@@ -7,7 +7,8 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **Multi-Server**: Run multiple Minecraft servers (survival, creative, modded, etc.)
 - **Single Port**: All servers accessible via port 25565 with hostname routing
 - **Auto-Scale**: Servers start on client connect, stop after idle timeout
-- **Zero Resources**: Only mc-router runs when servers are idle (~20MB RAM)
+- **mDNS Discovery**: Clients auto-discover servers via Bonjour/Zeroconf (no hosts file needed)
+- **Zero Resources**: Only infrastructure services run when servers are idle (~40MB RAM)
 - **Modular Config**: Each server has its own directory with independent configuration
 
 ## Quick Start
@@ -28,29 +29,34 @@ cd platform
 docker compose up -d
 ```
 
-### 3. Configure Client DNS
+### 3. Connect via Minecraft
 
-Add to `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows):
-
-```
-<server-ip> ironwood.local
-```
-
-### 4. Connect via Minecraft
-
+With mDNS auto-discovery, just connect directly:
 - Ironwood (Paper): `ironwood.local:25565`
 
-Add more servers using `create-server.sh` and update hosts file accordingly.
+**mDNS Requirements** (for auto-discovery):
+| OS | Requirement |
+|----|-------------|
+| Linux | avahi-daemon (usually pre-installed) |
+| macOS | Built-in Bonjour (no setup needed) |
+| Windows | Bonjour Print Services or iTunes |
+
+**Fallback** (if mDNS unavailable): Add `<server-ip> ironwood.local` to hosts file.
+
+Add more servers using `create-server.sh` - they're automatically discoverable!
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│          mc-router (always running :25565)          │
-├─────────────────────────────────────────────────────┤
-│  ironwood.local    → mc-ironwood    (auto-scale)    │
-│  <server>.local    → mc-<server>    (add via script)│
-└─────────────────────────────────────────────────────┘
+┌──────────────────────┐  ┌────────────────────┐
+│  mc-router (:25565)  │  │  mdns-publisher    │
+│  hostname routing    │  │  mDNS broadcast    │
+├──────────────────────┤  ├────────────────────┤
+│ ironwood.local ─→    │  │ Broadcasts:        │
+│  mc-ironwood         │  │  ironwood.local    │
+│ <server>.local ─→    │  │  <server>.local    │
+│  mc-<server>         │  │                    │
+└──────────────────────┘  └────────────────────┘
 ```
 
 ## Adding a New Server
@@ -77,7 +83,7 @@ The script automatically:
 2. Updates main docker-compose.yml (include, MAPPING, depends_on)
 3. Starts the server (unless `--no-start` specified)
 
-Just add the hostname to your `/etc/hosts` file and connect!
+New servers are automatically discoverable via mDNS - just connect!
 
 See [CLAUDE.md](CLAUDE.md) for detailed instructions.
 

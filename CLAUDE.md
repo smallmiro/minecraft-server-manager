@@ -36,6 +36,13 @@ minecraft/
 │   ├── scripts/                 # Management scripts
 │   │   └── create-server.sh     # Server creation script
 │   │
+│   ├── services/                # Microservices
+│   │   └── mdns-publisher/      # mDNS auto-broadcast service
+│   │       ├── Dockerfile
+│   │       ├── requirements.txt
+│   │       ├── mdns_publisher.py
+│   │       └── README.md
+│   │
 │   └── backups/                 # Backup storage
 │
 ├── docs/                        # Documentation (official docs reference)
@@ -296,30 +303,46 @@ The `plan.md` file serves as the implementation roadmap:
 
 ## Architecture Overview
 
-### Multi-Server with mc-router
+### Multi-Server with mc-router and mDNS
 
-This project uses **hostname-based routing** via mc-router for multi-server management:
+This project uses **hostname-based routing** via mc-router and **automatic hostname discovery** via mDNS for multi-server management:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    mc-router (:25565)                        │
-│              (always running, hostname routing)              │
-├─────────────────────────────────────────────────────────────┤
-│  ironwood.local    → mc-ironwood    (auto-scale up/down)    │
-│  <new-server>.local → mc-<new-server> (add via script)      │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────┐  ┌────────────────────┐
+│  mc-router (:25565)  │  │  mdns-publisher    │
+│  hostname routing    │  │  mDNS broadcast    │
+│  auto-scale up/down  │  │  host network mode │
+├──────────────────────┤  ├────────────────────┤
+│ ironwood.local ─→    │  │ Broadcasts:        │
+│  mc-ironwood         │  │  ironwood.local    │
+│ <server>.local ─→    │  │  <server>.local    │
+│  mc-<server>         │  │                    │
+└──────────┬───────────┘  └────────┬───────────┘
+           │ Docker Socket          │ mDNS multicast
+           └────────────────────────┘
 ```
 
 **Key Features**:
 - Single port (25565) for all servers via hostname routing
 - Auto-scale: servers start on client connect, stop after idle timeout
-- Zero resources when servers are stopped (only mc-router runs)
-- Clients need DNS/hosts file to resolve hostnames
+- Zero resources when servers are stopped (only mc-router and mdns-publisher run)
+- **mDNS auto-discovery**: Clients on same LAN can connect without hosts file
 
 ### Client Connection
 
-Clients must configure their hosts file or DNS:
+**With mDNS (Recommended)**:
+Clients on the same LAN automatically discover servers via mDNS (Bonjour/Zeroconf).
+Just connect via Minecraft: `ironwood.local:25565`
 
+**mDNS Requirements**:
+| OS | Requirement |
+|----|-------------|
+| Linux | avahi-daemon (usually pre-installed) |
+| macOS | Built-in Bonjour (no setup needed) |
+| Windows | Bonjour Print Services or iTunes |
+
+**Fallback (if mDNS unavailable)**:
+Configure hosts file:
 ```bash
 # Add to /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
 192.168.1.100 ironwood.local
@@ -543,6 +566,7 @@ For detailed settings, refer to the documents in the `docs/` directory:
 - **Backup**: Always backup data before changes
 - **Java Version**: Use the version required by server/mods
 - **Memory**: Modpacks require at least 4G recommended
-- **Hostname Routing**: Clients must configure DNS/hosts to resolve server hostnames
+- **mDNS**: Clients on same LAN auto-discover servers (no hosts file needed)
 - **Auto-Scale**: Servers start on connect, stop after 10 min idle (configurable)
 - **mc-router**: Always running, handles routing to all servers via single port 25565
+- **mdns-publisher**: Broadcasts mDNS for automatic hostname discovery
