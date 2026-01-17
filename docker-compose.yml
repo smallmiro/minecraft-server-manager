@@ -1,0 +1,119 @@
+# =============================================================================
+# Multi-Server Minecraft Docker Compose Configuration
+# =============================================================================
+# Architecture:
+#   - Lazymc: Always-running proxy that manages server lifecycle
+#   - MC Servers: Started on-demand when players connect, stopped when idle
+# =============================================================================
+
+# Common Minecraft server configuration (YAML anchor)
+x-minecraft-common: &minecraft-common
+  image: itzg/minecraft-server:java21
+  restart: "no"  # Lazymc controls lifecycle
+  tty: true
+  stdin_open: true
+  environment:
+    EULA: "TRUE"
+    TZ: ${TZ:-Asia/Seoul}
+    ENABLE_RCON: "true"
+    RCON_PASSWORD: ${RCON_PASSWORD:-changeme}
+  networks:
+    - minecraft-net
+
+services:
+  # ===========================================================================
+  # Lazymc Proxy - Always Running
+  # ===========================================================================
+  # Lazymc handles:
+  #   - Port forwarding (25565-25567)
+  #   - Auto-start servers on player connect
+  #   - Auto-stop servers after idle timeout
+  # ===========================================================================
+  lazymc:
+    image: ghcr.io/timvisee/lazymc:latest
+    container_name: lazymc
+    restart: unless-stopped
+    ports:
+      - "25565:25565"  # survival
+      - "25566:25566"  # creative
+      - "25567:25567"  # modded
+    volumes:
+      - ./lazymc.toml:/etc/lazymc/lazymc.toml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - minecraft-net
+    depends_on:
+      - mc-survival
+      - mc-creative
+      - mc-modded
+
+  # ===========================================================================
+  # Minecraft Servers - Managed by Lazymc
+  # ===========================================================================
+  # Note: No port mappings on MC servers - Lazymc proxies all connections
+  # ===========================================================================
+
+  # ---------------------------------------------------------------------------
+  # Survival Server (PAPER)
+  # ---------------------------------------------------------------------------
+  mc-survival:
+    <<: *minecraft-common
+    container_name: mc-survival
+    env_file:
+      - .env
+      - servers/survival/config.env
+    volumes:
+      - ./servers/survival/data:/data
+      - ./servers/survival/logs:/data/logs
+      - ./worlds:/worlds:rw
+      - ./shared/plugins:/plugins:ro
+    labels:
+      - "lazymc.enabled=true"
+      - "lazymc.group=survival"
+
+  # ---------------------------------------------------------------------------
+  # Creative Server (VANILLA)
+  # ---------------------------------------------------------------------------
+  mc-creative:
+    <<: *minecraft-common
+    container_name: mc-creative
+    env_file:
+      - .env
+      - servers/creative/config.env
+    volumes:
+      - ./servers/creative/data:/data
+      - ./servers/creative/logs:/data/logs
+      - ./worlds:/worlds:rw
+      - ./shared/plugins:/plugins:ro
+    labels:
+      - "lazymc.enabled=true"
+      - "lazymc.group=creative"
+
+  # ---------------------------------------------------------------------------
+  # Modded Server (FORGE)
+  # ---------------------------------------------------------------------------
+  mc-modded:
+    <<: *minecraft-common
+    container_name: mc-modded
+    env_file:
+      - .env
+      - servers/modded/config.env
+    volumes:
+      - ./servers/modded/data:/data
+      - ./servers/modded/logs:/data/logs
+      - ./worlds:/worlds:rw
+      - ./shared/mods:/mods:ro
+    labels:
+      - "lazymc.enabled=true"
+      - "lazymc.group=modded"
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  minecraft-net:
+    name: ${MINECRAFT_NETWORK:-minecraft-net}
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${MINECRAFT_SUBNET:-172.20.0.0/16}
