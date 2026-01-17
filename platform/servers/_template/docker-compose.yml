@@ -47,12 +47,12 @@ services:
     labels:
       # IMPORTANT: Change 'template.local' to '<server-name>.local'
       # Example: template.local -> ironwood.local
-      - "mc-router.host=template.local"
-      - "mc-router.auto-scale-up=true"
-      - "mc-router.auto-scale-down=true"
+      mc-router.host: "template.local"
+      mc-router.auto-scale-up: "true"
+      mc-router.auto-scale-down: "true"
       # Custom MOTD when server is starting (supports Minecraft formatting codes)
       # §e = yellow, §a = green, §c = red, §b = aqua, §f = white
       # §l = bold, §o = italic, §n = underline
-      - "mc-router.auto-scale-asleep-motd=§e§lStarting..server...§r\n§7Please..wait..while..the..server..wakes..up!"
+      mc-router.auto-scale-asleep-motd: "§e§lStarting server...§r\n§7Please wait while the server wakes up!"
 
 # Network is defined in main docker-compose.yml
