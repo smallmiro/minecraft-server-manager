@@ -13,30 +13,38 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 
 ## Quick Start
 
-### 1. Clone and Configure
+### Option A: npm Package (Recommended)
+
+```bash
+# Install globally
+npm install -g @minecraft-docker/mcctl
+
+# Initialize platform (creates ~/minecraft-servers)
+mcctl init
+
+# Create your first server
+mcctl create myserver -t VANILLA -v 1.21.1
+
+# Check status
+mcctl status
+```
+
+### Option B: Clone Repository
 
 ```bash
 git clone <repository>
 cd minecraft/platform
 cp .env.example .env
 # Edit .env with your settings
-```
 
-### 2. Start All Servers
-
-```bash
-cd platform
+# Start infrastructure
 docker compose up -d
-```
 
-### 3. Create Your First Server
-
-```bash
-cd platform
+# Create your first server
 ./scripts/create-server.sh myserver -t VANILLA -v 1.21.1
 ```
 
-### 4. Connect via Minecraft
+### Connect via Minecraft
 
 With mDNS auto-discovery, just connect directly:
 - `myserver.local:25565`
