@@ -22,6 +22,40 @@ minecraft/
 
 ## Custom Commands
 
+### /project:work
+
+Executes development work based on GitHub Issues or Milestones following the project workflow.
+
+```bash
+# Single issue implementation
+/project:work --issue 7
+
+# Process all issues in milestone (uses Ralph Loop)
+/project:work --milestone 1
+
+# Options
+/project:work --issue 7 --dry-run      # Plan only, no execution
+/project:work --issue 7 --skip-review  # Skip code review (emergency)
+/project:work --milestone 1 --parallel # Auto-parallelize independent issues
+```
+
+This command performs the following tasks:
+- **Single Issue**: Implements one issue with full workflow (branch → TDD → PR → review → merge)
+- **Milestone**: Processes all issues using Ralph Loop (max iterations = issue count + 3)
+- Updates `task.md` with work history at each checkpoint
+- Updates `plan.md` checkboxes when tasks complete
+- Updates GitHub Issue body checkboxes
+- Runs code review before merge
+- Analyzes and suggests parallel execution for independent issues
+
+**Workflow Steps**:
+1. Load issue/milestone context (milestone: remember goals throughout)
+2. Create feature branch from `develop`
+3. Implement with TDD (Red → Green → Refactor)
+4. Commit at checkpoints with issue reference
+5. Create PR and run code review
+6. Merge on approval, close issue
+
 ### /project:update-docs
 
 Reads the official documentation (https://docker-minecraft-server.readthedocs.io/) and updates the docs/ directory to the latest state.
