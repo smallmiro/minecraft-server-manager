@@ -18,6 +18,7 @@
 | Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) | 🔄 Open |
 | Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | 🔄 Open |
 | Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | 🔄 Open |
+| Phase 6: npm Package | [#28](https://github.com/smallmiro/minecraft-server-manager/issues/28) | ✅ PR #29 |
 
 ---
 
@@ -540,17 +541,18 @@ ss -tuln | grep 25565
 
 ---
 
-## Phase 6: npm Package Distribution
+## Phase 6: npm Package Distribution ✅ COMPLETED
 
 > **Milestone**: [v1.0.0 - Release](https://github.com/smallmiro/minecraft-server-manager/milestone/3)
 > **Issue**: [#28](https://github.com/smallmiro/minecraft-server-manager/issues/28)
+> **PR**: [#29](https://github.com/smallmiro/minecraft-server-manager/pull/29)
 
 ### 6.1 Overview
 
 Docker Minecraft 서버 관리 플랫폼을 npm 패키지로 배포하여 전역 CLI(`mcctl`)로 사용 가능하게 합니다.
 
 **패키지 이름**: `@minecraft-docker/mcctl`
-**데이터 디렉토리**: `~/.minecraft-servers`
+**데이터 디렉토리**: `~/minecraft-servers` (Snap Docker 호환성)
 
 ### 6.2 Monorepo Structure
 
@@ -587,24 +589,24 @@ minecraft/
 
 ### 6.3 Implementation Tasks
 
-- [ ] pnpm workspace 설정 (`package.json`, `pnpm-workspace.yaml`)
-- [ ] `@minecraft-docker/shared` 모듈 구현
-  - [ ] 타입 정의 (`types/index.ts`)
-  - [ ] 유틸리티 (`utils/index.ts`)
-  - [ ] Docker 래퍼 (`docker/index.ts`)
-- [ ] `@minecraft-docker/mcctl` CLI 모듈 구현
-  - [ ] CLI 진입점 (`index.ts`)
-  - [ ] init 명령어 (`commands/init.ts`)
-  - [ ] status 명령어 (`commands/status.ts`)
-  - [ ] 쉘 스크립트 호출 래퍼 (`lib/shell.ts`)
-- [ ] 쉘 스크립트 환경변수 지원 추가
-  - [ ] `common.sh` - MCCTL_ROOT, MCCTL_SCRIPTS, MCCTL_TEMPLATES
-  - [ ] `create-server.sh`
-  - [ ] `delete-server.sh`
-  - [ ] `init.sh`
-  - [ ] `lock.sh`
-- [ ] `templates/` 디렉토리 구성
-- [ ] 로컬 테스트 (`pnpm link`)
+- [x] pnpm workspace 설정 (`package.json`, `pnpm-workspace.yaml`)
+- [x] `@minecraft-docker/shared` 모듈 구현
+  - [x] 타입 정의 (`types/index.ts`)
+  - [x] 유틸리티 (`utils/index.ts`)
+  - [x] Docker 래퍼 (`docker/index.ts`)
+- [x] `@minecraft-docker/mcctl` CLI 모듈 구현
+  - [x] CLI 진입점 (`index.ts`)
+  - [x] init 명령어 (`commands/init.ts`)
+  - [x] status 명령어 (`commands/status.ts`)
+  - [x] 쉘 스크립트 호출 래퍼 (`lib/shell.ts`)
+- [x] 쉘 스크립트 환경변수 지원 추가
+  - [x] `common.sh` - MCCTL_ROOT, MCCTL_SCRIPTS, MCCTL_TEMPLATES
+  - [x] `create-server.sh`
+  - [x] `delete-server.sh`
+  - [x] `init.sh`
+  - [x] `lock.sh`
+- [x] `templates/` 디렉토리 구성
+- [x] 로컬 테스트 (`pnpm link`)
 
 ### 6.4 CLI Commands
 
