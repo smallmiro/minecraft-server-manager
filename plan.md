@@ -14,6 +14,7 @@
 |-------|--------|--------|
 | Phase 1: Infrastructure | [#1](https://github.com/smallmiro/minecraft-server-manager/issues/1), [#2](https://github.com/smallmiro/minecraft-server-manager/issues/2), [#3](https://github.com/smallmiro/minecraft-server-manager/issues/3) | ✅ Closed |
 | Phase 2: Docker & mc-router | [#4](https://github.com/smallmiro/minecraft-server-manager/issues/4), [#5](https://github.com/smallmiro/minecraft-server-manager/issues/5), [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) | ✅ Closed |
+| Phase 2.5: mDNS Publisher | [#20](https://github.com/smallmiro/minecraft-server-manager/issues/20) | 🔄 Open |
 | Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) | 🔄 Open |
 | Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | 🔄 Open |
 | Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | 🔄 Open |
@@ -214,6 +215,144 @@ The script automatically:
 
 ---
 
+## Phase 2.5: mDNS Auto-Broadcast Service
+
+> **Milestone**: [v0.3.0 - Core Features](https://github.com/smallmiro/minecraft-server-manager/milestone/2)
+
+### 2.5.1 Implement mdns-publisher ([#20](https://github.com/smallmiro/minecraft-server-manager/issues/20))
+
+**Purpose**: Automatically broadcast mDNS (Bonjour/Zeroconf) A records for `.local` hostnames so clients can connect without manual hosts file configuration.
+
+**Directory Structure**:
+```
+platform/services/mdns-publisher/
+├── Dockerfile
+├── requirements.txt
+├── mdns_publisher.py
+└── README.md
+```
+
+**Architecture**:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     mdns-publisher                           │
+│                    (host network mode)                       │
+├─────────────────────────────────────────────────────────────┤
+│  Docker SDK          │           Zeroconf                    │
+│  - Monitor events    │           - Register A records        │
+│  - Read labels       │           - Broadcast on mDNS         │
+│  - container start   │           - Unregister on stop        │
+│  - container die     │                                       │
+└─────────────────────────────────────────────────────────────┘
+           │                              │
+           ▼                              ▼
+    Docker Socket                   LAN (multicast)
+    /var/run/docker.sock            224.0.0.251:5353
+```
+
+**Key Components**:
+
+| Component | Description |
+|-----------|-------------|
+| Docker Event Listener | Monitor container start/die events |
+| Label Parser | Extract `mc-router.host` label from containers |
+| mDNS Broadcaster | Register/unregister A records via zeroconf |
+| Health Endpoint | HTTP endpoint for Docker healthcheck |
+
+**Label Detection**:
+```yaml
+# Server container labels (already exists)
+labels:
+  - "mc-router.host=ironwood.local"
+  - "mc-router.auto-scale-up=true"
+  - "mc-router.auto-scale-down=true"
+```
+
+**Implementation Details**:
+
+```python
+# mdns_publisher.py pseudo-code
+import docker
+from zeroconf import Zeroconf, ServiceInfo
+import socket
+
+# Get host IP for mDNS A record
+host_ip = socket.gethostbyname(socket.gethostname())
+
+# Watch Docker events
+for event in client.events(decode=True, filters={'event': ['start', 'die']}):
+    container = client.containers.get(event['id'])
+    hostname = container.labels.get('mc-router.host')
+
+    if hostname:
+        if event['Action'] == 'start':
+            # Register mDNS: hostname -> host_ip
+            register_mdns(hostname, host_ip)
+        elif event['Action'] == 'die':
+            # Unregister mDNS
+            unregister_mdns(hostname)
+```
+
+**Docker Compose Service**:
+```yaml
+# In main docker-compose.yml
+services:
+  mdns-publisher:
+    build: ./services/mdns-publisher
+    container_name: mdns-publisher
+    restart: unless-stopped
+    network_mode: host  # Required for mDNS multicast
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5353/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+```
+
+**Dependencies**:
+```
+# requirements.txt
+docker>=6.0.0
+zeroconf>=0.131.0
+flask>=3.0.0  # For health endpoint
+```
+
+### 2.5.2 Client Compatibility
+
+| OS | mDNS Support | Notes |
+|----|--------------|-------|
+| Linux | avahi-daemon | Usually pre-installed on Ubuntu/Debian |
+| macOS | Built-in Bonjour | No setup needed |
+| Windows | Bonjour Print Services | Install from Apple or with iTunes |
+
+### 2.5.3 Testing
+
+```bash
+# 1. Start mdns-publisher
+docker compose up -d mdns-publisher
+
+# 2. Start a Minecraft server
+docker compose up -d mc-ironwood
+
+# 3. Check mDNS registration (Linux)
+avahi-browse -art | grep ironwood
+
+# 4. Check mDNS registration (macOS)
+dns-sd -B _services._dns-sd._udp
+
+# 5. Resolve hostname (all platforms)
+ping ironwood.local
+
+# 6. Connect via Minecraft
+# Server address: ironwood.local:25565
+```
+
+---
+
 ## Phase 3: World Locking System
 
 > **Milestone**: [v0.3.0 - Core Features](https://github.com/smallmiro/minecraft-server-manager/milestone/2)
@@ -344,6 +483,7 @@ Add sections:
 
 | File | Phase | Issue |
 |------|-------|-------|
+| `platform/services/mdns-publisher/` | 2.5 | [#20](https://github.com/smallmiro/minecraft-server-manager/issues/20) |
 | `platform/scripts/lock.sh` | 3 | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) |
 | `platform/scripts/mcctl.sh` | 4 | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8) |
 | `platform/scripts/logs.sh` | 4 | [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9) |
@@ -453,7 +593,21 @@ If implementation fails at any phase:
 - **Resource efficiency**: Zero RAM usage when servers are stopped
 
 ### Client Configuration
-Clients must add server hostnames to their hosts file:
+
+**With mDNS Publisher (Recommended)**:
+No configuration needed! Clients on the same LAN automatically discover servers via mDNS (Bonjour/Zeroconf).
+
+Just connect via Minecraft: `ironwood.local:25565`
+
+**mDNS Requirements**:
+| OS | Requirement |
+|----|-------------|
+| Linux | avahi-daemon (usually pre-installed) |
+| macOS | Built-in Bonjour (no setup needed) |
+| Windows | Bonjour Print Services or iTunes |
+
+**Fallback (without mDNS)**:
+Add server hostnames to hosts file:
 ```
 # /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
 192.168.1.100 ironwood.local

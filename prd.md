@@ -134,6 +134,20 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [x] `--start` option starts server after creation (default)
   - [x] `--no-start` option skips server start
 
+#### FR-011: mDNS Auto-Broadcast
+- **Priority**: High
+- **Description**: Automatically broadcast mDNS (Bonjour/Zeroconf) records for `.local` hostnames so clients can discover servers without manual hosts file configuration
+- **Acceptance Criteria**:
+  - [ ] `mdns-publisher` service monitors Docker events (start/die)
+  - [ ] Reads `mc-router.host` labels from Minecraft server containers
+  - [ ] Broadcasts mDNS A records for `.local` hostnames using `zeroconf` library
+  - [ ] Registers on container start, unregisters on container stop
+  - [ ] Uses host network mode for proper mDNS packet broadcasting
+  - [ ] Health check endpoint for monitoring
+  - [ ] Graceful shutdown with proper mDNS unregistration
+  - [ ] Clients on same LAN can connect via `ironwood.local:25565` without hosts file
+  - [ ] Works on Linux, macOS, and Windows (with Bonjour support)
+
 ### 2.2 Non-Functional Requirements
 
 #### NFR-001: Performance
@@ -183,6 +197,13 @@ minecraft/
 │   ├── scripts/                 # Management scripts
 │   │   └── create-server.sh     # Server creation script (with world options)
 │   │
+│   ├── services/                # Microservices
+│   │   └── mdns-publisher/      # mDNS auto-broadcast service
+│   │       ├── Dockerfile
+│   │       ├── requirements.txt
+│   │       ├── mdns_publisher.py
+│   │       └── README.md
+│   │
 │   ├── servers/                 # Server configurations
 │   │   ├── _template/           # Template for new servers
 │   │   │   ├── docker-compose.yml
@@ -220,33 +241,35 @@ minecraft/
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │              Server Host (192.168.x.x)               │    │
 │  │                                                      │    │
-│  │   ┌─────────────────────────────────────────────┐   │    │
-│  │   │        mc-router (Always Running)            │   │    │
-│  │   │         :25565 (hostname routing)            │   │    │
-│  │   │                                              │   │    │
-│  │   │   ironwood.local    ──→ mc-ironwood          │   │    │
-│  │   │   <server>.local    ──→ mc-<server>          │   │    │
-│  │   │   (add more via create-server.sh)            │   │    │
-│  │   │                                              │   │    │
-│  │   └─────────────────────┬────────────────────────┘   │    │
-│  │                         │ Docker Socket              │    │
-│  │   ┌─────────────────────┴────────────────────────┐   │    │
-│  │   │           minecraft-net (bridge)              │   │    │
-│  │   │                                               │   │    │
-│  │   │  mc-ironwood   mc-<server>  (add via script) │   │    │
-│  │   │  (auto-scale)   (auto-scale)                 │   │    │
-│  │   │                                               │   │    │
-│  │   └───────────────────────────────────────────────┘   │    │
+│  │   ┌──────────────────────┐  ┌────────────────────┐  │    │
+│  │   │  mc-router (Always)  │  │  mdns-publisher    │  │    │
+│  │   │  :25565 hostname rte │  │  (mDNS broadcast)  │  │    │
+│  │   │                      │  │  host network mode │  │    │
+│  │   │  ironwood.local ─→   │  │                    │  │    │
+│  │   │   mc-ironwood        │  │  Broadcasts:       │  │    │
+│  │   │  <server>.local ─→   │  │  ironwood.local    │  │    │
+│  │   │   mc-<server>        │  │  <server>.local    │  │    │
+│  │   └──────────┬───────────┘  └────────┬───────────┘  │    │
+│  │              │ Docker Socket          │              │    │
+│  │   ┌──────────┴────────────────────────┴───────────┐ │    │
+│  │   │           minecraft-net (bridge)               │ │    │
+│  │   │                                                │ │    │
+│  │   │  mc-ironwood   mc-<server>  (add via script)  │ │    │
+│  │   │  (auto-scale)   (auto-scale)                  │ │    │
+│  │   │                                                │ │    │
+│  │   └────────────────────────────────────────────────┘ │    │
 │  │                                                      │    │
 │  └──────────────────────────────────────────────────────┘    │
 │                              │                               │
-│  ┌───────────────────────────┴────────────────────────────┐  │
-│  │                    External PCs                         │  │
-│  │     Add to hosts file or DNS:                          │  │
-│  │       ironwood.local    → <host-ip>                    │  │
-│  │       <server>.local    → <host-ip>                    │  │
-│  │     Connect via: ironwood.local:25565                  │  │
-│  └─────────────────────────────────────────────────────────┘  │
+│                              │ mDNS (multicast)              │
+│                              ▼                               │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │                    External PCs                        │  │
+│  │     mDNS auto-discovery (no hosts file needed):       │  │
+│  │       ironwood.local → <host-ip> (auto-resolved)      │  │
+│  │       <server>.local → <host-ip> (auto-resolved)      │  │
+│  │     Connect via: ironwood.local:25565                 │  │
+│  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -442,15 +465,20 @@ labels:
 | 3 servers running | 12GB + 20MB | Variable |
 
 #### External Access
-PCs on the same LAN must configure DNS or hosts file:
+With mDNS publisher enabled, PCs on the same LAN automatically discover servers:
 ```
-# Add to /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
-192.168.1.100 ironwood.local
-# Add more servers as needed:
-# 192.168.1.100 myserver.local
-
-# Then connect via:
+# No configuration needed with mDNS!
+# Just connect directly:
 ironwood.local:25565
+
+# mDNS requirements:
+# - Linux: avahi-daemon (usually pre-installed)
+# - macOS: Built-in Bonjour (no setup needed)
+# - Windows: Bonjour Print Services or iTunes (provides Bonjour)
+
+# Fallback (if mDNS unavailable):
+# Add to /etc/hosts or C:\Windows\System32\drivers\etc\hosts
+192.168.1.100 ironwood.local
 ```
 
 ## 5. Implementation Plan
@@ -482,32 +510,41 @@ When implementing CLI tools, always consider future Web UI integration:
 - [x] Create `docker-compose.yml` with mc-router
 - [x] Create server config templates
 
-### Phase 2: Locking System
+### Phase 2: mDNS Auto-Broadcast
+- [ ] Create `services/mdns-publisher/` directory structure
+- [ ] Implement `mdns_publisher.py` with Docker event monitoring
+- [ ] Implement mDNS broadcasting with `zeroconf` library
+- [ ] Create Dockerfile and docker-compose service
+- [ ] Add health check endpoint
+- [ ] Test on Linux, macOS, Windows clients
+- [ ] Update main docker-compose.yml to include service
+
+### Phase 3: Locking System
 - [ ] Implement `scripts/lock.sh`
 - [ ] Test lock acquire/release
 - [ ] Test concurrent lock attempts
 - [ ] Handle stale lock cleanup
 
-### Phase 3: Management CLI
+### Phase 4: Management CLI
 - [ ] Implement `scripts/mcctl.sh`
 - [ ] Implement `scripts/logs.sh`
 - [ ] Add `--json` output option for Web-ready integration
 - [ ] Test all CLI commands
 - [ ] Add error handling with proper exit codes
 
-### Phase 4: Documentation
+### Phase 5: Documentation
 - [ ] Update `CLAUDE.md`
 - [ ] Update `README.md`
 - [ ] Create usage examples
 
-### Phase 5: Testing & Refinement
+### Phase 6: Testing & Refinement
 - [ ] Test multi-server startup
 - [ ] Test world switching
 - [ ] Test failure scenarios
 - [ ] Performance validation
 - [ ] Verify JSON output parsing
 
-### Future: Phase 6 (Web Management UI)
+### Future: Phase 7 (Web Management UI)
 See **Section 9.1** for detailed Web UI implementation plan.
 - Wrap CLI functions with Next.js API routes
 - Build MUI dashboard components
