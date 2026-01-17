@@ -13,14 +13,14 @@ Automatically broadcasts mDNS (Bonjour/Zeroconf) A records for Minecraft servers
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     mdns-publisher                           │
-│                    (host network mode)                       │
+│                     mdns-publisher                          │
+│                    (host network mode)                      │
 ├─────────────────────────────────────────────────────────────┤
-│  Docker SDK          │           Zeroconf                    │
-│  - Monitor events    │           - Register A records        │
-│  - Read labels       │           - Broadcast on mDNS         │
-│  - container start   │           - Unregister on stop        │
-│  - container die     │                                       │
+│  Docker SDK          │           Zeroconf                   │
+│  - Monitor events    │           - Register A records       │
+│  - Read labels       │           - Broadcast on mDNS        │
+│  - container start   │           - Unregister on sto        │
+│  - container die     │                                      │
 └─────────────────────────────────────────────────────────────┘
            │                              │
            ▼                              ▼
