@@ -35,3 +35,6 @@ Thumbs.db
 
 # Docker
 *.log
+docker-compose.test.yml
+docker-compose.*.yml
+!docker-compose.yml
