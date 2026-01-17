@@ -53,6 +53,6 @@ services:
       # Custom MOTD when server is starting (supports Minecraft formatting codes)
       # §e = yellow, §a = green, §c = red, §b = aqua, §f = white
       # §l = bold, §o = italic, §n = underline
-      - "mc-router.auto-scale-asleep-motd=§e§lStarting...§r§7PleaseWait"
+      - "mc-router.auto-scale-asleep-motd=§e§lStarting..§r§7Please..Wait!"
 
 # Network is defined in main docker-compose.yml
