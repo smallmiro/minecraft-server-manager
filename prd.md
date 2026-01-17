@@ -32,81 +32,81 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 - **Priority**: High
 - **Description**: Support running multiple Minecraft servers simultaneously
 - **Acceptance Criteria**:
-  - [ ] At least 3 servers can run concurrently
-  - [ ] Each server has independent configuration
-  - [ ] Servers can be started/stopped independently
-  - [ ] Different server types supported (Vanilla, Paper, Forge, Fabric)
+  - [x] At least 3 servers can run concurrently
+  - [x] Each server has independent configuration
+  - [x] Servers can be started/stopped independently
+  - [x] Different server types supported (Vanilla, Paper, Forge, Fabric)
 
 #### FR-002: Shared World Storage
 - **Priority**: High
 - **Description**: All servers share a common world storage directory
 - **Acceptance Criteria**:
-  - [ ] `worlds/` directory accessible by all servers
-  - [ ] Worlds can be assigned to different servers
-  - [ ] World data persists across server restarts
-  - [ ] New worlds can be created and managed
+  - [x] `worlds/` directory accessible by all servers
+  - [x] Worlds can be assigned to different servers
+  - [x] World data persists across server restarts
+  - [x] New worlds can be created and managed
 
 #### FR-003: World Locking Mechanism
 - **Priority**: High
 - **Description**: Prevent multiple servers from using the same world simultaneously
 - **Acceptance Criteria**:
-  - [ ] Only one server can use a world at a time
-  - [ ] Lock is acquired before server starts
-  - [ ] Lock is released when server stops
-  - [ ] Lock status is queryable
-  - [ ] Stale locks can be manually cleared
+  - [x] Only one server can use a world at a time
+  - [x] Lock is acquired before server starts
+  - [x] Lock is released when server stops
+  - [x] Lock status is queryable
+  - [x] Stale locks can be manually cleared
 
 #### FR-004: Per-Server Logging
 - **Priority**: Medium
 - **Description**: Each server maintains separate log files
 - **Acceptance Criteria**:
-  - [ ] Logs stored in `servers/<name>/logs/`
-  - [ ] Log rotation configured (max size, max files)
-  - [ ] Logs viewable via CLI command
-  - [ ] Real-time log tailing supported
+  - [x] Logs stored in `servers/<name>/logs/`
+  - [x] Log rotation configured (max size, max files)
+  - [x] Logs viewable via CLI command
+  - [x] Real-time log tailing supported
 
 #### FR-005: Management CLI
 - **Priority**: Medium
 - **Description**: Command-line tool for server management
 - **Acceptance Criteria**:
-  - [ ] Start/stop/restart servers
-  - [ ] View server status
-  - [ ] View and tail logs
-  - [ ] Manage world assignments
-  - [ ] Access RCON console
+  - [x] Start/stop/restart servers
+  - [x] View server status
+  - [x] View and tail logs
+  - [x] Manage world assignments
+  - [x] Access RCON console
 
 #### FR-006: Shared Resources
 - **Priority**: Low
 - **Description**: Plugins and mods can be shared across servers
 - **Acceptance Criteria**:
-  - [ ] `shared/plugins/` mountable as read-only
-  - [ ] `shared/mods/` mountable as read-only
-  - [ ] Server-specific overrides supported
+  - [x] `shared/plugins/` mountable as read-only
+  - [x] `shared/mods/` mountable as read-only
+  - [x] Server-specific overrides supported
 
 #### FR-007: Automatic Server Start/Stop (mc-router)
 - **Priority**: High
 - **Description**: Automatically start servers on client connection and stop after idle timeout
 - **Acceptance Criteria**:
-  - [ ] mc-router always running, listening on single port with hostname routing
-  - [ ] Server auto-starts when client connects (via Docker socket)
-  - [ ] MOTD shows server status when sleeping (configurable message)
-  - [ ] Server auto-stops after configurable idle timeout (default: 10 min)
-  - [ ] Zero resource usage when server is stopped (container not running)
-  - [ ] External PCs connect via hostname (e.g., ironwood.local, myserver.local)
-  - [ ] Multiple servers supported with hostname-based routing
+  - [x] mc-router always running, listening on single port with hostname routing
+  - [x] Server auto-starts when client connects (via Docker socket)
+  - [x] MOTD shows server status when sleeping (configurable message)
+  - [x] Server auto-stops after configurable idle timeout (default: 10 min)
+  - [x] Zero resource usage when server is stopped (container not running)
+  - [x] External PCs connect via hostname (e.g., ironwood.local, myserver.local)
+  - [x] Multiple servers supported with hostname-based routing
 
 #### FR-008: Player UUID Lookup
 - **Priority**: Medium
 - **Description**: Look up player information including Online/Offline UUID via PlayerDB API
 - **API**: `https://playerdb.co/api/player/minecraft/{playerName}`
 - **Acceptance Criteria**:
-  - [ ] Query PlayerDB API to retrieve player information
-  - [ ] Return Online UUID (from Mojang account)
-  - [ ] Calculate Offline UUID (MD5-based Version 3 UUID)
-  - [ ] Display player avatar URL and skin texture
-  - [ ] Support `--json` output for Web API integration
-  - [ ] Integrate with `mcctl.sh player` command
-  - [ ] Handle errors gracefully (player not found, API timeout)
+  - [x] Query PlayerDB API to retrieve player information
+  - [x] Return Online UUID (from Mojang account)
+  - [x] Calculate Offline UUID (MD5-based Version 3 UUID)
+  - [x] Display player avatar URL and skin texture
+  - [x] Support `--json` output for Web API integration
+  - [x] Integrate with `mcctl.sh player` command
+  - [x] Handle errors gracefully (player not found, API timeout)
 
 #### FR-009: World Creation Options
 - **Priority**: Medium
@@ -586,30 +586,30 @@ When implementing CLI tools, always consider future Web UI integration:
 - [x] Document client setup (Linux, macOS, Windows, WSL)
 - [x] Test mDNS resolution on local network
 
-### Phase 3: Locking System
-- [ ] Implement `scripts/lock.sh`
-- [ ] Test lock acquire/release
-- [ ] Test concurrent lock attempts
-- [ ] Handle stale lock cleanup
+### Phase 3: Locking System ✅
+- [x] Implement `scripts/lock.sh`
+- [x] Test lock acquire/release
+- [x] Test concurrent lock attempts
+- [x] Handle stale lock cleanup
 
-### Phase 4: Management CLI
-- [ ] Implement `scripts/mcctl.sh`
-- [ ] Implement `scripts/logs.sh`
-- [ ] Add `--json` output option for Web-ready integration
-- [ ] Test all CLI commands
-- [ ] Add error handling with proper exit codes
+### Phase 4: Management CLI ✅
+- [x] Implement `scripts/mcctl.sh`
+- [x] Implement `scripts/logs.sh`
+- [x] Add `--json` output option for Web-ready integration
+- [x] Test all CLI commands
+- [x] Add error handling with proper exit codes
 
 ### Phase 5: Documentation
 - [ ] Update `CLAUDE.md`
 - [ ] Update `README.md`
 - [ ] Create usage examples
 
-### Phase 6: Testing & Refinement
-- [ ] Test multi-server startup
-- [ ] Test world switching
+### Phase 6: Testing & Refinement (Partial)
+- [x] Test multi-server startup
+- [x] Test world switching
 - [ ] Test failure scenarios
 - [ ] Performance validation
-- [ ] Verify JSON output parsing
+- [x] Verify JSON output parsing
 
 ### Phase 6: npm Package Distribution ✅
 - [x] pnpm workspace Monorepo structure
@@ -626,8 +626,22 @@ mcctl init
 mcctl create myserver
 ```
 
-### Future: Phase 7 (Web Management UI)
-See **Section 9.1** for detailed Web UI implementation plan.
+### Phase 7: CLI Interactive Mode
+> **Milestone**: [v0.4.0](https://github.com/smallmiro/minecraft-server-manager/milestone/4)
+
+See **Section 9** for detailed CLI Architecture (Hexagonal + Clean Architecture).
+- [ ] Add `@clack/prompts` dependency
+- [ ] Implement Domain Layer (Value Objects, Entities)
+- [ ] Implement Application Layer (Ports, Use Cases)
+- [ ] Implement Infrastructure Adapters (ClackPromptAdapter, DocsAdapter)
+- [ ] Interactive `mcctl create` command
+- [ ] Interactive `mcctl delete` command
+- [ ] Interactive world and backup commands
+- [ ] Unit and integration tests
+- [ ] Documentation update
+
+### Future: Phase 8 (Web Management UI)
+See **Section 10.1** for detailed Web UI implementation plan.
 - Wrap CLI functions with Next.js API routes
 - Build MUI dashboard components
 - Add SQLite/PostgreSQL for persistent state
@@ -737,6 +751,9 @@ SIMULATION_DISTANCE=8
 - RCON accessible only from localhost
 
 ## 9. CLI Architecture (Hexagonal + Clean Architecture)
+
+> **Milestone**: [v0.4.0 - CLI Interactive Mode](https://github.com/smallmiro/minecraft-server-manager/milestone/4)
+> **Issues**: [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30) - [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40)
 
 ### 9.1 Design Principles
 
