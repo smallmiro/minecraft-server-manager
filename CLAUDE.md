@@ -15,18 +15,15 @@ minecraft/
 │   ├── docker-compose.yml       # Main orchestration (mc-router + server includes)
 │   ├── .env                     # Global environment variables
 │   ├── .env.example             # Environment template
+│   ├── .gitignore               # Git ignore rules for servers, worlds, etc.
 │   │
-│   ├── servers/                 # Server configurations (modular structure)
-│   │   ├── _template/           # Template for new servers
-│   │   │   ├── docker-compose.yml
-│   │   │   └── config.env
-│   │   └── ironwood/            # Example: Paper server (default)
+│   ├── servers/                 # Server configurations (gitignored except _template)
+│   │   └── _template/           # Template for new servers
 │   │       ├── docker-compose.yml
-│   │       ├── config.env
-│   │       ├── data/            # Server data (gitignored)
-│   │       └── logs/            # Server logs (gitignored)
+│   │       └── config.env
+│   │   # Servers created by create-server.sh go here (gitignored)
 │   │
-│   ├── worlds/                  # Shared world storage
+│   ├── worlds/                  # Shared world storage (gitignored except .locks)
 │   │   └── .locks/              # Lock files (future)
 │   │
 │   ├── shared/                  # Shared resources
@@ -38,17 +35,13 @@ minecraft/
 │   │   │   └── common.sh        # Shared functions library
 │   │   ├── mcctl.sh             # Main management CLI
 │   │   ├── create-server.sh     # Server creation script
+│   │   ├── init.sh              # Platform initialization script
 │   │   ├── lock.sh              # World locking system
 │   │   ├── logs.sh              # Log viewer
 │   │   ├── player.sh            # Player UUID lookup
 │   │   └── backup.sh            # GitHub worlds backup
 │   │
-│   ├── services/                # Microservices
-│   │   └── mdns-publisher/      # mDNS auto-broadcast service
-│   │       ├── Dockerfile
-│   │       ├── requirements.txt
-│   │       ├── mdns_publisher.py
-│   │       └── README.md
+│   ├── services/                # Microservices (reserved for future use)
 │   │
 │   └── backups/                 # Backup storage
 │
@@ -310,54 +303,55 @@ The `plan.md` file serves as the implementation roadmap:
 
 ## Architecture Overview
 
-### Multi-Server with mc-router and mDNS
+### Multi-Server with mc-router and avahi-daemon
 
-This project uses **hostname-based routing** via mc-router and **automatic hostname discovery** via mDNS for multi-server management:
+This project uses **hostname-based routing** via mc-router and **automatic hostname discovery** via avahi-daemon (system mDNS) for multi-server management:
 
 ```
 ┌──────────────────────┐  ┌────────────────────┐
-│  mc-router (:25565)  │  │  mdns-publisher    │
-│  hostname routing    │  │  mDNS broadcast    │
-│  auto-scale up/down  │  │  host network mode │
+│  mc-router (:25565)  │  │  avahi-daemon      │
+│  hostname routing    │  │  (system service)  │
+│  auto-scale up/down  │  │  mDNS broadcast    │
 ├──────────────────────┤  ├────────────────────┤
-│ ironwood.local ─→    │  │ Broadcasts:        │
-│  mc-ironwood         │  │  ironwood.local    │
-│ <server>.local ─→    │  │  <server>.local    │
-│  mc-<server>         │  │                    │
-└──────────┬───────────┘  └────────┬───────────┘
-           │ Docker Socket          │ mDNS multicast
-           └────────────────────────┘
+│ <server>.local ─→    │  │ /etc/avahi/hosts:  │
+│  mc-<server>         │  │  <server>.local    │
+└──────────────────────┘  └────────────────────┘
 ```
 
 **Key Features**:
 - Single port (25565) for all servers via hostname routing
 - Auto-scale: servers start on client connect, stop after idle timeout
-- Zero resources when servers are stopped (only mc-router and mdns-publisher run)
+- Zero resources when servers are stopped (only mc-router runs)
 - **mDNS auto-discovery**: Clients on same LAN can connect without hosts file
+- **avahi-daemon**: System-level mDNS (auto-registered by create-server.sh)
 
 ### Client Connection
 
 **With mDNS (Recommended)**:
-Clients on the same LAN automatically discover servers via mDNS (Bonjour/Zeroconf).
-Just connect via Minecraft: `ironwood.local:25565`
+The `create-server.sh` script automatically registers hostnames with avahi-daemon.
+Clients on the same LAN can connect directly via Minecraft: `<server-name>.local:25565`
 
-**mDNS Requirements**:
+**mDNS Client Requirements**:
 | OS | Requirement |
 |----|-------------|
 | Linux | avahi-daemon (usually pre-installed) |
 | macOS | Built-in Bonjour (no setup needed) |
 | Windows | Bonjour Print Services or iTunes |
 
+**Server Requirements**:
+- avahi-daemon installed and running
+- HOST_IP set in `.env` (or auto-detected)
+
 **Fallback (if mDNS unavailable)**:
 Configure hosts file:
 ```bash
 # Add to /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
-192.168.1.100 ironwood.local
+192.168.1.100 myserver.local
 # Add more servers as needed:
-# 192.168.1.100 myserver.local
+# 192.168.1.100 another-server.local
 ```
 
-Then connect via Minecraft: `ironwood.local:25565`
+Then connect via Minecraft: `myserver.local:25565`
 
 ## Core Principles
 
@@ -378,29 +372,33 @@ cd platform
 # Basic examples:
 ./scripts/create-server.sh myworld              # Creates & starts PAPER server
 ./scripts/create-server.sh techcraft -t FORGE   # Creates & starts FORGE server
+./scripts/create-server.sh myworld -t VANILLA -v 1.21.1   # Vanilla with specific version
 ./scripts/create-server.sh myworld --no-start   # Create only, don't start
 
 # World options (mutually exclusive):
 ./scripts/create-server.sh myworld --seed 12345           # Specific world seed
 ./scripts/create-server.sh myworld --world-url URL        # Download world from ZIP
-./scripts/create-server.sh myworld --world existing-world # Use existing world
+./scripts/create-server.sh myworld -w existing-world -v 1.21.1  # Use existing world (creates symlink)
 ```
 
 **Options**:
 | Option | Description |
 |--------|-------------|
 | `-t, --type TYPE` | Server type: PAPER (default), VANILLA, FORGE, FABRIC |
+| `-v, --version VER` | Minecraft version (e.g., 1.21.1, 1.20.4) |
 | `-s, --seed NUMBER` | World seed for new world generation |
 | `-u, --world-url URL` | Download world from ZIP URL |
-| `-w, --world NAME` | Use existing world from `worlds/` directory |
+| `-w, --world NAME` | Use existing world from `worlds/` directory (creates symlink) |
 | `--start` | Start server after creation (default) |
 | `--no-start` | Create without starting |
 
 The script automatically:
 1. Creates server directory with configuration
-2. Updates main `docker-compose.yml` (include, MAPPING, depends_on)
-3. Validates docker-compose.yml configuration
-4. Starts the server (unless `--no-start` specified)
+2. Creates symlink to existing world (if `--world` specified)
+3. Updates main `docker-compose.yml` (include, MAPPING, depends_on)
+4. Validates docker-compose.yml configuration
+5. Registers hostname with avahi-daemon (mDNS)
+6. Starts the server (unless `--no-start` specified)
 
 The server name you provide will be used for:
 - **Directory**: `servers/<server-name>/`
@@ -472,14 +470,14 @@ docker logs -f mc-router
 ```bash
 cd platform
 
-# Start specific server
-docker compose up -d mc-ironwood
+# Start specific server (replace <server-name> with your server name)
+docker compose up -d mc-<server-name>
 
 # Stop specific server
-docker compose stop mc-ironwood
+docker compose stop mc-<server-name>
 
 # View server logs
-docker logs -f mc-ironwood
+docker logs -f mc-<server-name>
 ```
 
 ### Management CLI (mcctl.sh)
@@ -492,16 +490,16 @@ cd platform
 ./scripts/mcctl.sh status --json
 
 # Logs
-./scripts/mcctl.sh logs ironwood
-./scripts/mcctl.sh logs ironwood -n 100
+./scripts/mcctl.sh logs <server-name>
+./scripts/mcctl.sh logs <server-name> -n 100
 
 # RCON console
-./scripts/mcctl.sh console ironwood
+./scripts/mcctl.sh console <server-name>
 
 # World management
 ./scripts/mcctl.sh world list
-./scripts/mcctl.sh world assign survival mc-ironwood
-./scripts/mcctl.sh world release survival
+./scripts/mcctl.sh world assign <world-name> mc-<server-name>
+./scripts/mcctl.sh world release <world-name>
 
 # Player lookup
 ./scripts/mcctl.sh player lookup Notch
@@ -517,11 +515,11 @@ cd platform
 ### Execute Commands
 
 ```bash
-# Single command (replace mc-ironwood with your server name)
-docker exec mc-ironwood rcon-cli say Hello
+# Single command (replace <server-name> with your server name)
+docker exec mc-<server-name> rcon-cli say Hello
 
 # Interactive console
-docker exec -i mc-ironwood rcon-cli
+docker exec -i mc-<server-name> rcon-cli
 ```
 
 ### Change Server Type
@@ -529,7 +527,7 @@ docker exec -i mc-ironwood rcon-cli
 Modify `TYPE` in server's `config.env`:
 
 ```bash
-# platform/servers/ironwood/config.env
+# platform/servers/<server-name>/config.env
 TYPE=PAPER       # Paper server
 TYPE=FORGE       # Forge mod server
 TYPE=FABRIC      # Fabric mod server
@@ -626,4 +624,4 @@ For detailed settings, refer to the documents in the `docs/` directory:
 - **mDNS**: Clients on same LAN auto-discover servers (no hosts file needed)
 - **Auto-Scale**: Servers start on connect, stop after 10 min idle (configurable)
 - **mc-router**: Always running, handles routing to all servers via single port 25565
-- **mdns-publisher**: Broadcasts mDNS for automatic hostname discovery
+- **avahi-daemon**: System mDNS service, hostnames registered by create-server.sh

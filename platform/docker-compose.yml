@@ -3,7 +3,6 @@
 # =============================================================================
 # Architecture:
 #   - mc-router: Connection router with auto-scale support (hostname-based)
-#   - mdns-publisher: Automatic mDNS broadcasting for .local hostnames
 #   - MC Servers: Each server in its own directory under servers/
 #
 # Adding a new server (fully automated):
@@ -11,6 +10,7 @@
 #
 #   The script automatically:
 #     - Creates server directory and configuration
+#     - Registers hostname with avahi-daemon (mDNS)
 #     - Updates this file (include, MAPPING, depends_on)
 #     - Starts the server (use --no-start to skip)
 #
@@ -20,7 +20,7 @@
 #     - Container: mc-<server-name>
 #     - Hostname: <server-name>.local
 #
-# Connection (automatic with mDNS):
+# Connection (via avahi-daemon mDNS):
 #   Clients on the same LAN automatically discover servers via mDNS.
 #   Just connect to: <server-name>.local:25565
 #
@@ -31,30 +31,13 @@
 # -----------------------------------------------------------------------------
 # Include server configurations (managed automatically by create-server.sh)
 # -----------------------------------------------------------------------------
-include:
-  - servers/ironwood/docker-compose.yml
+# include:
+#   - servers/<server-name>/docker-compose.yml
 
 # -----------------------------------------------------------------------------
 # Services
 # -----------------------------------------------------------------------------
 services:
-  # ===========================================================================
-  # mDNS Publisher - Automatic Hostname Discovery
-  # ===========================================================================
-  # Broadcasts mDNS (Bonjour/Zeroconf) A records for .local hostnames
-  # Clients on the same LAN can connect without hosts file configuration
-  # ===========================================================================
-  mdns-publisher:
-    build: ./services/mdns-publisher
-    container_name: mdns-publisher
-    restart: unless-stopped
-    network_mode: host  # Required for mDNS multicast
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      - LOG_LEVEL=${MDNS_LOG_LEVEL:-INFO}
-      - HEALTH_PORT=5353
-
   # ===========================================================================
   # MC Router - Connection Router with Auto-Scale
   # ===========================================================================
@@ -77,14 +60,11 @@ services:
       # =========================================================================
       # Format: hostname=container:port
       # The hostname must match mc-router.host label in server's docker-compose.yml
-      MAPPING: |
-        ironwood.local=mc-ironwood:25565
+      MAPPING: ""
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - minecraft-net
-    depends_on:
-      - mc-ironwood
 
 # -----------------------------------------------------------------------------
 # Networks

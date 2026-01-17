@@ -29,10 +29,17 @@ cd platform
 docker compose up -d
 ```
 
-### 3. Connect via Minecraft
+### 3. Create Your First Server
+
+```bash
+cd platform
+./scripts/create-server.sh myserver -t VANILLA -v 1.21.1
+```
+
+### 4. Connect via Minecraft
 
 With mDNS auto-discovery, just connect directly:
-- Ironwood (Paper): `ironwood.local:25565`
+- `myserver.local:25565`
 
 **mDNS Requirements** (for auto-discovery):
 | OS | Requirement |
@@ -41,7 +48,7 @@ With mDNS auto-discovery, just connect directly:
 | macOS | Built-in Bonjour (no setup needed) |
 | Windows | Bonjour Print Services or iTunes |
 
-**Fallback** (if mDNS unavailable): Add `<server-ip> ironwood.local` to hosts file.
+**Fallback** (if mDNS unavailable): Add `<server-ip> myserver.local` to hosts file.
 
 Add more servers using `create-server.sh` - they're automatically discoverable!
 
@@ -49,13 +56,11 @@ Add more servers using `create-server.sh` - they're automatically discoverable!
 
 ```
 ┌──────────────────────┐  ┌────────────────────┐
-│  mc-router (:25565)  │  │  mdns-publisher    │
-│  hostname routing    │  │  mDNS broadcast    │
+│  mc-router (:25565)  │  │  avahi-daemon      │
+│  hostname routing    │  │  (system mDNS)     │
 ├──────────────────────┤  ├────────────────────┤
-│ ironwood.local ─→    │  │ Broadcasts:        │
-│  mc-ironwood         │  │  ironwood.local    │
-│ <server>.local ─→    │  │  <server>.local    │
-│  mc-<server>         │  │                    │
+│ <server>.local ─→    │  │ /etc/avahi/hosts:  │
+│  mc-<server>         │  │  <server>.local    │
 └──────────────────────┘  └────────────────────┘
 ```
 
@@ -72,16 +77,21 @@ cd platform
 ./scripts/create-server.sh techcraft -t FORGE   # Creates & starts techcraft.local (FORGE)
 ./scripts/create-server.sh myworld --no-start   # Create only, don't start
 
+# With version:
+./scripts/create-server.sh myworld -t VANILLA -v 1.21.1   # Specific version
+
 # World options (mutually exclusive):
 ./scripts/create-server.sh myworld --seed 12345           # Specific seed
 ./scripts/create-server.sh myworld --world-url <URL>      # Download from ZIP
-./scripts/create-server.sh myworld --world existing-world # Use existing world
+./scripts/create-server.sh myworld -w existing-world -v 1.21.1 # Use existing world (symlink)
 ```
 
 The script automatically:
 1. Creates server directory with configuration
-2. Updates main docker-compose.yml (include, MAPPING, depends_on)
-3. Starts the server (unless `--no-start` specified)
+2. Creates symlink to existing world (if `--world` specified)
+3. Updates main docker-compose.yml (include, MAPPING, depends_on)
+4. Registers hostname with avahi-daemon (mDNS)
+5. Starts the server (unless `--no-start` specified)
 
 New servers are automatically discoverable via mDNS - just connect!
 
@@ -200,23 +210,23 @@ cd platform
 # Start all servers
 docker compose up -d
 
-# Start specific server
-docker compose up -d mc-ironwood
+# Start specific server (replace <server-name> with your server name)
+docker compose up -d mc-<server-name>
 
 # Stop specific server
-docker compose stop mc-ironwood
+docker compose stop mc-<server-name>
 
 # View router logs
 docker logs -f mc-router
 
 # View server logs
-docker logs -f mc-ironwood
+docker logs -f mc-<server-name>
 
 # Console access
-docker exec -i mc-ironwood rcon-cli
+docker exec -i mc-<server-name> rcon-cli
 
 # Execute command
-docker exec mc-ironwood rcon-cli say Hello World
+docker exec mc-<server-name> rcon-cli say Hello World
 
 # Stop all
 docker compose down

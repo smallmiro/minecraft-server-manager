@@ -14,9 +14,10 @@
 #
 # Options:
 #   -t, --type TYPE      Server type: PAPER (default), VANILLA, FORGE, FABRIC
+#   -v, --version VER    Minecraft version (e.g., 1.21.1, 1.20.4)
 #   -s, --seed NUMBER    World seed for new world generation
 #   -u, --world-url URL  Download world from ZIP URL
-#   -w, --world NAME     Use existing world from worlds/ directory
+#   -w, --world NAME     Use existing world from worlds/ directory (creates symlink)
 #   --no-start           Don't start the server after creation
 #   --start              Start the server after creation (default)
 #
@@ -25,9 +26,10 @@
 # Examples:
 #   ./scripts/create-server.sh myserver
 #   ./scripts/create-server.sh myserver -t FORGE
+#   ./scripts/create-server.sh myserver -t VANILLA -v 1.21.1
 #   ./scripts/create-server.sh myserver --seed 12345 --no-start
 #   ./scripts/create-server.sh myserver --world-url https://example.com/world.zip
-#   ./scripts/create-server.sh myserver --world existing-world
+#   ./scripts/create-server.sh myserver --world existing-world --version 1.21.1
 # =============================================================================
 
 set -e
@@ -45,9 +47,87 @@ PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
 SERVERS_DIR="$PLATFORM_DIR/servers"
 TEMPLATE_DIR="$SERVERS_DIR/_template"
 MAIN_COMPOSE="$PLATFORM_DIR/docker-compose.yml"
+ENV_FILE="$PLATFORM_DIR/.env"
+AVAHI_HOSTS="/etc/avahi/hosts"
+
+# =============================================================================
+# Helper Functions
+# =============================================================================
+
+# Get host IP from .env or auto-detect
+get_host_ip() {
+    # Try to get from .env file
+    if [ -f "$ENV_FILE" ]; then
+        local env_ip
+        env_ip=$(grep "^HOST_IP=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d '"' | tr -d "'")
+        if [ -n "$env_ip" ]; then
+            echo "$env_ip"
+            return
+        fi
+    fi
+
+    # Auto-detect: get IP of default route interface
+    local detected_ip
+    detected_ip=$(ip route get 1 2>/dev/null | awk '{print $7; exit}')
+    if [ -n "$detected_ip" ]; then
+        echo "$detected_ip"
+        return
+    fi
+
+    # Fallback: try hostname -I
+    detected_ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    if [ -n "$detected_ip" ]; then
+        echo "$detected_ip"
+        return
+    fi
+
+    echo ""
+}
+
+# Register hostname with avahi-daemon
+register_avahi_hostname() {
+    local hostname="$1"
+    local ip="$2"
+
+    if [ -z "$ip" ]; then
+        echo -e "${YELLOW}   Warning: Could not determine HOST_IP, skipping avahi registration${NC}"
+        echo "   Set HOST_IP in .env or add manually: sudo nano $AVAHI_HOSTS"
+        return 1
+    fi
+
+    # Check if avahi-daemon is available
+    if ! command -v avahi-daemon &> /dev/null; then
+        echo -e "${YELLOW}   Warning: avahi-daemon not found, skipping mDNS registration${NC}"
+        return 1
+    fi
+
+    # Check if entry already exists
+    if grep -q "^[^#]*$hostname" "$AVAHI_HOSTS" 2>/dev/null; then
+        echo -e "${YELLOW}   Hostname $hostname already registered in avahi${NC}"
+        return 0
+    fi
+
+    # Add entry to /etc/avahi/hosts (requires sudo)
+    echo -e "   Registering $hostname -> $ip with avahi-daemon..."
+    if echo "$ip $hostname" | sudo tee -a "$AVAHI_HOSTS" > /dev/null 2>&1; then
+        # Restart avahi-daemon to apply changes
+        if sudo systemctl restart avahi-daemon 2>/dev/null; then
+            echo -e "   ${GREEN}mDNS hostname registered: $hostname -> $ip${NC}"
+            return 0
+        else
+            echo -e "${YELLOW}   Warning: Failed to restart avahi-daemon${NC}"
+            return 1
+        fi
+    else
+        echo -e "${YELLOW}   Warning: Failed to write to $AVAHI_HOSTS (sudo required)${NC}"
+        echo "   Add manually: echo '$ip $hostname' | sudo tee -a $AVAHI_HOSTS"
+        return 1
+    fi
+}
 
 # Default values
 SERVER_TYPE="PAPER"
+MC_VERSION=""
 WORLD_SEED=""
 WORLD_URL=""
 WORLD_NAME=""
@@ -62,9 +142,10 @@ show_usage() {
     echo ""
     echo "Options:"
     echo "  -t, --type TYPE      Server type: PAPER (default), VANILLA, FORGE, FABRIC"
+    echo "  -v, --version VER    Minecraft version (e.g., 1.21.1, 1.20.4)"
     echo "  -s, --seed NUMBER    World seed for new world generation"
     echo "  -u, --world-url URL  Download world from ZIP URL"
-    echo "  -w, --world NAME     Use existing world from worlds/ directory"
+    echo "  -w, --world NAME     Use existing world from worlds/ directory (creates symlink)"
     echo "  --no-start           Don't start the server after creation"
     echo "  --start              Start the server after creation (default)"
     echo ""
@@ -73,9 +154,10 @@ show_usage() {
     echo "Examples:"
     echo "  $0 myserver"
     echo "  $0 myserver -t FORGE"
+    echo "  $0 myserver -t VANILLA -v 1.21.1"
     echo "  $0 myserver --seed 12345"
     echo "  $0 myserver --world-url https://example.com/world.zip"
-    echo "  $0 myserver --world existing-world --no-start"
+    echo "  $0 myserver --world existing-world -v 1.21.1 --no-start"
 }
 
 # Check if first argument exists
@@ -95,6 +177,10 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -t|--type)
             SERVER_TYPE="$2"
+            shift 2
+            ;;
+        -v|--version)
+            MC_VERSION="$2"
             shift 2
             ;;
         -s|--seed)
@@ -175,6 +261,7 @@ fi
 
 echo -e "${GREEN}Creating new server: $SERVER_NAME${NC}"
 echo "  Type: $SERVER_TYPE"
+[ -n "$MC_VERSION" ] && echo "  Version: $MC_VERSION"
 echo "  Directory: $SERVER_DIR"
 echo "  Auto-start: $START_SERVER"
 echo ""
@@ -182,13 +269,13 @@ echo ""
 # =============================================================================
 # Step 1: Copy template
 # =============================================================================
-echo -e "${BLUE}[1/5]${NC} Copying template..."
+echo -e "${BLUE}[1/6]${NC} Copying template..."
 cp -r "$TEMPLATE_DIR" "$SERVER_DIR"
 
 # =============================================================================
 # Step 2: Update server's docker-compose.yml
 # =============================================================================
-echo -e "${BLUE}[2/5]${NC} Updating server docker-compose.yml..."
+echo -e "${BLUE}[2/6]${NC} Updating server docker-compose.yml..."
 COMPOSE_FILE="$SERVER_DIR/docker-compose.yml"
 
 # Replace template with server name
@@ -204,11 +291,17 @@ sed -i "/^#   [2-5]\./d" "$COMPOSE_FILE"
 # =============================================================================
 # Step 3: Update config.env
 # =============================================================================
-echo -e "${BLUE}[3/5]${NC} Updating config.env..."
+echo -e "${BLUE}[3/6]${NC} Updating config.env..."
 CONFIG_FILE="$SERVER_DIR/config.env"
 if [ -f "$CONFIG_FILE" ]; then
     sed -i "s/^TYPE=.*/TYPE=$SERVER_TYPE/" "$CONFIG_FILE"
     sed -i "s/^MOTD=.*/MOTD=Welcome to $SERVER_NAME Server/" "$CONFIG_FILE"
+
+    # Apply version if specified
+    if [ -n "$MC_VERSION" ]; then
+        sed -i "s/^VERSION=.*/VERSION=$MC_VERSION/" "$CONFIG_FILE"
+        echo "   Version: $MC_VERSION"
+    fi
 
     # Apply world options
     if [ -n "$WORLD_SEED" ]; then
@@ -231,6 +324,19 @@ if [ -f "$CONFIG_FILE" ]; then
         if [ -d "$WORLD_PATH" ]; then
             sed -i "s/^LEVEL=.*/LEVEL=$WORLD_NAME/" "$CONFIG_FILE"
             echo "   Using existing world: $WORLD_NAME"
+
+            # Create symlink from server data dir to shared worlds dir
+            # This allows the world to be shared/managed centrally
+            mkdir -p "$SERVER_DIR/data"
+            SYMLINK_PATH="$SERVER_DIR/data/$WORLD_NAME"
+            SYMLINK_TARGET="../../../worlds/$WORLD_NAME"
+
+            if [ ! -e "$SYMLINK_PATH" ]; then
+                ln -s "$SYMLINK_TARGET" "$SYMLINK_PATH"
+                echo -e "   ${GREEN}Created symlink: data/$WORLD_NAME -> worlds/$WORLD_NAME${NC}"
+            else
+                echo -e "   ${YELLOW}Warning: $SYMLINK_PATH already exists${NC}"
+            fi
         else
             echo -e "${YELLOW}   Warning: World '$WORLD_NAME' not found in worlds/ directory${NC}"
             echo "   LEVEL set to '$WORLD_NAME' - world will be created on first start"
@@ -239,14 +345,14 @@ if [ -f "$CONFIG_FILE" ]; then
     fi
 fi
 
-# Create data and logs directories
+# Create data and logs directories (data may already exist if --world was used)
 mkdir -p "$SERVER_DIR/data"
 mkdir -p "$SERVER_DIR/logs"
 
 # =============================================================================
 # Step 4: Update main docker-compose.yml
 # =============================================================================
-echo -e "${BLUE}[4/5]${NC} Updating main docker-compose.yml..."
+echo -e "${BLUE}[4/6]${NC} Updating main docker-compose.yml..."
 
 # Backup original
 cp "$MAIN_COMPOSE" "$MAIN_COMPOSE.bak"
@@ -335,10 +441,17 @@ else
 fi
 
 # =============================================================================
-# Step 5: Start server (optional)
+# Step 5: Register with avahi-daemon (mDNS)
+# =============================================================================
+echo -e "${BLUE}[5/6]${NC} Registering mDNS hostname..."
+HOST_IP=$(get_host_ip)
+register_avahi_hostname "$SERVER_NAME.local" "$HOST_IP"
+
+# =============================================================================
+# Step 6: Start server (optional)
 # =============================================================================
 if [ "$START_SERVER" = "true" ]; then
-    echo -e "${BLUE}[5/5]${NC} Starting server..."
+    echo -e "${BLUE}[6/6]${NC} Starting server..."
     cd "$PLATFORM_DIR"
     docker compose up -d "mc-$SERVER_NAME"
 
@@ -350,7 +463,7 @@ if [ "$START_SERVER" = "true" ]; then
         echo -e "   ${YELLOW}Server is starting... (check logs with: docker logs -f mc-$SERVER_NAME)${NC}"
     fi
 else
-    echo -e "${BLUE}[5/5]${NC} Skipping server start (--no-start specified)"
+    echo -e "${BLUE}[6/6]${NC} Skipping server start (--no-start specified)"
 fi
 
 # =============================================================================
@@ -373,6 +486,9 @@ if [ -n "$WORLD_SEED" ] || [ -n "$WORLD_URL" ] || [ -n "$WORLD_NAME" ]; then
     fi
     if [ -n "$WORLD_NAME" ]; then
         echo "  - Level: $WORLD_NAME"
+        if [ -L "$SERVER_DIR/data/$WORLD_NAME" ]; then
+            echo "  - Symlink: data/$WORLD_NAME -> worlds/$WORLD_NAME"
+        fi
     fi
     echo ""
 fi
@@ -382,11 +498,18 @@ echo "  - Directory: servers/$SERVER_NAME/"
 echo "  - Service: mc-$SERVER_NAME"
 echo "  - Hostname: $SERVER_NAME.local"
 echo "  - Type: $SERVER_TYPE"
+[ -n "$MC_VERSION" ] && echo "  - Version: $MC_VERSION"
 echo ""
 
-echo -e "${YELLOW}Client setup:${NC}"
-echo "  Add to hosts file: <server-ip> $SERVER_NAME.local"
-echo "  Connect via: $SERVER_NAME.local:25565"
+echo -e "${GREEN}Connection:${NC}"
+if [ -n "$HOST_IP" ] && grep -q "$SERVER_NAME.local" "$AVAHI_HOSTS" 2>/dev/null; then
+    echo "  mDNS registered - clients on same LAN can connect directly"
+    echo "  Connect via: $SERVER_NAME.local:25565"
+else
+    echo "  Add to hosts file: <server-ip> $SERVER_NAME.local"
+    echo "  Or register mDNS: echo '<server-ip> $SERVER_NAME.local' | sudo tee -a $AVAHI_HOSTS"
+    echo "  Connect via: $SERVER_NAME.local:25565"
+fi
 echo ""
 
 if [ "$START_SERVER" = "true" ]; then

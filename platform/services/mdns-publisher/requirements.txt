@@ -1,3 +1,0 @@
-docker>=6.0.0
-zeroconf>=0.131.0
-flask>=3.0.0
