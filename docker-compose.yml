@@ -2,14 +2,14 @@
 # Multi-Server Minecraft Docker Compose Configuration
 # =============================================================================
 # Architecture:
-#   - Lazymc: Always-running proxy that manages server lifecycle
-#   - MC Servers: Started on-demand when players connect, stopped when idle
+#   - mc-router: Connection router with auto-scale support
+#   - MC Servers: Started on-demand, stopped when idle
 # =============================================================================
 
 # Common Minecraft server configuration (YAML anchor)
 x-minecraft-common: &minecraft-common
   image: itzg/minecraft-server:java21
-  restart: "no"  # Lazymc controls lifecycle
+  restart: "no"  # mc-router controls lifecycle
   tty: true
   stdin_open: true
   environment:
@@ -22,24 +22,30 @@ x-minecraft-common: &minecraft-common
 
 services:
   # ===========================================================================
-  # Lazymc Proxy - Always Running
+  # MC Router - Connection Router with Auto-Scale
   # ===========================================================================
-  # Lazymc handles:
-  #   - Port forwarding (25565-25567)
-  #   - Auto-start servers on player connect
-  #   - Auto-stop servers after idle timeout
-  # ===========================================================================
-  lazymc:
-    image: ghcr.io/timvisee/lazymc:latest
-    container_name: lazymc
+  router:
+    image: itzg/mc-router
+    container_name: mc-router
     restart: unless-stopped
+    command: >
+      --in-docker
+      --auto-scale-up
+      --auto-scale-down
+      --auto-scale-down-after=10m
+      --docker-timeout=120
+      --auto-scale-asleep-motd=§e서버가 시작 중입니다... 잠시만 기다려주세요!
     ports:
-      - "25565:25565"  # survival
-      - "25566:25566"  # creative
-      - "25567:25567"  # modded
+      - "25565:25565"  # All servers via hostname routing
+    environment:
+      # Static mapping (hostname=backend:port)
+      # Clients connect with: survival.local, creative.local, modded.local
+      MAPPING: |
+        survival.local=mc-survival:25565
+        creative.local=mc-creative:25565
+        modded.local=mc-modded:25565
     volumes:
-      - ./lazymc.toml:/etc/lazymc/lazymc.toml:ro
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - minecraft-net
     depends_on:
@@ -48,9 +54,7 @@ services:
       - mc-modded
 
   # ===========================================================================
-  # Minecraft Servers - Managed by Lazymc
-  # ===========================================================================
-  # Note: No port mappings on MC servers - Lazymc proxies all connections
+  # Minecraft Servers
   # ===========================================================================
 
   # ---------------------------------------------------------------------------
@@ -68,8 +72,9 @@ services:
       - ./worlds:/worlds:rw
       - ./shared/plugins:/plugins:ro
     labels:
-      - "lazymc.enabled=true"
-      - "lazymc.group=survival"
+      - "mc-router.host=survival.local"
+      - "mc-router.auto-scale-up=true"
+      - "mc-router.auto-scale-down=true"
 
   # ---------------------------------------------------------------------------
   # Creative Server (VANILLA)
@@ -86,8 +91,9 @@ services:
       - ./worlds:/worlds:rw
       - ./shared/plugins:/plugins:ro
     labels:
-      - "lazymc.enabled=true"
-      - "lazymc.group=creative"
+      - "mc-router.host=creative.local"
+      - "mc-router.auto-scale-up=true"
+      - "mc-router.auto-scale-down=true"
 
   # ---------------------------------------------------------------------------
   # Modded Server (FORGE)
@@ -104,8 +110,9 @@ services:
       - ./worlds:/worlds:rw
       - ./shared/mods:/mods:ro
     labels:
-      - "lazymc.enabled=true"
-      - "lazymc.group=modded"
+      - "mc-router.host=modded.local"
+      - "mc-router.auto-scale-up=true"
+      - "mc-router.auto-scale-down=true"
 
 # =============================================================================
 # Networks
