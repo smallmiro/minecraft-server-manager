@@ -22,6 +22,7 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 | World | A Minecraft world directory containing level data, regions, etc. |
 | Lock | A mechanism to prevent multiple servers from using the same world |
 | RCON | Remote Console protocol for server administration |
+| Lazymc | A proxy that automatically starts/stops Minecraft servers on demand |
 
 ## 2. Requirements
 
@@ -82,6 +83,18 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [ ] `shared/mods/` mountable as read-only
   - [ ] Server-specific overrides supported
 
+#### FR-007: Automatic Server Start/Stop (Lazymc)
+- **Priority**: High
+- **Description**: Automatically start servers on client connection and stop after idle timeout
+- **Acceptance Criteria**:
+  - [ ] Lazymc proxy always running, listening on fixed ports
+  - [ ] Server auto-starts when client connects
+  - [ ] "Starting server..." message shown to waiting clients
+  - [ ] Server auto-stops after configurable idle timeout (default: 10 min)
+  - [ ] Zero resource usage when server is stopped (container not running)
+  - [ ] External PCs on same LAN can connect via `<host-ip>:<port>`
+  - [ ] Multiple servers supported with different ports
+
 ### 2.2 Non-Functional Requirements
 
 #### NFR-001: Performance
@@ -120,6 +133,7 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 minecraft/
 ├── prd.md                       # This document
 ├── docker-compose.yml           # Main orchestration
+├── lazymc.toml                  # Lazymc proxy configuration
 ├── .env                         # Global environment variables
 │
 ├── scripts/                     # Management scripts
@@ -162,34 +176,81 @@ minecraft/
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    minecraft-net (bridge)                    │
-├─────────────────────────────────────────────────────────────┤
+│                  Same LAN (Local Network)                    │
 │                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │  mc-survival │  │  mc-creative │  │  mc-modded   │       │
-│  │  :25565      │  │  :25566      │  │  :25567      │       │
-│  │  Paper       │  │  Vanilla     │  │  Forge       │       │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘       │
-│         │                 │                 │                │
-└─────────┼─────────────────┼─────────────────┼────────────────┘
-          │                 │                 │
-          ▼                 ▼                 ▼
-    ┌─────────────────────────────────────────────┐
-    │              Shared Volumes                  │
-    ├─────────────────────────────────────────────┤
-    │  worlds/          (rw)  - World data        │
-    │  shared/plugins/  (ro)  - Shared plugins    │
-    │  shared/mods/     (ro)  - Shared mods       │
-    └─────────────────────────────────────────────┘
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              Server Host (192.168.x.x)               │    │
+│  │                                                      │    │
+│  │   ┌─────────────────────────────────────────────┐   │    │
+│  │   │         Lazymc Proxy (Always Running)        │   │    │
+│  │   │                                              │   │    │
+│  │   │   :25565 ──→ mc-survival (auto start/stop)  │   │    │
+│  │   │   :25566 ──→ mc-creative (auto start/stop)  │   │    │
+│  │   │   :25567 ──→ mc-modded   (auto start/stop)  │   │    │
+│  │   │                                              │   │    │
+│  │   └─────────────────────┬────────────────────────┘   │    │
+│  │                         │                            │    │
+│  │   ┌─────────────────────┴────────────────────────┐   │    │
+│  │   │           minecraft-net (bridge)              │   │    │
+│  │   │                                               │   │    │
+│  │   │  mc-survival    mc-creative    mc-modded     │   │    │
+│  │   │  (on demand)    (on demand)    (on demand)   │   │    │
+│  │   │                                               │   │    │
+│  │   └───────────────────────────────────────────────┘   │    │
+│  │                                                      │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                              │                               │
+│  ┌───────────────────────────┴────────────────────────────┐  │
+│  │                    External PCs                         │  │
+│  │     Connect via: <host-ip>:25565 (survival)            │  │
+│  │                   <host-ip>:25566 (creative)            │  │
+│  │                   <host-ip>:25567 (modded)              │  │
+│  └─────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.3 Port Mapping
+### 3.3 Port Configuration
 
-| Server | Game Port | RCON Port |
-|--------|-----------|-----------|
-| survival | 25565 | 25575 |
-| creative | 25566 | 25576 |
-| modded | 25567 | 25577 |
+#### Fixed Port Mapping (via Lazymc)
+| Server | Game Port | RCON Port | Status |
+|--------|-----------|-----------|--------|
+| survival | 25565 | 25575 | Lazymc managed |
+| creative | 25566 | 25576 | Lazymc managed |
+| modded | 25567 | 25577 | Lazymc managed |
+
+#### Server Lifecycle
+```
+Client connects to :25565
+        │
+        ▼
+┌───────────────────┐
+│  Lazymc receives  │
+└────────┬──────────┘
+         │
+    ┌────┴────┐
+    │ Server  │
+    │ running?│
+    └────┬────┘
+         │
+   Yes   │   No
+   ┌─────┴─────┐
+   │           │
+   ▼           ▼
+┌───────┐  ┌──────────────────┐
+│ Proxy │  │ Show "Starting..." │
+│ to MC │  │ docker start      │
+└───────┘  │ wait for ready    │
+           │ then proxy        │
+           └──────────────────┘
+
+After 10 min idle
+        │
+        ▼
+┌───────────────────┐
+│  docker stop      │
+│  (zero resources) │
+└───────────────────┘
+```
 
 ## 4. Detailed Design
 
@@ -262,10 +323,7 @@ Server Start Request
 mcctl.sh <command> [options]
 
 Commands:
-  start <server> [world]    Start server with optional world
-  stop <server>             Stop server gracefully
-  restart <server>          Restart server
-  status                    Show all servers status
+  status                    Show all servers status (running/stopped)
   logs <server> [lines]     View/tail server logs
   console <server>          Open RCON console
 
@@ -275,10 +333,87 @@ Commands:
 
   backup <target>           Create backup
 
+  # Manual override (bypasses Lazymc auto-management)
+  start <server>            Force start server
+  stop <server>             Force stop server
+
 Options:
   -f, --force              Force operation (skip confirmations)
   -q, --quiet              Suppress output
   -h, --help               Show help
+```
+
+**Note**: With Lazymc, servers start/stop automatically. Manual start/stop is only for maintenance.
+
+### 4.4 Lazymc Proxy System
+
+#### Configuration File
+```
+lazymc.toml
+```
+
+#### Key Settings
+```toml
+[public]
+address = "0.0.0.0:25565"              # External listening port
+motd = "§7Server starting..."          # Message when server is down
+
+[server]
+address = "mc-survival:25565"          # Internal server address
+
+[docker]
+enabled = true
+container = "mc-survival"              # Container to control
+
+[time]
+sleep_after = 600                      # Stop after 10 min idle
+minimum_online_time = 60               # Min time before auto-stop
+```
+
+#### Multi-Server Configuration
+```toml
+# Server 1: Survival
+[[servers]]
+name = "survival"
+[servers.public]
+address = "0.0.0.0:25565"
+[servers.docker]
+container = "mc-survival"
+
+# Server 2: Creative
+[[servers]]
+name = "creative"
+[servers.public]
+address = "0.0.0.0:25566"
+[servers.docker]
+container = "mc-creative"
+
+# Server 3: Modded
+[[servers]]
+name = "modded"
+[servers.public]
+address = "0.0.0.0:25567"
+[servers.docker]
+container = "mc-modded"
+```
+
+#### Resource Efficiency
+| State | RAM Usage | CPU Usage |
+|-------|-----------|-----------|
+| All servers stopped | ~50MB (Lazymc only) | ~0% |
+| 1 server running | 4GB + 50MB | Variable |
+| 3 servers running | 12GB + 50MB | Variable |
+
+#### External Access
+PCs on the same LAN can connect using:
+```
+<server-host-ip>:<port>
+
+Example:
+  Server Host: 192.168.1.100
+  Survival: 192.168.1.100:25565
+  Creative: 192.168.1.100:25566
+  Modded:   192.168.1.100:25567
 ```
 
 ## 5. Implementation Plan
@@ -320,6 +455,10 @@ Options:
 # Network
 MINECRAFT_NETWORK=minecraft-net
 MINECRAFT_SUBNET=172.20.0.0/16
+
+# Lazymc Settings
+LAZYMC_IDLE_TIMEOUT=600          # Stop server after 10 min idle
+LAZYMC_MIN_ONLINE_TIME=60        # Min time before auto-stop
 
 # Defaults
 DEFAULT_MEMORY=4G
@@ -371,23 +510,29 @@ SIMULATION_DISTANCE=8
 | Lock acquire on locked world | Fail with error message |
 | Lock release by owner | Success, lock file removed |
 | Lock release by non-owner | Fail with error message |
+| Lazymc config validation | Valid TOML, correct container names |
+| Lazymc port binding | All configured ports accessible |
 
 ### 7.2 Integration Tests
 
 | Test Case | Expected Result |
 |-----------|-----------------|
-| Start server with world | Server running, world locked |
-| Stop server | Server stopped, world unlocked |
-| Start second server same world | Blocked by lock |
-| Start second server different world | Both running |
+| Client connects to stopped server | Lazymc starts container, client connects |
+| Server idle timeout | Container stops after configured time |
+| Second client during startup | Queued and connected after ready |
+| External PC connection | Can connect via host-ip:port |
+| Multiple servers simultaneously | Each starts/stops independently |
+| Lazymc restart | Servers maintain state correctly |
 
 ### 7.3 Stress Tests
 
 | Test Case | Expected Result |
 |-----------|-----------------|
 | 3 servers concurrent start | All start within 2 minutes |
-| Rapid start/stop cycles | No orphaned locks |
-| Kill -9 server process | Lock recoverable |
+| Rapid connect/disconnect | Lazymc handles gracefully |
+| Kill -9 server process | Lazymc detects and recovers |
+| Multiple clients same server | All connected successfully |
+| Long idle period | Server stops, restarts on next connect |
 
 ## 8. Security Considerations
 
@@ -408,13 +553,94 @@ SIMULATION_DISTANCE=8
 
 ## 9. Future Enhancements
 
-### 9.1 Planned
-- [ ] Web-based management UI
+### 9.1 Planned: Web Management UI (All-in-One Package)
+
+**Goal**: Create a web-based management tool that provides complete control over the Minecraft server infrastructure.
+
+#### Tech Stack
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js, TypeScript, MUI (Material-UI) |
+| Backend | Next.js API Routes |
+| Database | SQLite (default) or PostgreSQL (optional) |
+| Packaging | npm package (all-in-one installation) |
+
+#### Features
+- [ ] Dashboard with server status overview
+- [ ] Start/Stop/Restart servers via UI
+- [ ] World management (create, assign, backup)
+- [ ] Player management and whitelist
+- [ ] Log viewer with real-time streaming
+- [ ] Configuration editor (server.properties, config.env)
+- [ ] Backup scheduling and management
+- [ ] Resource monitoring (CPU, RAM, disk)
+- [ ] User authentication and access control
+
+#### Installation Goal
+```bash
+# Single command installation
+npm install minecraft-server-manager
+
+# Or global installation
+npm install -g minecraft-server-manager
+
+# Start the management UI
+minecraft-manager start
+# → Opens http://localhost:3000
+# → All Docker containers, Lazymc, and servers managed from UI
+```
+
+#### Package Structure
+```
+minecraft-server-manager/
+├── package.json
+├── bin/
+│   └── cli.js              # CLI entry point
+├── src/
+│   ├── app/                # Next.js app
+│   ├── components/         # MUI components
+│   ├── api/                # API routes
+│   └── lib/
+│       ├── docker.ts       # Docker API integration
+│       ├── lazymc.ts       # Lazymc management
+│       └── db.ts           # SQLite/PostgreSQL
+├── docker/
+│   ├── docker-compose.yml  # Bundled compose file
+│   └── lazymc.toml         # Bundled Lazymc config
+└── prisma/
+    └── schema.prisma       # Database schema
+```
+
+#### Architecture
+```
+┌─────────────────────────────────────────────────┐
+│           Web Management UI (Next.js)            │
+│                 http://localhost:3000            │
+├─────────────────────────────────────────────────┤
+│  Dashboard │ Servers │ Worlds │ Logs │ Settings │
+└──────────────────────┬──────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────┐
+│              API Layer (Next.js API)             │
+│  /api/servers  /api/worlds  /api/logs  /api/... │
+└──────────────────────┬──────────────────────────┘
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+    ┌──────────┐ ┌──────────┐ ┌──────────┐
+    │  Docker  │ │  Lazymc  │ │ Database │
+    │   API    │ │  Config  │ │ SQLite/  │
+    │          │ │          │ │ Postgres │
+    └──────────┘ └──────────┘ └──────────┘
+```
+
+### 9.2 Other Planned Features
 - [ ] Automated backup scheduling
 - [ ] Discord integration for notifications
 - [ ] Prometheus metrics export
 
-### 9.2 Considered
+### 9.3 Considered
 - [ ] Kubernetes deployment option
 - [ ] Multi-host cluster support
 - [ ] Player synchronization between servers
@@ -425,3 +651,5 @@ SIMULATION_DISTANCE=8
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0.0 | 2025-01-17 | - | Initial PRD |
+| 1.1.0 | 2025-01-17 | - | Add automatic port assignment (FR-007) |
+| 2.0.0 | 2025-01-17 | - | Replace port assignment with Lazymc auto start/stop |
