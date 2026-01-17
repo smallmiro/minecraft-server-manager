@@ -1,0 +1,76 @@
+# =============================================================================
+# Multi-Server Minecraft Docker Compose Configuration
+# =============================================================================
+# Architecture:
+#   - mc-router: Connection router with auto-scale support (hostname-based)
+#   - MC Servers: Each server in its own directory under servers/
+#
+# Adding a new server (fully automated):
+#   ./scripts/create-server.sh <server-name> [options]
+#
+#   The script automatically:
+#     - Creates server directory and configuration
+#     - Updates this file (include, MAPPING, depends_on)
+#     - Starts the server (use --no-start to skip)
+#
+#   Server naming convention:
+#     - Directory: servers/<server-name>/
+#     - Service: mc-<server-name>
+#     - Container: mc-<server-name>
+#     - Hostname: <server-name>.local
+#
+# Connection (requires hosts file or DNS):
+#   Add to /etc/hosts: <server-ip> <server-name>.local
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Include server configurations (managed automatically by create-server.sh)
+# -----------------------------------------------------------------------------
+include:
+  - servers/ironwood/docker-compose.yml
+
+# -----------------------------------------------------------------------------
+# Services
+# -----------------------------------------------------------------------------
+services:
+  # ===========================================================================
+  # MC Router - Connection Router with Auto-Scale
+  # ===========================================================================
+  router:
+    image: itzg/mc-router
+    container_name: mc-router
+    restart: unless-stopped
+    command: >
+      --in-docker
+      --auto-scale-up
+      --auto-scale-down
+      --auto-scale-down-after=10m
+      --docker-timeout=120
+      --auto-scale-asleep-motd=§e서버가 시작 중입니다... 잠시만 기다려주세요!
+    ports:
+      - "25565:25565"
+    environment:
+      # =========================================================================
+      # Server Mappings - Add new servers here
+      # =========================================================================
+      # Format: hostname=container:port
+      # The hostname must match mc-router.host label in server's docker-compose.yml
+      MAPPING: |
+        ironwood.local=mc-ironwood:25565
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - minecraft-net
+    depends_on:
+      - mc-ironwood
+
+# -----------------------------------------------------------------------------
+# Networks
+# -----------------------------------------------------------------------------
+networks:
+  minecraft-net:
+    name: ${MINECRAFT_NETWORK:-minecraft-net}
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${MINECRAFT_SUBNET:-172.28.0.0/16}

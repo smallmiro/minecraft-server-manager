@@ -1,0 +1,48 @@
+# =============================================================================
+# ironwood Server
+# =============================================================================
+# IMPORTANT: Use create-server.sh script to create a new server:
+#   ./scripts/create-server.sh <your-server-name> [PAPER|VANILLA|FORGE|FABRIC]
+#
+# The server name you provide will be used for:
+#   - Directory name: servers/<server-name>/
+#   - Service name: mc-<server-name>
+#   - Container name: mc-<server-name>
+#   - Hostname: <server-name>.local
+#
+# Manual setup (if not using script):
+# Type: PAPER
+#   6. Add depends_on entry for router
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # IMPORTANT: Change 'template' to your server name (must match directory name)
+  # Example: mc-ironwood -> mc-ironwood
+  # ---------------------------------------------------------------------------
+  mc-ironwood:
+    image: itzg/minecraft-server:java21
+    container_name: mc-ironwood
+    restart: "no"
+    tty: true
+    stdin_open: true
+    env_file:
+      - ../../.env
+      - config.env
+    environment:
+      EULA: "TRUE"
+    volumes:
+      - ./data:/data
+      - ./logs:/data/logs
+      - ../../worlds:/worlds:rw
+      - ../../shared/plugins:/plugins:ro
+    networks:
+      - minecraft-net
+    labels:
+      # IMPORTANT: Change 'ironwood.local' to '<server-name>.local'
+      # Example: ironwood.local -> ironwood.local
+      - "mc-router.host=ironwood.local"
+      - "mc-router.auto-scale-up=true"
+      - "mc-router.auto-scale-down=true"
+
+# Network is defined in main docker-compose.yml

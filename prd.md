@@ -22,7 +22,7 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 | World | A Minecraft world directory containing level data, regions, etc. |
 | Lock | A mechanism to prevent multiple servers from using the same world |
 | RCON | Remote Console protocol for server administration |
-| Lazymc | A proxy that automatically starts/stops Minecraft servers on demand |
+| mc-router | A connection router that automatically scales Minecraft servers via Docker |
 
 ## 2. Requirements
 
@@ -83,17 +83,56 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [ ] `shared/mods/` mountable as read-only
   - [ ] Server-specific overrides supported
 
-#### FR-007: Automatic Server Start/Stop (Lazymc)
+#### FR-007: Automatic Server Start/Stop (mc-router)
 - **Priority**: High
 - **Description**: Automatically start servers on client connection and stop after idle timeout
 - **Acceptance Criteria**:
-  - [ ] Lazymc proxy always running, listening on fixed ports
-  - [ ] Server auto-starts when client connects
-  - [ ] "Starting server..." message shown to waiting clients
+  - [ ] mc-router always running, listening on single port with hostname routing
+  - [ ] Server auto-starts when client connects (via Docker socket)
+  - [ ] MOTD shows server status when sleeping (configurable message)
   - [ ] Server auto-stops after configurable idle timeout (default: 10 min)
   - [ ] Zero resource usage when server is stopped (container not running)
-  - [ ] External PCs on same LAN can connect via `<host-ip>:<port>`
-  - [ ] Multiple servers supported with different ports
+  - [ ] External PCs connect via hostname (e.g., ironwood.local, myserver.local)
+  - [ ] Multiple servers supported with hostname-based routing
+
+#### FR-008: Player UUID Lookup
+- **Priority**: Medium
+- **Description**: Look up player information including Online/Offline UUID via PlayerDB API
+- **API**: `https://playerdb.co/api/player/minecraft/{playerName}`
+- **Acceptance Criteria**:
+  - [ ] Query PlayerDB API to retrieve player information
+  - [ ] Return Online UUID (from Mojang account)
+  - [ ] Calculate Offline UUID (MD5-based Version 3 UUID)
+  - [ ] Display player avatar URL and skin texture
+  - [ ] Support `--json` output for Web API integration
+  - [ ] Integrate with `mcctl.sh player` command
+  - [ ] Handle errors gracefully (player not found, API timeout)
+
+#### FR-009: World Creation Options
+- **Priority**: Medium
+- **Description**: Support multiple world initialization methods when creating a new server
+- **Acceptance Criteria**:
+  - [x] Seed specification: Use `SEED` environment variable for new world generation
+  - [x] ZIP download: Use `WORLD` environment variable with URL to download and extract world
+  - [x] Existing world: Use `LEVEL` environment variable to point to existing world in `worlds/` directory
+  - [x] `create-server.sh` supports `--seed <number>` option
+  - [x] `create-server.sh` supports `--world-url <url>` option for ZIP download
+  - [x] `create-server.sh` supports `--world <name>` option for existing world
+  - [x] Options are mutually exclusive (only one can be specified)
+  - [x] Clear error messages when invalid options are provided
+
+#### FR-010: Fully Automated Server Creation
+- **Priority**: High
+- **Description**: Single command to create and configure a new server with all necessary setup
+- **Acceptance Criteria**:
+  - [x] `create-server.sh` automatically updates main docker-compose.yml
+  - [x] Adds include entry for new server
+  - [x] Adds MAPPING entry to mc-router configuration
+  - [x] Adds depends_on entry for router
+  - [x] Validates docker-compose.yml after changes
+  - [x] Restores backup on validation failure
+  - [x] `--start` option starts server after creation (default)
+  - [x] `--no-start` option skips server start
 
 ### 2.2 Non-Functional Requirements
 
@@ -132,44 +171,44 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 ```
 minecraft/
 ├── prd.md                       # This document
-├── docker-compose.yml           # Main orchestration
-├── lazymc.toml                  # Lazymc proxy configuration
-├── .env                         # Global environment variables
+├── CLAUDE.md                    # Project guide
+├── README.md                    # Project overview
+├── plan.md                      # Implementation roadmap
 │
-├── scripts/                     # Management scripts
-│   ├── mcctl.sh                 # Main CLI
-│   ├── lock.sh                  # World locking
-│   └── logs.sh                  # Log viewer
+├── platform/                    # Docker platform (all runtime files)
+│   ├── docker-compose.yml       # Main orchestration (includes mc-router)
+│   ├── .env                     # Global environment variables
+│   ├── .env.example             # Environment template
+│   │
+│   ├── scripts/                 # Management scripts
+│   │   └── create-server.sh     # Server creation script (with world options)
+│   │
+│   ├── servers/                 # Server configurations
+│   │   ├── _template/           # Template for new servers
+│   │   │   ├── docker-compose.yml
+│   │   │   └── config.env
+│   │   └── ironwood/            # Example: Paper server (default)
+│   │       ├── docker-compose.yml
+│   │       ├── config.env
+│   │       ├── data/            # Server data (gitignored)
+│   │       └── logs/            # Server logs (gitignored)
+│   │
+│   ├── worlds/                  # Shared world storage
+│   │   └── .locks/              # Lock files (future)
+│   │
+│   ├── shared/                  # Shared resources
+│   │   ├── plugins/
+│   │   └── mods/
+│   │
+│   └── backups/                 # Backup storage
+│       ├── worlds/
+│       └── servers/
 │
-├── servers/                     # Server configurations
-│   ├── _template/               # Template for new servers
-│   │   └── config.env
-│   ├── survival/
-│   │   ├── config.env           # Server settings
-│   │   ├── data/                # Server data
-│   │   └── logs/                # Server logs
-│   ├── creative/
-│   │   ├── config.env
-│   │   ├── data/
-│   │   └── logs/
-│   └── modded/
-│       ├── config.env
-│       ├── data/
-│       └── logs/
+├── docs/                        # Documentation
+│   └── *.md
 │
-├── worlds/                      # Shared world storage
-│   ├── .locks/                  # Lock files
-│   ├── survival-world/
-│   ├── creative-world/
-│   └── modded-world/
-│
-├── shared/                      # Shared resources
-│   ├── plugins/
-│   └── mods/
-│
-└── backups/                     # Backup storage
-    ├── worlds/
-    └── servers/
+└── .claude/                     # Claude commands
+    └── commands/
 ```
 
 ### 3.2 Docker Architecture
@@ -182,19 +221,20 @@ minecraft/
 │  │              Server Host (192.168.x.x)               │    │
 │  │                                                      │    │
 │  │   ┌─────────────────────────────────────────────┐   │    │
-│  │   │         Lazymc Proxy (Always Running)        │   │    │
+│  │   │        mc-router (Always Running)            │   │    │
+│  │   │         :25565 (hostname routing)            │   │    │
 │  │   │                                              │   │    │
-│  │   │   :25565 ──→ mc-survival (auto start/stop)  │   │    │
-│  │   │   :25566 ──→ mc-creative (auto start/stop)  │   │    │
-│  │   │   :25567 ──→ mc-modded   (auto start/stop)  │   │    │
+│  │   │   ironwood.local    ──→ mc-ironwood          │   │    │
+│  │   │   <server>.local    ──→ mc-<server>          │   │    │
+│  │   │   (add more via create-server.sh)            │   │    │
 │  │   │                                              │   │    │
 │  │   └─────────────────────┬────────────────────────┘   │    │
-│  │                         │                            │    │
+│  │                         │ Docker Socket              │    │
 │  │   ┌─────────────────────┴────────────────────────┐   │    │
 │  │   │           minecraft-net (bridge)              │   │    │
 │  │   │                                               │   │    │
-│  │   │  mc-survival    mc-creative    mc-modded     │   │    │
-│  │   │  (on demand)    (on demand)    (on demand)   │   │    │
+│  │   │  mc-ironwood   mc-<server>  (add via script) │   │    │
+│  │   │  (auto-scale)   (auto-scale)                 │   │    │
 │  │   │                                               │   │    │
 │  │   └───────────────────────────────────────────────┘   │    │
 │  │                                                      │    │
@@ -202,29 +242,33 @@ minecraft/
 │                              │                               │
 │  ┌───────────────────────────┴────────────────────────────┐  │
 │  │                    External PCs                         │  │
-│  │     Connect via: <host-ip>:25565 (survival)            │  │
-│  │                   <host-ip>:25566 (creative)            │  │
-│  │                   <host-ip>:25567 (modded)              │  │
+│  │     Add to hosts file or DNS:                          │  │
+│  │       ironwood.local    → <host-ip>                    │  │
+│  │       <server>.local    → <host-ip>                    │  │
+│  │     Connect via: ironwood.local:25565                  │  │
 │  └─────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### 3.3 Port Configuration
 
-#### Fixed Port Mapping (via Lazymc)
-| Server | Game Port | RCON Port | Status |
-|--------|-----------|-----------|--------|
-| survival | 25565 | 25575 | Lazymc managed |
-| creative | 25566 | 25576 | Lazymc managed |
-| modded | 25567 | 25577 | Lazymc managed |
+#### Hostname-Based Routing (via mc-router)
+| Hostname | Backend | Status |
+|----------|---------|--------|
+| ironwood.local | mc-ironwood:25565 | auto-scale (default) |
+| `<server>.local` | `mc-<server>:25565` | add via create-server.sh |
+
+**Note**: All servers share port 25565 via hostname routing.
+Clients must configure DNS or hosts file to resolve hostnames.
 
 #### Server Lifecycle
 ```
-Client connects to :25565
+Client connects to ironwood.local:25565
         │
         ▼
 ┌───────────────────┐
-│  Lazymc receives  │
+│ mc-router receives│
+│ (hostname routing)│
 └────────┬──────────┘
          │
     ┌────┴────┐
@@ -237,10 +281,10 @@ Client connects to :25565
    │           │
    ▼           ▼
 ┌───────┐  ┌──────────────────┐
-│ Proxy │  │ Show "Starting..." │
-│ to MC │  │ docker start      │
-└───────┘  │ wait for ready    │
-           │ then proxy        │
+│ Proxy │  │ docker start      │
+│ to MC │  │ Show MOTD         │
+└───────┘  │ Client reconnects │
+           │ after ~30-60s     │
            └──────────────────┘
 
 After 10 min idle
@@ -251,6 +295,9 @@ After 10 min idle
 │  (zero resources) │
 └───────────────────┘
 ```
+
+**Note**: Unlike Lazymc, mc-router does not hold client connections.
+Clients must reconnect after server wakes up (typically 30-60 seconds).
 
 ## 4. Detailed Design
 
@@ -345,75 +392,65 @@ Options:
 
 **Note**: With Lazymc, servers start/stop automatically. Manual start/stop is only for maintenance.
 
-### 4.4 Lazymc Proxy System
+### 4.4 mc-router Connection Router
 
-#### Configuration File
-```
-lazymc.toml
+#### Configuration (in docker-compose.yml)
+```yaml
+router:
+  image: itzg/mc-router
+  command: >
+    --in-docker
+    --auto-scale-up
+    --auto-scale-down
+    --auto-scale-down-after=10m
+    --docker-timeout=120
+    --auto-scale-asleep-motd=§e서버가 시작 중입니다...
+  ports:
+    - "25565:25565"
+  environment:
+    MAPPING: |
+      ironwood.local=mc-ironwood:25565
+      # Add more servers via create-server.sh
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
 
 #### Key Settings
-```toml
-[public]
-address = "0.0.0.0:25565"              # External listening port
-motd = "§7Server starting..."          # Message when server is down
+| Option | Description |
+|--------|-------------|
+| `--in-docker` | Enable Docker integration |
+| `--auto-scale-up` | Start containers on client connect |
+| `--auto-scale-down` | Stop containers when idle |
+| `--auto-scale-down-after=10m` | Idle timeout before shutdown |
+| `--docker-timeout=120` | Wait time for container startup |
+| `--auto-scale-asleep-motd` | MOTD when server is sleeping |
 
-[server]
-address = "mc-survival:25565"          # Internal server address
-
-[docker]
-enabled = true
-container = "mc-survival"              # Container to control
-
-[time]
-sleep_after = 600                      # Stop after 10 min idle
-minimum_online_time = 60               # Min time before auto-stop
-```
-
-#### Multi-Server Configuration
-```toml
-# Server 1: Survival
-[[servers]]
-name = "survival"
-[servers.public]
-address = "0.0.0.0:25565"
-[servers.docker]
-container = "mc-survival"
-
-# Server 2: Creative
-[[servers]]
-name = "creative"
-[servers.public]
-address = "0.0.0.0:25566"
-[servers.docker]
-container = "mc-creative"
-
-# Server 3: Modded
-[[servers]]
-name = "modded"
-[servers.public]
-address = "0.0.0.0:25567"
-[servers.docker]
-container = "mc-modded"
+#### Container Labels
+Each Minecraft server needs these labels:
+```yaml
+labels:
+  - "mc-router.host=ironwood.local"
+  - "mc-router.auto-scale-up=true"
+  - "mc-router.auto-scale-down=true"
 ```
 
 #### Resource Efficiency
 | State | RAM Usage | CPU Usage |
 |-------|-----------|-----------|
-| All servers stopped | ~50MB (Lazymc only) | ~0% |
-| 1 server running | 4GB + 50MB | Variable |
-| 3 servers running | 12GB + 50MB | Variable |
+| All servers stopped | ~20MB (mc-router only) | ~0% |
+| 1 server running | 4GB + 20MB | Variable |
+| 3 servers running | 12GB + 20MB | Variable |
 
 #### External Access
-PCs on the same LAN can connect using:
+PCs on the same LAN must configure DNS or hosts file:
 ```
-<server-host-ip>:<port>
+# Add to /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
+192.168.1.100 ironwood.local
+# Add more servers as needed:
+# 192.168.1.100 myserver.local
 
-Example:
-  Server Host: 192.168.1.100
-  Survival: 192.168.1.100:25565
-  Creative: 192.168.1.100:25566
-  Modded:   192.168.1.100:25567
+# Then connect via:
+ironwood.local:25565
 ```
 
 ## 5. Implementation Plan
@@ -440,11 +477,10 @@ When implementing CLI tools, always consider future Web UI integration:
 | **Separation of Concerns** | Logic in functions, CLI in main | Functions become API handlers |
 
 ### Phase 1: Infrastructure Setup
-- [ ] Create directory structure
-- [ ] Create `.env` with global settings
-- [ ] Create `docker-compose.yml` with Lazymc
-- [ ] Create `lazymc.toml`
-- [ ] Create server config templates
+- [x] Create directory structure
+- [x] Create `.env` with global settings
+- [x] Create `docker-compose.yml` with mc-router
+- [x] Create server config templates
 
 ### Phase 2: Locking System
 - [ ] Implement `scripts/lock.sh`
@@ -485,16 +521,15 @@ See **Section 9.1** for detailed Web UI implementation plan.
 ```bash
 # Network
 MINECRAFT_NETWORK=minecraft-net
-MINECRAFT_SUBNET=172.20.0.0/16
+MINECRAFT_SUBNET=172.28.0.0/16
 
-# Lazymc Settings
-LAZYMC_IDLE_TIMEOUT=600          # Stop server after 10 min idle
-LAZYMC_MIN_ONLINE_TIME=60        # Min time before auto-stop
+# mc-router Settings (configured in docker-compose.yml command)
+# --auto-scale-down-after=10m    # Stop server after 10 min idle
+# --docker-timeout=120           # Wait 2 min for server startup
 
 # Defaults
 DEFAULT_MEMORY=4G
 DEFAULT_VERSION=1.20.4
-DEFAULT_JAVA=java21
 
 # Timezone
 TZ=Asia/Seoul
@@ -513,10 +548,10 @@ VERSION=1.20.4
 MEMORY=4G
 
 # World
-LEVEL=survival-world
+LEVEL=ironwood-world
 
 # Server Properties
-MOTD=Welcome to Survival Server
+MOTD=Welcome to Ironwood Server
 MAX_PLAYERS=50
 DIFFICULTY=normal
 PVP=true
@@ -541,27 +576,27 @@ SIMULATION_DISTANCE=8
 | Lock acquire on locked world | Fail with error message |
 | Lock release by owner | Success, lock file removed |
 | Lock release by non-owner | Fail with error message |
-| Lazymc config validation | Valid TOML, correct container names |
-| Lazymc port binding | All configured ports accessible |
+| mc-router hostname routing | Correct backend resolution |
+| mc-router Docker labels | All containers have required labels |
 
 ### 7.2 Integration Tests
 
 | Test Case | Expected Result |
 |-----------|-----------------|
-| Client connects to stopped server | Lazymc starts container, client connects |
+| Client connects to stopped server | mc-router starts container, client reconnects |
 | Server idle timeout | Container stops after configured time |
-| Second client during startup | Queued and connected after ready |
-| External PC connection | Can connect via host-ip:port |
+| MOTD when server sleeping | Custom MOTD displayed |
+| External PC connection | Can connect via hostname:25565 |
 | Multiple servers simultaneously | Each starts/stops independently |
-| Lazymc restart | Servers maintain state correctly |
+| mc-router restart | Servers maintain state correctly |
 
 ### 7.3 Stress Tests
 
 | Test Case | Expected Result |
 |-----------|-----------------|
 | 3 servers concurrent start | All start within 2 minutes |
-| Rapid connect/disconnect | Lazymc handles gracefully |
-| Kill -9 server process | Lazymc detects and recovers |
+| Rapid connect/disconnect | mc-router handles gracefully |
+| Kill -9 server process | mc-router detects and recovers |
 | Multiple clients same server | All connected successfully |
 | Long idle period | Server stops, restarts on next connect |
 
@@ -633,11 +668,10 @@ minecraft-server-manager/
 │   ├── api/                # API routes
 │   └── lib/
 │       ├── docker.ts       # Docker API integration
-│       ├── lazymc.ts       # Lazymc management
+│       ├── mc-router.ts    # mc-router management
 │       └── db.ts           # SQLite/PostgreSQL
 ├── docker/
-│   ├── docker-compose.yml  # Bundled compose file
-│   └── lazymc.toml         # Bundled Lazymc config
+│   └── docker-compose.yml  # Bundled compose file (includes mc-router)
 └── prisma/
     └── schema.prisma       # Database schema
 ```
@@ -660,7 +694,7 @@ minecraft-server-manager/
           ┌────────────┼────────────┐
           ▼            ▼            ▼
     ┌──────────┐ ┌──────────┐ ┌──────────┐
-    │  Docker  │ │  Lazymc  │ │ Database │
+    │  Docker  │ │mc-router │ │ Database │
     │   API    │ │  Config  │ │ SQLite/  │
     │          │ │          │ │ Postgres │
     └──────────┘ └──────────┘ └──────────┘
@@ -684,3 +718,4 @@ minecraft-server-manager/
 | 1.0.0 | 2025-01-17 | - | Initial PRD |
 | 1.1.0 | 2025-01-17 | - | Add automatic port assignment (FR-007) |
 | 2.0.0 | 2025-01-17 | - | Replace port assignment with Lazymc auto start/stop |
+| 2.1.0 | 2026-01-17 | - | Migrate from Lazymc to mc-router (hostname routing, Docker auto-scale) |
