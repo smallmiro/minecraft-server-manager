@@ -236,11 +236,11 @@ minecraft/
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  Same LAN (Local Network)                    │
-│                                                              │
+│                  Same LAN (Local Network)                   │
+│                                                             │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │              Server Host (192.168.x.x)               │    │
-│  │                                                      │    │
+│  │              Server Host (192.168.x.x)              │    │
+│  │                                                     │    │
 │  │   ┌──────────────────────┐  ┌────────────────────┐  │    │
 │  │   │  mc-router (Always)  │  │  mdns-publisher    │  │    │
 │  │   │  :25565 hostname rte │  │  (mDNS broadcast)  │  │    │
@@ -249,22 +249,22 @@ minecraft/
 │  │   │   mc-ironwood        │  │  Broadcasts:       │  │    │
 │  │   │  <server>.local ─→   │  │  ironwood.local    │  │    │
 │  │   │   mc-<server>        │  │  <server>.local    │  │    │
-│  │   └──────────┬───────────┘  └────────┬───────────┘  │    │
-│  │              │ Docker Socket          │              │    │
+│  │   └──────────┬───────────┘  └─────────┬──────────┘  │    │
+│  │              │ Docker Socket          │             │    │
 │  │   ┌──────────┴────────────────────────┴───────────┐ │    │
-│  │   │           minecraft-net (bridge)               │ │    │
-│  │   │                                                │ │    │
+│  │   │           minecraft-net (bridge)              │ │    │
+│  │   │                                               │ │    │
 │  │   │  mc-ironwood   mc-<server>  (add via script)  │ │    │
 │  │   │  (auto-scale)   (auto-scale)                  │ │    │
-│  │   │                                                │ │    │
-│  │   └────────────────────────────────────────────────┘ │    │
-│  │                                                      │    │
-│  └──────────────────────────────────────────────────────┘    │
-│                              │                               │
-│                              │ mDNS (multicast)              │
-│                              ▼                               │
+│  │   │                                               │ │    │
+│  │   └───────────────────────────────────────────────┘ │    │
+│  │                                                     │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                              │                              │
+│                              │ mDNS (multicast)             │
+│                              ▼                              │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │                    External PCs                        │  │
+│  │                    External PCs                       │  │
 │  │     mDNS auto-discovery (no hosts file needed):       │  │
 │  │       ironwood.local → <host-ip> (auto-resolved)      │  │
 │  │       <server>.local → <host-ip> (auto-resolved)      │  │
@@ -304,10 +304,10 @@ Client connects to ironwood.local:25565
    │           │
    ▼           ▼
 ┌───────┐  ┌──────────────────┐
-│ Proxy │  │ docker start      │
-│ to MC │  │ Show MOTD         │
-└───────┘  │ Client reconnects │
-           │ after ~30-60s     │
+│ Proxy │  │ docker start     │
+│ to MC │  │ Show MOTD        │
+└───────┘  │ Client reconnects│
+           │ after ~30-60s    │
            └──────────────────┘
 
 After 10 min idle
@@ -716,15 +716,15 @@ minecraft-server-manager/
 #### Architecture
 ```
 ┌─────────────────────────────────────────────────┐
-│           Web Management UI (Next.js)            │
-│                 http://localhost:3000            │
+│           Web Management UI (Next.js)           │
+│                 http://localhost:3000           │
 ├─────────────────────────────────────────────────┤
 │  Dashboard │ Servers │ Worlds │ Logs │ Settings │
 └──────────────────────┬──────────────────────────┘
                        │
                        ▼
 ┌─────────────────────────────────────────────────┐
-│              API Layer (Next.js API)             │
+│              API Layer (Next.js API)            │
 │  /api/servers  /api/worlds  /api/logs  /api/... │
 └──────────────────────┬──────────────────────────┘
                        │
