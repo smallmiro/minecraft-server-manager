@@ -115,9 +115,17 @@ cmd_status() {
     router_health=$(get_container_health "mc-router")
     router_port="25565"
 
-    # Get mdns-publisher status
-    local mdns_status
-    mdns_status=$(get_container_status "mdns-publisher")
+    # Get avahi-daemon status (system service, not Docker)
+    local avahi_status="unknown"
+    if systemctl is-active --quiet avahi-daemon 2>/dev/null; then
+        avahi_status="running"
+    elif rc-service avahi-daemon status &>/dev/null 2>&1; then
+        avahi_status="running"
+    elif command -v avahi-daemon &>/dev/null; then
+        avahi_status="installed (not running)"
+    else
+        avahi_status="not installed"
+    fi
 
     if $json_output; then
         # JSON output
@@ -128,9 +136,10 @@ cmd_status() {
         echo "    \"health\": \"$router_health\","
         echo "    \"port\": $router_port"
         echo '  },'
-        echo '  "mdns_publisher": {'
-        echo "    \"name\": \"mdns-publisher\","
-        echo "    \"status\": \"$mdns_status\""
+        echo '  "avahi_daemon": {'
+        echo "    \"name\": \"avahi-daemon\","
+        echo "    \"status\": \"$avahi_status\","
+        echo "    \"type\": \"system\""
         echo '  },'
         echo '  "servers": ['
 
@@ -175,9 +184,9 @@ cmd_status() {
         [[ "$router_status" == "running" ]] && router_color="${GREEN}"
         printf "%-20s ${router_color}%-12s${NC} %-10s %s\n" "mc-router" "$router_status" "$router_health" ":$router_port (hostname routing)"
 
-        local mdns_color="${RED}"
-        [[ "$mdns_status" == "running" ]] && mdns_color="${GREEN}"
-        printf "%-20s ${mdns_color}%-12s${NC} %-10s %s\n" "mdns-publisher" "$mdns_status" "-" "mDNS broadcast"
+        local avahi_color="${RED}"
+        [[ "$avahi_status" == "running" ]] && avahi_color="${GREEN}"
+        printf "%-20s ${avahi_color}%-12s${NC} %-10s %s\n" "avahi-daemon" "$avahi_status" "(system)" "mDNS broadcast"
 
         echo ""
         echo -e "${CYAN}MINECRAFT SERVERS${NC}"

@@ -50,6 +50,8 @@ With mDNS auto-discovery, just connect directly:
 
 **Fallback** (if mDNS unavailable): Add `<server-ip> myserver.local` to hosts file.
 
+See [mDNS Setup Guide](#mdns-setup-guide) for detailed installation instructions.
+
 Add more servers using `create-server.sh` - they're automatically discoverable!
 
 ## Architecture
@@ -233,6 +235,130 @@ docker exec mc-<server-name> rcon-cli say Hello World
 # Stop all
 docker compose down
 ```
+
+---
+
+## mDNS Setup Guide
+
+mDNS (Multicast DNS) enables automatic hostname discovery on local networks. This allows Minecraft clients to connect using `.local` hostnames without configuring hosts files.
+
+### Server Host Setup (where Minecraft servers run)
+
+The server host needs avahi-daemon to broadcast `.local` hostnames.
+
+#### Debian / Ubuntu (Systemd)
+
+```bash
+# Install avahi-daemon
+sudo apt update
+sudo apt install avahi-daemon
+
+# Enable and start service
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+
+# Verify status
+sudo systemctl status avahi-daemon
+```
+
+#### CentOS / RHEL / Fedora (Systemd)
+
+```bash
+# Install avahi
+sudo dnf install avahi
+
+# Enable and start service
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+
+# Open firewall for mDNS (if firewalld is active)
+sudo firewall-cmd --permanent --add-service=mdns
+sudo firewall-cmd --reload
+```
+
+#### Arch Linux (Systemd)
+
+```bash
+# Install avahi and nss-mdns
+sudo pacman -S avahi nss-mdns
+
+# Enable and start service
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+
+# Edit /etc/nsswitch.conf for .local resolution
+# Add 'mdns_minimal [NOTFOUND=return]' before 'resolve' in hosts line
+```
+
+#### Alpine Linux (OpenRC)
+
+```bash
+# Install avahi
+apk add avahi
+
+# Add to default runlevel and start
+rc-update add avahi-daemon default
+rc-service avahi-daemon start
+
+# Verify status
+rc-service avahi-daemon status
+```
+
+### Client Setup (connecting to servers)
+
+#### Linux
+
+Same as server setup - install avahi-daemon using the instructions above.
+
+#### macOS
+
+No setup required. macOS has built-in Bonjour support.
+
+#### Windows
+
+**Option 1: Bonjour Print Services (Recommended)**
+1. Download [Bonjour Print Services](https://support.apple.com/kb/DL999) from Apple
+2. Install and restart if needed
+3. `.local` hostnames will resolve automatically
+
+**Option 2: iTunes**
+Installing iTunes also installs Bonjour support.
+
+**Option 3: WSL2 (Windows Subsystem for Linux)**
+```bash
+# Inside WSL2 Ubuntu
+sudo apt update
+sudo apt install avahi-daemon
+
+# Start avahi-daemon
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+
+# Note: WSL2 network is bridged, so mDNS discovery works for Linux apps in WSL
+# For Windows apps, use Option 1 or 2
+```
+
+### Verifying mDNS Setup
+
+```bash
+# On Linux/macOS, test hostname resolution
+ping myserver.local
+
+# Or use avahi-browse to discover services
+avahi-browse -art
+
+# Check if hostname is registered in avahi
+cat /etc/avahi/hosts
+```
+
+### Troubleshooting mDNS
+
+| Issue | Solution |
+|-------|----------|
+| `.local` not resolving | Ensure avahi-daemon is running and firewall allows UDP 5353 |
+| Hostname conflicts | Check `/etc/avahi/hosts` for duplicate entries |
+| Windows can't resolve | Install Bonjour Print Services |
+| Works on Linux, not Windows | Windows needs Bonjour; or use hosts file fallback |
 
 ---
 

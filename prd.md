@@ -125,10 +125,10 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 - **Priority**: High
 - **Description**: Single command to create and configure a new server with all necessary setup
 - **Acceptance Criteria**:
-  - [x] `create-server.sh` automatically updates main docker-compose.yml
-  - [x] Adds include entry for new server
-  - [x] Adds MAPPING entry to mc-router configuration
-  - [x] Adds depends_on entry for router
+  - [x] `create-server.sh` creates server directory and configuration
+  - [x] Updates `servers/compose.yml` (main docker-compose.yml not modified)
+  - [x] mc-router auto-discovers servers via Docker labels (no MAPPING needed)
+  - [x] Registers hostname with avahi-daemon for mDNS
   - [x] Validates docker-compose.yml after changes
   - [x] Restores backup on validation failure
   - [x] `--start` option starts server after creation (default)
@@ -138,15 +138,13 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 - **Priority**: High
 - **Description**: Automatically broadcast mDNS (Bonjour/Zeroconf) records for `.local` hostnames so clients can discover servers without manual hosts file configuration
 - **Acceptance Criteria**:
-  - [ ] `mdns-publisher` service monitors Docker events (start/die)
-  - [ ] Reads `mc-router.host` labels from Minecraft server containers
-  - [ ] Broadcasts mDNS A records for `.local` hostnames using `zeroconf` library
-  - [ ] Registers on container start, unregisters on container stop
-  - [ ] Uses host network mode for proper mDNS packet broadcasting
-  - [ ] Health check endpoint for monitoring
-  - [ ] Graceful shutdown with proper mDNS unregistration
-  - [ ] Clients on same LAN can connect via `ironwood.local:25565` without hosts file
-  - [ ] Works on Linux, macOS, and Windows (with Bonjour support)
+  - [x] Use system avahi-daemon for mDNS broadcasting (simpler than Docker service)
+  - [x] `create-server.sh` registers hostname in `/etc/avahi/hosts`
+  - [x] `delete-server.sh` removes hostname from `/etc/avahi/hosts`
+  - [x] avahi-daemon broadcasts mDNS A records for `.local` hostnames
+  - [x] Clients on same LAN can connect via `<server>.local:25565` without hosts file
+  - [x] Works on Linux (avahi-daemon), macOS (Bonjour), Windows (Bonjour Print Services)
+  - [x] Documentation for avahi-daemon setup on various Linux distributions
 
 ### 2.2 Non-Functional Requirements
 
@@ -195,14 +193,10 @@ minecraft/
 │   ├── .env.example             # Environment template
 │   │
 │   ├── scripts/                 # Management scripts
-│   │   └── create-server.sh     # Server creation script (with world options)
+│   │   ├── create-server.sh     # Server creation (registers avahi hostname)
+│   │   └── delete-server.sh     # Server deletion (removes avahi hostname)
 │   │
-│   ├── services/                # Microservices
-│   │   └── mdns-publisher/      # mDNS auto-broadcast service
-│   │       ├── Dockerfile
-│   │       ├── requirements.txt
-│   │       ├── mdns_publisher.py
-│   │       └── README.md
+│   ├── services/                # Microservices (reserved for future use)
 │   │
 │   ├── servers/                 # Server configurations
 │   │   ├── _template/           # Template for new servers
@@ -242,27 +236,26 @@ minecraft/
 │  │              Server Host (192.168.x.x)              │    │
 │  │                                                     │    │
 │  │   ┌──────────────────────┐  ┌────────────────────┐  │    │
-│  │   │  mc-router (Always)  │  │  mdns-publisher    │  │    │
-│  │   │  :25565 hostname rte │  │  (mDNS broadcast)  │  │    │
-│  │   │                      │  │  host network mode │  │    │
-│  │   │  ironwood.local ─→   │  │                    │  │    │
-│  │   │   mc-ironwood        │  │  Broadcasts:       │  │    │
-│  │   │  <server>.local ─→   │  │  ironwood.local    │  │    │
-│  │   │   mc-<server>        │  │  <server>.local    │  │    │
+│  │   │  mc-router (Docker)  │  │  avahi-daemon      │  │    │
+│  │   │  :25565 hostname rte │  │  (system service)  │  │    │
+│  │   │  auto-scale up/down  │  │                    │  │    │
+│  │   │                      │  │  /etc/avahi/hosts: │  │    │
+│  │   │  ironwood.local ─→   │  │  ironwood.local    │  │    │
+│  │   │   mc-ironwood        │  │  <server>.local    │  │    │
+│  │   │  <server>.local ─→   │  │  (auto-registered  │  │    │
+│  │   │   mc-<server>        │  │   by script)       │  │    │
 │  │   └──────────┬───────────┘  └─────────┬──────────┘  │    │
-│  │              │ Docker Socket          │             │    │
-│  │   ┌──────────┴────────────────────────┴───────────┐ │    │
-│  │   │           minecraft-net (bridge)              │ │    │
-│  │   │                                               │ │    │
-│  │   │  mc-ironwood   mc-<server>  (add via script)  │ │    │
-│  │   │  (auto-scale)   (auto-scale)                  │ │    │
-│  │   │                                               │ │    │
-│  │   └───────────────────────────────────────────────┘ │    │
-│  │                                                     │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                              │                              │
-│                              │ mDNS (multicast)             │
-│                              ▼                              │
+│  │              │ Docker Socket          │ mDNS        │    │
+│  │   ┌──────────┴───────────────────┐    │ multicast   │    │
+│  │   │    minecraft-net (bridge)    │    │             │    │
+│  │   │                              │    │             │    │
+│  │   │  mc-ironwood  mc-<server>    │    │             │    │
+│  │   │  (auto-scale) (auto-scale)   │    │             │    │
+│  │   └──────────────────────────────┘    │             │    │
+│  │                                       │             │    │
+│  └───────────────────────────────────────┼─────────────┘    │
+│                                          │                  │
+│                                          ▼                  │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │                    External PCs                       │  │
 │  │     mDNS auto-discovery (no hosts file needed):       │  │
@@ -413,7 +406,7 @@ Options:
   -h, --help               Show help
 ```
 
-**Note**: With Lazymc, servers start/stop automatically. Manual start/stop is only for maintenance.
+**Note**: With mc-router, servers start/stop automatically. Manual start/stop is only for maintenance.
 
 ### 4.4 mc-router Connection Router
 
@@ -421,22 +414,24 @@ Options:
 ```yaml
 router:
   image: itzg/mc-router
-  command: >
-    --in-docker
-    --auto-scale-up
-    --auto-scale-down
-    --auto-scale-down-after=10m
-    --docker-timeout=120
-    --auto-scale-asleep-motd=§e서버가 시작 중입니다...
+  container_name: mc-router
+  restart: unless-stopped
+  command:
+    - --in-docker
+    - --auto-scale-up
+    - --auto-scale-down
+    - --auto-scale-down-after=10m
+    - --docker-timeout=120
+    - --auto-scale-asleep-motd=§eStarting...
   ports:
     - "25565:25565"
-  environment:
-    MAPPING: |
-      ironwood.local=mc-ironwood:25565
-      # Add more servers via create-server.sh
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
+  networks:
+    - minecraft-net
 ```
+
+**Note**: No MAPPING environment variable needed. mc-router auto-discovers servers via Docker labels (`mc-router.host`).
 
 #### Key Settings
 | Option | Description |
@@ -465,20 +460,92 @@ labels:
 | 3 servers running | 12GB + 20MB | Variable |
 
 #### External Access
-With mDNS publisher enabled, PCs on the same LAN automatically discover servers:
+With mDNS (avahi-daemon) enabled, PCs on the same LAN automatically discover servers:
 ```
 # No configuration needed with mDNS!
 # Just connect directly:
 ironwood.local:25565
 
-# mDNS requirements:
-# - Linux: avahi-daemon (usually pre-installed)
-# - macOS: Built-in Bonjour (no setup needed)
-# - Windows: Bonjour Print Services or iTunes (provides Bonjour)
-
 # Fallback (if mDNS unavailable):
 # Add to /etc/hosts or C:\Windows\System32\drivers\etc\hosts
 192.168.1.100 ironwood.local
+```
+
+#### mDNS Setup Guide
+
+**Server Host Setup** (where Minecraft servers run):
+
+| OS | Installation Command |
+|----|---------------------|
+| Debian/Ubuntu | `sudo apt install avahi-daemon && sudo systemctl enable --now avahi-daemon` |
+| CentOS/RHEL/Fedora | `sudo dnf install avahi && sudo systemctl enable --now avahi-daemon` |
+| Arch Linux | `sudo pacman -S avahi nss-mdns && sudo systemctl enable --now avahi-daemon` |
+| Alpine Linux | `apk add avahi && rc-update add avahi-daemon default && rc-service avahi-daemon start` |
+
+**Client Setup** (connecting to servers):
+
+| OS | Setup |
+|----|-------|
+| Linux | Install avahi-daemon (same as server) |
+| macOS | Built-in Bonjour (no setup needed) |
+| Windows | Install [Bonjour Print Services](https://support.apple.com/kb/DL999) or iTunes |
+| Windows WSL2 | Install avahi-daemon in WSL; for Windows apps, use Bonjour |
+
+**Detailed Setup Instructions**:
+
+**Debian / Ubuntu (Systemd)**:
+```bash
+sudo apt update
+sudo apt install avahi-daemon
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+```
+
+**CentOS / RHEL / Fedora (Systemd)**:
+```bash
+sudo dnf install avahi
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+# If firewalld is active:
+sudo firewall-cmd --permanent --add-service=mdns
+sudo firewall-cmd --reload
+```
+
+**Arch Linux (Systemd)**:
+```bash
+sudo pacman -S avahi nss-mdns
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+# Edit /etc/nsswitch.conf: add 'mdns_minimal [NOTFOUND=return]' before 'resolve'
+```
+
+**Alpine Linux (OpenRC)**:
+```bash
+apk add avahi
+rc-update add avahi-daemon default
+rc-service avahi-daemon start
+```
+
+**Windows WSL2**:
+```bash
+# Inside WSL2 Ubuntu
+sudo apt update
+sudo apt install avahi-daemon
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+# Note: For Windows apps, install Bonjour Print Services
+```
+
+**Verification**:
+```bash
+# Test hostname resolution
+ping myserver.local
+
+# Discover mDNS services
+avahi-browse -art
+
+# Check registered hostnames
+cat /etc/avahi/hosts
 ```
 
 ## 5. Implementation Plan
@@ -510,14 +577,13 @@ When implementing CLI tools, always consider future Web UI integration:
 - [x] Create `docker-compose.yml` with mc-router
 - [x] Create server config templates
 
-### Phase 2: mDNS Auto-Broadcast
-- [x] Create `services/mdns-publisher/` directory structure
-- [x] Implement `mdns_publisher.py` with Docker event monitoring
-- [x] Implement mDNS broadcasting with `zeroconf` library
-- [x] Create Dockerfile and docker-compose service
-- [x] Add health check endpoint
-- [ ] Test on Linux, macOS, Windows clients
-- [x] Update main docker-compose.yml to include service
+### Phase 2: mDNS Auto-Broadcast (via avahi-daemon)
+- [x] Use system avahi-daemon instead of Docker service (simpler approach)
+- [x] `create-server.sh` registers hostname in `/etc/avahi/hosts`
+- [x] `delete-server.sh` removes hostname from `/etc/avahi/hosts`
+- [x] Document avahi-daemon setup for various OS (Debian, CentOS, Arch, Alpine)
+- [x] Document client setup (Linux, macOS, Windows, WSL)
+- [x] Test mDNS resolution on local network
 
 ### Phase 3: Locking System
 - [ ] Implement `scripts/lock.sh`
