@@ -113,6 +113,35 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
+### Semantic Versioning
+
+This project follows [Semantic Versioning 2.0.0](https://semver.org/).
+
+**Format**: `MAJOR.MINOR.PATCH` (e.g., `1.2.3`)
+
+| Version | When to Increment | Example |
+|---------|-------------------|---------|
+| **MAJOR** | Incompatible API/breaking changes | `1.0.0` → `2.0.0` |
+| **MINOR** | New features (backward compatible) | `1.0.0` → `1.1.0` |
+| **PATCH** | Bug fixes (backward compatible) | `1.0.0` → `1.0.1` |
+
+**Key Rules**:
+- `0.x.x`: Initial development, API may change anytime
+- `1.0.0`: First stable release, public API defined
+- When MAJOR increments → reset MINOR and PATCH to 0
+- When MINOR increments → reset PATCH to 0
+
+**Pre-release & Build Metadata**:
+```
+1.0.0-alpha      # Pre-release (lower precedence than 1.0.0)
+1.0.0-alpha.1    # Pre-release with identifier
+1.0.0-beta       # Beta release
+1.0.0-rc.1       # Release candidate
+1.0.0+20250117   # Build metadata (ignored in precedence)
+```
+
+**Version Precedence**: `1.0.0-alpha` < `1.0.0-alpha.1` < `1.0.0-beta` < `1.0.0-rc.1` < `1.0.0`
+
 ### Task Checkpoint (task.md)
 
 During development, use `task.md` to track work-in-progress:
@@ -137,6 +166,67 @@ During development, use `task.md` to track work-in-progress:
 ```
 
 **Important**: `task.md` is in `.gitignore` - for local tracking only, not committed.
+
+### TDD (Test-Driven Development)
+
+Follow the **Red → Green → Refactor** cycle:
+
+1. **Red**: Write a failing test first
+2. **Green**: Write minimal code to make the test pass
+3. **Refactor**: Clean up while keeping tests green
+
+```bash
+# Example for Bash scripts
+# 1. Write test case in tests/test_lock.sh
+# 2. Run test - expect failure
+# 3. Implement in scripts/lock.sh
+# 4. Run test - expect success
+# 5. Refactor and verify tests still pass
+```
+
+### Tidy First
+
+**Never mix structural and behavioral changes in the same commit.**
+
+| Change Type | Examples | Commit Separately |
+|-------------|----------|-------------------|
+| Structural | Rename, extract function, move file | Yes |
+| Behavioral | New feature, bug fix, logic change | Yes |
+
+```bash
+# Good: Two separate commits
+git commit -m "refactor: Extract validate_world function"
+git commit -m "feat: Add world existence check (#7)"
+
+# Bad: Mixed in one commit
+git commit -m "feat: Add validation with new helper function"
+```
+
+### Using plan.md
+
+The `plan.md` file serves as the implementation roadmap:
+
+1. **Before starting work**: Read `plan.md` to understand the overall architecture
+2. **Check current phase**: Find the next unmarked task in the current phase
+3. **Update as you go**: Mark completed items, add discovered tasks
+4. **Sync with GitHub Issues**: Each phase/task maps to GitHub Issues
+
+```bash
+# Workflow
+1. Read plan.md → Identify next task
+2. Create GitHub Issue (if not exists)
+3. Create feature branch
+4. Implement following TDD
+5. Mark task complete in plan.md
+6. Commit and PR
+```
+
+### Code Quality Standards
+
+- **Eliminate duplication**: Extract common patterns into reusable functions
+- **Clear naming**: Variables and functions should be self-documenting
+- **Single responsibility**: Each function does one thing well
+- **Small commits**: Atomic changes that are easy to review and revert
 
 ## Core Principles
 
