@@ -215,140 +215,94 @@ The script automatically:
 
 ---
 
-## Phase 2.5: mDNS Auto-Broadcast Service
+## Phase 2.5: mDNS Auto-Broadcast (via avahi-daemon)
 
 > **Milestone**: [v0.3.0 - Core Features](https://github.com/smallmiro/minecraft-server-manager/milestone/2)
+> **Status**: ✅ Completed
 
-### 2.5.1 Implement mdns-publisher ([#20](https://github.com/smallmiro/minecraft-server-manager/issues/20))
+### 2.5.1 Implementation Approach
 
-**Purpose**: Automatically broadcast mDNS (Bonjour/Zeroconf) A records for `.local` hostnames so clients can connect without manual hosts file configuration.
+**Decision**: Use system avahi-daemon instead of Docker-based mdns-publisher service.
 
-**Directory Structure**:
-```
-platform/services/mdns-publisher/
-├── Dockerfile
-├── requirements.txt
-├── mdns_publisher.py
-└── README.md
-```
+**Rationale**:
+- Simpler architecture (no additional Docker service)
+- More reliable mDNS broadcasting (native system service)
+- Lower resource usage
+- Better integration with host networking
 
 **Architecture**:
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     mdns-publisher                           │
-│                    (host network mode)                       │
+│                   Server Host                                │
 ├─────────────────────────────────────────────────────────────┤
-│  Docker SDK          │           Zeroconf                    │
-│  - Monitor events    │           - Register A records        │
-│  - Read labels       │           - Broadcast on mDNS         │
-│  - container start   │           - Unregister on stop        │
-│  - container die     │                                       │
+│  create-server.sh        │           avahi-daemon            │
+│  - Creates server        │           (system service)        │
+│  - Registers hostname    │           - Reads /etc/avahi/hosts│
+│    in /etc/avahi/hosts   │           - Broadcasts mDNS       │
+│                          │                                   │
+│  delete-server.sh        │                                   │
+│  - Removes server        │                                   │
+│  - Unregisters hostname  │                                   │
 └─────────────────────────────────────────────────────────────┘
            │                              │
            ▼                              ▼
-    Docker Socket                   LAN (multicast)
-    /var/run/docker.sock            224.0.0.251:5353
+    /etc/avahi/hosts               LAN (multicast)
+    <host-ip> server.local         224.0.0.251:5353
 ```
 
-**Key Components**:
+### 2.5.2 Implementation Details
 
-| Component | Description |
-|-----------|-------------|
-| Docker Event Listener | Monitor container start/die events |
-| Label Parser | Extract `mc-router.host` label from containers |
-| mDNS Broadcaster | Register/unregister A records via zeroconf |
-| Health Endpoint | HTTP endpoint for Docker healthcheck |
-
-**Label Detection**:
-```yaml
-# Server container labels (already exists)
-labels:
-  - "mc-router.host=ironwood.local"
-  - "mc-router.auto-scale-up=true"
-  - "mc-router.auto-scale-down=true"
+**create-server.sh** registers hostname:
+```bash
+# Add to /etc/avahi/hosts
+echo "$HOST_IP $SERVER_NAME.local" | sudo tee -a /etc/avahi/hosts
+sudo systemctl restart avahi-daemon
 ```
 
-**Implementation Details**:
-
-```python
-# mdns_publisher.py pseudo-code
-import docker
-from zeroconf import Zeroconf, ServiceInfo
-import socket
-
-# Get host IP for mDNS A record
-host_ip = socket.gethostbyname(socket.gethostname())
-
-# Watch Docker events
-for event in client.events(decode=True, filters={'event': ['start', 'die']}):
-    container = client.containers.get(event['id'])
-    hostname = container.labels.get('mc-router.host')
-
-    if hostname:
-        if event['Action'] == 'start':
-            # Register mDNS: hostname -> host_ip
-            register_mdns(hostname, host_ip)
-        elif event['Action'] == 'die':
-            # Unregister mDNS
-            unregister_mdns(hostname)
+**delete-server.sh** unregisters hostname:
+```bash
+# Remove from /etc/avahi/hosts
+sudo sed -i "/$SERVER_NAME\.local/d" /etc/avahi/hosts
+sudo systemctl restart avahi-daemon
 ```
 
-**Docker Compose Service**:
-```yaml
-# In main docker-compose.yml
-services:
-  mdns-publisher:
-    build: ./services/mdns-publisher
-    container_name: mdns-publisher
-    restart: unless-stopped
-    network_mode: host  # Required for mDNS multicast
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      - LOG_LEVEL=INFO
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5353/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-```
+### 2.5.3 avahi-daemon Setup
 
-**Dependencies**:
-```
-# requirements.txt
-docker>=6.0.0
-zeroconf>=0.131.0
-flask>=3.0.0  # For health endpoint
-```
+| OS | Installation |
+|----|--------------|
+| Debian/Ubuntu | `sudo apt install avahi-daemon && sudo systemctl enable --now avahi-daemon` |
+| CentOS/RHEL | `sudo dnf install avahi && sudo systemctl enable --now avahi-daemon` |
+| Arch Linux | `sudo pacman -S avahi nss-mdns && sudo systemctl enable --now avahi-daemon` |
+| Alpine Linux | `apk add avahi && rc-update add avahi-daemon default && rc-service avahi-daemon start` |
 
-### 2.5.2 Client Compatibility
+### 2.5.4 Client Compatibility
 
 | OS | mDNS Support | Notes |
 |----|--------------|-------|
-| Linux | avahi-daemon | Usually pre-installed on Ubuntu/Debian |
+| Linux | avahi-daemon | Install same as server |
 | macOS | Built-in Bonjour | No setup needed |
 | Windows | Bonjour Print Services | Install from Apple or with iTunes |
+| Windows WSL | avahi-daemon in WSL | For Windows apps, use Bonjour |
 
-### 2.5.3 Testing
+### 2.5.5 Testing
 
 ```bash
-# 1. Start mdns-publisher
-docker compose up -d mdns-publisher
+# 1. Verify avahi-daemon is running
+sudo systemctl status avahi-daemon
 
-# 2. Start a Minecraft server
-docker compose up -d mc-ironwood
+# 2. Check registered hostnames
+cat /etc/avahi/hosts
 
-# 3. Check mDNS registration (Linux)
-avahi-browse -art | grep ironwood
+# 3. Create a server (auto-registers hostname)
+./scripts/create-server.sh myserver -t PAPER
 
-# 4. Check mDNS registration (macOS)
-dns-sd -B _services._dns-sd._udp
+# 4. Check mDNS resolution
+ping myserver.local
 
-# 5. Resolve hostname (all platforms)
-ping ironwood.local
+# 5. Browse mDNS services
+avahi-browse -art
 
-# 6. Connect via Minecraft
-# Server address: ironwood.local:25565
+# 6. Connect via Minecraft: myserver.local:25565
 ```
 
 ---
@@ -499,7 +453,7 @@ Add sections:
 | `platform/servers/_template/` | 1 | ✅ |
 | `platform/servers/ironwood/` | 2 | ✅ |
 | `platform/scripts/create-server.sh` | 2 | ✅ |
-| `platform/services/mdns-publisher/` | 2.5 | ✅ |
+| `platform/scripts/delete-server.sh` | 2 | ✅ |
 | `platform/scripts/lock.sh` | 3 | ✅ |
 | `platform/scripts/mcctl.sh` | 4 | ✅ |
 | `platform/scripts/logs.sh` | 4 | ✅ |

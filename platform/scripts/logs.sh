@@ -10,7 +10,7 @@
 #   ./scripts/logs.sh <server> -f            # Follow logs in real-time
 #   ./scripts/logs.sh <server> --file        # View log file instead
 #   ./scripts/logs.sh router                 # View mc-router logs
-#   ./scripts/logs.sh mdns                   # View mdns-publisher logs
+#   ./scripts/logs.sh avahi                  # View avahi-daemon logs (journalctl)
 #
 # Options:
 #   -n, --lines <N>        Number of lines to show (default: 50)
@@ -53,7 +53,7 @@ View logs from Minecraft servers (Docker or file-based).
 
 Arguments:
   <server>                 Server name (without mc- prefix)
-                           Special values: router, mdns
+                           Special values: router, avahi
 
 Options:
   -n, --lines <N>          Number of lines to show (default: $DEFAULT_LINES)
@@ -72,7 +72,7 @@ Examples:
   $(basename "$0") ironwood --file -f    # Follow log file
   $(basename "$0") ironwood --json       # JSON output
   $(basename "$0") router                # mc-router logs
-  $(basename "$0") mdns                  # mdns-publisher logs
+  $(basename "$0") avahi                 # avahi-daemon logs (journalctl)
   $(basename "$0") ironwood --since 1h   # Logs from last hour
 EOF
 }
@@ -231,23 +231,37 @@ main() {
 
     # Determine container name
     local container
+    local use_journalctl=false
     case "$server" in
         router|mc-router)
             container="mc-router"
             server="router"
             ;;
-        mdns|mdns-publisher)
-            container="mdns-publisher"
-            server="mdns"
+        avahi|avahi-daemon)
+            # avahi-daemon is a system service, use journalctl
+            use_journalctl=true
+            server="avahi"
             ;;
         *)
             container="mc-$server"
             ;;
     esac
 
+    # Handle avahi-daemon logs via journalctl
+    if $use_journalctl; then
+        info "Viewing avahi-daemon logs (system service via journalctl)"
+        local journal_opts="-u avahi-daemon --no-pager"
+        [[ -n "$lines" ]] && journal_opts="$journal_opts -n $lines"
+        [[ "$follow" == "true" ]] && journal_opts="$journal_opts -f"
+        [[ -n "$since" ]] && journal_opts="$journal_opts --since=$since"
+        # shellcheck disable=SC2086
+        sudo journalctl $journal_opts
+        exit 0
+    fi
+
     # Check if using file mode
     if $file_mode; then
-        if [[ "$server" == "router" || "$server" == "mdns" ]]; then
+        if [[ "$server" == "router" ]]; then
             error "File mode not supported for $server"
             exit 1
         fi
