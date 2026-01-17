@@ -27,6 +27,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
 source "$SCRIPT_DIR/lib/common.sh"
 
+# Load environment variables from .env
+ENV_FILE="$PLATFORM_DIR/.env"
+if [[ -f "$ENV_FILE" ]]; then
+    set -a
+    source <(grep -v '^\s*#' "$ENV_FILE" | grep -v '^\s*$') 2>/dev/null || true
+    set +a
+fi
+
 # =============================================================================
 # Usage
 # =============================================================================
@@ -51,6 +59,12 @@ Player Lookup:
   player lookup <name>         Look up player info (UUID, avatar)
   player uuid <name>           Get player's online UUID
   player uuid <name> --offline Get player's offline UUID
+
+Backup (requires .env configuration):
+  backup push [--message "m"]  Backup worlds to GitHub
+  backup status                Show backup configuration
+  backup history [--json]      Show backup history
+  backup restore <commit>      Restore from specific commit
 
 Options:
   --json                       Output in JSON format
@@ -426,6 +440,28 @@ cmd_stop() {
     info "Stopping server '$server'..."
     docker stop "$container"
     info "Server '$server' stopped"
+
+    # Auto-backup on stop (if configured)
+    if [[ "${BACKUP_AUTO_ON_STOP:-false}" == "true" ]]; then
+        if [[ -n "${BACKUP_GITHUB_TOKEN:-}" && -n "${BACKUP_GITHUB_REPO:-}" ]]; then
+            info "Auto-backup triggered..."
+            "$SCRIPT_DIR/backup.sh" push --auto || warn "Auto-backup failed (non-critical)"
+        fi
+    fi
+}
+
+# =============================================================================
+# Backup Command
+# =============================================================================
+
+cmd_backup() {
+    # Delegate to backup.sh
+    if [[ -x "$SCRIPT_DIR/backup.sh" ]]; then
+        "$SCRIPT_DIR/backup.sh" "$@"
+    else
+        error "backup.sh not found"
+        return 1
+    fi
 }
 
 # =============================================================================
@@ -457,6 +493,9 @@ main() {
             ;;
         player)
             cmd_player "$@"
+            ;;
+        backup)
+            cmd_backup "$@"
             ;;
         -h|--help|help)
             usage

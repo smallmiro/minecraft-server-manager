@@ -443,6 +443,27 @@ Player UUID lookup using PlayerDB API.
 ./scripts/player.sh uuid <playerName> --offline # Offline UUID only
 ```
 
+### 4.4 Implement backup.sh ([#26](https://github.com/smallmiro/minecraft-server-manager/issues/26))
+
+**File**: `platform/scripts/backup.sh`
+
+GitHub backup for worlds/ directory. Auto-backup triggers on `mcctl.sh stop`.
+
+**Environment Variables** (in `.env`):
+```bash
+BACKUP_GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+BACKUP_GITHUB_REPO=username/minecraft-worlds-backup
+BACKUP_AUTO_ON_STOP=true
+```
+
+**Commands**:
+```bash
+./scripts/backup.sh push [--message "msg"]  # Backup to GitHub
+./scripts/backup.sh status                   # Show configuration
+./scripts/backup.sh history [--json]         # Backup history
+./scripts/backup.sh restore <commit>         # Restore from commit
+```
+
 ---
 
 ## Phase 5: Documentation Update
@@ -478,16 +499,17 @@ Add sections:
 | `platform/servers/_template/` | 1 | ✅ |
 | `platform/servers/ironwood/` | 2 | ✅ |
 | `platform/scripts/create-server.sh` | 2 | ✅ |
+| `platform/services/mdns-publisher/` | 2.5 | ✅ |
+| `platform/scripts/lock.sh` | 3 | ✅ |
+| `platform/scripts/mcctl.sh` | 4 | ✅ |
+| `platform/scripts/logs.sh` | 4 | ✅ |
+| `platform/scripts/player.sh` | 4 | ✅ |
 
 ### Pending
 
 | File | Phase | Issue |
 |------|-------|-------|
-| `platform/services/mdns-publisher/` | 2.5 | [#20](https://github.com/smallmiro/minecraft-server-manager/issues/20) |
-| `platform/scripts/lock.sh` | 3 | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) |
-| `platform/scripts/mcctl.sh` | 4 | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8) |
-| `platform/scripts/logs.sh` | 4 | [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9) |
-| `platform/scripts/player.sh` | 4 | [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) |
+| `platform/scripts/backup.sh` | 4 | [#26](https://github.com/smallmiro/minecraft-server-manager/issues/26) |
 
 ---
 
@@ -530,6 +552,22 @@ ss -tuln | grep 25565
 ./scripts/mcctl.sh status
 ./scripts/mcctl.sh status --json
 ./scripts/mcctl.sh world list
+
+# Test lock.sh
+./scripts/lock.sh list
+./scripts/lock.sh lock test-world mc-test
+./scripts/lock.sh check test-world
+./scripts/lock.sh unlock test-world mc-test
+
+# Test player.sh
+./scripts/player.sh lookup Notch
+./scripts/player.sh uuid Steve --offline
+
+# Test backup.sh (requires .env configuration)
+./scripts/backup.sh status
+# If configured:
+# ./scripts/backup.sh push -m "Test backup"
+# ./scripts/backup.sh history
 
 # Test mc-router auto-start (connect with MC client)
 # 1. Add to hosts: <host-ip> ironwood.local
