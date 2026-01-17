@@ -22,21 +22,23 @@ minecraft/
 
 ## Custom Commands
 
-### /project:work
+> **Note**: Commands are invoked as `/command-name` (not `/project:command-name`)
+
+### /work
 
 Executes development work based on GitHub Issues or Milestones following the project workflow.
 
 ```bash
 # Single issue implementation
-/project:work --issue 7
+/work --issue 7
 
 # Process all issues in milestone (uses Ralph Loop)
-/project:work --milestone 1
+/work --milestone 1
 
 # Options
-/project:work --issue 7 --dry-run      # Plan only, no execution
-/project:work --issue 7 --skip-review  # Skip code review (emergency)
-/project:work --milestone 1 --parallel # Auto-parallelize independent issues
+/work --issue 7 --dry-run      # Plan only, no execution
+/work --issue 7 --skip-review  # Skip code review (emergency)
+/work --milestone 1 --parallel # Auto-parallelize independent issues
 ```
 
 This command performs the following tasks:
@@ -56,13 +58,13 @@ This command performs the following tasks:
 5. Create PR and run code review
 6. Merge on approval, close issue
 
-### /project:update-docs
+### /update-docs
 
 Reads the official documentation (https://docker-minecraft-server.readthedocs.io/) and updates the docs/ directory to the latest state.
 
 ```bash
 # Run in Claude Code
-/project:update-docs
+/update-docs
 ```
 
 This command performs the following tasks:
@@ -71,13 +73,13 @@ This command performs the following tasks:
 - Updates documents with changes
 - Maintains existing format (environment variable tables, example code blocks)
 
-### /project:sync-docs
+### /sync-docs
 
 Analyzes the codebase and synchronizes project documentation (CLAUDE.md, README.md, prd.md) with the current state.
 
 ```bash
 # Run in Claude Code
-/project:sync-docs
+/sync-docs
 ```
 
 This command performs the following tasks:
@@ -86,7 +88,7 @@ This command performs the following tasks:
 - Syncs README.md quick start examples
 - Updates prd.md if it exists
 
-**Important**: This command does NOT edit files in `docs/` directory. Those are managed by `/project:update-docs`.
+**Important**: This command does NOT edit files in `docs/` directory. Those are managed by `/update-docs`.
 
 ## Development Philosophy
 
