@@ -422,7 +422,7 @@ router:
     AUTO_SCALE_DOWN: "true"
     AUTO_SCALE_DOWN_AFTER: "10m"
     DOCKER_TIMEOUT: "120"
-    AUTO_SCALE_ASLEEP_MOTD: "§e§lStarting server...§r\n§7Please wait while the server wakes up!"
+    AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"
   ports:
     - "25565:25565"
   volumes:
@@ -450,7 +450,7 @@ labels:
   mc-router.host: "ironwood.local"
   mc-router.auto-scale-up: "true"
   mc-router.auto-scale-down: "true"
-  mc-router.auto-scale-asleep-motd: "§e§lStarting server...§r\n§7Please wait while the server wakes up!"
+  mc-router.auto-scale-asleep-motd: "§e§lServer is sleeping§r\n§7Connect to wake up!"
 ```
 
 #### Resource Efficiency
