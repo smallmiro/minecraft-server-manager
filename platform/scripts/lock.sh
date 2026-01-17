@@ -23,9 +23,18 @@
 
 set -e
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
+# Get script/platform directories
+# Support both direct execution and npm package execution (mcctl CLI)
+if [[ -n "${MCCTL_ROOT:-}" ]]; then
+    # Running via npm package
+    PLATFORM_DIR="$MCCTL_ROOT"
+    SCRIPT_DIR="${MCCTL_SCRIPTS:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+else
+    # Running directly (development mode)
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
+fi
+
 WORLDS_DIR="$PLATFORM_DIR/worlds"
 LOCKS_DIR="$WORLDS_DIR/.locks"
 
