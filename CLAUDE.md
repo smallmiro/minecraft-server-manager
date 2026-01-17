@@ -340,9 +340,19 @@ Clients on the same LAN can connect directly via Minecraft: `<server-name>.local
 | macOS | Built-in Bonjour (no setup needed) |
 | Windows | Bonjour Print Services or iTunes |
 
-**Server Requirements**:
-- avahi-daemon installed and running
+**Server Host Requirements**:
+- avahi-daemon installed and running (see setup below)
 - HOST_IP set in `.env` (or auto-detected)
+
+**avahi-daemon Installation**:
+| OS | Command |
+|----|---------|
+| Debian/Ubuntu | `sudo apt install avahi-daemon && sudo systemctl enable --now avahi-daemon` |
+| CentOS/RHEL | `sudo dnf install avahi && sudo systemctl enable --now avahi-daemon` |
+| Arch Linux | `sudo pacman -S avahi nss-mdns && sudo systemctl enable --now avahi-daemon` |
+| Alpine Linux | `apk add avahi && rc-update add avahi-daemon default && rc-service avahi-daemon start` |
+
+See [README.md mDNS Setup Guide](README.md#mdns-setup-guide) for detailed instructions including Windows WSL.
 
 **Fallback (if mDNS unavailable)**:
 Configure hosts file:

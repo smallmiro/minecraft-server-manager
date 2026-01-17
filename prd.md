@@ -465,20 +465,92 @@ labels:
 | 3 servers running | 12GB + 20MB | Variable |
 
 #### External Access
-With mDNS publisher enabled, PCs on the same LAN automatically discover servers:
+With mDNS (avahi-daemon) enabled, PCs on the same LAN automatically discover servers:
 ```
 # No configuration needed with mDNS!
 # Just connect directly:
 ironwood.local:25565
 
-# mDNS requirements:
-# - Linux: avahi-daemon (usually pre-installed)
-# - macOS: Built-in Bonjour (no setup needed)
-# - Windows: Bonjour Print Services or iTunes (provides Bonjour)
-
 # Fallback (if mDNS unavailable):
 # Add to /etc/hosts or C:\Windows\System32\drivers\etc\hosts
 192.168.1.100 ironwood.local
+```
+
+#### mDNS Setup Guide
+
+**Server Host Setup** (where Minecraft servers run):
+
+| OS | Installation Command |
+|----|---------------------|
+| Debian/Ubuntu | `sudo apt install avahi-daemon && sudo systemctl enable --now avahi-daemon` |
+| CentOS/RHEL/Fedora | `sudo dnf install avahi && sudo systemctl enable --now avahi-daemon` |
+| Arch Linux | `sudo pacman -S avahi nss-mdns && sudo systemctl enable --now avahi-daemon` |
+| Alpine Linux | `apk add avahi && rc-update add avahi-daemon default && rc-service avahi-daemon start` |
+
+**Client Setup** (connecting to servers):
+
+| OS | Setup |
+|----|-------|
+| Linux | Install avahi-daemon (same as server) |
+| macOS | Built-in Bonjour (no setup needed) |
+| Windows | Install [Bonjour Print Services](https://support.apple.com/kb/DL999) or iTunes |
+| Windows WSL2 | Install avahi-daemon in WSL; for Windows apps, use Bonjour |
+
+**Detailed Setup Instructions**:
+
+**Debian / Ubuntu (Systemd)**:
+```bash
+sudo apt update
+sudo apt install avahi-daemon
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+```
+
+**CentOS / RHEL / Fedora (Systemd)**:
+```bash
+sudo dnf install avahi
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+# If firewalld is active:
+sudo firewall-cmd --permanent --add-service=mdns
+sudo firewall-cmd --reload
+```
+
+**Arch Linux (Systemd)**:
+```bash
+sudo pacman -S avahi nss-mdns
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+# Edit /etc/nsswitch.conf: add 'mdns_minimal [NOTFOUND=return]' before 'resolve'
+```
+
+**Alpine Linux (OpenRC)**:
+```bash
+apk add avahi
+rc-update add avahi-daemon default
+rc-service avahi-daemon start
+```
+
+**Windows WSL2**:
+```bash
+# Inside WSL2 Ubuntu
+sudo apt update
+sudo apt install avahi-daemon
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+# Note: For Windows apps, install Bonjour Print Services
+```
+
+**Verification**:
+```bash
+# Test hostname resolution
+ping myserver.local
+
+# Discover mDNS services
+avahi-browse -art
+
+# Check registered hostnames
+cat /etc/avahi/hosts
 ```
 
 ## 5. Implementation Plan
