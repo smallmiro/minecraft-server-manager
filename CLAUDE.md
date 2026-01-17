@@ -113,6 +113,35 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
+### Semantic Versioning
+
+This project follows [Semantic Versioning 2.0.0](https://semver.org/).
+
+**Format**: `MAJOR.MINOR.PATCH` (e.g., `1.2.3`)
+
+| Version | When to Increment | Example |
+|---------|-------------------|---------|
+| **MAJOR** | Incompatible API/breaking changes | `1.0.0` → `2.0.0` |
+| **MINOR** | New features (backward compatible) | `1.0.0` → `1.1.0` |
+| **PATCH** | Bug fixes (backward compatible) | `1.0.0` → `1.0.1` |
+
+**Key Rules**:
+- `0.x.x`: Initial development, API may change anytime
+- `1.0.0`: First stable release, public API defined
+- When MAJOR increments → reset MINOR and PATCH to 0
+- When MINOR increments → reset PATCH to 0
+
+**Pre-release & Build Metadata**:
+```
+1.0.0-alpha      # Pre-release (lower precedence than 1.0.0)
+1.0.0-alpha.1    # Pre-release with identifier
+1.0.0-beta       # Beta release
+1.0.0-rc.1       # Release candidate
+1.0.0+20250117   # Build metadata (ignored in precedence)
+```
+
+**Version Precedence**: `1.0.0-alpha` < `1.0.0-alpha.1` < `1.0.0-beta` < `1.0.0-rc.1` < `1.0.0`
+
 ### Task Checkpoint (task.md)
 
 During development, use `task.md` to track work-in-progress:
