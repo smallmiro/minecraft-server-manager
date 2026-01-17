@@ -2,8 +2,13 @@
 # Multi-Server Minecraft Docker Compose Configuration
 # =============================================================================
 # Architecture:
-#   - mc-router: Connection router with auto-scale support
+#   - mc-router: Connection router with auto-scale support (hostname-based)
 #   - MC Servers: Started on-demand, stopped when idle
+#
+# Connection (requires hosts file or DNS configuration):
+#   - Survival: survival.local:25565
+#   - Creative: creative.local:25565
+#   - Modded:   modded.local:25565
 # =============================================================================
 
 # Common Minecraft server configuration (YAML anchor)
@@ -36,9 +41,9 @@ services:
       --docker-timeout=120
       --auto-scale-asleep-motd=§e서버가 시작 중입니다... 잠시만 기다려주세요!
     ports:
-      - "25565:25565"  # All servers via hostname routing
+      - "25565:25565"
     environment:
-      # Static mapping (hostname=backend:port)
+      # Hostname-based routing
       # Clients connect with: survival.local, creative.local, modded.local
       MAPPING: |
         survival.local=mc-survival:25565
@@ -58,7 +63,7 @@ services:
   # ===========================================================================
 
   # ---------------------------------------------------------------------------
-  # Survival Server (PAPER)
+  # Survival Server (PAPER) - Connect via survival.local:25565
   # ---------------------------------------------------------------------------
   mc-survival:
     <<: *minecraft-common
@@ -77,7 +82,7 @@ services:
       - "mc-router.auto-scale-down=true"
 
   # ---------------------------------------------------------------------------
-  # Creative Server (VANILLA)
+  # Creative Server (VANILLA) - Connect via creative.local:25565
   # ---------------------------------------------------------------------------
   mc-creative:
     <<: *minecraft-common
@@ -96,7 +101,7 @@ services:
       - "mc-router.auto-scale-down=true"
 
   # ---------------------------------------------------------------------------
-  # Modded Server (FORGE)
+  # Modded Server (FORGE) - Connect via modded.local:25565
   # ---------------------------------------------------------------------------
   mc-modded:
     <<: *minecraft-common
@@ -123,4 +128,4 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: ${MINECRAFT_SUBNET:-172.20.0.0/16}
+        - subnet: ${MINECRAFT_SUBNET:-172.28.0.0/16}
