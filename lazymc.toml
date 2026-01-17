@@ -1,0 +1,101 @@
+# =============================================================================
+# Lazymc Configuration - Multi-Server Proxy
+# =============================================================================
+# Documentation: https://github.com/timvisee/lazymc
+# =============================================================================
+
+# =============================================================================
+# Survival Server - Port 25565
+# =============================================================================
+[[servers]]
+name = "survival"
+
+[servers.public]
+address = "0.0.0.0:25565"
+protocol = 765  # 1.20.4
+version = "1.20.4"
+motd = "§a§lSurvival§r - §7Starting server..."
+
+[servers.server]
+address = "mc-survival:25565"
+wake_timeout = 300      # 5 min to wake
+start_timeout = 600     # 10 min to fully start
+stop_timeout = 60       # 1 min to stop gracefully
+
+[servers.time]
+sleep_after = 600       # 10 min idle = sleep
+minimum_online_time = 60  # Min 1 min before auto-sleep
+
+[servers.join]
+kick = false            # Don't kick, wait for server
+hold_duration = 300     # Hold connection 5 min while starting
+hold_message = "§eSurvival server is starting...\\n§7Please wait, this may take a few minutes."
+
+[servers.docker]
+enabled = true
+container = "mc-survival"
+socket = "unix:///var/run/docker.sock"
+
+# =============================================================================
+# Creative Server - Port 25566
+# =============================================================================
+[[servers]]
+name = "creative"
+
+[servers.public]
+address = "0.0.0.0:25566"
+protocol = 765  # 1.20.4
+version = "1.20.4"
+motd = "§b§lCreative§r - §7Starting server..."
+
+[servers.server]
+address = "mc-creative:25565"
+wake_timeout = 300
+start_timeout = 600
+stop_timeout = 60
+
+[servers.time]
+sleep_after = 600
+minimum_online_time = 60
+
+[servers.join]
+kick = false
+hold_duration = 300
+hold_message = "§eCreative server is starting...\\n§7Please wait, this may take a few minutes."
+
+[servers.docker]
+enabled = true
+container = "mc-creative"
+socket = "unix:///var/run/docker.sock"
+
+# =============================================================================
+# Modded Server - Port 25567
+# =============================================================================
+[[servers]]
+name = "modded"
+
+[servers.public]
+address = "0.0.0.0:25567"
+protocol = 765  # 1.20.1 (Forge often uses older versions)
+version = "1.20.1"
+motd = "§6§lModded§r - §7Starting server..."
+
+[servers.server]
+address = "mc-modded:25565"
+wake_timeout = 600      # 10 min for modded (more mods = longer)
+start_timeout = 900     # 15 min for mod loading
+stop_timeout = 120      # 2 min for world save
+
+[servers.time]
+sleep_after = 900       # 15 min idle (modded takes longer to start)
+minimum_online_time = 120  # Min 2 min before auto-sleep
+
+[servers.join]
+kick = false
+hold_duration = 600     # 10 min hold for modded
+hold_message = "§eModded server is starting...\\n§7Forge servers take longer to load.\\n§7Please be patient!"
+
+[servers.docker]
+enabled = true
+container = "mc-modded"
+socket = "unix:///var/run/docker.sock"
