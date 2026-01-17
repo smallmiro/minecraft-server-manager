@@ -40,7 +40,7 @@ export class Paths {
 
   constructor(dataDir?: string) {
     this.packageRoot = getPackageRoot();
-    this.dataDir = dataDir ?? process.env['MCCTL_ROOT'] ?? join(homedir(), '.minecraft-servers');
+    this.dataDir = dataDir ?? process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
   }
 
   /** User data directory (~/.minecraft-servers) */
