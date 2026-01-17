@@ -736,9 +736,555 @@ SIMULATION_DISTANCE=8
 - Only game ports exposed to host
 - RCON accessible only from localhost
 
-## 9. Future Enhancements
+## 9. CLI Architecture (Hexagonal + Clean Architecture)
 
-### 9.1 Planned: Web Management UI (All-in-One Package)
+### 9.1 Design Principles
+
+#### SOLID Principles
+| Principle | Application |
+|-----------|-------------|
+| **SRP** | Each class has single responsibility (e.g., `ServerCreator` only creates servers) |
+| **OCP** | Open for extension via interfaces, closed for modification |
+| **LSP** | All implementations are substitutable for their interfaces |
+| **ISP** | Small, focused interfaces (e.g., `IPromptPort`, `IShellPort`) |
+| **DIP** | Domain depends on abstractions, not concrete implementations |
+
+#### Clean Code Guidelines
+- Meaningful names: `createServerWithPrompts()` not `create()`
+- Small functions: Max 20 lines per function
+- No side effects: Pure functions where possible
+- Error handling: Result pattern over exceptions
+
+#### Technology Stack: CLI Framework
+
+| Component | Package | Purpose |
+|-----------|---------|---------|
+| **Prompts** | `@clack/prompts` | Interactive CLI prompts (input, select, confirm, multiselect) |
+| **Spinner** | `@clack/prompts` (built-in) | Progress indicators during async operations |
+| **Colors** | `picocolors` | Terminal color styling (lightweight alternative to chalk) |
+
+**Why @clack/prompts?**
+- Modern, accessible UI with beautiful terminal output
+- Built-in spinner functionality (no separate `ora` dependency)
+- Small bundle size (~20KB vs inquirer's ~200KB)
+- TypeScript-first with excellent type inference
+- Active maintenance and growing ecosystem
+
+**Example Usage:**
+```typescript
+import * as p from '@clack/prompts';
+
+// Start a prompt group with intro
+p.intro('Create Minecraft Server');
+
+// Text input with validation
+const name = await p.text({
+  message: 'Server name',
+  placeholder: 'myserver',
+  validate: (value) => {
+    if (!/^[a-z0-9-]+$/.test(value)) {
+      return 'Only lowercase letters, numbers, and hyphens allowed';
+    }
+  }
+});
+
+// Select with options
+const type = await p.select({
+  message: 'Server type',
+  options: [
+    { value: 'PAPER', label: 'Paper', hint: 'High-performance (recommended)' },
+    { value: 'VANILLA', label: 'Vanilla', hint: 'Official Mojang server' },
+    { value: 'FORGE', label: 'Forge', hint: 'Mod support' },
+    { value: 'FABRIC', label: 'Fabric', hint: 'Lightweight mods' },
+  ]
+});
+
+// Spinner for async operations
+const s = p.spinner();
+s.start('Creating server...');
+await createServer(name, type);
+s.stop('Server created!');
+
+// End with outro
+p.outro('Connect via: myserver.local:25565');
+```
+
+### 9.2 Hexagonal Architecture Overview
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│                         PRESENTATION LAYER                         │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐        │
+│  │   CLI Entry    │  │  Web API       │  │  (Future)      │        │
+│  │   (index.ts)   │  │  (Next.js)     │  │  Discord Bot   │        │
+│  └───────┬────────┘  └───────┬────────┘  └───────┬────────┘        │
+└──────────┼───────────────────┼───────────────────┼─────────────────┘
+           │                   │                   │
+           ▼                   ▼                   ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                      PRIMARY ADAPTERS (Driving)                    │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    Command Handlers                         │   │
+│  │   CreateServerCommand │ DeleteServerCommand │ StatusCommand │   │
+│  └────────────────────────────────┬────────────────────────────┘   │
+└───────────────────────────────────┼────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                         PRIMARY PORTS (Inbound)                    │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │IServerUseCase│  │IWorldUseCase │  │IBackupUseCase│              │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘              │
+└─────────┼─────────────────┼─────────────────┼──────────────────────┘
+          │                 │                 │
+          ▼                 ▼                 ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                     APPLICATION LAYER (Use Cases)                  │
+│  ┌────────────────────────────────────────────────────────────┐    │
+│  │  CreateServerUseCase │ DeleteServerUseCase │ BackupUseCase │    │
+│  │  AssignWorldUseCase  │ LockWorldUseCase    │ StatusUseCase │    │
+│  └────────────────────────────────┬───────────────────────────┘    │
+└───────────────────────────────────┼────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                          DOMAIN LAYER                              │
+│  ┌────────────────────────────────────────────────────────────┐    │
+│  │                      Entities                              │    │
+│  │   Server │ World │ Lock │ Player │ Backup │ ServerConfig   │    │
+│  ├────────────────────────────────────────────────────────────┤    │
+│  │                    Value Objects                           │    │
+│  │   ServerName │ ServerType │ McVersion │ WorldSeed │ UUID   │    │
+│  ├────────────────────────────────────────────────────────────┤    │
+│  │                   Domain Services                          │    │
+│  │   ServerConfigBuilder │ WorldValidator │ LockManager       │    │
+│  └────────────────────────────────────────────────────────────┘    │
+└────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                       SECONDARY PORTS (Outbound)                   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │ IPromptPort  │  │ IShellPort   │  │ IDocProvider │              │
+│  │ IConfigPort  │  │ IDockerPort  │  │ IPlayerAPI   │              │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘              │
+└─────────┼─────────────────┼─────────────────┼──────────────────────┘
+          │                 │                 │
+          ▼                 ▼                 ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                    SECONDARY ADAPTERS (Driven)                     │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐        │
+│  │ ClackPrompt    │  │ BashShellExec  │  │ DocsProvider   │        │
+│  │ ConfigFileRepo │  │ DockerodeAPI   │  │ PlayerDBAPI    │        │
+│  └────────────────┘  └────────────────┘  └────────────────┘        │
+│                                                                    │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    Bash Scripts (Delegation)                │   │
+│  │   create-server.sh │ delete-server.sh │ backup.sh │ lock.sh │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+### 9.3 Directory Structure
+
+```
+platform/services/
+├── shared/                          # @minecraft-docker/shared
+│   └── src/
+│       ├── index.ts
+│       ├── types/                   # Shared type definitions
+│       │   ├── server.types.ts
+│       │   ├── world.types.ts
+│       │   └── config.types.ts
+│       ├── utils/                   # Pure utility functions
+│       │   ├── paths.ts
+│       │   ├── logger.ts
+│       │   └── validation.ts
+│       └── docker/                  # Docker utilities
+│           └── client.ts
+│
+└── cli/                             # @minecraft-docker/mcctl
+    └── src/
+        │
+        ├── index.ts                 # Entry point (bootstrap DI)
+        │
+        ├── domain/                  # 🟢 DOMAIN LAYER (innermost)
+        │   ├── entities/
+        │   │   ├── Server.ts        # Server entity
+        │   │   ├── World.ts         # World entity
+        │   │   ├── Lock.ts          # Lock entity
+        │   │   └── ServerConfig.ts  # Configuration entity
+        │   │
+        │   ├── value-objects/
+        │   │   ├── ServerName.ts    # Validated server name
+        │   │   ├── ServerType.ts    # PAPER | FORGE | FABRIC | ...
+        │   │   ├── McVersion.ts     # Minecraft version
+        │   │   ├── WorldSeed.ts     # World seed value
+        │   │   └── Memory.ts        # Memory allocation (e.g., "4G")
+        │   │
+        │   └── services/
+        │       ├── ServerConfigBuilder.ts
+        │       └── WorldValidator.ts
+        │
+        ├── application/             # 🟡 APPLICATION LAYER (use cases)
+        │   ├── ports/
+        │   │   ├── inbound/         # Primary ports (driving)
+        │   │   │   ├── IServerUseCase.ts
+        │   │   │   ├── IWorldUseCase.ts
+        │   │   │   └── IBackupUseCase.ts
+        │   │   │
+        │   │   └── outbound/        # Secondary ports (driven)
+        │   │       ├── IPromptPort.ts       # User interaction
+        │   │       ├── IShellPort.ts        # Script execution
+        │   │       ├── IConfigPort.ts       # Config file access
+        │   │       ├── IDockerPort.ts       # Docker operations
+        │   │       ├── IDocProvider.ts      # Documentation access
+        │   │       └── IPlayerAPIPort.ts    # Player lookup API
+        │   │
+        │   └── use-cases/
+        │       ├── server/
+        │       │   ├── CreateServerUseCase.ts
+        │       │   ├── DeleteServerUseCase.ts
+        │       │   └── ServerStatusUseCase.ts
+        │       ├── world/
+        │       │   ├── AssignWorldUseCase.ts
+        │       │   └── LockWorldUseCase.ts
+        │       └── backup/
+        │           └── BackupUseCase.ts
+        │
+        ├── infrastructure/          # 🔴 INFRASTRUCTURE LAYER (adapters)
+        │   ├── adapters/
+        │   │   ├── prompt/
+        │   │   │   ├── ClackPromptAdapter.ts
+        │   │   │   └── prompts/     # Prompt definitions
+        │   │   │       ├── ServerPrompts.ts
+        │   │   │       ├── WorldPrompts.ts
+        │   │   │       └── BackupPrompts.ts
+        │   │   │
+        │   │   ├── shell/
+        │   │   │   └── BashShellAdapter.ts   # Bash script executor
+        │   │   │
+        │   │   ├── config/
+        │   │   │   └── FileConfigAdapter.ts  # .env, config.env
+        │   │   │
+        │   │   ├── docker/
+        │   │   │   └── DockerodeAdapter.ts   # Docker API
+        │   │   │
+        │   │   ├── docs/
+        │   │   │   └── DocsProviderAdapter.ts # docs/ reader
+        │   │   │
+        │   │   └── api/
+        │   │       └── PlayerDBAdapter.ts    # PlayerDB API
+        │   │
+        │   └── di/
+        │       └── container.ts     # Dependency injection setup
+        │
+        └── presentation/            # 🔵 PRESENTATION LAYER
+            └── cli/
+                ├── commands/
+                │   ├── CreateServerCommand.ts
+                │   ├── DeleteServerCommand.ts
+                │   ├── StatusCommand.ts
+                │   ├── WorldCommand.ts
+                │   ├── PlayerCommand.ts
+                │   └── BackupCommand.ts
+                │
+                └── handlers/
+                    └── CommandRouter.ts
+```
+
+### 9.4 Port Interfaces
+
+#### IPromptPort (User Interaction)
+```typescript
+// application/ports/outbound/IPromptPort.ts
+export interface IPromptPort {
+  // Basic prompts
+  input(message: string, options?: InputOptions): Promise<string>;
+  select<T>(message: string, choices: Choice<T>[]): Promise<T>;
+  confirm(message: string, defaultValue?: boolean): Promise<boolean>;
+
+  // Domain-specific prompts (composed from docs/)
+  promptServerName(): Promise<ServerName>;
+  promptServerType(): Promise<ServerType>;
+  promptMcVersion(type: ServerType): Promise<McVersion>;
+  promptWorldOptions(): Promise<WorldOptions>;
+  promptMemory(): Promise<Memory>;
+
+  // Feedback
+  spinner(message: string): Spinner;
+  success(message: string): void;
+  error(message: string): void;
+  warn(message: string): void;
+}
+```
+
+#### IShellPort (Script Execution)
+```typescript
+// application/ports/outbound/IShellPort.ts
+export interface IShellPort {
+  // Script execution (delegates to Bash)
+  createServer(name: ServerName, config: ServerConfig): Promise<Result<void>>;
+  deleteServer(name: ServerName, force: boolean): Promise<Result<void>>;
+  startServer(name: ServerName): Promise<Result<void>>;
+  stopServer(name: ServerName): Promise<Result<void>>;
+
+  // World operations
+  lockWorld(world: string, server: string): Promise<Result<void>>;
+  unlockWorld(world: string, server: string): Promise<Result<void>>;
+
+  // Backup operations
+  backupPush(message: string): Promise<Result<void>>;
+  backupRestore(commit: string): Promise<Result<void>>;
+}
+```
+
+#### IDocProvider (Documentation Access)
+```typescript
+// application/ports/outbound/IDocProvider.ts
+export interface IDocProvider {
+  // Server types from docs/06-types-and-platforms.md
+  getServerTypes(): Promise<ServerTypeInfo[]>;
+  getServerTypeDetails(type: ServerType): Promise<ServerTypeDetails>;
+
+  // Variables from docs/03-variables.md
+  getVariables(category?: string): Promise<Variable[]>;
+  getVariableDescription(name: string): Promise<string>;
+
+  // Versions
+  getSupportedVersions(type: ServerType): Promise<McVersion[]>;
+}
+```
+
+### 9.5 Use Case Example: CreateServerUseCase
+
+```typescript
+// application/use-cases/server/CreateServerUseCase.ts
+export class CreateServerUseCase implements IServerUseCase {
+  constructor(
+    private readonly promptPort: IPromptPort,
+    private readonly shellPort: IShellPort,
+    private readonly docProvider: IDocProvider,
+    private readonly configPort: IConfigPort,
+  ) {}
+
+  async execute(options?: Partial<ServerConfig>): Promise<Result<Server>> {
+    // 1. Collect information via prompts (uses docs/ for choices)
+    const serverTypes = await this.docProvider.getServerTypes();
+
+    const name = options?.name ?? await this.promptPort.promptServerName();
+    const type = options?.type ?? await this.promptPort.promptServerType();
+    const version = options?.version ?? await this.promptPort.promptMcVersion(type);
+    const worldOptions = await this.promptPort.promptWorldOptions();
+    const memory = options?.memory ?? await this.promptPort.promptMemory();
+
+    // 2. Build validated config (domain service)
+    const config = ServerConfigBuilder.create()
+      .withName(name)
+      .withType(type)
+      .withVersion(version)
+      .withWorld(worldOptions)
+      .withMemory(memory)
+      .build();
+
+    // 3. Confirm with user
+    this.promptPort.showSummary(config);
+    const confirmed = await this.promptPort.confirm('Create server?');
+    if (!confirmed) {
+      return Result.cancelled();
+    }
+
+    // 4. Execute via shell (delegates to Bash script)
+    const spinner = this.promptPort.spinner('Creating server...');
+    const result = await this.shellPort.createServer(name, config);
+
+    if (result.isSuccess()) {
+      spinner.succeed(`Server '${name.value}' created!`);
+      return Result.ok(new Server(name, config));
+    } else {
+      spinner.fail('Failed to create server');
+      return Result.fail(result.error);
+    }
+  }
+}
+```
+
+### 9.6 Prompt Flow with Docs Integration
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                     User runs: mcctl create                      │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  ClackPromptAdapter.promptServerName()                           │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  ◆ 서버 이름을 입력하세요: █                                    │  │
+│  │    (소문자, 숫자, 하이픈만 사용 가능)                            │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │ validated: ServerName("myserver")
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  DocsProviderAdapter.getServerTypes()                            │
+│  → Reads docs/06-types-and-platforms.md                          │
+│  → Returns: [PAPER, VANILLA, FORGE, FABRIC, QUILT, ...]          │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  ClackPromptAdapter.promptServerType()                           │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  ◆ 서버 타입을 선택하세요:                                      │  │
+│  │  ● Paper (추천) - High-performance Spigot fork              │  │
+│  │  ○ Vanilla - Official Mojang server                        │  │
+│  │    Forge - Mod support server                              │  │
+│  │    Fabric - Lightweight mod loader                         │  │
+│  │    Quilt - Fabric compatible                               │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │ selected: ServerType.PAPER
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  ClackPromptAdapter.promptMcVersion(PAPER)                       │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  ? Minecraft 버전을 입력하세요: 1.21.1                         │  │
+│  │    (지원: 1.8.8 ~ 1.21.1)                                   │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  ClackPromptAdapter.promptWorldOptions()                         │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  ? 월드 설정 방법을 선택하세요:                                  │  │
+│  │  ❯ 새 월드 생성 (기본)                                         │  │
+│  │    시드 지정                                                 │  │
+│  │    기존 월드 사용                                             │  │
+│  │    URL에서 다운로드                                           │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  ClackPromptAdapter.promptMemory()                               │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  ? 메모리 할당량: 4G                                          │  │
+│  │    (형식: 2G, 4G, 8G 또는 2048M)                             │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  Confirmation Summary                                            │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  📋 설정 확인:                                               │  │
+│  │     이름: myserver                                          │  │
+│  │     타입: PAPER                                             │  │
+│  │     버전: 1.21.1                                            │  │
+│  │     월드: 새 월드 생성                                         │  │
+│  │     메모리: 4G                                               │  │
+│  │                                                            │  │
+│  │  ? 서버를 생성할까요? (Y/n)                                    │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │ confirmed: true
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  BashShellAdapter.createServer()                                 │
+│  → Executes: create-server.sh myserver -t PAPER -v 1.21.1        │
+│  → Shows spinner while executing                                 │
+│  → Returns: Result<void>                                         │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### 9.7 Dependency Injection
+
+```typescript
+// infrastructure/di/container.ts
+import { CreateServerUseCase } from '@/application/use-cases/server/CreateServerUseCase';
+import { ClackPromptAdapter } from '@/infrastructure/adapters/prompt/ClackPromptAdapter';
+import { BashShellAdapter } from '@/infrastructure/adapters/shell/BashShellAdapter';
+import { DocsProviderAdapter } from '@/infrastructure/adapters/docs/DocsProviderAdapter';
+import { FileConfigAdapter } from '@/infrastructure/adapters/config/FileConfigAdapter';
+
+export function createContainer(paths: Paths) {
+  // Secondary adapters (driven side)
+  const promptAdapter = new ClackPromptAdapter();
+  const shellAdapter = new BashShellAdapter(paths);
+  const docsAdapter = new DocsProviderAdapter(paths.docs);
+  const configAdapter = new FileConfigAdapter(paths);
+
+  // Use cases (application layer)
+  const createServerUseCase = new CreateServerUseCase(
+    promptAdapter,
+    shellAdapter,
+    docsAdapter,
+    configAdapter,
+  );
+
+  const deleteServerUseCase = new DeleteServerUseCase(
+    promptAdapter,
+    shellAdapter,
+    configAdapter,
+  );
+
+  // ... other use cases
+
+  return {
+    useCases: {
+      createServer: createServerUseCase,
+      deleteServer: deleteServerUseCase,
+      // ...
+    },
+    adapters: {
+      prompt: promptAdapter,
+      shell: shellAdapter,
+      docs: docsAdapter,
+      config: configAdapter,
+    },
+  };
+}
+```
+
+### 9.8 Benefits of This Architecture
+
+| Benefit | Description |
+|---------|-------------|
+| **Testability** | Use cases can be unit tested with mock ports |
+| **Flexibility** | Swap adapters without changing business logic |
+| **Docs-Driven** | Prompts dynamically generated from docs/ |
+| **Type Safety** | Value objects ensure valid data at compile time |
+| **Separation** | Clear boundary between TS logic and Bash scripts |
+| **Extensibility** | Easy to add Web UI or Discord bot as new adapters |
+
+### 9.9 Migration Path
+
+#### Phase 1: Infrastructure Setup
+- [ ] Add dependencies: `@clack/prompts`, `picocolors`
+- [ ] Create port interfaces
+- [ ] Implement `ClackPromptAdapter`
+- [ ] Implement `DocsProviderAdapter`
+
+#### Phase 2: Core Use Cases
+- [ ] Implement `CreateServerUseCase` with prompts
+- [ ] Implement `DeleteServerUseCase` with confirmation
+- [ ] Implement `StatusCommand` (pure TypeScript)
+
+#### Phase 3: Enhanced Features
+- [ ] Add `PlayerCommand` (TypeScript, no Bash)
+- [ ] Add `WorldCommand` with interactive assignment
+- [ ] Add `BackupCommand` with prompts
+
+#### Phase 4: Polish
+- [ ] Add progress indicators
+- [ ] Improve error messages
+- [ ] Add `--yes` flag for non-interactive mode
+
+## 10. Future Enhancements
+
+### 10.1 Planned: Web Management UI (All-in-One Package)
 
 **Goal**: Create a web-based management tool that provides complete control over the Minecraft server infrastructure.
 
@@ -819,12 +1365,12 @@ minecraft-server-manager/
     └──────────┘ └──────────┘ └──────────┘
 ```
 
-### 9.2 Other Planned Features
+### 10.2 Other Planned Features
 - [ ] Automated backup scheduling
 - [ ] Discord integration for notifications
 - [ ] Prometheus metrics export
 
-### 9.3 Considered
+### 10.3 Considered
 - [ ] Kubernetes deployment option
 - [ ] Multi-host cluster support
 - [ ] Player synchronization between servers
@@ -838,3 +1384,4 @@ minecraft-server-manager/
 | 1.1.0 | 2025-01-17 | - | Add automatic port assignment (FR-007) |
 | 2.0.0 | 2025-01-17 | - | Replace port assignment with Lazymc auto start/stop |
 | 2.1.0 | 2026-01-17 | - | Migrate from Lazymc to mc-router (hostname routing, Docker auto-scale) |
+| 3.0.0 | 2026-01-18 | - | Add CLI Architecture (Hexagonal + Clean Architecture, SOLID principles) |
