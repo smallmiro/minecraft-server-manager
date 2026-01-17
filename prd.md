@@ -95,6 +95,19 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [ ] External PCs on same LAN can connect via `<host-ip>:<port>`
   - [ ] Multiple servers supported with different ports
 
+#### FR-008: Player UUID Lookup
+- **Priority**: Medium
+- **Description**: Look up player information including Online/Offline UUID via PlayerDB API
+- **API**: `https://playerdb.co/api/player/minecraft/{playerName}`
+- **Acceptance Criteria**:
+  - [ ] Query PlayerDB API to retrieve player information
+  - [ ] Return Online UUID (from Mojang account)
+  - [ ] Calculate Offline UUID (MD5-based Version 3 UUID)
+  - [ ] Display player avatar URL and skin texture
+  - [ ] Support `--json` output for Web API integration
+  - [ ] Integrate with `mcctl.sh player` command
+  - [ ] Handle errors gracefully (player not found, API timeout)
+
 ### 2.2 Non-Functional Requirements
 
 #### NFR-001: Performance

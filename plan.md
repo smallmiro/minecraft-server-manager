@@ -15,7 +15,7 @@
 | Phase 1: Infrastructure | [#1](https://github.com/smallmiro/minecraft-server-manager/issues/1), [#2](https://github.com/smallmiro/minecraft-server-manager/issues/2), [#3](https://github.com/smallmiro/minecraft-server-manager/issues/3) |
 | Phase 2: Docker & Lazymc | [#4](https://github.com/smallmiro/minecraft-server-manager/issues/4), [#5](https://github.com/smallmiro/minecraft-server-manager/issues/5), [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) |
 | Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) |
-| Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9) |
+| Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) |
 | Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) |
 
 ---
@@ -369,7 +369,44 @@ docker ps --filter "name=mc-$server" --format "{{.Status}}"
 
 Helper script for log viewing with Docker and file options.
 
-### 4.3 Make Scripts Executable
+### 4.3 Implement player.sh ([#12](https://github.com/smallmiro/minecraft-server-manager/issues/12))
+
+**File**: `scripts/player.sh`
+
+Player UUID lookup using PlayerDB API.
+
+**API**: `https://playerdb.co/api/player/minecraft/{playerName}`
+
+**Commands**:
+```bash
+./scripts/player.sh lookup <playerName>        # Full player info
+./scripts/player.sh lookup <playerName> --json # JSON output
+./scripts/player.sh uuid <playerName>          # Online UUID only
+./scripts/player.sh uuid <playerName> --offline # Offline UUID only
+```
+
+**Output Example**:
+```
+Player: Seatree1229
+Online UUID:  d2998bfc-9934-4ff1-8c8d-ec9e99609755
+Offline UUID: 3a9b5e8f-1234-3abc-def0-123456789abc
+Avatar: https://crafthead.net/avatar/d2998bfc99344ff18c8dec9e99609755
+```
+
+**Offline UUID Calculation**:
+```bash
+# Version 3 UUID from "OfflinePlayer:<name>"
+echo -n "OfflinePlayer:Seatree1229" | md5sum | \
+  sed 's/^\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\).*/\1\2\3\4-\5\6-3\7\8-\9\10-\11\12\13\14\15\16/'
+```
+
+**mcctl.sh Integration**:
+```
+mcctl.sh player lookup <name>
+mcctl.sh player uuid <name> [--offline]
+```
+
+### 4.4 Make Scripts Executable
 
 ```bash
 chmod +x scripts/*.sh
@@ -410,6 +447,7 @@ Add sections:
 | `scripts/lock.sh` | 3 | High | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) |
 | `scripts/mcctl.sh` | 4 | Medium | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8) |
 | `scripts/logs.sh` | 4 | Medium | [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9) |
+| `scripts/player.sh` | 4 | Medium | [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) |
 
 ### Update Existing Files
 
