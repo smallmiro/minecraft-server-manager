@@ -158,6 +158,11 @@ init_backup_cache() {
         git pull origin "$branch" --rebase 2>/dev/null || true
     fi
 
+    # Configure git user for backup commits (local to this repo)
+    cd "$BACKUP_CACHE_DIR"
+    git config user.email "minecraft-backup@localhost"
+    git config user.name "Minecraft Backup"
+
     cd "$PLATFORM_DIR"
 }
 
