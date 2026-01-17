@@ -60,6 +60,50 @@ esac
 - Bash 4.0+
 - At least 8GB RAM available for servers
 
+## GitHub Issues Integration
+
+Each phase and task should be tracked via **GitHub Issues** with proper labels and milestones.
+
+### Issue Labels
+| Label | Color | Description |
+|-------|-------|-------------|
+| `phase:1-infra` | #0052CC | Phase 1: Infrastructure |
+| `phase:2-docker` | #0052CC | Phase 2: Docker & Lazymc |
+| `phase:3-locking` | #0052CC | Phase 3: World Locking |
+| `phase:4-cli` | #0052CC | Phase 4: Management CLI |
+| `phase:5-docs` | #0052CC | Phase 5: Documentation |
+| `type:feature` | #1D76DB | New feature |
+| `type:bug` | #D73A4A | Bug fix |
+| `type:docs` | #0075CA | Documentation |
+| `priority:high` | #B60205 | High priority |
+| `priority:medium` | #FBCA04 | Medium priority |
+
+### Milestone Mapping
+| Milestone | Phases | Target |
+|-----------|--------|--------|
+| v0.1.0 - Infrastructure | Phase 1, 2 | Base setup |
+| v0.2.0 - Core Features | Phase 3, 4 | CLI tools |
+| v1.0.0 - Release | Phase 5 | Documentation & Testing |
+
+### Branch → Issue Linking
+```bash
+# Branch naming
+feature/<issue-number>-<description>
+bugfix/<issue-number>-<description>
+
+# Commit message
+feat: Add lock.sh script (#5)
+
+Implements world locking mechanism with flock.
+
+- Add lock/unlock/check/list commands
+- Handle stale lock detection
+
+Closes #5
+```
+
+---
+
 ## Phase 1: Infrastructure Setup
 
 ### 1.1 Create Directory Structure

@@ -72,6 +72,72 @@ When developing CLI tools:
 
 This ensures smooth transition when wrapping CLI with Web API later.
 
+### Git-Flow Workflow
+
+This project follows **Git-Flow** branching strategy.
+
+```
+main (production)
+  │
+  └── develop (integration)
+        │
+        ├── feature/xxx (new features)
+        ├── bugfix/xxx (bug fixes)
+        └── release/x.x.x (release preparation)
+```
+
+#### Branch Naming Convention
+| Branch Type | Pattern | Example |
+|-------------|---------|---------|
+| Feature | `feature/<issue-number>-<description>` | `feature/12-add-backup-script` |
+| Bugfix | `bugfix/<issue-number>-<description>` | `bugfix/15-fix-lock-release` |
+| Release | `release/<version>` | `release/1.0.0` |
+| Hotfix | `hotfix/<issue-number>-<description>` | `hotfix/20-critical-fix` |
+
+#### Workflow
+1. Create GitHub Issue for task
+2. Create feature branch from `develop`
+3. Implement and commit with issue reference (`#issue-number`)
+4. Create PR to `develop`
+5. Merge after review
+6. Delete feature branch
+
+#### Commit Message Format
+```
+<type>: <description> (#<issue-number>)
+
+<body>
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+```
+
+Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+
+### Task Checkpoint (task.md)
+
+During development, use `task.md` to track work-in-progress:
+
+```markdown
+# Current Task
+
+## Working On
+- [ ] Implementing lock.sh (#5)
+
+## Context
+- Started: 2025-01-17 14:00
+- Branch: feature/5-world-locking
+
+## Notes
+- lock file format decided: <server>:<timestamp>:<pid>
+- Need to handle stale locks
+
+## Next Steps
+- [ ] Test concurrent lock attempts
+- [ ] Add to mcctl.sh
+```
+
+**Important**: `task.md` is in `.gitignore` - for local tracking only, not committed.
+
 ## Core Principles
 
 ### Infrastructure as Code

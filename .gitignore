@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# Task checkpoint (local work-in-progress tracking)
+task.md
+
 # Server data (large files)
 servers/*/data/
 servers/*/logs/
