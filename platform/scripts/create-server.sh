@@ -46,6 +46,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
 SERVERS_DIR="$PLATFORM_DIR/servers"
 TEMPLATE_DIR="$SERVERS_DIR/_template"
+SERVERS_COMPOSE="$SERVERS_DIR/compose.yml"
 MAIN_COMPOSE="$PLATFORM_DIR/docker-compose.yml"
 ENV_FILE="$PLATFORM_DIR/.env"
 AVAHI_HOSTS="/etc/avahi/hosts"
@@ -122,6 +123,24 @@ register_avahi_hostname() {
         echo -e "${YELLOW}   Warning: Failed to write to $AVAHI_HOSTS (sudo required)${NC}"
         echo "   Add manually: echo '$ip $hostname' | sudo tee -a $AVAHI_HOSTS"
         return 1
+    fi
+}
+
+# Create servers/compose.yml if it doesn't exist
+ensure_servers_compose() {
+    if [ ! -f "$SERVERS_COMPOSE" ]; then
+        echo -e "   Creating servers/compose.yml..."
+        cat > "$SERVERS_COMPOSE" << 'EOF'
+# =============================================================================
+# Server Include List (managed automatically by create-server.sh)
+# =============================================================================
+# This file is modified by scripts/create-server.sh and scripts/delete-server.sh
+# Do NOT modify docker-compose.yml - only this file is updated for server changes
+# =============================================================================
+
+# Server includes are added below by create-server.sh
+EOF
+        echo -e "   ${GREEN}Created servers/compose.yml${NC}"
     fi
 }
 
@@ -295,7 +314,7 @@ echo -e "${BLUE}[3/6]${NC} Updating config.env..."
 CONFIG_FILE="$SERVER_DIR/config.env"
 if [ -f "$CONFIG_FILE" ]; then
     sed -i "s/^TYPE=.*/TYPE=$SERVER_TYPE/" "$CONFIG_FILE"
-    sed -i "s/^MOTD=.*/MOTD=Welcome to $SERVER_NAME Server/" "$CONFIG_FILE"
+    sed -i "s/^MOTD=.*/MOTD=Welcome to $SERVER_NAME! Your adventure begins here./" "$CONFIG_FILE"
 
     # Apply version if specified
     if [ -n "$MC_VERSION" ]; then
@@ -350,92 +369,37 @@ mkdir -p "$SERVER_DIR/data"
 mkdir -p "$SERVER_DIR/logs"
 
 # =============================================================================
-# Step 4: Update main docker-compose.yml
+# Step 4: Update servers/compose.yml
 # =============================================================================
-echo -e "${BLUE}[4/6]${NC} Updating main docker-compose.yml..."
+echo -e "${BLUE}[4/6]${NC} Updating servers/compose.yml..."
+
+# Ensure servers/compose.yml exists
+ensure_servers_compose
 
 # Backup original
-cp "$MAIN_COMPOSE" "$MAIN_COMPOSE.bak"
+cp "$SERVERS_COMPOSE" "$SERVERS_COMPOSE.bak"
 
-# --- Add include entry ---
-# Check if include section exists and is not commented
-if grep -q "^include:" "$MAIN_COMPOSE"; then
+# Check if include section exists
+if grep -q "^include:" "$SERVERS_COMPOSE"; then
     # Add new server to existing include section
-    # Find the line after "include:" and add the new entry
-    sed -i "/^include:/a\\  - servers/$SERVER_NAME/docker-compose.yml" "$MAIN_COMPOSE"
+    sed -i "/^include:/a\\  - $SERVER_NAME/docker-compose.yml" "$SERVERS_COMPOSE"
     echo "   Added to include section"
 else
-    # Check if include is commented out
-    if grep -q "^# include:" "$MAIN_COMPOSE"; then
-        # Uncomment and add
-        sed -i "s/^# include:/include:/" "$MAIN_COMPOSE"
-        sed -i "/^include:/a\\  - servers/$SERVER_NAME/docker-compose.yml" "$MAIN_COMPOSE"
-        echo "   Enabled and added to include section"
-    else
-        # Add include section before services
-        sed -i "/^services:/i\\include:\\n  - servers/$SERVER_NAME/docker-compose.yml\\n" "$MAIN_COMPOSE"
-        echo "   Created include section"
-    fi
-fi
-
-# --- Add MAPPING entry ---
-# Find MAPPING line and add new entry
-if grep -q "MAPPING:" "$MAIN_COMPOSE"; then
-    # Check if MAPPING is empty (MAPPING: "")
-    if grep -q 'MAPPING: ""' "$MAIN_COMPOSE"; then
-        # Replace empty MAPPING with new entry
-        sed -i "s|MAPPING: \"\"|MAPPING: \|\n        $SERVER_NAME.local=mc-$SERVER_NAME:25565|" "$MAIN_COMPOSE"
-        echo "   Set MAPPING entry"
-    else
-        # Add to existing MAPPING (find the line after MAPPING: | and add)
-        # Use awk for more reliable multi-line handling
-        awk -v server="$SERVER_NAME" '
-            /MAPPING: \|/ { print; getline; print; print "        " server ".local=mc-" server ":25565"; next }
-            { print }
-        ' "$MAIN_COMPOSE" > "$MAIN_COMPOSE.tmp" && mv "$MAIN_COMPOSE.tmp" "$MAIN_COMPOSE"
-        echo "   Added to MAPPING"
-    fi
-fi
-
-# --- Add depends_on entry ---
-# Find depends_on in router section and add new entry
-if grep -q "depends_on:" "$MAIN_COMPOSE"; then
-    # Add new dependency after existing depends_on entries
-    # Find the last "- mc-" line under depends_on and add after it
-    awk -v server="$SERVER_NAME" '
-        /depends_on:/ { in_depends=1 }
-        in_depends && /^[[:space:]]*- mc-/ { last_mc=NR; last_line=$0 }
-        in_depends && !/^[[:space:]]*-/ && NR>1 && last_mc {
-            if (NR == last_mc+1 || (!/^[[:space:]]*$/ && !/^[[:space:]]*#/)) {
-                in_depends=0
-            }
-        }
-        { lines[NR]=$0 }
-        END {
-            for (i=1; i<=NR; i++) {
-                print lines[i]
-                if (i == last_mc) {
-                    # Get indentation from last line
-                    match(lines[i], /^[[:space:]]*/)
-                    indent = substr(lines[i], RSTART, RLENGTH)
-                    print indent "- mc-" server
-                }
-            }
-        }
-    ' "$MAIN_COMPOSE" > "$MAIN_COMPOSE.tmp" && mv "$MAIN_COMPOSE.tmp" "$MAIN_COMPOSE"
-    echo "   Added to depends_on"
-else
-    echo -e "${YELLOW}   Warning: depends_on section not found${NC}"
+    # Add include section at the end
+    echo "" >> "$SERVERS_COMPOSE"
+    echo "include:" >> "$SERVERS_COMPOSE"
+    echo "  - $SERVER_NAME/docker-compose.yml" >> "$SERVERS_COMPOSE"
+    echo "   Created include section and added server"
 fi
 
 # Verify the changes
 if docker compose -f "$MAIN_COMPOSE" config --quiet 2>/dev/null; then
-    echo -e "   ${GREEN}docker-compose.yml validated successfully${NC}"
-    rm -f "$MAIN_COMPOSE.bak"
+    echo -e "   ${GREEN}Configuration validated successfully${NC}"
+    rm -f "$SERVERS_COMPOSE.bak"
 else
-    echo -e "${RED}   Error: docker-compose.yml validation failed!${NC}"
+    echo -e "${RED}   Error: Configuration validation failed!${NC}"
     echo "   Restoring backup..."
-    mv "$MAIN_COMPOSE.bak" "$MAIN_COMPOSE"
+    mv "$SERVERS_COMPOSE.bak" "$SERVERS_COMPOSE"
     echo "   Please check the configuration manually."
     exit 1
 fi

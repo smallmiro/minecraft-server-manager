@@ -14,9 +14,11 @@
 #   1. Copy this directory: cp -r servers/_template servers/<server-name>
 #   2. Replace all 'template' with '<server-name>' in this file
 #   3. Edit config.env with your server settings
-#   4. Add include to main docker-compose.yml
-#   5. Add MAPPING entry to router section
-#   6. Add depends_on entry for router
+#   4. Add include to servers/compose.yml
+#
+# mc-router auto-discovery:
+#   mc-router automatically discovers servers via Docker labels (mc-router.host)
+#   No manual MAPPING configuration needed.
 # =============================================================================
 
 services:

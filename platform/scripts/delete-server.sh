@@ -6,7 +6,7 @@
 #
 # This script removes a server created by create-server.sh:
 #   - Stops and removes the Docker container
-#   - Removes server from docker-compose.yml (include, MAPPING, depends_on)
+#   - Removes server from servers/compose.yml
 #   - Removes hostname from avahi-daemon
 #   - Deletes server directory (servers/<server-name>/)
 #
@@ -35,6 +35,7 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
 SERVERS_DIR="$PLATFORM_DIR/servers"
+SERVERS_COMPOSE="$SERVERS_DIR/compose.yml"
 MAIN_COMPOSE="$PLATFORM_DIR/docker-compose.yml"
 AVAHI_HOSTS="/etc/avahi/hosts"
 
@@ -114,7 +115,7 @@ if [ "$FORCE_DELETE" != "true" ]; then
     echo "The following will be removed:"
     echo "  - Docker container: mc-$SERVER_NAME"
     echo "  - Server directory: servers/$SERVER_NAME/"
-    echo "  - docker-compose.yml entries"
+    echo "  - servers/compose.yml entry"
     if [ "$KEEP_AVAHI" != "true" ]; then
         echo "  - avahi hostname: $SERVER_NAME.local"
     fi
@@ -146,60 +147,41 @@ else
 fi
 
 # =============================================================================
-# Step 2: Update docker-compose.yml
+# Step 2: Update servers/compose.yml
 # =============================================================================
-echo -e "${BLUE}[2/4]${NC} Updating docker-compose.yml..."
+echo -e "${BLUE}[2/4]${NC} Updating servers/compose.yml..."
 
-# Backup original
-cp "$MAIN_COMPOSE" "$MAIN_COMPOSE.bak"
+if [ -f "$SERVERS_COMPOSE" ]; then
+    # Backup original
+    cp "$SERVERS_COMPOSE" "$SERVERS_COMPOSE.bak"
 
-# --- Remove include entry ---
-if grep -q "servers/$SERVER_NAME/docker-compose.yml" "$MAIN_COMPOSE"; then
-    sed -i "\|servers/$SERVER_NAME/docker-compose.yml|d" "$MAIN_COMPOSE"
-    echo "   Removed from include section"
+    # Remove include entry
+    if grep -q "$SERVER_NAME/docker-compose.yml" "$SERVERS_COMPOSE"; then
+        sed -i "\|$SERVER_NAME/docker-compose.yml|d" "$SERVERS_COMPOSE"
+        echo "   Removed from include section"
 
-    # If no more includes, comment out the include section
-    if ! grep -q "^  - servers/" "$MAIN_COMPOSE"; then
-        sed -i 's/^include:/# include:/' "$MAIN_COMPOSE"
-        echo "   Commented out empty include section"
+        # If no more includes, remove the include: line
+        if ! grep -q "^  - " "$SERVERS_COMPOSE"; then
+            sed -i '/^include:/d' "$SERVERS_COMPOSE"
+            echo "   Removed empty include section"
+        fi
+    else
+        echo "   Server not found in compose.yml"
     fi
-fi
 
-# --- Remove MAPPING entry ---
-if grep -q "$SERVER_NAME.local=mc-$SERVER_NAME" "$MAIN_COMPOSE"; then
-    sed -i "/$SERVER_NAME\.local=mc-$SERVER_NAME/d" "$MAIN_COMPOSE"
-    echo "   Removed from MAPPING"
-
-    # If MAPPING is now empty (only has |), replace with ""
-    if grep -q 'MAPPING: |$' "$MAIN_COMPOSE" && ! grep -qE "^\s+\S+\.local=" "$MAIN_COMPOSE"; then
-        sed -i 's/MAPPING: |/MAPPING: ""/' "$MAIN_COMPOSE"
-        echo "   Reset empty MAPPING"
+    # Verify the changes
+    if docker compose -f "$MAIN_COMPOSE" config --quiet 2>/dev/null; then
+        echo -e "   ${GREEN}Configuration validated successfully${NC}"
+        rm -f "$SERVERS_COMPOSE.bak"
+    else
+        echo -e "${RED}   Error: Configuration validation failed!${NC}"
+        echo "   Restoring backup..."
+        mv "$SERVERS_COMPOSE.bak" "$SERVERS_COMPOSE"
+        echo "   Please check the configuration manually."
+        exit 1
     fi
-fi
-
-# --- Remove depends_on entry ---
-if grep -q "- mc-$SERVER_NAME" "$MAIN_COMPOSE"; then
-    sed -i "/- mc-$SERVER_NAME$/d" "$MAIN_COMPOSE"
-    echo "   Removed from depends_on"
-
-    # If depends_on is now empty, remove the section
-    # Check if there are no more "- mc-" entries after depends_on
-    if grep -q "depends_on:" "$MAIN_COMPOSE" && ! grep -qE "^\s+- mc-" "$MAIN_COMPOSE"; then
-        sed -i '/depends_on:/d' "$MAIN_COMPOSE"
-        echo "   Removed empty depends_on section"
-    fi
-fi
-
-# Verify the changes
-if docker compose -f "$MAIN_COMPOSE" config --quiet 2>/dev/null; then
-    echo -e "   ${GREEN}docker-compose.yml validated successfully${NC}"
-    rm -f "$MAIN_COMPOSE.bak"
 else
-    echo -e "${RED}   Error: docker-compose.yml validation failed!${NC}"
-    echo "   Restoring backup..."
-    mv "$MAIN_COMPOSE.bak" "$MAIN_COMPOSE"
-    echo "   Please check the configuration manually."
-    exit 1
+    echo "   servers/compose.yml not found (nothing to update)"
 fi
 
 # =============================================================================
@@ -253,7 +235,7 @@ echo ""
 echo "Removed:"
 echo "  - Container: mc-$SERVER_NAME"
 echo "  - Directory: servers/$SERVER_NAME/"
-echo "  - docker-compose.yml entries"
+echo "  - servers/compose.yml entry"
 if [ "$KEEP_AVAHI" != "true" ]; then
     echo "  - avahi hostname: $SERVER_NAME.local"
 fi

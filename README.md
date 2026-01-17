@@ -89,9 +89,11 @@ cd platform
 The script automatically:
 1. Creates server directory with configuration
 2. Creates symlink to existing world (if `--world` specified)
-3. Updates main docker-compose.yml (include, MAPPING, depends_on)
+3. Updates `servers/compose.yml` (main docker-compose.yml is NOT modified)
 4. Registers hostname with avahi-daemon (mDNS)
 5. Starts the server (unless `--no-start` specified)
+
+**mc-router auto-discovery**: Servers are auto-discovered via Docker labels (`mc-router.host`).
 
 New servers are automatically discoverable via mDNS - just connect!
 

@@ -18,6 +18,7 @@ minecraft/
 │   ├── .gitignore               # Git ignore rules for servers, worlds, etc.
 │   │
 │   ├── servers/                 # Server configurations (gitignored except _template)
+│   │   ├── compose.yml          # Server include list (auto-generated, gitignored)
 │   │   └── _template/           # Template for new servers
 │   │       ├── docker-compose.yml
 │   │       └── config.env
@@ -35,6 +36,7 @@ minecraft/
 │   │   │   └── common.sh        # Shared functions library
 │   │   ├── mcctl.sh             # Main management CLI
 │   │   ├── create-server.sh     # Server creation script
+│   │   ├── delete-server.sh     # Server deletion script (preserves world data)
 │   │   ├── init.sh              # Platform initialization script
 │   │   ├── lock.sh              # World locking system
 │   │   ├── logs.sh              # Log viewer
@@ -395,10 +397,12 @@ cd platform
 The script automatically:
 1. Creates server directory with configuration
 2. Creates symlink to existing world (if `--world` specified)
-3. Updates main `docker-compose.yml` (include, MAPPING, depends_on)
-4. Validates docker-compose.yml configuration
+3. Updates `servers/compose.yml` (include list only - main docker-compose.yml is NOT modified)
+4. Validates configuration
 5. Registers hostname with avahi-daemon (mDNS)
 6. Starts the server (unless `--no-start` specified)
+
+**mc-router auto-discovery**: mc-router uses `--in-docker` mode to automatically discover servers via Docker labels (`mc-router.host`). No manual MAPPING configuration is needed.
 
 The server name you provide will be used for:
 - **Directory**: `servers/<server-name>/`

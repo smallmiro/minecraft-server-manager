@@ -11,7 +11,7 @@
 #   The script automatically:
 #     - Creates server directory and configuration
 #     - Registers hostname with avahi-daemon (mDNS)
-#     - Updates this file (include, MAPPING, depends_on)
+#     - Updates servers/compose.yml (this file is NOT modified)
 #     - Starts the server (use --no-start to skip)
 #
 #   Server naming convention:
@@ -19,6 +19,10 @@
 #     - Service: mc-<server-name>
 #     - Container: mc-<server-name>
 #     - Hostname: <server-name>.local
+#
+# mc-router auto-discovery:
+#   mc-router uses --in-docker mode to automatically discover servers
+#   via Docker labels (mc-router.host). No manual MAPPING needed.
 #
 # Connection (via avahi-daemon mDNS):
 #   Clients on the same LAN automatically discover servers via mDNS.
@@ -29,10 +33,10 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Include server configurations (managed automatically by create-server.sh)
+# Include server configurations (from servers/compose.yml)
 # -----------------------------------------------------------------------------
-# include:
-#   - servers/<server-name>/docker-compose.yml
+include:
+  - servers/compose.yml
 
 # -----------------------------------------------------------------------------
 # Services
@@ -41,26 +45,22 @@ services:
   # ===========================================================================
   # MC Router - Connection Router with Auto-Scale
   # ===========================================================================
+  # mc-router auto-discovers servers via Docker labels (mc-router.host)
+  # No MAPPING environment variable needed with --in-docker mode
+  # ===========================================================================
   router:
     image: itzg/mc-router
     container_name: mc-router
     restart: unless-stopped
-    command: >
-      --in-docker
-      --auto-scale-up
-      --auto-scale-down
-      --auto-scale-down-after=10m
-      --docker-timeout=120
-      --auto-scale-asleep-motd=§e서버가 시작 중입니다... 잠시만 기다려주세요!
+    command:
+      - --in-docker
+      - --auto-scale-up
+      - --auto-scale-down
+      - --auto-scale-down-after=10m
+      - --docker-timeout=120
+      - --auto-scale-asleep-motd=§eStarting..Please wait.
     ports:
       - "25565:25565"
-    environment:
-      # =========================================================================
-      # Server Mappings - Add new servers here
-      # =========================================================================
-      # Format: hostname=container:port
-      # The hostname must match mc-router.host label in server's docker-compose.yml
-      MAPPING: ""
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
