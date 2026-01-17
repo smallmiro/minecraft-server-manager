@@ -4,9 +4,9 @@
 # =============================================================================
 # This script prepares the platform for initial operation:
 #   1. Validates Docker and Docker Compose installation
-#   2. Creates/validates .env configuration
-#   3. Creates required directories
-#   4. Builds custom Docker images (mdns-publisher)
+#   2. Validates avahi-daemon for mDNS support
+#   3. Creates/validates .env configuration
+#   4. Creates required directories
 #   5. Creates Docker network and volumes
 #   6. Performs initial docker-compose config validation
 #
@@ -16,7 +16,7 @@
 # Options:
 #   --create-server NAME [TYPE]  Create initial server after setup
 #   --skip-validation            Skip Docker/Compose validation
-#   --skip-build                 Skip Docker image builds
+#   --skip-avahi                 Skip avahi-daemon validation
 #   --skip-compose-up            Only initialize, don't start services
 #   -h, --help                   Show this help
 #
@@ -44,7 +44,7 @@ ENV_EXAMPLE="$PLATFORM_DIR/.env.example"
 
 # Default options
 VALIDATE_DOCKER=true
-BUILD_IMAGES=true
+VALIDATE_AVAHI=true
 START_SERVICES=true
 CREATE_SERVER_NAME=""
 CREATE_SERVER_TYPE="PAPER"
@@ -61,8 +61,8 @@ while [[ $# -gt 0 ]]; do
             VALIDATE_DOCKER=false
             shift
             ;;
-        --skip-build)
-            BUILD_IMAGES=false
+        --skip-avahi)
+            VALIDATE_AVAHI=false
             shift
             ;;
         --skip-compose-up)
@@ -146,10 +146,53 @@ if [ "$VALIDATE_DOCKER" = true ]; then
 fi
 
 # =============================================================================
-# 2. Setup Environment File
+# 2. Validate avahi-daemon (mDNS support)
 # =============================================================================
 
-print_header "Step 2: Setting up environment configuration"
+if [ "$VALIDATE_AVAHI" = true ]; then
+    print_header "Step 2: Validating avahi-daemon (mDNS)"
+
+    print_step "Checking avahi-daemon installation..."
+    if command -v avahi-daemon &> /dev/null; then
+        print_success "avahi-daemon found"
+    else
+        print_warning "avahi-daemon not found"
+        echo ""
+        echo -e "${YELLOW}To install avahi-daemon:${NC}"
+        echo "  Debian/Ubuntu: sudo apt install avahi-daemon"
+        echo "  CentOS/RHEL:   sudo dnf install avahi"
+        echo "  Arch Linux:    sudo pacman -S avahi nss-mdns"
+        echo "  Alpine Linux:  apk add avahi"
+        echo ""
+    fi
+
+    print_step "Checking avahi-daemon status..."
+    if systemctl is-active --quiet avahi-daemon 2>/dev/null; then
+        print_success "avahi-daemon is running"
+    elif rc-service avahi-daemon status &>/dev/null; then
+        print_success "avahi-daemon is running (OpenRC)"
+    else
+        print_warning "avahi-daemon is not running"
+        echo ""
+        echo -e "${YELLOW}To start avahi-daemon:${NC}"
+        echo "  Systemd:  sudo systemctl enable --now avahi-daemon"
+        echo "  OpenRC:   rc-update add avahi-daemon default && rc-service avahi-daemon start"
+        echo ""
+    fi
+
+    print_step "Checking /etc/avahi/hosts write permission..."
+    if [ -w /etc/avahi/hosts ] || sudo test -w /etc/avahi/hosts 2>/dev/null; then
+        print_success "/etc/avahi/hosts is writable"
+    else
+        print_warning "/etc/avahi/hosts may require sudo for hostname registration"
+    fi
+fi
+
+# =============================================================================
+# 3. Setup Environment File
+# =============================================================================
+
+print_header "Step 3: Setting up environment configuration"
 
 if [ ! -f "$ENV_FILE" ]; then
     print_step "Creating .env from template..."
@@ -176,10 +219,10 @@ else
 fi
 
 # =============================================================================
-# 3. Create Required Directories
+# 4. Create Required Directories
 # =============================================================================
 
-print_header "Step 3: Creating required directories"
+print_header "Step 4: Creating required directories"
 
 DIRS=(
     "$PLATFORM_DIR/servers"
@@ -201,23 +244,6 @@ done
 print_success "All directories validated/created"
 
 # =============================================================================
-# 4. Build Custom Docker Images
-# =============================================================================
-
-if [ "$BUILD_IMAGES" = true ]; then
-    print_header "Step 4: Building custom Docker images"
-
-    MDNS_DOCKERFILE="$PLATFORM_DIR/services/mdns-publisher/Dockerfile"
-    if [ -f "$MDNS_DOCKERFILE" ]; then
-        print_step "Building mdns-publisher image..."
-        cd "$PLATFORM_DIR" && docker build -t mdns-publisher:latest ./services/mdns-publisher/
-        print_success "mdns-publisher image built"
-    else
-        print_warning "mdns-publisher Dockerfile not found, skipping"
-    fi
-fi
-
-# =============================================================================
 # 5. Validate docker-compose.yml
 # =============================================================================
 
@@ -236,7 +262,7 @@ print_success "Docker Compose configuration is valid"
 # 6. Create/Verify Docker Network
 # =============================================================================
 
-print_header "Step 6: Setting up Docker network and volumes"
+print_header "Step 6: Setting up Docker network"
 
 # Source .env to get network settings
 set -a
@@ -283,13 +309,13 @@ fi
 
 if [ "$START_SERVICES" = true ]; then
     print_header "Step 8: Starting platform services"
-    
+
     print_step "Starting Docker Compose services..."
     cd "$PLATFORM_DIR"
-    $DOCKER_COMPOSE_CMD up -d mdns-publisher router 2>&1 | grep -E '(Creating|Created|Starting|Started)' || true
-    
-    print_success "Platform services started"
-    
+    $DOCKER_COMPOSE_CMD up -d router 2>&1 | grep -E '(Creating|Created|Starting|Started)' || true
+
+    print_success "mc-router started"
+
     # Wait for router to be ready
     print_step "Waiting for router to be ready..."
     for i in {1..30}; do
@@ -320,31 +346,32 @@ ${GREEN}Platform Status:${NC}
   📁 Configuration:  $ENV_FILE
   🐳 Network:        $NETWORK_NAME
   📂 Directories:    Created
-  🖼️  Images:        Built
-  
+  🌐 mDNS:           avahi-daemon (system service)
+
 ${GREEN}Next Steps:${NC}
 
   1. Create your first server:
      cd $PLATFORM_DIR
-     ./scripts/create-server.sh myserver --type PAPER
+     ./scripts/create-server.sh myserver -t PAPER
 
   2. Connect to server (mDNS):
      Open Minecraft and connect to: myserver.local:25565
 
   3. View server status:
-     ./scripts/mcctl.sh status
+     docker compose ps
 
   4. View logs:
-     ./scripts/mcctl.sh logs myserver
+     docker logs -f mc-myserver
 
 ${YELLOW}Environment Reminder:${NC}
 
   ⚠️  Default RCON_PASSWORD is 'changeme' - change in .env for production!
-  ⚠️  Ensure avahi-daemon is running for mDNS auto-discovery on Linux
+  ⚠️  Ensure avahi-daemon is running for mDNS auto-discovery
 
 ${BLUE}Documentation:${NC}
 
-  📖 Getting Started: Read docs/01-getting-started.md
+  📖 Getting Started: Read README.md
+  📖 mDNS Setup:      See README.md#mdns-setup-guide
   📖 Full Docs:       See docs/doc-list.md
 
 EOF
