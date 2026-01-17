@@ -447,9 +447,10 @@ router:
 Each Minecraft server needs these labels:
 ```yaml
 labels:
-  - "mc-router.host=ironwood.local"
-  - "mc-router.auto-scale-up=true"
-  - "mc-router.auto-scale-down=true"
+  mc-router.host: "ironwood.local"
+  mc-router.auto-scale-up: "true"
+  mc-router.auto-scale-down: "true"
+  mc-router.auto-scale-asleep-motd: "§e§lStarting server...§r\n§7Please wait while the server wakes up!"
 ```
 
 #### Resource Efficiency
