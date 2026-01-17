@@ -5,26 +5,26 @@
 #   - mc-router: Connection router with auto-scale support (hostname-based)
 #   - MC Servers: Each server in its own directory under servers/
 #
-# Adding a new server (recommended):
-#   ./scripts/create-server.sh <server-name> [PAPER|VANILLA|FORGE|FABRIC]
+# Adding a new server (fully automated):
+#   ./scripts/create-server.sh <server-name> [options]
 #
-#   The server name you provide will be used for:
+#   The script automatically:
+#     - Creates server directory and configuration
+#     - Updates this file (include, MAPPING, depends_on)
+#     - Starts the server (use --no-start to skip)
+#
+#   Server naming convention:
 #     - Directory: servers/<server-name>/
 #     - Service: mc-<server-name>
 #     - Container: mc-<server-name>
 #     - Hostname: <server-name>.local
 #
-#   After running script, add to this file:
-#     1. include: - servers/<server-name>/docker-compose.yml
-#     2. MAPPING: <server-name>.local=mc-<server-name>:25565
-#     3. depends_on: - mc-<server-name>
-#
 # Connection (requires hosts file or DNS):
-#   Add to /etc/hosts: <server-ip> ironwood.local
+#   Add to /etc/hosts: <server-ip> <server-name>.local
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Include server configurations (add servers here after running create-server.sh)
+# Include server configurations (managed automatically by create-server.sh)
 # -----------------------------------------------------------------------------
 include:
   - servers/ironwood/docker-compose.yml

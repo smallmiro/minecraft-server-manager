@@ -163,34 +163,25 @@ minecraft/
 ├── plan.md                      # Implementation roadmap
 │
 ├── platform/                    # Docker platform (all runtime files)
-│   ├── _template/               # Template for new platforms (future)
 │   ├── docker-compose.yml       # Main orchestration (includes mc-router)
 │   ├── .env                     # Global environment variables
+│   ├── .env.example             # Environment template
 │   │
 │   ├── scripts/                 # Management scripts
-│   │   ├── mcctl.sh             # Main CLI
-│   │   ├── lock.sh              # World locking
-│   │   └── logs.sh              # Log viewer
+│   │   └── create-server.sh     # Server creation script (with world options)
 │   │
 │   ├── servers/                 # Server configurations
 │   │   ├── _template/           # Template for new servers
 │   │   │   ├── docker-compose.yml
 │   │   │   └── config.env
-│   │   ├── ironwood/            # Paper server
-│   │   │   ├── docker-compose.yml
-│   │   │   ├── config.env
-│   │   │   ├── data/
-│   │   │   └── logs/
-│   │   ├── crystalpeak/         # Vanilla server
-│   │   │   └── ...
-│   │   └── shadowvale/          # Forge server
-│   │       └── ...
+│   │   └── ironwood/            # Example: Paper server (default)
+│   │       ├── docker-compose.yml
+│   │       ├── config.env
+│   │       ├── data/            # Server data (gitignored)
+│   │       └── logs/            # Server logs (gitignored)
 │   │
 │   ├── worlds/                  # Shared world storage
-│   │   ├── .locks/              # Lock files
-│   │   ├── ironwood-world/
-│   │   ├── crystalpeak-world/
-│   │   └── shadowvale-world/
+│   │   └── .locks/              # Lock files (future)
 │   │
 │   ├── shared/                  # Shared resources
 │   │   ├── plugins/
@@ -221,16 +212,16 @@ minecraft/
 │  │   │         :25565 (hostname routing)            │   │    │
 │  │   │                                              │   │    │
 │  │   │   ironwood.local    ──→ mc-ironwood          │   │    │
-│  │   │   crystalpeak.local ──→ mc-crystalpeak       │   │    │
-│  │   │   shadowvale.local  ──→ mc-shadowvale        │   │    │
+│  │   │   <server>.local    ──→ mc-<server>          │   │    │
+│  │   │   (add more via create-server.sh)            │   │    │
 │  │   │                                              │   │    │
 │  │   └─────────────────────┬────────────────────────┘   │    │
 │  │                         │ Docker Socket              │    │
 │  │   ┌─────────────────────┴────────────────────────┐   │    │
 │  │   │           minecraft-net (bridge)              │   │    │
 │  │   │                                               │   │    │
-│  │   │  mc-ironwood   mc-crystalpeak  mc-shadowvale │   │    │
-│  │   │  (auto-scale)   (auto-scale)   (auto-scale)  │   │    │
+│  │   │  mc-ironwood   mc-<server>  (add via script) │   │    │
+│  │   │  (auto-scale)   (auto-scale)                 │   │    │
 │  │   │                                               │   │    │
 │  │   └───────────────────────────────────────────────┘   │    │
 │  │                                                      │    │
@@ -240,8 +231,7 @@ minecraft/
 │  │                    External PCs                         │  │
 │  │     Add to hosts file or DNS:                          │  │
 │  │       ironwood.local    → <host-ip>                    │  │
-│  │       crystalpeak.local → <host-ip>                    │  │
-│  │       shadowvale.local  → <host-ip>                    │  │
+│  │       <server>.local    → <host-ip>                    │  │
 │  │     Connect via: ironwood.local:25565                  │  │
 │  └─────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
@@ -250,11 +240,10 @@ minecraft/
 ### 3.3 Port Configuration
 
 #### Hostname-Based Routing (via mc-router)
-| Hostname | Backend | RCON Port | Status |
-|----------|---------|-----------|--------|
-| ironwood.local | mc-ironwood:25565 | 25575 | auto-scale |
-| crystalpeak.local | mc-crystalpeak:25565 | 25576 | auto-scale |
-| shadowvale.local | mc-shadowvale:25565 | 25577 | auto-scale |
+| Hostname | Backend | Status |
+|----------|---------|--------|
+| ironwood.local | mc-ironwood:25565 | auto-scale (default) |
+| `<server>.local` | `mc-<server>:25565` | add via create-server.sh |
 
 **Note**: All servers share port 25565 via hostname routing.
 Clients must configure DNS or hosts file to resolve hostnames.

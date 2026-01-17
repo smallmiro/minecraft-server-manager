@@ -12,7 +12,6 @@ minecraft/
 ├── plan.md                      # Implementation roadmap
 │
 ├── platform/                    # Docker platform (all runtime files)
-│   ├── _template/               # Template for new platforms (future)
 │   ├── docker-compose.yml       # Main orchestration (mc-router + server includes)
 │   ├── .env                     # Global environment variables
 │   ├── .env.example             # Environment template
@@ -21,13 +20,11 @@ minecraft/
 │   │   ├── _template/           # Template for new servers
 │   │   │   ├── docker-compose.yml
 │   │   │   └── config.env
-│   │   ├── ironwood/            # Example: Paper server
-│   │   │   ├── docker-compose.yml
-│   │   │   ├── config.env
-│   │   │   ├── data/
-│   │   │   └── logs/
-│   │   ├── crystalpeak/         # Example: Vanilla server
-│   │   └── shadowvale/          # Example: Forge server
+│   │   └── ironwood/            # Example: Paper server (default)
+│   │       ├── docker-compose.yml
+│   │       ├── config.env
+│   │       ├── data/            # Server data (gitignored)
+│   │       └── logs/            # Server logs (gitignored)
 │   │
 │   ├── worlds/                  # Shared world storage
 │   │   └── .locks/              # Lock files (future)
@@ -36,14 +33,10 @@ minecraft/
 │   │   ├── plugins/             # Shared plugins (read-only mount)
 │   │   └── mods/                # Shared mods (read-only mount)
 │   │
-│   ├── scripts/                 # Management scripts (future: Phase 2-3)
-│   │   ├── mcctl.sh
-│   │   ├── lock.sh
-│   │   └── logs.sh
+│   ├── scripts/                 # Management scripts
+│   │   └── create-server.sh     # Server creation script
 │   │
 │   └── backups/                 # Backup storage
-│       ├── worlds/
-│       └── servers/
 │
 ├── docs/                        # Documentation (official docs reference)
 │   ├── README.md
@@ -313,8 +306,7 @@ This project uses **hostname-based routing** via mc-router for multi-server mana
 │              (always running, hostname routing)              │
 ├─────────────────────────────────────────────────────────────┤
 │  ironwood.local    → mc-ironwood    (auto-scale up/down)    │
-│  crystalpeak.local → mc-crystalpeak (auto-scale up/down)    │
-│  shadowvale.local  → mc-shadowvale  (auto-scale up/down)    │
+│  <new-server>.local → mc-<new-server> (add via script)      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -331,8 +323,8 @@ Clients must configure their hosts file or DNS:
 ```bash
 # Add to /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
 192.168.1.100 ironwood.local
-192.168.1.100 crystalpeak.local
-192.168.1.100 shadowvale.local
+# Add more servers as needed:
+# 192.168.1.100 myserver.local
 ```
 
 Then connect via Minecraft: `ironwood.local:25565`

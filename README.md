@@ -33,14 +33,14 @@ docker compose up -d
 Add to `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows):
 
 ```
-<server-ip> ironwood.local crystalpeak.local shadowvale.local
+<server-ip> ironwood.local
 ```
 
 ### 4. Connect via Minecraft
 
 - Ironwood (Paper): `ironwood.local:25565`
-- Crystalpeak (Vanilla): `crystalpeak.local:25565`
-- Shadowvale (Forge): `shadowvale.local:25565`
+
+Add more servers using `create-server.sh` and update hosts file accordingly.
 
 ## Architecture
 
@@ -49,22 +49,22 @@ Add to `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Wi
 │          mc-router (always running :25565)          │
 ├─────────────────────────────────────────────────────┤
 │  ironwood.local    → mc-ironwood    (auto-scale)    │
-│  crystalpeak.local → mc-crystalpeak (auto-scale)    │
-│  shadowvale.local  → mc-shadowvale  (auto-scale)    │
+│  <server>.local    → mc-<server>    (add via script)│
 └─────────────────────────────────────────────────────┘
 ```
 
 ## Adding a New Server
 
-Use the server name for all identifiers (directory, service, container, hostname):
+Fully automated with a single command:
 
 ```bash
 cd platform
 ./scripts/create-server.sh <server-name> [options]
 
 # Basic examples:
-./scripts/create-server.sh myworld              # Creates myworld.local (PAPER)
-./scripts/create-server.sh techcraft -t FORGE   # Creates techcraft.local (FORGE)
+./scripts/create-server.sh myworld              # Creates & starts myworld.local (PAPER)
+./scripts/create-server.sh techcraft -t FORGE   # Creates & starts techcraft.local (FORGE)
+./scripts/create-server.sh myworld --no-start   # Create only, don't start
 
 # World options (mutually exclusive):
 ./scripts/create-server.sh myworld --seed 12345           # Specific seed
@@ -72,7 +72,12 @@ cd platform
 ./scripts/create-server.sh myworld --world existing-world # Use existing world
 ```
 
-Then follow the script's instructions to complete setup.
+The script automatically:
+1. Creates server directory with configuration
+2. Updates main docker-compose.yml (include, MAPPING, depends_on)
+3. Starts the server (unless `--no-start` specified)
+
+Just add the hostname to your `/etc/hosts` file and connect!
 
 See [CLAUDE.md](CLAUDE.md) for detailed instructions.
 
