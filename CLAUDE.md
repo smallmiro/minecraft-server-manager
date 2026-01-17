@@ -138,6 +138,67 @@ During development, use `task.md` to track work-in-progress:
 
 **Important**: `task.md` is in `.gitignore` - for local tracking only, not committed.
 
+### TDD (Test-Driven Development)
+
+Follow the **Red → Green → Refactor** cycle:
+
+1. **Red**: Write a failing test first
+2. **Green**: Write minimal code to make the test pass
+3. **Refactor**: Clean up while keeping tests green
+
+```bash
+# Example for Bash scripts
+# 1. Write test case in tests/test_lock.sh
+# 2. Run test - expect failure
+# 3. Implement in scripts/lock.sh
+# 4. Run test - expect success
+# 5. Refactor and verify tests still pass
+```
+
+### Tidy First
+
+**Never mix structural and behavioral changes in the same commit.**
+
+| Change Type | Examples | Commit Separately |
+|-------------|----------|-------------------|
+| Structural | Rename, extract function, move file | Yes |
+| Behavioral | New feature, bug fix, logic change | Yes |
+
+```bash
+# Good: Two separate commits
+git commit -m "refactor: Extract validate_world function"
+git commit -m "feat: Add world existence check (#7)"
+
+# Bad: Mixed in one commit
+git commit -m "feat: Add validation with new helper function"
+```
+
+### Using plan.md
+
+The `plan.md` file serves as the implementation roadmap:
+
+1. **Before starting work**: Read `plan.md` to understand the overall architecture
+2. **Check current phase**: Find the next unmarked task in the current phase
+3. **Update as you go**: Mark completed items, add discovered tasks
+4. **Sync with GitHub Issues**: Each phase/task maps to GitHub Issues
+
+```bash
+# Workflow
+1. Read plan.md → Identify next task
+2. Create GitHub Issue (if not exists)
+3. Create feature branch
+4. Implement following TDD
+5. Mark task complete in plan.md
+6. Commit and PR
+```
+
+### Code Quality Standards
+
+- **Eliminate duplication**: Extract common patterns into reusable functions
+- **Clear naming**: Variables and functions should be self-documenting
+- **Single responsibility**: Each function does one thing well
+- **Small commits**: Atomic changes that are easy to review and revert
+
 ## Core Principles
 
 ### Infrastructure as Code
