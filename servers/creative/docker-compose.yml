@@ -1,0 +1,31 @@
+# =============================================================================
+# Creative Server
+# =============================================================================
+# Hostname: creative.local
+# Type: VANILLA
+# =============================================================================
+
+services:
+  mc-creative:
+    image: itzg/minecraft-server:java21
+    container_name: mc-creative
+    restart: "no"
+    tty: true
+    stdin_open: true
+    env_file:
+      - ../../.env
+      - config.env
+    environment:
+      EULA: "TRUE"
+    volumes:
+      - ./data:/data
+      - ./logs:/data/logs
+      - ../../worlds:/worlds:rw
+      - ../../shared/plugins:/plugins:ro
+    networks:
+      - minecraft-net
+    labels:
+      - "mc-router.host=creative.local"
+      - "mc-router.auto-scale-up=true"
+      - "mc-router.auto-scale-down=true"
+

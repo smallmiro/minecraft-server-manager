@@ -3,28 +3,31 @@
 # =============================================================================
 # Architecture:
 #   - mc-router: Connection router with auto-scale support (hostname-based)
-#   - MC Servers: Started on-demand, stopped when idle
+#   - MC Servers: Each server in its own directory under servers/
 #
-# Connection (requires hosts file or DNS configuration):
-#   - Survival: survival.local:25565
-#   - Creative: creative.local:25565
-#   - Modded:   modded.local:25565
+# Adding a new server:
+#   1. Copy template: cp -r servers/_template servers/my-server-name
+#   2. Edit servers/my-server-name/docker-compose.yml (service name, container, labels)
+#   3. Edit servers/my-server-name/config.env (server settings)
+#   4. Add include below: - servers/my-server-name/docker-compose.yml
+#   5. Add MAPPING entry: my-server-name.local=mc-my-server-name:25565
+#   6. Run: docker compose up -d
+#
+# Connection (requires hosts file or DNS):
+#   Add to /etc/hosts: <server-ip> survival.local creative.local modded.local
 # =============================================================================
 
-# Common Minecraft server configuration (YAML anchor)
-x-minecraft-common: &minecraft-common
-  image: itzg/minecraft-server:java21
-  restart: "no"  # mc-router controls lifecycle
-  tty: true
-  stdin_open: true
-  environment:
-    EULA: "TRUE"
-    TZ: ${TZ:-Asia/Seoul}
-    ENABLE_RCON: "true"
-    RCON_PASSWORD: ${RCON_PASSWORD:-changeme}
-  networks:
-    - minecraft-net
+# -----------------------------------------------------------------------------
+# Include server configurations
+# -----------------------------------------------------------------------------
+include:
+  - servers/survival/docker-compose.yml
+  - servers/creative/docker-compose.yml
+  - servers/modded/docker-compose.yml
 
+# -----------------------------------------------------------------------------
+# Services
+# -----------------------------------------------------------------------------
 services:
   # ===========================================================================
   # MC Router - Connection Router with Auto-Scale
@@ -43,8 +46,11 @@ services:
     ports:
       - "25565:25565"
     environment:
-      # Hostname-based routing
-      # Clients connect with: survival.local, creative.local, modded.local
+      # =========================================================================
+      # Server Mappings - Add new servers here
+      # =========================================================================
+      # Format: hostname=container:port
+      # The hostname must match mc-router.host label in server's docker-compose.yml
       MAPPING: |
         survival.local=mc-survival:25565
         creative.local=mc-creative:25565
@@ -58,70 +64,9 @@ services:
       - mc-creative
       - mc-modded
 
-  # ===========================================================================
-  # Minecraft Servers
-  # ===========================================================================
-
-  # ---------------------------------------------------------------------------
-  # Survival Server (PAPER) - Connect via survival.local:25565
-  # ---------------------------------------------------------------------------
-  mc-survival:
-    <<: *minecraft-common
-    container_name: mc-survival
-    env_file:
-      - .env
-      - servers/survival/config.env
-    volumes:
-      - ./servers/survival/data:/data
-      - ./servers/survival/logs:/data/logs
-      - ./worlds:/worlds:rw
-      - ./shared/plugins:/plugins:ro
-    labels:
-      - "mc-router.host=survival.local"
-      - "mc-router.auto-scale-up=true"
-      - "mc-router.auto-scale-down=true"
-
-  # ---------------------------------------------------------------------------
-  # Creative Server (VANILLA) - Connect via creative.local:25565
-  # ---------------------------------------------------------------------------
-  mc-creative:
-    <<: *minecraft-common
-    container_name: mc-creative
-    env_file:
-      - .env
-      - servers/creative/config.env
-    volumes:
-      - ./servers/creative/data:/data
-      - ./servers/creative/logs:/data/logs
-      - ./worlds:/worlds:rw
-      - ./shared/plugins:/plugins:ro
-    labels:
-      - "mc-router.host=creative.local"
-      - "mc-router.auto-scale-up=true"
-      - "mc-router.auto-scale-down=true"
-
-  # ---------------------------------------------------------------------------
-  # Modded Server (FORGE) - Connect via modded.local:25565
-  # ---------------------------------------------------------------------------
-  mc-modded:
-    <<: *minecraft-common
-    container_name: mc-modded
-    env_file:
-      - .env
-      - servers/modded/config.env
-    volumes:
-      - ./servers/modded/data:/data
-      - ./servers/modded/logs:/data/logs
-      - ./worlds:/worlds:rw
-      - ./shared/mods:/mods:ro
-    labels:
-      - "mc-router.host=modded.local"
-      - "mc-router.auto-scale-up=true"
-      - "mc-router.auto-scale-down=true"
-
-# =============================================================================
+# -----------------------------------------------------------------------------
 # Networks
-# =============================================================================
+# -----------------------------------------------------------------------------
 networks:
   minecraft-net:
     name: ${MINECRAFT_NETWORK:-minecraft-net}

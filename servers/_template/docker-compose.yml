@@ -1,0 +1,40 @@
+# =============================================================================
+# Minecraft Server Configuration Template
+# =============================================================================
+# Usage:
+#   1. Copy this directory: cp -r servers/_template servers/my-server-name
+#   2. Edit config.env with your server settings
+#   3. Update SERVER_NAME in this file
+#   4. Add include to main docker-compose.yml
+#   5. Add MAPPING entry to main docker-compose.yml router section
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # IMPORTANT: Change 'template' to your server name (must match directory name)
+  # ---------------------------------------------------------------------------
+  mc-template:
+    image: itzg/minecraft-server:java21
+    container_name: mc-template
+    restart: "no"
+    tty: true
+    stdin_open: true
+    env_file:
+      - ../../.env
+      - config.env
+    environment:
+      EULA: "TRUE"
+    volumes:
+      - ./data:/data
+      - ./logs:/data/logs
+      - ../../worlds:/worlds:rw
+      - ../../shared/plugins:/plugins:ro
+    networks:
+      - minecraft-net
+    labels:
+      # IMPORTANT: Change 'template.local' to your server hostname
+      - "mc-router.host=template.local"
+      - "mc-router.auto-scale-up=true"
+      - "mc-router.auto-scale-down=true"
+
+# Network is defined in main docker-compose.yml
