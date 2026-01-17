@@ -1,23 +1,60 @@
 # CLAUDE.md - Docker Minecraft Server Project Guide
 
-This project is a DevOps project for building and operating Minecraft Java Edition servers using the `itzg/minecraft-server` Docker image.
+This project is a DevOps project for building and operating multiple Minecraft Java Edition servers using the `itzg/minecraft-server` Docker image with `itzg/mc-router` for connection routing and auto-scaling.
 
 ## Project Structure
 
 ```
 minecraft/
-├── CLAUDE.md              # This file (project guide)
-├── docker-compose.yml     # Server configuration file
-├── data/                  # Server data (volume mount)
-├── config/                # Additional configuration files
-├── secrets/               # Sensitive information (passwords, etc.)
-├── .claude/
-│   └── commands/
-│       └── update-docs.md # Documentation update command
-└── docs/                  # Documentation
-    ├── README.md          # Main guide
-    ├── doc-list.md        # Original documentation links
-    └── *.md               # Category-specific documents
+├── CLAUDE.md                    # This file (project guide)
+├── README.md                    # Project overview
+├── prd.md                       # Product Requirements Document
+├── plan.md                      # Implementation roadmap
+│
+├── platform/                    # Docker platform (all runtime files)
+│   ├── _template/               # Template for new platforms (future)
+│   ├── docker-compose.yml       # Main orchestration (mc-router + server includes)
+│   ├── .env                     # Global environment variables
+│   ├── .env.example             # Environment template
+│   │
+│   ├── servers/                 # Server configurations (modular structure)
+│   │   ├── _template/           # Template for new servers
+│   │   │   ├── docker-compose.yml
+│   │   │   └── config.env
+│   │   ├── ironwood/            # Example: Paper server
+│   │   │   ├── docker-compose.yml
+│   │   │   ├── config.env
+│   │   │   ├── data/
+│   │   │   └── logs/
+│   │   ├── crystalpeak/         # Example: Vanilla server
+│   │   └── shadowvale/          # Example: Forge server
+│   │
+│   ├── worlds/                  # Shared world storage
+│   │   └── .locks/              # Lock files (future)
+│   │
+│   ├── shared/                  # Shared resources
+│   │   ├── plugins/             # Shared plugins (read-only mount)
+│   │   └── mods/                # Shared mods (read-only mount)
+│   │
+│   ├── scripts/                 # Management scripts (future: Phase 2-3)
+│   │   ├── mcctl.sh
+│   │   ├── lock.sh
+│   │   └── logs.sh
+│   │
+│   └── backups/                 # Backup storage
+│       ├── worlds/
+│       └── servers/
+│
+├── docs/                        # Documentation (official docs reference)
+│   ├── README.md
+│   ├── doc-list.md
+│   └── *.md
+│
+└── .claude/
+    └── commands/
+        ├── update-docs.md
+        ├── sync-docs.md
+        └── work.md
 ```
 
 ## Custom Commands
@@ -264,21 +301,119 @@ The `plan.md` file serves as the implementation roadmap:
 - **Single responsibility**: Each function does one thing well
 - **Small commits**: Atomic changes that are easy to review and revert
 
+## Architecture Overview
+
+### Multi-Server with mc-router
+
+This project uses **hostname-based routing** via mc-router for multi-server management:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    mc-router (:25565)                        │
+│              (always running, hostname routing)              │
+├─────────────────────────────────────────────────────────────┤
+│  ironwood.local    → mc-ironwood    (auto-scale up/down)    │
+│  crystalpeak.local → mc-crystalpeak (auto-scale up/down)    │
+│  shadowvale.local  → mc-shadowvale  (auto-scale up/down)    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Features**:
+- Single port (25565) for all servers via hostname routing
+- Auto-scale: servers start on client connect, stop after idle timeout
+- Zero resources when servers are stopped (only mc-router runs)
+- Clients need DNS/hosts file to resolve hostnames
+
+### Client Connection
+
+Clients must configure their hosts file or DNS:
+
+```bash
+# Add to /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
+192.168.1.100 ironwood.local
+192.168.1.100 crystalpeak.local
+192.168.1.100 shadowvale.local
+```
+
+Then connect via Minecraft: `ironwood.local:25565`
+
 ## Core Principles
 
 ### Infrastructure as Code
-- All server settings are defined in `docker-compose.yml`
+- Main `docker-compose.yml` includes server-specific compose files
+- Each server has its own directory with `docker-compose.yml` and `config.env`
 - Control server behavior through environment variables
 - Ensure data persistence through volume mounts
-- Use Docker Secrets or environment variable files for passwords
+
+### Adding a New Server
+
+**Recommended: Use the create-server.sh script**
+
+```bash
+cd platform
+./scripts/create-server.sh <server-name> [options]
+
+# Basic examples:
+./scripts/create-server.sh myworld              # Creates PAPER server
+./scripts/create-server.sh techcraft -t FORGE   # Creates FORGE server
+./scripts/create-server.sh vanilla01 --type VANILLA
+
+# World options (mutually exclusive):
+./scripts/create-server.sh myworld --seed 12345           # Specific world seed
+./scripts/create-server.sh myworld --world-url URL        # Download world from ZIP
+./scripts/create-server.sh myworld --world existing-world # Use existing world
+```
+
+**Options**:
+| Option | Description |
+|--------|-------------|
+| `-t, --type TYPE` | Server type: PAPER (default), VANILLA, FORGE, FABRIC |
+| `-s, --seed NUMBER` | World seed for new world generation |
+| `-u, --world-url URL` | Download world from ZIP URL |
+| `-w, --world NAME` | Use existing world from `worlds/` directory |
+
+The server name you provide will be used for:
+- **Directory**: `servers/<server-name>/`
+- **Service**: `mc-<server-name>`
+- **Container**: `mc-<server-name>`
+- **Hostname**: `<server-name>.local`
+
+After running the script, follow the displayed instructions to:
+1. Edit `config.env` for server settings
+2. Add `include` to main `docker-compose.yml`
+3. Add `MAPPING` entry to router
+4. Add `depends_on` entry for router
+5. Configure client hosts file
+6. Run: `docker compose up -d`
+
+**Manual setup (alternative)**
+
+1. Copy template: `cp -r platform/servers/_template platform/servers/<server-name>`
+2. Edit `platform/servers/<server-name>/docker-compose.yml`:
+   - Change service name: `mc-template` → `mc-<server-name>`
+   - Change container name: `mc-template` → `mc-<server-name>`
+   - Change hostname label: `template.local` → `<server-name>.local`
+3. Edit `platform/servers/<server-name>/config.env` with server settings
+4. Add include to `platform/docker-compose.yml`:
+   ```yaml
+   include:
+     - servers/<server-name>/docker-compose.yml
+   ```
+5. Add MAPPING to router environment:
+   ```yaml
+   MAPPING: |
+     <server-name>.local=mc-<server-name>:25565
+   ```
+6. Add `depends_on` entry for router
+7. Run: `cd platform && docker compose up -d`
 
 ### Change Management
-1. **Configuration changes**: Modify `docker-compose.yml` → `docker compose up -d`
-2. **Add mods/plugins**: Modify environment variables or `/mods`, `/plugins` directories
-3. **Version upgrade**: Change `VERSION` environment variable
+1. **Configuration changes**: Modify compose files → `docker compose up -d`
+2. **Add mods/plugins**: Modify environment variables or mount directories
+3. **Version upgrade**: Change `VERSION` in server's `config.env`
 
 ### Backup First
-- Always backup `/data` before server changes
+- Always backup server's `data/` before changes
 - Recommended to run `rcon-cli save-all` before backup
 
 ## Required Environment Variables
@@ -293,53 +428,73 @@ The `plan.md` file serves as the implementation roadmap:
 
 ## Common Tasks
 
-### Start/Stop Server
+### Start/Stop All Servers
 
 ```bash
-# Start
+cd platform
+
+# Start mc-router and all servers
 docker compose up -d
 
-# Stop
+# Stop all
 docker compose down
 
-# View logs
-docker logs -f mc
+# View router logs
+docker logs -f mc-router
+```
+
+### Start/Stop Individual Server
+
+```bash
+cd platform
+
+# Start specific server
+docker compose up -d mc-ironwood
+
+# Stop specific server
+docker compose stop mc-ironwood
+
+# View server logs
+docker logs -f mc-ironwood
 ```
 
 ### Execute Commands
 
 ```bash
-# Single command
-docker exec mc rcon-cli say Hello
+# Single command (replace mc-ironwood with your server name)
+docker exec mc-ironwood rcon-cli say Hello
 
 # Interactive console
-docker exec -i mc rcon-cli
+docker exec -i mc-ironwood rcon-cli
 ```
 
 ### Change Server Type
 
-Modify `TYPE` environment variable in `docker-compose.yml`:
+Modify `TYPE` in server's `config.env`:
 
-```yaml
-environment:
-  TYPE: "PAPER"     # Paper server
-  TYPE: "FORGE"     # Forge mod server
-  TYPE: "FABRIC"    # Fabric mod server
+```bash
+# platform/servers/ironwood/config.env
+TYPE=PAPER       # Paper server
+TYPE=FORGE       # Forge mod server
+TYPE=FABRIC      # Fabric mod server
 ```
 
 ### Add Mods/Plugins
 
-```yaml
-environment:
-  # Download from Modrinth
-  MODRINTH_PROJECTS: |
-    fabric-api
-    lithium
+Modify server's `config.env`:
 
-  # Download from CurseForge
-  CF_API_KEY: "${CF_API_KEY}"
-  CURSEFORGE_FILES: "jei,journeymap"
+```bash
+# Download from Modrinth
+MODRINTH_PROJECTS="fabric-api,lithium"
+
+# Download from CurseForge
+CF_API_KEY="${CF_API_KEY}"
+CURSEFORGE_FILES="jei,journeymap"
 ```
+
+Or use shared directories (mounted read-only):
+- `platform/shared/plugins/` for plugins
+- `platform/shared/mods/` for mods
 
 ## Troubleshooting
 
@@ -387,24 +542,26 @@ For detailed settings, refer to the documents in the `docs/` directory:
 ## Checklists
 
 ### New Server Setup
-- [ ] Create `docker-compose.yml`
-- [ ] Set `EULA=TRUE`
-- [ ] Select server type and version
-- [ ] Configure memory settings
-- [ ] Verify volume mounts
-- [ ] Verify port forwarding
+- [ ] Copy `platform/servers/_template` to new server directory
+- [ ] Edit `docker-compose.yml` (service name, container name, hostname label)
+- [ ] Edit `config.env` (server settings)
+- [ ] Add `include` to `platform/docker-compose.yml`
+- [ ] Add `MAPPING` entry to router
+- [ ] Add `depends_on` entry for router
+- [ ] Update DNS/hosts file on client machines
+- [ ] Run `cd platform && docker compose up -d`
 
 ### Server Upgrade
-- [ ] Backup `/data`
-- [ ] Change `VERSION` environment variable
+- [ ] Backup server's `data/` directory
+- [ ] Change `VERSION` in `config.env`
 - [ ] Check mod/plugin compatibility
-- [ ] Run `docker compose up -d`
+- [ ] Run `docker compose up -d <server-name>`
 - [ ] Check logs
 
 ### Modpack Installation
-- [ ] Verify server type (FORGE/FABRIC)
-- [ ] Check Java version
-- [ ] Set API key (CurseForge)
+- [ ] Verify server type (FORGE/FABRIC) in `config.env`
+- [ ] Check Java version (image tag in `docker-compose.yml`)
+- [ ] Set API key (CurseForge) if needed
 - [ ] Set modpack slug/URL
 - [ ] Allocate sufficient memory
 
@@ -414,4 +571,6 @@ For detailed settings, refer to the documents in the `docs/` directory:
 - **Backup**: Always backup data before changes
 - **Java Version**: Use the version required by server/mods
 - **Memory**: Modpacks require at least 4G recommended
-- **Port**: Default 25565, notify clients if changed
+- **Hostname Routing**: Clients must configure DNS/hosts to resolve server hostnames
+- **Auto-Scale**: Servers start on connect, stop after 10 min idle (configurable)
+- **mc-router**: Always running, handles routing to all servers via single port 25565

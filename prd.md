@@ -92,7 +92,7 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [ ] MOTD shows server status when sleeping (configurable message)
   - [ ] Server auto-stops after configurable idle timeout (default: 10 min)
   - [ ] Zero resource usage when server is stopped (container not running)
-  - [ ] External PCs connect via hostname (e.g., survival.local, creative.local)
+  - [ ] External PCs connect via hostname (e.g., ironwood.local, crystalpeak.local)
   - [ ] Multiple servers supported with hostname-based routing
 
 #### FR-008: Player UUID Lookup
@@ -107,6 +107,19 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [ ] Support `--json` output for Web API integration
   - [ ] Integrate with `mcctl.sh player` command
   - [ ] Handle errors gracefully (player not found, API timeout)
+
+#### FR-009: World Creation Options
+- **Priority**: Medium
+- **Description**: Support multiple world initialization methods when creating a new server
+- **Acceptance Criteria**:
+  - [ ] Seed specification: Use `SEED` environment variable for new world generation
+  - [ ] ZIP download: Use `WORLD` environment variable with URL to download and extract world
+  - [ ] Existing world: Use `LEVEL` environment variable to point to existing world in `worlds/` directory
+  - [ ] `create-server.sh` supports `--seed <number>` option
+  - [ ] `create-server.sh` supports `--world-url <url>` option for ZIP download
+  - [ ] `create-server.sh` supports `--world <name>` option for existing world
+  - [ ] Options are mutually exclusive (only one can be specified)
+  - [ ] Clear error messages when invalid options are provided
 
 ### 2.2 Non-Functional Requirements
 
@@ -145,43 +158,53 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 ```
 minecraft/
 ├── prd.md                       # This document
-├── docker-compose.yml           # Main orchestration (includes mc-router)
-├── .env                         # Global environment variables
+├── CLAUDE.md                    # Project guide
+├── README.md                    # Project overview
+├── plan.md                      # Implementation roadmap
 │
-├── scripts/                     # Management scripts
-│   ├── mcctl.sh                 # Main CLI
-│   ├── lock.sh                  # World locking
-│   └── logs.sh                  # Log viewer
+├── platform/                    # Docker platform (all runtime files)
+│   ├── _template/               # Template for new platforms (future)
+│   ├── docker-compose.yml       # Main orchestration (includes mc-router)
+│   ├── .env                     # Global environment variables
+│   │
+│   ├── scripts/                 # Management scripts
+│   │   ├── mcctl.sh             # Main CLI
+│   │   ├── lock.sh              # World locking
+│   │   └── logs.sh              # Log viewer
+│   │
+│   ├── servers/                 # Server configurations
+│   │   ├── _template/           # Template for new servers
+│   │   │   ├── docker-compose.yml
+│   │   │   └── config.env
+│   │   ├── ironwood/            # Paper server
+│   │   │   ├── docker-compose.yml
+│   │   │   ├── config.env
+│   │   │   ├── data/
+│   │   │   └── logs/
+│   │   ├── crystalpeak/         # Vanilla server
+│   │   │   └── ...
+│   │   └── shadowvale/          # Forge server
+│   │       └── ...
+│   │
+│   ├── worlds/                  # Shared world storage
+│   │   ├── .locks/              # Lock files
+│   │   ├── ironwood-world/
+│   │   ├── crystalpeak-world/
+│   │   └── shadowvale-world/
+│   │
+│   ├── shared/                  # Shared resources
+│   │   ├── plugins/
+│   │   └── mods/
+│   │
+│   └── backups/                 # Backup storage
+│       ├── worlds/
+│       └── servers/
 │
-├── servers/                     # Server configurations
-│   ├── _template/               # Template for new servers
-│   │   └── config.env
-│   ├── survival/
-│   │   ├── config.env           # Server settings
-│   │   ├── data/                # Server data
-│   │   └── logs/                # Server logs
-│   ├── creative/
-│   │   ├── config.env
-│   │   ├── data/
-│   │   └── logs/
-│   └── modded/
-│       ├── config.env
-│       ├── data/
-│       └── logs/
+├── docs/                        # Documentation
+│   └── *.md
 │
-├── worlds/                      # Shared world storage
-│   ├── .locks/                  # Lock files
-│   ├── survival-world/
-│   ├── creative-world/
-│   └── modded-world/
-│
-├── shared/                      # Shared resources
-│   ├── plugins/
-│   └── mods/
-│
-└── backups/                     # Backup storage
-    ├── worlds/
-    └── servers/
+└── .claude/                     # Claude commands
+    └── commands/
 ```
 
 ### 3.2 Docker Architecture
@@ -197,16 +220,16 @@ minecraft/
 │  │   │        mc-router (Always Running)            │   │    │
 │  │   │         :25565 (hostname routing)            │   │    │
 │  │   │                                              │   │    │
-│  │   │   survival.local ──→ mc-survival             │   │    │
-│  │   │   creative.local ──→ mc-creative             │   │    │
-│  │   │   modded.local   ──→ mc-modded               │   │    │
+│  │   │   ironwood.local    ──→ mc-ironwood          │   │    │
+│  │   │   crystalpeak.local ──→ mc-crystalpeak       │   │    │
+│  │   │   shadowvale.local  ──→ mc-shadowvale        │   │    │
 │  │   │                                              │   │    │
 │  │   └─────────────────────┬────────────────────────┘   │    │
 │  │                         │ Docker Socket              │    │
 │  │   ┌─────────────────────┴────────────────────────┐   │    │
 │  │   │           minecraft-net (bridge)              │   │    │
 │  │   │                                               │   │    │
-│  │   │  mc-survival    mc-creative    mc-modded     │   │    │
+│  │   │  mc-ironwood   mc-crystalpeak  mc-shadowvale │   │    │
 │  │   │  (auto-scale)   (auto-scale)   (auto-scale)  │   │    │
 │  │   │                                               │   │    │
 │  │   └───────────────────────────────────────────────┘   │    │
@@ -216,10 +239,10 @@ minecraft/
 │  ┌───────────────────────────┴────────────────────────────┐  │
 │  │                    External PCs                         │  │
 │  │     Add to hosts file or DNS:                          │  │
-│  │       survival.local → <host-ip>                       │  │
-│  │       creative.local → <host-ip>                       │  │
-│  │       modded.local   → <host-ip>                       │  │
-│  │     Connect via: survival.local:25565                  │  │
+│  │       ironwood.local    → <host-ip>                    │  │
+│  │       crystalpeak.local → <host-ip>                    │  │
+│  │       shadowvale.local  → <host-ip>                    │  │
+│  │     Connect via: ironwood.local:25565                  │  │
 │  └─────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -229,16 +252,16 @@ minecraft/
 #### Hostname-Based Routing (via mc-router)
 | Hostname | Backend | RCON Port | Status |
 |----------|---------|-----------|--------|
-| survival.local | mc-survival:25565 | 25575 | auto-scale |
-| creative.local | mc-creative:25565 | 25576 | auto-scale |
-| modded.local | mc-modded:25565 | 25577 | auto-scale |
+| ironwood.local | mc-ironwood:25565 | 25575 | auto-scale |
+| crystalpeak.local | mc-crystalpeak:25565 | 25576 | auto-scale |
+| shadowvale.local | mc-shadowvale:25565 | 25577 | auto-scale |
 
 **Note**: All servers share port 25565 via hostname routing.
 Clients must configure DNS or hosts file to resolve hostnames.
 
 #### Server Lifecycle
 ```
-Client connects to survival.local:25565
+Client connects to ironwood.local:25565
         │
         ▼
 ┌───────────────────┐
@@ -384,9 +407,9 @@ router:
     - "25565:25565"
   environment:
     MAPPING: |
-      survival.local=mc-survival:25565
-      creative.local=mc-creative:25565
-      modded.local=mc-modded:25565
+      ironwood.local=mc-ironwood:25565
+      crystalpeak.local=mc-crystalpeak:25565
+      shadowvale.local=mc-shadowvale:25565
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
@@ -405,7 +428,7 @@ router:
 Each Minecraft server needs these labels:
 ```yaml
 labels:
-  - "mc-router.host=survival.local"
+  - "mc-router.host=ironwood.local"
   - "mc-router.auto-scale-up=true"
   - "mc-router.auto-scale-down=true"
 ```
@@ -421,14 +444,14 @@ labels:
 PCs on the same LAN must configure DNS or hosts file:
 ```
 # Add to /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
-192.168.1.100 survival.local
-192.168.1.100 creative.local
-192.168.1.100 modded.local
+192.168.1.100 ironwood.local
+192.168.1.100 crystalpeak.local
+192.168.1.100 shadowvale.local
 
 # Then connect via:
-survival.local:25565
-creative.local:25565
-modded.local:25565
+ironwood.local:25565
+crystalpeak.local:25565
+shadowvale.local:25565
 ```
 
 ## 5. Implementation Plan
@@ -526,10 +549,10 @@ VERSION=1.20.4
 MEMORY=4G
 
 # World
-LEVEL=survival-world
+LEVEL=ironwood-world
 
 # Server Properties
-MOTD=Welcome to Survival Server
+MOTD=Welcome to Ironwood Server
 MAX_PLAYERS=50
 DIFFICULTY=normal
 PVP=true

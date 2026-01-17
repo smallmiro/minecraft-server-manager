@@ -1,21 +1,28 @@
 # =============================================================================
-# Minecraft Server Configuration Template
+# ironwood Server
 # =============================================================================
-# Usage:
-#   1. Copy this directory: cp -r servers/_template servers/my-server-name
-#   2. Edit config.env with your server settings
-#   3. Update SERVER_NAME in this file
-#   4. Add include to main docker-compose.yml
-#   5. Add MAPPING entry to main docker-compose.yml router section
+# IMPORTANT: Use create-server.sh script to create a new server:
+#   ./scripts/create-server.sh <your-server-name> [PAPER|VANILLA|FORGE|FABRIC]
+#
+# The server name you provide will be used for:
+#   - Directory name: servers/<server-name>/
+#   - Service name: mc-<server-name>
+#   - Container name: mc-<server-name>
+#   - Hostname: <server-name>.local
+#
+# Manual setup (if not using script):
+# Type: PAPER
+#   6. Add depends_on entry for router
 # =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
   # IMPORTANT: Change 'template' to your server name (must match directory name)
+  # Example: mc-ironwood -> mc-ironwood
   # ---------------------------------------------------------------------------
-  mc-template:
+  mc-ironwood:
     image: itzg/minecraft-server:java21
-    container_name: mc-template
+    container_name: mc-ironwood
     restart: "no"
     tty: true
     stdin_open: true
@@ -32,8 +39,9 @@ services:
     networks:
       - minecraft-net
     labels:
-      # IMPORTANT: Change 'template.local' to your server hostname
-      - "mc-router.host=template.local"
+      # IMPORTANT: Change 'ironwood.local' to '<server-name>.local'
+      # Example: ironwood.local -> ironwood.local
+      - "mc-router.host=ironwood.local"
       - "mc-router.auto-scale-up=true"
       - "mc-router.auto-scale-down=true"
 

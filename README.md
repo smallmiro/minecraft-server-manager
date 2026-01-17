@@ -1,27 +1,80 @@
-# Docker Minecraft Server Guide
+# Docker Minecraft Server Manager
 
-A guide for building and operating Minecraft Java Edition servers using the `itzg/minecraft-server` Docker image.
+A multi-server Minecraft management system using `itzg/minecraft-server` with `itzg/mc-router` for automatic scaling and hostname-based routing.
+
+## Features
+
+- **Multi-Server**: Run multiple Minecraft servers (survival, creative, modded, etc.)
+- **Single Port**: All servers accessible via port 25565 with hostname routing
+- **Auto-Scale**: Servers start on client connect, stop after idle timeout
+- **Zero Resources**: Only mc-router runs when servers are idle (~20MB RAM)
+- **Modular Config**: Each server has its own directory with independent configuration
 
 ## Quick Start
 
-```yaml
-# docker-compose.yml
-services:
-  mc:
-    image: itzg/minecraft-server
-    tty: true
-    stdin_open: true
-    environment:
-      EULA: "TRUE"
-    ports:
-      - "25565:25565"
-    volumes:
-      - ./data:/data
-```
+### 1. Clone and Configure
 
 ```bash
+git clone <repository>
+cd minecraft/platform
+cp .env.example .env
+# Edit .env with your settings
+```
+
+### 2. Start All Servers
+
+```bash
+cd platform
 docker compose up -d
 ```
+
+### 3. Configure Client DNS
+
+Add to `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows):
+
+```
+<server-ip> ironwood.local crystalpeak.local shadowvale.local
+```
+
+### 4. Connect via Minecraft
+
+- Ironwood (Paper): `ironwood.local:25565`
+- Crystalpeak (Vanilla): `crystalpeak.local:25565`
+- Shadowvale (Forge): `shadowvale.local:25565`
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│          mc-router (always running :25565)          │
+├─────────────────────────────────────────────────────┤
+│  ironwood.local    → mc-ironwood    (auto-scale)    │
+│  crystalpeak.local → mc-crystalpeak (auto-scale)    │
+│  shadowvale.local  → mc-shadowvale  (auto-scale)    │
+└─────────────────────────────────────────────────────┘
+```
+
+## Adding a New Server
+
+Use the server name for all identifiers (directory, service, container, hostname):
+
+```bash
+cd platform
+./scripts/create-server.sh <server-name> [options]
+
+# Basic examples:
+./scripts/create-server.sh myworld              # Creates myworld.local (PAPER)
+./scripts/create-server.sh techcraft -t FORGE   # Creates techcraft.local (FORGE)
+
+# World options (mutually exclusive):
+./scripts/create-server.sh myworld --seed 12345           # Specific seed
+./scripts/create-server.sh myworld --world-url <URL>      # Download from ZIP
+./scripts/create-server.sh myworld --world existing-world # Use existing world
+```
+
+Then follow the script's instructions to complete setup.
+
+See [CLAUDE.md](CLAUDE.md) for detailed instructions.
 
 ---
 
@@ -131,19 +184,30 @@ Forge 1.16.5 and below → java8 (required)
 ## Useful Commands
 
 ```bash
-# Start server
+cd platform
+
+# Start all servers
 docker compose up -d
 
-# View logs
-docker logs -f mc
+# Start specific server
+docker compose up -d mc-ironwood
+
+# Stop specific server
+docker compose stop mc-ironwood
+
+# View router logs
+docker logs -f mc-router
+
+# View server logs
+docker logs -f mc-ironwood
 
 # Console access
-docker exec -i mc rcon-cli
+docker exec -i mc-ironwood rcon-cli
 
 # Execute command
-docker exec mc rcon-cli say Hello World
+docker exec mc-ironwood rcon-cli say Hello World
 
-# Stop server
+# Stop all
 docker compose down
 ```
 

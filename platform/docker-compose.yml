@@ -5,25 +5,29 @@
 #   - mc-router: Connection router with auto-scale support (hostname-based)
 #   - MC Servers: Each server in its own directory under servers/
 #
-# Adding a new server:
-#   1. Copy template: cp -r servers/_template servers/my-server-name
-#   2. Edit servers/my-server-name/docker-compose.yml (service name, container, labels)
-#   3. Edit servers/my-server-name/config.env (server settings)
-#   4. Add include below: - servers/my-server-name/docker-compose.yml
-#   5. Add MAPPING entry: my-server-name.local=mc-my-server-name:25565
-#   6. Run: docker compose up -d
+# Adding a new server (recommended):
+#   ./scripts/create-server.sh <server-name> [PAPER|VANILLA|FORGE|FABRIC]
+#
+#   The server name you provide will be used for:
+#     - Directory: servers/<server-name>/
+#     - Service: mc-<server-name>
+#     - Container: mc-<server-name>
+#     - Hostname: <server-name>.local
+#
+#   After running script, add to this file:
+#     1. include: - servers/<server-name>/docker-compose.yml
+#     2. MAPPING: <server-name>.local=mc-<server-name>:25565
+#     3. depends_on: - mc-<server-name>
 #
 # Connection (requires hosts file or DNS):
-#   Add to /etc/hosts: <server-ip> survival.local creative.local modded.local
+#   Add to /etc/hosts: <server-ip> ironwood.local
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Include server configurations
+# Include server configurations (add servers here after running create-server.sh)
 # -----------------------------------------------------------------------------
 include:
-  - servers/survival/docker-compose.yml
-  - servers/creative/docker-compose.yml
-  - servers/modded/docker-compose.yml
+  - servers/ironwood/docker-compose.yml
 
 # -----------------------------------------------------------------------------
 # Services
@@ -52,17 +56,13 @@ services:
       # Format: hostname=container:port
       # The hostname must match mc-router.host label in server's docker-compose.yml
       MAPPING: |
-        survival.local=mc-survival:25565
-        creative.local=mc-creative:25565
-        modded.local=mc-modded:25565
+        ironwood.local=mc-ironwood:25565
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - minecraft-net
     depends_on:
-      - mc-survival
-      - mc-creative
-      - mc-modded
+      - mc-ironwood
 
 # -----------------------------------------------------------------------------
 # Networks
