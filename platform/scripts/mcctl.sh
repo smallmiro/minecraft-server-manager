@@ -47,6 +47,11 @@ World Management:
   world assign <world> <srv>   Lock world and assign to server
   world release <world>        Force release world lock
 
+Player Lookup:
+  player lookup <name>         Look up player info (UUID, avatar)
+  player uuid <name>           Get player's online UUID
+  player uuid <name> --offline Get player's offline UUID
+
 Options:
   --json                       Output in JSON format
   -h, --help                   Show this help message
@@ -346,6 +351,20 @@ cmd_world_release() {
 }
 
 # =============================================================================
+# Player Commands
+# =============================================================================
+
+cmd_player() {
+    # Delegate to player.sh
+    if [[ -x "$SCRIPT_DIR/player.sh" ]]; then
+        "$SCRIPT_DIR/player.sh" "$@"
+    else
+        error "player.sh not found"
+        return 1
+    fi
+}
+
+# =============================================================================
 # Start/Stop Commands
 # =============================================================================
 
@@ -435,6 +454,9 @@ main() {
             ;;
         stop)
             cmd_stop "$@"
+            ;;
+        player)
+            cmd_player "$@"
             ;;
         -h|--help|help)
             usage
