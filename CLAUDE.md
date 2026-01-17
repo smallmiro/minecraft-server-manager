@@ -54,6 +54,24 @@ This command performs the following tasks:
 
 **Important**: This command does NOT edit files in `docs/` directory. Those are managed by `/project:update-docs`.
 
+## Development Philosophy
+
+### CLI-First, Web-Ready
+
+All features are implemented via CLI first, with Web Management UI as a future enhancement.
+
+**Current Phase**: CLI-based management (`scripts/mcctl.sh`)
+**Future Phase**: Web UI (Next.js + MUI + TypeScript)
+
+When developing CLI tools:
+- Design scripts to be **callable from external programs** (Web API)
+- Use **structured output** (JSON-compatible) for status/list commands
+- Keep **business logic separate** from CLI argument parsing
+- Store configuration in **parseable formats** (TOML, JSON, env files)
+- Use **exit codes** consistently for error handling
+
+This ensures smooth transition when wrapping CLI with Web API later.
+
 ## Core Principles
 
 ### Infrastructure as Code

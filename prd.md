@@ -418,10 +418,32 @@ Example:
 
 ## 5. Implementation Plan
 
+### Development Strategy: CLI-First, Web-Ready
+
+All features are implemented via **CLI first** (Phase 1-5), with **Web Management UI** as a future enhancement (see Section 9.1).
+
+**Why CLI-First?**
+- Immediate usability without additional infrastructure
+- Scripts can be automated via cron, systemd, etc.
+- Foundation for Web API (scripts become backend functions)
+- Easy testing and debugging
+
+**Web-Ready Design Principles**:
+When implementing CLI tools, always consider future Web UI integration:
+
+| Principle | CLI Implementation | Web Integration |
+|-----------|-------------------|-----------------|
+| **Structured Output** | `mcctl.sh status --json` | API returns JSON directly |
+| **Exit Codes** | 0=success, 1=error, 2=warning | HTTP status codes mapping |
+| **Config Files** | TOML, JSON, env files | Parseable by Node.js |
+| **Stateless Operations** | Each command is independent | Stateless API endpoints |
+| **Separation of Concerns** | Logic in functions, CLI in main | Functions become API handlers |
+
 ### Phase 1: Infrastructure Setup
 - [ ] Create directory structure
 - [ ] Create `.env` with global settings
-- [ ] Create `docker-compose.yml`
+- [ ] Create `docker-compose.yml` with Lazymc
+- [ ] Create `lazymc.toml`
 - [ ] Create server config templates
 
 ### Phase 2: Locking System
@@ -433,8 +455,9 @@ Example:
 ### Phase 3: Management CLI
 - [ ] Implement `scripts/mcctl.sh`
 - [ ] Implement `scripts/logs.sh`
+- [ ] Add `--json` output option for Web-ready integration
 - [ ] Test all CLI commands
-- [ ] Add error handling
+- [ ] Add error handling with proper exit codes
 
 ### Phase 4: Documentation
 - [ ] Update `CLAUDE.md`
@@ -446,6 +469,14 @@ Example:
 - [ ] Test world switching
 - [ ] Test failure scenarios
 - [ ] Performance validation
+- [ ] Verify JSON output parsing
+
+### Future: Phase 6 (Web Management UI)
+See **Section 9.1** for detailed Web UI implementation plan.
+- Wrap CLI functions with Next.js API routes
+- Build MUI dashboard components
+- Add SQLite/PostgreSQL for persistent state
+- Package as npm module
 
 ## 6. Configuration Reference
 

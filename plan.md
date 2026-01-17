@@ -4,6 +4,55 @@
 
 This plan outlines the implementation steps for the multi-server Minecraft management system defined in `prd.md`.
 
+## Development Strategy: CLI-First, Web-Ready
+
+All features are implemented via **CLI first**, with **Web Management UI** as a future enhancement.
+
+### Web-Ready Implementation Guidelines
+
+When implementing CLI scripts:
+
+```bash
+# 1. Support JSON output for Web API integration
+mcctl.sh status --json
+# Output: {"servers":[{"name":"survival","status":"running","port":25565},...]}
+
+# 2. Use consistent exit codes
+# 0 = success
+# 1 = error
+# 2 = warning
+
+# 3. Separate logic from CLI parsing
+# Bad:  echo "Server started"
+# Good: output_message "Server started" (function handles format)
+
+# 4. All config in parseable formats (TOML, JSON, env)
+```
+
+### Example: Web-Ready Function Design
+
+```bash
+# scripts/lib/servers.sh - Reusable functions
+
+get_server_status() {
+    local server=$1
+    local status=$(docker inspect -f '{{.State.Status}}' "mc-$server" 2>/dev/null || echo "not_found")
+    local port=$(grep -oP 'address.*:\K\d+' lazymc.toml | head -1)
+    echo "{\"name\":\"$server\",\"status\":\"$status\",\"port\":$port}"
+}
+
+# scripts/mcctl.sh - CLI wrapper
+case "$1" in
+    status)
+        if [[ "$2" == "--json" ]]; then
+            get_server_status "$3"
+        else
+            # Human-readable output
+        fi
+        ;;
+esac
+```
+
 ## Prerequisites
 
 - Docker Engine 20.10+
