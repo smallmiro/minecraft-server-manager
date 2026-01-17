@@ -34,7 +34,14 @@ minecraft/
 │   │   └── mods/                # Shared mods (read-only mount)
 │   │
 │   ├── scripts/                 # Management scripts
-│   │   └── create-server.sh     # Server creation script
+│   │   ├── lib/
+│   │   │   └── common.sh        # Shared functions library
+│   │   ├── mcctl.sh             # Main management CLI
+│   │   ├── create-server.sh     # Server creation script
+│   │   ├── lock.sh              # World locking system
+│   │   ├── logs.sh              # Log viewer
+│   │   ├── player.sh            # Player UUID lookup
+│   │   └── backup.sh            # GitHub worlds backup
 │   │
 │   ├── services/                # Microservices
 │   │   └── mdns-publisher/      # mDNS auto-broadcast service
@@ -425,6 +432,24 @@ After creation, just:
 | `MEMORY` | Recommended | JVM memory (e.g., `4G`) |
 | `RCON_PASSWORD` | Recommended | RCON password |
 
+## Optional: GitHub Backup Configuration
+
+Backup `worlds/` directory to a private GitHub repository.
+
+| Variable | Description |
+|----------|-------------|
+| `BACKUP_GITHUB_TOKEN` | GitHub Personal Access Token (repo scope) |
+| `BACKUP_GITHUB_REPO` | Repository as `username/repo-name` |
+| `BACKUP_GITHUB_BRANCH` | Branch name (default: `main`) |
+| `BACKUP_AUTO_ON_STOP` | Auto backup on server stop (`true`/`false`) |
+
+```bash
+# .env example
+BACKUP_GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+BACKUP_GITHUB_REPO=myuser/minecraft-worlds-backup
+BACKUP_AUTO_ON_STOP=true
+```
+
 ## Common Tasks
 
 ### Start/Stop All Servers
@@ -455,6 +480,38 @@ docker compose stop mc-ironwood
 
 # View server logs
 docker logs -f mc-ironwood
+```
+
+### Management CLI (mcctl.sh)
+
+```bash
+cd platform
+
+# Server status
+./scripts/mcctl.sh status
+./scripts/mcctl.sh status --json
+
+# Logs
+./scripts/mcctl.sh logs ironwood
+./scripts/mcctl.sh logs ironwood -n 100
+
+# RCON console
+./scripts/mcctl.sh console ironwood
+
+# World management
+./scripts/mcctl.sh world list
+./scripts/mcctl.sh world assign survival mc-ironwood
+./scripts/mcctl.sh world release survival
+
+# Player lookup
+./scripts/mcctl.sh player lookup Notch
+./scripts/mcctl.sh player uuid Steve --offline
+
+# Backup (requires .env configuration)
+./scripts/mcctl.sh backup status
+./scripts/mcctl.sh backup push -m "Before upgrade"
+./scripts/mcctl.sh backup history
+./scripts/mcctl.sh backup restore abc1234
 ```
 
 ### Execute Commands
