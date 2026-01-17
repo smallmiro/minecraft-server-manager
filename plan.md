@@ -1,5 +1,25 @@
 # Implementation Plan: Multi-Server Minecraft Management System
 
+## Quick Reference
+
+### Milestones
+| Version | Description | Status |
+|---------|-------------|--------|
+| [v0.2.0](https://github.com/smallmiro/minecraft-server-manager/milestone/1) | Infrastructure (Phase 1, 2) | 🔄 Open |
+| [v0.3.0](https://github.com/smallmiro/minecraft-server-manager/milestone/2) | Core Features (Phase 3, 4) | 🔄 Open |
+| [v1.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/3) | Release (Phase 5) | 🔄 Open |
+
+### Issues by Phase
+| Phase | Issues |
+|-------|--------|
+| Phase 1: Infrastructure | [#1](https://github.com/smallmiro/minecraft-server-manager/issues/1), [#2](https://github.com/smallmiro/minecraft-server-manager/issues/2), [#3](https://github.com/smallmiro/minecraft-server-manager/issues/3) |
+| Phase 2: Docker & Lazymc | [#4](https://github.com/smallmiro/minecraft-server-manager/issues/4), [#5](https://github.com/smallmiro/minecraft-server-manager/issues/5), [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) |
+| Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) |
+| Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9) |
+| Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) |
+
+---
+
 ## Overview
 
 This plan outlines the implementation steps for the multi-server Minecraft management system defined in `prd.md`.
@@ -79,11 +99,11 @@ Each phase and task should be tracked via **GitHub Issues** with proper labels a
 | `priority:medium` | #FBCA04 | Medium priority |
 
 ### Milestone Mapping
-| Milestone | Phases | Target |
-|-----------|--------|--------|
-| v0.1.0 - Infrastructure | Phase 1, 2 | Base setup |
-| v0.2.0 - Core Features | Phase 3, 4 | CLI tools |
-| v1.0.0 - Release | Phase 5 | Documentation & Testing |
+| Milestone | Phases | Target | Link |
+|-----------|--------|--------|------|
+| v0.2.0 - Infrastructure | Phase 1, 2 | Base setup | [Milestone](https://github.com/smallmiro/minecraft-server-manager/milestone/1) |
+| v0.3.0 - Core Features | Phase 3, 4 | CLI tools | [Milestone](https://github.com/smallmiro/minecraft-server-manager/milestone/2) |
+| v1.0.0 - Release | Phase 5 | Documentation & Testing | [Milestone](https://github.com/smallmiro/minecraft-server-manager/milestone/3) |
 
 ### Branch → Issue Linking
 ```bash
@@ -106,7 +126,9 @@ Closes #5
 
 ## Phase 1: Infrastructure Setup
 
-### 1.1 Create Directory Structure
+> **Milestone**: [v0.2.0 - Infrastructure](https://github.com/smallmiro/minecraft-server-manager/milestone/1)
+
+### 1.1 Create Directory Structure ([#1](https://github.com/smallmiro/minecraft-server-manager/issues/1))
 
 ```bash
 mkdir -p servers/{_template,survival,creative,modded}/{data,logs}
@@ -116,7 +138,7 @@ mkdir -p backups/{worlds,servers}
 mkdir -p scripts
 ```
 
-### 1.2 Create Global Environment File
+### 1.2 Create Global Environment File ([#2](https://github.com/smallmiro/minecraft-server-manager/issues/2))
 
 **File**: `.env`
 
@@ -140,7 +162,7 @@ TZ=Asia/Seoul
 RCON_PASSWORD=changeme
 ```
 
-### 1.3 Create Server Template
+### 1.3 Create Server Template ([#3](https://github.com/smallmiro/minecraft-server-manager/issues/3))
 
 **File**: `servers/_template/config.env`
 
@@ -148,7 +170,9 @@ Template for creating new server configurations.
 
 ## Phase 2: Docker & Lazymc Configuration
 
-### 2.1 Create docker-compose.yml
+> **Milestone**: [v0.2.0 - Infrastructure](https://github.com/smallmiro/minecraft-server-manager/milestone/1)
+
+### 2.1 Create docker-compose.yml ([#4](https://github.com/smallmiro/minecraft-server-manager/issues/4))
 
 **Key Features**:
 - Lazymc proxy service (always running)
@@ -193,7 +217,7 @@ services:
       - minecraft-net
 ```
 
-### 2.2 Create lazymc.toml
+### 2.2 Create lazymc.toml ([#5](https://github.com/smallmiro/minecraft-server-manager/issues/5))
 
 **File**: `lazymc.toml`
 
@@ -257,7 +281,7 @@ container = "mc-modded"
 sleep_after = 900  # 15 min for modded
 ```
 
-### 2.3 Create Server Configurations
+### 2.3 Create Server Configurations ([#6](https://github.com/smallmiro/minecraft-server-manager/issues/6))
 
 **Files to create**:
 - `servers/survival/config.env`
@@ -266,7 +290,9 @@ sleep_after = 900  # 15 min for modded
 
 ## Phase 3: World Locking System
 
-### 3.1 Implement lock.sh
+> **Milestone**: [v0.3.0 - Core Features](https://github.com/smallmiro/minecraft-server-manager/milestone/2)
+
+### 3.1 Implement lock.sh ([#7](https://github.com/smallmiro/minecraft-server-manager/issues/7))
 
 **File**: `scripts/lock.sh`
 
@@ -294,7 +320,9 @@ sleep_after = 900  # 15 min for modded
 
 ## Phase 4: Management CLI
 
-### 4.1 Implement mcctl.sh
+> **Milestone**: [v0.3.0 - Core Features](https://github.com/smallmiro/minecraft-server-manager/milestone/2)
+
+### 4.1 Implement mcctl.sh ([#8](https://github.com/smallmiro/minecraft-server-manager/issues/8))
 
 **File**: `scripts/mcctl.sh`
 
@@ -335,7 +363,7 @@ docker ps --filter "name=lazymc" --format "{{.Status}}"
 docker ps --filter "name=mc-$server" --format "{{.Status}}"
 ```
 
-### 4.2 Implement logs.sh
+### 4.2 Implement logs.sh ([#9](https://github.com/smallmiro/minecraft-server-manager/issues/9))
 
 **File**: `scripts/logs.sh`
 
@@ -349,7 +377,9 @@ chmod +x scripts/*.sh
 
 ## Phase 5: Documentation Update
 
-### 5.1 Update CLAUDE.md
+> **Milestone**: [v1.0.0 - Release](https://github.com/smallmiro/minecraft-server-manager/milestone/3)
+
+### 5.1 Update CLAUDE.md ([#10](https://github.com/smallmiro/minecraft-server-manager/issues/10))
 
 Add sections:
 - Multi-server architecture overview
@@ -357,7 +387,7 @@ Add sections:
 - World locking explanation
 - Troubleshooting for multi-server
 
-### 5.2 Update README.md
+### 5.2 Update README.md ([#11](https://github.com/smallmiro/minecraft-server-manager/issues/11))
 
 Add sections:
 - Multi-server quick start
@@ -368,25 +398,25 @@ Add sections:
 
 ### Create New Files
 
-| File | Phase | Priority |
-|------|-------|----------|
-| `.env` | 1 | High |
-| `docker-compose.yml` | 2 | High |
-| `lazymc.toml` | 2 | High |
-| `servers/_template/config.env` | 1 | High |
-| `servers/survival/config.env` | 2 | High |
-| `servers/creative/config.env` | 2 | High |
-| `servers/modded/config.env` | 2 | High |
-| `scripts/lock.sh` | 3 | High |
-| `scripts/mcctl.sh` | 4 | Medium |
-| `scripts/logs.sh` | 4 | Medium |
+| File | Phase | Priority | Issue |
+|------|-------|----------|-------|
+| `.env` | 1 | High | [#2](https://github.com/smallmiro/minecraft-server-manager/issues/2) |
+| `docker-compose.yml` | 2 | High | [#4](https://github.com/smallmiro/minecraft-server-manager/issues/4) |
+| `lazymc.toml` | 2 | High | [#5](https://github.com/smallmiro/minecraft-server-manager/issues/5) |
+| `servers/_template/config.env` | 1 | High | [#3](https://github.com/smallmiro/minecraft-server-manager/issues/3) |
+| `servers/survival/config.env` | 2 | High | [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) |
+| `servers/creative/config.env` | 2 | High | [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) |
+| `servers/modded/config.env` | 2 | High | [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) |
+| `scripts/lock.sh` | 3 | High | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) |
+| `scripts/mcctl.sh` | 4 | Medium | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8) |
+| `scripts/logs.sh` | 4 | Medium | [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9) |
 
 ### Update Existing Files
 
-| File | Phase | Changes |
-|------|-------|---------|
-| `CLAUDE.md` | 5 | Add multi-server section |
-| `README.md` | 5 | Add management guide |
+| File | Phase | Changes | Issue |
+|------|-------|---------|-------|
+| `CLAUDE.md` | 5 | Add multi-server section | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10) |
+| `README.md` | 5 | Add management guide | [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) |
 
 ### Create Directories
 
