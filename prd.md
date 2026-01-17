@@ -416,13 +416,13 @@ router:
   image: itzg/mc-router
   container_name: mc-router
   restart: unless-stopped
-  command:
-    - --in-docker
-    - --auto-scale-up
-    - --auto-scale-down
-    - --auto-scale-down-after=10m
-    - --docker-timeout=120
-    - --auto-scale-asleep-motd=§eStarting...
+  environment:
+    IN_DOCKER: "true"
+    AUTO_SCALE_UP: "true"
+    AUTO_SCALE_DOWN: "true"
+    AUTO_SCALE_DOWN_AFTER: "10m"
+    DOCKER_TIMEOUT: "120"
+    AUTO_SCALE_ASLEEP_MOTD: "§e§lStarting server...§r\n§7Please wait while the server wakes up!"
   ports:
     - "25565:25565"
   volumes:
@@ -434,14 +434,14 @@ router:
 **Note**: No MAPPING environment variable needed. mc-router auto-discovers servers via Docker labels (`mc-router.host`).
 
 #### Key Settings
-| Option | Description |
-|--------|-------------|
-| `--in-docker` | Enable Docker integration |
-| `--auto-scale-up` | Start containers on client connect |
-| `--auto-scale-down` | Stop containers when idle |
-| `--auto-scale-down-after=10m` | Idle timeout before shutdown |
-| `--docker-timeout=120` | Wait time for container startup |
-| `--auto-scale-asleep-motd` | MOTD when server is sleeping |
+| Environment Variable | Description |
+|---------------------|-------------|
+| `IN_DOCKER` | Enable Docker integration |
+| `AUTO_SCALE_UP` | Start containers on client connect |
+| `AUTO_SCALE_DOWN` | Stop containers when idle |
+| `AUTO_SCALE_DOWN_AFTER` | Idle timeout before shutdown (e.g., "10m") |
+| `DOCKER_TIMEOUT` | Wait time for container startup in seconds |
+| `AUTO_SCALE_ASLEEP_MOTD` | MOTD when server is sleeping |
 
 #### Container Labels
 Each Minecraft server needs these labels:
@@ -627,9 +627,9 @@ See **Section 9.1** for detailed Web UI implementation plan.
 MINECRAFT_NETWORK=minecraft-net
 MINECRAFT_SUBNET=172.28.0.0/16
 
-# mc-router Settings (configured in docker-compose.yml command)
-# --auto-scale-down-after=10m    # Stop server after 10 min idle
-# --docker-timeout=120           # Wait 2 min for server startup
+# mc-router Settings (configured in docker-compose.yml environment)
+# AUTO_SCALE_DOWN_AFTER=10m      # Stop server after 10 min idle
+# DOCKER_TIMEOUT=120             # Wait 2 min for server startup
 
 # Defaults
 DEFAULT_MEMORY=4G
