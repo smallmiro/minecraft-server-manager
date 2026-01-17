@@ -5,18 +5,18 @@
 ### Milestones
 | Version | Description | Status |
 |---------|-------------|--------|
-| [v0.2.0](https://github.com/smallmiro/minecraft-server-manager/milestone/1) | Infrastructure (Phase 1, 2) | ✅ Complete |
+| [v0.2.0](https://github.com/smallmiro/minecraft-server-manager/milestone/1) | Infrastructure (Phase 1, 2) | ✅ Closed |
 | [v0.3.0](https://github.com/smallmiro/minecraft-server-manager/milestone/2) | Core Features (Phase 3, 4) | 🔄 Open |
 | [v1.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/3) | Release (Phase 5) | 🔄 Open |
 
 ### Issues by Phase
-| Phase | Issues |
-|-------|--------|
-| Phase 1: Infrastructure | [#1](https://github.com/smallmiro/minecraft-server-manager/issues/1), [#2](https://github.com/smallmiro/minecraft-server-manager/issues/2), [#3](https://github.com/smallmiro/minecraft-server-manager/issues/3) |
-| Phase 2: Docker & Lazymc | [#4](https://github.com/smallmiro/minecraft-server-manager/issues/4), [#5](https://github.com/smallmiro/minecraft-server-manager/issues/5), [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) |
-| Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) |
-| Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) |
-| Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) |
+| Phase | Issues | Status |
+|-------|--------|--------|
+| Phase 1: Infrastructure | [#1](https://github.com/smallmiro/minecraft-server-manager/issues/1), [#2](https://github.com/smallmiro/minecraft-server-manager/issues/2), [#3](https://github.com/smallmiro/minecraft-server-manager/issues/3) | ✅ Closed |
+| Phase 2: Docker & mc-router | [#4](https://github.com/smallmiro/minecraft-server-manager/issues/4), [#5](https://github.com/smallmiro/minecraft-server-manager/issues/5), [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) | ✅ Closed |
+| Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) | 🔄 Open |
+| Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | 🔄 Open |
+| Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | 🔄 Open |
 
 ---
 
@@ -24,18 +24,34 @@
 
 This plan outlines the implementation steps for the multi-server Minecraft management system defined in `prd.md`.
 
+## Architecture: mc-router Based
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    mc-router (:25565)                        │
+│              (always running, hostname routing)              │
+├─────────────────────────────────────────────────────────────┤
+│  ironwood.local    → mc-ironwood    (auto-scale up/down)    │
+│  <new-server>.local → mc-<new-server> (add via script)      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Features**:
+- Single port (25565) for all servers via hostname routing
+- Auto-scale: servers start on client connect, stop after idle timeout
+- Zero resources when servers are stopped (only mc-router runs)
+- Fully automated server creation via `create-server.sh`
+
 ## Development Strategy: CLI-First, Web-Ready
 
 All features are implemented via **CLI first**, with **Web Management UI** as a future enhancement.
 
 ### Web-Ready Implementation Guidelines
 
-When implementing CLI scripts:
-
 ```bash
 # 1. Support JSON output for Web API integration
 mcctl.sh status --json
-# Output: {"servers":[{"name":"survival","status":"running","port":25565},...]}
+# Output: {"router":"running","servers":[{"name":"ironwood","status":"running",...}]}
 
 # 2. Use consistent exit codes
 # 0 = success
@@ -43,34 +59,10 @@ mcctl.sh status --json
 # 2 = warning
 
 # 3. Separate logic from CLI parsing
-# Bad:  echo "Server started"
-# Good: output_message "Server started" (function handles format)
+# scripts/lib/servers.sh - Reusable functions
+# scripts/mcctl.sh - CLI wrapper
 
 # 4. All config in parseable formats (TOML, JSON, env)
-```
-
-### Example: Web-Ready Function Design
-
-```bash
-# scripts/lib/servers.sh - Reusable functions
-
-get_server_status() {
-    local server=$1
-    local status=$(docker inspect -f '{{.State.Status}}' "mc-$server" 2>/dev/null || echo "not_found")
-    local port=$(grep -oP 'address.*:\K\d+' lazymc.toml | head -1)
-    echo "{\"name\":\"$server\",\"status\":\"$status\",\"port\":$port}"
-}
-
-# scripts/mcctl.sh - CLI wrapper
-case "$1" in
-    status)
-        if [[ "$2" == "--json" ]]; then
-            get_server_status "$3"
-        else
-            # Human-readable output
-        fi
-        ;;
-esac
 ```
 
 ## Prerequisites
@@ -82,28 +74,17 @@ esac
 
 ## GitHub Issues Integration
 
-Each phase and task should be tracked via **GitHub Issues** with proper labels and milestones.
-
 ### Issue Labels
 | Label | Color | Description |
 |-------|-------|-------------|
 | `phase:1-infra` | #0052CC | Phase 1: Infrastructure |
-| `phase:2-docker` | #0052CC | Phase 2: Docker & Lazymc |
+| `phase:2-docker` | #0052CC | Phase 2: Docker & mc-router |
 | `phase:3-locking` | #0052CC | Phase 3: World Locking |
 | `phase:4-cli` | #0052CC | Phase 4: Management CLI |
 | `phase:5-docs` | #0052CC | Phase 5: Documentation |
 | `type:feature` | #1D76DB | New feature |
 | `type:bug` | #D73A4A | Bug fix |
 | `type:docs` | #0075CA | Documentation |
-| `priority:high` | #B60205 | High priority |
-| `priority:medium` | #FBCA04 | Medium priority |
-
-### Milestone Mapping
-| Milestone | Phases | Target | Link |
-|-----------|--------|--------|------|
-| v0.2.0 - Infrastructure | Phase 1, 2 | Base setup | [Milestone](https://github.com/smallmiro/minecraft-server-manager/milestone/1) |
-| v0.3.0 - Core Features | Phase 3, 4 | CLI tools | [Milestone](https://github.com/smallmiro/minecraft-server-manager/milestone/2) |
-| v1.0.0 - Release | Phase 5 | Documentation & Testing | [Milestone](https://github.com/smallmiro/minecraft-server-manager/milestone/3) |
 
 ### Branch → Issue Linking
 ```bash
@@ -112,181 +93,126 @@ feature/<issue-number>-<description>
 bugfix/<issue-number>-<description>
 
 # Commit message
-feat: Add lock.sh script (#5)
+feat: Add lock.sh script (#7)
 
 Implements world locking mechanism with flock.
 
 - Add lock/unlock/check/list commands
 - Handle stale lock detection
 
-Closes #5
+Closes #7
 ```
 
 ---
 
-## Phase 1: Infrastructure Setup
+## Phase 1: Infrastructure Setup ✅ COMPLETED
 
-> **Milestone**: [v0.2.0 - Infrastructure](https://github.com/smallmiro/minecraft-server-manager/milestone/1)
+> **Milestone**: [v0.2.0 - Infrastructure](https://github.com/smallmiro/minecraft-server-manager/milestone/1) (Closed)
 
-### 1.1 Create Directory Structure ([#1](https://github.com/smallmiro/minecraft-server-manager/issues/1))
+### 1.1 Create Directory Structure ([#1](https://github.com/smallmiro/minecraft-server-manager/issues/1)) ✅
 
-```bash
-mkdir -p servers/{_template,survival,creative,modded}/{data,logs}
-mkdir -p worlds/.locks
-mkdir -p shared/{plugins,mods}
-mkdir -p backups/{worlds,servers}
-mkdir -p scripts
+```
+platform/
+├── docker-compose.yml       # Main orchestration (mc-router + includes)
+├── .env                     # Global environment variables
+├── .env.example             # Template
+├── servers/
+│   ├── _template/           # Template for new servers
+│   │   ├── docker-compose.yml
+│   │   └── config.env
+│   └── ironwood/            # Default server
+│       ├── docker-compose.yml
+│       ├── config.env
+│       ├── data/            # Server data (gitignored)
+│       └── logs/            # Server logs (gitignored)
+├── worlds/                  # Shared world storage
+│   └── .locks/              # Lock files (future)
+├── shared/
+│   ├── plugins/             # Shared plugins (read-only mount)
+│   └── mods/                # Shared mods (read-only mount)
+├── scripts/
+│   └── create-server.sh     # Fully automated server creation
+└── backups/                 # Backup storage
 ```
 
-### 1.2 Create Global Environment File ([#2](https://github.com/smallmiro/minecraft-server-manager/issues/2))
+### 1.2 Create Global Environment File ([#2](https://github.com/smallmiro/minecraft-server-manager/issues/2)) ✅
 
-**File**: `.env`
+**File**: `platform/.env`
 
-```bash
-# Network Configuration
-MINECRAFT_NETWORK=minecraft-net
-MINECRAFT_SUBNET=172.20.0.0/16
+### 1.3 Create Server Template ([#3](https://github.com/smallmiro/minecraft-server-manager/issues/3)) ✅
 
-# Lazymc Settings
-LAZYMC_IDLE_TIMEOUT=600          # Stop server after 10 min idle
-LAZYMC_MIN_ONLINE_TIME=60        # Min time before auto-stop
+**File**: `platform/servers/_template/`
 
-# Default Settings
-DEFAULT_MEMORY=4G
-DEFAULT_VERSION=1.20.4
+## Phase 2: Docker & mc-router Configuration ✅ COMPLETED
 
-# Timezone
-TZ=Asia/Seoul
+> **Milestone**: [v0.2.0 - Infrastructure](https://github.com/smallmiro/minecraft-server-manager/milestone/1) (Closed)
 
-# RCON (change in production)
-RCON_PASSWORD=changeme
-```
-
-### 1.3 Create Server Template ([#3](https://github.com/smallmiro/minecraft-server-manager/issues/3))
-
-**File**: `servers/_template/config.env`
-
-Template for creating new server configurations.
-
-## Phase 2: Docker & Lazymc Configuration
-
-> **Milestone**: [v0.2.0 - Infrastructure](https://github.com/smallmiro/minecraft-server-manager/milestone/1)
-
-### 2.1 Create docker-compose.yml ([#4](https://github.com/smallmiro/minecraft-server-manager/issues/4))
+### 2.1 Create docker-compose.yml ([#4](https://github.com/smallmiro/minecraft-server-manager/issues/4)) ✅
 
 **Key Features**:
-- Lazymc proxy service (always running)
-- YAML anchors for common configuration (`x-minecraft-common`)
+- mc-router service (always running)
+- Docker Compose `include` directive for modular server configs
 - Shared network (`minecraft-net`)
-- Shared volumes (`worlds`, `shared-plugins`, `shared-mods`)
-- Per-server log directories
-- **No port mapping on MC servers** (Lazymc handles ports)
-- `restart: "no"` on MC servers (Lazymc controls lifecycle)
+- Auto-scale via Docker socket integration
 
-**Services**:
-| Service | Port | Type | Managed By |
-|---------|------|------|------------|
-| lazymc | 25565-25567 | Proxy | Always running |
-| mc-survival | (internal) | PAPER | Lazymc |
-| mc-creative | (internal) | VANILLA | Lazymc |
-| mc-modded | (internal) | FORGE | Lazymc |
-
-**Docker Compose Structure**:
+**Current Structure**:
 ```yaml
+include:
+  - servers/ironwood/docker-compose.yml
+  # Add more via create-server.sh
+
 services:
-  # Lazymc - Always running proxy
-  lazymc:
-    image: ghcr.io/timvisee/lazymc:latest
-    restart: unless-stopped
+  router:
+    image: itzg/mc-router
+    command: >
+      --in-docker
+      --auto-scale-up
+      --auto-scale-down
+      --auto-scale-down-after=10m
     ports:
-      - "25565:25565"  # survival
-      - "25566:25566"  # creative
-      - "25567:25567"  # modded
+      - "25565:25565"
+    environment:
+      MAPPING: |
+        ironwood.local=mc-ironwood:25565
     volumes:
-      - ./lazymc.toml:/etc/lazymc/lazymc.toml:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - minecraft-net
-
-  # MC servers - No ports, Lazymc manages
-  mc-survival:
-    image: itzg/minecraft-server:java21
-    restart: "no"  # Lazymc controls
-    # No ports - internal only
-    networks:
-      - minecraft-net
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
 
-### 2.2 Create lazymc.toml ([#5](https://github.com/smallmiro/minecraft-server-manager/issues/5))
+### 2.2 Configure mc-router ([#5](https://github.com/smallmiro/minecraft-server-manager/issues/5)) ✅
 
-**File**: `lazymc.toml`
+mc-router is configured via docker-compose.yml command and environment variables.
 
-```toml
-# Survival Server
-[[servers]]
-name = "survival"
+| Option | Description |
+|--------|-------------|
+| `--in-docker` | Enable Docker integration |
+| `--auto-scale-up` | Start containers on client connect |
+| `--auto-scale-down` | Stop containers when idle |
+| `--auto-scale-down-after=10m` | Idle timeout before shutdown |
 
-[servers.public]
-address = "0.0.0.0:25565"
-motd = "§aSurvival§r - Starting server..."
-version = "1.20.4"
+### 2.3 Create Server Configurations ([#6](https://github.com/smallmiro/minecraft-server-manager/issues/6)) ✅
 
-[servers.server]
-address = "mc-survival:25565"
-wake_timeout = 300
-start_timeout = 600
+- `platform/servers/ironwood/` - Default Paper server
 
-[servers.docker]
-enabled = true
-container = "mc-survival"
+### 2.4 Fully Automated Server Creation ✅
 
-[servers.time]
-sleep_after = 600
-minimum_online_time = 60
+**File**: `platform/scripts/create-server.sh`
 
-# Creative Server
-[[servers]]
-name = "creative"
+The script automatically:
+1. Creates server directory from template
+2. Updates server's docker-compose.yml
+3. Updates config.env
+4. Updates main docker-compose.yml (include, MAPPING, depends_on)
+5. Validates configuration
+6. Starts the server (unless --no-start)
 
-[servers.public]
-address = "0.0.0.0:25566"
-motd = "§bCreative§r - Starting server..."
-
-[servers.server]
-address = "mc-creative:25565"
-
-[servers.docker]
-enabled = true
-container = "mc-creative"
-
-[servers.time]
-sleep_after = 600
-
-# Modded Server
-[[servers]]
-name = "modded"
-
-[servers.public]
-address = "0.0.0.0:25567"
-motd = "§6Modded§r - Starting server..."
-
-[servers.server]
-address = "mc-modded:25565"
-
-[servers.docker]
-enabled = true
-container = "mc-modded"
-
-[servers.time]
-sleep_after = 900  # 15 min for modded
+```bash
+./scripts/create-server.sh myserver              # Create & start
+./scripts/create-server.sh myserver -t FORGE     # With server type
+./scripts/create-server.sh myserver --no-start   # Create only
+./scripts/create-server.sh myserver --seed 12345 # With world seed
 ```
 
-### 2.3 Create Server Configurations ([#6](https://github.com/smallmiro/minecraft-server-manager/issues/6))
-
-**Files to create**:
-- `servers/survival/config.env`
-- `servers/creative/config.env`
-- `servers/modded/config.env`
+---
 
 ## Phase 3: World Locking System
 
@@ -294,7 +220,7 @@ sleep_after = 900  # 15 min for modded
 
 ### 3.1 Implement lock.sh ([#7](https://github.com/smallmiro/minecraft-server-manager/issues/7))
 
-**File**: `scripts/lock.sh`
+**File**: `platform/scripts/lock.sh`
 
 **Functions**:
 | Function | Description |
@@ -309,6 +235,8 @@ sleep_after = 900  # 15 min for modded
 <server-name>:<timestamp>:<pid>
 ```
 
+**Lock File Location**: `platform/worlds/.locks/<world-name>.lock`
+
 ### 3.2 Lock Safety Rules
 
 1. Lock acquired BEFORE container start
@@ -316,7 +244,7 @@ sleep_after = 900  # 15 min for modded
 3. Only lock owner can release
 4. Stale locks detectable via timestamp
 
-**Note**: Port management is handled by Lazymc (fixed ports in lazymc.toml), not by scripts.
+---
 
 ## Phase 4: Management CLI
 
@@ -324,11 +252,11 @@ sleep_after = 900  # 15 min for modded
 
 ### 4.1 Implement mcctl.sh ([#8](https://github.com/smallmiro/minecraft-server-manager/issues/8))
 
-**File**: `scripts/mcctl.sh`
+**File**: `platform/scripts/mcctl.sh`
 
 **Commands**:
 ```
-mcctl.sh status                   - Show all servers status
+mcctl.sh status                   - Show mc-router and all servers status
 mcctl.sh logs <server> [lines]    - View logs
 mcctl.sh console <server>         - RCON console
 
@@ -336,42 +264,33 @@ mcctl.sh world list               - List worlds/locks
 mcctl.sh world assign <w> <s>     - Assign world to server config
 mcctl.sh world release <w>        - Force release world lock
 
-# Manual override (bypasses Lazymc)
+# Manual override (bypasses mc-router auto-management)
 mcctl.sh start <server>           - Force start server
 mcctl.sh stop <server>            - Force stop server
 ```
 
-**Note**: With Lazymc, servers start/stop automatically on client connect/idle. Manual start/stop is only for maintenance or debugging.
-
 **Status Output Example**:
 ```
-=== Server Status (Lazymc Managed) ===
-SERVER      STATUS     PORT    WORLD            IDLE
-survival    RUNNING    25565   survival-world   2m ago
-creative    STOPPED    25566   creative-world   -
-modded      STOPPED    25567   modded-world     -
+=== Server Status (mc-router Managed) ===
+ROUTER     STATUS     PORT
+mc-router  RUNNING    25565 (hostname routing)
 
-Lazymc: RUNNING (3 servers configured)
-```
+SERVER       STATUS     HOSTNAME           IDLE
+mc-ironwood  RUNNING    ironwood.local     2m ago
+mc-myserver  STOPPED    myserver.local     auto-scale ready
 
-**Status Check Logic**:
-```bash
-# Check if Lazymc is running
-docker ps --filter "name=lazymc" --format "{{.Status}}"
-
-# Check individual server status
-docker ps --filter "name=mc-$server" --format "{{.Status}}"
+mc-router: RUNNING (2 servers configured)
 ```
 
 ### 4.2 Implement logs.sh ([#9](https://github.com/smallmiro/minecraft-server-manager/issues/9))
 
-**File**: `scripts/logs.sh`
+**File**: `platform/scripts/logs.sh`
 
 Helper script for log viewing with Docker and file options.
 
 ### 4.3 Implement player.sh ([#12](https://github.com/smallmiro/minecraft-server-manager/issues/12))
 
-**File**: `scripts/player.sh`
+**File**: `platform/scripts/player.sh`
 
 Player UUID lookup using PlayerDB API.
 
@@ -385,32 +304,7 @@ Player UUID lookup using PlayerDB API.
 ./scripts/player.sh uuid <playerName> --offline # Offline UUID only
 ```
 
-**Output Example**:
-```
-Player: Seatree1229
-Online UUID:  d2998bfc-9934-4ff1-8c8d-ec9e99609755
-Offline UUID: 3a9b5e8f-1234-3abc-def0-123456789abc
-Avatar: https://crafthead.net/avatar/d2998bfc99344ff18c8dec9e99609755
-```
-
-**Offline UUID Calculation**:
-```bash
-# Version 3 UUID from "OfflinePlayer:<name>"
-echo -n "OfflinePlayer:Seatree1229" | md5sum | \
-  sed 's/^\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\)\(..\).*/\1\2\3\4-\5\6-3\7\8-\9\10-\11\12\13\14\15\16/'
-```
-
-**mcctl.sh Integration**:
-```
-mcctl.sh player lookup <name>
-mcctl.sh player uuid <name> [--offline]
-```
-
-### 4.4 Make Scripts Executable
-
-```bash
-chmod +x scripts/*.sh
-```
+---
 
 ## Phase 5: Documentation Update
 
@@ -419,8 +313,8 @@ chmod +x scripts/*.sh
 ### 5.1 Update CLAUDE.md ([#10](https://github.com/smallmiro/minecraft-server-manager/issues/10))
 
 Add sections:
-- Multi-server architecture overview
-- New CLI commands (`mcctl.sh`)
+- mc-router based multi-server architecture overview
+- CLI commands reference (`mcctl.sh`)
 - World locking explanation
 - Troubleshooting for multi-server
 
@@ -431,81 +325,55 @@ Add sections:
 - Server management commands
 - World management guide
 
+---
+
 ## File Checklist
 
-### Create New Files
+### Completed ✅
 
-| File | Phase | Priority | Issue |
-|------|-------|----------|-------|
-| `.env` | 1 | High | [#2](https://github.com/smallmiro/minecraft-server-manager/issues/2) |
-| `docker-compose.yml` | 2 | High | [#4](https://github.com/smallmiro/minecraft-server-manager/issues/4) |
-| `lazymc.toml` | 2 | High | [#5](https://github.com/smallmiro/minecraft-server-manager/issues/5) |
-| `servers/_template/config.env` | 1 | High | [#3](https://github.com/smallmiro/minecraft-server-manager/issues/3) |
-| `servers/survival/config.env` | 2 | High | [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) |
-| `servers/creative/config.env` | 2 | High | [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) |
-| `servers/modded/config.env` | 2 | High | [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) |
-| `scripts/lock.sh` | 3 | High | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) |
-| `scripts/mcctl.sh` | 4 | Medium | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8) |
-| `scripts/logs.sh` | 4 | Medium | [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9) |
-| `scripts/player.sh` | 4 | Medium | [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) |
+| File | Phase | Status |
+|------|-------|--------|
+| `platform/.env` | 1 | ✅ |
+| `platform/.env.example` | 1 | ✅ |
+| `platform/docker-compose.yml` | 2 | ✅ |
+| `platform/servers/_template/` | 1 | ✅ |
+| `platform/servers/ironwood/` | 2 | ✅ |
+| `platform/scripts/create-server.sh` | 2 | ✅ |
 
-### Update Existing Files
+### Pending
 
-| File | Phase | Changes | Issue |
-|------|-------|---------|-------|
-| `CLAUDE.md` | 5 | Add multi-server section | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10) |
-| `README.md` | 5 | Add management guide | [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) |
+| File | Phase | Issue |
+|------|-------|-------|
+| `platform/scripts/lock.sh` | 3 | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) |
+| `platform/scripts/mcctl.sh` | 4 | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8) |
+| `platform/scripts/logs.sh` | 4 | [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9) |
+| `platform/scripts/player.sh` | 4 | [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) |
 
-### Create Directories
-
-```
-servers/_template/
-servers/survival/{data,logs}/
-servers/creative/{data,logs}/
-servers/modded/{data,logs}/
-worlds/.locks/
-shared/{plugins,mods}/
-backups/{worlds,servers}/
-scripts/
-```
+---
 
 ## Verification Steps
 
-### Phase 1 Verification
-```bash
-# Check directory structure
-ls -la servers/ worlds/ shared/ scripts/
+### Phase 1-2 Verification ✅
 
-# Verify .env exists
-cat .env
-```
-
-### Phase 2 Verification
 ```bash
 # Validate docker-compose syntax
-docker compose config
+cd platform && docker compose config
 
 # Check services defined
 docker compose config --services
-```
 
-### Phase 2 Verification (Lazymc)
-```bash
-# Validate lazymc.toml syntax
-docker run --rm -v ./lazymc.toml:/etc/lazymc/lazymc.toml \
-  ghcr.io/timvisee/lazymc:latest --config-test
+# Start mc-router and servers
+docker compose up -d
 
-# Start Lazymc only
-docker compose up -d lazymc
+# Check mc-router is listening
+ss -tuln | grep 25565
 
-# Check Lazymc is listening
-ss -tuln | grep -E "25565|25566|25567"
-
-# Check Lazymc logs
-docker logs lazymc
+# Test server creation
+./scripts/create-server.sh testserver --no-start
 ```
 
 ### Phase 3 Verification
+
 ```bash
 # Test lock operations
 ./scripts/lock.sh lock test-world test-server
@@ -515,72 +383,81 @@ docker logs lazymc
 ```
 
 ### Phase 4 Verification
+
 ```bash
 # Test CLI
 ./scripts/mcctl.sh --help
 ./scripts/mcctl.sh status
+./scripts/mcctl.sh status --json
 ./scripts/mcctl.sh world list
 
-# Test Lazymc auto-start (connect with MC client)
-# 1. Connect to 192.168.x.x:25565
-# 2. Check server started: docker ps
-# 3. Disconnect and wait 10 min
-# 4. Check server stopped: docker ps
+# Test mc-router auto-start (connect with MC client)
+# 1. Add to hosts: <host-ip> ironwood.local
+# 2. Connect to ironwood.local:25565
+# 3. Check server started: docker ps
+# 4. Disconnect and wait 10 min
+# 5. Check server stopped: docker ps
 ```
 
 ### Phase 5 Verification
+
 ```bash
 # Run sync-docs to validate documentation
-/project:sync-docs
+/sync-docs
 ```
+
+---
 
 ## Rollback Plan
 
 If implementation fails at any phase:
 
-1. **Phase 1-2 Failure**: Remove created directories and files
+1. **Phase 3-4 Failure**: Remove only scripts
    ```bash
-   docker compose down
-   rm -rf servers/ worlds/ shared/ scripts/ .env docker-compose.yml lazymc.toml
+   rm platform/scripts/lock.sh platform/scripts/mcctl.sh platform/scripts/logs.sh
    ```
 
-2. **Phase 3-4 Failure**: Remove only scripts
-   ```bash
-   rm -rf scripts/
-   ```
-
-3. **Phase 5 Failure**: Restore from git
+2. **Phase 5 Failure**: Restore from git
    ```bash
    git checkout CLAUDE.md README.md
    ```
+
+---
 
 ## Dependencies
 
 ### External
 - `itzg/minecraft-server` Docker image
-- `ghcr.io/timvisee/lazymc` Docker image
+- `itzg/mc-router` Docker image
 - Docker Engine & Compose
 
 ### Internal
 - `prd.md` - Requirements reference
 - `docs/` - Official documentation reference
 
-### Lazymc Resources
-- GitHub: https://github.com/timvisee/lazymc
-- Docker Hub: https://ghcr.io/timvisee/lazymc
+### mc-router Resources
+- GitHub: https://github.com/itzg/mc-router
+- Docker Hub: https://hub.docker.com/r/itzg/mc-router
+
+---
 
 ## Notes
 
-- All scripts use Bash (no additional runtime needed)
-- Lock system uses `flock` for atomic operations
-- World directory shared via `--world-dir` argument
-- Each server has isolated `/data` but shared `/worlds`
-
-### Lazymc Architecture
-- **Lazymc proxy**: Always running, minimal resources (~50MB RAM)
-- **MC servers**: Started on-demand by Lazymc, stopped after idle
-- **Fixed ports**: 25565 (survival), 25566 (creative), 25567 (modded)
-- **External access**: Same LAN PCs connect via `<host-ip>:<port>`
-- **Auto start**: Client connects → Lazymc starts container → proxies connection
-- **Auto stop**: No players for 10 min → Lazymc stops container
+### mc-router Architecture
+- **mc-router proxy**: Always running, minimal resources (~20MB RAM)
+- **MC servers**: Started on-demand by mc-router, stopped after idle
+- **Hostname routing**: All servers on port 25565, distinguished by hostname
+- **External access**: Clients configure DNS/hosts file to resolve hostnames
+- **Auto start**: Client connects → mc-router starts container → proxies connection
+- **Auto stop**: No players for 10 min → mc-router stops container
 - **Resource efficiency**: Zero RAM usage when servers are stopped
+
+### Client Configuration
+Clients must add server hostnames to their hosts file:
+```
+# /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
+192.168.1.100 ironwood.local
+192.168.1.100 myserver.local
+```
+
+Then connect via Minecraft: `ironwood.local:25565`
