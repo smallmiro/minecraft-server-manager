@@ -92,7 +92,7 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [ ] MOTD shows server status when sleeping (configurable message)
   - [ ] Server auto-stops after configurable idle timeout (default: 10 min)
   - [ ] Zero resource usage when server is stopped (container not running)
-  - [ ] External PCs connect via hostname (e.g., ironwood.local, crystalpeak.local)
+  - [ ] External PCs connect via hostname (e.g., ironwood.local, myserver.local)
   - [ ] Multiple servers supported with hostname-based routing
 
 #### FR-008: Player UUID Lookup
@@ -112,14 +112,27 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 - **Priority**: Medium
 - **Description**: Support multiple world initialization methods when creating a new server
 - **Acceptance Criteria**:
-  - [ ] Seed specification: Use `SEED` environment variable for new world generation
-  - [ ] ZIP download: Use `WORLD` environment variable with URL to download and extract world
-  - [ ] Existing world: Use `LEVEL` environment variable to point to existing world in `worlds/` directory
-  - [ ] `create-server.sh` supports `--seed <number>` option
-  - [ ] `create-server.sh` supports `--world-url <url>` option for ZIP download
-  - [ ] `create-server.sh` supports `--world <name>` option for existing world
-  - [ ] Options are mutually exclusive (only one can be specified)
-  - [ ] Clear error messages when invalid options are provided
+  - [x] Seed specification: Use `SEED` environment variable for new world generation
+  - [x] ZIP download: Use `WORLD` environment variable with URL to download and extract world
+  - [x] Existing world: Use `LEVEL` environment variable to point to existing world in `worlds/` directory
+  - [x] `create-server.sh` supports `--seed <number>` option
+  - [x] `create-server.sh` supports `--world-url <url>` option for ZIP download
+  - [x] `create-server.sh` supports `--world <name>` option for existing world
+  - [x] Options are mutually exclusive (only one can be specified)
+  - [x] Clear error messages when invalid options are provided
+
+#### FR-010: Fully Automated Server Creation
+- **Priority**: High
+- **Description**: Single command to create and configure a new server with all necessary setup
+- **Acceptance Criteria**:
+  - [x] `create-server.sh` automatically updates main docker-compose.yml
+  - [x] Adds include entry for new server
+  - [x] Adds MAPPING entry to mc-router configuration
+  - [x] Adds depends_on entry for router
+  - [x] Validates docker-compose.yml after changes
+  - [x] Restores backup on validation failure
+  - [x] `--start` option starts server after creation (default)
+  - [x] `--no-start` option skips server start
 
 ### 2.2 Non-Functional Requirements
 
@@ -397,8 +410,7 @@ router:
   environment:
     MAPPING: |
       ironwood.local=mc-ironwood:25565
-      crystalpeak.local=mc-crystalpeak:25565
-      shadowvale.local=mc-shadowvale:25565
+      # Add more servers via create-server.sh
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
@@ -434,13 +446,11 @@ PCs on the same LAN must configure DNS or hosts file:
 ```
 # Add to /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
 192.168.1.100 ironwood.local
-192.168.1.100 crystalpeak.local
-192.168.1.100 shadowvale.local
+# Add more servers as needed:
+# 192.168.1.100 myserver.local
 
 # Then connect via:
 ironwood.local:25565
-crystalpeak.local:25565
-shadowvale.local:25565
 ```
 
 ## 5. Implementation Plan

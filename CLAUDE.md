@@ -339,16 +339,16 @@ Then connect via Minecraft: `ironwood.local:25565`
 
 ### Adding a New Server
 
-**Recommended: Use the create-server.sh script**
+**Fully automated with create-server.sh**
 
 ```bash
 cd platform
 ./scripts/create-server.sh <server-name> [options]
 
 # Basic examples:
-./scripts/create-server.sh myworld              # Creates PAPER server
-./scripts/create-server.sh techcraft -t FORGE   # Creates FORGE server
-./scripts/create-server.sh vanilla01 --type VANILLA
+./scripts/create-server.sh myworld              # Creates & starts PAPER server
+./scripts/create-server.sh techcraft -t FORGE   # Creates & starts FORGE server
+./scripts/create-server.sh myworld --no-start   # Create only, don't start
 
 # World options (mutually exclusive):
 ./scripts/create-server.sh myworld --seed 12345           # Specific world seed
@@ -363,6 +363,14 @@ cd platform
 | `-s, --seed NUMBER` | World seed for new world generation |
 | `-u, --world-url URL` | Download world from ZIP URL |
 | `-w, --world NAME` | Use existing world from `worlds/` directory |
+| `--start` | Start server after creation (default) |
+| `--no-start` | Create without starting |
+
+The script automatically:
+1. Creates server directory with configuration
+2. Updates main `docker-compose.yml` (include, MAPPING, depends_on)
+3. Validates docker-compose.yml configuration
+4. Starts the server (unless `--no-start` specified)
 
 The server name you provide will be used for:
 - **Directory**: `servers/<server-name>/`
@@ -370,34 +378,10 @@ The server name you provide will be used for:
 - **Container**: `mc-<server-name>`
 - **Hostname**: `<server-name>.local`
 
-After running the script, follow the displayed instructions to:
-1. Edit `config.env` for server settings
-2. Add `include` to main `docker-compose.yml`
-3. Add `MAPPING` entry to router
-4. Add `depends_on` entry for router
-5. Configure client hosts file
-6. Run: `docker compose up -d`
-
-**Manual setup (alternative)**
-
-1. Copy template: `cp -r platform/servers/_template platform/servers/<server-name>`
-2. Edit `platform/servers/<server-name>/docker-compose.yml`:
-   - Change service name: `mc-template` → `mc-<server-name>`
-   - Change container name: `mc-template` → `mc-<server-name>`
-   - Change hostname label: `template.local` → `<server-name>.local`
-3. Edit `platform/servers/<server-name>/config.env` with server settings
-4. Add include to `platform/docker-compose.yml`:
-   ```yaml
-   include:
-     - servers/<server-name>/docker-compose.yml
-   ```
-5. Add MAPPING to router environment:
-   ```yaml
-   MAPPING: |
-     <server-name>.local=mc-<server-name>:25565
-   ```
-6. Add `depends_on` entry for router
-7. Run: `cd platform && docker compose up -d`
+After creation, just:
+1. (Optional) Edit `config.env` for custom server settings
+2. Configure client hosts file: `<server-ip> <server-name>.local`
+3. Connect via Minecraft: `<server-name>.local:25565`
 
 ### Change Management
 1. **Configuration changes**: Modify compose files → `docker compose up -d`
@@ -534,14 +518,10 @@ For detailed settings, refer to the documents in the `docs/` directory:
 ## Checklists
 
 ### New Server Setup
-- [ ] Copy `platform/servers/_template` to new server directory
-- [ ] Edit `docker-compose.yml` (service name, container name, hostname label)
-- [ ] Edit `config.env` (server settings)
-- [ ] Add `include` to `platform/docker-compose.yml`
-- [ ] Add `MAPPING` entry to router
-- [ ] Add `depends_on` entry for router
+- [ ] Run `./scripts/create-server.sh <server-name> [options]`
+- [ ] (Optional) Edit `config.env` for custom settings
 - [ ] Update DNS/hosts file on client machines
-- [ ] Run `cd platform && docker compose up -d`
+- [ ] Connect via Minecraft: `<server-name>.local:25565`
 
 ### Server Upgrade
 - [ ] Backup server's `data/` directory
