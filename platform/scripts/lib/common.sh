@@ -4,11 +4,29 @@
 # =============================================================================
 # Source this file in other scripts:
 #   source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
+#
+# When running via npm package (mcctl CLI), these environment variables are set:
+#   MCCTL_ROOT     - User data directory (~/.minecraft-servers)
+#   MCCTL_SCRIPTS  - Package scripts directory
+#   MCCTL_TEMPLATES - Package templates directory
 # =============================================================================
 
 # Get script/platform directories
-SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-PLATFORM_DIR="${PLATFORM_DIR:-$(dirname "$SCRIPT_DIR")}"
+# Support both direct execution and npm package execution
+if [[ -n "${MCCTL_ROOT:-}" ]]; then
+    # Running via npm package (mcctl CLI)
+    PLATFORM_DIR="$MCCTL_ROOT"
+    SCRIPT_DIR="${MCCTL_SCRIPTS:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+    TEMPLATES_DIR="${MCCTL_TEMPLATES:-$PLATFORM_DIR/servers/_template}"
+else
+    # Running directly (development mode)
+    SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+    PLATFORM_DIR="${PLATFORM_DIR:-$(dirname "$SCRIPT_DIR")}"
+    TEMPLATES_DIR="$PLATFORM_DIR/servers/_template"
+fi
+
+# Export for sub-scripts
+export PLATFORM_DIR SCRIPT_DIR TEMPLATES_DIR
 
 # Colors (disabled if not terminal or JSON output)
 setup_colors() {

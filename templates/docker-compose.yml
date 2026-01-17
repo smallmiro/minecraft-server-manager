@@ -6,7 +6,7 @@
 #   - MC Servers: Each server in its own directory under servers/
 #
 # Adding a new server (fully automated):
-#   ./scripts/create-server.sh <server-name> [options]
+#   mcctl create <server-name> [options]
 #
 #   The script automatically:
 #     - Creates server directory and configuration
@@ -55,9 +55,8 @@ services:
     environment:
       IN_DOCKER: "true"
       AUTO_SCALE_UP: "true"
-      AUTO_SCALE_DOWN: "false"
-      # AUTO_SCALE_DOWN disabled due to bug: disconnects players after timeout
-      # See: https://github.com/itzg/mc-router/issues (report pending)
+      AUTO_SCALE_DOWN: "true"
+      AUTO_SCALE_DOWN_AFTER: "1m"
       DOCKER_TIMEOUT: "120"
       AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"
     ports:

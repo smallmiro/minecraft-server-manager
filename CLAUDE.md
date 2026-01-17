@@ -11,6 +11,10 @@ minecraft/
 ├── prd.md                       # Product Requirements Document
 ├── plan.md                      # Implementation roadmap
 │
+├── package.json                 # Root workspace package (pnpm)
+├── pnpm-workspace.yaml          # pnpm workspace configuration
+├── tsconfig.base.json           # Shared TypeScript configuration
+│
 ├── platform/                    # Docker platform (all runtime files)
 │   ├── docker-compose.yml       # Main orchestration (mc-router + server includes)
 │   ├── .env                     # Global environment variables
@@ -31,10 +35,10 @@ minecraft/
 │   │   ├── plugins/             # Shared plugins (read-only mount)
 │   │   └── mods/                # Shared mods (read-only mount)
 │   │
-│   ├── scripts/                 # Management scripts
+│   ├── scripts/                 # Management scripts (Bash)
 │   │   ├── lib/
 │   │   │   └── common.sh        # Shared functions library
-│   │   ├── mcctl.sh             # Main management CLI
+│   │   ├── mcctl.sh             # Main management CLI (Bash version)
 │   │   ├── create-server.sh     # Server creation script
 │   │   ├── delete-server.sh     # Server deletion script (preserves world data)
 │   │   ├── init.sh              # Platform initialization script
@@ -43,9 +47,24 @@ minecraft/
 │   │   ├── player.sh            # Player UUID lookup
 │   │   └── backup.sh            # GitHub worlds backup
 │   │
-│   ├── services/                # Microservices (reserved for future use)
+│   ├── services/                # TypeScript microservices (Monorepo)
+│   │   ├── cli/                 # @minecraft-docker/mcctl (npm CLI)
+│   │   │   ├── src/             # TypeScript source
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   ├── shared/              # @minecraft-docker/shared (common utilities)
+│   │   │   ├── src/             # Types, Docker utils, path helpers
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   └── web-admin/           # Future: Web management UI
 │   │
 │   └── backups/                 # Backup storage
+│
+├── templates/                   # npm package templates
+│   ├── docker-compose.yml       # Template for mcctl init
+│   ├── .env.example
+│   ├── .gitignore
+│   └── servers/_template/
 │
 ├── docs/                        # Documentation (official docs reference)
 │   ├── README.md
@@ -128,6 +147,65 @@ This command performs the following tasks:
 - Updates prd.md if it exists
 
 **Important**: This command does NOT edit files in `docs/` directory. Those are managed by `/update-docs`.
+
+## npm Package Installation (Global CLI)
+
+The management CLI can be installed globally via npm for easy access from anywhere.
+
+### Installation
+
+```bash
+# Install globally via npm
+npm install -g @minecraft-docker/mcctl
+
+# Or via pnpm
+pnpm add -g @minecraft-docker/mcctl
+```
+
+### Usage
+
+After installation, `mcctl` is available globally:
+
+```bash
+# Initialize platform in ~/minecraft-servers
+mcctl init
+
+# Create a new server
+mcctl create myserver
+mcctl create myserver -t FORGE -v 1.20.4
+
+# Server management
+mcctl status
+mcctl start myserver
+mcctl stop myserver
+mcctl logs myserver
+
+# World management
+mcctl world list
+mcctl world assign survival mc-myserver
+
+# Custom data directory
+mcctl --root /path/to/data init
+```
+
+### Data Directory
+
+Default data directory: `~/minecraft-servers`
+
+This location is used instead of `~/.minecraft-servers` for compatibility with Snap Docker, which has restrictions on hidden directories.
+
+### Development (Local)
+
+```bash
+# Build all packages
+pnpm build
+
+# Link CLI globally for development
+cd platform/services/cli && pnpm link --global
+
+# Test
+mcctl --version
+```
 
 ## Development Philosophy
 

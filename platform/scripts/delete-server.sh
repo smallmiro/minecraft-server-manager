@@ -31,9 +31,18 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
+# Get script/platform directories
+# Support both direct execution and npm package execution (mcctl CLI)
+if [[ -n "${MCCTL_ROOT:-}" ]]; then
+    # Running via npm package
+    PLATFORM_DIR="$MCCTL_ROOT"
+    SCRIPT_DIR="${MCCTL_SCRIPTS:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+else
+    # Running directly (development mode)
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
+fi
+
 SERVERS_DIR="$PLATFORM_DIR/servers"
 SERVERS_COMPOSE="$SERVERS_DIR/compose.yml"
 MAIN_COMPOSE="$PLATFORM_DIR/docker-compose.yml"

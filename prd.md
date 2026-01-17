@@ -611,6 +611,21 @@ When implementing CLI tools, always consider future Web UI integration:
 - [ ] Performance validation
 - [ ] Verify JSON output parsing
 
+### Phase 6: npm Package Distribution ✅
+- [x] pnpm workspace Monorepo structure
+- [x] `@minecraft-docker/shared` - Common types and utilities
+- [x] `@minecraft-docker/mcctl` - Global CLI package
+- [x] Shell script environment variable support (MCCTL_ROOT, etc.)
+- [x] Templates directory for npm distribution
+- [x] Data directory: `~/minecraft-servers` (Snap Docker compatible)
+
+**Installation**:
+```bash
+npm install -g @minecraft-docker/mcctl
+mcctl init
+mcctl create myserver
+```
+
 ### Future: Phase 7 (Web Management UI)
 See **Section 9.1** for detailed Web UI implementation plan.
 - Wrap CLI functions with Next.js API routes
