@@ -511,13 +511,13 @@ When implementing CLI tools, always consider future Web UI integration:
 - [x] Create server config templates
 
 ### Phase 2: mDNS Auto-Broadcast
-- [ ] Create `services/mdns-publisher/` directory structure
-- [ ] Implement `mdns_publisher.py` with Docker event monitoring
-- [ ] Implement mDNS broadcasting with `zeroconf` library
-- [ ] Create Dockerfile and docker-compose service
-- [ ] Add health check endpoint
+- [x] Create `services/mdns-publisher/` directory structure
+- [x] Implement `mdns_publisher.py` with Docker event monitoring
+- [x] Implement mDNS broadcasting with `zeroconf` library
+- [x] Create Dockerfile and docker-compose service
+- [x] Add health check endpoint
 - [ ] Test on Linux, macOS, Windows clients
-- [ ] Update main docker-compose.yml to include service
+- [x] Update main docker-compose.yml to include service
 
 ### Phase 3: Locking System
 - [ ] Implement `scripts/lock.sh`
