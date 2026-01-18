@@ -32,7 +32,7 @@ mcctl --root /opt/minecraft init
 
 **What it creates:**
 
-```
+```text
 ~/minecraft-servers/
 ├── docker-compose.yml
 ├── .env

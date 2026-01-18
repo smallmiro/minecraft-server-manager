@@ -14,7 +14,7 @@ Welcome to Docker Minecraft Server Management Platform. This guide will help you
 
 ## Architecture Overview
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │                     Minecraft Clients                        │
 │     myserver.192.168.1.100.nip.io:25565                      │

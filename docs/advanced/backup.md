@@ -180,7 +180,7 @@ Add:
 
 The backup includes the entire `worlds/` directory:
 
-```
+```text
 worlds/
 ├── survival/
 │   ├── level.dat
@@ -215,7 +215,7 @@ worlds/
 
 After the first backup, your repository will contain:
 
-```
+```text
 minecraft-worlds-backup/
 ├── README.md           # Auto-generated
 ├── survival/

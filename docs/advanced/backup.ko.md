@@ -180,7 +180,7 @@ crontab -e
 
 백업에는 전체 `worlds/` 디렉토리가 포함됩니다:
 
-```
+```text
 worlds/
 ├── survival/
 │   ├── level.dat
@@ -215,7 +215,7 @@ worlds/
 
 첫 번째 백업 후 저장소에는 다음이 포함됩니다:
 
-```
+```text
 minecraft-worlds-backup/
 ├── README.md           # 자동 생성
 ├── survival/

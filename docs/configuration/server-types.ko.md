@@ -311,7 +311,7 @@ MODRINTH_PROJECTS=qsl,fabric-api
 
 ### 의사결정 트리
 
-```
+```text
 모드가 필요한가요?
 ├── 예
 │   ├── Forge 모드? → FORGE

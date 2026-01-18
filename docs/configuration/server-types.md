@@ -311,7 +311,7 @@ MODRINTH_PROJECTS=qsl,fabric-api
 
 ### Decision Tree
 
-```
+```text
 Need mods?
 ├── Yes
 │   ├── Forge mods? → FORGE

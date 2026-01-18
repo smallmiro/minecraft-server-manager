@@ -26,7 +26,7 @@ mcctl create
 
 ## Architecture
 
-```
+```text
 ┌──────────────────────┐
 │  mc-router (:25565)  │
 │  hostname routing    │

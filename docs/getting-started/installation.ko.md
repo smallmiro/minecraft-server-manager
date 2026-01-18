@@ -133,7 +133,7 @@ mcctl init
 
 이 명령은 `~/minecraft-servers/`에 플랫폼 디렉토리 구조를 생성합니다:
 
-```
+```text
 ~/minecraft-servers/
 ├── docker-compose.yml     # 메인 오케스트레이션
 ├── .env                   # 환경 설정

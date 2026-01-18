@@ -32,7 +32,7 @@ mcctl --root /opt/minecraft init
 
 **생성되는 구조:**
 
-```
+```text
 ~/minecraft-servers/
 ├── docker-compose.yml
 ├── .env

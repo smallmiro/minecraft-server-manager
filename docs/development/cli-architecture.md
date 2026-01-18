@@ -12,7 +12,7 @@ The CLI is built using **Hexagonal Architecture** (Ports & Adapters pattern) com
 
 ## Architecture Diagram
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                          CLI Layer                               │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
