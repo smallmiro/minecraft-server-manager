@@ -49,17 +49,26 @@ docker compose up -d
 
 ### Connect via Minecraft
 
-With mDNS auto-discovery, just connect directly:
+**Option A: nip.io Magic DNS (Recommended)**
+
+No setup required - just connect using the nip.io hostname:
+- `myserver.192.168.20.37.nip.io:25565`
+
+Replace `192.168.20.37` with your server's HOST_IP from `.env`.
+
+**Option B: mDNS (.local)**
+
+With avahi/Bonjour, connect directly:
 - `myserver.local:25565`
 
-**mDNS Requirements** (for auto-discovery):
+**mDNS Requirements** (for .local hostnames):
 | OS | Requirement |
 |----|-------------|
 | Linux | avahi-daemon (usually pre-installed) |
 | macOS | Built-in Bonjour (no setup needed) |
 | Windows | Bonjour Print Services or iTunes |
 
-**Fallback** (if mDNS unavailable): Add `<server-ip> myserver.local` to hosts file.
+**Fallback** (if both unavailable): Add `<server-ip> myserver.local` to hosts file.
 
 See [mDNS Setup Guide](#mdns-setup-guide) for detailed installation instructions.
 

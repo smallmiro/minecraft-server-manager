@@ -45,7 +45,8 @@ minecraft/
 │   │   ├── lock.sh              # World locking system
 │   │   ├── logs.sh              # Log viewer
 │   │   ├── player.sh            # Player UUID lookup
-│   │   └── backup.sh            # GitHub worlds backup
+│   │   ├── backup.sh            # GitHub worlds backup
+│   │   └── migrate-nip-io.sh    # Migration script for nip.io hostnames
 │   │
 │   ├── services/                # TypeScript microservices (Monorepo)
 │   │   ├── cli/                 # @minecraft-docker/mcctl (npm CLI)

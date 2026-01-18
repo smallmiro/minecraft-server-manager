@@ -151,13 +151,13 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 - **Description**: Add nip.io magic DNS as alternative hostname routing method. nip.io automatically resolves `<name>.<ip>.nip.io` to `<ip>` without any client configuration.
 - **Issue**: [#52](https://github.com/smallmiro/minecraft-server-manager/issues/52)
 - **Acceptance Criteria**:
-  - [ ] `HOST_IP` in `.env` used to generate nip.io hostnames
-  - [ ] `create-server.sh` generates dual hostname: `<name>.local,<name>.<HOST_IP>.nip.io`
-  - [ ] Template updated with nip.io documentation
-  - [ ] Migration script for existing servers (`migrate-nip-io.sh`)
-  - [ ] Fallback to `.local` only if `HOST_IP` not set
-  - [ ] Clients can connect via `<server>.<HOST_IP>.nip.io:25565` without any setup
-  - [ ] Documentation updated with nip.io connection examples
+  - [x] `HOST_IP` in `.env` used to generate nip.io hostnames
+  - [x] `create-server.sh` generates dual hostname: `<name>.local,<name>.<HOST_IP>.nip.io`
+  - [x] Template updated with nip.io documentation
+  - [x] Migration script for existing servers (`migrate-nip-io.sh`)
+  - [x] Fallback to `.local` only if `HOST_IP` not set
+  - [x] Clients can connect via `<server>.<HOST_IP>.nip.io:25565` without any setup
+  - [x] Documentation updated with nip.io connection examples
 
 ### 2.2 Non-Functional Requirements
 
