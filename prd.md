@@ -626,19 +626,19 @@ mcctl init
 mcctl create myserver
 ```
 
-### Phase 7: CLI Interactive Mode
+### Phase 7: CLI Interactive Mode ✅
 > **Milestone**: [v0.4.0](https://github.com/smallmiro/minecraft-server-manager/milestone/4)
 
 See **Section 9** for detailed CLI Architecture (Hexagonal + Clean Architecture).
-- [ ] Add `@clack/prompts` dependency
-- [ ] Implement Domain Layer (Value Objects, Entities)
-- [ ] Implement Application Layer (Ports, Use Cases)
-- [ ] Implement Infrastructure Adapters (ClackPromptAdapter, DocsAdapter)
-- [ ] Interactive `mcctl create` command
-- [ ] Interactive `mcctl delete` command
-- [ ] Interactive world and backup commands
-- [ ] Unit and integration tests
-- [ ] Documentation update
+- [x] Add `@clack/prompts` dependency
+- [x] Implement Domain Layer (Value Objects, Entities)
+- [x] Implement Application Layer (Ports, Use Cases)
+- [x] Implement Infrastructure Adapters (ClackPromptAdapter, DocsAdapter)
+- [x] Interactive `mcctl create` command
+- [x] Interactive `mcctl delete` command
+- [x] Interactive world and backup commands
+- [x] Unit and integration tests
+- [x] Documentation update
 
 ### Future: Phase 8 (Web Management UI)
 See **Section 10.1** for detailed Web UI implementation plan.

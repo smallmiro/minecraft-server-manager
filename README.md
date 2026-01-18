@@ -22,7 +22,10 @@ npm install -g @minecraft-docker/mcctl
 # Initialize platform (creates ~/minecraft-servers)
 mcctl init
 
-# Create your first server
+# Create your first server (interactive mode)
+mcctl create
+
+# Or with options (CLI mode)
 mcctl create myserver -t VANILLA -v 1.21.1
 
 # Check status
@@ -214,7 +217,53 @@ Forge 1.16.5 and below → java8 (required)
 
 ---
 
-## Useful Commands
+## CLI Commands
+
+### Interactive Mode (mcctl)
+
+The CLI supports **interactive mode** with guided prompts for easy server management:
+
+```bash
+# Interactive server creation with guided prompts
+mcctl create
+
+# Interactive server deletion with confirmation
+mcctl delete
+
+# Interactive world management
+mcctl world            # Shows subcommand help
+mcctl world list       # List all worlds with lock status
+mcctl world assign     # Interactively assign world to server
+mcctl world release    # Interactively release world lock
+
+# Interactive backup management
+mcctl backup status    # Show backup configuration
+mcctl backup push      # Interactive backup with message prompt
+mcctl backup history   # Show backup history
+mcctl backup restore   # Interactive restore from backup
+```
+
+### CLI Mode (with arguments)
+
+All commands also support **CLI mode** for scripting:
+
+```bash
+# Create server with options
+mcctl create myserver -t PAPER -v 1.21.1 --seed 12345
+
+# Delete server by name (--force skips player check)
+mcctl delete myserver --force
+
+# World management with names
+mcctl world assign survival mc-myserver
+mcctl world release survival
+
+# Backup with message
+mcctl backup push -m "Before upgrade"
+mcctl backup restore abc1234
+```
+
+### Docker Commands
 
 ```bash
 cd platform
