@@ -52,13 +52,14 @@ services:
     image: itzg/mc-router
     container_name: mc-router
     restart: unless-stopped
-    command:
-      - --in-docker
-      - --auto-scale-up
-      - --auto-scale-down
-      - --auto-scale-down-after=10m
-      - --docker-timeout=120
-      - --auto-scale-asleep-motd=§eStarting..Please wait.
+    environment:
+      IN_DOCKER: "true"
+      AUTO_SCALE_UP: "true"
+      AUTO_SCALE_DOWN: "false"
+      # AUTO_SCALE_DOWN disabled due to bug: disconnects players after timeout
+      # See: https://github.com/itzg/mc-router/issues (report pending)
+      DOCKER_TIMEOUT: "120"
+      AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"
     ports:
       - "25565:25565"
     volumes:

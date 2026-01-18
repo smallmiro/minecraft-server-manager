@@ -7,11 +7,12 @@ This command analyzes the codebase and updates project documentation to reflect 
 - `CLAUDE.md` - Project guide and development reference
 - `README.md` - Main documentation and quick start guide
 - `prd.md` - Product Requirements Document (if exists)
+- `plan.md` - Implementation roadmap (if exists)
 
 ## Protected Files (DO NOT EDIT)
 
-- `docs/*` - All files under docs/ directory are **READ-ONLY**
-- These files are managed by `/project:update-docs` command
+- `docs/itzg-reference/*` - All files under docs/itzg-reference/ directory are **READ-ONLY**
+- These files are managed by `/update-docs` command
 
 ## Procedure
 
@@ -38,6 +39,12 @@ This command analyzes the codebase and updates project documentation to reflect 
    - Update feature list based on implemented configurations
    - Mark completed requirements
    - Add discovered requirements from codebase analysis
+
+5. **Update plan.md** (if exists):
+   - Update phase status (In Progress → Completed)
+   - Mark implementation tasks as done
+   - Add new files to file checklist
+   - Update architecture diagrams if structure changed
 
 ## Analysis Checklist
 
@@ -83,7 +90,7 @@ minecraft/
 
 ## Important Notes
 
-- **NEVER edit files in docs/** - These are synced from official documentation
+- **NEVER edit files in docs/itzg-reference/** - These are synced from official documentation
 - **Always read files before editing** - Understand current content first
 - **Preserve user customizations** - Don't overwrite intentional modifications
 - **English only** - All documentation must be in English for open-source
@@ -93,5 +100,5 @@ minecraft/
 When this command is executed:
 1. Analyze the codebase thoroughly
 2. Compare with current documentation
-3. Update only the target files (CLAUDE.md, README.md, prd.md)
+3. Update only the target files (CLAUDE.md, README.md, prd.md, plan.md)
 4. Report what changes were made

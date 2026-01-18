@@ -1,10 +1,10 @@
 # Docker Minecraft Server Documentation Update
 
-This command reads the official itzg/docker-minecraft-server documentation and updates the docs/ directory to keep it current.
+This command reads the official itzg/docker-minecraft-server documentation and updates the docs/itzg-reference/ directory to keep it current.
 
 ## Procedure
 
-1. **Source Documentation URLs** (see docs/doc-list.md):
+1. **Source Documentation URLs** (see docs/itzg-reference/doc-list.md):
 
 ### Basic Documentation
 - https://docker-minecraft-server.readthedocs.io/en/latest/
@@ -49,26 +49,26 @@ This command reads the official itzg/docker-minecraft-server documentation and u
 - https://docker-minecraft-server.readthedocs.io/en/latest/versions/java/
 
 2. **Target Files**:
-   - docs/01-getting-started.md
-   - docs/02-data-directory.md
-   - docs/03-variables.md
-   - docs/04-server-properties.md
-   - docs/05-jvm-options.md
-   - docs/06-types-and-platforms.md
-   - docs/07-java-versions.md
-   - docs/08-mods-and-plugins.md
-   - docs/09-configuration.md
-   - docs/10-commands.md
-   - docs/11-autopause-autostop.md
-   - docs/12-healthcheck.md
-   - docs/13-deployment.md
-   - docs/14-world-data.md
-   - docs/15-troubleshooting.md
-   - docs/16-examples.md
+   - docs/itzg-reference/01-getting-started.md
+   - docs/itzg-reference/02-data-directory.md
+   - docs/itzg-reference/03-variables.md
+   - docs/itzg-reference/04-server-properties.md
+   - docs/itzg-reference/05-jvm-options.md
+   - docs/itzg-reference/06-types-and-platforms.md
+   - docs/itzg-reference/07-java-versions.md
+   - docs/itzg-reference/08-mods-and-plugins.md
+   - docs/itzg-reference/09-configuration.md
+   - docs/itzg-reference/10-commands.md
+   - docs/itzg-reference/11-autopause-autostop.md
+   - docs/itzg-reference/12-healthcheck.md
+   - docs/itzg-reference/13-deployment.md
+   - docs/itzg-reference/14-world-data.md
+   - docs/itzg-reference/15-troubleshooting.md
+   - docs/itzg-reference/16-examples.md
 
 3. **Tasks**:
    - Use WebFetch to read the above URLs and check for new environment variables, options, or examples
-   - Update corresponding docs/ files if changes are found
+   - Update corresponding docs/itzg-reference/ files if changes are found
    - Reflect any new features or server types that have been added
    - Maintain existing format (environment variable tables, example code blocks) while updating
 

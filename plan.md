@@ -7,6 +7,7 @@
 |---------|-------------|--------|
 | [v0.2.0](https://github.com/smallmiro/minecraft-server-manager/milestone/1) | Infrastructure (Phase 1, 2) | ✅ Closed |
 | [v0.3.0](https://github.com/smallmiro/minecraft-server-manager/milestone/2) | Core Features (Phase 3, 4) | 🔄 Open |
+| [v0.4.0](https://github.com/smallmiro/minecraft-server-manager/milestone/4) | CLI Interactive Mode (Phase 7) | 🔄 Open |
 | [v1.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/3) | Release (Phase 5) | 🔄 Open |
 
 ### Issues by Phase
@@ -14,10 +15,13 @@
 |-------|--------|--------|
 | Phase 1: Infrastructure | [#1](https://github.com/smallmiro/minecraft-server-manager/issues/1), [#2](https://github.com/smallmiro/minecraft-server-manager/issues/2), [#3](https://github.com/smallmiro/minecraft-server-manager/issues/3) | ✅ Closed |
 | Phase 2: Docker & mc-router | [#4](https://github.com/smallmiro/minecraft-server-manager/issues/4), [#5](https://github.com/smallmiro/minecraft-server-manager/issues/5), [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) | ✅ Closed |
-| Phase 2.5: mDNS Publisher | [#20](https://github.com/smallmiro/minecraft-server-manager/issues/20) | 🔄 PR #21 |
-| Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) | 🔄 Open |
+| Phase 2.5: mDNS Publisher | [#20](https://github.com/smallmiro/minecraft-server-manager/issues/20) | ✅ Completed |
+| Phase 2.6: nip.io Magic DNS | [#52](https://github.com/smallmiro/minecraft-server-manager/issues/52) | ✅ Completed |
+| Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) | ✅ Completed |
 | Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | 🔄 Open |
 | Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | 🔄 Open |
+| Phase 6: npm Package | [#28](https://github.com/smallmiro/minecraft-server-manager/issues/28) | ✅ Closed |
+| Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40), [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54) | 🔄 Open |
 
 ---
 
@@ -32,8 +36,8 @@ This plan outlines the implementation steps for the multi-server Minecraft manag
 │                    mc-router (:25565)                        │
 │              (always running, hostname routing)              │
 ├─────────────────────────────────────────────────────────────┤
-│  ironwood.local    → mc-ironwood    (auto-scale up/down)    │
-│  <new-server>.local → mc-<new-server> (add via script)      │
+│  myserver.local                → mc-myserver (auto-scale)   │
+│  myserver.192.168.20.37.nip.io → mc-myserver (auto-scale)   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -307,11 +311,79 @@ avahi-browse -art
 
 ---
 
-## Phase 3: World Locking System
+## Phase 2.6: nip.io Magic DNS Support ✅ COMPLETED
+
+> **Milestone**: [v0.3.0 - Core Features](https://github.com/smallmiro/minecraft-server-manager/milestone/2)
+> **Issue**: [#52](https://github.com/smallmiro/minecraft-server-manager/issues/52)
+> **Status**: ✅ Completed
+
+### 2.6.1 Overview
+
+**Problem**: mDNS (`.local`) requires client-side setup (avahi/Bonjour) and has reliability issues on some networks.
+
+**Solution**: Add nip.io "magic DNS" as an alternative hostname routing method.
+
+nip.io automatically resolves `<name>.<ip>.nip.io` to `<ip>` without any configuration:
+- `myserver.192.168.20.37.nip.io` → resolves to `192.168.20.37`
+- Works universally with internet access
+- No client-side mDNS setup required
+
+### 2.6.2 Implementation Tasks
+
+- [x] Update `.env.example` with nip.io documentation
+- [x] Update `servers/_template/docker-compose.yml` labels
+- [x] Modify `create-server.sh` to add nip.io hostname
+- [x] Create `migrate-nip-io.sh` for existing servers
+- [x] Update CLAUDE.md documentation
+
+### 2.6.3 Dual Hostname Strategy
+
+mc-router supports comma-separated hostnames:
+```yaml
+labels:
+  mc-router.host: "myserver.local,myserver.192.168.20.37.nip.io"
+```
+
+**Client Connection Options**:
+| Method | Hostname | Requirements |
+|--------|----------|--------------|
+| nip.io (Recommended) | `myserver.192.168.20.37.nip.io:25565` | Internet access only |
+| mDNS | `myserver.local:25565` | avahi-daemon/Bonjour |
+| hosts file | `myserver.local:25565` | Manual /etc/hosts entry |
+
+### 2.6.4 Script Changes
+
+**create-server.sh**:
+```bash
+# Read HOST_IP from .env
+HOST_IP=$(get_host_ip)
+
+if [ -n "$HOST_IP" ]; then
+    # Dual hostname: .local + nip.io
+    sed -i "s/template\.local/$SERVER_NAME.local,$SERVER_NAME.$HOST_IP.nip.io/g" "$COMPOSE_FILE"
+else
+    # Fallback: .local only
+    sed -i "s/template\.local/$SERVER_NAME.local/g" "$COMPOSE_FILE"
+fi
+```
+
+### 2.6.5 Migration Script
+
+**File**: `platform/scripts/migrate-nip-io.sh`
+
+Updates existing servers to include nip.io hostnames:
+```bash
+./scripts/migrate-nip-io.sh
+# Updates all servers in servers/*/docker-compose.yml
+```
+
+---
+
+## Phase 3: World Locking System ✅ COMPLETED
 
 > **Milestone**: [v0.3.0 - Core Features](https://github.com/smallmiro/minecraft-server-manager/milestone/2)
 
-### 3.1 Implement lock.sh ([#7](https://github.com/smallmiro/minecraft-server-manager/issues/7))
+### 3.1 Implement lock.sh ([#7](https://github.com/smallmiro/minecraft-server-manager/issues/7)) ✅
 
 **File**: `platform/scripts/lock.sh`
 
@@ -343,7 +415,7 @@ avahi-browse -art
 
 > **Milestone**: [v0.3.0 - Core Features](https://github.com/smallmiro/minecraft-server-manager/milestone/2)
 
-### 4.1 Implement mcctl.sh ([#8](https://github.com/smallmiro/minecraft-server-manager/issues/8))
+### 4.1 Implement mcctl.sh ([#8](https://github.com/smallmiro/minecraft-server-manager/issues/8)) ✅
 
 **File**: `platform/scripts/mcctl.sh`
 
@@ -375,13 +447,13 @@ mc-myserver  STOPPED    myserver.local     auto-scale ready
 mc-router: RUNNING (2 servers configured)
 ```
 
-### 4.2 Implement logs.sh ([#9](https://github.com/smallmiro/minecraft-server-manager/issues/9))
+### 4.2 Implement logs.sh ([#9](https://github.com/smallmiro/minecraft-server-manager/issues/9)) ✅
 
 **File**: `platform/scripts/logs.sh`
 
 Helper script for log viewing with Docker and file options.
 
-### 4.3 Implement player.sh ([#12](https://github.com/smallmiro/minecraft-server-manager/issues/12))
+### 4.3 Implement player.sh ([#12](https://github.com/smallmiro/minecraft-server-manager/issues/12)) ✅
 
 **File**: `platform/scripts/player.sh`
 
@@ -458,6 +530,7 @@ Add sections:
 | `platform/scripts/mcctl.sh` | 4 | ✅ |
 | `platform/scripts/logs.sh` | 4 | ✅ |
 | `platform/scripts/player.sh` | 4 | ✅ |
+| `platform/scripts/migrate-nip-io.sh` | 2.6 | ✅ |
 
 ### Pending
 
@@ -540,6 +613,360 @@ ss -tuln | grep 25565
 
 ---
 
+## Phase 6: npm Package Distribution ✅ COMPLETED
+
+> **Milestone**: [v1.0.0 - Release](https://github.com/smallmiro/minecraft-server-manager/milestone/3)
+> **Issue**: [#28](https://github.com/smallmiro/minecraft-server-manager/issues/28)
+> **PR**: [#29](https://github.com/smallmiro/minecraft-server-manager/pull/29)
+
+### 6.1 Overview
+
+Docker Minecraft 서버 관리 플랫폼을 npm 패키지로 배포하여 전역 CLI(`mcctl`)로 사용 가능하게 합니다.
+
+**패키지 이름**: `@minecraft-docker/mcctl`
+**데이터 디렉토리**: `~/minecraft-servers` (Snap Docker 호환성)
+
+### 6.2 Monorepo Structure
+
+```
+minecraft/
+├── package.json                    # 루트 워크스페이스 (pnpm workspace)
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+│
+├── platform/
+│   ├── services/                   # 서비스 모듈들 (Monorepo)
+│   │   ├── cli/                    # @minecraft-docker/mcctl
+│   │   │   ├── package.json
+│   │   │   ├── tsconfig.json
+│   │   │   └── src/
+│   │   │       ├── index.ts        # CLI 진입점
+│   │   │       ├── commands/       # 명령어 구현
+│   │   │       └── lib/            # 유틸리티
+│   │   │
+│   │   ├── shared/                 # @minecraft-docker/shared
+│   │   │   ├── package.json
+│   │   │   └── src/
+│   │   │       ├── types/          # 공통 타입 정의
+│   │   │       ├── utils/          # 공통 유틸리티
+│   │   │       └── docker/         # Docker API 래퍼
+│   │   │
+│   │   └── web-admin/              # 웹 어드민 (향후)
+│   │
+│   ├── scripts/                    # 기존 쉘 스크립트
+│   └── ...
+│
+└── templates/                      # npm 배포용 템플릿
+```
+
+### 6.3 Implementation Tasks
+
+- [x] pnpm workspace 설정 (`package.json`, `pnpm-workspace.yaml`)
+- [x] `@minecraft-docker/shared` 모듈 구현
+  - [x] 타입 정의 (`types/index.ts`)
+  - [x] 유틸리티 (`utils/index.ts`)
+  - [x] Docker 래퍼 (`docker/index.ts`)
+- [x] `@minecraft-docker/mcctl` CLI 모듈 구현
+  - [x] CLI 진입점 (`index.ts`)
+  - [x] init 명령어 (`commands/init.ts`)
+  - [x] status 명령어 (`commands/status.ts`)
+  - [x] 쉘 스크립트 호출 래퍼 (`lib/shell.ts`)
+- [x] 쉘 스크립트 환경변수 지원 추가
+  - [x] `common.sh` - MCCTL_ROOT, MCCTL_SCRIPTS, MCCTL_TEMPLATES
+  - [x] `create-server.sh`
+  - [x] `delete-server.sh`
+  - [x] `init.sh`
+  - [x] `lock.sh`
+- [x] `templates/` 디렉토리 구성
+- [x] 로컬 테스트 (`pnpm link`)
+
+### 6.4 CLI Commands
+
+```bash
+# 설치
+npm install -g @minecraft-docker/mcctl
+
+# 초기화
+mcctl init
+
+# 서버 생성
+mcctl create myserver
+mcctl create myserver -t FORGE -v 1.20.4
+
+# 상태 확인
+mcctl status [--json]
+
+# 기타 명령어 (기존 mcctl.sh와 동일)
+mcctl logs <server>
+mcctl console <server>
+mcctl start <server>
+mcctl stop <server>
+mcctl world list
+mcctl player lookup <name>
+mcctl backup push
+```
+
+### 6.5 Verification
+
+```bash
+# 1. 빌드
+cd minecraft
+pnpm install
+pnpm build
+
+# 2. 로컬 테스트
+cd platform/services/cli
+pnpm link --global
+
+# 3. 초기화 테스트
+mcctl --version
+mcctl init
+
+# 4. 서버 생성 테스트
+mcctl create testserver
+mcctl status
+
+# 5. 기존 platform/ 호환성 확인
+cd platform
+./scripts/mcctl.sh status
+```
+
+---
+
+## Phase 7: CLI Interactive Mode
+
+> **Milestone**: [v0.4.0 - CLI Interactive Mode](https://github.com/smallmiro/minecraft-server-manager/milestone/4)
+> **Architecture**: [PRD Section 9 - CLI Architecture](./prd.md#9-cli-architecture-hexagonal--clean-architecture)
+
+### 7.1 Overview
+
+기존 CLI(`mcctl`)를 대화형 인터페이스로 개선하여 사용자 경험을 향상시킵니다.
+
+**핵심 개념**:
+- **Hexagonal Architecture**: 포트와 어댑터 패턴으로 테스트 용이한 구조
+- **@clack/prompts**: 모던한 터미널 UI (input, select, spinner)
+- **Docs-Driven Prompts**: `docs/` 파일에서 선택지 동적 로드
+- **Bash Delegation**: TypeScript에서 사용자 입력 수집 후 Bash 스크립트 실행
+
+### 7.2 Implementation Tasks
+
+#### Phase 7.1: Infrastructure Setup ([#30](https://github.com/smallmiro/minecraft-server-manager/issues/30))
+- [ ] Add `@clack/prompts` dependency
+- [ ] Add `picocolors` for terminal colors
+- [ ] Configure TypeScript types
+- [ ] Verify compatibility with existing CLI structure
+
+#### Phase 7.2: Domain Layer ([#31](https://github.com/smallmiro/minecraft-server-manager/issues/31))
+- [ ] Implement Value Objects:
+  - [ ] `ServerName` - validated server name
+  - [ ] `ServerType` - PAPER, VANILLA, FORGE, FABRIC enum
+  - [ ] `McVersion` - semantic version validation
+  - [ ] `Memory` - memory allocation (e.g., "4G")
+  - [ ] `WorldOptions` - seed, world-url, existing world
+- [ ] Implement Entities:
+  - [ ] `Server` - server entity with configuration
+  - [ ] `World` - world entity with lock status
+- [ ] Add unit tests for Value Objects
+
+#### Phase 7.3: Application Layer - Ports ([#32](https://github.com/smallmiro/minecraft-server-manager/issues/32))
+- [ ] Implement Inbound Ports:
+  - [ ] `ICreateServerUseCase`
+  - [ ] `IDeleteServerUseCase`
+  - [ ] `IServerStatusUseCase`
+- [ ] Implement Outbound Ports:
+  - [ ] `IPromptPort` - user interaction interface
+  - [ ] `IShellPort` - bash script execution interface
+  - [ ] `IDocProvider` - docs directory reader interface
+  - [ ] `IServerRepository` - server data access
+
+#### Phase 7.4: Application Layer - Use Cases ([#33](https://github.com/smallmiro/minecraft-server-manager/issues/33))
+- [ ] Implement Use Cases:
+  - [ ] `CreateServerUseCase` - interactive server creation
+  - [ ] `DeleteServerUseCase` - server deletion with confirmation
+  - [ ] `ServerStatusUseCase` - display server status
+  - [ ] `WorldManagementUseCase` - world lock/unlock operations
+  - [ ] `BackupUseCase` - backup operations
+  - [ ] `PlayerLookupUseCase` - player UUID lookup
+
+#### Phase 7.5: Infrastructure Adapters ([#34](https://github.com/smallmiro/minecraft-server-manager/issues/34))
+- [ ] Implement Adapters:
+  - [ ] `ClackPromptAdapter` - @clack/prompts implementation of IPromptPort
+  - [ ] `ShellAdapter` - Bash script execution via ShellExecutor
+  - [ ] `DocsAdapter` - Read and parse docs/ markdown files
+  - [ ] `ServerRepository` - Server configuration file access
+- [ ] Create Dependency Injection container
+
+#### Phase 7.6: DocsAdapter Implementation ([#35](https://github.com/smallmiro/minecraft-server-manager/issues/35))
+- [ ] Parse `docs/06-types-and-platforms.md` for server types
+- [ ] Parse `docs/03-variables.md` for environment variables
+- [ ] Extract version compatibility information
+- [ ] Cache parsed documentation
+- [ ] Handle documentation format changes gracefully
+
+#### Phase 7.7: Interactive Commands ([#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38))
+- [ ] `mcctl create` - interactive server creation
+- [ ] `mcctl delete` - server deletion with confirmation
+- [ ] `mcctl world assign` - interactive world assignment
+- [ ] `mcctl backup push` - interactive backup with message
+
+#### Phase 7.8: Testing ([#39](https://github.com/smallmiro/minecraft-server-manager/issues/39))
+- [ ] Unit tests for Value Objects
+- [ ] Use Case tests with mock ports
+- [ ] Integration tests with mocked shell
+- [ ] Mock implementations:
+  - [ ] `MockPromptAdapter`
+  - [ ] `MockShellAdapter`
+  - [ ] `MockDocsAdapter`
+
+#### Phase 7.9: Documentation ([#40](https://github.com/smallmiro/minecraft-server-manager/issues/40))
+- [ ] Update README.md with interactive examples
+- [ ] Update CLAUDE.md with new CLI architecture
+- [ ] Add developer documentation for extending CLI
+- [ ] Update prd.md implementation status
+
+#### Phase 7.10: Shared Package Refactoring ([#54](https://github.com/smallmiro/minecraft-server-manager/issues/54))
+- [ ] Domain Layer 이동 (`domain/entities`, `domain/value-objects`) → shared
+- [ ] Application Layer 이동 (`application/ports`, `application/use-cases`) → shared
+- [ ] 공통 Infrastructure 이동 (`ShellAdapter`, `ServerRepository`, `WorldRepository`) → shared
+- [ ] CLI 패키지에서 shared 패키지 import로 변경
+- [ ] 빌드 및 테스트 검증
+- [ ] package.json exports 업데이트
+
+### 7.3 Directory Structure
+
+#### After Phase 7.10 Refactoring (Target Structure)
+
+**shared 패키지** (`@minecraft-docker/shared`):
+```
+platform/services/shared/src/
+├── domain/                      # 🟢 DOMAIN LAYER (공통)
+│   ├── entities/
+│   │   ├── Server.ts
+│   │   └── World.ts
+│   └── value-objects/
+│       ├── ServerName.ts
+│       ├── ServerType.ts
+│       ├── McVersion.ts
+│       ├── Memory.ts
+│       └── WorldOptions.ts
+│
+├── application/                 # 🟡 APPLICATION LAYER (공통)
+│   ├── ports/
+│   │   ├── inbound/             # Use Case 인터페이스
+│   │   └── outbound/            # Repository/Service 인터페이스
+│   └── use-cases/
+│       ├── CreateServerUseCase.ts
+│       ├── DeleteServerUseCase.ts
+│       └── ...
+│
+├── infrastructure/              # 🔴 공통 INFRASTRUCTURE
+│   ├── adapters/
+│   │   ├── ShellAdapter.ts
+│   │   ├── ServerRepository.ts
+│   │   └── WorldRepository.ts
+│   └── docker/                  # 기존 Docker 유틸리티
+│
+├── types/                       # 기존 유지
+└── utils/                       # 기존 유지
+```
+
+**CLI 패키지** (`@minecraft-docker/mcctl`):
+```
+platform/services/cli/src/
+├── index.ts                     # Entry point (bootstrap DI)
+│
+├── adapters/                    # 🔴 CLI 전용 ADAPTERS
+│   └── ClackPromptAdapter.ts    # @clack/prompts 구현
+│
+├── di/
+│   └── container.ts             # CLI용 DI 구성
+│
+└── commands/                    # 🔵 CLI COMMANDS
+    ├── create.ts
+    ├── delete.ts
+    └── ...
+```
+
+**web-admin 패키지** (`@minecraft-docker/web-admin`, 향후):
+```
+platform/services/web-admin/src/
+├── api/                         # REST/GraphQL endpoints
+├── adapters/
+│   └── WebPromptAdapter.ts      # HTTP 기반 구현
+├── di/
+│   └── container.ts             # Web용 DI 구성
+└── index.ts
+```
+
+### 7.4 Interactive Flow Example
+
+```
+$ mcctl create
+
+┌  Create Minecraft Server
+│
+◆  Server name?
+│  myserver
+│
+◆  Server type?
+│  ● Paper (Recommended) - High performance with plugin support
+│  ○ Vanilla - Official Minecraft server
+│  ○ Forge - Modded server for Forge mods
+│  ○ Fabric - Lightweight modded server
+│
+◆  Minecraft version?
+│  ● 1.21.1 (Latest)
+│  ○ 1.20.4
+│  ○ Other...
+│
+◆  World setup?
+│  ● New world (generate new)
+│  ○ Use existing world
+│  ○ Download from URL
+│
+◆  Memory allocation?
+│  4G
+│
+◇  Creating server...
+│
+└  ✓ Server 'myserver' created successfully!
+   Connect via: myserver.local:25565
+```
+
+### 7.5 Technology Stack
+
+| Component | Package | Purpose |
+|-----------|---------|---------|
+| **Prompts** | `@clack/prompts` | Interactive CLI prompts |
+| **Spinner** | `@clack/prompts` (built-in) | Progress indicators |
+| **Colors** | `picocolors` | Terminal color styling |
+
+### 7.6 Verification
+
+```bash
+# 1. Build
+pnpm build
+
+# 2. Test interactive create
+mcctl create
+# (Follow interactive prompts)
+
+# 3. Test CLI argument mode (backward compatible)
+mcctl create myserver -t PAPER -v 1.21.1
+
+# 4. Test interactive delete
+mcctl delete
+# (Select server from list, confirm deletion)
+
+# 5. Run unit tests
+pnpm test
+
+# 6. Check test coverage
+pnpm test --coverage
+```
+
+---
+
 ## Rollback Plan
 
 If implementation fails at any phase:
@@ -586,9 +1013,15 @@ If implementation fails at any phase:
 
 ### Client Configuration
 
-**With mDNS Publisher (Recommended)**:
-No configuration needed! Clients on the same LAN automatically discover servers via mDNS (Bonjour/Zeroconf).
+**Option A: nip.io Magic DNS (Recommended)**:
+No configuration needed! Connect using the nip.io hostname:
+```
+myserver.192.168.20.37.nip.io:25565
+```
+Replace `192.168.20.37` with your HOST_IP from `.env`. Works everywhere with internet access.
 
+**Option B: mDNS (.local)**:
+Clients on the same LAN automatically discover servers via mDNS (Bonjour/Zeroconf).
 Just connect via Minecraft: `ironwood.local:25565`
 
 **mDNS Requirements**:
@@ -598,7 +1031,7 @@ Just connect via Minecraft: `ironwood.local:25565`
 | macOS | Built-in Bonjour (no setup needed) |
 | Windows | Bonjour Print Services or iTunes |
 
-**Fallback (without mDNS)**:
+**Fallback (without mDNS or nip.io)**:
 Add server hostnames to hosts file:
 ```
 # /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)

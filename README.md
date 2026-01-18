@@ -13,42 +13,62 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 
 ## Quick Start
 
-### 1. Clone and Configure
+### Option A: npm Package (Recommended)
+
+```bash
+# Install globally
+npm install -g @minecraft-docker/mcctl
+
+# Initialize platform (creates ~/minecraft-servers)
+mcctl init
+
+# Create your first server (interactive mode)
+mcctl create
+
+# Or with options (CLI mode)
+mcctl create myserver -t VANILLA -v 1.21.1
+
+# Check status
+mcctl status
+```
+
+### Option B: Clone Repository
 
 ```bash
 git clone <repository>
 cd minecraft/platform
 cp .env.example .env
 # Edit .env with your settings
-```
 
-### 2. Start All Servers
-
-```bash
-cd platform
+# Start infrastructure
 docker compose up -d
-```
 
-### 3. Create Your First Server
-
-```bash
-cd platform
+# Create your first server
 ./scripts/create-server.sh myserver -t VANILLA -v 1.21.1
 ```
 
-### 4. Connect via Minecraft
+### Connect via Minecraft
 
-With mDNS auto-discovery, just connect directly:
+**Option A: nip.io Magic DNS (Recommended)**
+
+No setup required - just connect using the nip.io hostname:
+- `myserver.192.168.20.37.nip.io:25565`
+
+Replace `192.168.20.37` with your server's HOST_IP from `.env`.
+
+**Option B: mDNS (.local)**
+
+With avahi/Bonjour, connect directly:
 - `myserver.local:25565`
 
-**mDNS Requirements** (for auto-discovery):
+**mDNS Requirements** (for .local hostnames):
 | OS | Requirement |
 |----|-------------|
 | Linux | avahi-daemon (usually pre-installed) |
 | macOS | Built-in Bonjour (no setup needed) |
 | Windows | Bonjour Print Services or iTunes |
 
-**Fallback** (if mDNS unavailable): Add `<server-ip> myserver.local` to hosts file.
+**Fallback** (if both unavailable): Add `<server-ip> myserver.local` to hosts file.
 
 See [mDNS Setup Guide](#mdns-setup-guide) for detailed installation instructions.
 
@@ -147,6 +167,81 @@ See [CLAUDE.md](CLAUDE.md) for detailed instructions.
 | [Examples](16-examples.md) | docker-compose example collection |
 | [Documentation Links](doc-list.md) | Original documentation URLs |
 
+### Development
+
+| Document | Description |
+|----------|-------------|
+| [CLI Usage Examples](docs/usage/cli-usage-examples.md) | Detailed CLI usage with examples (Korean) |
+| [CLI Architecture](docs/development/cli-architecture.md) | Hexagonal architecture and patterns |
+
+---
+
+## Development Setup
+
+### Prerequisites
+
+- Node.js >= 18.0.0
+- pnpm >= 8.0.0
+- Docker Engine 20.10+
+- Docker Compose v2.0+
+
+### Build from Source
+
+```bash
+# Clone repository
+git clone https://github.com/smallmiro/minecraft-server-manager.git
+cd minecraft-server-manager
+
+# Install dependencies
+pnpm install
+
+# Build all packages (shared → cli, in order)
+pnpm build
+
+# Link CLI globally for development
+cd platform/services/cli
+pnpm link --global
+
+# Verify installation
+mcctl --version
+```
+
+### Project Structure (Monorepo)
+
+```
+minecraft/
+├── package.json              # Root workspace
+├── pnpm-workspace.yaml       # pnpm workspace config
+│
+└── platform/services/
+    ├── shared/               # @minecraft-docker/shared
+    │   └── src/              # Common types, utils, docker helpers
+    │
+    └── cli/                  # @minecraft-docker/mcctl
+        └── src/              # CLI commands and adapters
+```
+
+### Available Scripts
+
+| Location | Command | Description |
+|----------|---------|-------------|
+| Root (`/minecraft`) | `pnpm install` | Install all dependencies |
+| Root (`/minecraft`) | `pnpm build` | Build all packages (recommended) |
+| Root (`/minecraft`) | `pnpm clean` | Clean all build outputs |
+| Root (`/minecraft`) | `pnpm test` | Run all tests |
+| `platform/services/cli` | `pnpm build` | Build CLI only |
+| `platform/services/cli` | `pnpm test` | Run CLI tests |
+| `platform/services/cli` | `pnpm link --global` | Link CLI globally |
+
+### Build Order
+
+pnpm automatically builds packages in dependency order:
+
+```
+1️⃣ @minecraft-docker/shared  (no dependencies)
+2️⃣ @minecraft-docker/mcctl   (depends on shared)
+```
+
 ---
 
 ## Quick Reference - Key Environment Variables
@@ -206,7 +301,53 @@ Forge 1.16.5 and below → java8 (required)
 
 ---
 
-## Useful Commands
+## CLI Commands
+
+### Interactive Mode (mcctl)
+
+The CLI supports **interactive mode** with guided prompts for easy server management:
+
+```bash
+# Interactive server creation with guided prompts
+mcctl create
+
+# Interactive server deletion with confirmation
+mcctl delete
+
+# Interactive world management
+mcctl world            # Shows subcommand help
+mcctl world list       # List all worlds with lock status
+mcctl world assign     # Interactively assign world to server
+mcctl world release    # Interactively release world lock
+
+# Interactive backup management
+mcctl backup status    # Show backup configuration
+mcctl backup push      # Interactive backup with message prompt
+mcctl backup history   # Show backup history
+mcctl backup restore   # Interactive restore from backup
+```
+
+### CLI Mode (with arguments)
+
+All commands also support **CLI mode** for scripting:
+
+```bash
+# Create server with options
+mcctl create myserver -t PAPER -v 1.21.1 --seed 12345
+
+# Delete server by name (--force skips player check)
+mcctl delete myserver --force
+
+# World management with names
+mcctl world assign survival mc-myserver
+mcctl world release survival
+
+# Backup with message
+mcctl backup push -m "Before upgrade"
+mcctl backup restore abc1234
+```
+
+### Docker Commands
 
 ```bash
 cd platform

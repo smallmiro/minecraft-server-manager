@@ -1,0 +1,31 @@
+{
+  "name": "@minecraft-docker/root",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-server Docker Minecraft management platform",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean",
+    "test": "pnpm -r test"
+  },
+  "keywords": [
+    "minecraft",
+    "docker",
+    "server",
+    "management",
+    "mc-router"
+  ],
+  "author": "smallmiro",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smallmiro/minecraft"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

@@ -11,6 +11,10 @@ minecraft/
 ├── prd.md                       # Product Requirements Document
 ├── plan.md                      # Implementation roadmap
 │
+├── package.json                 # Root workspace package (pnpm)
+├── pnpm-workspace.yaml          # pnpm workspace configuration
+├── tsconfig.base.json           # Shared TypeScript configuration
+│
 ├── platform/                    # Docker platform (all runtime files)
 │   ├── docker-compose.yml       # Main orchestration (mc-router + server includes)
 │   ├── .env                     # Global environment variables
@@ -31,31 +35,53 @@ minecraft/
 │   │   ├── plugins/             # Shared plugins (read-only mount)
 │   │   └── mods/                # Shared mods (read-only mount)
 │   │
-│   ├── scripts/                 # Management scripts
+│   ├── scripts/                 # Management scripts (Bash)
 │   │   ├── lib/
 │   │   │   └── common.sh        # Shared functions library
-│   │   ├── mcctl.sh             # Main management CLI
+│   │   ├── mcctl.sh             # Main management CLI (Bash version)
 │   │   ├── create-server.sh     # Server creation script
 │   │   ├── delete-server.sh     # Server deletion script (preserves world data)
 │   │   ├── init.sh              # Platform initialization script
 │   │   ├── lock.sh              # World locking system
 │   │   ├── logs.sh              # Log viewer
 │   │   ├── player.sh            # Player UUID lookup
-│   │   └── backup.sh            # GitHub worlds backup
+│   │   ├── backup.sh            # GitHub worlds backup
+│   │   └── migrate-nip-io.sh    # Migration script for nip.io hostnames
 │   │
-│   ├── services/                # Microservices (reserved for future use)
+│   ├── services/                # TypeScript microservices (Monorepo)
+│   │   ├── cli/                 # @minecraft-docker/mcctl (npm CLI)
+│   │   │   ├── src/             # TypeScript source
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   ├── shared/              # @minecraft-docker/shared (common utilities)
+│   │   │   ├── src/             # Types, Docker utils, path helpers
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   └── web-admin/           # Future: Web management UI
 │   │
 │   └── backups/                 # Backup storage
 │
-├── docs/                        # Documentation (official docs reference)
-│   ├── README.md
-│   ├── doc-list.md
-│   └── *.md
+├── templates/                   # npm package templates
+│   ├── docker-compose.yml       # Template for mcctl init
+│   ├── .env.example
+│   ├── .gitignore
+│   └── servers/_template/
+│
+├── docs/                        # Documentation
+│   ├── itzg-reference/          # itzg/docker-minecraft-server official docs
+│   │   ├── doc-list.md
+│   │   └── *.md
+│   ├── development/             # Development guides
+│   └── usage/                   # Project usage guides (to be added)
 │
 └── .claude/
+    ├── agents/
+    │   ├── release-manager.md
+    │   └── technical-writer.md
     └── commands/
         ├── update-docs.md
         ├── sync-docs.md
+        ├── write-docs.md
         └── work.md
 ```
 
@@ -99,7 +125,7 @@ This command performs the following tasks:
 
 ### /update-docs
 
-Reads the official documentation (https://docker-minecraft-server.readthedocs.io/) and updates the docs/ directory to the latest state.
+Reads the official documentation (https://docker-minecraft-server.readthedocs.io/) and updates the docs/itzg-reference/ directory to the latest state.
 
 ```bash
 # Run in Claude Code
@@ -127,7 +153,109 @@ This command performs the following tasks:
 - Syncs README.md quick start examples
 - Updates prd.md if it exists
 
-**Important**: This command does NOT edit files in `docs/` directory. Those are managed by `/update-docs`.
+**Important**: This command does NOT edit files in `docs/itzg-reference/` directory. Those are managed by `/update-docs`.
+
+### /write-docs
+
+Bilingual (English/Korean) technical documentation writer for MkDocs + Read the Docs.
+
+```bash
+# Create new document (both EN and KO)
+/write-docs create getting-started/installation --title "Installation Guide"
+
+# Translate existing document
+/write-docs translate cli/commands --from en --to ko
+
+# Review documentation
+/write-docs review getting-started/ --check all
+
+# Sync translations (find missing/outdated)
+/write-docs sync .
+```
+
+This command performs the following tasks:
+- Creates bilingual documentation (English + Korean)
+- Uses MkDocs i18n suffix pattern (`page.md`, `page.ko.md`)
+- Provides templates: basic, reference, tutorial, guide
+- Reviews technical accuracy and translation quality
+- Expertise: DevOps, Docker, Bash, Network, Linux, TypeScript
+
+## npm Package Installation (Global CLI)
+
+The management CLI can be installed globally via npm for easy access from anywhere.
+
+### Installation
+
+```bash
+# Install globally via npm
+npm install -g @minecraft-docker/mcctl
+
+# Or via pnpm
+pnpm add -g @minecraft-docker/mcctl
+```
+
+### Usage
+
+After installation, `mcctl` is available globally:
+
+```bash
+# Initialize platform in ~/minecraft-servers
+mcctl init
+
+# Create a new server (interactive mode - guided prompts)
+mcctl create
+
+# Create a new server (CLI mode - with arguments)
+mcctl create myserver -t FORGE -v 1.20.4
+
+# Delete a server (interactive or with name)
+mcctl delete              # Interactive: shows server list
+mcctl delete myserver     # CLI: deletes myserver
+mcctl delete myserver --force  # Force delete even with players online
+
+# Server management
+mcctl status
+mcctl start myserver
+mcctl stop myserver
+mcctl logs myserver
+
+# World management (interactive or with arguments)
+mcctl world list          # List all worlds with lock status
+mcctl world assign        # Interactive: select world and server
+mcctl world assign survival mc-myserver  # CLI: assign directly
+mcctl world release       # Interactive: select locked world
+mcctl world release survival  # CLI: release directly
+
+# Backup management
+mcctl backup status       # Show backup configuration
+mcctl backup push         # Interactive: prompt for message
+mcctl backup push -m "Before upgrade"  # CLI: with message
+mcctl backup history      # Show backup history
+mcctl backup restore      # Interactive: select from history
+mcctl backup restore abc1234  # CLI: restore specific commit
+
+# Custom data directory
+mcctl --root /path/to/data init
+```
+
+### Data Directory
+
+Default data directory: `~/minecraft-servers`
+
+This location is used instead of `~/.minecraft-servers` for compatibility with Snap Docker, which has restrictions on hidden directories.
+
+### Development (Local)
+
+```bash
+# Build all packages
+pnpm build
+
+# Link CLI globally for development
+cd platform/services/cli && pnpm link --global
+
+# Test
+mcctl --version
+```
 
 ## Development Philosophy
 
@@ -135,8 +263,8 @@ This command performs the following tasks:
 
 All features are implemented via CLI first, with Web Management UI as a future enhancement.
 
-**Current Phase**: CLI-based management (`scripts/mcctl.sh`)
-**Future Phase**: Web UI (Next.js + MUI + TypeScript)
+**Current Phase**: CLI with Interactive Mode (`platform/services/cli`)
+**Future Phase**: Web UI (Next.js + Tailwind CSS + TypeScript)
 
 When developing CLI tools:
 - Design scripts to be **callable from external programs** (Web API)
@@ -146,6 +274,44 @@ When developing CLI tools:
 - Use **exit codes** consistently for error handling
 
 This ensures smooth transition when wrapping CLI with Web API later.
+
+### CLI Architecture
+
+The CLI uses **Hexagonal Architecture** (Ports & Adapters) with **Clean Architecture** principles:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Commands Layer (src/commands/)                              │
+│  - Entry points for CLI commands                             │
+│  - Parses arguments, calls Use Cases                         │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│  Application Layer (src/application/)                        │
+│  - Use Cases: CreateServer, DeleteServer, WorldManagement    │
+│  - Ports: IPromptPort, IShellPort, IServerRepository         │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│  Domain Layer (src/domain/)                                  │
+│  - Value Objects: ServerName, ServerType, McVersion, Memory  │
+│  - Entities: Server, World                                   │
+└─────────────────────────────────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│  Infrastructure Layer (src/infrastructure/)                  │
+│  - Adapters: ClackPromptAdapter, ShellAdapter, DocsAdapter   │
+│  - Container: Dependency injection                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Concepts**:
+- **Value Objects**: Immutable, validated on construction (e.g., `ServerName.create("myserver")`)
+- **Use Cases**: Business logic with interactive and CLI modes
+- **Ports**: Interfaces for external dependencies (prompts, shell, repositories)
+- **Adapters**: Concrete implementations (@clack/prompts, bash scripts)
+
+See [docs/development/cli-architecture.md](docs/development/cli-architecture.md) for detailed documentation.
 
 ### Git-Flow Workflow
 
@@ -329,20 +495,35 @@ This project uses **hostname-based routing** via mc-router and **automatic hostn
 
 ### Client Connection
 
-**With mDNS (Recommended)**:
-The `create-server.sh` script automatically registers hostnames with avahi-daemon.
-Clients on the same LAN can connect directly via Minecraft: `<server-name>.local:25565`
+The `create-server.sh` script configures dual hostnames for each server:
+- **nip.io** (Recommended): `<server>.<HOST_IP>.nip.io:25565` - Works everywhere, no setup needed
+- **mDNS**: `<server>.local:25565` - Requires avahi/Bonjour on client
 
-**mDNS Client Requirements**:
+**Connection Methods**:
+
+| Method | Example | Client Requirements |
+|--------|---------|---------------------|
+| **nip.io (Recommended)** | `myserver.192.168.20.37.nip.io:25565` | Internet access only |
+| mDNS | `myserver.local:25565` | avahi-daemon/Bonjour |
+| hosts file | `myserver.local:25565` | Manual /etc/hosts entry |
+
+**nip.io Magic DNS**:
+nip.io automatically resolves `<name>.<ip>.nip.io` to `<ip>`:
+```
+myserver.192.168.20.37.nip.io → 192.168.20.37
+```
+No client configuration needed - just connect directly in Minecraft.
+
+**Server Requirements**:
+- HOST_IP set in `.env` (required for nip.io)
+- avahi-daemon installed (optional, for mDNS)
+
+**mDNS Client Requirements** (if using .local):
 | OS | Requirement |
 |----|-------------|
 | Linux | avahi-daemon (usually pre-installed) |
 | macOS | Built-in Bonjour (no setup needed) |
 | Windows | Bonjour Print Services or iTunes |
-
-**Server Host Requirements**:
-- avahi-daemon installed and running (see setup below)
-- HOST_IP set in `.env` (or auto-detected)
 
 **avahi-daemon Installation**:
 | OS | Command |
@@ -354,16 +535,12 @@ Clients on the same LAN can connect directly via Minecraft: `<server-name>.local
 
 See [README.md mDNS Setup Guide](README.md#mdns-setup-guide) for detailed instructions including Windows WSL.
 
-**Fallback (if mDNS unavailable)**:
-Configure hosts file:
+**Migrate Existing Servers to nip.io**:
 ```bash
-# Add to /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
-192.168.1.100 myserver.local
-# Add more servers as needed:
-# 192.168.1.100 another-server.local
+cd platform
+./scripts/migrate-nip-io.sh           # Apply changes
+./scripts/migrate-nip-io.sh --dry-run # Preview changes only
 ```
-
-Then connect via Minecraft: `myserver.local:25565`
 
 ## Core Principles
 
@@ -593,13 +770,13 @@ environment:
 
 ## Documentation Reference
 
-For detailed settings, refer to the documents in the `docs/` directory:
+For detailed settings, refer to the documents in the `docs/itzg-reference/` directory:
 
-- [Getting Started](docs/01-getting-started.md)
-- [Environment Variables](docs/03-variables.md)
-- [Server Types](docs/06-types-and-platforms.md)
-- [Mods/Plugins](docs/08-mods-and-plugins.md)
-- [Troubleshooting](docs/15-troubleshooting.md)
+- [Getting Started](docs/itzg-reference/01-getting-started.md)
+- [Environment Variables](docs/itzg-reference/03-variables.md)
+- [Server Types](docs/itzg-reference/06-types-and-platforms.md)
+- [Mods/Plugins](docs/itzg-reference/08-mods-and-plugins.md)
+- [Troubleshooting](docs/itzg-reference/15-troubleshooting.md)
 
 ## External Resources
 
