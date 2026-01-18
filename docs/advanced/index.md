@@ -37,30 +37,32 @@ The platform provides several advanced features for production deployments and c
 
 ### Platform Components
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                       Host Machine                           │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────┐                                        │
-│  │   mc-router     │ ← Port 25565 (public)                  │
-│  │   (always on)   │                                        │
-│  └────────┬────────┘                                        │
-│           │ Docker labels (mc-router.host)                  │
-│  ┌────────┼────────────────────────────────────────┐        │
-│  │        ▼                                        │        │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐       │        │
-│  │  │ Server 1 │  │ Server 2 │  │ Server N │       │        │
-│  │  │ (Paper)  │  │ (Forge)  │  │ (Fabric) │       │        │
-│  │  └────┬─────┘  └────┬─────┘  └────┬─────┘       │        │
-│  │       │             │             │             │        │
-│  │  minecraft-net (Docker network)                 │        │
-│  └─────────────────────────────────────────────────┘        │
-│           │             │             │                      │
-│  ┌────────▼─────────────▼─────────────▼────────────┐        │
-│  │                   volumes                        │        │
-│  │  servers/<name>/data    worlds/    shared/       │        │
-│  └──────────────────────────────────────────────────┘        │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph host["Host Machine"]
+        subgraph router["mc-router (Port 25565)"]
+            R["Always running<br/>Docker labels routing"]
+        end
+
+        subgraph network["minecraft-net (Docker network)"]
+            S1["Server 1<br/>(Paper)"]
+            S2["Server 2<br/>(Forge)"]
+            SN["Server N<br/>(Fabric)"]
+        end
+
+        subgraph volumes["Volumes"]
+            V1["servers/&lt;name&gt;/data"]
+            V2["worlds/"]
+            V3["shared/"]
+        end
+
+        router --> S1
+        router --> S2
+        router --> SN
+        S1 --> volumes
+        S2 --> volumes
+        SN --> volumes
+    end
 ```
 
 ### Request Flow
@@ -74,41 +76,35 @@ The platform provides several advanced features for production deployments and c
 
 ### Auto-scaling Behavior
 
-```
-Player connects → mc-router → Server stopped?
-                                    │
-                    ┌───────────────┴───────────────┐
-                    ▼                               ▼
-                   No                              Yes
-                    │                               │
-                    ▼                               ▼
-              Route to server              Start server
-                    │                       (wait DOCKER_TIMEOUT)
-                    │                               │
-                    │                               ▼
-                    └───────────────┬───────────────┘
-                                    ▼
-                            Player connected
+```mermaid
+flowchart TB
+    A[Player connects] --> B[mc-router]
+    B --> C{Server stopped?}
+    C -->|No| D[Route to server]
+    C -->|Yes| E[Start server]
+    E --> F[Wait DOCKER_TIMEOUT]
+    F --> D
+    D --> G[Player connected]
 ```
 
 ### World Locking
 
 World locking prevents data corruption when sharing worlds between servers:
 
-```
-Server A                     World                      Server B
-    │                          │                            │
-    │ ─── assign world ───────▶│                            │
-    │                          │ (locked to A)              │
-    │                          │                            │
-    │                          │◀─── try assign ─────────── │
-    │                          │     ❌ DENIED               │
-    │                          │                            │
-    │ ─── release world ──────▶│                            │
-    │                          │ (unlocked)                 │
-    │                          │                            │
-    │                          │◀─── assign world ──────── │
-    │                          │ (locked to B)              │
+```mermaid
+sequenceDiagram
+    participant A as Server A
+    participant W as World
+    participant B as Server B
+
+    A->>W: assign world
+    Note over W: Locked to A
+    B->>W: try assign
+    W--xB: DENIED
+    A->>W: release world
+    Note over W: Unlocked
+    B->>W: assign world
+    Note over W: Locked to B
 ```
 
 ## Performance Tuning
