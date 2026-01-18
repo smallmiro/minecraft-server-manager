@@ -6,17 +6,14 @@ import {
   McVersion,
   Memory,
   WorldOptions,
-  WorldSetupType,
   Server,
   World,
-} from '../../domain/index.js';
-import type {
-  IPromptPort,
-  TextPromptOptions,
-  SelectPromptOptions,
-  ConfirmPromptOptions,
-  Spinner,
-} from '../../application/ports/outbound/IPromptPort.js';
+  type IPromptPort,
+  type TextPromptOptions,
+  type SelectPromptOptions,
+  type ConfirmPromptOptions,
+  type Spinner,
+} from '@minecraft-docker/shared';
 
 /**
  * ClackPromptAdapter

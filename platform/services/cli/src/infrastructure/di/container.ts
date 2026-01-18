@@ -1,32 +1,32 @@
-import { Paths } from '@minecraft-docker/shared';
 import {
-  ClackPromptAdapter,
+  Paths,
+  // Infrastructure adapters from shared
   ShellAdapter,
   ServerRepository,
   WorldRepository,
   DocsAdapter,
-} from '../adapters/index.js';
-import {
+  // Use cases from shared
   CreateServerUseCase,
   DeleteServerUseCase,
   ServerStatusUseCase,
   WorldManagementUseCase,
   BackupUseCase,
   PlayerLookupUseCase,
-} from '../../application/use-cases/index.js';
-import type {
-  IPromptPort,
-  IShellPort,
-  IServerRepository,
-  IWorldRepository,
-  IDocProvider,
-  ICreateServerUseCase,
-  IDeleteServerUseCase,
-  IServerStatusUseCase,
-  IWorldManagementUseCase,
-  IBackupUseCase,
-  IPlayerLookupUseCase,
-} from '../../application/ports/index.js';
+  // Port types from shared
+  type IPromptPort,
+  type IShellPort,
+  type IServerRepository,
+  type IWorldRepository,
+  type IDocProvider,
+  type ICreateServerUseCase,
+  type IDeleteServerUseCase,
+  type IServerStatusUseCase,
+  type IWorldManagementUseCase,
+  type IBackupUseCase,
+  type IPlayerLookupUseCase,
+} from '@minecraft-docker/shared';
+// CLI-specific adapter
+import { ClackPromptAdapter } from '../adapters/ClackPromptAdapter.js';
 
 /**
  * Dependency Injection Container

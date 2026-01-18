@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
-import { ServerType, ServerTypeEnum } from '../../../../src/domain/value-objects/ServerType.js';
+import { ServerType, ServerTypeEnum } from '@minecraft-docker/shared';
 
 describe('ServerType Value Object', () => {
   describe('valid types', () => {

@@ -1,8 +1,8 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { Paths } from '@minecraft-docker/shared';
-import { World, WorldLockStatus } from '../../domain/index.js';
+import { Paths } from '../../utils/index.js';
+import { World } from '../../domain/index.js';
 import type {
   IWorldRepository,
   WorldLockData,

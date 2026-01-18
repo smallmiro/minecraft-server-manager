@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
-import { WorldOptions, WorldSetupType } from '../../../../src/domain/value-objects/WorldOptions.js';
+import { WorldOptions, WorldSetupType } from '@minecraft-docker/shared';
 
 describe('WorldOptions Value Object', () => {
   describe('new world', () => {

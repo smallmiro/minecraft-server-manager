@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import { BackupUseCase } from '../../src/application/use-cases/BackupUseCase.js';
+import { BackupUseCase } from '@minecraft-docker/shared';
 import { MockPromptAdapter, MockShellAdapter } from '../mocks/index.js';
 
 describe('BackupUseCase Integration', () => {

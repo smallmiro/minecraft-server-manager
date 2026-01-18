@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import { WorldManagementUseCase } from '../../src/application/use-cases/WorldManagementUseCase.js';
+import { WorldManagementUseCase } from '@minecraft-docker/shared';
 import {
   MockPromptAdapter,
   MockShellAdapter,
