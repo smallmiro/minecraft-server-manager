@@ -26,16 +26,18 @@ mcctl create
 
 ## 아키텍처
 
-```text
-┌──────────────────────┐
-│  mc-router (:25565)  │
-│  호스트네임 라우팅     │
-├──────────────────────┤
-│ server1.local ─→     │
-│  mc-server1          │
-│ server2.local ─→     │
-│  mc-server2          │
-└──────────────────────┘
+```mermaid
+flowchart TB
+    subgraph router["mc-router (:25565)"]
+        direction LR
+        R[호스트네임 라우팅]
+    end
+
+    C1[server1.local] --> router
+    C2[server2.local] --> router
+
+    router --> S1[mc-server1]
+    router --> S2[mc-server2]
 ```
 
 ## 문서
