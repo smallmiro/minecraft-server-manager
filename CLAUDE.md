@@ -67,10 +67,12 @@ minecraft/
 │   ├── .gitignore
 │   └── servers/_template/
 │
-├── docs/                        # Documentation (official docs reference)
-│   ├── README.md
-│   ├── doc-list.md
-│   └── *.md
+├── docs/                        # Documentation
+│   ├── itzg-reference/          # itzg/docker-minecraft-server official docs
+│   │   ├── doc-list.md
+│   │   └── *.md
+│   ├── development/             # Development guides
+│   └── usage/                   # Project usage guides (to be added)
 │
 └── .claude/
     └── commands/
@@ -119,7 +121,7 @@ This command performs the following tasks:
 
 ### /update-docs
 
-Reads the official documentation (https://docker-minecraft-server.readthedocs.io/) and updates the docs/ directory to the latest state.
+Reads the official documentation (https://docker-minecraft-server.readthedocs.io/) and updates the docs/itzg-reference/ directory to the latest state.
 
 ```bash
 # Run in Claude Code
@@ -147,7 +149,7 @@ This command performs the following tasks:
 - Syncs README.md quick start examples
 - Updates prd.md if it exists
 
-**Important**: This command does NOT edit files in `docs/` directory. Those are managed by `/update-docs`.
+**Important**: This command does NOT edit files in `docs/itzg-reference/` directory. Those are managed by `/update-docs`.
 
 ## npm Package Installation (Global CLI)
 
@@ -739,13 +741,13 @@ environment:
 
 ## Documentation Reference
 
-For detailed settings, refer to the documents in the `docs/` directory:
+For detailed settings, refer to the documents in the `docs/itzg-reference/` directory:
 
-- [Getting Started](docs/01-getting-started.md)
-- [Environment Variables](docs/03-variables.md)
-- [Server Types](docs/06-types-and-platforms.md)
-- [Mods/Plugins](docs/08-mods-and-plugins.md)
-- [Troubleshooting](docs/15-troubleshooting.md)
+- [Getting Started](docs/itzg-reference/01-getting-started.md)
+- [Environment Variables](docs/itzg-reference/03-variables.md)
+- [Server Types](docs/itzg-reference/06-types-and-platforms.md)
+- [Mods/Plugins](docs/itzg-reference/08-mods-and-plugins.md)
+- [Troubleshooting](docs/itzg-reference/15-troubleshooting.md)
 
 ## External Resources
 

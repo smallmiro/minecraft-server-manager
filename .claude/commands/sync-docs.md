@@ -11,8 +11,8 @@ This command analyzes the codebase and updates project documentation to reflect 
 
 ## Protected Files (DO NOT EDIT)
 
-- `docs/*` - All files under docs/ directory are **READ-ONLY**
-- These files are managed by `/project:update-docs` command
+- `docs/itzg-reference/*` - All files under docs/itzg-reference/ directory are **READ-ONLY**
+- These files are managed by `/update-docs` command
 
 ## Procedure
 
@@ -90,7 +90,7 @@ minecraft/
 
 ## Important Notes
 
-- **NEVER edit files in docs/** - These are synced from official documentation
+- **NEVER edit files in docs/itzg-reference/** - These are synced from official documentation
 - **Always read files before editing** - Understand current content first
 - **Preserve user customizations** - Don't overwrite intentional modifications
 - **English only** - All documentation must be in English for open-source
