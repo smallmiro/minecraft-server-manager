@@ -158,6 +158,13 @@ See [CLAUDE.md](CLAUDE.md) for detailed instructions.
 | [Examples](16-examples.md) | docker-compose example collection |
 | [Documentation Links](doc-list.md) | Original documentation URLs |
 
+### Development
+
+| Document | Description |
+|----------|-------------|
+| [CLI Usage Examples](docs/usage/cli-usage-examples.md) | Detailed CLI usage with examples (Korean) |
+| [CLI Architecture](docs/development/cli-architecture.md) | Hexagonal architecture and patterns |
+
 ---
 
 ## Quick Reference - Key Environment Variables
