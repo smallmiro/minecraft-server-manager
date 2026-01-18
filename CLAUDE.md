@@ -75,6 +75,9 @@ minecraft/
 │   └── usage/                   # Project usage guides (to be added)
 │
 └── .claude/
+    ├── agents/
+    │   ├── release-manager.md
+    │   └── technical-writer.md
     └── commands/
         ├── update-docs.md
         ├── sync-docs.md
