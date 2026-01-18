@@ -307,9 +307,23 @@ cp -r "$TEMPLATE_DIR" "$SERVER_DIR"
 echo -e "${BLUE}[2/6]${NC} Updating server docker-compose.yml..."
 COMPOSE_FILE="$SERVER_DIR/docker-compose.yml"
 
+# Get HOST_IP for nip.io hostname
+HOST_IP=$(get_host_ip)
+
 # Replace template with server name
 sed -i "s/mc-template/mc-$SERVER_NAME/g" "$COMPOSE_FILE"
-sed -i "s/template\.local/$SERVER_NAME.local/g" "$COMPOSE_FILE"
+
+# Configure mc-router hostnames (dual: .local + nip.io)
+if [ -n "$HOST_IP" ]; then
+    # Both .local and nip.io domains
+    sed -i "s/template\.local/$SERVER_NAME.local,$SERVER_NAME.$HOST_IP.nip.io/g" "$COMPOSE_FILE"
+    echo "   Hostnames: $SERVER_NAME.local, $SERVER_NAME.$HOST_IP.nip.io"
+else
+    # Fallback to .local only
+    echo -e "${YELLOW}   Warning: HOST_IP not set, using .local domain only${NC}"
+    echo "   Set HOST_IP in .env for nip.io domain support"
+    sed -i "s/template\.local/$SERVER_NAME.local/g" "$COMPOSE_FILE"
+fi
 sed -i "s/# Minecraft Server Configuration Template/# $SERVER_NAME Server/g" "$COMPOSE_FILE"
 
 # Update header comments
@@ -470,19 +484,25 @@ fi
 echo -e "${GREEN}Server details:${NC}"
 echo "  - Directory: servers/$SERVER_NAME/"
 echo "  - Service: mc-$SERVER_NAME"
-echo "  - Hostname: $SERVER_NAME.local"
+if [ -n "$HOST_IP" ]; then
+    echo "  - Hostnames: $SERVER_NAME.local, $SERVER_NAME.$HOST_IP.nip.io"
+else
+    echo "  - Hostname: $SERVER_NAME.local"
+fi
 echo "  - Type: $SERVER_TYPE"
 [ -n "$MC_VERSION" ] && echo "  - Version: $MC_VERSION"
 echo ""
 
 echo -e "${GREEN}Connection:${NC}"
-if [ -n "$HOST_IP" ] && grep -q "$SERVER_NAME.local" "$AVAHI_HOSTS" 2>/dev/null; then
-    echo "  mDNS registered - clients on same LAN can connect directly"
-    echo "  Connect via: $SERVER_NAME.local:25565"
+if [ -n "$HOST_IP" ]; then
+    echo "  ${GREEN}Recommended (nip.io - no client setup needed):${NC}"
+    echo "    $SERVER_NAME.$HOST_IP.nip.io:25565"
+    echo ""
+    echo "  Alternative (mDNS - requires avahi/Bonjour on client):"
+    echo "    $SERVER_NAME.local:25565"
 else
-    echo "  Add to hosts file: <server-ip> $SERVER_NAME.local"
-    echo "  Or register mDNS: echo '<server-ip> $SERVER_NAME.local' | sudo tee -a $AVAHI_HOSTS"
-    echo "  Connect via: $SERVER_NAME.local:25565"
+    echo "  mDNS: $SERVER_NAME.local:25565"
+    echo "  (Set HOST_IP in .env for nip.io support)"
 fi
 echo ""
 

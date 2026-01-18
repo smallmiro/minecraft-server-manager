@@ -45,8 +45,12 @@ services:
     networks:
       - minecraft-net
     labels:
-      # IMPORTANT: Change 'template.local' to '<server-name>.local'
-      # Example: template.local -> ironwood.local
+      # mc-router hostname routing (comma-separated for multiple hostnames)
+      # Hostnames are auto-configured by create-server.sh:
+      #   - <server>.local: mDNS hostname (requires avahi/Bonjour on client)
+      #   - <server>.<HOST_IP>.nip.io: Magic DNS (no client setup needed)
+      # Example with HOST_IP=192.168.20.37:
+      #   mc-router.host: "myserver.local,myserver.192.168.20.37.nip.io"
       mc-router.host: "template.local"
       mc-router.auto-scale-up: "true"
       mc-router.auto-scale-down: "true"
