@@ -33,6 +33,11 @@
   ],
   "author": "smallmiro",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smallmiro/minecraft-server-manager.git",
+    "directory": "platform/services/cli"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
