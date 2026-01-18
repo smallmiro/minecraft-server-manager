@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 
 import { Paths, log, colors } from '@minecraft-docker/shared';
-import { initCommand, statusCommand, createCommand, deleteCommand } from './commands/index.js';
+import {
+  initCommand,
+  statusCommand,
+  createCommand,
+  deleteCommand,
+  worldCommand,
+  backupCommand,
+} from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
 const VERSION = '0.1.0';
@@ -237,17 +244,15 @@ async function main(): Promise<void> {
       }
 
       case 'world': {
-        if (!paths.isInitialized()) {
-          log.error('Platform not initialized. Run: mcctl init');
-          exitCode = 1;
-          break;
-        }
-
-        const worldArgs = [subCommand ?? 'list', ...positional];
-        if (flags['json']) worldArgs.push('--json');
-        if (flags['force']) worldArgs.push('--force');
-
-        exitCode = await shell.mcctl(['world', ...worldArgs]);
+        // Use new interactive world command
+        exitCode = await worldCommand({
+          root: rootDir,
+          subCommand: subCommand,
+          worldName: positional[0],
+          serverName: positional[1],
+          json: flags['json'] === true,
+          force: flags['force'] === true,
+        });
         break;
       }
 
@@ -261,18 +266,15 @@ async function main(): Promise<void> {
       }
 
       case 'backup': {
-        if (!paths.isInitialized()) {
-          log.error('Platform not initialized. Run: mcctl init');
-          exitCode = 1;
-          break;
-        }
-
-        const backupArgs = [subCommand ?? 'status', ...positional];
-        if (flags['json']) backupArgs.push('--json');
-        if (flags['message']) backupArgs.push('-m', flags['message'] as string);
-        if (flags['auto']) backupArgs.push('--auto');
-
-        exitCode = await shell.backup(backupArgs);
+        // Use new interactive backup command
+        exitCode = await backupCommand({
+          root: rootDir,
+          subCommand: subCommand,
+          message: flags['message'] as string | undefined,
+          commitHash: positional[0],
+          json: flags['json'] === true,
+          auto: flags['auto'] === true,
+        });
         break;
       }
 
