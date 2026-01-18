@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 
 import { Paths, log, colors } from '@minecraft-docker/shared';
-import { initCommand } from './commands/init.js';
-import { statusCommand } from './commands/status.js';
+import { initCommand, statusCommand, createCommand } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
 const VERSION = '0.1.0';
@@ -191,31 +190,18 @@ async function main(): Promise<void> {
         break;
 
       case 'create': {
-        const name = positional[0];
-        if (!name) {
-          log.error('Server name is required');
-          console.log('Usage: mcctl create <name> [options]');
-          exitCode = 1;
-          break;
-        }
-
-        // Check if initialized
-        if (!paths.isInitialized()) {
-          log.error('Platform not initialized. Run: mcctl init');
-          exitCode = 1;
-          break;
-        }
-
-        // Build options for create-server.sh
-        const createOpts: string[] = [];
-        if (flags['type']) createOpts.push('-t', flags['type'] as string);
-        if (flags['version']) createOpts.push('-v', flags['version'] as string);
-        if (flags['seed']) createOpts.push('-s', flags['seed'] as string);
-        if (flags['world-url']) createOpts.push('-u', flags['world-url'] as string);
-        if (flags['world']) createOpts.push('-w', flags['world'] as string);
-        if (flags['no-start']) createOpts.push('--no-start');
-
-        exitCode = await shell.createServer(name, createOpts);
+        // Use new interactive create command
+        // If no name provided, will run in interactive mode
+        exitCode = await createCommand({
+          root: rootDir,
+          name: positional[0],
+          type: flags['type'] as string | undefined,
+          version: flags['version'] as string | undefined,
+          seed: flags['seed'] as string | undefined,
+          worldUrl: flags['world-url'] as string | undefined,
+          worldName: flags['world'] as string | undefined,
+          noStart: flags['no-start'] === true,
+        });
         break;
       }
 
