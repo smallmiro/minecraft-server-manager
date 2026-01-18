@@ -18,7 +18,9 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
-    "test": "node --test",
+    "test": "find tests -name '*.test.ts' | xargs npx tsx --test",
+    "test:unit": "find tests/unit -name '*.test.ts' | xargs npx tsx --test",
+    "test:integration": "find tests/integration -name '*.test.ts' | xargs npx tsx --test",
     "start": "node dist/index.js"
   },
   "keywords": [
