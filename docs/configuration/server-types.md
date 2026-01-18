@@ -311,19 +311,22 @@ MODRINTH_PROJECTS=qsl,fabric-api
 
 ### Decision Tree
 
-```text
-Need mods?
-├── Yes
-│   ├── Forge mods? → FORGE
-│   └── Fabric/Quilt mods?
-│       ├── Want cutting-edge features? → QUILT
-│       └── Maximum compatibility? → FABRIC
-└── No
-    ├── Need plugins?
-    │   ├── Maximum performance? → PAPER (Recommended)
-    │   ├── Extra customization? → PURPUR
-    │   └── Legacy compatibility? → SPIGOT or BUKKIT
-    └── Pure Vanilla? → VANILLA
+```mermaid
+flowchart TD
+    A{Need mods?} -->|Yes| B{Which type?}
+    A -->|No| C{Need plugins?}
+
+    B -->|Forge mods| D[FORGE]
+    B -->|Fabric/Quilt| E{Priority?}
+    E -->|Cutting-edge| F[QUILT]
+    E -->|Compatibility| G[FABRIC]
+
+    C -->|Yes| H{Priority?}
+    C -->|No| I[VANILLA]
+
+    H -->|Performance| J[PAPER ⭐]
+    H -->|Customization| K[PURPUR]
+    H -->|Legacy| L[SPIGOT/BUKKIT]
 ```
 
 ### Quick Recommendations
