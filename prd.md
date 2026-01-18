@@ -917,111 +917,79 @@ p.outro('Connect via: myserver.local:25565');
 
 ### 9.3 Directory Structure
 
+> **Note**: Issue [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54) - Domain/Application Layer를 shared 패키지로 이동하여 CLI와 web-admin이 공유하도록 리팩토링 예정
+
+#### Target Structure (After Refactoring)
+
 ```
 platform/services/
-├── shared/                          # @minecraft-docker/shared
+├── shared/                          # @minecraft-docker/shared (공통 비즈니스 로직)
 │   └── src/
 │       ├── index.ts
-│       ├── types/                   # Shared type definitions
-│       │   ├── server.types.ts
-│       │   ├── world.types.ts
-│       │   └── config.types.ts
-│       ├── utils/                   # Pure utility functions
-│       │   ├── paths.ts
-│       │   ├── logger.ts
-│       │   └── validation.ts
-│       └── docker/                  # Docker utilities
-│           └── client.ts
+│       │
+│       ├── domain/                  # 🟢 DOMAIN LAYER (공통)
+│       │   ├── entities/
+│       │   │   ├── Server.ts
+│       │   │   ├── World.ts
+│       │   │   └── Lock.ts
+│       │   └── value-objects/
+│       │       ├── ServerName.ts
+│       │       ├── ServerType.ts
+│       │       ├── McVersion.ts
+│       │       ├── Memory.ts
+│       │       └── WorldOptions.ts
+│       │
+│       ├── application/             # 🟡 APPLICATION LAYER (공통)
+│       │   ├── ports/
+│       │   │   ├── inbound/         # Use Case 인터페이스
+│       │   │   └── outbound/        # Repository/Service 인터페이스
+│       │   └── use-cases/
+│       │       ├── CreateServerUseCase.ts
+│       │       ├── DeleteServerUseCase.ts
+│       │       └── ...
+│       │
+│       ├── infrastructure/          # 🔴 공통 INFRASTRUCTURE
+│       │   ├── adapters/
+│       │   │   ├── ShellAdapter.ts
+│       │   │   ├── ServerRepository.ts
+│       │   │   └── WorldRepository.ts
+│       │   └── docker/              # Docker 유틸리티
+│       │
+│       ├── types/                   # 타입 정의
+│       └── utils/                   # 유틸리티 함수
 │
-└── cli/                             # @minecraft-docker/mcctl
+├── cli/                             # @minecraft-docker/mcctl (CLI 전용)
+│   └── src/
+│       ├── index.ts                 # Entry point
+│       ├── adapters/
+│       │   └── ClackPromptAdapter.ts  # CLI 전용 (@clack/prompts)
+│       ├── di/
+│       │   └── container.ts         # CLI용 DI 구성
+│       └── commands/
+│           ├── create.ts
+│           ├── delete.ts
+│           └── ...
+│
+└── web-admin/                       # @minecraft-docker/web-admin (Web 전용, 향후)
     └── src/
-        │
-        ├── index.ts                 # Entry point (bootstrap DI)
-        │
-        ├── domain/                  # 🟢 DOMAIN LAYER (innermost)
-        │   ├── entities/
-        │   │   ├── Server.ts        # Server entity
-        │   │   ├── World.ts         # World entity
-        │   │   ├── Lock.ts          # Lock entity
-        │   │   └── ServerConfig.ts  # Configuration entity
-        │   │
-        │   ├── value-objects/
-        │   │   ├── ServerName.ts    # Validated server name
-        │   │   ├── ServerType.ts    # PAPER | FORGE | FABRIC | ...
-        │   │   ├── McVersion.ts     # Minecraft version
-        │   │   ├── WorldSeed.ts     # World seed value
-        │   │   └── Memory.ts        # Memory allocation (e.g., "4G")
-        │   │
-        │   └── services/
-        │       ├── ServerConfigBuilder.ts
-        │       └── WorldValidator.ts
-        │
-        ├── application/             # 🟡 APPLICATION LAYER (use cases)
-        │   ├── ports/
-        │   │   ├── inbound/         # Primary ports (driving)
-        │   │   │   ├── IServerUseCase.ts
-        │   │   │   ├── IWorldUseCase.ts
-        │   │   │   └── IBackupUseCase.ts
-        │   │   │
-        │   │   └── outbound/        # Secondary ports (driven)
-        │   │       ├── IPromptPort.ts       # User interaction
-        │   │       ├── IShellPort.ts        # Script execution
-        │   │       ├── IConfigPort.ts       # Config file access
-        │   │       ├── IDockerPort.ts       # Docker operations
-        │   │       ├── IDocProvider.ts      # Documentation access
-        │   │       └── IPlayerAPIPort.ts    # Player lookup API
-        │   │
-        │   └── use-cases/
-        │       ├── server/
-        │       │   ├── CreateServerUseCase.ts
-        │       │   ├── DeleteServerUseCase.ts
-        │       │   └── ServerStatusUseCase.ts
-        │       ├── world/
-        │       │   ├── AssignWorldUseCase.ts
-        │       │   └── LockWorldUseCase.ts
-        │       └── backup/
-        │           └── BackupUseCase.ts
-        │
-        ├── infrastructure/          # 🔴 INFRASTRUCTURE LAYER (adapters)
-        │   ├── adapters/
-        │   │   ├── prompt/
-        │   │   │   ├── ClackPromptAdapter.ts
-        │   │   │   └── prompts/     # Prompt definitions
-        │   │   │       ├── ServerPrompts.ts
-        │   │   │       ├── WorldPrompts.ts
-        │   │   │       └── BackupPrompts.ts
-        │   │   │
-        │   │   ├── shell/
-        │   │   │   └── BashShellAdapter.ts   # Bash script executor
-        │   │   │
-        │   │   ├── config/
-        │   │   │   └── FileConfigAdapter.ts  # .env, config.env
-        │   │   │
-        │   │   ├── docker/
-        │   │   │   └── DockerodeAdapter.ts   # Docker API
-        │   │   │
-        │   │   ├── docs/
-        │   │   │   └── DocsProviderAdapter.ts # docs/ reader
-        │   │   │
-        │   │   └── api/
-        │   │       └── PlayerDBAdapter.ts    # PlayerDB API
-        │   │
-        │   └── di/
-        │       └── container.ts     # Dependency injection setup
-        │
-        └── presentation/            # 🔵 PRESENTATION LAYER
-            └── cli/
-                ├── commands/
-                │   ├── CreateServerCommand.ts
-                │   ├── DeleteServerCommand.ts
-                │   ├── StatusCommand.ts
-                │   ├── WorldCommand.ts
-                │   ├── PlayerCommand.ts
-                │   └── BackupCommand.ts
-                │
-                └── handlers/
-                    └── CommandRouter.ts
+        ├── api/                     # REST/GraphQL endpoints
+        ├── adapters/
+        │   └── WebPromptAdapter.ts  # Web 전용 (HTTP 기반)
+        ├── di/
+        │   └── container.ts         # Web용 DI 구성
+        └── index.ts
 ```
+
+#### Layer Placement Strategy
+
+| Layer | Package | Reason |
+|-------|---------|--------|
+| Domain (entities, value-objects) | `shared` | 비즈니스 규칙은 UI와 무관 |
+| Application (ports, use-cases) | `shared` | 비즈니스 로직은 공통 |
+| Infrastructure (shell, repos) | `shared` | bash 스크립트 호출은 동일 |
+| ClackPromptAdapter | `cli` | @clack/prompts는 CLI 전용 |
+| WebPromptAdapter | `web-admin` | HTTP 기반은 Web 전용 |
+| DI Container | 각 서비스 | 서비스별 어댑터 주입이 다름 |
 
 ### 9.4 Port Interfaces
 
@@ -1311,6 +1279,14 @@ export function createContainer(paths: Paths) {
 - [ ] Add progress indicators
 - [ ] Improve error messages
 - [ ] Add `--yes` flag for non-interactive mode
+
+#### Phase 5: Shared Package Refactoring ([#54](https://github.com/smallmiro/minecraft-server-manager/issues/54))
+- [ ] Domain Layer 이동 (`domain/entities`, `domain/value-objects`) → shared
+- [ ] Application Layer 이동 (`application/ports`, `application/use-cases`) → shared
+- [ ] 공통 Infrastructure 이동 (`ShellAdapter`, `ServerRepository`, `WorldRepository`) → shared
+- [ ] CLI 패키지에서 shared 패키지 import로 변경
+- [ ] 빌드 및 테스트 검증
+- [ ] package.json exports 업데이트
 
 ## 10. Future Enhancements
 

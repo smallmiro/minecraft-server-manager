@@ -176,6 +176,74 @@ See [CLAUDE.md](CLAUDE.md) for detailed instructions.
 
 ---
 
+## Development Setup
+
+### Prerequisites
+
+- Node.js >= 18.0.0
+- pnpm >= 8.0.0
+- Docker Engine 20.10+
+- Docker Compose v2.0+
+
+### Build from Source
+
+```bash
+# Clone repository
+git clone https://github.com/smallmiro/minecraft-server-manager.git
+cd minecraft-server-manager
+
+# Install dependencies
+pnpm install
+
+# Build all packages (shared → cli, in order)
+pnpm build
+
+# Link CLI globally for development
+cd platform/services/cli
+pnpm link --global
+
+# Verify installation
+mcctl --version
+```
+
+### Project Structure (Monorepo)
+
+```
+minecraft/
+├── package.json              # Root workspace
+├── pnpm-workspace.yaml       # pnpm workspace config
+│
+└── platform/services/
+    ├── shared/               # @minecraft-docker/shared
+    │   └── src/              # Common types, utils, docker helpers
+    │
+    └── cli/                  # @minecraft-docker/mcctl
+        └── src/              # CLI commands and adapters
+```
+
+### Available Scripts
+
+| Location | Command | Description |
+|----------|---------|-------------|
+| Root (`/minecraft`) | `pnpm install` | Install all dependencies |
+| Root (`/minecraft`) | `pnpm build` | Build all packages (recommended) |
+| Root (`/minecraft`) | `pnpm clean` | Clean all build outputs |
+| Root (`/minecraft`) | `pnpm test` | Run all tests |
+| `platform/services/cli` | `pnpm build` | Build CLI only |
+| `platform/services/cli` | `pnpm test` | Run CLI tests |
+| `platform/services/cli` | `pnpm link --global` | Link CLI globally |
+
+### Build Order
+
+pnpm automatically builds packages in dependency order:
+
+```
+1️⃣ @minecraft-docker/shared  (no dependencies)
+2️⃣ @minecraft-docker/mcctl   (depends on shared)
+```
+
+---
+
 ## Quick Reference - Key Environment Variables
 
 ### Required
