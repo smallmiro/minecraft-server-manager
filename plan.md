@@ -16,6 +16,7 @@
 | Phase 1: Infrastructure | [#1](https://github.com/smallmiro/minecraft-server-manager/issues/1), [#2](https://github.com/smallmiro/minecraft-server-manager/issues/2), [#3](https://github.com/smallmiro/minecraft-server-manager/issues/3) | ✅ Closed |
 | Phase 2: Docker & mc-router | [#4](https://github.com/smallmiro/minecraft-server-manager/issues/4), [#5](https://github.com/smallmiro/minecraft-server-manager/issues/5), [#6](https://github.com/smallmiro/minecraft-server-manager/issues/6) | ✅ Closed |
 | Phase 2.5: mDNS Publisher | [#20](https://github.com/smallmiro/minecraft-server-manager/issues/20) | ✅ Completed |
+| Phase 2.6: nip.io Magic DNS | [#52](https://github.com/smallmiro/minecraft-server-manager/issues/52) | ✅ Completed |
 | Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) | ✅ Completed |
 | Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | 🔄 Open |
 | Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | 🔄 Open |
@@ -35,8 +36,8 @@ This plan outlines the implementation steps for the multi-server Minecraft manag
 │                    mc-router (:25565)                        │
 │              (always running, hostname routing)              │
 ├─────────────────────────────────────────────────────────────┤
-│  ironwood.local    → mc-ironwood    (auto-scale up/down)    │
-│  <new-server>.local → mc-<new-server> (add via script)      │
+│  myserver.local                → mc-myserver (auto-scale)   │
+│  myserver.192.168.20.37.nip.io → mc-myserver (auto-scale)   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -310,6 +311,74 @@ avahi-browse -art
 
 ---
 
+## Phase 2.6: nip.io Magic DNS Support ✅ COMPLETED
+
+> **Milestone**: [v0.3.0 - Core Features](https://github.com/smallmiro/minecraft-server-manager/milestone/2)
+> **Issue**: [#52](https://github.com/smallmiro/minecraft-server-manager/issues/52)
+> **Status**: ✅ Completed
+
+### 2.6.1 Overview
+
+**Problem**: mDNS (`.local`) requires client-side setup (avahi/Bonjour) and has reliability issues on some networks.
+
+**Solution**: Add nip.io "magic DNS" as an alternative hostname routing method.
+
+nip.io automatically resolves `<name>.<ip>.nip.io` to `<ip>` without any configuration:
+- `myserver.192.168.20.37.nip.io` → resolves to `192.168.20.37`
+- Works universally with internet access
+- No client-side mDNS setup required
+
+### 2.6.2 Implementation Tasks
+
+- [x] Update `.env.example` with nip.io documentation
+- [x] Update `servers/_template/docker-compose.yml` labels
+- [x] Modify `create-server.sh` to add nip.io hostname
+- [x] Create `migrate-nip-io.sh` for existing servers
+- [x] Update CLAUDE.md documentation
+
+### 2.6.3 Dual Hostname Strategy
+
+mc-router supports comma-separated hostnames:
+```yaml
+labels:
+  mc-router.host: "myserver.local,myserver.192.168.20.37.nip.io"
+```
+
+**Client Connection Options**:
+| Method | Hostname | Requirements |
+|--------|----------|--------------|
+| nip.io (Recommended) | `myserver.192.168.20.37.nip.io:25565` | Internet access only |
+| mDNS | `myserver.local:25565` | avahi-daemon/Bonjour |
+| hosts file | `myserver.local:25565` | Manual /etc/hosts entry |
+
+### 2.6.4 Script Changes
+
+**create-server.sh**:
+```bash
+# Read HOST_IP from .env
+HOST_IP=$(get_host_ip)
+
+if [ -n "$HOST_IP" ]; then
+    # Dual hostname: .local + nip.io
+    sed -i "s/template\.local/$SERVER_NAME.local,$SERVER_NAME.$HOST_IP.nip.io/g" "$COMPOSE_FILE"
+else
+    # Fallback: .local only
+    sed -i "s/template\.local/$SERVER_NAME.local/g" "$COMPOSE_FILE"
+fi
+```
+
+### 2.6.5 Migration Script
+
+**File**: `platform/scripts/migrate-nip-io.sh`
+
+Updates existing servers to include nip.io hostnames:
+```bash
+./scripts/migrate-nip-io.sh
+# Updates all servers in servers/*/docker-compose.yml
+```
+
+---
+
 ## Phase 3: World Locking System ✅ COMPLETED
 
 > **Milestone**: [v0.3.0 - Core Features](https://github.com/smallmiro/minecraft-server-manager/milestone/2)
@@ -461,6 +530,7 @@ Add sections:
 | `platform/scripts/mcctl.sh` | 4 | ✅ |
 | `platform/scripts/logs.sh` | 4 | ✅ |
 | `platform/scripts/player.sh` | 4 | ✅ |
+| `platform/scripts/migrate-nip-io.sh` | 2.6 | ✅ |
 
 ### Pending
 
@@ -915,9 +985,15 @@ If implementation fails at any phase:
 
 ### Client Configuration
 
-**With mDNS Publisher (Recommended)**:
-No configuration needed! Clients on the same LAN automatically discover servers via mDNS (Bonjour/Zeroconf).
+**Option A: nip.io Magic DNS (Recommended)**:
+No configuration needed! Connect using the nip.io hostname:
+```
+myserver.192.168.20.37.nip.io:25565
+```
+Replace `192.168.20.37` with your HOST_IP from `.env`. Works everywhere with internet access.
 
+**Option B: mDNS (.local)**:
+Clients on the same LAN automatically discover servers via mDNS (Bonjour/Zeroconf).
 Just connect via Minecraft: `ironwood.local:25565`
 
 **mDNS Requirements**:
@@ -927,7 +1003,7 @@ Just connect via Minecraft: `ironwood.local:25565`
 | macOS | Built-in Bonjour (no setup needed) |
 | Windows | Bonjour Print Services or iTunes |
 
-**Fallback (without mDNS)**:
+**Fallback (without mDNS or nip.io)**:
 Add server hostnames to hosts file:
 ```
 # /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)

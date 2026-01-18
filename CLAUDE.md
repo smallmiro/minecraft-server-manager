@@ -45,7 +45,8 @@ minecraft/
 │   │   ├── lock.sh              # World locking system
 │   │   ├── logs.sh              # Log viewer
 │   │   ├── player.sh            # Player UUID lookup
-│   │   └── backup.sh            # GitHub worlds backup
+│   │   ├── backup.sh            # GitHub worlds backup
+│   │   └── migrate-nip-io.sh    # Migration script for nip.io hostnames
 │   │
 │   ├── services/                # TypeScript microservices (Monorepo)
 │   │   ├── cli/                 # @minecraft-docker/mcctl (npm CLI)
@@ -463,20 +464,35 @@ This project uses **hostname-based routing** via mc-router and **automatic hostn
 
 ### Client Connection
 
-**With mDNS (Recommended)**:
-The `create-server.sh` script automatically registers hostnames with avahi-daemon.
-Clients on the same LAN can connect directly via Minecraft: `<server-name>.local:25565`
+The `create-server.sh` script configures dual hostnames for each server:
+- **nip.io** (Recommended): `<server>.<HOST_IP>.nip.io:25565` - Works everywhere, no setup needed
+- **mDNS**: `<server>.local:25565` - Requires avahi/Bonjour on client
 
-**mDNS Client Requirements**:
+**Connection Methods**:
+
+| Method | Example | Client Requirements |
+|--------|---------|---------------------|
+| **nip.io (Recommended)** | `myserver.192.168.20.37.nip.io:25565` | Internet access only |
+| mDNS | `myserver.local:25565` | avahi-daemon/Bonjour |
+| hosts file | `myserver.local:25565` | Manual /etc/hosts entry |
+
+**nip.io Magic DNS**:
+nip.io automatically resolves `<name>.<ip>.nip.io` to `<ip>`:
+```
+myserver.192.168.20.37.nip.io → 192.168.20.37
+```
+No client configuration needed - just connect directly in Minecraft.
+
+**Server Requirements**:
+- HOST_IP set in `.env` (required for nip.io)
+- avahi-daemon installed (optional, for mDNS)
+
+**mDNS Client Requirements** (if using .local):
 | OS | Requirement |
 |----|-------------|
 | Linux | avahi-daemon (usually pre-installed) |
 | macOS | Built-in Bonjour (no setup needed) |
 | Windows | Bonjour Print Services or iTunes |
-
-**Server Host Requirements**:
-- avahi-daemon installed and running (see setup below)
-- HOST_IP set in `.env` (or auto-detected)
 
 **avahi-daemon Installation**:
 | OS | Command |
@@ -488,16 +504,12 @@ Clients on the same LAN can connect directly via Minecraft: `<server-name>.local
 
 See [README.md mDNS Setup Guide](README.md#mdns-setup-guide) for detailed instructions including Windows WSL.
 
-**Fallback (if mDNS unavailable)**:
-Configure hosts file:
+**Migrate Existing Servers to nip.io**:
 ```bash
-# Add to /etc/hosts (Linux/macOS) or C:\Windows\System32\drivers\etc\hosts (Windows)
-192.168.1.100 myserver.local
-# Add more servers as needed:
-# 192.168.1.100 another-server.local
+cd platform
+./scripts/migrate-nip-io.sh           # Apply changes
+./scripts/migrate-nip-io.sh --dry-run # Preview changes only
 ```
-
-Then connect via Minecraft: `myserver.local:25565`
 
 ## Core Principles
 
