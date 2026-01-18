@@ -60,7 +60,7 @@ This package follows **Hexagonal Architecture** (Clean Architecture):
 
 ## Documentation
 
-- [Full Documentation](https://smallmiro.github.io/minecraft-server-manager/)
+- [Full Documentation](https://minecraft-server-manager.readthedocs.io/)
 - [GitHub Repository](https://github.com/smallmiro/minecraft-server-manager)
 
 ## License

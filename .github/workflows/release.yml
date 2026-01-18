@@ -142,7 +142,7 @@ jobs:
 
             ## Documentation
 
-            https://smallmiro.github.io/minecraft-server-manager/
+            https://minecraft-server-manager.readthedocs.io/
           draft: false
           prerelease: ${{ contains(steps.version.outputs.VERSION, '-') }}
         env:
