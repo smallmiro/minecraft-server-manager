@@ -7,6 +7,7 @@ This command analyzes the codebase and updates project documentation to reflect 
 - `CLAUDE.md` - Project guide and development reference
 - `README.md` - Main documentation and quick start guide
 - `prd.md` - Product Requirements Document (if exists)
+- `plan.md` - Implementation roadmap (if exists)
 
 ## Protected Files (DO NOT EDIT)
 
@@ -38,6 +39,12 @@ This command analyzes the codebase and updates project documentation to reflect 
    - Update feature list based on implemented configurations
    - Mark completed requirements
    - Add discovered requirements from codebase analysis
+
+5. **Update plan.md** (if exists):
+   - Update phase status (In Progress → Completed)
+   - Mark implementation tasks as done
+   - Add new files to file checklist
+   - Update architecture diagrams if structure changed
 
 ## Analysis Checklist
 
@@ -93,5 +100,5 @@ minecraft/
 When this command is executed:
 1. Analyze the codebase thoroughly
 2. Compare with current documentation
-3. Update only the target files (CLAUDE.md, README.md, prd.md)
+3. Update only the target files (CLAUDE.md, README.md, prd.md, plan.md)
 4. Report what changes were made
