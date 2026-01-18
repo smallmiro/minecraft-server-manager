@@ -1,0 +1,358 @@
+# Networking Guide
+
+Configure hostname-based routing for your Minecraft servers using nip.io, mDNS, and mc-router.
+
+## Overview
+
+The platform supports three connection methods:
+
+| Method | URL Example | Client Setup | Works Remotely |
+|--------|-------------|--------------|----------------|
+| **nip.io** (Recommended) | `myserver.192.168.1.100.nip.io:25565` | None | Yes |
+| **mDNS** | `myserver.local:25565` | avahi/Bonjour | LAN only |
+| **Direct IP** | `192.168.1.100:25565` | None | Yes |
+
+## nip.io Magic DNS
+
+**Recommended for all users.**
+
+nip.io is a magic DNS service that automatically resolves hostnames containing IP addresses:
+
+```
+myserver.192.168.1.100.nip.io → 192.168.1.100
+creative.192.168.1.100.nip.io → 192.168.1.100
+modded.192.168.1.100.nip.io   → 192.168.1.100
+```
+
+### How It Works
+
+1. Client connects to `myserver.192.168.1.100.nip.io:25565`
+2. DNS query goes to nip.io service
+3. nip.io extracts `192.168.1.100` from hostname
+4. Returns `192.168.1.100` as the IP address
+5. Client connects to `192.168.1.100:25565`
+6. mc-router receives connection with hostname `myserver.192.168.1.100.nip.io`
+7. mc-router routes to the correct server based on hostname
+
+### Configuration
+
+Set your host IP in `.env`:
+
+```bash
+# ~/minecraft-servers/.env
+HOST_IP=192.168.1.100
+```
+
+When you create a server, mcctl automatically configures both nip.io and mDNS hostnames:
+
+```bash
+mcctl create myserver
+# Hostnames:
+#   - myserver.192.168.1.100.nip.io:25565 (nip.io)
+#   - myserver.local:25565 (mDNS)
+```
+
+### Benefits
+
+- **No client configuration** - Works immediately
+- **Works remotely** - Accessible from any network with internet
+- **Simple setup** - Just set HOST_IP in .env
+- **Multiple servers** - Each server gets a unique hostname
+
+### Requirements
+
+- Internet access for DNS resolution
+- HOST_IP correctly set in .env
+- mc-router must be running
+
+---
+
+## mDNS (Multicast DNS)
+
+mDNS allows `.local` hostnames to work on local networks.
+
+### How It Works
+
+1. avahi-daemon broadcasts hostname on local network
+2. Clients with mDNS support discover the hostname
+3. No manual /etc/hosts configuration needed
+
+### Server Setup
+
+#### Install avahi-daemon
+
+=== "Ubuntu/Debian"
+    ```bash
+    sudo apt install avahi-daemon
+    sudo systemctl enable --now avahi-daemon
+    ```
+
+=== "CentOS/RHEL"
+    ```bash
+    sudo dnf install avahi
+    sudo systemctl enable --now avahi-daemon
+    ```
+
+=== "Arch Linux"
+    ```bash
+    sudo pacman -S avahi nss-mdns
+    sudo systemctl enable --now avahi-daemon
+    ```
+
+#### Register Hostnames
+
+mcctl automatically registers hostnames when creating servers:
+
+```bash
+mcctl create myserver
+# Registers myserver.local with avahi-daemon
+```
+
+Manual registration:
+
+```bash
+# Add entry
+echo "192.168.1.100 myserver.local" | sudo tee -a /etc/avahi/hosts
+
+# Restart avahi
+sudo systemctl restart avahi-daemon
+```
+
+### Client Setup
+
+| OS | Setup Required |
+|----|----------------|
+| **Linux** | Install avahi-daemon (usually pre-installed) |
+| **macOS** | None (Bonjour built-in) |
+| **Windows** | Install Bonjour (iTunes or Bonjour Print Services) |
+
+#### Windows Client
+
+1. Download [Bonjour Print Services](https://support.apple.com/kb/DL999)
+2. Install and restart
+3. `.local` hostnames will resolve
+
+#### Linux Client
+
+```bash
+# Ubuntu/Debian
+sudo apt install avahi-daemon libnss-mdns
+
+# Verify nss-mdns is configured
+grep mdns /etc/nsswitch.conf
+# Should show: hosts: files mdns4_minimal [NOTFOUND=return] dns
+```
+
+### Troubleshooting mDNS
+
+```bash
+# Check if avahi is running
+systemctl status avahi-daemon
+
+# List registered hostnames
+cat /etc/avahi/hosts
+
+# Test resolution
+avahi-resolve -n myserver.local
+
+# Check network interface
+avahi-daemon --check
+```
+
+---
+
+## mc-router Configuration
+
+mc-router handles hostname-based routing and auto-scaling.
+
+### Docker Labels
+
+Each server uses Docker labels for mc-router discovery:
+
+```yaml
+# servers/myserver/docker-compose.yml
+services:
+  mc-myserver:
+    labels:
+      mc-router.host: "myserver.local,myserver.192.168.1.100.nip.io"
+```
+
+### Auto-scaling Settings
+
+Configure in `docker-compose.yml`:
+
+```yaml
+services:
+  router:
+    image: itzg/mc-router
+    environment:
+      IN_DOCKER: "true"
+      AUTO_SCALE_UP: "true"       # Start servers on connect
+      AUTO_SCALE_DOWN: "false"    # Stop idle servers (see note)
+      DOCKER_TIMEOUT: "120"       # Wait time for server startup (seconds)
+      AUTO_SCALE_ASLEEP_MOTD: "Server is sleeping. Connect to wake up!"
+```
+
+!!! warning "AUTO_SCALE_DOWN"
+    Auto scale down is currently disabled by default due to a bug that can disconnect players after the timeout. Enable with caution.
+
+### Multiple Hostnames
+
+You can configure multiple hostnames for a server:
+
+```yaml
+labels:
+  mc-router.host: "myserver.local,myserver.example.com,survival.mynetwork.local"
+```
+
+### Debug Mode
+
+Enable mc-router debug output:
+
+```yaml
+services:
+  router:
+    environment:
+      DEBUG: "true"
+```
+
+---
+
+## Network Architecture
+
+### Docker Network
+
+All Minecraft containers run on a shared Docker network:
+
+```yaml
+# docker-compose.yml
+networks:
+  minecraft-net:
+    name: ${MINECRAFT_NETWORK:-minecraft-net}
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${MINECRAFT_SUBNET:-172.28.0.0/16}
+```
+
+### Port Mapping
+
+Only mc-router exposes port 25565:
+
+```yaml
+services:
+  router:
+    ports:
+      - "25565:25565"  # Public port
+```
+
+Individual Minecraft servers don't expose ports - they're accessed through mc-router.
+
+### Container Discovery
+
+mc-router uses the Docker socket to discover containers:
+
+```yaml
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock:ro
+```
+
+---
+
+## Custom Domain Setup
+
+For production deployments, use your own domain.
+
+### DNS Configuration
+
+Add A records pointing to your server:
+
+```
+survival.minecraft.example.com  A  192.168.1.100
+creative.minecraft.example.com  A  192.168.1.100
+```
+
+### Server Configuration
+
+Update the mc-router.host label:
+
+```yaml
+labels:
+  mc-router.host: "survival.minecraft.example.com"
+```
+
+### HTTPS/TLS
+
+Minecraft uses its own protocol, not HTTPS. TLS is not needed for the game connection.
+
+---
+
+## Firewall Configuration
+
+### Required Ports
+
+| Port | Protocol | Purpose |
+|------|----------|---------|
+| 25565 | TCP | Minecraft client connections |
+| 5353 | UDP | mDNS (local network only) |
+
+### UFW (Ubuntu)
+
+```bash
+sudo ufw allow 25565/tcp comment "Minecraft"
+sudo ufw allow 5353/udp comment "mDNS"
+```
+
+### firewalld (CentOS/RHEL)
+
+```bash
+sudo firewall-cmd --permanent --add-port=25565/tcp
+sudo firewall-cmd --permanent --add-service=mdns
+sudo firewall-cmd --reload
+```
+
+---
+
+## Troubleshooting
+
+### Connection Refused
+
+1. Check mc-router is running:
+   ```bash
+   docker ps | grep mc-router
+   ```
+
+2. Check hostname is configured:
+   ```bash
+   docker inspect mc-myserver | grep mc-router.host
+   ```
+
+3. Test DNS resolution:
+   ```bash
+   nslookup myserver.192.168.1.100.nip.io
+   ```
+
+### Server Not Starting
+
+1. Check Docker timeout:
+   ```yaml
+   DOCKER_TIMEOUT: "180"  # Increase if server takes long to start
+   ```
+
+2. Check server logs:
+   ```bash
+   docker logs mc-myserver
+   ```
+
+### mDNS Not Working
+
+1. Verify avahi is running on server
+2. Check client has mDNS support
+3. Ensure same network subnet
+4. Check firewall allows port 5353/udp
+
+## See Also
+
+- **[Quick Start](../getting-started/quickstart.md)** - Basic server setup
+- **[Environment Variables](../configuration/environment.md)** - All configuration options
+- **[mc-router Documentation](https://github.com/itzg/mc-router)** - Full mc-router reference

@@ -60,20 +60,20 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started:
+      - Overview: getting-started/index.md
       - Installation: getting-started/installation.md
       - Quick Start: getting-started/quickstart.md
   - CLI Reference:
-      - Overview: cli/overview.md
+      - Overview: cli/index.md
       - Commands: cli/commands.md
   - Configuration:
+      - Overview: configuration/index.md
       - Environment Variables: configuration/environment.md
       - Server Types: configuration/server-types.md
   - Advanced:
-      - World Management: advanced/world-management.md
+      - Overview: advanced/index.md
+      - Networking: advanced/networking.md
       - Backup: advanced/backup.md
-  - Development:
-      - Architecture: development/architecture.md
-      - Contributing: development/contributing.md
 
 extra:
   alternate:
