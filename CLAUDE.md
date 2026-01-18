@@ -78,6 +78,7 @@ minecraft/
     └── commands/
         ├── update-docs.md
         ├── sync-docs.md
+        ├── write-docs.md
         └── work.md
 ```
 
@@ -150,6 +151,31 @@ This command performs the following tasks:
 - Updates prd.md if it exists
 
 **Important**: This command does NOT edit files in `docs/itzg-reference/` directory. Those are managed by `/update-docs`.
+
+### /write-docs
+
+Bilingual (English/Korean) technical documentation writer for MkDocs + Read the Docs.
+
+```bash
+# Create new document (both EN and KO)
+/write-docs create getting-started/installation --title "Installation Guide"
+
+# Translate existing document
+/write-docs translate cli/commands --from en --to ko
+
+# Review documentation
+/write-docs review getting-started/ --check all
+
+# Sync translations (find missing/outdated)
+/write-docs sync .
+```
+
+This command performs the following tasks:
+- Creates bilingual documentation (English + Korean)
+- Uses MkDocs i18n suffix pattern (`page.md`, `page.ko.md`)
+- Provides templates: basic, reference, tutorial, guide
+- Reviews technical accuracy and translation quality
+- Expertise: DevOps, Docker, Bash, Network, Linux, TypeScript
 
 ## npm Package Installation (Global CLI)
 
