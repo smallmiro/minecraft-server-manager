@@ -656,7 +656,7 @@ See **Section 9** for detailed CLI Architecture (Hexagonal + Clean Architecture)
 ### Future: Phase 8 (Web Management UI)
 See **Section 10.1** for detailed Web UI implementation plan.
 - Wrap CLI functions with Next.js API routes
-- Build MUI dashboard components
+- Build Tailwind CSS dashboard components
 - Add SQLite/PostgreSQL for persistent state
 - Package as npm module
 
@@ -1297,7 +1297,7 @@ export function createContainer(paths: Paths) {
 #### Tech Stack
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js, TypeScript, MUI (Material-UI) |
+| Frontend | Next.js, TypeScript, Tailwind CSS |
 | Backend | Next.js API Routes |
 | Database | SQLite (default) or PostgreSQL (optional) |
 | Packaging | npm package (all-in-one installation) |
@@ -1335,7 +1335,7 @@ minecraft-server-manager/
 │   └── cli.js              # CLI entry point
 ├── src/
 │   ├── app/                # Next.js app
-│   ├── components/         # MUI components
+│   ├── components/         # Tailwind CSS components
 │   ├── api/                # API routes
 │   └── lib/
 │       ├── docker.ts       # Docker API integration
