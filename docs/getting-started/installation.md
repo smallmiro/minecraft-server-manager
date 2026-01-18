@@ -133,7 +133,7 @@ mcctl init
 
 This creates the platform directory structure at `~/minecraft-servers/`:
 
-```
+```text
 ~/minecraft-servers/
 ├── docker-compose.yml     # Main orchestration
 ├── .env                   # Environment configuration

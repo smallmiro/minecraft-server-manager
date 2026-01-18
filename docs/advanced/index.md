@@ -37,7 +37,7 @@ The platform provides several advanced features for production deployments and c
 
 ### Platform Components
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                       Host Machine                           │
 ├─────────────────────────────────────────────────────────────┤
