@@ -4,6 +4,7 @@ import {
   ShellAdapter,
   ServerRepository,
   WorldRepository,
+  DocsAdapter,
 } from '../adapters/index.js';
 import {
   CreateServerUseCase,
@@ -18,6 +19,7 @@ import type {
   IShellPort,
   IServerRepository,
   IWorldRepository,
+  IDocProvider,
   ICreateServerUseCase,
   IDeleteServerUseCase,
   IServerStatusUseCase,
@@ -38,6 +40,7 @@ export class Container {
   private _shellPort?: IShellPort;
   private _serverRepo?: IServerRepository;
   private _worldRepo?: IWorldRepository;
+  private _docProvider?: IDocProvider;
 
   constructor(rootDir?: string) {
     this.paths = new Paths(rootDir);
@@ -73,6 +76,13 @@ export class Container {
       this._worldRepo = new WorldRepository(this.paths);
     }
     return this._worldRepo;
+  }
+
+  get docProvider(): IDocProvider {
+    if (!this._docProvider) {
+      this._docProvider = new DocsAdapter(this.paths.root);
+    }
+    return this._docProvider;
   }
 
   // ========================================

@@ -4,6 +4,7 @@ export {
   ShellAdapter,
   ServerRepository,
   WorldRepository,
+  DocsAdapter,
 } from './adapters/index.js';
 
 // DI Container
