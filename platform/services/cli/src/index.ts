@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Paths, log, colors } from '@minecraft-docker/shared';
-import { initCommand, statusCommand, createCommand } from './commands/index.js';
+import { initCommand, statusCommand, createCommand, deleteCommand } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
 const VERSION = '0.1.0';
@@ -206,24 +206,13 @@ async function main(): Promise<void> {
       }
 
       case 'delete': {
-        const name = positional[0];
-        if (!name) {
-          log.error('Server name is required');
-          console.log('Usage: mcctl delete <name> [--force]');
-          exitCode = 1;
-          break;
-        }
-
-        if (!paths.isInitialized()) {
-          log.error('Platform not initialized. Run: mcctl init');
-          exitCode = 1;
-          break;
-        }
-
-        const deleteOpts: string[] = [];
-        if (flags['force'] || flags['yes']) deleteOpts.push('--force');
-
-        exitCode = await shell.deleteServer(name, deleteOpts);
+        // Use new interactive delete command
+        // If no name provided, will run in interactive mode with server selection
+        exitCode = await deleteCommand({
+          root: rootDir,
+          name: positional[0],
+          force: flags['force'] === true || flags['yes'] === true,
+        });
         break;
       }
 
