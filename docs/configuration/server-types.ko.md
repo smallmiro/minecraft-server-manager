@@ -311,19 +311,22 @@ MODRINTH_PROJECTS=qsl,fabric-api
 
 ### 의사결정 트리
 
-```text
-모드가 필요한가요?
-├── 예
-│   ├── Forge 모드? → FORGE
-│   └── Fabric/Quilt 모드?
-│       ├── 최신 기능을 원하나요? → QUILT
-│       └── 최대 호환성? → FABRIC
-└── 아니오
-    ├── 플러그인이 필요한가요?
-    │   ├── 최대 성능? → PAPER (권장)
-    │   ├── 추가 커스터마이징? → PURPUR
-    │   └── 레거시 호환성? → SPIGOT 또는 BUKKIT
-    └── 순수 바닐라? → VANILLA
+```mermaid
+flowchart TD
+    A{모드가 필요한가요?} -->|예| B{어떤 타입?}
+    A -->|아니오| C{플러그인이 필요한가요?}
+
+    B -->|Forge 모드| D[FORGE]
+    B -->|Fabric/Quilt| E{우선순위?}
+    E -->|최신 기능| F[QUILT]
+    E -->|호환성| G[FABRIC]
+
+    C -->|예| H{우선순위?}
+    C -->|아니오| I[VANILLA]
+
+    H -->|성능| J[PAPER ⭐]
+    H -->|커스터마이징| K[PURPUR]
+    H -->|레거시| L[SPIGOT/BUKKIT]
 ```
 
 ### 빠른 권장사항
