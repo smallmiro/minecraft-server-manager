@@ -28,6 +28,22 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Track current backup for cleanup on error
+CURRENT_BACKUP=""
+
+# Cleanup function for trap
+cleanup_on_error() {
+    if [ -n "$CURRENT_BACKUP" ] && [ -f "$CURRENT_BACKUP" ]; then
+        echo -e "${RED}Error occurred. Restoring backup...${NC}"
+        local original_file="${CURRENT_BACKUP%.bak}"
+        mv "$CURRENT_BACKUP" "$original_file"
+        echo -e "${YELLOW}Restored: $original_file${NC}"
+    fi
+}
+
+# Set trap for cleanup on error
+trap cleanup_on_error ERR
+
 # Get script/platform directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
@@ -54,8 +70,9 @@ show_usage() {
     echo "  HOST_IP must be set in platform/.env"
 }
 
-# Get host IP from .env file
+# Get host IP from .env file or auto-detect
 get_host_ip() {
+    # Try .env file first
     if [ -f "$ENV_FILE" ]; then
         local env_ip
         env_ip=$(grep "^HOST_IP=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d '"' | tr -d "'")
@@ -64,6 +81,22 @@ get_host_ip() {
             return
         fi
     fi
+
+    # Auto-detect: Try ip route
+    local detected_ip
+    detected_ip=$(ip route get 1 2>/dev/null | grep -oP 'src \K\S+' | head -1)
+    if [ -n "$detected_ip" ]; then
+        echo "$detected_ip"
+        return
+    fi
+
+    # Auto-detect: Try hostname -I
+    detected_ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    if [ -n "$detected_ip" ]; then
+        echo "$detected_ip"
+        return
+    fi
+
     echo ""
 }
 
@@ -175,9 +208,11 @@ for server_dir in "$SERVERS_DIR"/*/; do
 
     if [ "$DRY_RUN" = true ]; then
         echo -e "  ${YELLOW}Would update${NC} (dry run)"
+        SERVERS_UPDATED=$((SERVERS_UPDATED + 1))
     else
-        # Create backup
-        cp "$compose_file" "$compose_file.bak"
+        # Create backup (tracked for cleanup on error)
+        CURRENT_BACKUP="$compose_file.bak"
+        cp "$compose_file" "$CURRENT_BACKUP"
 
         # Update the mc-router.host label
         # Handle both YAML format (mc-router.host: "value") and array format (- "mc-router.host=value")
@@ -191,11 +226,11 @@ for server_dir in "$SERVERS_DIR"/*/; do
 
         echo -e "  ${GREEN}Updated${NC}"
 
-        # Remove backup on success
-        rm -f "$compose_file.bak"
+        # Remove backup on success and clear tracking
+        rm -f "$CURRENT_BACKUP"
+        CURRENT_BACKUP=""
+        SERVERS_UPDATED=$((SERVERS_UPDATED + 1))
     fi
-
-    SERVERS_UPDATED=$((SERVERS_UPDATED + 1))
 done
 
 echo ""
