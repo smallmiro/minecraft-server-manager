@@ -21,7 +21,7 @@
 | Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | 🔄 Open |
 | Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | 🔄 Open |
 | Phase 6: npm Package | [#28](https://github.com/smallmiro/minecraft-server-manager/issues/28) | ✅ Closed |
-| Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40) | 🔄 Open |
+| Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40), [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54) | 🔄 Open |
 
 ---
 
@@ -824,13 +824,22 @@ cd platform
 - [ ] Add developer documentation for extending CLI
 - [ ] Update prd.md implementation status
 
+#### Phase 7.10: Shared Package Refactoring ([#54](https://github.com/smallmiro/minecraft-server-manager/issues/54))
+- [ ] Domain Layer 이동 (`domain/entities`, `domain/value-objects`) → shared
+- [ ] Application Layer 이동 (`application/ports`, `application/use-cases`) → shared
+- [ ] 공통 Infrastructure 이동 (`ShellAdapter`, `ServerRepository`, `WorldRepository`) → shared
+- [ ] CLI 패키지에서 shared 패키지 import로 변경
+- [ ] 빌드 및 테스트 검증
+- [ ] package.json exports 업데이트
+
 ### 7.3 Directory Structure
 
+#### After Phase 7.10 Refactoring (Target Structure)
+
+**shared 패키지** (`@minecraft-docker/shared`):
 ```
-platform/services/cli/src/
-├── index.ts                     # Entry point (bootstrap DI)
-│
-├── domain/                      # 🟢 DOMAIN LAYER
+platform/services/shared/src/
+├── domain/                      # 🟢 DOMAIN LAYER (공통)
 │   ├── entities/
 │   │   ├── Server.ts
 │   │   └── World.ts
@@ -841,33 +850,52 @@ platform/services/cli/src/
 │       ├── Memory.ts
 │       └── WorldOptions.ts
 │
-├── application/                 # 🟡 APPLICATION LAYER
+├── application/                 # 🟡 APPLICATION LAYER (공통)
 │   ├── ports/
-│   │   ├── inbound/
-│   │   │   └── IServerUseCase.ts
-│   │   └── outbound/
-│   │       ├── IPromptPort.ts
-│   │       ├── IShellPort.ts
-│   │       └── IDocProvider.ts
+│   │   ├── inbound/             # Use Case 인터페이스
+│   │   └── outbound/            # Repository/Service 인터페이스
 │   └── use-cases/
 │       ├── CreateServerUseCase.ts
 │       ├── DeleteServerUseCase.ts
 │       └── ...
 │
-├── infrastructure/              # 🔴 INFRASTRUCTURE LAYER
+├── infrastructure/              # 🔴 공통 INFRASTRUCTURE
 │   ├── adapters/
-│   │   ├── prompt/
-│   │   │   └── ClackPromptAdapter.ts
-│   │   ├── shell/
-│   │   │   └── ShellAdapter.ts
-│   │   └── docs/
-│   │       └── DocsAdapter.ts
-│   └── di/
-│       └── container.ts
+│   │   ├── ShellAdapter.ts
+│   │   ├── ServerRepository.ts
+│   │   └── WorldRepository.ts
+│   └── docker/                  # 기존 Docker 유틸리티
 │
-└── presentation/                # 🔵 PRESENTATION LAYER
-    └── cli/
-        └── commands/
+├── types/                       # 기존 유지
+└── utils/                       # 기존 유지
+```
+
+**CLI 패키지** (`@minecraft-docker/mcctl`):
+```
+platform/services/cli/src/
+├── index.ts                     # Entry point (bootstrap DI)
+│
+├── adapters/                    # 🔴 CLI 전용 ADAPTERS
+│   └── ClackPromptAdapter.ts    # @clack/prompts 구현
+│
+├── di/
+│   └── container.ts             # CLI용 DI 구성
+│
+└── commands/                    # 🔵 CLI COMMANDS
+    ├── create.ts
+    ├── delete.ts
+    └── ...
+```
+
+**web-admin 패키지** (`@minecraft-docker/web-admin`, 향후):
+```
+platform/services/web-admin/src/
+├── api/                         # REST/GraphQL endpoints
+├── adapters/
+│   └── WebPromptAdapter.ts      # HTTP 기반 구현
+├── di/
+│   └── container.ts             # Web용 DI 구성
+└── index.ts
 ```
 
 ### 7.4 Interactive Flow Example

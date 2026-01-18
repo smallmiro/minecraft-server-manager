@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
-import { Memory } from '../../../../src/domain/value-objects/Memory.js';
+import { Memory } from '@minecraft-docker/shared';
 
 describe('Memory Value Object', () => {
   describe('valid memory formats', () => {

@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import { DocsAdapter } from '../../../../src/infrastructure/adapters/DocsAdapter.js';
+import { DocsAdapter } from '@minecraft-docker/shared';
 
 describe('DocsAdapter', () => {
   let adapter: DocsAdapter;

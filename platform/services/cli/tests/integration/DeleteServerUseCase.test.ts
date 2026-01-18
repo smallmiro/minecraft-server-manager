@@ -1,7 +1,6 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import { DeleteServerUseCase } from '../../src/application/use-cases/DeleteServerUseCase.js';
-import { ServerStatus } from '../../src/domain/index.js';
+import { DeleteServerUseCase, ServerStatus } from '@minecraft-docker/shared';
 import {
   MockPromptAdapter,
   MockShellAdapter,

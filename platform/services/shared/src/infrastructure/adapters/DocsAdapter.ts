@@ -1,7 +1,7 @@
-import { readFile } from 'fs/promises';
-import { existsSync } from 'fs';
-import { join } from 'path';
-import { Paths } from '@minecraft-docker/shared';
+import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { Paths } from '../../utils/index.js';
 import { ServerTypeEnum } from '../../domain/index.js';
 import type {
   IDocProvider,

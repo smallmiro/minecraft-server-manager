@@ -233,7 +233,7 @@ mcctl --version
 All features are implemented via CLI first, with Web Management UI as a future enhancement.
 
 **Current Phase**: CLI with Interactive Mode (`platform/services/cli`)
-**Future Phase**: Web UI (Next.js + MUI + TypeScript)
+**Future Phase**: Web UI (Next.js + Tailwind CSS + TypeScript)
 
 When developing CLI tools:
 - Design scripts to be **callable from external programs** (Web API)

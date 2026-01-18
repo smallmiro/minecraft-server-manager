@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert';
-import { CreateServerUseCase } from '../../src/application/use-cases/CreateServerUseCase.js';
+import { CreateServerUseCase } from '@minecraft-docker/shared';
 import {
   MockPromptAdapter,
   MockShellAdapter,

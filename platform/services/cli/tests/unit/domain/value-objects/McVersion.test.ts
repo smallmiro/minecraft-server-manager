@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
-import { McVersion } from '../../../../src/domain/value-objects/McVersion.js';
+import { McVersion } from '@minecraft-docker/shared';
 
 describe('McVersion Value Object', () => {
   describe('valid versions', () => {

@@ -1,7 +1,8 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { Paths, execScript } from '@minecraft-docker/shared';
+import { Paths } from '../../utils/index.js';
+import { execScript } from '../../docker/index.js';
 import {
   Server,
   ServerStatus,

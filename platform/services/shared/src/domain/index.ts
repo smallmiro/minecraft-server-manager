@@ -1,6 +1,5 @@
-// Re-export from shared package for backward compatibility
+// Value Objects
 export {
-  // Value Objects
   ServerName,
   ServerType,
   ServerTypeEnum,
@@ -10,11 +9,14 @@ export {
   WorldOptions,
   WorldSetupType,
   type WorldOptionsData,
-  // Entities
+} from './value-objects/index.js';
+
+// Entities
+export {
   Server,
   ServerStatus,
   type ServerConfig,
   World,
   WorldLockStatus,
   type WorldLock,
-} from '@minecraft-docker/shared';
+} from './entities/index.js';
