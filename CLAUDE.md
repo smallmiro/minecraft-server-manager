@@ -170,9 +170,16 @@ After installation, `mcctl` is available globally:
 # Initialize platform in ~/minecraft-servers
 mcctl init
 
-# Create a new server
-mcctl create myserver
+# Create a new server (interactive mode - guided prompts)
+mcctl create
+
+# Create a new server (CLI mode - with arguments)
 mcctl create myserver -t FORGE -v 1.20.4
+
+# Delete a server (interactive or with name)
+mcctl delete              # Interactive: shows server list
+mcctl delete myserver     # CLI: deletes myserver
+mcctl delete myserver --force  # Force delete even with players online
 
 # Server management
 mcctl status
@@ -180,9 +187,20 @@ mcctl start myserver
 mcctl stop myserver
 mcctl logs myserver
 
-# World management
-mcctl world list
-mcctl world assign survival mc-myserver
+# World management (interactive or with arguments)
+mcctl world list          # List all worlds with lock status
+mcctl world assign        # Interactive: select world and server
+mcctl world assign survival mc-myserver  # CLI: assign directly
+mcctl world release       # Interactive: select locked world
+mcctl world release survival  # CLI: release directly
+
+# Backup management
+mcctl backup status       # Show backup configuration
+mcctl backup push         # Interactive: prompt for message
+mcctl backup push -m "Before upgrade"  # CLI: with message
+mcctl backup history      # Show backup history
+mcctl backup restore      # Interactive: select from history
+mcctl backup restore abc1234  # CLI: restore specific commit
 
 # Custom data directory
 mcctl --root /path/to/data init
@@ -213,7 +231,7 @@ mcctl --version
 
 All features are implemented via CLI first, with Web Management UI as a future enhancement.
 
-**Current Phase**: CLI-based management (`scripts/mcctl.sh`)
+**Current Phase**: CLI with Interactive Mode (`platform/services/cli`)
 **Future Phase**: Web UI (Next.js + MUI + TypeScript)
 
 When developing CLI tools:
@@ -224,6 +242,44 @@ When developing CLI tools:
 - Use **exit codes** consistently for error handling
 
 This ensures smooth transition when wrapping CLI with Web API later.
+
+### CLI Architecture
+
+The CLI uses **Hexagonal Architecture** (Ports & Adapters) with **Clean Architecture** principles:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Commands Layer (src/commands/)                              │
+│  - Entry points for CLI commands                             │
+│  - Parses arguments, calls Use Cases                         │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│  Application Layer (src/application/)                        │
+│  - Use Cases: CreateServer, DeleteServer, WorldManagement    │
+│  - Ports: IPromptPort, IShellPort, IServerRepository         │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│  Domain Layer (src/domain/)                                  │
+│  - Value Objects: ServerName, ServerType, McVersion, Memory  │
+│  - Entities: Server, World                                   │
+└─────────────────────────────────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│  Infrastructure Layer (src/infrastructure/)                  │
+│  - Adapters: ClackPromptAdapter, ShellAdapter, DocsAdapter   │
+│  - Container: Dependency injection                           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Concepts**:
+- **Value Objects**: Immutable, validated on construction (e.g., `ServerName.create("myserver")`)
+- **Use Cases**: Business logic with interactive and CLI modes
+- **Ports**: Interfaces for external dependencies (prompts, shell, repositories)
+- **Adapters**: Concrete implementations (@clack/prompts, bash scripts)
+
+See [docs/development/cli-architecture.md](docs/development/cli-architecture.md) for detailed documentation.
 
 ### Git-Flow Workflow
 
