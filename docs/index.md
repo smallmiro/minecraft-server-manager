@@ -26,16 +26,18 @@ mcctl create
 
 ## Architecture
 
-```text
-┌──────────────────────┐
-│  mc-router (:25565)  │
-│  hostname routing    │
-├──────────────────────┤
-│ server1.local ─→     │
-│  mc-server1          │
-│ server2.local ─→     │
-│  mc-server2          │
-└──────────────────────┘
+```mermaid
+flowchart TB
+    subgraph router["mc-router (:25565)"]
+        direction LR
+        R[Hostname Routing]
+    end
+
+    C1[server1.local] --> router
+    C2[server2.local] --> router
+
+    router --> S1[mc-server1]
+    router --> S2[mc-server2]
 ```
 
 ## Documentation
