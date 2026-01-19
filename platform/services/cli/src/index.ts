@@ -9,6 +9,7 @@ import {
   worldCommand,
   backupCommand,
   execCommand,
+  configCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -36,6 +37,12 @@ ${colors.cyan('Commands:')}
   ${colors.bold('logs')} <server> [lines]      View server logs
   ${colors.bold('console')} <server>           Connect to RCON console
   ${colors.bold('exec')} <server> <cmd...>     Execute RCON command
+  ${colors.bold('config')} <server> [key] [val]  View/set server config
+
+${colors.cyan('Config Shortcuts:')}
+  --cheats, --no-cheats      Enable/disable cheats (ALLOW_CHEATS)
+  --pvp, --no-pvp            Enable/disable PvP
+  --command-block            Enable/disable command blocks
 
 ${colors.cyan('World Management:')}
   ${colors.bold('world list')} [--json]        List worlds and lock status
@@ -78,6 +85,9 @@ ${colors.cyan('Examples:')}
   mcctl logs myserver -f
   mcctl exec myserver say "Hello!"   # Execute RCON command
   mcctl exec myserver list           # List online players
+  mcctl config myserver              # View all config
+  mcctl config myserver --cheats     # Enable cheats
+  mcctl config myserver MOTD "Welcome!"  # Set MOTD
 `);
 }
 
@@ -309,6 +319,23 @@ async function main(): Promise<void> {
           root: rootDir,
           serverName: positional[0],
           command: positional.slice(1),
+        });
+        break;
+      }
+
+      case 'config': {
+        exitCode = await configCommand({
+          root: rootDir,
+          serverName: positional[0],
+          key: positional[1],
+          value: positional[2],
+          json: flags['json'] === true,
+          cheats: flags['cheats'] === true,
+          noCheats: flags['no-cheats'] === true,
+          pvp: flags['pvp'] === true,
+          noPvp: flags['no-pvp'] === true,
+          commandBlock: flags['command-block'] === true,
+          noCommandBlock: flags['no-command-block'] === true,
         });
         break;
       }

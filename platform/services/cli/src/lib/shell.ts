@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { Paths, execScript, execScriptInteractive, log } from '@minecraft-docker/shared';
 
@@ -132,6 +132,80 @@ export class ShellExecutor {
         resolve(1);
       });
     });
+  }
+
+  /**
+   * Get server config.env path
+   */
+  getConfigPath(server: string): string {
+    const serverName = server.startsWith('mc-') ? server.slice(3) : server;
+    return join(this.paths.servers, serverName, 'config.env');
+  }
+
+  /**
+   * Read server config.env as key-value pairs
+   */
+  readConfig(server: string): Record<string, string> | null {
+    const configPath = this.getConfigPath(server);
+    if (!existsSync(configPath)) {
+      return null;
+    }
+
+    const content = readFileSync(configPath, 'utf-8');
+    const config: Record<string, string> = {};
+
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      // Skip empty lines and comments
+      if (!trimmed || trimmed.startsWith('#')) {
+        continue;
+      }
+      const match = trimmed.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
+      if (match) {
+        const [, key, value] = match;
+        // Remove surrounding quotes if present
+        config[key!] = value!.replace(/^["']|["']$/g, '');
+      }
+    }
+
+    return config;
+  }
+
+  /**
+   * Write a config value to server's config.env
+   * Preserves comments and formatting
+   */
+  writeConfigValue(server: string, key: string, value: string): boolean {
+    const configPath = this.getConfigPath(server);
+    if (!existsSync(configPath)) {
+      log.error(`Config file not found: ${configPath}`);
+      return false;
+    }
+
+    const content = readFileSync(configPath, 'utf-8');
+    const lines = content.split('\n');
+    let found = false;
+
+    const updatedLines = lines.map((line) => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('#') || !trimmed) {
+        return line;
+      }
+      const match = trimmed.match(/^([A-Z_][A-Z0-9_]*)=/);
+      if (match && match[1] === key) {
+        found = true;
+        return `${key}=${value}`;
+      }
+      return line;
+    });
+
+    // If key not found, add it at the end
+    if (!found) {
+      updatedLines.push(`${key}=${value}`);
+    }
+
+    writeFileSync(configPath, updatedLines.join('\n'));
+    return true;
   }
 
   /**
