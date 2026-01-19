@@ -347,7 +347,25 @@ mcctl backup push -m "Before upgrade"
 mcctl backup restore abc1234
 ```
 
-### Docker Commands
+### Infrastructure Commands
+
+```bash
+# Start/stop all infrastructure (mc-router + all servers)
+mcctl up                   # Start everything
+mcctl down                 # Stop everything
+
+# Start/stop all MC servers (mc-router keeps running)
+mcctl start --all          # or mcctl start -a
+mcctl stop --all           # or mcctl stop -a
+
+# Individual server management
+mcctl start myserver
+mcctl stop myserver
+mcctl logs myserver
+mcctl console myserver
+```
+
+### Docker Commands (Alternative)
 
 ```bash
 cd platform
