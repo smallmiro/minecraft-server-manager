@@ -147,6 +147,19 @@ export class ShellExecutor {
    */
   async down(): Promise<number> {
     log.info('Stopping all infrastructure...');
+    // First stop all mc-* containers (including those from included compose files)
+    await new Promise<void>((resolve) => {
+      const child = spawn('sh', ['-c',
+        'docker ps --filter "name=mc-" --format "{{.Names}}" | xargs -r docker stop'
+      ], {
+        cwd: this.paths.root,
+        stdio: 'inherit',
+        env: { ...process.env, ...this.env },
+      });
+      child.on('close', () => resolve());
+      child.on('error', () => resolve());
+    });
+    // Then run docker compose down to clean up network
     return this.dockerCompose(['down']);
   }
 
