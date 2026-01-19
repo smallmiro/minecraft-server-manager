@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { Paths, execScript, execScriptInteractive, log } from '@minecraft-docker/shared';
 
 /**
@@ -109,5 +110,95 @@ export class ShellExecutor {
    */
   async initPlatform(options: string[] = []): Promise<number> {
     return this.execInteractive('init.sh', options);
+  }
+
+  /**
+   * Execute docker compose command
+   */
+  async dockerCompose(args: string[]): Promise<number> {
+    return new Promise((resolve) => {
+      const child = spawn('docker', ['compose', ...args], {
+        cwd: this.paths.root,
+        stdio: 'inherit',
+        env: { ...process.env, ...this.env },
+      });
+
+      child.on('close', (code) => {
+        resolve(code ?? 0);
+      });
+
+      child.on('error', (err) => {
+        log.error(`Failed to execute docker compose: ${err.message}`);
+        resolve(1);
+      });
+    });
+  }
+
+  /**
+   * Start all infrastructure (router + all servers)
+   */
+  async up(): Promise<number> {
+    log.info('Starting all infrastructure...');
+    return this.dockerCompose(['up', '-d']);
+  }
+
+  /**
+   * Stop all infrastructure
+   */
+  async down(): Promise<number> {
+    log.info('Stopping all infrastructure...');
+    return this.dockerCompose(['down']);
+  }
+
+  /**
+   * Start all Minecraft servers (not router)
+   */
+  async startAll(): Promise<number> {
+    log.info('Starting all Minecraft servers...');
+    // Start all mc-* containers except mc-router
+    return new Promise((resolve) => {
+      const child = spawn('sh', ['-c',
+        'docker ps -a --filter "name=mc-" --filter "status=exited" --format "{{.Names}}" | grep -v mc-router | xargs -r docker start'
+      ], {
+        cwd: this.paths.root,
+        stdio: 'inherit',
+        env: { ...process.env, ...this.env },
+      });
+
+      child.on('close', (code) => {
+        resolve(code ?? 0);
+      });
+
+      child.on('error', (err) => {
+        log.error(`Failed to start servers: ${err.message}`);
+        resolve(1);
+      });
+    });
+  }
+
+  /**
+   * Stop all Minecraft servers (not router)
+   */
+  async stopAll(): Promise<number> {
+    log.info('Stopping all Minecraft servers...');
+    // Stop all mc-* containers except mc-router
+    return new Promise((resolve) => {
+      const child = spawn('sh', ['-c',
+        'docker ps --filter "name=mc-" --format "{{.Names}}" | grep -v mc-router | xargs -r docker stop'
+      ], {
+        cwd: this.paths.root,
+        stdio: 'inherit',
+        env: { ...process.env, ...this.env },
+      });
+
+      child.on('close', (code) => {
+        resolve(code ?? 0);
+      });
+
+      child.on('error', (err) => {
+        log.error(`Failed to stop servers: ${err.message}`);
+        resolve(1);
+      });
+    });
   }
 }
