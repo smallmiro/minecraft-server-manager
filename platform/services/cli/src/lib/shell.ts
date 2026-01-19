@@ -135,6 +135,30 @@ export class ShellExecutor {
   }
 
   /**
+   * Execute RCON command on a server
+   */
+  async execRcon(server: string, command: string[]): Promise<number> {
+    const containerName = server.startsWith('mc-') ? server : `mc-${server}`;
+
+    return new Promise((resolve) => {
+      const child = spawn('docker', ['exec', containerName, 'rcon-cli', ...command], {
+        cwd: this.paths.root,
+        stdio: 'inherit',
+        env: { ...process.env, ...this.env },
+      });
+
+      child.on('close', (code) => {
+        resolve(code ?? 0);
+      });
+
+      child.on('error', (err) => {
+        log.error(`Failed to execute RCON command: ${err.message}`);
+        resolve(1);
+      });
+    });
+  }
+
+  /**
    * Start all infrastructure (router + all servers)
    */
   async up(): Promise<number> {

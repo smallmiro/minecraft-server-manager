@@ -8,6 +8,7 @@ import {
   deleteCommand,
   worldCommand,
   backupCommand,
+  execCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -34,6 +35,7 @@ ${colors.cyan('Commands:')}
   ${colors.bold('stop')} <server> [--all]      Stop a server (--all for all servers)
   ${colors.bold('logs')} <server> [lines]      View server logs
   ${colors.bold('console')} <server>           Connect to RCON console
+  ${colors.bold('exec')} <server> <cmd...>     Execute RCON command
 
 ${colors.cyan('World Management:')}
   ${colors.bold('world list')} [--json]        List worlds and lock status
@@ -74,6 +76,8 @@ ${colors.cyan('Examples:')}
   mcctl create myserver -t FORGE -v 1.20.4
   mcctl status --json
   mcctl logs myserver -f
+  mcctl exec myserver say "Hello!"   # Execute RCON command
+  mcctl exec myserver list           # List online players
 `);
 }
 
@@ -297,6 +301,15 @@ async function main(): Promise<void> {
         if (flags['lines']) mcctlArgs.push('-n', flags['lines'] as string);
 
         exitCode = await shell.mcctl(mcctlArgs);
+        break;
+      }
+
+      case 'exec': {
+        exitCode = await execCommand({
+          root: rootDir,
+          serverName: positional[0],
+          command: positional.slice(1),
+        });
         break;
       }
 

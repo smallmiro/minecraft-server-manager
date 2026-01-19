@@ -213,6 +213,12 @@ mcctl delete              # Interactive: shows server list
 mcctl delete myserver     # CLI: deletes myserver
 mcctl delete myserver --force  # Force delete even with players online
 
+# Infrastructure management
+mcctl up                  # Start all (mc-router + all servers)
+mcctl down                # Stop all infrastructure
+mcctl start --all         # Start all MC servers (not router)
+mcctl stop --all          # Stop all MC servers (not router)
+
 # Server management
 mcctl status
 mcctl start myserver
@@ -641,30 +647,37 @@ BACKUP_AUTO_ON_STOP=true
 
 ## Common Tasks
 
-### Start/Stop All Servers
+### Start/Stop All Infrastructure
 
 ```bash
+# Using mcctl (recommended)
+mcctl up      # Start mc-router + all servers
+mcctl down    # Stop all infrastructure
+
+# Using docker compose directly
 cd platform
+docker compose up -d    # Start all
+docker compose down     # Stop all
+```
 
-# Start mc-router and all servers
-docker compose up -d
+### Start/Stop All Servers (not router)
 
-# Stop all
-docker compose down
-
-# View router logs
-docker logs -f mc-router
+```bash
+# Start/stop all MC servers (mc-router keeps running)
+mcctl start --all       # or mcctl start -a
+mcctl stop --all        # or mcctl stop -a
 ```
 
 ### Start/Stop Individual Server
 
 ```bash
+# Using mcctl (recommended)
+mcctl start myserver
+mcctl stop myserver
+
+# Using docker compose directly
 cd platform
-
-# Start specific server (replace <server-name> with your server name)
 docker compose up -d mc-<server-name>
-
-# Stop specific server
 docker compose stop mc-<server-name>
 
 # View server logs
