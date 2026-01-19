@@ -25,11 +25,13 @@ ${colors.cyan('Usage:')}
 
 ${colors.cyan('Commands:')}
   ${colors.bold('init')}                       Initialize platform (~/.minecraft-servers)
+  ${colors.bold('up')}                         Start all infrastructure (router + servers)
+  ${colors.bold('down')}                       Stop all infrastructure
   ${colors.bold('create')} <name> [options]    Create a new server
   ${colors.bold('delete')} <name> [--force]    Delete a server (preserves world data)
   ${colors.bold('status')} [--json]            Show status of all servers
-  ${colors.bold('start')} <server>             Start a server
-  ${colors.bold('stop')} <server>              Stop a server
+  ${colors.bold('start')} <server> [--all]     Start a server (--all for all servers)
+  ${colors.bold('stop')} <server> [--all]      Stop a server (--all for all servers)
   ${colors.bold('logs')} <server> [lines]      View server logs
   ${colors.bold('console')} <server>           Connect to RCON console
 
@@ -65,11 +67,13 @@ ${colors.cyan('Global Options:')}
 
 ${colors.cyan('Examples:')}
   mcctl init
-  mcctl create myserver
+  mcctl up                           # Start everything
+  mcctl down                         # Stop everything
+  mcctl start --all                  # Start all MC servers
+  mcctl stop --all                   # Stop all MC servers
   mcctl create myserver -t FORGE -v 1.20.4
   mcctl status --json
   mcctl logs myserver -f
-  mcctl world assign survival mc-myserver
 `);
 }
 
@@ -122,6 +126,7 @@ function parseArgs(args: string[]): {
         n: 'lines',
         m: 'message',
         y: 'yes',
+        a: 'all',
       };
 
       const longKey = flagMap[key] ?? key;
@@ -196,6 +201,26 @@ async function main(): Promise<void> {
         });
         break;
 
+      case 'up': {
+        if (!paths.isInitialized()) {
+          log.error('Platform not initialized. Run: mcctl init');
+          exitCode = 1;
+          break;
+        }
+        exitCode = await shell.up();
+        break;
+      }
+
+      case 'down': {
+        if (!paths.isInitialized()) {
+          log.error('Platform not initialized. Run: mcctl init');
+          exitCode = 1;
+          break;
+        }
+        exitCode = await shell.down();
+        break;
+      }
+
       case 'create': {
         // Use new interactive create command
         // If no name provided, will run in interactive mode
@@ -223,8 +248,40 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'start':
-      case 'stop':
+      case 'start': {
+        if (!paths.isInitialized()) {
+          log.error('Platform not initialized. Run: mcctl init');
+          exitCode = 1;
+          break;
+        }
+
+        if (flags['all']) {
+          exitCode = await shell.startAll();
+        } else {
+          const mcctlArgs = [command, ...positional];
+          if (flags['json']) mcctlArgs.push('--json');
+          exitCode = await shell.mcctl(mcctlArgs);
+        }
+        break;
+      }
+
+      case 'stop': {
+        if (!paths.isInitialized()) {
+          log.error('Platform not initialized. Run: mcctl init');
+          exitCode = 1;
+          break;
+        }
+
+        if (flags['all']) {
+          exitCode = await shell.stopAll();
+        } else {
+          const mcctlArgs = [command, ...positional];
+          if (flags['json']) mcctlArgs.push('--json');
+          exitCode = await shell.mcctl(mcctlArgs);
+        }
+        break;
+      }
+
       case 'console':
       case 'logs': {
         if (!paths.isInitialized()) {
