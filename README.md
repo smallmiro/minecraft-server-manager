@@ -354,6 +354,11 @@ mcctl backup restore abc1234
 mcctl up                   # Start everything
 mcctl down                 # Stop everything
 
+# Manage mc-router independently
+mcctl router start         # Start mc-router only
+mcctl router stop          # Stop mc-router only
+mcctl router restart       # Restart mc-router
+
 # Start/stop all MC servers (mc-router keeps running)
 mcctl start --all          # or mcctl start -a
 mcctl stop --all           # or mcctl stop -a
@@ -406,6 +411,53 @@ mcctl op myserver list --json      # JSON output
 # Dual update strategy:
 # - RCON (/op, /deop) for immediate effect when server is running
 # - config.env (OPS=) for persistence across restarts
+```
+
+### Whitelist Management
+
+```bash
+mcctl whitelist myserver list      # List whitelisted players
+mcctl whitelist myserver add Steve # Add to whitelist
+mcctl whitelist myserver remove Steve  # Remove from whitelist
+mcctl whitelist myserver on        # Enable whitelist
+mcctl whitelist myserver off       # Disable whitelist
+mcctl whitelist myserver status    # Show whitelist status
+```
+
+### Ban Management
+
+```bash
+mcctl ban myserver list            # List banned players
+mcctl ban myserver add Griefer "reason"  # Ban player with reason
+mcctl ban myserver remove Griefer  # Unban player
+mcctl ban myserver ip list         # List banned IPs
+mcctl ban myserver ip add 1.2.3.4 "reason"  # Ban IP
+mcctl ban myserver ip remove 1.2.3.4  # Unban IP
+```
+
+### Kick and Online Players
+
+```bash
+# Kick player from server
+mcctl kick myserver PlayerName "Too long AFK"
+
+# View online players
+mcctl player online myserver       # List online players on server
+mcctl player online --all          # List online players on all servers
+```
+
+### Server Backup/Restore
+
+```bash
+# Backup server configuration (not world data)
+mcctl server-backup myserver              # Create backup with auto message
+mcctl server-backup myserver -m "msg"     # Create backup with message
+mcctl server-backup myserver --list       # List all backups
+
+# Restore server from backup
+mcctl server-restore myserver             # Interactive restore (select from list)
+mcctl server-restore myserver abc123      # Restore specific backup
+mcctl server-restore myserver --dry-run   # Preview restore without applying
 ```
 
 ### Docker Commands (Alternative)

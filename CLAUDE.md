@@ -67,12 +67,20 @@ minecraft/
 │   ├── .gitignore
 │   └── servers/_template/
 │
-├── docs/                        # Documentation
+├── docs/                        # Documentation (MkDocs + Read the Docs)
+│   ├── index.md                 # English homepage
+│   ├── index.ko.md              # Korean homepage
 │   ├── itzg-reference/          # itzg/docker-minecraft-server official docs
 │   │   ├── doc-list.md
 │   │   └── *.md
+│   ├── cli/                     # CLI command reference
+│   │   ├── commands.md          # English CLI docs
+│   │   └── commands.ko.md       # Korean CLI docs
+│   ├── getting-started/         # Getting started guides
+│   ├── configuration/           # Configuration guides
+│   ├── advanced/                # Advanced usage guides
 │   ├── development/             # Development guides
-│   └── usage/                   # Project usage guides (to be added)
+│   └── usage/                   # Project usage guides
 │
 └── .claude/
     ├── agents/
@@ -216,6 +224,9 @@ mcctl delete myserver --force  # Force delete even with players online
 # Infrastructure management
 mcctl up                  # Start all (mc-router + all servers)
 mcctl down                # Stop all infrastructure
+mcctl router start        # Start mc-router only
+mcctl router stop         # Stop mc-router only
+mcctl router restart      # Restart mc-router
 mcctl start --all         # Start all MC servers (not router)
 mcctl stop --all          # Stop all MC servers (not router)
 
@@ -243,7 +254,33 @@ mcctl config myserver --json       # JSON output
 mcctl op myserver list             # List operators
 mcctl op myserver add Notch        # Add operator
 mcctl op myserver remove Steve     # Remove operator
-mcctl op myserver list --json      # JSON output
+
+# Whitelist management
+mcctl whitelist myserver list      # List whitelisted players
+mcctl whitelist myserver add Steve # Add to whitelist
+mcctl whitelist myserver remove Steve  # Remove from whitelist
+mcctl whitelist myserver on        # Enable whitelist
+mcctl whitelist myserver off       # Disable whitelist
+
+# Ban management
+mcctl ban myserver list            # List banned players
+mcctl ban myserver add Griefer "reason"  # Ban player
+mcctl ban myserver remove Griefer  # Unban player
+mcctl ban myserver ip list         # List banned IPs
+mcctl ban myserver ip add 1.2.3.4  # Ban IP
+
+# Kick player
+mcctl kick myserver PlayerName "reason"
+
+# Online players
+mcctl player online myserver       # List online players
+mcctl player online --all          # List all online players
+
+# Server backup/restore
+mcctl server-backup myserver       # Backup server config
+mcctl server-backup myserver --list  # List backups
+mcctl server-restore myserver      # Interactive restore
+mcctl server-restore myserver abc123  # Restore specific backup
 
 # World management (interactive or with arguments)
 mcctl world list          # List all worlds with lock status
