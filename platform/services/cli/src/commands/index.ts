@@ -7,3 +7,5 @@ export { backupCommand, type BackupCommandOptions } from './backup.js';
 export { execCommand, type ExecCommandOptions } from './exec.js';
 export { configCommand, type ConfigCommandOptions } from './config.js';
 export { opCommand, type OpCommandOptions } from './op.js';
+export { serverBackupCommand, type ServerBackupOptions } from './server-backup.js';
+export { serverRestoreCommand, type ServerRestoreOptions } from './server-restore.js';
