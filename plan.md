@@ -22,6 +22,8 @@
 | Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | 🔄 Open |
 | Phase 6: npm Package | [#28](https://github.com/smallmiro/minecraft-server-manager/issues/28) | ✅ Closed |
 | Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40), [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54), [#56](https://github.com/smallmiro/minecraft-server-manager/issues/56) ✅ | 🔄 Open |
+| Phase 7.1: Server Management Commands | [#58](https://github.com/smallmiro/minecraft-server-manager/issues/58) ✅, [#59](https://github.com/smallmiro/minecraft-server-manager/issues/59) ✅, [#60](https://github.com/smallmiro/minecraft-server-manager/issues/60) ✅ | ✅ Completed |
+| Phase 7.2: Server Backup Commands | [#64](https://github.com/smallmiro/minecraft-server-manager/issues/64) | 🔄 Open |
 
 ---
 
@@ -969,6 +971,144 @@ pnpm test
 
 # 6. Check test coverage
 pnpm test --coverage
+```
+
+---
+
+## Phase 7.2: Server Backup Commands
+
+> **Issue**: [#64](https://github.com/smallmiro/minecraft-server-manager/issues/64)
+> **Status**: 🔄 Open
+
+### 7.2.1 Overview
+
+개별 서버의 설정 파일을 백업/복원하는 기능입니다. 월드 데이터가 아닌 서버 운영에 필요한 설정 파일만 대상으로 합니다.
+
+**백업 대상 파일**:
+| 파일 | 설명 | 우선순위 |
+|------|------|----------|
+| `config.env` | 서버 환경 설정 | 필수 |
+| `docker-compose.yml` | Docker 서비스 정의 | 필수 |
+| `data/ops.json` | 운영자 목록 | 필수 |
+| `data/whitelist.json` | 화이트리스트 | 필수 |
+| `data/banned-players.json` | 차단된 플레이어 | 필수 |
+| `data/banned-ips.json` | 차단된 IP | 필수 |
+| `data/server.properties` | 서버 속성 (생성됨) | 선택 |
+
+### 7.2.2 Commands
+
+**`mcctl server-backup <server> [options]`**
+```bash
+# 기본 백업
+mcctl server-backup myserver
+
+# 설명 추가
+mcctl server-backup myserver -m "Before upgrade to 1.21"
+
+# 백업 목록 조회
+mcctl server-backup myserver --list
+mcctl server-backup myserver --list --json
+```
+
+**`mcctl server-restore <server> [backup-id] [options]`**
+```bash
+# 대화형 복원 (백업 목록 표시)
+mcctl server-restore myserver
+
+# 직접 복원
+mcctl server-restore myserver 20250120-143025
+
+# 강제 복원 (확인 생략)
+mcctl server-restore myserver 20250120-143025 --force
+
+# 드라이런 (변경 없이 확인만)
+mcctl server-restore myserver 20250120-143025 --dry-run
+```
+
+### 7.2.3 Backup File Structure
+
+```
+~/minecraft-servers/backups/servers/
+└── myserver/
+    └── 20250120-143025.tar.gz
+        ├── manifest.json
+        ├── config.env
+        ├── docker-compose.yml
+        └── data/
+            ├── ops.json
+            ├── whitelist.json
+            ├── banned-players.json
+            ├── banned-ips.json
+            └── server.properties
+```
+
+### 7.2.4 manifest.json Schema
+
+```json
+{
+  "version": "1.0",
+  "serverName": "myserver",
+  "createdAt": "2025-01-20T14:30:25Z",
+  "description": "Before upgrade to 1.21",
+  "mcctlVersion": "0.1.5",
+  "files": [
+    { "path": "config.env", "size": 1024, "checksum": "sha256:..." },
+    { "path": "docker-compose.yml", "size": 512, "checksum": "sha256:..." },
+    { "path": "data/ops.json", "size": 256, "checksum": "sha256:..." }
+  ],
+  "serverConfig": {
+    "type": "PAPER",
+    "version": "1.21.1",
+    "memory": "4G"
+  }
+}
+```
+
+### 7.2.5 Implementation Tasks
+
+#### Phase 1: server-backup command
+- [ ] Create `commands/server-backup.ts`
+- [ ] Implement backup file collection logic
+- [ ] Create tar.gz with manifest.json
+- [ ] Add `--list` option for backup listing
+- [ ] Add to index.ts routing and help text
+
+#### Phase 2: server-restore command
+- [ ] Create `commands/server-restore.ts`
+- [ ] Implement backup extraction logic
+- [ ] Add interactive backup selection
+- [ ] Add confirmation prompt
+- [ ] Add `--dry-run` option
+- [ ] Add `--force` option
+- [ ] Add to index.ts routing and help text
+
+#### Phase 3: Testing & Documentation
+- [ ] Unit tests for backup/restore logic
+- [ ] Integration tests for full backup/restore cycle
+- [ ] Update README.md with new commands
+- [ ] Update CLAUDE.md with new commands
+
+### 7.2.6 Verification
+
+```bash
+# 1. Build
+pnpm build
+
+# 2. Test backup creation
+mcctl server-backup myserver -m "Test backup"
+
+# 3. Test backup listing
+mcctl server-backup myserver --list
+mcctl server-backup myserver --list --json
+
+# 4. Test dry-run restore
+mcctl server-restore myserver 20250120-143025 --dry-run
+
+# 5. Test actual restore
+mcctl server-restore myserver 20250120-143025
+
+# 6. Verify restored files
+cat ~/minecraft-servers/servers/myserver/config.env
 ```
 
 ---

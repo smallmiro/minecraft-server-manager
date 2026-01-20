@@ -159,6 +159,22 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [x] Clients can connect via `<server>.<HOST_IP>.nip.io:25565` without any setup
   - [x] Documentation updated with nip.io connection examples
 
+#### FR-013: Individual Server Backup/Restore
+- **Priority**: Medium
+- **Description**: Backup and restore individual server configuration files (not world data). Enables saving server settings before changes and restoring if needed.
+- **Issue**: [#64](https://github.com/smallmiro/minecraft-server-manager/issues/64)
+- **Acceptance Criteria**:
+  - [ ] `mcctl server-backup <server>` creates backup tar.gz with manifest
+  - [ ] `mcctl server-backup <server> --list` shows all backups for a server
+  - [ ] `mcctl server-restore <server>` shows interactive backup selection
+  - [ ] `mcctl server-restore <server> <id>` restores specific backup
+  - [ ] Backup includes: config.env, docker-compose.yml, ops.json, whitelist.json, banned-players.json, banned-ips.json
+  - [ ] Backup stored in `~/minecraft-servers/backups/servers/<server>/`
+  - [ ] Backup filename includes timestamp (e.g., `20250120-143025.tar.gz`)
+  - [ ] manifest.json contains metadata (version, files, checksums, server config)
+  - [ ] Restore prompts for confirmation (unless --force)
+  - [ ] `--dry-run` option shows what would be restored without changes
+
 ### 2.2 Non-Functional Requirements
 
 #### NFR-001: Performance

@@ -11,6 +11,8 @@ import {
   execCommand,
   configCommand,
   opCommand,
+  serverBackupCommand,
+  serverRestoreCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -60,7 +62,12 @@ ${colors.cyan('Player Lookup:')}
   ${colors.bold('player uuid')} <name>         Get player UUID
   ${colors.bold('player uuid')} <name> --offline  Get offline UUID
 
-${colors.cyan('Backup (requires .env config):')}
+${colors.cyan('Server Backup/Restore:')}
+  ${colors.bold('server-backup')} <server> [-m msg]  Backup server configuration
+  ${colors.bold('server-backup')} <server> --list   List all backups
+  ${colors.bold('server-restore')} <server> [id]    Restore from backup
+
+${colors.cyan('World Backup (requires .env config):')}
   ${colors.bold('backup push')} [--message]    Backup worlds to GitHub
   ${colors.bold('backup status')}              Show backup configuration
   ${colors.bold('backup history')} [--json]    Show backup history
@@ -96,6 +103,8 @@ ${colors.cyan('Examples:')}
   mcctl config myserver MOTD "Welcome!"  # Set MOTD
   mcctl op myserver list             # List operators
   mcctl op myserver add Notch        # Add operator
+  mcctl server-backup myserver       # Backup server config
+  mcctl server-restore myserver      # Restore from backup
 `);
 }
 
@@ -392,6 +401,29 @@ async function main(): Promise<void> {
           serverName: subCommand,
           subCommand: positional[0] as 'add' | 'remove' | 'list' | undefined,
           playerName: positional[1],
+          json: flags['json'] === true,
+        });
+        break;
+      }
+
+      case 'server-backup': {
+        exitCode = await serverBackupCommand({
+          root: rootDir,
+          serverName: positional[0],
+          message: flags['message'] as string | undefined,
+          list: flags['list'] === true,
+          json: flags['json'] === true,
+        });
+        break;
+      }
+
+      case 'server-restore': {
+        exitCode = await serverRestoreCommand({
+          root: rootDir,
+          serverName: positional[0],
+          backupId: positional[1],
+          force: flags['force'] === true,
+          dryRun: flags['dry-run'] === true,
           json: flags['json'] === true,
         });
         break;
