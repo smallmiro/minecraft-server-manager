@@ -370,6 +370,40 @@ mcctl logs myserver
 mcctl console myserver
 ```
 
+### mc-router Configuration
+
+mc-router settings are configured via environment variables in `.env` file:
+
+```bash
+# ~/minecraft-servers/.env
+
+# Auto-scaling settings
+AUTO_SCALE_UP=true              # Auto-start servers on player connect
+AUTO_SCALE_DOWN=true            # Auto-stop idle servers
+AUTO_SCALE_DOWN_AFTER=10m       # Idle timeout (default: 10 minutes)
+DOCKER_TIMEOUT=120              # Container start timeout in seconds
+
+# Custom MOTD for sleeping servers
+AUTO_SCALE_ASLEEP_MOTD=§e§lServer is sleeping§r\n§7Connect to wake up!
+
+# Management API (for health checks)
+API_BINDING=:8080               # Internal API port
+```
+
+**Common timeout values:**
+| Value | Description |
+|-------|-------------|
+| `1m` | 1 minute |
+| `5m` | 5 minutes |
+| `10m` | 10 minutes (default) |
+| `30m` | 30 minutes |
+| `1h` | 1 hour |
+
+After changing `.env`, restart mc-router:
+```bash
+mcctl router restart
+```
+
 ### Server Commands (RCON)
 
 ```bash
