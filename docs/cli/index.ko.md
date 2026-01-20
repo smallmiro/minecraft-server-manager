@@ -26,11 +26,19 @@ mcctl create --help
 
 ## 명령어 카테고리
 
-### 서버 관리
+### 인프라 명령어
 
 | 명령어 | 설명 |
 |--------|------|
 | `mcctl init` | 플랫폼 디렉토리 구조 초기화 |
+| `mcctl up` | 모든 인프라 시작 (라우터 + 서버) |
+| `mcctl down` | 모든 인프라 중지 |
+| `mcctl router <action>` | mc-router 관리 (start/stop/restart) |
+
+### 서버 관리
+
+| 명령어 | 설명 |
+|--------|------|
 | `mcctl create` | 새 서버 생성 (대화형 또는 CLI) |
 | `mcctl delete` | 서버 삭제 (월드 데이터 보존) |
 | `mcctl status` | 모든 서버 상태 표시 |
@@ -38,6 +46,20 @@ mcctl create --help
 | `mcctl stop` | 실행 중인 서버 중지 |
 | `mcctl logs` | 서버 로그 확인 |
 | `mcctl console` | RCON 콘솔 접속 |
+| `mcctl exec` | 단일 RCON 명령 실행 |
+| `mcctl config` | 서버 설정 조회/수정 |
+
+### 플레이어 관리
+
+| 명령어 | 설명 |
+|--------|------|
+| `mcctl op` | 서버 관리자(OP) 관리 (add/remove/list) |
+| `mcctl whitelist` | 화이트리스트 관리 (add/remove/on/off/status) |
+| `mcctl ban` | 플레이어 및 IP 밴 관리 |
+| `mcctl kick` | 서버에서 플레이어 강퇴 |
+| `mcctl player online` | 온라인 플레이어 표시 |
+| `mcctl player lookup` | 플레이어 정보 조회 |
+| `mcctl player uuid` | 플레이어 UUID 조회 |
 
 ### 월드 관리
 
@@ -47,7 +69,14 @@ mcctl create --help
 | `mcctl world assign` | 월드를 서버에 잠금 |
 | `mcctl world release` | 월드 잠금 해제 |
 
-### 백업 관리
+### 서버 백업/복원
+
+| 명령어 | 설명 |
+|--------|------|
+| `mcctl server-backup` | 서버 설정 백업 |
+| `mcctl server-restore` | 백업에서 서버 복원 |
+
+### 월드 백업 (GitHub)
 
 | 명령어 | 설명 |
 |--------|------|
@@ -55,13 +84,6 @@ mcctl create --help
 | `mcctl backup push` | GitHub에 백업 푸시 |
 | `mcctl backup history` | 백업 히스토리 표시 |
 | `mcctl backup restore` | 백업에서 복원 |
-
-### 플레이어 유틸리티
-
-| 명령어 | 설명 |
-|--------|------|
-| `mcctl player lookup` | 플레이어 정보 조회 |
-| `mcctl player uuid` | 플레이어 UUID 조회 |
 
 ## 대화형 모드 vs CLI 모드
 
