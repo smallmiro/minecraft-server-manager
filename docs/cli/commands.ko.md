@@ -85,6 +85,39 @@ mcctl down
 
 ---
 
+### mcctl router
+
+mc-router를 마인크래프트 서버와 독립적으로 관리합니다.
+
+```bash
+mcctl router <action>
+```
+
+**액션:**
+
+| 액션 | 설명 |
+|--------|-------------|
+| `start` | mc-router만 시작 |
+| `stop` | mc-router만 중지 |
+| `restart` | mc-router 재시작 |
+
+**예제:**
+
+```bash
+# mc-router 시작
+mcctl router start
+
+# mc-router 중지
+mcctl router stop
+
+# mc-router 재시작 (설정 변경 후 유용)
+mcctl router restart
+```
+
+mc-router는 모든 마인크래프트 서버에 대한 호스트명 기반 라우팅을 처리합니다. 클라이언트가 어떤 서버에든 연결하려면 mc-router가 실행 중이어야 합니다.
+
+---
+
 ### mcctl status
 
 다양한 표시 옵션으로 모든 서버의 상태를 표시합니다.

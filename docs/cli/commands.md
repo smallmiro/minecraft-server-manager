@@ -85,6 +85,39 @@ Stops all mc-* containers and runs `docker compose down`.
 
 ---
 
+### mcctl router
+
+Manage mc-router independently from Minecraft servers.
+
+```bash
+mcctl router <action>
+```
+
+**Actions:**
+
+| Action | Description |
+|--------|-------------|
+| `start` | Start mc-router only |
+| `stop` | Stop mc-router only |
+| `restart` | Restart mc-router |
+
+**Examples:**
+
+```bash
+# Start mc-router
+mcctl router start
+
+# Stop mc-router
+mcctl router stop
+
+# Restart mc-router (useful after configuration changes)
+mcctl router restart
+```
+
+mc-router handles hostname-based routing for all Minecraft servers. It must be running for clients to connect to any server.
+
+---
+
 ### mcctl status
 
 Show status of all servers with various display options.
