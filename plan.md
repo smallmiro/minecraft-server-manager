@@ -27,6 +27,8 @@
 | Phase 7.3: World Selection Enhancement | [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66) ✅ | ✅ Completed |
 | Phase 7.4: Player Management Commands | [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67) ✅ | ✅ Completed |
 | Phase 7.5: Detailed Monitoring | [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68) ✅ | ✅ Completed |
+| Phase 7.6: Sudo Password Handling | [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72) | 🔄 Open |
+| Phase 7.7: Unified Player Management | [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73) | 🔄 Open |
 
 ---
 
@@ -1539,6 +1541,285 @@ mcctl router status
 mcctl status --detail --json
 
 # 7. Run tests
+pnpm test
+```
+
+---
+
+## Phase 7.6: Sudo Password Handling for Automation
+
+> **Issue**: [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72)
+> **Status**: 🔄 Open
+
+### 7.6.1 Overview
+
+Scripts requiring `sudo` (create-server.sh, delete-server.sh) block automation. Add password handling mechanism for CLI and environment variable support.
+
+**Problem Areas**:
+| Script | sudo Required For | Location |
+|--------|-------------------|----------|
+| `create-server.sh` | `/etc/avahi/hosts`, `systemctl restart avahi-daemon` | :121-133 |
+| `delete-server.sh` | `/etc/avahi/hosts`, `systemctl restart avahi-daemon` | :204-209 |
+| `logs.sh` | `journalctl` | :258 |
+
+### 7.6.2 Commands
+
+```bash
+# Parameter mode
+mcctl create myserver --sudo-password "mypassword"
+mcctl delete myserver --sudo-password "mypassword"
+
+# Environment variable mode
+MCCTL_SUDO_PASSWORD=secret mcctl create myserver
+
+# Interactive mode (prompted when needed)
+$ mcctl create myserver
+? sudo password (for mDNS registration): ••••••••
+```
+
+### 7.6.3 Implementation Tasks
+
+#### Phase 1: CLI Option & Environment Variable
+- [ ] Add `--sudo-password` option to create/delete commands
+- [ ] Support `MCCTL_SUDO_PASSWORD` environment variable
+- [ ] Add password prompt in interactive mode using `@clack/prompts` password()
+- [ ] Create `ISudoPort` interface in application layer
+
+#### Phase 2: Bash Script Modifications
+- [ ] Update `create-server.sh` to support `sudo -S` with password from env
+- [ ] Update `delete-server.sh` to support `sudo -S` with password from env
+- [ ] Update `logs.sh` for journalctl sudo handling (optional)
+
+#### Phase 3: Security & Documentation
+- [ ] Ensure password not visible in `ps` output
+- [ ] Clear password from memory after use
+- [ ] Never log passwords
+- [ ] Document sudoers NOPASSWD configuration as alternative
+
+### 7.6.4 Verification
+
+```bash
+# 1. Build
+pnpm build
+
+# 2. Test with environment variable
+MCCTL_SUDO_PASSWORD=secret mcctl create testserver
+
+# 3. Test with parameter
+mcctl create testserver --sudo-password secret
+
+# 4. Test interactive mode
+mcctl create testserver
+# (Should prompt for password when sudo needed)
+
+# 5. Verify password not in process list
+ps aux | grep mcctl  # Should NOT show password
+```
+
+---
+
+## Phase 7.7: Unified Player Management with Interactive Mode
+
+> **Issue**: [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73)
+> **Status**: 🔄 Open
+
+### 7.7.1 Overview
+
+Create unified `mcctl player` command with interactive mode for player management. Add Mojang API integration with encrypted local cache to minimize API calls.
+
+**Current State**:
+| Feature | Implementation | Interactive Mode |
+|---------|---------------|------------------|
+| Online player list | ✅ `player-online` | ❌ |
+| Player info lookup | ❌ None | ❌ |
+| Whitelist management | ✅ `whitelist` | ❌ |
+| Ban management | ✅ `ban` | ❌ |
+| OP management | ✅ `op` | ❌ |
+| Kick | ✅ `kick` | ❌ |
+
+### 7.7.2 Commands
+
+```bash
+# Unified interactive mode
+mcctl player                    # Interactive: server → player → action
+mcctl player myserver           # Interactive: player → action
+
+# Subcommands
+mcctl player online myserver    # List online players
+mcctl player info Steve         # Player info (UUID, skin, etc.)
+
+# Cache management
+mcctl player cache clear        # Clear cached data
+mcctl player cache stats        # Show cache statistics
+```
+
+### 7.7.3 Interactive Workflow
+
+```
+$ mcctl player
+
+? Select server: (Use arrow keys)
+❯ survival (3 players online)
+  creative (0 players online)
+  modded (1 player online)
+
+? Select player: (Use arrow keys)
+❯ Steve (online)
+  Alex (online)
+  Notch (online)
+  [Enter player name manually]
+
+? Select action:
+❯ View player info
+  Add to whitelist
+  Remove from whitelist
+  Add as operator
+  Remove as operator
+  Ban player
+  Kick player (online only)
+```
+
+### 7.7.4 Player Cache System
+
+**Purpose**: Cache Mojang API responses to avoid rate limiting.
+
+**Cache Location**: `~/.mcctl/.player-cache` (encrypted)
+
+**Cache Structure**:
+```typescript
+interface PlayerCache {
+  version: number;
+  players: {
+    [username_lowercase: string]: {
+      name: string;           // Original case-sensitive name
+      uuid: string;           // Immutable UUID
+      cachedAt: number;       // Timestamp
+      source: 'mojang' | 'offline';
+    }
+  }
+}
+```
+
+**Cache Policy**:
+| Data Type | Cache Duration | Reason |
+|-----------|---------------|--------|
+| UUID | Permanent | Never changes |
+| Username | 30 days | Can change (rare) |
+| Skin URL | 1 day | Can change frequently |
+
+**Cache Flow**:
+```
+Player lookup request
+        │
+        ▼
+┌─────────────────────┐
+│  Read cache file    │
+│  (decrypt if exists)│
+└─────────┬───────────┘
+          │
+          ▼
+    ┌───────────┐     Yes    ┌─────────────────┐
+    │ In cache? ├────────────► Return cached   │
+    └─────┬─────┘            │ data            │
+          │ No               └─────────────────┘
+          ▼
+┌─────────────────────┐
+│  Call Mojang API    │
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│  Encrypt & save     │
+│  to cache file      │
+└─────────┬───────────┘
+          │
+          ▼
+    Return data
+```
+
+### 7.7.5 Implementation Tasks
+
+#### Phase 1: Unified Player Command
+- [ ] Create `mcctl player` unified command entry point
+- [ ] Implement server selection prompt
+- [ ] Implement player selection prompt (online + manual)
+- [ ] Implement action selection prompt
+- [ ] Add player action loop (continuous actions)
+
+#### Phase 2: Reusable Prompt Components
+- [ ] Create `lib/prompts/server-select.ts`
+- [ ] Create `lib/prompts/player-select.ts`
+- [ ] Create `lib/prompts/action-select.ts`
+
+#### Phase 3: Player Info Command (Mojang API)
+- [ ] Create `lib/mojang-api.ts` - Mojang API client
+- [ ] Create `commands/player-info.ts` - Player info command
+- [ ] Integrate with existing PlayerLookupUseCase
+
+#### Phase 4: Player Cache System
+- [ ] Create `lib/player-cache.ts` with AES-256-GCM encryption
+- [ ] Implement cache read/write with machine-specific key
+- [ ] Add cache statistics command
+- [ ] Add cache clear command
+- [ ] Set file permissions to `600`
+
+#### Phase 5: Interactive Mode for Existing Commands
+- [ ] Add interactive mode to `whitelist.ts`
+- [ ] Add interactive mode to `ban.ts`
+- [ ] Add interactive mode to `op.ts`
+- [ ] Add interactive mode to `kick.ts`
+
+#### Phase 6: Testing & Documentation
+- [ ] Unit tests for Mojang API client
+- [ ] Unit tests for cache encryption/decryption
+- [ ] Integration tests for player workflow
+- [ ] Update CLI documentation
+
+### 7.7.6 Technical Details
+
+**Mojang API**:
+```
+GET https://api.mojang.com/users/profiles/minecraft/{username}
+Response: { "id": "uuid", "name": "CaseSensitiveName" }
+```
+
+**Encryption**:
+- Algorithm: AES-256-GCM
+- Key: Derived from machine-specific identifier
+- File permissions: `600` (owner read/write only)
+
+**Offline UUID Calculation**:
+```typescript
+// For offline-mode servers
+function offlineUUID(name: string): string {
+  const hash = md5(`OfflinePlayer:${name}`);
+  // Set version 3 (name-based) UUID bits
+  return formatAsUUID(hash);
+}
+```
+
+### 7.7.7 Verification
+
+```bash
+# 1. Build
+pnpm build
+
+# 2. Test unified player command
+mcctl player
+# (Follow interactive prompts)
+
+# 3. Test player info
+mcctl player info Steve
+
+# 4. Test cache
+mcctl player cache stats
+mcctl player cache clear
+
+# 5. Test existing commands with interactive mode
+mcctl whitelist myserver
+# (Should prompt for action and player)
+
+# 6. Run tests
 pnpm test
 ```
 
