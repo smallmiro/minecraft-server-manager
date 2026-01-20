@@ -232,12 +232,111 @@ Each server gets its own hostname:
 
 ## Quick Reference
 
+### Server Management
+
 | Task | Command |
 |------|---------|
 | Create server | `mcctl create <name> [-t TYPE] [-v VERSION]` |
 | List servers | `mcctl status` |
+| Detailed status | `mcctl status --detail` |
+| Real-time monitoring | `mcctl status --watch` |
 | Start server | `mcctl start <name>` |
 | Stop server | `mcctl stop <name>` |
 | View logs | `mcctl logs <name> [-f]` |
 | RCON console | `mcctl console <name>` |
+| Execute RCON command | `mcctl exec <name> <command>` |
 | Delete server | `mcctl delete <name>` |
+
+### Player Management
+
+| Task | Command |
+|------|---------|
+| Add operator | `mcctl op <server> add <player>` |
+| Remove operator | `mcctl op <server> remove <player>` |
+| List operators | `mcctl op <server> list` |
+| Add to whitelist | `mcctl whitelist <server> add <player>` |
+| Enable whitelist | `mcctl whitelist <server> on` |
+| Ban player | `mcctl ban <server> add <player> [reason]` |
+| Kick player | `mcctl kick <server> <player> [reason]` |
+| Show online players | `mcctl player online <server>` |
+
+### Configuration
+
+| Task | Command |
+|------|---------|
+| View config | `mcctl config <server>` |
+| Set config | `mcctl config <server> KEY value` |
+| Enable cheats | `mcctl config <server> --cheats` |
+| Disable PvP | `mcctl config <server> --no-pvp` |
+
+### Backup
+
+| Task | Command |
+|------|---------|
+| Backup server config | `mcctl server-backup <server>` |
+| Restore server config | `mcctl server-restore <server>` |
+| Backup worlds to GitHub | `mcctl backup push -m "message"` |
+| Restore from GitHub | `mcctl backup restore <commit>` |
+
+---
+
+## Troubleshooting
+
+### Server Won't Start
+
+1. **Check logs for errors:**
+   ```bash
+   mcctl logs <server> -n 100
+   ```
+
+2. **Verify EULA is accepted:**
+   ```bash
+   mcctl config <server> EULA
+   # Should show: EULA=TRUE
+   ```
+
+3. **Check Java version compatibility:**
+   - Minecraft 1.21+ requires Java 21
+   - Minecraft 1.18-1.20.4 requires Java 17+
+   - Forge 1.16.5 and below requires Java 8
+
+### Can't Connect to Server
+
+1. **Verify mc-router is running:**
+   ```bash
+   mcctl status
+   # mc-router should show "running" and "healthy"
+   ```
+
+2. **Check server hostname:**
+   ```bash
+   mcctl status <server>
+   # Note the hostname (e.g., myserver.192.168.1.100.nip.io)
+   ```
+
+3. **Ensure server is running:**
+   ```bash
+   mcctl start <server>
+   ```
+
+### Server Crashes
+
+1. **Check memory allocation:**
+   ```bash
+   mcctl config <server> MEMORY
+   # Increase if needed: mcctl config <server> MEMORY 6G
+   ```
+
+2. **Check for mod conflicts:**
+   ```bash
+   mcctl logs <server> | grep -i "error\|exception"
+   ```
+
+### Permission Denied Errors
+
+```bash
+# Fix file ownership (if needed)
+sudo chown -R $USER:$USER ~/minecraft-servers/
+```
+
+For more detailed troubleshooting, see the [itzg/minecraft-server documentation](https://docker-minecraft-server.readthedocs.io/).

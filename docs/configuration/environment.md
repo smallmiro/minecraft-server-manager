@@ -142,15 +142,23 @@ These map directly to Minecraft's `server.properties`:
 
 ## mc-router Variables
 
-These are set in the main `docker-compose.yml` for mc-router:
+These are set in `~/minecraft-servers/.env` and passed to mc-router:
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
 | `IN_DOCKER` | Enable Docker mode | `true` | `true` |
 | `AUTO_SCALE_UP` | Auto-start servers on connect | `true` | `true`, `false` |
-| `AUTO_SCALE_DOWN` | Auto-stop idle servers | `false` | `true`, `false` |
+| `AUTO_SCALE_DOWN` | Auto-stop idle servers | `true` | `true`, `false` |
+| `AUTO_SCALE_DOWN_AFTER` | Idle timeout before stopping | `10m` | `1m`, `5m`, `10m`, `30m`, `1h` |
 | `DOCKER_TIMEOUT` | Server startup timeout (sec) | `120` | `120`, `300` |
-| `AUTO_SCALE_ASLEEP_MOTD` | MOTD for sleeping servers | - | `Server is sleeping...` |
+| `AUTO_SCALE_ASLEEP_MOTD` | MOTD for sleeping servers | - | `§e§lServer sleeping§r` |
+| `API_BINDING` | Management API binding | `:8080` | `:8080` |
+
+!!! tip "Managing mc-router"
+    After changing mc-router variables, restart it with:
+    ```bash
+    mcctl router restart
+    ```
 
 ---
 

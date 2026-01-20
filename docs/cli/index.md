@@ -26,11 +26,19 @@ mcctl create --help
 
 ## Command Categories
 
-### Server Management
+### Infrastructure Commands
 
 | Command | Description |
 |---------|-------------|
 | `mcctl init` | Initialize platform directory structure |
+| `mcctl up` | Start all infrastructure (router + servers) |
+| `mcctl down` | Stop all infrastructure |
+| `mcctl router <action>` | Manage mc-router (start/stop/restart) |
+
+### Server Management
+
+| Command | Description |
+|---------|-------------|
 | `mcctl create` | Create a new server (interactive or CLI) |
 | `mcctl delete` | Delete a server (preserves world data) |
 | `mcctl status` | Show status of all servers |
@@ -38,6 +46,20 @@ mcctl create --help
 | `mcctl stop` | Stop a running server |
 | `mcctl logs` | View server logs |
 | `mcctl console` | Connect to RCON console |
+| `mcctl exec` | Execute a single RCON command |
+| `mcctl config` | View or modify server configuration |
+
+### Player Management
+
+| Command | Description |
+|---------|-------------|
+| `mcctl op` | Manage server operators (add/remove/list) |
+| `mcctl whitelist` | Manage whitelist (add/remove/on/off/status) |
+| `mcctl ban` | Manage player and IP bans |
+| `mcctl kick` | Kick a player from the server |
+| `mcctl player online` | Show online players |
+| `mcctl player lookup` | Look up player information |
+| `mcctl player uuid` | Get player UUID |
 
 ### World Management
 
@@ -47,7 +69,14 @@ mcctl create --help
 | `mcctl world assign` | Lock a world to a server |
 | `mcctl world release` | Release a world lock |
 
-### Backup Management
+### Server Backup/Restore
+
+| Command | Description |
+|---------|-------------|
+| `mcctl server-backup` | Backup server configuration |
+| `mcctl server-restore` | Restore server from backup |
+
+### World Backup (GitHub)
 
 | Command | Description |
 |---------|-------------|
@@ -55,13 +84,6 @@ mcctl create --help
 | `mcctl backup push` | Push backup to GitHub |
 | `mcctl backup history` | Show backup history |
 | `mcctl backup restore` | Restore from backup |
-
-### Player Utilities
-
-| Command | Description |
-|---------|-------------|
-| `mcctl player lookup` | Look up player information |
-| `mcctl player uuid` | Get player UUID |
 
 ## Interactive vs CLI Mode
 

@@ -46,3 +46,6 @@ Thumbs.db
 docker-compose.test.yml
 docker-compose.*.yml
 !docker-compose.yml
+
+.venv/
+site/

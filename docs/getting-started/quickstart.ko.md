@@ -232,12 +232,111 @@ mcctl status
 
 ## 빠른 참조
 
+### 서버 관리
+
 | 작업 | 명령어 |
 |------|--------|
 | 서버 생성 | `mcctl create <name> [-t TYPE] [-v VERSION]` |
 | 서버 목록 | `mcctl status` |
+| 상세 상태 | `mcctl status --detail` |
+| 실시간 모니터링 | `mcctl status --watch` |
 | 서버 시작 | `mcctl start <name>` |
 | 서버 중지 | `mcctl stop <name>` |
 | 로그 확인 | `mcctl logs <name> [-f]` |
 | RCON 콘솔 | `mcctl console <name>` |
+| RCON 명령 실행 | `mcctl exec <name> <command>` |
 | 서버 삭제 | `mcctl delete <name>` |
+
+### 플레이어 관리
+
+| 작업 | 명령어 |
+|------|--------|
+| 관리자 추가 | `mcctl op <server> add <player>` |
+| 관리자 제거 | `mcctl op <server> remove <player>` |
+| 관리자 목록 | `mcctl op <server> list` |
+| 화이트리스트 추가 | `mcctl whitelist <server> add <player>` |
+| 화이트리스트 활성화 | `mcctl whitelist <server> on` |
+| 플레이어 밴 | `mcctl ban <server> add <player> [reason]` |
+| 플레이어 강퇴 | `mcctl kick <server> <player> [reason]` |
+| 온라인 플레이어 확인 | `mcctl player online <server>` |
+
+### 설정
+
+| 작업 | 명령어 |
+|------|--------|
+| 설정 보기 | `mcctl config <server>` |
+| 설정 변경 | `mcctl config <server> KEY value` |
+| 치트 활성화 | `mcctl config <server> --cheats` |
+| PvP 비활성화 | `mcctl config <server> --no-pvp` |
+
+### 백업
+
+| 작업 | 명령어 |
+|------|--------|
+| 서버 설정 백업 | `mcctl server-backup <server>` |
+| 서버 설정 복원 | `mcctl server-restore <server>` |
+| 월드 GitHub 백업 | `mcctl backup push -m "message"` |
+| GitHub에서 복원 | `mcctl backup restore <commit>` |
+
+---
+
+## 문제 해결
+
+### 서버가 시작되지 않음
+
+1. **로그에서 오류 확인:**
+   ```bash
+   mcctl logs <server> -n 100
+   ```
+
+2. **EULA 동의 확인:**
+   ```bash
+   mcctl config <server> EULA
+   # EULA=TRUE 여야 함
+   ```
+
+3. **Java 버전 호환성 확인:**
+   - Minecraft 1.21+ → Java 21 필요
+   - Minecraft 1.18-1.20.4 → Java 17+ 필요
+   - Forge 1.16.5 이하 → Java 8 필요
+
+### 서버에 접속할 수 없음
+
+1. **mc-router 실행 확인:**
+   ```bash
+   mcctl status
+   # mc-router가 "running"과 "healthy" 상태여야 함
+   ```
+
+2. **서버 호스트명 확인:**
+   ```bash
+   mcctl status <server>
+   # 호스트명 확인 (예: myserver.192.168.1.100.nip.io)
+   ```
+
+3. **서버 실행 확인:**
+   ```bash
+   mcctl start <server>
+   ```
+
+### 서버 충돌
+
+1. **메모리 할당 확인:**
+   ```bash
+   mcctl config <server> MEMORY
+   # 필요시 증가: mcctl config <server> MEMORY 6G
+   ```
+
+2. **모드 충돌 확인:**
+   ```bash
+   mcctl logs <server> | grep -i "error\|exception"
+   ```
+
+### 권한 거부 오류
+
+```bash
+# 파일 소유권 수정 (필요시)
+sudo chown -R $USER:$USER ~/minecraft-servers/
+```
+
+더 자세한 문제 해결은 [itzg/minecraft-server 문서](https://docker-minecraft-server.readthedocs.io/)를 참조하세요.

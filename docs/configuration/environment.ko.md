@@ -142,15 +142,23 @@ Minecraft의 `server.properties`에 직접 매핑됩니다:
 
 ## mc-router 변수
 
-mc-router용 메인 `docker-compose.yml`에 설정됩니다:
+`~/minecraft-servers/.env`에 설정하고 mc-router에 전달됩니다:
 
 | 변수 | 설명 | 기본값 | 예제 |
 |------|------|--------|------|
 | `IN_DOCKER` | Docker 모드 활성화 | `true` | `true` |
 | `AUTO_SCALE_UP` | 접속 시 서버 자동 시작 | `true` | `true`, `false` |
-| `AUTO_SCALE_DOWN` | 유휴 서버 자동 중지 | `false` | `true`, `false` |
+| `AUTO_SCALE_DOWN` | 유휴 서버 자동 중지 | `true` | `true`, `false` |
+| `AUTO_SCALE_DOWN_AFTER` | 중지 전 유휴 타임아웃 | `10m` | `1m`, `5m`, `10m`, `30m`, `1h` |
 | `DOCKER_TIMEOUT` | 서버 시작 타임아웃 (초) | `120` | `120`, `300` |
-| `AUTO_SCALE_ASLEEP_MOTD` | 슬리핑 서버 MOTD | - | `서버가 대기 중입니다...` |
+| `AUTO_SCALE_ASLEEP_MOTD` | 슬리핑 서버 MOTD | - | `§e§l서버 슬립 중§r` |
+| `API_BINDING` | 관리 API 바인딩 | `:8080` | `:8080` |
+
+!!! tip "mc-router 관리"
+    mc-router 변수 변경 후 재시작하세요:
+    ```bash
+    mcctl router restart
+    ```
 
 ---
 
