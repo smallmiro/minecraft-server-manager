@@ -26,7 +26,7 @@
 | Phase 7.2: Server Backup Commands | [#64](https://github.com/smallmiro/minecraft-server-manager/issues/64) ✅ | ✅ Completed |
 | Phase 7.3: World Selection Enhancement | [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66) ✅ | ✅ Completed |
 | Phase 7.4: Player Management Commands | [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67) ✅ | ✅ Completed |
-| Phase 7.5: Detailed Monitoring | [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68) | 🔄 Open |
+| Phase 7.5: Detailed Monitoring | [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68) ✅ | ✅ Completed |
 
 ---
 
@@ -1355,7 +1355,7 @@ pnpm test
 ## Phase 7.5: Detailed Monitoring
 
 > **Issue**: [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68)
-> **Status**: 🔄 Open
+> **Status**: ✅ Done
 
 ### 7.5.1 Overview
 
