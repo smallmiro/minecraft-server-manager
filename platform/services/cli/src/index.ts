@@ -10,6 +10,7 @@ import {
   backupCommand,
   execCommand,
   configCommand,
+  opCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -43,6 +44,11 @@ ${colors.cyan('Config Shortcuts:')}
   --cheats, --no-cheats      Enable/disable cheats (ALLOW_CHEATS)
   --pvp, --no-pvp            Enable/disable PvP
   --command-block            Enable/disable command blocks
+
+${colors.cyan('Operator Management:')}
+  ${colors.bold('op')} <server> list           List current operators
+  ${colors.bold('op')} <server> add <player>   Add operator (RCON + config)
+  ${colors.bold('op')} <server> remove <player>  Remove operator
 
 ${colors.cyan('World Management:')}
   ${colors.bold('world list')} [--json]        List worlds and lock status
@@ -88,6 +94,8 @@ ${colors.cyan('Examples:')}
   mcctl config myserver              # View all config
   mcctl config myserver --cheats     # Enable cheats
   mcctl config myserver MOTD "Welcome!"  # Set MOTD
+  mcctl op myserver list             # List operators
+  mcctl op myserver add Notch        # Add operator
 `);
 }
 
@@ -155,7 +163,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -371,6 +379,20 @@ async function main(): Promise<void> {
           commitHash: positional[0],
           json: flags['json'] === true,
           auto: flags['auto'] === true,
+        });
+        break;
+      }
+
+      case 'op': {
+        // op command: op <server> <action> [player]
+        // parseArgs treats second arg as subCommand, so:
+        // subCommand = server name, positional[0] = action, positional[1] = player
+        exitCode = await opCommand({
+          root: rootDir,
+          serverName: subCommand,
+          subCommand: positional[0] as 'add' | 'remove' | 'list' | undefined,
+          playerName: positional[1],
+          json: flags['json'] === true,
         });
         break;
       }

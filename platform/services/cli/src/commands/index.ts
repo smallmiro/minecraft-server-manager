@@ -6,3 +6,4 @@ export { worldCommand, type WorldCommandOptions } from './world.js';
 export { backupCommand, type BackupCommandOptions } from './backup.js';
 export { execCommand, type ExecCommandOptions } from './exec.js';
 export { configCommand, type ConfigCommandOptions } from './config.js';
+export { opCommand, type OpCommandOptions } from './op.js';
