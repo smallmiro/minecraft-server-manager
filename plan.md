@@ -24,8 +24,8 @@
 | Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40), [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54), [#56](https://github.com/smallmiro/minecraft-server-manager/issues/56) ✅ | 🔄 Open |
 | Phase 7.1: Server Management Commands | [#58](https://github.com/smallmiro/minecraft-server-manager/issues/58) ✅, [#59](https://github.com/smallmiro/minecraft-server-manager/issues/59) ✅, [#60](https://github.com/smallmiro/minecraft-server-manager/issues/60) ✅ | ✅ Completed |
 | Phase 7.2: Server Backup Commands | [#64](https://github.com/smallmiro/minecraft-server-manager/issues/64) ✅ | ✅ Completed |
-| Phase 7.3: World Selection Enhancement | [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66) | 🔄 Open |
-| Phase 7.4: Player Management Commands | [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67) | 🔄 Open |
+| Phase 7.3: World Selection Enhancement | [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66) ✅ | ✅ Completed |
+| Phase 7.4: Player Management Commands | [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67) ✅ | ✅ Completed |
 | Phase 7.5: Detailed Monitoring | [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68) | 🔄 Open |
 
 ---
@@ -1117,10 +1117,11 @@ cat ~/minecraft-servers/servers/myserver/config.env
 
 ---
 
-## Phase 7.3: World Selection Enhancement
+## Phase 7.3: World Selection Enhancement ✅ COMPLETED
 
 > **Issue**: [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66)
-> **Status**: 🔄 Open
+> **PR**: [#69](https://github.com/smallmiro/minecraft-server-manager/pull/69)
+> **Status**: ✅ Completed
 
 ### 7.3.1 Overview
 
@@ -1161,26 +1162,26 @@ $ mcctl create
 ### 7.3.3 Implementation Tasks
 
 #### Phase 1: WorldRepository Enhancement
-- [ ] Add `getWorldsWithStatus()` method to WorldRepository
-- [ ] Query ServerRepository for world usage
-- [ ] Query Docker for server running status
-- [ ] Return categorized world list
+- [x] Add `getWorldsWithStatus()` method to WorldRepository
+- [x] Query ServerRepository for world usage
+- [x] Query Docker for server running status
+- [x] Return categorized world list
 
 #### Phase 2: ClackPromptAdapter Update
-- [ ] Modify `promptWorldOptions()` for world selection
-- [ ] Create `promptSelectWorld()` with categorized display
-- [ ] Add warning confirmation for reusable worlds
-- [ ] Disable locked world options
+- [x] Modify `promptWorldOptions()` for world selection
+- [x] Create `promptSelectWorld()` with categorized display
+- [x] Add warning confirmation for reusable worlds
+- [x] Disable locked world options
 
 #### Phase 3: CreateServerUseCase Integration
-- [ ] Update Use Case to use new world selection flow
-- [ ] Handle world ownership transfer for reusable worlds
-- [ ] Maintain CLI argument compatibility (`-w <name>`)
+- [x] Update Use Case to use new world selection flow
+- [x] Handle world ownership transfer for reusable worlds
+- [x] Maintain CLI argument compatibility (`-w <name>`)
 
 #### Phase 4: Testing & Documentation
-- [ ] Unit tests for WorldRepository categorization
-- [ ] Integration tests for world selection flow
-- [ ] Update help text and documentation
+- [x] Unit tests for WorldRepository categorization
+- [x] Integration tests for world selection flow
+- [x] Update help text and documentation
 
 ### 7.3.4 Verification
 
@@ -1201,10 +1202,11 @@ pnpm test
 
 ---
 
-## Phase 7.4: Player Management Commands
+## Phase 7.4: Player Management Commands ✅ COMPLETED
 
 > **Issue**: [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67)
-> **Status**: 🔄 Open
+> **PR**: [#70](https://github.com/smallmiro/minecraft-server-manager/pull/70)
+> **Status**: ✅ Completed
 
 ### 7.4.1 Overview
 
@@ -1258,31 +1260,31 @@ mcctl kick myserver AFK_Player --reason "AFK too long"
 ### 7.4.3 Implementation Tasks
 
 #### Phase 1: Infrastructure
-- [ ] Create `commands/whitelist.ts`
-- [ ] Create `commands/ban.ts`
-- [ ] Create `commands/kick.ts`
-- [ ] Add to index.ts routing and help text
+- [x] Create `commands/whitelist.ts`
+- [x] Create `commands/ban.ts`
+- [x] Create `commands/kick.ts`
+- [x] Add to index.ts routing and help text
 
 #### Phase 2: RCON Integration
-- [ ] Implement RCON command execution for whitelist
-- [ ] Implement RCON command execution for ban/pardon
-- [ ] Implement RCON command execution for kick
-- [ ] Handle server not running errors gracefully
+- [x] Implement RCON command execution for whitelist
+- [x] Implement RCON command execution for ban/pardon
+- [x] Implement RCON command execution for kick
+- [x] Handle server not running errors gracefully
 
 #### Phase 3: JSON File Management
-- [ ] Read/write `whitelist.json`
-- [ ] Read/write `banned-players.json`
-- [ ] Integrate with PlayerLookupUseCase for UUID
+- [x] Read/write `whitelist.json`
+- [x] Read/write `banned-players.json`
+- [x] Integrate with PlayerLookupUseCase for UUID
 
 #### Phase 4: Interactive Mode
-- [ ] Interactive server selection (if not provided)
-- [ ] Online player list for kick command
-- [ ] Confirmation prompts for destructive actions
+- [x] Interactive server selection (if not provided)
+- [x] Online player list for kick command
+- [x] Confirmation prompts for destructive actions
 
 #### Phase 5: Testing & Documentation
-- [ ] Unit tests for each command
-- [ ] Integration tests with mock RCON
-- [ ] Update README.md and CLAUDE.md
+- [x] Unit tests for each command
+- [x] Integration tests with mock RCON
+- [x] Update README.md and CLAUDE.md
 
 ### 7.4.4 Technical Details
 
