@@ -312,4 +312,28 @@ export class ShellExecutor {
       });
     });
   }
+
+  /**
+   * Start mc-router only
+   */
+  async routerStart(): Promise<number> {
+    log.info('Starting mc-router...');
+    return this.dockerCompose(['up', '-d', 'router']);
+  }
+
+  /**
+   * Stop mc-router only
+   */
+  async routerStop(): Promise<number> {
+    log.info('Stopping mc-router...');
+    return this.dockerCompose(['stop', 'router']);
+  }
+
+  /**
+   * Restart mc-router
+   */
+  async routerRestart(): Promise<number> {
+    log.info('Restarting mc-router...');
+    return this.dockerCompose(['restart', 'router']);
+  }
 }

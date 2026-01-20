@@ -36,6 +36,7 @@ ${colors.cyan('Commands:')}
   ${colors.bold('init')}                       Initialize platform (~/.minecraft-servers)
   ${colors.bold('up')}                         Start all infrastructure (router + servers)
   ${colors.bold('down')}                       Stop all infrastructure
+  ${colors.bold('router')} <start|stop|restart>  Manage mc-router only
   ${colors.bold('create')} <name> [options]    Create a new server
   ${colors.bold('delete')} <name> [--force]    Delete a server (preserves world data)
   ${colors.bold('status')} [options]            Show status of all servers
@@ -125,6 +126,8 @@ ${colors.cyan('Examples:')}
   mcctl init
   mcctl up                           # Start everything
   mcctl down                         # Stop everything
+  mcctl router start                 # Start mc-router only
+  mcctl router restart               # Restart mc-router
   mcctl start --all                  # Start all MC servers
   mcctl stop --all                   # Stop all MC servers
   mcctl create myserver -t FORGE -v 1.20.4
@@ -217,7 +220,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -545,6 +548,30 @@ async function main(): Promise<void> {
           reason,
           json: flags['json'] === true,
         });
+        break;
+      }
+
+      case 'router': {
+        if (!paths.isInitialized()) {
+          log.error('Platform not initialized. Run: mcctl init');
+          exitCode = 1;
+          break;
+        }
+
+        switch (subCommand) {
+          case 'start':
+            exitCode = await shell.routerStart();
+            break;
+          case 'stop':
+            exitCode = await shell.routerStop();
+            break;
+          case 'restart':
+            exitCode = await shell.routerRestart();
+            break;
+          default:
+            log.error('Usage: mcctl router <start|stop|restart>');
+            exitCode = 1;
+        }
         break;
       }
 
