@@ -86,6 +86,49 @@ export function getContainerHealth(container: string): HealthStatus {
 }
 
 /**
+ * Check mc-router health via management API
+ * mc-router uses distroless image, so Docker healthcheck doesn't work
+ * Instead, we check the management API on localhost:25580
+ */
+export function getRouterHealthViaApi(): HealthStatus {
+  try {
+    // Check if mc-router is running first
+    const status = getContainerStatus('mc-router');
+    if (status !== 'running') {
+      return 'unknown';
+    }
+
+    // Try to connect to management API
+    const result = spawnSync('curl', ['-s', '-o', '/dev/null', '-w', '%{http_code}', 'http://127.0.0.1:25580/routes'], {
+      encoding: 'utf-8',
+      timeout: 3000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    if (result.error || result.status !== 0) {
+      // curl failed, try wget
+      const wgetResult = spawnSync('wget', ['-q', '-O', '/dev/null', 'http://127.0.0.1:25580/routes'], {
+        encoding: 'utf-8',
+        timeout: 3000,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      if (wgetResult.error || wgetResult.status !== 0) {
+        return 'unhealthy';
+      }
+      return 'healthy';
+    }
+
+    const httpCode = (result.stdout ?? '').trim();
+    if (httpCode === '200') {
+      return 'healthy';
+    }
+    return 'unhealthy';
+  } catch {
+    return 'unknown';
+  }
+}
+
+/**
  * Check if container exists
  */
 export function containerExists(container: string): boolean {
@@ -176,7 +219,7 @@ export function getRouterInfo(): RouterInfo {
   return {
     name: 'mc-router',
     status: getContainerStatus('mc-router'),
-    health: getContainerHealth('mc-router'),
+    health: getRouterHealthViaApi(),
     port: 25565,
   };
 }
