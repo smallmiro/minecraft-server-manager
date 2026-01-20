@@ -5,6 +5,7 @@ import {
   McVersion,
   Memory,
   WorldOptions,
+  WorldSetupType,
 } from '../../domain/index.js';
 import type {
   ICreateServerUseCase,
@@ -12,6 +13,7 @@ import type {
   IPromptPort,
   IShellPort,
   IServerRepository,
+  IWorldRepository,
 } from '../ports/index.js';
 
 /**
@@ -22,7 +24,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
   constructor(
     private readonly prompt: IPromptPort,
     private readonly shell: IShellPort,
-    private readonly serverRepo: IServerRepository
+    private readonly serverRepo: IServerRepository,
+    private readonly worldRepo?: IWorldRepository
   ) {}
 
   /**
@@ -48,7 +51,26 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       const version = await this.prompt.promptMcVersion(type);
 
       // Prompt for world options
-      const worldOptions = await this.prompt.promptWorldOptions();
+      let worldOptions = await this.prompt.promptWorldOptions();
+
+      // If "existing" was selected and we have a world repository,
+      // show the enhanced world selection with availability status
+      if (
+        worldOptions.setupType === WorldSetupType.EXISTING &&
+        this.worldRepo
+      ) {
+        const worldsWithStatus = await this.worldRepo.findAllWithServerStatus();
+        const selectedWorld =
+          await this.prompt.promptExistingWorldSelection(worldsWithStatus);
+
+        if (selectedWorld) {
+          worldOptions = WorldOptions.existingWorld(selectedWorld.name);
+        } else {
+          // User cancelled or no world available, fallback to new world
+          this.prompt.info('Creating a new world instead');
+          worldOptions = WorldOptions.newWorld();
+        }
+      }
 
       // Prompt for memory
       const memory = await this.prompt.promptMemory();

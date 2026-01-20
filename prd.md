@@ -164,16 +164,59 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 - **Description**: Backup and restore individual server configuration files (not world data). Enables saving server settings before changes and restoring if needed.
 - **Issue**: [#64](https://github.com/smallmiro/minecraft-server-manager/issues/64)
 - **Acceptance Criteria**:
-  - [ ] `mcctl server-backup <server>` creates backup tar.gz with manifest
-  - [ ] `mcctl server-backup <server> --list` shows all backups for a server
-  - [ ] `mcctl server-restore <server>` shows interactive backup selection
-  - [ ] `mcctl server-restore <server> <id>` restores specific backup
-  - [ ] Backup includes: config.env, docker-compose.yml, ops.json, whitelist.json, banned-players.json, banned-ips.json
-  - [ ] Backup stored in `~/minecraft-servers/backups/servers/<server>/`
-  - [ ] Backup filename includes timestamp (e.g., `20250120-143025.tar.gz`)
-  - [ ] manifest.json contains metadata (version, files, checksums, server config)
-  - [ ] Restore prompts for confirmation (unless --force)
-  - [ ] `--dry-run` option shows what would be restored without changes
+  - [x] `mcctl server-backup <server>` creates backup tar.gz with manifest
+  - [x] `mcctl server-backup <server> --list` shows all backups for a server
+  - [x] `mcctl server-restore <server>` shows interactive backup selection
+  - [x] `mcctl server-restore <server> <id>` restores specific backup
+  - [x] Backup includes: config.env, docker-compose.yml, ops.json, whitelist.json, banned-players.json, banned-ips.json
+  - [x] Backup stored in `~/minecraft-servers/backups/servers/<server>/`
+  - [x] Backup filename includes timestamp (e.g., `20250120-143025.tar.gz`)
+  - [x] manifest.json contains metadata (version, files, checksums, server config)
+  - [x] Restore prompts for confirmation (unless --force)
+  - [x] `--dry-run` option shows what would be restored without changes
+
+#### FR-014: World Selection Enhancement
+- **Priority**: Medium
+- **Description**: Enhanced world selection in `mcctl create` that shows available worlds with usage status, allowing users to select from existing worlds categorized by availability.
+- **Issue**: [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66)
+- **Acceptance Criteria**:
+  - [ ] Show available worlds in interactive mode when "Use existing world" is selected
+  - [ ] Display 3 categories: Available (not used), Reusable (server stopped), Locked (server running)
+  - [ ] Show server name and status for locked/reusable worlds
+  - [ ] Allow selection via @clack/prompts select UI
+  - [ ] Warn user when selecting world used by stopped server (will transfer ownership)
+  - [ ] Block selection of worlds used by running servers
+  - [ ] Maintain backward compatibility with CLI arguments (`-w <name>`)
+
+#### FR-015: Player Management Commands
+- **Priority**: Medium
+- **Description**: Comprehensive player management commands for whitelist, ban/unban, and kick operations, integrated with existing player lookup feature for UUID resolution.
+- **Issue**: [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67)
+- **Acceptance Criteria**:
+  - [ ] `mcctl whitelist <server> <add|remove|list|on|off> [player]` - Whitelist management
+  - [ ] `mcctl ban <server> <add|remove|list> [player] [--reason]` - Ban management
+  - [ ] `mcctl kick <server> <player> [--reason]` - Kick player from server
+  - [ ] Integration with PlayerLookupUseCase for UUID resolution
+  - [ ] RCON command execution for runtime changes
+  - [ ] JSON file updates for persistence (whitelist.json, banned-players.json)
+  - [ ] `--json` output support for all commands
+  - [ ] Interactive mode with player name autocomplete from online players
+
+#### FR-016: Detailed Server Monitoring
+- **Priority**: Medium
+- **Description**: Enhanced monitoring capabilities showing detailed server and mc-router status including online players, resource usage, uptime, and real-time updates.
+- **Issue**: [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68)
+- **Acceptance Criteria**:
+  - [ ] `mcctl status --detail` shows comprehensive server information
+  - [ ] `mcctl status --watch` enables real-time status updates (5s interval)
+  - [ ] `mcctl status <server>` shows single server detailed status
+  - [ ] `mcctl router status` shows mc-router specific information
+  - [ ] Display online player count and names per server
+  - [ ] Display memory/CPU usage from Docker stats
+  - [ ] Display server uptime
+  - [ ] Display TPS (ticks per second) when available
+  - [ ] Display mc-router connection stats and routing table
+  - [ ] `--json` output support for all monitoring commands
 
 ### 2.2 Non-Functional Requirements
 

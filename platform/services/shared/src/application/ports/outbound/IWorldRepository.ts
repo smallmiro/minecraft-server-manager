@@ -1,6 +1,26 @@
 import { World, WorldLockStatus } from '../../../domain/index.js';
 
 /**
+ * Server status for world availability
+ */
+export type ServerStatus = 'running' | 'stopped' | 'not_found';
+
+/**
+ * World availability category
+ */
+export type WorldAvailabilityCategory = 'available' | 'stopped' | 'running';
+
+/**
+ * World with server status information
+ */
+export interface WorldWithServerStatus {
+  world: World;
+  assignedServer?: string;
+  serverStatus?: ServerStatus;
+  category: WorldAvailabilityCategory;
+}
+
+/**
  * World Repository Port - Outbound Port
  * Interface for world data access
  */
@@ -44,6 +64,12 @@ export interface IWorldRepository {
    * Get lock status for a world
    */
   getLockStatus(name: string): Promise<WorldLockData | null>;
+
+  /**
+   * Get all worlds with their server status
+   * Returns worlds categorized by availability
+   */
+  findAllWithServerStatus(): Promise<WorldWithServerStatus[]>;
 }
 
 /**
