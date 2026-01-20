@@ -16,6 +16,12 @@ export {
   type BackupStatus,
   type PlayerInfo,
   type CommandResult,
+  // New detailed types
+  type ContainerStats,
+  type PlayerListResult,
+  type DetailedServerInfo,
+  type RouterDetailInfo,
+  type RouteInfo,
 } from './types/index.js';
 
 // Re-export utilities
@@ -40,6 +46,14 @@ export {
   getContainerLogs,
   execScript,
   execScriptInteractive,
+  // New detailed functions
+  getContainerStats,
+  getContainerUptime,
+  getOnlinePlayers,
+  getDetailedServerInfo,
+  getDetailedServerInfoWithPlayers,
+  getRouterDetailInfo,
+  formatBytes,
 } from './docker/index.js';
 
 // Re-export domain layer (Value Objects and Entities)

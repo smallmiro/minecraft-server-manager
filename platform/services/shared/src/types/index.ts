@@ -120,3 +120,50 @@ export interface CommandResult<T = void> {
   error?: string;
   code?: number;
 }
+
+/**
+ * Container stats types
+ */
+export interface ContainerStats {
+  memoryUsage: number;  // bytes
+  memoryLimit: number;  // bytes
+  memoryPercent: number; // 0-100
+  cpuPercent: number;   // 0-100
+}
+
+export interface PlayerListResult {
+  online: number;
+  max: number;
+  players: string[];
+}
+
+/**
+ * Detailed server info
+ */
+export interface DetailedServerInfo extends ServerInfo {
+  type?: string;
+  version?: string;
+  memory?: string;
+  uptime?: string;
+  uptimeSeconds?: number;
+  players?: PlayerListResult;
+  stats?: ContainerStats;
+  worldName?: string;
+  worldSize?: string;
+}
+
+/**
+ * Router detail info
+ */
+export interface RouterDetailInfo extends RouterInfo {
+  uptime?: string;
+  uptimeSeconds?: number;
+  routes: RouteInfo[];
+  mode?: string;
+}
+
+export interface RouteInfo {
+  hostname: string;
+  target: string;
+  serverStatus: ContainerStatus;
+}

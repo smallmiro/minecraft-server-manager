@@ -38,7 +38,9 @@ ${colors.cyan('Commands:')}
   ${colors.bold('down')}                       Stop all infrastructure
   ${colors.bold('create')} <name> [options]    Create a new server
   ${colors.bold('delete')} <name> [--force]    Delete a server (preserves world data)
-  ${colors.bold('status')} [--json]            Show status of all servers
+  ${colors.bold('status')} [options]            Show status of all servers
+  ${colors.bold('status')} <server>             Show detailed status of a server
+  ${colors.bold('status')} router               Show mc-router status with routes
   ${colors.bold('start')} <server> [--all]     Start a server (--all for all servers)
   ${colors.bold('stop')} <server> [--all]      Stop a server (--all for all servers)
   ${colors.bold('logs')} <server> [lines]      View server logs
@@ -108,6 +110,11 @@ ${colors.cyan('Create Options:')}
   -w, --world NAME           Use existing world (symlink)
   --no-start                 Create without starting
 
+${colors.cyan('Status Options:')}
+  --detail, -d               Show detailed info (memory, CPU, players)
+  --watch, -W                Real-time monitoring mode
+  --interval <sec>           Watch refresh interval (default: 5)
+
 ${colors.cyan('Global Options:')}
   --root <path>              Custom data directory
   --json                     Output in JSON format
@@ -122,6 +129,11 @@ ${colors.cyan('Examples:')}
   mcctl stop --all                   # Stop all MC servers
   mcctl create myserver -t FORGE -v 1.20.4
   mcctl status --json
+  mcctl status --detail              # Show detailed info
+  mcctl status --watch               # Real-time monitoring
+  mcctl status --watch --interval 2  # Watch with 2s refresh
+  mcctl status myserver              # Single server status
+  mcctl status router                # mc-router status
   mcctl logs myserver -f
   mcctl exec myserver say "Hello!"   # Execute RCON command
   mcctl exec myserver list           # List online players
@@ -189,6 +201,8 @@ function parseArgs(args: string[]): {
         m: 'message',
         y: 'yes',
         a: 'all',
+        d: 'detail',
+        W: 'watch',
       };
 
       const longKey = flagMap[key] ?? key;
@@ -260,6 +274,10 @@ async function main(): Promise<void> {
         exitCode = await statusCommand({
           json: flags['json'] === true,
           root: rootDir,
+          detail: flags['detail'] === true,
+          watch: flags['watch'] === true,
+          interval: flags['interval'] ? parseInt(flags['interval'] as string, 10) : undefined,
+          serverName: positional[0],
         });
         break;
 
