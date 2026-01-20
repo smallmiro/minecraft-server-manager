@@ -73,6 +73,70 @@ debug() {
 }
 
 # =============================================================================
+# Sudo Functions
+# =============================================================================
+# Supports MCCTL_SUDO_PASSWORD environment variable for automation
+# When set, uses sudo -S to pipe password via stdin
+
+# Run command with sudo, supporting MCCTL_SUDO_PASSWORD for automation
+# Usage: run_with_sudo <command> [args...]
+# Example: run_with_sudo tee -a /etc/avahi/hosts
+# Example: run_with_sudo systemctl restart avahi-daemon
+run_with_sudo() {
+    if [[ -z "$*" ]]; then
+        error "run_with_sudo: No command specified"
+        return 1
+    fi
+
+    if [[ -n "${MCCTL_SUDO_PASSWORD:-}" ]]; then
+        # Automation mode: use sudo -S to read password from stdin
+        debug "Using MCCTL_SUDO_PASSWORD for sudo"
+        echo "$MCCTL_SUDO_PASSWORD" | sudo -S "$@" 2>/dev/null
+    else
+        # Interactive mode: let sudo prompt for password
+        sudo "$@"
+    fi
+}
+
+# Run command with sudo and capture output (for commands like tee)
+# Usage: echo "content" | run_with_sudo_stdin <command> [args...]
+# Example: echo "$ip $hostname" | run_with_sudo_stdin tee -a /etc/avahi/hosts
+run_with_sudo_stdin() {
+    if [[ -z "$*" ]]; then
+        error "run_with_sudo_stdin: No command specified"
+        return 1
+    fi
+
+    if [[ -n "${MCCTL_SUDO_PASSWORD:-}" ]]; then
+        # Automation mode: need to handle both password and stdin content
+        # Use expect-like approach with heredoc
+        local stdin_content
+        stdin_content=$(cat)
+        debug "Using MCCTL_SUDO_PASSWORD for sudo with stdin"
+        {
+            echo "$MCCTL_SUDO_PASSWORD"
+            echo "$stdin_content"
+        } | sudo -S "$@" 2>/dev/null
+    else
+        # Interactive mode: let sudo prompt for password, pass stdin through
+        sudo "$@"
+    fi
+}
+
+# Check if sudo password is configured for automation
+has_sudo_password() {
+    [[ -n "${MCCTL_SUDO_PASSWORD:-}" ]]
+}
+
+# Validate sudo password (test if it works)
+validate_sudo_password() {
+    if [[ -z "${MCCTL_SUDO_PASSWORD:-}" ]]; then
+        return 1
+    fi
+    echo "$MCCTL_SUDO_PASSWORD" | sudo -S -v 2>/dev/null
+}
+
+# =============================================================================
 # Docker Functions
 # =============================================================================
 

@@ -13,6 +13,7 @@ export interface CreateCommandOptions {
   worldUrl?: string;
   worldName?: string;
   noStart?: boolean;
+  sudoPassword?: string;
 }
 
 /**
@@ -30,7 +31,10 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
     return 1;
   }
 
-  const container = getContainer(options.root);
+  const container = getContainer({
+    rootDir: options.root,
+    sudoPassword: options.sudoPassword,
+  });
 
   // Determine execution mode
   if (options.name) {

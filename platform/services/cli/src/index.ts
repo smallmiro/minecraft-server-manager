@@ -118,6 +118,7 @@ ${colors.cyan('Status Options:')}
 
 ${colors.cyan('Global Options:')}
   --root <path>              Custom data directory
+  --sudo-password <pwd>      Sudo password for automation (or use MCCTL_SUDO_PASSWORD env)
   --json                     Output in JSON format
   -h, --help                 Show this help
   --version                  Show version
@@ -258,8 +259,9 @@ async function main(): Promise<void> {
   }
 
   const rootDir = flags['root'] as string | undefined;
+  const sudoPassword = flags['sudo-password'] as string | undefined;
   const paths = new Paths(rootDir);
-  const shell = new ShellExecutor(paths);
+  const shell = new ShellExecutor({ paths, sudoPassword });
 
   let exitCode = 0;
 
@@ -316,6 +318,7 @@ async function main(): Promise<void> {
           worldUrl: flags['world-url'] as string | undefined,
           worldName: flags['world'] as string | undefined,
           noStart: flags['no-start'] === true,
+          sudoPassword,
         });
         break;
       }
@@ -327,6 +330,7 @@ async function main(): Promise<void> {
           root: rootDir,
           name: positional[0],
           force: flags['force'] === true || flags['yes'] === true,
+          sudoPassword,
         });
         break;
       }

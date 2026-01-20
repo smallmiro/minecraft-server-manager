@@ -10,6 +10,11 @@ import type {
   ShellResult,
 } from '../../application/ports/outbound/IShellPort.js';
 
+export interface ShellAdapterOptions {
+  paths?: Paths;
+  sudoPassword?: string;
+}
+
 /**
  * ShellAdapter
  * Implements IShellPort by executing bash scripts
@@ -17,18 +22,38 @@ import type {
 export class ShellAdapter implements IShellPort {
   private readonly paths: Paths;
   private readonly env: Record<string, string>;
+  private readonly sudoPassword?: string;
 
-  constructor(paths?: Paths) {
-    this.paths = paths ?? new Paths();
+  constructor(pathsOrOptions?: Paths | ShellAdapterOptions) {
+    if (pathsOrOptions instanceof Paths) {
+      this.paths = pathsOrOptions;
+      this.sudoPassword = undefined;
+    } else if (pathsOrOptions) {
+      this.paths = pathsOrOptions.paths ?? new Paths();
+      this.sudoPassword = pathsOrOptions.sudoPassword;
+    } else {
+      this.paths = new Paths();
+      this.sudoPassword = undefined;
+    }
     this.env = this.buildEnv();
   }
 
   private buildEnv(): Record<string, string> {
-    return {
+    const env: Record<string, string> = {
       MCCTL_ROOT: this.paths.root,
       MCCTL_TEMPLATES: this.paths.templates,
       MCCTL_SCRIPTS: this.paths.scripts,
     };
+
+    // Support MCCTL_SUDO_PASSWORD from:
+    // 1. Constructor option (--sudo-password CLI flag)
+    // 2. Environment variable (for automation)
+    const sudoPassword = this.sudoPassword ?? process.env.MCCTL_SUDO_PASSWORD;
+    if (sudoPassword) {
+      env.MCCTL_SUDO_PASSWORD = sudoPassword;
+    }
+
+    return env;
   }
 
   private getScriptPath(script: string): string | null {

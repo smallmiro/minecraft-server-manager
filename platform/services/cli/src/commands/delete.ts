@@ -8,6 +8,7 @@ export interface DeleteCommandOptions {
   root?: string;
   name?: string;
   force?: boolean;
+  sudoPassword?: string;
 }
 
 /**
@@ -25,7 +26,10 @@ export async function deleteCommand(options: DeleteCommandOptions): Promise<numb
     return 1;
   }
 
-  const container = getContainer(options.root);
+  const container = getContainer({
+    rootDir: options.root,
+    sudoPassword: options.sudoPassword,
+  });
 
   // Determine execution mode
   if (options.name) {
