@@ -1,4 +1,4 @@
-import { spawn, execSync } from 'node:child_process';
+import { spawn, execSync, spawnSync } from 'node:child_process';
 import type {
   ContainerStatus,
   HealthStatus,
@@ -14,14 +14,18 @@ import type {
 
 /**
  * Execute a command and return stdout
+ * Uses spawnSync to properly handle arguments with special characters
  */
 function execCommand(command: string, args: string[]): string {
   try {
-    const result = execSync(`${command} ${args.join(' ')}`, {
+    const result = spawnSync(command, args, {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
     });
-    return result.trim();
+    if (result.error || result.status !== 0) {
+      return '';
+    }
+    return (result.stdout ?? '').trim();
   } catch {
     return '';
   }
