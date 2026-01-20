@@ -7,6 +7,7 @@ import {
   Server,
   World,
 } from '../../../domain/index.js';
+import type { WorldWithServerStatus } from './IWorldRepository.js';
 
 /**
  * Prompt Port - Outbound Port
@@ -80,6 +81,16 @@ export interface IPromptPort {
    * Prompt for world selection from list
    */
   promptWorldSelection(worlds: World[]): Promise<World>;
+
+  /**
+   * Prompt for existing world selection with availability status
+   * Shows worlds categorized by: available, stopped server, running server
+   * @param worlds - List of worlds with their server status
+   * @returns Selected world or null if cancelled/no selection
+   */
+  promptExistingWorldSelection(
+    worlds: WorldWithServerStatus[]
+  ): Promise<World | null>;
 
   // ========================================
   // Status Display

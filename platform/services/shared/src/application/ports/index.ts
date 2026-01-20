@@ -42,4 +42,7 @@ export type {
   ServerConfigData,
   IWorldRepository,
   WorldLockData,
+  WorldWithServerStatus,
+  ServerStatus,
+  WorldAvailabilityCategory,
 } from './outbound/index.js';

@@ -67,12 +67,20 @@ minecraft/
 │   ├── .gitignore
 │   └── servers/_template/
 │
-├── docs/                        # Documentation
+├── docs/                        # Documentation (MkDocs + Read the Docs)
+│   ├── index.md                 # English homepage
+│   ├── index.ko.md              # Korean homepage
 │   ├── itzg-reference/          # itzg/docker-minecraft-server official docs
 │   │   ├── doc-list.md
 │   │   └── *.md
+│   ├── cli/                     # CLI command reference
+│   │   ├── commands.md          # English CLI docs
+│   │   └── commands.ko.md       # Korean CLI docs
+│   ├── getting-started/         # Getting started guides
+│   ├── configuration/           # Configuration guides
+│   ├── advanced/                # Advanced usage guides
 │   ├── development/             # Development guides
-│   └── usage/                   # Project usage guides (to be added)
+│   └── usage/                   # Project usage guides
 │
 └── .claude/
     ├── agents/
@@ -213,11 +221,66 @@ mcctl delete              # Interactive: shows server list
 mcctl delete myserver     # CLI: deletes myserver
 mcctl delete myserver --force  # Force delete even with players online
 
+# Infrastructure management
+mcctl up                  # Start all (mc-router + all servers)
+mcctl down                # Stop all infrastructure
+mcctl router start        # Start mc-router only
+mcctl router stop         # Stop mc-router only
+mcctl router restart      # Restart mc-router
+mcctl start --all         # Start all MC servers (not router)
+mcctl stop --all          # Stop all MC servers (not router)
+
 # Server management
 mcctl status
 mcctl start myserver
 mcctl stop myserver
 mcctl logs myserver
+mcctl console myserver    # Connect to RCON console
+
+# Server commands (RCON)
+mcctl exec myserver say "Hello!"     # Execute RCON command
+mcctl exec myserver list             # List online players
+mcctl exec myserver give Player diamond 64
+
+# Server configuration
+mcctl config myserver              # View all config
+mcctl config myserver MOTD         # View specific key
+mcctl config myserver MOTD "Welcome!"  # Set value
+mcctl config myserver --cheats     # Enable cheats (shortcut)
+mcctl config myserver --no-pvp     # Disable PvP (shortcut)
+mcctl config myserver --json       # JSON output
+
+# Operator management
+mcctl op myserver list             # List operators
+mcctl op myserver add Notch        # Add operator
+mcctl op myserver remove Steve     # Remove operator
+
+# Whitelist management
+mcctl whitelist myserver list      # List whitelisted players
+mcctl whitelist myserver add Steve # Add to whitelist
+mcctl whitelist myserver remove Steve  # Remove from whitelist
+mcctl whitelist myserver on        # Enable whitelist
+mcctl whitelist myserver off       # Disable whitelist
+
+# Ban management
+mcctl ban myserver list            # List banned players
+mcctl ban myserver add Griefer "reason"  # Ban player
+mcctl ban myserver remove Griefer  # Unban player
+mcctl ban myserver ip list         # List banned IPs
+mcctl ban myserver ip add 1.2.3.4  # Ban IP
+
+# Kick player
+mcctl kick myserver PlayerName "reason"
+
+# Online players
+mcctl player online myserver       # List online players
+mcctl player online --all          # List all online players
+
+# Server backup/restore
+mcctl server-backup myserver       # Backup server config
+mcctl server-backup myserver --list  # List backups
+mcctl server-restore myserver      # Interactive restore
+mcctl server-restore myserver abc123  # Restore specific backup
 
 # World management (interactive or with arguments)
 mcctl world list          # List all worlds with lock status
@@ -641,30 +704,37 @@ BACKUP_AUTO_ON_STOP=true
 
 ## Common Tasks
 
-### Start/Stop All Servers
+### Start/Stop All Infrastructure
 
 ```bash
+# Using mcctl (recommended)
+mcctl up      # Start mc-router + all servers
+mcctl down    # Stop all infrastructure
+
+# Using docker compose directly
 cd platform
+docker compose up -d    # Start all
+docker compose down     # Stop all
+```
 
-# Start mc-router and all servers
-docker compose up -d
+### Start/Stop All Servers (not router)
 
-# Stop all
-docker compose down
-
-# View router logs
-docker logs -f mc-router
+```bash
+# Start/stop all MC servers (mc-router keeps running)
+mcctl start --all       # or mcctl start -a
+mcctl stop --all        # or mcctl stop -a
 ```
 
 ### Start/Stop Individual Server
 
 ```bash
+# Using mcctl (recommended)
+mcctl start myserver
+mcctl stop myserver
+
+# Using docker compose directly
 cd platform
-
-# Start specific server (replace <server-name> with your server name)
 docker compose up -d mc-<server-name>
-
-# Stop specific server
 docker compose stop mc-<server-name>
 
 # View server logs

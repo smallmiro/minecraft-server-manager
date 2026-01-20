@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/shared",
-  "version": "0.1.0",
+  "version": "1.4.0",
   "description": "Shared utilities and types for Minecraft Docker platform",
   "type": "module",
   "main": "dist/index.js",
@@ -38,6 +38,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -52,6 +55,12 @@
   ],
   "author": "smallmiro",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smallmiro/minecraft-server-manager.git",
+    "directory": "platform/services/shared"
+  },
+  "homepage": "https://minecraft-server-manager.readthedocs.io/",
   "devDependencies": {
     "@types/node": "^20.10.0",
     "typescript": "^5.3.0"

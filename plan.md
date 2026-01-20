@@ -21,7 +21,12 @@
 | Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | 🔄 Open |
 | Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | 🔄 Open |
 | Phase 6: npm Package | [#28](https://github.com/smallmiro/minecraft-server-manager/issues/28) | ✅ Closed |
-| Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40), [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54) | 🔄 Open |
+| Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40), [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54), [#56](https://github.com/smallmiro/minecraft-server-manager/issues/56) ✅ | 🔄 Open |
+| Phase 7.1: Server Management Commands | [#58](https://github.com/smallmiro/minecraft-server-manager/issues/58) ✅, [#59](https://github.com/smallmiro/minecraft-server-manager/issues/59) ✅, [#60](https://github.com/smallmiro/minecraft-server-manager/issues/60) ✅ | ✅ Completed |
+| Phase 7.2: Server Backup Commands | [#64](https://github.com/smallmiro/minecraft-server-manager/issues/64) ✅ | ✅ Completed |
+| Phase 7.3: World Selection Enhancement | [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66) ✅ | ✅ Completed |
+| Phase 7.4: Player Management Commands | [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67) ✅ | ✅ Completed |
+| Phase 7.5: Detailed Monitoring | [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68) ✅ | ✅ Completed |
 
 ---
 
@@ -428,6 +433,12 @@ mcctl.sh console <server>         - RCON console
 mcctl.sh world list               - List worlds/locks
 mcctl.sh world assign <w> <s>     - Assign world to server config
 mcctl.sh world release <w>        - Force release world lock
+
+# Infrastructure management (added in #56)
+mcctl up                          - Start all infrastructure (router + servers)
+mcctl down                        - Stop all infrastructure
+mcctl start --all                 - Start all MC servers (not router)
+mcctl stop --all                  - Stop all MC servers (not router)
 
 # Manual override (bypasses mc-router auto-management)
 mcctl.sh start <server>           - Force start server
@@ -963,6 +974,572 @@ pnpm test
 
 # 6. Check test coverage
 pnpm test --coverage
+```
+
+---
+
+## Phase 7.2: Server Backup Commands ✅ COMPLETED
+
+> **Issue**: [#64](https://github.com/smallmiro/minecraft-server-manager/issues/64)
+> **PR**: [#65](https://github.com/smallmiro/minecraft-server-manager/pull/65)
+> **Status**: ✅ Completed
+
+### 7.2.1 Overview
+
+개별 서버의 설정 파일을 백업/복원하는 기능입니다. 월드 데이터가 아닌 서버 운영에 필요한 설정 파일만 대상으로 합니다.
+
+**백업 대상 파일**:
+| 파일 | 설명 | 우선순위 |
+|------|------|----------|
+| `config.env` | 서버 환경 설정 | 필수 |
+| `docker-compose.yml` | Docker 서비스 정의 | 필수 |
+| `data/ops.json` | 운영자 목록 | 필수 |
+| `data/whitelist.json` | 화이트리스트 | 필수 |
+| `data/banned-players.json` | 차단된 플레이어 | 필수 |
+| `data/banned-ips.json` | 차단된 IP | 필수 |
+| `data/server.properties` | 서버 속성 (생성됨) | 선택 |
+
+### 7.2.2 Commands
+
+**`mcctl server-backup <server> [options]`**
+```bash
+# 기본 백업
+mcctl server-backup myserver
+
+# 설명 추가
+mcctl server-backup myserver -m "Before upgrade to 1.21"
+
+# 백업 목록 조회
+mcctl server-backup myserver --list
+mcctl server-backup myserver --list --json
+```
+
+**`mcctl server-restore <server> [backup-id] [options]`**
+```bash
+# 대화형 복원 (백업 목록 표시)
+mcctl server-restore myserver
+
+# 직접 복원
+mcctl server-restore myserver 20250120-143025
+
+# 강제 복원 (확인 생략)
+mcctl server-restore myserver 20250120-143025 --force
+
+# 드라이런 (변경 없이 확인만)
+mcctl server-restore myserver 20250120-143025 --dry-run
+```
+
+### 7.2.3 Backup File Structure
+
+```
+~/minecraft-servers/backups/servers/
+└── myserver/
+    └── 20250120-143025.tar.gz
+        ├── manifest.json
+        ├── config.env
+        ├── docker-compose.yml
+        └── data/
+            ├── ops.json
+            ├── whitelist.json
+            ├── banned-players.json
+            ├── banned-ips.json
+            └── server.properties
+```
+
+### 7.2.4 manifest.json Schema
+
+```json
+{
+  "version": "1.0",
+  "serverName": "myserver",
+  "createdAt": "2025-01-20T14:30:25Z",
+  "description": "Before upgrade to 1.21",
+  "mcctlVersion": "0.1.5",
+  "files": [
+    { "path": "config.env", "size": 1024, "checksum": "sha256:..." },
+    { "path": "docker-compose.yml", "size": 512, "checksum": "sha256:..." },
+    { "path": "data/ops.json", "size": 256, "checksum": "sha256:..." }
+  ],
+  "serverConfig": {
+    "type": "PAPER",
+    "version": "1.21.1",
+    "memory": "4G"
+  }
+}
+```
+
+### 7.2.5 Implementation Tasks
+
+#### Phase 1: server-backup command
+- [x] Create `commands/server-backup.ts`
+- [x] Implement backup file collection logic
+- [x] Create tar.gz with manifest.json
+- [x] Add `--list` option for backup listing
+- [x] Add to index.ts routing and help text
+
+#### Phase 2: server-restore command
+- [x] Create `commands/server-restore.ts`
+- [x] Implement backup extraction logic
+- [x] Add interactive backup selection
+- [x] Add confirmation prompt
+- [x] Add `--dry-run` option
+- [x] Add `--force` option
+- [x] Add to index.ts routing and help text
+
+#### Phase 3: Testing & Documentation
+- [x] Unit tests for backup/restore logic
+- [x] Integration tests for full backup/restore cycle
+- [x] Update README.md with new commands
+- [x] Update CLAUDE.md with new commands
+
+### 7.2.6 Verification
+
+```bash
+# 1. Build
+pnpm build
+
+# 2. Test backup creation
+mcctl server-backup myserver -m "Test backup"
+
+# 3. Test backup listing
+mcctl server-backup myserver --list
+mcctl server-backup myserver --list --json
+
+# 4. Test dry-run restore
+mcctl server-restore myserver 20250120-143025 --dry-run
+
+# 5. Test actual restore
+mcctl server-restore myserver 20250120-143025
+
+# 6. Verify restored files
+cat ~/minecraft-servers/servers/myserver/config.env
+```
+
+---
+
+## Phase 7.3: World Selection Enhancement ✅ COMPLETED
+
+> **Issue**: [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66)
+> **PR**: [#69](https://github.com/smallmiro/minecraft-server-manager/pull/69)
+> **Status**: ✅ Completed
+
+### 7.3.1 Overview
+
+`mcctl create` 명령어에서 "Use existing world" 선택 시 기존 월드 목록을 보여주고 사용 상태별로 분류하여 표시합니다.
+
+**월드 분류**:
+| 상태 | 설명 | 선택 가능 |
+|------|------|----------|
+| 🟢 Available | 어떤 서버에서도 사용하지 않는 월드 | ✅ 바로 선택 가능 |
+| 🟡 Reusable | 다른 서버에서 사용하지만 서버가 중지됨 | ⚠️ 경고 후 선택 가능 |
+| 🔴 Locked | 다른 서버에서 사용 중 (서버 실행 중) | ❌ 선택 불가 |
+
+### 7.3.2 User Interface
+
+```
+$ mcctl create
+...
+◆ World setup?
+│  ○ New world (generate new)
+│  ● Use existing world
+│  ○ Download from URL
+│
+◆ Select a world:
+│
+│  🟢 Available worlds:
+│    ● survival-world
+│    ○ creative-world
+│    ○ test-world
+│
+│  🟡 Used by stopped servers (will transfer):
+│    ○ adventure-world (mc-server1 - stopped)
+│
+│  🔴 In use (cannot select):
+│    ✗ main-world (mc-server2 - running)
+│
+```
+
+### 7.3.3 Implementation Tasks
+
+#### Phase 1: WorldRepository Enhancement
+- [x] Add `getWorldsWithStatus()` method to WorldRepository
+- [x] Query ServerRepository for world usage
+- [x] Query Docker for server running status
+- [x] Return categorized world list
+
+#### Phase 2: ClackPromptAdapter Update
+- [x] Modify `promptWorldOptions()` for world selection
+- [x] Create `promptSelectWorld()` with categorized display
+- [x] Add warning confirmation for reusable worlds
+- [x] Disable locked world options
+
+#### Phase 3: CreateServerUseCase Integration
+- [x] Update Use Case to use new world selection flow
+- [x] Handle world ownership transfer for reusable worlds
+- [x] Maintain CLI argument compatibility (`-w <name>`)
+
+#### Phase 4: Testing & Documentation
+- [x] Unit tests for WorldRepository categorization
+- [x] Integration tests for world selection flow
+- [x] Update help text and documentation
+
+### 7.3.4 Verification
+
+```bash
+# 1. Build
+pnpm build
+
+# 2. Test interactive world selection
+mcctl create
+# (Select "Use existing world" and verify categorized list)
+
+# 3. Test CLI argument mode (backward compatible)
+mcctl create myserver -w existing-world
+
+# 4. Run tests
+pnpm test
+```
+
+---
+
+## Phase 7.4: Player Management Commands ✅ COMPLETED
+
+> **Issue**: [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67)
+> **PR**: [#70](https://github.com/smallmiro/minecraft-server-manager/pull/70)
+> **Status**: ✅ Completed
+
+### 7.4.1 Overview
+
+플레이어 관리를 위한 화이트리스트, 밴/언밴, 킥 명령어를 추가합니다. 기존 PlayerLookupUseCase와 통합하여 UUID 조회를 자동화합니다.
+
+**명령어 구조**:
+| 명령어 | 설명 |
+|--------|------|
+| `mcctl whitelist <server> <action> [player]` | 화이트리스트 관리 |
+| `mcctl ban <server> <action> [player] [--reason]` | 밴/언밴 관리 |
+| `mcctl kick <server> <player> [--reason]` | 플레이어 킥 |
+
+### 7.4.2 Command Details
+
+#### Whitelist Command
+```bash
+# 화이트리스트 활성화/비활성화
+mcctl whitelist myserver on
+mcctl whitelist myserver off
+
+# 플레이어 추가/제거
+mcctl whitelist myserver add Notch
+mcctl whitelist myserver remove Steve
+
+# 목록 조회
+mcctl whitelist myserver list
+mcctl whitelist myserver list --json
+```
+
+#### Ban Command
+```bash
+# 플레이어 밴
+mcctl ban myserver add Griefer --reason "Griefing"
+mcctl ban myserver add Griefer  # 사유 없이 밴
+
+# 밴 해제
+mcctl ban myserver remove Griefer
+
+# 밴 목록
+mcctl ban myserver list
+mcctl ban myserver list --json
+```
+
+#### Kick Command
+```bash
+# 플레이어 킥
+mcctl kick myserver AFK_Player
+mcctl kick myserver AFK_Player --reason "AFK too long"
+```
+
+### 7.4.3 Implementation Tasks
+
+#### Phase 1: Infrastructure
+- [x] Create `commands/whitelist.ts`
+- [x] Create `commands/ban.ts`
+- [x] Create `commands/kick.ts`
+- [x] Add to index.ts routing and help text
+
+#### Phase 2: RCON Integration
+- [x] Implement RCON command execution for whitelist
+- [x] Implement RCON command execution for ban/pardon
+- [x] Implement RCON command execution for kick
+- [x] Handle server not running errors gracefully
+
+#### Phase 3: JSON File Management
+- [x] Read/write `whitelist.json`
+- [x] Read/write `banned-players.json`
+- [x] Integrate with PlayerLookupUseCase for UUID
+
+#### Phase 4: Interactive Mode
+- [x] Interactive server selection (if not provided)
+- [x] Online player list for kick command
+- [x] Confirmation prompts for destructive actions
+
+#### Phase 5: Testing & Documentation
+- [x] Unit tests for each command
+- [x] Integration tests with mock RCON
+- [x] Update README.md and CLAUDE.md
+
+### 7.4.4 Technical Details
+
+**RCON Commands**:
+| Action | RCON Command |
+|--------|--------------|
+| Whitelist on | `whitelist on` |
+| Whitelist off | `whitelist off` |
+| Whitelist add | `whitelist add <player>` |
+| Whitelist remove | `whitelist remove <player>` |
+| Whitelist list | `whitelist list` |
+| Ban | `ban <player> [reason]` |
+| Pardon | `pardon <player>` |
+| Ban list | `banlist players` |
+| Kick | `kick <player> [reason]` |
+
+**JSON File Structure** (`whitelist.json`):
+```json
+[
+  {
+    "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+    "name": "Notch"
+  }
+]
+```
+
+**JSON File Structure** (`banned-players.json`):
+```json
+[
+  {
+    "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+    "name": "Griefer",
+    "created": "2025-01-20 14:30:25 +0900",
+    "source": "Server",
+    "expires": "forever",
+    "reason": "Griefing"
+  }
+]
+```
+
+### 7.4.5 Verification
+
+```bash
+# 1. Build
+pnpm build
+
+# 2. Test whitelist commands
+mcctl whitelist myserver list
+mcctl whitelist myserver add TestPlayer
+mcctl whitelist myserver remove TestPlayer
+mcctl whitelist myserver on
+mcctl whitelist myserver off
+
+# 3. Test ban commands
+mcctl ban myserver add TestPlayer --reason "Testing"
+mcctl ban myserver list
+mcctl ban myserver remove TestPlayer
+
+# 4. Test kick command (requires running server with player)
+mcctl kick myserver TestPlayer --reason "Testing kick"
+
+# 5. Run tests
+pnpm test
+```
+
+---
+
+## Phase 7.5: Detailed Monitoring
+
+> **Issue**: [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68)
+> **Status**: ✅ Done
+
+### 7.5.1 Overview
+
+서버와 mc-router의 상세 모니터링 기능을 추가합니다. 온라인 플레이어, 리소스 사용량, 업타임 등을 실시간으로 확인할 수 있습니다.
+
+### 7.5.2 Command Structure
+
+```bash
+# 기본 상태 (기존과 동일)
+mcctl status
+
+# 상세 상태
+mcctl status --detail
+
+# 실시간 모니터링 (5초 간격)
+mcctl status --watch
+
+# 특정 서버 상세 상태
+mcctl status myserver
+
+# mc-router 상태
+mcctl router status
+```
+
+### 7.5.3 Output Examples
+
+#### Basic Status (Existing)
+```
+=== Server Status ===
+SERVICE      STATUS    HEALTH    PORT/INFO
+mc-router    running   healthy   :25565 (hostname routing)
+mc-survival  running   healthy   survival.local
+mc-creative  stopped   -         creative.local (auto-scale ready)
+```
+
+#### Detailed Status (`--detail`)
+```
+=== Detailed Server Status ===
+
+📡 MC-ROUTER
+   Status: running (healthy)
+   Uptime: 3d 14h 22m
+   Port: 25565
+   Connections: 5 active
+   Routing Table:
+     survival.local → mc-survival:25565
+     creative.local → mc-creative:25565
+
+🖥️  MC-SURVIVAL (Paper 1.21.1)
+   Status: running (healthy)
+   Uptime: 2d 8h 15m
+   Players: 3/20 online
+     - Notch
+     - Steve
+     - Alex
+   Memory: 2.1GB / 4GB (52%)
+   CPU: 15%
+   TPS: 19.8
+
+🖥️  MC-CREATIVE (Paper 1.21.1)
+   Status: stopped (auto-scale ready)
+   Last active: 2 hours ago
+   Players: 0/20
+```
+
+#### Watch Mode (`--watch`)
+```
+=== Live Status (5s refresh) ===
+Last update: 2025-01-20 14:30:25
+
+[Press Ctrl+C to exit]
+
+SERVICE      STATUS    PLAYERS   MEM      CPU    TPS
+mc-survival  running   3/20      52%      15%    19.8
+mc-creative  stopped   -         -        -      -
+
+Total: 3 players online
+```
+
+#### Single Server Status (`mcctl status <server>`)
+```
+=== Server: mc-survival ===
+
+Type: Paper 1.21.1
+Status: running (healthy)
+Uptime: 2d 8h 15m
+Hostname: survival.local, survival.192.168.1.100.nip.io
+
+📊 Resources:
+   Memory: 2.1GB / 4GB (52%)
+   CPU: 15%
+   Disk: 1.2GB
+
+👥 Players (3/20):
+   - Notch (OP)
+   - Steve
+   - Alex
+
+⚡ Performance:
+   TPS: 19.8
+   MSPT: 48.2ms
+```
+
+### 7.5.4 Implementation Tasks
+
+#### Phase 1: Docker Stats Integration
+- [ ] Add `getContainerStats()` to docker/index.ts
+- [ ] Parse memory usage from Docker stats
+- [ ] Parse CPU usage from Docker stats
+- [ ] Calculate uptime from container start time
+
+#### Phase 2: Player Information
+- [ ] Execute RCON `list` command to get online players
+- [ ] Parse player list response
+- [ ] Get max players from server.properties or config.env
+
+#### Phase 3: TPS Monitoring
+- [ ] Execute RCON command for TPS (Paper/Spigot specific)
+- [ ] Handle servers without TPS support gracefully
+
+#### Phase 4: Status Command Enhancement
+- [ ] Add `--detail` flag to status command
+- [ ] Add `--watch` flag with refresh loop
+- [ ] Add single server status (`mcctl status <server>`)
+- [ ] Implement table formatting for watch mode
+
+#### Phase 5: Router Status
+- [ ] Create `mcctl router status` subcommand
+- [ ] Parse mc-router logs for connection stats
+- [ ] Show routing table from Docker labels
+
+#### Phase 6: Testing & Documentation
+- [ ] Unit tests for stats parsing
+- [ ] Integration tests for status commands
+- [ ] Update help text and documentation
+
+### 7.5.5 Technical Details
+
+**Docker Stats API**:
+```typescript
+interface ContainerStats {
+  memory: {
+    usage: number;    // bytes
+    limit: number;    // bytes
+    percent: number;  // 0-100
+  };
+  cpu: {
+    percent: number;  // 0-100
+  };
+  uptime: number;     // seconds
+}
+```
+
+**RCON Commands**:
+| Info | RCON Command | Server Type |
+|------|--------------|-------------|
+| Player list | `list` | All |
+| TPS | `tps` | Paper/Spigot |
+| TPS (Forge) | `forge tps` | Forge |
+
+### 7.5.6 Verification
+
+```bash
+# 1. Build
+pnpm build
+
+# 2. Test detailed status
+mcctl status --detail
+
+# 3. Test watch mode
+mcctl status --watch
+# (Wait for refresh, then Ctrl+C)
+
+# 4. Test single server status
+mcctl status myserver
+
+# 5. Test router status
+mcctl router status
+
+# 6. Test JSON output
+mcctl status --detail --json
+
+# 7. Run tests
+pnpm test
 ```
 
 ---

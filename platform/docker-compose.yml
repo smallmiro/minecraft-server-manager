@@ -57,7 +57,7 @@ services:
       AUTO_SCALE_UP: "true"
       AUTO_SCALE_DOWN: "false"
       # AUTO_SCALE_DOWN disabled due to bug: disconnects players after timeout
-      # See: https://github.com/itzg/mc-router/issues (report pending)
+      # See: https://github.com/itzg/mc-router/issues/507
       DOCKER_TIMEOUT: "120"
       AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"
     ports:

@@ -49,46 +49,153 @@ mcctl --root /opt/minecraft init
 
 ---
 
-### mcctl status
+### mcctl up
 
-Show status of all servers.
+Start all infrastructure (mc-router and all Minecraft servers).
 
 ```bash
-mcctl status [options]
+mcctl up
 ```
-
-**Options:**
-
-| Option | Description |
-|--------|-------------|
-| `--json` | Output in JSON format |
 
 **Example:**
 
 ```bash
-mcctl status
+mcctl up
 ```
 
-**Output:**
+Equivalent to `docker compose up -d`.
+
+---
+
+### mcctl down
+
+Stop all infrastructure and remove network.
+
+```bash
+mcctl down
+```
+
+**Example:**
+
+```bash
+mcctl down
+```
+
+Stops all mc-* containers and runs `docker compose down`.
+
+---
+
+### mcctl router
+
+Manage mc-router independently from Minecraft servers.
+
+```bash
+mcctl router <action>
+```
+
+**Actions:**
+
+| Action | Description |
+|--------|-------------|
+| `start` | Start mc-router only |
+| `stop` | Stop mc-router only |
+| `restart` | Restart mc-router |
+
+**Examples:**
+
+```bash
+# Start mc-router
+mcctl router start
+
+# Stop mc-router
+mcctl router stop
+
+# Restart mc-router (useful after configuration changes)
+mcctl router restart
+```
+
+mc-router handles hostname-based routing for all Minecraft servers. It must be running for clients to connect to any server.
+
+---
+
+### mcctl status
+
+Show status of all servers with various display options.
+
+```bash
+mcctl status [options]
+mcctl status <server>
+mcctl status router
+```
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--detail` | `-d` | Show detailed info (memory, CPU, players, uptime) |
+| `--watch` | `-W` | Real-time monitoring mode |
+| `--interval <sec>` | | Watch refresh interval (default: 5) |
+| `--json` | | Output in JSON format |
+
+**Examples:**
+
+=== "Basic Status"
+    ```bash
+    mcctl status
+    ```
+
+=== "Detailed Status"
+    ```bash
+    mcctl status --detail
+    ```
+
+=== "Real-time Monitoring"
+    ```bash
+    # Default 5 second refresh
+    mcctl status --watch
+
+    # Custom 2 second refresh
+    mcctl status --watch --interval 2
+    ```
+
+=== "Single Server"
+    ```bash
+    mcctl status myserver
+    ```
+
+=== "Router Status"
+    ```bash
+    mcctl status router
+    ```
+
+**Detailed Output Example:**
 
 ```
-Platform Status
-===============
+=== Detailed Server Status ===
 
-Router: mc-router (running)
+INFRASTRUCTURE
 
-Servers:
-  mc-myserver
-    Status: running
-    Type: PAPER 1.21.1
-    Memory: 4G
-    Players: 2/20
-    Connect: myserver.192.168.1.100.nip.io:25565
+  mc-router
+    Status:    running (healthy)
+    Port:      25565
+    Mode:      --in-docker (auto-discovery)
+    Uptime:    3d 14h 22m
+    Routes:    2 configured
+      - myserver.local → mc-myserver:25565
+      - creative.local → mc-creative:25565
 
-  mc-creative
-    Status: stopped
-    Type: VANILLA 1.20.4
-    Memory: 2G
+MINECRAFT SERVERS
+
+  myserver
+    Container: mc-myserver
+    Status:    running (healthy)
+    Hostname:  myserver.192.168.1.100.nip.io
+    Type:      PAPER
+    Version:   1.21.1
+    Memory:    4G
+    Uptime:    2d 8h 15m
+    Resources: 2.1 GB / 4.0 GB (52.5%) | CPU: 15.2%
+    Players:   3/20 - Steve, Alex, Notch
 ```
 
 ---
@@ -201,16 +308,27 @@ mcctl delete myserver --force
 
 ### mcctl start
 
-Start a stopped server.
+Start a stopped server or all servers.
 
 ```bash
 mcctl start <name>
+mcctl start --all
 ```
 
-**Example:**
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--all` | `-a` | Start all Minecraft servers (not router) |
+
+**Examples:**
 
 ```bash
+# Start single server
 mcctl start myserver
+
+# Start all servers
+mcctl start --all
 ```
 
 !!! tip "Auto-Start"
@@ -220,16 +338,27 @@ mcctl start myserver
 
 ### mcctl stop
 
-Stop a running server.
+Stop a running server or all servers.
 
 ```bash
 mcctl stop <name>
+mcctl stop --all
 ```
 
-**Example:**
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--all` | `-a` | Stop all Minecraft servers (not router) |
+
+**Examples:**
 
 ```bash
+# Stop single server
 mcctl stop myserver
+
+# Stop all servers
+mcctl stop --all
 ```
 
 ---
@@ -286,6 +415,329 @@ There are 2 of a max of 20 players online: Steve, Alex
 ```
 
 Press `Ctrl+C` to exit.
+
+---
+
+### mcctl exec
+
+Execute a single RCON command on a server.
+
+```bash
+mcctl exec <server> <command...>
+```
+
+**Examples:**
+
+```bash
+# Say message to all players
+mcctl exec myserver say "Hello everyone!"
+
+# Give items to player
+mcctl exec myserver give Steve diamond 64
+
+# List online players
+mcctl exec myserver list
+
+# Change weather
+mcctl exec myserver weather clear
+
+# Set time
+mcctl exec myserver time set day
+```
+
+---
+
+### mcctl config
+
+View or modify server configuration.
+
+```bash
+mcctl config <server> [key] [value] [options]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `server` | Server name |
+| `key` | Configuration key (optional) |
+| `value` | New value (optional) |
+
+**Shortcut Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--cheats` | Enable cheats (ALLOW_CHEATS=true) |
+| `--no-cheats` | Disable cheats |
+| `--pvp` | Enable PvP |
+| `--no-pvp` | Disable PvP |
+| `--command-block` | Enable command blocks |
+| `--no-command-block` | Disable command blocks |
+
+**Examples:**
+
+=== "View All Config"
+    ```bash
+    mcctl config myserver
+    ```
+
+=== "View Single Key"
+    ```bash
+    mcctl config myserver MOTD
+    ```
+
+=== "Set Value"
+    ```bash
+    mcctl config myserver MOTD "Welcome to my server!"
+    mcctl config myserver MAX_PLAYERS 50
+    ```
+
+=== "Use Shortcuts"
+    ```bash
+    mcctl config myserver --cheats
+    mcctl config myserver --no-pvp
+    mcctl config myserver --command-block
+    ```
+
+!!! note "Restart Required"
+    Some configuration changes require a server restart to take effect.
+
+---
+
+## Server Backup & Restore
+
+### mcctl server-backup
+
+Backup server configuration (config.env, docker-compose.yml).
+
+```bash
+mcctl server-backup <server> [options]
+```
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--message` | `-m` | Backup description |
+| `--list` | | List all backups for server |
+| `--json` | | Output in JSON format |
+
+**Examples:**
+
+```bash
+# Backup with message
+mcctl server-backup myserver -m "Before upgrade"
+
+# List all backups
+mcctl server-backup myserver --list
+```
+
+---
+
+### mcctl server-restore
+
+Restore server configuration from backup.
+
+```bash
+mcctl server-restore <server> [backup-id] [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--force` | Skip confirmation |
+| `--dry-run` | Show what would be restored |
+| `--json` | Output in JSON format |
+
+**Examples:**
+
+```bash
+# Interactive - shows backup list
+mcctl server-restore myserver
+
+# Restore specific backup
+mcctl server-restore myserver abc123
+
+# Preview restoration
+mcctl server-restore myserver abc123 --dry-run
+```
+
+---
+
+## Player Management
+
+### mcctl op
+
+Manage server operators.
+
+```bash
+mcctl op <server> <action> [player]
+```
+
+**Actions:**
+
+| Action | Description |
+|--------|-------------|
+| `list` | Show current operators |
+| `add <player>` | Add operator (updates RCON + config.env) |
+| `remove <player>` | Remove operator |
+
+**Examples:**
+
+```bash
+# List operators
+mcctl op myserver list
+
+# Add operator
+mcctl op myserver add Steve
+
+# Remove operator
+mcctl op myserver remove Steve
+```
+
+---
+
+### mcctl whitelist
+
+Manage server whitelist.
+
+```bash
+mcctl whitelist <server> <action> [player]
+```
+
+**Actions:**
+
+| Action | Description |
+|--------|-------------|
+| `list` | Show whitelisted players |
+| `add <player>` | Add to whitelist |
+| `remove <player>` | Remove from whitelist |
+| `on` | Enable whitelist |
+| `off` | Disable whitelist |
+| `status` | Show whitelist status |
+
+**Examples:**
+
+```bash
+# List whitelisted players
+mcctl whitelist myserver list
+
+# Add player
+mcctl whitelist myserver add Steve
+
+# Enable whitelist
+mcctl whitelist myserver on
+
+# Check status
+mcctl whitelist myserver status
+```
+
+---
+
+### mcctl ban
+
+Manage player and IP bans.
+
+```bash
+mcctl ban <server> <action> [target] [reason]
+mcctl ban <server> ip <action> [ip] [reason]
+```
+
+**Player Ban Actions:**
+
+| Action | Description |
+|--------|-------------|
+| `list` | Show banned players |
+| `add <player> [reason]` | Ban player |
+| `remove <player>` | Unban player |
+
+**IP Ban Actions:**
+
+| Action | Description |
+|--------|-------------|
+| `ip list` | Show banned IPs |
+| `ip add <ip> [reason]` | Ban IP address |
+| `ip remove <ip>` | Unban IP address |
+
+**Examples:**
+
+```bash
+# List banned players
+mcctl ban myserver list
+
+# Ban player with reason
+mcctl ban myserver add Griefer "Destroying buildings"
+
+# Unban player
+mcctl ban myserver remove Griefer
+
+# List banned IPs
+mcctl ban myserver ip list
+
+# Ban IP
+mcctl ban myserver ip add 192.168.1.100 "Spam"
+```
+
+---
+
+### mcctl kick
+
+Kick a player from the server.
+
+```bash
+mcctl kick <server> <player> [reason]
+```
+
+**Examples:**
+
+```bash
+# Kick player
+mcctl kick myserver Steve
+
+# Kick with reason
+mcctl kick myserver Steve "AFK too long"
+```
+
+---
+
+### mcctl player online
+
+Show online players on servers.
+
+```bash
+mcctl player online <server>
+mcctl player online --all
+```
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--all` | `-a` | Show players on all servers |
+| `--json` | | Output in JSON format |
+
+**Examples:**
+
+```bash
+# Single server
+mcctl player online myserver
+
+# All servers
+mcctl player online --all
+```
+
+**Output:**
+
+```
+Online Players for myserver:
+
+  Status: Running (3/20)
+
+  Steve
+  Alex
+  Notch
+```
 
 ---
 

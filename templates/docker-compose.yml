@@ -59,8 +59,10 @@ services:
       AUTO_SCALE_DOWN_AFTER: "1m"
       DOCKER_TIMEOUT: "120"
       AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"
+      API_BINDING: ":8080"
     ports:
       - "25565:25565"
+      - "127.0.0.1:25580:8080"  # Management API (localhost only, for healthcheck)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:

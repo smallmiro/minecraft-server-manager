@@ -347,7 +347,120 @@ mcctl backup push -m "Before upgrade"
 mcctl backup restore abc1234
 ```
 
-### Docker Commands
+### Infrastructure Commands
+
+```bash
+# Start/stop all infrastructure (mc-router + all servers)
+mcctl up                   # Start everything
+mcctl down                 # Stop everything
+
+# Manage mc-router independently
+mcctl router start         # Start mc-router only
+mcctl router stop          # Stop mc-router only
+mcctl router restart       # Restart mc-router
+
+# Start/stop all MC servers (mc-router keeps running)
+mcctl start --all          # or mcctl start -a
+mcctl stop --all           # or mcctl stop -a
+
+# Individual server management
+mcctl start myserver
+mcctl stop myserver
+mcctl logs myserver
+mcctl console myserver
+```
+
+### Server Commands (RCON)
+
+```bash
+# Execute RCON commands
+mcctl exec myserver say "Hello!"         # Broadcast message
+mcctl exec myserver list                 # List online players
+mcctl exec myserver give Player diamond 64  # Give items
+mcctl exec myserver tp Player 0 100 0    # Teleport player
+```
+
+### Server Configuration
+
+```bash
+# View configuration
+mcctl config myserver              # View all config.env values
+mcctl config myserver MOTD         # View specific key
+mcctl config myserver --json       # JSON output
+
+# Modify configuration
+mcctl config myserver MOTD "Welcome!"  # Set any config value
+
+# Shortcut flags for common settings
+mcctl config myserver --cheats         # Enable cheats (ALLOW_CHEATS=true)
+mcctl config myserver --no-cheats      # Disable cheats
+mcctl config myserver --pvp            # Enable PvP
+mcctl config myserver --no-pvp         # Disable PvP
+mcctl config myserver --command-block  # Enable command blocks
+```
+
+### Operator Management
+
+```bash
+# List, add, remove operators
+mcctl op myserver list             # List current operators
+mcctl op myserver add Notch        # Add operator
+mcctl op myserver remove Steve     # Remove operator
+mcctl op myserver list --json      # JSON output
+
+# Dual update strategy:
+# - RCON (/op, /deop) for immediate effect when server is running
+# - config.env (OPS=) for persistence across restarts
+```
+
+### Whitelist Management
+
+```bash
+mcctl whitelist myserver list      # List whitelisted players
+mcctl whitelist myserver add Steve # Add to whitelist
+mcctl whitelist myserver remove Steve  # Remove from whitelist
+mcctl whitelist myserver on        # Enable whitelist
+mcctl whitelist myserver off       # Disable whitelist
+mcctl whitelist myserver status    # Show whitelist status
+```
+
+### Ban Management
+
+```bash
+mcctl ban myserver list            # List banned players
+mcctl ban myserver add Griefer "reason"  # Ban player with reason
+mcctl ban myserver remove Griefer  # Unban player
+mcctl ban myserver ip list         # List banned IPs
+mcctl ban myserver ip add 1.2.3.4 "reason"  # Ban IP
+mcctl ban myserver ip remove 1.2.3.4  # Unban IP
+```
+
+### Kick and Online Players
+
+```bash
+# Kick player from server
+mcctl kick myserver PlayerName "Too long AFK"
+
+# View online players
+mcctl player online myserver       # List online players on server
+mcctl player online --all          # List online players on all servers
+```
+
+### Server Backup/Restore
+
+```bash
+# Backup server configuration (not world data)
+mcctl server-backup myserver              # Create backup with auto message
+mcctl server-backup myserver -m "msg"     # Create backup with message
+mcctl server-backup myserver --list       # List all backups
+
+# Restore server from backup
+mcctl server-restore myserver             # Interactive restore (select from list)
+mcctl server-restore myserver abc123      # Restore specific backup
+mcctl server-restore myserver --dry-run   # Preview restore without applying
+```
+
+### Docker Commands (Alternative)
 
 ```bash
 cd platform

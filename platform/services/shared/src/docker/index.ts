@@ -1,16 +1,31 @@
-import { spawn, execSync } from 'node:child_process';
-import type { ContainerStatus, HealthStatus, ServerInfo, RouterInfo, PlatformStatus } from '../types/index.js';
+import { spawn, execSync, spawnSync } from 'node:child_process';
+import type {
+  ContainerStatus,
+  HealthStatus,
+  ServerInfo,
+  RouterInfo,
+  PlatformStatus,
+  ContainerStats,
+  PlayerListResult,
+  DetailedServerInfo,
+  RouterDetailInfo,
+  RouteInfo,
+} from '../types/index.js';
 
 /**
  * Execute a command and return stdout
+ * Uses spawnSync to properly handle arguments with special characters
  */
 function execCommand(command: string, args: string[]): string {
   try {
-    const result = execSync(`${command} ${args.join(' ')}`, {
+    const result = spawnSync(command, args, {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
     });
-    return result.trim();
+    if (result.error || result.status !== 0) {
+      return '';
+    }
+    return (result.stdout ?? '').trim();
   } catch {
     return '';
   }
@@ -68,6 +83,49 @@ export function getContainerHealth(container: string): HealthStatus {
 
   if (!result) return 'unknown';
   return result as HealthStatus;
+}
+
+/**
+ * Check mc-router health via management API
+ * mc-router uses distroless image, so Docker healthcheck doesn't work
+ * Instead, we check the management API on localhost:25580
+ */
+export function getRouterHealthViaApi(): HealthStatus {
+  try {
+    // Check if mc-router is running first
+    const status = getContainerStatus('mc-router');
+    if (status !== 'running') {
+      return 'unknown';
+    }
+
+    // Try to connect to management API
+    const result = spawnSync('curl', ['-s', '-o', '/dev/null', '-w', '%{http_code}', 'http://127.0.0.1:25580/routes'], {
+      encoding: 'utf-8',
+      timeout: 3000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    if (result.error || result.status !== 0) {
+      // curl failed, try wget
+      const wgetResult = spawnSync('wget', ['-q', '-O', '/dev/null', 'http://127.0.0.1:25580/routes'], {
+        encoding: 'utf-8',
+        timeout: 3000,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      if (wgetResult.error || wgetResult.status !== 0) {
+        return 'unhealthy';
+      }
+      return 'healthy';
+    }
+
+    const httpCode = (result.stdout ?? '').trim();
+    if (httpCode === '200') {
+      return 'healthy';
+    }
+    return 'unhealthy';
+  } catch {
+    return 'unknown';
+  }
 }
 
 /**
@@ -161,7 +219,7 @@ export function getRouterInfo(): RouterInfo {
   return {
     name: 'mc-router',
     status: getContainerStatus('mc-router'),
-    health: getContainerHealth('mc-router'),
+    health: getRouterHealthViaApi(),
     port: 25565,
   };
 }
@@ -302,4 +360,242 @@ export function execScriptInteractive(
       resolve(1);
     });
   });
+}
+
+/**
+ * Get container resource stats (memory, CPU)
+ */
+export function getContainerStats(container: string): ContainerStats | null {
+  // docker stats --no-stream --format "{{.MemUsage}},{{.CPUPerc}}"
+  // Example output: "2.1GiB / 4GiB,15.23%"
+  const result = execCommand('docker', [
+    'stats',
+    '--no-stream',
+    '--format',
+    '{{.MemUsage}},{{.CPUPerc}}',
+    container,
+  ]);
+
+  if (!result) return null;
+
+  try {
+    const [memUsage, cpuPerc] = result.split(',');
+    if (!memUsage || !cpuPerc) return null;
+
+    // Parse memory: "2.1GiB / 4GiB" or "512MiB / 4GiB"
+    const memParts = memUsage.split('/').map((s) => s.trim());
+    if (memParts.length !== 2) return null;
+
+    const parseMemory = (mem: string): number => {
+      const match = mem.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)?$/i);
+      if (!match || !match[1]) return 0;
+      const value = parseFloat(match[1]);
+      const unit = (match[2] ?? 'B').toUpperCase();
+      const multipliers: Record<string, number> = {
+        B: 1,
+        KIB: 1024,
+        MIB: 1024 ** 2,
+        GIB: 1024 ** 3,
+        TIB: 1024 ** 4,
+        KB: 1000,
+        MB: 1000 ** 2,
+        GB: 1000 ** 3,
+        TB: 1000 ** 4,
+      };
+      return value * (multipliers[unit] || 1);
+    };
+
+    const memoryUsage = parseMemory(memParts[0]!);
+    const memoryLimit = parseMemory(memParts[1]!);
+    const memoryPercent = memoryLimit > 0 ? (memoryUsage / memoryLimit) * 100 : 0;
+
+    // Parse CPU: "15.23%" or "0.00%"
+    const cpuPercent = parseFloat(cpuPerc.replace('%', '')) || 0;
+
+    return {
+      memoryUsage,
+      memoryLimit,
+      memoryPercent,
+      cpuPercent,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get container uptime (time since start)
+ */
+export function getContainerUptime(container: string): { uptime: string; seconds: number } | null {
+  // docker inspect --format '{{.State.StartedAt}}'
+  const result = execCommand('docker', [
+    'inspect',
+    '--format',
+    '{{.State.StartedAt}}',
+    container,
+  ]);
+
+  if (!result || result === '0001-01-01T00:00:00Z') return null;
+
+  try {
+    const startedAt = new Date(result);
+    const now = new Date();
+    const diffMs = now.getTime() - startedAt.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+
+    // Format uptime
+    const days = Math.floor(diffSeconds / 86400);
+    const hours = Math.floor((diffSeconds % 86400) / 3600);
+    const minutes = Math.floor((diffSeconds % 3600) / 60);
+
+    let uptime = '';
+    if (days > 0) uptime += `${days}d `;
+    if (hours > 0 || days > 0) uptime += `${hours}h `;
+    uptime += `${minutes}m`;
+
+    return { uptime: uptime.trim(), seconds: diffSeconds };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get online players via RCON
+ */
+export async function getOnlinePlayers(container: string): Promise<PlayerListResult | null> {
+  try {
+    const result = execSync(`docker exec ${container} rcon-cli list`, {
+      encoding: 'utf-8',
+      timeout: 5000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    // Parse: "There are 3 of a max of 20 players online: Notch, Steve, Alex"
+    // Or: "There are 0 of a max of 20 players online:"
+    const countMatch = result.match(/There are (\d+)(?:\s+of a max of\s+|\/)(\d+) players? online/i);
+    if (!countMatch || !countMatch[1] || !countMatch[2]) return null;
+
+    const online = parseInt(countMatch[1], 10);
+    const max = parseInt(countMatch[2], 10);
+
+    // Extract player names after the colon
+    const playersMatch = result.match(/:\s*(.*)$/);
+    let players: string[] = [];
+    if (playersMatch && playersMatch[1]) {
+      players = playersMatch[1]
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+
+    return { online, max, players };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get detailed server info
+ */
+export function getDetailedServerInfo(container: string, configEnv?: Record<string, string>): DetailedServerInfo {
+  const basic = getServerInfo(container);
+  const detailed: DetailedServerInfo = { ...basic };
+
+  // Only get extended info if container is running
+  if (basic.status === 'running') {
+    // Get stats
+    const stats = getContainerStats(container);
+    if (stats) {
+      detailed.stats = stats;
+    }
+
+    // Get uptime
+    const uptimeInfo = getContainerUptime(container);
+    if (uptimeInfo) {
+      detailed.uptime = uptimeInfo.uptime;
+      detailed.uptimeSeconds = uptimeInfo.seconds;
+    }
+  }
+
+  // Get config info if provided
+  if (configEnv) {
+    detailed.type = configEnv['TYPE'];
+    detailed.version = configEnv['VERSION'];
+    detailed.memory = configEnv['MEMORY'];
+  }
+
+  return detailed;
+}
+
+/**
+ * Get detailed server info with players (async)
+ */
+export async function getDetailedServerInfoWithPlayers(
+  container: string,
+  configEnv?: Record<string, string>
+): Promise<DetailedServerInfo> {
+  const detailed = getDetailedServerInfo(container, configEnv);
+
+  // Get players if running
+  if (detailed.status === 'running') {
+    const players = await getOnlinePlayers(container);
+    if (players) {
+      detailed.players = players;
+    }
+  }
+
+  return detailed;
+}
+
+/**
+ * Get router detailed info
+ */
+export function getRouterDetailInfo(): RouterDetailInfo {
+  const basic = getRouterInfo();
+  const detailed: RouterDetailInfo = {
+    ...basic,
+    routes: [],
+    mode: '--in-docker (auto-discovery)',
+  };
+
+  // Get uptime
+  if (basic.status === 'running') {
+    const uptimeInfo = getContainerUptime('mc-router');
+    if (uptimeInfo) {
+      detailed.uptime = uptimeInfo.uptime;
+      detailed.uptimeSeconds = uptimeInfo.seconds;
+    }
+  }
+
+  // Get routes from all mc-* containers
+  const containers = getMcContainers();
+  for (const container of containers) {
+    const hostname = getContainerHostname(container);
+    if (hostname && hostname !== '-') {
+      // hostname might be comma-separated (e.g., "server.local,server.192.168.1.10.nip.io")
+      const hostnames = hostname.split(',').map((h) => h.trim());
+      const serverStatus = getContainerStatus(container);
+
+      for (const h of hostnames) {
+        detailed.routes.push({
+          hostname: h,
+          target: `${container}:25565`,
+          serverStatus,
+        });
+      }
+    }
+  }
+
+  return detailed;
+}
+
+/**
+ * Format bytes to human readable string
+ */
+export function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }

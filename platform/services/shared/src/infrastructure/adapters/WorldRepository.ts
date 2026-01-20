@@ -3,9 +3,13 @@ import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { Paths } from '../../utils/index.js';
 import { World } from '../../domain/index.js';
+import { getContainerStatus } from '../../docker/index.js';
 import type {
   IWorldRepository,
   WorldLockData,
+  WorldWithServerStatus,
+  ServerStatus,
+  WorldAvailabilityCategory,
 } from '../../application/ports/outbound/IWorldRepository.js';
 
 /**
@@ -148,6 +152,68 @@ export class WorldRepository implements IWorldRepository {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Get all worlds with their server status
+   * Returns worlds categorized by availability
+   */
+  async findAllWithServerStatus(): Promise<WorldWithServerStatus[]> {
+    const worlds = await this.findAll();
+    const results: WorldWithServerStatus[] = [];
+
+    for (const world of worlds) {
+      if (!world.isLocked) {
+        // World is not locked by any server - available
+        results.push({
+          world,
+          category: 'available',
+        });
+      } else {
+        // World is locked - check server status
+        const serverName = world.lockedBy!;
+        const containerName = serverName.startsWith('mc-')
+          ? serverName
+          : `mc-${serverName}`;
+        const containerStatus = getContainerStatus(containerName);
+
+        let serverStatus: ServerStatus;
+        let category: WorldAvailabilityCategory;
+
+        if (containerStatus === 'running') {
+          serverStatus = 'running';
+          category = 'running';
+        } else if (containerStatus === 'not_found') {
+          serverStatus = 'not_found';
+          // If container not found, treat as available (stale lock)
+          category = 'available';
+        } else {
+          // exited, paused, created, etc. - server is stopped
+          serverStatus = 'stopped';
+          category = 'stopped';
+        }
+
+        results.push({
+          world,
+          assignedServer: serverName,
+          serverStatus,
+          category,
+        });
+      }
+    }
+
+    // Sort: available first, then stopped, then running
+    const categoryOrder: Record<WorldAvailabilityCategory, number> = {
+      available: 0,
+      stopped: 1,
+      running: 2,
+    };
+
+    return results.sort((a, b) => {
+      const orderDiff = categoryOrder[a.category] - categoryOrder[b.category];
+      if (orderDiff !== 0) return orderDiff;
+      return a.world.name.localeCompare(b.world.name);
+    });
   }
 
   /**
