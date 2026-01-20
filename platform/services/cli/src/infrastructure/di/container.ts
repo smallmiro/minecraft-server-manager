@@ -93,7 +93,8 @@ export class Container {
     return new CreateServerUseCase(
       this.promptPort,
       this.shellPort,
-      this.serverRepository
+      this.serverRepository,
+      this.worldRepository
     );
   }
 

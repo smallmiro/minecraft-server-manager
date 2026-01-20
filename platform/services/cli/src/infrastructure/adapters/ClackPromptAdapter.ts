@@ -13,6 +13,7 @@ import {
   type SelectPromptOptions,
   type ConfirmPromptOptions,
   type Spinner,
+  type WorldWithServerStatus,
 } from '@minecraft-docker/shared';
 
 /**
@@ -334,6 +335,145 @@ export class ClackPromptAdapter implements IPromptPort {
     }
 
     return world;
+  }
+
+  async promptExistingWorldSelection(
+    worlds: WorldWithServerStatus[]
+  ): Promise<World | null> {
+    // Check if there are any worlds
+    if (worlds.length === 0) {
+      this.warn('No worlds found in worlds/ directory');
+      return null;
+    }
+
+    // Check if all worlds are in use by running servers
+    const selectableWorlds = worlds.filter((w) => w.category !== 'running');
+    if (selectableWorlds.length === 0) {
+      this.warn('All worlds are currently in use by running servers');
+      return null;
+    }
+
+    // Build options with category grouping
+    type WorldOption = {
+      value: string;
+      label: string;
+      hint?: string;
+    };
+
+    const options: WorldOption[] = [];
+
+    // Group by category: available, stopped, running
+    const available = worlds.filter((w) => w.category === 'available');
+    const stopped = worlds.filter((w) => w.category === 'stopped');
+    const running = worlds.filter((w) => w.category === 'running');
+
+    // Add available worlds
+    if (available.length > 0) {
+      options.push({
+        value: '__header_available__',
+        label: pc.green('── Available ──'),
+        hint: 'Free to use',
+      });
+      for (const w of available) {
+        options.push({
+          value: w.world.name,
+          label: `  ${w.world.name}`,
+          hint: w.world.sizeFormatted,
+        });
+      }
+    }
+
+    // Add stopped server worlds
+    if (stopped.length > 0) {
+      options.push({
+        value: '__header_stopped__',
+        label: pc.yellow('── Server Stopped ──'),
+        hint: 'Selectable with warning',
+      });
+      for (const w of stopped) {
+        options.push({
+          value: w.world.name,
+          label: `  ${w.world.name}`,
+          hint: `Used by ${w.assignedServer} (stopped)`,
+        });
+      }
+    }
+
+    // Add running server worlds (disabled)
+    if (running.length > 0) {
+      options.push({
+        value: '__header_running__',
+        label: pc.red('── In Use ──'),
+        hint: 'Not selectable',
+      });
+      for (const w of running) {
+        options.push({
+          value: `__disabled_${w.world.name}__`,
+          label: pc.dim(`  ${w.world.name}`),
+          hint: pc.dim(`In use by ${w.assignedServer} (running)`),
+        });
+      }
+    }
+
+    // Add cancel option
+    options.push({
+      value: '__cancel__',
+      label: pc.gray('Cancel'),
+      hint: 'Go back',
+    });
+
+    const result = await p.select({
+      message: 'Select existing world:',
+      options,
+    });
+
+    if (this.isCancel(result)) {
+      this.handleCancel();
+    }
+
+    const selected = result as string;
+
+    // Handle special values
+    if (
+      selected === '__cancel__' ||
+      selected.startsWith('__header_') ||
+      selected.startsWith('__disabled_')
+    ) {
+      if (selected.startsWith('__disabled_')) {
+        this.warn('This world is in use by a running server. Stop the server first.');
+        return this.promptExistingWorldSelection(worlds);
+      }
+      if (selected.startsWith('__header_')) {
+        // Re-prompt if header selected
+        return this.promptExistingWorldSelection(worlds);
+      }
+      return null;
+    }
+
+    // Find selected world
+    const worldEntry = worlds.find((w) => w.world.name === selected);
+    if (!worldEntry) {
+      throw new Error('World not found');
+    }
+
+    // Show warning for stopped server worlds
+    if (worldEntry.category === 'stopped') {
+      this.warn(
+        `This world is assigned to ${worldEntry.assignedServer} (currently stopped). ` +
+          'Using it with a new server may cause conflicts when the original server starts.'
+      );
+
+      const proceed = await this.confirm({
+        message: 'Continue with this world?',
+        initialValue: false,
+      });
+
+      if (!proceed) {
+        return this.promptExistingWorldSelection(worlds);
+      }
+    }
+
+    return worldEntry.world;
   }
 
   // ========================================
