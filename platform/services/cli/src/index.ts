@@ -13,6 +13,10 @@ import {
   opCommand,
   serverBackupCommand,
   serverRestoreCommand,
+  whitelistCommand,
+  banCommand,
+  kickCommand,
+  playerOnlineCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -47,10 +51,31 @@ ${colors.cyan('Config Shortcuts:')}
   --pvp, --no-pvp            Enable/disable PvP
   --command-block            Enable/disable command blocks
 
-${colors.cyan('Operator Management:')}
-  ${colors.bold('op')} <server> list           List current operators
-  ${colors.bold('op')} <server> add <player>   Add operator (RCON + config)
-  ${colors.bold('op')} <server> remove <player>  Remove operator
+${colors.cyan('Player Management:')}
+  ${colors.bold('op')} <server> <action> [player]      Manage operators
+  ${colors.bold('whitelist')} <server> <action> [player]  Manage whitelist
+  ${colors.bold('ban')} <server> <action> [player/ip]  Manage bans
+  ${colors.bold('kick')} <server> <player> [reason]    Kick player
+
+${colors.cyan('Operator Actions:')}
+  list                    List current operators
+  add <player>            Add operator (RCON + config)
+  remove <player>         Remove operator
+
+${colors.cyan('Whitelist Actions:')}
+  list                    Show whitelisted players
+  add <player>            Add to whitelist
+  remove <player>         Remove from whitelist
+  on / off                Enable/disable whitelist
+  status                  Show whitelist status
+
+${colors.cyan('Ban Actions:')}
+  list                    Show banned players
+  add <player> [reason]   Ban player
+  remove <player>         Unban player
+  ip list                 Show banned IPs
+  ip add <ip> [reason]    Ban IP
+  ip remove <ip>          Unban IP
 
 ${colors.cyan('World Management:')}
   ${colors.bold('world list')} [--json]        List worlds and lock status
@@ -61,6 +86,8 @@ ${colors.cyan('Player Lookup:')}
   ${colors.bold('player lookup')} <name>       Look up player info
   ${colors.bold('player uuid')} <name>         Get player UUID
   ${colors.bold('player uuid')} <name> --offline  Get offline UUID
+  ${colors.bold('player online')} <server>     List online players
+  ${colors.bold('player online')} --all        List online players on all servers
 
 ${colors.cyan('Server Backup/Restore:')}
   ${colors.bold('server-backup')} <server> [-m msg]  Backup server configuration
@@ -103,6 +130,10 @@ ${colors.cyan('Examples:')}
   mcctl config myserver MOTD "Welcome!"  # Set MOTD
   mcctl op myserver list             # List operators
   mcctl op myserver add Notch        # Add operator
+  mcctl whitelist myserver add Steve # Add to whitelist
+  mcctl ban myserver add Griefer     # Ban player
+  mcctl kick myserver AFK "Too long" # Kick player
+  mcctl player online myserver       # Show online players
   mcctl server-backup myserver       # Backup server config
   mcctl server-restore myserver      # Restore from backup
 `);
@@ -172,7 +203,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -371,11 +402,22 @@ async function main(): Promise<void> {
       }
 
       case 'player': {
-        const playerArgs = [subCommand ?? 'lookup', ...positional];
-        if (flags['json']) playerArgs.push('--json');
-        if (flags['offline']) playerArgs.push('--offline');
+        // Handle 'player online' subcommand separately
+        if (subCommand === 'online') {
+          exitCode = await playerOnlineCommand({
+            root: rootDir,
+            serverName: positional[0],
+            all: flags['all'] === true,
+            json: flags['json'] === true,
+          });
+        } else {
+          // Other player subcommands use legacy shell.player
+          const playerArgs = [subCommand ?? 'lookup', ...positional];
+          if (flags['json']) playerArgs.push('--json');
+          if (flags['offline']) playerArgs.push('--offline');
 
-        exitCode = await shell.player(playerArgs);
+          exitCode = await shell.player(playerArgs);
+        }
         break;
       }
 
@@ -424,6 +466,65 @@ async function main(): Promise<void> {
           backupId: positional[1],
           force: flags['force'] === true,
           dryRun: flags['dry-run'] === true,
+          json: flags['json'] === true,
+        });
+        break;
+      }
+
+      case 'whitelist': {
+        // whitelist command: whitelist <server> <action> [player]
+        // subCommand = server name, positional[0] = action, positional[1] = player
+        exitCode = await whitelistCommand({
+          root: rootDir,
+          serverName: subCommand,
+          subCommand: positional[0] as 'list' | 'add' | 'remove' | 'on' | 'off' | 'status' | undefined,
+          playerName: positional[1],
+          json: flags['json'] === true,
+        });
+        break;
+      }
+
+      case 'ban': {
+        // ban command: ban <server> <action> [target] [reason...]
+        // subCommand = server name, positional[0] = action, positional[1] = target
+        const action = positional[0];
+        let ipAction: 'list' | 'add' | 'remove' | undefined;
+        let target: string | undefined;
+        let reason: string | undefined;
+
+        if (action === 'ip') {
+          // ban <server> ip <list|add|remove> [ip] [reason]
+          ipAction = positional[1] as 'list' | 'add' | 'remove' | undefined;
+          target = positional[2];
+          reason = positional.slice(3).join(' ') || undefined;
+        } else {
+          target = positional[1];
+          reason = positional.slice(2).join(' ') || undefined;
+        }
+
+        exitCode = await banCommand({
+          root: rootDir,
+          serverName: subCommand,
+          subCommand: action as 'list' | 'add' | 'remove' | 'ip' | undefined,
+          target,
+          reason,
+          ipAction,
+          json: flags['json'] === true,
+        });
+        break;
+      }
+
+      case 'kick': {
+        // kick command: kick <server> <player> [reason...]
+        const serverName = positional[0];
+        const playerName = positional[1];
+        const reason = positional.slice(2).join(' ') || undefined;
+
+        exitCode = await kickCommand({
+          root: rootDir,
+          serverName,
+          playerName,
+          reason,
           json: flags['json'] === true,
         });
         break;
