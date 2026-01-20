@@ -116,6 +116,23 @@ mcctl router restart
 
 mc-router handles hostname-based routing for all Minecraft servers. It must be running for clients to connect to any server.
 
+**Configuration:**
+
+mc-router settings are configured via environment variables in `.env` file:
+
+```bash
+# Auto-scaling settings
+AUTO_SCALE_UP=true              # Auto-start servers on player connect
+AUTO_SCALE_DOWN=true            # Auto-stop idle servers
+AUTO_SCALE_DOWN_AFTER=10m       # Idle timeout (1m, 5m, 10m, 30m, 1h)
+DOCKER_TIMEOUT=120              # Container start timeout in seconds
+
+# Custom MOTD for sleeping servers
+AUTO_SCALE_ASLEEP_MOTD=§e§lServer is sleeping§r\n§7Connect to wake up!
+```
+
+After changing `.env`, restart mc-router with `mcctl router restart`.
+
 ---
 
 ### mcctl status
