@@ -365,6 +365,49 @@ mcctl logs myserver
 mcctl console myserver
 ```
 
+### Server Commands (RCON)
+
+```bash
+# Execute RCON commands
+mcctl exec myserver say "Hello!"         # Broadcast message
+mcctl exec myserver list                 # List online players
+mcctl exec myserver give Player diamond 64  # Give items
+mcctl exec myserver tp Player 0 100 0    # Teleport player
+```
+
+### Server Configuration
+
+```bash
+# View configuration
+mcctl config myserver              # View all config.env values
+mcctl config myserver MOTD         # View specific key
+mcctl config myserver --json       # JSON output
+
+# Modify configuration
+mcctl config myserver MOTD "Welcome!"  # Set any config value
+
+# Shortcut flags for common settings
+mcctl config myserver --cheats         # Enable cheats (ALLOW_CHEATS=true)
+mcctl config myserver --no-cheats      # Disable cheats
+mcctl config myserver --pvp            # Enable PvP
+mcctl config myserver --no-pvp         # Disable PvP
+mcctl config myserver --command-block  # Enable command blocks
+```
+
+### Operator Management
+
+```bash
+# List, add, remove operators
+mcctl op myserver list             # List current operators
+mcctl op myserver add Notch        # Add operator
+mcctl op myserver remove Steve     # Remove operator
+mcctl op myserver list --json      # JSON output
+
+# Dual update strategy:
+# - RCON (/op, /deop) for immediate effect when server is running
+# - config.env (OPS=) for persistence across restarts
+```
+
 ### Docker Commands (Alternative)
 
 ```bash

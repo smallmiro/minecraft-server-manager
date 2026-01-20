@@ -224,6 +224,26 @@ mcctl status
 mcctl start myserver
 mcctl stop myserver
 mcctl logs myserver
+mcctl console myserver    # Connect to RCON console
+
+# Server commands (RCON)
+mcctl exec myserver say "Hello!"     # Execute RCON command
+mcctl exec myserver list             # List online players
+mcctl exec myserver give Player diamond 64
+
+# Server configuration
+mcctl config myserver              # View all config
+mcctl config myserver MOTD         # View specific key
+mcctl config myserver MOTD "Welcome!"  # Set value
+mcctl config myserver --cheats     # Enable cheats (shortcut)
+mcctl config myserver --no-pvp     # Disable PvP (shortcut)
+mcctl config myserver --json       # JSON output
+
+# Operator management
+mcctl op myserver list             # List operators
+mcctl op myserver add Notch        # Add operator
+mcctl op myserver remove Steve     # Remove operator
+mcctl op myserver list --json      # JSON output
 
 # World management (interactive or with arguments)
 mcctl world list          # List all worlds with lock status
