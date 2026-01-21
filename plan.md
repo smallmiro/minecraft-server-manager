@@ -6,9 +6,9 @@
 | Version | Description | Status |
 |---------|-------------|--------|
 | [v0.2.0](https://github.com/smallmiro/minecraft-server-manager/milestone/1) | Infrastructure (Phase 1, 2) | ✅ Closed |
-| [v0.3.0](https://github.com/smallmiro/minecraft-server-manager/milestone/2) | Core Features (Phase 3, 4) | 🔄 Open |
-| [v0.4.0](https://github.com/smallmiro/minecraft-server-manager/milestone/4) | CLI Interactive Mode (Phase 7) | 🔄 Open |
-| [v1.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/3) | Release (Phase 5) | 🔄 Open |
+| [v0.3.0](https://github.com/smallmiro/minecraft-server-manager/milestone/2) | Core Features (Phase 3, 4) | ✅ Closed |
+| [v0.4.0](https://github.com/smallmiro/minecraft-server-manager/milestone/4) | CLI Interactive Mode (Phase 7) | ✅ Closed |
+| [v1.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/3) | Release (Phase 5) | ✅ Closed |
 
 ### Issues by Phase
 | Phase | Issues | Status |
@@ -18,17 +18,17 @@
 | Phase 2.5: mDNS Publisher | [#20](https://github.com/smallmiro/minecraft-server-manager/issues/20) | ✅ Completed |
 | Phase 2.6: nip.io Magic DNS | [#52](https://github.com/smallmiro/minecraft-server-manager/issues/52) | ✅ Completed |
 | Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) | ✅ Completed |
-| Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | 🔄 Open |
-| Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | 🔄 Open |
+| Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | ✅ Completed |
+| Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | ✅ Completed |
 | Phase 6: npm Package | [#28](https://github.com/smallmiro/minecraft-server-manager/issues/28) | ✅ Closed |
-| Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40), [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54), [#56](https://github.com/smallmiro/minecraft-server-manager/issues/56) ✅ | 🔄 Open |
+| Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40), [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54), [#56](https://github.com/smallmiro/minecraft-server-manager/issues/56) | ✅ Completed |
 | Phase 7.1: Server Management Commands | [#58](https://github.com/smallmiro/minecraft-server-manager/issues/58) ✅, [#59](https://github.com/smallmiro/minecraft-server-manager/issues/59) ✅, [#60](https://github.com/smallmiro/minecraft-server-manager/issues/60) ✅ | ✅ Completed |
 | Phase 7.2: Server Backup Commands | [#64](https://github.com/smallmiro/minecraft-server-manager/issues/64) ✅ | ✅ Completed |
 | Phase 7.3: World Selection Enhancement | [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66) ✅ | ✅ Completed |
 | Phase 7.4: Player Management Commands | [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67) ✅ | ✅ Completed |
 | Phase 7.5: Detailed Monitoring | [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68) ✅ | ✅ Completed |
-| Phase 7.6: Sudo Password Handling | [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72) | 🔄 Open |
-| Phase 7.7: Unified Player Management | [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73) | 🔄 Open |
+| Phase 7.6: Sudo Password Handling | [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72) ✅ | ✅ Completed |
+| Phase 7.7: Unified Player Management | [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73) ✅ | ✅ Completed |
 
 ---
 
@@ -1546,10 +1546,11 @@ pnpm test
 
 ---
 
-## Phase 7.6: Sudo Password Handling for Automation
+## Phase 7.6: Sudo Password Handling for Automation ✅ COMPLETED
 
 > **Issue**: [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72)
-> **Status**: 🔄 Open
+> **PR**: [#74](https://github.com/smallmiro/minecraft-server-manager/pull/74)
+> **Status**: ✅ Completed
 
 ### 7.6.1 Overview
 
@@ -1580,21 +1581,21 @@ $ mcctl create myserver
 ### 7.6.3 Implementation Tasks
 
 #### Phase 1: CLI Option & Environment Variable
-- [ ] Add `--sudo-password` option to create/delete commands
-- [ ] Support `MCCTL_SUDO_PASSWORD` environment variable
-- [ ] Add password prompt in interactive mode using `@clack/prompts` password()
-- [ ] Create `ISudoPort` interface in application layer
+- [x] Add `--sudo-password` option to create/delete commands
+- [x] Support `MCCTL_SUDO_PASSWORD` environment variable
+- [x] Add password prompt in interactive mode using `@clack/prompts` password()
+- [x] Create `ISudoPort` interface in application layer
 
 #### Phase 2: Bash Script Modifications
-- [ ] Update `create-server.sh` to support `sudo -S` with password from env
-- [ ] Update `delete-server.sh` to support `sudo -S` with password from env
-- [ ] Update `logs.sh` for journalctl sudo handling (optional)
+- [x] Update `create-server.sh` to support `sudo -S` with password from env
+- [x] Update `delete-server.sh` to support `sudo -S` with password from env
+- [x] Update `logs.sh` for journalctl sudo handling (optional)
 
 #### Phase 3: Security & Documentation
-- [ ] Ensure password not visible in `ps` output
-- [ ] Clear password from memory after use
-- [ ] Never log passwords
-- [ ] Document sudoers NOPASSWD configuration as alternative
+- [x] Ensure password not visible in `ps` output
+- [x] Clear password from memory after use
+- [x] Never log passwords
+- [x] Document sudoers NOPASSWD configuration as alternative
 
 ### 7.6.4 Verification
 
@@ -1618,10 +1619,11 @@ ps aux | grep mcctl  # Should NOT show password
 
 ---
 
-## Phase 7.7: Unified Player Management with Interactive Mode
+## Phase 7.7: Unified Player Management with Interactive Mode ✅ COMPLETED
 
 > **Issue**: [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73)
-> **Status**: 🔄 Open
+> **PR**: [#75](https://github.com/smallmiro/minecraft-server-manager/pull/75)
+> **Status**: ✅ Completed
 
 ### 7.7.1 Overview
 
@@ -1740,40 +1742,40 @@ Player lookup request
 ### 7.7.5 Implementation Tasks
 
 #### Phase 1: Unified Player Command
-- [ ] Create `mcctl player` unified command entry point
-- [ ] Implement server selection prompt
-- [ ] Implement player selection prompt (online + manual)
-- [ ] Implement action selection prompt
-- [ ] Add player action loop (continuous actions)
+- [x] Create `mcctl player` unified command entry point
+- [x] Implement server selection prompt
+- [x] Implement player selection prompt (online + manual)
+- [x] Implement action selection prompt
+- [x] Add player action loop (continuous actions)
 
 #### Phase 2: Reusable Prompt Components
-- [ ] Create `lib/prompts/server-select.ts`
-- [ ] Create `lib/prompts/player-select.ts`
-- [ ] Create `lib/prompts/action-select.ts`
+- [x] Create `lib/prompts/server-select.ts`
+- [x] Create `lib/prompts/player-select.ts`
+- [x] Create `lib/prompts/action-select.ts`
 
 #### Phase 3: Player Info Command (Mojang API)
-- [ ] Create `lib/mojang-api.ts` - Mojang API client
-- [ ] Create `commands/player-info.ts` - Player info command
-- [ ] Integrate with existing PlayerLookupUseCase
+- [x] Create `lib/mojang-api.ts` - Mojang API client
+- [x] Create `commands/player.ts` - Unified player command with info
+- [x] Integrate with existing PlayerLookupUseCase
 
 #### Phase 4: Player Cache System
-- [ ] Create `lib/player-cache.ts` with AES-256-GCM encryption
-- [ ] Implement cache read/write with machine-specific key
-- [ ] Add cache statistics command
-- [ ] Add cache clear command
-- [ ] Set file permissions to `600`
+- [x] Create `lib/player-cache.ts` with AES-256-GCM encryption
+- [x] Implement cache read/write with machine-specific key
+- [x] Add cache statistics command
+- [x] Add cache clear command
+- [x] Set file permissions to `600`
 
 #### Phase 5: Interactive Mode for Existing Commands
-- [ ] Add interactive mode to `whitelist.ts`
-- [ ] Add interactive mode to `ban.ts`
-- [ ] Add interactive mode to `op.ts`
-- [ ] Add interactive mode to `kick.ts`
+- [x] Add interactive mode to `whitelist.ts`
+- [x] Add interactive mode to `ban.ts`
+- [x] Add interactive mode to `op.ts`
+- [x] Add interactive mode to `kick.ts`
 
 #### Phase 6: Testing & Documentation
-- [ ] Unit tests for Mojang API client
-- [ ] Unit tests for cache encryption/decryption
-- [ ] Integration tests for player workflow
-- [ ] Update CLI documentation
+- [x] Unit tests for Mojang API client
+- [x] Unit tests for cache encryption/decryption
+- [x] Integration tests for player workflow
+- [x] Update CLI documentation
 
 ### 7.7.6 Technical Details
 
