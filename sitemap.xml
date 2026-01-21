@@ -2,434 +2,434 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/advanced/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/advanced/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/advanced/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/advanced/backup/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/advanced/backup/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/advanced/backup/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/advanced/networking/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/advanced/networking/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/advanced/networking/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/cli/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/cli/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/cli/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/cli/commands/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/cli/commands/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/cli/commands/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/configuration/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/configuration/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/configuration/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/configuration/environment/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/configuration/environment/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/configuration/environment/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/configuration/server-types/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/configuration/server-types/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/configuration/server-types/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/development/cli-architecture/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/development/cli-architecture/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/development/cli-architecture/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/getting-started/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/getting-started/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/getting-started/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/getting-started/installation/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/getting-started/installation/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/getting-started/installation/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/getting-started/quickstart/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/getting-started/quickstart/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/getting-started/quickstart/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/01-getting-started/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/01-getting-started/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/01-getting-started/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/02-data-directory/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/02-data-directory/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/02-data-directory/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/03-variables/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/03-variables/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/03-variables/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/04-server-properties/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/04-server-properties/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/04-server-properties/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/05-jvm-options/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/05-jvm-options/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/05-jvm-options/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/06-types-and-platforms/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/06-types-and-platforms/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/06-types-and-platforms/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/07-java-versions/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/07-java-versions/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/07-java-versions/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/08-mods-and-plugins/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/08-mods-and-plugins/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/08-mods-and-plugins/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/09-configuration/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/09-configuration/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/09-configuration/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/10-commands/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/10-commands/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/10-commands/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/11-autopause-autostop/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/11-autopause-autostop/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/11-autopause-autostop/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/12-healthcheck/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/12-healthcheck/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/12-healthcheck/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/13-deployment/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/13-deployment/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/13-deployment/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/14-world-data/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/14-world-data/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/14-world-data/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/15-troubleshooting/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/15-troubleshooting/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/15-troubleshooting/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/16-examples/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/16-examples/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/16-examples/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/itzg-reference/doc-list/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/doc-list/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/doc-list/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/usage/cli-usage-examples/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/usage/cli-usage-examples/"/>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/usage/cli-usage-examples/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/advanced/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/advanced/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/advanced/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/advanced/backup/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/advanced/backup/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/advanced/backup/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/advanced/networking/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/advanced/networking/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/advanced/networking/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/cli/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/cli/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/cli/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/cli/commands/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/cli/commands/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/cli/commands/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/configuration/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/configuration/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/configuration/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/configuration/environment/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/configuration/environment/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/configuration/environment/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/configuration/server-types/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/configuration/server-types/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/configuration/server-types/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/development/cli-architecture/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/development/cli-architecture/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/development/cli-architecture/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/getting-started/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/getting-started/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/getting-started/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/getting-started/installation/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/getting-started/installation/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/getting-started/installation/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/getting-started/quickstart/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/getting-started/quickstart/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/getting-started/quickstart/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/01-getting-started/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/01-getting-started/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/01-getting-started/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/02-data-directory/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/02-data-directory/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/02-data-directory/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/03-variables/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/03-variables/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/03-variables/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/04-server-properties/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/04-server-properties/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/04-server-properties/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/05-jvm-options/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/05-jvm-options/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/05-jvm-options/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/06-types-and-platforms/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/06-types-and-platforms/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/06-types-and-platforms/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/07-java-versions/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/07-java-versions/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/07-java-versions/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/08-mods-and-plugins/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/08-mods-and-plugins/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/08-mods-and-plugins/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/09-configuration/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/09-configuration/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/09-configuration/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/10-commands/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/10-commands/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/10-commands/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/11-autopause-autostop/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/11-autopause-autostop/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/11-autopause-autostop/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/12-healthcheck/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/12-healthcheck/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/12-healthcheck/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/13-deployment/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/13-deployment/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/13-deployment/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/14-world-data/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/14-world-data/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/14-world-data/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/15-troubleshooting/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/15-troubleshooting/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/15-troubleshooting/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/16-examples/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/16-examples/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/16-examples/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/doc-list/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/itzg-reference/doc-list/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/doc-list/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/usage/cli-usage-examples/</loc>
-        <lastmod>2026-01-20</lastmod>
+        <lastmod>2026-01-21</lastmod>
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/usage/cli-usage-examples/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/usage/cli-usage-examples/"/>

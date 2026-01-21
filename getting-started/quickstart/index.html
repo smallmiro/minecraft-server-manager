@@ -803,6 +803,117 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Quick Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#player-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-wont-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Won't Start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cant-connect-to-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Can't Connect to Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-crashes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Crashes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permission-denied-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission Denied Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1428,6 +1539,117 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Quick Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#player-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-wont-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Won't Start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cant-connect-to-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Can't Connect to Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-crashes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Crashes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permission-denied-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permission Denied Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1648,6 +1870,7 @@ Subsequent starts are much faster.</p>
 </ul>
 </div>
 <h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
+<h3 id="server-management">Server Management<a class="headerlink" href="#server-management" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -1663,6 +1886,14 @@ Subsequent starts are much faster.</p>
 <tr>
 <td>List servers</td>
 <td><code>mcctl status</code></td>
+</tr>
+<tr>
+<td>Detailed status</td>
+<td><code>mcctl status --detail</code></td>
+</tr>
+<tr>
+<td>Real-time monitoring</td>
+<td><code>mcctl status --watch</code></td>
 </tr>
 <tr>
 <td>Start server</td>
@@ -1681,11 +1912,173 @@ Subsequent starts are much faster.</p>
 <td><code>mcctl console &lt;name&gt;</code></td>
 </tr>
 <tr>
+<td>Execute RCON command</td>
+<td><code>mcctl exec &lt;name&gt; &lt;command&gt;</code></td>
+</tr>
+<tr>
 <td>Delete server</td>
 <td><code>mcctl delete &lt;name&gt;</code></td>
 </tr>
 </tbody>
 </table>
+<h3 id="player-management">Player Management<a class="headerlink" href="#player-management" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Add operator</td>
+<td><code>mcctl op &lt;server&gt; add &lt;player&gt;</code></td>
+</tr>
+<tr>
+<td>Remove operator</td>
+<td><code>mcctl op &lt;server&gt; remove &lt;player&gt;</code></td>
+</tr>
+<tr>
+<td>List operators</td>
+<td><code>mcctl op &lt;server&gt; list</code></td>
+</tr>
+<tr>
+<td>Add to whitelist</td>
+<td><code>mcctl whitelist &lt;server&gt; add &lt;player&gt;</code></td>
+</tr>
+<tr>
+<td>Enable whitelist</td>
+<td><code>mcctl whitelist &lt;server&gt; on</code></td>
+</tr>
+<tr>
+<td>Ban player</td>
+<td><code>mcctl ban &lt;server&gt; add &lt;player&gt; [reason]</code></td>
+</tr>
+<tr>
+<td>Kick player</td>
+<td><code>mcctl kick &lt;server&gt; &lt;player&gt; [reason]</code></td>
+</tr>
+<tr>
+<td>Show online players</td>
+<td><code>mcctl player online &lt;server&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>View config</td>
+<td><code>mcctl config &lt;server&gt;</code></td>
+</tr>
+<tr>
+<td>Set config</td>
+<td><code>mcctl config &lt;server&gt; KEY value</code></td>
+</tr>
+<tr>
+<td>Enable cheats</td>
+<td><code>mcctl config &lt;server&gt; --cheats</code></td>
+</tr>
+<tr>
+<td>Disable PvP</td>
+<td><code>mcctl config &lt;server&gt; --no-pvp</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="backup">Backup<a class="headerlink" href="#backup" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backup server config</td>
+<td><code>mcctl server-backup &lt;server&gt;</code></td>
+</tr>
+<tr>
+<td>Restore server config</td>
+<td><code>mcctl server-restore &lt;server&gt;</code></td>
+</tr>
+<tr>
+<td>Backup worlds to GitHub</td>
+<td><code>mcctl backup push -m "message"</code></td>
+</tr>
+<tr>
+<td>Restore from GitHub</td>
+<td><code>mcctl backup restore &lt;commit&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="server-wont-start">Server Won't Start<a class="headerlink" href="#server-wont-start" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Check logs for errors:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Verify EULA is accepted:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>EULA
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="c1"># Should show: EULA=TRUE</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Check Java version compatibility:</strong></p>
+</li>
+<li>Minecraft 1.21+ requires Java 21</li>
+<li>Minecraft 1.18-1.20.4 requires Java 17+</li>
+<li>Forge 1.16.5 and below requires Java 8</li>
+</ol>
+<h3 id="cant-connect-to-server">Can't Connect to Server<a class="headerlink" href="#cant-connect-to-server" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Verify mc-router is running:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>status
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="c1"># mc-router should show &quot;running&quot; and &quot;healthy&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Check server hostname:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>&lt;server&gt;
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># Note the hostname (e.g., myserver.192.168.1.100.nip.io)</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Ensure server is running:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;server&gt;
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="server-crashes">Server Crashes<a class="headerlink" href="#server-crashes" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Check memory allocation:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>MEMORY
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1"># Increase if needed: mcctl config &lt;server&gt; MEMORY 6G</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Check for mod conflicts:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error\|exception&quot;</span>
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="permission-denied-errors">Permission Denied Errors<a class="headerlink" href="#permission-denied-errors" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Fix file ownership (if needed)</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span><span class="nv">$USER</span>:<span class="nv">$USER</span><span class="w"> </span>~/minecraft-servers/
+</code></pre></div>
+<p>For more detailed troubleshooting, see the <a href="https://docker-minecraft-server.readthedocs.io/">itzg/minecraft-server documentation</a>.</p>
 
 
 

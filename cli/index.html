@@ -1025,10 +1025,32 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#infrastructure-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#server-management" class="md-nav__link">
     <span class="md-ellipsis">
       
         Server Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#player-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Management
       
     </span>
   </a>
@@ -1047,10 +1069,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#backup-management" class="md-nav__link">
+  <a href="#server-backuprestore" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Backup Management
+        Server Backup/Restore
       
     </span>
   </a>
@@ -1058,10 +1080,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#player-utilities" class="md-nav__link">
+  <a href="#world-backup-github" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Player Utilities
+        World Backup (GitHub)
       
     </span>
   </a>
@@ -1231,7 +1253,7 @@
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>create<span class="w"> </span>--help
 </code></pre></div>
 <h2 id="command-categories">Command Categories<a class="headerlink" href="#command-categories" title="Permanent link">&para;</a></h2>
-<h3 id="server-management">Server Management<a class="headerlink" href="#server-management" title="Permanent link">&para;</a></h3>
+<h3 id="infrastructure-commands">Infrastructure Commands<a class="headerlink" href="#infrastructure-commands" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -1244,6 +1266,29 @@
 <td><code>mcctl init</code></td>
 <td>Initialize platform directory structure</td>
 </tr>
+<tr>
+<td><code>mcctl up</code></td>
+<td>Start all infrastructure (router + servers)</td>
+</tr>
+<tr>
+<td><code>mcctl down</code></td>
+<td>Stop all infrastructure</td>
+</tr>
+<tr>
+<td><code>mcctl router &lt;action&gt;</code></td>
+<td>Manage mc-router (start/stop/restart)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="server-management">Server Management<a class="headerlink" href="#server-management" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>mcctl create</code></td>
 <td>Create a new server (interactive or CLI)</td>
@@ -1272,6 +1317,53 @@
 <td><code>mcctl console</code></td>
 <td>Connect to RCON console</td>
 </tr>
+<tr>
+<td><code>mcctl exec</code></td>
+<td>Execute a single RCON command</td>
+</tr>
+<tr>
+<td><code>mcctl config</code></td>
+<td>View or modify server configuration</td>
+</tr>
+</tbody>
+</table>
+<h3 id="player-management">Player Management<a class="headerlink" href="#player-management" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mcctl op</code></td>
+<td>Manage server operators (add/remove/list)</td>
+</tr>
+<tr>
+<td><code>mcctl whitelist</code></td>
+<td>Manage whitelist (add/remove/on/off/status)</td>
+</tr>
+<tr>
+<td><code>mcctl ban</code></td>
+<td>Manage player and IP bans</td>
+</tr>
+<tr>
+<td><code>mcctl kick</code></td>
+<td>Kick a player from the server</td>
+</tr>
+<tr>
+<td><code>mcctl player online</code></td>
+<td>Show online players</td>
+</tr>
+<tr>
+<td><code>mcctl player lookup</code></td>
+<td>Look up player information</td>
+</tr>
+<tr>
+<td><code>mcctl player uuid</code></td>
+<td>Get player UUID</td>
+</tr>
 </tbody>
 </table>
 <h3 id="world-management">World Management<a class="headerlink" href="#world-management" title="Permanent link">&para;</a></h3>
@@ -1297,7 +1389,26 @@
 </tr>
 </tbody>
 </table>
-<h3 id="backup-management">Backup Management<a class="headerlink" href="#backup-management" title="Permanent link">&para;</a></h3>
+<h3 id="server-backuprestore">Server Backup/Restore<a class="headerlink" href="#server-backuprestore" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mcctl server-backup</code></td>
+<td>Backup server configuration</td>
+</tr>
+<tr>
+<td><code>mcctl server-restore</code></td>
+<td>Restore server from backup</td>
+</tr>
+</tbody>
+</table>
+<h3 id="world-backup-github">World Backup (GitHub)<a class="headerlink" href="#world-backup-github" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -1321,25 +1432,6 @@
 <tr>
 <td><code>mcctl backup restore</code></td>
 <td>Restore from backup</td>
-</tr>
-</tbody>
-</table>
-<h3 id="player-utilities">Player Utilities<a class="headerlink" href="#player-utilities" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Command</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>mcctl player lookup</code></td>
-<td>Look up player information</td>
-</tr>
-<tr>
-<td><code>mcctl player uuid</code></td>
-<td>Get player UUID</td>
 </tr>
 </tbody>
 </table>
