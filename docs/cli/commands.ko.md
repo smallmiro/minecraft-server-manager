@@ -161,9 +161,132 @@ mcctl status router
     mcctl status
     ```
 
+    **출력:**
+    ```
+    === Server Status (mc-router Managed) ===
+
+    INFRASTRUCTURE
+    SERVICE              STATUS       HEALTH     PORT/INFO
+    -------              ------       ------     ---------
+    mc-router            running      healthy    :25565 (hostname routing)
+    avahi-daemon         running      (system)   mDNS broadcast
+
+    MINECRAFT SERVERS
+    SERVER               STATUS       HEALTH     HOSTNAME
+    ------               ------       ------     --------
+    survival             running      healthy    survival.local,survival.192.168.1.100.nip.io
+    ```
+
 === "상세 상태"
     ```bash
     mcctl status --detail
+    ```
+
+    **출력:**
+    ```
+    === Detailed Server Status ===
+
+    INFRASTRUCTURE
+
+      mc-router
+        Status:    running (healthy)
+        Port:      25565
+        Mode:      --in-docker (auto-discovery)
+        Uptime:    1d 1h 27m
+        Routes:    2 configured
+          - survival.local → mc-survival:25565
+          - survival.192.168.1.100.nip.io → mc-survival:25565
+
+      avahi-daemon
+        Status:    running
+        Type:      system
+
+    MINECRAFT SERVERS
+
+      survival
+        Container: mc-survival
+        Status:    running (healthy)
+        Hostname:  survival.local,survival.192.168.1.100.nip.io
+        Type:      PAPER
+        Version:   1.21.1
+        Memory:    4G
+        Uptime:    1d 1h 16m
+        Resources: 3.1 GB / 8.0 GB (38.8%) | CPU: 15.2%
+        Players:   2/20 - Steve, Alex
+    ```
+
+=== "JSON 출력"
+    ```bash
+    mcctl status --json
+    ```
+
+    **출력:**
+    ```json
+    {
+      "router": {
+        "name": "mc-router",
+        "status": "running",
+        "health": "healthy",
+        "port": 25565
+      },
+      "avahi_daemon": {
+        "name": "avahi-daemon",
+        "status": "running",
+        "type": "system"
+      },
+      "servers": [
+        {
+          "name": "survival",
+          "container": "mc-survival",
+          "status": "running",
+          "health": "healthy",
+          "hostname": "survival.local,survival.192.168.1.100.nip.io"
+        }
+      ]
+    }
+    ```
+
+=== "단일 서버"
+    ```bash
+    mcctl status survival
+    ```
+
+    **출력:**
+    ```
+    === Server: survival ===
+
+      survival
+        Container: mc-survival
+        Status:    running (healthy)
+        Hostname:  survival.local,survival.192.168.1.100.nip.io
+        Type:      PAPER
+        Version:   1.21.1
+        Memory:    4G
+        Uptime:    1d 1h 16m
+        Resources: 3.1 GB / 8.0 GB (38.8%) | CPU: 18.2%
+        Players:   2/20 - Steve, Alex
+    ```
+
+=== "라우터 상태"
+    ```bash
+    mcctl status router
+    ```
+
+    **출력:**
+    ```
+    === mc-router Status ===
+
+      Status:    running (healthy)
+      Port:      25565
+      Mode:      --in-docker (auto-discovery)
+      Uptime:    1d 1h 27m
+
+    ROUTING TABLE
+
+      HOSTNAME                                 TARGET                    STATUS
+      --------                                 ------                    ------
+      survival.local                           mc-survival:25565         running
+      survival.192.168.1.100.nip.io            mc-survival:25565         running
     ```
 
 === "실시간 모니터링"
@@ -174,46 +297,6 @@ mcctl status router
     # 사용자 지정 2초 새로고침
     mcctl status --watch --interval 2
     ```
-
-=== "단일 서버"
-    ```bash
-    mcctl status myserver
-    ```
-
-=== "라우터 상태"
-    ```bash
-    mcctl status router
-    ```
-
-**상세 출력 예시:**
-
-```
-=== Detailed Server Status ===
-
-INFRASTRUCTURE
-
-  mc-router
-    Status:    running (healthy)
-    Port:      25565
-    Mode:      --in-docker (auto-discovery)
-    Uptime:    3d 14h 22m
-    Routes:    2 configured
-      - myserver.local → mc-myserver:25565
-      - creative.local → mc-creative:25565
-
-MINECRAFT SERVERS
-
-  myserver
-    Container: mc-myserver
-    Status:    running (healthy)
-    Hostname:  myserver.192.168.1.100.nip.io
-    Type:      PAPER
-    Version:   1.21.1
-    Memory:    4G
-    Uptime:    2d 8h 15m
-    Resources: 2.1 GB / 4.0 GB (52.5%) | CPU: 15.2%
-    Players:   3/20 - Steve, Alex, Notch
-```
 
 ---
 
@@ -414,13 +497,27 @@ mcctl logs <name> [options]
 
 ```bash
 # 마지막 50줄 표시
-mcctl logs myserver
+mcctl logs survival
 
 # 실시간으로 로그 추적
-mcctl logs myserver -f
+mcctl logs survival -f
 
-# 마지막 100줄 표시
-mcctl logs myserver -n 100
+# 마지막 10줄 표시
+mcctl logs survival -n 10
+```
+
+**출력 예시:**
+```
+[22:09:48] [Server thread/INFO]: Steve joined the game
+[22:10:15] [Server thread/INFO]: Alex joined the game
+[22:15:30] [Server thread/INFO]: <Steve> Hello everyone!
+[22:15:45] [Server thread/INFO]: <Alex> Hi Steve!
+[22:20:00] [Server thread/INFO]: Steve has made the advancement [Getting Wood]
+[22:25:12] [Server thread/INFO]: Saving the game (this may take a moment!)
+[22:25:12] [Server thread/INFO]: Saved the game
+[22:30:00] [Server thread/INFO]: Alex left the game
+[22:35:15] [RCON Listener #1/INFO]: Thread RCON Client started
+[22:35:15] [RCON Client #1/INFO]: Thread RCON Client shutting down
 ```
 
 ---
@@ -510,25 +607,46 @@ mcctl config <server> [key] [value] [options]
 
 === "전체 설정 보기"
     ```bash
-    mcctl config myserver
+    mcctl config survival
+    ```
+
+    **출력:**
+    ```
+    Configuration for survival:
+
+      TYPE=PAPER
+      VERSION=1.21.1
+      MEMORY=4G
+      GAMEMODE=survival
+      DIFFICULTY=normal
+      MAX_PLAYERS=20
+      VIEW_DISTANCE=10
+      PVP=true
+      SPAWN_PROTECTION=0
+      LEVEL=survival-world
+      ENABLE_RCON=true
+      MOTD=Welcome to survival! Your adventure begins here.
+      ALLOW_CHEATS=false
+      ENABLE_COMMAND_BLOCK=true
+      OPS=Steve
     ```
 
 === "단일 키 보기"
     ```bash
-    mcctl config myserver MOTD
+    mcctl config survival MOTD
     ```
 
 === "값 설정"
     ```bash
-    mcctl config myserver MOTD "Welcome to my server!"
-    mcctl config myserver MAX_PLAYERS 50
+    mcctl config survival MOTD "Welcome to my server!"
+    mcctl config survival MAX_PLAYERS 50
     ```
 
 === "단축키 사용"
     ```bash
-    mcctl config myserver --cheats
-    mcctl config myserver --no-pvp
-    mcctl config myserver --command-block
+    mcctl config survival --cheats
+    mcctl config survival --no-pvp
+    mcctl config survival --command-block
     ```
 
 !!! note "재시작 필요"
@@ -558,10 +676,25 @@ mcctl server-backup <server> [options]
 
 ```bash
 # 메시지와 함께 백업
-mcctl server-backup myserver -m "Before upgrade"
+mcctl server-backup survival -m "업그레이드 전"
 
 # 모든 백업 목록
-mcctl server-backup myserver --list
+mcctl server-backup survival --list
+```
+
+**출력 예시 (--list):**
+```
+Backups for survival:
+
+  20260120-203357
+    Created: 1/20/2026, 8:33:57 PM
+    Size: 3 KB, Files: 7
+    Description: Before upgrade
+
+  20260118-150000
+    Created: 1/18/2026, 3:00:00 PM
+    Size: 3 KB, Files: 7
+    Description: Initial setup
 ```
 
 ---
@@ -619,13 +752,21 @@ mcctl op <server> <action> [player]
 
 ```bash
 # 관리자 목록
-mcctl op myserver list
+mcctl op survival list
 
 # 관리자 추가
-mcctl op myserver add Steve
+mcctl op survival add Steve
 
 # 관리자 제거
-mcctl op myserver remove Steve
+mcctl op survival remove Steve
+```
+
+**출력 예시 (list):**
+```
+Operators for survival:
+
+  Steve
+  Alex
 ```
 
 ---
@@ -653,16 +794,34 @@ mcctl whitelist <server> <action> [player]
 
 ```bash
 # 화이트리스트된 플레이어 목록
-mcctl whitelist myserver list
+mcctl whitelist survival list
 
 # 플레이어 추가
-mcctl whitelist myserver add Steve
+mcctl whitelist survival add Steve
 
 # 화이트리스트 활성화
-mcctl whitelist myserver on
+mcctl whitelist survival on
 
 # 상태 확인
-mcctl whitelist myserver status
+mcctl whitelist survival status
+```
+
+**출력 예시 (list):**
+```
+Whitelist for survival:
+
+  Steve
+  Alex
+  Notch
+```
+
+**출력 예시 (status):**
+```
+Whitelist Status for survival:
+
+  Enabled: Yes
+  Players: 3
+  Running: Yes
 ```
 
 ---
@@ -696,19 +855,26 @@ mcctl ban <server> ip <action> [ip] [reason]
 
 ```bash
 # 밴된 플레이어 목록
-mcctl ban myserver list
+mcctl ban survival list
 
 # 사유와 함께 플레이어 밴
-mcctl ban myserver add Griefer "건물 파괴"
+mcctl ban survival add Griefer "스폰 지역 그리핑"
 
 # 플레이어 밴 해제
-mcctl ban myserver remove Griefer
+mcctl ban survival remove Griefer
 
 # 밴된 IP 목록
-mcctl ban myserver ip list
+mcctl ban survival ip list
 
 # IP 밴
-mcctl ban myserver ip add 192.168.1.100 "스팸"
+mcctl ban survival ip add 192.168.1.100 "스팸"
+```
+
+**출력 예시 (list):**
+```
+Banned Players for survival:
+
+  Griefer (Reason: Griefing spawn area)
 ```
 
 ---
@@ -751,25 +917,39 @@ mcctl player online --all
 
 **예제:**
 
-```bash
-# 단일 서버
-mcctl player online myserver
+=== "단일 서버"
+    ```bash
+    mcctl player online survival
+    ```
 
-# 모든 서버
-mcctl player online --all
-```
+    **출력:**
+    ```
+    Online Players for survival:
 
-**출력:**
+      Status: Running (2/20)
 
-```
-Online Players for myserver:
+      Players:
+        - Steve
+        - Alex
+    ```
 
-  Status: Running (3/20)
+=== "모든 서버"
+    ```bash
+    mcctl player online --all
+    ```
 
-  Steve
-  Alex
-  Notch
-```
+    **출력:**
+    ```
+    Online Players (All Servers):
+
+      survival: 2 players
+        - Steve
+        - Alex
+
+      creative: 0 players
+
+      Total: 2 players online
+    ```
 
 ---
 
@@ -791,25 +971,51 @@ mcctl world list [options]
 
 **예제:**
 
-```bash
-mcctl world list
-```
+=== "기본 출력"
+    ```bash
+    mcctl world list
+    ```
 
-**출력:**
+    **출력:**
+    ```
+    Worlds:
 
-```
-Worlds:
+      survival-world
+        Status: locked (mc-survival)
+        Size: 514.0MB
+        Path: /home/myuser/minecraft-servers/worlds/survival-world
 
-  survival
-    Status: locked: mc-myserver
-    Size: 256 MB
-    Path: /home/user/minecraft-servers/worlds/survival
+      creative-world
+        Status: unlocked
+        Size: 128.5MB
+        Path: /home/myuser/minecraft-servers/worlds/creative-world
+    ```
 
-  creative
-    Status: unlocked
-    Size: 128 MB
-    Path: /home/user/minecraft-servers/worlds/creative
-```
+=== "JSON 출력"
+    ```bash
+    mcctl world list --json
+    ```
+
+    **출력:**
+    ```json
+    [
+      {
+        "name": "survival-world",
+        "path": "/home/myuser/minecraft-servers/worlds/survival-world",
+        "isLocked": true,
+        "lockedBy": "mc-survival",
+        "size": "514.0MB",
+        "lastModified": "2026-01-21T13:19:48.853Z"
+      },
+      {
+        "name": "creative-world",
+        "path": "/home/myuser/minecraft-servers/worlds/creative-world",
+        "isLocked": false,
+        "size": "128.5MB",
+        "lastModified": "2026-01-20T10:30:00.000Z"
+      }
+    ]
+    ```
 
 ---
 
@@ -903,13 +1109,25 @@ mcctl backup status
 **출력 (설정됨):**
 
 ```
+=== Backup Status ===
+
+Configuration: Configured
+Repository:    myuser/minecraft-backup-repo
+Branch:        main
+Auto on stop:  true
+
+Cache:         Exists
+Last commit:   fd8633b
+Last date:     2026-01-20 21:06:35 +0900
+
+Worlds dir:    /home/myuser/minecraft-servers/worlds
+Cache dir:     /home/myuser/.minecraft-backup
+
 Backup Configuration:
 
   Status: Configured
-  Repository: user/minecraft-worlds-backup
+  Repository: myuser/minecraft-backup-repo
   Branch: main
-  Last backup: 2024-01-15 14:30:00
-  Auto backup: enabled
 ```
 
 **출력 (설정되지 않음):**
@@ -971,19 +1189,37 @@ mcctl backup history [options]
 
 **예제:**
 
-```bash
-mcctl backup history
-```
+=== "기본 출력"
+    ```bash
+    mcctl backup history
+    ```
 
-**출력:**
+    **출력:**
+    ```
+    Backup History:
 
-```
-Backup History:
+      fd8633b  Backup: 2026-01-20 21:06:30       2026-01-20
+      19a7a4d  Backup: 2026-01-20 20:21:06       2026-01-20
+      7c2ad14  Manual backup                     2026-01-19
+      ddeda27  Initial backup                    2026-01-17
+    ```
 
-  abc1234  서버 업그레이드 전     2024-01-15
-  def5678  주간 백업              2024-01-08
-  ghi9012  초기 백업              2024-01-01
-```
+=== "JSON 출력"
+    ```bash
+    mcctl backup history --json
+    ```
+
+    **출력:**
+    ```json
+    {
+      "history": [
+        {"commit": "fd8633b", "date": "2026-01-20 21:06:35 +0900", "message": "Backup: 2026-01-20 21:06:30"},
+        {"commit": "19a7a4d", "date": "2026-01-20 20:21:08 +0900", "message": "Backup: 2026-01-20 20:21:06"},
+        {"commit": "7c2ad14", "date": "2026-01-19 22:50:42 +0900", "message": "Manual backup"},
+        {"commit": "ddeda27", "date": "2026-01-17 23:43:24 +0900", "message": "Initial backup"}
+      ]
+    }
+    ```
 
 ---
 
@@ -1087,11 +1323,10 @@ mcctl player info Notch --json
 **출력:**
 
 ```
-Player Info: Notch
-
+Player: Notch
   UUID: 069a79f4-44e9-4726-a5be-fca90e38aaf5
-  Skin URL: https://textures.minecraft.net/texture/...
-  Source: mojang (cached)
+  Skin: http://textures.minecraft.net/texture/292009a4925b58f02c77dadc3ecef07ea4c7472f64e0fdc32ce5522489362680
+  Source: mojang
 ```
 
 **JSON 출력:**
@@ -1145,19 +1380,9 @@ mcctl player cache clear
 **통계 출력:**
 
 ```
-Player Cache Statistics:
-
-  Location: /home/user/.minecraft-docker/.player-cache
-  Encryption: AES-256-GCM
-
-  Entries: 42
-  Size: 128 KB
-  Oldest Entry: 2024-01-01
-  Newest Entry: 2024-01-15
-
-  By Type:
-    UUID lookups: 42
-    Skin URLs: 38
+Player Cache Statistics
+  Players cached: 5
+  Cache size: 2.1 KB
 ```
 
 ---
