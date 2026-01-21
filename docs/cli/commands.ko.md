@@ -243,6 +243,7 @@ mcctl create [name] [options]
 | `--world-url` | `-u` | ZIP URL에서 월드 다운로드 |
 | `--world` | `-w` | worlds/ 디렉토리의 기존 월드 사용 |
 | `--no-start` | | 생성만 하고 시작하지 않음 |
+| `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
 
 **예제:**
 
@@ -268,6 +269,16 @@ mcctl create [name] [options]
 
     # 시작하지 않고 생성만
     mcctl create myserver --no-start
+    ```
+
+=== "자동화 (CI/CD)"
+    ```bash
+    # 환경 변수로 sudo 비밀번호 전달
+    export MCCTL_SUDO_PASSWORD="your-password"
+    mcctl create myserver -t PAPER -v 1.21.1
+
+    # --sudo-password 옵션 사용
+    mcctl create myserver --sudo-password "your-password"
     ```
 
 **서버 타입:**
@@ -304,6 +315,7 @@ mcctl delete [name] [options]
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
 | `--force` | `-y` | 확인 건너뛰기 |
+| `--sudo-password` | | mDNS 해제용 sudo 비밀번호 (자동화용) |
 
 !!! warning "월드 데이터 보존"
     `mcctl delete`는 서버 설정만 제거하고 월드 데이터는 `worlds/` 디렉토리에 보존됩니다.
@@ -319,6 +331,9 @@ mcctl delete myserver
 
 # 확인 없이 강제 삭제
 mcctl delete myserver --force
+
+# 자동화 시 sudo 비밀번호 사용
+MCCTL_SUDO_PASSWORD="your-password" mcctl delete myserver --force
 ```
 
 ---
@@ -1006,7 +1021,191 @@ mcctl backup restore [commit]
 
 ## 플레이어 유틸리티
 
-### mcctl player lookup
+### mcctl player (대화형 모드)
+
+통합 플레이어 관리 대화형 워크플로우입니다.
+
+```bash
+mcctl player
+mcctl player <server>
+```
+
+**예제:**
+
+=== "전체 대화형"
+    ```bash
+    mcctl player
+    # 1. 목록에서 서버 선택
+    # 2. 온라인 플레이어 선택 또는 이름 입력
+    # 3. 액션 선택 (op/deop, 화이트리스트, 밴, 강퇴, 정보)
+    ```
+
+=== "서버 지정"
+    ```bash
+    mcctl player myserver
+    # 1. 온라인 플레이어 선택 또는 이름 입력
+    # 2. 액션 선택
+    ```
+
+대화형 모드 제공 기능:
+
+- 상태 표시가 있는 서버 선택
+- 온라인 플레이어 목록 및 쉬운 선택
+- 액션 메뉴 (op/deop, 화이트리스트 추가/제거, 밴/밴 해제, 강퇴, 정보 보기)
+- 필요시 자동 서버 재시작 프롬프트
+
+---
+
+### mcctl player info
+
+Mojang API에서 플레이어 정보를 조회하고 암호화된 로컬 캐시를 사용합니다.
+
+```bash
+mcctl player info <name> [options]
+```
+
+**옵션:**
+
+| 옵션 | 설명 |
+|--------|-------------|
+| `--offline` | Mojang 조회 대신 오프라인 모드 UUID 계산 |
+| `--json` | JSON 형식으로 출력 |
+
+**예제:**
+
+```bash
+# 플레이어 정보 조회 (UUID, 스킨 URL)
+mcctl player info Notch
+
+# 오프라인 UUID 계산
+mcctl player info Steve --offline
+
+# 스크립팅용 JSON 출력
+mcctl player info Notch --json
+```
+
+**출력:**
+
+```
+Player Info: Notch
+
+  UUID: 069a79f4-44e9-4726-a5be-fca90e38aaf5
+  Skin URL: https://textures.minecraft.net/texture/...
+  Source: mojang (cached)
+```
+
+**JSON 출력:**
+
+```json
+{
+  "username": "Notch",
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "skinUrl": "https://textures.minecraft.net/texture/...",
+  "source": "mojang",
+  "cached": true
+}
+```
+
+!!! info "플레이어 캐시"
+    플레이어 데이터는 AES-256-GCM 암호화로 로컬에 캐시됩니다:
+
+    - **UUID**: 영구 캐시 (절대 변경되지 않음)
+    - **사용자명**: 30일간 캐시 (변경 가능)
+    - **스킨 URL**: 1일간 캐시 (자주 변경됨)
+
+    캐시 위치: `~/.minecraft-docker/.player-cache`
+
+---
+
+### mcctl player cache
+
+암호화된 플레이어 데이터 캐시를 관리합니다.
+
+```bash
+mcctl player cache <action>
+```
+
+**액션:**
+
+| 액션 | 설명 |
+|--------|-------------|
+| `stats` | 캐시 통계 표시 |
+| `clear` | 모든 캐시된 플레이어 데이터 삭제 |
+
+**예제:**
+
+```bash
+# 캐시 통계 보기
+mcctl player cache stats
+
+# 모든 캐시된 데이터 삭제
+mcctl player cache clear
+```
+
+**통계 출력:**
+
+```
+Player Cache Statistics:
+
+  Location: /home/user/.minecraft-docker/.player-cache
+  Encryption: AES-256-GCM
+
+  Entries: 42
+  Size: 128 KB
+  Oldest Entry: 2024-01-01
+  Newest Entry: 2024-01-15
+
+  By Type:
+    UUID lookups: 42
+    Skin URLs: 38
+```
+
+---
+
+### mcctl player online
+
+서버의 온라인 플레이어를 표시합니다.
+
+```bash
+mcctl player online <server>
+mcctl player online --all
+```
+
+**옵션:**
+
+| 옵션 | 단축 | 설명 |
+|--------|-------|-------------|
+| `--all` | `-a` | 모든 서버의 플레이어 표시 |
+| `--json` | | JSON 형식으로 출력 |
+
+**예제:**
+
+```bash
+# 단일 서버
+mcctl player online myserver
+
+# 모든 서버
+mcctl player online --all
+```
+
+**출력:**
+
+```
+Online Players for myserver:
+
+  Status: Running (3/20)
+
+  Steve
+  Alex
+  Notch
+```
+
+---
+
+### mcctl player lookup (레거시)
+
+!!! note "지원 중단 예정"
+    `mcctl player info`를 대신 사용하세요. 이 명령어는 하위 호환성을 위해 유지됩니다.
 
 Mojang API에서 플레이어 정보를 조회합니다.
 
@@ -1028,7 +1227,10 @@ mcctl player lookup Notch
 
 ---
 
-### mcctl player uuid
+### mcctl player uuid (레거시)
+
+!!! note "지원 중단 예정"
+    `mcctl player info` 또는 `mcctl player info --offline`을 대신 사용하세요.
 
 플레이어 UUID를 가져옵니다.
 
@@ -1065,3 +1267,42 @@ mcctl player uuid Steve --offline
 | `--json` | JSON 출력 형식 | `mcctl status --json` |
 | `-h, --help` | 도움말 표시 | `mcctl --help` |
 | `--version` | 버전 표시 | `mcctl --version` |
+
+---
+
+## 환경 변수
+
+자동화 및 CI/CD 파이프라인을 위한 환경 변수입니다.
+
+### MCCTL_SUDO_PASSWORD
+
+root 권한이 필요한 작업(mDNS 등록/해제)에 sudo 비밀번호를 제공합니다.
+
+```bash
+export MCCTL_SUDO_PASSWORD="your-password"
+```
+
+**사용하는 명령어:**
+
+- `mcctl create` - avahi-daemon에 mDNS 호스트명 등록
+- `mcctl delete` - mDNS 호스트명 해제
+
+**예제 (CI/CD):**
+
+```bash
+# GitHub Actions 예제
+- name: Create Minecraft Server
+  env:
+    MCCTL_SUDO_PASSWORD: ${{ secrets.SUDO_PASSWORD }}
+  run: |
+    mcctl create myserver -t PAPER -v 1.21.1
+```
+
+!!! warning "보안"
+    sudo 비밀번호는 CI/CD secrets를 사용하여 안전하게 저장하세요. 비밀번호를 버전 관리에 커밋하지 마세요.
+
+**대안:** `--sudo-password` 옵션 직접 사용:
+
+```bash
+mcctl create myserver --sudo-password "your-password"
+```

@@ -50,7 +50,24 @@ minecraft/
 │   │
 │   ├── services/                # TypeScript microservices (Monorepo)
 │   │   ├── cli/                 # @minecraft-docker/mcctl (npm CLI)
-│   │   │   ├── src/             # TypeScript source
+│   │   │   ├── src/
+│   │   │   │   ├── index.ts     # CLI entry point
+│   │   │   │   ├── commands/    # Command implementations
+│   │   │   │   │   ├── player.ts       # Unified player management
+│   │   │   │   │   ├── whitelist.ts    # Whitelist management
+│   │   │   │   │   ├── ban.ts          # Ban management
+│   │   │   │   │   ├── op.ts           # Operator management
+│   │   │   │   │   ├── kick.ts         # Kick player
+│   │   │   │   │   └── ...
+│   │   │   │   ├── lib/         # Libraries
+│   │   │   │   │   ├── mojang-api.ts   # Mojang API client
+│   │   │   │   │   ├── player-cache.ts # Encrypted player cache
+│   │   │   │   │   ├── rcon.ts         # RCON helpers
+│   │   │   │   │   └── prompts/        # Reusable prompt components
+│   │   │   │   │       ├── server-select.ts
+│   │   │   │   │       ├── player-select.ts
+│   │   │   │   │       └── action-select.ts
+│   │   │   │   └── infrastructure/     # DI and adapters
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
 │   │   ├── shared/              # @minecraft-docker/shared (common utilities)
@@ -221,6 +238,10 @@ mcctl delete              # Interactive: shows server list
 mcctl delete myserver     # CLI: deletes myserver
 mcctl delete myserver --force  # Force delete even with players online
 
+# Automation (sudo password for mDNS registration)
+MCCTL_SUDO_PASSWORD=secret mcctl create myserver   # Environment variable
+mcctl create myserver --sudo-password "secret"     # CLI option
+
 # Infrastructure management
 mcctl up                  # Start all (mc-router + all servers)
 mcctl down                # Stop all infrastructure
@@ -275,6 +296,15 @@ mcctl kick myserver PlayerName "reason"
 # Online players
 mcctl player online myserver       # List online players
 mcctl player online --all          # List all online players
+
+# Unified player management (interactive)
+mcctl player                       # Interactive: server → player → action
+mcctl player myserver              # Interactive: for specific server
+mcctl player info Steve            # Player info lookup (UUID, skin)
+mcctl player info Steve --offline  # Offline UUID calculation
+mcctl player info Steve --json     # JSON output
+mcctl player cache stats           # Show cache statistics
+mcctl player cache clear           # Clear cached data
 
 # Server backup/restore
 mcctl server-backup myserver       # Backup server config

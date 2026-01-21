@@ -218,39 +218,43 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [ ] Display mc-router connection stats and routing table
   - [ ] `--json` output support for all monitoring commands
 
-#### FR-017: Sudo Password Handling for Automation
+#### FR-017: Sudo Password Handling for Automation ✅
 - **Priority**: Medium
 - **Description**: Add sudo password handling mechanism to enable CLI automation. Scripts requiring sudo (create-server.sh, delete-server.sh) currently block automation due to password prompts.
 - **Issue**: [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72)
+- **PR**: [#74](https://github.com/smallmiro/minecraft-server-manager/pull/74)
+- **Status**: ✅ Completed
 - **Acceptance Criteria**:
-  - [ ] `--sudo-password` CLI option for create/delete commands
-  - [ ] `MCCTL_SUDO_PASSWORD` environment variable support
-  - [ ] Interactive password prompt using `@clack/prompts` password() when needed
-  - [ ] Bash scripts support `sudo -S` with password from environment
-  - [ ] Password not visible in process list (`ps aux`)
-  - [ ] Password never logged to files or console
-  - [ ] Documentation for sudoers NOPASSWD configuration as alternative
+  - [x] `--sudo-password` CLI option for create/delete commands
+  - [x] `MCCTL_SUDO_PASSWORD` environment variable support
+  - [x] Interactive password prompt using `@clack/prompts` password() when needed
+  - [x] Bash scripts support `sudo -S` with password from environment
+  - [x] Password not visible in process list (`ps aux`)
+  - [x] Password never logged to files or console
+  - [x] Documentation for sudoers NOPASSWD configuration as alternative
 
-#### FR-018: Unified Player Management with Interactive Mode
+#### FR-018: Unified Player Management with Interactive Mode ✅
 - **Priority**: Medium
 - **Description**: Create unified `mcctl player` command with interactive mode for comprehensive player management. Integrate Mojang API with encrypted local cache to minimize API calls and avoid rate limiting.
 - **Issue**: [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73)
+- **PR**: [#75](https://github.com/smallmiro/minecraft-server-manager/pull/75)
+- **Status**: ✅ Completed
 - **Acceptance Criteria**:
-  - [ ] `mcctl player` unified interactive mode (server → player → action)
-  - [ ] `mcctl player info <name>` shows player info (UUID, skin URL)
-  - [ ] `mcctl player cache clear` clears cached player data
-  - [ ] `mcctl player cache stats` shows cache statistics
-  - [ ] Server selection prompt showing online player counts
-  - [ ] Player selection from online players or manual entry
-  - [ ] Action selection (view info, whitelist, ban, op, kick)
-  - [ ] Reusable prompt components (`server-select`, `player-select`, `action-select`)
-  - [ ] Interactive mode for existing commands (whitelist, ban, op, kick)
-  - [ ] Mojang API integration with encrypted local cache
-  - [ ] Cache location: `~/.mcctl/.player-cache`
-  - [ ] Cache encryption: AES-256-GCM with machine-specific key
-  - [ ] Cache policy: UUID permanent, username 30 days, skin 1 day
-  - [ ] Cache file permissions: `600`
-  - [ ] Support offline UUID calculation for offline-mode servers
+  - [x] `mcctl player` unified interactive mode (server → player → action)
+  - [x] `mcctl player info <name>` shows player info (UUID, skin URL)
+  - [x] `mcctl player cache clear` clears cached player data
+  - [x] `mcctl player cache stats` shows cache statistics
+  - [x] Server selection prompt showing online player counts
+  - [x] Player selection from online players or manual entry
+  - [x] Action selection (view info, whitelist, ban, op, kick)
+  - [x] Reusable prompt components (`server-select`, `player-select`, `action-select`)
+  - [x] Interactive mode for existing commands (whitelist, ban, op, kick)
+  - [x] Mojang API integration with encrypted local cache
+  - [x] Cache location: `~/.minecraft-docker/.player-cache`
+  - [x] Cache encryption: AES-256-GCM with machine-specific key
+  - [x] Cache policy: UUID permanent, username 30 days, skin 1 day
+  - [x] Cache file permissions: `600`
+  - [x] Support offline UUID calculation for offline-mode servers
 
 ### 2.2 Non-Functional Requirements
 

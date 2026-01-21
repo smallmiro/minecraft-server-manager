@@ -243,6 +243,7 @@ mcctl create [name] [options]
 | `--world-url` | `-u` | Download world from ZIP URL |
 | `--world` | `-w` | Use existing world from worlds/ directory |
 | `--no-start` | | Create without starting |
+| `--sudo-password` | | Sudo password for mDNS registration (automation) |
 
 **Examples:**
 
@@ -268,6 +269,16 @@ mcctl create [name] [options]
 
     # Create without starting
     mcctl create myserver --no-start
+    ```
+
+=== "Automation (CI/CD)"
+    ```bash
+    # Using environment variable for sudo password
+    export MCCTL_SUDO_PASSWORD="your-password"
+    mcctl create myserver -t PAPER -v 1.21.1
+
+    # Using --sudo-password option
+    mcctl create myserver --sudo-password "your-password"
     ```
 
 **Server Types:**
@@ -304,6 +315,7 @@ mcctl delete [name] [options]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--force` | `-y` | Skip confirmation |
+| `--sudo-password` | | Sudo password for mDNS deregistration (automation) |
 
 !!! warning "World Data Preserved"
     `mcctl delete` removes the server configuration but preserves world data in the `worlds/` directory.
@@ -319,6 +331,9 @@ mcctl delete myserver
 
 # Force delete without confirmation
 mcctl delete myserver --force
+
+# Automation with sudo password
+MCCTL_SUDO_PASSWORD="your-password" mcctl delete myserver --force
 ```
 
 ---
@@ -1006,7 +1021,191 @@ mcctl backup restore [commit]
 
 ## Player Utilities
 
-### mcctl player lookup
+### mcctl player (Interactive Mode)
+
+Unified player management with interactive workflow.
+
+```bash
+mcctl player
+mcctl player <server>
+```
+
+**Examples:**
+
+=== "Full Interactive"
+    ```bash
+    mcctl player
+    # 1. Select server from list
+    # 2. Select online player or enter name
+    # 3. Select action (op/deop, whitelist, ban, kick, info)
+    ```
+
+=== "Server-Specific"
+    ```bash
+    mcctl player myserver
+    # 1. Select online player or enter name
+    # 2. Select action
+    ```
+
+The interactive mode provides:
+
+- Server selection with status indicators
+- Online player list with easy selection
+- Action menu (op/deop, whitelist add/remove, ban/unban, kick, view info)
+- Automatic server restart prompts when needed
+
+---
+
+### mcctl player info
+
+Look up player information from Mojang API with encrypted local caching.
+
+```bash
+mcctl player info <name> [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--offline` | Calculate offline-mode UUID instead of Mojang lookup |
+| `--json` | Output in JSON format |
+
+**Examples:**
+
+```bash
+# Look up player info (UUID, skin URL)
+mcctl player info Notch
+
+# Offline UUID calculation
+mcctl player info Steve --offline
+
+# JSON output for scripting
+mcctl player info Notch --json
+```
+
+**Output:**
+
+```
+Player Info: Notch
+
+  UUID: 069a79f4-44e9-4726-a5be-fca90e38aaf5
+  Skin URL: https://textures.minecraft.net/texture/...
+  Source: mojang (cached)
+```
+
+**JSON Output:**
+
+```json
+{
+  "username": "Notch",
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "skinUrl": "https://textures.minecraft.net/texture/...",
+  "source": "mojang",
+  "cached": true
+}
+```
+
+!!! info "Player Cache"
+    Player data is cached locally with AES-256-GCM encryption:
+
+    - **UUID**: Cached permanently (never changes)
+    - **Username**: Cached for 30 days (can change)
+    - **Skin URL**: Cached for 1 day (changes frequently)
+
+    Cache location: `~/.minecraft-docker/.player-cache`
+
+---
+
+### mcctl player cache
+
+Manage the encrypted player data cache.
+
+```bash
+mcctl player cache <action>
+```
+
+**Actions:**
+
+| Action | Description |
+|--------|-------------|
+| `stats` | Show cache statistics |
+| `clear` | Clear all cached player data |
+
+**Examples:**
+
+```bash
+# View cache statistics
+mcctl player cache stats
+
+# Clear all cached data
+mcctl player cache clear
+```
+
+**Stats Output:**
+
+```
+Player Cache Statistics:
+
+  Location: /home/user/.minecraft-docker/.player-cache
+  Encryption: AES-256-GCM
+
+  Entries: 42
+  Size: 128 KB
+  Oldest Entry: 2024-01-01
+  Newest Entry: 2024-01-15
+
+  By Type:
+    UUID lookups: 42
+    Skin URLs: 38
+```
+
+---
+
+### mcctl player online
+
+Show online players on servers.
+
+```bash
+mcctl player online <server>
+mcctl player online --all
+```
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--all` | `-a` | Show players on all servers |
+| `--json` | | Output in JSON format |
+
+**Examples:**
+
+```bash
+# Single server
+mcctl player online myserver
+
+# All servers
+mcctl player online --all
+```
+
+**Output:**
+
+```
+Online Players for myserver:
+
+  Status: Running (3/20)
+
+  Steve
+  Alex
+  Notch
+```
+
+---
+
+### mcctl player lookup (Legacy)
+
+!!! note "Deprecated"
+    Use `mcctl player info` instead. This command is kept for backward compatibility.
 
 Look up player information from Mojang API.
 
@@ -1028,7 +1227,10 @@ mcctl player lookup Notch
 
 ---
 
-### mcctl player uuid
+### mcctl player uuid (Legacy)
+
+!!! note "Deprecated"
+    Use `mcctl player info` or `mcctl player info --offline` instead.
 
 Get player UUID.
 
@@ -1065,3 +1267,42 @@ These options work with all commands:
 | `--json` | JSON output format | `mcctl status --json` |
 | `-h, --help` | Show help | `mcctl --help` |
 | `--version` | Show version | `mcctl --version` |
+
+---
+
+## Environment Variables
+
+Environment variables for automation and CI/CD pipelines.
+
+### MCCTL_SUDO_PASSWORD
+
+Provides sudo password for operations requiring root access (mDNS registration/deregistration).
+
+```bash
+export MCCTL_SUDO_PASSWORD="your-password"
+```
+
+**Used by:**
+
+- `mcctl create` - For registering mDNS hostname with avahi-daemon
+- `mcctl delete` - For deregistering mDNS hostname
+
+**Example (CI/CD):**
+
+```bash
+# GitHub Actions example
+- name: Create Minecraft Server
+  env:
+    MCCTL_SUDO_PASSWORD: ${{ secrets.SUDO_PASSWORD }}
+  run: |
+    mcctl create myserver -t PAPER -v 1.21.1
+```
+
+!!! warning "Security"
+    Store sudo passwords securely using CI/CD secrets. Never commit passwords to version control.
+
+**Alternative:** Use `--sudo-password` option directly:
+
+```bash
+mcctl create myserver --sudo-password "your-password"
+```
