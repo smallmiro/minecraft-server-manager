@@ -17,6 +17,7 @@ import {
   banCommand,
   kickCommand,
   playerOnlineCommand,
+  playerCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -85,12 +86,19 @@ ${colors.cyan('World Management:')}
   ${colors.bold('world assign')} <world> <srv> Lock world to server
   ${colors.bold('world release')} <world>      Release world lock
 
-${colors.cyan('Player Lookup:')}
-  ${colors.bold('player lookup')} <name>       Look up player info
-  ${colors.bold('player uuid')} <name>         Get player UUID
-  ${colors.bold('player uuid')} <name> --offline  Get offline UUID
+${colors.cyan('Player Management (Interactive):')}
+  ${colors.bold('player')}                     Interactive mode: server → player → action
+  ${colors.bold('player')} <server>            Interactive mode for specific server
+  ${colors.bold('player info')} <name>         Player info lookup (UUID, skin)
+  ${colors.bold('player info')} <name> --offline  Get offline player info
   ${colors.bold('player online')} <server>     List online players
   ${colors.bold('player online')} --all        List online players on all servers
+  ${colors.bold('player cache')} clear         Clear player info cache
+  ${colors.bold('player cache')} stats         Show cache statistics
+
+${colors.cyan('Player Lookup (Legacy):')}
+  ${colors.bold('player lookup')} <name>       Look up player info
+  ${colors.bold('player uuid')} <name>         Get player UUID
 
 ${colors.cyan('Server Backup/Restore:')}
   ${colors.bold('server-backup')} <server> [-m msg]  Backup server configuration
@@ -118,6 +126,7 @@ ${colors.cyan('Status Options:')}
 
 ${colors.cyan('Global Options:')}
   --root <path>              Custom data directory
+  --sudo-password <pwd>      Sudo password for automation (or use MCCTL_SUDO_PASSWORD env)
   --json                     Output in JSON format
   -h, --help                 Show this help
   --version                  Show version
@@ -258,8 +267,9 @@ async function main(): Promise<void> {
   }
 
   const rootDir = flags['root'] as string | undefined;
+  const sudoPassword = flags['sudo-password'] as string | undefined;
   const paths = new Paths(rootDir);
-  const shell = new ShellExecutor(paths);
+  const shell = new ShellExecutor({ paths, sudoPassword });
 
   let exitCode = 0;
 
@@ -316,6 +326,7 @@ async function main(): Promise<void> {
           worldUrl: flags['world-url'] as string | undefined,
           worldName: flags['world'] as string | undefined,
           noStart: flags['no-start'] === true,
+          sudoPassword,
         });
         break;
       }
@@ -327,6 +338,7 @@ async function main(): Promise<void> {
           root: rootDir,
           name: positional[0],
           force: flags['force'] === true || flags['yes'] === true,
+          sudoPassword,
         });
         break;
       }
@@ -423,21 +435,46 @@ async function main(): Promise<void> {
       }
 
       case 'player': {
-        // Handle 'player online' subcommand separately
+        // Handle player subcommands
         if (subCommand === 'online') {
+          // player online <server> - List online players
           exitCode = await playerOnlineCommand({
             root: rootDir,
             serverName: positional[0],
             all: flags['all'] === true,
             json: flags['json'] === true,
           });
-        } else {
-          // Other player subcommands use legacy shell.player
-          const playerArgs = [subCommand ?? 'lookup', ...positional];
+        } else if (subCommand === 'info') {
+          // player info <name> - Player info lookup
+          exitCode = await playerCommand({
+            root: rootDir,
+            subCommand: 'info',
+            playerName: positional[0],
+            offline: flags['offline'] === true,
+            json: flags['json'] === true,
+          });
+        } else if (subCommand === 'cache') {
+          // player cache <clear|stats> - Cache management
+          exitCode = await playerCommand({
+            root: rootDir,
+            subCommand: 'cache',
+            cacheAction: positional[0] as 'clear' | 'stats',
+            json: flags['json'] === true,
+          });
+        } else if (subCommand === 'lookup' || subCommand === 'uuid') {
+          // Legacy lookup commands via shell.player
+          const playerArgs = [subCommand, ...positional];
           if (flags['json']) playerArgs.push('--json');
           if (flags['offline']) playerArgs.push('--offline');
-
           exitCode = await shell.player(playerArgs);
+        } else if (!subCommand || subCommand) {
+          // Interactive mode: player [server]
+          // If subCommand is provided but not a known command, treat it as server name
+          exitCode = await playerCommand({
+            root: rootDir,
+            serverName: subCommand || positional[0],
+            json: flags['json'] === true,
+          });
         }
         break;
       }

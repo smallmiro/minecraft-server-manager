@@ -10,6 +10,9 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **mDNS Discovery**: Clients auto-discover servers via Bonjour/Zeroconf (no hosts file needed)
 - **Zero Resources**: Only infrastructure services run when servers are idle (~40MB RAM)
 - **Modular Config**: Each server has its own directory with independent configuration
+- **Interactive CLI**: Guided prompts for server creation, player management, and more
+- **Player Management**: Unified `mcctl player` command with Mojang API integration and local cache
+- **Automation Ready**: Environment variable and CLI options for sudo password handling
 
 ## Quick Start
 
@@ -277,6 +280,12 @@ pnpm automatically builds packages in dependency order:
 | `ENABLE_WHITELIST` | Enable whitelist |
 | `OPS` | Operator list |
 
+### Automation
+
+| Variable | Description |
+|----------|-------------|
+| `MCCTL_SUDO_PASSWORD` | sudo password for mDNS registration (avahi-daemon) |
+
 ---
 
 ## Server Type Selection Guide
@@ -480,6 +489,43 @@ mcctl player online myserver       # List online players on server
 mcctl player online --all          # List online players on all servers
 ```
 
+### Unified Player Management (Interactive)
+
+```bash
+# Interactive player management (server → player → action)
+mcctl player                       # Full interactive mode
+mcctl player myserver              # Skip server selection
+
+# Player info lookup (Mojang API with local cache)
+mcctl player info Steve            # Show UUID, skin URL, etc.
+mcctl player info Steve --json     # JSON output
+
+# Cache management (avoids Mojang API rate limiting)
+mcctl player cache stats           # Show cache statistics
+mcctl player cache clear           # Clear all cached data
+```
+
+**Interactive workflow**:
+```
+$ mcctl player
+
+? Select server:
+❯ survival (3 players online)
+  creative (0 players online)
+
+? Select player:
+❯ Steve (online)
+  Alex (online)
+  [Enter player name manually]
+
+? Select action:
+❯ View player info
+  Add to whitelist
+  Add as operator
+  Ban player
+  Kick player
+```
+
 ### Server Backup/Restore
 
 ```bash
@@ -492,6 +538,33 @@ mcctl server-backup myserver --list       # List all backups
 mcctl server-restore myserver             # Interactive restore (select from list)
 mcctl server-restore myserver abc123      # Restore specific backup
 mcctl server-restore myserver --dry-run   # Preview restore without applying
+```
+
+### Automation (sudo Password Handling)
+
+For CI/CD or scripting, you can provide sudo password for mDNS registration:
+
+```bash
+# Environment variable (recommended for automation)
+MCCTL_SUDO_PASSWORD=secret mcctl create myserver
+
+# CLI option
+mcctl create myserver --sudo-password "secret"
+mcctl delete myserver --sudo-password "secret"
+
+# Interactive mode (prompted when needed)
+mcctl create myserver
+# ? sudo password (for mDNS registration): ••••••••
+```
+
+**Alternative: sudoers NOPASSWD**
+
+For passwordless operation, add to `/etc/sudoers.d/mcctl`:
+```bash
+# Allow mcctl commands without password
+%docker ALL=(ALL) NOPASSWD: /usr/bin/tee -a /etc/avahi/hosts
+%docker ALL=(ALL) NOPASSWD: /usr/bin/sed -i * /etc/avahi/hosts
+%docker ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart avahi-daemon
 ```
 
 ### Docker Commands (Alternative)

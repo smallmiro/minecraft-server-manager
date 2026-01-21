@@ -201,12 +201,16 @@ if [ "$KEEP_AVAHI" = "true" ]; then
     echo "   Skipped (--keep-avahi specified)"
 elif [ -f "$AVAHI_HOSTS" ]; then
     if grep -q "$SERVER_NAME.local" "$AVAHI_HOSTS" 2>/dev/null; then
-        if sudo sed -i "/$SERVER_NAME\.local/d" "$AVAHI_HOSTS" 2>/dev/null; then
-            sudo systemctl restart avahi-daemon 2>/dev/null || true
+        if run_with_sudo sed -i "/$SERVER_NAME\.local/d" "$AVAHI_HOSTS" 2>/dev/null; then
+            run_with_sudo systemctl restart avahi-daemon 2>/dev/null || true
             echo -e "   ${GREEN}Removed $SERVER_NAME.local from avahi${NC}"
         else
             echo -e "${YELLOW}   Warning: Failed to update avahi (sudo required)${NC}"
-            echo "   Remove manually: sudo sed -i '/$SERVER_NAME.local/d' $AVAHI_HOSTS"
+            if has_sudo_password; then
+                echo "   Check if MCCTL_SUDO_PASSWORD is correct"
+            else
+                echo "   Set MCCTL_SUDO_PASSWORD env var or remove manually: sudo sed -i '/$SERVER_NAME.local/d' $AVAHI_HOSTS"
+            fi
         fi
     else
         echo "   Hostname not found in avahi"

@@ -120,9 +120,9 @@ register_avahi_hostname() {
 
     # Add entry to /etc/avahi/hosts (requires sudo)
     echo -e "   Registering $hostname -> $ip with avahi-daemon..."
-    if echo "$ip $hostname" | sudo tee -a "$AVAHI_HOSTS" > /dev/null 2>&1; then
+    if echo "$ip $hostname" | run_with_sudo_stdin tee -a "$AVAHI_HOSTS" > /dev/null 2>&1; then
         # Restart avahi-daemon to apply changes
-        if sudo systemctl restart avahi-daemon 2>/dev/null; then
+        if run_with_sudo systemctl restart avahi-daemon 2>/dev/null; then
             echo -e "   ${GREEN}mDNS hostname registered: $hostname -> $ip${NC}"
             return 0
         else
@@ -131,7 +131,11 @@ register_avahi_hostname() {
         fi
     else
         echo -e "${YELLOW}   Warning: Failed to write to $AVAHI_HOSTS (sudo required)${NC}"
-        echo "   Add manually: echo '$ip $hostname' | sudo tee -a $AVAHI_HOSTS"
+        if has_sudo_password; then
+            echo "   Check if MCCTL_SUDO_PASSWORD is correct"
+        else
+            echo "   Set MCCTL_SUDO_PASSWORD env var or add manually: echo '$ip $hostname' | sudo tee -a $AVAHI_HOSTS"
+        fi
         return 1
     fi
 }

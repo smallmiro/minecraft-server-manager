@@ -1,1 +1,1 @@
-export { Container, getContainer, resetContainer } from './container.js';
+export { Container, getContainer, resetContainer, type ContainerOptions } from './container.js';
