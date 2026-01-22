@@ -8,6 +8,7 @@
 
 - **네트워킹** - nip.io magic DNS, mDNS, mc-router 설정
 - **백업** - 월드 데이터 자동 GitHub 백업
+- **RCON** - 서버 관리를 위한 원격 콘솔 프로토콜
 - **월드 관리** - 잠금 기능이 있는 멀티 서버 월드 공유
 - **자동 스케일링** - 플레이어 활동에 따른 서버 자동 시작/중지
 
@@ -30,6 +31,14 @@
     월드 데이터 자동 GitHub 백업 설정
 
     [:octicons-arrow-right-24: 백업 가이드](backup.ko.md)
+
+-   :material-console:{ .lg .middle } **RCON**
+
+    ---
+
+    서버 관리를 위한 원격 콘솔 프로토콜
+
+    [:octicons-arrow-right-24: RCON 스펙](rcon.ko.md)
 
 </div>
 
@@ -217,3 +226,4 @@ mc-router는 mc-router.host 라벨 조회를 통해 상태 정보를 제공합�
 
 - **[네트워킹 가이드](networking.ko.md)** - 호스트네임 라우팅 설정
 - **[백업 가이드](backup.ko.md)** - 자동 백업 설정
+- **[RCON 스펙](rcon.ko.md)** - 원격 콘솔 프로토콜 상세

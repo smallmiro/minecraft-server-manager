@@ -8,6 +8,7 @@ The platform provides several advanced features for production deployments and c
 
 - **Networking** - nip.io magic DNS, mDNS, mc-router configuration
 - **Backup** - Automatic GitHub backup for world data
+- **RCON** - Remote console protocol for server administration
 - **World Management** - Multi-server world sharing with locking
 - **Auto-scaling** - Automatic server start/stop based on player activity
 
@@ -30,6 +31,14 @@ The platform provides several advanced features for production deployments and c
     Set up automatic GitHub backup for world data
 
     [:octicons-arrow-right-24: Backup Guide](backup.md)
+
+-   :material-console:{ .lg .middle } **RCON**
+
+    ---
+
+    Remote console protocol for server administration
+
+    [:octicons-arrow-right-24: RCON Specification](rcon.md)
 
 </div>
 
@@ -217,3 +226,4 @@ See the [Troubleshooting Guide](../getting-started/quickstart.md#troubleshooting
 
 - **[Networking Guide](networking.md)** - Configure hostname routing
 - **[Backup Guide](backup.md)** - Set up automatic backups
+- **[RCON Specification](rcon.md)** - Remote console protocol details
