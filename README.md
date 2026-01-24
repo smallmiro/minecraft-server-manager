@@ -329,6 +329,7 @@ mcctl delete
 # Interactive world management
 mcctl world            # Shows subcommand help
 mcctl world list       # List all worlds with lock status
+mcctl world new        # Interactively create new world
 mcctl world assign     # Interactively assign world to server
 mcctl world release    # Interactively release world lock
 
@@ -351,6 +352,7 @@ mcctl create myserver -t PAPER -v 1.21.1 --seed 12345
 mcctl delete myserver --force
 
 # World management with names
+mcctl world new myworld --seed 12345 --server myserver
 mcctl world assign survival mc-myserver
 mcctl world release survival
 

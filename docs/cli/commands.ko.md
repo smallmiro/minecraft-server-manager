@@ -955,6 +955,73 @@ mcctl player online --all
 
 ## 월드 관리
 
+### mcctl world new
+
+선택적 시드 설정으로 새 월드 디렉토리를 생성합니다.
+
+```bash
+mcctl world new [name] [options]
+```
+
+**인자:**
+
+| 인자 | 설명 |
+|----------|-------------|
+| `name` | 월드 이름 (선택사항, 제공하지 않으면 프롬프트 표시) |
+
+**옵션:**
+
+| 옵션 | 단축 | 설명 |
+|--------|-------|-------------|
+| `--seed` | `-s` | 월드 생성 시드 |
+| `--server` | | 월드를 할당할 서버 (config에 SEED도 설정) |
+| `--no-start` | | 할당 후 서버 자동 시작 안 함 |
+
+**예제:**
+
+=== "대화형 모드"
+    ```bash
+    mcctl world new
+    # 다음을 프롬프트로 물어봅니다:
+    # 1. 월드 이름
+    # 2. 선택적 시드
+    # 3. 선택적 서버 할당
+    # 4. 자동 시작 여부 (서버 할당 시)
+    ```
+
+=== "CLI 모드"
+    ```bash
+    # 빈 월드 디렉토리 생성
+    mcctl world new myworld
+
+    # 특정 시드로 월드 생성
+    mcctl world new myworld --seed 12345
+
+    # 생성 후 서버에 할당
+    mcctl world new myworld --server myserver
+
+    # 시드와 함께 생성하고 서버에 할당
+    mcctl world new myworld --seed 12345 --server myserver
+
+    # 자동 시작 없이 생성 후 할당
+    mcctl world new myworld --server myserver --no-start
+    ```
+
+**수행 내용:**
+
+1. `worlds/<name>/` 디렉토리에 월드 디렉토리 생성
+2. 시드가 제공되면 `.seed` 파일 생성 (참조용)
+3. 서버가 할당되면:
+   - 서버의 `config.env`에 `LEVEL=<world-name>` 업데이트
+   - 시드가 있으면 `SEED=<seed>` 설정
+   - 선택적으로 서버 시작
+
+!!! tip "시드 동작"
+    시드는 서버의 `SEED` 환경 변수를 통해 적용됩니다.
+    서버가 처음 시작될 때 이 시드로 월드가 생성됩니다.
+
+---
+
 ### mcctl world list
 
 모든 월드와 잠금 상태를 나열합니다.

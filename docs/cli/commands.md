@@ -955,6 +955,73 @@ mcctl player online --all
 
 ## World Management
 
+### mcctl world new
+
+Create a new world directory with optional seed configuration.
+
+```bash
+mcctl world new [name] [options]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `name` | World name (optional, prompts if not provided) |
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--seed` | `-s` | World seed for generation |
+| `--server` | | Server to assign world to (also sets SEED in config) |
+| `--no-start` | | Don't auto-start server after assignment |
+
+**Examples:**
+
+=== "Interactive Mode"
+    ```bash
+    mcctl world new
+    # Prompts for:
+    # 1. World name
+    # 2. Optional seed
+    # 3. Optional server assignment
+    # 4. Auto-start preference (if server assigned)
+    ```
+
+=== "CLI Mode"
+    ```bash
+    # Create empty world directory
+    mcctl world new myworld
+
+    # Create world with specific seed
+    mcctl world new myworld --seed 12345
+
+    # Create and assign to server
+    mcctl world new myworld --server myserver
+
+    # Create with seed and assign to server
+    mcctl world new myworld --seed 12345 --server myserver
+
+    # Create and assign without auto-starting
+    mcctl world new myworld --server myserver --no-start
+    ```
+
+**What it does:**
+
+1. Creates world directory in `worlds/<name>/`
+2. Creates `.seed` file if seed is provided (for reference)
+3. If server assigned:
+   - Updates server's `config.env` with `LEVEL=<world-name>`
+   - Sets `SEED=<seed>` if provided
+   - Optionally starts the server
+
+!!! tip "Seed Behavior"
+    The seed is applied via the server's `SEED` environment variable.
+    The world is generated with this seed when the server first starts.
+
+---
+
 ### mcctl world list
 
 List all worlds with their lock status.

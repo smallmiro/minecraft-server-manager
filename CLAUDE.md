@@ -322,6 +322,10 @@ mcctl migrate worlds --backup      # Create backup before migration
 
 # World management (interactive or with arguments)
 mcctl world list          # List all worlds with lock status
+mcctl world new           # Interactive: create new world with prompts
+mcctl world new myworld --seed 12345  # CLI: create with seed
+mcctl world new myworld --server myserver  # Create and assign to server
+mcctl world new myworld --server myserver --no-start  # Don't auto-start server
 mcctl world assign        # Interactive: select world and server
 mcctl world assign survival mc-myserver  # CLI: assign directly
 mcctl world release       # Interactive: select locked world
