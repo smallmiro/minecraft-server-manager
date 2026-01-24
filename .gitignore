@@ -31,6 +31,9 @@ platform/backups/
 # shared/plugins/
 # shared/mods/
 
+# GitHub Wiki (separate repository)
+.wiki/
+
 # OS files
 .DS_Store
 Thumbs.db
