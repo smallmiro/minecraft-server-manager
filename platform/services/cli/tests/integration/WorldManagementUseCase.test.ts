@@ -38,6 +38,161 @@ describe('WorldManagementUseCase Integration', () => {
     );
   });
 
+  describe('createWorld (CLI mode)', () => {
+    it('should create world with name only', async () => {
+      const result = await useCase.createWorld({ name: 'newworld' });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.worldName, 'newworld');
+    });
+
+    it('should create world with seed', async () => {
+      const result = await useCase.createWorld({
+        name: 'seededworld',
+        seed: '12345',
+        serverName: 'server1',
+      });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.worldName, 'seededworld');
+      assert.strictEqual(result.seed, '12345');
+      assert.ok(shellAdapter.wasCommandCalled('setServerConfig'));
+    });
+
+    it('should return error when world already exists', async () => {
+      const result = await useCase.createWorld({ name: 'survival' });
+
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.includes('already exists'));
+    });
+
+    it('should return error when server not found', async () => {
+      const result = await useCase.createWorld({
+        name: 'newworld',
+        serverName: 'nonexistent',
+      });
+
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.includes('not found'));
+    });
+
+    it('should stop running server before configuring', async () => {
+      shellAdapter = new MockShellAdapter({
+        serverStatusResult: { success: true, stdout: 'Status: running' },
+      });
+      useCase = new WorldManagementUseCase(
+        promptAdapter,
+        shellAdapter,
+        worldRepo,
+        serverRepo
+      );
+
+      await useCase.createWorld({
+        name: 'newworld',
+        serverName: 'server1',
+      });
+
+      assert.ok(shellAdapter.wasCommandCalled('serverStatus'));
+      assert.ok(shellAdapter.wasCommandCalled('stopServer'));
+      assert.ok(shellAdapter.wasCommandCalled('setServerConfig'));
+    });
+
+    it('should start server when autoStart is true', async () => {
+      const result = await useCase.createWorld({
+        name: 'newworld',
+        serverName: 'server1',
+        autoStart: true,
+      });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.started, true);
+      assert.ok(shellAdapter.wasCommandCalled('startServer'));
+    });
+
+    it('should not start server when autoStart is false', async () => {
+      const result = await useCase.createWorld({
+        name: 'newworld',
+        serverName: 'server1',
+        autoStart: false,
+      });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.started, false);
+      assert.ok(!shellAdapter.wasCommandCalled('startServer'));
+    });
+
+    it('should return error when no servers available', async () => {
+      serverRepo.clear();
+
+      const result = await useCase.createWorld({ name: 'newworld' });
+
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.includes('No servers'));
+    });
+
+    it('should handle setServerConfig failure for LEVEL', async () => {
+      shellAdapter = new MockShellAdapter({
+        setServerConfigResult: { success: false, stderr: 'Config error' },
+      });
+      useCase = new WorldManagementUseCase(
+        promptAdapter,
+        shellAdapter,
+        worldRepo,
+        serverRepo
+      );
+
+      const result = await useCase.createWorld({
+        name: 'newworld',
+        serverName: 'server1',
+      });
+
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.includes('Config error') || result.error?.includes('LEVEL'));
+    });
+  });
+
+  describe('createWorld (interactive mode)', () => {
+    it('should prompt for world name when not provided', async () => {
+      promptAdapter.textValues = ['interactiveworld', ''];  // world name, seed (empty)
+
+      const result = await useCase.createWorld();
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.worldName, 'interactiveworld');
+      assert.strictEqual(promptAdapter.introMessage, 'Create New World');
+    });
+
+    it('should prompt for seed in interactive mode', async () => {
+      promptAdapter.textValues = ['seedworld', '98765'];
+      promptAdapter = new MockPromptAdapter({
+        confirm: true,
+        selectIndex: 0,
+      });
+      promptAdapter.textValues = ['seedworld', '98765'];
+
+      useCase = new WorldManagementUseCase(
+        promptAdapter,
+        shellAdapter,
+        worldRepo,
+        serverRepo
+      );
+
+      const result = await useCase.createWorld();
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.worldName, 'seedworld');
+    });
+
+    it('should handle cancellation', async () => {
+      promptAdapter.setCancelled(true);
+
+      const result = await useCase.createWorld();
+
+      assert.strictEqual(result.success, false);
+      assert.strictEqual(result.error, 'Cancelled');
+    });
+  });
+
   describe('listWorlds', () => {
     it('should list all worlds with lock status', async () => {
       const worlds = await useCase.listWorlds();
