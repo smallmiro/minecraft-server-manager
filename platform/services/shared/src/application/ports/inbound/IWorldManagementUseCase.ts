@@ -1,4 +1,24 @@
-import { World } from '../../../domain/index.js';
+/**
+ * World creation options
+ */
+export interface WorldCreateOptions {
+  name?: string;
+  seed?: string;
+  serverName?: string;
+  autoStart?: boolean;
+}
+
+/**
+ * World creation result
+ */
+export interface WorldCreateResult {
+  success: boolean;
+  worldName: string;
+  seed?: string;
+  serverName?: string;
+  started?: boolean;
+  error?: string;
+}
 
 /**
  * World Management Use Case - Inbound Port
@@ -9,6 +29,11 @@ export interface IWorldManagementUseCase {
    * List all worlds with lock status
    */
   listWorlds(): Promise<WorldListResult[]>;
+
+  /**
+   * Interactive world creation with seed support
+   */
+  createWorld(options?: WorldCreateOptions): Promise<WorldCreateResult>;
 
   /**
    * Interactive world assignment
@@ -62,3 +87,4 @@ export interface WorldReleaseResult {
   previousServer?: string;
   error?: string;
 }
+

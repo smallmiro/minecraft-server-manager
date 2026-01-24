@@ -9,6 +9,8 @@ export interface WorldCommandOptions {
   subCommand?: string;
   worldName?: string;
   serverName?: string;
+  seed?: string;
+  autoStart?: boolean;
   json?: boolean;
   force?: boolean;
 }
@@ -32,6 +34,9 @@ export async function worldCommand(options: WorldCommandOptions): Promise<number
     case 'list':
       return worldList(container, options);
 
+    case 'new':
+      return worldNew(container, options);
+
     case 'assign':
       return worldAssign(container, options);
 
@@ -40,8 +45,63 @@ export async function worldCommand(options: WorldCommandOptions): Promise<number
 
     default:
       log.error(`Unknown world subcommand: ${subCommand}`);
-      console.log('Usage: mcctl world [list|assign|release]');
+      console.log('Usage: mcctl world [list|new|assign|release]');
       return 1;
+  }
+}
+
+/**
+ * Create a new world with optional seed
+ */
+async function worldNew(
+  container: ReturnType<typeof getContainer>,
+  options: WorldCommandOptions
+): Promise<number> {
+  const useCase = container.worldManagementUseCase;
+
+  try {
+    const result = await useCase.createWorld({
+      name: options.worldName,
+      seed: options.seed,
+      serverName: options.serverName,
+      autoStart: options.autoStart,
+    });
+
+    if (result.success) {
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        console.log('');
+        console.log(colors.green(`✓ World '${result.worldName}' created`));
+        if (result.seed) {
+          console.log(colors.dim(`  Seed: ${result.seed}`));
+        }
+        if (result.serverName) {
+          console.log(colors.dim(`  Server: ${result.serverName}`));
+        }
+        if (result.started) {
+          console.log(colors.dim(`  Server started: yes`));
+        }
+        console.log('');
+      }
+      return 0;
+    } else {
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        log.error(result.error || 'Failed to create world');
+      }
+      return 1;
+    }
+  } catch (error) {
+    const prompt = container.promptPort;
+    if (prompt.isCancel(error)) {
+      return 0;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    log.error(message);
+    return 1;
   }
 }
 

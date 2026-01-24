@@ -25,12 +25,22 @@ export interface IShellPort {
   /**
    * Start a server
    */
-  startServer(name: ServerName): Promise<ShellResult>;
+  startServer(name: ServerName | string): Promise<ShellResult>;
 
   /**
    * Stop a server
    */
-  stopServer(name: ServerName): Promise<ShellResult>;
+  stopServer(name: ServerName | string): Promise<ShellResult>;
+
+  /**
+   * Get server status
+   */
+  serverStatus(name: string): Promise<ShellResult>;
+
+  /**
+   * Set server config value
+   */
+  setServerConfig(serverName: string, key: string, value: string): Promise<ShellResult>;
 
   /**
    * Get server logs

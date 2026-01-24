@@ -118,12 +118,22 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('delete-server.sh', args);
   }
 
-  async startServer(name: ServerName): Promise<ShellResult> {
-    return this.executeScript('mcctl.sh', ['start', name.value]);
+  async startServer(name: ServerName | string): Promise<ShellResult> {
+    const serverName = typeof name === 'string' ? name : name.value;
+    return this.executeScript('mcctl.sh', ['start', serverName]);
   }
 
-  async stopServer(name: ServerName): Promise<ShellResult> {
-    return this.executeScript('mcctl.sh', ['stop', name.value]);
+  async stopServer(name: ServerName | string): Promise<ShellResult> {
+    const serverName = typeof name === 'string' ? name : name.value;
+    return this.executeScript('mcctl.sh', ['stop', serverName]);
+  }
+
+  async serverStatus(name: string): Promise<ShellResult> {
+    return this.executeScript('mcctl.sh', ['status', name, '--json']);
+  }
+
+  async setServerConfig(serverName: string, key: string, value: string): Promise<ShellResult> {
+    return this.executeScript('mcctl.sh', ['config', serverName, key, value]);
   }
 
   async logs(name: ServerName, options?: LogsOptions): Promise<ShellResult> {
