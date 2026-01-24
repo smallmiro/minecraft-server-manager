@@ -1482,6 +1482,110 @@ mcctl player uuid Steve --offline
 
 ---
 
+## Migration Commands
+
+### mcctl migrate status
+
+Check migration status for all servers.
+
+```bash
+mcctl migrate status [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output in JSON format |
+
+**Example:**
+
+```bash
+mcctl migrate status
+```
+
+**Output:**
+
+```
+Migration Status:
+
+  survival: needs migration
+    Missing EXTRA_ARGS=--universe /worlds/
+  creative: up to date
+
+1 server(s) need migration.
+Run: mcctl migrate worlds to migrate.
+```
+
+---
+
+### mcctl migrate worlds
+
+Migrate worlds to the shared `/worlds/` directory structure.
+
+```bash
+mcctl migrate worlds [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--all` | Migrate all servers without selection |
+| `--dry-run` | Preview changes without applying |
+| `--backup` | Create backup before migration |
+| `--force` | Skip confirmation prompts |
+
+**Examples:**
+
+=== "Interactive Mode"
+    ```bash
+    mcctl migrate worlds
+    # Shows servers needing migration, select one or all
+    ```
+
+=== "Migrate All"
+    ```bash
+    mcctl migrate worlds --all
+    ```
+
+=== "Dry Run"
+    ```bash
+    mcctl migrate worlds --dry-run
+    ```
+
+    **Output:**
+    ```
+    DRY RUN - No changes will be made
+
+    Would migrate: survival
+      1. Stop server if running
+      2. Move world: servers/survival/data/world → worlds/survival
+      3. Update config.env:
+         - Add: EXTRA_ARGS=--universe /worlds/
+         - Set: LEVEL=survival
+    ```
+
+=== "With Backup"
+    ```bash
+    mcctl migrate worlds --all --backup
+    ```
+
+**What Migration Does:**
+
+1. **Stops server** if running
+2. **Moves world data** from `servers/<name>/data/world` to `worlds/<server-name>/`
+3. **Updates config.env**:
+   - Adds `EXTRA_ARGS=--universe /worlds/`
+   - Sets `LEVEL=<server-name>`
+4. **Detects existing worlds** with case-insensitive matching
+
+!!! info "World Storage Change"
+    New servers created with `mcctl create` already use the `/worlds/` directory structure.
+    This migration command is for existing servers created before this change.
+
+---
+
 ## Global Options Reference
 
 These options work with all commands:

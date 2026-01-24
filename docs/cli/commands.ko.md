@@ -1482,6 +1482,110 @@ mcctl player uuid Steve --offline
 
 ---
 
+## 마이그레이션 명령어
+
+### mcctl migrate status
+
+모든 서버의 마이그레이션 상태를 확인합니다.
+
+```bash
+mcctl migrate status [options]
+```
+
+**옵션:**
+
+| 옵션 | 설명 |
+|--------|-------------|
+| `--json` | JSON 형식으로 출력 |
+
+**예제:**
+
+```bash
+mcctl migrate status
+```
+
+**출력:**
+
+```
+Migration Status:
+
+  survival: needs migration
+    Missing EXTRA_ARGS=--universe /worlds/
+  creative: up to date
+
+1 server(s) need migration.
+Run: mcctl migrate worlds to migrate.
+```
+
+---
+
+### mcctl migrate worlds
+
+월드를 공유 `/worlds/` 디렉토리 구조로 마이그레이션합니다.
+
+```bash
+mcctl migrate worlds [options]
+```
+
+**옵션:**
+
+| 옵션 | 설명 |
+|--------|-------------|
+| `--all` | 선택 없이 모든 서버 마이그레이션 |
+| `--dry-run` | 변경 사항을 적용하지 않고 미리보기 |
+| `--backup` | 마이그레이션 전 백업 생성 |
+| `--force` | 확인 프롬프트 건너뛰기 |
+
+**예제:**
+
+=== "대화형 모드"
+    ```bash
+    mcctl migrate worlds
+    # 마이그레이션이 필요한 서버 표시, 하나 또는 전체 선택
+    ```
+
+=== "전체 마이그레이션"
+    ```bash
+    mcctl migrate worlds --all
+    ```
+
+=== "드라이 런"
+    ```bash
+    mcctl migrate worlds --dry-run
+    ```
+
+    **출력:**
+    ```
+    DRY RUN - No changes will be made
+
+    Would migrate: survival
+      1. Stop server if running
+      2. Move world: servers/survival/data/world → worlds/survival
+      3. Update config.env:
+         - Add: EXTRA_ARGS=--universe /worlds/
+         - Set: LEVEL=survival
+    ```
+
+=== "백업과 함께"
+    ```bash
+    mcctl migrate worlds --all --backup
+    ```
+
+**마이그레이션 수행 내용:**
+
+1. 서버가 실행 중이면 **서버 중지**
+2. `servers/<name>/data/world`에서 `worlds/<server-name>/`으로 **월드 데이터 이동**
+3. **config.env 업데이트**:
+   - `EXTRA_ARGS=--universe /worlds/` 추가
+   - `LEVEL=<server-name>` 설정
+4. 대소문자 무시로 **기존 월드 탐지**
+
+!!! info "월드 저장 경로 변경"
+    `mcctl create`로 생성된 새 서버는 이미 `/worlds/` 디렉토리 구조를 사용합니다.
+    이 마이그레이션 명령어는 이 변경 이전에 생성된 기존 서버를 위한 것입니다.
+
+---
+
 ## 전역 옵션 레퍼런스
 
 이 옵션들은 모든 명령어에서 사용할 수 있습니다:

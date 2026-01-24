@@ -113,10 +113,13 @@ cd platform
 
 The script automatically:
 1. Creates server directory with configuration
-2. Creates symlink to existing world (if `--world` specified)
-3. Updates `servers/compose.yml` (main docker-compose.yml is NOT modified)
-4. Registers hostname with avahi-daemon (mDNS)
-5. Starts the server (unless `--no-start` specified)
+2. Sets LEVEL to server name (world stored in `/worlds/<server-name>/`)
+3. Creates symlink to existing world (if `--world` specified)
+4. Updates `servers/compose.yml` (main docker-compose.yml is NOT modified)
+5. Registers hostname with avahi-daemon (mDNS)
+6. Starts the server (unless `--no-start` specified)
+
+**World Storage**: Worlds are stored in the shared `/worlds/` directory using `EXTRA_ARGS=--universe /worlds/`. This enables world sharing between servers.
 
 **mc-router auto-discovery**: Servers are auto-discovered via Docker labels (`mc-router.host`).
 
@@ -539,6 +542,26 @@ mcctl server-restore myserver             # Interactive restore (select from lis
 mcctl server-restore myserver abc123      # Restore specific backup
 mcctl server-restore myserver --dry-run   # Preview restore without applying
 ```
+
+### Migration (Existing Servers)
+
+Migrate existing servers to the new shared world directory structure:
+
+```bash
+# Check migration status
+mcctl migrate status               # Show servers needing migration
+
+# Migrate worlds to /worlds/ directory
+mcctl migrate worlds               # Interactive server selection
+mcctl migrate worlds --all         # Migrate all servers
+mcctl migrate worlds --dry-run     # Preview changes without applying
+mcctl migrate worlds --backup      # Create backup before migration
+```
+
+The migration:
+- Moves world data from `servers/<name>/data/world` to `worlds/<server-name>/`
+- Updates `config.env` with `EXTRA_ARGS=--universe /worlds/` and `LEVEL=<server-name>`
+- Detects existing worlds with case-insensitive matching
 
 ### Automation (sudo Password Handling)
 

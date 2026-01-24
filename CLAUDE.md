@@ -58,6 +58,7 @@ minecraft/
 │   │   │   │   │   ├── ban.ts          # Ban management
 │   │   │   │   │   ├── op.ts           # Operator management
 │   │   │   │   │   ├── kick.ts         # Kick player
+│   │   │   │   │   ├── migrate.ts      # World storage migration
 │   │   │   │   │   └── ...
 │   │   │   │   ├── lib/         # Libraries
 │   │   │   │   │   ├── mojang-api.ts   # Mojang API client
@@ -311,6 +312,13 @@ mcctl server-backup myserver       # Backup server config
 mcctl server-backup myserver --list  # List backups
 mcctl server-restore myserver      # Interactive restore
 mcctl server-restore myserver abc123  # Restore specific backup
+
+# Migration (for existing servers to new world directory structure)
+mcctl migrate status               # Check migration status for all servers
+mcctl migrate worlds               # Migrate worlds to /worlds/ directory
+mcctl migrate worlds --all         # Migrate all servers
+mcctl migrate worlds --dry-run     # Preview without changes
+mcctl migrate worlds --backup      # Create backup before migration
 
 # World management (interactive or with arguments)
 mcctl world list          # List all worlds with lock status
@@ -676,11 +684,17 @@ cd platform
 
 The script automatically:
 1. Creates server directory with configuration
-2. Creates symlink to existing world (if `--world` specified)
-3. Updates `servers/compose.yml` (include list only - main docker-compose.yml is NOT modified)
-4. Validates configuration
-5. Registers hostname with avahi-daemon (mDNS)
-6. Starts the server (unless `--no-start` specified)
+2. Sets LEVEL to server name (world stored in `/worlds/<server-name>/`)
+3. Creates symlink to existing world (if `--world` specified)
+4. Updates `servers/compose.yml` (include list only - main docker-compose.yml is NOT modified)
+5. Validates configuration
+6. Registers hostname with avahi-daemon (mDNS)
+7. Starts the server (unless `--no-start` specified)
+
+**World Storage**: All worlds are stored in the shared `/worlds/` directory using `EXTRA_ARGS=--universe /worlds/`. This enables:
+- Server-to-server world sharing
+- Centralized world backup
+- Easy world migration between servers
 
 **mc-router auto-discovery**: mc-router uses `--in-docker` mode to automatically discover servers via Docker labels (`mc-router.host`). No manual MAPPING configuration is needed.
 
@@ -713,6 +727,8 @@ After creation, just:
 | `VERSION` | Recommended | Minecraft version |
 | `MEMORY` | Recommended | JVM memory (e.g., `4G`) |
 | `RCON_PASSWORD` | Recommended | RCON password |
+| `LEVEL` | Auto-set | World folder name in `/worlds/` (default: server name) |
+| `EXTRA_ARGS` | Auto-set | `--universe /worlds/` for shared world storage |
 
 ## Optional: GitHub Backup Configuration
 
