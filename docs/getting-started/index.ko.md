@@ -68,6 +68,31 @@ mcctl은 대화형 모드와 CLI 모드를 모두 제공합니다:
 - 설정 가능한 유휴 시간 후 서버 자동 중지
 - 모든 서버가 유휴 상태일 때는 mc-router만 실행
 
+### 완전한 서버 라이프사이클
+
+```bash
+# 서버 생성
+mcctl create myserver -t PAPER -v 1.21.1
+
+# 서버 설정
+mcctl config myserver DIFFICULTY hard
+mcctl config myserver MAX_PLAYERS 50
+mcctl config myserver USE_AIKAR_FLAGS true
+
+# 플레이어 관리
+mcctl op myserver add Steve
+mcctl whitelist myserver add Steve
+
+# 모니터링 및 제어
+mcctl status myserver
+mcctl logs myserver -f
+mcctl console myserver
+
+# 백업 및 복원
+mcctl backup push -m "업그레이드 전"
+mcctl backup restore
+```
+
 ## 빠른 링크
 
 <div class="grid cards" markdown>

@@ -116,6 +116,19 @@ sequenceDiagram
     Note over W: B에 잠김
 ```
 
+**mcctl로 월드 잠금 관리:**
+
+```bash
+# 모든 월드와 잠금 상태 목록
+mcctl world list
+
+# 월드를 서버에 할당 (잠금)
+mcctl world assign survival mc-myserver
+
+# 월드 잠금 해제
+mcctl world release survival
+```
+
 ## 성능 튜닝
 
 ### JVM 최적화
@@ -123,14 +136,14 @@ sequenceDiagram
 최적의 성능을 위해 Aikar의 플래그를 사용합니다:
 
 ```bash
-# config.env
-USE_AIKAR_FLAGS=true
-MEMORY=8G
+mcctl config myserver USE_AIKAR_FLAGS true
+mcctl stop myserver && mcctl start myserver
 ```
 
-대규모 서버의 경우 G1GC 파라미터를 조정합니다:
+대규모 서버의 경우 G1GC 파라미터를 조정합니다 (config.env 직접 편집):
 
 ```bash
+# config.env에서
 JVM_OPTS="-XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:G1NewSizePercent=40"
 ```
 
@@ -139,15 +152,14 @@ JVM_OPTS="-XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:G1NewSizePercent=40"
 많은 플레이어 수의 서버:
 
 ```bash
-# config.env
-NETWORK_COMPRESSION_THRESHOLD=256
-VIEW_DISTANCE=8
-SIMULATION_DISTANCE=6
+mcctl config myserver NETWORK_COMPRESSION_THRESHOLD 256
+mcctl config myserver VIEW_DISTANCE 8
+mcctl config myserver SIMULATION_DISTANCE 6
 ```
 
 ### 컨테이너 리소스
 
-docker-compose.yml에서 컨테이너 리소스를 제한합니다:
+Docker 리소스 제한은 서버의 docker-compose.yml을 직접 편집합니다:
 
 ```yaml
 services:
@@ -162,15 +174,26 @@ services:
           memory: 4G
 ```
 
+그런 다음 재시작합니다:
+
+```bash
+mcctl stop myserver && mcctl start myserver
+```
+
 ## 보안 고려사항
 
 ### RCON 비밀번호
 
-항상 기본 RCON 비밀번호를 변경하세요:
+`.env`에서 기본 RCON 비밀번호를 변경합니다:
 
 ```bash
-# .env
 RCON_PASSWORD=매우-안전한-비밀번호-여기에
+```
+
+그런 다음 모든 서비스를 재시작합니다:
+
+```bash
+mcctl down && mcctl up
 ```
 
 ### 화이트리스트
@@ -178,9 +201,10 @@ RCON_PASSWORD=매우-안전한-비밀번호-여기에
 프라이빗 서버에서는 화이트리스트를 활성화합니다:
 
 ```bash
-# config.env
-ENABLE_WHITELIST=true
-WHITELIST=Steve,Alex,Player3
+mcctl whitelist myserver on
+mcctl whitelist myserver add Steve
+mcctl whitelist myserver add Alex
+mcctl whitelist myserver status
 ```
 
 ### 온라인 모드
@@ -188,39 +212,89 @@ WHITELIST=Steve,Alex,Player3
 오프라인이 특별히 필요하지 않다면 온라인 모드를 유지합니다:
 
 ```bash
-# config.env
-ONLINE_MODE=true  # 기본값, Mojang으로 검증
+mcctl config myserver ONLINE_MODE true
 ```
 
 ## 모니터링
 
-### Docker 통계
+### 서버 상태
 
 ```bash
-# 리소스 사용량 확인
-docker stats mc-myserver
+# 기본 상태
+mcctl status
 
-# 모든 Minecraft 컨테이너
-docker stats $(docker ps --filter name=mc- -q)
+# 리소스 포함 상세 상태
+mcctl status --detail
+
+# 실시간 모니터링
+mcctl status --watch
+
+# 스크립팅용 JSON 출력
+mcctl status --json
 ```
 
 ### 서버 로그
 
 ```bash
-# 실시간 로그
+# 최근 로그 보기
+mcctl logs myserver
+
+# 실시간으로 로그 추적
 mcctl logs myserver -f
 
-# 오류 검색
-docker logs mc-myserver 2>&1 | grep -i error
+# 마지막 N줄 보기
+mcctl logs myserver -n 100
 ```
 
-### 헬스 체크
+### 리소스 사용량
 
-mc-router는 mc-router.host 라벨 조회를 통해 상태 정보를 제공합니다.
+```bash
+# 특정 서버 확인
+mcctl status myserver
+
+# 출력 포함:
+#   Resources: 3.1 GB / 8.0 GB (38.8%) | CPU: 15.2%
+#   Players:   2/20 - Steve, Alex
+```
+
+### 온라인 플레이어
+
+```bash
+# 단일 서버
+mcctl player online myserver
+
+# 모든 서버
+mcctl player online --all
+```
 
 ## 문제 해결
 
-일반적인 문제는 [문제 해결 가이드](../getting-started/quickstart.ko.md#문제-해결)를 참조하세요.
+### 빠른 진단
+
+```bash
+# 전체 상태 확인
+mcctl status --detail
+
+# 라우터 상태 확인
+mcctl status router
+
+# 특정 서버 로그 확인
+mcctl logs myserver -n 100
+
+# RCON 연결 테스트
+mcctl console myserver
+```
+
+### 일반적인 문제
+
+| 문제 | 진단 | 해결책 |
+|------|------|--------|
+| 서버가 시작되지 않음 | `mcctl logs myserver` | Java 버전, 메모리 확인 |
+| 연결할 수 없음 | `mcctl status router` | mc-router 실행 확인 |
+| 느린 성능 | `mcctl status --detail` | 메모리 확인, Aikar 플래그 활성화 |
+| 월드 손상 | `mcctl world list` | 잠금 상태 확인 |
+
+자세한 내용은 [문제 해결 가이드](../getting-started/quickstart.ko.md#문제-해결)를 참조하세요.
 
 ## 다음 단계
 

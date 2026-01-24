@@ -2,6 +2,24 @@
 
 Detailed guide for each Minecraft server platform supported by mcctl.
 
+## Quick Start
+
+Create a server with your desired type using mcctl:
+
+```bash
+# Paper (recommended for most users)
+mcctl create myserver -t PAPER -v 1.21.1
+
+# Vanilla (pure Minecraft)
+mcctl create myserver -t VANILLA -v 1.21.1
+
+# Forge (mods)
+mcctl create myserver -t FORGE -v 1.20.4
+
+# Fabric (lightweight mods)
+mcctl create myserver -t FABRIC -v 1.21.1
+```
+
 ## Overview
 
 | Type | Plugins | Mods | Performance | Recommended For |
@@ -23,6 +41,12 @@ Detailed guide for each Minecraft server platform supported by mcctl.
 
 Paper is a high-performance Minecraft server that supports Bukkit and Spigot plugins while providing significant performance improvements.
 
+### Create Paper Server
+
+```bash
+mcctl create myserver -t PAPER -v 1.21.1
+```
+
 ### Features
 
 - Significant performance improvements over Vanilla
@@ -31,29 +55,27 @@ Paper is a high-performance Minecraft server that supports Bukkit and Spigot plu
 - Anti-exploit patches
 - Extensive configuration options
 
-### Configuration
+### Recommended Configuration
 
 ```bash
-# servers/myserver/config.env
-TYPE=PAPER
-VERSION=1.21.1
-MEMORY=4G
-
 # Enable Aikar's optimized JVM flags
-USE_AIKAR_FLAGS=true
+mcctl config myserver USE_AIKAR_FLAGS true
 ```
 
 ### Adding Plugins
 
-Place plugin JAR files in `shared/plugins/` or use automatic download:
-
 ```bash
 # From Modrinth
-MODRINTH_PROJECTS=essentialsx,luckperms
+mcctl config myserver MODRINTH_PROJECTS "essentialsx,luckperms"
 
 # From Spigot
-SPIGET_RESOURCES=28140,81534
+mcctl config myserver SPIGET_RESOURCES "28140,81534"
+
+# Apply changes
+mcctl stop myserver && mcctl start myserver
 ```
+
+Or place plugin JAR files in `shared/plugins/` directory.
 
 ### Best Practices
 
@@ -67,21 +89,18 @@ SPIGET_RESOURCES=28140,81534
 
 The official Minecraft server from Mojang.
 
+### Create Vanilla Server
+
+```bash
+mcctl create myserver -t VANILLA -v 1.21.1
+```
+
 ### Features
 
 - Official Minecraft experience
 - No modifications
 - Guaranteed compatibility with all Minecraft features
 - Smallest footprint
-
-### Configuration
-
-```bash
-# servers/myserver/config.env
-TYPE=VANILLA
-VERSION=1.21.1
-MEMORY=2G
-```
 
 ### Use Cases
 
@@ -95,6 +114,12 @@ MEMORY=2G
 
 Server for running Forge mods.
 
+### Create Forge Server
+
+```bash
+mcctl create myserver -t FORGE -v 1.20.4
+```
+
 ### Features
 
 - Large mod ecosystem
@@ -105,31 +130,30 @@ Server for running Forge mods.
 ### Configuration
 
 ```bash
-# servers/myserver/config.env
-TYPE=FORGE
-VERSION=1.20.4
-MEMORY=8G
+# Set memory (modpacks need more)
+mcctl config myserver MEMORY 8G
 
-# CurseForge API key required for mod downloads
-CF_API_KEY=${CF_API_KEY}
-CURSEFORGE_FILES=jei,journeymap,create
+# Add mods (requires CF_API_KEY in .env)
+mcctl config myserver CURSEFORGE_FILES "jei,journeymap,create"
 
 # Or specific Forge version
-FORGE_VERSION=47.2.0
+mcctl config myserver FORGE_VERSION "47.2.0"
+
+# Apply changes
+mcctl stop myserver && mcctl start myserver
 ```
 
 ### Java Version Requirements
 
-| Minecraft Version | Required Java |
-|-------------------|---------------|
-| 1.20.x+ | Java 17 or 21 |
-| 1.17.x - 1.19.x | Java 17 |
-| 1.16.x and below | Java 8 |
+| Minecraft Version | Required Java | Image Tag |
+|-------------------|---------------|-----------|
+| 1.20.x+ | Java 17 or 21 | `latest` |
+| 1.17.x - 1.19.x | Java 17 | `java17` |
+| 1.16.x and below | Java 8 | `java8` |
 
 !!! warning "Forge 1.16.5 and Below"
-    For older Forge versions, use the java8 image tag:
+    For older Forge versions, you need to modify the server's docker-compose.yml to use the java8 image:
     ```yaml
-    # docker-compose.yml
     image: itzg/minecraft-server:java8
     ```
 
@@ -141,11 +165,21 @@ FORGE_VERSION=47.2.0
 | Medium (30-100 mods) | 6-8G |
 | Heavy (100+ mods) | 8-12G |
 
+```bash
+mcctl config myserver MEMORY 8G
+```
+
 ---
 
 ## Fabric
 
 Lightweight modding platform with excellent performance.
+
+### Create Fabric Server
+
+```bash
+mcctl create myserver -t FABRIC -v 1.21.1
+```
 
 ### Features
 
@@ -157,28 +191,33 @@ Lightweight modding platform with excellent performance.
 ### Configuration
 
 ```bash
-# servers/myserver/config.env
-TYPE=FABRIC
-VERSION=1.21.1
-MEMORY=6G
+# Set memory
+mcctl config myserver MEMORY 6G
 
 # Essential Fabric mods from Modrinth
-MODRINTH_PROJECTS=fabric-api,lithium,starlight
-MODRINTH_DOWNLOAD_DEPENDENCIES=required
+mcctl config myserver MODRINTH_PROJECTS "fabric-api,lithium,starlight"
+mcctl config myserver MODRINTH_DOWNLOAD_DEPENDENCIES required
 
 # Or specific Fabric loader version
-FABRIC_LOADER_VERSION=0.15.0
+mcctl config myserver FABRIC_LOADER_VERSION "0.15.0"
+
+# Apply changes
+mcctl stop myserver && mcctl start myserver
 ```
 
 ### Recommended Mods
 
-| Mod | Purpose |
-|-----|---------|
-| `fabric-api` | Required by most mods |
-| `lithium` | Game logic optimization |
-| `starlight` | Lighting engine rewrite |
-| `krypton` | Network optimization |
-| `ferritecore` | Memory optimization |
+| Mod | Purpose | mcctl config |
+|-----|---------|--------------|
+| `fabric-api` | Required by most mods | `MODRINTH_PROJECTS` |
+| `lithium` | Game logic optimization | `MODRINTH_PROJECTS` |
+| `starlight` | Lighting engine rewrite | `MODRINTH_PROJECTS` |
+| `krypton` | Network optimization | `MODRINTH_PROJECTS` |
+| `ferritecore` | Memory optimization | `MODRINTH_PROJECTS` |
+
+```bash
+mcctl config myserver MODRINTH_PROJECTS "fabric-api,lithium,starlight,krypton,ferritecore"
+```
 
 ### Performance Comparison
 
@@ -194,20 +233,17 @@ Fabric with optimization mods typically provides:
 
 Modified Bukkit server with plugin support.
 
+### Create Spigot Server
+
+```bash
+mcctl create myserver -t SPIGOT -v 1.21.1
+```
+
 ### Features
 
 - Bukkit plugin compatibility
 - Performance improvements over Bukkit
 - Wide plugin ecosystem
-
-### Configuration
-
-```bash
-# servers/myserver/config.env
-TYPE=SPIGOT
-VERSION=1.21.1
-MEMORY=4G
-```
 
 ### When to Use
 
@@ -224,20 +260,17 @@ MEMORY=4G
 
 Classic Minecraft plugin server.
 
+### Create Bukkit Server
+
+```bash
+mcctl create myserver -t BUKKIT -v 1.21.1
+```
+
 ### Features
 
 - Original plugin API
 - Legacy plugin support
 - Stable and well-documented
-
-### Configuration
-
-```bash
-# servers/myserver/config.env
-TYPE=BUKKIT
-VERSION=1.21.1
-MEMORY=4G
-```
 
 ### When to Use
 
@@ -250,6 +283,12 @@ MEMORY=4G
 
 Paper fork with additional features and customization.
 
+### Create Purpur Server
+
+```bash
+mcctl create myserver -t PURPUR -v 1.21.1
+```
+
 ### Features
 
 - All Paper features plus more
@@ -260,12 +299,7 @@ Paper fork with additional features and customization.
 ### Configuration
 
 ```bash
-# servers/myserver/config.env
-TYPE=PURPUR
-VERSION=1.21.1
-MEMORY=4G
-
-USE_AIKAR_FLAGS=true
+mcctl config myserver USE_AIKAR_FLAGS true
 ```
 
 ### Unique Features
@@ -281,6 +315,12 @@ USE_AIKAR_FLAGS=true
 
 Modern Fabric fork with improved APIs.
 
+### Create Quilt Server
+
+```bash
+mcctl create myserver -t QUILT -v 1.21.1
+```
+
 ### Features
 
 - Fabric mod compatibility
@@ -291,12 +331,7 @@ Modern Fabric fork with improved APIs.
 ### Configuration
 
 ```bash
-# servers/myserver/config.env
-TYPE=QUILT
-VERSION=1.21.1
-MEMORY=6G
-
-MODRINTH_PROJECTS=qsl,fabric-api
+mcctl config myserver MODRINTH_PROJECTS "qsl,fabric-api"
 ```
 
 ### When to Use
@@ -324,23 +359,80 @@ flowchart TD
     C -->|Yes| H{Priority?}
     C -->|No| I[VANILLA]
 
-    H -->|Performance| J[PAPER ⭐]
+    H -->|Performance| J[PAPER]
     H -->|Customization| K[PURPUR]
     H -->|Legacy| L[SPIGOT/BUKKIT]
 ```
 
 ### Quick Recommendations
 
-| Use Case | Recommended Type |
-|----------|------------------|
-| General multiplayer | PAPER |
-| Performance-focused | PAPER or FABRIC |
-| Complex modpacks | FORGE |
-| Light optimization mods | FABRIC |
-| Pure vanilla | VANILLA |
-| Maximum customization | PURPUR |
+| Use Case | Command |
+|----------|---------|
+| General multiplayer | `mcctl create myserver -t PAPER -v 1.21.1` |
+| Performance-focused | `mcctl create myserver -t PAPER -v 1.21.1` or `-t FABRIC` |
+| Complex modpacks | `mcctl create myserver -t FORGE -v 1.20.4` |
+| Light optimization mods | `mcctl create myserver -t FABRIC -v 1.21.1` |
+| Pure vanilla | `mcctl create myserver -t VANILLA -v 1.21.1` |
+| Maximum customization | `mcctl create myserver -t PURPUR -v 1.21.1` |
+
+## Complete Setup Examples
+
+### Survival Server (Paper)
+
+```bash
+# Create server
+mcctl create survival -t PAPER -v 1.21.1
+
+# Configure
+mcctl config survival MOTD "Survival Server - Good luck!"
+mcctl config survival DIFFICULTY hard
+mcctl config survival GAMEMODE survival
+mcctl config survival USE_AIKAR_FLAGS true
+
+# Add plugins
+mcctl config survival MODRINTH_PROJECTS "essentialsx,luckperms"
+
+# Restart to apply
+mcctl stop survival && mcctl start survival
+
+# Add operators
+mcctl op survival add YourName
+```
+
+### Modded Server (Forge)
+
+```bash
+# Create server
+mcctl create modded -t FORGE -v 1.20.4
+
+# Configure
+mcctl config modded MEMORY 8G
+mcctl config modded USE_AIKAR_FLAGS true
+
+# Add mods (requires CF_API_KEY in .env)
+mcctl config modded CURSEFORGE_FILES "create,jei,journeymap"
+
+# Restart to apply
+mcctl stop modded && mcctl start modded
+```
+
+### Performance Server (Fabric)
+
+```bash
+# Create server
+mcctl create performance -t FABRIC -v 1.21.1
+
+# Configure
+mcctl config performance MEMORY 6G
+mcctl config performance MODRINTH_PROJECTS "fabric-api,lithium,starlight,krypton"
+mcctl config performance MODRINTH_DOWNLOAD_DEPENDENCIES required
+
+# Restart to apply
+mcctl stop performance && mcctl start performance
+```
 
 ## See Also
 
 - **[Environment Variables](environment.md)** - All configuration options
+- **[CLI Commands](../cli/commands.md)** - Full mcctl reference
 - **[itzg/minecraft-server Types](https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/)** - Full documentation

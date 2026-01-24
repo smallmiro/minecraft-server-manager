@@ -165,12 +165,28 @@ avahi-daemon --check
 
 mc-router는 호스트네임 기반 라우팅과 자동 스케일링을 처리합니다.
 
+### mcctl로 라우터 관리
+
+```bash
+# 라우터 상태 확인
+mcctl status router
+
+# 라우터 시작
+mcctl router start
+
+# 라우터 재시작 (설정 변경 후)
+mcctl router restart
+
+# 라우터 중지
+mcctl router stop
+```
+
 ### Docker 라벨
 
-각 서버는 mc-router 검색을 위해 Docker 라벨을 사용합니다:
+각 서버는 mc-router 검색을 위해 Docker 라벨을 사용합니다. `mcctl create`가 자동으로 설정합니다:
 
 ```yaml
-# servers/myserver/docker-compose.yml
+# servers/myserver/docker-compose.yml (자동 생성됨)
 services:
   mc-myserver:
     labels:
@@ -179,18 +195,19 @@ services:
 
 ### 자동 스케일링 설정
 
-`docker-compose.yml`에서 설정합니다:
+`~/minecraft-servers/.env`에서 설정합니다:
 
-```yaml
-services:
-  router:
-    image: itzg/mc-router
-    environment:
-      IN_DOCKER: "true"
-      AUTO_SCALE_UP: "true"       # 접속 시 서버 시작
-      AUTO_SCALE_DOWN: "false"    # 유휴 서버 중지 (참고 사항 확인)
-      DOCKER_TIMEOUT: "120"       # 서버 시작 대기 시간 (초)
-      AUTO_SCALE_ASLEEP_MOTD: "서버가 대기 중입니다. 접속하면 시작됩니다!"
+```bash
+# 자동 스케일링 설정
+AUTO_SCALE_UP=true       # 접속 시 서버 시작
+AUTO_SCALE_DOWN=false    # 유휴 서버 중지 (참고 사항 확인)
+DOCKER_TIMEOUT=120       # 서버 시작 대기 시간 (초)
+```
+
+그런 다음 라우터를 재시작합니다:
+
+```bash
+mcctl router restart
 ```
 
 !!! warning "AUTO_SCALE_DOWN"
@@ -198,22 +215,30 @@ services:
 
 ### 다중 호스트네임
 
-서버에 여러 호스트네임을 설정할 수 있습니다:
+VPN mesh 사용 시 다중 호스트네임이 자동으로 설정됩니다:
 
-```yaml
-labels:
-  mc-router.host: "myserver.local,myserver.example.com,survival.mynetwork.local"
+```bash
+# ~/minecraft-servers/.env
+HOST_IPS=192.168.1.100,100.64.0.5
 ```
+
+각 IP에 대해 호스트네임이 생성됩니다:
+- `myserver.192.168.1.100.nip.io`
+- `myserver.100.64.0.5.nip.io`
 
 ### 디버그 모드
 
-mc-router 디버그 출력 활성화:
+`.env`에서 mc-router 디버그 출력 활성화:
 
-```yaml
-services:
-  router:
-    environment:
-      DEBUG: "true"
+```bash
+# ~/minecraft-servers/.env
+DEBUG=true
+```
+
+그런 다음 재시작:
+
+```bash
+mcctl router restart
 ```
 
 ---
@@ -319,12 +344,12 @@ sudo firewall-cmd --reload
 
 1. mc-router가 실행 중인지 확인:
    ```bash
-   docker ps | grep mc-router
+   mcctl status router
    ```
 
 2. 호스트네임이 설정되었는지 확인:
    ```bash
-   docker inspect mc-myserver | grep mc-router.host
+   mcctl status myserver --detail
    ```
 
 3. DNS 해석 테스트:
@@ -334,14 +359,15 @@ sudo firewall-cmd --reload
 
 ### 서버가 시작되지 않음
 
-1. Docker 타임아웃 확인:
-   ```yaml
-   DOCKER_TIMEOUT: "180"  # 서버 시작이 오래 걸리면 증가
+1. `.env`에서 Docker 타임아웃 확인:
+   ```bash
+   # ~/minecraft-servers/.env
+   DOCKER_TIMEOUT=180  # 서버 시작이 오래 걸리면 증가
    ```
 
 2. 서버 로그 확인:
    ```bash
-   docker logs mc-myserver
+   mcctl logs myserver
    ```
 
 ### mDNS가 작동하지 않음

@@ -68,6 +68,31 @@ mcctl provides both interactive and CLI modes:
 - Servers stop after configurable idle timeout
 - Only mc-router runs when all servers are idle
 
+### Complete Server Lifecycle
+
+```bash
+# Create a server
+mcctl create myserver -t PAPER -v 1.21.1
+
+# Configure the server
+mcctl config myserver DIFFICULTY hard
+mcctl config myserver MAX_PLAYERS 50
+mcctl config myserver USE_AIKAR_FLAGS true
+
+# Manage players
+mcctl op myserver add Steve
+mcctl whitelist myserver add Steve
+
+# Monitor and control
+mcctl status myserver
+mcctl logs myserver -f
+mcctl console myserver
+
+# Backup and restore
+mcctl backup push -m "Before upgrade"
+mcctl backup restore
+```
+
 ## Quick Links
 
 <div class="grid cards" markdown>

@@ -202,11 +202,16 @@ worlds/
 - 컨테이너 데이터 (로그, 임시 파일)
 
 !!! tip "서버 설정은 별도로 백업"
-    설정 파일은 별도로 백업하는 것을 고려하세요:
+    mcctl을 사용하여 서버 설정을 백업하세요:
     ```bash
-    # 설정 백업
-    cp -r ~/minecraft-servers/servers ./servers-backup
-    cp ~/minecraft-servers/.env ./env-backup
+    # 특정 서버 설정 백업
+    mcctl server-backup myserver
+
+    # 사용 가능한 백업 목록
+    mcctl server-backup myserver --list
+
+    # 서버 설정 복원
+    mcctl server-restore myserver
     ```
 
 ---

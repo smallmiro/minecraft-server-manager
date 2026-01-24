@@ -165,12 +165,28 @@ avahi-daemon --check
 
 mc-router handles hostname-based routing and auto-scaling.
 
+### Router Management with mcctl
+
+```bash
+# Check router status
+mcctl status router
+
+# Start router
+mcctl router start
+
+# Restart router (after config changes)
+mcctl router restart
+
+# Stop router
+mcctl router stop
+```
+
 ### Docker Labels
 
-Each server uses Docker labels for mc-router discovery:
+Each server uses Docker labels for mc-router discovery. These are automatically configured by `mcctl create`:
 
 ```yaml
-# servers/myserver/docker-compose.yml
+# servers/myserver/docker-compose.yml (auto-generated)
 services:
   mc-myserver:
     labels:
@@ -179,18 +195,19 @@ services:
 
 ### Auto-scaling Settings
 
-Configure in `docker-compose.yml`:
+Configure in `~/minecraft-servers/.env`:
 
-```yaml
-services:
-  router:
-    image: itzg/mc-router
-    environment:
-      IN_DOCKER: "true"
-      AUTO_SCALE_UP: "true"       # Start servers on connect
-      AUTO_SCALE_DOWN: "false"    # Stop idle servers (see note)
-      DOCKER_TIMEOUT: "120"       # Wait time for server startup (seconds)
-      AUTO_SCALE_ASLEEP_MOTD: "Server is sleeping. Connect to wake up!"
+```bash
+# Auto-scaling configuration
+AUTO_SCALE_UP=true       # Start servers on connect
+AUTO_SCALE_DOWN=false    # Stop idle servers (see note)
+DOCKER_TIMEOUT=120       # Wait time for server startup (seconds)
+```
+
+Then restart the router:
+
+```bash
+mcctl router restart
 ```
 
 !!! warning "AUTO_SCALE_DOWN"
@@ -198,22 +215,30 @@ services:
 
 ### Multiple Hostnames
 
-You can configure multiple hostnames for a server:
+Multiple hostnames are configured automatically when using VPN mesh:
 
-```yaml
-labels:
-  mc-router.host: "myserver.local,myserver.example.com,survival.mynetwork.local"
+```bash
+# ~/minecraft-servers/.env
+HOST_IPS=192.168.1.100,100.64.0.5
 ```
+
+This creates hostnames for each IP:
+- `myserver.192.168.1.100.nip.io`
+- `myserver.100.64.0.5.nip.io`
 
 ### Debug Mode
 
-Enable mc-router debug output:
+Enable mc-router debug output in `.env`:
 
-```yaml
-services:
-  router:
-    environment:
-      DEBUG: "true"
+```bash
+# ~/minecraft-servers/.env
+DEBUG=true
+```
+
+Then restart:
+
+```bash
+mcctl router restart
 ```
 
 ---
@@ -319,12 +344,12 @@ sudo firewall-cmd --reload
 
 1. Check mc-router is running:
    ```bash
-   docker ps | grep mc-router
+   mcctl status router
    ```
 
 2. Check hostname is configured:
    ```bash
-   docker inspect mc-myserver | grep mc-router.host
+   mcctl status myserver --detail
    ```
 
 3. Test DNS resolution:
@@ -334,14 +359,15 @@ sudo firewall-cmd --reload
 
 ### Server Not Starting
 
-1. Check Docker timeout:
-   ```yaml
-   DOCKER_TIMEOUT: "180"  # Increase if server takes long to start
+1. Check Docker timeout in `.env`:
+   ```bash
+   # ~/minecraft-servers/.env
+   DOCKER_TIMEOUT=180  # Increase if server takes long to start
    ```
 
 2. Check server logs:
    ```bash
-   docker logs mc-myserver
+   mcctl logs myserver
    ```
 
 ### mDNS Not Working
