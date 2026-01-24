@@ -1,0 +1,1905 @@
+
+<!doctype html>
+<html lang="ko" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/ko/advanced/rcon/">
+      
+      
+      
+      
+        
+          <link rel="alternate" href="../../../advanced/rcon/" hreflang="en">
+        
+          <link rel="alternate" href="./" hreflang="ko">
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>RCON 프로토콜 스펙 - Minecraft Docker Server Manager</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#rcon-프로토콜-스펙" class="md-skip">
+          콘텐츠로 이동
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="상단/헤더">
+    <a href="../../" title="Minecraft Docker Server Manager" class="md-header__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Minecraft Docker Server Manager
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              RCON 프로토콜 스펙
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="언어설정">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="../../../advanced/rcon/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="ko" class="md-select__link">
+              한국어
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="검색" placeholder="검색" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="검색">
+        
+        <button type="reset" class="md-search__icon md-icon" title="지우기" aria-label="지우기" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            검색 초기화
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/smallmiro/minecraft-server-manager" title="저장소로 이동" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    smallmiro/minecraft-server-manager
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="탭" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  CLI Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="네비게이션" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../" title="Minecraft Docker Server Manager" class="md-nav__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Minecraft Docker Server Manager
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/smallmiro/minecraft-server-manager" title="저장소로 이동" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    smallmiro/minecraft-server-manager
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../cli/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../configuration/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#개요" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        개요
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#프로토콜-스펙" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        프로토콜 스펙
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="프로토콜 스펙">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#패킷-구조" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        패킷 구조
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#패킷-타입" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        패킷 타입
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#크기-제한" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        크기 제한
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#통신-흐름" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        통신 흐름
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="통신 흐름">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#인증" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        인증
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#명령-실행" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        명령 실행
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#응답-분할" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        응답 분할
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#서버-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서버 설정
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="서버 설정">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#serverproperties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        server.properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-설정-이-프로젝트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker 설정 (이 프로젝트)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#주요-rcon-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        주요 RCON 명령어
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#이-프로젝트에서의-사용" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        이 프로젝트에서의 사용
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="이 프로젝트에서의 사용">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-cli-사용" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl CLI 사용
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-직접-사용" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker 직접 사용
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rcon-cli-옵션-사용" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rcon-cli 옵션 사용
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#구현-참고사항" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        구현 참고사항
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="구현 참고사항">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#문자-인코딩" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        문자 인코딩
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-id-처리" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request ID 처리
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#연결-관리" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        연결 관리
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#보안-모범-사례" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        보안 모범 사례
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="보안 모범 사례">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#네트워크-보안" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        네트워크 보안
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-보안" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker 보안
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#보안-대안" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        보안 대안
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#문제-해결" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        문제 해결
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="문제 해결">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#연결-거부" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        연결 거부
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#인증-실패" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        인증 실패
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#빈-응답" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        빈 응답
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#타임아웃-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        타임아웃 문제
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#참고-자료" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        참고 자료
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#관련-문서" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        관련 문서
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="rcon-프로토콜-스펙">RCON 프로토콜 스펙<a class="headerlink" href="#rcon-프로토콜-스펙" title="Permanent link">&para;</a></h1>
+<p>RCON(Remote Console)은 원격 서버 관리를 위한 TCP/IP 기반 프로토콜입니다. Valve가 Source 엔진 게임용으로 개발했으며, Minecraft 서버에서도 채택하여 사용합니다.</p>
+<h2 id="개요">개요<a class="headerlink" href="#개요" title="Permanent link">&para;</a></h2>
+<p>RCON은 직접 콘솔 접근 없이 원격으로 서버 명령을 실행할 수 있게 해줍니다. <code>mcctl</code>과 같은 CLI 도구의 자동화된 서버 관리에 필수적입니다.</p>
+<div class="admonition warning">
+<p class="admonition-title">보안 경고</p>
+<p>RCON은 데이터를 <strong>암호화하지 않고</strong> 전송합니다. RCON 포트를 인터넷에 직접 노출하지 마세요. 신뢰할 수 있는 네트워크 내에서만 사용하거나 보안 터널을 통해 사용하세요.</p>
+</div>
+<h2 id="프로토콜-스펙">프로토콜 스펙<a class="headerlink" href="#프로토콜-스펙" title="Permanent link">&para;</a></h2>
+<h3 id="패킷-구조">패킷 구조<a class="headerlink" href="#패킷-구조" title="Permanent link">&para;</a></h3>
+<p>모든 정수는 <strong>리틀 엔디안</strong>(Little-Endian)입니다. (빅 엔디안을 사용하는 Minecraft 메인 프로토콜과 다릅니다)</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌────────────┬────────────┬────────────┬─────────────────┬──────┐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│   Length   │ Request ID │    Type    │     Payload     │ Pad  │
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  (4 bytes) │ (4 bytes)  │ (4 bytes)  │   (가변 길이)    │ (2)  │
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  int32 LE  │  int32 LE  │  int32 LE  │ null 종료 문자열 │ 0x00 │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>└────────────┴────────────┴────────────┴─────────────────┴──────┘
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>필드</th>
+<th>크기</th>
+<th>타입</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Length</strong></td>
+<td>4 bytes</td>
+<td>int32</td>
+<td>패킷의 나머지 부분 길이 (이 필드 제외)</td>
+</tr>
+<tr>
+<td><strong>Request ID</strong></td>
+<td>4 bytes</td>
+<td>int32</td>
+<td>응답 매칭을 위한 클라이언트 생성 ID</td>
+</tr>
+<tr>
+<td><strong>Type</strong></td>
+<td>4 bytes</td>
+<td>int32</td>
+<td>패킷 타입 (아래 참조)</td>
+</tr>
+<tr>
+<td><strong>Payload</strong></td>
+<td>가변</td>
+<td>ASCII 문자열</td>
+<td>NULL 종료 명령어 또는 응답</td>
+</tr>
+<tr>
+<td><strong>Padding</strong></td>
+<td>2 bytes</td>
+<td>byte[2]</td>
+<td>두 개의 NULL 바이트 (0x00 0x00)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="패킷-타입">패킷 타입<a class="headerlink" href="#패킷-타입" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>타입</th>
+<th>값</th>
+<th>방향</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SERVERDATA_AUTH</strong></td>
+<td>3</td>
+<td>클라이언트 → 서버</td>
+<td>인증 요청 (비밀번호)</td>
+</tr>
+<tr>
+<td><strong>SERVERDATA_AUTH_RESPONSE</strong></td>
+<td>2</td>
+<td>서버 → 클라이언트</td>
+<td>인증 응답</td>
+</tr>
+<tr>
+<td><strong>SERVERDATA_EXECCOMMAND</strong></td>
+<td>2</td>
+<td>클라이언트 → 서버</td>
+<td>명령 실행 요청</td>
+</tr>
+<tr>
+<td><strong>SERVERDATA_RESPONSE_VALUE</strong></td>
+<td>0</td>
+<td>서버 → 클라이언트</td>
+<td>명령 실행 응답</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">타입 값 중복</p>
+<p><code>SERVERDATA_AUTH_RESPONSE</code>와 <code>SERVERDATA_EXECCOMMAND</code>는 같은 값(2)을 공유합니다. 패킷의 방향에 따라 의미가 결정됩니다.</p>
+</div>
+<h3 id="크기-제한">크기 제한<a class="headerlink" href="#크기-제한" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>방향</th>
+<th>최대 페이로드</th>
+<th>최대 전체 패킷</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>클라이언트 → 서버</td>
+<td>1446 bytes</td>
+<td>1460 bytes</td>
+</tr>
+<tr>
+<td>서버 → 클라이언트</td>
+<td>4096 bytes</td>
+<td>4110 bytes</td>
+</tr>
+</tbody>
+</table>
+<h2 id="통신-흐름">통신 흐름<a class="headerlink" href="#통신-흐름" title="Permanent link">&para;</a></h2>
+<h3 id="인증">인증<a class="headerlink" href="#인증" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant C as 클라이언트
+    participant S as 서버
+
+    C-&gt;&gt;S: SERVERDATA_AUTH (비밀번호)
+    S-&gt;&gt;C: SERVERDATA_RESPONSE_VALUE (빈 응답)
+    alt 인증 성공
+        S-&gt;&gt;C: SERVERDATA_AUTH_RESPONSE (request_id 일치)
+    else 인증 실패
+        S-&gt;&gt;C: SERVERDATA_AUTH_RESPONSE (request_id = -1)
+    end</code></pre>
+<p><strong>인증 요청:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Length:     14 + password_length
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Request ID: 클라이언트_생성_id
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Type:       3 (SERVERDATA_AUTH)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Payload:    &quot;your_password\0&quot;
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Padding:    0x00 0x00
+</code></pre></div></p>
+<p><strong>인증 응답 (성공):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Length:     10
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Request ID: 요청과_동일 (클라이언트 ID와 일치)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Type:       2 (SERVERDATA_AUTH_RESPONSE)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Payload:    &quot;\0&quot;
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Padding:    0x00 0x00
+</code></pre></div></p>
+<p><strong>인증 응답 (실패):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Length:     10
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Request ID: -1 (실패를 나타냄)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Type:       2 (SERVERDATA_AUTH_RESPONSE)
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Payload:    &quot;\0&quot;
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Padding:    0x00 0x00
+</code></pre></div></p>
+<h3 id="명령-실행">명령 실행<a class="headerlink" href="#명령-실행" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant C as 클라이언트
+    participant S as 서버
+
+    Note over C,S: 인증 성공 후
+    C-&gt;&gt;S: SERVERDATA_EXECCOMMAND ("list")
+    S-&gt;&gt;C: SERVERDATA_RESPONSE_VALUE (결과)
+    Note over S,C: 큰 응답은 분할될 수 있음</code></pre>
+<p><strong>명령 요청:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Length:     14 + command_length
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Request ID: 클라이언트_생성_id
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Type:       2 (SERVERDATA_EXECCOMMAND)
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Payload:    &quot;list\0&quot;
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>Padding:    0x00 0x00
+</code></pre></div></p>
+<p><strong>명령 응답:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Length:     10 + response_length
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Request ID: 요청과_동일
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Type:       0 (SERVERDATA_RESPONSE_VALUE)
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>Payload:    &quot;There are 2 of a max 20 players online: Steve, Alex\0&quot;
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Padding:    0x00 0x00
+</code></pre></div></p>
+<h3 id="응답-분할">응답 분할<a class="headerlink" href="#응답-분할" title="Permanent link">&para;</a></h3>
+<p>큰 응답(&gt;4096 bytes)은 여러 패킷으로 분할됩니다. 멀티 패킷 응답의 끝을 감지하는 것은 까다롭습니다:</p>
+<ol>
+<li><strong>페이로드 크기 확인</strong>: 페이로드가 4096 bytes 미만이면 마지막 패킷일 가능성이 높음</li>
+<li><strong>타임아웃</strong>: 새 데이터가 없는 일정 시간 대기</li>
+<li><strong>더미 패킷</strong>: 더미 명령을 보내고 그 응답을 기다림</li>
+</ol>
+<h2 id="서버-설정">서버 설정<a class="headerlink" href="#서버-설정" title="Permanent link">&para;</a></h2>
+<h3 id="serverproperties">server.properties<a class="headerlink" href="#serverproperties" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># RCON 활성화</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="na">enable-rcon</span><span class="o">=</span><span class="s">true</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># RCON 포트 (기본값: 25575)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="na">rcon.port</span><span class="o">=</span><span class="s">25575</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># RCON 비밀번호 (필수)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="na">rcon.password</span><span class="o">=</span><span class="s">your_secure_password</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># RCON 명령을 운영자에게 브로드캐스트 (선택)</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="na">broadcast-rcon-to-ops</span><span class="o">=</span><span class="s">false</span>
+</code></pre></div>
+<h3 id="docker-설정-이-프로젝트">Docker 설정 (이 프로젝트)<a class="headerlink" href="#docker-설정-이-프로젝트" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># platform/servers/&lt;server&gt;/config.env</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nv">ENABLE_RCON</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nv">RCON_PASSWORD</span><span class="o">=</span>your_secure_password
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nv">RCON_PORT</span><span class="o">=</span><span class="m">25575</span>
+</code></pre></div>
+<p><code>itzg/minecraft-server</code> 이미지에는 내장 RCON 클라이언트인 <code>rcon-cli</code>가 포함되어 있습니다.</p>
+<h2 id="주요-rcon-명령어">주요 RCON 명령어<a class="headerlink" href="#주요-rcon-명령어" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+<th>응답 예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>list</code></td>
+<td>온라인 플레이어</td>
+<td><code>There are 2 of a max 20 players online: Steve, Alex</code></td>
+</tr>
+<tr>
+<td><code>say &lt;message&gt;</code></td>
+<td>메시지 브로드캐스트</td>
+<td>(빈 응답)</td>
+</tr>
+<tr>
+<td><code>tell &lt;player&gt; &lt;msg&gt;</code></td>
+<td>귓속말</td>
+<td>(빈 응답)</td>
+</tr>
+<tr>
+<td><code>kick &lt;player&gt; [reason]</code></td>
+<td>플레이어 추방</td>
+<td><code>Kicked Steve: reason</code></td>
+</tr>
+<tr>
+<td><code>ban &lt;player&gt; [reason]</code></td>
+<td>플레이어 밴</td>
+<td><code>Banned player Steve</code></td>
+</tr>
+<tr>
+<td><code>pardon &lt;player&gt;</code></td>
+<td>밴 해제</td>
+<td><code>Unbanned player Steve</code></td>
+</tr>
+<tr>
+<td><code>op &lt;player&gt;</code></td>
+<td>운영자 권한 부여</td>
+<td><code>Made Steve a server operator</code></td>
+</tr>
+<tr>
+<td><code>deop &lt;player&gt;</code></td>
+<td>운영자 권한 해제</td>
+<td><code>Made Steve no longer a server operator</code></td>
+</tr>
+<tr>
+<td><code>whitelist list</code></td>
+<td>화이트리스트 목록</td>
+<td><code>There are 3 whitelisted players: ...</code></td>
+</tr>
+<tr>
+<td><code>whitelist add &lt;player&gt;</code></td>
+<td>화이트리스트 추가</td>
+<td><code>Added Steve to the whitelist</code></td>
+</tr>
+<tr>
+<td><code>whitelist remove &lt;player&gt;</code></td>
+<td>화이트리스트 제거</td>
+<td><code>Removed Steve from the whitelist</code></td>
+</tr>
+<tr>
+<td><code>save-all</code></td>
+<td>월드 저장</td>
+<td><code>Saving the game (this may take a moment!)</code></td>
+</tr>
+<tr>
+<td><code>stop</code></td>
+<td>서버 종료</td>
+<td>서버 종료됨</td>
+</tr>
+<tr>
+<td><code>time set &lt;value&gt;</code></td>
+<td>월드 시간 설정</td>
+<td><code>Set the time to &lt;value&gt;</code></td>
+</tr>
+<tr>
+<td><code>weather &lt;type&gt;</code></td>
+<td>날씨 설정</td>
+<td><code>Set the weather to &lt;type&gt;</code></td>
+</tr>
+<tr>
+<td><code>gamemode &lt;mode&gt; &lt;player&gt;</code></td>
+<td>게임 모드 변경</td>
+<td><code>Set Steve's game mode to Creative Mode</code></td>
+</tr>
+<tr>
+<td><code>give &lt;player&gt; &lt;item&gt; [count]</code></td>
+<td>아이템 지급</td>
+<td><code>Gave 64 [Diamond] to Steve</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="이-프로젝트에서의-사용">이 프로젝트에서의 사용<a class="headerlink" href="#이-프로젝트에서의-사용" title="Permanent link">&para;</a></h2>
+<h3 id="mcctl-cli-사용">mcctl CLI 사용<a class="headerlink" href="#mcctl-cli-사용" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># 단일 명령 실행</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>list
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">&quot;5분 후 서버가 재시작됩니다!&quot;</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># 대화형 RCON 콘솔</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>mcctl<span class="w"> </span>console<span class="w"> </span>myserver
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># 플레이어 관리 (내부적으로 RCON 사용)</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Steve
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>mcctl<span class="w"> </span>op<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Steve
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>myserver<span class="w"> </span>Steve<span class="w"> </span><span class="s2">&quot;장시간 자리 비움&quot;</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>myserver<span class="w"> </span>Griefer<span class="w"> </span><span class="s2">&quot;그리핑&quot;</span>
+</code></pre></div>
+<h3 id="docker-직접-사용">Docker 직접 사용<a class="headerlink" href="#docker-직접-사용" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># 단일 명령</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>mc-myserver<span class="w"> </span>rcon-cli<span class="w"> </span>list
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># 대화형 모드</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>mc-myserver<span class="w"> </span>rcon-cli
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># 명시적 비밀번호 지정</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>mc-myserver<span class="w"> </span>rcon-cli<span class="w"> </span>--password<span class="w"> </span>mypassword<span class="w"> </span>list
+</code></pre></div>
+<h3 id="rcon-cli-옵션-사용">rcon-cli 옵션 사용<a class="headerlink" href="#rcon-cli-옵션-사용" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># 기본 사용법</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>rcon-cli<span class="w"> </span>&lt;command&gt;
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># 호스트와 포트 지정 (원격 연결용)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>rcon-cli<span class="w"> </span>--host<span class="w"> </span>localhost<span class="w"> </span>--port<span class="w"> </span><span class="m">25575</span><span class="w"> </span>--password<span class="w"> </span>mypassword<span class="w"> </span>list
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># 환경 변수 사용</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="nv">RCON_HOST</span><span class="o">=</span>localhost<span class="w"> </span><span class="nv">RCON_PORT</span><span class="o">=</span><span class="m">25575</span><span class="w"> </span><span class="nv">RCON_PASSWORD</span><span class="o">=</span>mypassword<span class="w"> </span>rcon-cli<span class="w"> </span>list
+</code></pre></div>
+<h2 id="구현-참고사항">구현 참고사항<a class="headerlink" href="#구현-참고사항" title="Permanent link">&para;</a></h2>
+<h3 id="문자-인코딩">문자 인코딩<a class="headerlink" href="#문자-인코딩" title="Permanent link">&para;</a></h3>
+<p>일부 서버(CraftBukkit/Spigot 등)는 바이트 <code>0xA7</code>(섹션 기호)을 사용하여 색상 코드를 전송합니다. 더 나은 호환성을 위해:</p>
+<ul>
+<li>US-ASCII 대신 <strong>ISO-8859-1</strong> (ISO-LATIN-1) 문자셋 사용</li>
+<li>응답에서 색상 코드(<code>§</code>) 처리</li>
+</ul>
+<h3 id="request-id-처리">Request ID 처리<a class="headerlink" href="#request-id-처리" title="Permanent link">&para;</a></h3>
+<ul>
+<li>각 명령에 대해 고유한 request ID 생성</li>
+<li>request ID로 응답 매칭</li>
+<li>request ID <code>-1</code>은 인증 실패로 처리</li>
+</ul>
+<h3 id="연결-관리">연결 관리<a class="headerlink" href="#연결-관리" title="Permanent link">&para;</a></h3>
+<ul>
+<li>여러 명령을 위해 연결 유지</li>
+<li>응답 없는 서버에 대한 타임아웃 구현</li>
+<li>연결 끊김을 우아하게 처리</li>
+</ul>
+<h2 id="보안-모범-사례">보안 모범 사례<a class="headerlink" href="#보안-모범-사례" title="Permanent link">&para;</a></h2>
+<h3 id="네트워크-보안">네트워크 보안<a class="headerlink" href="#네트워크-보안" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>RCON을 인터넷에 노출하지 않음</strong> - localhost 또는 신뢰할 수 있는 네트워크에서만 사용</li>
+<li><strong>강력한 비밀번호 사용</strong> - 최소 16자, 무작위</li>
+<li><strong>방화벽 규칙</strong> - RCON 포트에 대한 외부 접근 차단</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># UFW (Ubuntu)</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>sudo<span class="w"> </span>ufw<span class="w"> </span>deny<span class="w"> </span><span class="m">25575</span>/tcp
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># iptables</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>sudo<span class="w"> </span>iptables<span class="w"> </span>-A<span class="w"> </span>INPUT<span class="w"> </span>-p<span class="w"> </span>tcp<span class="w"> </span>--dport<span class="w"> </span><span class="m">25575</span><span class="w"> </span>-j<span class="w"> </span>DROP
+</code></pre></div>
+<h3 id="docker-보안">Docker 보안<a class="headerlink" href="#docker-보안" title="Permanent link">&para;</a></h3>
+<p>Docker 환경에서 RCON은 <code>docker exec</code>를 통해 접근하며, 이는:</p>
+<ul>
+<li>네트워크 노출이 필요 없음</li>
+<li>Docker의 인증 사용</li>
+<li>Docker 소켓을 통해 작동</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># 포트 노출 불필요</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">mc-myserver</span><span class="p">:</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="c1"># ports:</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="c1">#   - &quot;25575:25575&quot;  # RCON 포트 노출하지 않음</span>
+</code></pre></div>
+<h3 id="보안-대안">보안 대안<a class="headerlink" href="#보안-대안" title="Permanent link">&para;</a></h3>
+<p>인터넷을 통한 원격 관리의 경우:</p>
+<ol>
+<li>
+<p><strong>SSH 터널</strong>: SSH를 통해 RCON 접근
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">25575</span>:localhost:25575<span class="w"> </span>user@server
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>rcon-cli<span class="w"> </span>--host<span class="w"> </span>localhost<span class="w"> </span>--port<span class="w"> </span><span class="m">25575</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>VPN</strong>: VPN을 통해 서버 네트워크 접근</p>
+</li>
+<li>
+<p><strong>웹 패널</strong>: HTTPS를 사용하는 웹 기반 관리 패널 사용</p>
+</li>
+</ol>
+<h2 id="문제-해결">문제 해결<a class="headerlink" href="#문제-해결" title="Permanent link">&para;</a></h2>
+<h3 id="연결-거부">연결 거부<a class="headerlink" href="#연결-거부" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># RCON 활성화 확인</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>mc-myserver<span class="w"> </span>cat<span class="w"> </span>/data/server.properties<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>rcon
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># 컨테이너 실행 확인</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>docker<span class="w"> </span>ps<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>mc-myserver
+</code></pre></div>
+<h3 id="인증-실패">인증 실패<a class="headerlink" href="#인증-실패" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># 설정에서 비밀번호 확인</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>cat<span class="w"> </span>platform/servers/myserver/config.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>RCON_PASSWORD
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># server.properties 확인</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>mc-myserver<span class="w"> </span>cat<span class="w"> </span>/data/server.properties<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>rcon.password
+</code></pre></div>
+<h3 id="빈-응답">빈 응답<a class="headerlink" href="#빈-응답" title="Permanent link">&para;</a></h3>
+<p>일부 명령은 빈 응답을 반환합니다. 다음 명령에서는 정상입니다:</p>
+<ul>
+<li><code>say</code> - 브로드캐스트만 하고 응답 없음</li>
+<li><code>tell</code> - 귓속말 전송됨</li>
+<li><code>whitelist add</code> - 플레이어 추가됨 (일부 서버는 빈 응답 반환)</li>
+</ul>
+<h3 id="타임아웃-문제">타임아웃 문제<a class="headerlink" href="#타임아웃-문제" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># rcon-cli에서 타임아웃 증가</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>rcon-cli<span class="w"> </span>--timeout<span class="w"> </span><span class="m">30</span><span class="w"> </span>&lt;command&gt;
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># 서버 응답 확인</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>docker<span class="w"> </span>logs<span class="w"> </span>mc-myserver<span class="w"> </span>--tail<span class="w"> </span><span class="m">50</span>
+</code></pre></div>
+<h2 id="참고-자료">참고 자료<a class="headerlink" href="#참고-자료" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://minecraft.wiki/w/RCON">Minecraft Wiki - RCON</a></li>
+<li><a href="https://developer.valvesoftware.com/wiki/Source_RCON_Protocol">Source RCON Protocol (Valve)</a></li>
+<li><a href="https://docker-minecraft-server.readthedocs.io/en/latest/commands/">itzg/minecraft-server - RCON</a></li>
+<li><a href="https://github.com/itzg/rcon-cli">rcon-cli GitHub</a></li>
+</ul>
+<h2 id="관련-문서">관련 문서<a class="headerlink" href="#관련-문서" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../networking/">네트워킹 가이드</a></strong> - 네트워크 설정</li>
+<li><strong><a href="../../cli/commands/">CLI 명령어</a></strong> - 전체 CLI 레퍼런스</li>
+<li><strong><a href="../../configuration/environment/">환경 변수</a></strong> - 서버 설정</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  맨위로
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 smallmiro
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/smallmiro/minecraft-server-manager" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

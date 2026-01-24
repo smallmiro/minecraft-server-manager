@@ -1189,6 +1189,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#migration-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-migrate-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl migrate status
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-migrate-worlds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl migrate worlds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#global-options-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2024,6 +2063,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#migration-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-migrate-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl migrate status
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-migrate-worlds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl migrate worlds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#global-options-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2242,66 +2320,141 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:5"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Basic Status</label><label for="__tabbed_1_2">Detailed Status</label><label for="__tabbed_1_3">Real-time Monitoring</label><label for="__tabbed_1_4">Single Server</label><label for="__tabbed_1_5">Router Status</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:6"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><input id="__tabbed_1_6" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Basic Status</label><label for="__tabbed_1_2">Detailed Status</label><label for="__tabbed_1_3">JSON Output</label><label for="__tabbed_1_4">Single Server</label><label for="__tabbed_1_5">Router Status</label><label for="__tabbed_1_6">Real-time Monitoring</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mcctl<span class="w"> </span>status
 </code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>=== Server Status (mc-router Managed) ===
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>INFRASTRUCTURE
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>SERVICE              STATUS       HEALTH     PORT/INFO
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>-------              ------       ------     ---------
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>mc-router            running      healthy    :25565 (hostname routing)
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>avahi-daemon         running      (system)   mDNS broadcast
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>MINECRAFT SERVERS
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>SERVER               STATUS       HEALTH     HOSTNAME
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>------               ------       ------     --------
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>survival             running      healthy    survival.local,survival.192.168.1.100.nip.io
+</code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>--detail
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>--detail
 </code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>=== Detailed Server Status ===
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>INFRASTRUCTURE
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>  mc-router
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    Status:    running (healthy)
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    Port:      25565
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    Mode:      --in-docker (auto-discovery)
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    Uptime:    1d 1h 27m
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    Routes:    2 configured
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>      - survival.local → mc-survival:25565
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>      - survival.192.168.1.100.nip.io → mc-survival:25565
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>  avahi-daemon
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>    Status:    running
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>    Type:      system
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>MINECRAFT SERVERS
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>  survival
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>    Container: mc-survival
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>    Status:    running (healthy)
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a>    Hostname:  survival.local,survival.192.168.1.100.nip.io
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>    Type:      PAPER
+<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a>    Version:   1.21.1
+<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a>    Memory:    4G
+<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a>    Uptime:    1d 1h 16m
+<a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a>    Resources: 3.1 GB / 8.0 GB (38.8%) | CPU: 15.2%
+<a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a>    Players:   2/20 - Steve, Alex
+</code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Default 5 second refresh</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>mcctl<span class="w"> </span>status<span class="w"> </span>--watch
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Custom 2 second refresh</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>mcctl<span class="w"> </span>status<span class="w"> </span>--watch<span class="w"> </span>--interval<span class="w"> </span><span class="m">2</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>--json
 </code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p">{</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">&quot;router&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mc-router&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;running&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="nt">&quot;health&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;healthy&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">25565</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">  </span><span class="nt">&quot;avahi_daemon&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;avahi-daemon&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;running&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;system&quot;</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="w">  </span><span class="nt">&quot;servers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;survival&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="w">      </span><span class="nt">&quot;container&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mc-survival&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;running&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="w">      </span><span class="nt">&quot;health&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;healthy&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="w">      </span><span class="nt">&quot;hostname&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;survival.local,survival.192.168.1.100.nip.io&quot;</span>
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-16-22" name="__codelineno-16-22" href="#__codelineno-16-22"></a><span class="p">}</span>
+</code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>myserver
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>survival
 </code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>=== Server: survival ===
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>  survival
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>    Container: mc-survival
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>    Status:    running (healthy)
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>    Hostname:  survival.local,survival.192.168.1.100.nip.io
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>    Type:      PAPER
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>    Version:   1.21.1
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>    Memory:    4G
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>    Uptime:    1d 1h 16m
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>    Resources: 3.1 GB / 8.0 GB (38.8%) | CPU: 18.2%
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>    Players:   2/20 - Steve, Alex
+</code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>router
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>router
+</code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>=== mc-router Status ===
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>  Status:    running (healthy)
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>  Port:      25565
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>  Mode:      --in-docker (auto-discovery)
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>  Uptime:    1d 1h 27m
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>ROUTING TABLE
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>  HOSTNAME                                 TARGET                    STATUS
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>  --------                                 ------                    ------
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>  survival.local                           mc-survival:25565         running
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>  survival.192.168.1.100.nip.io            mc-survival:25565         running
+</code></pre></div></p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Default 5 second refresh</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>mcctl<span class="w"> </span>status<span class="w"> </span>--watch
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Custom 2 second refresh</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>mcctl<span class="w"> </span>status<span class="w"> </span>--watch<span class="w"> </span>--interval<span class="w"> </span><span class="m">2</span>
 </code></pre></div>
 </div>
 </div>
 </div>
-<p><strong>Detailed Output Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>=== Detailed Server Status ===
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>INFRASTRUCTURE
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>  mc-router
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    Status:    running (healthy)
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>    Port:      25565
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>    Mode:      --in-docker (auto-discovery)
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>    Uptime:    3d 14h 22m
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>    Routes:    2 configured
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>      - myserver.local → mc-myserver:25565
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>      - creative.local → mc-creative:25565
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>MINECRAFT SERVERS
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>
-<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>  myserver
-<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a>    Container: mc-myserver
-<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>    Status:    running (healthy)
-<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>    Hostname:  myserver.192.168.1.100.nip.io
-<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a>    Type:      PAPER
-<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a>    Version:   1.21.1
-<a id="__codelineno-16-22" name="__codelineno-16-22" href="#__codelineno-16-22"></a>    Memory:    4G
-<a id="__codelineno-16-23" name="__codelineno-16-23" href="#__codelineno-16-23"></a>    Uptime:    2d 8h 15m
-<a id="__codelineno-16-24" name="__codelineno-16-24" href="#__codelineno-16-24"></a>    Resources: 2.1 GB / 4.0 GB (52.5%) | CPU: 15.2%
-<a id="__codelineno-16-25" name="__codelineno-16-25" href="#__codelineno-16-25"></a>    Players:   3/20 - Steve, Alex, Notch
-</code></pre></div>
 <hr />
 <h2 id="server-commands">Server Commands<a class="headerlink" href="#server-commands" title="Permanent link">&para;</a></h2>
 <h3 id="mcctl-create">mcctl create<a class="headerlink" href="#mcctl-create" title="Permanent link">&para;</a></h3>
 <p>Create a new Minecraft server.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>name<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>name<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -2369,34 +2522,34 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Interactive Mode</label><label for="__tabbed_2_2">CLI Mode</label><label for="__tabbed_2_3">Automation (CI/CD)</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>mcctl<span class="w"> </span>create
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="c1"># Prompts for all options</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>create
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="c1"># Prompts for all options</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Basic Paper server</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Forge server with specific version</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>-t<span class="w"> </span>FORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="c1"># Server with world seed</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1<span class="w"> </span>-s<span class="w"> </span><span class="m">12345</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>
-<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="c1"># Using existing world</span>
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>mcctl<span class="w"> </span>create<span class="w"> </span>legacy<span class="w"> </span>-w<span class="w"> </span>old-world<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
-<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>
-<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="c1"># Create without starting</span>
-<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--no-start
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Basic Paper server</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Forge server with specific version</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>-t<span class="w"> </span>FORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="c1"># Server with world seed</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1<span class="w"> </span>-s<span class="w"> </span><span class="m">12345</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="c1"># Using existing world</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>mcctl<span class="w"> </span>create<span class="w"> </span>legacy<span class="w"> </span>-w<span class="w"> </span>old-world<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span class="c1"># Create without starting</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--no-start
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Using environment variable for sudo password</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">&quot;your-password&quot;</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="c1"># Using --sudo-password option</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--sudo-password<span class="w"> </span><span class="s2">&quot;your-password&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Using environment variable for sudo password</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">&quot;your-password&quot;</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="c1"># Using --sudo-password option</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--sudo-password<span class="w"> </span><span class="s2">&quot;your-password&quot;</span>
 </code></pre></div>
 </div>
 </div>
@@ -2465,7 +2618,7 @@
 <hr />
 <h3 id="mcctl-delete">mcctl delete<a class="headerlink" href="#mcctl-delete" title="Permanent link">&para;</a></h3>
 <p>Delete a server.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>mcctl<span class="w"> </span>delete<span class="w"> </span><span class="o">[</span>name<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mcctl<span class="w"> </span>delete<span class="w"> </span><span class="o">[</span>name<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -2509,23 +2662,23 @@
 <p><code>mcctl delete</code> removes the server configuration but preserves world data in the <code>worlds/</code> directory.</p>
 </div>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Interactive - shows server list</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>mcctl<span class="w"> </span>delete
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Delete specific server with confirmation</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="c1"># Force delete without confirmation</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--force
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="c1"># Automation with sudo password</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">&quot;your-password&quot;</span><span class="w"> </span>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--force
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Interactive - shows server list</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>mcctl<span class="w"> </span>delete
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Delete specific server with confirmation</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="c1"># Force delete without confirmation</span>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--force
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="c1"># Automation with sudo password</span>
+<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">&quot;your-password&quot;</span><span class="w"> </span>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--force
 </code></pre></div>
 <hr />
 <h3 id="mcctl-start">mcctl start<a class="headerlink" href="#mcctl-start" title="Permanent link">&para;</a></h3>
 <p>Start a stopped server or all servers.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;name&gt;
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>mcctl<span class="w"> </span>start<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;name&gt;
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>mcctl<span class="w"> </span>start<span class="w"> </span>--all
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -2545,11 +2698,11 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Start single server</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Start all servers</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>mcctl<span class="w"> </span>start<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Start single server</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="c1"># Start all servers</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>mcctl<span class="w"> </span>start<span class="w"> </span>--all
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Auto-Start</p>
@@ -2558,8 +2711,8 @@
 <hr />
 <h3 id="mcctl-stop">mcctl stop<a class="headerlink" href="#mcctl-stop" title="Permanent link">&para;</a></h3>
 <p>Stop a running server or all servers.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>&lt;name&gt;
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>&lt;name&gt;
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>--all
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -2579,16 +2732,16 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Stop single server</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Stop all servers</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Stop single server</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="c1"># Stop all servers</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>--all
 </code></pre></div>
 <hr />
 <h3 id="mcctl-logs">mcctl logs<a class="headerlink" href="#mcctl-logs" title="Permanent link">&para;</a></h3>
 <p>View server logs.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -2613,54 +2766,66 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Show last 50 lines</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># Follow logs in real-time</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver<span class="w"> </span>-f
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>
-<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="c1"># Show last 100 lines</span>
-<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Show last 50 lines</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>survival
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="c1"># Follow logs in real-time</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>survival<span class="w"> </span>-f
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="c1"># Show last 10 lines</span>
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>survival<span class="w"> </span>-n<span class="w"> </span><span class="m">10</span>
 </code></pre></div>
+<p><strong>Output Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>[22:09:48] [Server thread/INFO]: Steve joined the game
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>[22:10:15] [Server thread/INFO]: Alex joined the game
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>[22:15:30] [Server thread/INFO]: &lt;Steve&gt; Hello everyone!
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>[22:15:45] [Server thread/INFO]: &lt;Alex&gt; Hi Steve!
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>[22:20:00] [Server thread/INFO]: Steve has made the advancement [Getting Wood]
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>[22:25:12] [Server thread/INFO]: Saving the game (this may take a moment!)
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a>[22:25:12] [Server thread/INFO]: Saved the game
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a>[22:30:00] [Server thread/INFO]: Alex left the game
+<a id="__codelineno-34-9" name="__codelineno-34-9" href="#__codelineno-34-9"></a>[22:35:15] [RCON Listener #1/INFO]: Thread RCON Client started
+<a id="__codelineno-34-10" name="__codelineno-34-10" href="#__codelineno-34-10"></a>[22:35:15] [RCON Client #1/INFO]: Thread RCON Client shutting down
+</code></pre></div></p>
 <hr />
 <h3 id="mcctl-console">mcctl console<a class="headerlink" href="#mcctl-console" title="Permanent link">&para;</a></h3>
 <p>Connect to server RCON console.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>&lt;name&gt;
 </code></pre></div>
 <p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>myserver
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>myserver
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>&gt; list
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>There are 2 of a max of 20 players online: Steve, Alex
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>&gt; say Hello everyone!
-<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>&gt; tp Steve Alex
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>&gt; list
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>There are 2 of a max of 20 players online: Steve, Alex
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>&gt; say Hello everyone!
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a>&gt; tp Steve Alex
 </code></pre></div>
 <p>Press <code>Ctrl+C</code> to exit.</p>
 <hr />
 <h3 id="mcctl-exec">mcctl exec<a class="headerlink" href="#mcctl-exec" title="Permanent link">&para;</a></h3>
 <p>Execute a single RCON command on a server.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;command...&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;command...&gt;
 </code></pre></div>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Say message to all players</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">&quot;Hello everyone!&quot;</span>
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="c1"># Give items to player</span>
-<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>give<span class="w"> </span>Steve<span class="w"> </span>diamond<span class="w"> </span><span class="m">64</span>
-<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>
-<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="c1"># List online players</span>
-<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>list
-<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>
-<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a><span class="c1"># Change weather</span>
-<a id="__codelineno-33-11" name="__codelineno-33-11" href="#__codelineno-33-11"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>weather<span class="w"> </span>clear
-<a id="__codelineno-33-12" name="__codelineno-33-12" href="#__codelineno-33-12"></a>
-<a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a><span class="c1"># Set time</span>
-<a id="__codelineno-33-14" name="__codelineno-33-14" href="#__codelineno-33-14"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span><span class="nb">time</span><span class="w"> </span><span class="nb">set</span><span class="w"> </span>day
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># Say message to all players</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">&quot;Hello everyone!&quot;</span>
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="c1"># Give items to player</span>
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>give<span class="w"> </span>Steve<span class="w"> </span>diamond<span class="w"> </span><span class="m">64</span>
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>
+<a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a><span class="c1"># List online players</span>
+<a id="__codelineno-39-8" name="__codelineno-39-8" href="#__codelineno-39-8"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>list
+<a id="__codelineno-39-9" name="__codelineno-39-9" href="#__codelineno-39-9"></a>
+<a id="__codelineno-39-10" name="__codelineno-39-10" href="#__codelineno-39-10"></a><span class="c1"># Change weather</span>
+<a id="__codelineno-39-11" name="__codelineno-39-11" href="#__codelineno-39-11"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>weather<span class="w"> </span>clear
+<a id="__codelineno-39-12" name="__codelineno-39-12" href="#__codelineno-39-12"></a>
+<a id="__codelineno-39-13" name="__codelineno-39-13" href="#__codelineno-39-13"></a><span class="c1"># Set time</span>
+<a id="__codelineno-39-14" name="__codelineno-39-14" href="#__codelineno-39-14"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span><span class="nb">time</span><span class="w"> </span><span class="nb">set</span><span class="w"> </span>day
 </code></pre></div>
 <hr />
 <h3 id="mcctl-config">mcctl config<a class="headerlink" href="#mcctl-config" title="Permanent link">&para;</a></h3>
 <p>View or modify server configuration.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>key<span class="o">]</span><span class="w"> </span><span class="o">[</span>value<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>key<span class="o">]</span><span class="w"> </span><span class="o">[</span>value<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -2724,22 +2889,41 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="3:4"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><input id="__tabbed_3_4" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">View All Config</label><label for="__tabbed_3_2">View Single Key</label><label for="__tabbed_3_3">Set Value</label><label for="__tabbed_3_4">Use Shortcuts</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival
+</code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>Configuration for survival:
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>  TYPE=PAPER
+<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a>  VERSION=1.21.1
+<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>  MEMORY=4G
+<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a>  GAMEMODE=survival
+<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a>  DIFFICULTY=normal
+<a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a>  MAX_PLAYERS=20
+<a id="__codelineno-42-9" name="__codelineno-42-9" href="#__codelineno-42-9"></a>  VIEW_DISTANCE=10
+<a id="__codelineno-42-10" name="__codelineno-42-10" href="#__codelineno-42-10"></a>  PVP=true
+<a id="__codelineno-42-11" name="__codelineno-42-11" href="#__codelineno-42-11"></a>  SPAWN_PROTECTION=0
+<a id="__codelineno-42-12" name="__codelineno-42-12" href="#__codelineno-42-12"></a>  LEVEL=survival-world
+<a id="__codelineno-42-13" name="__codelineno-42-13" href="#__codelineno-42-13"></a>  ENABLE_RCON=true
+<a id="__codelineno-42-14" name="__codelineno-42-14" href="#__codelineno-42-14"></a>  MOTD=Welcome to survival! Your adventure begins here.
+<a id="__codelineno-42-15" name="__codelineno-42-15" href="#__codelineno-42-15"></a>  ALLOW_CHEATS=false
+<a id="__codelineno-42-16" name="__codelineno-42-16" href="#__codelineno-42-16"></a>  ENABLE_COMMAND_BLOCK=true
+<a id="__codelineno-42-17" name="__codelineno-42-17" href="#__codelineno-42-17"></a>  OPS=Steve
+</code></pre></div></p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MOTD
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MOTD
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Welcome to my server!&quot;</span>
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">50</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Welcome to my server!&quot;</span>
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">50</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>--cheats
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>--no-pvp
-<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>--command-block
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>--cheats
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>--no-pvp
+<a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>--command-block
 </code></pre></div>
 </div>
 </div>
@@ -2752,7 +2936,7 @@
 <h2 id="server-backup--restore">Server Backup &amp; Restore<a class="headerlink" href="#server-backup--restore" title="Permanent link">&para;</a></h2>
 <h3 id="mcctl-server-backup">mcctl server-backup<a class="headerlink" href="#mcctl-server-backup" title="Permanent link">&para;</a></h3>
 <p>Backup server configuration (config.env, docker-compose.yml).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -2782,16 +2966,29 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Backup with message</span>
-<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>myserver<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Before upgrade&quot;</span>
-<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="c1"># List all backups</span>
-<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>myserver<span class="w"> </span>--list
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a><span class="c1"># Backup with message</span>
+<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>survival<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Before upgrade&quot;</span>
+<a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a>
+<a id="__codelineno-47-4" name="__codelineno-47-4" href="#__codelineno-47-4"></a><span class="c1"># List all backups</span>
+<a id="__codelineno-47-5" name="__codelineno-47-5" href="#__codelineno-47-5"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>survival<span class="w"> </span>--list
 </code></pre></div>
+<p><strong>Output Example (--list):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>Backups for survival:
+<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>
+<a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a>  20260120-203357
+<a id="__codelineno-48-4" name="__codelineno-48-4" href="#__codelineno-48-4"></a>    Created: 1/20/2026, 8:33:57 PM
+<a id="__codelineno-48-5" name="__codelineno-48-5" href="#__codelineno-48-5"></a>    Size: 3 KB, Files: 7
+<a id="__codelineno-48-6" name="__codelineno-48-6" href="#__codelineno-48-6"></a>    Description: Before upgrade
+<a id="__codelineno-48-7" name="__codelineno-48-7" href="#__codelineno-48-7"></a>
+<a id="__codelineno-48-8" name="__codelineno-48-8" href="#__codelineno-48-8"></a>  20260118-150000
+<a id="__codelineno-48-9" name="__codelineno-48-9" href="#__codelineno-48-9"></a>    Created: 1/18/2026, 3:00:00 PM
+<a id="__codelineno-48-10" name="__codelineno-48-10" href="#__codelineno-48-10"></a>    Size: 3 KB, Files: 7
+<a id="__codelineno-48-11" name="__codelineno-48-11" href="#__codelineno-48-11"></a>    Description: Initial setup
+</code></pre></div></p>
 <hr />
 <h3 id="mcctl-server-restore">mcctl server-restore<a class="headerlink" href="#mcctl-server-restore" title="Permanent link">&para;</a></h3>
 <p>Restore server configuration from backup.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>backup-id<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>backup-id<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -2817,20 +3014,20 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1"># Interactive - shows backup list</span>
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>myserver
-<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>
-<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="c1"># Restore specific backup</span>
-<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>myserver<span class="w"> </span>abc123
-<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a>
-<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="c1"># Preview restoration</span>
-<a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>myserver<span class="w"> </span>abc123<span class="w"> </span>--dry-run
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="c1"># Interactive - shows backup list</span>
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>myserver
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>
+<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a><span class="c1"># Restore specific backup</span>
+<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>myserver<span class="w"> </span>abc123
+<a id="__codelineno-50-6" name="__codelineno-50-6" href="#__codelineno-50-6"></a>
+<a id="__codelineno-50-7" name="__codelineno-50-7" href="#__codelineno-50-7"></a><span class="c1"># Preview restoration</span>
+<a id="__codelineno-50-8" name="__codelineno-50-8" href="#__codelineno-50-8"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>myserver<span class="w"> </span>abc123<span class="w"> </span>--dry-run
 </code></pre></div>
 <hr />
 <h2 id="player-management">Player Management<a class="headerlink" href="#player-management" title="Permanent link">&para;</a></h2>
 <h3 id="mcctl-op">mcctl op<a class="headerlink" href="#mcctl-op" title="Permanent link">&para;</a></h3>
 <p>Manage server operators.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>mcctl<span class="w"> </span>op<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;action&gt;<span class="w"> </span><span class="o">[</span>player<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>mcctl<span class="w"> </span>op<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;action&gt;<span class="w"> </span><span class="o">[</span>player<span class="o">]</span>
 </code></pre></div>
 <p><strong>Actions:</strong></p>
 <table>
@@ -2856,19 +3053,25 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="c1"># List operators</span>
-<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>mcctl<span class="w"> </span>op<span class="w"> </span>myserver<span class="w"> </span>list
-<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a>
-<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="c1"># Add operator</span>
-<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a>mcctl<span class="w"> </span>op<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Steve
-<a id="__codelineno-44-6" name="__codelineno-44-6" href="#__codelineno-44-6"></a>
-<a id="__codelineno-44-7" name="__codelineno-44-7" href="#__codelineno-44-7"></a><span class="c1"># Remove operator</span>
-<a id="__codelineno-44-8" name="__codelineno-44-8" href="#__codelineno-44-8"></a>mcctl<span class="w"> </span>op<span class="w"> </span>myserver<span class="w"> </span>remove<span class="w"> </span>Steve
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a><span class="c1"># List operators</span>
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>mcctl<span class="w"> </span>op<span class="w"> </span>survival<span class="w"> </span>list
+<a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>
+<a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="c1"># Add operator</span>
+<a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>mcctl<span class="w"> </span>op<span class="w"> </span>survival<span class="w"> </span>add<span class="w"> </span>Steve
+<a id="__codelineno-52-6" name="__codelineno-52-6" href="#__codelineno-52-6"></a>
+<a id="__codelineno-52-7" name="__codelineno-52-7" href="#__codelineno-52-7"></a><span class="c1"># Remove operator</span>
+<a id="__codelineno-52-8" name="__codelineno-52-8" href="#__codelineno-52-8"></a>mcctl<span class="w"> </span>op<span class="w"> </span>survival<span class="w"> </span>remove<span class="w"> </span>Steve
 </code></pre></div>
+<p><strong>Output Example (list):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>Operators for survival:
+<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a>
+<a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a>  Steve
+<a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a>  Alex
+</code></pre></div></p>
 <hr />
 <h3 id="mcctl-whitelist">mcctl whitelist<a class="headerlink" href="#mcctl-whitelist" title="Permanent link">&para;</a></h3>
 <p>Manage server whitelist.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;action&gt;<span class="w"> </span><span class="o">[</span>player<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;action&gt;<span class="w"> </span><span class="o">[</span>player<span class="o">]</span>
 </code></pre></div>
 <p><strong>Actions:</strong></p>
 <table>
@@ -2906,23 +3109,37 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a><span class="c1"># List whitelisted players</span>
-<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>list
-<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>
-<a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a><span class="c1"># Add player</span>
-<a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Steve
-<a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>
-<a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a><span class="c1"># Enable whitelist</span>
-<a id="__codelineno-46-8" name="__codelineno-46-8" href="#__codelineno-46-8"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>on
-<a id="__codelineno-46-9" name="__codelineno-46-9" href="#__codelineno-46-9"></a>
-<a id="__codelineno-46-10" name="__codelineno-46-10" href="#__codelineno-46-10"></a><span class="c1"># Check status</span>
-<a id="__codelineno-46-11" name="__codelineno-46-11" href="#__codelineno-46-11"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>status
+<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a><span class="c1"># List whitelisted players</span>
+<a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>survival<span class="w"> </span>list
+<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a>
+<a id="__codelineno-55-4" name="__codelineno-55-4" href="#__codelineno-55-4"></a><span class="c1"># Add player</span>
+<a id="__codelineno-55-5" name="__codelineno-55-5" href="#__codelineno-55-5"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>survival<span class="w"> </span>add<span class="w"> </span>Steve
+<a id="__codelineno-55-6" name="__codelineno-55-6" href="#__codelineno-55-6"></a>
+<a id="__codelineno-55-7" name="__codelineno-55-7" href="#__codelineno-55-7"></a><span class="c1"># Enable whitelist</span>
+<a id="__codelineno-55-8" name="__codelineno-55-8" href="#__codelineno-55-8"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>survival<span class="w"> </span>on
+<a id="__codelineno-55-9" name="__codelineno-55-9" href="#__codelineno-55-9"></a>
+<a id="__codelineno-55-10" name="__codelineno-55-10" href="#__codelineno-55-10"></a><span class="c1"># Check status</span>
+<a id="__codelineno-55-11" name="__codelineno-55-11" href="#__codelineno-55-11"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>survival<span class="w"> </span>status
 </code></pre></div>
+<p><strong>Output Example (list):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>Whitelist for survival:
+<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>
+<a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a>  Steve
+<a id="__codelineno-56-4" name="__codelineno-56-4" href="#__codelineno-56-4"></a>  Alex
+<a id="__codelineno-56-5" name="__codelineno-56-5" href="#__codelineno-56-5"></a>  Notch
+</code></pre></div></p>
+<p><strong>Output Example (status):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>Whitelist Status for survival:
+<a id="__codelineno-57-2" name="__codelineno-57-2" href="#__codelineno-57-2"></a>
+<a id="__codelineno-57-3" name="__codelineno-57-3" href="#__codelineno-57-3"></a>  Enabled: Yes
+<a id="__codelineno-57-4" name="__codelineno-57-4" href="#__codelineno-57-4"></a>  Players: 3
+<a id="__codelineno-57-5" name="__codelineno-57-5" href="#__codelineno-57-5"></a>  Running: Yes
+</code></pre></div></p>
 <hr />
 <h3 id="mcctl-ban">mcctl ban<a class="headerlink" href="#mcctl-ban" title="Permanent link">&para;</a></h3>
 <p>Manage player and IP bans.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;action&gt;<span class="w"> </span><span class="o">[</span>target<span class="o">]</span><span class="w"> </span><span class="o">[</span>reason<span class="o">]</span>
-<a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>&lt;server&gt;<span class="w"> </span>ip<span class="w"> </span>&lt;action&gt;<span class="w"> </span><span class="o">[</span>ip<span class="o">]</span><span class="w"> </span><span class="o">[</span>reason<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;action&gt;<span class="w"> </span><span class="o">[</span>target<span class="o">]</span><span class="w"> </span><span class="o">[</span>reason<span class="o">]</span>
+<a id="__codelineno-58-2" name="__codelineno-58-2" href="#__codelineno-58-2"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>&lt;server&gt;<span class="w"> </span>ip<span class="w"> </span>&lt;action&gt;<span class="w"> </span><span class="o">[</span>ip<span class="o">]</span><span class="w"> </span><span class="o">[</span>reason<span class="o">]</span>
 </code></pre></div>
 <p><strong>Player Ban Actions:</strong></p>
 <table>
@@ -2971,38 +3188,43 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a><span class="c1"># List banned players</span>
-<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>myserver<span class="w"> </span>list
-<a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a>
-<a id="__codelineno-48-4" name="__codelineno-48-4" href="#__codelineno-48-4"></a><span class="c1"># Ban player with reason</span>
-<a id="__codelineno-48-5" name="__codelineno-48-5" href="#__codelineno-48-5"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Griefer<span class="w"> </span><span class="s2">&quot;Destroying buildings&quot;</span>
-<a id="__codelineno-48-6" name="__codelineno-48-6" href="#__codelineno-48-6"></a>
-<a id="__codelineno-48-7" name="__codelineno-48-7" href="#__codelineno-48-7"></a><span class="c1"># Unban player</span>
-<a id="__codelineno-48-8" name="__codelineno-48-8" href="#__codelineno-48-8"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>myserver<span class="w"> </span>remove<span class="w"> </span>Griefer
-<a id="__codelineno-48-9" name="__codelineno-48-9" href="#__codelineno-48-9"></a>
-<a id="__codelineno-48-10" name="__codelineno-48-10" href="#__codelineno-48-10"></a><span class="c1"># List banned IPs</span>
-<a id="__codelineno-48-11" name="__codelineno-48-11" href="#__codelineno-48-11"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>myserver<span class="w"> </span>ip<span class="w"> </span>list
-<a id="__codelineno-48-12" name="__codelineno-48-12" href="#__codelineno-48-12"></a>
-<a id="__codelineno-48-13" name="__codelineno-48-13" href="#__codelineno-48-13"></a><span class="c1"># Ban IP</span>
-<a id="__codelineno-48-14" name="__codelineno-48-14" href="#__codelineno-48-14"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>myserver<span class="w"> </span>ip<span class="w"> </span>add<span class="w"> </span><span class="m">192</span>.168.1.100<span class="w"> </span><span class="s2">&quot;Spam&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a><span class="c1"># List banned players</span>
+<a id="__codelineno-59-2" name="__codelineno-59-2" href="#__codelineno-59-2"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>survival<span class="w"> </span>list
+<a id="__codelineno-59-3" name="__codelineno-59-3" href="#__codelineno-59-3"></a>
+<a id="__codelineno-59-4" name="__codelineno-59-4" href="#__codelineno-59-4"></a><span class="c1"># Ban player with reason</span>
+<a id="__codelineno-59-5" name="__codelineno-59-5" href="#__codelineno-59-5"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>survival<span class="w"> </span>add<span class="w"> </span>Griefer<span class="w"> </span><span class="s2">&quot;Griefing spawn area&quot;</span>
+<a id="__codelineno-59-6" name="__codelineno-59-6" href="#__codelineno-59-6"></a>
+<a id="__codelineno-59-7" name="__codelineno-59-7" href="#__codelineno-59-7"></a><span class="c1"># Unban player</span>
+<a id="__codelineno-59-8" name="__codelineno-59-8" href="#__codelineno-59-8"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>survival<span class="w"> </span>remove<span class="w"> </span>Griefer
+<a id="__codelineno-59-9" name="__codelineno-59-9" href="#__codelineno-59-9"></a>
+<a id="__codelineno-59-10" name="__codelineno-59-10" href="#__codelineno-59-10"></a><span class="c1"># List banned IPs</span>
+<a id="__codelineno-59-11" name="__codelineno-59-11" href="#__codelineno-59-11"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>survival<span class="w"> </span>ip<span class="w"> </span>list
+<a id="__codelineno-59-12" name="__codelineno-59-12" href="#__codelineno-59-12"></a>
+<a id="__codelineno-59-13" name="__codelineno-59-13" href="#__codelineno-59-13"></a><span class="c1"># Ban IP</span>
+<a id="__codelineno-59-14" name="__codelineno-59-14" href="#__codelineno-59-14"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>survival<span class="w"> </span>ip<span class="w"> </span>add<span class="w"> </span><span class="m">192</span>.168.1.100<span class="w"> </span><span class="s2">&quot;Spam&quot;</span>
 </code></pre></div>
+<p><strong>Output Example (list):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>Banned Players for survival:
+<a id="__codelineno-60-2" name="__codelineno-60-2" href="#__codelineno-60-2"></a>
+<a id="__codelineno-60-3" name="__codelineno-60-3" href="#__codelineno-60-3"></a>  Griefer (Reason: Griefing spawn area)
+</code></pre></div></p>
 <hr />
 <h3 id="mcctl-kick">mcctl kick<a class="headerlink" href="#mcctl-kick" title="Permanent link">&para;</a></h3>
 <p>Kick a player from the server.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;player&gt;<span class="w"> </span><span class="o">[</span>reason<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;player&gt;<span class="w"> </span><span class="o">[</span>reason<span class="o">]</span>
 </code></pre></div>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="c1"># Kick player</span>
-<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>myserver<span class="w"> </span>Steve
-<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>
-<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a><span class="c1"># Kick with reason</span>
-<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>myserver<span class="w"> </span>Steve<span class="w"> </span><span class="s2">&quot;AFK too long&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a><span class="c1"># Kick player</span>
+<a id="__codelineno-62-2" name="__codelineno-62-2" href="#__codelineno-62-2"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>myserver<span class="w"> </span>Steve
+<a id="__codelineno-62-3" name="__codelineno-62-3" href="#__codelineno-62-3"></a>
+<a id="__codelineno-62-4" name="__codelineno-62-4" href="#__codelineno-62-4"></a><span class="c1"># Kick with reason</span>
+<a id="__codelineno-62-5" name="__codelineno-62-5" href="#__codelineno-62-5"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>myserver<span class="w"> </span>Steve<span class="w"> </span><span class="s2">&quot;AFK too long&quot;</span>
 </code></pre></div>
 <hr />
 <h3 id="mcctl-player-online">mcctl player online<a class="headerlink" href="#mcctl-player-online" title="Permanent link">&para;</a></h3>
 <p>Show online players on servers.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>&lt;server&gt;
-<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>&lt;server&gt;
+<a id="__codelineno-63-2" name="__codelineno-63-2" href="#__codelineno-63-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>--all
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -3027,26 +3249,43 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a><span class="c1"># Single server</span>
-<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>myserver
-<a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>
-<a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="c1"># All servers</span>
-<a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>--all
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Single Server</label><label for="__tabbed_4_2">All Servers</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>survival
 </code></pre></div>
-<p><strong>Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>Online Players for myserver:
-<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a>
-<a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a>  Status: Running (3/20)
-<a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a>
-<a id="__codelineno-53-5" name="__codelineno-53-5" href="#__codelineno-53-5"></a>  Steve
-<a id="__codelineno-53-6" name="__codelineno-53-6" href="#__codelineno-53-6"></a>  Alex
-<a id="__codelineno-53-7" name="__codelineno-53-7" href="#__codelineno-53-7"></a>  Notch
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>Online Players for survival:
+<a id="__codelineno-65-2" name="__codelineno-65-2" href="#__codelineno-65-2"></a>
+<a id="__codelineno-65-3" name="__codelineno-65-3" href="#__codelineno-65-3"></a>  Status: Running (2/20)
+<a id="__codelineno-65-4" name="__codelineno-65-4" href="#__codelineno-65-4"></a>
+<a id="__codelineno-65-5" name="__codelineno-65-5" href="#__codelineno-65-5"></a>  Players:
+<a id="__codelineno-65-6" name="__codelineno-65-6" href="#__codelineno-65-6"></a>    - Steve
+<a id="__codelineno-65-7" name="__codelineno-65-7" href="#__codelineno-65-7"></a>    - Alex
+</code></pre></div></p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>--all
 </code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>Online Players (All Servers):
+<a id="__codelineno-67-2" name="__codelineno-67-2" href="#__codelineno-67-2"></a>
+<a id="__codelineno-67-3" name="__codelineno-67-3" href="#__codelineno-67-3"></a>  survival: 2 players
+<a id="__codelineno-67-4" name="__codelineno-67-4" href="#__codelineno-67-4"></a>    - Steve
+<a id="__codelineno-67-5" name="__codelineno-67-5" href="#__codelineno-67-5"></a>    - Alex
+<a id="__codelineno-67-6" name="__codelineno-67-6" href="#__codelineno-67-6"></a>
+<a id="__codelineno-67-7" name="__codelineno-67-7" href="#__codelineno-67-7"></a>  creative: 0 players
+<a id="__codelineno-67-8" name="__codelineno-67-8" href="#__codelineno-67-8"></a>
+<a id="__codelineno-67-9" name="__codelineno-67-9" href="#__codelineno-67-9"></a>  Total: 2 players online
+</code></pre></div></p>
+</div>
+</div>
+</div>
 <hr />
 <h2 id="world-management">World Management<a class="headerlink" href="#world-management" title="Permanent link">&para;</a></h2>
 <h3 id="mcctl-world-list">mcctl world list<a class="headerlink" href="#mcctl-world-list" title="Permanent link">&para;</a></h3>
 <p>List all worlds with their lock status.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -3063,26 +3302,55 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
+<p><strong>Examples:</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Default Output</label><label for="__tabbed_5_2">JSON Output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
 </code></pre></div>
-<p><strong>Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>Worlds:
-<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>
-<a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a>  survival
-<a id="__codelineno-56-4" name="__codelineno-56-4" href="#__codelineno-56-4"></a>    Status: locked: mc-myserver
-<a id="__codelineno-56-5" name="__codelineno-56-5" href="#__codelineno-56-5"></a>    Size: 256 MB
-<a id="__codelineno-56-6" name="__codelineno-56-6" href="#__codelineno-56-6"></a>    Path: /home/user/minecraft-servers/worlds/survival
-<a id="__codelineno-56-7" name="__codelineno-56-7" href="#__codelineno-56-7"></a>
-<a id="__codelineno-56-8" name="__codelineno-56-8" href="#__codelineno-56-8"></a>  creative
-<a id="__codelineno-56-9" name="__codelineno-56-9" href="#__codelineno-56-9"></a>    Status: unlocked
-<a id="__codelineno-56-10" name="__codelineno-56-10" href="#__codelineno-56-10"></a>    Size: 128 MB
-<a id="__codelineno-56-11" name="__codelineno-56-11" href="#__codelineno-56-11"></a>    Path: /home/user/minecraft-servers/worlds/creative
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a>Worlds:
+<a id="__codelineno-70-2" name="__codelineno-70-2" href="#__codelineno-70-2"></a>
+<a id="__codelineno-70-3" name="__codelineno-70-3" href="#__codelineno-70-3"></a>  survival-world
+<a id="__codelineno-70-4" name="__codelineno-70-4" href="#__codelineno-70-4"></a>    Status: locked (mc-survival)
+<a id="__codelineno-70-5" name="__codelineno-70-5" href="#__codelineno-70-5"></a>    Size: 514.0MB
+<a id="__codelineno-70-6" name="__codelineno-70-6" href="#__codelineno-70-6"></a>    Path: /home/myuser/minecraft-servers/worlds/survival-world
+<a id="__codelineno-70-7" name="__codelineno-70-7" href="#__codelineno-70-7"></a>
+<a id="__codelineno-70-8" name="__codelineno-70-8" href="#__codelineno-70-8"></a>  creative-world
+<a id="__codelineno-70-9" name="__codelineno-70-9" href="#__codelineno-70-9"></a>    Status: unlocked
+<a id="__codelineno-70-10" name="__codelineno-70-10" href="#__codelineno-70-10"></a>    Size: 128.5MB
+<a id="__codelineno-70-11" name="__codelineno-70-11" href="#__codelineno-70-11"></a>    Path: /home/myuser/minecraft-servers/worlds/creative-world
+</code></pre></div></p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list<span class="w"> </span>--json
 </code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-72-1" name="__codelineno-72-1" href="#__codelineno-72-1"></a><span class="p">[</span>
+<a id="__codelineno-72-2" name="__codelineno-72-2" href="#__codelineno-72-2"></a><span class="w">  </span><span class="p">{</span>
+<a id="__codelineno-72-3" name="__codelineno-72-3" href="#__codelineno-72-3"></a><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;survival-world&quot;</span><span class="p">,</span>
+<a id="__codelineno-72-4" name="__codelineno-72-4" href="#__codelineno-72-4"></a><span class="w">    </span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/myuser/minecraft-servers/worlds/survival-world&quot;</span><span class="p">,</span>
+<a id="__codelineno-72-5" name="__codelineno-72-5" href="#__codelineno-72-5"></a><span class="w">    </span><span class="nt">&quot;isLocked&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-72-6" name="__codelineno-72-6" href="#__codelineno-72-6"></a><span class="w">    </span><span class="nt">&quot;lockedBy&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mc-survival&quot;</span><span class="p">,</span>
+<a id="__codelineno-72-7" name="__codelineno-72-7" href="#__codelineno-72-7"></a><span class="w">    </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;514.0MB&quot;</span><span class="p">,</span>
+<a id="__codelineno-72-8" name="__codelineno-72-8" href="#__codelineno-72-8"></a><span class="w">    </span><span class="nt">&quot;lastModified&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-01-21T13:19:48.853Z&quot;</span>
+<a id="__codelineno-72-9" name="__codelineno-72-9" href="#__codelineno-72-9"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-72-10" name="__codelineno-72-10" href="#__codelineno-72-10"></a><span class="w">  </span><span class="p">{</span>
+<a id="__codelineno-72-11" name="__codelineno-72-11" href="#__codelineno-72-11"></a><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;creative-world&quot;</span><span class="p">,</span>
+<a id="__codelineno-72-12" name="__codelineno-72-12" href="#__codelineno-72-12"></a><span class="w">    </span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/myuser/minecraft-servers/worlds/creative-world&quot;</span><span class="p">,</span>
+<a id="__codelineno-72-13" name="__codelineno-72-13" href="#__codelineno-72-13"></a><span class="w">    </span><span class="nt">&quot;isLocked&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-72-14" name="__codelineno-72-14" href="#__codelineno-72-14"></a><span class="w">    </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;128.5MB&quot;</span><span class="p">,</span>
+<a id="__codelineno-72-15" name="__codelineno-72-15" href="#__codelineno-72-15"></a><span class="w">    </span><span class="nt">&quot;lastModified&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-01-20T10:30:00.000Z&quot;</span>
+<a id="__codelineno-72-16" name="__codelineno-72-16" href="#__codelineno-72-16"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-72-17" name="__codelineno-72-17" href="#__codelineno-72-17"></a><span class="p">]</span>
+</code></pre></div></p>
+</div>
+</div>
+</div>
 <hr />
 <h3 id="mcctl-world-assign">mcctl world assign<a class="headerlink" href="#mcctl-world-assign" title="Permanent link">&para;</a></h3>
 <p>Lock a world to a server.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>server<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-73-1" name="__codelineno-73-1" href="#__codelineno-73-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>server<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -3104,15 +3372,15 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Interactive Mode</label><label for="__tabbed_4_2">CLI Mode</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Interactive Mode</label><label for="__tabbed_6_2">CLI Mode</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign
-<a id="__codelineno-58-2" name="__codelineno-58-2" href="#__codelineno-58-2"></a><span class="c1"># Shows world list, then server list</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign
+<a id="__codelineno-74-2" name="__codelineno-74-2" href="#__codelineno-74-2"></a><span class="c1"># Shows world list, then server list</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>survival<span class="w"> </span>mc-myserver
+<div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>survival<span class="w"> </span>mc-myserver
 </code></pre></div>
 </div>
 </div>
@@ -3124,7 +3392,7 @@
 <hr />
 <h3 id="mcctl-world-release">mcctl world release<a class="headerlink" href="#mcctl-world-release" title="Permanent link">&para;</a></h3>
 <p>Release a world lock.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-76-1" name="__codelineno-76-1" href="#__codelineno-76-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -3157,17 +3425,17 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a><span class="c1"># Interactive - shows locked worlds</span>
-<a id="__codelineno-61-2" name="__codelineno-61-2" href="#__codelineno-61-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release
-<a id="__codelineno-61-3" name="__codelineno-61-3" href="#__codelineno-61-3"></a>
-<a id="__codelineno-61-4" name="__codelineno-61-4" href="#__codelineno-61-4"></a><span class="c1"># Release specific world</span>
-<a id="__codelineno-61-5" name="__codelineno-61-5" href="#__codelineno-61-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>survival
+<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a><span class="c1"># Interactive - shows locked worlds</span>
+<a id="__codelineno-77-2" name="__codelineno-77-2" href="#__codelineno-77-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release
+<a id="__codelineno-77-3" name="__codelineno-77-3" href="#__codelineno-77-3"></a>
+<a id="__codelineno-77-4" name="__codelineno-77-4" href="#__codelineno-77-4"></a><span class="c1"># Release specific world</span>
+<a id="__codelineno-77-5" name="__codelineno-77-5" href="#__codelineno-77-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>survival
 </code></pre></div>
 <hr />
 <h2 id="backup-management">Backup Management<a class="headerlink" href="#backup-management" title="Permanent link">&para;</a></h2>
 <h3 id="mcctl-backup-status">mcctl backup status<a class="headerlink" href="#mcctl-backup-status" title="Permanent link">&para;</a></h3>
 <p>Show backup configuration status.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -3185,30 +3453,42 @@
 </tbody>
 </table>
 <p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>status
+<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>status
 </code></pre></div>
 <p><strong>Output (configured):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>Backup Configuration:
-<a id="__codelineno-64-2" name="__codelineno-64-2" href="#__codelineno-64-2"></a>
-<a id="__codelineno-64-3" name="__codelineno-64-3" href="#__codelineno-64-3"></a>  Status: Configured
-<a id="__codelineno-64-4" name="__codelineno-64-4" href="#__codelineno-64-4"></a>  Repository: user/minecraft-worlds-backup
-<a id="__codelineno-64-5" name="__codelineno-64-5" href="#__codelineno-64-5"></a>  Branch: main
-<a id="__codelineno-64-6" name="__codelineno-64-6" href="#__codelineno-64-6"></a>  Last backup: 2024-01-15 14:30:00
-<a id="__codelineno-64-7" name="__codelineno-64-7" href="#__codelineno-64-7"></a>  Auto backup: enabled
+<div class="highlight"><pre><span></span><code><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a>=== Backup Status ===
+<a id="__codelineno-80-2" name="__codelineno-80-2" href="#__codelineno-80-2"></a>
+<a id="__codelineno-80-3" name="__codelineno-80-3" href="#__codelineno-80-3"></a>Configuration: Configured
+<a id="__codelineno-80-4" name="__codelineno-80-4" href="#__codelineno-80-4"></a>Repository:    myuser/minecraft-backup-repo
+<a id="__codelineno-80-5" name="__codelineno-80-5" href="#__codelineno-80-5"></a>Branch:        main
+<a id="__codelineno-80-6" name="__codelineno-80-6" href="#__codelineno-80-6"></a>Auto on stop:  true
+<a id="__codelineno-80-7" name="__codelineno-80-7" href="#__codelineno-80-7"></a>
+<a id="__codelineno-80-8" name="__codelineno-80-8" href="#__codelineno-80-8"></a>Cache:         Exists
+<a id="__codelineno-80-9" name="__codelineno-80-9" href="#__codelineno-80-9"></a>Last commit:   fd8633b
+<a id="__codelineno-80-10" name="__codelineno-80-10" href="#__codelineno-80-10"></a>Last date:     2026-01-20 21:06:35 +0900
+<a id="__codelineno-80-11" name="__codelineno-80-11" href="#__codelineno-80-11"></a>
+<a id="__codelineno-80-12" name="__codelineno-80-12" href="#__codelineno-80-12"></a>Worlds dir:    /home/myuser/minecraft-servers/worlds
+<a id="__codelineno-80-13" name="__codelineno-80-13" href="#__codelineno-80-13"></a>Cache dir:     /home/myuser/.minecraft-backup
+<a id="__codelineno-80-14" name="__codelineno-80-14" href="#__codelineno-80-14"></a>
+<a id="__codelineno-80-15" name="__codelineno-80-15" href="#__codelineno-80-15"></a>Backup Configuration:
+<a id="__codelineno-80-16" name="__codelineno-80-16" href="#__codelineno-80-16"></a>
+<a id="__codelineno-80-17" name="__codelineno-80-17" href="#__codelineno-80-17"></a>  Status: Configured
+<a id="__codelineno-80-18" name="__codelineno-80-18" href="#__codelineno-80-18"></a>  Repository: myuser/minecraft-backup-repo
+<a id="__codelineno-80-19" name="__codelineno-80-19" href="#__codelineno-80-19"></a>  Branch: main
 </code></pre></div>
 <p><strong>Output (not configured):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-65-1" name="__codelineno-65-1" href="#__codelineno-65-1"></a>Backup Configuration:
-<a id="__codelineno-65-2" name="__codelineno-65-2" href="#__codelineno-65-2"></a>
-<a id="__codelineno-65-3" name="__codelineno-65-3" href="#__codelineno-65-3"></a>  Status: Not configured
-<a id="__codelineno-65-4" name="__codelineno-65-4" href="#__codelineno-65-4"></a>
-<a id="__codelineno-65-5" name="__codelineno-65-5" href="#__codelineno-65-5"></a>  To enable backups, set in .env:
-<a id="__codelineno-65-6" name="__codelineno-65-6" href="#__codelineno-65-6"></a>    BACKUP_GITHUB_TOKEN=your-token
-<a id="__codelineno-65-7" name="__codelineno-65-7" href="#__codelineno-65-7"></a>    BACKUP_GITHUB_REPO=username/repo
+<div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>Backup Configuration:
+<a id="__codelineno-81-2" name="__codelineno-81-2" href="#__codelineno-81-2"></a>
+<a id="__codelineno-81-3" name="__codelineno-81-3" href="#__codelineno-81-3"></a>  Status: Not configured
+<a id="__codelineno-81-4" name="__codelineno-81-4" href="#__codelineno-81-4"></a>
+<a id="__codelineno-81-5" name="__codelineno-81-5" href="#__codelineno-81-5"></a>  To enable backups, set in .env:
+<a id="__codelineno-81-6" name="__codelineno-81-6" href="#__codelineno-81-6"></a>    BACKUP_GITHUB_TOKEN=your-token
+<a id="__codelineno-81-7" name="__codelineno-81-7" href="#__codelineno-81-7"></a>    BACKUP_GITHUB_REPO=username/repo
 </code></pre></div>
 <hr />
 <h3 id="mcctl-backup-push">mcctl backup push<a class="headerlink" href="#mcctl-backup-push" title="Permanent link">&para;</a></h3>
 <p>Push world data to GitHub repository.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -3228,15 +3508,15 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Interactive Mode</label><label for="__tabbed_5_2">CLI Mode</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Interactive Mode</label><label for="__tabbed_7_2">CLI Mode</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push
-<a id="__codelineno-67-2" name="__codelineno-67-2" href="#__codelineno-67-2"></a><span class="c1"># Prompts for commit message</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push
+<a id="__codelineno-83-2" name="__codelineno-83-2" href="#__codelineno-83-2"></a><span class="c1"># Prompts for commit message</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Before server upgrade&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Before server upgrade&quot;</span>
 </code></pre></div>
 </div>
 </div>
@@ -3244,7 +3524,7 @@
 <hr />
 <h3 id="mcctl-backup-history">mcctl backup history<a class="headerlink" href="#mcctl-backup-history" title="Permanent link">&para;</a></h3>
 <p>Show backup history.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -3261,20 +3541,41 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span>
+<p><strong>Examples:</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="8:2"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">Default Output</label><label for="__tabbed_8_2">JSON Output</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span>
 </code></pre></div>
-<p><strong>Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a>Backup History:
-<a id="__codelineno-71-2" name="__codelineno-71-2" href="#__codelineno-71-2"></a>
-<a id="__codelineno-71-3" name="__codelineno-71-3" href="#__codelineno-71-3"></a>  abc1234  Before server upgrade  2024-01-15
-<a id="__codelineno-71-4" name="__codelineno-71-4" href="#__codelineno-71-4"></a>  def5678  Weekly backup          2024-01-08
-<a id="__codelineno-71-5" name="__codelineno-71-5" href="#__codelineno-71-5"></a>  ghi9012  Initial backup         2024-01-01
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a>Backup History:
+<a id="__codelineno-87-2" name="__codelineno-87-2" href="#__codelineno-87-2"></a>
+<a id="__codelineno-87-3" name="__codelineno-87-3" href="#__codelineno-87-3"></a>  fd8633b  Backup: 2026-01-20 21:06:30       2026-01-20
+<a id="__codelineno-87-4" name="__codelineno-87-4" href="#__codelineno-87-4"></a>  19a7a4d  Backup: 2026-01-20 20:21:06       2026-01-20
+<a id="__codelineno-87-5" name="__codelineno-87-5" href="#__codelineno-87-5"></a>  7c2ad14  Manual backup                     2026-01-19
+<a id="__codelineno-87-6" name="__codelineno-87-6" href="#__codelineno-87-6"></a>  ddeda27  Initial backup                    2026-01-17
+</code></pre></div></p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span><span class="w"> </span>--json
 </code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-89-1" name="__codelineno-89-1" href="#__codelineno-89-1"></a><span class="p">{</span>
+<a id="__codelineno-89-2" name="__codelineno-89-2" href="#__codelineno-89-2"></a><span class="w">  </span><span class="nt">&quot;history&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-89-3" name="__codelineno-89-3" href="#__codelineno-89-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fd8633b&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-01-20 21:06:35 +0900&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Backup: 2026-01-20 21:06:30&quot;</span><span class="p">},</span>
+<a id="__codelineno-89-4" name="__codelineno-89-4" href="#__codelineno-89-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;19a7a4d&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-01-20 20:21:08 +0900&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Backup: 2026-01-20 20:21:06&quot;</span><span class="p">},</span>
+<a id="__codelineno-89-5" name="__codelineno-89-5" href="#__codelineno-89-5"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;7c2ad14&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-01-19 22:50:42 +0900&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Manual backup&quot;</span><span class="p">},</span>
+<a id="__codelineno-89-6" name="__codelineno-89-6" href="#__codelineno-89-6"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ddeda27&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;date&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-01-17 23:43:24 +0900&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Initial backup&quot;</span><span class="p">}</span>
+<a id="__codelineno-89-7" name="__codelineno-89-7" href="#__codelineno-89-7"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-89-8" name="__codelineno-89-8" href="#__codelineno-89-8"></a><span class="p">}</span>
+</code></pre></div></p>
+</div>
+</div>
+</div>
 <hr />
 <h3 id="mcctl-backup-restore">mcctl backup restore<a class="headerlink" href="#mcctl-backup-restore" title="Permanent link">&para;</a></h3>
 <p>Restore world data from a backup.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-72-1" name="__codelineno-72-1" href="#__codelineno-72-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span><span class="o">[</span>commit<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-90-1" name="__codelineno-90-1" href="#__codelineno-90-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span><span class="o">[</span>commit<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -3292,15 +3593,15 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Interactive Mode</label><label for="__tabbed_6_2">CLI Mode</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="9:2"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Interactive Mode</label><label for="__tabbed_9_2">CLI Mode</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-73-1" name="__codelineno-73-1" href="#__codelineno-73-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore
-<a id="__codelineno-73-2" name="__codelineno-73-2" href="#__codelineno-73-2"></a><span class="c1"># Shows backup history for selection</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-91-1" name="__codelineno-91-1" href="#__codelineno-91-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore
+<a id="__codelineno-91-2" name="__codelineno-91-2" href="#__codelineno-91-2"></a><span class="c1"># Shows backup history for selection</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span>abc1234
+<div class="highlight"><pre><span></span><code><a id="__codelineno-92-1" name="__codelineno-92-1" href="#__codelineno-92-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span>abc1234
 </code></pre></div>
 </div>
 </div>
@@ -3313,23 +3614,23 @@
 <h2 id="player-utilities">Player Utilities<a class="headerlink" href="#player-utilities" title="Permanent link">&para;</a></h2>
 <h3 id="mcctl-player-interactive-mode">mcctl player (Interactive Mode)<a class="headerlink" href="#mcctl-player-interactive-mode" title="Permanent link">&para;</a></h3>
 <p>Unified player management with interactive workflow.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a>mcctl<span class="w"> </span>player
-<a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>&lt;server&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-93-1" name="__codelineno-93-1" href="#__codelineno-93-1"></a>mcctl<span class="w"> </span>player
+<a id="__codelineno-93-2" name="__codelineno-93-2" href="#__codelineno-93-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>&lt;server&gt;
 </code></pre></div>
 <p><strong>Examples:</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Full Interactive</label><label for="__tabbed_7_2">Server-Specific</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Full Interactive</label><label for="__tabbed_10_2">Server-Specific</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-76-1" name="__codelineno-76-1" href="#__codelineno-76-1"></a>mcctl<span class="w"> </span>player
-<a id="__codelineno-76-2" name="__codelineno-76-2" href="#__codelineno-76-2"></a><span class="c1"># 1. Select server from list</span>
-<a id="__codelineno-76-3" name="__codelineno-76-3" href="#__codelineno-76-3"></a><span class="c1"># 2. Select online player or enter name</span>
-<a id="__codelineno-76-4" name="__codelineno-76-4" href="#__codelineno-76-4"></a><span class="c1"># 3. Select action (op/deop, whitelist, ban, kick, info)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-94-1" name="__codelineno-94-1" href="#__codelineno-94-1"></a>mcctl<span class="w"> </span>player
+<a id="__codelineno-94-2" name="__codelineno-94-2" href="#__codelineno-94-2"></a><span class="c1"># 1. Select server from list</span>
+<a id="__codelineno-94-3" name="__codelineno-94-3" href="#__codelineno-94-3"></a><span class="c1"># 2. Select online player or enter name</span>
+<a id="__codelineno-94-4" name="__codelineno-94-4" href="#__codelineno-94-4"></a><span class="c1"># 3. Select action (op/deop, whitelist, ban, kick, info)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>myserver
-<a id="__codelineno-77-2" name="__codelineno-77-2" href="#__codelineno-77-2"></a><span class="c1"># 1. Select online player or enter name</span>
-<a id="__codelineno-77-3" name="__codelineno-77-3" href="#__codelineno-77-3"></a><span class="c1"># 2. Select action</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-95-1" name="__codelineno-95-1" href="#__codelineno-95-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>myserver
+<a id="__codelineno-95-2" name="__codelineno-95-2" href="#__codelineno-95-2"></a><span class="c1"># 1. Select online player or enter name</span>
+<a id="__codelineno-95-3" name="__codelineno-95-3" href="#__codelineno-95-3"></a><span class="c1"># 2. Select action</span>
 </code></pre></div>
 </div>
 </div>
@@ -3344,7 +3645,7 @@
 <hr />
 <h3 id="mcctl-player-info">mcctl player info<a class="headerlink" href="#mcctl-player-info" title="Permanent link">&para;</a></h3>
 <p>Look up player information from Mojang API with encrypted local caching.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>info<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-96-1" name="__codelineno-96-1" href="#__codelineno-96-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>info<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -3366,30 +3667,29 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-79-1" name="__codelineno-79-1" href="#__codelineno-79-1"></a><span class="c1"># Look up player info (UUID, skin URL)</span>
-<a id="__codelineno-79-2" name="__codelineno-79-2" href="#__codelineno-79-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>info<span class="w"> </span>Notch
-<a id="__codelineno-79-3" name="__codelineno-79-3" href="#__codelineno-79-3"></a>
-<a id="__codelineno-79-4" name="__codelineno-79-4" href="#__codelineno-79-4"></a><span class="c1"># Offline UUID calculation</span>
-<a id="__codelineno-79-5" name="__codelineno-79-5" href="#__codelineno-79-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>info<span class="w"> </span>Steve<span class="w"> </span>--offline
-<a id="__codelineno-79-6" name="__codelineno-79-6" href="#__codelineno-79-6"></a>
-<a id="__codelineno-79-7" name="__codelineno-79-7" href="#__codelineno-79-7"></a><span class="c1"># JSON output for scripting</span>
-<a id="__codelineno-79-8" name="__codelineno-79-8" href="#__codelineno-79-8"></a>mcctl<span class="w"> </span>player<span class="w"> </span>info<span class="w"> </span>Notch<span class="w"> </span>--json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-97-1" name="__codelineno-97-1" href="#__codelineno-97-1"></a><span class="c1"># Look up player info (UUID, skin URL)</span>
+<a id="__codelineno-97-2" name="__codelineno-97-2" href="#__codelineno-97-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>info<span class="w"> </span>Notch
+<a id="__codelineno-97-3" name="__codelineno-97-3" href="#__codelineno-97-3"></a>
+<a id="__codelineno-97-4" name="__codelineno-97-4" href="#__codelineno-97-4"></a><span class="c1"># Offline UUID calculation</span>
+<a id="__codelineno-97-5" name="__codelineno-97-5" href="#__codelineno-97-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>info<span class="w"> </span>Steve<span class="w"> </span>--offline
+<a id="__codelineno-97-6" name="__codelineno-97-6" href="#__codelineno-97-6"></a>
+<a id="__codelineno-97-7" name="__codelineno-97-7" href="#__codelineno-97-7"></a><span class="c1"># JSON output for scripting</span>
+<a id="__codelineno-97-8" name="__codelineno-97-8" href="#__codelineno-97-8"></a>mcctl<span class="w"> </span>player<span class="w"> </span>info<span class="w"> </span>Notch<span class="w"> </span>--json
 </code></pre></div>
 <p><strong>Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-80-1" name="__codelineno-80-1" href="#__codelineno-80-1"></a>Player Info: Notch
-<a id="__codelineno-80-2" name="__codelineno-80-2" href="#__codelineno-80-2"></a>
-<a id="__codelineno-80-3" name="__codelineno-80-3" href="#__codelineno-80-3"></a>  UUID: 069a79f4-44e9-4726-a5be-fca90e38aaf5
-<a id="__codelineno-80-4" name="__codelineno-80-4" href="#__codelineno-80-4"></a>  Skin URL: https://textures.minecraft.net/texture/...
-<a id="__codelineno-80-5" name="__codelineno-80-5" href="#__codelineno-80-5"></a>  Source: mojang (cached)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-98-1" name="__codelineno-98-1" href="#__codelineno-98-1"></a>Player: Notch
+<a id="__codelineno-98-2" name="__codelineno-98-2" href="#__codelineno-98-2"></a>  UUID: 069a79f4-44e9-4726-a5be-fca90e38aaf5
+<a id="__codelineno-98-3" name="__codelineno-98-3" href="#__codelineno-98-3"></a>  Skin: http://textures.minecraft.net/texture/292009a4925b58f02c77dadc3ecef07ea4c7472f64e0fdc32ce5522489362680
+<a id="__codelineno-98-4" name="__codelineno-98-4" href="#__codelineno-98-4"></a>  Source: mojang
 </code></pre></div>
 <p><strong>JSON Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a><span class="p">{</span>
-<a id="__codelineno-81-2" name="__codelineno-81-2" href="#__codelineno-81-2"></a><span class="w">  </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Notch&quot;</span><span class="p">,</span>
-<a id="__codelineno-81-3" name="__codelineno-81-3" href="#__codelineno-81-3"></a><span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;069a79f4-44e9-4726-a5be-fca90e38aaf5&quot;</span><span class="p">,</span>
-<a id="__codelineno-81-4" name="__codelineno-81-4" href="#__codelineno-81-4"></a><span class="w">  </span><span class="nt">&quot;skinUrl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://textures.minecraft.net/texture/...&quot;</span><span class="p">,</span>
-<a id="__codelineno-81-5" name="__codelineno-81-5" href="#__codelineno-81-5"></a><span class="w">  </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mojang&quot;</span><span class="p">,</span>
-<a id="__codelineno-81-6" name="__codelineno-81-6" href="#__codelineno-81-6"></a><span class="w">  </span><span class="nt">&quot;cached&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
-<a id="__codelineno-81-7" name="__codelineno-81-7" href="#__codelineno-81-7"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-99-1" name="__codelineno-99-1" href="#__codelineno-99-1"></a><span class="p">{</span>
+<a id="__codelineno-99-2" name="__codelineno-99-2" href="#__codelineno-99-2"></a><span class="w">  </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Notch&quot;</span><span class="p">,</span>
+<a id="__codelineno-99-3" name="__codelineno-99-3" href="#__codelineno-99-3"></a><span class="w">  </span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;069a79f4-44e9-4726-a5be-fca90e38aaf5&quot;</span><span class="p">,</span>
+<a id="__codelineno-99-4" name="__codelineno-99-4" href="#__codelineno-99-4"></a><span class="w">  </span><span class="nt">&quot;skinUrl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://textures.minecraft.net/texture/...&quot;</span><span class="p">,</span>
+<a id="__codelineno-99-5" name="__codelineno-99-5" href="#__codelineno-99-5"></a><span class="w">  </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mojang&quot;</span><span class="p">,</span>
+<a id="__codelineno-99-6" name="__codelineno-99-6" href="#__codelineno-99-6"></a><span class="w">  </span><span class="nt">&quot;cached&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<a id="__codelineno-99-7" name="__codelineno-99-7" href="#__codelineno-99-7"></a><span class="p">}</span>
 </code></pre></div>
 <div class="admonition info">
 <p class="admonition-title">Player Cache</p>
@@ -3404,7 +3704,7 @@
 <hr />
 <h3 id="mcctl-player-cache">mcctl player cache<a class="headerlink" href="#mcctl-player-cache" title="Permanent link">&para;</a></h3>
 <p>Manage the encrypted player data cache.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>cache<span class="w"> </span>&lt;action&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-100-1" name="__codelineno-100-1" href="#__codelineno-100-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>cache<span class="w"> </span>&lt;action&gt;
 </code></pre></div>
 <p><strong>Actions:</strong></p>
 <table>
@@ -3426,32 +3726,22 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a><span class="c1"># View cache statistics</span>
-<a id="__codelineno-83-2" name="__codelineno-83-2" href="#__codelineno-83-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>cache<span class="w"> </span>stats
-<a id="__codelineno-83-3" name="__codelineno-83-3" href="#__codelineno-83-3"></a>
-<a id="__codelineno-83-4" name="__codelineno-83-4" href="#__codelineno-83-4"></a><span class="c1"># Clear all cached data</span>
-<a id="__codelineno-83-5" name="__codelineno-83-5" href="#__codelineno-83-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>cache<span class="w"> </span>clear
+<div class="highlight"><pre><span></span><code><a id="__codelineno-101-1" name="__codelineno-101-1" href="#__codelineno-101-1"></a><span class="c1"># View cache statistics</span>
+<a id="__codelineno-101-2" name="__codelineno-101-2" href="#__codelineno-101-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>cache<span class="w"> </span>stats
+<a id="__codelineno-101-3" name="__codelineno-101-3" href="#__codelineno-101-3"></a>
+<a id="__codelineno-101-4" name="__codelineno-101-4" href="#__codelineno-101-4"></a><span class="c1"># Clear all cached data</span>
+<a id="__codelineno-101-5" name="__codelineno-101-5" href="#__codelineno-101-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>cache<span class="w"> </span>clear
 </code></pre></div>
 <p><strong>Stats Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>Player Cache Statistics:
-<a id="__codelineno-84-2" name="__codelineno-84-2" href="#__codelineno-84-2"></a>
-<a id="__codelineno-84-3" name="__codelineno-84-3" href="#__codelineno-84-3"></a>  Location: /home/user/.minecraft-docker/.player-cache
-<a id="__codelineno-84-4" name="__codelineno-84-4" href="#__codelineno-84-4"></a>  Encryption: AES-256-GCM
-<a id="__codelineno-84-5" name="__codelineno-84-5" href="#__codelineno-84-5"></a>
-<a id="__codelineno-84-6" name="__codelineno-84-6" href="#__codelineno-84-6"></a>  Entries: 42
-<a id="__codelineno-84-7" name="__codelineno-84-7" href="#__codelineno-84-7"></a>  Size: 128 KB
-<a id="__codelineno-84-8" name="__codelineno-84-8" href="#__codelineno-84-8"></a>  Oldest Entry: 2024-01-01
-<a id="__codelineno-84-9" name="__codelineno-84-9" href="#__codelineno-84-9"></a>  Newest Entry: 2024-01-15
-<a id="__codelineno-84-10" name="__codelineno-84-10" href="#__codelineno-84-10"></a>
-<a id="__codelineno-84-11" name="__codelineno-84-11" href="#__codelineno-84-11"></a>  By Type:
-<a id="__codelineno-84-12" name="__codelineno-84-12" href="#__codelineno-84-12"></a>    UUID lookups: 42
-<a id="__codelineno-84-13" name="__codelineno-84-13" href="#__codelineno-84-13"></a>    Skin URLs: 38
+<div class="highlight"><pre><span></span><code><a id="__codelineno-102-1" name="__codelineno-102-1" href="#__codelineno-102-1"></a>Player Cache Statistics
+<a id="__codelineno-102-2" name="__codelineno-102-2" href="#__codelineno-102-2"></a>  Players cached: 5
+<a id="__codelineno-102-3" name="__codelineno-102-3" href="#__codelineno-102-3"></a>  Cache size: 2.1 KB
 </code></pre></div>
 <hr />
 <h3 id="mcctl-player-online_1">mcctl player online<a class="headerlink" href="#mcctl-player-online_1" title="Permanent link">&para;</a></h3>
 <p>Show online players on servers.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>&lt;server&gt;
-<a id="__codelineno-85-2" name="__codelineno-85-2" href="#__codelineno-85-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-103-1" name="__codelineno-103-1" href="#__codelineno-103-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>&lt;server&gt;
+<a id="__codelineno-103-2" name="__codelineno-103-2" href="#__codelineno-103-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>--all
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -3476,20 +3766,20 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a><span class="c1"># Single server</span>
-<a id="__codelineno-86-2" name="__codelineno-86-2" href="#__codelineno-86-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>myserver
-<a id="__codelineno-86-3" name="__codelineno-86-3" href="#__codelineno-86-3"></a>
-<a id="__codelineno-86-4" name="__codelineno-86-4" href="#__codelineno-86-4"></a><span class="c1"># All servers</span>
-<a id="__codelineno-86-5" name="__codelineno-86-5" href="#__codelineno-86-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-104-1" name="__codelineno-104-1" href="#__codelineno-104-1"></a><span class="c1"># Single server</span>
+<a id="__codelineno-104-2" name="__codelineno-104-2" href="#__codelineno-104-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>myserver
+<a id="__codelineno-104-3" name="__codelineno-104-3" href="#__codelineno-104-3"></a>
+<a id="__codelineno-104-4" name="__codelineno-104-4" href="#__codelineno-104-4"></a><span class="c1"># All servers</span>
+<a id="__codelineno-104-5" name="__codelineno-104-5" href="#__codelineno-104-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>--all
 </code></pre></div>
 <p><strong>Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a>Online Players for myserver:
-<a id="__codelineno-87-2" name="__codelineno-87-2" href="#__codelineno-87-2"></a>
-<a id="__codelineno-87-3" name="__codelineno-87-3" href="#__codelineno-87-3"></a>  Status: Running (3/20)
-<a id="__codelineno-87-4" name="__codelineno-87-4" href="#__codelineno-87-4"></a>
-<a id="__codelineno-87-5" name="__codelineno-87-5" href="#__codelineno-87-5"></a>  Steve
-<a id="__codelineno-87-6" name="__codelineno-87-6" href="#__codelineno-87-6"></a>  Alex
-<a id="__codelineno-87-7" name="__codelineno-87-7" href="#__codelineno-87-7"></a>  Notch
+<div class="highlight"><pre><span></span><code><a id="__codelineno-105-1" name="__codelineno-105-1" href="#__codelineno-105-1"></a>Online Players for myserver:
+<a id="__codelineno-105-2" name="__codelineno-105-2" href="#__codelineno-105-2"></a>
+<a id="__codelineno-105-3" name="__codelineno-105-3" href="#__codelineno-105-3"></a>  Status: Running (3/20)
+<a id="__codelineno-105-4" name="__codelineno-105-4" href="#__codelineno-105-4"></a>
+<a id="__codelineno-105-5" name="__codelineno-105-5" href="#__codelineno-105-5"></a>  Steve
+<a id="__codelineno-105-6" name="__codelineno-105-6" href="#__codelineno-105-6"></a>  Alex
+<a id="__codelineno-105-7" name="__codelineno-105-7" href="#__codelineno-105-7"></a>  Notch
 </code></pre></div>
 <hr />
 <h3 id="mcctl-player-lookup-legacy">mcctl player lookup (Legacy)<a class="headerlink" href="#mcctl-player-lookup-legacy" title="Permanent link">&para;</a></h3>
@@ -3498,7 +3788,7 @@
 <p>Use <code>mcctl player info</code> instead. This command is kept for backward compatibility.</p>
 </div>
 <p>Look up player information from Mojang API.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>lookup<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-106-1" name="__codelineno-106-1" href="#__codelineno-106-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>lookup<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -3516,7 +3806,7 @@
 </tbody>
 </table>
 <p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-89-1" name="__codelineno-89-1" href="#__codelineno-89-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>lookup<span class="w"> </span>Notch
+<div class="highlight"><pre><span></span><code><a id="__codelineno-107-1" name="__codelineno-107-1" href="#__codelineno-107-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>lookup<span class="w"> </span>Notch
 </code></pre></div>
 <hr />
 <h3 id="mcctl-player-uuid-legacy">mcctl player uuid (Legacy)<a class="headerlink" href="#mcctl-player-uuid-legacy" title="Permanent link">&para;</a></h3>
@@ -3525,7 +3815,7 @@
 <p>Use <code>mcctl player info</code> or <code>mcctl player info --offline</code> instead.</p>
 </div>
 <p>Get player UUID.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-90-1" name="__codelineno-90-1" href="#__codelineno-90-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-108-1" name="__codelineno-108-1" href="#__codelineno-108-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -3547,12 +3837,124 @@
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-91-1" name="__codelineno-91-1" href="#__codelineno-91-1"></a><span class="c1"># Online UUID (from Mojang)</span>
-<a id="__codelineno-91-2" name="__codelineno-91-2" href="#__codelineno-91-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>Notch
-<a id="__codelineno-91-3" name="__codelineno-91-3" href="#__codelineno-91-3"></a>
-<a id="__codelineno-91-4" name="__codelineno-91-4" href="#__codelineno-91-4"></a><span class="c1"># Offline UUID (for offline-mode servers)</span>
-<a id="__codelineno-91-5" name="__codelineno-91-5" href="#__codelineno-91-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>Steve<span class="w"> </span>--offline
+<div class="highlight"><pre><span></span><code><a id="__codelineno-109-1" name="__codelineno-109-1" href="#__codelineno-109-1"></a><span class="c1"># Online UUID (from Mojang)</span>
+<a id="__codelineno-109-2" name="__codelineno-109-2" href="#__codelineno-109-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>Notch
+<a id="__codelineno-109-3" name="__codelineno-109-3" href="#__codelineno-109-3"></a>
+<a id="__codelineno-109-4" name="__codelineno-109-4" href="#__codelineno-109-4"></a><span class="c1"># Offline UUID (for offline-mode servers)</span>
+<a id="__codelineno-109-5" name="__codelineno-109-5" href="#__codelineno-109-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>Steve<span class="w"> </span>--offline
 </code></pre></div>
+<hr />
+<h2 id="migration-commands">Migration Commands<a class="headerlink" href="#migration-commands" title="Permanent link">&para;</a></h2>
+<h3 id="mcctl-migrate-status">mcctl migrate status<a class="headerlink" href="#mcctl-migrate-status" title="Permanent link">&para;</a></h3>
+<p>Check migration status for all servers.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-110-1" name="__codelineno-110-1" href="#__codelineno-110-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--json</code></td>
+<td>Output in JSON format</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-111-1" name="__codelineno-111-1" href="#__codelineno-111-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status
+</code></pre></div>
+<p><strong>Output:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-112-1" name="__codelineno-112-1" href="#__codelineno-112-1"></a>Migration Status:
+<a id="__codelineno-112-2" name="__codelineno-112-2" href="#__codelineno-112-2"></a>
+<a id="__codelineno-112-3" name="__codelineno-112-3" href="#__codelineno-112-3"></a>  survival: needs migration
+<a id="__codelineno-112-4" name="__codelineno-112-4" href="#__codelineno-112-4"></a>    Missing EXTRA_ARGS=--universe /worlds/
+<a id="__codelineno-112-5" name="__codelineno-112-5" href="#__codelineno-112-5"></a>  creative: up to date
+<a id="__codelineno-112-6" name="__codelineno-112-6" href="#__codelineno-112-6"></a>
+<a id="__codelineno-112-7" name="__codelineno-112-7" href="#__codelineno-112-7"></a>1 server(s) need migration.
+<a id="__codelineno-112-8" name="__codelineno-112-8" href="#__codelineno-112-8"></a>Run: mcctl migrate worlds to migrate.
+</code></pre></div>
+<hr />
+<h3 id="mcctl-migrate-worlds">mcctl migrate worlds<a class="headerlink" href="#mcctl-migrate-worlds" title="Permanent link">&para;</a></h3>
+<p>Migrate worlds to the shared <code>/worlds/</code> directory structure.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-113-1" name="__codelineno-113-1" href="#__codelineno-113-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--all</code></td>
+<td>Migrate all servers without selection</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Preview changes without applying</td>
+</tr>
+<tr>
+<td><code>--backup</code></td>
+<td>Create backup before migration</td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td>Skip confirmation prompts</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples:</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="11:4"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><input id="__tabbed_11_2" name="__tabbed_11" type="radio" /><input id="__tabbed_11_3" name="__tabbed_11" type="radio" /><input id="__tabbed_11_4" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">Interactive Mode</label><label for="__tabbed_11_2">Migrate All</label><label for="__tabbed_11_3">Dry Run</label><label for="__tabbed_11_4">With Backup</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-114-1" name="__codelineno-114-1" href="#__codelineno-114-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds
+<a id="__codelineno-114-2" name="__codelineno-114-2" href="#__codelineno-114-2"></a><span class="c1"># Shows servers needing migration, select one or all</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-115-1" name="__codelineno-115-1" href="#__codelineno-115-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-116-1" name="__codelineno-116-1" href="#__codelineno-116-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--dry-run
+</code></pre></div>
+<p><strong>Output:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-117-1" name="__codelineno-117-1" href="#__codelineno-117-1"></a>DRY RUN - No changes will be made
+<a id="__codelineno-117-2" name="__codelineno-117-2" href="#__codelineno-117-2"></a>
+<a id="__codelineno-117-3" name="__codelineno-117-3" href="#__codelineno-117-3"></a>Would migrate: survival
+<a id="__codelineno-117-4" name="__codelineno-117-4" href="#__codelineno-117-4"></a>  1. Stop server if running
+<a id="__codelineno-117-5" name="__codelineno-117-5" href="#__codelineno-117-5"></a>  2. Move world: servers/survival/data/world → worlds/survival
+<a id="__codelineno-117-6" name="__codelineno-117-6" href="#__codelineno-117-6"></a>  3. Update config.env:
+<a id="__codelineno-117-7" name="__codelineno-117-7" href="#__codelineno-117-7"></a>     - Add: EXTRA_ARGS=--universe /worlds/
+<a id="__codelineno-117-8" name="__codelineno-117-8" href="#__codelineno-117-8"></a>     - Set: LEVEL=survival
+</code></pre></div></p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-118-1" name="__codelineno-118-1" href="#__codelineno-118-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all<span class="w"> </span>--backup
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><strong>What Migration Does:</strong></p>
+<ol>
+<li><strong>Stops server</strong> if running</li>
+<li><strong>Moves world data</strong> from <code>servers/&lt;name&gt;/data/world</code> to <code>worlds/&lt;server-name&gt;/</code></li>
+<li><strong>Updates config.env</strong>:</li>
+<li>Adds <code>EXTRA_ARGS=--universe /worlds/</code></li>
+<li>Sets <code>LEVEL=&lt;server-name&gt;</code></li>
+<li><strong>Detects existing worlds</strong> with case-insensitive matching</li>
+</ol>
+<div class="admonition info">
+<p class="admonition-title">World Storage Change</p>
+<p>New servers created with <code>mcctl create</code> already use the <code>/worlds/</code> directory structure.
+This migration command is for existing servers created before this change.</p>
+</div>
 <hr />
 <h2 id="global-options-reference">Global Options Reference<a class="headerlink" href="#global-options-reference" title="Permanent link">&para;</a></h2>
 <p>These options work with all commands:</p>
@@ -3592,7 +3994,7 @@
 <p>Environment variables for automation and CI/CD pipelines.</p>
 <h3 id="mcctl_sudo_password">MCCTL_SUDO_PASSWORD<a class="headerlink" href="#mcctl_sudo_password" title="Permanent link">&para;</a></h3>
 <p>Provides sudo password for operations requiring root access (mDNS registration/deregistration).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-92-1" name="__codelineno-92-1" href="#__codelineno-92-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">&quot;your-password&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-119-1" name="__codelineno-119-1" href="#__codelineno-119-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">&quot;your-password&quot;</span>
 </code></pre></div>
 <p><strong>Used by:</strong></p>
 <ul>
@@ -3600,19 +4002,19 @@
 <li><code>mcctl delete</code> - For deregistering mDNS hostname</li>
 </ul>
 <p><strong>Example (CI/CD):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-93-1" name="__codelineno-93-1" href="#__codelineno-93-1"></a><span class="c1"># GitHub Actions example</span>
-<a id="__codelineno-93-2" name="__codelineno-93-2" href="#__codelineno-93-2"></a>-<span class="w"> </span>name:<span class="w"> </span>Create<span class="w"> </span>Minecraft<span class="w"> </span>Server
-<a id="__codelineno-93-3" name="__codelineno-93-3" href="#__codelineno-93-3"></a><span class="w">  </span>env:
-<a id="__codelineno-93-4" name="__codelineno-93-4" href="#__codelineno-93-4"></a><span class="w">    </span>MCCTL_SUDO_PASSWORD:<span class="w"> </span><span class="si">${</span><span class="p">{ secrets.SUDO_PASSWORD </span><span class="si">}</span><span class="o">}</span>
-<a id="__codelineno-93-5" name="__codelineno-93-5" href="#__codelineno-93-5"></a><span class="w">  </span>run:<span class="w"> </span><span class="p">|</span>
-<a id="__codelineno-93-6" name="__codelineno-93-6" href="#__codelineno-93-6"></a><span class="w">    </span>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-120-1" name="__codelineno-120-1" href="#__codelineno-120-1"></a><span class="c1"># GitHub Actions example</span>
+<a id="__codelineno-120-2" name="__codelineno-120-2" href="#__codelineno-120-2"></a>-<span class="w"> </span>name:<span class="w"> </span>Create<span class="w"> </span>Minecraft<span class="w"> </span>Server
+<a id="__codelineno-120-3" name="__codelineno-120-3" href="#__codelineno-120-3"></a><span class="w">  </span>env:
+<a id="__codelineno-120-4" name="__codelineno-120-4" href="#__codelineno-120-4"></a><span class="w">    </span>MCCTL_SUDO_PASSWORD:<span class="w"> </span><span class="si">${</span><span class="p">{ secrets.SUDO_PASSWORD </span><span class="si">}</span><span class="o">}</span>
+<a id="__codelineno-120-5" name="__codelineno-120-5" href="#__codelineno-120-5"></a><span class="w">  </span>run:<span class="w"> </span><span class="p">|</span>
+<a id="__codelineno-120-6" name="__codelineno-120-6" href="#__codelineno-120-6"></a><span class="w">    </span>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Security</p>
 <p>Store sudo passwords securely using CI/CD secrets. Never commit passwords to version control.</p>
 </div>
 <p><strong>Alternative:</strong> Use <code>--sudo-password</code> option directly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-94-1" name="__codelineno-94-1" href="#__codelineno-94-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--sudo-password<span class="w"> </span><span class="s2">&quot;your-password&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-121-1" name="__codelineno-121-1" href="#__codelineno-121-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--sudo-password<span class="w"> </span><span class="s2">&quot;your-password&quot;</span>
 </code></pre></div>
 
 
