@@ -65,10 +65,18 @@ AVAHI_HOSTS="/etc/avahi/hosts"
 # Helper Functions
 # =============================================================================
 
-# Get host IP from .env or auto-detect
+# Get host IP from .env or auto-detect (returns first IP for avahi)
 get_host_ip() {
-    # Try to get from .env file
+    # Try to get from .env file (HOST_IPS first, then HOST_IP)
     if [ -f "$ENV_FILE" ]; then
+        local env_ips
+        env_ips=$(grep "^HOST_IPS=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d '"' | tr -d "'")
+        if [ -n "$env_ips" ]; then
+            # Return first IP for avahi registration
+            echo "$env_ips" | cut -d',' -f1 | tr -d ' '
+            return
+        fi
+
         local env_ip
         env_ip=$(grep "^HOST_IP=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d '"' | tr -d "'")
         if [ -n "$env_ip" ]; then
@@ -93,6 +101,53 @@ get_host_ip() {
     fi
 
     echo ""
+}
+
+# Get all host IPs from .env (comma-separated)
+# Supports HOST_IPS for multiple IPs (e.g., LAN + VPN mesh)
+get_host_ips() {
+    if [ -f "$ENV_FILE" ]; then
+        # Try HOST_IPS first (comma-separated list)
+        local env_ips
+        env_ips=$(grep "^HOST_IPS=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d ' ')
+        if [ -n "$env_ips" ]; then
+            echo "$env_ips"
+            return
+        fi
+
+        # Fallback to single HOST_IP
+        local env_ip
+        env_ip=$(grep "^HOST_IP=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d '"' | tr -d "'")
+        if [ -n "$env_ip" ]; then
+            echo "$env_ip"
+            return
+        fi
+    fi
+
+    # Auto-detect if not configured
+    get_host_ip
+}
+
+# Build nip.io hostnames for all configured IPs
+# Returns: server.local,server.ip1.nip.io,server.ip2.nip.io,...
+build_hostnames() {
+    local server_name="$1"
+    local host_ips="$2"
+
+    local hostnames="$server_name.local"
+
+    if [ -n "$host_ips" ]; then
+        # Split by comma and add nip.io for each IP
+        IFS=',' read -ra IPS <<< "$host_ips"
+        for ip in "${IPS[@]}"; do
+            ip=$(echo "$ip" | tr -d ' ')  # trim whitespace
+            if [ -n "$ip" ]; then
+                hostnames="$hostnames,$server_name.$ip.nip.io"
+            fi
+        done
+    fi
+
+    echo "$hostnames"
 }
 
 # Register hostname with avahi-daemon
@@ -311,21 +366,21 @@ cp -r "$TEMPLATE_DIR" "$SERVER_DIR"
 echo -e "${BLUE}[2/6]${NC} Updating server docker-compose.yml..."
 COMPOSE_FILE="$SERVER_DIR/docker-compose.yml"
 
-# Get HOST_IP for nip.io hostname
-HOST_IP=$(get_host_ip)
+# Get all HOST_IPS for nip.io hostnames (supports multiple IPs for VPN mesh)
+HOST_IPS=$(get_host_ips)
+HOSTNAMES=$(build_hostnames "$SERVER_NAME" "$HOST_IPS")
 
 # Replace template with server name
 sed -i "s/mc-template/mc-$SERVER_NAME/g" "$COMPOSE_FILE"
 
-# Configure mc-router hostnames (dual: .local + nip.io)
-if [ -n "$HOST_IP" ]; then
-    # Both .local and nip.io domains
-    sed -i "s/template\.local/$SERVER_NAME.local,$SERVER_NAME.$HOST_IP.nip.io/g" "$COMPOSE_FILE"
-    echo "   Hostnames: $SERVER_NAME.local, $SERVER_NAME.$HOST_IP.nip.io"
+# Configure mc-router hostnames (supports multiple IPs: .local + nip.io for each IP)
+if [ -n "$HOST_IPS" ]; then
+    sed -i "s/template\.local/$HOSTNAMES/g" "$COMPOSE_FILE"
+    echo "   Hostnames: $HOSTNAMES"
 else
     # Fallback to .local only
-    echo -e "${YELLOW}   Warning: HOST_IP not set, using .local domain only${NC}"
-    echo "   Set HOST_IP in .env for nip.io domain support"
+    echo -e "${YELLOW}   Warning: HOST_IP/HOST_IPS not set, using .local domain only${NC}"
+    echo "   Set HOST_IP or HOST_IPS in .env for nip.io domain support"
     sed -i "s/template\.local/$SERVER_NAME.local/g" "$COMPOSE_FILE"
 fi
 sed -i "s/# Minecraft Server Configuration Template/# $SERVER_NAME Server/g" "$COMPOSE_FILE"
@@ -481,8 +536,8 @@ echo ""
 echo -e "${GREEN}Server details:${NC}"
 echo "  - Directory: servers/$SERVER_NAME/"
 echo "  - Service: mc-$SERVER_NAME"
-if [ -n "$HOST_IP" ]; then
-    echo "  - Hostnames: $SERVER_NAME.local, $SERVER_NAME.$HOST_IP.nip.io"
+if [ -n "$HOST_IPS" ]; then
+    echo "  - Hostnames: $HOSTNAMES"
 else
     echo "  - Hostname: $SERVER_NAME.local"
 fi
@@ -491,15 +546,22 @@ echo "  - Type: $SERVER_TYPE"
 echo ""
 
 echo -e "${GREEN}Connection:${NC}"
-if [ -n "$HOST_IP" ]; then
+if [ -n "$HOST_IPS" ]; then
     echo "  ${GREEN}Recommended (nip.io - no client setup needed):${NC}"
-    echo "    $SERVER_NAME.$HOST_IP.nip.io:25565"
+    # Show each IP's nip.io address
+    IFS=',' read -ra IPS <<< "$HOST_IPS"
+    for ip in "${IPS[@]}"; do
+        ip=$(echo "$ip" | tr -d ' ')
+        if [ -n "$ip" ]; then
+            echo "    $SERVER_NAME.$ip.nip.io:25565"
+        fi
+    done
     echo ""
     echo "  Alternative (mDNS - requires avahi/Bonjour on client):"
     echo "    $SERVER_NAME.local:25565"
 else
     echo "  mDNS: $SERVER_NAME.local:25565"
-    echo "  (Set HOST_IP in .env for nip.io support)"
+    echo "  (Set HOST_IP or HOST_IPS in .env for nip.io support)"
 fi
 echo ""
 

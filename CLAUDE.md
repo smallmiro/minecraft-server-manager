@@ -616,8 +616,16 @@ myserver.192.168.20.37.nip.io → 192.168.20.37
 No client configuration needed - just connect directly in Minecraft.
 
 **Server Requirements**:
-- HOST_IP set in `.env` (required for nip.io)
+- HOST_IP or HOST_IPS set in `.env` (required for nip.io)
 - avahi-daemon installed (optional, for mDNS)
+
+**VPN Mesh Support**:
+For access from multiple networks (e.g., LAN + Tailscale/ZeroTier):
+```bash
+# .env - comma-separated IPs generate multiple nip.io hostnames
+HOST_IPS=192.168.20.37,100.64.0.5
+```
+This creates hostnames: `server.local`, `server.192.168.20.37.nip.io`, `server.100.64.0.5.nip.io`
 
 **mDNS Client Requirements** (if using .local):
 | OS | Requirement |
