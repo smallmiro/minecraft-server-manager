@@ -63,11 +63,16 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: .
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Verify build output
+        run: |
+          echo "=== Shared dist ===" && ls -la platform/services/shared/dist/
+          echo "=== CLI dist ===" && ls -la platform/services/cli/dist/
 
       - name: Publish @minecraft-docker/shared
         run: |
