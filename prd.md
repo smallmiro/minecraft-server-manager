@@ -175,48 +175,51 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [x] Restore prompts for confirmation (unless --force)
   - [x] `--dry-run` option shows what would be restored without changes
 
-#### FR-014: World Selection Enhancement
+#### FR-014: World Selection Enhancement ✅
 - **Priority**: Medium
 - **Description**: Enhanced world selection in `mcctl create` that shows available worlds with usage status, allowing users to select from existing worlds categorized by availability.
 - **Issue**: [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66)
+- **Status**: ✅ Completed
 - **Acceptance Criteria**:
-  - [ ] Show available worlds in interactive mode when "Use existing world" is selected
-  - [ ] Display 3 categories: Available (not used), Reusable (server stopped), Locked (server running)
-  - [ ] Show server name and status for locked/reusable worlds
-  - [ ] Allow selection via @clack/prompts select UI
-  - [ ] Warn user when selecting world used by stopped server (will transfer ownership)
-  - [ ] Block selection of worlds used by running servers
-  - [ ] Maintain backward compatibility with CLI arguments (`-w <name>`)
+  - [x] Show available worlds in interactive mode when "Use existing world" is selected
+  - [x] Display 3 categories: Available (not used), Reusable (server stopped), Locked (server running)
+  - [x] Show server name and status for locked/reusable worlds
+  - [x] Allow selection via @clack/prompts select UI
+  - [x] Warn user when selecting world used by stopped server (will transfer ownership)
+  - [x] Block selection of worlds used by running servers
+  - [x] Maintain backward compatibility with CLI arguments (`-w <name>`)
 
-#### FR-015: Player Management Commands
+#### FR-015: Player Management Commands ✅
 - **Priority**: Medium
 - **Description**: Comprehensive player management commands for whitelist, ban/unban, and kick operations, integrated with existing player lookup feature for UUID resolution.
 - **Issue**: [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67)
+- **Status**: ✅ Completed
 - **Acceptance Criteria**:
-  - [ ] `mcctl whitelist <server> <add|remove|list|on|off> [player]` - Whitelist management
-  - [ ] `mcctl ban <server> <add|remove|list> [player] [--reason]` - Ban management
-  - [ ] `mcctl kick <server> <player> [--reason]` - Kick player from server
-  - [ ] Integration with PlayerLookupUseCase for UUID resolution
-  - [ ] RCON command execution for runtime changes
-  - [ ] JSON file updates for persistence (whitelist.json, banned-players.json)
-  - [ ] `--json` output support for all commands
-  - [ ] Interactive mode with player name autocomplete from online players
+  - [x] `mcctl whitelist <server> <add|remove|list|on|off> [player]` - Whitelist management
+  - [x] `mcctl ban <server> <add|remove|list> [player] [--reason]` - Ban management
+  - [x] `mcctl kick <server> <player> [--reason]` - Kick player from server
+  - [x] Integration with PlayerLookupUseCase for UUID resolution
+  - [x] RCON command execution for runtime changes
+  - [x] JSON file updates for persistence (whitelist.json, banned-players.json)
+  - [x] `--json` output support for all commands
+  - [x] Interactive mode with player name autocomplete from online players
 
-#### FR-016: Detailed Server Monitoring
+#### FR-016: Detailed Server Monitoring ✅
 - **Priority**: Medium
 - **Description**: Enhanced monitoring capabilities showing detailed server and mc-router status including online players, resource usage, uptime, and real-time updates.
 - **Issue**: [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68)
+- **Status**: ✅ Completed
 - **Acceptance Criteria**:
-  - [ ] `mcctl status --detail` shows comprehensive server information
-  - [ ] `mcctl status --watch` enables real-time status updates (5s interval)
-  - [ ] `mcctl status <server>` shows single server detailed status
-  - [ ] `mcctl router status` shows mc-router specific information
-  - [ ] Display online player count and names per server
-  - [ ] Display memory/CPU usage from Docker stats
-  - [ ] Display server uptime
-  - [ ] Display TPS (ticks per second) when available
-  - [ ] Display mc-router connection stats and routing table
-  - [ ] `--json` output support for all monitoring commands
+  - [x] `mcctl status --detail` shows comprehensive server information
+  - [x] `mcctl status --watch` enables real-time status updates (5s interval)
+  - [x] `mcctl status <server>` shows single server detailed status
+  - [x] `mcctl router status` shows mc-router specific information
+  - [x] Display online player count and names per server
+  - [x] Display memory/CPU usage from Docker stats
+  - [x] Display server uptime
+  - [x] Display TPS (ticks per second) when available
+  - [x] Display mc-router connection stats and routing table
+  - [x] `--json` output support for all monitoring commands
 
 #### FR-017: Sudo Password Handling for Automation ✅
 - **Priority**: Medium
@@ -709,10 +712,10 @@ When implementing CLI tools, always consider future Web UI integration:
 - [x] Test all CLI commands
 - [x] Add error handling with proper exit codes
 
-### Phase 5: Documentation
-- [ ] Update `CLAUDE.md`
-- [ ] Update `README.md`
-- [ ] Create usage examples
+### Phase 5: Documentation ✅
+- [x] Update `CLAUDE.md`
+- [x] Update `README.md`
+- [x] Create usage examples
 
 ### Phase 6: Testing & Refinement (Partial)
 - [x] Test multi-server startup
@@ -1356,26 +1359,26 @@ export function createContainer(paths: Paths) {
 
 ### 9.9 Migration Path
 
-#### Phase 1: Infrastructure Setup
-- [ ] Add dependencies: `@clack/prompts`, `picocolors`
-- [ ] Create port interfaces
-- [ ] Implement `ClackPromptAdapter`
-- [ ] Implement `DocsProviderAdapter`
+#### Phase 1: Infrastructure Setup ✅
+- [x] Add dependencies: `@clack/prompts`, `picocolors`
+- [x] Create port interfaces
+- [x] Implement `ClackPromptAdapter`
+- [x] Implement `DocsProviderAdapter`
 
-#### Phase 2: Core Use Cases
-- [ ] Implement `CreateServerUseCase` with prompts
-- [ ] Implement `DeleteServerUseCase` with confirmation
-- [ ] Implement `StatusCommand` (pure TypeScript)
+#### Phase 2: Core Use Cases ✅
+- [x] Implement `CreateServerUseCase` with prompts
+- [x] Implement `DeleteServerUseCase` with confirmation
+- [x] Implement `StatusCommand` (pure TypeScript)
 
-#### Phase 3: Enhanced Features
-- [ ] Add `PlayerCommand` (TypeScript, no Bash)
-- [ ] Add `WorldCommand` with interactive assignment
-- [ ] Add `BackupCommand` with prompts
+#### Phase 3: Enhanced Features ✅
+- [x] Add `PlayerCommand` (TypeScript, no Bash)
+- [x] Add `WorldCommand` with interactive assignment
+- [x] Add `BackupCommand` with prompts
 
-#### Phase 4: Polish
-- [ ] Add progress indicators
-- [ ] Improve error messages
-- [ ] Add `--yes` flag for non-interactive mode
+#### Phase 4: Polish ✅
+- [x] Add progress indicators
+- [x] Improve error messages
+- [x] Add `--yes` flag for non-interactive mode
 
 #### Phase 5: Shared Package Refactoring ([#54](https://github.com/smallmiro/minecraft-server-manager/issues/54))
 - [ ] Domain Layer 이동 (`domain/entities`, `domain/value-objects`) → shared
@@ -1486,5 +1489,6 @@ minecraft-server-manager/
 | 1.0.0 | 2025-01-17 | - | Initial PRD |
 | 1.1.0 | 2025-01-17 | - | Add automatic port assignment (FR-007) |
 | 2.0.0 | 2025-01-17 | - | Replace port assignment with Lazymc auto start/stop |
-| 2.1.0 | 2026-01-17 | - | Migrate from Lazymc to mc-router (hostname routing, Docker auto-scale) |
-| 3.0.0 | 2026-01-18 | - | Add CLI Architecture (Hexagonal + Clean Architecture, SOLID principles) |
+| 2.1.0 | 2025-01-17 | - | Migrate from Lazymc to mc-router (hostname routing, Docker auto-scale) |
+| 3.0.0 | 2025-01-18 | - | Add CLI Architecture (Hexagonal + Clean Architecture, SOLID principles) |
+| 3.1.0 | 2025-01-24 | - | Update FR-014~FR-016 status to completed, update Phase 5 and Migration Path status |

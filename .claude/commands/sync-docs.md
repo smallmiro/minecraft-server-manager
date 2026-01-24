@@ -37,8 +37,21 @@ This command analyzes the codebase and updates project documentation to reflect 
 
 4. **Update prd.md** (if exists):
    - Update feature list based on implemented configurations
-   - Mark completed requirements
+   - Mark completed requirements (FR-xxx checkboxes)
    - Add discovered requirements from codebase analysis
+   - **Verify FR completion status**:
+     - Check CLI commands in `platform/services/cli/src/commands/`
+     - Compare with FR acceptance criteria checkboxes
+     - Update status badges (✅ Completed) for fully implemented features
+   - **Update Implementation Plan phases**:
+     - Check Phase completion status against actual implementation
+     - Update Phase checkboxes based on code existence
+   - **Update Migration Path (Section 9.9)**:
+     - Verify which migration phases are completed
+     - Check for adapter implementations, use cases, and commands
+   - **Update Revision History**:
+     - Add new entry when updating PRD
+     - Format: `| x.x.x | YYYY-MM-DD | - | Description |`
 
 5. **Update plan.md** (if exists):
    - Update phase status (In Progress → Completed)
@@ -54,6 +67,12 @@ This command analyzes the codebase and updates project documentation to reflect 
 - [ ] Identify new mods/plugins configured
 - [ ] Check for new volume mounts
 - [ ] Verify port mappings
+- [ ] **prd.md specific**:
+  - [ ] List CLI commands in `platform/services/cli/src/commands/`
+  - [ ] Compare commands with FR acceptance criteria
+  - [ ] Check implementation status of each FR feature
+  - [ ] Verify Phase completion in Implementation Plan
+  - [ ] Check Migration Path status (Section 9.9)
 
 ## Update Rules
 
@@ -86,6 +105,35 @@ minecraft/
 ├── data/
 ├── config/
 └── backups/        # New: Backup storage
+```
+
+### prd.md FR feature implemented
+```markdown
+# Before (FR not checked)
+#### FR-015: Player Management Commands
+- **Acceptance Criteria**:
+  - [ ] `mcctl whitelist <server> <add|remove|list|on|off> [player]`
+  - [ ] `mcctl ban <server> <add|remove|list> [player]`
+
+# After (verify commands exist in CLI, then check)
+#### FR-015: Player Management Commands ✅
+- **Status**: ✅ Completed
+- **Acceptance Criteria**:
+  - [x] `mcctl whitelist <server> <add|remove|list|on|off> [player]`
+  - [x] `mcctl ban <server> <add|remove|list> [player]`
+```
+
+### prd.md Phase completed
+```markdown
+# Before
+### Phase 5: Documentation
+- [ ] Update `CLAUDE.md`
+- [ ] Update `README.md`
+
+# After (verify docs are up-to-date)
+### Phase 5: Documentation ✅
+- [x] Update `CLAUDE.md`
+- [x] Update `README.md`
 ```
 
 ## Important Notes
