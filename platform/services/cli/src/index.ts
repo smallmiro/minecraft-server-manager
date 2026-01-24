@@ -18,6 +18,8 @@ import {
   kickCommand,
   playerOnlineCommand,
   playerCommand,
+  msgCommand,
+  migrateCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -60,6 +62,7 @@ ${colors.cyan('Player Management:')}
   ${colors.bold('whitelist')} <server> <action> [player]  Manage whitelist
   ${colors.bold('ban')} <server> <action> [player/ip]  Manage bans
   ${colors.bold('kick')} <server> <player> [reason]    Kick player
+  ${colors.bold('msg')} [server] [player] <message>    Send message to players
 
 ${colors.cyan('Operator Actions:')}
   list                    List current operators
@@ -111,6 +114,12 @@ ${colors.cyan('World Backup (requires .env config):')}
   ${colors.bold('backup history')} [--json]    Show backup history
   ${colors.bold('backup restore')} <commit>    Restore from commit
 
+${colors.cyan('Migration:')}
+  ${colors.bold('migrate worlds')}             Migrate worlds to shared directory
+  ${colors.bold('migrate status')}             Check migration status
+  ${colors.bold('migrate worlds')} --all       Migrate all servers
+  ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
+
 ${colors.cyan('Create Options:')}
   -t, --type TYPE            Server type: PAPER, VANILLA, FORGE, FABRIC
   -v, --version VERSION      Minecraft version (e.g., 1.21.1)
@@ -157,6 +166,10 @@ ${colors.cyan('Examples:')}
   mcctl whitelist myserver add Steve # Add to whitelist
   mcctl ban myserver add Griefer     # Ban player
   mcctl kick myserver AFK "Too long" # Kick player
+  mcctl msg                          # Interactive message mode
+  mcctl msg myserver "Hello!"        # Broadcast to server
+  mcctl msg myserver Steve "Hi!"     # Whisper to player
+  mcctl msg --all "Global notice"    # Broadcast to all servers
   mcctl player online myserver       # Show online players
   mcctl server-backup myserver       # Backup server config
   mcctl server-restore myserver      # Restore from backup
@@ -189,7 +202,13 @@ function parseArgs(args: string[]): {
       const key = arg.slice(2);
       const nextArg = args[i + 1];
 
-      if (nextArg && !nextArg.startsWith('-')) {
+      // Boolean-only flags (never take a value)
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run'];
+
+      if (booleanOnlyFlags.includes(key)) {
+        result.flags[key] = true;
+        i++;
+      } else if (nextArg && !nextArg.startsWith('-')) {
         result.flags[key] = nextArg;
         i += 2;
       } else {
@@ -219,7 +238,13 @@ function parseArgs(args: string[]): {
 
       const longKey = flagMap[key] ?? key;
 
-      if (nextArg && !nextArg.startsWith('-')) {
+      // Boolean-only short flags
+      const booleanOnlyShortFlags = ['h', 'f', 'y', 'a', 'd', 'W'];
+
+      if (booleanOnlyShortFlags.includes(key)) {
+        result.flags[longKey] = true;
+        i++;
+      } else if (nextArg && !nextArg.startsWith('-')) {
         result.flags[longKey] = nextArg;
         i += 2;
       } else {
@@ -229,7 +254,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'msg', 'migrate'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -588,6 +613,65 @@ async function main(): Promise<void> {
         break;
       }
 
+      case 'msg': {
+        // msg command: msg [server] [player] <message>
+        // or: msg --all [player] <message>
+        // subCommand = server name (if not --all)
+        // Interactive mode if no arguments
+        if (flags['all']) {
+          // --all mode: broadcast to all or find player
+          // When --all is used, subCommand might contain the message/player
+          const allArgs = subCommand ? [subCommand, ...positional] : positional;
+
+          if (allArgs.length >= 2) {
+            // msg --all <player> <message>
+            exitCode = await msgCommand({
+              root: rootDir,
+              all: true,
+              player: allArgs[0],
+              message: allArgs.slice(1).join(' '),
+            });
+          } else if (allArgs.length === 1) {
+            // msg --all <message>
+            exitCode = await msgCommand({
+              root: rootDir,
+              all: true,
+              message: allArgs[0],
+            });
+          } else {
+            log.error('Usage: mcctl msg --all <message>');
+            log.error('       mcctl msg --all <player> <message>');
+            exitCode = 1;
+          }
+        } else if (subCommand) {
+          // Server specified
+          if (positional.length >= 2) {
+            // msg <server> <player> <message>
+            exitCode = await msgCommand({
+              root: rootDir,
+              server: subCommand,
+              player: positional[0],
+              message: positional.slice(1).join(' '),
+            });
+          } else if (positional.length === 1) {
+            // msg <server> <message>
+            exitCode = await msgCommand({
+              root: rootDir,
+              server: subCommand,
+              message: positional[0],
+            });
+          } else {
+            log.error('Usage: mcctl msg <server> <message>');
+            log.error('       mcctl msg <server> <player> <message>');
+            exitCode = 1;
+          }
+        } else {
+          // Interactive mode
+          exitCode = await msgCommand({ root: rootDir });
+        }
+        break;
+      }
+
       case 'router': {
         if (!paths.isInitialized()) {
           log.error('Platform not initialized. Run: mcctl init');
@@ -609,6 +693,21 @@ async function main(): Promise<void> {
             log.error('Usage: mcctl router <start|stop|restart>');
             exitCode = 1;
         }
+        break;
+      }
+
+      case 'migrate': {
+        // migrate command: migrate [worlds|status] [options]
+        exitCode = await migrateCommand({
+          root: rootDir,
+          subCommand: subCommand,
+          serverName: flags['server'] as string | undefined,
+          all: flags['all'] === true,
+          dryRun: flags['dry-run'] === true,
+          backup: flags['backup'] === true,
+          force: flags['force'] === true,
+          json: flags['json'] === true,
+        });
         break;
       }
 

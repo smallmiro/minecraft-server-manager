@@ -344,6 +344,11 @@ if [ -f "$CONFIG_FILE" ]; then
     sed -i "s/^TYPE=.*/TYPE=$SERVER_TYPE/" "$CONFIG_FILE"
     sed -i "s/^MOTD=.*/MOTD=Welcome to $SERVER_NAME! Your adventure begins here./" "$CONFIG_FILE"
 
+    # Set LEVEL to server name by default (world stored in /worlds/<server-name>)
+    # This can be overridden by --world option
+    sed -i "s/^LEVEL=.*/LEVEL=$SERVER_NAME/" "$CONFIG_FILE"
+    echo "   World directory: worlds/$SERVER_NAME"
+
     # Apply version if specified
     if [ -n "$MC_VERSION" ]; then
         sed -i "s/^VERSION=.*/VERSION=$MC_VERSION/" "$CONFIG_FILE"
@@ -366,24 +371,11 @@ if [ -f "$CONFIG_FILE" ]; then
     fi
 
     if [ -n "$WORLD_NAME" ]; then
-        # Check if the world exists
+        # Check if the world exists in shared worlds directory
         WORLD_PATH="$PLATFORM_DIR/worlds/$WORLD_NAME"
         if [ -d "$WORLD_PATH" ]; then
             sed -i "s/^LEVEL=.*/LEVEL=$WORLD_NAME/" "$CONFIG_FILE"
-            echo "   Using existing world: $WORLD_NAME"
-
-            # Create symlink from server data dir to shared worlds dir
-            # This allows the world to be shared/managed centrally
-            mkdir -p "$SERVER_DIR/data"
-            SYMLINK_PATH="$SERVER_DIR/data/$WORLD_NAME"
-            SYMLINK_TARGET="../../../worlds/$WORLD_NAME"
-
-            if [ ! -e "$SYMLINK_PATH" ]; then
-                ln -s "$SYMLINK_TARGET" "$SYMLINK_PATH"
-                echo -e "   ${GREEN}Created symlink: data/$WORLD_NAME -> worlds/$WORLD_NAME${NC}"
-            else
-                echo -e "   ${YELLOW}Warning: $SYMLINK_PATH already exists${NC}"
-            fi
+            echo "   Using existing world: $WORLD_NAME (from worlds/$WORLD_NAME)"
         else
             echo -e "${YELLOW}   Warning: World '$WORLD_NAME' not found in worlds/ directory${NC}"
             echo "   LEVEL set to '$WORLD_NAME' - world will be created on first start"
@@ -392,9 +384,13 @@ if [ -f "$CONFIG_FILE" ]; then
     fi
 fi
 
-# Create data and logs directories (data may already exist if --world was used)
+# Create data and logs directories
 mkdir -p "$SERVER_DIR/data"
 mkdir -p "$SERVER_DIR/logs"
+
+# Ensure worlds directory exists (world will be created here via --world-dir)
+WORLD_LEVEL="${WORLD_NAME:-$SERVER_NAME}"
+mkdir -p "$PLATFORM_DIR/worlds"
 
 # =============================================================================
 # Step 4: Update servers/compose.yml
@@ -468,22 +464,19 @@ echo -e "${GREEN}========================================${NC}"
 echo ""
 
 # Show world configuration summary
-if [ -n "$WORLD_SEED" ] || [ -n "$WORLD_URL" ] || [ -n "$WORLD_NAME" ]; then
-    echo -e "${GREEN}World configuration:${NC}"
-    if [ -n "$WORLD_SEED" ]; then
-        echo "  - Seed: $WORLD_SEED"
-    fi
-    if [ -n "$WORLD_URL" ]; then
-        echo "  - URL: $WORLD_URL (downloaded on first start)"
-    fi
-    if [ -n "$WORLD_NAME" ]; then
-        echo "  - Level: $WORLD_NAME"
-        if [ -L "$SERVER_DIR/data/$WORLD_NAME" ]; then
-            echo "  - Symlink: data/$WORLD_NAME -> worlds/$WORLD_NAME"
-        fi
-    fi
-    echo ""
+echo -e "${GREEN}World configuration:${NC}"
+if [ -n "$WORLD_NAME" ]; then
+    echo "  - World: worlds/$WORLD_NAME (existing)"
+elif [ -n "$WORLD_URL" ]; then
+    echo "  - World: worlds/$SERVER_NAME (from URL)"
+    echo "  - URL: $WORLD_URL"
+else
+    echo "  - World: worlds/$SERVER_NAME (new)"
 fi
+if [ -n "$WORLD_SEED" ]; then
+    echo "  - Seed: $WORLD_SEED"
+fi
+echo ""
 
 echo -e "${GREEN}Server details:${NC}"
 echo "  - Directory: servers/$SERVER_NAME/"
