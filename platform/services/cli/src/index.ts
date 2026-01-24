@@ -84,8 +84,14 @@ ${colors.cyan('Ban Actions:')}
 
 ${colors.cyan('World Management:')}
   ${colors.bold('world list')} [--json]        List worlds and lock status
+  ${colors.bold('world new')} [name] [options] Create new world with seed
   ${colors.bold('world assign')} <world> <srv> Lock world to server
   ${colors.bold('world release')} <world>      Release world lock
+
+${colors.cyan('World New Options:')}
+  --seed <seed>              World seed (optional, random if empty)
+  --server <name>            Server to assign world to
+  --no-start                 Don't start server after creation
 
 ${colors.cyan('Player Management (Interactive):')}
   ${colors.bold('player')}                     Interactive mode: server → player → action
@@ -446,7 +452,11 @@ async function main(): Promise<void> {
           root: rootDir,
           subCommand: subCommand,
           worldName: positional[0],
-          serverName: positional[1],
+          serverName: subCommand === 'new'
+            ? (flags['server'] as string | undefined)
+            : positional[1],
+          seed: flags['seed'] as string | undefined,
+          autoStart: flags['no-start'] === true ? false : undefined,
           json: flags['json'] === true,
           force: flags['force'] === true,
         });

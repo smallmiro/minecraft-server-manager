@@ -10,6 +10,8 @@ export type {
   WorldListResult,
   WorldAssignResult,
   WorldReleaseResult,
+  WorldCreateOptions,
+  WorldCreateResult,
   IBackupUseCase,
   BackupPushResult,
   BackupStatusResult,

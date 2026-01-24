@@ -15,6 +15,8 @@ export interface MockShellConfig {
   startServerResult?: Partial<ShellResult>;
   stopServerResult?: Partial<ShellResult>;
   statusResult?: Partial<ShellResult>;
+  serverStatusResult?: Partial<ShellResult>;
+  setServerConfigResult?: Partial<ShellResult>;
   worldAssignResult?: Partial<ShellResult>;
   worldReleaseResult?: Partial<ShellResult>;
   backupPushResult?: Partial<ShellResult>;
@@ -99,14 +101,26 @@ export class MockShellAdapter implements IShellPort {
     return this.makeResult(this.config.deleteServerResult);
   }
 
-  async startServer(name: ServerName): Promise<ShellResult> {
-    this.log('startServer', name.value);
+  async startServer(name: ServerName | string): Promise<ShellResult> {
+    const serverName = typeof name === 'string' ? name : name.value;
+    this.log('startServer', serverName);
     return this.makeResult(this.config.startServerResult);
   }
 
-  async stopServer(name: ServerName): Promise<ShellResult> {
-    this.log('stopServer', name.value);
+  async stopServer(name: ServerName | string): Promise<ShellResult> {
+    const serverName = typeof name === 'string' ? name : name.value;
+    this.log('stopServer', serverName);
     return this.makeResult(this.config.stopServerResult);
+  }
+
+  async serverStatus(name: string): Promise<ShellResult> {
+    this.log('serverStatus', name);
+    return this.makeResult(this.config.serverStatusResult);
+  }
+
+  async setServerConfig(serverName: string, key: string, value: string): Promise<ShellResult> {
+    this.log('setServerConfig', serverName, key, value);
+    return this.makeResult(this.config.setServerConfigResult);
   }
 
   async logs(name: ServerName, options?: LogsOptions): Promise<ShellResult> {
