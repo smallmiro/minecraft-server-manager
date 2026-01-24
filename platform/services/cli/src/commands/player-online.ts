@@ -177,9 +177,12 @@ async function getServerOnlineInfo(
   let maxPlayers = 20;
 
   if (result.code === 0) {
+    // Trim output to handle trailing newlines
+    const output = result.output.trim();
+
     // Parse "There are X of a max of Y players online: player1, player2"
     // or "There are X/Y players online: player1, player2"
-    const countMatch = result.output.match(
+    const countMatch = output.match(
       /There are (\d+)(?:\s+of a max of\s+|\/)(\d+) players? online/i
     );
     if (countMatch && countMatch[1] && countMatch[2]) {
@@ -188,7 +191,7 @@ async function getServerOnlineInfo(
     }
 
     // Extract player names after the colon
-    const playersMatch = result.output.match(/:\s*(.+)$/);
+    const playersMatch = output.match(/:\s*(.+)$/);
     if (playersMatch && playersMatch[1]) {
       players = playersMatch[1]
         .split(',')
