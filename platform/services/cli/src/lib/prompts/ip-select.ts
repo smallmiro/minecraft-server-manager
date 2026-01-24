@@ -49,9 +49,15 @@ function detectInterfaceType(iface: NetworkInterface): string {
   const { name, address } = iface;
   const nameLower = name.toLowerCase();
 
-  // VPN detection
+  // VPN detection by interface name
   if (nameLower.includes('tailscale') || nameLower.startsWith('tailscale')) {
     return 'Tailscale VPN';
+  }
+  if (nameLower.includes('nordlynx') || nameLower.startsWith('nordlynx')) {
+    return 'NordVPN Meshnet';
+  }
+  if (nameLower.includes('nordtun') || nameLower.startsWith('nordtun')) {
+    return 'NordVPN';
   }
   if (nameLower.includes('zt') || nameLower.startsWith('zt')) {
     return 'ZeroTier VPN';
@@ -66,9 +72,20 @@ function detectInterfaceType(iface: NetworkInterface): string {
     return 'Nebula VPN';
   }
 
-  // IP range detection for VPNs
+  // IP range detection for VPNs (100.64.0.0/10 = CGNAT range used by mesh VPNs)
   if (address.startsWith('100.')) {
-    return 'Tailscale VPN';  // Tailscale uses 100.x.x.x
+    // 100.64.0.0 - 100.127.255.255 is CGNAT range
+    const secondOctet = parseInt(address.split('.')[1] || '0', 10);
+    if (secondOctet >= 64 && secondOctet <= 127) {
+      // Could be Tailscale (100.x.x.x) or NordVPN Meshnet (100.64.0.0/10)
+      // Check interface name for more specific detection
+      if (nameLower.includes('nord')) {
+        return 'NordVPN Meshnet';
+      }
+      return 'Tailscale VPN';
+    }
+    // Other 100.x.x.x ranges - likely Tailscale
+    return 'Tailscale VPN';
   }
   if (address.startsWith('10.147.') || address.startsWith('10.144.')) {
     return 'ZeroTier VPN';  // ZeroTier common ranges
