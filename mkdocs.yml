@@ -85,6 +85,13 @@ nav:
       - Overview: configuration/index.md
       - Environment Variables: configuration/environment.md
       - Server Types: configuration/server-types.md
+  - Mods & Plugins:
+      - Overview: mods-and-plugins/index.md
+      - Modrinth: mods-and-plugins/modrinth.md
+      - CurseForge: mods-and-plugins/curseforge.md
+      - Spiget (SpigotMC): mods-and-plugins/spiget.md
+      - Direct Download: mods-and-plugins/direct-download.md
+      - Modpacks: mods-and-plugins/modpacks.md
   - Advanced:
       - Overview: advanced/index.md
       - Networking: advanced/networking.md
