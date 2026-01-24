@@ -402,22 +402,28 @@ cmd_start() {
     check_docker || return 1
 
     local container="mc-$server"
+    local server_config="$PLATFORM_DIR/servers/$server/docker-compose.yml"
 
-    if ! container_exists "$container"; then
-        error "Server '$server' (container: $container) not found"
+    # Check if server configuration exists
+    if [[ ! -f "$server_config" ]]; then
+        error "Server '$server' not found (no config at servers/$server/)"
         return 1
     fi
 
-    local status
-    status=$(get_container_status "$container")
+    # Check if container already running
+    if container_exists "$container"; then
+        local status
+        status=$(get_container_status "$container")
 
-    if [[ "$status" == "running" ]]; then
-        warn "Server '$server' is already running"
-        return 2
+        if [[ "$status" == "running" ]]; then
+            warn "Server '$server' is already running"
+            return 2
+        fi
     fi
 
+    # Use docker compose up to create and start (works even if container doesn't exist)
     info "Starting server '$server'..."
-    docker start "$container"
+    cd "$PLATFORM_DIR" && docker compose up -d "$container"
     info "Server '$server' started"
 }
 
@@ -432,10 +438,18 @@ cmd_stop() {
     check_docker || return 1
 
     local container="mc-$server"
+    local server_config="$PLATFORM_DIR/servers/$server/docker-compose.yml"
 
-    if ! container_exists "$container"; then
-        error "Server '$server' (container: $container) not found"
+    # Check if server configuration exists
+    if [[ ! -f "$server_config" ]]; then
+        error "Server '$server' not found (no config at servers/$server/)"
         return 1
+    fi
+
+    # Check if container exists
+    if ! container_exists "$container"; then
+        warn "Server '$server' is not running (container not created)"
+        return 2
     fi
 
     local status

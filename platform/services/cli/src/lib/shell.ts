@@ -288,13 +288,15 @@ export class ShellExecutor {
 
   /**
    * Start all Minecraft servers (not router)
+   * Uses docker compose up to create containers if they don't exist
    */
   async startAll(): Promise<number> {
     log.info('Starting all Minecraft servers...');
-    // Start all mc-* containers except mc-router
+    // Get all mc-* services from compose config and start them
+    // This works even if containers haven't been created yet
     return new Promise((resolve) => {
       const child = spawn('sh', ['-c',
-        'docker ps -a --filter "name=mc-" --filter "status=exited" --format "{{.Names}}" | grep -v mc-router | xargs -r docker start'
+        'docker compose config --services | grep "^mc-" | xargs -r docker compose up -d'
       ], {
         cwd: this.paths.root,
         stdio: 'inherit',
@@ -314,13 +316,14 @@ export class ShellExecutor {
 
   /**
    * Stop all Minecraft servers (not router)
+   * Uses docker compose stop for consistency
    */
   async stopAll(): Promise<number> {
     log.info('Stopping all Minecraft servers...');
-    // Stop all mc-* containers except mc-router
+    // Get all mc-* services from compose config and stop them
     return new Promise((resolve) => {
       const child = spawn('sh', ['-c',
-        'docker ps --filter "name=mc-" --format "{{.Names}}" | grep -v mc-router | xargs -r docker stop'
+        'docker compose config --services | grep "^mc-" | xargs -r docker compose stop'
       ], {
         cwd: this.paths.root,
         stdio: 'inherit',
