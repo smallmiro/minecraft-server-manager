@@ -1,6 +1,6 @@
 # Direct Download
 
-Download mods and plugins directly from URLs or mount local files.
+Download mods and plugins directly from URLs or use local files.
 
 ## Overview
 
@@ -15,28 +15,66 @@ Download mods and plugins directly from URLs or mount local files.
 | Method | Description | Use Case |
 |--------|-------------|----------|
 | `MODS` / `PLUGINS` | Direct URL list | Simple URL-based downloads |
-| `MODS_FILE` / `PLUGINS_FILE` | File containing URLs | Organized URL lists |
-| Volume Mounts | Local directories | Local or manually downloaded files |
+| Shared Directories | Local directories | Local or manually downloaded files |
 
-## URL-Based Downloads
+## Quick Start with mcctl
 
-### MODS and PLUGINS Variables
+### Using Direct URLs
 
-Download mods or plugins directly from URLs:
+```bash
+# Create a Fabric server
+mcctl create modded --type FABRIC --version 1.21.1
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "FABRIC"
-      VERSION: "1.20.4"
-      MODS: |
-        https://example.com/custom-mod.jar
-        https://github.com/user/repo/releases/download/v1.0/mod.jar
-    volumes:
-      - ./data:/data
+# Add mods from direct URLs
+mcctl config modded MODS "https://example.com/custom-mod.jar,https://github.com/user/repo/releases/download/v1.0/mod.jar"
+
+# Restart to apply
+mcctl stop modded && mcctl start modded
+```
+
+### Using Shared Directories
+
+mcctl creates shared directories for mods and plugins:
+
+```
+~/minecraft-servers/
+  shared/
+    mods/       # Place mod JARs here
+    plugins/    # Place plugin JARs here
+```
+
+Simply place your files in these directories and they are automatically available to all servers.
+
+## Configuration via mcctl
+
+### MODS Variable
+
+For Forge/Fabric servers, download mods from URLs:
+
+```bash
+# Single mod
+mcctl config myserver MODS "https://example.com/custom-mod.jar"
+
+# Multiple mods (comma-separated)
+mcctl config myserver MODS "https://example.com/mod1.jar,https://example.com/mod2.jar"
+
+# Restart to apply
+mcctl stop myserver && mcctl start myserver
+```
+
+### PLUGINS Variable
+
+For Paper/Spigot servers, download plugins from URLs:
+
+```bash
+# Single plugin
+mcctl config myserver PLUGINS "https://example.com/custom-plugin.jar"
+
+# Multiple plugins
+mcctl config myserver PLUGINS "https://example.com/plugin1.jar,https://example.com/plugin2.jar"
+
+# Restart to apply
+mcctl stop myserver && mcctl start myserver
 ```
 
 ### Supported Delimiters
@@ -45,33 +83,143 @@ URLs can be separated by:
 
 - Commas: `url1,url2,url3`
 - Spaces: `url1 url2 url3`
-- Newlines (YAML multi-line)
+- Newlines (in config.env multi-line format)
 
-### Example with Plugins
+## Configuration Reference
 
-```yaml
-environment:
-  TYPE: "PAPER"
-  PLUGINS: |
-    https://example.com/plugin1.jar
-    https://example.com/plugin2.jar
+| Config Key | Description |
+|------------|-------------|
+| `MODS` | Comma/space/newline separated mod URLs or container paths |
+| `PLUGINS` | Comma/space/newline separated plugin URLs or container paths |
+
+## Shared Directories
+
+### Directory Structure
+
+mcctl init creates these shared directories:
+
+```
+~/minecraft-servers/
+  shared/
+    mods/       # Shared mod files (Forge, Fabric)
+    plugins/    # Shared plugin files (Paper, Spigot)
 ```
 
-## File-Based Lists
+### Using Shared Directories
 
-### MODS_FILE and PLUGINS_FILE
+1. Place JAR files in the appropriate directory
+2. Files are automatically mounted to all servers (read-only)
+3. No configuration needed
 
-Reference a file containing URLs:
+```bash
+# Example: Add a custom mod
+cp ~/downloads/custom-mod.jar ~/minecraft-servers/shared/mods/
 
-```yaml
-environment:
-  MODS_FILE: "/data/mods.txt"
-  PLUGINS_FILE: "/data/plugins.txt"
+# The mod is automatically available to all Forge/Fabric servers
 ```
 
-### File Format
+### Benefits
 
-Create `/data/mods.txt`:
+- **Shared across servers**: One file serves all servers
+- **No configuration needed**: Just drop files in the directory
+- **Read-only mount**: Server cannot modify source files
+- **Easy updates**: Replace file, restart servers
+
+## Complete Examples
+
+### GitHub Releases Download
+
+```bash
+# Create server
+mcctl create modded --type FABRIC --version 1.21.1
+
+# Add mods from GitHub releases
+mcctl config modded MODS "https://github.com/CaffeineMC/sodium-fabric/releases/download/mc1.21-0.6.0/sodium-fabric-0.6.0+mc1.21.jar"
+
+# Restart to apply
+mcctl stop modded && mcctl start modded
+```
+
+### Mixed Sources
+
+```bash
+# Create server
+mcctl create modded --type FABRIC --version 1.21.1
+
+# Direct URLs for custom mods
+mcctl config modded MODS "https://example.com/custom-mod.jar"
+
+# Modrinth for popular mods
+mcctl config modded MODRINTH_PROJECTS "fabric-api,lithium,sodium"
+
+# Restart to apply
+mcctl stop modded && mcctl start modded
+```
+
+### Local Development Setup
+
+For mod development with local builds:
+
+1. Build your mod
+2. Copy to shared directory
+3. Restart server
+
+```bash
+# Copy built mod to shared directory
+cp ~/my-mod/build/libs/my-mod-1.0.jar ~/minecraft-servers/shared/mods/
+
+# Restart server to load the mod
+mcctl stop modded && mcctl start modded
+```
+
+### Server Network with Shared Plugins
+
+All servers share the same plugins from `shared/plugins/`:
+
+```bash
+# Create multiple servers
+mcctl create lobby --type PAPER --version 1.21.1
+mcctl create survival --type PAPER --version 1.21.1
+mcctl create creative --type PAPER --version 1.21.1
+
+# Place shared plugins
+cp luckperms.jar ~/minecraft-servers/shared/plugins/
+cp vault.jar ~/minecraft-servers/shared/plugins/
+
+# All servers now have these plugins
+mcctl start --all
+```
+
+## Advanced Configuration (Manual)
+
+For advanced configurations, edit `config.env` directly:
+
+```bash
+nano ~/minecraft-servers/servers/myserver/config.env
+```
+
+Example `config.env`:
+
+```bash
+# Direct mod URLs (multi-line format)
+MODS=https://example.com/mod1.jar
+https://example.com/mod2.jar
+https://github.com/user/repo/releases/download/v1.0/mod3.jar
+
+# Auto-cleanup settings
+REMOVE_OLD_MODS=TRUE
+```
+
+### Using File Lists
+
+For very large mod lists:
+
+```bash
+# Create mod list file
+nano ~/minecraft-servers/servers/myserver/data/mods.txt
+```
+
+Content of `mods.txt`:
 
 ```text
 # Performance mods
@@ -89,183 +237,40 @@ modrinth:fabric-api
 curseforge:jei
 ```
 
-### Remote File Lists
+Then set MODS_FILE in `config.env`:
 
-You can also reference remote file lists:
-
-```yaml
-environment:
-  MODS_FILE: "https://example.com/server-mods.txt"
-  PLUGINS_FILE: "https://gist.githubusercontent.com/user/id/raw/plugins.txt"
+```bash
+MODS_FILE=/data/mods.txt
 ```
 
-### Special Prefixes
+### Sync Path Customization
 
-File lists support special prefixes for different sources:
+Customize where mods/plugins are synced:
 
-| Prefix | Description | Example |
-|--------|-------------|---------|
-| `modrinth:` | Modrinth project | `modrinth:fabric-api` |
-| `curseforge:` | CurseForge project | `curseforge:jei` |
-| (none) | Direct URL | `https://example.com/mod.jar` |
-
-## Volume Mounts
-
-### Read-Only Mounts
-
-Mount local directories containing mods or plugins:
-
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "FABRIC"
-    volumes:
-      - ./data:/data
-      - ./mods:/mods:ro      # Read-only
-      - ./plugins:/plugins:ro
+```bash
+# In config.env
+COPY_MODS_SRC=/custom-mods
+COPY_MODS_DEST=/data/mods
+COPY_PLUGINS_SRC=/custom-plugins
+COPY_PLUGINS_DEST=/data/plugins
 ```
 
-!!! tip "Read-Only Recommended"
-    Use `:ro` (read-only) to prevent the server from modifying your source files.
+## Auto Cleanup
 
-### Mount Points
+### Remove Old Mods
 
-| Container Path | Syncs To | Purpose |
-|----------------|----------|---------|
-| `/mods` | `/data/mods` | Mod files (Forge, Fabric) |
-| `/plugins` | `/data/plugins` | Plugin files (Paper, Spigot) |
-| `/config` | `/data/config` | Configuration files |
+Configure automatic cleanup before applying new content:
 
-### Customizing Sync Paths
-
-Change source or destination paths:
-
-```yaml
-environment:
-  COPY_MODS_SRC: "/custom-mods"
-  COPY_MODS_DEST: "/data/mods"
-  COPY_PLUGINS_SRC: "/custom-plugins"
-  COPY_PLUGINS_DEST: "/data/plugins"
-  COPY_CONFIG_DEST: "/data/config"
-volumes:
-  - ./my-mods:/custom-mods:ro
-  - ./my-plugins:/custom-plugins:ro
+```bash
+mcctl config myserver REMOVE_OLD_MODS "TRUE"
 ```
 
-## Container Path References
+### Exclude Specific Files
 
-Reference files already in the container:
-
-```yaml
-environment:
-  MODS: |
-    /extras/custom-mod.jar
-    https://example.com/other-mod.jar
-volumes:
-  - ./extras:/extras:ro
+```bash
+mcctl config myserver REMOVE_OLD_MODS_INCLUDE "*.jar"
+mcctl config myserver REMOVE_OLD_MODS_EXCLUDE "keep-this-mod.jar"
 ```
-
-## Complete Examples
-
-### GitHub Releases Download
-
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "FABRIC"
-      VERSION: "1.20.4"
-      MODS: |
-        https://github.com/CaffeineMC/sodium-fabric/releases/download/mc1.20.4-0.5.8/sodium-fabric-0.5.8+mc1.20.4.jar
-        https://github.com/CaffeineMC/lithium-fabric/releases/download/mc1.20.4-0.12.1/lithium-fabric-mc1.20.4-0.12.1.jar
-    volumes:
-      - ./data:/data
-```
-
-### Mixed Sources
-
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "FABRIC"
-      VERSION: "1.20.4"
-
-      # Direct URLs
-      MODS: |
-        https://example.com/custom-mod.jar
-
-      # File-based list
-      MODS_FILE: "/data/extra-mods.txt"
-
-      # Modrinth mods
-      MODRINTH_PROJECTS: |
-        fabric-api
-        sodium
-    volumes:
-      - ./data:/data
-```
-
-### Local Development Setup
-
-For mod development with local builds:
-
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "FABRIC"
-      VERSION: "1.20.4"
-      REMOVE_OLD_MODS: "TRUE"  # Clean on restart
-    volumes:
-      - ./data:/data
-      - ../my-mod/build/libs:/mods:ro  # Mount build output
-```
-
-### Server Network with Shared Plugins
-
-```yaml
-services:
-  lobby:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "PAPER"
-    volumes:
-      - ./lobby-data:/data
-      - ./shared-plugins:/plugins:ro
-
-  survival:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "PAPER"
-    volumes:
-      - ./survival-data:/data
-      - ./shared-plugins:/plugins:ro
-```
-
-## Environment Variables Reference
-
-| Variable | Description |
-|----------|-------------|
-| `MODS` | Comma/space/newline separated mod URLs or container paths |
-| `PLUGINS` | Comma/space/newline separated plugin URLs or container paths |
-| `MODS_FILE` | Path or URL to file containing mod URLs |
-| `PLUGINS_FILE` | Path or URL to file containing plugin URLs |
-| `COPY_MODS_SRC` | Source directory for mods (default: `/mods`) |
-| `COPY_MODS_DEST` | Destination directory for mods (default: `/data/mods`) |
-| `COPY_PLUGINS_SRC` | Source directory for plugins (default: `/plugins`) |
-| `COPY_PLUGINS_DEST` | Destination directory for plugins (default: `/data/plugins`) |
 
 ## Troubleshooting
 
@@ -274,17 +279,38 @@ services:
 | Issue | Cause | Solution |
 |-------|-------|----------|
 | Download failed | Invalid URL or network issue | Verify URL is accessible |
-| File not found | Wrong container path | Check volume mount configuration |
+| File not found | Wrong path | Check shared directory location |
 | Permission denied | File permissions | Ensure files are readable |
 | Mods not loading | Wrong server type | Verify TYPE matches mod loader |
 
-### Debug Logging
+### Check Current Configuration
+
+```bash
+# View all configuration
+mcctl config myserver
+
+# View MODS setting
+mcctl config myserver MODS
+```
+
+### View Server Logs
+
+```bash
+# Check for mod/plugin loading errors
+mcctl logs myserver
+
+# Follow logs in real-time
+mcctl logs myserver -f
+```
+
+### Debug Mode
 
 Enable debug output to troubleshoot:
 
-```yaml
-environment:
-  DEBUG: "true"
+```bash
+mcctl config myserver DEBUG "true"
+mcctl stop myserver && mcctl start myserver
+mcctl logs myserver
 ```
 
 ### Verify URL Access
@@ -295,10 +321,21 @@ Test URL accessibility:
 curl -I "https://example.com/mod.jar"
 ```
 
+### Check Shared Directory
+
+```bash
+# List shared mods
+ls -la ~/minecraft-servers/shared/mods/
+
+# List shared plugins
+ls -la ~/minecraft-servers/shared/plugins/
+```
+
 ## See Also
 
 - [Mods and Plugins Overview](index.md)
 - [Modrinth Guide](modrinth.md)
 - [CurseForge Guide](curseforge.md)
 - [Spiget Guide](spiget.md)
+- [CLI Commands Reference](../cli/commands.md)
 - [Official itzg Documentation](https://docker-minecraft-server.readthedocs.io/en/latest/mods-and-plugins/)

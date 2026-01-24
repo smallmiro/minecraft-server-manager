@@ -13,25 +13,21 @@ Download plugins from [SpigotMC](https://www.spigotmc.org/) using the [Spiget AP
 | Server Types | Paper, Spigot, Bukkit |
 
 !!! note "Spiget vs Spigot"
-    The environment variable uses **SPIGET** (with an "E"), not "SPIGOT". Spiget is a third-party API that provides programmatic access to SpigotMC resources.
+    The config key uses **SPIGET** (with an "E"), not "SPIGOT". Spiget is a third-party API that provides programmatic access to SpigotMC resources.
 
-## Basic Usage
+## Quick Start with mcctl
 
-### SPIGET_RESOURCES
+### Create Server and Add Plugins
 
-Download plugins using numeric resource IDs:
+```bash
+# Create a Paper server
+mcctl create survival --type PAPER --version 1.21.1
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "PAPER"
-      VERSION: "1.20.4"
-      SPIGET_RESOURCES: "28140,34315"
-    volumes:
-      - ./data:/data
+# Add SpigotMC plugins (using numeric resource IDs)
+mcctl config survival SPIGET_RESOURCES "28140,34315,6245"
+
+# Restart to apply changes
+mcctl stop survival && mcctl start survival
 ```
 
 ## Finding Resource IDs
@@ -46,7 +42,7 @@ The resource ID is the numeric portion at the end of the SpigotMC resource URL.
 | Vault | `https://www.spigotmc.org/resources/vault.34315/` | `34315` |
 | PlaceholderAPI | `https://www.spigotmc.org/resources/placeholderapi.6245/` | `6245` |
 | WorldEdit | `https://www.spigotmc.org/resources/worldedit.13932/` | `13932` |
-| WorldGuard | `https://www.spigotmc.org/resources/worldguard.13932/` | `13932` |
+| CoreProtect | `https://www.spigotmc.org/resources/coreprotect.8631/` | `8631` |
 
 ### How to Find Resource ID
 
@@ -56,10 +52,32 @@ The resource ID is the numeric portion at the end of the SpigotMC resource URL.
 4. Look at the URL: `https://www.spigotmc.org/resources/plugin-name.XXXXX/`
 5. The number at the end (XXXXX) is the resource ID
 
-## Environment Variables
+## Configuration via mcctl
 
-| Variable | Description |
-|----------|-------------|
+### Basic Setup
+
+```bash
+# Add plugins (comma-separated numeric IDs)
+mcctl config myserver SPIGET_RESOURCES "28140,34315,6245"
+
+# Restart to apply
+mcctl stop myserver && mcctl start myserver
+```
+
+### View Current Configuration
+
+```bash
+# View all configuration
+mcctl config myserver
+
+# View Spiget resources
+mcctl config myserver SPIGET_RESOURCES
+```
+
+## Configuration Reference
+
+| Config Key | Description |
+|------------|-------------|
 | `SPIGET_RESOURCES` | Comma-separated list of SpigotMC resource IDs |
 
 ## File Handling
@@ -81,84 +99,68 @@ The Spiget API handles different file types automatically:
     - EssentialsX (ID: 9089)
     - Some premium plugins
 
-    For these plugins, manually download the file and use volume mounts instead.
+    For these plugins, manually download and use the shared plugins directory.
 
 ### Manual Download Alternative
 
-For restricted plugins:
+For restricted plugins, use the shared plugins directory:
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "PAPER"
-    volumes:
-      - ./data:/data
-      - ./plugins:/plugins:ro  # Mount your manually downloaded plugins
+```bash
+# Download plugin manually and place in shared directory
+# Location: ~/minecraft-servers/shared/plugins/
+
+# The file will be automatically available to all servers
 ```
-
-Then place the manually downloaded JAR files in the `./plugins` directory.
 
 ## Complete Examples
 
 ### Paper Server with Multiple Plugins
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "PAPER"
-      VERSION: "1.20.4"
-      MEMORY: "4G"
-      SPIGET_RESOURCES: "28140,34315,6245"  # LuckPerms, Vault, PlaceholderAPI
-    volumes:
-      - ./data:/data
-    ports:
-      - "25565:25565"
+```bash
+# Create server
+mcctl create survival --type PAPER --version 1.21.1
+
+# Configure plugins
+mcctl config survival SPIGET_RESOURCES "28140,34315,6245"
+mcctl config survival MEMORY "4G"
+
+# Start server
+mcctl start survival
 ```
 
 ### Combined with Modrinth Plugins
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "PAPER"
-      VERSION: "1.20.4"
+```bash
+# Create server
+mcctl create survival --type PAPER --version 1.21.1
 
-      # Spiget plugins
-      SPIGET_RESOURCES: "28140,34315"  # LuckPerms, Vault
+# Spiget plugins (SpigotMC)
+mcctl config survival SPIGET_RESOURCES "28140,34315"
 
-      # Modrinth plugins
-      MODRINTH_PROJECTS: |
-        chunky
-        spark
-    volumes:
-      - ./data:/data
+# Modrinth plugins (additional)
+mcctl config survival MODRINTH_PROJECTS "chunky,spark"
+
+# Restart to apply
+mcctl stop survival && mcctl start survival
 ```
 
 ### Combined with Manual Plugins
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "PAPER"
-      VERSION: "1.20.4"
+For plugins that restrict Spiget downloads:
 
-      # Spiget plugins (that allow automated download)
-      SPIGET_RESOURCES: "28140,34315"
-    volumes:
-      - ./data:/data
-      - ./plugins:/plugins:ro  # EssentialsX and other restricted plugins
+1. Download the plugin manually from SpigotMC
+2. Place the JAR file in `~/minecraft-servers/shared/plugins/`
+3. The plugin will be available to all servers
+
+```bash
+# Create server (manual plugins are auto-mounted)
+mcctl create survival --type PAPER --version 1.21.1
+
+# Add Spiget plugins for ones that work
+mcctl config survival SPIGET_RESOURCES "28140,34315"
+
+# Manual plugins in shared/plugins/ are automatically available
+mcctl start survival
 ```
 
 ## Popular SpigotMC Plugins
@@ -169,10 +171,10 @@ services:
 | Vault | 34315 | Economy/permissions API |
 | PlaceholderAPI | 6245 | Placeholder expansion |
 | WorldEdit | 13932 | World editing tool |
-| WorldGuard | 13932 | Region protection |
 | CoreProtect | 8631 | Block logging |
 | Multiverse-Core | 390 | Multiple worlds |
 | SkinsRestorer | 2124 | Skin management |
+| DiscordSRV | 18494 | Discord integration |
 
 !!! info "Plugin Compatibility"
     Always check plugin compatibility with your Minecraft version on the SpigotMC page before adding to your server.
@@ -183,18 +185,39 @@ services:
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| Plugin not downloading | Download restricted | Use manual download with volume mount |
+| Plugin not downloading | Download restricted | Use manual download with shared directory |
 | Wrong plugin version | Spiget selects latest | Check if latest supports your MC version |
 | Plugin not loading | Missing dependencies | Check plugin requirements and add them |
 | Resource not found | Invalid resource ID | Verify ID from SpigotMC URL |
 
-### Debug Logging
+### Check Current Configuration
+
+```bash
+# View all configuration
+mcctl config myserver
+
+# View Spiget resources
+mcctl config myserver SPIGET_RESOURCES
+```
+
+### View Server Logs
+
+```bash
+# Check for plugin loading errors
+mcctl logs myserver
+
+# Follow logs in real-time
+mcctl logs myserver -f
+```
+
+### Debug Mode
 
 Enable debug output to troubleshoot issues:
 
-```yaml
-environment:
-  DEBUG: "true"
+```bash
+mcctl config myserver DEBUG "true"
+mcctl stop myserver && mcctl start myserver
+mcctl logs myserver
 ```
 
 ### Check Spiget API
@@ -205,6 +228,25 @@ Verify a resource exists and is available:
 curl "https://api.spiget.org/v2/resources/28140"
 ```
 
+## Modrinth vs Spiget for Plugins
+
+If a plugin is available on both Modrinth and SpigotMC, consider:
+
+| Feature | Modrinth | Spiget (SpigotMC) |
+|---------|----------|-------------------|
+| ID Format | Slug (easy to remember) | Numeric (harder to remember) |
+| Dependency Support | Yes | No |
+| Download Restrictions | None | Some plugins restricted |
+| Recommendation | **Preferred** | Use when not on Modrinth |
+
+```bash
+# Preferred: Use Modrinth when available
+mcctl config myserver MODRINTH_PROJECTS "luckperms,chunky,spark"
+
+# Alternative: Use Spiget for SpigotMC-only plugins
+mcctl config myserver SPIGET_RESOURCES "390,2124"
+```
+
 ## See Also
 
 - [SpigotMC Resources](https://www.spigotmc.org/resources/)
@@ -212,4 +254,5 @@ curl "https://api.spiget.org/v2/resources/28140"
 - [Mods and Plugins Overview](index.md)
 - [Modrinth Guide](modrinth.md)
 - [Direct Download Guide](direct-download.md)
+- [CLI Commands Reference](../cli/commands.md)
 - [Official itzg Documentation](https://docker-minecraft-server.readthedocs.io/en/latest/mods-and-plugins/spiget/)

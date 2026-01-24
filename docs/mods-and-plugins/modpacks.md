@@ -4,13 +4,16 @@ Install pre-configured modpack collections from various sources.
 
 ## Overview
 
-| Platform | Environment Variable | API Key Required | Best For |
-|----------|---------------------|------------------|----------|
+| Platform | Config Key | API Key Required | Best For |
+|----------|-----------|------------------|----------|
 | [Packwiz](#packwiz) | `PACKWIZ_URL` | No | Custom/self-hosted modpacks |
 | [CurseForge](#curseforge-modpacks) | `CF_PAGE_URL`, `CF_SLUG` | Yes | Popular modpacks |
 | [Modrinth](#modrinth-modpacks) | `MODRINTH_MODPACK` | No | Open-source modpacks |
 | [FTB](#ftb-modpacks) | `FTB_MODPACK_ID` | No | Feed the Beast modpacks |
 | [ZIP Archive](#zip-modpacks) | `MODPACK`, `GENERIC_PACKS` | No | Manual/custom archives |
+
+!!! note "Modpacks and Server Types"
+    When installing modpacks, the server TYPE is often set automatically based on the modpack platform. For example, CurseForge modpacks use `TYPE=AUTO_CURSEFORGE` and Modrinth modpacks use `TYPE=MODRINTH`.
 
 ---
 
@@ -18,24 +21,23 @@ Install pre-configured modpack collections from various sources.
 
 [Packwiz](https://packwiz.infra.link/) is a command-line tool for creating and managing modpacks with support for both CurseForge and Modrinth sources.
 
-### Basic Usage
+### Quick Start with mcctl
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "FABRIC"
-      PACKWIZ_URL: "https://example.com/modpack/pack.toml"
-    volumes:
-      - ./data:/data
+```bash
+# Create a Fabric server with Packwiz modpack
+mcctl create modded --type FABRIC --version 1.21.1
+
+# Set Packwiz modpack URL
+mcctl config modded PACKWIZ_URL "https://example.com/modpack/pack.toml"
+
+# Restart to apply
+mcctl stop modded && mcctl start modded
 ```
 
-### Environment Variables
+### Configuration Reference
 
-| Variable | Description |
-|----------|-------------|
+| Config Key | Description |
+|------------|-------------|
 | `PACKWIZ_URL` | URL to the `pack.toml` modpack definition file |
 
 ### Key Features
@@ -63,19 +65,26 @@ Install modpacks from [CurseForge](https://www.curseforge.com/minecraft/modpacks
 !!! warning "API Key Required"
     CurseForge requires an API key. See [CurseForge Guide](curseforge.md#getting-api-key) for setup instructions.
 
-### Basic Usage
+### Quick Start with mcctl
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java17
-    environment:
-      EULA: "TRUE"
-      TYPE: "AUTO_CURSEFORGE"
-      CF_API_KEY: "${CF_API_KEY}"
-      CF_PAGE_URL: "https://www.curseforge.com/minecraft/modpacks/all-the-mods-8"
-    volumes:
-      - ./data:/data
+```bash
+# Create server (TYPE is set automatically for CurseForge modpacks)
+mcctl create modded
+
+# Set server type for CurseForge modpack
+mcctl config modded TYPE "AUTO_CURSEFORGE"
+
+# Set modpack by page URL
+mcctl config modded CF_PAGE_URL "https://www.curseforge.com/minecraft/modpacks/all-the-mods-8"
+
+# Or by slug (shorter)
+mcctl config modded CF_SLUG "all-the-mods-8"
+
+# Set memory (modpacks typically need more)
+mcctl config modded MEMORY "8G"
+
+# Restart to apply
+mcctl stop modded && mcctl start modded
 ```
 
 ### Modpack Specification Methods
@@ -87,12 +96,11 @@ services:
 | `CF_FILE_ID` | Specific file ID for version pinning | `4567890` |
 | `CF_FILENAME_MATCHER` | Substring to match filename | `server` |
 
-### Environment Variables
+### Configuration Reference
 
-| Variable | Description |
-|----------|-------------|
-| `CF_API_KEY` | CurseForge API key (required) |
-| `CF_API_KEY_FILE` | Path to file containing API key |
+| Config Key | Description |
+|------------|-------------|
+| `CF_API_KEY` | CurseForge API key (required, set in `.env`) |
 | `CF_PAGE_URL` | Full URL to modpack or specific file |
 | `CF_SLUG` | Short identifier from URL path |
 | `CF_FILE_ID` | Specific file ID for version pinning |
@@ -100,75 +108,39 @@ services:
 
 ### Mod Filtering
 
-| Variable | Description |
-|----------|-------------|
+```bash
+# Exclude specific mods
+mcctl config modded CF_EXCLUDE_MODS "optifine,journeymap"
+
+# Force include mods incorrectly tagged as client-only
+mcctl config modded CF_FORCE_INCLUDE_MODS "some-mod"
+
+# Parallel download count
+mcctl config modded CF_PARALLEL_DOWNLOADS "6"
+```
+
+| Config Key | Description |
+|------------|-------------|
 | `CF_EXCLUDE_MODS` | Comma/space-delimited project slugs or IDs to exclude |
 | `CF_FORCE_INCLUDE_MODS` | Force inclusion of mods incorrectly tagged as client-only |
 | `CF_EXCLUDE_ALL_MODS` | Exclude all mods (for server-only setup) |
-| `CF_EXCLUDE_INCLUDE_FILE` | Path to JSON configuration for complex exclusions |
-
-### Advanced Options
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CF_MOD_LOADER_VERSION` | auto | Override mod loader version |
-| `CF_OVERRIDES_EXCLUSIONS` | - | Ant-style path patterns for excluding override files |
-| `CF_PARALLEL_DOWNLOADS` | 4 | Number of concurrent mod downloads |
-| `CF_FORCE_REINSTALL_MODLOADER` | false | Force reinstallation of mod loader |
-| `CF_FORCE_SYNCHRONIZE` | false | Re-evaluate exclusions/inclusions |
-| `CF_SET_LEVEL_FROM` | - | Set world data from `WORLD_FILE` or `OVERRIDES` |
-
-### Manual Downloads
-
-For mods that restrict automated downloads:
-
-```yaml
-environment:
-  CF_DOWNLOADS_REPO: "/downloads"  # Default path
-volumes:
-  - ./manual-downloads:/downloads:ro
-```
-
-Place manually downloaded files in `./manual-downloads/`.
-
-### Unpublished Modpacks
-
-For unpublished or local modpacks:
-
-```yaml
-environment:
-  TYPE: "AUTO_CURSEFORGE"
-  CF_API_KEY: "${CF_API_KEY}"
-  CF_MODPACK_ZIP: "/modpacks/my-modpack.zip"
-volumes:
-  - ./modpacks:/modpacks:ro
-```
-
-Or use manifest only:
-
-```yaml
-environment:
-  CF_MODPACK_MANIFEST: "/modpacks/manifest.json"
-```
+| `CF_PARALLEL_DOWNLOADS` | Number of concurrent mod downloads (default: 4) |
 
 ### Complete Example
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java17
-    environment:
-      EULA: "TRUE"
-      TYPE: "AUTO_CURSEFORGE"
-      CF_API_KEY: "${CF_API_KEY}"
-      CF_PAGE_URL: "https://www.curseforge.com/minecraft/modpacks/all-the-mods-8"
-      MEMORY: "8G"
-      CF_EXCLUDE_MODS: "optifine,journeymap"  # Exclude client-only mods
-      CF_PARALLEL_DOWNLOADS: "6"
-    volumes:
-      - ./data:/data
-    ports:
-      - "25565:25565"
+```bash
+# Create and configure CurseForge modpack server
+mcctl create atm8
+
+# Configure modpack
+mcctl config atm8 TYPE "AUTO_CURSEFORGE"
+mcctl config atm8 CF_PAGE_URL "https://www.curseforge.com/minecraft/modpacks/all-the-mods-8"
+mcctl config atm8 MEMORY "8G"
+mcctl config atm8 CF_EXCLUDE_MODS "optifine,journeymap"
+mcctl config atm8 CF_PARALLEL_DOWNLOADS "6"
+
+# Start server
+mcctl start atm8
 ```
 
 ---
@@ -177,18 +149,23 @@ services:
 
 Install modpacks from [Modrinth](https://modrinth.com/modpacks).
 
-### Basic Usage
+### Quick Start with mcctl
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "MODRINTH"
-      MODRINTH_MODPACK: "cobblemon-modpack"
-    volumes:
-      - ./data:/data
+```bash
+# Create server
+mcctl create modded
+
+# Set server type for Modrinth modpack
+mcctl config modded TYPE "MODRINTH"
+
+# Set modpack by slug
+mcctl config modded MODRINTH_MODPACK "cobblemon-modpack"
+
+# Set memory
+mcctl config modded MEMORY "6G"
+
+# Restart to apply
+mcctl stop modded && mcctl start modded
 ```
 
 ### Modpack Specification Methods
@@ -201,10 +178,10 @@ services:
 | mrpack URL | Direct mrpack file URL | `https://example.com/pack.mrpack` |
 | Local path | Container path | `/packs/custom.mrpack` |
 
-### Environment Variables
+### Configuration Reference
 
-| Variable | Default | Description |
-|----------|---------|-------------|
+| Config Key | Default | Description |
+|------------|---------|-------------|
 | `MODRINTH_MODPACK` | - | Project slug, ID, URL, or path |
 | `VERSION` | - | Set to `LATEST` or `SNAPSHOT` for auto-selection |
 | `MODRINTH_MODPACK_VERSION_TYPE` | - | Narrow to `release`, `beta`, or `alpha` |
@@ -213,31 +190,32 @@ services:
 
 ### File Management
 
-| Variable | Description |
-|----------|-------------|
-| `MODRINTH_EXCLUDE_FILES` | Comma/newline list of partial filenames to exclude |
-| `MODRINTH_FORCE_INCLUDE_FILES` | Force-include specific mods |
-| `MODRINTH_IGNORE_MISSING_FILES` | Glob patterns for files to ignore |
-| `MODRINTH_OVERRIDES_EXCLUSIONS` | Ant-style paths for override exclusions |
-| `MODRINTH_FORCE_SYNCHRONIZE` | Set to `true` when iterating on mod compatibility |
+```bash
+# Exclude specific files
+mcctl config modded MODRINTH_EXCLUDE_FILES "optifine,shaders"
+
+# Force include specific mods
+mcctl config modded MODRINTH_FORCE_INCLUDE_FILES "some-server-mod"
+
+# Force synchronize (when iterating on mod compatibility)
+mcctl config modded MODRINTH_FORCE_SYNCHRONIZE "true"
+```
 
 ### Complete Example
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "MODRINTH"
-      MODRINTH_MODPACK: "cobblemon-modpack"
-      MODRINTH_MODPACK_VERSION_TYPE: "release"
-      MEMORY: "6G"
-      MODRINTH_EXCLUDE_FILES: "optifine,shaders"
-    volumes:
-      - ./data:/data
-    ports:
-      - "25565:25565"
+```bash
+# Create and configure Modrinth modpack server
+mcctl create cobblemon
+
+# Configure modpack
+mcctl config cobblemon TYPE "MODRINTH"
+mcctl config cobblemon MODRINTH_MODPACK "cobblemon-modpack"
+mcctl config cobblemon MODRINTH_MODPACK_VERSION_TYPE "release"
+mcctl config cobblemon MEMORY "6G"
+mcctl config cobblemon MODRINTH_EXCLUDE_FILES "optifine,shaders"
+
+# Start server
+mcctl start cobblemon
 ```
 
 ---
@@ -246,18 +224,23 @@ services:
 
 Install modpacks from [Feed the Beast](https://www.feed-the-beast.com/modpacks).
 
-### Basic Usage
+### Quick Start with mcctl
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java17-graalvm
-    environment:
-      EULA: "TRUE"
-      TYPE: "FTBA"
-      FTB_MODPACK_ID: "23"
-    volumes:
-      - ./data:/data
+```bash
+# Create server
+mcctl create ftb
+
+# Set server type (use FTBA, not FTB)
+mcctl config ftb TYPE "FTBA"
+
+# Set modpack ID (from URL)
+mcctl config ftb FTB_MODPACK_ID "23"
+
+# Set memory (FTB packs are large)
+mcctl config ftb MEMORY "8G"
+
+# Restart to apply
+mcctl stop ftb && mcctl start ftb
 ```
 
 !!! info "FTBA vs FTB"
@@ -269,10 +252,10 @@ The modpack ID is in the URL:
 
 `https://www.feed-the-beast.com/modpacks/23-ftb-infinity-evolved-17` -> ID is `23`
 
-### Environment Variables
+### Configuration Reference
 
-| Variable | Description |
-|----------|-------------|
+| Config Key | Description |
+|------------|-------------|
 | `FTB_MODPACK_ID` | Numeric modpack ID (required) |
 | `FTB_MODPACK_VERSION_ID` | Specific version ID (optional) |
 | `FTB_FORCE_REINSTALL` | Set to `true` to force reinstallation |
@@ -284,19 +267,17 @@ The modpack ID is in the URL:
 
 ### Complete Example
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java17-graalvm
-    environment:
-      EULA: "TRUE"
-      TYPE: "FTBA"
-      FTB_MODPACK_ID: "23"
-      MEMORY: "8G"
-    volumes:
-      - ./data:/data
-    ports:
-      - "25565:25565"
+```bash
+# Create and configure FTB modpack server
+mcctl create infinity
+
+# Configure modpack
+mcctl config infinity TYPE "FTBA"
+mcctl config infinity FTB_MODPACK_ID "23"
+mcctl config infinity MEMORY "8G"
+
+# Start server
+mcctl start infinity
 ```
 
 ---
@@ -305,55 +286,34 @@ services:
 
 Install modpacks from ZIP archives.
 
-### MODPACK Variable
+### Quick Start with mcctl
 
-For single modpack installation:
+```bash
+# Create server with appropriate type
+mcctl create modded --type FORGE
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java17
-    environment:
-      EULA: "TRUE"
-      TYPE: "FORGE"
-      MODPACK: "https://example.com/modpack.zip"
-    volumes:
-      - ./data:/data
+# Set modpack URL
+mcctl config modded MODPACK "https://example.com/modpack.zip"
+
+# Restart to apply
+mcctl stop modded && mcctl start modded
 ```
 
-### GENERIC_PACKS Variable
+### Multiple Packs
 
 For multiple packs or additional content:
 
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "FABRIC"
-      GENERIC_PACKS: |
-        https://example.com/base-pack.zip
-        https://example.com/addon-pack.zip
-    volumes:
-      - ./data:/data
+```bash
+# Set multiple packs (comma-separated)
+mcctl config modded GENERIC_PACKS "https://example.com/base-pack.zip,https://example.com/addon-pack.zip"
 ```
 
-### Local ZIP Files
+### Configuration Reference
 
-```yaml
-environment:
-  MODPACK: "/packs/custom-modpack.zip"
-volumes:
-  - ./packs:/packs:ro
-```
-
-### Environment Variables
-
-| Variable | Description |
-|----------|-------------|
+| Config Key | Description |
+|------------|-------------|
 | `MODPACK` | URL or container path to modpack ZIP |
-| `GENERIC_PACKS` | Multiple pack URLs/paths (newline separated) |
+| `GENERIC_PACKS` | Multiple pack URLs/paths (comma/newline separated) |
 
 ---
 
@@ -379,11 +339,63 @@ volumes:
 | Out of memory | Insufficient allocation | Increase MEMORY value (8G+ recommended for large packs) |
 | Version mismatch | Incompatible versions | Pin specific version with version ID variables |
 
-### Debug Logging
+### Check Current Configuration
 
-```yaml
-environment:
-  DEBUG: "true"
+```bash
+# View all configuration
+mcctl config myserver
+
+# View specific settings
+mcctl config myserver TYPE
+mcctl config myserver CF_PAGE_URL
+mcctl config myserver MODRINTH_MODPACK
+```
+
+### View Server Logs
+
+```bash
+# Check for modpack loading errors
+mcctl logs myserver
+
+# Follow logs in real-time
+mcctl logs myserver -f
+```
+
+### Debug Mode
+
+Enable debug output to troubleshoot issues:
+
+```bash
+mcctl config myserver DEBUG "true"
+mcctl stop myserver && mcctl start myserver
+mcctl logs myserver
+```
+
+## Advanced Configuration (Manual)
+
+For complex configurations, edit `config.env` directly:
+
+```bash
+nano ~/minecraft-servers/servers/myserver/config.env
+```
+
+Example `config.env` for CurseForge modpack:
+
+```bash
+TYPE=AUTO_CURSEFORGE
+CF_PAGE_URL=https://www.curseforge.com/minecraft/modpacks/all-the-mods-8
+MEMORY=8G
+CF_EXCLUDE_MODS=optifine,journeymap
+CF_PARALLEL_DOWNLOADS=6
+```
+
+Example `config.env` for Modrinth modpack:
+
+```bash
+TYPE=MODRINTH
+MODRINTH_MODPACK=cobblemon-modpack
+MODRINTH_MODPACK_VERSION_TYPE=release
+MEMORY=6G
 ```
 
 ## See Also
@@ -391,6 +403,7 @@ environment:
 - [CurseForge Mods Guide](curseforge.md)
 - [Modrinth Mods Guide](modrinth.md)
 - [Mods and Plugins Overview](index.md)
+- [CLI Commands Reference](../cli/commands.md)
 - [Official itzg Documentation - Auto CurseForge](https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/mod-platforms/auto-curseforge/)
 - [Official itzg Documentation - Modrinth Modpacks](https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/mod-platforms/modrinth-modpacks/)
 - [Official itzg Documentation - FTB](https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/mod-platforms/ftb/)

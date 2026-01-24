@@ -12,10 +12,39 @@ Download mods and plugins from [CurseForge](https://www.curseforge.com/minecraft
 | Dependency Resolution | Manual (metadata only) |
 | Mod Library Size | Largest |
 
-## Getting API Key
+## Quick Start with mcctl
+
+### Step 1: Get API Key
+
+1. Go to [CurseForge API Console](https://console.curseforge.com/)
+2. Sign in and create an API key
+3. Add the key to your platform `.env` file:
+
+```bash
+# Edit global environment file
+nano ~/minecraft-servers/.env
+
+# Add this line
+CF_API_KEY=your_api_key_here
+```
+
+### Step 2: Create Server and Add Mods
+
+```bash
+# Create a Forge server
+mcctl create modded --type FORGE --version 1.20.4
+
+# Add CurseForge mods
+mcctl config modded CURSEFORGE_FILES "jei,journeymap,jade"
+
+# Restart to apply changes
+mcctl stop modded && mcctl start modded
+```
 
 !!! warning "API Key Required"
-    CurseForge requires an API key for all downloads. You must obtain one before using CurseForge features.
+    CurseForge requires an API key for all downloads. The key must be set in your `.env` file.
+
+## Getting API Key
 
 ### Step 1: Create CurseForge Account
 
@@ -38,78 +67,22 @@ Download mods and plugins from [CurseForge](https://www.curseforge.com/minecraft
 !!! danger "Security"
     - Store your API key securely
     - Never commit API keys to version control
-    - Use environment variables or Docker secrets
+    - Add `.env` to your `.gitignore` file
 
 ### Step 4: Configure API Key
 
-=== "Environment Variable"
+Add the API key to your platform's `.env` file:
 
-    ```yaml
-    environment:
-      CF_API_KEY: "${CF_API_KEY}"
-    ```
+```bash
+# Edit .env file
+nano ~/minecraft-servers/.env
 
-    Set in your shell or `.env` file:
-    ```bash
-    export CF_API_KEY=your_api_key_here
-    ```
-
-=== "Docker Secrets"
-
-    ```yaml
-    services:
-      mc:
-        secrets:
-          - cf_api_key
-        environment:
-          CF_API_KEY_FILE: /run/secrets/cf_api_key
-
-    secrets:
-      cf_api_key:
-        file: ./cf_api_key.txt
-    ```
-
-=== ".env File"
-
-    ```bash
-    # .env
-    CF_API_KEY=your_api_key_here
-    ```
-
-    ```yaml
-    # docker-compose.yml
-    environment:
-      CF_API_KEY: "${CF_API_KEY}"
-    ```
-
-!!! tip "Escaping $ in Docker Compose"
-    If your API key contains `$`, escape it with `$$`:
-    ```yaml
-    CF_API_KEY: "abc$$def$$ghi"
-    ```
-
-## Basic Usage
-
-### CURSEFORGE_FILES
-
-Download mods/plugins using various reference formats:
-
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java17
-    environment:
-      EULA: "TRUE"
-      TYPE: "FORGE"
-      VERSION: "1.20.1"
-      CF_API_KEY: "${CF_API_KEY}"
-      CURSEFORGE_FILES: |
-        jei
-        journeymap
-        jade
-    volumes:
-      - ./data:/data
+# Add the API key
+CF_API_KEY=your_api_key_here
 ```
+
+!!! tip "Escaping $ in API Key"
+    If your API key contains `$`, escape it with `$$` in the `.env` file.
 
 ## Supported Reference Formats
 
@@ -122,42 +95,144 @@ services:
 | Slug:FileID | Slug with specific file | `jei:4593548` |
 | ID:FileID | Project ID with file ID | `238222:4593548` |
 | Slug@Version | Slug with version string | `jei@10.2.1.1005` |
-| @ListingFile | Path to listing file | `@/extras/cf-mods.txt` |
 
 !!! tip "Finding Project IDs"
     1. Go to the mod page on CurseForge
     2. Scroll down to the "About Project" section
     3. Find "Project ID" (e.g., 238222 for JEI)
 
-### Reference Format Examples
+## Configuration via mcctl
 
-```yaml
-environment:
-  CF_API_KEY: "${CF_API_KEY}"
-  CURSEFORGE_FILES: |
-    # URL formats
-    https://www.curseforge.com/minecraft/mc-mods/jei
-    https://www.curseforge.com/minecraft/mc-mods/jei/files/4593548
+### Basic Setup
 
-    # Slug (auto-selects newest compatible version)
-    journeymap
+```bash
+# Add mods (comma-separated)
+mcctl config myserver CURSEFORGE_FILES "jei,journeymap,jade"
 
-    # Project ID
-    238222
-
-    # Specific file ID
-    jei:4593548
-    238222:4593548
-
-    # Specific version string
-    jei@10.2.1.1005
+# Restart to apply
+mcctl stop myserver && mcctl start myserver
 ```
 
-## Using Listing Files
+### Specific Versions
 
-### File Format
+```bash
+# Pin to specific file ID
+mcctl config myserver CURSEFORGE_FILES "jei:4593548,journeymap:4596105"
 
-Create a listing file at `/extras/cf-mods.txt`:
+# Pin by version string
+mcctl config myserver CURSEFORGE_FILES "jei@10.2.1.1005"
+```
+
+### Mixed References
+
+```bash
+# Different reference formats together
+mcctl config myserver CURSEFORGE_FILES "jei,journeymap:4596105,238222"
+```
+
+## Configuration Reference
+
+| Config Key | Description |
+|------------|-------------|
+| `CURSEFORGE_FILES` | Comma/space/newline separated list of mod references |
+
+!!! note "API Key Location"
+    The `CF_API_KEY` is set in the platform `.env` file, not in individual server `config.env` files.
+
+## Complete Examples
+
+### Forge Mod Server
+
+```bash
+# Create server
+mcctl create modded --type FORGE --version 1.20.4
+
+# Configure mods
+mcctl config modded CURSEFORGE_FILES "jei,journeymap,jade,mouse-tweaks,appleskin"
+mcctl config modded MEMORY "6G"
+
+# Start server
+mcctl start modded
+```
+
+### Mixed Sources (CurseForge + Modrinth)
+
+```bash
+# Create Fabric server
+mcctl create mixed --type FABRIC --version 1.21.1
+
+# CurseForge mods (requires API key)
+mcctl config mixed CURSEFORGE_FILES "jei,journeymap"
+
+# Modrinth mods (no API key needed)
+mcctl config mixed MODRINTH_PROJECTS "fabric-api,sodium,lithium"
+
+# Restart to apply
+mcctl stop mixed && mcctl start mixed
+```
+
+### Pinned Versions for Reproducibility
+
+```bash
+# Pin specific file versions for consistent builds
+mcctl config myserver CURSEFORGE_FILES "jei:4593548,journeymap:4596105,jade:4587399"
+```
+
+## Auto-Removal and Upgrades
+
+- Files are automatically **upgraded** when newer versions are available
+- **Removed** references are automatically cleaned up
+- To remove all CurseForge mods:
+
+```bash
+# Clear all CurseForge mods
+mcctl config myserver CURSEFORGE_FILES ""
+mcctl stop myserver && mcctl start myserver
+```
+
+## Dependencies
+
+!!! warning "Manual Dependency Management"
+    CurseForge can detect missing dependencies but cannot automatically resolve them.
+
+    You must manually add required dependencies to `CURSEFORGE_FILES`.
+
+Example: If JEI requires Forge API, you need to add both:
+
+```bash
+mcctl config myserver CURSEFORGE_FILES "jei,forge-api"
+```
+
+## Advanced Configuration (Manual)
+
+For complex configurations, edit `config.env` directly:
+
+```bash
+nano ~/minecraft-servers/servers/myserver/config.env
+```
+
+Example `config.env`:
+
+```bash
+# CurseForge mods (multi-line format)
+CURSEFORGE_FILES=jei
+journeymap
+jade
+mouse-tweaks
+appleskin
+storage-drawers
+```
+
+### Using Listing Files
+
+For very large mod lists:
+
+```bash
+# Create mod list file
+nano ~/minecraft-servers/servers/myserver/data/cf-mods.txt
+```
+
+Content of `cf-mods.txt`:
 
 ```text
 # Core mods
@@ -172,108 +247,17 @@ mouse-tweaks
 create:5678901
 ```
 
-### Reference Listing File
+Then reference it in `config.env`:
 
-```yaml
-environment:
-  CF_API_KEY: "${CF_API_KEY}"
-  CURSEFORGE_FILES: "@/extras/cf-mods.txt"
-volumes:
-  - ./extras:/extras:ro
+```bash
+CURSEFORGE_FILES=@/data/cf-mods.txt
 ```
 
-!!! note "Listing File Requirements"
-    - Must be in a mounted directory
-    - Comments start with `#`
-    - Blank lines are ignored
+And mount the directory:
 
-## Auto-Removal and Upgrades
-
-- Files are automatically **upgraded** when newer versions are available
-- **Removed** references are automatically cleaned up
-- Set `CURSEFORGE_FILES` to empty string to remove all managed files
-
-## Dependencies
-
-!!! warning "Manual Dependency Management"
-    CurseForge can detect missing dependencies but cannot automatically resolve them. The metadata provides only mod IDs, not specific file versions needed.
-
-    You must manually add required dependencies to `CURSEFORGE_FILES`.
-
-## Complete Examples
-
-### Forge Mod Server
-
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java17
-    environment:
-      EULA: "TRUE"
-      TYPE: "FORGE"
-      VERSION: "1.20.1"
-      MEMORY: "6G"
-      CF_API_KEY: "${CF_API_KEY}"
-      CURSEFORGE_FILES: |
-        jei
-        journeymap
-        jade
-        mouse-tweaks
-        appleskin
-        storage-drawers
-        refined-storage
-    volumes:
-      - ./data:/data
-    ports:
-      - "25565:25565"
+```bash
+# This is automatically done by mcctl
 ```
-
-### Mixed Sources (CurseForge + Modrinth)
-
-```yaml
-services:
-  mc:
-    image: itzg/minecraft-server:java21
-    environment:
-      EULA: "TRUE"
-      TYPE: "FABRIC"
-      VERSION: "1.20.4"
-
-      # CurseForge mods
-      CF_API_KEY: "${CF_API_KEY}"
-      CURSEFORGE_FILES: |
-        jei
-        journeymap
-
-      # Modrinth mods
-      MODRINTH_PROJECTS: |
-        fabric-api
-        sodium
-        lithium
-    volumes:
-      - ./data:/data
-```
-
-### Pinned Versions
-
-For reproducible builds, pin specific file versions:
-
-```yaml
-environment:
-  CF_API_KEY: "${CF_API_KEY}"
-  CURSEFORGE_FILES: |
-    jei:4593548
-    journeymap:4596105
-    jade:4587399
-```
-
-## Environment Variables Reference
-
-| Variable | Description |
-|----------|-------------|
-| `CF_API_KEY` | CurseForge API key (required) |
-| `CF_API_KEY_FILE` | Path to file containing API key |
-| `CURSEFORGE_FILES` | Comma/space/newline separated list of mod references |
 
 ## Troubleshooting
 
@@ -281,19 +265,47 @@ environment:
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| 401 Unauthorized | Invalid or missing API key | Verify `CF_API_KEY` is set correctly |
+| 401 Unauthorized | Invalid or missing API key | Verify `CF_API_KEY` in `.env` |
 | 403 Forbidden | API key lacks permissions | Regenerate API key from console |
 | Mod not found | Wrong slug or ID | Verify from CurseForge URL |
 | Version mismatch | Mod doesn't support server version | Use specific file ID for compatible version |
 | Missing dependencies | Dependencies not resolved | Manually add required mods |
 
-### Debug Logging
+### Check API Key Configuration
+
+```bash
+# View .env file (don't share the output!)
+cat ~/minecraft-servers/.env | grep CF_API_KEY
+```
+
+### Check Current Configuration
+
+```bash
+# View all configuration
+mcctl config myserver
+
+# View specific setting
+mcctl config myserver CURSEFORGE_FILES
+```
+
+### View Server Logs
+
+```bash
+# Check for mod loading errors
+mcctl logs myserver
+
+# Follow logs in real-time
+mcctl logs myserver -f
+```
+
+### Debug Mode
 
 Enable debug output to troubleshoot issues:
 
-```yaml
-environment:
-  DEBUG: "true"
+```bash
+mcctl config myserver DEBUG "true"
+mcctl stop myserver && mcctl start myserver
+mcctl logs myserver
 ```
 
 ### Verify API Key
@@ -312,4 +324,5 @@ curl -H "x-api-key: YOUR_API_KEY" \
 - [Mods and Plugins Overview](index.md)
 - [Modrinth Guide](modrinth.md)
 - [Modpacks Guide](modpacks.md)
+- [CLI Commands Reference](../cli/commands.md)
 - [Official itzg Documentation](https://docker-minecraft-server.readthedocs.io/en/latest/mods-and-plugins/curseforge-files/)
