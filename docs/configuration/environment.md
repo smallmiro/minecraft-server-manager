@@ -35,9 +35,17 @@ These variables are set in `~/minecraft-servers/.env` and apply to all servers.
 | Variable | Description | Default | mcctl |
 |----------|-------------|---------|-------|
 | `HOST_IP` | Host machine IP address | Auto-detected | `mcctl init` |
-| `HOST_IPS` | Multiple IPs for VPN mesh | - | Manual |
+| `HOST_IPS` | Multiple IPs for VPN mesh (comma-separated) | - | Manual |
 | `MINECRAFT_NETWORK` | Docker network name | `minecraft-net` | Auto |
 | `MINECRAFT_SUBNET` | Network subnet | `172.28.0.0/16` | Auto |
+
+!!! tip "Multi-Network Access (Tailscale/ZeroTier)"
+    To allow connections from both LAN and VPN, use `HOST_IPS`:
+    ```bash
+    # LAN IP + Tailscale IP
+    HOST_IPS=192.168.1.100,100.64.0.5
+    ```
+    See **[VPN Mesh Networks Guide](../advanced/networking.md#vpn-mesh-networks)** for detailed setup.
 
 ### Default Server Settings
 

@@ -215,7 +215,7 @@ mcctl router restart
 
 ### 다중 호스트네임
 
-VPN mesh 사용 시 다중 호스트네임이 자동으로 설정됩니다:
+여러 네트워크(LAN + VPN)에서 동시에 접속하려면 다중 IP를 설정합니다:
 
 ```bash
 # ~/minecraft-servers/.env
@@ -223,8 +223,151 @@ HOST_IPS=192.168.1.100,100.64.0.5
 ```
 
 각 IP에 대해 호스트네임이 생성됩니다:
-- `myserver.192.168.1.100.nip.io`
-- `myserver.100.64.0.5.nip.io`
+- `myserver.192.168.1.100.nip.io` (LAN)
+- `myserver.100.64.0.5.nip.io` (VPN)
+
+!!! tip "HOST_IP vs HOST_IPS"
+    - `HOST_IP`: 단일 IP 주소 (기본)
+    - `HOST_IPS`: 쉼표로 구분된 다중 IP (VPN mesh용)
+
+    `HOST_IPS`가 설정되면 `HOST_IP`보다 우선합니다.
+
+---
+
+## VPN Mesh 네트워크
+
+Tailscale이나 ZeroTier 같은 VPN mesh를 사용하면 어디서든 서버에 접속할 수 있습니다.
+
+### 왜 VPN Mesh를 사용하나요?
+
+| 시나리오 | 해결책 |
+|---------|--------|
+| 친구가 다른 네트워크에 있음 | VPN mesh로 가상 LAN 구성 |
+| 외부에서 홈 서버 접속 | 포트포워딩 없이 VPN으로 접속 |
+| 여러 위치에서 접속 | 다중 IP로 모든 네트워크 지원 |
+
+### Tailscale 설정
+
+[Tailscale](https://tailscale.com/)은 무료 VPN mesh 서비스입니다.
+
+#### 1. Tailscale 설치
+
+=== "Ubuntu/Debian"
+    ```bash
+    curl -fsSL https://tailscale.com/install.sh | sh
+    sudo tailscale up
+    ```
+
+=== "Arch Linux"
+    ```bash
+    sudo pacman -S tailscale
+    sudo systemctl enable --now tailscaled
+    sudo tailscale up
+    ```
+
+#### 2. Tailscale IP 확인
+
+```bash
+tailscale ip -4
+# 예: 100.64.0.5
+```
+
+#### 3. mcctl에 다중 IP 설정
+
+```bash
+# ~/minecraft-servers/.env
+# LAN IP + Tailscale IP
+HOST_IPS=192.168.1.100,100.64.0.5
+```
+
+#### 4. 서버 재생성 또는 라벨 업데이트
+
+```bash
+# 새 서버는 자동으로 다중 호스트네임 설정
+mcctl create myserver
+
+# 기존 서버는 마이그레이션 스크립트 실행
+cd ~/minecraft-servers
+./scripts/migrate-nip-io.sh
+```
+
+#### 5. 클라이언트 접속
+
+친구도 Tailscale을 설치하고 같은 네트워크에 초대한 후:
+
+```
+# Minecraft에서 서버 추가
+myserver.100.64.0.5.nip.io:25565
+```
+
+### ZeroTier 설정
+
+[ZeroTier](https://zerotier.com/)는 또 다른 무료 VPN mesh 서비스입니다.
+
+#### 1. ZeroTier 설치
+
+```bash
+curl -s https://install.zerotier.com | sudo bash
+```
+
+#### 2. 네트워크 생성 및 참여
+
+1. [my.zerotier.com](https://my.zerotier.com/)에서 네트워크 생성
+2. Network ID 복사 (예: `8056c2e21c000001`)
+3. 네트워크 참여:
+   ```bash
+   sudo zerotier-cli join 8056c2e21c000001
+   ```
+
+#### 3. ZeroTier IP 확인
+
+```bash
+sudo zerotier-cli listnetworks
+# 또는
+ip addr show zt*
+# 예: 10.147.20.1
+```
+
+#### 4. mcctl에 다중 IP 설정
+
+```bash
+# ~/minecraft-servers/.env
+HOST_IPS=192.168.1.100,10.147.20.1
+```
+
+### 다중 VPN 동시 사용
+
+Tailscale과 ZeroTier를 동시에 사용할 수도 있습니다:
+
+```bash
+# ~/minecraft-servers/.env
+# LAN + Tailscale + ZeroTier
+HOST_IPS=192.168.1.100,100.64.0.5,10.147.20.1
+```
+
+모든 네트워크에서 접속 가능:
+- `myserver.192.168.1.100.nip.io:25565` (LAN)
+- `myserver.100.64.0.5.nip.io:25565` (Tailscale)
+- `myserver.10.147.20.1.nip.io:25565` (ZeroTier)
+
+### VPN Mesh 문제 해결
+
+```bash
+# Tailscale 상태 확인
+tailscale status
+
+# ZeroTier 상태 확인
+sudo zerotier-cli listnetworks
+
+# 호스트네임 라벨 확인
+docker inspect mc-myserver | grep mc-router.host
+
+# mc-router 로그에서 호스트네임 확인
+docker logs router 2>&1 | grep myserver
+```
+
+!!! warning "VPN IP 변경 시"
+    VPN IP가 변경되면 `.env`를 업데이트하고 `./scripts/migrate-nip-io.sh`를 다시 실행하세요.
 
 ### 디버그 모드
 

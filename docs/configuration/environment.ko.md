@@ -35,9 +35,17 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 | 변수 | 설명 | 기본값 | mcctl |
 |------|------|--------|-------|
 | `HOST_IP` | 호스트 머신 IP 주소 | 자동 감지 | `mcctl init` |
-| `HOST_IPS` | VPN mesh용 다중 IP | - | 수동 |
+| `HOST_IPS` | VPN mesh용 다중 IP (쉼표 구분) | - | 수동 |
 | `MINECRAFT_NETWORK` | Docker 네트워크 이름 | `minecraft-net` | 자동 |
 | `MINECRAFT_SUBNET` | 네트워크 서브넷 | `172.28.0.0/16` | 자동 |
+
+!!! tip "다중 네트워크 접속 (Tailscale/ZeroTier)"
+    LAN과 VPN에서 동시에 접속하려면 `HOST_IPS`를 사용하세요:
+    ```bash
+    # LAN IP + Tailscale IP
+    HOST_IPS=192.168.1.100,100.64.0.5
+    ```
+    자세한 설정은 **[VPN Mesh 네트워크 가이드](../advanced/networking.ko.md#vpn-mesh-네트워크)**를 참조하세요.
 
 ### 기본 서버 설정
 

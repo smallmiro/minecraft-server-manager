@@ -191,6 +191,9 @@ nano ~/minecraft-servers/.env
 # 서버의 IP 주소 (nip.io에 필요)
 HOST_IP=192.168.1.100
 
+# VPN mesh 사용 시 다중 IP (Tailscale/ZeroTier)
+# HOST_IPS=192.168.1.100,100.64.0.5
+
 # 기본 서버 설정
 DEFAULT_MEMORY=4G
 DEFAULT_VERSION=1.20.4

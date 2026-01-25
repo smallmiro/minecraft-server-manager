@@ -75,6 +75,20 @@ With avahi/Bonjour, connect directly:
 
 See [mDNS Setup Guide](#mdns-setup-guide) for detailed installation instructions.
 
+**Option C: VPN Mesh (Remote Access)**
+
+For remote access without port forwarding, use [Tailscale](https://tailscale.com/) or [ZeroTier](https://zerotier.com/):
+
+```bash
+# .env - add your VPN IP alongside LAN IP
+HOST_IPS=192.168.1.100,100.64.0.5
+```
+
+Friends on your VPN network can connect via:
+- `myserver.100.64.0.5.nip.io:25565`
+
+See [VPN Mesh Networks Guide](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/networking/#vpn-mesh-networks) for setup instructions.
+
 Add more servers using `create-server.sh` - they're automatically discoverable!
 
 ## Architecture
@@ -282,6 +296,13 @@ pnpm automatically builds packages in dependency order:
 | `RCON_PASSWORD` | RCON password |
 | `ENABLE_WHITELIST` | Enable whitelist |
 | `OPS` | Operator list |
+
+### Network
+
+| Variable | Description |
+|----------|-------------|
+| `HOST_IP` | Host IP for nip.io hostname |
+| `HOST_IPS` | Multiple IPs for VPN mesh (comma-separated) |
 
 ### Automation
 
