@@ -20,6 +20,7 @@ import {
   playerCommand,
   migrateCommand,
   modCommand,
+  adminServiceCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -152,6 +153,15 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')} --all       Migrate all servers
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
 
+${colors.cyan('Admin Service:')}
+  ${colors.bold('admin service start')}        Start API + Console services
+  ${colors.bold('admin service start')} --api-only    Start API only
+  ${colors.bold('admin service start')} --console-only Start Console only
+  ${colors.bold('admin service stop')}         Stop admin services
+  ${colors.bold('admin service restart')}      Restart admin services
+  ${colors.bold('admin service status')}       Show service status
+  ${colors.bold('admin service logs')} [-f]    View logs (--api, --console)
+
 ${colors.cyan('Create Options:')}
   -t, --type TYPE            Server type: PAPER, VANILLA, FORGE, FABRIC
   -v, --version VERSION      Minecraft version (e.g., 1.21.1)
@@ -282,7 +292,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'admin'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -702,6 +712,25 @@ async function main(): Promise<void> {
           json: flags['json'] === true,
           force: flags['force'] === true,
         });
+        break;
+      }
+
+      case 'admin': {
+        // admin command: admin <subcommand> [options]
+        // subCommand = service, positional[0] = action (start/stop/restart/status/logs)
+        if (subCommand === 'service') {
+          exitCode = await adminServiceCommand({
+            root: rootDir,
+            subCommand: positional[0] as 'start' | 'stop' | 'restart' | 'status' | 'logs' | undefined,
+            apiOnly: flags['api-only'] === true || flags['api'] === true,
+            consoleOnly: flags['console-only'] === true || flags['console'] === true,
+            follow: flags['follow'] === true,
+            json: flags['json'] === true,
+          });
+        } else {
+          log.error('Usage: mcctl admin service <start|stop|restart|status|logs>');
+          exitCode = 1;
+        }
         break;
       }
 

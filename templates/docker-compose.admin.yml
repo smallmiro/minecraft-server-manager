@@ -1,0 +1,87 @@
+# =============================================================================
+# Admin Service Docker Compose Configuration
+# =============================================================================
+# mcctl-api: REST API server for managing Docker Minecraft servers (port 3001)
+# mcctl-console: Web management UI (port 3000)
+#
+# Usage:
+#   mcctl admin service start        # Start both services
+#   mcctl admin service start --api-only
+#   mcctl admin service start --console-only
+#   mcctl admin service stop
+#   mcctl admin service status
+#   mcctl admin service logs [-f]
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # mcctl-api - REST API Server
+  # ===========================================================================
+  mcctl-api:
+    image: ${MCCTL_API_IMAGE:-mcctl-api:latest}
+    build:
+      context: .
+      dockerfile: services/cli/Dockerfile.api
+    container_name: mcctl-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      MCCTL_ROOT: /data
+      # Auth config
+      MCCTL_JWT_SECRET: ${MCCTL_JWT_SECRET:-change-me-in-production}
+      MCCTL_JWT_EXPIRY: ${MCCTL_JWT_EXPIRY:-24h}
+      # CORS
+      MCCTL_CORS_ORIGIN: ${MCCTL_CORS_ORIGIN:-http://localhost:3000}
+    ports:
+      - "${MCCTL_API_PORT:-3001}:3001"
+    volumes:
+      # Mount host data directory
+      - ${MCCTL_ROOT:-~/minecraft-servers}:/data:rw
+      # Docker socket for container management
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - minecraft-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+  # ===========================================================================
+  # mcctl-console - Web Management UI
+  # ===========================================================================
+  mcctl-console:
+    image: ${MCCTL_CONSOLE_IMAGE:-mcctl-console:latest}
+    build:
+      context: .
+      dockerfile: services/mcctl-console/Dockerfile
+    container_name: mcctl-console
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # API URL for BFF proxy
+      MCCTL_API_URL: ${MCCTL_API_URL:-http://mcctl-api:3001}
+      # NextAuth configuration
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-me-in-production}
+    ports:
+      - "${MCCTL_CONSOLE_PORT:-3000}:3000"
+    networks:
+      - minecraft-net
+    depends_on:
+      mcctl-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+networks:
+  minecraft-net:
+    external: true
+    name: ${MINECRAFT_NETWORK:-minecraft-net}
