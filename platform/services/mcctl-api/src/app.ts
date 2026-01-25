@@ -2,6 +2,7 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { config } from './config/index.js';
+import authPlugin from './plugins/auth.js';
 
 export interface BuildAppOptions {
   logger?: boolean;
@@ -23,6 +24,11 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(helmet, {
     // Helmet default security headers
     contentSecurityPolicy: config.nodeEnv === 'production',
+  });
+
+  // Register authentication plugin
+  await app.register(authPlugin, {
+    config: config.auth,
   });
 
   // Health check endpoint
