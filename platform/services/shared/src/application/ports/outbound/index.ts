@@ -37,3 +37,5 @@ export type {
 } from './IWorldRepository.js';
 
 export type { IModSourcePort } from './IModSourcePort.js';
+
+export type { IUserRepository } from './IUserRepository.js';

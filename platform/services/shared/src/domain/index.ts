@@ -9,6 +9,10 @@ export {
   WorldOptions,
   WorldSetupType,
   type WorldOptionsData,
+  UserId,
+  Username,
+  Role,
+  RoleEnum,
 } from './value-objects/index.js';
 
 // Entities
@@ -19,4 +23,6 @@ export {
   World,
   WorldLockStatus,
   type WorldLock,
+  User,
+  type UserData,
 } from './entities/index.js';
