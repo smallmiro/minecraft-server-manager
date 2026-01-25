@@ -328,6 +328,14 @@ mcctl create [name] [options]
 | `--no-start` | | 생성만 하고 시작하지 않음 |
 | `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
 
+!!! tip "Sudo 비밀번호를 사용한 자동화"
+    CI/CD 파이프라인에서 서버 생성을 자동화할 때 mDNS 등록을 위한 sudo 비밀번호를 제공할 수 있습니다:
+
+    - 환경 변수: `MCCTL_SUDO_PASSWORD`
+    - CLI 옵션: `--sudo-password`
+
+    avahi-daemon이 설치되어 있고 비밀번호가 제공되지 않으면 대화형으로 입력을 요청합니다.
+
 **예제:**
 
 === "대화형 모드"
@@ -371,6 +379,7 @@ mcctl create [name] [options]
 | `PAPER` | 고성능 (권장) | Yes | No |
 | `VANILLA` | 공식 마인크래프트 서버 | No | No |
 | `FORGE` | Forge 모드용 서버 | No | Yes |
+| `NEOFORGE` | 현대적인 Forge 포크 (1.20.1+) | No | Yes |
 | `FABRIC` | 경량 모드 서버 | No | Yes |
 | `SPIGOT` | 수정된 Bukkit 서버 | Yes | No |
 | `BUKKIT` | 클래식 플러그인 서버 | Yes | No |
@@ -1151,6 +1160,73 @@ mcctl world release survival
 
 ---
 
+### mcctl world delete
+
+월드와 모든 데이터를 영구적으로 삭제합니다.
+
+```bash
+mcctl world delete [world] [options]
+```
+
+**인자:**
+
+| 인자 | 설명 |
+|----------|-------------|
+| `world` | 월드 이름 (선택사항, 제공하지 않으면 프롬프트 표시) |
+
+**옵션:**
+
+| 옵션 | 단축 | 설명 |
+|--------|-------|-------------|
+| `--force` | `-f` | 확인 프롬프트 건너뛰기 |
+| `--json` | | JSON 형식으로 출력 |
+
+!!! danger "영구 삭제"
+    이 명령어는 다음을 포함한 모든 월드 데이터를 영구적으로 삭제합니다:
+
+    - 월드 파일 (level.dat, 리전 데이터 등)
+    - 네더와 엔드 차원
+    - 해당 월드의 플레이어 데이터
+
+    **이 작업은 되돌릴 수 없습니다.** 삭제 전에 중요한 월드는 반드시 백업하세요.
+
+**예제:**
+
+=== "대화형 모드"
+    ```bash
+    mcctl world delete
+    # 선택할 월드 목록 표시
+    # 삭제 전 확인 요청
+    ```
+
+=== "CLI 모드"
+    ```bash
+    # 확인 프롬프트와 함께 삭제
+    mcctl world delete old-world
+
+    # 확인 없이 강제 삭제
+    mcctl world delete old-world --force
+    ```
+
+**안전 기능:**
+
+- **잠금 확인**: 잠긴 월드(실행 중인 서버에 할당된)는 삭제할 수 없음
+- **확인 프롬프트**: "DELETE" 입력 필요 (`--force` 미사용 시)
+- **크기 표시**: 삭제 전 월드 크기 표시
+
+**출력 예시:**
+
+```
+World 'old-world' (512.5 MB) will be permanently deleted.
+
+Type DELETE to confirm: DELETE
+
+✓ World 'old-world' deleted
+  Freed: 512.5 MB
+```
+
+---
+
 ## 백업 관리
 
 ### mcctl backup status
@@ -1650,6 +1726,390 @@ mcctl migrate worlds [options]
 !!! info "월드 저장 경로 변경"
     `mcctl create`로 생성된 새 서버는 이미 `/worlds/` 디렉토리 구조를 사용합니다.
     이 마이그레이션 명령어는 이 변경 이전에 생성된 기존 서버를 위한 것입니다.
+
+---
+
+## 모드 관리
+
+마인크래프트 서버의 모드와 플러그인을 관리합니다. mcctl은 Modrinth, CurseForge, Spiget (SpigotMC), 직접 URL 다운로드 등 다양한 모드 소스와 통합됩니다.
+
+### mcctl mod search
+
+Modrinth에서 모드를 검색합니다.
+
+```bash
+mcctl mod search <query> [options]
+```
+
+**인자:**
+
+| 인자 | 설명 |
+|----------|-------------|
+| `query` | 검색어 (모드 이름, 설명 키워드) |
+
+**옵션:**
+
+| 옵션 | 설명 |
+|--------|-------------|
+| `--json` | JSON 형식으로 출력 |
+
+**예제:**
+
+```bash
+# 최적화 모드 검색
+mcctl mod search sodium
+
+# 월드 생성 모드 검색
+mcctl mod search "world generation"
+
+# 스크립팅용 JSON 출력
+mcctl mod search lithium --json
+```
+
+**출력 예시:**
+
+```
+Search results for "sodium" (25 total):
+
+  sodium (12.5M downloads)
+    Sodium server client
+    A modern rendering engine for Minecraft
+
+  sodium-extra (2.1M downloads)
+    Sodium Extra server? client
+    Extra options for Sodium
+
+Use: mcctl mod add <server> <mod-slug> to install
+```
+
+출력 내용:
+
+- **모드 슬러그** (설치에 사용)
+- **다운로드 수** (인기도 지표)
+- **사이드 요구사항** (서버/클라이언트/둘 다)
+- **설명** (잘린 버전)
+
+---
+
+### mcctl mod add
+
+서버 설정에 모드를 추가합니다.
+
+```bash
+mcctl mod add <server> <mod...> [options]
+```
+
+**인자:**
+
+| 인자 | 설명 |
+|----------|-------------|
+| `server` | 서버 이름 |
+| `mod...` | 하나 이상의 모드 슬러그/ID |
+
+**옵션:**
+
+| 옵션 | 설명 |
+|--------|-------------|
+| `--modrinth` | Modrinth 사용 (기본값) |
+| `--curseforge` | CurseForge 사용 (CF_API_KEY 필요) |
+| `--spiget` | Spiget 사용 (SpigotMC 플러그인) |
+| `--url` | 직접 JAR URL 다운로드 |
+| `--force` | 모드를 찾을 수 없거나 서버 타입 불일치해도 추가 |
+| `--json` | JSON 형식으로 출력 |
+
+**예제:**
+
+=== "Modrinth (기본값)"
+    ```bash
+    # 단일 모드 추가
+    mcctl mod add myserver sodium
+
+    # 여러 모드 한 번에 추가
+    mcctl mod add myserver sodium lithium phosphor
+
+    # Fabric 서버에 추가
+    mcctl mod add fabric-server fabric-api sodium lithium
+    ```
+
+=== "CurseForge"
+    ```bash
+    # .env 파일에 CF_API_KEY 필요
+    mcctl mod add myserver --curseforge jei journeymap
+
+    # 인기 모드팩 모드 추가
+    mcctl mod add myserver --curseforge create applied-energistics-2
+    ```
+
+=== "Spiget (SpigotMC)"
+    ```bash
+    # SpigotMC의 리소스 ID 사용
+    mcctl mod add myserver --spiget 9089 1649
+
+    # EssentialsX 예제 (리소스 ID: 9089)
+    mcctl mod add paper-server --spiget 9089
+    ```
+
+=== "직접 URL"
+    ```bash
+    # URL에서 JAR 직접 다운로드
+    mcctl mod add myserver --url https://example.com/mod.jar
+
+    # 여러 URL
+    mcctl mod add myserver --url https://example.com/mod1.jar https://example.com/mod2.jar
+    ```
+
+**작동 방식:**
+
+1. **검증**: Modrinth에서 모드 존재 여부 확인 (Modrinth 소스 사용 시)
+2. **서버 타입 확인**: 서버 타입이 모드를 지원하지 않을 수 있으면 경고
+3. **설정 업데이트**: `config.env`의 적절한 환경 변수에 모드 추가
+4. **재시작 필요**: 변경 사항 적용을 위해 서버 재시작 필요
+
+**사용되는 환경 변수:**
+
+| 소스 | 환경 변수 | 서버 타입 |
+|--------|---------------------|--------------|
+| Modrinth | `MODRINTH_PROJECTS` | 전체 |
+| CurseForge | `CURSEFORGE_FILES` | 전체 (CF_API_KEY 필요) |
+| Spiget | `SPIGET_RESOURCES` | Paper, Spigot, Bukkit |
+| URL | `MODS` | Forge, NeoForge, Fabric, Quilt |
+| URL | `PLUGINS` | Paper, Spigot, Bukkit |
+
+**출력 예시:**
+
+```
+Validating mods on Modrinth...
+  ✓ Sodium (sodium)
+  ✓ Lithium (lithium)
+
+✓ Added 2 mod(s) to myserver
+
+  sodium
+  lithium
+
+Config: MODRINTH_PROJECTS=sodium,lithium
+
+Restart the server to apply changes:
+  mcctl stop myserver && mcctl start myserver
+```
+
+---
+
+### mcctl mod list
+
+서버에 설정된 모드 목록을 표시합니다.
+
+```bash
+mcctl mod list <server> [options]
+```
+
+**인자:**
+
+| 인자 | 설명 |
+|----------|-------------|
+| `server` | 서버 이름 |
+
+**옵션:**
+
+| 옵션 | 설명 |
+|--------|-------------|
+| `--json` | JSON 형식으로 출력 |
+
+**예제:**
+
+```bash
+# 서버의 모드 목록
+mcctl mod list myserver
+
+# JSON 출력
+mcctl mod list myserver --json
+```
+
+**출력 예시:**
+
+```
+Mods for myserver (FABRIC):
+
+  Modrinth:
+    - sodium
+    - lithium
+    - phosphor
+
+  CurseForge:
+    - jei
+    - journeymap
+
+Total: 5 mod(s)
+```
+
+**JSON 출력:**
+
+```json
+{
+  "serverType": "FABRIC",
+  "sources": [
+    {"key": "MODRINTH_PROJECTS", "name": "Modrinth", "mods": ["sodium", "lithium"]},
+    {"key": "CURSEFORGE_FILES", "name": "CurseForge", "mods": ["jei"]}
+  ],
+  "total": 3
+}
+```
+
+---
+
+### mcctl mod remove
+
+서버 설정에서 모드를 제거합니다.
+
+```bash
+mcctl mod remove <server> <mod...> [options]
+```
+
+**인자:**
+
+| 인자 | 설명 |
+|----------|-------------|
+| `server` | 서버 이름 |
+| `mod...` | 제거할 하나 이상의 모드 슬러그/ID |
+
+**옵션:**
+
+| 옵션 | 설명 |
+|--------|-------------|
+| `--json` | JSON 형식으로 출력 |
+
+**예제:**
+
+```bash
+# 단일 모드 제거
+mcctl mod remove myserver sodium
+
+# 여러 모드 제거
+mcctl mod remove myserver sodium lithium phosphor
+```
+
+**출력 예시:**
+
+```
+  ✓ Removed sodium from MODRINTH_PROJECTS
+  ✓ Removed lithium from MODRINTH_PROJECTS
+
+✓ Removed 2 mod(s) from myserver
+
+Restart the server to apply changes:
+  mcctl stop myserver && mcctl start myserver
+```
+
+!!! note "재시작 필요"
+    제거된 모드는 서버가 재시작될 때까지 서버의 mods 폴더에 남아있습니다. 재시작 시 itzg/minecraft-server 이미지가 mods 폴더를 설정과 동기화합니다.
+
+---
+
+### mcctl mod sources
+
+사용 가능한 모드 소스와 설정을 표시합니다.
+
+```bash
+mcctl mod sources [options]
+```
+
+**옵션:**
+
+| 옵션 | 설명 |
+|--------|-------------|
+| `--json` | JSON 형식으로 출력 |
+
+**예제:**
+
+```bash
+mcctl mod sources
+```
+
+**출력:**
+
+```
+Available Mod Sources:
+
+  Modrinth --modrinth (default)
+    Free, open-source mod platform. No API key required.
+    Config: MODRINTH_PROJECTS
+    mcctl mod add myserver sodium lithium
+
+  CurseForge --curseforge
+    Popular mod platform. Requires CF_API_KEY in .env
+    Config: CURSEFORGE_FILES
+    mcctl mod add myserver --curseforge jei journeymap
+
+  Spiget (SpigotMC) --spiget
+    SpigotMC plugin repository. Use resource IDs.
+    Config: SPIGET_RESOURCES
+    mcctl mod add myserver --spiget 9089
+
+  URL --url
+    Direct JAR file download URLs.
+    Config: MODS / PLUGINS
+    mcctl mod add myserver --url https://example.com/mod.jar
+```
+
+---
+
+### 모드 관리 워크플로우
+
+#### 모드 서버 설정하기
+
+Fabric 모드 서버를 생성하고 설정하는 전체 워크플로우:
+
+```bash
+# 1. Fabric 서버 생성
+mcctl create modded-server -t FABRIC -v 1.20.4
+
+# 2. 모드 검색
+mcctl mod search "optimization"
+
+# 3. 필수 모드 추가
+mcctl mod add modded-server fabric-api sodium lithium phosphor
+
+# 4. 설정된 모드 목록 확인
+mcctl mod list modded-server
+
+# 5. 재시작하여 적용
+mcctl stop modded-server && mcctl start modded-server
+```
+
+#### 플러그인 서버 설정하기
+
+플러그인이 있는 Paper 서버 전체 워크플로우:
+
+```bash
+# 1. Paper 서버 생성
+mcctl create plugin-server -t PAPER -v 1.21.1
+
+# 2. Modrinth에서 플러그인 추가
+mcctl mod add plugin-server luckperms
+
+# 3. Spiget (SpigotMC)에서 플러그인 추가
+mcctl mod add plugin-server --spiget 9089  # EssentialsX
+
+# 4. 재시작하여 적용
+mcctl stop plugin-server && mcctl start plugin-server
+```
+
+#### CurseForge 설정
+
+CurseForge 모드를 사용하려면 API 키가 필요합니다:
+
+1. [CurseForge for Studios](https://console.curseforge.com/)에서 API 키 발급
+2. `.env` 파일에 추가:
+
+```bash
+CF_API_KEY=your-api-key-here
+```
+
+3. 이제 CurseForge 모드를 추가할 수 있습니다:
+
+```bash
+mcctl mod add myserver --curseforge jei journeymap
+```
 
 ---
 

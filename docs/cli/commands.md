@@ -328,6 +328,14 @@ mcctl create [name] [options]
 | `--no-start` | | Create without starting |
 | `--sudo-password` | | Sudo password for mDNS registration (automation) |
 
+!!! tip "Automation with Sudo Password"
+    When automating server creation in CI/CD pipelines, you can provide the sudo password for mDNS registration:
+
+    - Environment variable: `MCCTL_SUDO_PASSWORD`
+    - CLI option: `--sudo-password`
+
+    If avahi-daemon is installed and no password is provided, you will be prompted interactively.
+
 **Examples:**
 
 === "Interactive Mode"
@@ -371,6 +379,7 @@ mcctl create [name] [options]
 | `PAPER` | High performance (Recommended) | Yes | No |
 | `VANILLA` | Official Minecraft server | No | No |
 | `FORGE` | Modded server for Forge mods | No | Yes |
+| `NEOFORGE` | Modern Forge fork (1.20.1+) | No | Yes |
 | `FABRIC` | Lightweight modded server | No | Yes |
 | `SPIGOT` | Modified Bukkit server | Yes | No |
 | `BUKKIT` | Classic plugin server | Yes | No |
@@ -1151,6 +1160,73 @@ mcctl world release survival
 
 ---
 
+### mcctl world delete
+
+Permanently delete a world and all its data.
+
+```bash
+mcctl world delete [world] [options]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `world` | World name (optional, prompts if not provided) |
+
+**Options:**
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--force` | `-f` | Skip confirmation prompt |
+| `--json` | | Output in JSON format |
+
+!!! danger "Permanent Deletion"
+    This command permanently deletes all world data including:
+
+    - World files (level.dat, region data, etc.)
+    - Nether and End dimensions
+    - Player data for that world
+
+    **This action cannot be undone.** Make sure to backup important worlds before deletion.
+
+**Examples:**
+
+=== "Interactive Mode"
+    ```bash
+    mcctl world delete
+    # Shows world list for selection
+    # Asks for confirmation before deletion
+    ```
+
+=== "CLI Mode"
+    ```bash
+    # Delete with confirmation prompt
+    mcctl world delete old-world
+
+    # Force delete without confirmation
+    mcctl world delete old-world --force
+    ```
+
+**Safety Features:**
+
+- **Lock Check**: Cannot delete a world that is locked (assigned to a running server)
+- **Confirmation Prompt**: Requires typing "DELETE" to confirm (unless `--force`)
+- **Size Display**: Shows world size before deletion
+
+**Output Example:**
+
+```
+World 'old-world' (512.5 MB) will be permanently deleted.
+
+Type DELETE to confirm: DELETE
+
+✓ World 'old-world' deleted
+  Freed: 512.5 MB
+```
+
+---
+
 ## Backup Management
 
 ### mcctl backup status
@@ -1650,6 +1726,390 @@ mcctl migrate worlds [options]
 !!! info "World Storage Change"
     New servers created with `mcctl create` already use the `/worlds/` directory structure.
     This migration command is for existing servers created before this change.
+
+---
+
+## Mod Management
+
+Manage mods and plugins for your Minecraft servers. mcctl integrates with multiple mod sources including Modrinth, CurseForge, Spiget (SpigotMC), and direct URL downloads.
+
+### mcctl mod search
+
+Search for mods on Modrinth.
+
+```bash
+mcctl mod search <query> [options]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `query` | Search query (mod name, description keywords) |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output in JSON format |
+
+**Examples:**
+
+```bash
+# Search for optimization mods
+mcctl mod search sodium
+
+# Search for world generation mods
+mcctl mod search "world generation"
+
+# JSON output for scripting
+mcctl mod search lithium --json
+```
+
+**Output Example:**
+
+```
+Search results for "sodium" (25 total):
+
+  sodium (12.5M downloads)
+    Sodium server client
+    A modern rendering engine for Minecraft
+
+  sodium-extra (2.1M downloads)
+    Sodium Extra server? client
+    Extra options for Sodium
+
+Use: mcctl mod add <server> <mod-slug> to install
+```
+
+The output shows:
+
+- **Mod slug** (used for installation)
+- **Download count** (popularity indicator)
+- **Side requirements** (server/client/both)
+- **Description** (truncated)
+
+---
+
+### mcctl mod add
+
+Add mods to a server configuration.
+
+```bash
+mcctl mod add <server> <mod...> [options]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `server` | Server name |
+| `mod...` | One or more mod slugs/IDs |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--modrinth` | Use Modrinth (default) |
+| `--curseforge` | Use CurseForge (requires CF_API_KEY) |
+| `--spiget` | Use Spiget (SpigotMC plugins) |
+| `--url` | Direct JAR URL download |
+| `--force` | Add even if mod not found or server type mismatch |
+| `--json` | Output in JSON format |
+
+**Examples:**
+
+=== "Modrinth (Default)"
+    ```bash
+    # Add single mod
+    mcctl mod add myserver sodium
+
+    # Add multiple mods at once
+    mcctl mod add myserver sodium lithium phosphor
+
+    # Add to Fabric server
+    mcctl mod add fabric-server fabric-api sodium lithium
+    ```
+
+=== "CurseForge"
+    ```bash
+    # Requires CF_API_KEY in .env file
+    mcctl mod add myserver --curseforge jei journeymap
+
+    # Add popular modpack mods
+    mcctl mod add myserver --curseforge create applied-energistics-2
+    ```
+
+=== "Spiget (SpigotMC)"
+    ```bash
+    # Use resource IDs from SpigotMC
+    mcctl mod add myserver --spiget 9089 1649
+
+    # EssentialsX example (resource ID: 9089)
+    mcctl mod add paper-server --spiget 9089
+    ```
+
+=== "Direct URL"
+    ```bash
+    # Download JAR directly from URL
+    mcctl mod add myserver --url https://example.com/mod.jar
+
+    # Multiple URLs
+    mcctl mod add myserver --url https://example.com/mod1.jar https://example.com/mod2.jar
+    ```
+
+**How It Works:**
+
+1. **Validation**: Verifies mod exists on Modrinth (if using Modrinth source)
+2. **Server Type Check**: Warns if server type may not support mods
+3. **Config Update**: Adds mod to appropriate environment variable in `config.env`
+4. **Restart Required**: Server must be restarted to apply changes
+
+**Environment Variables Used:**
+
+| Source | Environment Variable | Server Types |
+|--------|---------------------|--------------|
+| Modrinth | `MODRINTH_PROJECTS` | All |
+| CurseForge | `CURSEFORGE_FILES` | All (requires CF_API_KEY) |
+| Spiget | `SPIGET_RESOURCES` | Paper, Spigot, Bukkit |
+| URL | `MODS` | Forge, NeoForge, Fabric, Quilt |
+| URL | `PLUGINS` | Paper, Spigot, Bukkit |
+
+**Output Example:**
+
+```
+Validating mods on Modrinth...
+  ✓ Sodium (sodium)
+  ✓ Lithium (lithium)
+
+✓ Added 2 mod(s) to myserver
+
+  sodium
+  lithium
+
+Config: MODRINTH_PROJECTS=sodium,lithium
+
+Restart the server to apply changes:
+  mcctl stop myserver && mcctl start myserver
+```
+
+---
+
+### mcctl mod list
+
+List configured mods for a server.
+
+```bash
+mcctl mod list <server> [options]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `server` | Server name |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output in JSON format |
+
+**Examples:**
+
+```bash
+# List mods for server
+mcctl mod list myserver
+
+# JSON output
+mcctl mod list myserver --json
+```
+
+**Output Example:**
+
+```
+Mods for myserver (FABRIC):
+
+  Modrinth:
+    - sodium
+    - lithium
+    - phosphor
+
+  CurseForge:
+    - jei
+    - journeymap
+
+Total: 5 mod(s)
+```
+
+**JSON Output:**
+
+```json
+{
+  "serverType": "FABRIC",
+  "sources": [
+    {"key": "MODRINTH_PROJECTS", "name": "Modrinth", "mods": ["sodium", "lithium"]},
+    {"key": "CURSEFORGE_FILES", "name": "CurseForge", "mods": ["jei"]}
+  ],
+  "total": 3
+}
+```
+
+---
+
+### mcctl mod remove
+
+Remove mods from a server configuration.
+
+```bash
+mcctl mod remove <server> <mod...> [options]
+```
+
+**Arguments:**
+
+| Argument | Description |
+|----------|-------------|
+| `server` | Server name |
+| `mod...` | One or more mod slugs/IDs to remove |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output in JSON format |
+
+**Examples:**
+
+```bash
+# Remove single mod
+mcctl mod remove myserver sodium
+
+# Remove multiple mods
+mcctl mod remove myserver sodium lithium phosphor
+```
+
+**Output Example:**
+
+```
+  ✓ Removed sodium from MODRINTH_PROJECTS
+  ✓ Removed lithium from MODRINTH_PROJECTS
+
+✓ Removed 2 mod(s) from myserver
+
+Restart the server to apply changes:
+  mcctl stop myserver && mcctl start myserver
+```
+
+!!! note "Restart Required"
+    Removed mods will still be present in the server's mods folder until the server is restarted. On restart, the itzg/minecraft-server image will sync the mods folder with the configuration.
+
+---
+
+### mcctl mod sources
+
+Display available mod sources and their configuration.
+
+```bash
+mcctl mod sources [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output in JSON format |
+
+**Examples:**
+
+```bash
+mcctl mod sources
+```
+
+**Output:**
+
+```
+Available Mod Sources:
+
+  Modrinth --modrinth (default)
+    Free, open-source mod platform. No API key required.
+    Config: MODRINTH_PROJECTS
+    mcctl mod add myserver sodium lithium
+
+  CurseForge --curseforge
+    Popular mod platform. Requires CF_API_KEY in .env
+    Config: CURSEFORGE_FILES
+    mcctl mod add myserver --curseforge jei journeymap
+
+  Spiget (SpigotMC) --spiget
+    SpigotMC plugin repository. Use resource IDs.
+    Config: SPIGET_RESOURCES
+    mcctl mod add myserver --spiget 9089
+
+  URL --url
+    Direct JAR file download URLs.
+    Config: MODS / PLUGINS
+    mcctl mod add myserver --url https://example.com/mod.jar
+```
+
+---
+
+### Mod Management Workflows
+
+#### Setting Up a Modded Server
+
+Complete workflow for creating and configuring a modded Fabric server:
+
+```bash
+# 1. Create a Fabric server
+mcctl create modded-server -t FABRIC -v 1.20.4
+
+# 2. Search for mods
+mcctl mod search "optimization"
+
+# 3. Add essential mods
+mcctl mod add modded-server fabric-api sodium lithium phosphor
+
+# 4. List configured mods
+mcctl mod list modded-server
+
+# 5. Restart to apply
+mcctl stop modded-server && mcctl start modded-server
+```
+
+#### Setting Up a Plugin Server
+
+Complete workflow for a Paper server with plugins:
+
+```bash
+# 1. Create a Paper server
+mcctl create plugin-server -t PAPER -v 1.21.1
+
+# 2. Add plugins from Modrinth
+mcctl mod add plugin-server luckperms
+
+# 3. Add plugins from Spiget (SpigotMC)
+mcctl mod add plugin-server --spiget 9089  # EssentialsX
+
+# 4. Restart to apply
+mcctl stop plugin-server && mcctl start plugin-server
+```
+
+#### CurseForge Configuration
+
+To use CurseForge mods, you need an API key:
+
+1. Get an API key from [CurseForge for Studios](https://console.curseforge.com/)
+2. Add to your `.env` file:
+
+```bash
+CF_API_KEY=your-api-key-here
+```
+
+3. Now you can add CurseForge mods:
+
+```bash
+mcctl mod add myserver --curseforge jei journeymap
+```
 
 ---
 

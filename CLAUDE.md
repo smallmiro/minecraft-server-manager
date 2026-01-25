@@ -59,11 +59,14 @@ minecraft/
 │   │   │   │   │   ├── op.ts           # Operator management
 │   │   │   │   │   ├── kick.ts         # Kick player
 │   │   │   │   │   ├── migrate.ts      # World storage migration
+│   │   │   │   │   ├── mod.ts          # Mod management (search, add, remove)
 │   │   │   │   │   └── ...
 │   │   │   │   ├── lib/         # Libraries
 │   │   │   │   │   ├── mojang-api.ts   # Mojang API client
+│   │   │   │   │   ├── modrinth-api.ts # Modrinth mod search API
 │   │   │   │   │   ├── player-cache.ts # Encrypted player cache
 │   │   │   │   │   ├── rcon.ts         # RCON helpers
+│   │   │   │   │   ├── sudo-utils.ts   # Sudo password handling
 │   │   │   │   │   └── prompts/        # Reusable prompt components
 │   │   │   │   │       ├── server-select.ts
 │   │   │   │   │       ├── player-select.ts
@@ -330,6 +333,19 @@ mcctl world assign        # Interactive: select world and server
 mcctl world assign survival mc-myserver  # CLI: assign directly
 mcctl world release       # Interactive: select locked world
 mcctl world release survival  # CLI: release directly
+mcctl world delete        # Interactive: select world to delete
+mcctl world delete old-world  # CLI: delete with confirmation
+mcctl world delete old-world --force  # Force delete without confirmation
+
+# Mod management
+mcctl mod search sodium   # Search mods on Modrinth
+mcctl mod add myserver sodium lithium  # Add mods from Modrinth
+mcctl mod add myserver --curseforge jei  # Add from CurseForge
+mcctl mod add myserver --spiget 9089  # Add from SpigotMC (plugin ID)
+mcctl mod add myserver --url https://example.com/mod.jar  # Direct URL
+mcctl mod list myserver   # List configured mods
+mcctl mod remove myserver sodium  # Remove mod from config
+mcctl mod sources         # Show available mod sources
 
 # Backup management
 mcctl backup status       # Show backup configuration
@@ -686,7 +702,7 @@ cd platform
 **Options**:
 | Option | Description |
 |--------|-------------|
-| `-t, --type TYPE` | Server type: PAPER (default), VANILLA, FORGE, FABRIC |
+| `-t, --type TYPE` | Server type: PAPER (default), VANILLA, FORGE, NEOFORGE, FABRIC |
 | `-v, --version VER` | Minecraft version (e.g., 1.21.1, 1.20.4) |
 | `-s, --seed NUMBER` | World seed for new world generation |
 | `-u, --world-url URL` | Download world from ZIP URL |
@@ -735,7 +751,7 @@ After creation, just:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `EULA` | **Required** | `TRUE` - Minecraft EULA agreement |
-| `TYPE` | Recommended | Server type (PAPER, FORGE, FABRIC) |
+| `TYPE` | Recommended | Server type (PAPER, FORGE, NEOFORGE, FABRIC) |
 | `VERSION` | Recommended | Minecraft version |
 | `MEMORY` | Recommended | JVM memory (e.g., `4G`) |
 | `RCON_PASSWORD` | Recommended | RCON password |
@@ -849,6 +865,7 @@ Modify `TYPE` in server's `config.env`:
 # platform/servers/<server-name>/config.env
 TYPE=PAPER       # Paper server
 TYPE=FORGE       # Forge mod server
+TYPE=NEOFORGE    # NeoForge mod server (1.20.1+)
 TYPE=FABRIC      # Fabric mod server
 ```
 

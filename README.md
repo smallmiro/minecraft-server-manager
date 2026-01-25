@@ -12,6 +12,8 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **Modular Config**: Each server has its own directory with independent configuration
 - **Interactive CLI**: Guided prompts for server creation, player management, and more
 - **Player Management**: Unified `mcctl player` command with Mojang API integration and local cache
+- **Mod Management**: Search, add, and remove mods from Modrinth, CurseForge, Spiget, or direct URLs
+- **NeoForge Support**: Full support for NeoForge modded servers (Minecraft 1.20.1+)
 - **Automation Ready**: Environment variable and CLI options for sudo password handling
 
 ## Quick Start
@@ -114,6 +116,7 @@ cd platform
 # Basic examples:
 ./scripts/create-server.sh myworld              # Creates & starts myworld.local (PAPER)
 ./scripts/create-server.sh techcraft -t FORGE   # Creates & starts techcraft.local (FORGE)
+./scripts/create-server.sh modern -t NEOFORGE -v 1.21.1  # NeoForge for modern mods
 ./scripts/create-server.sh myworld --no-start   # Create only, don't start
 
 # With version:
@@ -140,6 +143,43 @@ The script automatically:
 New servers are automatically discoverable via mDNS - just connect!
 
 See [CLAUDE.md](CLAUDE.md) for detailed instructions.
+
+## Mod Management
+
+mcctl integrates with multiple mod sources for easy mod installation:
+
+```bash
+# Search for mods on Modrinth
+mcctl mod search sodium
+
+# Add mods to your server (from Modrinth, the default)
+mcctl mod add myserver sodium lithium phosphor
+
+# Add mods from CurseForge (requires CF_API_KEY in .env)
+mcctl mod add myserver --curseforge jei journeymap
+
+# Add plugins from SpigotMC (use resource ID)
+mcctl mod add myserver --spiget 9089  # EssentialsX
+
+# Add from direct URL
+mcctl mod add myserver --url https://example.com/mod.jar
+
+# List configured mods
+mcctl mod list myserver
+
+# Remove a mod
+mcctl mod remove myserver sodium
+
+# Show all available sources
+mcctl mod sources
+```
+
+After adding or removing mods, restart the server:
+```bash
+mcctl stop myserver && mcctl start myserver
+```
+
+See [CLI Commands Reference](docs/cli/commands.md) for complete documentation.
 
 ---
 
