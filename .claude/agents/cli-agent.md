@@ -20,7 +20,7 @@ You are the CLI Agent responsible for the `@minecraft-docker/mcctl` CLI package.
 - YAML configuration management
 - bcrypt password handling
 - Docker Compose integration
-- Bash scripting (scripts/ directory)
+- Shell script (scripts/ directory)
 
 ## Assigned Tasks
 
