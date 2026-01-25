@@ -3,6 +3,8 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { config } from './config/index.js';
 import authPlugin from './plugins/auth.js';
+import serversRoutes from './routes/servers.js';
+import serverActionsRoutes from './routes/servers/actions.js';
 import consoleRoutes from './routes/console.js';
 
 export interface BuildAppOptions {
@@ -31,6 +33,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(authPlugin, {
     config: config.auth,
   });
+
+  // Register server routes
+  await app.register(serversRoutes);
+  await app.register(serverActionsRoutes);
 
   // Health check endpoint
   app.get('/health', async () => {
