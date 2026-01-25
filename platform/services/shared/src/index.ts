@@ -68,6 +68,11 @@ export {
   WorldOptions,
   WorldSetupType,
   type WorldOptionsData,
+  // User Value Objects
+  UserId,
+  Username,
+  Role,
+  RoleEnum,
   // Entities
   Server,
   ServerStatus,
@@ -75,6 +80,8 @@ export {
   World,
   WorldLockStatus,
   type WorldLock,
+  User,
+  type UserData,
 } from './domain/index.js';
 
 // Re-export mod domain models

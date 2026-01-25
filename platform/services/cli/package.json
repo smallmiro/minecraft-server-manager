@@ -50,6 +50,7 @@
     "@clack/prompts": "^0.8.0",
     "@minecraft-docker/mod-source-modrinth": "workspace:*",
     "@minecraft-docker/shared": "workspace:*",
+    "commander": "^14.0.2",
     "picocolors": "^1.1.0",
     "tar": "^7.5.4"
   },

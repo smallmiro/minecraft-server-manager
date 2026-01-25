@@ -20,6 +20,7 @@ import {
   playerCommand,
   migrateCommand,
   modCommand,
+  adminCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -152,6 +153,13 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')} --all       Migrate all servers
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
 
+${colors.cyan('Admin Console:')}
+  ${colors.bold('admin user list')}            List admin console users
+  ${colors.bold('admin user add')}             Add user (interactive)
+  ${colors.bold('admin user remove')} <user>   Remove user
+  ${colors.bold('admin user update')} <user>   Update user role
+  ${colors.bold('admin user reset-password')} <user>  Reset user password
+
 ${colors.cyan('Create Options:')}
   -t, --type TYPE            Server type: PAPER, VANILLA, FORGE, FABRIC
   -v, --version VERSION      Minecraft version (e.g., 1.21.1)
@@ -282,7 +290,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'admin'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -702,6 +710,23 @@ async function main(): Promise<void> {
           json: flags['json'] === true,
           force: flags['force'] === true,
         });
+        break;
+      }
+
+      case 'admin': {
+        // admin command: admin user [list|add|remove|update|reset-password] [args...]
+        // Use commander-based admin command
+        const cmd = adminCommand();
+        // Pass the remaining args to commander
+        const adminArgs = ['node', 'mcctl', 'admin'];
+        if (subCommand) adminArgs.push(subCommand);
+        adminArgs.push(...positional);
+        if (flags['json']) adminArgs.push('--json');
+        if (flags['force']) adminArgs.push('--force');
+        if (flags['role']) adminArgs.push('--role', flags['role'] as string);
+        if (flags['password']) adminArgs.push('--password', flags['password'] as string);
+        await cmd.parseAsync(adminArgs);
+        exitCode = 0;
         break;
       }
 
