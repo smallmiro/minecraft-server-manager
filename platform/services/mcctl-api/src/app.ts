@@ -5,6 +5,7 @@ import { config } from './config/index.js';
 import authPlugin from './plugins/auth.js';
 import serversRoutes from './routes/servers.js';
 import serverActionsRoutes from './routes/servers/actions.js';
+import consoleRoutes from './routes/console.js';
 
 export interface BuildAppOptions {
   logger?: boolean;
@@ -44,6 +45,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       timestamp: new Date().toISOString(),
     };
   });
+
+
+  // Register API routes
+  await app.register(consoleRoutes);
 
   // Graceful shutdown handler
   const gracefulShutdown = async (signal: string) => {
