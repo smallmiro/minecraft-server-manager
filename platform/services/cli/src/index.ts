@@ -20,7 +20,7 @@ import {
   playerCommand,
   migrateCommand,
   modCommand,
-  adminServiceCommand,
+  adminInitCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -154,13 +154,7 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
 
 ${colors.cyan('Admin Service:')}
-  ${colors.bold('admin service start')}        Start API + Console services
-  ${colors.bold('admin service start')} --api-only    Start API only
-  ${colors.bold('admin service start')} --console-only Start Console only
-  ${colors.bold('admin service stop')}         Stop admin services
-  ${colors.bold('admin service restart')}      Restart admin services
-  ${colors.bold('admin service status')}       Show service status
-  ${colors.bold('admin service logs')} [-f]    View logs (--api, --console)
+  ${colors.bold('admin init')} [--force]       Initialize admin service (create admin user)
 
 ${colors.cyan('Create Options:')}
   -t, --type TYPE            Server type: PAPER, VANILLA, FORGE, FABRIC
@@ -716,20 +710,16 @@ async function main(): Promise<void> {
       }
 
       case 'admin': {
-        // admin command: admin <subcommand> [options]
-        // subCommand = service, positional[0] = action (start/stop/restart/status/logs)
-        if (subCommand === 'service') {
-          exitCode = await adminServiceCommand({
-            root: rootDir,
-            subCommand: positional[0] as 'start' | 'stop' | 'restart' | 'status' | 'logs' | undefined,
-            apiOnly: flags['api-only'] === true || flags['api'] === true,
-            consoleOnly: flags['console-only'] === true || flags['console'] === true,
-            follow: flags['follow'] === true,
-            json: flags['json'] === true,
-          });
-        } else {
-          log.error('Usage: mcctl admin service <start|stop|restart|status|logs>');
-          exitCode = 1;
+        switch (subCommand) {
+          case 'init':
+            exitCode = await adminInitCommand({
+              root: rootDir,
+              force: flags['force'] === true,
+            });
+            break;
+          default:
+            log.error('Usage: mcctl admin <init>');
+            exitCode = 1;
         }
         break;
       }

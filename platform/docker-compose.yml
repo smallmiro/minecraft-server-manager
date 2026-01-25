@@ -4,6 +4,7 @@
 # Architecture:
 #   - mc-router: Connection router with auto-scale support (hostname-based)
 #   - MC Servers: Each server in its own directory under servers/
+#   - Admin Service (optional): Web UI for server management
 #
 # Adding a new server (fully automated):
 #   ./scripts/create-server.sh <server-name> [options]
@@ -30,6 +31,11 @@
 #
 # Fallback (if mDNS unavailable):
 #   Add to /etc/hosts: <server-ip> <server-name>.local
+#
+# Admin Service (optional):
+#   To enable web management UI, use mcctl or manual compose:
+#   - mcctl admin service start
+#   - docker compose -f docker-compose.yml -f docker-compose.admin.yml up -d
 # =============================================================================
 
 # -----------------------------------------------------------------------------

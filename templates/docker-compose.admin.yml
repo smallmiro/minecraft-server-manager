@@ -11,63 +11,81 @@
 #   mcctl admin service stop
 #   mcctl admin service status
 #   mcctl admin service logs [-f]
+#
+# Manual usage:
+#   docker compose -f docker-compose.yml -f docker-compose.admin.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.admin.yml down
 # =============================================================================
 
 services:
   # ===========================================================================
   # mcctl-api - REST API Server
   # ===========================================================================
+  # Provides REST API for managing Minecraft servers via Docker
+  # Internal service (port 3001) - accessed through mcctl-console BFF
+  # ===========================================================================
   mcctl-api:
-    image: ${MCCTL_API_IMAGE:-mcctl-api:latest}
-    build:
-      context: .
-      dockerfile: services/cli/Dockerfile.api
+    image: ${MCCTL_API_IMAGE:-minecraft-docker/mcctl-api:latest}
     container_name: mcctl-api
     restart: unless-stopped
     environment:
+      # Runtime configuration
       NODE_ENV: production
       PORT: "3001"
+      HOST: "0.0.0.0"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Data directory (mounted from host)
       MCCTL_ROOT: /data
-      # Auth config
+      # Authentication
       MCCTL_JWT_SECRET: ${MCCTL_JWT_SECRET:-change-me-in-production}
       MCCTL_JWT_EXPIRY: ${MCCTL_JWT_EXPIRY:-24h}
-      # CORS
+      # API access mode (internal = only from mcctl-console)
+      API_ACCESS_MODE: ${API_ACCESS_MODE:-internal}
+      API_KEY: ${API_KEY:-}
+      # CORS configuration
       MCCTL_CORS_ORIGIN: ${MCCTL_CORS_ORIGIN:-http://localhost:3000}
-    ports:
-      - "${MCCTL_API_PORT:-3001}:3001"
     volumes:
-      # Mount host data directory
+      # Mount host data directory for server management
       - ${MCCTL_ROOT:-~/minecraft-servers}:/data:rw
-      # Docker socket for container management
+      # Docker socket for container management (read-only)
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - minecraft-net
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
       interval: 30s
-      timeout: 3s
+      timeout: 5s
       start_period: 10s
       retries: 3
+    # Expose port only if API_ACCESS_MODE is external
+    # For internal mode, mcctl-console accesses via Docker network
+    # ports:
+    #   - "${MCCTL_API_PORT:-3001}:3001"
 
   # ===========================================================================
   # mcctl-console - Web Management UI
   # ===========================================================================
+  # Next.js web application for managing Minecraft servers
+  # Public service (port 3000) - users connect here
+  # ===========================================================================
   mcctl-console:
-    image: ${MCCTL_CONSOLE_IMAGE:-mcctl-console:latest}
-    build:
-      context: .
-      dockerfile: services/mcctl-console/Dockerfile
+    image: ${MCCTL_CONSOLE_IMAGE:-minecraft-docker/mcctl-console:latest}
     container_name: mcctl-console
     restart: unless-stopped
     environment:
+      # Runtime configuration
       NODE_ENV: production
       PORT: "3000"
-      # API URL for BFF proxy
+      HOSTNAME: "0.0.0.0"
+      # API URL for BFF proxy (internal Docker network)
       MCCTL_API_URL: ${MCCTL_API_URL:-http://mcctl-api:3001}
+      # Internal API key for mcctl-api communication
+      INTERNAL_API_KEY: ${API_KEY:-}
       # NextAuth configuration
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-me-in-production}
     ports:
+      # Expose web UI on port 3000
       - "${MCCTL_CONSOLE_PORT:-3000}:3000"
     networks:
       - minecraft-net
@@ -77,10 +95,15 @@ services:
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
-      timeout: 3s
+      timeout: 5s
       start_period: 10s
       retries: 3
 
+# =============================================================================
+# Network Configuration
+# =============================================================================
+# Uses the same network as Minecraft servers for internal communication
+# =============================================================================
 networks:
   minecraft-net:
     external: true

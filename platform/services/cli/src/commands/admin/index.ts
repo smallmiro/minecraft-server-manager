@@ -1,7 +1,1 @@
-/**
- * Admin Commands
- *
- * Commands for managing the Admin Service (mcctl-api + mcctl-console)
- */
-
-export { adminServiceCommand, type AdminServiceOptions } from './service.js';
+export { adminInitCommand, type AdminInitOptions } from './init.js';
