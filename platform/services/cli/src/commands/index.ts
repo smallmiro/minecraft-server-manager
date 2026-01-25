@@ -18,3 +18,4 @@ export { migrateCommand, type MigrateCommandOptions } from './migrate.js';
 export { modCommand, type ModCommandOptions } from './mod.js';
 export { adminCommand } from './admin/index.js';
 export { adminUserCommand, type AdminUserCommandOptions } from './admin/user.js';
+export { adminApiCommand, type AdminApiCommandOptions } from './admin/api.js';
