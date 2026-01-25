@@ -1538,6 +1538,94 @@ mcctl admin user list         # List users
 mcctl admin user add <name>   # Add user
 ```
 
+### 10.5 Multi-Agent Collaboration
+
+This project uses a **Multi-Agent Collaboration** system for all development work. Each agent has exclusive ownership of their module and must **collaborate, not substitute** for other agents.
+
+#### 🔴 Critical Rules
+
+**NEVER do another agent's work.** Each agent owns their module exclusively:
+
+| Rule | Description |
+|------|-------------|
+| ❌ **Don't** | Implement code in another agent's module |
+| ❌ **Don't** | Modify files outside your assigned directory |
+| ❌ **Don't** | Make assumptions about another agent's implementation |
+| ✅ **Do** | Request dependencies via `DEPENDENCY_NEEDED` message |
+| ✅ **Do** | Wait for `DEPENDENCY_READY` response before proceeding |
+| ✅ **Do** | Communicate blockers via `BLOCKING_ISSUE` message |
+
+#### Agent Ownership
+
+**Development Agents** (Module Ownership):
+
+| Agent | Exclusive Module | Responsibility |
+|-------|------------------|----------------|
+| 🔧 **Core** | `platform/services/shared/` | Domain, Use Cases, Shared Adapters |
+| 💻 **CLI** | `platform/services/cli/` | CLI Commands, Prompts |
+| 🖥️ **Backend** | `platform/services/mcctl-api/` | REST API, Auth, Swagger |
+| 🎨 **Frontend** | `platform/services/mcctl-console/` | BFF, UI Components |
+| 🐳 **DevOps** | `platform/`, `e2e/` | Docker, Integration Tests |
+
+**Support Agents** (Cross-cutting Concerns):
+
+| Agent | Module | Responsibility | Invoked By |
+|-------|--------|----------------|------------|
+| 📝 **Technical Writer** | `docs/` | Bilingual documentation (EN/KO) | `/write-docs`, Release Manager |
+| 🚀 **Release Manager** | Git, Docker | Version tagging, deployment | User request |
+
+#### Per-Agent Documentation
+
+Each module agent manages their own PRD and Plan:
+- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md) | [Plan](platform/services/mcctl-api/plan.md)
+- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md) | [Plan](platform/services/mcctl-console/plan.md)
+
+Agent specification files: `.claude/agents/` directory
+
+#### Collaboration Protocol
+
+**When you need something from another agent:**
+
+```markdown
+## 📋 DEPENDENCY_NEEDED
+
+**From**: [your agent]
+**To**: [target agent]
+
+### Need
+[What interface/artifact you need]
+
+### Reason
+[Why you need it for your work]
+```
+
+**When you complete work that others depend on:**
+
+```markdown
+## ✅ DEPENDENCY_READY
+
+**From**: [your agent]
+**To**: [dependent agents]
+
+### Artifact
+[Interface/spec now available]
+
+### Location
+[File path or import statement]
+```
+
+#### Sync Points (Milestone 5 Example)
+
+| ID | Trigger | From | To | Artifact |
+|----|---------|------|----|----------|
+| SYNC-1 | #80 complete | Core | CLI, Backend | IUserRepository interface |
+| SYNC-2 | #89 complete | Backend | Frontend | Auth plugin specification |
+| SYNC-3 | #93 complete | Backend | Frontend | OpenAPI specification |
+| SYNC-4 | #94+#100 | Backend, Frontend | DevOps | Docker images |
+| SYNC-5 | #101 complete | DevOps | All | Integration test environment |
+
+For the complete collaboration guide, see [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md).
+
 ## 11. Revision History
 
 | Version | Date | Author | Changes |
@@ -1549,3 +1637,4 @@ mcctl admin user add <name>   # Add user
 | 3.0.0 | 2025-01-18 | - | Add CLI Architecture (Hexagonal + Clean Architecture, SOLID principles) |
 | 3.1.0 | 2025-01-24 | - | Update FR-014~FR-016 status to completed, update Phase 5 and Migration Path status |
 | 4.0.0 | 2025-01-25 | - | Add Section 10: Admin Service (mcctl-api, mcctl-console) |
+| 4.1.0 | 2025-01-25 | - | Add Section 10.5: Multi-Agent Collaboration with ownership rules |

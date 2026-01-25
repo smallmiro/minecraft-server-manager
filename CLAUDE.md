@@ -449,6 +449,116 @@ The CLI uses **Hexagonal Architecture** (Ports & Adapters) with **Clean Architec
 
 See [docs/development/cli-architecture.md](docs/development/cli-architecture.md) for detailed documentation.
 
+### Multi-Agent Collaboration
+
+This project uses a **Multi-Agent Collaboration** system where specialized agents are responsible for different modules. This applies to **ALL work**, not just specific milestones.
+
+#### 🔴 Critical Rules
+
+**NEVER do another agent's work.** Each agent has exclusive ownership of their module:
+
+| Agent | Exclusive Module | Do NOT Touch |
+|-------|------------------|--------------|
+| 🔧 **Core** | `platform/services/shared/` | Other agents' code |
+| 💻 **CLI** | `platform/services/cli/` | Other agents' code |
+| 🖥️ **Backend** | `platform/services/mcctl-api/` | Other agents' code |
+| 🎨 **Frontend** | `platform/services/mcctl-console/` | Other agents' code |
+| 🐳 **DevOps** | `platform/`, `e2e/` | Other agents' code |
+
+**If you need something from another agent's module:**
+1. **DO NOT** implement it yourself
+2. **DO** send a `DEPENDENCY_NEEDED` message to that agent
+3. **DO** wait for `DEPENDENCY_READY` response
+4. **DO** use the provided interface/artifact
+
+#### Agent Registry
+
+**Development Agents** (Module Ownership):
+
+| Agent | Role | Module |
+|-------|------|--------|
+| 🎯 **Orchestrator** | Project Coordinator | All (coordination only) |
+| 🔧 **Core** | Shared Package | `platform/services/shared/` |
+| 💻 **CLI** | CLI Commands | `platform/services/cli/` |
+| 🖥️ **Backend** | REST API | `platform/services/mcctl-api/` |
+| 🎨 **Frontend** | Web Console | `platform/services/mcctl-console/` |
+| 🐳 **DevOps** | Integration & E2E | `platform/`, `e2e/` |
+
+**Support Agents** (Cross-cutting Concerns):
+
+| Agent | Role | Module | Invoked By |
+|-------|------|--------|------------|
+| 📝 **Technical Writer** | Documentation | `docs/` | `/write-docs` command, Release Manager |
+| 🚀 **Release Manager** | Release & Deploy | Git tags, Docker | User request (릴리즈, 배포) |
+
+#### Agent Files
+
+Each agent has a dedicated specification file:
+```
+.claude/agents/
+├── orchestrator-agent.md    # Coordination protocol
+├── core-agent.md            # Shared package tasks
+├── cli-agent.md             # CLI admin commands
+├── backend-agent.md         # mcctl-api service
+├── frontend-agent.md        # mcctl-console service
+├── devops-agent.md          # Docker + E2E tests
+├── technical-writer.md      # Documentation (EN/KO)
+└── release-manager.md       # Release & deployment
+```
+
+#### Collaboration Protocol
+
+**When you need something from another module:**
+
+```markdown
+## 📋 DEPENDENCY_NEEDED
+
+**From**: [your agent]
+**To**: [target agent]
+**Issue**: #XX
+
+### Need
+[What you need]
+
+### Reason
+[Why you need it]
+
+### Expected Format
+[Interface, spec, or artifact format]
+```
+
+**When you complete work that others depend on:**
+
+```markdown
+## ✅ DEPENDENCY_READY
+
+**From**: [your agent]
+**To**: [dependent agents]
+**Issue**: #XX
+
+### Artifact
+[What is now available]
+
+### Location
+[Where to find it]
+
+### Usage
+[How to use it]
+```
+
+#### Communication Message Types
+
+| Message | Purpose |
+|---------|---------|
+| `WORK_REQUEST` | Orchestrator assigns work to agent |
+| `WORK_COMPLETE` | Agent reports task completion |
+| `DEPENDENCY_READY` | Agent notifies dependency is available |
+| `DEPENDENCY_NEEDED` | Agent requests dependency from another |
+| `SYNC_REQUEST` | Request sync point coordination |
+| `BLOCKING_ISSUE` | Report a blocker |
+
+See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) for the complete collaboration guide.
+
 ### Git-Flow Workflow
 
 This project follows **Git-Flow** branching strategy.
