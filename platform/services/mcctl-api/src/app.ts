@@ -3,6 +3,10 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { config } from './config/index.js';
 import authPlugin from './plugins/auth.js';
+import swaggerPlugin from './plugins/swagger.js';
+import serversRoutes from './routes/servers.js';
+import serverActionsRoutes from './routes/servers/actions.js';
+import consoleRoutes from './routes/console.js';
 
 export interface BuildAppOptions {
   logger?: boolean;
@@ -31,6 +35,20 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     config: config.auth,
   });
 
+  // Register Swagger documentation (only in non-production or if explicitly enabled)
+  if (config.nodeEnv !== 'production' || process.env['SWAGGER_ENABLED'] === 'true') {
+    await app.register(swaggerPlugin, {
+      title: 'mcctl-api',
+      description: 'REST API for managing Docker Minecraft servers',
+      version: '0.1.0',
+      routePrefix: '/docs',
+    });
+  }
+
+  // Register server routes
+  await app.register(serversRoutes);
+  await app.register(serverActionsRoutes);
+
   // Health check endpoint
   app.get('/health', async () => {
     return {
@@ -38,6 +56,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       timestamp: new Date().toISOString(),
     };
   });
+
+
+  // Register API routes
+  await app.register(consoleRoutes);
 
   // Graceful shutdown handler
   const gracefulShutdown = async (signal: string) => {

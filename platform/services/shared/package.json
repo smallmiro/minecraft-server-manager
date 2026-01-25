@@ -46,7 +46,7 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
-    "test": "npx tsx --test tests/YamlUserRepository.test.ts"
+    "test": "npx tsx --test tests/*.test.ts"
   },
   "keywords": [
     "minecraft",
