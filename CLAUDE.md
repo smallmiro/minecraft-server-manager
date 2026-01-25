@@ -491,6 +491,35 @@ This project uses a **Multi-Agent Collaboration** system where specialized agent
 | 📝 **Technical Writer** | Documentation | `docs/` | `/write-docs` command, Release Manager |
 | 🚀 **Release Manager** | Release & Deploy | Git tags, Docker | User request (릴리즈, 배포) |
 
+#### Agent Labels (GitHub Issues)
+
+**When creating issues, ALWAYS assign the appropriate agent label:**
+
+| Label | Agent | Module | Color |
+|-------|-------|--------|-------|
+| `agent:orchestrator` | 🎯 Orchestrator | Coordination | Gray |
+| `agent:core` | 🔧 Core | `shared/` | Blue |
+| `agent:cli` | 💻 CLI | `cli/` | Green |
+| `agent:backend` | 🖥️ Backend | `mcctl-api/` | Purple |
+| `agent:frontend` | 🎨 Frontend | `mcctl-console/` | Pink |
+| `agent:devops` | 🐳 DevOps | `platform/`, `e2e/` | Cyan |
+| `agent:docs` | 📝 Technical Writer | `docs/` | Yellow |
+| `agent:release` | 🚀 Release Manager | releases | Orange |
+
+**Issue Creation Rules:**
+1. **Every issue MUST have an agent label** - No issue without agent assignment
+2. **One primary agent per issue** - If multiple agents needed, create separate issues
+3. **Use label for filtering** - `label:agent:backend` to see Backend agent's issues
+4. **Include agent info in body** - Add `## 🤖 Agent Assignment` section (see issue templates)
+
+```bash
+# Example: Create issue with agent label
+gh issue create --title "feat(api): Add auth endpoint" --label "agent:backend"
+
+# Filter issues by agent
+gh issue list --label "agent:backend"
+```
+
 #### Agent Files
 
 Each agent has a dedicated specification file:
