@@ -20,6 +20,7 @@ import {
   playerCommand,
   migrateCommand,
   modCommand,
+  adminInitCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -152,6 +153,9 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')} --all       Migrate all servers
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
 
+${colors.cyan('Admin Service:')}
+  ${colors.bold('admin init')} [--force]       Initialize admin service (create admin user)
+
 ${colors.cyan('Create Options:')}
   -t, --type TYPE            Server type: PAPER, VANILLA, FORGE, FABRIC
   -v, --version VERSION      Minecraft version (e.g., 1.21.1)
@@ -282,7 +286,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'admin'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -702,6 +706,21 @@ async function main(): Promise<void> {
           json: flags['json'] === true,
           force: flags['force'] === true,
         });
+        break;
+      }
+
+      case 'admin': {
+        switch (subCommand) {
+          case 'init':
+            exitCode = await adminInitCommand({
+              root: rootDir,
+              force: flags['force'] === true,
+            });
+            break;
+          default:
+            log.error('Usage: mcctl admin <init>');
+            exitCode = 1;
+        }
         break;
       }
 
