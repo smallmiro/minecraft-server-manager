@@ -68,7 +68,6 @@ export {
   WorldOptions,
   WorldSetupType,
   type WorldOptionsData,
-  // User Value Objects
   UserId,
   Username,
   Role,

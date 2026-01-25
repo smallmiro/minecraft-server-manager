@@ -20,7 +20,7 @@ import {
   playerCommand,
   migrateCommand,
   modCommand,
-  adminCommand,
+  adminInitCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -153,12 +153,8 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')} --all       Migrate all servers
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
 
-${colors.cyan('Admin Console:')}
-  ${colors.bold('admin user list')}            List admin console users
-  ${colors.bold('admin user add')}             Add user (interactive)
-  ${colors.bold('admin user remove')} <user>   Remove user
-  ${colors.bold('admin user update')} <user>   Update user role
-  ${colors.bold('admin user reset-password')} <user>  Reset user password
+${colors.cyan('Admin Service:')}
+  ${colors.bold('admin init')} [--force]       Initialize admin service (create admin user)
 
 ${colors.cyan('Create Options:')}
   -t, --type TYPE            Server type: PAPER, VANILLA, FORGE, FABRIC
@@ -714,19 +710,17 @@ async function main(): Promise<void> {
       }
 
       case 'admin': {
-        // admin command: admin user [list|add|remove|update|reset-password] [args...]
-        // Use commander-based admin command
-        const cmd = adminCommand();
-        // Pass the remaining args to commander
-        const adminArgs = ['node', 'mcctl', 'admin'];
-        if (subCommand) adminArgs.push(subCommand);
-        adminArgs.push(...positional);
-        if (flags['json']) adminArgs.push('--json');
-        if (flags['force']) adminArgs.push('--force');
-        if (flags['role']) adminArgs.push('--role', flags['role'] as string);
-        if (flags['password']) adminArgs.push('--password', flags['password'] as string);
-        await cmd.parseAsync(adminArgs);
-        exitCode = 0;
+        switch (subCommand) {
+          case 'init':
+            exitCode = await adminInitCommand({
+              root: rootDir,
+              force: flags['force'] === true,
+            });
+            break;
+          default:
+            log.error('Usage: mcctl admin <init>');
+            exitCode = 1;
+        }
         break;
       }
 

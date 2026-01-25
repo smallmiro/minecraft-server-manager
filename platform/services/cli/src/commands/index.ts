@@ -16,6 +16,4 @@ export { playerOnlineCommand, type PlayerOnlineCommandOptions } from './player-o
 export { playerCommand, type PlayerCommandOptions } from './player.js';
 export { migrateCommand, type MigrateCommandOptions } from './migrate.js';
 export { modCommand, type ModCommandOptions } from './mod.js';
-export { adminCommand } from './admin/index.js';
-export { adminUserCommand, type AdminUserCommandOptions } from './admin/user.js';
-export { adminApiCommand, type AdminApiCommandOptions } from './admin/api.js';
+export { adminInitCommand, type AdminInitOptions } from './admin/index.js';
