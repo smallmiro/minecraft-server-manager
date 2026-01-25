@@ -15,7 +15,10 @@
 7. [Common Use Cases](#common-use-cases)
 8. [Troubleshooting](#troubleshooting)
 9. [FAQ](#faq)
-10. [Glossary](#glossary)
+10. [Reference Documentation](#reference-documentation)
+    - [itzg/minecraft-server](#itzgminecraft-server)
+    - [mc-router](#mc-router)
+11. [Glossary](#glossary)
 
 ---
 
@@ -1644,6 +1647,571 @@ A: World data is preserved in the worlds/ directory.
 
 **Q: How do I import an existing world?**
 A: Place it in `~/minecraft-servers/worlds/` and use `mcctl create --world <name>`.
+
+---
+
+## Reference Documentation
+
+This section provides essential information from the official itzg/minecraft-server and mc-router documentation for LLM agents to accurately answer technical questions about the underlying Docker infrastructure.
+
+---
+
+### itzg/minecraft-server
+
+The `itzg/minecraft-server` Docker image is the core component that runs Minecraft Java Edition servers. It handles automatic version management, mod/plugin installation, and server configuration.
+
+#### Supported Server Types
+
+| Type | Description | Plugins | Mods | Best For |
+|------|-------------|:-------:|:----:|----------|
+| `VANILLA` | Official Mojang server | No | No | Pure vanilla experience |
+| `PAPER` | High-performance Spigot fork | Yes | No | Production servers (recommended) |
+| `SPIGOT` | Modified Bukkit server | Yes | No | Plugin compatibility |
+| `BUKKIT` | Classic plugin server | Yes | No | Legacy support |
+| `PURPUR` | Paper fork with extra features | Yes | No | Advanced customization |
+| `PUFFERFISH` | Performance-optimized Paper fork | Yes | No | High player counts |
+| `FOLIA` | Multi-threaded Paper fork | Yes | No | Large worlds, many entities |
+| `FORGE` | Mod server for Forge mods | No | Yes | Forge modpacks |
+| `NEOFORGE` | Modern Forge fork (1.20.1+) | No | Yes | Modern Forge mods |
+| `FABRIC` | Lightweight mod loader | No | Yes | Performance mods |
+| `QUILT` | Fabric-compatible loader | No | Yes | Modern modding |
+| `MOHIST` | Forge + Bukkit hybrid | Yes | Yes | Mods with plugins |
+| `ARCLIGHT` | Multi-loader hybrid | Yes | Yes | Flexible hybrid |
+| `MAGMA_MAINTAINED` | Forge + Bukkit hybrid | Yes | Yes | Stable hybrid |
+
+**Modpack Platforms:**
+
+| Platform | Environment Variable | Description |
+|----------|---------------------|-------------|
+| `AUTO_CURSEFORGE` | `CF_API_KEY`, `CF_SLUG` | Automatic CurseForge modpack installation |
+| `MODRINTH` | `MODRINTH_MODPACK` | Modrinth modpack installation |
+| `FTBA` | `FTB_MODPACK_ID` | Feed The Beast modpacks |
+
+---
+
+#### Key Environment Variables
+
+**Essential Variables:**
+
+| Variable | Required | Default | Description |
+|----------|:--------:|---------|-------------|
+| `EULA` | **Yes** | - | Must be `TRUE` to accept Minecraft EULA |
+| `TYPE` | No | `VANILLA` | Server type (see table above) |
+| `VERSION` | No | `LATEST` | Minecraft version (e.g., `1.21.1`, `1.20.4`) |
+| `MEMORY` | No | `1G` | JVM heap memory (e.g., `4G`, `8G`) |
+
+**Server Settings:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MOTD` | - | Server message of the day |
+| `DIFFICULTY` | `easy` | Game difficulty: `peaceful`, `easy`, `normal`, `hard` |
+| `MODE` | `survival` | Default game mode: `survival`, `creative`, `adventure`, `spectator` |
+| `MAX_PLAYERS` | `20` | Maximum concurrent players |
+| `PVP` | `true` | Enable player vs player combat |
+| `LEVEL` | `world` | World save folder name |
+| `SEED` | Random | World generation seed |
+| `VIEW_DISTANCE` | - | Server view distance (chunks) |
+| `SIMULATION_DISTANCE` | - | Simulation distance (chunks) |
+| `SPAWN_PROTECTION` | `16` | Spawn protection radius (0 to disable) |
+
+**Memory Configuration:**
+
+| Variable | Description |
+|----------|-------------|
+| `MEMORY` | Sets both initial and max heap (e.g., `4G`) |
+| `INIT_MEMORY` | Initial heap size (separate from max) |
+| `MAX_MEMORY` | Maximum heap size (separate from initial) |
+
+Format: `<size>[g|G|m|M|k|K]` or percentage `<size>%`
+
+**Player Management:**
+
+| Variable | Description |
+|----------|-------------|
+| `OPS` | Operator usernames (comma-separated) |
+| `OPS_FILE` | Path/URL to ops file |
+| `ENABLE_WHITELIST` | Enable whitelist (`true`/`false`) |
+| `WHITELIST` | Whitelisted players (comma-separated) |
+| `WHITELIST_FILE` | Path/URL to whitelist file |
+
+**RCON (Remote Console):**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_RCON` | `true` | Enable RCON protocol |
+| `RCON_PASSWORD` | - | RCON authentication password |
+| `RCON_PASSWORD_FILE` | - | Read password from file (Docker Secrets) |
+| `RCON_PORT` | `25575` | RCON port |
+
+**JVM Optimization:**
+
+| Variable | Description |
+|----------|-------------|
+| `USE_AIKAR_FLAGS` | Enable Aikar's GC tuning (recommended for Paper) |
+| `USE_MEOWICE_FLAGS` | Updated JVM flags |
+| `USE_MEOWICE_GRAALVM_FLAGS` | GraalVM-specific optimizations |
+| `USE_SIMD_FLAGS` | SIMD optimization flags |
+
+**Debugging:**
+
+| Variable | Description |
+|----------|-------------|
+| `DEBUG` | Enable verbose logging |
+| `DEBUG_EXEC` | Show server start command |
+| `DEBUG_MEMORY` | Memory allocation debugging |
+
+---
+
+#### Mod/Plugin Sources
+
+**Modrinth (Recommended):**
+
+```yaml
+environment:
+  MODRINTH_PROJECTS: |
+    fabric-api
+    lithium
+    sodium
+    iris
+  MODRINTH_DOWNLOAD_DEPENDENCIES: required  # none, required, optional
+  MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE: release  # release, beta, alpha
+```
+
+**Version Specifiers:**
+- `mod-slug` - Latest release
+- `mod-slug:version_id` - Specific version
+- `mod-slug:beta` - Latest beta
+- `mod-slug:release` - Latest release
+
+**CurseForge:**
+
+```yaml
+environment:
+  CF_API_KEY: "${CF_API_KEY}"  # Required from console.curseforge.com
+  CURSEFORGE_FILES: |
+    jei
+    journeymap
+    jade
+```
+
+**CurseForge Formats:**
+- Project slug: `jei`
+- Project ID: `238222`
+- Slug:FileID: `jei:4593548`
+- Project URL: `https://www.curseforge.com/minecraft/mc-mods/jei`
+
+**Spiget (SpigotMC Plugins):**
+
+```yaml
+environment:
+  SPIGET_RESOURCES: "9089,34315"  # Resource IDs from SpigotMC URLs
+```
+
+**Direct URLs:**
+
+```yaml
+environment:
+  MODS: |
+    https://example.com/mod1.jar
+    https://example.com/mod2.jar
+  MODS_FILE: "/data/mods.txt"  # File containing URLs
+```
+
+**Mod Cleanup:**
+
+| Variable | Description |
+|----------|-------------|
+| `REMOVE_OLD_MODS` | `TRUE` to clean up old mod versions |
+| `REMOVE_OLD_MODS_INCLUDE` | Pattern to include (e.g., `*.jar`) |
+| `REMOVE_OLD_MODS_EXCLUDE` | Pattern to exclude |
+
+---
+
+#### Java Version Requirements
+
+| Minecraft Version | Minimum Java | Recommended Image Tag |
+|-------------------|--------------|----------------------|
+| 1.21+ | Java 21 | `java21` or `latest` |
+| 1.20.5 - 1.20.6 | Java 21 | `java21` |
+| 1.18 - 1.20.4 | Java 17 | `java17` or `java21` |
+| 1.17 | Java 16 | `java17` |
+| 1.12 - 1.16.5 | Java 8 | `java8` or `java11` |
+| 1.11 and below | Java 8 | `java8` |
+
+**Forge-Specific Requirements:**
+
+| Forge Version | Required Java | Image Tag |
+|---------------|---------------|-----------|
+| Forge 1.20.5+ | Java 21 | `java21` |
+| Forge 1.18 - 1.20.4 | Java 17 | `java17` |
+| Forge 1.17.x | Java 16/17 | `java17` |
+| **Forge 1.16.5 and below** | **Java 8** | `java8` **(required)** |
+
+**Available Image Tags:**
+
+| Tag | Java Version | Architectures |
+|-----|--------------|---------------|
+| `latest`, `stable` | Java 25 | amd64, arm64 |
+| `java21` | Java 21 | amd64, arm64 |
+| `java17` | Java 17 | amd64, arm64, armv7 |
+| `java11` | Java 11 | amd64, arm64 |
+| `java8` | Java 8 | amd64, arm64 |
+| `java21-graalvm` | GraalVM 21 | amd64, arm64 |
+
+---
+
+#### Volume Mounts
+
+| Container Path | Purpose | Recommended Mount |
+|----------------|---------|-------------------|
+| `/data` | All server data (world, config, logs) | Required - persistent storage |
+| `/plugins` | Plugin JARs (Paper/Spigot) | Optional - `:ro` for read-only |
+| `/mods` | Mod JARs (Forge/Fabric) | Optional - `:ro` for read-only |
+| `/config` | Mod configuration files | Optional |
+
+**/data Directory Structure:**
+
+```
+/data
+├── server.jar          # Server executable
+├── server.properties   # Server configuration
+├── ops.json           # Operator list
+├── whitelist.json     # Whitelist
+├── banned-players.json
+├── banned-ips.json
+├── world/             # Default world (overworld)
+├── world_nether/      # Nether dimension
+├── world_the_end/     # End dimension
+├── plugins/           # Downloaded plugins
+├── mods/              # Downloaded mods
+├── config/            # Mod configurations
+└── logs/              # Server logs
+```
+
+**Permission Variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `UID` | `1000` | User ID inside container |
+| `GID` | `1000` | Group ID inside container |
+| `SKIP_CHOWN_DATA` | `false` | Skip ownership changes (for pre-configured permissions) |
+
+---
+
+#### Autopause / Autostop
+
+**Autopause** - Pauses the server process when no players are online:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_AUTOPAUSE` | `false` | Enable autopause feature |
+| `AUTOPAUSE_TIMEOUT_EST` | `3600` | Seconds after last player leaves |
+| `AUTOPAUSE_TIMEOUT_INIT` | `600` | Seconds after start with no connections |
+| `AUTOPAUSE_PERIOD` | `10` | Status check interval |
+| `MAX_TICK_TIME` | - | Set to `-1` to disable watchdog (recommended) |
+
+**Autostop** - Completely stops the container when idle:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_AUTOSTOP` | `false` | Enable autostop feature |
+| `AUTOSTOP_TIMEOUT_EST` | `3600` | Seconds after last player leaves |
+| `AUTOSTOP_TIMEOUT_INIT` | `1800` | Seconds after start with no connections |
+| `AUTOSTOP_PERIOD` | `10` | Status check interval |
+
+**Comparison:**
+
+| Feature | Autopause | Autostop |
+|---------|-----------|----------|
+| Behavior | Pauses JVM process | Stops container |
+| Recovery | Instant resume | Requires container restart |
+| Resource Savings | Medium (CPU only) | High (CPU + most memory) |
+| Best For | Quick response needed | Maximum savings |
+
+---
+
+#### Environment Variable Interpolation
+
+The server supports dynamic configuration through variable substitution:
+
+**Syntax:** `${CFG_VARIABLE_NAME}`
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REPLACE_ENV_IN_PLACE` | `true` | Enable variable replacement in config files |
+| `REPLACE_ENV_VARIABLE_PREFIX` | `CFG_` | Prefix for replaceable variables |
+| `REPLACE_ENV_DURING_SYNC` | `false` | Replace in synced `/plugins`, `/mods`, `/config` |
+| `REPLACE_ENV_VARIABLES_EXCLUDES` | - | Files to exclude from replacement |
+| `REPLACE_ENV_VARIABLES_EXCLUDE_PATHS` | - | Paths to exclude |
+
+**Supported File Types:** `.yml`, `.yaml`, `.txt`, `.cfg`, `.conf`, `.properties`
+
+**Secret Files:** Append `_FILE` to variable name to read from mounted file:
+```yaml
+environment:
+  RCON_PASSWORD_FILE: /run/secrets/rcon_password
+```
+
+---
+
+### mc-router
+
+**mc-router** is a connection multiplexer that enables multiple Minecraft servers to share a single IP address and port (25565) using hostname-based routing.
+
+#### Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Minecraft Clients                        │
+│        (Connect to server.example.com:25565)                │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│                    mc-router (:25565)                       │
+│  - Reads hostname from Minecraft handshake packet          │
+│  - Routes to correct backend server                        │
+│  - Handles auto-scaling (start/stop containers)            │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+    ┌────────────────────┼────────────────────┐
+    ▼                    ▼                    ▼
+┌─────────┐        ┌─────────┐        ┌─────────┐
+│ Server1 │        │ Server2 │        │ Server3 │
+│ :25566  │        │ :25567  │        │ :25568  │
+└─────────┘        └─────────┘        └─────────┘
+```
+
+#### Routing Methods
+
+**1. Command-Line Mapping:**
+```bash
+mc-router -mapping "server1.example.com=mc-server1:25565,server2.example.com=mc-server2:25565"
+```
+
+**2. JSON Configuration File:**
+```json
+{
+  "default-server": "vanilla:25565",
+  "mappings": {
+    "survival.example.com": "mc-survival:25565",
+    "creative.example.com": "mc-creative:25565"
+  }
+}
+```
+
+**3. Docker Auto-Discovery (Recommended for Docker Compose):**
+
+Set `-in-docker` flag and use Docker labels:
+
+```yaml
+services:
+  mc-router:
+    image: itzg/mc-router
+    command: --in-docker --auto-scale-up --auto-scale-down
+    ports:
+      - "25565:25565"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  mc-survival:
+    image: itzg/minecraft-server
+    labels:
+      - "mc-router.host=survival.local"
+      - "mc-router.port=25565"
+```
+
+**Docker Labels:**
+
+| Label | Description |
+|-------|-------------|
+| `mc-router.host` | External hostname(s), comma-separated |
+| `mc-router.port` | Backend port (default: 25565) |
+| `mc-router.auto-scale-up` | Per-container override for auto-scale-up |
+| `mc-router.auto-scale-down` | Per-container override for auto-scale-down |
+
+**4. Kubernetes Service Discovery:**
+
+```yaml
+metadata:
+  annotations:
+    "mc-router.itzg.me/externalServerName": "survival.example.com"
+    "mc-router.itzg.me/defaultServer": "true"
+```
+
+---
+
+#### Configuration
+
+**Key Environment Variables / Flags:**
+
+| Flag | Environment Variable | Default | Description |
+|------|---------------------|---------|-------------|
+| `-port` | `PORT` | `25565` | Listen port |
+| `-default` | `DEFAULT` | - | Default backend server |
+| `-in-docker` | - | - | Enable Docker auto-discovery |
+| `-in-kube-cluster` | - | - | Enable Kubernetes discovery |
+| `-mapping` | `MAPPING` | - | Static hostname mappings |
+| `-connection-rate-limit` | `CONNECTION_RATE_LIMIT` | `1` | Connections per second limit |
+
+---
+
+#### Auto-Scaling
+
+mc-router can automatically start stopped containers when players connect and stop idle containers.
+
+**Configuration:**
+
+| Flag | Environment Variable | Default | Description |
+|------|---------------------|---------|-------------|
+| `-auto-scale-up` | `AUTO_SCALE_UP` | `false` | Start stopped containers on connect |
+| `-auto-scale-down` | `AUTO_SCALE_DOWN` | `false` | Stop idle containers |
+| `-auto-scale-down-after` | `AUTO_SCALE_DOWN_AFTER` | `10m` | Idle timeout before stopping |
+| `-docker-timeout` | `DOCKER_TIMEOUT` | `60` | Seconds to wait for container start |
+
+**MOTD for Sleeping Servers:**
+
+| Flag | Environment Variable | Default |
+|------|---------------------|---------|
+| `-auto-scale-asleep-motd` | `AUTO_SCALE_ASLEEP_MOTD` | `Server is sleeping. Connect to wake up!` |
+
+**Player Allow/Deny Lists:**
+
+| Flag | Description |
+|------|-------------|
+| `-auto-scale-up-allow-list` | File of player UUIDs/usernames allowed to wake servers |
+| `-auto-scale-up-deny-list` | File of players blocked from waking servers |
+
+---
+
+#### Security Features
+
+| Feature | Description |
+|---------|-------------|
+| **Port Scanner Blocking** | Connections without valid hostname are blocked |
+| **Rate Limiting** | Configurable connections per second per IP |
+| **DDoS Mitigation** | Connection throttling reduces attack surface |
+
+---
+
+#### Monitoring
+
+| Flag | Environment Variable | Description |
+|------|---------------------|-------------|
+| `-metrics-backend` | `METRICS_BACKEND` | `prometheus`, `influxdb`, or `discard` |
+| `-metrics-bind` | `METRICS_BIND` | Metrics server bind address |
+| `-record-logins` | `RECORD_LOGINS` | Track player login metrics |
+| `-webhook-url` | `WEBHOOK_URL` | URL for player login/disconnect notifications |
+
+---
+
+#### Platform Support
+
+**Docker Images:** `itzg/mc-router`
+
+| Architecture | Supported |
+|--------------|:---------:|
+| amd64 (x86_64) | Yes |
+| arm64 (Apple Silicon, AWS Graviton) | Yes |
+| arm32v6 (Raspberry Pi) | Yes |
+
+---
+
+### Quick Reference Examples
+
+**Basic Paper Server with mc-router:**
+
+```yaml
+services:
+  router:
+    image: itzg/mc-router
+    command: --in-docker --auto-scale-up --auto-scale-down
+    ports:
+      - "25565:25565"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  mc-survival:
+    image: itzg/minecraft-server:java21
+    environment:
+      EULA: "TRUE"
+      TYPE: "PAPER"
+      VERSION: "1.21.1"
+      MEMORY: "4G"
+      USE_AIKAR_FLAGS: "true"
+    labels:
+      - "mc-router.host=survival.local,survival.192.168.1.100.nip.io"
+    volumes:
+      - ./data:/data
+```
+
+**Fabric Server with Mods:**
+
+```yaml
+services:
+  mc-modded:
+    image: itzg/minecraft-server:java21
+    environment:
+      EULA: "TRUE"
+      TYPE: "FABRIC"
+      VERSION: "1.20.4"
+      MEMORY: "8G"
+      MODRINTH_PROJECTS: |
+        fabric-api
+        sodium
+        lithium
+        iris
+      MODRINTH_DOWNLOAD_DEPENDENCIES: required
+    volumes:
+      - ./data:/data
+```
+
+**Forge Server with CurseForge Mods:**
+
+```yaml
+services:
+  mc-forge:
+    image: itzg/minecraft-server:java17
+    environment:
+      EULA: "TRUE"
+      TYPE: "FORGE"
+      VERSION: "1.20.1"
+      MEMORY: "8G"
+      CF_API_KEY: "${CF_API_KEY}"
+      CURSEFORGE_FILES: |
+        jei
+        journeymap
+        create
+    volumes:
+      - ./data:/data
+```
+
+**Legacy Forge (1.16.5):**
+
+```yaml
+services:
+  mc-legacy:
+    image: itzg/minecraft-server:java8  # Java 8 required!
+    environment:
+      EULA: "TRUE"
+      TYPE: "FORGE"
+      VERSION: "1.16.5"
+      MEMORY: "6G"
+    volumes:
+      - ./data:/data
+```
+
+---
+
+### Official Documentation Links
+
+| Resource | URL |
+|----------|-----|
+| **minecraft-server Docs** | https://docker-minecraft-server.readthedocs.io/ |
+| **minecraft-server GitHub** | https://github.com/itzg/docker-minecraft-server |
+| **mc-router GitHub** | https://github.com/itzg/mc-router |
+| **Docker Hub (minecraft-server)** | https://hub.docker.com/r/itzg/minecraft-server |
+| **Docker Hub (mc-router)** | https://hub.docker.com/r/itzg/mc-router |
 
 ---
 
