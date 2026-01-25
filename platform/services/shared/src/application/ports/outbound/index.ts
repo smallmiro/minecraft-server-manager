@@ -35,3 +35,5 @@ export type {
   ServerStatus,
   WorldAvailabilityCategory,
 } from './IWorldRepository.js';
+
+export type { IModSourcePort } from './IModSourcePort.js';

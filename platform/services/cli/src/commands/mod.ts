@@ -1,11 +1,12 @@
-import { Paths, log, colors } from '@minecraft-docker/shared';
 import {
-  searchMods,
-  getProject,
-  formatDownloads,
-  getLoaderFromServerType,
-  type ModrinthProject,
-} from '../lib/modrinth-api.js';
+  Paths,
+  log,
+  colors,
+  ModSourceFactory,
+  type ModProject,
+} from '@minecraft-docker/shared';
+// Auto-register mod source adapters
+import '@minecraft-docker/mod-source-modrinth';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -62,10 +63,11 @@ export async function modCommand(options: ModCommandOptions): Promise<number> {
 }
 
 /**
- * Search mods on Modrinth
+ * Search mods using ModSourceFactory
  */
 async function modSearch(options: ModCommandOptions): Promise<number> {
   const query = options.query;
+  const source = options.source ?? 'modrinth';
 
   if (!query) {
     log.error('Search query required');
@@ -73,11 +75,19 @@ async function modSearch(options: ModCommandOptions): Promise<number> {
     return 1;
   }
 
+  // Get the appropriate mod source adapter
+  const adapter = ModSourceFactory.getOrNull(source);
+  if (!adapter) {
+    log.error(`Mod source '${source}' is not supported`);
+    console.log(`Available sources: ${ModSourceFactory.getSupportedSources().join(', ')}`);
+    return 1;
+  }
+
   try {
-    const result = await searchMods(query, { limit: 15 });
+    const result = await adapter.search(query, { limit: 15 });
 
     if (result.hits.length === 0) {
-      console.log(`No mods found for "${query}"`);
+      console.log(`No mods found for "${query}" on ${adapter.displayName}`);
       return 0;
     }
 
@@ -87,15 +97,15 @@ async function modSearch(options: ModCommandOptions): Promise<number> {
     }
 
     console.log('');
-    console.log(colors.bold(`Search results for "${query}" (${result.total_hits} total):`));
+    console.log(colors.bold(`Search results for "${query}" on ${adapter.displayName} (${result.totalHits} total):`));
     console.log('');
 
     for (const mod of result.hits) {
       const downloads = formatDownloads(mod.downloads);
-      const serverSide = mod.server_side === 'required' ? colors.green('server') :
-                        mod.server_side === 'optional' ? colors.yellow('server?') : '';
-      const clientSide = mod.client_side === 'required' ? colors.blue('client') :
-                        mod.client_side === 'optional' ? colors.dim('client?') : '';
+      const serverSide = mod.serverSide === 'required' ? colors.green('server') :
+                        mod.serverSide === 'optional' ? colors.yellow('server?') : '';
+      const clientSide = mod.clientSide === 'required' ? colors.blue('client') :
+                        mod.clientSide === 'optional' ? colors.dim('client?') : '';
       const sides = [serverSide, clientSide].filter(Boolean).join(' ');
 
       console.log(`  ${colors.cyan(mod.slug)} ${colors.dim(`(${downloads} downloads)`)}`);
@@ -116,7 +126,7 @@ async function modSearch(options: ModCommandOptions): Promise<number> {
 }
 
 /**
- * Add mod to server
+ * Add mod to server using ModSourceFactory
  */
 async function modAdd(
   paths: Paths,
@@ -145,6 +155,9 @@ async function modAdd(
     return 1;
   }
 
+  // Get the appropriate mod source adapter
+  const adapter = ModSourceFactory.getOrNull(source);
+
   try {
     // Read current config
     const configContent = await readFile(configPath, 'utf-8');
@@ -163,16 +176,16 @@ async function modAdd(
       }
     }
 
-    // Validate mods exist on Modrinth (if source is modrinth)
-    const validMods: ModrinthProject[] = [];
+    // Validate mods exist on the source (if adapter is available)
+    const validMods: ModProject[] = [];
     const invalidMods: string[] = [];
 
-    if (source === 'modrinth') {
+    if (adapter) {
       console.log('');
-      console.log(colors.dim('Validating mods on Modrinth...'));
+      console.log(colors.dim(`Validating mods on ${adapter.displayName}...`));
 
       for (const modName of modNames) {
-        const project = await getProject(modName);
+        const project = await adapter.getProject(modName);
         if (project) {
           validMods.push(project);
           console.log(`  ${colors.green('✓')} ${project.title} (${project.slug})`);
@@ -191,8 +204,8 @@ async function modAdd(
     }
 
     // Update config.env
-    const modsToAdd = source === 'modrinth' ? validMods.map(m => m.slug) : modNames;
-    const envKey = getEnvKeyForSource(source, serverType);
+    const modsToAdd = adapter ? validMods.map(m => adapter.formatForEnv(m)) : modNames;
+    const envKey = adapter ? adapter.getEnvKey() : getEnvKeyForSource(source, serverType);
     const currentMods = parseModList(config[envKey] || '');
     const newMods = [...new Set([...currentMods, ...modsToAdd])];
 
@@ -499,4 +512,35 @@ function getEnvKeyForSource(source: string, serverType: string): string {
     default:
       return 'MODRINTH_PROJECTS';
   }
+}
+
+/**
+ * Format download count for display
+ */
+function formatDownloads(count: number): string {
+  if (count >= 1_000_000) {
+    return `${(count / 1_000_000).toFixed(1)}M`;
+  }
+  if (count >= 1_000) {
+    return `${(count / 1_000).toFixed(1)}K`;
+  }
+  return String(count);
+}
+
+/**
+ * Get loader type from server type
+ */
+function getLoaderFromServerType(serverType: string): string | null {
+  const loaderMap: Record<string, string> = {
+    FORGE: 'forge',
+    NEOFORGE: 'neoforge',
+    FABRIC: 'fabric',
+    QUILT: 'quilt',
+    PAPER: 'paper',
+    SPIGOT: 'spigot',
+    BUKKIT: 'bukkit',
+    PURPUR: 'purpur',
+  };
+
+  return loaderMap[serverType.toUpperCase()] ?? null;
 }

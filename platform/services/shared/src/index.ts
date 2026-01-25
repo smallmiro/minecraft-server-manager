@@ -77,6 +77,26 @@ export {
   type WorldLock,
 } from './domain/index.js';
 
+// Re-export mod domain models
+export type {
+  ModSideSupport,
+  ModProjectType,
+  ModVersionType,
+  ModDependencyType,
+  ModSearchIndex,
+  ModSearchOptions,
+  ModVersionOptions,
+  ModProject,
+  ModVersion,
+  ModFile,
+  ModFileHashes,
+  ModDependency,
+  ModSearchResult,
+} from './domain/mod/index.js';
+
+// Re-export ModSourceFactory
+export { ModSourceFactory } from './infrastructure/factories/index.js';
+
 // Re-export application layer (ports and use-cases)
 export * from './application/index.js';
 
