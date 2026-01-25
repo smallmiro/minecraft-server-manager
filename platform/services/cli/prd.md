@@ -1,35 +1,35 @@
 # PRD: mcctl - CLI Tool
 
-## 상위 문서
-- [전체 프로젝트 PRD](../../../prd.md) - Section 9
+## Parent Document
+- [Project PRD](../../../prd.md) - Section 9
 
-## 1. 개요
+## 1. Overview
 
-### 1.1 목적
-마인크래프트 서버 관리를 위한 CLI(Command Line Interface) 도구입니다. 대화형 프롬프트와 명령어 인자를 모두 지원합니다.
+### 1.1 Purpose
+Command-line interface (CLI) tool for Minecraft server management. Supports both interactive prompts and command-line arguments.
 
-### 1.2 범위
-- 서버 생성/삭제/시작/중지
-- 월드 관리 (생성, 할당, 해제)
-- 플레이어 관리 (화이트리스트, 밴, OP, 킥)
-- 백업/복원
-- 플랫폼 초기화
+### 1.2 Scope
+- Server creation/deletion/start/stop
+- World management (create, assign, release)
+- Player management (whitelist, ban, OP, kick)
+- Backup/restore
+- Platform initialization
 
-### 1.3 비목표
-- 웹 UI 제공 (mcctl-console 담당)
-- REST API 제공 (mcctl-api 담당)
+### 1.3 Non-Goals
+- Web UI (handled by mcctl-console)
+- REST API (handled by mcctl-api)
 
-## 2. 기술 스택
+## 2. Tech Stack
 
-| 구성요소 | 기술 | 버전 |
-|---------|------|------|
+| Component | Technology | Version |
+|-----------|------------|---------|
 | Runtime | Node.js | 18+ |
 | Language | TypeScript | 5.x |
 | Prompts | @clack/prompts | 0.7.x |
 | Colors | picocolors | 1.x |
 | Shared | @minecraft-docker/shared | workspace |
 
-## 3. 아키텍처
+## 3. Architecture
 
 ### 3.1 Hexagonal Architecture
 
@@ -51,22 +51,22 @@
                           │
 ┌─────────────────────────▼───────────────────────────────────┐
 │                 INFRASTRUCTURE LAYER                         │
-│   ClackPromptAdapter (CLI 전용) + Shared Adapters            │
+│   ClackPromptAdapter (CLI-specific) + Shared Adapters        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 디렉토리 구조
+### 3.2 Directory Structure
 
 ```
 platform/services/cli/
-├── prd.md                      # 이 문서
-├── plan.md                     # 구현 계획
-├── README.md                   # npm 패키지 설명
+├── prd.md                      # This document
+├── plan.md                     # Implementation plan
+├── README.md                   # npm package description
 ├── package.json                # @minecraft-docker/mcctl
 ├── tsconfig.json
 ├── src/
-│   ├── index.ts                # CLI 진입점
-│   ├── commands/               # 명령어 구현
+│   ├── index.ts                # CLI entry point
+│   ├── commands/               # Command implementations
 │   │   ├── create.ts
 │   │   ├── delete.ts
 │   │   ├── status.ts
@@ -79,63 +79,63 @@ platform/services/cli/
 │   │   ├── backup.ts
 │   │   └── ...
 │   ├── adapters/
-│   │   └── ClackPromptAdapter.ts  # CLI 전용 어댑터
+│   │   └── ClackPromptAdapter.ts  # CLI-specific adapter
 │   ├── di/
-│   │   └── container.ts        # DI 컨테이너
+│   │   └── container.ts        # DI container
 │   └── lib/
-│       ├── prompts/            # 재사용 프롬프트 컴포넌트
-│       ├── mojang-api.ts       # Mojang API 클라이언트
-│       └── player-cache.ts     # 플레이어 캐시
+│       ├── prompts/            # Reusable prompt components
+│       ├── mojang-api.ts       # Mojang API client
+│       └── player-cache.ts     # Player cache
 └── tests/
 ```
 
-## 4. 명령어 구조
+## 4. Command Structure
 
-### 4.1 서버 관리
+### 4.1 Server Management
 
-| 명령어 | 설명 |
-|--------|------|
-| `mcctl init` | 플랫폼 초기화 |
-| `mcctl create [name]` | 서버 생성 |
-| `mcctl delete [name]` | 서버 삭제 |
-| `mcctl status` | 서버 상태 조회 |
-| `mcctl start <name>` | 서버 시작 |
-| `mcctl stop <name>` | 서버 중지 |
-| `mcctl logs <name>` | 서버 로그 |
-| `mcctl console <name>` | RCON 콘솔 |
+| Command | Description |
+|---------|-------------|
+| `mcctl init` | Initialize platform |
+| `mcctl create [name]` | Create server |
+| `mcctl delete [name]` | Delete server |
+| `mcctl status` | View server status |
+| `mcctl start <name>` | Start server |
+| `mcctl stop <name>` | Stop server |
+| `mcctl logs <name>` | View server logs |
+| `mcctl console <name>` | RCON console |
 
-### 4.2 월드 관리
+### 4.2 World Management
 
-| 명령어 | 설명 |
-|--------|------|
-| `mcctl world list` | 월드 목록 |
-| `mcctl world new [name]` | 월드 생성 |
-| `mcctl world assign` | 월드 할당 |
-| `mcctl world release` | 월드 해제 |
+| Command | Description |
+|---------|-------------|
+| `mcctl world list` | List worlds |
+| `mcctl world new [name]` | Create world |
+| `mcctl world assign` | Assign world |
+| `mcctl world release` | Release world |
 
-### 4.3 플레이어 관리
+### 4.3 Player Management
 
-| 명령어 | 설명 |
-|--------|------|
-| `mcctl player` | 통합 플레이어 관리 (대화형) |
-| `mcctl player info <name>` | 플레이어 정보 |
-| `mcctl whitelist <server> <action>` | 화이트리스트 |
-| `mcctl ban <server> <action>` | 밴/언밴 |
-| `mcctl op <server> <action>` | OP 관리 |
-| `mcctl kick <server> <player>` | 킥 |
+| Command | Description |
+|---------|-------------|
+| `mcctl player` | Unified player management (interactive) |
+| `mcctl player info <name>` | Player info |
+| `mcctl whitelist <server> <action>` | Whitelist |
+| `mcctl ban <server> <action>` | Ban/unban |
+| `mcctl op <server> <action>` | OP management |
+| `mcctl kick <server> <player>` | Kick |
 
-### 4.4 백업
+### 4.4 Backup
 
-| 명령어 | 설명 |
-|--------|------|
-| `mcctl backup status` | 백업 상태 |
-| `mcctl backup push` | 백업 푸시 |
-| `mcctl backup history` | 백업 이력 |
-| `mcctl backup restore` | 백업 복원 |
+| Command | Description |
+|---------|-------------|
+| `mcctl backup status` | Backup status |
+| `mcctl backup push` | Push backup |
+| `mcctl backup history` | Backup history |
+| `mcctl backup restore` | Restore backup |
 
-## 5. 대화형 모드
+## 5. Interactive Mode
 
-### 5.1 서버 생성 플로우
+### 5.1 Server Creation Flow
 
 ```
 $ mcctl create
@@ -160,9 +160,9 @@ $ mcctl create
    Connect via: myserver.local:25565
 ```
 
-## 6. 의존성
+## 6. Dependencies
 
-### 6.1 내부 의존성
+### 6.1 Internal Dependencies
 
 ```json
 {
@@ -172,7 +172,7 @@ $ mcctl create
 }
 ```
 
-### 6.2 외부 의존성
+### 6.2 External Dependencies
 
 ```json
 {
@@ -183,15 +183,15 @@ $ mcctl create
 }
 ```
 
-## 7. 환경 변수
+## 7. Environment Variables
 
-| 변수 | 설명 | 기본값 |
-|------|------|--------|
-| `MCCTL_ROOT` | 데이터 디렉토리 | `~/minecraft-servers` |
-| `MCCTL_SUDO_PASSWORD` | sudo 비밀번호 (자동화용) | - |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCCTL_ROOT` | Data directory | `~/minecraft-servers` |
+| `MCCTL_SUDO_PASSWORD` | sudo password (for automation) | - |
 
 ## 8. Revision History
 
-| 버전 | 날짜 | 작성자 | 변경 내용 |
-|------|------|--------|----------|
-| 1.0.0 | 2025-01-25 | - | 초기 PRD 작성 |
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0.0 | 2025-01-25 | - | Initial PRD |

@@ -1,22 +1,22 @@
-# Issue: IUserRepository 포트 정의
+# Issue: IUserRepository Port Definition
 
 ## Phase
-8.1.1 - Shared 패키지 확장
+8.1.1 - Shared Package Extension
 
-## 제목
+## Title
 feat(shared): Add IUserRepository port interface
 
-## 설명
-Admin Service 사용자 관리를 위한 `IUserRepository` 포트 인터페이스를 정의합니다.
+## Description
+Define the `IUserRepository` port interface for Admin Service user management.
 
-## 작업 내용
-- [ ] `src/application/ports/outbound/IUserRepository.ts` 생성
-- [ ] User 인터페이스 정의
-- [ ] IUserRepository 인터페이스 정의
-- [ ] index.ts에 export 추가
-- [ ] 단위 테스트 작성
+## Tasks
+- [ ] Create `src/application/ports/outbound/IUserRepository.ts`
+- [ ] Define User interface
+- [ ] Define IUserRepository interface
+- [ ] Add export to index.ts
+- [ ] Write unit tests
 
-## 인터페이스 정의
+## Interface Definition
 
 ```typescript
 export interface User {
@@ -37,10 +37,10 @@ export interface IUserRepository {
 }
 ```
 
-## 관련 문서
+## Related Documents
 - [shared PRD](../../platform/services/shared/prd.md) - Section 4.1
 
-## 라벨
+## Labels
 - `phase:8-admin`
 - `type:feature`
 - `package:shared`

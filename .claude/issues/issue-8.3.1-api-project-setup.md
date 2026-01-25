@@ -1,25 +1,25 @@
-# Issue: mcctl-api 프로젝트 기반 구조
+# Issue: mcctl-api Project Foundation
 
 ## Phase
-8.3.1 - mcctl-api 서비스
+8.3.1 - mcctl-api Service
 
-## 제목
+## Title
 feat(mcctl-api): Setup project foundation
 
-## 설명
-mcctl-api REST API 서비스의 기본 프로젝트 구조를 설정합니다.
+## Description
+Set up the basic project structure for the mcctl-api REST API service.
 
-## 작업 내용
-- [ ] `package.json` 생성 (`@minecraft-docker/mcctl-api`)
-- [ ] `tsconfig.json` 설정
-- [ ] `src/index.ts` - 진입점
-- [ ] `src/server.ts` - Fastify 서버 설정
-- [ ] `src/config.ts` - 환경 변수 로더
-- [ ] `src/di/container.ts` - DI 컨테이너
-- [ ] pnpm-workspace.yaml에 패키지 추가
-- [ ] 빌드 테스트
+## Tasks
+- [ ] Create `package.json` (`@minecraft-docker/mcctl-api`)
+- [ ] Configure `tsconfig.json`
+- [ ] `src/index.ts` - Entry point
+- [ ] `src/server.ts` - Fastify server setup
+- [ ] `src/config.ts` - Environment variable loader
+- [ ] `src/di/container.ts` - DI container
+- [ ] Add package to pnpm-workspace.yaml
+- [ ] Build test
 
-## 의존성
+## Dependencies
 
 ```json
 {
@@ -31,19 +31,19 @@ mcctl-api REST API 서비스의 기본 프로젝트 구조를 설정합니다.
 }
 ```
 
-## 환경 변수
+## Environment Variables
 
-| 변수 | 설명 | 기본값 |
-|------|------|--------|
-| `MCCTL_ROOT` | 데이터 디렉토리 | `/data` |
-| `API_PORT` | 리스닝 포트 | `3001` |
-| `API_ACCESS_MODE` | 접근 모드 | `internal` |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCCTL_ROOT` | Data directory | `/data` |
+| `API_PORT` | Listening port | `3001` |
+| `API_ACCESS_MODE` | Access mode | `internal` |
 
-## 관련 문서
+## Related Documents
 - [mcctl-api PRD](../../platform/services/mcctl-api/prd.md)
 - [mcctl-api Plan](../../platform/services/mcctl-api/plan.md) - Phase 1
 
-## 라벨
+## Labels
 - `phase:8-admin`
 - `type:feature`
 - `package:mcctl-api`

@@ -1833,75 +1833,75 @@ pnpm test
 > **Milestone**: TBD
 > **Status**: Planned
 
-웹 기반 관리 콘솔 서비스의 구현 계획입니다. MSA 원칙에 따라 두 개의 독립 서비스로 구성됩니다.
+Implementation plan for web-based management console service. Consists of two independent services following MSA principles.
 
-### 8.1 서비스 구조
+### 8.1 Service Structure
 
 ```
 platform/services/
 ├── mcctl-api/              # @minecraft-docker/mcctl-api
-│   ├── prd.md              # API 서비스 PRD
-│   ├── plan.md             # API 서비스 Plan
+│   ├── prd.md              # API service PRD
+│   ├── plan.md             # API service Plan
 │   └── src/
 │
 └── mcctl-console/          # @minecraft-docker/mcctl-console
-    ├── prd.md              # Console 서비스 PRD
-    ├── plan.md             # Console 서비스 Plan
+    ├── prd.md              # Console service PRD
+    ├── plan.md             # Console service Plan
     └── src/
 ```
 
-### 8.2 세부 계획 문서
+### 8.2 Detailed Plan Documents
 
-각 서비스는 독립적인 구현 계획을 가집니다:
+Each service has independent implementation plans:
 
 - **mcctl-api**: [Plan](platform/services/mcctl-api/plan.md) - Fastify REST API
 - **mcctl-console**: [Plan](platform/services/mcctl-console/plan.md) - Next.js BFF + UI
 
-### 8.3 구현 순서
+### 8.3 Implementation Order
 
-#### Phase 8.1: Shared 패키지 확장
-- [ ] `IUserRepository` 포트 추가
-- [ ] `YamlUserRepository` 어댑터 구현
-- [ ] `SqliteUserRepository` 어댑터 구현
-- [ ] `ApiPromptAdapter` 구현
+#### Phase 8.1: Shared Package Extension
+- [ ] Add `IUserRepository` port
+- [ ] Implement `YamlUserRepository` adapter
+- [ ] Implement `SqliteUserRepository` adapter
+- [ ] Implement `ApiPromptAdapter`
 
-#### Phase 8.2: CLI Admin 명령어
-- [ ] `mcctl admin init` - 초기 설정
-- [ ] `mcctl admin user` - 사용자 관리
-- [ ] `mcctl admin api` - API 설정
-- [ ] `mcctl admin service` - 서비스 관리
+#### Phase 8.2: CLI Admin Commands
+- [ ] `mcctl admin init` - Initial setup
+- [ ] `mcctl admin user` - User management
+- [ ] `mcctl admin api` - API settings
+- [ ] `mcctl admin service` - Service management
 
-#### Phase 8.3: mcctl-api 서비스
-- [ ] Fastify 서버 구조
-- [ ] 인증 플러그인 (5가지 접근 모드)
-- [ ] REST API 라우트
+#### Phase 8.3: mcctl-api Service
+- [ ] Fastify server structure
+- [ ] Authentication plugin (5 access modes)
+- [ ] REST API routes
 - [ ] OpenAPI/Swagger
 - [ ] Dockerfile
 
-#### Phase 8.4: mcctl-console 서비스
-- [ ] Next.js 프로젝트 설정
-- [ ] NextAuth.js 인증
-- [ ] BFF 프록시
-- [ ] 대시보드 UI
+#### Phase 8.4: mcctl-console Service
+- [ ] Next.js project setup
+- [ ] NextAuth.js authentication
+- [ ] BFF proxy
+- [ ] Dashboard UI
 - [ ] Dockerfile
 
-#### Phase 8.5: 통합 및 테스트
-- [ ] Docker Compose 통합
-- [ ] E2E 테스트
+#### Phase 8.5: Integration and Testing
+- [ ] Docker Compose integration
+- [ ] E2E tests
 
 ### 8.4 Verification
 
 ```bash
-# 1. 초기화
+# 1. Initialize
 mcctl admin init
 
-# 2. 서비스 시작
+# 2. Start services
 mcctl admin start
 
-# 3. Console 접근
+# 3. Access Console
 open http://localhost:3000
 
-# 4. API 테스트 (api-key 모드)
+# 4. API test (api-key mode)
 curl -H "X-API-Key: mctk_xxx" http://localhost:3001/api/servers
 ```
 

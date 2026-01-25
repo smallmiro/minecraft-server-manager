@@ -1,30 +1,30 @@
-# Issue: mcctl admin init 명령어
+# Issue: mcctl admin init Command
 
 ## Phase
-8.2.1 - CLI Admin 명령어
+8.2.1 - CLI Admin Commands
 
-## 제목
+## Title
 feat(cli): Add `mcctl admin init` command for Admin Service initialization
 
-## 설명
-Admin Service 초기 설정을 위한 대화형 `mcctl admin init` 명령어를 구현합니다.
+## Description
+Implement an interactive `mcctl admin init` command for Admin Service initial setup.
 
-## 선행 작업
-- #8.1.1 IUserRepository 포트 정의
-- #8.1.2 YamlUserRepository 어댑터 구현
+## Prerequisites
+- #8.1.1 IUserRepository port definition
+- #8.1.2 YamlUserRepository adapter implementation
 
-## 작업 내용
-- [ ] `src/commands/admin/index.ts` - 메인 라우터
-- [ ] `src/commands/admin/init.ts` - 초기화 명령어
-- [ ] `.mcctl-admin.yml` 설정 파일 생성
-- [ ] 관리자 계정 생성 프롬프트
-- [ ] API 접근 모드 선택
-- [ ] API 키 자동 생성
-- [ ] `src/lib/admin-config.ts` - 설정 관리
-- [ ] index.ts에 admin 라우팅 추가
-- [ ] 테스트
+## Tasks
+- [ ] `src/commands/admin/index.ts` - Main router
+- [ ] `src/commands/admin/init.ts` - Init command
+- [ ] Create `.mcctl-admin.yml` configuration file
+- [ ] Admin account creation prompt
+- [ ] API access mode selection
+- [ ] Auto-generate API key
+- [ ] `src/lib/admin-config.ts` - Configuration management
+- [ ] Add admin routing to index.ts
+- [ ] Tests
 
-## 대화형 플로우
+## Interactive Flow
 
 ```
 $ mcctl admin init
@@ -51,7 +51,7 @@ $ mcctl admin init
    Console: http://localhost:3000
 ```
 
-## 생성되는 설정 파일
+## Generated Configuration File
 
 ```yaml
 # ~/.minecraft-servers/.mcctl-admin.yml
@@ -79,10 +79,10 @@ users:
     role: "admin"
 ```
 
-## 관련 문서
+## Related Documents
 - [mcctl-api PRD](../../platform/services/mcctl-api/prd.md) - Section 4
 
-## 라벨
+## Labels
 - `phase:8-admin`
 - `type:feature`
 - `package:cli`

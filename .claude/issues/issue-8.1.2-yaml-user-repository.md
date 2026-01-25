@@ -1,27 +1,27 @@
-# Issue: YamlUserRepository 어댑터 구현
+# Issue: YamlUserRepository Adapter Implementation
 
 ## Phase
-8.1.2 - Shared 패키지 확장
+8.1.2 - Shared Package Extension
 
-## 제목
+## Title
 feat(shared): Implement YamlUserRepository adapter
 
-## 설명
-`.mcctl-admin.yml` 파일 기반 사용자 저장소 어댑터를 구현합니다.
+## Description
+Implement a YAML file-based user repository adapter using `.mcctl-admin.yml`.
 
-## 선행 작업
-- #8.1.1 IUserRepository 포트 정의
+## Prerequisites
+- #8.1.1 IUserRepository port definition
 
-## 작업 내용
-- [ ] `src/infrastructure/adapters/YamlUserRepository.ts` 생성
-- [ ] IUserRepository 구현
-- [ ] 파일 읽기/쓰기 구현
-- [ ] bcrypt 비밀번호 해싱
-- [ ] 파일 잠금 처리
-- [ ] index.ts에 export 추가
-- [ ] 단위 테스트 작성
+## Tasks
+- [ ] Create `src/infrastructure/adapters/YamlUserRepository.ts`
+- [ ] Implement IUserRepository interface
+- [ ] Implement file read/write operations
+- [ ] bcrypt password hashing
+- [ ] File locking handling
+- [ ] Add export to index.ts
+- [ ] Write unit tests
 
-## 설정 파일 구조
+## Configuration File Structure
 
 ```yaml
 # ~/.minecraft-servers/.mcctl-admin.yml
@@ -34,10 +34,10 @@ users:
     role: "operator"
 ```
 
-## 관련 문서
+## Related Documents
 - [shared PRD](../../platform/services/shared/prd.md) - Section 4.2
 
-## 라벨
+## Labels
 - `phase:8-admin`
 - `type:feature`
 - `package:shared`

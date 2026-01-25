@@ -1,38 +1,38 @@
-# Issue: mcctl-api 인증 플러그인 구현
+# Issue: mcctl-api Authentication Plugin
 
 ## Phase
-8.3.2 - mcctl-api 서비스
+8.3.2 - mcctl-api Service
 
-## 제목
+## Title
 feat(mcctl-api): Implement authentication plugin with 5 access modes
 
-## 설명
-5가지 접근 모드를 지원하는 Fastify 인증 플러그인을 구현합니다.
+## Description
+Implement a Fastify authentication plugin supporting 5 access modes.
 
-## 선행 작업
-- #8.3.1 mcctl-api 프로젝트 기반 구조
+## Prerequisites
+- #8.3.1 mcctl-api project foundation
 
-## 작업 내용
-- [ ] `src/plugins/auth.ts` 생성
-- [ ] `internal` 모드 - Docker 네트워크 검증
-- [ ] `api-key` 모드 - X-API-Key 헤더 검증
-- [ ] `ip-whitelist` 모드 - IP 화이트리스트
-- [ ] `api-key-ip` 모드 - 복합 인증
-- [ ] `open` 모드 - 인증 없음 (개발용)
-- [ ] `src/plugins/error-handler.ts` - 에러 핸들러
-- [ ] 단위 테스트
+## Tasks
+- [ ] Create `src/plugins/auth.ts`
+- [ ] `internal` mode - Docker network verification
+- [ ] `api-key` mode - X-API-Key header verification
+- [ ] `ip-whitelist` mode - IP whitelist
+- [ ] `api-key-ip` mode - Combined authentication
+- [ ] `open` mode - No authentication (development only)
+- [ ] `src/plugins/error-handler.ts` - Error handler
+- [ ] Unit tests
 
-## 접근 모드 상세
+## Access Mode Details
 
-| 모드 | 포트 노출 | 인증 방식 |
-|------|----------|----------|
-| `internal` | 없음 | Docker 네트워크만 |
-| `api-key` | 3001 | X-API-Key 헤더 |
-| `ip-whitelist` | 3001 | IP 검증 |
-| `api-key-ip` | 3001 | 둘 다 |
-| `open` | 3001 | 없음 (개발용) |
+| Mode | Port Exposure | Authentication |
+|------|---------------|----------------|
+| `internal` | None | Docker network only |
+| `api-key` | 3001 | X-API-Key header |
+| `ip-whitelist` | 3001 | IP verification |
+| `api-key-ip` | 3001 | Both |
+| `open` | 3001 | None (dev only) |
 
-## 구현 예시
+## Implementation Example
 
 ```typescript
 export interface AuthPluginOptions {
@@ -43,10 +43,10 @@ export interface AuthPluginOptions {
 }
 ```
 
-## 관련 문서
+## Related Documents
 - [mcctl-api PRD](../../platform/services/mcctl-api/prd.md) - Section 4
 
-## 라벨
+## Labels
 - `phase:8-admin`
 - `type:feature`
 - `package:mcctl-api`

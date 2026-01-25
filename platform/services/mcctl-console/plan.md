@@ -1,79 +1,79 @@
 # Implementation Plan: mcctl-console
 
-## 상위 문서
-- [전체 프로젝트 Plan](../../../plan.md) - Phase 8
+## Parent Document
+- [Project Plan](../../../plan.md) - Phase 8
 
-## 개요
+## Overview
 
-mcctl-console 관리 콘솔 서비스의 구현 계획입니다.
+Implementation plan for mcctl-console management console service.
 
-## Phase 1: 프로젝트 기반 구조
+## Phase 1: Project Foundation
 
-### 1.1 패키지 설정
-- [ ] `package.json` 생성 (`@minecraft-docker/mcctl-console`)
-- [ ] `tsconfig.json` 설정
-- [ ] `next.config.js` 설정
-- [ ] `tailwind.config.js` 설정
+### 1.1 Package Setup
+- [ ] Create `package.json` (`@minecraft-docker/mcctl-console`)
+- [ ] Configure `tsconfig.json`
+- [ ] Configure `next.config.js`
+- [ ] Configure `tailwind.config.js`
 
-### 1.2 기본 레이아웃
-- [ ] `src/app/layout.tsx` - 루트 레이아웃
-- [ ] `src/components/layout/Sidebar.tsx` - 사이드바
-- [ ] `src/components/layout/Header.tsx` - 헤더
+### 1.2 Basic Layout
+- [ ] `src/app/layout.tsx` - Root layout
+- [ ] `src/components/layout/Sidebar.tsx` - Sidebar
+- [ ] `src/components/layout/Header.tsx` - Header
 
-### 1.3 UI 컴포넌트
-- [ ] shadcn/ui 설정
-- [ ] 기본 컴포넌트 추가
+### 1.3 UI Components
+- [ ] Setup shadcn/ui
+- [ ] Add base components
 
-## Phase 2: 인증 시스템
+## Phase 2: Authentication System
 
-- [ ] NextAuth 설정
-- [ ] 로그인 페이지
-- [ ] 세션 관리
+- [ ] NextAuth configuration
+- [ ] Login page
+- [ ] Session management
 
-## Phase 3: BFF 프록시
+## Phase 3: BFF Proxy
 
-- [ ] API 프록시 라우트
-- [ ] API 클라이언트
-- [ ] React Query 설정
+- [ ] API proxy routes
+- [ ] API client
+- [ ] React Query setup
 
-## Phase 4: 대시보드
+## Phase 4: Dashboard
 
-- [ ] 대시보드 페이지
-- [ ] 통계 위젯
-- [ ] 서버 개요
+- [ ] Dashboard page
+- [ ] Stats widgets
+- [ ] Server overview
 
-## Phase 5: 서버 관리
+## Phase 5: Server Management
 
-- [ ] 서버 목록
-- [ ] 서버 상세
-- [ ] RCON 콘솔
+- [ ] Server list
+- [ ] Server details
+- [ ] RCON console
 
-## Phase 6: 월드/플레이어/백업 관리
+## Phase 6: World/Player/Backup Management
 
-- [ ] 월드 관리 페이지
-- [ ] 플레이어 관리 페이지
-- [ ] 백업 관리 페이지
+- [ ] World management page
+- [ ] Player management page
+- [ ] Backup management page
 
-## Phase 7: Docker 설정
+## Phase 7: Docker Setup
 
-- [ ] Dockerfile 작성
-- [ ] CI/CD 설정
+- [ ] Create Dockerfile
+- [ ] CI/CD setup
 
-## Phase 8: 테스트
+## Phase 8: Testing
 
-- [ ] 컴포넌트 테스트
-- [ ] E2E 테스트
+- [ ] Component tests
+- [ ] E2E tests
 
-## 완료 기준
+## Completion Criteria
 
-1. 모든 페이지 구현 및 정상 동작
-2. NextAuth 인증 정상 동작
-3. BFF 프록시 통한 API 호출 성공
-4. 반응형 디자인 (모바일 지원)
-5. Docker 이미지 빌드 성공
+1. All pages implemented and working correctly
+2. NextAuth authentication working
+3. BFF proxy API calls successful
+4. Responsive design (mobile support)
+5. Docker image builds successfully
 
 ## Revision History
 
-| 버전 | 날짜 | 작성자 | 변경 내용 |
-|------|------|--------|----------|
-| 1.0.0 | 2025-01-25 | - | 초기 계획 작성 |
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0.0 | 2025-01-25 | - | Initial plan |

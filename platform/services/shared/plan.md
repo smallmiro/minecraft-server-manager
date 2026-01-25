@@ -1,18 +1,18 @@
-# Implementation Plan: shared 패키지
+# Implementation Plan: shared Package
 
-## 상위 문서
-- [전체 프로젝트 Plan](../../../plan.md) - Phase 7
+## Parent Document
+- [Project Plan](../../../plan.md) - Phase 7
 
-## 개요
+## Overview
 
-shared 패키지의 구현 계획입니다. 현재 대부분 구현이 완료된 상태이며, Admin Service를 위한 확장이 필요합니다.
+Implementation plan for the shared package. Most features are already implemented, with extensions needed for the Admin Service.
 
-## 구현 현황
+## Implementation Status
 
-### Phase 1: 기반 구조 ✅
-- [x] `package.json` 생성 (`@minecraft-docker/shared`)
-- [x] `tsconfig.json` 설정
-- [x] 메인 export (`src/index.ts`)
+### Phase 1: Foundation ✅
+- [x] Create `package.json` (`@minecraft-docker/shared`)
+- [x] Configure `tsconfig.json`
+- [x] Main export (`src/index.ts`)
 
 ### Phase 2: Domain Layer ✅
 - [x] Value Objects
@@ -48,27 +48,27 @@ shared 패키지의 구현 계획입니다. 현재 대부분 구현이 완료된
   - [x] `getPlatformStatus()`
   - [x] `getDetailedServerInfoWithPlayers()`
 
-## 신규 계획 (Admin Service용)
+## New Plans (For Admin Service)
 
-### Phase 5: User Repository (예정)
-- [ ] `IUserRepository` 포트 정의
-- [ ] `YamlUserRepository` 어댑터 구현
-- [ ] `SqliteUserRepository` 어댑터 구현
-- [ ] 단위 테스트
+### Phase 5: User Repository (Planned)
+- [ ] Define `IUserRepository` port
+- [ ] Implement `YamlUserRepository` adapter
+- [ ] Implement `SqliteUserRepository` adapter
+- [ ] Unit tests
 
-### Phase 6: API Prompt Adapter (예정)
-- [ ] `ApiPromptAdapter` 구현
-- [ ] 비대화형 모드 에러 처리
-- [ ] 단위 테스트
+### Phase 6: API Prompt Adapter (Planned)
+- [ ] Implement `ApiPromptAdapter`
+- [ ] Non-interactive mode error handling
+- [ ] Unit tests
 
-## 완료 기준
+## Completion Criteria
 
-1. 모든 Use Case가 CLI와 API에서 재사용 가능
-2. 어댑터 교체로 동작 변경 가능 (DI)
-3. 단위 테스트 커버리지 80% 이상
+1. All Use Cases reusable by both CLI and API
+2. Behavior changes possible via adapter swap (DI)
+3. Unit test coverage 80% or higher
 
 ## Revision History
 
-| 버전 | 날짜 | 작성자 | 변경 내용 |
-|------|------|--------|----------|
-| 1.0.0 | 2025-01-25 | - | 초기 계획 작성 |
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0.0 | 2025-01-25 | - | Initial plan |

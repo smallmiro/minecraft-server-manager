@@ -1,48 +1,48 @@
-# Issue: mcctl-api 서버 관리 API 라우트
+# Issue: mcctl-api Server Management API Routes
 
 ## Phase
-8.3.3 - mcctl-api 서비스
+8.3.3 - mcctl-api Service
 
-## 제목
+## Title
 feat(mcctl-api): Implement server management API routes
 
-## 설명
-서버 관리를 위한 REST API 엔드포인트를 구현합니다.
+## Description
+Implement REST API endpoints for server management.
 
-## 선행 작업
-- #8.3.1 mcctl-api 프로젝트 기반 구조
-- #8.3.2 mcctl-api 인증 플러그인
+## Prerequisites
+- #8.3.1 mcctl-api project foundation
+- #8.3.2 mcctl-api authentication plugin
 
-## 작업 내용
-- [ ] `src/routes/servers.ts` 생성
-- [ ] `GET /api/servers` - 서버 목록
-- [ ] `GET /api/servers/:name` - 서버 상세
-- [ ] `POST /api/servers` - 서버 생성
-- [ ] `DELETE /api/servers/:name` - 서버 삭제
-- [ ] `POST /api/servers/:name/start` - 서버 시작
-- [ ] `POST /api/servers/:name/stop` - 서버 중지
-- [ ] `POST /api/servers/:name/restart` - 서버 재시작
-- [ ] `GET /api/servers/:name/logs` - 서버 로그
-- [ ] `POST /api/servers/:name/exec` - RCON 명령 실행
-- [ ] 스키마 정의 (Zod/TypeBox)
-- [ ] 단위 테스트
-- [ ] 통합 테스트
+## Tasks
+- [ ] Create `src/routes/servers.ts`
+- [ ] `GET /api/servers` - List servers
+- [ ] `GET /api/servers/:name` - Server details
+- [ ] `POST /api/servers` - Create server
+- [ ] `DELETE /api/servers/:name` - Delete server
+- [ ] `POST /api/servers/:name/start` - Start server
+- [ ] `POST /api/servers/:name/stop` - Stop server
+- [ ] `POST /api/servers/:name/restart` - Restart server
+- [ ] `GET /api/servers/:name/logs` - Server logs
+- [ ] `POST /api/servers/:name/exec` - Execute RCON command
+- [ ] Schema definitions (Zod/TypeBox)
+- [ ] Unit tests
+- [ ] Integration tests
 
-## API 엔드포인트
+## API Endpoints
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/api/servers` | 서버 목록 |
-| GET | `/api/servers/:name` | 서버 상세 |
-| POST | `/api/servers` | 서버 생성 |
-| DELETE | `/api/servers/:name` | 서버 삭제 |
-| POST | `/api/servers/:name/start` | 시작 |
-| POST | `/api/servers/:name/stop` | 중지 |
-| POST | `/api/servers/:name/restart` | 재시작 |
-| GET | `/api/servers/:name/logs` | 로그 |
-| POST | `/api/servers/:name/exec` | RCON 실행 |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/servers` | List servers |
+| GET | `/api/servers/:name` | Server details |
+| POST | `/api/servers` | Create server |
+| DELETE | `/api/servers/:name` | Delete server |
+| POST | `/api/servers/:name/start` | Start |
+| POST | `/api/servers/:name/stop` | Stop |
+| POST | `/api/servers/:name/restart` | Restart |
+| GET | `/api/servers/:name/logs` | Logs |
+| POST | `/api/servers/:name/exec` | RCON execute |
 
-## 응답 예시
+## Response Example
 
 ```json
 // GET /api/servers
@@ -61,10 +61,10 @@ feat(mcctl-api): Implement server management API routes
 }
 ```
 
-## 관련 문서
+## Related Documents
 - [mcctl-api PRD](../../platform/services/mcctl-api/prd.md) - Section 5.1
 
-## 라벨
+## Labels
 - `phase:8-admin`
 - `type:feature`
 - `package:mcctl-api`

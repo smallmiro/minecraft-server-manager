@@ -1,28 +1,28 @@
-# Issue: mcctl-console 프로젝트 기반 구조
+# Issue: mcctl-console Project Foundation
 
 ## Phase
-8.4.1 - mcctl-console 서비스
+8.4.1 - mcctl-console Service
 
-## 제목
+## Title
 feat(mcctl-console): Setup Next.js project foundation
 
-## 설명
-mcctl-console 관리 콘솔 서비스의 기본 Next.js 프로젝트 구조를 설정합니다.
+## Description
+Set up the basic Next.js project structure for the mcctl-console management console service.
 
-## 작업 내용
-- [ ] `package.json` 생성 (`@minecraft-docker/mcctl-console`)
-- [ ] `tsconfig.json` 설정
-- [ ] `next.config.js` 설정
-- [ ] `tailwind.config.js` 설정
-- [ ] `src/app/layout.tsx` - 루트 레이아웃
-- [ ] `src/app/page.tsx` - 홈 (대시보드 리다이렉트)
+## Tasks
+- [ ] Create `package.json` (`@minecraft-docker/mcctl-console`)
+- [ ] Configure `tsconfig.json`
+- [ ] Configure `next.config.js`
+- [ ] Configure `tailwind.config.js`
+- [ ] `src/app/layout.tsx` - Root layout
+- [ ] `src/app/page.tsx` - Home (dashboard redirect)
 - [ ] `src/components/layout/Sidebar.tsx`
 - [ ] `src/components/layout/Header.tsx`
-- [ ] shadcn/ui 설정
-- [ ] pnpm-workspace.yaml에 패키지 추가
-- [ ] 빌드 테스트
+- [ ] Setup shadcn/ui
+- [ ] Add package to pnpm-workspace.yaml
+- [ ] Build test
 
-## 의존성
+## Dependencies
 
 ```json
 {
@@ -35,7 +35,7 @@ mcctl-console 관리 콘솔 서비스의 기본 Next.js 프로젝트 구조를 �
 }
 ```
 
-## UI 컬러 팔레트 (다크 테마)
+## UI Color Palette (Dark Theme)
 
 ```css
 :root {
@@ -49,11 +49,11 @@ mcctl-console 관리 콘솔 서비스의 기본 Next.js 프로젝트 구조를 �
 }
 ```
 
-## 관련 문서
+## Related Documents
 - [mcctl-console PRD](../../platform/services/mcctl-console/prd.md)
 - [mcctl-console Plan](../../platform/services/mcctl-console/plan.md) - Phase 1
 
-## 라벨
+## Labels
 - `phase:8-admin`
 - `type:feature`
 - `package:mcctl-console`

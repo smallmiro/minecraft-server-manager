@@ -1487,23 +1487,23 @@ minecraft-server-manager/
 > **Milestone**: Phase 8
 > **Status**: Planned
 
-웹 기반 관리 콘솔 서비스입니다. MSA(Microservice Architecture) 원칙에 따라 두 개의 독립 서비스로 구성됩니다.
+Web-based management console service. Consists of two independent services following MSA (Microservice Architecture) principles.
 
-### 10.1 서비스 구성
+### 10.1 Service Components
 
-| 서비스 | 패키지 | 역할 |
-|--------|--------|------|
-| **mcctl-api** | `@minecraft-docker/mcctl-api` | 내부 REST API 서비스 |
-| **mcctl-console** | `@minecraft-docker/mcctl-console` | BFF + 관리 UI |
+| Service | Package | Role |
+|---------|---------|------|
+| **mcctl-api** | `@minecraft-docker/mcctl-api` | Internal REST API service |
+| **mcctl-console** | `@minecraft-docker/mcctl-console` | BFF + Management UI |
 
-### 10.2 세부 문서
+### 10.2 Detailed Documents
 
-각 서비스는 독립적인 PRD/Plan 문서를 가집니다:
+Each service has independent PRD/Plan documents:
 
 - **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md) | [Plan](platform/services/mcctl-api/plan.md)
 - **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md) | [Plan](platform/services/mcctl-console/plan.md)
 
-### 10.3 아키텍처 개요
+### 10.3 Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1527,15 +1527,15 @@ minecraft-server-manager/
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 10.4 CLI 명령어 (`mcctl admin`)
+### 10.4 CLI Commands (`mcctl admin`)
 
 ```bash
-mcctl admin init              # 초기 설정
-mcctl admin start             # 서비스 시작
-mcctl admin stop              # 서비스 중지
-mcctl admin status            # 상태 확인
-mcctl admin user list         # 사용자 목록
-mcctl admin user add <name>   # 사용자 추가
+mcctl admin init              # Initial setup
+mcctl admin start             # Start services
+mcctl admin stop              # Stop services
+mcctl admin status            # Check status
+mcctl admin user list         # List users
+mcctl admin user add <name>   # Add user
 ```
 
 ## 11. Revision History

@@ -1,36 +1,36 @@
 # PRD: mcctl-api - REST API Service
 
-## 상위 문서
-- [전체 프로젝트 PRD](../../../prd.md) - Section 10
+## Parent Document
+- [Project PRD](../../../prd.md) - Section 10
 
-## 1. 개요
+## 1. Overview
 
-### 1.1 목적
-마인크래프트 서버 관리를 위한 내부 REST API 서비스입니다. mcctl CLI와 동일한 기능을 HTTP API로 제공합니다.
+### 1.1 Purpose
+Internal REST API service for Minecraft server management. Provides the same functionality as mcctl CLI via HTTP API.
 
-### 1.2 범위
-- 서버 관리 API (생성, 삭제, 시작, 중지)
-- 월드 관리 API (목록, 할당, 해제)
-- 플레이어 관리 API (화이트리스트, 밴, 킥, OP)
-- 백업 API (푸시, 복원, 이력)
-- 헬스 체크 API
+### 1.2 Scope
+- Server management API (create, delete, start, stop)
+- World management API (list, assign, release)
+- Player management API (whitelist, ban, kick, OP)
+- Backup API (push, restore, history)
+- Health check API
 
-### 1.3 비목표
-- 사용자 인터페이스 제공 (mcctl-console 담당)
-- 사용자 세션 관리 (mcctl-console 담당)
-- 직접적인 클라이언트 접근 지원 (BFF 패턴 사용)
+### 1.3 Non-Goals
+- User interface (handled by mcctl-console)
+- User session management (handled by mcctl-console)
+- Direct client access (uses BFF pattern)
 
-## 2. 기술 스택
+## 2. Tech Stack
 
-| 구성요소 | 기술 | 버전 |
-|---------|------|------|
+| Component | Technology | Version |
+|-----------|------------|---------|
 | Runtime | Node.js | 18+ |
 | Framework | Fastify | 4.x |
 | Language | TypeScript | 5.x |
 | API Docs | @fastify/swagger | 8.x |
 | Shared | @minecraft-docker/shared | workspace |
 
-## 3. 아키텍처
+## 3. Architecture
 
 ### 3.1 Hexagonal Architecture
 
@@ -58,52 +58,52 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 디렉토리 구조
+### 3.2 Directory Structure
 
 ```
 platform/services/mcctl-api/
-├── prd.md                      # 이 문서
-├── plan.md                     # 구현 계획
+├── prd.md                      # This document
+├── plan.md                     # Implementation plan
 ├── package.json                # @minecraft-docker/mcctl-api
 ├── tsconfig.json
 ├── src/
-│   ├── index.ts                # 진입점
-│   ├── server.ts               # Fastify 서버 설정
-│   ├── config.ts               # 설정 로더
+│   ├── index.ts                # Entry point
+│   ├── server.ts               # Fastify server setup
+│   ├── config.ts               # Configuration loader
 │   ├── routes/
-│   │   ├── index.ts            # 라우트 등록
+│   │   ├── index.ts            # Route registration
 │   │   ├── servers.ts          # /api/servers/*
 │   │   ├── worlds.ts           # /api/worlds/*
 │   │   ├── players.ts          # /api/players/*
 │   │   ├── backup.ts           # /api/backup/*
 │   │   └── health.ts           # /api/health
 │   ├── plugins/
-│   │   ├── auth.ts             # API Key/IP 인증
-│   │   ├── swagger.ts          # OpenAPI 문서
-│   │   └── error-handler.ts    # 에러 핸들링
+│   │   ├── auth.ts             # API Key/IP authentication
+│   │   ├── swagger.ts          # OpenAPI documentation
+│   │   └── error-handler.ts    # Error handling
 │   ├── adapters/
-│   │   └── ApiPromptAdapter.ts # 비대화형 IPromptPort
+│   │   └── ApiPromptAdapter.ts # Non-interactive IPromptPort
 │   └── di/
-│       └── container.ts        # DI 컨테이너
+│       └── container.ts        # DI container
 ├── tests/
 │   ├── routes/
 │   └── plugins/
 └── Dockerfile
 ```
 
-## 4. API 접근 모드
+## 4. API Access Modes
 
-### 4.1 접근 모드 종류
+### 4.1 Access Mode Types
 
-| 모드 | 포트 노출 | 인증 방식 | 용도 |
-|------|----------|----------|------|
-| `internal` | 없음 (Docker 네트워크만) | 없음 | 기본값, mcctl-console 전용 |
-| `api-key` | 3001 노출 | X-API-Key 헤더 | 외부 도구 연동 |
-| `ip-whitelist` | 3001 노출 | IP 검증 | 신뢰된 네트워크 |
-| `api-key-ip` | 3001 노출 | 둘 다 | 최고 보안 |
-| `open` | 3001 노출 | 없음 | 개발 전용 |
+| Mode | Port Exposure | Authentication | Use Case |
+|------|---------------|----------------|----------|
+| `internal` | None (Docker network only) | None | Default, mcctl-console only |
+| `api-key` | 3001 exposed | X-API-Key header | External tool integration |
+| `ip-whitelist` | 3001 exposed | IP verification | Trusted networks |
+| `api-key-ip` | 3001 exposed | Both | Maximum security |
+| `open` | 3001 exposed | None | Development only |
 
-### 4.2 인증 플러그인 구현
+### 4.2 Authentication Plugin Implementation
 
 ```typescript
 // plugins/auth.ts
@@ -150,67 +150,67 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (fastify, option
 };
 ```
 
-## 5. API 엔드포인트
+## 5. API Endpoints
 
-### 5.1 서버 관리
+### 5.1 Server Management
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/api/servers` | 서버 목록 |
-| GET | `/api/servers/:name` | 서버 상세 정보 |
-| POST | `/api/servers` | 서버 생성 |
-| DELETE | `/api/servers/:name` | 서버 삭제 |
-| POST | `/api/servers/:name/start` | 서버 시작 |
-| POST | `/api/servers/:name/stop` | 서버 중지 |
-| POST | `/api/servers/:name/restart` | 서버 재시작 |
-| GET | `/api/servers/:name/logs` | 서버 로그 |
-| POST | `/api/servers/:name/exec` | RCON 명령 실행 |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/servers` | List servers |
+| GET | `/api/servers/:name` | Server details |
+| POST | `/api/servers` | Create server |
+| DELETE | `/api/servers/:name` | Delete server |
+| POST | `/api/servers/:name/start` | Start server |
+| POST | `/api/servers/:name/stop` | Stop server |
+| POST | `/api/servers/:name/restart` | Restart server |
+| GET | `/api/servers/:name/logs` | Server logs |
+| POST | `/api/servers/:name/exec` | Execute RCON command |
 
-### 5.2 월드 관리
+### 5.2 World Management
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/api/worlds` | 월드 목록 |
-| POST | `/api/worlds` | 월드 생성 |
-| POST | `/api/worlds/:name/assign` | 월드 할당 |
-| POST | `/api/worlds/:name/release` | 월드 해제 |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/worlds` | List worlds |
+| POST | `/api/worlds` | Create world |
+| POST | `/api/worlds/:name/assign` | Assign world |
+| POST | `/api/worlds/:name/release` | Release world |
 
-### 5.3 플레이어 관리
+### 5.3 Player Management
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/api/servers/:name/players` | 온라인 플레이어 |
-| GET | `/api/players/:username` | 플레이어 정보 |
-| GET | `/api/servers/:name/whitelist` | 화이트리스트 |
-| POST | `/api/servers/:name/whitelist` | 화이트리스트 추가 |
-| DELETE | `/api/servers/:name/whitelist/:player` | 화이트리스트 제거 |
-| GET | `/api/servers/:name/bans` | 밴 목록 |
-| POST | `/api/servers/:name/bans` | 플레이어 밴 |
-| DELETE | `/api/servers/:name/bans/:player` | 밴 해제 |
-| POST | `/api/servers/:name/kick` | 플레이어 킥 |
-| GET | `/api/servers/:name/ops` | OP 목록 |
-| POST | `/api/servers/:name/ops` | OP 추가 |
-| DELETE | `/api/servers/:name/ops/:player` | OP 제거 |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/servers/:name/players` | Online players |
+| GET | `/api/players/:username` | Player info |
+| GET | `/api/servers/:name/whitelist` | Whitelist |
+| POST | `/api/servers/:name/whitelist` | Add to whitelist |
+| DELETE | `/api/servers/:name/whitelist/:player` | Remove from whitelist |
+| GET | `/api/servers/:name/bans` | Ban list |
+| POST | `/api/servers/:name/bans` | Ban player |
+| DELETE | `/api/servers/:name/bans/:player` | Unban player |
+| POST | `/api/servers/:name/kick` | Kick player |
+| GET | `/api/servers/:name/ops` | OP list |
+| POST | `/api/servers/:name/ops` | Add OP |
+| DELETE | `/api/servers/:name/ops/:player` | Remove OP |
 
-### 5.4 백업
+### 5.4 Backup
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/api/backup/status` | 백업 상태 |
-| POST | `/api/backup/push` | 백업 푸시 |
-| GET | `/api/backup/history` | 백업 이력 |
-| POST | `/api/backup/restore` | 백업 복원 |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/backup/status` | Backup status |
+| POST | `/api/backup/push` | Push backup |
+| GET | `/api/backup/history` | Backup history |
+| POST | `/api/backup/restore` | Restore backup |
 
-### 5.5 시스템
+### 5.5 System
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/api/health` | 헬스 체크 |
-| GET | `/api/router/status` | mc-router 상태 |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | Health check |
+| GET | `/api/router/status` | mc-router status |
 
-## 6. 응답 형식
+## 6. Response Format
 
-### 6.1 성공 응답
+### 6.1 Success Response
 
 ```json
 {
@@ -219,7 +219,7 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (fastify, option
 }
 ```
 
-### 6.2 에러 응답
+### 6.2 Error Response
 
 ```json
 {
@@ -231,31 +231,31 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (fastify, option
 }
 ```
 
-### 6.3 에러 코드
+### 6.3 Error Codes
 
-| 코드 | HTTP | 설명 |
-|------|------|------|
-| `UNAUTHORIZED` | 401 | 인증 실패 |
-| `FORBIDDEN` | 403 | 접근 거부 |
-| `NOT_FOUND` | 404 | 리소스 없음 |
-| `CONFLICT` | 409 | 리소스 충돌 (서버 실행 중 삭제 등) |
-| `INTERNAL_ERROR` | 500 | 내부 오류 |
+| Code | HTTP | Description |
+|------|------|-------------|
+| `UNAUTHORIZED` | 401 | Authentication failed |
+| `FORBIDDEN` | 403 | Access denied |
+| `NOT_FOUND` | 404 | Resource not found |
+| `CONFLICT` | 409 | Resource conflict (e.g., deleting running server) |
+| `INTERNAL_ERROR` | 500 | Internal error |
 
-## 7. 환경 변수
+## 7. Environment Variables
 
-| 변수 | 설명 | 기본값 |
-|------|------|--------|
-| `MCCTL_ROOT` | 데이터 디렉토리 | `/data` |
-| `API_ACCESS_MODE` | 접근 모드 | `internal` |
-| `API_KEY` | API 키 (api-key 모드) | - |
-| `API_KEY_HEADER` | API 키 헤더 이름 | `X-API-Key` |
-| `API_IP_WHITELIST` | IP 화이트리스트 (쉼표 구분) | - |
-| `API_PORT` | 리스닝 포트 | `3001` |
-| `USER_STORE_TYPE` | 사용자 저장소 타입 | `yaml` |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCCTL_ROOT` | Data directory | `/data` |
+| `API_ACCESS_MODE` | Access mode | `internal` |
+| `API_KEY` | API key (api-key mode) | - |
+| `API_KEY_HEADER` | API key header name | `X-API-Key` |
+| `API_IP_WHITELIST` | IP whitelist (comma-separated) | - |
+| `API_PORT` | Listening port | `3001` |
+| `USER_STORE_TYPE` | User storage type | `yaml` |
 
-## 8. 의존성
+## 8. Dependencies
 
-### 8.1 내부 의존성
+### 8.1 Internal Dependencies
 
 ```json
 {
@@ -265,7 +265,7 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (fastify, option
 }
 ```
 
-### 8.2 외부 의존성
+### 8.2 External Dependencies
 
 ```json
 {
@@ -278,27 +278,27 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (fastify, option
 }
 ```
 
-## 9. 테스트 계획
+## 9. Test Plan
 
-### 9.1 단위 테스트
-- 라우트 핸들러 테스트
-- 인증 플러그인 테스트
-- 에러 핸들러 테스트
+### 9.1 Unit Tests
+- Route handler tests
+- Authentication plugin tests
+- Error handler tests
 
-### 9.2 통합 테스트
-- supertest를 사용한 API 엔드포인트 테스트
-- 인증 모드별 접근 테스트
+### 9.2 Integration Tests
+- API endpoint tests with supertest
+- Access mode authentication tests
 
-### 9.3 수동 테스트
+### 9.3 Manual Tests
 
 ```bash
-# 헬스 체크
+# Health check
 curl http://localhost:3001/api/health
 
-# 서버 목록 (api-key 모드)
+# Server list (api-key mode)
 curl -H "X-API-Key: mctk_xxx" http://localhost:3001/api/servers
 
-# 서버 생성
+# Create server
 curl -X POST -H "Content-Type: application/json" \
   -H "X-API-Key: mctk_xxx" \
   -d '{"name":"myserver","type":"PAPER","version":"1.21.1"}' \
@@ -307,6 +307,6 @@ curl -X POST -H "Content-Type: application/json" \
 
 ## 10. Revision History
 
-| 버전 | 날짜 | 작성자 | 변경 내용 |
-|------|------|--------|----------|
-| 1.0.0 | 2025-01-25 | - | 초기 PRD 작성 |
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0.0 | 2025-01-25 | - | Initial PRD |

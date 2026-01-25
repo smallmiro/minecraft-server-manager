@@ -1,32 +1,32 @@
-# PRD: shared - 공통 패키지
+# PRD: shared - Common Package
 
-## 상위 문서
-- [전체 프로젝트 PRD](../../../prd.md) - Section 9
+## Parent Document
+- [Project PRD](../../../prd.md) - Section 9
 
-## 1. 개요
+## 1. Overview
 
-### 1.1 목적
-CLI, API, Console 서비스가 공유하는 도메인 로직, 유스케이스, 어댑터를 제공하는 핵심 패키지입니다.
+### 1.1 Purpose
+Core package providing shared domain logic, use cases, and adapters for CLI, API, and Console services.
 
-### 1.2 범위
+### 1.2 Scope
 - Domain Layer: Entities, Value Objects
 - Application Layer: Use Cases, Ports
-- Infrastructure Layer: 공통 Adapters (Shell, Repository)
-- 유틸리티 및 타입 정의
+- Infrastructure Layer: Common Adapters (Shell, Repository)
+- Utilities and type definitions
 
-### 1.3 비목표
-- CLI 전용 어댑터 (ClackPromptAdapter → cli 패키지)
-- Web 전용 어댑터 (WebPromptAdapter → mcctl-console)
-- API 전용 어댑터 (ApiPromptAdapter → mcctl-api)
+### 1.3 Non-Goals
+- CLI-specific adapters (ClackPromptAdapter → cli package)
+- Web-specific adapters (WebPromptAdapter → mcctl-console)
+- API-specific adapters (ApiPromptAdapter → mcctl-api)
 
-## 2. 기술 스택
+## 2. Tech Stack
 
-| 구성요소 | 기술 | 버전 |
-|---------|------|------|
+| Component | Technology | Version |
+|-----------|------------|---------|
 | Runtime | Node.js | 18+ |
 | Language | TypeScript | 5.x |
 
-## 3. 아키텍처
+## 3. Architecture
 
 ### 3.1 Hexagonal Architecture
 
@@ -47,7 +47,7 @@ CLI, API, Console 서비스가 공유하는 도메인 로직, 유스케이스, �
 │  │  - IShellPort (outbound)                               │  │
 │  │  - IServerRepository (outbound)                        │  │
 │  │  - IWorldRepository (outbound)                         │  │
-│  │  - IUserRepository (outbound) ← 신규                   │  │
+│  │  - IUserRepository (outbound) ← NEW                    │  │
 │  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                           │
@@ -72,13 +72,13 @@ CLI, API, Console 서비스가 공유하는 도메인 로직, 유스케이스, �
 ┌─────────────────────────▼───────────────────────────────────┐
 │                 INFRASTRUCTURE LAYER                         │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  Adapters (공통)                                       │  │
+│  │  Adapters (Common)                                     │  │
 │  │  - ShellAdapter                                        │  │
 │  │  - ServerRepository                                    │  │
 │  │  - WorldRepository                                     │  │
-│  │  - YamlUserRepository ← 신규                           │  │
-│  │  - SqliteUserRepository ← 신규                         │  │
-│  │  - ApiPromptAdapter ← 신규                             │  │
+│  │  - YamlUserRepository ← NEW                            │  │
+│  │  - SqliteUserRepository ← NEW                          │  │
+│  │  - ApiPromptAdapter ← NEW                              │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │  Docker Utilities                                      │  │
@@ -88,19 +88,19 @@ CLI, API, Console 서비스가 공유하는 도메인 로직, 유스케이스, �
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 디렉토리 구조
+### 3.2 Directory Structure
 
 ```
 platform/services/shared/
-├── prd.md                      # 이 문서
-├── plan.md                     # 구현 계획
-├── README.md                   # npm 패키지 설명
+├── prd.md                      # This document
+├── plan.md                     # Implementation plan
+├── README.md                   # npm package description
 ├── package.json                # @minecraft-docker/shared
 ├── tsconfig.json
 ├── src/
-│   ├── index.ts                # 메인 export
+│   ├── index.ts                # Main export
 │   │
-│   ├── domain/                 # 도메인 레이어
+│   ├── domain/                 # Domain layer
 │   │   ├── entities/
 │   │   │   ├── Server.ts
 │   │   │   └── World.ts
@@ -111,39 +111,39 @@ platform/services/shared/
 │   │       ├── Memory.ts
 │   │       └── WorldOptions.ts
 │   │
-│   ├── application/            # 애플리케이션 레이어
+│   ├── application/            # Application layer
 │   │   ├── ports/
-│   │   │   ├── inbound/        # Use Case 인터페이스
-│   │   │   └── outbound/       # Repository 인터페이스
+│   │   │   ├── inbound/        # Use Case interfaces
+│   │   │   └── outbound/       # Repository interfaces
 │   │   │       ├── IPromptPort.ts
 │   │   │       ├── IShellPort.ts
 │   │   │       ├── IServerRepository.ts
 │   │   │       ├── IWorldRepository.ts
-│   │   │       └── IUserRepository.ts  ← 신규
+│   │   │       └── IUserRepository.ts  ← NEW
 │   │   └── use-cases/
 │   │       ├── CreateServerUseCase.ts
 │   │       ├── DeleteServerUseCase.ts
 │   │       └── ...
 │   │
-│   ├── infrastructure/         # 인프라 레이어
+│   ├── infrastructure/         # Infrastructure layer
 │   │   ├── adapters/
 │   │   │   ├── ShellAdapter.ts
 │   │   │   ├── ServerRepository.ts
 │   │   │   ├── WorldRepository.ts
-│   │   │   ├── YamlUserRepository.ts    ← 신규
-│   │   │   ├── SqliteUserRepository.ts  ← 신규
-│   │   │   └── ApiPromptAdapter.ts      ← 신규
+│   │   │   ├── YamlUserRepository.ts    ← NEW
+│   │   │   ├── SqliteUserRepository.ts  ← NEW
+│   │   │   └── ApiPromptAdapter.ts      ← NEW
 │   │   └── docker/
 │   │       └── index.ts
 │   │
-│   ├── types/                  # 타입 정의
-│   └── utils/                  # 유틸리티
+│   ├── types/                  # Type definitions
+│   └── utils/                  # Utilities
 └── tests/
 ```
 
-## 4. 신규 추가 항목 (Admin Service용)
+## 4. New Additions (For Admin Service)
 
-### 4.1 IUserRepository 포트
+### 4.1 IUserRepository Port
 
 ```typescript
 export interface User {
@@ -166,19 +166,19 @@ export interface IUserRepository {
 
 ### 4.2 YamlUserRepository
 
-`.mcctl-admin.yml` 파일의 `users` 섹션을 읽고 쓰는 어댑터.
+Adapter that reads and writes the `users` section of `.mcctl-admin.yml` file.
 
 ### 4.3 SqliteUserRepository
 
-`mcctl-admin.db` SQLite 데이터베이스를 사용하는 어댑터.
+Adapter that uses the `mcctl-admin.db` SQLite database.
 
 ### 4.4 ApiPromptAdapter
 
-API 컨텍스트용 비대화형 `IPromptPort` 구현. 대화형 프롬프트를 호출하면 에러를 발생시킴.
+Non-interactive `IPromptPort` implementation for API context. Throws an error when interactive prompts are called.
 
-## 5. 의존성
+## 5. Dependencies
 
-### 5.1 외부 의존성
+### 5.1 External Dependencies
 
 ```json
 {
@@ -189,7 +189,7 @@ API 컨텍스트용 비대화형 `IPromptPort` 구현. 대화형 프롬프트를
 }
 ```
 
-## 6. Export 구조
+## 6. Export Structure
 
 ```typescript
 // index.ts
@@ -206,6 +206,6 @@ export * from './utils';
 
 ## 7. Revision History
 
-| 버전 | 날짜 | 작성자 | 변경 내용 |
-|------|------|--------|----------|
-| 1.0.0 | 2025-01-25 | - | 초기 PRD 작성 |
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0.0 | 2025-01-25 | - | Initial PRD |

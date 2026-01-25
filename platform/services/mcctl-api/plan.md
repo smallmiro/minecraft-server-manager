@@ -1,102 +1,102 @@
 # Implementation Plan: mcctl-api
 
-## 상위 문서
-- [전체 프로젝트 Plan](../../../plan.md) - Phase 8
+## Parent Document
+- [Project Plan](../../../plan.md) - Phase 8
 
-## 개요
+## Overview
 
-mcctl-api REST API 서비스의 구현 계획입니다.
+Implementation plan for mcctl-api REST API service.
 
-## Phase 1: 프로젝트 기반 구조
+## Phase 1: Project Foundation
 
-### 1.1 패키지 설정
-- [ ] `package.json` 생성 (`@minecraft-docker/mcctl-api`)
-- [ ] `tsconfig.json` 설정
-- [ ] 의존성 설치 (fastify, @fastify/swagger)
-- [ ] pnpm-workspace.yaml에 패키지 추가
+### 1.1 Package Setup
+- [ ] Create `package.json` (`@minecraft-docker/mcctl-api`)
+- [ ] Configure `tsconfig.json`
+- [ ] Install dependencies (fastify, @fastify/swagger)
+- [ ] Add package to pnpm-workspace.yaml
 
-### 1.2 기본 서버 구조
-- [ ] `src/index.ts` - 진입점
-- [ ] `src/server.ts` - Fastify 서버 설정
-- [ ] `src/config.ts` - 환경 변수 로더
+### 1.2 Basic Server Structure
+- [ ] `src/index.ts` - Entry point
+- [ ] `src/server.ts` - Fastify server setup
+- [ ] `src/config.ts` - Environment variable loader
 
-### 1.3 DI 컨테이너
-- [ ] `src/di/container.ts` - 의존성 주입 컨테이너
-- [ ] shared 패키지의 Use Case, Repository 연결
+### 1.3 DI Container
+- [ ] `src/di/container.ts` - Dependency injection container
+- [ ] Connect shared package Use Cases and Repositories
 
-## Phase 2: 인증 플러그인
+## Phase 2: Authentication Plugin
 
-### 2.1 접근 모드 구현
-- [ ] `src/plugins/auth.ts` - 인증 플러그인
-- [ ] `internal` 모드 - Docker 네트워크 검증
-- [ ] `api-key` 모드 - X-API-Key 헤더 검증
-- [ ] `ip-whitelist` 모드 - IP 화이트리스트
-- [ ] `api-key-ip` 모드 - 복합 인증
-- [ ] `open` 모드 - 인증 없음 (개발용)
+### 2.1 Access Mode Implementation
+- [ ] `src/plugins/auth.ts` - Authentication plugin
+- [ ] `internal` mode - Docker network verification
+- [ ] `api-key` mode - X-API-Key header verification
+- [ ] `ip-whitelist` mode - IP whitelist
+- [ ] `api-key-ip` mode - Combined authentication
+- [ ] `open` mode - No authentication (development only)
 
-### 2.2 에러 핸들링
-- [ ] `src/plugins/error-handler.ts` - 통합 에러 핸들러
-- [ ] 표준 에러 응답 포맷
+### 2.2 Error Handling
+- [ ] `src/plugins/error-handler.ts` - Unified error handler
+- [ ] Standard error response format
 
-## Phase 3: API 라우트 구현
+## Phase 3: API Route Implementation
 
-### 3.1 서버 관리 API
+### 3.1 Server Management API
 - [ ] `src/routes/servers.ts`
-- [ ] `GET /api/servers` - 서버 목록
-- [ ] `GET /api/servers/:name` - 서버 상세
-- [ ] `POST /api/servers` - 서버 생성
-- [ ] `DELETE /api/servers/:name` - 서버 삭제
-- [ ] `POST /api/servers/:name/start` - 서버 시작
-- [ ] `POST /api/servers/:name/stop` - 서버 중지
-- [ ] `POST /api/servers/:name/restart` - 서버 재시작
-- [ ] `GET /api/servers/:name/logs` - 서버 로그
-- [ ] `POST /api/servers/:name/exec` - RCON 명령 실행
+- [ ] `GET /api/servers` - Server list
+- [ ] `GET /api/servers/:name` - Server details
+- [ ] `POST /api/servers` - Create server
+- [ ] `DELETE /api/servers/:name` - Delete server
+- [ ] `POST /api/servers/:name/start` - Start server
+- [ ] `POST /api/servers/:name/stop` - Stop server
+- [ ] `POST /api/servers/:name/restart` - Restart server
+- [ ] `GET /api/servers/:name/logs` - Server logs
+- [ ] `POST /api/servers/:name/exec` - RCON command execution
 
-### 3.2 월드 관리 API
+### 3.2 World Management API
 - [ ] `src/routes/worlds.ts`
-- [ ] `GET /api/worlds` - 월드 목록
-- [ ] `POST /api/worlds` - 월드 생성
-- [ ] `POST /api/worlds/:name/assign` - 월드 할당
-- [ ] `POST /api/worlds/:name/release` - 월드 해제
+- [ ] `GET /api/worlds` - World list
+- [ ] `POST /api/worlds` - Create world
+- [ ] `POST /api/worlds/:name/assign` - Assign world
+- [ ] `POST /api/worlds/:name/release` - Release world
 
-### 3.3 플레이어 관리 API
+### 3.3 Player Management API
 - [ ] `src/routes/players.ts`
-- [ ] 화이트리스트, 밴, OP, 킥 API
+- [ ] Whitelist, ban, OP, kick APIs
 
-### 3.4 백업 API
+### 3.4 Backup API
 - [ ] `src/routes/backup.ts`
-- [ ] 백업 상태, 푸시, 이력, 복원 API
+- [ ] Backup status, push, history, restore APIs
 
-### 3.5 시스템 API
+### 3.5 System API
 - [ ] `src/routes/health.ts`
-- [ ] 헬스 체크, mc-router 상태 API
+- [ ] Health check, mc-router status APIs
 
 ## Phase 4: Swagger/OpenAPI
 
-- [ ] `src/plugins/swagger.ts` - Swagger 플러그인
-- [ ] 스키마 정의
-- [ ] `/docs` 엔드포인트 설정
+- [ ] `src/plugins/swagger.ts` - Swagger plugin
+- [ ] Schema definitions
+- [ ] `/docs` endpoint setup
 
-## Phase 5: Docker 설정
+## Phase 5: Docker Setup
 
-- [ ] `Dockerfile` 작성
-- [ ] Multi-stage 빌드
+- [ ] Create `Dockerfile`
+- [ ] Multi-stage build
 - [ ] GitHub Actions CI/CD
 
-## Phase 6: 테스트
+## Phase 6: Testing
 
-- [ ] 단위 테스트 (vitest)
-- [ ] 통합 테스트 (supertest)
+- [ ] Unit tests (vitest)
+- [ ] Integration tests (supertest)
 
-## 완료 기준
+## Completion Criteria
 
-1. 모든 API 엔드포인트 구현 및 테스트 통과
-2. 5가지 접근 모드 정상 동작
-3. OpenAPI 문서 자동 생성
-4. Docker 이미지 빌드 성공
+1. All API endpoints implemented and tests passing
+2. All 5 access modes working correctly
+3. OpenAPI documentation auto-generated
+4. Docker image builds successfully
 
 ## Revision History
 
-| 버전 | 날짜 | 작성자 | 변경 내용 |
-|------|------|--------|----------|
-| 1.0.0 | 2025-01-25 | - | 초기 계획 작성 |
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0.0 | 2025-01-25 | - | Initial plan |

@@ -1,30 +1,30 @@
-# Issue: mcctl-console 대시보드 페이지
+# Issue: mcctl-console Dashboard Page
 
 ## Phase
-8.4.4 - mcctl-console 서비스
+8.4.4 - mcctl-console Service
 
-## 제목
+## Title
 feat(mcctl-console): Implement dashboard page with server overview
 
-## 설명
-서버 현황을 한눈에 볼 수 있는 대시보드 페이지를 구현합니다.
+## Description
+Implement a dashboard page that provides an at-a-glance view of server status.
 
-## 선행 작업
-- #8.4.1 mcctl-console 프로젝트 기반 구조
-- #8.4.2 mcctl-console NextAuth 인증
-- #8.4.3 mcctl-console BFF 프록시
+## Prerequisites
+- #8.4.1 mcctl-console project foundation
+- #8.4.2 mcctl-console NextAuth authentication
+- #8.4.3 mcctl-console BFF proxy
 
-## 작업 내용
-- [ ] `src/app/dashboard/page.tsx` - 대시보드 페이지
-- [ ] `src/components/server/ServerCard.tsx` - 서버 카드 컴포넌트
-- [ ] `src/components/server/ServerStats.tsx` - 통계 위젯
-- [ ] `src/components/server/PlayerList.tsx` - 온라인 플레이어 목록
-- [ ] `src/hooks/useServers.ts` - 서버 데이터 훅 (React Query)
-- [ ] 실시간 상태 업데이트 (polling)
-- [ ] 반응형 디자인
-- [ ] 테스트
+## Tasks
+- [ ] `src/app/dashboard/page.tsx` - Dashboard page
+- [ ] `src/components/server/ServerCard.tsx` - Server card component
+- [ ] `src/components/server/ServerStats.tsx` - Stats widget
+- [ ] `src/components/server/PlayerList.tsx` - Online player list
+- [ ] `src/hooks/useServers.ts` - Server data hook (React Query)
+- [ ] Real-time status updates (polling)
+- [ ] Responsive design
+- [ ] Tests
 
-## 대시보드 레이아웃
+## Dashboard Layout
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -32,7 +32,7 @@ feat(mcctl-console): Implement dashboard page with server overview
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │ 서버 수     │ │ 온라인      │ │ 메모리 사용  │           │
+│  │ Servers     │ │ Online      │ │ Memory      │           │
 │  │ 3 / 5      │ │ 12 players  │ │ 8.2GB/16GB  │           │
 │  └─────────────┘ └─────────────┘ └─────────────┘           │
 │                                                             │
@@ -47,7 +47,7 @@ feat(mcctl-console): Implement dashboard page with server overview
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 컴포넌트 Props
+## Component Props
 
 ```typescript
 interface ServerCardProps {
@@ -61,10 +61,10 @@ interface ServerCardProps {
 }
 ```
 
-## 관련 문서
+## Related Documents
 - [mcctl-console PRD](../../platform/services/mcctl-console/prd.md) - Section 4
 
-## 라벨
+## Labels
 - `phase:8-admin`
 - `type:feature`
 - `package:mcctl-console`
