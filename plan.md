@@ -9,6 +9,7 @@
 | [v0.3.0](https://github.com/smallmiro/minecraft-server-manager/milestone/2) | Core Features (Phase 3, 4) | ✅ Closed |
 | [v0.4.0](https://github.com/smallmiro/minecraft-server-manager/milestone/4) | CLI Interactive Mode (Phase 7) | ✅ Closed |
 | [v1.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/3) | Release (Phase 5) | ✅ Closed |
+| [v2.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/5) | Admin Service (Phase 8) | 🚧 Open |
 
 ### Issues by Phase
 | Phase | Issues | Status |
@@ -29,7 +30,11 @@
 | Phase 7.5: Detailed Monitoring | [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68) ✅ | ✅ Completed |
 | Phase 7.6: Sudo Password Handling | [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72) ✅ | ✅ Completed |
 | Phase 7.7: Unified Player Management | [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73) ✅ | ✅ Completed |
-| Phase 8: Admin Service | TBD | 📋 Planned |
+| Phase 8.1: Shared Package Extension | [#80](https://github.com/smallmiro/minecraft-server-manager/issues/80), [#81](https://github.com/smallmiro/minecraft-server-manager/issues/81), [#82](https://github.com/smallmiro/minecraft-server-manager/issues/82), [#83](https://github.com/smallmiro/minecraft-server-manager/issues/83) | 🚧 Open |
+| Phase 8.2: CLI Admin Commands | [#84](https://github.com/smallmiro/minecraft-server-manager/issues/84), [#85](https://github.com/smallmiro/minecraft-server-manager/issues/85), [#86](https://github.com/smallmiro/minecraft-server-manager/issues/86), [#87](https://github.com/smallmiro/minecraft-server-manager/issues/87) | 🚧 Open |
+| Phase 8.3: mcctl-api Service | [#88](https://github.com/smallmiro/minecraft-server-manager/issues/88), [#89](https://github.com/smallmiro/minecraft-server-manager/issues/89), [#90](https://github.com/smallmiro/minecraft-server-manager/issues/90), [#91](https://github.com/smallmiro/minecraft-server-manager/issues/91), [#92](https://github.com/smallmiro/minecraft-server-manager/issues/92), [#93](https://github.com/smallmiro/minecraft-server-manager/issues/93), [#94](https://github.com/smallmiro/minecraft-server-manager/issues/94) | 🚧 Open |
+| Phase 8.4: mcctl-console Service | [#95](https://github.com/smallmiro/minecraft-server-manager/issues/95), [#96](https://github.com/smallmiro/minecraft-server-manager/issues/96), [#97](https://github.com/smallmiro/minecraft-server-manager/issues/97), [#98](https://github.com/smallmiro/minecraft-server-manager/issues/98), [#99](https://github.com/smallmiro/minecraft-server-manager/issues/99), [#100](https://github.com/smallmiro/minecraft-server-manager/issues/100) | 🚧 Open |
+| Phase 8.5: Integration & Testing | [#101](https://github.com/smallmiro/minecraft-server-manager/issues/101), [#102](https://github.com/smallmiro/minecraft-server-manager/issues/102) | 🚧 Open |
 
 ---
 
