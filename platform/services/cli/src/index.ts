@@ -88,6 +88,20 @@ ${colors.cyan('World Management:')}
   ${colors.bold('world new')} [name] [options] Create new world with seed
   ${colors.bold('world assign')} <world> <srv> Lock world to server
   ${colors.bold('world release')} <world>      Release world lock
+  ${colors.bold('world delete')} <world> [-f]  Delete world permanently
+
+${colors.cyan('Mod Management:')}
+  ${colors.bold('mod search')} <query>         Search mods on Modrinth
+  ${colors.bold('mod add')} <srv> <mod...>     Add mods to server
+  ${colors.bold('mod list')} <server>          List configured mods
+  ${colors.bold('mod remove')} <srv> <mod...>  Remove mods from server
+  ${colors.bold('mod sources')}                Show available mod sources
+
+${colors.cyan('Mod Add Options:')}
+  --modrinth                 Use Modrinth (default)
+  --curseforge               Use CurseForge (requires CF_API_KEY)
+  --spiget                   Use Spiget (SpigotMC plugins)
+  --url                      Direct JAR URL download
 
 ${colors.cyan('Mod Management:')}
   ${colors.bold('mod search')} <query>         Search mods on Modrinth

@@ -43,9 +43,12 @@ export async function worldCommand(options: WorldCommandOptions): Promise<number
     case 'release':
       return worldRelease(container, options);
 
+    case 'delete':
+      return worldDelete(container, options);
+
     default:
       log.error(`Unknown world subcommand: ${subCommand}`);
-      console.log('Usage: mcctl world [list|new|assign|release]');
+      console.log('Usage: mcctl world [list|new|assign|release|delete]');
       return 1;
   }
 }
@@ -231,6 +234,60 @@ async function worldRelease(
 
     // Interactive mode
     const result = await useCase.releaseWorld();
+    return result.success ? 0 : 1;
+  } catch (error) {
+    const prompt = container.promptPort;
+    if (prompt.isCancel(error)) {
+      return 0;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    log.error(message);
+    return 1;
+  }
+}
+
+/**
+ * Delete world
+ */
+async function worldDelete(
+  container: ReturnType<typeof getContainer>,
+  options: WorldCommandOptions
+): Promise<number> {
+  const useCase = container.worldManagementUseCase;
+
+  try {
+    // If world name provided, use direct deletion
+    if (options.worldName) {
+      const result = await useCase.deleteWorldByName(
+        options.worldName,
+        options.force ?? false
+      );
+
+      if (result.success) {
+        if (options.json) {
+          console.log(JSON.stringify(result, null, 2));
+        } else {
+          console.log('');
+          console.log(colors.green(`✓ World '${result.worldName}' deleted`));
+          if (result.size) {
+            console.log(colors.dim(`  Freed: ${result.size}`));
+          }
+          console.log('');
+        }
+        return 0;
+      } else {
+        if (options.json) {
+          console.log(JSON.stringify(result, null, 2));
+        } else {
+          log.error(result.error || 'Failed to delete world');
+        }
+        return 1;
+      }
+    }
+
+    // Interactive mode
+    const result = await useCase.deleteWorld();
     return result.success ? 0 : 1;
   } catch (error) {
     const prompt = container.promptPort;

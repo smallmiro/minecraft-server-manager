@@ -43,6 +43,9 @@ else
     PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
 fi
 
+# Source common functions
+source "$SCRIPT_DIR/lib/common.sh"
+
 SERVERS_DIR="$PLATFORM_DIR/servers"
 SERVERS_COMPOSE="$SERVERS_DIR/compose.yml"
 MAIN_COMPOSE="$PLATFORM_DIR/docker-compose.yml"
@@ -152,7 +155,13 @@ if docker compose ps "mc-$SERVER_NAME" 2>/dev/null | grep -q "mc-$SERVER_NAME"; 
     docker compose rm -f "mc-$SERVER_NAME" 2>/dev/null || true
     echo "   Container mc-$SERVER_NAME stopped and removed"
 else
-    echo "   Container mc-$SERVER_NAME not running"
+    # Check if container exists but not managed by compose (exited state)
+    if docker ps -a --format '{{.Names}}' | grep -q "^mc-$SERVER_NAME$"; then
+        docker rm -f "mc-$SERVER_NAME" 2>/dev/null || true
+        echo "   Container mc-$SERVER_NAME removed"
+    else
+        echo "   Container mc-$SERVER_NAME not found"
+    fi
 fi
 
 # =============================================================================

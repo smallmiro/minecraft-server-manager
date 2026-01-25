@@ -43,6 +43,11 @@ export interface IPromptPort {
    */
   confirm(options: ConfirmPromptOptions): Promise<boolean>;
 
+  /**
+   * Password input prompt (masked)
+   */
+  password(options: PasswordPromptOptions): Promise<string>;
+
   // ========================================
   // Domain-Specific Prompts
   // ========================================
@@ -175,6 +180,15 @@ export interface SelectOption<T> {
 export interface ConfirmPromptOptions {
   message: string;
   initialValue?: boolean;
+}
+
+/**
+ * Password prompt options
+ */
+export interface PasswordPromptOptions {
+  message: string;
+  mask?: string;
+  validate?: (value: string) => string | void;
 }
 
 /**

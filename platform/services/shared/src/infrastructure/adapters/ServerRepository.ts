@@ -2,7 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { Paths } from '../../utils/index.js';
-import { execScript } from '../../docker/index.js';
+import { execCommandAsync } from '../../docker/index.js';
 import {
   Server,
   ServerStatus,
@@ -109,12 +109,12 @@ export class ServerRepository implements IServerRepository {
   async getStatus(name: string): Promise<ServerStatus> {
     try {
       const containerName = `mc-${name}`;
-      const result = await execScript('docker', [
+      const result = await execCommandAsync('docker', [
         'inspect',
         '-f',
         '{{.State.Status}}',
         containerName,
-      ], {});
+      ]);
 
       if (result.code !== 0) {
         return ServerStatus.STOPPED;

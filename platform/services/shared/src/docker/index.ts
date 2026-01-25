@@ -16,7 +16,7 @@ import type {
  * Execute a command and return stdout
  * Uses spawnSync to properly handle arguments with special characters
  */
-function execCommand(command: string, args: string[]): string {
+export function execCommand(command: string, args: string[]): string {
   try {
     const result = spawnSync(command, args, {
       encoding: 'utf-8',
@@ -299,6 +299,40 @@ export function stopContainer(container: string): boolean {
  */
 export function getContainerLogs(container: string, lines: number = 50): string {
   return execCommand('docker', ['logs', '--tail', String(lines), container]);
+}
+
+/**
+ * Execute a command asynchronously and return result
+ * For docker commands that need async/await pattern
+ */
+export function execCommandAsync(
+  command: string,
+  args: string[]
+): Promise<{ code: number; stdout: string; stderr: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout?.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    child.stderr?.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    child.on('close', (code) => {
+      resolve({ code: code ?? 1, stdout: stdout.trim(), stderr: stderr.trim() });
+    });
+
+    child.on('error', () => {
+      resolve({ code: 1, stdout: '', stderr: 'Failed to execute command' });
+    });
+  });
 }
 
 /**

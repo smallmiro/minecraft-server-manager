@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir, readFile, stat, rm, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { Paths } from '../../utils/index.js';
@@ -214,6 +214,31 @@ export class WorldRepository implements IWorldRepository {
       if (orderDiff !== 0) return orderDiff;
       return a.world.name.localeCompare(b.world.name);
     });
+  }
+
+  /**
+   * Delete a world directory and its lock file
+   */
+  async delete(name: string): Promise<boolean> {
+    const worldPath = join(this.worldsDir, name);
+    const lockFile = join(this.locksDir, `${name}.lock`);
+
+    if (!existsSync(worldPath)) {
+      return false;
+    }
+
+    try {
+      // Delete lock file if exists
+      if (existsSync(lockFile)) {
+        await unlink(lockFile);
+      }
+
+      // Delete world directory
+      await rm(worldPath, { recursive: true, force: true });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**

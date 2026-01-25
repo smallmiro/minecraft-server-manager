@@ -12,6 +12,7 @@ import {
   type TextPromptOptions,
   type SelectPromptOptions,
   type ConfirmPromptOptions,
+  type PasswordPromptOptions,
   type Spinner,
   type WorldWithServerStatus,
 } from '@minecraft-docker/shared';
@@ -81,6 +82,20 @@ export class ClackPromptAdapter implements IPromptPort {
     }
 
     return result as boolean;
+  }
+
+  async password(options: PasswordPromptOptions): Promise<string> {
+    const result = await p.password({
+      message: options.message,
+      mask: options.mask ?? '*',
+      validate: options.validate,
+    });
+
+    if (this.isCancel(result)) {
+      this.handleCancel();
+    }
+
+    return result as string;
   }
 
   // ========================================

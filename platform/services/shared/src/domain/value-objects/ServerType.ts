@@ -6,6 +6,7 @@ export enum ServerTypeEnum {
   PAPER = 'PAPER',
   VANILLA = 'VANILLA',
   FORGE = 'FORGE',
+  NEOFORGE = 'NEOFORGE',
   FABRIC = 'FABRIC',
   SPIGOT = 'SPIGOT',
   BUKKIT = 'BUKKIT',
@@ -40,6 +41,13 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
   [ServerTypeEnum.FORGE]: {
     label: 'Forge',
     description: 'Modded server for Forge mods',
+    supportsPlugins: false,
+    supportsMods: true,
+    recommended: false,
+  },
+  [ServerTypeEnum.NEOFORGE]: {
+    label: 'NeoForge',
+    description: 'Modern Forge fork for Minecraft 1.20.1+',
     supportsPlugins: false,
     supportsMods: true,
     recommended: false,

@@ -4,6 +4,7 @@ export type {
   SelectPromptOptions,
   SelectOption,
   ConfirmPromptOptions,
+  PasswordPromptOptions,
   Spinner,
 } from './IPromptPort.js';
 

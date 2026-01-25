@@ -70,6 +70,13 @@ export interface IWorldRepository {
    * Returns worlds categorized by availability
    */
   findAllWithServerStatus(): Promise<WorldWithServerStatus[]>;
+
+  /**
+   * Delete a world directory
+   * @param name World name to delete
+   * @returns true if deleted successfully
+   */
+  delete(name: string): Promise<boolean>;
 }
 
 /**

@@ -55,6 +55,9 @@ else
     TEMPLATE_DIR="$PLATFORM_DIR/servers/_template"
 fi
 
+# Source common functions
+source "$SCRIPT_DIR/lib/common.sh"
+
 SERVERS_DIR="$PLATFORM_DIR/servers"
 SERVERS_COMPOSE="$SERVERS_DIR/compose.yml"
 MAIN_COMPOSE="$PLATFORM_DIR/docker-compose.yml"

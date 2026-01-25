@@ -3,6 +3,7 @@ import type {
   WorldListResult,
   WorldAssignResult,
   WorldReleaseResult,
+  WorldDeleteResult,
   WorldCreateOptions,
   WorldCreateResult,
   IPromptPort,
@@ -497,5 +498,149 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       previousServer: world.lockedBy,
       error: result.success ? undefined : result.stderr,
     };
+  }
+
+  /**
+   * Interactive world deletion
+   */
+  async deleteWorld(): Promise<WorldDeleteResult> {
+    this.prompt.intro('Delete World');
+
+    try {
+      // Get all worlds
+      const worlds = await this.worldRepo.findAll();
+
+      if (worlds.length === 0) {
+        this.prompt.warn('No worlds found');
+        this.prompt.outro('Nothing to delete');
+        return {
+          success: false,
+          worldName: '',
+          error: 'No worlds found',
+        };
+      }
+
+      // Prompt for world selection
+      const world = await this.prompt.promptWorldSelection(worlds);
+
+      // Show world info
+      this.prompt.note(
+        `Name: ${world.name}\n` +
+          `Size: ${world.sizeFormatted}\n` +
+          `Status: ${world.isLocked ? `locked by ${world.lockedBy}` : 'unlocked'}`,
+        'World Info'
+      );
+
+      // Warn if locked
+      if (world.isLocked) {
+        this.prompt.warn(
+          `Warning: This world is currently locked by '${world.lockedBy}'!`
+        );
+      }
+
+      // Confirm deletion
+      const confirmed = await this.prompt.confirm({
+        message: 'Are you sure you want to delete this world? This action cannot be undone!',
+        initialValue: false,
+      });
+
+      if (!confirmed) {
+        this.prompt.outro('Deletion cancelled');
+        return {
+          success: false,
+          worldName: world.name,
+          error: 'Cancelled',
+        };
+      }
+
+      // Execute deletion
+      return await this.performWorldDeletion(world.name, world.sizeFormatted);
+    } catch (error) {
+      if (this.prompt.isCancel(error)) {
+        this.prompt.outro('Deletion cancelled');
+        return {
+          success: false,
+          worldName: '',
+          error: 'Cancelled',
+        };
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Delete world by name
+   */
+  async deleteWorldByName(
+    worldName: string,
+    force = false
+  ): Promise<WorldDeleteResult> {
+    // Check world exists
+    const world = await this.worldRepo.findByName(worldName);
+    if (!world) {
+      return {
+        success: false,
+        worldName,
+        error: `World '${worldName}' not found`,
+      };
+    }
+
+    // If not force mode and world is locked, throw error
+    if (!force && world.isLocked) {
+      return {
+        success: false,
+        worldName,
+        error: `World '${worldName}' is locked by '${world.lockedBy}'. Use --force to delete anyway.`,
+      };
+    }
+
+    return await this.performWorldDeletion(worldName, world.sizeFormatted, force);
+  }
+
+  /**
+   * Perform the actual world deletion
+   */
+  private async performWorldDeletion(
+    worldName: string,
+    size: string,
+    force = false
+  ): Promise<WorldDeleteResult> {
+    const spinner = this.prompt.spinner();
+
+    try {
+      spinner.start('Deleting world...');
+
+      // Delete the world
+      const success = await this.worldRepo.delete(worldName);
+
+      if (!success) {
+        spinner.stop('Deletion failed');
+        this.prompt.error('Failed to delete world directory');
+        return {
+          success: false,
+          worldName,
+          error: 'Failed to delete world directory',
+        };
+      }
+
+      spinner.stop('World deleted');
+      this.prompt.success(`World '${worldName}' deleted (${size})`);
+      this.prompt.outro('World removed successfully');
+
+      return {
+        success: true,
+        worldName,
+        size,
+      };
+    } catch (error) {
+      spinner.stop('Deletion failed');
+      const message = error instanceof Error ? error.message : String(error);
+      this.prompt.error(message);
+      return {
+        success: false,
+        worldName,
+        error: message,
+      };
+    }
   }
 }

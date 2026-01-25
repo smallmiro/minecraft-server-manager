@@ -54,6 +54,16 @@ export interface IWorldManagementUseCase {
    * Release world by name
    */
   releaseWorldByName(worldName: string, force?: boolean): Promise<WorldReleaseResult>;
+
+  /**
+   * Interactive world deletion
+   */
+  deleteWorld(): Promise<WorldDeleteResult>;
+
+  /**
+   * Delete world by name
+   */
+  deleteWorldByName(worldName: string, force?: boolean): Promise<WorldDeleteResult>;
 }
 
 /**
@@ -85,6 +95,16 @@ export interface WorldReleaseResult {
   success: boolean;
   worldName: string;
   previousServer?: string;
+  error?: string;
+}
+
+/**
+ * World delete result
+ */
+export interface WorldDeleteResult {
+  success: boolean;
+  worldName: string;
+  size?: string;
   error?: string;
 }
 

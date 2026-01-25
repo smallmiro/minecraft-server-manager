@@ -6,6 +6,7 @@ export type {
   WorldListResult,
   WorldAssignResult,
   WorldReleaseResult,
+  WorldDeleteResult,
   WorldCreateOptions,
   WorldCreateResult,
 } from './IWorldManagementUseCase.js';
