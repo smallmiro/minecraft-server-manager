@@ -1482,7 +1482,63 @@ minecraft-server-manager/
 - [ ] Player synchronization between servers
 - [ ] Automated world migration
 
-## 10. Revision History
+## 10. Admin Service (Web Management)
+
+> **Milestone**: Phase 8
+> **Status**: Planned
+
+웹 기반 관리 콘솔 서비스입니다. MSA(Microservice Architecture) 원칙에 따라 두 개의 독립 서비스로 구성됩니다.
+
+### 10.1 서비스 구성
+
+| 서비스 | 패키지 | 역할 |
+|--------|--------|------|
+| **mcctl-api** | `@minecraft-docker/mcctl-api` | 내부 REST API 서비스 |
+| **mcctl-console** | `@minecraft-docker/mcctl-console` | BFF + 관리 UI |
+
+### 10.2 세부 문서
+
+각 서비스는 독립적인 PRD/Plan 문서를 가집니다:
+
+- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md) | [Plan](platform/services/mcctl-api/plan.md)
+- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md) | [Plan](platform/services/mcctl-console/plan.md)
+
+### 10.3 아키텍처 개요
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     BROWSER                                  │
+│                   (React Client)                             │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ HTTP (localhost:3000)
+┌─────────────────────────▼───────────────────────────────────┐
+│                  mcctl-console (BFF + UI)                    │
+│                   Next.js App Router                         │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ HTTP (Docker network)
+┌─────────────────────────▼───────────────────────────────────┐
+│                      mcctl-api                               │
+│                  Fastify REST API                            │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────────┐
+│               @minecraft-docker/shared                       │
+│           (Domain, Use Cases, Adapters)                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 10.4 CLI 명령어 (`mcctl admin`)
+
+```bash
+mcctl admin init              # 초기 설정
+mcctl admin start             # 서비스 시작
+mcctl admin stop              # 서비스 중지
+mcctl admin status            # 상태 확인
+mcctl admin user list         # 사용자 목록
+mcctl admin user add <name>   # 사용자 추가
+```
+
+## 11. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
@@ -1492,3 +1548,4 @@ minecraft-server-manager/
 | 2.1.0 | 2025-01-17 | - | Migrate from Lazymc to mc-router (hostname routing, Docker auto-scale) |
 | 3.0.0 | 2025-01-18 | - | Add CLI Architecture (Hexagonal + Clean Architecture, SOLID principles) |
 | 3.1.0 | 2025-01-24 | - | Update FR-014~FR-016 status to completed, update Phase 5 and Migration Path status |
+| 4.0.0 | 2025-01-25 | - | Add Section 10: Admin Service (mcctl-api, mcctl-console) |
