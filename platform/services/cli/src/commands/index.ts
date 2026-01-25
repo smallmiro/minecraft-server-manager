@@ -15,3 +15,4 @@ export { kickCommand, type KickCommandOptions } from './kick.js';
 export { playerOnlineCommand, type PlayerOnlineCommandOptions } from './player-online.js';
 export { playerCommand, type PlayerCommandOptions } from './player.js';
 export { migrateCommand, type MigrateCommandOptions } from './migrate.js';
+export { modCommand, type ModCommandOptions } from './mod.js';
