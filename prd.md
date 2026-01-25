@@ -1482,7 +1482,63 @@ minecraft-server-manager/
 - [ ] Player synchronization between servers
 - [ ] Automated world migration
 
-## 10. Revision History
+## 10. Admin Service (Web Management)
+
+> **Milestone**: Phase 8
+> **Status**: Planned
+
+Web-based management console service. Consists of two independent services following MSA (Microservice Architecture) principles.
+
+### 10.1 Service Components
+
+| Service | Package | Role |
+|---------|---------|------|
+| **mcctl-api** | `@minecraft-docker/mcctl-api` | Internal REST API service |
+| **mcctl-console** | `@minecraft-docker/mcctl-console` | BFF + Management UI |
+
+### 10.2 Detailed Documents
+
+Each service has independent PRD/Plan documents:
+
+- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md) | [Plan](platform/services/mcctl-api/plan.md)
+- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md) | [Plan](platform/services/mcctl-console/plan.md)
+
+### 10.3 Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     BROWSER                                  │
+│                   (React Client)                             │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ HTTP (localhost:3000)
+┌─────────────────────────▼───────────────────────────────────┐
+│                  mcctl-console (BFF + UI)                    │
+│                   Next.js App Router                         │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ HTTP (Docker network)
+┌─────────────────────────▼───────────────────────────────────┐
+│                      mcctl-api                               │
+│                  Fastify REST API                            │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────────┐
+│               @minecraft-docker/shared                       │
+│           (Domain, Use Cases, Adapters)                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 10.4 CLI Commands (`mcctl admin`)
+
+```bash
+mcctl admin init              # Initial setup
+mcctl admin start             # Start services
+mcctl admin stop              # Stop services
+mcctl admin status            # Check status
+mcctl admin user list         # List users
+mcctl admin user add <name>   # Add user
+```
+
+## 11. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
@@ -1492,3 +1548,4 @@ minecraft-server-manager/
 | 2.1.0 | 2025-01-17 | - | Migrate from Lazymc to mc-router (hostname routing, Docker auto-scale) |
 | 3.0.0 | 2025-01-18 | - | Add CLI Architecture (Hexagonal + Clean Architecture, SOLID principles) |
 | 3.1.0 | 2025-01-24 | - | Update FR-014~FR-016 status to completed, update Phase 5 and Migration Path status |
+| 4.0.0 | 2025-01-25 | - | Add Section 10: Admin Service (mcctl-api, mcctl-console) |

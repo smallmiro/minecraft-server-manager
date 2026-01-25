@@ -29,6 +29,7 @@
 | Phase 7.5: Detailed Monitoring | [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68) ✅ | ✅ Completed |
 | Phase 7.6: Sudo Password Handling | [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72) ✅ | ✅ Completed |
 | Phase 7.7: Unified Player Management | [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73) ✅ | ✅ Completed |
+| Phase 8: Admin Service | TBD | 📋 Planned |
 
 ---
 
@@ -1823,6 +1824,85 @@ mcctl whitelist myserver
 
 # 6. Run tests
 pnpm test
+```
+
+---
+
+## Phase 8: Admin Service (Web Management)
+
+> **Milestone**: TBD
+> **Status**: Planned
+
+Implementation plan for web-based management console service. Consists of two independent services following MSA principles.
+
+### 8.1 Service Structure
+
+```
+platform/services/
+├── mcctl-api/              # @minecraft-docker/mcctl-api
+│   ├── prd.md              # API service PRD
+│   ├── plan.md             # API service Plan
+│   └── src/
+│
+└── mcctl-console/          # @minecraft-docker/mcctl-console
+    ├── prd.md              # Console service PRD
+    ├── plan.md             # Console service Plan
+    └── src/
+```
+
+### 8.2 Detailed Plan Documents
+
+Each service has independent implementation plans:
+
+- **mcctl-api**: [Plan](platform/services/mcctl-api/plan.md) - Fastify REST API
+- **mcctl-console**: [Plan](platform/services/mcctl-console/plan.md) - Next.js BFF + UI
+
+### 8.3 Implementation Order
+
+#### Phase 8.1: Shared Package Extension
+- [ ] Add `IUserRepository` port
+- [ ] Implement `YamlUserRepository` adapter
+- [ ] Implement `SqliteUserRepository` adapter
+- [ ] Implement `ApiPromptAdapter`
+
+#### Phase 8.2: CLI Admin Commands
+- [ ] `mcctl admin init` - Initial setup
+- [ ] `mcctl admin user` - User management
+- [ ] `mcctl admin api` - API settings
+- [ ] `mcctl admin service` - Service management
+
+#### Phase 8.3: mcctl-api Service
+- [ ] Fastify server structure
+- [ ] Authentication plugin (5 access modes)
+- [ ] REST API routes
+- [ ] OpenAPI/Swagger
+- [ ] Dockerfile
+
+#### Phase 8.4: mcctl-console Service
+- [ ] Next.js project setup
+- [ ] NextAuth.js authentication
+- [ ] BFF proxy
+- [ ] Dashboard UI
+- [ ] Dockerfile
+
+#### Phase 8.5: Integration and Testing
+- [ ] Docker Compose integration
+- [ ] E2E tests
+
+### 8.4 Verification
+
+```bash
+# 1. Initialize
+mcctl admin init
+
+# 2. Start services
+mcctl admin start
+
+# 3. Access Console
+open http://localhost:3000
+
+# 4. API test (api-key mode)
+curl -H "X-API-Key: mctk_xxx" http://localhost:3001/api/servers
 ```
 
 ---
