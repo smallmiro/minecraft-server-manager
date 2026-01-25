@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { config } from './config/index.js';
 import authPlugin from './plugins/auth.js';
+import swaggerPlugin from './plugins/swagger.js';
 
 export interface BuildAppOptions {
   logger?: boolean;
@@ -30,6 +31,16 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(authPlugin, {
     config: config.auth,
   });
+
+  // Register Swagger documentation (only in non-production or if explicitly enabled)
+  if (config.nodeEnv !== 'production' || process.env['SWAGGER_ENABLED'] === 'true') {
+    await app.register(swaggerPlugin, {
+      title: 'mcctl-api',
+      description: 'REST API for managing Docker Minecraft servers',
+      version: '0.1.0',
+      routePrefix: '/docs',
+    });
+  }
 
   // Health check endpoint
   app.get('/health', async () => {
