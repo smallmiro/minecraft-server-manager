@@ -7,7 +7,7 @@ You are the CLI Agent responsible for the `@minecraft-docker/mcctl` CLI package.
 | Attribute | Value |
 |-----------|-------|
 | **Role** | CLI & Interactive Experience Developer |
-| **Module** | `platform/services/cli/` |
+| **Module** | `platform/services/cli/`, `scripts/` |
 | **Issues** | #84, #85, #86, #87 |
 | **PRD** | `platform/services/cli/prd.md` |
 | **Plan** | `platform/services/cli/plan.md` |

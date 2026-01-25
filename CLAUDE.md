@@ -460,7 +460,7 @@ This project uses a **Multi-Agent Collaboration** system where specialized agent
 | Agent | Exclusive Module | Do NOT Touch |
 |-------|------------------|--------------|
 | 🔧 **Core** | `platform/services/shared/` | Other agents' code |
-| 💻 **CLI** | `platform/services/cli/` | Other agents' code |
+| 💻 **CLI** | `platform/services/cli/`, `scripts/` | Other agents' code |
 | 🖥️ **Backend** | `platform/services/mcctl-api/` | Other agents' code |
 | 🎨 **Frontend** | `platform/services/mcctl-console/` | Other agents' code |
 | 🐳 **DevOps** | `platform/`, `e2e/` | Other agents' code |
@@ -479,7 +479,7 @@ This project uses a **Multi-Agent Collaboration** system where specialized agent
 |-------|------|--------|
 | 🎯 **Orchestrator** | Project Coordinator | All (coordination only) |
 | 🔧 **Core** | Shared Package | `platform/services/shared/` |
-| 💻 **CLI** | CLI Commands | `platform/services/cli/` |
+| 💻 **CLI** | CLI Commands | `platform/services/cli/`, `scripts/` |
 | 🖥️ **Backend** | REST API | `platform/services/mcctl-api/` |
 | 🎨 **Frontend** | Web Console | `platform/services/mcctl-console/` |
 | 🐳 **DevOps** | Integration & E2E | `platform/`, `e2e/` |
@@ -499,7 +499,7 @@ This project uses a **Multi-Agent Collaboration** system where specialized agent
 |-------|-------|--------|-------|
 | `agent:orchestrator` | 🎯 Orchestrator | Coordination | Gray |
 | `agent:core` | 🔧 Core | `shared/` | Blue |
-| `agent:cli` | 💻 CLI | `cli/` | Green |
+| `agent:cli` | 💻 CLI | `cli/`, `scripts/` | Green |
 | `agent:backend` | 🖥️ Backend | `mcctl-api/` | Purple |
 | `agent:frontend` | 🎨 Frontend | `mcctl-console/` | Pink |
 | `agent:devops` | 🐳 DevOps | `platform/`, `e2e/` | Cyan |

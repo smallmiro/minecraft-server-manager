@@ -1562,7 +1562,7 @@ This project uses a **Multi-Agent Collaboration** system for all development wor
 | Agent | Exclusive Module | Responsibility |
 |-------|------------------|----------------|
 | 🔧 **Core** | `platform/services/shared/` | Domain, Use Cases, Shared Adapters |
-| 💻 **CLI** | `platform/services/cli/` | CLI Commands, Prompts |
+| 💻 **CLI** | `platform/services/cli/`, `scripts/` | CLI Commands, Prompts, Bash Scripts |
 | 🖥️ **Backend** | `platform/services/mcctl-api/` | REST API, Auth, Swagger |
 | 🎨 **Frontend** | `platform/services/mcctl-console/` | BFF, UI Components |
 | 🐳 **DevOps** | `platform/`, `e2e/` | Docker, Integration Tests |
