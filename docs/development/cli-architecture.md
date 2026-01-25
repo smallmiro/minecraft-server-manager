@@ -367,3 +367,224 @@ Every use case should support both modes:
 - `executeWithArgs()` or `executeWithConfig()`: CLI mode with arguments
 
 This allows the same business logic to be used from both interactive CLI and scripts.
+
+## Mod Source Factory Pattern
+
+The mod management system uses the **Factory Pattern** with auto-registration for pluggable mod source adapters.
+
+### Architecture Overview
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│  Application Layer (shared)                                      │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                    IModSourcePort                            ││
+│  │  - search(query, options): Promise<ModSearchResult>          ││
+│  │  - getProject(slugOrId): Promise<ModProject | null>          ││
+│  │  - getVersions(slugOrId, options): Promise<ModVersion[]>     ││
+│  │  - isAvailable(): Promise<boolean>                           ││
+│  │  - getEnvKey(): string                                       ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Infrastructure Layer (shared)                                   │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                  ModSourceFactory                            ││
+│  │  - register(adapter): void                                   ││
+│  │  - get(source): IModSourcePort                               ││
+│  │  - getSupportedSources(): string[]                           ││
+│  │  - getDefaultSource(): string                                ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                ┌───────────────┼───────────────┐
+                ▼               ▼               ▼
+┌─────────────────────┐ ┌─────────────┐ ┌─────────────────┐
+│ mod-source-modrinth │ │   Future    │ │     Future      │
+│ ┌─────────────────┐ │ │ CurseForge  │ │     Spiget      │
+│ │ModrinthAdapter  │ │ │   Adapter   │ │    Adapter      │
+│ └─────────────────┘ │ └─────────────┘ └─────────────────┘
+└─────────────────────┘
+```
+
+### Domain Models (shared/src/domain/mod/)
+
+```typescript
+// ModProject - Represents a mod/plugin project
+interface ModProject {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  author: string;
+  downloads: number;
+  iconUrl?: string;
+  categories: string[];
+  serverSide: 'required' | 'optional' | 'unsupported';
+  clientSide: 'required' | 'optional' | 'unsupported';
+  sourceUrl?: string;
+}
+
+// ModSearchResult - Paginated search results
+interface ModSearchResult {
+  hits: ModProject[];
+  offset: number;
+  limit: number;
+  totalHits: number;
+}
+
+// ModVersion - Specific version of a mod
+interface ModVersion {
+  id: string;
+  projectId: string;
+  name: string;
+  versionNumber: string;
+  gameVersions: string[];
+  loaders: string[];
+  files: ModFile[];
+  dependencies: ModDependency[];
+}
+```
+
+### IModSourcePort Interface
+
+The port interface that all mod source adapters must implement:
+
+```typescript
+// shared/src/application/ports/outbound/IModSourcePort.ts
+export interface IModSourcePort {
+  readonly sourceName: string;     // e.g., 'modrinth'
+  readonly displayName: string;    // e.g., 'Modrinth'
+
+  search(query: string, options?: ModSearchOptions): Promise<ModSearchResult>;
+  getProject(slugOrId: string): Promise<ModProject | null>;
+  getVersions(slugOrId: string, options?: ModVersionOptions): Promise<ModVersion[]>;
+  isAvailable(): Promise<boolean>;
+  getEnvKey(): string;             // e.g., 'MODRINTH_PROJECTS'
+  formatForEnv(project: ModProject): string;
+}
+```
+
+### ModSourceFactory
+
+The factory manages adapter registration and retrieval:
+
+```typescript
+// shared/src/infrastructure/factories/ModSourceFactory.ts
+import { ModSourceFactory } from '@minecraft-docker/shared';
+
+// Register an adapter (done automatically on import)
+ModSourceFactory.register(new ModrinthAdapter());
+
+// Get an adapter by name
+const source = ModSourceFactory.get('modrinth');
+const results = await source.search('sodium');
+
+// List available sources
+const sources = ModSourceFactory.getSupportedSources(); // ['modrinth']
+
+// Get default source
+const defaultSource = ModSourceFactory.getDefaultSource(); // 'modrinth'
+```
+
+### Implementing a Mod Source Adapter
+
+Each mod source is a separate npm package following Hexagonal Architecture:
+
+```text
+mod-source-modrinth/
+├── src/
+│   ├── index.ts                 # Exports and auto-registration
+│   ├── ModrinthAdapter.ts       # IModSourcePort implementation
+│   ├── types.ts                 # Modrinth-specific API types
+│   └── infrastructure/
+│       ├── api/
+│       │   └── ModrinthApiClient.ts  # HTTP client for Modrinth API
+│       └── mappers/
+│           └── ModrinthMapper.ts     # Maps API responses to domain models
+├── package.json
+└── tsconfig.json
+```
+
+Example adapter implementation:
+
+```typescript
+// mod-source-modrinth/src/ModrinthAdapter.ts
+import type { IModSourcePort, ModProject, ModSearchResult } from '@minecraft-docker/shared';
+import { ModrinthApiClient } from './infrastructure/api/ModrinthApiClient.js';
+import { ModrinthMapper } from './infrastructure/mappers/ModrinthMapper.js';
+
+export class ModrinthAdapter implements IModSourcePort {
+  readonly sourceName = 'modrinth';
+  readonly displayName = 'Modrinth';
+
+  private readonly api = new ModrinthApiClient();
+  private readonly mapper = new ModrinthMapper();
+
+  async search(query: string, options?: ModSearchOptions): Promise<ModSearchResult> {
+    const response = await this.api.search(query, options);
+    return this.mapper.toSearchResult(response);
+  }
+
+  async getProject(slugOrId: string): Promise<ModProject | null> {
+    const response = await this.api.getProject(slugOrId);
+    return response ? this.mapper.toProject(response) : null;
+  }
+
+  getEnvKey(): string {
+    return 'MODRINTH_PROJECTS';
+  }
+
+  formatForEnv(project: ModProject): string {
+    return project.slug;
+  }
+}
+```
+
+Auto-registration on import:
+
+```typescript
+// mod-source-modrinth/src/index.ts
+import { ModSourceFactory } from '@minecraft-docker/shared';
+import { ModrinthAdapter } from './ModrinthAdapter.js';
+
+// Auto-register when module is imported
+ModSourceFactory.register(new ModrinthAdapter());
+
+export { ModrinthAdapter };
+```
+
+### Using in CLI Commands
+
+```typescript
+// cli/src/commands/mod.ts
+import { ModSourceFactory } from '@minecraft-docker/shared';
+import '@minecraft-docker/mod-source-modrinth'; // Triggers auto-registration
+
+export async function searchMods(query: string, source = 'modrinth') {
+  const adapter = ModSourceFactory.get(source);
+  const results = await adapter.search(query);
+
+  for (const mod of results.hits) {
+    console.log(`${mod.slug} (${mod.downloads} downloads)`);
+  }
+}
+```
+
+### Adding New Mod Sources
+
+To add a new mod source (e.g., CurseForge):
+
+1. Create a new package: `mod-source-curseforge/`
+2. Implement `IModSourcePort` interface
+3. Add API client and mappers in `infrastructure/`
+4. Auto-register in `index.ts`
+5. Add as dependency to CLI package
+
+The Factory Pattern ensures:
+- **Extensibility**: New sources can be added without modifying core code
+- **Loose Coupling**: CLI doesn't depend on specific implementations
+- **Testability**: Adapters can be mocked for testing
+- **Clean Architecture**: Domain models are source-agnostic

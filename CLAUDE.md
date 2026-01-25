@@ -63,7 +63,6 @@ minecraft/
 │   │   │   │   │   └── ...
 │   │   │   │   ├── lib/         # Libraries
 │   │   │   │   │   ├── mojang-api.ts   # Mojang API client
-│   │   │   │   │   ├── modrinth-api.ts # Modrinth mod search API
 │   │   │   │   │   ├── player-cache.ts # Encrypted player cache
 │   │   │   │   │   ├── rcon.ts         # RCON helpers
 │   │   │   │   │   ├── sudo-utils.ts   # Sudo password handling
@@ -75,7 +74,23 @@ minecraft/
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
 │   │   ├── shared/              # @minecraft-docker/shared (common utilities)
-│   │   │   ├── src/             # Types, Docker utils, path helpers
+│   │   │   ├── src/
+│   │   │   │   ├── domain/      # Domain entities and value objects
+│   │   │   │   │   ├── entities/       # Server, World entities
+│   │   │   │   │   ├── value-objects/  # ServerName, ServerType, etc.
+│   │   │   │   │   └── mod/            # ModProject, ModVersion, ModSearchResult
+│   │   │   │   ├── application/ # Use cases and ports
+│   │   │   │   │   ├── ports/          # IModSourcePort, IPromptPort, etc.
+│   │   │   │   │   └── use-cases/      # CreateServer, DeleteServer, etc.
+│   │   │   │   └── infrastructure/     # Adapters and factories
+│   │   │   │       ├── adapters/       # ShellAdapter, DocsAdapter, etc.
+│   │   │   │       └── factories/      # ModSourceFactory
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   ├── mod-source-modrinth/ # @minecraft-docker/mod-source-modrinth
+│   │   │   ├── src/
+│   │   │   │   ├── ModrinthAdapter.ts  # IModSourcePort implementation
+│   │   │   │   └── infrastructure/     # API client, mappers
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
 │   │   └── web-admin/           # Future: Web management UI
