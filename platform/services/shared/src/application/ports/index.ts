@@ -49,4 +49,5 @@ export type {
   WorldWithServerStatus,
   ServerStatus,
   WorldAvailabilityCategory,
+  IModSourcePort,
 } from './outbound/index.js';
