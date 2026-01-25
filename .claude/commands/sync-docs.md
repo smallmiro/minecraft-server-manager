@@ -8,6 +8,7 @@ This command analyzes the codebase and updates project documentation to reflect 
 - `README.md` - Main documentation and quick start guide
 - `prd.md` - Product Requirements Document (if exists)
 - `plan.md` - Implementation roadmap (if exists)
+- `docs/documentforllmagent.md` - **LLM Knowledge Base** (ChatGPT/Gemini/Claude용)
 
 ## Protected Files (DO NOT EDIT)
 
@@ -59,6 +60,21 @@ This command analyzes the codebase and updates project documentation to reflect 
    - Add new files to file checklist
    - Update architecture diagrams if structure changed
 
+6. **Update docs/documentforllmagent.md** (LLM Knowledge Base) ⚠️ ALWAYS UPDATE:
+   - This file is the knowledge base for **ChatGPT, Gemini, Claude** projects
+   - Users upload this file to LLM projects for mcctl Q&A support
+   - **MUST be updated whenever mcctl commands change**
+
+   Update checklist:
+   - [ ] Run `mcctl --help` to get current command list
+   - [ ] Check for new commands in `platform/services/cli/src/commands/`
+   - [ ] Update **Command Reference** section with new commands
+   - [ ] Add examples for new features
+   - [ ] Update **FAQ** section if new common questions arise
+   - [ ] Update **Common Use Cases** if new workflows are added
+   - [ ] Verify all command syntax matches current implementation
+   - [ ] Update version number if changed
+
 ## Analysis Checklist
 
 - [ ] Read docker-compose.yml for current configuration
@@ -73,6 +89,13 @@ This command analyzes the codebase and updates project documentation to reflect 
   - [ ] Check implementation status of each FR feature
   - [ ] Verify Phase completion in Implementation Plan
   - [ ] Check Migration Path status (Section 9.9)
+- [ ] **docs/documentforllmagent.md specific** (LLM Knowledge Base):
+  - [ ] Run `mcctl --help` and compare with documented commands
+  - [ ] Check for new command files in `platform/services/cli/src/commands/`
+  - [ ] Verify all command syntax is up-to-date
+  - [ ] Add new commands to Command Reference section
+  - [ ] Update FAQ if new features need explanation
+  - [ ] Add practical examples for new commands
 
 ## Update Rules
 
@@ -136,12 +159,51 @@ minecraft/
 - [x] Update `README.md`
 ```
 
+### docs/documentforllmagent.md - New mcctl command added
+```markdown
+# When a new command like 'mcctl mod' is added:
+
+# 1. Add to Command Reference section
+## mod search
+Search for mods on Modrinth.
+**Syntax**: `mcctl mod search <query> [--json]`
+**Example**: `mcctl mod search sodium`
+
+# 2. Add to FAQ section
+### Q: How do I add mods to my server?
+A: Use `mcctl mod add <server> <mod-name>` to add mods from Modrinth.
+
+# 3. Add to Common Use Cases section
+### Setting Up a Modded Server
+1. Create server: `mcctl create myserver -t FORGE -v 1.20.4`
+2. Search mods: `mcctl mod search lithium`
+3. Add mods: `mcctl mod add myserver lithium sodium`
+```
+
+### docs/documentforllmagent.md - Why this file matters
+```
+┌─────────────────────────────────────────────────────────────┐
+│  This file is uploaded to LLM projects (ChatGPT/Gemini/    │
+│  Claude) so users can ask questions about mcctl.           │
+│                                                             │
+│  User: "How do I create a Forge server?"                   │
+│  LLM: (reads documentforllmagent.md) → accurate answer     │
+│                                                             │
+│  ⚠️ If this file is outdated, LLMs give wrong answers!     │
+│  ✅ ALWAYS update when mcctl commands change               │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ## Important Notes
 
 - **NEVER edit files in docs/itzg-reference/** - These are synced from official documentation
 - **Always read files before editing** - Understand current content first
 - **Preserve user customizations** - Don't overwrite intentional modifications
 - **English only** - All documentation must be in English for open-source
+- **⚠️ ALWAYS update docs/documentforllmagent.md** - This is the LLM knowledge base
+  - Users rely on this file for ChatGPT/Gemini/Claude mcctl Q&A
+  - Outdated information = wrong answers from LLMs
+  - Update whenever mcctl commands are added, changed, or removed
 
 ## Execution
 
