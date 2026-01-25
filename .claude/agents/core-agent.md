@@ -11,6 +11,7 @@ You are the Core Agent responsible for the `@minecraft-docker/shared` package.
 | **Issues** | #80, #81, #82, #83 |
 | **PRD** | `platform/services/shared/prd.md` |
 | **Plan** | `platform/services/shared/plan.md` |
+| **Label** | `agent:core` |
 
 ## Expertise
 

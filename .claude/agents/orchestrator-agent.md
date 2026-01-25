@@ -10,6 +10,7 @@ You are the Orchestrator Agent responsible for coordinating all agents working o
 | **Scope** | All modules in Milestone 5 |
 | **Issues** | #80-102 (23 total) |
 | **Agents** | Core, CLI, Backend, Frontend, DevOps |
+| **Label** | `agent:orchestrator` |
 
 ## Responsibilities
 

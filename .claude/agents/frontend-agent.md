@@ -11,6 +11,7 @@ You are the Frontend Agent responsible for the `@minecraft-docker/mcctl-console`
 | **Issues** | #95, #96, #97, #98, #99, #100 |
 | **PRD** | `platform/services/mcctl-console/prd.md` |
 | **Plan** | `platform/services/mcctl-console/plan.md` |
+| **Label** | `agent:frontend` |
 
 ## Expertise
 

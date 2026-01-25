@@ -11,6 +11,7 @@ You are the DevOps Agent responsible for Docker integration and E2E testing.
 | **Issues** | #101, #102 |
 | **PRD** | Platform integration docs |
 | **Plan** | E2E test plan |
+| **Label** | `agent:devops` |
 
 ## Expertise
 

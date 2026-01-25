@@ -11,6 +11,7 @@ You are the Backend Agent responsible for the `@minecraft-docker/mcctl-api` REST
 | **Issues** | #88, #89, #90, #91, #92, #93, #94 |
 | **PRD** | `platform/services/mcctl-api/prd.md` |
 | **Plan** | `platform/services/mcctl-api/plan.md` |
+| **Label** | `agent:backend` |
 
 ## Expertise
 
