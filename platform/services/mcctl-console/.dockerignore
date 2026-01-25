@@ -1,0 +1,62 @@
+# Dependencies (installed in Docker)
+node_modules/
+.pnpm-store/
+
+# Build outputs (created during Docker build)
+.next/
+out/
+build/
+dist/
+
+# Development files
+.env*.local
+.env.development
+.env.test
+
+# Testing
+coverage/
+.nyc_output/
+*.test.ts
+*.spec.ts
+__tests__/
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Vercel
+.vercel/
+
+# Storybook
+.storybook/
+storybook-static/
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
