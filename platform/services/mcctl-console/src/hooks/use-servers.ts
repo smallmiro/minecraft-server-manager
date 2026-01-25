@@ -1,67 +1,100 @@
-'use client';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryResult,
+  type UseMutationResult,
+} from '@tanstack/react-query';
+import { api, ApiError } from '@/lib/api-client';
+import type {
+  Server,
+  ServersResponse,
+  ServerActionResponse,
+  CommandResponse,
+} from '@/types/server';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { serverApi, ApiError } from '@/lib/api';
-import type { ServersResponse, ServerDetail, ServerSummary, ServerActionResponse } from '@/types/server';
-
-// Query keys for cache management
+/**
+ * Query keys for server-related queries
+ */
 export const serverKeys = {
   all: ['servers'] as const,
   lists: () => [...serverKeys.all, 'list'] as const,
   list: () => [...serverKeys.lists()] as const,
   details: () => [...serverKeys.all, 'detail'] as const,
   detail: (name: string) => [...serverKeys.details(), name] as const,
-  logs: (name: string) => [...serverKeys.all, 'logs', name] as const,
 };
 
 /**
+ * Hook options
+ */
+interface UseServersOptions {
+  /** Refetch interval in milliseconds (default: 5000) */
+  refetchInterval?: number;
+  /** Enable/disable the query */
+  enabled?: boolean;
+}
+
+/**
  * Hook to fetch all servers
+ *
+ * @example
+ * const { data, isLoading, error } = useServers();
+ * if (data) {
+ *   console.log(data.servers);
+ * }
  */
-export function useServers() {
-  return useQuery<ServersResponse, ApiError>({
-    queryKey: serverKeys.list(),
-    queryFn: () => serverApi.getServers(),
-    staleTime: 10 * 1000, // 10 seconds
-    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds
-  });
-}
+export function useServers(
+  options: UseServersOptions = {}
+): UseQueryResult<ServersResponse, ApiError> {
+  const { refetchInterval = 5000, enabled = true } = options;
 
-/**
- * Hook to fetch a single server's details
- */
-export function useServer(name: string) {
-  return useQuery<ServerDetail, ApiError>({
-    queryKey: serverKeys.detail(name),
-    queryFn: () => serverApi.getServer(name),
-    enabled: !!name,
-    staleTime: 5 * 1000,
-    refetchInterval: 10 * 1000, // More frequent updates for detail view
-  });
-}
-
-/**
- * Hook to fetch server logs
- */
-export function useServerLogs(name: string, lines: number = 50) {
   return useQuery({
-    queryKey: serverKeys.logs(name),
-    queryFn: () => serverApi.getLogs(name, lines),
-    enabled: !!name,
-    staleTime: 2 * 1000, // Logs change frequently
-    refetchInterval: 5 * 1000,
+    queryKey: serverKeys.list(),
+    queryFn: () => api.get<ServersResponse>('/servers'),
+    refetchInterval,
+    enabled,
   });
 }
 
 /**
- * Hook for starting a server
+ * Hook to fetch a single server by name
+ *
+ * @example
+ * const { data: server, isLoading } = useServer('myserver');
  */
-export function useStartServer() {
+export function useServer(
+  name: string,
+  options: UseServersOptions = {}
+): UseQueryResult<Server, ApiError> {
+  const { refetchInterval = 5000, enabled = true } = options;
+
+  return useQuery({
+    queryKey: serverKeys.detail(name),
+    queryFn: () => api.get<Server>(`/servers/${name}`),
+    refetchInterval,
+    enabled: enabled && !!name,
+  });
+}
+
+/**
+ * Hook to start a server
+ *
+ * @example
+ * const startServer = useStartServer();
+ * startServer.mutate('myserver');
+ */
+export function useStartServer(): UseMutationResult<
+  ServerActionResponse,
+  ApiError,
+  string
+> {
   const queryClient = useQueryClient();
 
-  return useMutation<ServerActionResponse, ApiError, string>({
-    mutationFn: (name: string) => serverApi.startServer(name),
-    onSuccess: (_data: ServerActionResponse, name: string) => {
-      // Invalidate server queries to refresh status
+  return useMutation({
+    mutationFn: (name: string) =>
+      api.post<ServerActionResponse>(`/servers/${name}/start`, {}),
+    onSuccess: (_data, name) => {
+      // Invalidate both the list and the specific server
       queryClient.invalidateQueries({ queryKey: serverKeys.list() });
       queryClient.invalidateQueries({ queryKey: serverKeys.detail(name) });
     },
@@ -69,14 +102,23 @@ export function useStartServer() {
 }
 
 /**
- * Hook for stopping a server
+ * Hook to stop a server
+ *
+ * @example
+ * const stopServer = useStopServer();
+ * stopServer.mutate('myserver');
  */
-export function useStopServer() {
+export function useStopServer(): UseMutationResult<
+  ServerActionResponse,
+  ApiError,
+  string
+> {
   const queryClient = useQueryClient();
 
-  return useMutation<ServerActionResponse, ApiError, string>({
-    mutationFn: (name: string) => serverApi.stopServer(name),
-    onSuccess: (_data: ServerActionResponse, name: string) => {
+  return useMutation({
+    mutationFn: (name: string) =>
+      api.post<ServerActionResponse>(`/servers/${name}/stop`, {}),
+    onSuccess: (_data, name) => {
       queryClient.invalidateQueries({ queryKey: serverKeys.list() });
       queryClient.invalidateQueries({ queryKey: serverKeys.detail(name) });
     },
@@ -84,14 +126,23 @@ export function useStopServer() {
 }
 
 /**
- * Hook for restarting a server
+ * Hook to restart a server
+ *
+ * @example
+ * const restartServer = useRestartServer();
+ * restartServer.mutate('myserver');
  */
-export function useRestartServer() {
+export function useRestartServer(): UseMutationResult<
+  ServerActionResponse,
+  ApiError,
+  string
+> {
   const queryClient = useQueryClient();
 
-  return useMutation<ServerActionResponse, ApiError, string>({
-    mutationFn: (name: string) => serverApi.restartServer(name),
-    onSuccess: (_data: ServerActionResponse, name: string) => {
+  return useMutation({
+    mutationFn: (name: string) =>
+      api.post<ServerActionResponse>(`/servers/${name}/restart`, {}),
+    onSuccess: (_data, name) => {
       queryClient.invalidateQueries({ queryKey: serverKeys.list() });
       queryClient.invalidateQueries({ queryKey: serverKeys.detail(name) });
     },
@@ -99,36 +150,50 @@ export function useRestartServer() {
 }
 
 /**
- * Get status badge color based on server status
+ * Command execution parameters
  */
-export function getStatusColor(status: ServerSummary['status']): string {
-  switch (status) {
-    case 'running':
-      return 'bg-green-500';
-    case 'stopped':
-      return 'bg-gray-500';
-    case 'starting':
-      return 'bg-yellow-500';
-    case 'stopping':
-      return 'bg-orange-500';
-    case 'error':
-      return 'bg-red-500';
-    default:
-      return 'bg-gray-400';
-  }
+interface ExecuteCommandParams {
+  serverName: string;
+  command: string;
 }
 
 /**
- * Get health badge color based on health status
+ * Hook to execute a command on a server via RCON
+ *
+ * @example
+ * const executeCommand = useExecuteCommand();
+ * executeCommand.mutate({ serverName: 'myserver', command: 'say Hello!' });
  */
-export function getHealthColor(health: ServerSummary['health']): string {
-  switch (health) {
-    case 'healthy':
-      return 'text-green-600';
-    case 'unhealthy':
-      return 'text-red-600';
-    case 'unknown':
-    default:
-      return 'text-gray-500';
-  }
+export function useExecuteCommand(): UseMutationResult<
+  CommandResponse,
+  ApiError,
+  ExecuteCommandParams
+> {
+  return useMutation({
+    mutationFn: ({ serverName, command }: ExecuteCommandParams) =>
+      api.post<CommandResponse>(`/servers/${serverName}/command`, { command }),
+  });
+}
+
+/**
+ * Hook to delete a server
+ *
+ * @example
+ * const deleteServer = useDeleteServer();
+ * deleteServer.mutate('myserver');
+ */
+export function useDeleteServer(): UseMutationResult<
+  ServerActionResponse,
+  ApiError,
+  string
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (name: string) =>
+      api.delete<ServerActionResponse>(`/servers/${name}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: serverKeys.list() });
+    },
+  });
 }

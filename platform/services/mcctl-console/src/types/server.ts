@@ -1,91 +1,106 @@
 /**
- * Server-related type definitions
+ * Server-related types for mcctl-console
+ *
+ * These types mirror the mcctl-api responses for type-safe data fetching.
  */
 
+/**
+ * Server status states
+ */
 export type ServerStatus = 'running' | 'stopped' | 'starting' | 'stopping' | 'error';
 
-export type ServerHealth = 'healthy' | 'unhealthy' | 'unknown';
+/**
+ * Server type (Minecraft distribution)
+ */
+export type ServerType = 'VANILLA' | 'PAPER' | 'FORGE' | 'FABRIC' | 'NEOFORGE' | 'SPIGOT' | 'BUKKIT';
 
-export type ServerType = 'PAPER' | 'VANILLA' | 'FORGE' | 'NEOFORGE' | 'FABRIC' | 'SPIGOT' | 'BUKKIT';
-
+/**
+ * Player information
+ */
 export interface Player {
   name: string;
   uuid: string;
   joinedAt?: string;
 }
 
-export interface ServerDetail {
-  name: string;
-  status: ServerStatus;
-  health: ServerHealth;
-  type: ServerType;
-  version: string;
-  memory: {
-    allocated: string;
-    used?: string;
-  };
-  uptime?: string;
-  players: {
-    online: number;
-    max: number;
-    list: Player[];
-  };
-  port?: number;
-  hostname?: string;
-}
-
-export interface ServerLogs {
-  lines: string[];
-  timestamp: string;
-}
-
-export interface ServerActionResponse {
-  success: boolean;
-  message: string;
-  server?: string;
+/**
+ * Server resource usage
+ */
+export interface ServerResources {
+  cpu: number;       // CPU usage percentage
+  memory: number;    // Memory usage in bytes
+  memoryLimit: number; // Memory limit in bytes
 }
 
 /**
- * Server summary for list view
+ * Server entity
  */
-export interface ServerSummary {
-  /** Server name (e.g., 'myserver') */
+export interface Server {
+  /** Server name (unique identifier) */
   name: string;
-  /** Docker container name (e.g., 'mc-myserver') */
-  containerName: string;
-  /** Current server status */
+
+  /** Display name (optional) */
+  displayName?: string;
+
+  /** Current status */
   status: ServerStatus;
-  /** Health check status */
-  health: ServerHealth;
-  /** Server type */
+
+  /** Server type (PAPER, FORGE, etc.) */
   type: ServerType;
+
   /** Minecraft version */
   version: string;
-  /** Number of online players */
-  playerCount: number;
-  /** Maximum player slots */
+
+  /** Currently online players */
+  players: Player[];
+
+  /** Maximum allowed players */
   maxPlayers: number;
-  /** Server hostname for connection */
-  hostname: string;
-  /** Server port (usually 25565) */
-  port: number;
-  /** Last status update timestamp */
+
+  /** Server MOTD */
+  motd?: string;
+
+  /** World name */
+  world?: string;
+
+  /** Resource usage */
+  resources?: ServerResources;
+
+  /** Server uptime in seconds */
+  uptime?: number;
+
+  /** Last updated timestamp */
   updatedAt: string;
 }
 
 /**
- * API response for server list
+ * Server list response
  */
 export interface ServersResponse {
-  servers: ServerSummary[];
+  servers: Server[];
   total: number;
 }
 
 /**
- * API error response
+ * Server action response
  */
-export interface ApiError {
-  code: string;
+export interface ServerActionResponse {
+  success: boolean;
   message: string;
-  details?: unknown;
+  server?: Server;
+}
+
+/**
+ * Server command execution response
+ */
+export interface CommandResponse {
+  success: boolean;
+  output: string;
+}
+
+/**
+ * Server configuration
+ */
+export interface ServerConfig {
+  [key: string]: string | number | boolean;
 }

@@ -1,49 +1,51 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+
+/**
+ * React Query configuration
+ */
+const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        // Stale time: 30 seconds (data considered fresh)
+        staleTime: 30 * 1000,
+        // Retry failed queries up to 3 times
+        retry: 3,
+        // Retry delay with exponential backoff
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+        // Refetch on window focus
+        refetchOnWindowFocus: true,
+        // Don't refetch on mount if data exists
+        refetchOnMount: false,
+      },
+      mutations: {
+        // Retry mutations once
+        retry: 1,
+      },
+    },
+  });
 
 interface QueryProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 /**
- * React Query provider with optimized default options
+ * Query Provider component
  *
- * Features:
- * - Prevents server-side rendering issues with useState
- * - Configures sensible retry and stale time defaults
- * - Provides query client to all child components
+ * Wraps the application with React Query's QueryClientProvider.
+ * Creates a new QueryClient instance per session to avoid SSR issues.
  *
  * @example
- * // In layout.tsx
  * <QueryProvider>
- *   {children}
+ *   <App />
  * </QueryProvider>
- *
- * // In any component
- * const { data, isLoading } = useQuery({
- *   queryKey: ['servers', name],
- *   queryFn: () => serverApi.getServer(name),
- * });
  */
 export function QueryProvider({ children }: QueryProviderProps) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 5 * 1000, // Data considered fresh for 5 seconds
-            refetchOnWindowFocus: true,
-            retry: 1,
-            refetchOnMount: true,
-          },
-          mutations: {
-            retry: 0,
-          },
-        },
-      })
-  );
+  // Create QueryClient once per component instance to avoid sharing state
+  const [queryClient] = useState(() => createQueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
