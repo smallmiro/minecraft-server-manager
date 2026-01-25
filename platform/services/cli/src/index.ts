@@ -19,6 +19,7 @@ import {
   playerOnlineCommand,
   playerCommand,
   migrateCommand,
+  modCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -87,6 +88,19 @@ ${colors.cyan('World Management:')}
   ${colors.bold('world new')} [name] [options] Create new world with seed
   ${colors.bold('world assign')} <world> <srv> Lock world to server
   ${colors.bold('world release')} <world>      Release world lock
+
+${colors.cyan('Mod Management:')}
+  ${colors.bold('mod search')} <query>         Search mods on Modrinth
+  ${colors.bold('mod add')} <srv> <mod...>     Add mods to server
+  ${colors.bold('mod list')} <server>          List configured mods
+  ${colors.bold('mod remove')} <srv> <mod...>  Remove mods from server
+  ${colors.bold('mod sources')}                Show available mod sources
+
+${colors.cyan('Mod Add Options:')}
+  --modrinth                 Use Modrinth (default)
+  --curseforge               Use CurseForge (requires CF_API_KEY)
+  --spiget                   Use Spiget (SpigotMC plugins)
+  --url                      Direct JAR URL download
 
 ${colors.cyan('World New Options:')}
   --seed <seed>              World seed (optional, random if empty)
@@ -254,7 +268,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -652,6 +666,27 @@ async function main(): Promise<void> {
           backup: flags['backup'] === true,
           force: flags['force'] === true,
           json: flags['json'] === true,
+        });
+        break;
+      }
+
+      case 'mod': {
+        // mod command: mod [search|add|list|remove|sources] [args...]
+        // subCommand = action, positional[0] = server or query, positional[1+] = mod names
+        const modSource = flags['modrinth'] ? 'modrinth' as const :
+                         flags['curseforge'] ? 'curseforge' as const :
+                         flags['spiget'] ? 'spiget' as const :
+                         flags['url'] ? 'url' as const : 'modrinth' as const;
+
+        exitCode = await modCommand({
+          root: rootDir,
+          subCommand: subCommand,
+          serverName: subCommand === 'search' ? undefined : positional[0],
+          query: subCommand === 'search' ? positional[0] : undefined,
+          modNames: subCommand === 'search' ? undefined : positional.slice(1),
+          source: modSource,
+          json: flags['json'] === true,
+          force: flags['force'] === true,
         });
         break;
       }
