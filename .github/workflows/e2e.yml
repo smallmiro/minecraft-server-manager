@@ -1,0 +1,123 @@
+name: E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+# Cancel in-progress runs on new commits to the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Create Docker network
+        run: docker network create minecraft-net || true
+
+      - name: Build Admin Service images
+        run: |
+          cd platform
+          docker compose -f docker-compose.yml -f docker-compose.admin.yml build mcctl-api mcctl-console
+
+      - name: Start Admin Services
+        run: |
+          cd platform
+          docker compose -f docker-compose.yml -f docker-compose.admin.yml up -d mcctl-api mcctl-console
+        env:
+          MCCTL_JWT_SECRET: test-secret-for-e2e
+          NEXTAUTH_SECRET: test-secret-for-e2e
+          NEXTAUTH_URL: http://localhost:3000
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for mcctl-api..."
+          timeout 120 bash -c 'until curl -s http://localhost:3001/health > /dev/null; do sleep 2; done' || {
+            echo "mcctl-api health check failed"
+            docker compose -f platform/docker-compose.yml -f platform/docker-compose.admin.yml logs mcctl-api
+            exit 1
+          }
+          echo "mcctl-api is ready"
+
+          echo "Waiting for mcctl-console..."
+          timeout 120 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done' || {
+            echo "mcctl-console health check failed"
+            docker compose -f platform/docker-compose.yml -f platform/docker-compose.admin.yml logs mcctl-console
+            exit 1
+          }
+          echo "mcctl-console is ready"
+
+      - name: Run E2E tests
+        working-directory: e2e
+        run: pnpm test
+        env:
+          CI: true
+          E2E_BASE_URL: http://localhost:3000
+          E2E_API_URL: http://localhost:3001
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: e2e/test-results/
+          retention-days: 7
+
+      - name: Show container logs on failure
+        if: failure()
+        run: |
+          echo "=== mcctl-api logs ==="
+          docker compose -f platform/docker-compose.yml -f platform/docker-compose.admin.yml logs mcctl-api
+          echo ""
+          echo "=== mcctl-console logs ==="
+          docker compose -f platform/docker-compose.yml -f platform/docker-compose.admin.yml logs mcctl-console
+
+      - name: Stop Admin Services
+        if: always()
+        run: |
+          cd platform
+          docker compose -f docker-compose.yml -f docker-compose.admin.yml down -v
+
+      - name: Clean up Docker network
+        if: always()
+        run: docker network rm minecraft-net || true

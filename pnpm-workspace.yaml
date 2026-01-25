@@ -1,3 +1,4 @@
 packages:
   - "platform/services/*"
   - "templates"
+  - "e2e"

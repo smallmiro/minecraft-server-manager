@@ -1,0 +1,11 @@
+# Playwright
+playwright-report/
+test-results/
+.playwright/
+
+# Node
+node_modules/
+
+# Test outputs
+*.png
+*.webm
