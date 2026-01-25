@@ -1875,6 +1875,25 @@ mcctl mod add <server> <mod...> [options]
 | URL | `MODS` | Forge, NeoForge, Fabric, Quilt |
 | URL | `PLUGINS` | Paper, Spigot, Bukkit |
 
+!!! warning "⚠️ 의존성 자동 다운로드"
+    모드는 종종 다른 모드를 의존성으로 필요로 합니다 (예: Iris는 Sodium 필요).
+
+    **기본적으로 의존성이 자동 다운로드됩니다** (`config.env`의 `MODRINTH_DOWNLOAD_DEPENDENCIES=required` 설정).
+
+    | 설정값 | 동작 |
+    |---------|----------|
+    | `required` | 필수 의존성 자동 다운로드 **(기본값, 권장)** |
+    | `optional` | 필수 + 선택적 의존성 다운로드 |
+    | `none` | 의존성 다운로드 안 함 (수동 관리) |
+
+    **예시**: `iris`를 추가하면 서버 시작 시 `sodium`(필수 의존성)이 자동으로 다운로드됩니다.
+
+    ```bash
+    mcctl mod add myserver iris
+    # ✓ iris 추가됨
+    # ✓ sodium 서버 시작 시 자동 다운로드 (필수 의존성)
+    ```
+
 **출력 예시:**
 
 ```

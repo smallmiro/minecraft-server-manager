@@ -1875,6 +1875,25 @@ mcctl mod add <server> <mod...> [options]
 | URL | `MODS` | Forge, NeoForge, Fabric, Quilt |
 | URL | `PLUGINS` | Paper, Spigot, Bukkit |
 
+!!! warning "⚠️ Automatic Dependency Download"
+    Mods often require other mods as dependencies (e.g., Iris requires Sodium).
+
+    **By default, dependencies are automatically downloaded** via the `MODRINTH_DOWNLOAD_DEPENDENCIES=required` setting in `config.env`.
+
+    | Setting | Behavior |
+    |---------|----------|
+    | `required` | Download required dependencies automatically **(DEFAULT, RECOMMENDED)** |
+    | `optional` | Download required + optional dependencies |
+    | `none` | Don't download dependencies (manual management) |
+
+    **Example**: When you add `iris`, it automatically downloads `sodium` (required dependency).
+
+    ```bash
+    mcctl mod add myserver iris
+    # ✓ iris added
+    # ✓ sodium automatically downloaded on server start (required dependency)
+    ```
+
 **Output Example:**
 
 ```

@@ -951,6 +951,18 @@ mcctl mod add myserver --spiget 9089  # EssentialsX
 mcctl mod add myserver --url https://example.com/mod.jar
 ```
 
+**⚠️ Important: Automatic Dependency Download**
+
+Mods often require other mods as dependencies. By default, dependencies are **automatically downloaded** via `MODRINTH_DOWNLOAD_DEPENDENCIES=required` in `config.env`.
+
+| Setting | Behavior |
+|---------|----------|
+| `required` | Download required dependencies automatically **(DEFAULT)** |
+| `optional` | Download required + optional dependencies |
+| `none` | Don't download dependencies (manual management) |
+
+**Example**: Adding `iris` automatically downloads `sodium` (required dependency) on server start.
+
 ---
 
 #### mcctl mod list
@@ -1594,6 +1606,18 @@ A: Yes. Get one from console.curseforge.com and set CF_API_KEY in .env.
 
 **Q: Where are mods stored?**
 A: Downloaded automatically by the server container based on config.env settings.
+
+**Q: Are mod dependencies downloaded automatically?**
+A: Yes! By default, `MODRINTH_DOWNLOAD_DEPENDENCIES=required` is set in config.env. This means when you add a mod like `iris`, its required dependency `sodium` is automatically downloaded on server start.
+
+**Q: How do I disable automatic dependency download?**
+A: Set `MODRINTH_DOWNLOAD_DEPENDENCIES=none` in your server's config.env file.
+
+**Q: What dependency options are available?**
+A: Three options:
+- `required` - Download required dependencies only (DEFAULT, RECOMMENDED)
+- `optional` - Download required + optional dependencies
+- `none` - Don't download dependencies (manual management)
 
 ---
 
