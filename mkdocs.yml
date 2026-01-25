@@ -92,10 +92,21 @@ nav:
       - Spiget (SpigotMC): mods-and-plugins/spiget.md
       - Direct Download: mods-and-plugins/direct-download.md
       - Modpacks: mods-and-plugins/modpacks.md
+  - Admin Service:
+      - Overview: admin-service/index.md
+      - Installation: admin-service/installation.md
+      - CLI Commands: admin-service/cli-commands.md
+      - API Reference: admin-service/api-reference.md
+      - Web Console: admin-service/web-console.md
   - Advanced:
       - Overview: advanced/index.md
       - Networking: advanced/networking.md
       - Backup: advanced/backup.md
+  - Development:
+      - Overview: development/index.md
+      - CLI Architecture: development/cli-architecture.md
+      - Agent Collaboration: development/agent-collaboration.md
+  - LLM Knowledge Base: documentforllmagent.md
 
 extra:
   alternate:

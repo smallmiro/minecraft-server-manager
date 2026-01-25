@@ -1484,8 +1484,8 @@ minecraft-server-manager/
 
 ## 10. Admin Service (Web Management)
 
-> **Milestone**: Phase 8
-> **Status**: Planned
+> **Milestone**: Phase 8 (Milestone 5)
+> **Status**: ✅ Completed (v2.0.0)
 
 Web-based management console service. Consists of two independent services following MSA (Microservice Architecture) principles.
 
@@ -1527,15 +1527,30 @@ Each service has independent PRD/Plan documents:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 10.4 CLI Commands (`mcctl admin`)
+### 10.4 CLI Commands (`mcctl admin`) ✅
 
 ```bash
-mcctl admin init              # Initial setup
-mcctl admin start             # Start services
-mcctl admin stop              # Stop services
-mcctl admin status            # Check status
-mcctl admin user list         # List users
-mcctl admin user add <name>   # Add user
+# Initialization
+mcctl admin init              # Initial setup (create users.yaml, API key)
+mcctl admin init --force      # Reinitialize (overwrite existing)
+
+# User Management
+mcctl admin user list         # List admin users
+mcctl admin user add <name>   # Add user interactively
+mcctl admin user remove <name>  # Remove user
+mcctl admin user reset <name>   # Reset user password
+
+# API Key Management
+mcctl admin api start         # Start API service only
+mcctl admin api stop          # Stop API service
+mcctl admin api status        # Check API status
+
+# Service Lifecycle
+mcctl admin service start     # Start all services (API + Console)
+mcctl admin service stop      # Stop all services
+mcctl admin service restart   # Restart services
+mcctl admin service status    # Show service status (--json for JSON output)
+mcctl admin service logs      # View logs (--api, --console, -f for follow)
 ```
 
 ### 10.5 Multi-Agent Collaboration
@@ -1638,3 +1653,4 @@ For the complete collaboration guide, see [docs/development/agent-collaboration.
 | 3.1.0 | 2025-01-24 | - | Update FR-014~FR-016 status to completed, update Phase 5 and Migration Path status |
 | 4.0.0 | 2025-01-25 | - | Add Section 10: Admin Service (mcctl-api, mcctl-console) |
 | 4.1.0 | 2025-01-25 | - | Add Section 10.5: Multi-Agent Collaboration with ownership rules |
+| 5.0.0 | 2025-01-26 | - | Mark Admin Service (Section 10) as Completed, update CLI commands |

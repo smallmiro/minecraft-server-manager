@@ -60,6 +60,11 @@ minecraft/
 │   │   │   │   │   ├── kick.ts         # Kick player
 │   │   │   │   │   ├── migrate.ts      # World storage migration
 │   │   │   │   │   ├── mod.ts          # Mod management (search, add, remove)
+│   │   │   │   │   ├── admin/          # Admin Service management
+│   │   │   │   │   │   ├── init.ts     # Initialize admin service
+│   │   │   │   │   │   ├── user.ts     # User management
+│   │   │   │   │   │   ├── api.ts      # API key management
+│   │   │   │   │   │   └── service.ts  # Service lifecycle
 │   │   │   │   │   └── ...
 │   │   │   │   ├── lib/         # Libraries
 │   │   │   │   │   ├── mojang-api.ts   # Mojang API client
@@ -93,7 +98,31 @@ minecraft/
 │   │   │   │   └── infrastructure/     # API client, mappers
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
-│   │   └── web-admin/           # Future: Web management UI
+│   │   ├── mcctl-api/           # @minecraft-docker/mcctl-api (REST API)
+│   │   │   ├── src/
+│   │   │   │   ├── app.ts              # Fastify app setup
+│   │   │   │   ├── routes/             # API endpoints
+│   │   │   │   │   ├── servers.ts      # GET/POST /servers
+│   │   │   │   │   ├── servers/actions.ts  # start/stop/restart
+│   │   │   │   │   └── console.ts      # RCON exec endpoint
+│   │   │   │   └── plugins/            # Fastify plugins
+│   │   │   │       ├── auth.ts         # 5-mode authentication
+│   │   │   │       └── swagger.ts      # OpenAPI documentation
+│   │   │   ├── Dockerfile              # Multi-stage build (~156MB)
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   ├── mcctl-console/       # @minecraft-docker/mcctl-console (Web UI)
+│   │   │   ├── src/
+│   │   │   │   ├── app/                # Next.js App Router
+│   │   │   │   │   ├── api/            # BFF proxy routes
+│   │   │   │   │   ├── servers/        # Server management pages
+│   │   │   │   │   └── layout.tsx      # Root layout
+│   │   │   │   ├── components/         # React components
+│   │   │   │   └── hooks/              # Custom hooks (use-servers)
+│   │   │   ├── Dockerfile              # Standalone build (~158MB)
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   └── web-admin/           # Deprecated: Use mcctl-console
 │   │
 │   └── backups/                 # Backup storage
 │
@@ -106,6 +135,12 @@ minecraft/
 ├── docs/                        # Documentation (MkDocs + Read the Docs)
 │   ├── index.md                 # English homepage
 │   ├── index.ko.md              # Korean homepage
+│   ├── admin-service/           # Admin Service documentation
+│   │   ├── index.md             # Overview
+│   │   ├── installation.md      # Installation guide
+│   │   ├── cli-commands.md      # CLI reference
+│   │   ├── api-reference.md     # REST API docs
+│   │   └── web-console.md       # Web console guide
 │   ├── itzg-reference/          # itzg/docker-minecraft-server official docs
 │   │   ├── doc-list.md
 │   │   └── *.md
@@ -117,6 +152,17 @@ minecraft/
 │   ├── advanced/                # Advanced usage guides
 │   ├── development/             # Development guides
 │   └── usage/                   # Project usage guides
+│
+├── e2e/                         # End-to-end tests (Playwright)
+│   ├── playwright.config.ts     # Playwright configuration
+│   ├── global-setup.ts          # Test setup
+│   ├── fixtures/                # Test fixtures
+│   │   └── auth.ts              # Authentication fixture
+│   └── tests/                   # Test suites
+│       ├── auth.spec.ts         # Authentication tests
+│       ├── dashboard.spec.ts    # Dashboard tests
+│       ├── servers.spec.ts      # Server management tests
+│       └── api.spec.ts          # API endpoint tests
 │
 └── .claude/
     ├── agents/
@@ -370,6 +416,29 @@ mcctl backup history      # Show backup history
 mcctl backup restore      # Interactive: select from history
 mcctl backup restore abc1234  # CLI: restore specific commit
 
+# Admin Service management
+mcctl admin init          # Initialize admin service (create users.yaml, API key)
+mcctl admin init --force  # Reinitialize (overwrite existing)
+
+mcctl admin user list     # List admin users
+mcctl admin user add alice  # Add user interactively
+mcctl admin user remove bob  # Remove user
+mcctl admin user reset alice  # Reset user password
+
+mcctl admin api start     # Start API service only
+mcctl admin api stop      # Stop API service
+mcctl admin api status    # Check API status
+
+mcctl admin service start           # Start all services (API + Console)
+mcctl admin service stop            # Stop all services
+mcctl admin service restart         # Restart all services
+mcctl admin service status          # Show service status
+mcctl admin service status --json   # JSON output
+mcctl admin service logs            # View logs
+mcctl admin service logs --api      # API logs only
+mcctl admin service logs --console  # Console logs only
+mcctl admin service logs -f         # Follow logs
+
 # Custom data directory
 mcctl --root /path/to/data init
 ```
@@ -397,10 +466,12 @@ mcctl --version
 
 ### CLI-First, Web-Ready
 
-All features are implemented via CLI first, with Web Management UI as a future enhancement.
+All features are implemented via CLI first, with Web Management UI now available.
 
-**Current Phase**: CLI with Interactive Mode (`platform/services/cli`)
-**Future Phase**: Web UI (Next.js + Tailwind CSS + TypeScript)
+**Phase 1**: CLI with Interactive Mode (`platform/services/cli`) ✅
+**Phase 2**: Admin Service - REST API + Web Console ✅
+- `mcctl-api`: Fastify REST API on port 3001
+- `mcctl-console`: Next.js Web UI on port 3000
 
 When developing CLI tools:
 - Design scripts to be **callable from external programs** (Web API)
