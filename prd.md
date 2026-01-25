@@ -1482,7 +1482,126 @@ minecraft-server-manager/
 - [ ] Player synchronization between servers
 - [ ] Automated world migration
 
-## 10. Revision History
+## 10. Admin Service (Web 관리 콘솔)
+
+> **Status**: 설계 완료, 구현 대기
+
+### 10.1 개요
+
+마인크래프트 서버를 웹 기반으로 관리할 수 있는 Admin 서비스입니다. MSA 원칙에 따라 두 개의 독립적인 마이크로서비스로 구성됩니다.
+
+### 10.2 서비스 구조
+
+| 서비스 | 패키지 | 역할 | Docker 이미지 |
+|--------|--------|------|---------------|
+| **mcctl-api** | @minecraft-docker/mcctl-api | 내부 REST API | ghcr.io/smallmiro/mcctl-api |
+| **mcctl-console** | @minecraft-docker/mcctl-console | BFF + 관리 UI | ghcr.io/smallmiro/mcctl-console |
+
+### 10.3 상세 문서
+
+각 서비스는 독립적인 PRD/Plan 문서를 가집니다:
+
+- **mcctl-api 서비스**:
+  - [platform/services/mcctl-api/prd.md](platform/services/mcctl-api/prd.md) - API 서비스 PRD
+  - [platform/services/mcctl-api/plan.md](platform/services/mcctl-api/plan.md) - API 서비스 구현 계획
+
+- **mcctl-console 서비스**:
+  - [platform/services/mcctl-console/prd.md](platform/services/mcctl-console/prd.md) - Console 서비스 PRD
+  - [platform/services/mcctl-console/plan.md](platform/services/mcctl-console/plan.md) - Console 서비스 구현 계획
+
+### 10.4 아키텍처
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Browser                                 │
+│                    (React Client)                            │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ HTTP (localhost:3000)
+┌─────────────────────────▼───────────────────────────────────┐
+│                  mcctl-console                               │
+│              (Next.js BFF + UI)                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  Dashboard │ Servers │ Worlds │ Players │ Backup    │    │
+│  └─────────────────────────┬───────────────────────────┘    │
+└────────────────────────────┼────────────────────────────────┘
+                             │ HTTP (Docker network)
+┌────────────────────────────▼────────────────────────────────┐
+│                      mcctl-api                               │
+│                  (Fastify REST API)                          │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  /api/servers │ /api/worlds │ /api/players │ ...    │    │
+│  └─────────────────────────┬───────────────────────────┘    │
+└────────────────────────────┼────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────┐
+│              @minecraft-docker/shared                        │
+│        (Domain, Use Cases, Infrastructure)                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 10.5 API 접근 모드
+
+| 모드 | 포트 노출 | 인증 방식 | 용도 |
+|------|----------|----------|------|
+| `internal` | 없음 | 없음 | 기본값, mcctl-console 전용 |
+| `api-key` | 3001 | X-API-Key 헤더 | 외부 도구 연동 |
+| `ip-whitelist` | 3001 | IP 검증 | 신뢰된 네트워크 |
+| `api-key-ip` | 3001 | 둘 다 | 최고 보안 |
+| `open` | 3001 | 없음 | 개발 전용 |
+
+### 10.6 CLI 명령어
+
+```bash
+# 초기화
+mcctl admin init                    # Admin 서비스 초기 설정 (대화형)
+
+# 서비스 관리
+mcctl admin status                  # mcctl-api + mcctl-console 상태
+mcctl admin start                   # 서비스 시작
+mcctl admin stop                    # 서비스 중지
+mcctl admin restart                 # 서비스 재시작
+
+# API 설정
+mcctl admin api mode [MODE]         # 접근 모드 조회/설정
+mcctl admin api key                 # API 키 표시
+mcctl admin api key regenerate      # API 키 재생성
+
+# 사용자 관리
+mcctl admin user list               # 사용자 목록
+mcctl admin user add <username>     # 사용자 추가
+mcctl admin user remove <username>  # 사용자 삭제
+```
+
+### 10.7 설정 파일
+
+**위치**: `~/minecraft-servers/.mcctl-admin.yml`
+
+```yaml
+version: "1.0"
+
+api:
+  access_mode: internal
+  port: 3001
+  api_key:
+    key: "mctk_xxxxxxxxxxxxx"
+    header: "X-API-Key"
+
+console:
+  port: 3000
+  session:
+    secret: "auto-generated-secret"
+    max_age: 86400
+
+user_store:
+  type: yaml  # yaml | sqlite
+
+users:
+  - username: "admin"
+    password_hash: "$2b$10$..."
+    role: "admin"
+```
+
+## 11. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|

@@ -1827,6 +1827,82 @@ pnpm test
 
 ---
 
+## Phase 8: Admin Service (Web 관리 콘솔)
+
+> **Milestone**: 향후 생성 예정
+> **Architecture**: [PRD Section 10 - Admin Service](./prd.md#10-admin-service-web-관리-콘솔)
+> **Status**: 설계 완료, 구현 대기
+
+### 8.1 Overview
+
+Admin Service는 MSA 원칙에 따라 두 개의 독립적인 마이크로서비스로 구성됩니다:
+
+- **mcctl-api**: Fastify 기반 REST API 서버
+- **mcctl-console**: Next.js 기반 BFF + 관리 UI
+
+### 8.2 상세 문서
+
+각 서비스는 독립적인 구현 계획을 가집니다:
+
+| 서비스 | PRD | Plan |
+|--------|-----|------|
+| mcctl-api | [prd.md](platform/services/mcctl-api/prd.md) | [plan.md](platform/services/mcctl-api/plan.md) |
+| mcctl-console | [prd.md](platform/services/mcctl-console/prd.md) | [plan.md](platform/services/mcctl-console/plan.md) |
+
+### 8.3 Implementation Tasks (개요)
+
+#### Phase 8.1: Shared 패키지 확장
+- [ ] IUserRepository 포트 추가
+- [ ] YamlUserRepository 어댑터 구현
+- [ ] SqliteUserRepository 어댑터 구현
+- [ ] ApiPromptAdapter 구현
+
+#### Phase 8.2: CLI 명령어 (`mcctl admin`)
+- [ ] `mcctl admin init` - 대화형 초기 설정
+- [ ] `mcctl admin user` - 사용자 관리
+- [ ] `mcctl admin api` - API 설정
+- [ ] `mcctl admin service` - 서비스 관리
+
+#### Phase 8.3: mcctl-api 서비스
+- [ ] 패키지 설정 및 기본 구조
+- [ ] 인증 플러그인 (5가지 접근 모드)
+- [ ] REST API 라우트
+- [ ] Swagger/OpenAPI 문서
+- [ ] Dockerfile 및 CI/CD
+
+#### Phase 8.4: mcctl-console 서비스
+- [ ] Next.js 프로젝트 설정
+- [ ] NextAuth.js 인증
+- [ ] BFF 프록시
+- [ ] 대시보드 및 관리 UI
+- [ ] Dockerfile 및 CI/CD
+
+#### Phase 8.5: 통합 및 테스트
+- [ ] Docker Compose 통합
+- [ ] E2E 테스트
+- [ ] 문서 업데이트
+
+### 8.4 Verification
+
+```bash
+# 1. Admin 서비스 초기화
+mcctl admin init
+
+# 2. 서비스 시작
+mcctl admin start
+
+# 3. Console 접근 확인
+open http://localhost:3000
+
+# 4. API 테스트 (api-key 모드일 경우)
+curl -H "X-API-Key: mctk_xxx" http://localhost:3001/api/servers
+
+# 5. 헬스 체크
+curl http://localhost:3001/api/health
+```
+
+---
+
 ## Rollback Plan
 
 If implementation fails at any phase:

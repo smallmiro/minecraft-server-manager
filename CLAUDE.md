@@ -75,7 +75,14 @@ minecraft/
 │   │   │   ├── src/             # Types, Docker utils, path helpers
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
-│   │   └── web-admin/           # Future: Web management UI
+│   │   ├── mcctl-api/           # @minecraft-docker/mcctl-api (REST API)
+│   │   │   ├── prd.md           # API service PRD
+│   │   │   ├── plan.md          # API service plan
+│   │   │   └── src/             # Fastify server
+│   │   └── mcctl-console/       # @minecraft-docker/mcctl-console (Web UI)
+│   │       ├── prd.md           # Console service PRD
+│   │       ├── plan.md          # Console service plan
+│   │       └── src/             # Next.js app
 │   │
 │   └── backups/                 # Backup storage
 │
@@ -339,9 +346,46 @@ mcctl backup history      # Show backup history
 mcctl backup restore      # Interactive: select from history
 mcctl backup restore abc1234  # CLI: restore specific commit
 
+# Admin Service (향후 구현 예정)
+mcctl admin init              # Admin 서비스 초기 설정 (대화형)
+mcctl admin status            # mcctl-api + mcctl-console 상태
+mcctl admin start             # 서비스 시작
+mcctl admin stop              # 서비스 중지
+mcctl admin restart           # 서비스 재시작
+mcctl admin api mode [MODE]   # API 접근 모드 조회/설정
+mcctl admin api key           # API 키 표시
+mcctl admin user list         # 사용자 목록
+mcctl admin user add <name>   # 사용자 추가
+
 # Custom data directory
 mcctl --root /path/to/data init
 ```
+
+### Admin Service
+
+> **Status**: 설계 완료, 구현 대기
+> **문서**: [prd.md Section 10](prd.md#10-admin-service-web-관리-콘솔), [plan.md Phase 8](plan.md#phase-8-admin-service-web-관리-콘솔)
+
+Admin Service는 두 개의 MSA 서비스로 구성됩니다:
+
+| 서비스 | 패키지 | 역할 | 포트 |
+|--------|--------|------|------|
+| mcctl-api | @minecraft-docker/mcctl-api | REST API | 3001 |
+| mcctl-console | @minecraft-docker/mcctl-console | BFF + Web UI | 3000 |
+
+**API 접근 모드**:
+| 모드 | 설명 |
+|------|------|
+| `internal` | 기본값, mcctl-console만 접근 |
+| `api-key` | X-API-Key 헤더로 인증 |
+| `ip-whitelist` | IP 화이트리스트 |
+| `open` | 인증 없음 (개발 전용) |
+
+**상세 문서**:
+- [mcctl-api/prd.md](platform/services/mcctl-api/prd.md)
+- [mcctl-api/plan.md](platform/services/mcctl-api/plan.md)
+- [mcctl-console/prd.md](platform/services/mcctl-console/prd.md)
+- [mcctl-console/plan.md](platform/services/mcctl-console/plan.md)
 
 ### Data Directory
 
