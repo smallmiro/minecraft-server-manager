@@ -50,4 +50,5 @@ export type {
   ServerStatus,
   WorldAvailabilityCategory,
   IModSourcePort,
+  IUserRepository,
 } from './outbound/index.js';
