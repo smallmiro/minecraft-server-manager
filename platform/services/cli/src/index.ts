@@ -21,6 +21,9 @@ import {
   migrateCommand,
   modCommand,
   adminInitCommand,
+  adminServiceCommand,
+  adminUserCommand,
+  adminApiCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -155,6 +158,16 @@ ${colors.cyan('Migration:')}
 
 ${colors.cyan('Admin Service:')}
   ${colors.bold('admin init')} [--force]       Initialize admin service (create admin user)
+  ${colors.bold('admin user')} <action> [name] Manage admin users (list, add, remove, reset)
+  ${colors.bold('admin api')} <action>         Manage API settings (status, config, key)
+  ${colors.bold('admin service')} <action>     Manage services (start, stop, restart, status, logs)
+
+${colors.cyan('Admin Service Options:')}
+  --api-port <port>            API server port (default: 3001)
+  --console-port <port>        Console server port (default: 3000)
+  --api                        Target API service only
+  --console                    Target console service only
+  -f, --follow                 Follow log output
 
 ${colors.cyan('Create Options:')}
   -t, --type TYPE            Server type: PAPER, VANILLA, FORGE, FABRIC
@@ -235,7 +248,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -717,8 +730,34 @@ async function main(): Promise<void> {
               force: flags['force'] === true,
             });
             break;
+          case 'service':
+            exitCode = await adminServiceCommand({
+              root: rootDir,
+              subCommand: positional[0] as 'start' | 'stop' | 'restart' | 'status' | 'logs' | undefined,
+              apiOnly: flags['api'] === true,
+              consoleOnly: flags['console'] === true,
+              follow: flags['follow'] === true,
+              json: flags['json'] === true,
+              apiPort: flags['api-port'] ? parseInt(flags['api-port'] as string, 10) : undefined,
+              consolePort: flags['console-port'] ? parseInt(flags['console-port'] as string, 10) : undefined,
+            });
+            break;
+          case 'user': {
+            // Use Commander-based command
+            const userCmd = adminUserCommand();
+            userCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
+            exitCode = 0;
+            break;
+          }
+          case 'api': {
+            // Use Commander-based command
+            const apiCmd = adminApiCommand();
+            apiCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
+            exitCode = 0;
+            break;
+          }
           default:
-            log.error('Usage: mcctl admin <init>');
+            log.error('Usage: mcctl admin <init|service|user|api>');
             exitCode = 1;
         }
         break;

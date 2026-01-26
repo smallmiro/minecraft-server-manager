@@ -21,6 +21,8 @@ export interface AdminServiceOptions {
   consoleOnly?: boolean;
   follow?: boolean;
   json?: boolean;
+  apiPort?: number;
+  consolePort?: number;
 }
 
 interface ServiceInfo {
@@ -83,13 +85,16 @@ function ensureAdminComposeExists(paths: Paths): boolean {
 /**
  * Get container info using docker inspect
  */
-function getContainerInfo(containerName: string): ServiceInfo {
+function getContainerInfo(containerName: string, port?: number): ServiceInfo {
+  const defaultPort = containerName === API_CONTAINER ? API_PORT : CONSOLE_PORT;
+  const actualPort = port ?? defaultPort;
+
   const info: ServiceInfo = {
     name: containerName.replace('mcctl-', ''),
     container: containerName,
     status: 'not_found',
     health: 'none',
-    port: containerName === API_CONTAINER ? API_PORT : CONSOLE_PORT,
+    port: actualPort,
   };
 
   try {
@@ -114,7 +119,7 @@ function getContainerInfo(containerName: string): ServiceInfo {
       }
 
       if (containerName === CONSOLE_CONTAINER && info.status === 'running') {
-        info.url = `http://localhost:${CONSOLE_PORT}`;
+        info.url = `http://localhost:${actualPort}`;
       }
     }
   } catch {
@@ -150,9 +155,9 @@ function calculateUptime(startedAt: string): string {
 /**
  * Get admin service status
  */
-function getAdminServiceStatus(): AdminServiceStatus {
-  const api = getContainerInfo(API_CONTAINER);
-  const consoleInfo = getContainerInfo(CONSOLE_CONTAINER);
+function getAdminServiceStatus(apiPort?: number, consolePort?: number): AdminServiceStatus {
+  const api = getContainerInfo(API_CONTAINER, apiPort);
+  const consoleInfo = getContainerInfo(CONSOLE_CONTAINER, consolePort);
 
   return {
     api,
@@ -168,7 +173,7 @@ function getAdminServiceStatus(): AdminServiceStatus {
 function runDockerCompose(
   paths: Paths,
   args: string[],
-  options: { stream?: boolean } = {}
+  options: { stream?: boolean; env?: Record<string, string> } = {}
 ): number {
   const composePath = getAdminComposePath(paths);
   const composeArgs = [
@@ -177,10 +182,14 @@ function runDockerCompose(
     ...args,
   ];
 
+  // Merge custom environment variables with process.env
+  const env = { ...process.env, ...options.env };
+
   if (options.stream) {
     const proc = spawnSync('docker', composeArgs, {
       stdio: 'inherit',
       cwd: paths.platform,
+      env,
     });
     return proc.status ?? 1;
   }
@@ -188,6 +197,7 @@ function runDockerCompose(
   const result = spawnSync('docker', composeArgs, {
     encoding: 'utf-8',
     cwd: paths.platform,
+    env,
   });
 
   if (result.stdout) {
@@ -291,6 +301,20 @@ function formatStatus(status: AdminServiceStatus, json: boolean): void {
 }
 
 /**
+ * Build environment variables for port configuration
+ */
+function buildPortEnv(options: AdminServiceOptions): Record<string, string> {
+  const env: Record<string, string> = {};
+  if (options.apiPort) {
+    env['MCCTL_API_PORT'] = String(options.apiPort);
+  }
+  if (options.consolePort) {
+    env['MCCTL_CONSOLE_PORT'] = String(options.consolePort);
+  }
+  return env;
+}
+
+/**
  * Start admin services
  */
 async function startServices(paths: Paths, options: AdminServiceOptions): Promise<number> {
@@ -305,17 +329,24 @@ async function startServices(paths: Paths, options: AdminServiceOptions): Promis
     services.push('mcctl-console');
   }
 
+  const apiPort = options.apiPort ?? API_PORT;
+  const consolePort = options.consolePort ?? CONSOLE_PORT;
+
   log.info('Starting admin services...');
+  if (options.apiPort || options.consolePort) {
+    log.info(`  API port: ${apiPort}, Console port: ${consolePort}`);
+  }
 
   const args = ['up', '-d', ...services];
-  const exitCode = runDockerCompose(paths, args, { stream: true });
+  const env = buildPortEnv(options);
+  const exitCode = runDockerCompose(paths, args, { stream: true, env });
 
   if (exitCode === 0) {
     log.info('Admin services started successfully');
 
     // Show status after starting
     await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for health checks
-    const status = getAdminServiceStatus();
+    const status = getAdminServiceStatus(apiPort, consolePort);
     formatStatus(status, false);
   }
 
@@ -357,17 +388,24 @@ async function restartServices(paths: Paths, options: AdminServiceOptions): Prom
     services.push('mcctl-console');
   }
 
+  const apiPort = options.apiPort ?? API_PORT;
+  const consolePort = options.consolePort ?? CONSOLE_PORT;
+
   log.info('Restarting admin services...');
+  if (options.apiPort || options.consolePort) {
+    log.info(`  API port: ${apiPort}, Console port: ${consolePort}`);
+  }
 
   const args = ['restart', ...services];
-  const exitCode = runDockerCompose(paths, args, { stream: true });
+  const env = buildPortEnv(options);
+  const exitCode = runDockerCompose(paths, args, { stream: true, env });
 
   if (exitCode === 0) {
     log.info('Admin services restarted');
 
     // Show status after restarting
     await new Promise(resolve => setTimeout(resolve, 2000));
-    const status = getAdminServiceStatus();
+    const status = getAdminServiceStatus(apiPort, consolePort);
     formatStatus(status, false);
   }
 
@@ -405,6 +443,9 @@ export async function adminServiceCommand(options: AdminServiceOptions): Promise
     return 1;
   }
 
+  const apiPort = options.apiPort ?? API_PORT;
+  const consolePort = options.consolePort ?? CONSOLE_PORT;
+
   switch (options.subCommand) {
     case 'start':
       return startServices(paths, options);
@@ -416,7 +457,7 @@ export async function adminServiceCommand(options: AdminServiceOptions): Promise
       return restartServices(paths, options);
 
     case 'status': {
-      const status = getAdminServiceStatus();
+      const status = getAdminServiceStatus(apiPort, consolePort);
       formatStatus(status, options.json ?? false);
       return status.healthy || status.api.status === 'not_found' ? 0 : 1;
     }
@@ -426,7 +467,7 @@ export async function adminServiceCommand(options: AdminServiceOptions): Promise
 
     default:
       // Default: show status
-      const status = getAdminServiceStatus();
+      const status = getAdminServiceStatus(apiPort, consolePort);
       formatStatus(status, options.json ?? false);
       return 0;
   }
