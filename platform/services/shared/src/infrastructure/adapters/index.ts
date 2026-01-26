@@ -8,6 +8,7 @@ export { ServerRepository } from './ServerRepository.js';
 export { WorldRepository } from './WorldRepository.js';
 export { DocsAdapter } from './DocsAdapter.js';
 export { YamlUserRepository } from './YamlUserRepository.js';
+export { SqliteUserRepository } from './SqliteUserRepository.js';
 export {
   ApiPromptAdapter,
   ApiModeError,
