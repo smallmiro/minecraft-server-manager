@@ -3,6 +3,13 @@
 ## Parent Document
 - [Project Plan](../../../plan.md) - Phase 8
 
+## Agent Assignment
+
+| Role | Agent | Label |
+|------|-------|-------|
+| **Owner** | 🎨 Frontend Agent | `agent:frontend` |
+| **Spec File** | [.claude/agents/frontend-agent.md](../../../.claude/agents/frontend-agent.md) | - |
+
 ## Overview
 
 Implementation plan for mcctl-console management console service.

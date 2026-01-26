@@ -3,6 +3,26 @@
 ## Parent Document
 - [Project PRD](../../../prd.md) - Section 10
 
+## Agent Assignment
+
+| Role | Agent | Label |
+|------|-------|-------|
+| **Owner** | 🎨 Frontend Agent | `agent:frontend` |
+| **Spec File** | [.claude/agents/frontend-agent.md](../../../.claude/agents/frontend-agent.md) | - |
+
+**Responsibilities**:
+- Next.js App Router implementation
+- NextAuth.js authentication
+- BFF proxy (client → mcctl-api)
+- Dashboard and management UI components
+- Tailwind CSS + shadcn/ui styling
+- Dockerfile for containerization
+
+**Collaboration**:
+- Imports types from `@minecraft-docker/shared`
+- Consumes REST API from mcctl-api (Backend Agent)
+- Depends on Backend Agent for OpenAPI specification
+
 ## 1. Overview
 
 ### 1.1 Purpose

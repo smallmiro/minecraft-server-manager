@@ -3,6 +3,13 @@
 ## Parent Document
 - [Project Plan](../../../plan.md) - Phase 8
 
+## Agent Assignment
+
+| Role | Agent | Label |
+|------|-------|-------|
+| **Owner** | 🖥️ Backend Agent | `agent:backend` |
+| **Spec File** | [.claude/agents/backend-agent.md](../../../.claude/agents/backend-agent.md) | - |
+
 ## Overview
 
 Implementation plan for mcctl-api REST API service.

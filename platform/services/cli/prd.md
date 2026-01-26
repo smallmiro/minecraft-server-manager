@@ -3,6 +3,23 @@
 ## Parent Document
 - [Project PRD](../../../prd.md) - Section 9
 
+## Agent Assignment
+
+| Role | Agent | Label |
+|------|-------|-------|
+| **Owner** | 💻 CLI Agent | `agent:cli` |
+| **Spec File** | [.claude/agents/cli-agent.md](../../../.claude/agents/cli-agent.md) | - |
+
+**Responsibilities**:
+- CLI command implementations (`src/commands/`)
+- Interactive prompts with @clack/prompts (`ClackPromptAdapter`)
+- Bash script integration (`scripts/`)
+- DI container configuration for CLI
+
+**Collaboration**:
+- Imports Use Cases and Ports from `@minecraft-docker/shared`
+- Depends on Core Agent for domain logic updates
+
 ## 1. Overview
 
 ### 1.1 Purpose

@@ -3,6 +3,13 @@
 ## Parent Document
 - [Project Plan](../../../plan.md) - Phase 7
 
+## Agent Assignment
+
+| Role | Agent | Label |
+|------|-------|-------|
+| **Owner** | 🔧 Core Agent | `agent:core` |
+| **Spec File** | [.claude/agents/core-agent.md](../../../.claude/agents/core-agent.md) | - |
+
 ## Overview
 
 Implementation plan for the shared package. Most features are already implemented, with extensions needed for the Admin Service.

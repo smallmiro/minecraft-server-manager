@@ -3,6 +3,13 @@
 ## Parent Document
 - [Project Plan](../../../plan.md) - Phase 6, 7
 
+## Agent Assignment
+
+| Role | Agent | Label |
+|------|-------|-------|
+| **Owner** | 💻 CLI Agent | `agent:cli` |
+| **Spec File** | [.claude/agents/cli-agent.md](../../../.claude/agents/cli-agent.md) | - |
+
 ## Overview
 
 Implementation plan for the mcctl CLI tool. Currently fully implemented.

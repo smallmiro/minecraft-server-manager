@@ -3,6 +3,25 @@
 ## Parent Document
 - [Project PRD](../../../prd.md) - Section 10
 
+## Agent Assignment
+
+| Role | Agent | Label |
+|------|-------|-------|
+| **Owner** | 🖥️ Backend Agent | `agent:backend` |
+| **Spec File** | [.claude/agents/backend-agent.md](../../../.claude/agents/backend-agent.md) | - |
+
+**Responsibilities**:
+- Fastify REST API implementation
+- Authentication plugin (5 access modes)
+- OpenAPI/Swagger documentation
+- API routes for servers, worlds, players, backups
+- Dockerfile for containerization
+
+**Collaboration**:
+- Imports Use Cases and Ports from `@minecraft-docker/shared`
+- Provides REST API for Frontend Agent (mcctl-console)
+- Depends on Core Agent for `IUserRepository` interface
+
 ## 1. Overview
 
 ### 1.1 Purpose

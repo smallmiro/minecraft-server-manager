@@ -3,6 +3,24 @@
 ## Parent Document
 - [Project PRD](../../../prd.md) - Section 9
 
+## Agent Assignment
+
+| Role | Agent | Label |
+|------|-------|-------|
+| **Owner** | 🔧 Core Agent | `agent:core` |
+| **Spec File** | [.claude/agents/core-agent.md](../../../.claude/agents/core-agent.md) | - |
+
+**Responsibilities**:
+- Domain Layer: Entities, Value Objects
+- Application Layer: Use Cases, Ports (Interfaces)
+- Infrastructure Layer: Common Adapters (ShellAdapter, Repositories)
+- Shared utilities and type definitions
+
+**Collaboration**:
+- Provides interfaces for CLI, Backend, Frontend agents
+- Receives `DEPENDENCY_NEEDED` requests from dependent agents
+- Notifies `DEPENDENCY_READY` when interfaces are implemented
+
 ## 1. Overview
 
 ### 1.1 Purpose
