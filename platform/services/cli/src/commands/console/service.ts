@@ -12,7 +12,8 @@
 import { Paths, colors, log } from '@minecraft-docker/shared';
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, copyFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Console service command options
@@ -56,6 +57,77 @@ const API_PORT = 3001;
 const CONSOLE_PORT = 3000;
 const API_IMAGE = 'minecraft-docker/mcctl-api:latest';
 const CONSOLE_IMAGE = 'minecraft-docker/mcctl-console:latest';
+
+/**
+ * Get the project source root directory (where templates/ exists)
+ * This is needed for building Docker images from source
+ */
+function getSourceRoot(): string | null {
+  try {
+    // Get the directory of this file
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+
+    // Traverse up to find project root (where templates/ exists)
+    // Current: cli/dist/commands/console/service.js or cli/src/commands/console/service.ts
+    // We need to go up to: minecraft/
+    let currentDir = __dirname;
+
+    for (let i = 0; i < 10; i++) {
+      const templatesDir = join(currentDir, 'templates');
+      if (existsSync(templatesDir) && existsSync(join(templatesDir, ADMIN_COMPOSE_FILE))) {
+        return currentDir;
+      }
+      const parentDir = dirname(currentDir);
+      if (parentDir === currentDir) break; // Reached root
+      currentDir = parentDir;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Build Docker images from source
+ */
+function buildImages(): boolean {
+  const sourceRoot = getSourceRoot();
+
+  if (!sourceRoot) {
+    log.error('Cannot find source directory for building images');
+    log.info('Make sure mcctl is installed from source or the source directory exists');
+    return false;
+  }
+
+  const composeFile = join(sourceRoot, 'templates', ADMIN_COMPOSE_FILE);
+
+  if (!existsSync(composeFile)) {
+    log.error(`Build compose file not found: ${composeFile}`);
+    return false;
+  }
+
+  log.info(`Building images from: ${sourceRoot}`);
+
+  const result = spawnSync('docker', [
+    'compose',
+    '-f', composeFile,
+    'build',
+  ], {
+    cwd: sourceRoot,
+    stdio: 'inherit',
+    encoding: 'utf-8',
+  });
+
+  if (result.status !== 0) {
+    log.error('Failed to build Docker images');
+    return false;
+  }
+
+  log.info('Docker images built successfully');
+  return true;
+}
 
 /**
  * Delete Docker images for admin services
@@ -395,11 +467,19 @@ async function startServices(paths: Paths, options: ConsoleServiceOptions): Prom
   const images = checkImagesExist();
   const needsBuild = options.build || (!options.noBuild && (!images.api || !images.console));
 
+  // Build images if needed (using source directory's docker-compose with build context)
   if (needsBuild && !options.noBuild) {
     if (!images.api || !images.console) {
       log.info('Docker images not found. Building images first...');
     } else if (options.build) {
-      log.info('Building images with --build flag...');
+      log.info('Rebuilding images with --build flag...');
+    }
+
+    // Build from source directory (which has build context)
+    const buildSuccess = buildImages();
+    if (!buildSuccess) {
+      log.error('Image build failed. Cannot start services.');
+      return 1;
     }
   }
 
@@ -408,11 +488,8 @@ async function startServices(paths: Paths, options: ConsoleServiceOptions): Prom
     log.info(`  API port: ${apiPort}, Console port: ${consolePort}`);
   }
 
-  const args = ['up', '-d'];
-  if (needsBuild) {
-    args.push('--build');
-  }
-  args.push(...services);
+  // Start services using user's compose file (no --build needed, images are already built)
+  const args = ['up', '-d', ...services];
 
   const env = buildPortEnv(options);
   const exitCode = runDockerCompose(paths, args, { stream: true, env });
