@@ -167,6 +167,8 @@ ${colors.cyan('Admin Service Options:')}
   --console-port <port>        Console server port (default: 3000)
   --api                        Target API service only
   --console                    Target console service only
+  --build                      Force rebuild images
+  --no-build                   Skip auto-build even if images missing
   -f, --follow                 Follow log output
 
 ${colors.cyan('Create Options:')}
@@ -248,7 +250,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -740,6 +742,8 @@ async function main(): Promise<void> {
               json: flags['json'] === true,
               apiPort: flags['api-port'] ? parseInt(flags['api-port'] as string, 10) : undefined,
               consolePort: flags['console-port'] ? parseInt(flags['console-port'] as string, 10) : undefined,
+              build: flags['build'] === true,
+              noBuild: flags['no-build'] === true,
             });
             break;
           case 'user': {

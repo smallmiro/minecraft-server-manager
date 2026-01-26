@@ -39,7 +39,10 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       # Data directory (mounted from host)
       MCCTL_ROOT: /data
-      # Authentication
+      # Authentication mode (disabled, api-key, ip-whitelist, basic, combined)
+      AUTH_MODE: ${AUTH_MODE:-disabled}
+      AUTH_API_KEY: ${AUTH_API_KEY:-}
+      # JWT for session tokens
       MCCTL_JWT_SECRET: ${MCCTL_JWT_SECRET:-change-me-in-production}
       MCCTL_JWT_EXPIRY: ${MCCTL_JWT_EXPIRY:-24h}
       # API access mode (internal = only from mcctl-console)

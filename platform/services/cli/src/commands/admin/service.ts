@@ -23,6 +23,8 @@ export interface AdminServiceOptions {
   json?: boolean;
   apiPort?: number;
   consolePort?: number;
+  build?: boolean;
+  noBuild?: boolean;
 }
 
 interface ServiceInfo {
@@ -46,6 +48,29 @@ const API_CONTAINER = 'mcctl-api';
 const CONSOLE_CONTAINER = 'mcctl-console';
 const API_PORT = 3001;
 const CONSOLE_PORT = 3000;
+const API_IMAGE = 'minecraft-docker/mcctl-api:latest';
+const CONSOLE_IMAGE = 'minecraft-docker/mcctl-console:latest';
+
+/**
+ * Check if Docker image exists locally
+ */
+function imageExists(imageName: string): boolean {
+  const result = spawnSync('docker', ['image', 'inspect', imageName], {
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  return result.status === 0;
+}
+
+/**
+ * Check if admin service images exist
+ */
+function checkImagesExist(): { api: boolean; console: boolean } {
+  return {
+    api: imageExists(API_IMAGE),
+    console: imageExists(CONSOLE_IMAGE),
+  };
+}
 
 /**
  * Get the admin compose file path
@@ -332,12 +357,29 @@ async function startServices(paths: Paths, options: AdminServiceOptions): Promis
   const apiPort = options.apiPort ?? API_PORT;
   const consolePort = options.consolePort ?? CONSOLE_PORT;
 
+  // Check if images exist and decide whether to build
+  const images = checkImagesExist();
+  const needsBuild = options.build || (!options.noBuild && (!images.api || !images.console));
+
+  if (needsBuild && !options.noBuild) {
+    if (!images.api || !images.console) {
+      log.info('Docker images not found. Building images first...');
+    } else if (options.build) {
+      log.info('Building images with --build flag...');
+    }
+  }
+
   log.info('Starting admin services...');
   if (options.apiPort || options.consolePort) {
     log.info(`  API port: ${apiPort}, Console port: ${consolePort}`);
   }
 
-  const args = ['up', '-d', ...services];
+  const args = ['up', '-d'];
+  if (needsBuild) {
+    args.push('--build');
+  }
+  args.push(...services);
+
   const env = buildPortEnv(options);
   const exitCode = runDockerCompose(paths, args, { stream: true, env });
 
