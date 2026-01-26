@@ -51,7 +51,7 @@ export function ServerCard({ server }: ServerCardProps) {
             <span className="font-medium">Version:</span> {server.version}
           </div>
           <div>
-            <span className="font-medium">Players:</span> {server.playerCount}/{server.maxPlayers}
+            <span className="font-medium">Players:</span> {server.players.online}/{server.players.max}
           </div>
           <div>
             <span className="font-medium">Port:</span> {server.port}

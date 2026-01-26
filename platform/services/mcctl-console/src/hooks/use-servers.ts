@@ -11,6 +11,9 @@ import type {
   ServersResponse,
   ServerActionResponse,
   CommandResponse,
+  ServerLogsResponse,
+  ServerStatus,
+  ServerHealth,
 } from '@/types/server';
 
 /**
@@ -196,4 +199,62 @@ export function useDeleteServer(): UseMutationResult<
       queryClient.invalidateQueries({ queryKey: serverKeys.list() });
     },
   });
+}
+
+/**
+ * Hook to fetch server logs
+ *
+ * @example
+ * const { data: logsData, refetch } = useServerLogs('myserver', 100);
+ */
+export function useServerLogs(
+  name: string,
+  lines: number = 50,
+  options: UseServersOptions = {}
+): UseQueryResult<ServerLogsResponse, ApiError> {
+  const { refetchInterval = 5000, enabled = true } = options;
+
+  return useQuery({
+    queryKey: [...serverKeys.detail(name), 'logs', lines] as const,
+    queryFn: () => api.get<ServerLogsResponse>(`/servers/${name}/logs?lines=${lines}`),
+    refetchInterval,
+    enabled: enabled && !!name,
+  });
+}
+
+/**
+ * Get CSS class for server status indicator
+ */
+export function getStatusColor(status: ServerStatus): string {
+  switch (status) {
+    case 'running':
+      return 'bg-green-500';
+    case 'stopped':
+      return 'bg-gray-500';
+    case 'starting':
+      return 'bg-yellow-500 animate-pulse';
+    case 'stopping':
+      return 'bg-orange-500 animate-pulse';
+    case 'error':
+      return 'bg-red-500';
+    default:
+      return 'bg-gray-500';
+  }
+}
+
+/**
+ * Get CSS class for server health indicator
+ */
+export function getHealthColor(health: ServerHealth): string {
+  switch (health) {
+    case 'healthy':
+      return 'text-green-500';
+    case 'unhealthy':
+      return 'text-red-500';
+    case 'starting':
+      return 'text-yellow-500';
+    case 'unknown':
+    default:
+      return 'text-gray-500';
+  }
 }
