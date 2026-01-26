@@ -1,4 +1,6 @@
 import { config as loadEnv } from 'dotenv';
+import * as path from 'path';
+import * as os from 'os';
 
 // Load .env file
 loadEnv();
@@ -28,6 +30,16 @@ export interface AppConfig {
   nodeEnv: 'development' | 'production' | 'test';
   logLevel: 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | 'silent';
   auth: AuthConfig;
+  /**
+   * Root directory for mcctl data.
+   * Default: MCCTL_ROOT env or ~/minecraft-servers
+   */
+  mcctlRoot: string;
+  /**
+   * Platform directory containing docker-compose.yml and server configurations.
+   * Default: PLATFORM_PATH env or mcctlRoot
+   */
+  platformPath: string;
 }
 
 function getEnv(key: string, defaultValue: string): string {
@@ -120,12 +132,46 @@ function getAuthConfig(): AuthConfig {
   };
 }
 
+/**
+ * Get MCCTL_ROOT directory.
+ * Priority:
+ *   1. MCCTL_ROOT environment variable
+ *   2. ~/minecraft-servers (default for native execution)
+ */
+function getMcctlRoot(): string {
+  const envRoot = process.env['MCCTL_ROOT'];
+  if (envRoot) {
+    return path.resolve(envRoot);
+  }
+  // Default: ~/minecraft-servers (user's home directory)
+  return path.join(os.homedir(), 'minecraft-servers');
+}
+
+/**
+ * Get platform directory path.
+ * Priority:
+ *   1. PLATFORM_PATH environment variable
+ *   2. MCCTL_ROOT (same as mcctlRoot)
+ */
+function getPlatformPath(mcctlRoot: string): string {
+  const envPath = process.env['PLATFORM_PATH'];
+  if (envPath) {
+    return path.resolve(envPath);
+  }
+  // Default: same as MCCTL_ROOT
+  return mcctlRoot;
+}
+
+const mcctlRoot = getMcctlRoot();
+
 export const config: AppConfig = {
   port: getEnvNumber('PORT', 3001),
   host: getEnv('HOST', '0.0.0.0'),
   nodeEnv: getNodeEnv(),
   logLevel: getLogLevel(),
   auth: getAuthConfig(),
+  mcctlRoot,
+  platformPath: getPlatformPath(mcctlRoot),
 };
 
 export default config;

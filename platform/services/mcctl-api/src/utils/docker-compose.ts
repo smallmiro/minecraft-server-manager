@@ -1,6 +1,6 @@
 import { exec, ExecOptions } from 'child_process';
 import { promisify } from 'util';
-import path from 'path';
+import { config } from '../config/index.js';
 
 const execPromise = promisify(exec);
 
@@ -23,10 +23,13 @@ export type ServerAction = 'start' | 'stop' | 'restart';
 
 /**
  * Platform directory path.
- * In production, this should be configured via environment variable.
+ * Uses config.platformPath which is resolved from:
+ *   1. PLATFORM_PATH environment variable
+ *   2. MCCTL_ROOT environment variable
+ *   3. ~/minecraft-servers (default)
  */
 function getPlatformPath(): string {
-  return process.env['PLATFORM_PATH'] ?? path.resolve(process.cwd(), '../../');
+  return config.platformPath;
 }
 
 // ============================================================
