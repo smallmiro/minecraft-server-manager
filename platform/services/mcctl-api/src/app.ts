@@ -7,6 +7,7 @@ import swaggerPlugin from './plugins/swagger.js';
 import serversRoutes from './routes/servers.js';
 import serverActionsRoutes from './routes/servers/actions.js';
 import consoleRoutes from './routes/console.js';
+import worldsRoutes from './routes/worlds.js';
 
 export interface BuildAppOptions {
   logger?: boolean;
@@ -48,6 +49,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   // Register server routes
   await app.register(serversRoutes);
   await app.register(serverActionsRoutes);
+
+  // Register world routes
+  await app.register(worldsRoutes);
 
   // Health check endpoint
   app.get('/health', async () => {
