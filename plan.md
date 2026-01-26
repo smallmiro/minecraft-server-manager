@@ -1,5 +1,52 @@
 # Implementation Plan: Multi-Server Minecraft Management System
 
+## Module Plans Dashboard
+
+All modules have independent implementation plans. Use this dashboard for centralized tracking.
+
+### Module Status Overview
+
+| Module | Plan | Progress | Status | Agent |
+|--------|------|----------|--------|-------|
+| **shared** | [plan.md](platform/services/shared/plan.md) | Phase 1-4 ✅, Phase 5-6 🚧 | Active | 🔧 Core |
+| **cli** | [plan.md](platform/services/cli/plan.md) | Phase 1-7 ✅, Admin 🚧 | Active | 💻 CLI |
+| **mcctl-api** | [plan.md](platform/services/mcctl-api/plan.md) | Phase 1-5 ✅ | Completed | 🖥️ Backend |
+| **mcctl-console** | [plan.md](platform/services/mcctl-console/plan.md) | Phase 1-7 ✅ | Completed | 🎨 Frontend |
+
+### Module Dependencies
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         shared                                   │
+│              (Domain, Use Cases, Common Adapters)               │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ imports
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+│     cli       │   │  mcctl-api    │   │mcctl-console  │
+│ Terminal UI   │   │  REST API     │   │  Web Console  │
+└───────────────┘   └───────┬───────┘   └───────┬───────┘
+                            │ HTTP              │
+                            └───────────────────┘
+```
+
+### Quick Navigation
+
+**Implementation Plans**:
+- [shared/plan.md](platform/services/shared/plan.md) - Domain Layer, Application Layer
+- [cli/plan.md](platform/services/cli/plan.md) - CLI Commands, Interactive Mode
+- [mcctl-api/plan.md](platform/services/mcctl-api/plan.md) - REST API, Authentication
+- [mcctl-console/plan.md](platform/services/mcctl-console/plan.md) - BFF, Dashboard UI
+
+**Related PRDs**:
+- [shared/prd.md](platform/services/shared/prd.md)
+- [cli/prd.md](platform/services/cli/prd.md)
+- [mcctl-api/prd.md](platform/services/mcctl-api/prd.md)
+- [mcctl-console/prd.md](platform/services/mcctl-console/prd.md)
+
+---
+
 ## Quick Reference
 
 ### Milestones

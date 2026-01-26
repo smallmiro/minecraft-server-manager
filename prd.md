@@ -1641,7 +1641,62 @@ Agent specification files: `.claude/agents/` directory
 
 For the complete collaboration guide, see [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md).
 
-## 11. Revision History
+## 11. Module PRD Index
+
+All services have independent PRD documents for detailed specifications:
+
+### 11.1 Module Documents
+
+| Module | PRD | Description | Status |
+|--------|-----|-------------|--------|
+| **shared** | [prd.md](platform/services/shared/prd.md) | Core Domain Layer, Use Cases, Common Adapters | ✅ v1.0 |
+| **cli** | [prd.md](platform/services/cli/prd.md) | CLI Tool (@clack/prompts interactive) | ✅ v1.0 |
+| **mcctl-api** | [prd.md](platform/services/mcctl-api/prd.md) | Fastify REST API Service | ✅ v1.0 |
+| **mcctl-console** | [prd.md](platform/services/mcctl-console/prd.md) | Next.js BFF + Web Console | ✅ v1.0 |
+
+### 11.2 Module Responsibilities
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         shared                                   │
+│  Domain: Entities, Value Objects                                │
+│  Application: Use Cases, Ports                                  │
+│  Infrastructure: ShellAdapter, Repositories                     │
+├─────────────────────────────────────────────────────────────────┤
+│         cli              │    mcctl-api    │   mcctl-console    │
+│  ClackPromptAdapter      │  ApiPromptAdapter│  WebPromptAdapter  │
+│  @clack/prompts          │  Fastify Routes │  Next.js App       │
+│  Terminal UI             │  REST API       │  BFF + Web UI      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 11.3 Document Hierarchy
+
+```
+prd.md (This Document)
+├── Section 9: CLI Architecture → shared/prd.md, cli/prd.md
+├── Section 10: Admin Service → mcctl-api/prd.md, mcctl-console/prd.md
+│
+├── platform/services/shared/prd.md
+│   └── Domain Layer, Application Layer, Infrastructure Layer
+│
+├── platform/services/cli/prd.md
+│   └── CLI Commands, Interactive Mode, Player Management
+│
+├── platform/services/mcctl-api/prd.md
+│   └── REST API, Authentication, OpenAPI/Swagger
+│
+└── platform/services/mcctl-console/prd.md
+    └── BFF Pattern, NextAuth.js, Dashboard UI
+```
+
+### 11.4 Cross-References
+
+- **Section 9** (CLI Architecture) → Details in `cli/prd.md`, `shared/prd.md`
+- **Section 10** (Admin Service) → Details in `mcctl-api/prd.md`, `mcctl-console/prd.md`
+- **Agent Ownership** → See Section 10.5 for module ownership rules
+
+## 12. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
@@ -1654,3 +1709,4 @@ For the complete collaboration guide, see [docs/development/agent-collaboration.
 | 4.0.0 | 2025-01-25 | - | Add Section 10: Admin Service (mcctl-api, mcctl-console) |
 | 4.1.0 | 2025-01-25 | - | Add Section 10.5: Multi-Agent Collaboration with ownership rules |
 | 5.0.0 | 2025-01-26 | - | Mark Admin Service (Section 10) as Completed, update CLI commands |
+| 5.1.0 | 2025-01-26 | - | Add Section 11: Module PRD Index for centralized document management |
