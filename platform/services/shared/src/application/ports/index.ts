@@ -51,4 +51,9 @@ export type {
   WorldAvailabilityCategory,
   IModSourcePort,
   IUserRepository,
+  IServiceManagerPort,
+  ServiceStartOptions,
+  ServiceStopOptions,
+  ServiceRestartOptions,
+  ServiceLogsOptions,
 } from './outbound/index.js';
