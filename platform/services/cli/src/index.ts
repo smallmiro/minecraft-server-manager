@@ -20,14 +20,60 @@ import {
   playerCommand,
   migrateCommand,
   modCommand,
-  adminInitCommand,
-  adminServiceCommand,
-  adminUserCommand,
-  adminApiCommand,
+  consoleInitCommand,
+  consoleServiceCommand,
+  consoleUserCommand,
+  consoleApiCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
 const VERSION = '0.1.0';
+
+/**
+ * Handle console command (shared by both 'console' and deprecated 'admin' commands)
+ */
+async function handleConsoleCommand(
+  subCommand: string | undefined,
+  positional: string[],
+  flags: Record<string, string | boolean>,
+  rootDir: string | undefined
+): Promise<number> {
+  switch (subCommand) {
+    case 'init':
+      return consoleInitCommand({
+        root: rootDir,
+        force: flags['force'] === true,
+      });
+    case 'service':
+      return consoleServiceCommand({
+        root: rootDir,
+        subCommand: positional[0] as 'start' | 'stop' | 'restart' | 'status' | 'logs' | undefined,
+        apiOnly: flags['api'] === true,
+        consoleOnly: flags['console'] === true,
+        follow: flags['follow'] === true,
+        json: flags['json'] === true,
+        apiPort: flags['api-port'] ? parseInt(flags['api-port'] as string, 10) : undefined,
+        consolePort: flags['console-port'] ? parseInt(flags['console-port'] as string, 10) : undefined,
+        build: flags['build'] === true,
+        noBuild: flags['no-build'] === true,
+      });
+    case 'user': {
+      // Use Commander-based command
+      const userCmd = consoleUserCommand();
+      userCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
+      return 0;
+    }
+    case 'api': {
+      // Use Commander-based command
+      const apiCmd = consoleApiCommand();
+      apiCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
+      return 0;
+    }
+    default:
+      log.error('Usage: mcctl console <init|service|user|api>');
+      return 1;
+  }
+}
 
 /**
  * Print usage information
@@ -156,13 +202,14 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')} --all       Migrate all servers
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
 
-${colors.cyan('Admin Service:')}
-  ${colors.bold('admin init')} [--force]       Initialize admin service (create admin user)
-  ${colors.bold('admin user')} <action> [name] Manage admin users (list, add, remove, reset)
-  ${colors.bold('admin api')} <action>         Manage API settings (status, config, key)
-  ${colors.bold('admin service')} <action>     Manage services (start, stop, restart, status, logs)
+${colors.cyan('Console Management:')}
+  ${colors.bold('console init')} [--force]       Initialize console service (create admin user)
+  ${colors.bold('console user')} <action> [name] Manage console users (list, add, remove, reset)
+  ${colors.bold('console api')} <action>         Manage API settings (status, config, key)
+  ${colors.bold('console service')} <action>     Manage services (start, stop, restart, status, logs)
+  ${colors.dim('admin <cmd>                  (deprecated, use "console" instead)')}
 
-${colors.cyan('Admin Service Options:')}
+${colors.cyan('Console Options:')}
   --api-port <port>            API server port (default: 3001)
   --console-port <port>        Console server port (default: 3000)
   --api                        Target API service only
@@ -301,7 +348,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'admin'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'console', 'admin'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -449,7 +496,32 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'console':
+      case 'console': {
+        // Check if this is console management command (init, service, user, api)
+        const consoleManagementSubCommands = ['init', 'service', 'user', 'api'];
+        if (subCommand && consoleManagementSubCommands.includes(subCommand)) {
+          // Route to console management
+          exitCode = await handleConsoleCommand(subCommand, positional, flags, rootDir);
+          break;
+        }
+
+        // Otherwise, treat as RCON console (mcctl console <server>)
+        if (!paths.isInitialized()) {
+          log.error('Platform not initialized. Run: mcctl init');
+          exitCode = 1;
+          break;
+        }
+
+        // Pass through to mcctl.sh for RCON console
+        const mcctlArgs = [command, ...positional];
+        if (flags['json']) mcctlArgs.push('--json');
+        if (flags['follow']) mcctlArgs.push('-f');
+        if (flags['lines']) mcctlArgs.push('-n', flags['lines'] as string);
+
+        exitCode = await shell.mcctl(mcctlArgs);
+        break;
+      }
+
       case 'logs': {
         if (!paths.isInitialized()) {
           log.error('Platform not initialized. Run: mcctl init');
@@ -725,45 +797,12 @@ async function main(): Promise<void> {
       }
 
       case 'admin': {
-        switch (subCommand) {
-          case 'init':
-            exitCode = await adminInitCommand({
-              root: rootDir,
-              force: flags['force'] === true,
-            });
-            break;
-          case 'service':
-            exitCode = await adminServiceCommand({
-              root: rootDir,
-              subCommand: positional[0] as 'start' | 'stop' | 'restart' | 'status' | 'logs' | undefined,
-              apiOnly: flags['api'] === true,
-              consoleOnly: flags['console'] === true,
-              follow: flags['follow'] === true,
-              json: flags['json'] === true,
-              apiPort: flags['api-port'] ? parseInt(flags['api-port'] as string, 10) : undefined,
-              consolePort: flags['console-port'] ? parseInt(flags['console-port'] as string, 10) : undefined,
-              build: flags['build'] === true,
-              noBuild: flags['no-build'] === true,
-            });
-            break;
-          case 'user': {
-            // Use Commander-based command
-            const userCmd = adminUserCommand();
-            userCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
-            exitCode = 0;
-            break;
-          }
-          case 'api': {
-            // Use Commander-based command
-            const apiCmd = adminApiCommand();
-            apiCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
-            exitCode = 0;
-            break;
-          }
-          default:
-            log.error('Usage: mcctl admin <init|service|user|api>');
-            exitCode = 1;
-        }
+        // Show deprecation warning for 'admin' command
+        log.warn('The "admin" command is deprecated. Please use "console" instead.');
+        console.log(`  Example: ${colors.cyan('mcctl console init')} instead of ${colors.dim('mcctl admin init')}`);
+        console.log('');
+        // Route to console management handler
+        exitCode = await handleConsoleCommand(subCommand, positional, flags, rootDir);
         break;
       }
 

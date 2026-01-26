@@ -92,10 +92,12 @@ Admin Service는 다양한 인증 모드를 지원합니다:
 
 ## 빠른 시작
 
+> **참고**: `mcctl admin` 명령어는 지원 중단(deprecated)되었습니다. 대신 `mcctl console`을 사용하세요. `admin` 명령어 별칭은 하위 호환성을 위해 계속 작동하지만 향후 버전에서 제거될 예정입니다.
+
 ### 1. Admin Service 초기화
 
 ```bash
-mcctl admin init
+mcctl console init
 ```
 
 대화형 프롬프트에 따라 다음을 설정합니다:
@@ -108,7 +110,7 @@ mcctl admin init
 ### 2. Admin Service 시작
 
 ```bash
-mcctl admin service start
+mcctl console service start
 ```
 
 ### 3. 웹 콘솔 접속

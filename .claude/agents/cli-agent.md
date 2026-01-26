@@ -24,7 +24,7 @@ You are the CLI Agent responsible for the `@minecraft-docker/mcctl` CLI package.
 
 ## Assigned Tasks
 
-### Issue #84: mcctl admin init
+### Issue #84: mcctl console init
 ```
 Priority: HIGH (blocks #85, #86)
 Prerequisites: #80, #81 complete
@@ -38,43 +38,43 @@ Deliverables:
 - Access mode selection
 ```
 
-### Issue #85: mcctl admin user
+### Issue #85: mcctl console user
 ```
 Priority: MEDIUM
 Prerequisites: #84 complete
 Location: src/commands/admin/user.ts
 
 Deliverables:
-- mcctl admin user list
-- mcctl admin user add (interactive + CLI)
-- mcctl admin user remove
-- mcctl admin user update
-- mcctl admin user reset-password
+- mcctl console user list
+- mcctl console user add (interactive + CLI)
+- mcctl console user remove
+- mcctl console user update
+- mcctl console user reset-password
 ```
 
-### Issue #86: mcctl admin api
+### Issue #86: mcctl console api
 ```
 Priority: MEDIUM
 Prerequisites: #84 complete
 Location: src/commands/admin/api.ts
 
 Deliverables:
-- mcctl admin api status
-- mcctl admin api key regenerate
-- mcctl admin api mode <mode>
-- mcctl admin api whitelist (list/add/remove)
+- mcctl console api status
+- mcctl console api key regenerate
+- mcctl console api mode <mode>
+- mcctl console api whitelist (list/add/remove)
 ```
 
-### Issue #87: mcctl admin service
+### Issue #87: mcctl console service
 ```
 Priority: MEDIUM
 Prerequisites: #94, #100 complete (Backend/Frontend Dockerfiles)
 Location: src/commands/admin/service.ts
 
 Deliverables:
-- mcctl admin service start/stop/restart
-- mcctl admin service status
-- mcctl admin service logs
+- mcctl console service start/stop/restart
+- mcctl console service status
+- mcctl console service logs
 - Docker Compose integration
 ```
 
@@ -109,7 +109,7 @@ needs:
 YamlUserRepository implementation complete
 
 ### Reason
-mcctl admin init needs to store admin user credentials
+mcctl console init needs to store admin user credentials
 
 ### Current Status
 Waiting for #81 completion
@@ -140,7 +140,7 @@ Waiting for #81 completion
 
 ### Example Output
 \`\`\`
-$ mcctl admin init
+$ mcctl console init
 
 ┌  Initialize Admin Service
 │
@@ -157,8 +157,8 @@ $ mcctl admin init
 \`\`\`
 
 ### Unblocks
-- #85 - mcctl admin user
-- #86 - mcctl admin api
+- #85 - mcctl console user
+- #86 - mcctl console api
 ```
 
 ## Code Standards

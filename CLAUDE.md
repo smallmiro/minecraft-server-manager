@@ -60,8 +60,8 @@ minecraft/
 │   │   │   │   │   ├── kick.ts         # Kick player
 │   │   │   │   │   ├── migrate.ts      # World storage migration
 │   │   │   │   │   ├── mod.ts          # Mod management (search, add, remove)
-│   │   │   │   │   ├── admin/          # Admin Service management
-│   │   │   │   │   │   ├── init.ts     # Initialize admin service
+│   │   │   │   │   ├── console/        # Console Management (Web Admin)
+│   │   │   │   │   │   ├── init.ts     # Initialize console service
 │   │   │   │   │   │   ├── user.ts     # User management
 │   │   │   │   │   │   ├── api.ts      # API key management
 │   │   │   │   │   │   └── service.ts  # Service lifecycle
@@ -416,28 +416,29 @@ mcctl backup history      # Show backup history
 mcctl backup restore      # Interactive: select from history
 mcctl backup restore abc1234  # CLI: restore specific commit
 
-# Admin Service management
-mcctl admin init          # Initialize admin service (create users.yaml, API key)
-mcctl admin init --force  # Reinitialize (overwrite existing)
+# Console Management (Web Admin)
+# Note: `mcctl admin` commands are deprecated. Use `mcctl console` instead.
+mcctl console init          # Initialize console service (create users.yaml, API key)
+mcctl console init --force  # Reinitialize (overwrite existing)
 
-mcctl admin user list     # List admin users
-mcctl admin user add alice  # Add user interactively
-mcctl admin user remove bob  # Remove user
-mcctl admin user reset alice  # Reset user password
+mcctl console user list     # List console users
+mcctl console user add alice  # Add user interactively
+mcctl console user remove bob  # Remove user
+mcctl console user reset alice  # Reset user password
 
-mcctl admin api start     # Start API service only
-mcctl admin api stop      # Stop API service
-mcctl admin api status    # Check API status
+mcctl console api start     # Start API service only
+mcctl console api stop      # Stop API service
+mcctl console api status    # Check API status
 
-mcctl admin service start           # Start all services (API + Console)
-mcctl admin service stop            # Stop all services
-mcctl admin service restart         # Restart all services
-mcctl admin service status          # Show service status
-mcctl admin service status --json   # JSON output
-mcctl admin service logs            # View logs
-mcctl admin service logs --api      # API logs only
-mcctl admin service logs --console  # Console logs only
-mcctl admin service logs -f         # Follow logs
+mcctl console service start           # Start all services (API + Console)
+mcctl console service stop            # Stop all services
+mcctl console service restart         # Restart all services
+mcctl console service status          # Show service status
+mcctl console service status --json   # JSON output
+mcctl console service logs            # View logs
+mcctl console service logs --api      # API logs only
+mcctl console service logs --console  # Console logs only
+mcctl console service logs -f         # Follow logs
 
 # Custom data directory
 mcctl --root /path/to/data init

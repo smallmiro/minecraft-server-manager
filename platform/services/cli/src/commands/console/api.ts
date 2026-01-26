@@ -5,10 +5,16 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
 
-export interface AdminApiCommandOptions {
+/**
+ * Console API command options
+ */
+export interface ConsoleApiCommandOptions {
   json?: boolean;
   force?: boolean;
 }
+
+// Backward compatibility alias
+export type AdminApiCommandOptions = ConsoleApiCommandOptions;
 
 /**
  * Access modes for the API
@@ -113,7 +119,7 @@ function isValidCidr(value: string): boolean {
 /**
  * Show API status
  */
-async function showStatus(options: AdminApiCommandOptions): Promise<void> {
+async function showStatus(options: ConsoleApiCommandOptions): Promise<void> {
   const config = loadConfig();
 
   if (options.json) {
@@ -166,7 +172,7 @@ async function showStatus(options: AdminApiCommandOptions): Promise<void> {
 /**
  * Regenerate API key
  */
-async function regenerateKey(options: AdminApiCommandOptions): Promise<void> {
+async function regenerateKey(options: ConsoleApiCommandOptions): Promise<void> {
   const config = loadConfig();
 
   if (!options.force) {
@@ -193,7 +199,7 @@ async function regenerateKey(options: AdminApiCommandOptions): Promise<void> {
 /**
  * Change access mode
  */
-async function changeMode(mode: string | undefined, options: AdminApiCommandOptions): Promise<void> {
+async function changeMode(mode: string | undefined, options: ConsoleApiCommandOptions): Promise<void> {
   const config = loadConfig();
   const validModes: AccessMode[] = ['internal', 'api-key', 'ip-whitelist', 'api-key-ip', 'open'];
 
@@ -257,7 +263,7 @@ async function changeMode(mode: string | undefined, options: AdminApiCommandOpti
 async function manageWhitelist(
   action: string | undefined,
   ip: string | undefined,
-  options: AdminApiCommandOptions
+  options: ConsoleApiCommandOptions
 ): Promise<void> {
   const config = loadConfig();
 
@@ -374,24 +380,24 @@ async function manageWhitelist(
 }
 
 /**
- * Create admin api command
+ * Create console api command
  */
-export function adminApiCommand(): Command {
+export function consoleApiCommand(): Command {
   const cmd = new Command('api')
     .description('Manage API configuration')
     .addHelpText(
       'after',
       `
 Examples:
-  $ mcctl admin api status              Show API configuration
-  $ mcctl admin api status --json       JSON output
-  $ mcctl admin api key regenerate      Regenerate API key
-  $ mcctl admin api mode api-key        Change access mode
-  $ mcctl admin api mode                Interactive mode selection
-  $ mcctl admin api whitelist list      List IP whitelist
-  $ mcctl admin api whitelist add 192.168.1.100
-  $ mcctl admin api whitelist add 10.0.0.0/8
-  $ mcctl admin api whitelist remove 192.168.1.100
+  $ mcctl console api status              Show API configuration
+  $ mcctl console api status --json       JSON output
+  $ mcctl console api key regenerate      Regenerate API key
+  $ mcctl console api mode api-key        Change access mode
+  $ mcctl console api mode                Interactive mode selection
+  $ mcctl console api whitelist list      List IP whitelist
+  $ mcctl console api whitelist add 192.168.1.100
+  $ mcctl console api whitelist add 10.0.0.0/8
+  $ mcctl console api whitelist remove 192.168.1.100
 
 Access Modes:
   internal       Docker network only (default, most secure)
@@ -407,7 +413,7 @@ Access Modes:
     .command('status')
     .description('Show API configuration')
     .option('--json', 'Output in JSON format')
-    .action(async (options: AdminApiCommandOptions) => {
+    .action(async (options: ConsoleApiCommandOptions) => {
       try {
         await showStatus(options);
       } catch (error) {
@@ -425,7 +431,7 @@ Access Modes:
     .command('regenerate')
     .description('Regenerate API key')
     .option('--force', 'Skip confirmation')
-    .action(async (options: AdminApiCommandOptions) => {
+    .action(async (options: ConsoleApiCommandOptions) => {
       try {
         await regenerateKey(options);
       } catch (error) {
@@ -439,7 +445,7 @@ Access Modes:
     .command('mode [mode]')
     .description('Change access mode')
     .option('--force', 'Skip confirmation for dangerous modes')
-    .action(async (mode: string | undefined, options: AdminApiCommandOptions) => {
+    .action(async (mode: string | undefined, options: ConsoleApiCommandOptions) => {
       try {
         await changeMode(mode, options);
       } catch (error) {
@@ -453,7 +459,7 @@ Access Modes:
     .command('whitelist [action] [ip]')
     .description('Manage IP whitelist')
     .option('--json', 'Output in JSON format')
-    .action(async (action: string | undefined, ip: string | undefined, options: AdminApiCommandOptions) => {
+    .action(async (action: string | undefined, ip: string | undefined, options: ConsoleApiCommandOptions) => {
       try {
         await manageWhitelist(action, ip, options);
       } catch (error) {
@@ -472,3 +478,6 @@ Actions:
 
   return cmd;
 }
+
+// Backward compatibility alias
+export const adminApiCommand = consoleApiCommand;

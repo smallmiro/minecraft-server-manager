@@ -14,13 +14,13 @@ mcctl-console은 Docker Minecraft 서버를 관리하기 위한 현대적인 웹
 
 1. Admin Service 시작:
    ```bash
-   mcctl admin service start
+   mcctl console service start
    ```
 
 2. 브라우저를 열고 `http://localhost:3000`으로 이동
 
 3. 자격 증명 입력:
-   - **사용자명:** `mcctl admin init` 중 생성한 관리자 사용자명
+   - **사용자명:** `mcctl console init` 중 생성한 관리자 사용자명
    - **비밀번호:** 관리자 비밀번호
 
 4. **로그인** 클릭
@@ -184,7 +184,7 @@ mcctl-console은 Docker Minecraft 서버를 관리하기 위한 현대적인 웹
 
 1. **서비스 상태 확인:**
    ```bash
-   mcctl admin service status
+   mcctl console service status
    ```
 
 2. **포트 확인:**
@@ -194,19 +194,19 @@ mcctl-console은 Docker Minecraft 서버를 관리하기 위한 현대적인 웹
 
 3. **로그 확인:**
    ```bash
-   mcctl admin service logs --console-only
+   mcctl console service logs --console-only
    ```
 
 ### 로그인 실패
 
 1. **자격 증명 확인:**
    ```bash
-   mcctl admin user list
+   mcctl console user list
    ```
 
 2. **비밀번호 재설정:**
    ```bash
-   mcctl admin user reset-password admin
+   mcctl console user reset-password admin
    ```
 
 3. **NextAuth 구성 확인:**
@@ -235,7 +235,7 @@ mcctl-console은 Docker Minecraft 서버를 관리하기 위한 현대적인 웹
 
 3. **API 로그 확인:**
    ```bash
-   mcctl admin service logs --api-only
+   mcctl console service logs --api-only
    ```
 
 ## 모바일 접근

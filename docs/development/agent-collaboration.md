@@ -182,7 +182,7 @@ orchestrator:
 
 ### 💻 CLI Agent (cli/)
 
-**Role**: mcctl admin command implementation
+**Role**: mcctl console command implementation
 
 | Attribute | Description |
 |-----------|-------------|
@@ -193,10 +193,10 @@ orchestrator:
 
 **Assigned Tasks**:
 ```
-#84: mcctl admin init command
-#85: mcctl admin user command
-#86: mcctl admin api command
-#87: mcctl admin service command
+#84: mcctl console init command
+#85: mcctl console user command
+#86: mcctl console api command
+#87: mcctl console service command
 ```
 
 **Provides** (→ to other agents):

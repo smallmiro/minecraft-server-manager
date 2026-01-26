@@ -37,7 +37,7 @@ Deliverables:
 - Environment variable templates
 - Health check verification
 - Update main docker-compose.yml
-- mcctl admin service integration
+- mcctl console service integration
 ```
 
 ### Issue #102: E2E Tests with Playwright
@@ -74,7 +74,7 @@ needs:
 ### From CLI Agent
 ```yaml
 needs:
-  - "#87: mcctl admin service" → For service management commands
+  - "#87: mcctl console service" → For service management commands
 ```
 
 ## Communication Protocol

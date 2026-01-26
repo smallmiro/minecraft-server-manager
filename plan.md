@@ -1917,11 +1917,12 @@ Each service has independent implementation plans:
 - [ ] Implement `SqliteUserRepository` adapter
 - [ ] Implement `ApiPromptAdapter`
 
-#### Phase 8.2: CLI Admin Commands
-- [ ] `mcctl admin init` - Initial setup
-- [ ] `mcctl admin user` - User management
-- [ ] `mcctl admin api` - API settings
-- [ ] `mcctl admin service` - Service management
+#### Phase 8.2: CLI Console Commands
+> **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead.
+- [ ] `mcctl console init` - Initial setup
+- [ ] `mcctl console user` - User management
+- [ ] `mcctl console api` - API settings
+- [ ] `mcctl console service` - Service management
 
 #### Phase 8.3: mcctl-api Service
 - [ ] Fastify server structure
@@ -1945,10 +1946,10 @@ Each service has independent implementation plans:
 
 ```bash
 # 1. Initialize
-mcctl admin init
+mcctl console init
 
 # 2. Start services
-mcctl admin start
+mcctl console service start
 
 # 3. Access Console
 open http://localhost:3000

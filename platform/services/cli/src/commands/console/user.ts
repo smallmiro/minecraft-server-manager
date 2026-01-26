@@ -11,12 +11,18 @@ import {
 } from '@minecraft-docker/shared';
 import { resolve } from 'node:path';
 
-export interface AdminUserCommandOptions {
+/**
+ * Console user command options
+ */
+export interface ConsoleUserCommandOptions {
   json?: boolean;
   force?: boolean;
   role?: string;
   password?: string;
 }
+
+// Backward compatibility alias
+export type AdminUserCommandOptions = ConsoleUserCommandOptions;
 
 /**
  * Get the user repository instance
@@ -30,7 +36,7 @@ function getUserRepository(): YamlUserRepository {
 /**
  * List all users
  */
-async function listUsers(options: AdminUserCommandOptions): Promise<void> {
+async function listUsers(options: ConsoleUserCommandOptions): Promise<void> {
   const repo = getUserRepository();
   const users = await repo.findAll();
 
@@ -41,7 +47,7 @@ async function listUsers(options: AdminUserCommandOptions): Promise<void> {
 
   if (users.length === 0) {
     console.log(colors.yellow('No users found.'));
-    console.log(`Run ${colors.cyan('mcctl admin init')} to create an admin user.`);
+    console.log(`Run ${colors.cyan('mcctl console init')} to create an admin user.`);
     return;
   }
 
@@ -70,7 +76,7 @@ async function listUsers(options: AdminUserCommandOptions): Promise<void> {
  */
 async function addUser(
   usernameArg: string | undefined,
-  options: AdminUserCommandOptions
+  options: ConsoleUserCommandOptions
 ): Promise<void> {
   const repo = getUserRepository();
 
@@ -182,7 +188,7 @@ async function addUser(
  */
 async function removeUser(
   usernameArg: string | undefined,
-  options: AdminUserCommandOptions
+  options: ConsoleUserCommandOptions
 ): Promise<void> {
   const repo = getUserRepository();
 
@@ -253,7 +259,7 @@ async function removeUser(
  */
 async function updateUser(
   usernameArg: string | undefined,
-  options: AdminUserCommandOptions
+  options: ConsoleUserCommandOptions
 ): Promise<void> {
   const repo = getUserRepository();
 
@@ -335,7 +341,7 @@ async function updateUser(
  */
 async function resetPassword(
   usernameArg: string | undefined,
-  options: AdminUserCommandOptions
+  options: ConsoleUserCommandOptions
 ): Promise<void> {
   const repo = getUserRepository();
 
@@ -421,26 +427,26 @@ async function resetPassword(
 }
 
 /**
- * Create admin user command
+ * Create console user command
  */
-export function adminUserCommand(): Command {
+export function consoleUserCommand(): Command {
   const cmd = new Command('user')
-    .description('Manage admin console users')
+    .description('Manage console users')
     .addHelpText(
       'after',
       `
 Examples:
-  $ mcctl admin user list                        List all users
-  $ mcctl admin user list --json                 List users in JSON format
-  $ mcctl admin user add                         Add user (interactive)
-  $ mcctl admin user add operator1 --role viewer --password "secret"
-  $ mcctl admin user remove                      Remove user (interactive)
-  $ mcctl admin user remove operator1            Remove user directly
-  $ mcctl admin user remove operator1 --force    Remove without confirmation
-  $ mcctl admin user update                      Update user (interactive)
-  $ mcctl admin user update operator1 --role admin
-  $ mcctl admin user reset-password              Reset password (interactive)
-  $ mcctl admin user reset-password operator1
+  $ mcctl console user list                        List all users
+  $ mcctl console user list --json                 List users in JSON format
+  $ mcctl console user add                         Add user (interactive)
+  $ mcctl console user add operator1 --role viewer --password "secret"
+  $ mcctl console user remove                      Remove user (interactive)
+  $ mcctl console user remove operator1            Remove user directly
+  $ mcctl console user remove operator1 --force    Remove without confirmation
+  $ mcctl console user update                      Update user (interactive)
+  $ mcctl console user update operator1 --role admin
+  $ mcctl console user reset-password              Reset password (interactive)
+  $ mcctl console user reset-password operator1
 `
     );
 
@@ -449,7 +455,7 @@ Examples:
     .command('list')
     .description('List all users')
     .option('--json', 'Output in JSON format')
-    .action(async (options: AdminUserCommandOptions) => {
+    .action(async (options: ConsoleUserCommandOptions) => {
       try {
         await listUsers(options);
       } catch (error) {
@@ -464,7 +470,7 @@ Examples:
     .description('Add a new user')
     .option('--role <role>', 'User role (admin, viewer)')
     .option('--password <password>', 'User password')
-    .action(async (username: string | undefined, options: AdminUserCommandOptions) => {
+    .action(async (username: string | undefined, options: ConsoleUserCommandOptions) => {
       try {
         await addUser(username, options);
       } catch (error) {
@@ -478,7 +484,7 @@ Examples:
     .command('remove [username]')
     .description('Remove a user')
     .option('--force', 'Skip confirmation')
-    .action(async (username: string | undefined, options: AdminUserCommandOptions) => {
+    .action(async (username: string | undefined, options: ConsoleUserCommandOptions) => {
       try {
         await removeUser(username, options);
       } catch (error) {
@@ -492,7 +498,7 @@ Examples:
     .command('update [username]')
     .description('Update a user')
     .option('--role <role>', 'New role (admin, viewer)')
-    .action(async (username: string | undefined, options: AdminUserCommandOptions) => {
+    .action(async (username: string | undefined, options: ConsoleUserCommandOptions) => {
       try {
         await updateUser(username, options);
       } catch (error) {
@@ -506,7 +512,7 @@ Examples:
     .command('reset-password [username]')
     .description('Reset a user password')
     .option('--password <password>', 'New password (for non-interactive use)')
-    .action(async (username: string | undefined, options: AdminUserCommandOptions) => {
+    .action(async (username: string | undefined, options: ConsoleUserCommandOptions) => {
       try {
         await resetPassword(username, options);
       } catch (error) {
@@ -517,3 +523,6 @@ Examples:
 
   return cmd;
 }
+
+// Backward compatibility alias
+export const adminUserCommand = consoleUserCommand;

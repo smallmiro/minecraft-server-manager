@@ -14,13 +14,13 @@ The mcctl-console provides a modern web interface for managing your Docker Minec
 
 1. Start Admin Service:
    ```bash
-   mcctl admin service start
+   mcctl console service start
    ```
 
 2. Open your browser and navigate to `http://localhost:3000`
 
 3. Enter your credentials:
-   - **Username:** The admin username created during `mcctl admin init`
+   - **Username:** The admin username created during `mcctl console init`
    - **Password:** The admin password
 
 4. Click **Sign In**
@@ -184,7 +184,7 @@ The console panel allows you to:
 
 1. **Check Service Status:**
    ```bash
-   mcctl admin service status
+   mcctl console service status
    ```
 
 2. **Verify Port:**
@@ -194,19 +194,19 @@ The console panel allows you to:
 
 3. **Check Logs:**
    ```bash
-   mcctl admin service logs --console-only
+   mcctl console service logs --console-only
    ```
 
 ### Login Fails
 
 1. **Verify Credentials:**
    ```bash
-   mcctl admin user list
+   mcctl console user list
    ```
 
 2. **Reset Password:**
    ```bash
-   mcctl admin user reset-password admin
+   mcctl console user reset-password admin
    ```
 
 3. **Check NextAuth Configuration:**
@@ -235,7 +235,7 @@ The console panel allows you to:
 
 3. **View API Logs:**
    ```bash
-   mcctl admin service logs --api-only
+   mcctl console service logs --api-only
    ```
 
 ## Mobile Access

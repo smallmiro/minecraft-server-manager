@@ -1,34 +1,36 @@
 # CLI Commands Reference
 
-Complete reference for all `mcctl admin` subcommands.
+> **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead. The `admin` command alias still works for backward compatibility but will be removed in a future release.
+
+Complete reference for all `mcctl console` subcommands.
 
 ## Overview
 
-The `mcctl admin` command group provides management capabilities for the Admin Service:
+The `mcctl console` command group provides management capabilities for the Admin Service:
 
 ```bash
-mcctl admin <subcommand> [options]
+mcctl console <subcommand> [options]
 ```
 
 ## Command Summary
 
 | Command | Description |
 |---------|-------------|
-| `mcctl admin init` | Initialize Admin Service configuration |
-| `mcctl admin user` | Manage admin console users |
-| `mcctl admin api` | Manage API configuration |
-| `mcctl admin service` | Manage Admin Service lifecycle |
+| `mcctl console init` | Initialize Admin Service configuration |
+| `mcctl console user` | Manage admin console users |
+| `mcctl console api` | Manage API configuration |
+| `mcctl console service` | Manage Admin Service lifecycle |
 
 ---
 
-## mcctl admin init
+## mcctl console init
 
 Initialize Admin Service configuration and create the first admin user.
 
 ### Usage
 
 ```bash
-mcctl admin init [options]
+mcctl console init [options]
 ```
 
 ### Options
@@ -61,13 +63,13 @@ The command guides you through:
 
 ```bash
 # Standard initialization
-mcctl admin init
+mcctl console init
 
 # Reinitialize with force
-mcctl admin init --force
+mcctl console init --force
 
 # Custom data directory
-mcctl admin init --root /opt/minecraft
+mcctl console init --root /opt/minecraft
 ```
 
 ### Output Files
@@ -80,7 +82,7 @@ mcctl admin init --root /opt/minecraft
 
 ---
 
-## mcctl admin user
+## mcctl console user
 
 Manage admin console users.
 
@@ -94,12 +96,12 @@ Manage admin console users.
 | `update` | Update user role |
 | `reset-password` | Reset user password |
 
-### mcctl admin user list
+### mcctl console user list
 
 List all registered users.
 
 ```bash
-mcctl admin user list [options]
+mcctl console user list [options]
 ```
 
 **Options:**
@@ -124,7 +126,7 @@ Total: 2 user(s)
 **JSON output:**
 
 ```bash
-mcctl admin user list --json
+mcctl console user list --json
 ```
 
 ```json
@@ -144,12 +146,12 @@ mcctl admin user list --json
 ]
 ```
 
-### mcctl admin user add
+### mcctl console user add
 
 Add a new user account.
 
 ```bash
-mcctl admin user add [username] [options]
+mcctl console user add [username] [options]
 ```
 
 **Options:**
@@ -162,7 +164,7 @@ mcctl admin user add [username] [options]
 **Interactive mode:**
 
 ```bash
-mcctl admin user add
+mcctl console user add
 
 ? Username: operator1
 ? Role: Viewer - Read-only access
@@ -175,7 +177,7 @@ User 'operator1' created successfully!
 **CLI mode:**
 
 ```bash
-mcctl admin user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator1 --role viewer --password "SecurePass123"
 ```
 
 **Roles:**
@@ -185,12 +187,12 @@ mcctl admin user add operator1 --role viewer --password "SecurePass123"
 | `admin` | Full access to all features |
 | `viewer` | Read-only access (status, logs) |
 
-### mcctl admin user remove
+### mcctl console user remove
 
 Remove a user account.
 
 ```bash
-mcctl admin user remove [username] [options]
+mcctl console user remove [username] [options]
 ```
 
 **Options:**
@@ -202,7 +204,7 @@ mcctl admin user remove [username] [options]
 **Interactive mode:**
 
 ```bash
-mcctl admin user remove
+mcctl console user remove
 
 ? Select user to remove: operator1 (viewer)
 ? Are you sure you want to delete user 'operator1'? Yes
@@ -213,18 +215,18 @@ User 'operator1' deleted successfully.
 **CLI mode:**
 
 ```bash
-mcctl admin user remove operator1 --force
+mcctl console user remove operator1 --force
 ```
 
 !!! note "Protection"
     You cannot delete the last admin user. This prevents accidental lockout.
 
-### mcctl admin user update
+### mcctl console user update
 
 Update a user's role.
 
 ```bash
-mcctl admin user update [username] [options]
+mcctl console user update [username] [options]
 ```
 
 **Options:**
@@ -237,18 +239,18 @@ mcctl admin user update [username] [options]
 
 ```bash
 # Promote to admin
-mcctl admin user update operator1 --role admin
+mcctl console user update operator1 --role admin
 
 # Demote to viewer
-mcctl admin user update operator1 --role viewer
+mcctl console user update operator1 --role viewer
 ```
 
-### mcctl admin user reset-password
+### mcctl console user reset-password
 
 Reset a user's password.
 
 ```bash
-mcctl admin user reset-password [username] [options]
+mcctl console user reset-password [username] [options]
 ```
 
 **Options:**
@@ -260,7 +262,7 @@ mcctl admin user reset-password [username] [options]
 **Interactive mode:**
 
 ```bash
-mcctl admin user reset-password operator1
+mcctl console user reset-password operator1
 
 ? New password: ********
 ? Confirm password: ********
@@ -271,12 +273,12 @@ Password for 'operator1' has been reset.
 **CLI mode:**
 
 ```bash
-mcctl admin user reset-password operator1 --password "NewSecurePass456"
+mcctl console user reset-password operator1 --password "NewSecurePass456"
 ```
 
 ---
 
-## mcctl admin api
+## mcctl console api
 
 Manage API configuration and access control.
 
@@ -289,12 +291,12 @@ Manage API configuration and access control.
 | `mode` | Change access mode |
 | `whitelist` | Manage IP whitelist |
 
-### mcctl admin api status
+### mcctl console api status
 
 Show current API configuration.
 
 ```bash
-mcctl admin api status [options]
+mcctl console api status [options]
 ```
 
 **Options:**
@@ -317,12 +319,12 @@ API Configuration
   Mode: External access with X-API-Key header
 ```
 
-### mcctl admin api key regenerate
+### mcctl console api key regenerate
 
 Generate a new API key. All existing clients must be updated.
 
 ```bash
-mcctl admin api key regenerate [options]
+mcctl console api key regenerate [options]
 ```
 
 **Options:**
@@ -334,7 +336,7 @@ mcctl admin api key regenerate [options]
 **Example:**
 
 ```bash
-mcctl admin api key regenerate
+mcctl console api key regenerate
 
 ? Are you sure you want to regenerate the API key? Yes
 
@@ -345,12 +347,12 @@ New API Key: mctk_1234567890abcdef1234567890abcdef
 Please update all clients with the new API key.
 ```
 
-### mcctl admin api mode
+### mcctl console api mode
 
 Change the API access mode.
 
 ```bash
-mcctl admin api mode [mode] [options]
+mcctl console api mode [mode] [options]
 ```
 
 **Modes:**
@@ -373,21 +375,21 @@ mcctl admin api mode [mode] [options]
 
 ```bash
 # Interactive selection
-mcctl admin api mode
+mcctl console api mode
 
 # Direct mode change
-mcctl admin api mode api-key
+mcctl console api mode api-key
 
 # Force open mode (development only!)
-mcctl admin api mode open --force
+mcctl console api mode open --force
 ```
 
-### mcctl admin api whitelist
+### mcctl console api whitelist
 
 Manage IP whitelist for ip-whitelist and api-key-ip modes.
 
 ```bash
-mcctl admin api whitelist <action> [ip] [options]
+mcctl console api whitelist <action> [ip] [options]
 ```
 
 **Actions:**
@@ -408,21 +410,21 @@ mcctl admin api whitelist <action> [ip] [options]
 
 ```bash
 # List whitelist
-mcctl admin api whitelist list
+mcctl console api whitelist list
 
 # Add single IP
-mcctl admin api whitelist add 192.168.1.100
+mcctl console api whitelist add 192.168.1.100
 
 # Add CIDR range
-mcctl admin api whitelist add 10.0.0.0/8
+mcctl console api whitelist add 10.0.0.0/8
 
 # Remove IP
-mcctl admin api whitelist remove 192.168.1.100
+mcctl console api whitelist remove 192.168.1.100
 ```
 
 ---
 
-## mcctl admin service
+## mcctl console service
 
 Manage Admin Service container lifecycle.
 
@@ -436,12 +438,12 @@ Manage Admin Service container lifecycle.
 | `status` | Show container status |
 | `logs` | View container logs |
 
-### mcctl admin service start
+### mcctl console service start
 
 Start Admin Service containers (API and Console).
 
 ```bash
-mcctl admin service start [options]
+mcctl console service start [options]
 ```
 
 **Options:**
@@ -455,29 +457,29 @@ mcctl admin service start [options]
 
 ```bash
 # Start all services
-mcctl admin service start
+mcctl console service start
 
 # Start API only
-mcctl admin service start --api-only
+mcctl console service start --api-only
 
 # Start console only
-mcctl admin service start --console-only
+mcctl console service start --console-only
 ```
 
-### mcctl admin service stop
+### mcctl console service stop
 
 Stop Admin Service containers.
 
 ```bash
-mcctl admin service stop
+mcctl console service stop
 ```
 
-### mcctl admin service restart
+### mcctl console service restart
 
 Restart Admin Service containers.
 
 ```bash
-mcctl admin service restart [options]
+mcctl console service restart [options]
 ```
 
 **Options:**
@@ -487,12 +489,12 @@ mcctl admin service restart [options]
 | `--api-only` | Restart only mcctl-api |
 | `--console-only` | Restart only mcctl-console |
 
-### mcctl admin service status
+### mcctl console service status
 
 Show Admin Service container status.
 
 ```bash
-mcctl admin service status [options]
+mcctl console service status [options]
 ```
 
 **Options:**
@@ -547,12 +549,12 @@ mcctl admin service status [options]
 }
 ```
 
-### mcctl admin service logs
+### mcctl console service logs
 
 View Admin Service container logs.
 
 ```bash
-mcctl admin service logs [options]
+mcctl console service logs [options]
 ```
 
 **Options:**
@@ -567,16 +569,16 @@ mcctl admin service logs [options]
 
 ```bash
 # View recent logs
-mcctl admin service logs
+mcctl console service logs
 
 # Follow logs in real-time
-mcctl admin service logs -f
+mcctl console service logs -f
 
 # View API logs only
-mcctl admin service logs --api-only
+mcctl console service logs --api-only
 
 # Follow console logs
-mcctl admin service logs --console-only -f
+mcctl console service logs --console-only -f
 ```
 
 Press `Ctrl+C` to stop following logs.
@@ -590,41 +592,41 @@ Press `Ctrl+C` to stop following logs.
 **Initial Setup:**
 
 ```bash
-mcctl admin init
-mcctl admin service start
+mcctl console init
+mcctl console service start
 ```
 
 **Add Operator User:**
 
 ```bash
-mcctl admin user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator1 --role viewer --password "SecurePass123"
 ```
 
 **Switch to API Key Mode:**
 
 ```bash
-mcctl admin api mode api-key
+mcctl console api mode api-key
 # Save the displayed API key
 ```
 
 **Configure IP Whitelist:**
 
 ```bash
-mcctl admin api mode ip-whitelist
-mcctl admin api whitelist add 192.168.1.0/24
-mcctl admin api whitelist add 10.0.0.0/8
-mcctl admin api whitelist list
+mcctl console api mode ip-whitelist
+mcctl console api whitelist add 192.168.1.0/24
+mcctl console api whitelist add 10.0.0.0/8
+mcctl console api whitelist list
 ```
 
 **Check Service Health:**
 
 ```bash
-mcctl admin service status
-mcctl admin service logs --api-only
+mcctl console service status
+mcctl console service logs --api-only
 ```
 
 **Restart After Configuration Change:**
 
 ```bash
-mcctl admin service restart
+mcctl console service restart
 ```

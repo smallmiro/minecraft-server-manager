@@ -66,11 +66,12 @@ Implementation plan for the mcctl CLI tool. Currently fully implemented.
 
 ## Future Plans
 
-### Phase 8: Admin Commands (Planned)
-- [ ] `mcctl admin init` - Admin service initialization
-- [ ] `mcctl admin start/stop` - Service management
-- [ ] `mcctl admin user` - User management
-- [ ] `mcctl admin api` - API settings
+### Phase 8: Console Commands (Planned)
+> **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead.
+- [ ] `mcctl console init` - Console service initialization
+- [ ] `mcctl console service start/stop` - Service management
+- [ ] `mcctl console user` - User management
+- [ ] `mcctl console api` - API settings
 
 → Detailed plans: [mcctl-api Plan](../mcctl-api/plan.md), [mcctl-console Plan](../mcctl-console/plan.md)
 

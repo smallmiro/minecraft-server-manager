@@ -16,7 +16,28 @@ export { playerOnlineCommand, type PlayerOnlineCommandOptions } from './player-o
 export { playerCommand, type PlayerCommandOptions } from './player.js';
 export { migrateCommand, type MigrateCommandOptions } from './migrate.js';
 export { modCommand, type ModCommandOptions } from './mod.js';
-export { adminInitCommand, type AdminInitOptions } from './admin/index.js';
-export { adminServiceCommand, type AdminServiceOptions } from './admin/index.js';
-export { adminUserCommand, type AdminUserCommandOptions } from './admin/index.js';
-export { adminApiCommand, type AdminApiCommandOptions } from './admin/index.js';
+
+// Console commands (new names)
+export {
+  consoleInitCommand,
+  consoleServiceCommand,
+  consoleUserCommand,
+  consoleApiCommand,
+  deleteAdminImages,
+  type ConsoleInitOptions,
+  type ConsoleServiceOptions,
+  type ConsoleUserCommandOptions,
+  type ConsoleApiCommandOptions,
+} from './console/index.js';
+
+// Backward compatibility aliases (deprecated - use console* instead)
+export {
+  adminInitCommand,
+  adminServiceCommand,
+  adminUserCommand,
+  adminApiCommand,
+  type AdminInitOptions,
+  type AdminServiceOptions,
+  type AdminUserCommandOptions,
+  type AdminApiCommandOptions,
+} from './console/index.js';

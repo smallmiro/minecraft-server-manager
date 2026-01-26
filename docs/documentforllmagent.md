@@ -157,33 +157,35 @@ mcctl migrate worlds --all        # Migrate all servers
 mcctl migrate worlds --dry-run    # Preview changes
 ```
 
-### Admin Service (v2.0.0)
+### Console Management (v2.0.0)
+
+> **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead.
 
 ```bash
 # Initialization
-mcctl admin init              # Initialize admin service
-mcctl admin init --force      # Reinitialize
+mcctl console init              # Initialize console service
+mcctl console init --force      # Reinitialize
 
 # User management
-mcctl admin user list         # List admin users
-mcctl admin user add <name>   # Add user
-mcctl admin user remove <name>  # Remove user
-mcctl admin user reset <name>   # Reset password
+mcctl console user list         # List console users
+mcctl console user add <name>   # Add user
+mcctl console user remove <name>  # Remove user
+mcctl console user reset <name>   # Reset password
 
 # API management
-mcctl admin api start         # Start API only
-mcctl admin api stop          # Stop API
-mcctl admin api status        # Check status
+mcctl console api start         # Start API only
+mcctl console api stop          # Stop API
+mcctl console api status        # Check status
 
 # Service lifecycle
-mcctl admin service start     # Start all (API + Console)
-mcctl admin service stop      # Stop all
-mcctl admin service restart   # Restart services
-mcctl admin service status    # Show status
-mcctl admin service logs      # View logs
-mcctl admin service logs -f   # Follow logs
-mcctl admin service logs --api  # API logs only
-mcctl admin service logs --console  # Console logs only
+mcctl console service start     # Start all (API + Console)
+mcctl console service stop      # Stop all
+mcctl console service restart   # Restart services
+mcctl console service status    # Show status
+mcctl console service logs      # View logs
+mcctl console service logs -f   # Follow logs
+mcctl console service logs --api  # API logs only
+mcctl console service logs --console  # Console logs only
 ```
 
 ## Common Use Cases
@@ -235,16 +237,16 @@ mcctl ban myserver add Griefer "Repeated griefing"
 ### Using Admin Web Console
 
 ```bash
-# 1. Initialize admin service
-mcctl admin init
+# 1. Initialize console service
+mcctl console init
 
 # 2. Start services
-mcctl admin service start
+mcctl console service start
 
 # 3. Access web console at http://localhost:3000
 
 # 4. Check status
-mcctl admin service status
+mcctl console service status
 ```
 
 ## FAQ
@@ -274,7 +276,7 @@ A: Use `mcctl config <server> --cheats` or set `ALLOW_CHEATS=true` in config.env
 A: Use `mcctl config <server> MOTD "Your message here"`.
 
 ### Q: What is the Admin Service?
-A: It's a web-based management console (mcctl-console on port 3000) backed by a REST API (mcctl-api on port 3001). Initialize with `mcctl admin init` and start with `mcctl admin service start`.
+A: It's a web-based management console (mcctl-console on port 3000) backed by a REST API (mcctl-api on port 3001). Initialize with `mcctl console init` and start with `mcctl console service start`.
 
 ### Q: How do I check server status?
 A: Use `mcctl status` for all servers or `mcctl status <server>` for a specific one. Add `--detail` for memory/CPU info.

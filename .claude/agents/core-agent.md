@@ -107,7 +107,7 @@ import { User, IUserRepository } from '@minecraft-docker/shared';
 ### Unblocks
 - #81 - YamlUserRepository (Core)
 - #82 - SqliteUserRepository (Core)
-- #84 - mcctl admin init (CLI)
+- #84 - mcctl console init (CLI)
 - #88 - Fastify foundation (Backend)
 ```
 

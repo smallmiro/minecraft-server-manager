@@ -1,34 +1,36 @@
 # CLI 명령어 레퍼런스
 
-모든 `mcctl admin` 하위 명령어에 대한 완전한 레퍼런스입니다.
+> **참고**: `mcctl admin` 명령어는 지원 중단(deprecated)되었습니다. 대신 `mcctl console`을 사용하세요. `admin` 명령어 별칭은 하위 호환성을 위해 계속 작동하지만 향후 버전에서 제거될 예정입니다.
+
+모든 `mcctl console` 하위 명령어에 대한 완전한 레퍼런스입니다.
 
 ## 개요
 
-`mcctl admin` 명령어 그룹은 Admin Service 관리 기능을 제공합니다:
+`mcctl console` 명령어 그룹은 Admin Service 관리 기능을 제공합니다:
 
 ```bash
-mcctl admin <subcommand> [options]
+mcctl console <subcommand> [options]
 ```
 
 ## 명령어 요약
 
 | 명령어 | 설명 |
 |--------|------|
-| `mcctl admin init` | Admin Service 설정 초기화 |
-| `mcctl admin user` | 관리 콘솔 사용자 관리 |
-| `mcctl admin api` | API 설정 관리 |
-| `mcctl admin service` | Admin Service 수명 주기 관리 |
+| `mcctl console init` | Admin Service 설정 초기화 |
+| `mcctl console user` | 관리 콘솔 사용자 관리 |
+| `mcctl console api` | API 설정 관리 |
+| `mcctl console service` | Admin Service 수명 주기 관리 |
 
 ---
 
-## mcctl admin init
+## mcctl console init
 
 Admin Service 설정을 초기화하고 첫 번째 관리자 사용자를 생성합니다.
 
 ### 사용법
 
 ```bash
-mcctl admin init [options]
+mcctl console init [options]
 ```
 
 ### 옵션
@@ -61,13 +63,13 @@ mcctl admin init [options]
 
 ```bash
 # 표준 초기화
-mcctl admin init
+mcctl console init
 
 # 강제 재초기화
-mcctl admin init --force
+mcctl console init --force
 
 # 사용자 정의 데이터 디렉토리
-mcctl admin init --root /opt/minecraft
+mcctl console init --root /opt/minecraft
 ```
 
 ### 출력 파일
@@ -80,7 +82,7 @@ mcctl admin init --root /opt/minecraft
 
 ---
 
-## mcctl admin user
+## mcctl console user
 
 관리 콘솔 사용자를 관리합니다.
 
@@ -94,12 +96,12 @@ mcctl admin init --root /opt/minecraft
 | `update` | 사용자 역할 변경 |
 | `reset-password` | 사용자 비밀번호 재설정 |
 
-### mcctl admin user list
+### mcctl console user list
 
 등록된 모든 사용자를 조회합니다.
 
 ```bash
-mcctl admin user list [options]
+mcctl console user list [options]
 ```
 
 **옵션:**
@@ -124,7 +126,7 @@ Total: 2 user(s)
 **JSON 출력:**
 
 ```bash
-mcctl admin user list --json
+mcctl console user list --json
 ```
 
 ```json
@@ -144,12 +146,12 @@ mcctl admin user list --json
 ]
 ```
 
-### mcctl admin user add
+### mcctl console user add
 
 새 사용자 계정을 추가합니다.
 
 ```bash
-mcctl admin user add [username] [options]
+mcctl console user add [username] [options]
 ```
 
 **옵션:**
@@ -162,7 +164,7 @@ mcctl admin user add [username] [options]
 **대화형 모드:**
 
 ```bash
-mcctl admin user add
+mcctl console user add
 
 ? Username: operator1
 ? Role: Viewer - Read-only access
@@ -175,7 +177,7 @@ User 'operator1' created successfully!
 **CLI 모드:**
 
 ```bash
-mcctl admin user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator1 --role viewer --password "SecurePass123"
 ```
 
 **역할:**
@@ -185,12 +187,12 @@ mcctl admin user add operator1 --role viewer --password "SecurePass123"
 | `admin` | 모든 기능에 대한 전체 접근 권한 |
 | `viewer` | 읽기 전용 접근 (상태, 로그) |
 
-### mcctl admin user remove
+### mcctl console user remove
 
 사용자 계정을 삭제합니다.
 
 ```bash
-mcctl admin user remove [username] [options]
+mcctl console user remove [username] [options]
 ```
 
 **옵션:**
@@ -202,7 +204,7 @@ mcctl admin user remove [username] [options]
 **대화형 모드:**
 
 ```bash
-mcctl admin user remove
+mcctl console user remove
 
 ? Select user to remove: operator1 (viewer)
 ? Are you sure you want to delete user 'operator1'? Yes
@@ -213,18 +215,18 @@ User 'operator1' deleted successfully.
 **CLI 모드:**
 
 ```bash
-mcctl admin user remove operator1 --force
+mcctl console user remove operator1 --force
 ```
 
 !!! note "보호 기능"
     마지막 관리자 사용자는 삭제할 수 없습니다. 이는 실수로 인한 계정 잠금을 방지합니다.
 
-### mcctl admin user update
+### mcctl console user update
 
 사용자의 역할을 변경합니다.
 
 ```bash
-mcctl admin user update [username] [options]
+mcctl console user update [username] [options]
 ```
 
 **옵션:**
@@ -237,18 +239,18 @@ mcctl admin user update [username] [options]
 
 ```bash
 # 관리자로 승격
-mcctl admin user update operator1 --role admin
+mcctl console user update operator1 --role admin
 
 # 뷰어로 강등
-mcctl admin user update operator1 --role viewer
+mcctl console user update operator1 --role viewer
 ```
 
-### mcctl admin user reset-password
+### mcctl console user reset-password
 
 사용자의 비밀번호를 재설정합니다.
 
 ```bash
-mcctl admin user reset-password [username] [options]
+mcctl console user reset-password [username] [options]
 ```
 
 **옵션:**
@@ -260,7 +262,7 @@ mcctl admin user reset-password [username] [options]
 **대화형 모드:**
 
 ```bash
-mcctl admin user reset-password operator1
+mcctl console user reset-password operator1
 
 ? New password: ********
 ? Confirm password: ********
@@ -271,12 +273,12 @@ Password for 'operator1' has been reset.
 **CLI 모드:**
 
 ```bash
-mcctl admin user reset-password operator1 --password "NewSecurePass456"
+mcctl console user reset-password operator1 --password "NewSecurePass456"
 ```
 
 ---
 
-## mcctl admin api
+## mcctl console api
 
 API 설정과 접근 제어를 관리합니다.
 
@@ -289,12 +291,12 @@ API 설정과 접근 제어를 관리합니다.
 | `mode` | 접근 모드 변경 |
 | `whitelist` | IP 화이트리스트 관리 |
 
-### mcctl admin api status
+### mcctl console api status
 
 현재 API 설정을 표시합니다.
 
 ```bash
-mcctl admin api status [options]
+mcctl console api status [options]
 ```
 
 **옵션:**
@@ -317,12 +319,12 @@ API Configuration
   Mode: External access with X-API-Key header
 ```
 
-### mcctl admin api key regenerate
+### mcctl console api key regenerate
 
 새 API 키를 생성합니다. 모든 기존 클라이언트를 업데이트해야 합니다.
 
 ```bash
-mcctl admin api key regenerate [options]
+mcctl console api key regenerate [options]
 ```
 
 **옵션:**
@@ -334,7 +336,7 @@ mcctl admin api key regenerate [options]
 **예제:**
 
 ```bash
-mcctl admin api key regenerate
+mcctl console api key regenerate
 
 ? Are you sure you want to regenerate the API key? Yes
 
@@ -345,12 +347,12 @@ New API Key: mctk_1234567890abcdef1234567890abcdef
 Please update all clients with the new API key.
 ```
 
-### mcctl admin api mode
+### mcctl console api mode
 
 API 접근 모드를 변경합니다.
 
 ```bash
-mcctl admin api mode [mode] [options]
+mcctl console api mode [mode] [options]
 ```
 
 **모드:**
@@ -373,21 +375,21 @@ mcctl admin api mode [mode] [options]
 
 ```bash
 # 대화형 선택
-mcctl admin api mode
+mcctl console api mode
 
 # 직접 모드 변경
-mcctl admin api mode api-key
+mcctl console api mode api-key
 
 # open 모드 강제 적용 (개발 환경 전용!)
-mcctl admin api mode open --force
+mcctl console api mode open --force
 ```
 
-### mcctl admin api whitelist
+### mcctl console api whitelist
 
 ip-whitelist 및 api-key-ip 모드를 위한 IP 화이트리스트를 관리합니다.
 
 ```bash
-mcctl admin api whitelist <action> [ip] [options]
+mcctl console api whitelist <action> [ip] [options]
 ```
 
 **액션:**
@@ -408,21 +410,21 @@ mcctl admin api whitelist <action> [ip] [options]
 
 ```bash
 # 화이트리스트 조회
-mcctl admin api whitelist list
+mcctl console api whitelist list
 
 # 단일 IP 추가
-mcctl admin api whitelist add 192.168.1.100
+mcctl console api whitelist add 192.168.1.100
 
 # CIDR 범위 추가
-mcctl admin api whitelist add 10.0.0.0/8
+mcctl console api whitelist add 10.0.0.0/8
 
 # IP 제거
-mcctl admin api whitelist remove 192.168.1.100
+mcctl console api whitelist remove 192.168.1.100
 ```
 
 ---
 
-## mcctl admin service
+## mcctl console service
 
 Admin Service 컨테이너 수명 주기를 관리합니다.
 
@@ -436,12 +438,12 @@ Admin Service 컨테이너 수명 주기를 관리합니다.
 | `status` | 컨테이너 상태 표시 |
 | `logs` | 컨테이너 로그 조회 |
 
-### mcctl admin service start
+### mcctl console service start
 
 Admin Service 컨테이너(API 및 Console)를 시작합니다.
 
 ```bash
-mcctl admin service start [options]
+mcctl console service start [options]
 ```
 
 **옵션:**
@@ -455,29 +457,29 @@ mcctl admin service start [options]
 
 ```bash
 # 모든 서비스 시작
-mcctl admin service start
+mcctl console service start
 
 # API만 시작
-mcctl admin service start --api-only
+mcctl console service start --api-only
 
 # 콘솔만 시작
-mcctl admin service start --console-only
+mcctl console service start --console-only
 ```
 
-### mcctl admin service stop
+### mcctl console service stop
 
 Admin Service 컨테이너를 중지합니다.
 
 ```bash
-mcctl admin service stop
+mcctl console service stop
 ```
 
-### mcctl admin service restart
+### mcctl console service restart
 
 Admin Service 컨테이너를 재시작합니다.
 
 ```bash
-mcctl admin service restart [options]
+mcctl console service restart [options]
 ```
 
 **옵션:**
@@ -487,12 +489,12 @@ mcctl admin service restart [options]
 | `--api-only` | mcctl-api만 재시작 |
 | `--console-only` | mcctl-console만 재시작 |
 
-### mcctl admin service status
+### mcctl console service status
 
 Admin Service 컨테이너 상태를 표시합니다.
 
 ```bash
-mcctl admin service status [options]
+mcctl console service status [options]
 ```
 
 **옵션:**
@@ -547,12 +549,12 @@ mcctl admin service status [options]
 }
 ```
 
-### mcctl admin service logs
+### mcctl console service logs
 
 Admin Service 컨테이너 로그를 조회합니다.
 
 ```bash
-mcctl admin service logs [options]
+mcctl console service logs [options]
 ```
 
 **옵션:**
@@ -567,16 +569,16 @@ mcctl admin service logs [options]
 
 ```bash
 # 최근 로그 조회
-mcctl admin service logs
+mcctl console service logs
 
 # 실시간 로그 팔로우
-mcctl admin service logs -f
+mcctl console service logs -f
 
 # API 로그만 조회
-mcctl admin service logs --api-only
+mcctl console service logs --api-only
 
 # 콘솔 로그 팔로우
-mcctl admin service logs --console-only -f
+mcctl console service logs --console-only -f
 ```
 
 로그 팔로우를 중지하려면 `Ctrl+C`를 누르세요.
@@ -590,41 +592,41 @@ mcctl admin service logs --console-only -f
 **초기 설정:**
 
 ```bash
-mcctl admin init
-mcctl admin service start
+mcctl console init
+mcctl console service start
 ```
 
 **운영자 사용자 추가:**
 
 ```bash
-mcctl admin user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator1 --role viewer --password "SecurePass123"
 ```
 
 **API 키 모드로 전환:**
 
 ```bash
-mcctl admin api mode api-key
+mcctl console api mode api-key
 # 표시된 API 키를 저장하세요
 ```
 
 **IP 화이트리스트 구성:**
 
 ```bash
-mcctl admin api mode ip-whitelist
-mcctl admin api whitelist add 192.168.1.0/24
-mcctl admin api whitelist add 10.0.0.0/8
-mcctl admin api whitelist list
+mcctl console api mode ip-whitelist
+mcctl console api whitelist add 192.168.1.0/24
+mcctl console api whitelist add 10.0.0.0/8
+mcctl console api whitelist list
 ```
 
 **서비스 상태 확인:**
 
 ```bash
-mcctl admin service status
-mcctl admin service logs --api-only
+mcctl console service status
+mcctl console service logs --api-only
 ```
 
 **설정 변경 후 재시작:**
 
 ```bash
-mcctl admin service restart
+mcctl console service restart
 ```

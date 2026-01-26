@@ -92,10 +92,12 @@ Admin Service supports multiple authentication modes:
 
 ## Quick Start
 
+> **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead. The `admin` command alias still works for backward compatibility but will be removed in a future release.
+
 ### 1. Initialize Admin Service
 
 ```bash
-mcctl admin init
+mcctl console init
 ```
 
 Follow the interactive prompts to configure:
@@ -108,7 +110,7 @@ Follow the interactive prompts to configure:
 ### 2. Start Admin Services
 
 ```bash
-mcctl admin service start
+mcctl console service start
 ```
 
 ### 3. Access Web Console

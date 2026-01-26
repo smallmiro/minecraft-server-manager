@@ -1541,30 +1541,32 @@ Each service has independent PRD/Plan documents:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 10.4 CLI Commands (`mcctl admin`) ✅
+### 10.4 CLI Commands (`mcctl console`) ✅
+
+> **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead. The `admin` command alias still works for backward compatibility but will be removed in a future release.
 
 ```bash
 # Initialization
-mcctl admin init              # Initial setup (create users.yaml, API key)
-mcctl admin init --force      # Reinitialize (overwrite existing)
+mcctl console init              # Initial setup (create users.yaml, API key)
+mcctl console init --force      # Reinitialize (overwrite existing)
 
 # User Management
-mcctl admin user list         # List admin users
-mcctl admin user add <name>   # Add user interactively
-mcctl admin user remove <name>  # Remove user
-mcctl admin user reset <name>   # Reset user password
+mcctl console user list         # List console users
+mcctl console user add <name>   # Add user interactively
+mcctl console user remove <name>  # Remove user
+mcctl console user reset <name>   # Reset user password
 
 # API Key Management
-mcctl admin api start         # Start API service only
-mcctl admin api stop          # Stop API service
-mcctl admin api status        # Check API status
+mcctl console api start         # Start API service only
+mcctl console api stop          # Stop API service
+mcctl console api status        # Check API status
 
 # Service Lifecycle
-mcctl admin service start     # Start all services (API + Console)
-mcctl admin service stop      # Stop all services
-mcctl admin service restart   # Restart services
-mcctl admin service status    # Show service status (--json for JSON output)
-mcctl admin service logs      # View logs (--api, --console, -f for follow)
+mcctl console service start     # Start all services (API + Console)
+mcctl console service stop      # Stop all services
+mcctl console service restart   # Restart services
+mcctl console service status    # Show service status (--json for JSON output)
+mcctl console service logs      # View logs (--api, --console, -f for follow)
 ```
 
 ### 10.5 Multi-Agent Collaboration

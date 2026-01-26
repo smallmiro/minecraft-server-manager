@@ -1,4 +1,6 @@
 import { join } from 'node:path';
+import { existsSync, unlinkSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import {
   Paths,
   log,
@@ -14,26 +16,134 @@ import {
 } from '../../lib/admin-config.js';
 
 /**
- * Admin init command options
+ * Console init command options
  */
-export interface AdminInitOptions {
+export interface ConsoleInitOptions {
   root?: string;
   force?: boolean;
 }
 
+// Backward compatibility alias
+export type AdminInitOptions = ConsoleInitOptions;
+
+const ADMIN_COMPOSE_FILE = 'docker-compose.admin.yml';
+const API_IMAGE = 'minecraft-docker/mcctl-api:latest';
+const CONSOLE_IMAGE = 'minecraft-docker/mcctl-console:latest';
+
 /**
- * Execute admin init command
+ * Delete Docker images for admin services
+ */
+export function deleteAdminImages(): { success: boolean; deleted: string[]; errors: string[] } {
+  const deleted: string[] = [];
+  const errors: string[] = [];
+
+  for (const image of [API_IMAGE, CONSOLE_IMAGE]) {
+    const result = spawnSync('docker', ['rmi', '-f', image], {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    if (result.status === 0) {
+      deleted.push(image);
+    } else if (result.stderr && !result.stderr.includes('No such image')) {
+      errors.push(`Failed to delete ${image}: ${result.stderr.trim()}`);
+    }
+  }
+
+  return {
+    success: errors.length === 0,
+    deleted,
+    errors,
+  };
+}
+
+/**
+ * Stop admin services using docker compose
+ */
+function stopAdminServices(paths: Paths): boolean {
+  const composePath = join(paths.platform, ADMIN_COMPOSE_FILE);
+
+  if (!existsSync(composePath)) {
+    return true; // No compose file, nothing to stop
+  }
+
+  const result = spawnSync('docker', [
+    'compose',
+    '-f', composePath,
+    'down',
+  ], {
+    encoding: 'utf-8',
+    cwd: paths.platform,
+  });
+
+  return result.status === 0;
+}
+
+/**
+ * Cleanup existing configuration and services
+ * Called when --force flag is used or user confirms reinitialize
+ */
+async function cleanupExistingConfig(
+  paths: Paths,
+  configManager: AdminConfigManager,
+  prompt: ReturnType<typeof getContainer>['promptPort']
+): Promise<boolean> {
+  const spinner = prompt.spinner();
+
+  // Step 1: Stop services
+  spinner.start('Stopping admin services...');
+  const stopResult = stopAdminServices(paths);
+  if (!stopResult) {
+    spinner.stop('Warning: Failed to stop some services');
+  } else {
+    spinner.stop('Admin services stopped');
+  }
+
+  // Step 2: Delete Docker images
+  spinner.start('Removing Docker images...');
+  const imageResult = deleteAdminImages();
+  if (imageResult.deleted.length > 0) {
+    spinner.stop(`Removed ${imageResult.deleted.length} Docker image(s)`);
+  } else {
+    spinner.stop('No Docker images to remove');
+  }
+
+  // Step 3: Delete config files
+  spinner.start('Cleaning up configuration files...');
+  const filesToDelete = [
+    configManager.path, // .mcctl-admin.yml
+    join(paths.root, 'users.yaml'),
+  ];
+
+  for (const file of filesToDelete) {
+    if (existsSync(file)) {
+      try {
+        unlinkSync(file);
+      } catch {
+        // Ignore errors
+      }
+    }
+  }
+  spinner.stop('Configuration files cleaned up');
+
+  return true;
+}
+
+/**
+ * Execute console init command
  *
  * Interactive flow:
  * 1. Check if already initialized
- * 2. Prompt for admin username
- * 3. Prompt for admin password (with confirmation)
- * 4. Prompt for API access mode
- * 5. Generate API key if needed
- * 6. Save configuration and user
+ * 2. If exists: prompt for reinitialize confirmation (unless --force)
+ * 3. Cleanup existing config if reinitializing
+ * 4. Prompt for admin username
+ * 5. Prompt for admin password (with confirmation)
+ * 6. Prompt for API access mode
+ * 7. Generate API key if needed
+ * 8. Save configuration and user
  */
-export async function adminInitCommand(
-  options: AdminInitOptions
+export async function consoleInitCommand(
+  options: ConsoleInitOptions
 ): Promise<number> {
   const paths = new Paths(options.root);
 
@@ -48,24 +158,47 @@ export async function adminInitCommand(
   const configManager = new AdminConfigManager(options.root);
 
   // Check if already initialized
-  if (configManager.isInitialized() && !options.force) {
+  if (configManager.isInitialized()) {
     const existingConfig = await configManager.load();
-    if (existingConfig) {
-      log.warn('Admin Service is already initialized');
+
+    if (existingConfig && !options.force) {
+      // Show existing config info
+      log.warn('Console Service is already initialized');
       console.log(`  Config: ${colors.cyan(configManager.path)}`);
       console.log(
         `  Initialized: ${colors.dim(existingConfig.initialized_at)}`
       );
       console.log('');
-      console.log('  To reinitialize, use:');
-      console.log(`    ${colors.dim('mcctl admin init --force')}`);
-      console.log('');
-      return 0;
+
+      // Prompt for reinitialize
+      try {
+        const shouldReinitialize = await prompt.confirm({
+          message: 'Existing configuration found. Reinitialize? (This will delete all settings and stop services)',
+          initialValue: false,
+        });
+
+        if (prompt.isCancel(shouldReinitialize) || !shouldReinitialize) {
+          console.log('');
+          console.log('  To reinitialize with --force, use:');
+          console.log(`    ${colors.dim('mcctl console init --force')}`);
+          console.log('');
+          return 0;
+        }
+      } catch (error) {
+        if (prompt.isCancel(error)) {
+          return 0;
+        }
+        throw error;
+      }
     }
+
+    // Cleanup existing config (either --force or user confirmed)
+    await cleanupExistingConfig(paths, configManager, prompt);
+    console.log('');
   }
 
   try {
-    prompt.intro('Initialize Admin Service');
+    prompt.intro('Initialize Console Service');
 
     // Step 1: Admin username
     const username = await prompt.text({
@@ -217,7 +350,7 @@ export async function adminInitCommand(
     if (existingUser && !options.force) {
       spinner.stop('');
       log.error(`User '${username}' already exists`);
-      console.log('  To overwrite, use: mcctl admin init --force');
+      console.log('  To overwrite, use: mcctl console init --force');
       return 1;
     }
 
@@ -246,7 +379,7 @@ export async function adminInitCommand(
 
     // Step 10: Display summary
     console.log('');
-    prompt.success('Admin Service initialized!');
+    prompt.success('Console Service initialized!');
 
     console.log('');
     console.log(colors.cyan('  Configuration:'));
@@ -280,7 +413,7 @@ export async function adminInitCommand(
     console.log('');
     console.log(colors.dim('  Next steps:'));
     console.log(
-      colors.dim('    1. Start the admin service: mcctl admin start')
+      colors.dim('    1. Start the console service: mcctl console start')
     );
     console.log(colors.dim('    2. Access the console in your browser'));
     console.log('');
@@ -297,3 +430,6 @@ export async function adminInitCommand(
     return 1;
   }
 }
+
+// Backward compatibility alias
+export const adminInitCommand = consoleInitCommand;

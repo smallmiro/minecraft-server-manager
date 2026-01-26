@@ -106,7 +106,7 @@ WORK_REQUEST → frontend: #95
 2. Checked unblocked issues: #81, #82, #84, #88
 3. Dispatched new work:
    - Core: #81 (YamlUserRepository)
-   - CLI: #84 (mcctl admin init) - prerequisites met
+   - CLI: #84 (mcctl console init) - prerequisites met
 
 ### Broadcast
 DEPENDENCY_READY → all: IUserRepository interface available

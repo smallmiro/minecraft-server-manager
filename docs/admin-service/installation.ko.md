@@ -36,7 +36,7 @@ mcctl CLI를 사용하는 것이 가장 간단한 Admin Service 설치 방법입
 #### 1단계: Admin Service 초기화
 
 ```bash
-mcctl admin init
+mcctl console init
 ```
 
 이 대화형 명령은 다음을 묻습니다:
@@ -53,7 +53,7 @@ mcctl admin init
 예시 세션:
 
 ```
-$ mcctl admin init
+$ mcctl console init
 
 Initialize Admin Service
 
@@ -77,14 +77,14 @@ Admin Service initialized!
     API:     http://localhost:3001
 
   Next steps:
-    1. Start the admin service: mcctl admin service start
+    1. Start the admin service: mcctl console service start
     2. Access the console in your browser
 ```
 
 #### 2단계: 서비스 시작
 
 ```bash
-mcctl admin service start
+mcctl console service start
 ```
 
 서비스가 시작되고 정상 상태가 될 때까지 기다립니다:
@@ -151,7 +151,7 @@ API_KEY=
 #### 3단계: 관리자 사용자 생성
 
 ```bash
-mcctl admin user add admin --role admin --password "YourSecurePassword123"
+mcctl console user add admin --role admin --password "YourSecurePassword123"
 ```
 
 #### 4단계: Docker Compose로 시작
@@ -185,7 +185,7 @@ docker compose -f docker-compose.admin.yml up -d
 Docker 네트워크 내부에서만 접근을 허용합니다. API가 호스트에 노출되지 않습니다.
 
 ```bash
-mcctl admin api mode internal
+mcctl console api mode internal
 ```
 
 #### api-key
@@ -193,7 +193,7 @@ mcctl admin api mode internal
 모든 API 요청에 `X-API-Key` 헤더가 필요합니다.
 
 ```bash
-mcctl admin api mode api-key
+mcctl console api mode api-key
 ```
 
 이 모드를 설정하면 API 키가 표시됩니다. 안전하게 저장하세요.
@@ -201,7 +201,7 @@ mcctl admin api mode api-key
 API 키를 재생성하려면:
 
 ```bash
-mcctl admin api key regenerate
+mcctl console api key regenerate
 ```
 
 #### ip-whitelist
@@ -209,9 +209,9 @@ mcctl admin api key regenerate
 지정된 IP 주소나 CIDR 범위에서만 접근을 허용합니다.
 
 ```bash
-mcctl admin api mode ip-whitelist
-mcctl admin api whitelist add 192.168.1.100
-mcctl admin api whitelist add 10.0.0.0/8
+mcctl console api mode ip-whitelist
+mcctl console api whitelist add 192.168.1.100
+mcctl console api whitelist add 10.0.0.0/8
 ```
 
 #### api-key-ip (최고 보안)
@@ -219,8 +219,8 @@ mcctl admin api whitelist add 10.0.0.0/8
 유효한 API 키와 화이트리스트에 등록된 클라이언트 IP가 모두 필요합니다.
 
 ```bash
-mcctl admin api mode api-key-ip
-mcctl admin api whitelist add 192.168.1.0/24
+mcctl console api mode api-key-ip
+mcctl console api whitelist add 192.168.1.0/24
 ```
 
 #### open (개발 환경 전용)
@@ -229,7 +229,7 @@ mcctl admin api whitelist add 192.168.1.0/24
     이 모드는 모든 인증을 비활성화합니다. 프로덕션에서는 절대 사용하지 마세요!
 
 ```bash
-mcctl admin api mode open --force
+mcctl console api mode open --force
 ```
 
 ### 사용자 관리
@@ -238,16 +238,16 @@ mcctl admin api mode open --force
 
 ```bash
 # 대화형 모드
-mcctl admin user add
+mcctl console user add
 
 # CLI 모드
-mcctl admin user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator1 --role viewer --password "SecurePass123"
 ```
 
 #### 사용자 목록 조회
 
 ```bash
-mcctl admin user list
+mcctl console user list
 ```
 
 출력:
@@ -266,23 +266,23 @@ Total: 2 user(s)
 #### 사용자 역할 변경
 
 ```bash
-mcctl admin user update operator1 --role admin
+mcctl console user update operator1 --role admin
 ```
 
 #### 비밀번호 재설정
 
 ```bash
 # 대화형
-mcctl admin user reset-password operator1
+mcctl console user reset-password operator1
 
 # CLI
-mcctl admin user reset-password operator1 --password "NewSecurePass456"
+mcctl console user reset-password operator1 --password "NewSecurePass456"
 ```
 
 #### 사용자 삭제
 
 ```bash
-mcctl admin user remove operator1
+mcctl console user remove operator1
 ```
 
 !!! note "마지막 관리자 보호"
@@ -293,7 +293,7 @@ mcctl admin user remove operator1
 ### 서비스 상태 확인
 
 ```bash
-mcctl admin service status
+mcctl console service status
 ```
 
 ### API 상태 확인
@@ -330,19 +330,19 @@ curl http://localhost:3001/health
 
 3. **서비스 로그 확인:**
    ```bash
-   mcctl admin service logs -f
+   mcctl console service logs -f
    ```
 
 ### 로그인 불가
 
 1. **사용자 존재 확인:**
    ```bash
-   mcctl admin user list
+   mcctl console user list
    ```
 
 2. **비밀번호 재설정:**
    ```bash
-   mcctl admin user reset-password admin
+   mcctl console user reset-password admin
    ```
 
 3. **NextAuth 구성 확인:**
@@ -352,16 +352,16 @@ curl http://localhost:3001/health
 
 1. **접근 모드 확인:**
    ```bash
-   mcctl admin api status
+   mcctl console api status
    ```
 
 2. **API 키 확인 (api-key 모드 사용 시):**
    - 요청에 `X-API-Key` 헤더가 포함되어 있는지 확인
-   - 필요시 키 재생성: `mcctl admin api key regenerate`
+   - 필요시 키 재생성: `mcctl console api key regenerate`
 
 3. **IP 화이트리스트 확인 (ip-whitelist 모드 사용 시):**
    ```bash
-   mcctl admin api whitelist list
+   mcctl console api whitelist list
    ```
 
 ### 컨테이너 헬스 체크 실패
@@ -374,7 +374,7 @@ curl http://localhost:3001/health
 
 2. **서비스 재시작:**
    ```bash
-   mcctl admin service restart
+   mcctl console service restart
    ```
 
 ## 업그레이드
@@ -383,21 +383,21 @@ curl http://localhost:3001/health
 
 ```bash
 # 서비스 중지
-mcctl admin service stop
+mcctl console service stop
 
 # 최신 이미지 가져오기
 docker pull minecraft-docker/mcctl-api:latest
 docker pull minecraft-docker/mcctl-console:latest
 
 # 서비스 시작
-mcctl admin service start
+mcctl console service start
 ```
 
 ### 소스에서 재빌드
 
 ```bash
 # 서비스 중지
-mcctl admin service stop
+mcctl console service stop
 
 # 프로젝트 루트로 이동
 cd ~/minecraft
@@ -407,7 +407,7 @@ pnpm build
 docker compose -f platform/docker-compose.admin.yml build
 
 # 서비스 시작
-mcctl admin service start
+mcctl console service start
 ```
 
 ## 제거
@@ -416,7 +416,7 @@ Admin Service를 완전히 제거하려면:
 
 ```bash
 # 컨테이너 중지 및 제거
-mcctl admin service stop
+mcctl console service stop
 docker compose -f ~/minecraft-servers/docker-compose.admin.yml down -v
 
 # 구성 파일 제거 (선택 사항)

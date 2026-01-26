@@ -36,7 +36,7 @@ The simplest way to install Admin Service is using the mcctl CLI.
 #### Step 1: Initialize Admin Service
 
 ```bash
-mcctl admin init
+mcctl console init
 ```
 
 This interactive command will prompt you for:
@@ -53,7 +53,7 @@ This interactive command will prompt you for:
 Example session:
 
 ```
-$ mcctl admin init
+$ mcctl console init
 
 Initialize Admin Service
 
@@ -77,14 +77,14 @@ Admin Service initialized!
     API:     http://localhost:3001
 
   Next steps:
-    1. Start the admin service: mcctl admin service start
+    1. Start the admin service: mcctl console service start
     2. Access the console in your browser
 ```
 
 #### Step 2: Start Services
 
 ```bash
-mcctl admin service start
+mcctl console service start
 ```
 
 Wait for services to start and become healthy:
@@ -151,7 +151,7 @@ API_KEY=
 #### Step 3: Create Admin User
 
 ```bash
-mcctl admin user add admin --role admin --password "YourSecurePassword123"
+mcctl console user add admin --role admin --password "YourSecurePassword123"
 ```
 
 #### Step 4: Start with Docker Compose
@@ -185,7 +185,7 @@ docker compose -f docker-compose.admin.yml up -d
 Only allows access from within the Docker network. The API is not exposed to the host.
 
 ```bash
-mcctl admin api mode internal
+mcctl console api mode internal
 ```
 
 #### api-key
@@ -193,7 +193,7 @@ mcctl admin api mode internal
 Requires `X-API-Key` header for all API requests.
 
 ```bash
-mcctl admin api mode api-key
+mcctl console api mode api-key
 ```
 
 After setting this mode, your API key will be displayed. Save it securely.
@@ -201,7 +201,7 @@ After setting this mode, your API key will be displayed. Save it securely.
 To regenerate the API key:
 
 ```bash
-mcctl admin api key regenerate
+mcctl console api key regenerate
 ```
 
 #### ip-whitelist
@@ -209,9 +209,9 @@ mcctl admin api key regenerate
 Only allows access from specified IP addresses or CIDR ranges.
 
 ```bash
-mcctl admin api mode ip-whitelist
-mcctl admin api whitelist add 192.168.1.100
-mcctl admin api whitelist add 10.0.0.0/8
+mcctl console api mode ip-whitelist
+mcctl console api whitelist add 192.168.1.100
+mcctl console api whitelist add 10.0.0.0/8
 ```
 
 #### api-key-ip (Highest Security)
@@ -219,8 +219,8 @@ mcctl admin api whitelist add 10.0.0.0/8
 Requires both a valid API key AND the client IP must be in the whitelist.
 
 ```bash
-mcctl admin api mode api-key-ip
-mcctl admin api whitelist add 192.168.1.0/24
+mcctl console api mode api-key-ip
+mcctl console api whitelist add 192.168.1.0/24
 ```
 
 #### open (Development Only)
@@ -229,7 +229,7 @@ mcctl admin api whitelist add 192.168.1.0/24
     This mode disables all authentication. Never use in production!
 
 ```bash
-mcctl admin api mode open --force
+mcctl console api mode open --force
 ```
 
 ### User Management
@@ -238,16 +238,16 @@ mcctl admin api mode open --force
 
 ```bash
 # Interactive mode
-mcctl admin user add
+mcctl console user add
 
 # CLI mode
-mcctl admin user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator1 --role viewer --password "SecurePass123"
 ```
 
 #### List Users
 
 ```bash
-mcctl admin user list
+mcctl console user list
 ```
 
 Output:
@@ -266,23 +266,23 @@ Total: 2 user(s)
 #### Update User Role
 
 ```bash
-mcctl admin user update operator1 --role admin
+mcctl console user update operator1 --role admin
 ```
 
 #### Reset Password
 
 ```bash
 # Interactive
-mcctl admin user reset-password operator1
+mcctl console user reset-password operator1
 
 # CLI
-mcctl admin user reset-password operator1 --password "NewSecurePass456"
+mcctl console user reset-password operator1 --password "NewSecurePass456"
 ```
 
 #### Remove User
 
 ```bash
-mcctl admin user remove operator1
+mcctl console user remove operator1
 ```
 
 !!! note "Last Admin Protection"
@@ -293,7 +293,7 @@ mcctl admin user remove operator1
 ### Check Service Status
 
 ```bash
-mcctl admin service status
+mcctl console service status
 ```
 
 ### Verify API Health
@@ -330,19 +330,19 @@ Expected response:
 
 3. **View service logs:**
    ```bash
-   mcctl admin service logs -f
+   mcctl console service logs -f
    ```
 
 ### Can't Log In
 
 1. **Verify user exists:**
    ```bash
-   mcctl admin user list
+   mcctl console user list
    ```
 
 2. **Reset password:**
    ```bash
-   mcctl admin user reset-password admin
+   mcctl console user reset-password admin
    ```
 
 3. **Check NextAuth configuration:**
@@ -352,16 +352,16 @@ Expected response:
 
 1. **Check access mode:**
    ```bash
-   mcctl admin api status
+   mcctl console api status
    ```
 
 2. **Verify API key (if using api-key mode):**
    - Ensure `X-API-Key` header is included in requests
-   - Regenerate key if needed: `mcctl admin api key regenerate`
+   - Regenerate key if needed: `mcctl console api key regenerate`
 
 3. **Check IP whitelist (if using ip-whitelist mode):**
    ```bash
-   mcctl admin api whitelist list
+   mcctl console api whitelist list
    ```
 
 ### Container Health Check Fails
@@ -374,7 +374,7 @@ Expected response:
 
 2. **Restart services:**
    ```bash
-   mcctl admin service restart
+   mcctl console service restart
    ```
 
 ## Upgrading
@@ -383,21 +383,21 @@ Expected response:
 
 ```bash
 # Stop services
-mcctl admin service stop
+mcctl console service stop
 
 # Pull latest images
 docker pull minecraft-docker/mcctl-api:latest
 docker pull minecraft-docker/mcctl-console:latest
 
 # Start services
-mcctl admin service start
+mcctl console service start
 ```
 
 ### Rebuild from Source
 
 ```bash
 # Stop services
-mcctl admin service stop
+mcctl console service stop
 
 # Navigate to project root
 cd ~/minecraft
@@ -407,7 +407,7 @@ pnpm build
 docker compose -f platform/docker-compose.admin.yml build
 
 # Start services
-mcctl admin service start
+mcctl console service start
 ```
 
 ## Uninstallation
@@ -416,7 +416,7 @@ To completely remove Admin Service:
 
 ```bash
 # Stop and remove containers
-mcctl admin service stop
+mcctl console service stop
 docker compose -f ~/minecraft-servers/docker-compose.admin.yml down -v
 
 # Remove configuration files (optional)

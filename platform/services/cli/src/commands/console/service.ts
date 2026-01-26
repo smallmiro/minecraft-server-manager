@@ -1,7 +1,7 @@
 /**
- * Admin Service Management Command
+ * Console Service Management Command
  *
- * Manages Admin Service (mcctl-api + mcctl-console) lifecycle:
+ * Manages Console Service (mcctl-api + mcctl-console) lifecycle:
  * - start: Start API + Console containers
  * - stop: Stop services
  * - restart: Restart services
@@ -14,7 +14,10 @@ import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, copyFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-export interface AdminServiceOptions {
+/**
+ * Console service command options
+ */
+export interface ConsoleServiceOptions {
   root?: string;
   subCommand?: 'start' | 'stop' | 'restart' | 'status' | 'logs';
   apiOnly?: boolean;
@@ -27,6 +30,9 @@ export interface AdminServiceOptions {
   noBuild?: boolean;
 }
 
+// Backward compatibility alias
+export type AdminServiceOptions = ConsoleServiceOptions;
+
 interface ServiceInfo {
   name: string;
   container: string;
@@ -37,7 +43,7 @@ interface ServiceInfo {
   url?: string;
 }
 
-interface AdminServiceStatus {
+interface ConsoleServiceStatus {
   api: ServiceInfo;
   console: ServiceInfo;
   healthy: boolean;
@@ -50,6 +56,34 @@ const API_PORT = 3001;
 const CONSOLE_PORT = 3000;
 const API_IMAGE = 'minecraft-docker/mcctl-api:latest';
 const CONSOLE_IMAGE = 'minecraft-docker/mcctl-console:latest';
+
+/**
+ * Delete Docker images for admin services
+ * @returns Object with success status, list of deleted images, and any errors
+ */
+export function deleteAdminImages(): { success: boolean; deleted: string[]; errors: string[] } {
+  const deleted: string[] = [];
+  const errors: string[] = [];
+
+  for (const image of [API_IMAGE, CONSOLE_IMAGE]) {
+    const result = spawnSync('docker', ['rmi', '-f', image], {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    if (result.status === 0) {
+      deleted.push(image);
+    } else if (result.stderr && !result.stderr.includes('No such image')) {
+      errors.push(`Failed to delete ${image}: ${result.stderr.trim()}`);
+    }
+  }
+
+  return {
+    success: errors.length === 0,
+    deleted,
+    errors,
+  };
+}
 
 /**
  * Check if Docker image exists locally
@@ -103,7 +137,7 @@ function ensureAdminComposeExists(paths: Paths): boolean {
   }
 
   log.error(`Admin compose file not found: ${composePath}`);
-  log.info(`Please run 'mcctl admin init' to initialize admin services`);
+  log.info(`Please run 'mcctl console init' to initialize console services`);
   return false;
 }
 
@@ -178,9 +212,9 @@ function calculateUptime(startedAt: string): string {
 }
 
 /**
- * Get admin service status
+ * Get console service status
  */
-function getAdminServiceStatus(apiPort?: number, consolePort?: number): AdminServiceStatus {
+function getConsoleServiceStatus(apiPort?: number, consolePort?: number): ConsoleServiceStatus {
   const api = getContainerInfo(API_CONTAINER, apiPort);
   const consoleInfo = getContainerInfo(CONSOLE_CONTAINER, consolePort);
 
@@ -269,14 +303,14 @@ function streamLogs(paths: Paths, services: string[], follow: boolean): Promise<
 /**
  * Format status output
  */
-function formatStatus(status: AdminServiceStatus, json: boolean): void {
+function formatStatus(status: ConsoleServiceStatus, json: boolean): void {
   if (json) {
     console.log(JSON.stringify(status, null, 2));
     return;
   }
 
   console.log('');
-  console.log(colors.bold('  Admin Service Status'));
+  console.log(colors.bold('  Console Service Status'));
   console.log('');
 
   // API Status
@@ -328,7 +362,7 @@ function formatStatus(status: AdminServiceStatus, json: boolean): void {
 /**
  * Build environment variables for port configuration
  */
-function buildPortEnv(options: AdminServiceOptions): Record<string, string> {
+function buildPortEnv(options: ConsoleServiceOptions): Record<string, string> {
   const env: Record<string, string> = {};
   if (options.apiPort) {
     env['MCCTL_API_PORT'] = String(options.apiPort);
@@ -340,9 +374,9 @@ function buildPortEnv(options: AdminServiceOptions): Record<string, string> {
 }
 
 /**
- * Start admin services
+ * Start console services
  */
-async function startServices(paths: Paths, options: AdminServiceOptions): Promise<number> {
+async function startServices(paths: Paths, options: ConsoleServiceOptions): Promise<number> {
   if (!ensureAdminComposeExists(paths)) {
     return 1;
   }
@@ -369,7 +403,7 @@ async function startServices(paths: Paths, options: AdminServiceOptions): Promis
     }
   }
 
-  log.info('Starting admin services...');
+  log.info('Starting console services...');
   if (options.apiPort || options.consolePort) {
     log.info(`  API port: ${apiPort}, Console port: ${consolePort}`);
   }
@@ -384,11 +418,11 @@ async function startServices(paths: Paths, options: AdminServiceOptions): Promis
   const exitCode = runDockerCompose(paths, args, { stream: true, env });
 
   if (exitCode === 0) {
-    log.info('Admin services started successfully');
+    log.info('Console services started successfully');
 
     // Show status after starting
     await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for health checks
-    const status = getAdminServiceStatus(apiPort, consolePort);
+    const status = getConsoleServiceStatus(apiPort, consolePort);
     formatStatus(status, false);
   }
 
@@ -396,7 +430,7 @@ async function startServices(paths: Paths, options: AdminServiceOptions): Promis
 }
 
 /**
- * Stop admin services
+ * Stop console services
  */
 function stopServices(paths: Paths): number {
   if (!existsSync(getAdminComposePath(paths))) {
@@ -404,21 +438,21 @@ function stopServices(paths: Paths): number {
     return 0;
   }
 
-  log.info('Stopping admin services...');
+  log.info('Stopping console services...');
 
   const exitCode = runDockerCompose(paths, ['down'], { stream: true });
 
   if (exitCode === 0) {
-    log.info('Admin services stopped');
+    log.info('Console services stopped');
   }
 
   return exitCode;
 }
 
 /**
- * Restart admin services
+ * Restart console services
  */
-async function restartServices(paths: Paths, options: AdminServiceOptions): Promise<number> {
+async function restartServices(paths: Paths, options: ConsoleServiceOptions): Promise<number> {
   if (!ensureAdminComposeExists(paths)) {
     return 1;
   }
@@ -433,7 +467,7 @@ async function restartServices(paths: Paths, options: AdminServiceOptions): Prom
   const apiPort = options.apiPort ?? API_PORT;
   const consolePort = options.consolePort ?? CONSOLE_PORT;
 
-  log.info('Restarting admin services...');
+  log.info('Restarting console services...');
   if (options.apiPort || options.consolePort) {
     log.info(`  API port: ${apiPort}, Console port: ${consolePort}`);
   }
@@ -443,11 +477,11 @@ async function restartServices(paths: Paths, options: AdminServiceOptions): Prom
   const exitCode = runDockerCompose(paths, args, { stream: true, env });
 
   if (exitCode === 0) {
-    log.info('Admin services restarted');
+    log.info('Console services restarted');
 
     // Show status after restarting
     await new Promise(resolve => setTimeout(resolve, 2000));
-    const status = getAdminServiceStatus(apiPort, consolePort);
+    const status = getConsoleServiceStatus(apiPort, consolePort);
     formatStatus(status, false);
   }
 
@@ -455,9 +489,9 @@ async function restartServices(paths: Paths, options: AdminServiceOptions): Prom
 }
 
 /**
- * Show admin service logs
+ * Show console service logs
  */
-async function showLogs(paths: Paths, options: AdminServiceOptions): Promise<number> {
+async function showLogs(paths: Paths, options: ConsoleServiceOptions): Promise<number> {
   if (!existsSync(getAdminComposePath(paths))) {
     log.error('Admin compose file not found');
     return 1;
@@ -474,9 +508,9 @@ async function showLogs(paths: Paths, options: AdminServiceOptions): Promise<num
 }
 
 /**
- * Admin service command
+ * Console service command
  */
-export async function adminServiceCommand(options: AdminServiceOptions): Promise<number> {
+export async function consoleServiceCommand(options: ConsoleServiceOptions): Promise<number> {
   const paths = new Paths(options.root);
 
   // Check if platform is initialized
@@ -499,7 +533,7 @@ export async function adminServiceCommand(options: AdminServiceOptions): Promise
       return restartServices(paths, options);
 
     case 'status': {
-      const status = getAdminServiceStatus(apiPort, consolePort);
+      const status = getConsoleServiceStatus(apiPort, consolePort);
       formatStatus(status, options.json ?? false);
       return status.healthy || status.api.status === 'not_found' ? 0 : 1;
     }
@@ -509,8 +543,11 @@ export async function adminServiceCommand(options: AdminServiceOptions): Promise
 
     default:
       // Default: show status
-      const status = getAdminServiceStatus(apiPort, consolePort);
+      const status = getConsoleServiceStatus(apiPort, consolePort);
       formatStatus(status, options.json ?? false);
       return 0;
   }
 }
+
+// Backward compatibility alias
+export const adminServiceCommand = consoleServiceCommand;
