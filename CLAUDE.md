@@ -525,6 +525,42 @@ See [docs/development/cli-architecture.md](docs/development/cli-architecture.md)
 
 This project uses a **Multi-Agent Collaboration** system where specialized agents are responsible for different modules. This applies to **ALL work**, not just specific milestones.
 
+#### 🔴 Orchestrator-First Rule
+
+**모든 비단순 업무는 Orchestrator Agent가 먼저 분석해야 합니다:**
+
+1. **업무 분석**: 요청된 작업의 범위와 복잡도 파악
+2. **에이전트 식별**: 필요한 에이전트와 관련 모듈 식별
+3. **협업 계획**: 병렬/순차 작업 구조 설계
+4. **의존성 매핑**: 에이전트 간 의존성 파악
+5. **작업 할당**: `WORK_REQUEST`로 각 에이전트에 작업 배정
+
+**Orchestrator 계획 출력 형식:**
+```markdown
+## 🎯 Orchestrator 업무 분석
+
+### 작업 요약
+[요청된 작업 요약]
+
+### 관련 에이전트
+| Agent | 역할 | 작업 내용 |
+|-------|------|----------|
+| 💻 CLI | ... | ... |
+| 🐳 DevOps | ... | ... |
+
+### 실행 계획
+1. **Phase 1** (병렬): [에이전트A, 에이전트B]
+2. **Phase 2** (순차): [에이전트C] ← Phase 1 완료 후
+
+### 의존성
+- 에이전트B → 에이전트C: [의존 내용]
+```
+
+**예외 (Orchestrator 분석 생략 가능):**
+- 단일 에이전트로 완료 가능한 단순 작업
+- 명확한 단일 모듈 수정 (예: "CLI에 옵션 추가")
+- 문서만 수정하는 작업
+
 #### 🔴 Critical Rules
 
 **NEVER do another agent's work.** Each agent has exclusive ownership of their module:
