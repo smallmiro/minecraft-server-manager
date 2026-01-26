@@ -72,6 +72,12 @@ export {
   Username,
   Role,
   RoleEnum,
+  // Service management value objects
+  ServiceStatus,
+  ServiceStatusEnum,
+  ProcessInfo,
+  type ProcessInfoData,
+  type ProcessMetrics,
   // Entities
   Server,
   ServerStatus,
