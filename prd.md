@@ -753,12 +753,26 @@ See **Section 9** for detailed CLI Architecture (Hexagonal + Clean Architecture)
 - [x] Unit and integration tests
 - [x] Documentation update
 
-### Future: Phase 8 (Web Management UI)
-See **Section 10.1** for detailed Web UI implementation plan.
-- Wrap CLI functions with Next.js API routes
-- Build Tailwind CSS dashboard components
-- Add SQLite/PostgreSQL for persistent state
-- Package as npm module
+### Phase 8: Admin Service (Web Management UI) ✅
+> **Milestone**: [v2.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/5) - Closed
+
+**Components**:
+- **mcctl-api**: Fastify REST API (5 authentication modes)
+- **mcctl-console**: Next.js BFF + Web UI (NextAuth.js)
+
+**Completed Features**:
+- [x] IUserRepository port interface (#80)
+- [x] YamlUserRepository adapter (#81)
+- [x] SqliteUserRepository adapter (#82)
+- [x] ApiPromptAdapter for non-interactive mode (#83)
+- [x] CLI admin init/user/api/service commands (#84-87)
+- [x] Fastify REST API with auth plugin (#88-89)
+- [x] Server/World/Player management routes (#90-92)
+- [x] OpenAPI/Swagger documentation (#93)
+- [x] Docker builds for mcctl-api and mcctl-console (#94, #100)
+- [x] Next.js BFF + Dashboard UI (#95-99)
+- [x] Docker Compose integration (#101)
+- [x] E2E tests (#102)
 
 ## 6. Configuration Reference
 
