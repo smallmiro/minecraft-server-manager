@@ -8,3 +8,7 @@ export { WorldOptions, WorldSetupType, type WorldOptionsData } from './WorldOpti
 export { UserId } from './UserId.js';
 export { Username } from './Username.js';
 export { Role, RoleEnum } from './Role.js';
+
+// Service management value objects
+export { ServiceStatus, ServiceStatusEnum } from './ServiceStatus.js';
+export { ProcessInfo, type ProcessInfoData, type ProcessMetrics } from './ProcessInfo.js';

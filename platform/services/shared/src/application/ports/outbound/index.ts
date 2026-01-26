@@ -39,3 +39,11 @@ export type {
 export type { IModSourcePort } from './IModSourcePort.js';
 
 export type { IUserRepository } from './IUserRepository.js';
+
+export type {
+  IServiceManagerPort,
+  ServiceStartOptions,
+  ServiceStopOptions,
+  ServiceRestartOptions,
+  ServiceLogsOptions,
+} from './IServiceManagerPort.js';
