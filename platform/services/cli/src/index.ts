@@ -24,6 +24,7 @@ import {
   consoleServiceCommand,
   consoleUserCommand,
   consoleApiCommand,
+  consoleRemoveCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
@@ -71,8 +72,15 @@ async function handleConsoleCommand(
       apiCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
       return 0;
     }
+    case 'remove':
+      return consoleRemoveCommand({
+        root: rootDir,
+        force: flags['force'] === true,
+        keepImages: flags['keep-images'] === true,
+        keepConfig: flags['keep-config'] === true,
+      });
     default:
-      log.error('Usage: mcctl console <init|service|user|api>');
+      log.error('Usage: mcctl console <init|service|user|api|remove>');
       return 1;
   }
 }
@@ -212,6 +220,10 @@ ${colors.cyan('Console Management:')}
   ${colors.bold('console user')} <action> [name] Manage console users (list, add, remove, reset)
   ${colors.bold('console api')} <action>         Manage API settings (status, config, key)
   ${colors.bold('console service')} <action>     Manage services (start, stop, restart, status, logs)
+  ${colors.bold('console remove')} [options]     Remove console service completely
+    --force                      Skip confirmation prompt
+    --keep-images                Don't delete Docker images
+    --keep-config                Don't delete configuration files
   ${colors.dim('admin <cmd>                  (deprecated, use "console" instead)')}
 
 ${colors.cyan('Console Options:')}
@@ -302,7 +314,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-images', 'keep-config'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -502,8 +514,8 @@ async function main(): Promise<void> {
       }
 
       case 'console': {
-        // Check if this is console management command (init, service, user, api)
-        const consoleManagementSubCommands = ['init', 'service', 'user', 'api'];
+        // Check if this is console management command (init, service, user, api, remove)
+        const consoleManagementSubCommands = ['init', 'service', 'user', 'api', 'remove'];
         if (subCommand && consoleManagementSubCommands.includes(subCommand)) {
           // Route to console management
           exitCode = await handleConsoleCommand(subCommand, positional, flags, rootDir);

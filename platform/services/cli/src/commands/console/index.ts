@@ -3,6 +3,7 @@ export { consoleInitCommand, deleteAdminImages, type ConsoleInitOptions } from '
 export { consoleServiceCommand, deleteAdminImages as deleteConsoleImages, type ConsoleServiceOptions } from './service.js';
 export { consoleUserCommand, type ConsoleUserCommandOptions } from './user.js';
 export { consoleApiCommand, type ConsoleApiCommandOptions } from './api.js';
+export { consoleRemoveCommand, type ConsoleRemoveOptions } from './remove.js';
 
 // Backward compatibility aliases (deprecated)
 export { adminInitCommand, type AdminInitOptions } from './init.js';

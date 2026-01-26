@@ -23,11 +23,13 @@ export {
   consoleServiceCommand,
   consoleUserCommand,
   consoleApiCommand,
+  consoleRemoveCommand,
   deleteAdminImages,
   type ConsoleInitOptions,
   type ConsoleServiceOptions,
   type ConsoleUserCommandOptions,
   type ConsoleApiCommandOptions,
+  type ConsoleRemoveOptions,
 } from './console/index.js';
 
 // Backward compatibility aliases (deprecated - use console* instead)
