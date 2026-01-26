@@ -43,6 +43,8 @@ async function handleConsoleCommand(
       return consoleInitCommand({
         root: rootDir,
         force: flags['force'] === true,
+        apiPort: flags['api-port'] ? parseInt(flags['api-port'] as string, 10) : undefined,
+        consolePort: flags['console-port'] ? parseInt(flags['console-port'] as string, 10) : undefined,
       });
     case 'service':
       return consoleServiceCommand({
@@ -203,7 +205,10 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
 
 ${colors.cyan('Console Management:')}
-  ${colors.bold('console init')} [--force]       Initialize console service (create admin user)
+  ${colors.bold('console init')} [options]       Initialize console service (create admin user)
+    --force                      Reinitialize (delete existing config)
+    --api-port <port>            API server port (default: 3001)
+    --console-port <port>        Console server port (default: 3000)
   ${colors.bold('console user')} <action> [name] Manage console users (list, add, remove, reset)
   ${colors.bold('console api')} <action>         Manage API settings (status, config, key)
   ${colors.bold('console service')} <action>     Manage services (start, stop, restart, status, logs)

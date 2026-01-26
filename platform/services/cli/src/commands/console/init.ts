@@ -21,6 +21,8 @@ import {
 export interface ConsoleInitOptions {
   root?: string;
   force?: boolean;
+  apiPort?: number;
+  consolePort?: number;
 }
 
 // Backward compatibility alias
@@ -282,7 +284,59 @@ export async function consoleInitCommand(
       initialValue: 'internal' as const,
     });
 
-    // Step 5: Generate API key if needed
+    // Step 5: Port configuration
+    const DEFAULT_API_PORT = 3001;
+    const DEFAULT_CONSOLE_PORT = 3000;
+
+    let apiPort = options.apiPort ?? DEFAULT_API_PORT;
+    let consolePort = options.consolePort ?? DEFAULT_CONSOLE_PORT;
+
+    // Only ask for ports if not provided via CLI options
+    if (!options.apiPort || !options.consolePort) {
+      const customPorts = await prompt.confirm({
+        message: 'Configure custom ports?',
+        initialValue: false,
+      });
+
+      if (customPorts) {
+        if (!options.apiPort) {
+          const apiPortInput = await prompt.text({
+            message: 'API server port?',
+            placeholder: String(DEFAULT_API_PORT),
+            initialValue: String(DEFAULT_API_PORT),
+            validate: (value) => {
+              const port = parseInt(value, 10);
+              if (isNaN(port) || port < 1 || port > 65535) {
+                return 'Port must be a number between 1 and 65535';
+              }
+              return undefined;
+            },
+          });
+          apiPort = parseInt(apiPortInput, 10);
+        }
+
+        if (!options.consolePort) {
+          const consolePortInput = await prompt.text({
+            message: 'Console server port?',
+            placeholder: String(DEFAULT_CONSOLE_PORT),
+            initialValue: String(DEFAULT_CONSOLE_PORT),
+            validate: (value) => {
+              const port = parseInt(value, 10);
+              if (isNaN(port) || port < 1 || port > 65535) {
+                return 'Port must be a number between 1 and 65535';
+              }
+              if (port === apiPort) {
+                return 'Console port must be different from API port';
+              }
+              return undefined;
+            },
+          });
+          consolePort = parseInt(consolePortInput, 10);
+        }
+      }
+    }
+
+    // Step 6: Generate API key if needed
     let apiKey: string | null = null;
     if (accessMode === 'api-key' || accessMode === 'api-key-ip') {
       const spinner = prompt.spinner();
@@ -373,6 +427,8 @@ export async function consoleInitCommand(
       accessMode,
       apiKey,
       allowedIps,
+      apiPort,
+      consolePort,
     });
 
     spinner.stop('Configuration saved');
