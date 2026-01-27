@@ -1,6 +1,15 @@
 // Primary exports (new names)
-export { consoleInitCommand, deleteAdminImages, type ConsoleInitOptions } from './init.js';
-export { consoleServiceCommand, deleteAdminImages as deleteConsoleImages, type ConsoleServiceOptions } from './service.js';
+export {
+  consoleInitCommand,
+  deleteAdminImages,
+  checkNodeVersion,
+  type ConsoleInitOptions,
+} from './init.js';
+export {
+  consoleServiceCommand,
+  deleteAdminImages as deleteConsoleImages,
+  type ConsoleServiceOptions,
+} from './service.js';
 export { consoleUserCommand, type ConsoleUserCommandOptions } from './user.js';
 export { consoleApiCommand, type ConsoleApiCommandOptions } from './api.js';
 export { consoleRemoveCommand, type ConsoleRemoveOptions } from './remove.js';

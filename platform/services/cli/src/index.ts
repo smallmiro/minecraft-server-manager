@@ -76,7 +76,6 @@ async function handleConsoleCommand(
       return consoleRemoveCommand({
         root: rootDir,
         force: flags['force'] === true,
-        keepImages: flags['keep-images'] === true,
         keepConfig: flags['keep-config'] === true,
       });
     default:
@@ -219,10 +218,9 @@ ${colors.cyan('Console Management:')}
     --console-port <port>        Console server port (default: 3000)
   ${colors.bold('console user')} <action> [name] Manage console users (list, add, remove, reset)
   ${colors.bold('console api')} <action>         Manage API settings (status, config, key)
-  ${colors.bold('console service')} <action>     Manage services (start, stop, restart, status, logs)
+  ${colors.bold('console service')} <action>     Manage services via PM2 (start, stop, restart, status, logs)
   ${colors.bold('console remove')} [options]     Remove console service completely
     --force                      Skip confirmation prompt
-    --keep-images                Don't delete Docker images
     --keep-config                Don't delete configuration files
   ${colors.dim('admin <cmd>                  (deprecated, use "console" instead)')}
 
@@ -231,8 +229,6 @@ ${colors.cyan('Console Options:')}
   --console-port <port>        Console server port (default: 3000)
   --api                        Target API service only
   --console                    Target console service only
-  --build                      Force rebuild images
-  --no-build                   Skip auto-build even if images missing
   -f, --follow                 Follow log output
 
 ${colors.cyan('Create Options:')}
@@ -314,7 +310,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-images', 'keep-config'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;

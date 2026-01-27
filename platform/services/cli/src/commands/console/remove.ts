@@ -2,18 +2,22 @@
  * Console Remove Command
  *
  * Completely removes Console Service:
- * - Stop and remove Docker containers
- * - Delete Docker images (optional)
+ * - Stop and remove PM2 processes
  * - Delete configuration files (optional)
+ * - Delete ecosystem.config.cjs
  */
 
 import { join } from 'node:path';
 import { existsSync, unlinkSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { Paths, log, colors } from '@minecraft-docker/shared';
 import { getContainer } from '../../infrastructure/index.js';
 import { AdminConfigManager } from '../../lib/admin-config.js';
-import { deleteAdminImages } from './init.js';
+import { Pm2ServiceManagerAdapter } from '../../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
+import {
+  checkPm2Installation,
+  ECOSYSTEM_CONFIG_FILE,
+  PM2_SERVICE_NAMES,
+} from '../../lib/pm2-utils.js';
 
 /**
  * Console remove command options
@@ -21,13 +25,8 @@ import { deleteAdminImages } from './init.js';
 export interface ConsoleRemoveOptions {
   root?: string;
   force?: boolean;
-  keepImages?: boolean;
   keepConfig?: boolean;
 }
-
-const ADMIN_COMPOSE_FILE = 'docker-compose.admin.yml';
-const API_CONTAINER = 'mcctl-api';
-const CONSOLE_CONTAINER = 'mcctl-console';
 
 /**
  * Check if console service is initialized
@@ -38,55 +37,52 @@ function isConsoleInitialized(paths: Paths): boolean {
 }
 
 /**
- * Stop and remove containers using docker compose
+ * Stop and remove PM2 processes
  */
-function stopAndRemoveContainers(paths: Paths): { success: boolean; message: string } {
-  const composePath = join(paths.platform, ADMIN_COMPOSE_FILE);
-
-  if (!existsSync(composePath)) {
-    return { success: true, message: 'No compose file found' };
+async function stopAndRemoveProcesses(paths: Paths): Promise<{
+  success: boolean;
+  message: string;
+  stopped: string[];
+}> {
+  const pm2Check = checkPm2Installation();
+  if (!pm2Check.installed) {
+    return { success: true, message: 'PM2 not installed', stopped: [] };
   }
 
-  // First, try docker compose down
-  const downResult = spawnSync('docker', [
-    'compose',
-    '-f', composePath,
-    'down',
-    '--remove-orphans',
-  ], {
-    encoding: 'utf-8',
-    cwd: paths.platform,
-  });
+  const pm2Adapter = new Pm2ServiceManagerAdapter(paths);
+  const stopped: string[] = [];
 
-  if (downResult.status === 0) {
-    return { success: true, message: 'Containers stopped and removed' };
+  try {
+    for (const serviceName of [PM2_SERVICE_NAMES.API, PM2_SERVICE_NAMES.CONSOLE]) {
+      const exists = await pm2Adapter.exists(serviceName);
+      if (exists) {
+        await pm2Adapter.delete(serviceName);
+        stopped.push(serviceName);
+      }
+    }
+
+    // Save process list after removal
+    if (stopped.length > 0) {
+      await pm2Adapter.save();
+    }
+
+    return {
+      success: true,
+      message:
+        stopped.length > 0
+          ? `Stopped and removed: ${stopped.join(', ')}`
+          : 'No PM2 processes running',
+      stopped,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to stop processes: ${error instanceof Error ? error.message : String(error)}`,
+      stopped,
+    };
+  } finally {
+    pm2Adapter.disconnect();
   }
-
-  // Fallback: manually stop and remove containers
-  const containers = [API_CONTAINER, CONSOLE_CONTAINER];
-  let stopped = 0;
-  let removed = 0;
-
-  for (const container of containers) {
-    // Stop container
-    const stopResult = spawnSync('docker', ['stop', container], {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    if (stopResult.status === 0) stopped++;
-
-    // Remove container
-    const rmResult = spawnSync('docker', ['rm', '-f', container], {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    if (rmResult.status === 0) removed++;
-  }
-
-  return {
-    success: true,
-    message: `Stopped ${stopped}, removed ${removed} container(s)`,
-  };
 }
 
 /**
@@ -97,6 +93,7 @@ function deleteConfigFiles(paths: Paths): { deleted: string[]; errors: string[] 
   const filesToDelete = [
     configManager.path, // .mcctl-admin.yml
     join(paths.root, 'users.yaml'),
+    join(paths.platform, ECOSYSTEM_CONFIG_FILE), // ecosystem.config.cjs
   ];
 
   const deleted: string[] = [];
@@ -108,7 +105,9 @@ function deleteConfigFiles(paths: Paths): { deleted: string[]; errors: string[] 
         unlinkSync(file);
         deleted.push(file);
       } catch (err) {
-        errors.push(`Failed to delete ${file}: ${err instanceof Error ? err.message : String(err)}`);
+        errors.push(
+          `Failed to delete ${file}: ${err instanceof Error ? err.message : String(err)}`
+        );
       }
     }
   }
@@ -120,9 +119,8 @@ function deleteConfigFiles(paths: Paths): { deleted: string[]; errors: string[] 
  * Execute console remove command
  *
  * Removes all Console Service components:
- * 1. Stop and remove Docker containers
- * 2. Delete Docker images (unless --keep-images)
- * 3. Delete configuration files (unless --keep-config)
+ * 1. Stop and remove PM2 processes
+ * 2. Delete configuration files (unless --keep-config)
  */
 export async function consoleRemoveCommand(
   options: ConsoleRemoveOptions
@@ -149,12 +147,10 @@ export async function consoleRemoveCommand(
     try {
       console.log('');
       console.log(colors.yellow('  This will remove:'));
-      if (!options.keepImages) {
-        console.log('    - Docker images (mcctl-api, mcctl-console)');
-      }
-      console.log('    - Docker containers');
+      console.log('    - PM2 processes (mcctl-api, mcctl-console)');
       if (!options.keepConfig) {
         console.log('    - Configuration files (.mcctl-admin.yml, users.yaml)');
+        console.log('    - PM2 ecosystem config (ecosystem.config.cjs)');
       }
       console.log('');
 
@@ -178,31 +174,16 @@ export async function consoleRemoveCommand(
   const spinner = prompt.spinner();
 
   try {
-    // Step 1: Stop and remove containers
-    spinner.start('Stopping and removing containers...');
-    const containerResult = stopAndRemoveContainers(paths);
-    spinner.stop(containerResult.message);
+    // Step 1: Stop and remove PM2 processes
+    spinner.start('Stopping and removing PM2 processes...');
+    const processResult = await stopAndRemoveProcesses(paths);
+    spinner.stop(processResult.message);
 
-    // Step 2: Delete Docker images (unless --keep-images)
-    if (!options.keepImages) {
-      spinner.start('Removing Docker images...');
-      const imageResult = deleteAdminImages();
-      if (imageResult.deleted.length > 0) {
-        spinner.stop(`Removed ${imageResult.deleted.length} Docker image(s)`);
-      } else {
-        spinner.stop('No Docker images to remove');
-      }
-
-      if (imageResult.errors.length > 0) {
-        for (const error of imageResult.errors) {
-          log.warn(error);
-        }
-      }
-    } else {
-      log.info('Keeping Docker images (--keep-images)');
+    if (!processResult.success) {
+      log.warn(processResult.message);
     }
 
-    // Step 3: Delete configuration files (unless --keep-config)
+    // Step 2: Delete configuration files (unless --keep-config)
     if (!options.keepConfig) {
       spinner.start('Removing configuration files...');
       const configResult = deleteConfigFiles(paths);
@@ -226,14 +207,11 @@ export async function consoleRemoveCommand(
     prompt.success('Console Service removed successfully');
     console.log('');
 
-    if (options.keepImages || options.keepConfig) {
-      console.log(colors.dim('  Note: Some components were kept as requested'));
-      if (options.keepImages) {
-        console.log(colors.dim('    - Docker images are still available'));
-      }
-      if (options.keepConfig) {
-        console.log(colors.dim('    - Configuration files are preserved'));
-      }
+    if (options.keepConfig) {
+      console.log(colors.dim('  Note: Configuration files were kept as requested'));
+      console.log(colors.dim('    - .mcctl-admin.yml'));
+      console.log(colors.dim('    - users.yaml'));
+      console.log(colors.dim('    - ecosystem.config.cjs'));
       console.log('');
     }
 
