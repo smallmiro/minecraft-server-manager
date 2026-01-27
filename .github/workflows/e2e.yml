@@ -44,37 +44,78 @@ jobs:
         working-directory: e2e
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Create Docker network
-        run: docker network create minecraft-net || true
+      - name: Install PM2 globally
+        run: npm install -g pm2
 
-      - name: Build Admin Service images
+      - name: Create platform directory structure
         run: |
-          cd platform
-          docker compose -f docker-compose.yml -f docker-compose.admin.yml build mcctl-api mcctl-console
+          mkdir -p ~/minecraft-servers/platform
+          mkdir -p ~/minecraft-servers/platform/logs
 
-      - name: Start Admin Services
+      - name: Generate ecosystem config
         run: |
-          cd platform
-          docker compose -f docker-compose.yml -f docker-compose.admin.yml up -d mcctl-api mcctl-console
-        env:
-          MCCTL_JWT_SECRET: test-secret-for-e2e
-          NEXTAUTH_SECRET: test-secret-for-e2e
-          NEXTAUTH_URL: http://localhost:3000
+          cat > ~/minecraft-servers/platform/ecosystem.config.cjs << 'EOF'
+          module.exports = {
+            apps: [
+              {
+                name: 'mcctl-api',
+                script: '${{ github.workspace }}/platform/services/mcctl-api/dist/index.js',
+                cwd: '${{ github.workspace }}/platform',
+                env: {
+                  NODE_ENV: 'production',
+                  PORT: 3001,
+                  HOST: '0.0.0.0',
+                  MCCTL_ROOT: '${{ github.workspace }}/platform',
+                  MCCTL_JWT_SECRET: 'test-secret-for-e2e',
+                },
+                instances: 1,
+                exec_mode: 'fork',
+                watch: false,
+                autorestart: true,
+                max_memory_restart: '500M',
+              },
+              {
+                name: 'mcctl-console',
+                script: '${{ github.workspace }}/platform/services/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js',
+                cwd: '${{ github.workspace }}/platform/services/mcctl-console/.next/standalone',
+                env: {
+                  NODE_ENV: 'production',
+                  PORT: 3000,
+                  HOSTNAME: '0.0.0.0',
+                  MCCTL_API_URL: 'http://localhost:3001',
+                  MCCTL_ROOT: '${{ github.workspace }}/platform',
+                  NEXTAUTH_SECRET: 'test-secret-for-e2e',
+                  NEXTAUTH_URL: 'http://localhost:3000',
+                },
+                instances: 1,
+                exec_mode: 'fork',
+                watch: false,
+                autorestart: true,
+                max_memory_restart: '500M',
+              },
+            ],
+          };
+          EOF
+
+      - name: Start services via PM2
+        run: |
+          pm2 start ~/minecraft-servers/platform/ecosystem.config.cjs
+          pm2 list
 
       - name: Wait for services to be ready
         run: |
           echo "Waiting for mcctl-api..."
-          timeout 120 bash -c 'until curl -s http://localhost:3001/health > /dev/null; do sleep 2; done' || {
+          timeout 60 bash -c 'until curl -s http://localhost:3001/health > /dev/null; do sleep 2; done' || {
             echo "mcctl-api health check failed"
-            docker compose -f platform/docker-compose.yml -f platform/docker-compose.admin.yml logs mcctl-api
+            pm2 logs mcctl-api --lines 50
             exit 1
           }
           echo "mcctl-api is ready"
 
           echo "Waiting for mcctl-console..."
-          timeout 120 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done' || {
+          timeout 60 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done' || {
             echo "mcctl-console health check failed"
-            docker compose -f platform/docker-compose.yml -f platform/docker-compose.admin.yml logs mcctl-console
+            pm2 logs mcctl-console --lines 50
             exit 1
           }
           echo "mcctl-console is ready"
@@ -86,6 +127,7 @@ jobs:
           CI: true
           E2E_BASE_URL: http://localhost:3000
           E2E_API_URL: http://localhost:3001
+          E2E_SKIP_SERVICE_START: true
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
@@ -103,21 +145,20 @@ jobs:
           path: e2e/test-results/
           retention-days: 7
 
-      - name: Show container logs on failure
+      - name: Show PM2 logs on failure
         if: failure()
         run: |
+          echo "=== PM2 Status ==="
+          pm2 status
+          echo ""
           echo "=== mcctl-api logs ==="
-          docker compose -f platform/docker-compose.yml -f platform/docker-compose.admin.yml logs mcctl-api
+          pm2 logs mcctl-api --lines 100 --nostream || true
           echo ""
           echo "=== mcctl-console logs ==="
-          docker compose -f platform/docker-compose.yml -f platform/docker-compose.admin.yml logs mcctl-console
+          pm2 logs mcctl-console --lines 100 --nostream || true
 
-      - name: Stop Admin Services
+      - name: Stop PM2 services
         if: always()
         run: |
-          cd platform
-          docker compose -f docker-compose.yml -f docker-compose.admin.yml down -v
-
-      - name: Clean up Docker network
-        if: always()
-        run: docker network rm minecraft-net || true
+          pm2 delete all || true
+          pm2 kill || true
