@@ -17,6 +17,7 @@ mcctl console <subcommand> [options]
 | Command | Description |
 |---------|-------------|
 | `mcctl console init` | Initialize Admin Service configuration |
+| `mcctl console remove` | Remove Admin Service completely |
 | `mcctl console user` | Manage admin console users |
 | `mcctl console api` | Manage API configuration |
 | `mcctl console service` | Manage Admin Service lifecycle |
@@ -39,6 +40,8 @@ mcctl console init [options]
 |--------|-------------|
 | `--root <path>` | Custom data directory |
 | `--force` | Reinitialize even if already configured |
+| `--api-port <port>` | API server port (default: 3001) |
+| `--console-port <port>` | Console server port (default: 3000) |
 
 ### Interactive Flow
 
@@ -52,12 +55,13 @@ The command guides you through:
    - At least one number
 3. **Confirm password** - Must match
 4. **API access mode** - Choose security level:
-   - `internal` - Docker network only (recommended)
+   - `internal` - Local network only (recommended)
    - `api-key` - Requires X-API-Key header
    - `ip-whitelist` - IP-based access control
    - `api-key-ip` - Both API key and IP required
    - `open` - No authentication (development only)
-5. **Additional configuration** - Based on selected mode
+5. **Custom ports** - Optional port configuration
+6. **Additional configuration** - Based on selected mode
 
 ### Examples
 
@@ -70,15 +74,78 @@ mcctl console init --force
 
 # Custom data directory
 mcctl console init --root /opt/minecraft
+
+# Custom ports
+mcctl console init --api-port 8001 --console-port 8000
 ```
 
 ### Output Files
 
 | File | Description |
 |------|-------------|
-| `admin.yaml` | Main Admin Service configuration |
+| `.mcctl-admin.yml` | Main Admin Service configuration |
 | `users.yaml` | User credentials with hashed passwords |
-| `api-config.json` | API access configuration |
+| `ecosystem.config.cjs` | PM2 process configuration |
+
+---
+
+## mcctl console remove
+
+Remove Admin Service completely, including PM2 processes and configuration files.
+
+### Usage
+
+```bash
+mcctl console remove [options]
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--root <path>` | Custom data directory |
+| `--force` | Skip confirmation prompt |
+| `--keep-config` | Keep configuration files for later reinstall |
+
+### What Gets Removed
+
+| Component | Description |
+|-----------|-------------|
+| PM2 processes | mcctl-api, mcctl-console processes are stopped and removed |
+| `.mcctl-admin.yml` | Main configuration file |
+| `users.yaml` | User credentials file |
+| `ecosystem.config.cjs` | PM2 ecosystem configuration |
+
+### Examples
+
+```bash
+# Interactive removal (prompts for confirmation)
+mcctl console remove
+
+# Force removal without confirmation
+mcctl console remove --force
+
+# Keep configuration files
+mcctl console remove --keep-config
+```
+
+### Output Example
+
+```
+  This will remove:
+    - PM2 processes (mcctl-api, mcctl-console)
+    - Configuration files (.mcctl-admin.yml, users.yaml)
+    - PM2 ecosystem config (ecosystem.config.cjs)
+
+? Are you sure you want to remove Console Service? Yes
+
+Stopping and removing PM2 processes...  Stopped and removed: mcctl-api, mcctl-console
+Removing configuration files...  Removed 3 configuration file(s)
+
+Console Service removed successfully
+
+  To reinstall, run: mcctl console init
+```
 
 ---
 
@@ -359,7 +426,7 @@ mcctl console api mode [mode] [options]
 
 | Mode | Description |
 |------|-------------|
-| `internal` | Docker network only (most secure) |
+| `internal` | Local network only (most secure) |
 | `api-key` | External access with X-API-Key header |
 | `ip-whitelist` | IP-based access control |
 | `api-key-ip` | Both API key and IP required |
@@ -426,21 +493,21 @@ mcctl console api whitelist remove 192.168.1.100
 
 ## mcctl console service
 
-Manage Admin Service container lifecycle.
+Manage Admin Service lifecycle via PM2.
 
 ### Subcommands
 
 | Subcommand | Description |
 |------------|-------------|
-| `start` | Start Admin Service containers |
-| `stop` | Stop Admin Service containers |
-| `restart` | Restart Admin Service containers |
-| `status` | Show container status |
-| `logs` | View container logs |
+| `start` | Start Admin Service via PM2 |
+| `stop` | Stop Admin Service |
+| `restart` | Restart Admin Service |
+| `status` | Show service status |
+| `logs` | View service logs |
 
 ### mcctl console service start
 
-Start Admin Service containers (API and Console).
+Start Admin Service processes (API and Console) via PM2.
 
 ```bash
 mcctl console service start [options]
@@ -466,17 +533,64 @@ mcctl console service start --api-only
 mcctl console service start --console-only
 ```
 
+**Output Example:**
+
+```
+Starting console services via PM2...
+  Started mcctl-api
+  Started mcctl-console
+Console services started successfully
+
+  Console Service Status (PM2)
+
+  mcctl-api
+    Status: online
+    PID: 12345
+    CPU: 0%
+    Memory: 50.2 MB
+    Uptime: 5s
+    Restarts: 0
+
+  mcctl-console
+    Status: online
+    PID: 12346
+    URL: http://localhost:3000
+    CPU: 0%
+    Memory: 80.5 MB
+    Uptime: 3s
+    Restarts: 0
+
+  All services healthy
+```
+
 ### mcctl console service stop
 
-Stop Admin Service containers.
+Stop Admin Service processes.
 
 ```bash
+mcctl console service stop [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--api-only` | Stop only mcctl-api |
+| `--console-only` | Stop only mcctl-console |
+
+**Examples:**
+
+```bash
+# Stop all services
 mcctl console service stop
+
+# Stop API only
+mcctl console service stop --api-only
 ```
 
 ### mcctl console service restart
 
-Restart Admin Service containers.
+Restart Admin Service processes.
 
 ```bash
 mcctl console service restart [options]
@@ -489,9 +603,19 @@ mcctl console service restart [options]
 | `--api-only` | Restart only mcctl-api |
 | `--console-only` | Restart only mcctl-console |
 
+**Examples:**
+
+```bash
+# Restart all services
+mcctl console service restart
+
+# Restart API only
+mcctl console service restart --api-only
+```
+
 ### mcctl console service status
 
-Show Admin Service container status.
+Show Admin Service status via PM2.
 
 ```bash
 mcctl console service status [options]
@@ -506,20 +630,24 @@ mcctl console service status [options]
 **Example output:**
 
 ```
-  Admin Service Status
+  Console Service Status (PM2)
 
   mcctl-api
-    Status: running
-    Port: 3001
-    Health: healthy
+    Status: online
+    PID: 12345
+    CPU: 2%
+    Memory: 52.1 MB
     Uptime: 2h 15m
+    Restarts: 0
 
   mcctl-console
-    Status: running
-    Port: 3000
+    Status: online
+    PID: 12346
     URL: http://localhost:3000
-    Health: healthy
+    CPU: 1%
+    Memory: 85.3 MB
     Uptime: 2h 15m
+    Restarts: 0
 
   All services healthy
 ```
@@ -529,20 +657,22 @@ mcctl console service status [options]
 ```json
 {
   "api": {
-    "name": "api",
-    "container": "mcctl-api",
-    "status": "running",
-    "health": "healthy",
-    "port": 3001,
-    "uptime": "2h 15m"
+    "name": "mcctl-api",
+    "status": "online",
+    "pid": 12345,
+    "cpu": 2,
+    "memory": "52.1 MB",
+    "uptime": "2h 15m",
+    "restarts": 0
   },
   "console": {
-    "name": "console",
-    "container": "mcctl-console",
-    "status": "running",
-    "health": "healthy",
-    "port": 3000,
+    "name": "mcctl-console",
+    "status": "online",
+    "pid": 12346,
+    "cpu": 1,
+    "memory": "85.3 MB",
     "uptime": "2h 15m",
+    "restarts": 0,
     "url": "http://localhost:3000"
   },
   "healthy": true
@@ -551,7 +681,7 @@ mcctl console service status [options]
 
 ### mcctl console service logs
 
-View Admin Service container logs.
+View Admin Service logs via PM2.
 
 ```bash
 mcctl console service logs [options]
@@ -629,4 +759,17 @@ mcctl console service logs --api-only
 
 ```bash
 mcctl console service restart
+```
+
+**Auto-Start on Boot:**
+
+```bash
+pm2 startup
+pm2 save
+```
+
+**Complete Removal:**
+
+```bash
+mcctl console remove
 ```
