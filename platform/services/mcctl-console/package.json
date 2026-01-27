@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "cp -r public .next/standalone/platform/services/mcctl-console/ 2>/dev/null || true && cp -r .next/static .next/standalone/platform/services/mcctl-console/.next/ 2>/dev/null || true",
     "start": "next start",
+    "start:standalone": "node .next/standalone/platform/services/mcctl-console/server.js",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next out"
   },
   "keywords": [

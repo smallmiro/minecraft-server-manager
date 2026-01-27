@@ -19,12 +19,14 @@ import { authOptions } from '@/lib/auth';
  * fetch('/api/proxy/servers')
  *
  * // Forwarded to:
- * fetch('http://mcctl-api:3001/api/servers', {
+ * fetch('http://localhost:3001/api/servers', {
  *   headers: { 'X-User': 'admin', 'X-Role': 'admin', ... }
  * })
  */
 
-const API_URL = process.env.MCCTL_API_URL || 'http://mcctl-api:3001';
+// Default to localhost for native PM2 execution
+// Override with MCCTL_API_URL for Docker or remote API
+const API_URL = process.env.MCCTL_API_URL || 'http://localhost:3001';
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'internal-dev-key';
 const isDevelopment = process.env.NODE_ENV === 'development';
 
