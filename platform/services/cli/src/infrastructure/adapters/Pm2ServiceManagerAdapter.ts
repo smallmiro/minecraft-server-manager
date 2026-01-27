@@ -59,12 +59,21 @@ function pm2Start(options: pm2.StartOptions): Promise<pm2.Proc> {
   });
 }
 
-function pm2StartConfig(configPath: string): Promise<pm2.Proc> {
+function pm2StartConfig(configPath: string, appName?: string): Promise<pm2.Proc> {
   return new Promise((resolve, reject) => {
-    pm2.start(configPath, (err, proc) => {
-      if (err) reject(err);
-      else resolve(proc);
-    });
+    if (appName) {
+      // Start only the specific app from config
+      pm2.start(configPath, { only: [appName] } as pm2.StartOptions, (err, proc) => {
+        if (err) reject(err);
+        else resolve(proc);
+      });
+    } else {
+      // Start all apps from config
+      pm2.start(configPath, (err, proc) => {
+        if (err) reject(err);
+        else resolve(proc);
+      });
+    }
   });
 }
 
@@ -155,6 +164,28 @@ export class Pm2ServiceManagerAdapter implements IServiceManagerPort {
   }
 
   /**
+   * Wait for a service to become online
+   * @param name - Service name
+   * @param timeout - Timeout in milliseconds
+   */
+  private async waitForOnline(name: string, timeout: number): Promise<void> {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < timeout) {
+      const procs = await pm2List();
+      const proc = procs.find((p) => p.name === name);
+
+      if (proc?.pm2_env?.status === 'online') {
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    throw new Error(`Timeout waiting for ${name} to be ready`);
+  }
+
+  /**
    * Start a service by name
    */
   async start(name: string, options?: ServiceStartOptions): Promise<void> {
@@ -173,6 +204,11 @@ export class Pm2ServiceManagerAdapter implements IServiceManagerPort {
       if (existing) {
         // Process exists but stopped, restart it
         await pm2Restart(name);
+
+        // Wait for ready if requested (same logic as new process start)
+        if (options?.wait) {
+          await this.waitForOnline(name, options.waitTimeout || 30000);
+        }
         return;
       }
 
@@ -185,26 +221,12 @@ export class Pm2ServiceManagerAdapter implements IServiceManagerPort {
         );
       }
 
-      // Start the specific app from config
-      await pm2StartConfig(configPath);
+      // Start the specific app from config (not all apps)
+      await pm2StartConfig(configPath, name);
 
       // Wait for ready if requested
       if (options?.wait) {
-        const timeout = options.waitTimeout || 30000;
-        const startTime = Date.now();
-
-        while (Date.now() - startTime < timeout) {
-          const procs = await pm2List();
-          const proc = procs.find((p) => p.name === name);
-
-          if (proc?.pm2_env?.status === 'online') {
-            return;
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
-
-        throw new Error(`Timeout waiting for ${name} to be ready`);
+        await this.waitForOnline(name, options.waitTimeout || 30000);
       }
     } catch (error) {
       throw new Error(`Failed to start ${name}: ${formatPm2Error(error)}`);
@@ -213,16 +235,16 @@ export class Pm2ServiceManagerAdapter implements IServiceManagerPort {
 
   /**
    * Stop a service by name
+   * @throws Error if service not found (as per IServiceManagerPort contract)
    */
   async stop(name: string, options?: ServiceStopOptions): Promise<void> {
     try {
       await this.ensureConnected();
 
-      // Check if process exists
+      // Check if process exists - throw if not found (interface contract)
       const exists = await this.exists(name);
       if (!exists) {
-        // Not running, nothing to stop
-        return;
+        throw new Error(`Service '${name}' not found`);
       }
 
       if (options?.force) {
@@ -257,21 +279,7 @@ export class Pm2ServiceManagerAdapter implements IServiceManagerPort {
 
       // Wait for ready if requested
       if (options?.wait) {
-        const timeout = options.waitTimeout || 30000;
-        const startTime = Date.now();
-
-        while (Date.now() - startTime < timeout) {
-          const procs = await pm2List();
-          const proc = procs.find((p) => p.name === name);
-
-          if (proc?.pm2_env?.status === 'online') {
-            return;
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
-
-        throw new Error(`Timeout waiting for ${name} to restart`);
+        await this.waitForOnline(name, options.waitTimeout || 30000);
       }
     } catch (error) {
       throw new Error(`Failed to restart ${name}: ${formatPm2Error(error)}`);
