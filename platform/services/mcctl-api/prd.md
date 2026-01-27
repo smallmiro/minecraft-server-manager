@@ -171,61 +171,92 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (fastify, option
 
 ## 5. API Endpoints
 
+**Status Legend**: ✅ Implemented | 🚧 Planned
+
 ### 5.1 Server Management
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/servers` | List servers |
-| GET | `/api/servers/:name` | Server details |
-| POST | `/api/servers` | Create server |
-| DELETE | `/api/servers/:name` | Delete server |
-| POST | `/api/servers/:name/start` | Start server |
-| POST | `/api/servers/:name/stop` | Stop server |
-| POST | `/api/servers/:name/restart` | Restart server |
-| GET | `/api/servers/:name/logs` | Server logs |
-| POST | `/api/servers/:name/exec` | Execute RCON command |
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/api/servers` | List servers | ✅ |
+| GET | `/api/servers/:name` | Server details (type, version, memory, players) | ✅ |
+| POST | `/api/servers` | Create server | 🚧 |
+| DELETE | `/api/servers/:name` | Delete server | 🚧 |
+| POST | `/api/servers/:name/start` | Start server | ✅ |
+| POST | `/api/servers/:name/stop` | Stop server | ✅ |
+| POST | `/api/servers/:name/restart` | Restart server | ✅ |
+| GET | `/api/servers/:name/logs` | Server logs (supports SSE streaming) | ✅ |
+| POST | `/api/servers/:name/exec` | Execute RCON command | ✅ |
+
+**Server Logs SSE Streaming**:
+
+The `/api/servers/:name/logs` endpoint supports real-time log streaming via Server-Sent Events (SSE).
+
+| Query Parameter | Type | Default | Description |
+|-----------------|------|---------|-------------|
+| `lines` | number | 100 | Number of initial log lines (1-10000) |
+| `follow` | boolean | false | Enable SSE streaming for real-time logs |
+
+**SSE Response Format**:
+```
+data: {"line":"[14:23:45] [Server thread/INFO]: Player joined"}
+
+data: {"line":"[14:23:46] [Server thread/INFO]: Done loading!"}
+
+: heartbeat
+```
+
+- Heartbeat sent every 30 seconds to keep connection alive
+- Client should reconnect on connection drop
 
 ### 5.2 World Management
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/worlds` | List worlds |
-| POST | `/api/worlds` | Create world |
-| POST | `/api/worlds/:name/assign` | Assign world |
-| POST | `/api/worlds/:name/release` | Release world |
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/api/worlds` | List worlds | ✅ |
+| GET | `/api/worlds/:name` | World details (size, lock status, directory) | ✅ |
+| POST | `/api/worlds` | Create world | ✅ |
+| DELETE | `/api/worlds/:name` | Delete world | ✅ |
+| POST | `/api/worlds/:name/assign` | Assign world to server | ✅ |
+| POST | `/api/worlds/:name/release` | Release world from server | ✅ |
 
 ### 5.3 Player Management
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/servers/:name/players` | Online players |
-| GET | `/api/players/:username` | Player info |
-| GET | `/api/servers/:name/whitelist` | Whitelist |
-| POST | `/api/servers/:name/whitelist` | Add to whitelist |
-| DELETE | `/api/servers/:name/whitelist/:player` | Remove from whitelist |
-| GET | `/api/servers/:name/bans` | Ban list |
-| POST | `/api/servers/:name/bans` | Ban player |
-| DELETE | `/api/servers/:name/bans/:player` | Unban player |
-| POST | `/api/servers/:name/kick` | Kick player |
-| GET | `/api/servers/:name/ops` | OP list |
-| POST | `/api/servers/:name/ops` | Add OP |
-| DELETE | `/api/servers/:name/ops/:player` | Remove OP |
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/api/servers/:name/players` | Online players | 🚧 |
+| GET | `/api/players/:username` | Player info | 🚧 |
+| GET | `/api/servers/:name/whitelist` | Whitelist | 🚧 |
+| POST | `/api/servers/:name/whitelist` | Add to whitelist | 🚧 |
+| DELETE | `/api/servers/:name/whitelist/:player` | Remove from whitelist | 🚧 |
+| GET | `/api/servers/:name/bans` | Ban list | 🚧 |
+| POST | `/api/servers/:name/bans` | Ban player | 🚧 |
+| DELETE | `/api/servers/:name/bans/:player` | Unban player | 🚧 |
+| POST | `/api/servers/:name/kick` | Kick player | 🚧 |
+| GET | `/api/servers/:name/ops` | OP list | 🚧 |
+| POST | `/api/servers/:name/ops` | Add OP | 🚧 |
+| DELETE | `/api/servers/:name/ops/:player` | Remove OP | 🚧 |
+
+> 🚧 = Planned (see [Issue #155](https://github.com/your-repo/issues/155))
 
 ### 5.4 Backup
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/backup/status` | Backup status |
-| POST | `/api/backup/push` | Push backup |
-| GET | `/api/backup/history` | Backup history |
-| POST | `/api/backup/restore` | Restore backup |
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/api/backup/status` | Backup status | 🚧 |
+| POST | `/api/backup/push` | Push backup | 🚧 |
+| GET | `/api/backup/history` | Backup history | 🚧 |
+| POST | `/api/backup/restore` | Restore backup | 🚧 |
+
+> 🚧 = Planned (see [Issue #156](https://github.com/your-repo/issues/156))
 
 ### 5.5 System
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Health check |
-| GET | `/api/router/status` | mc-router status |
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/api/health` | Health check | ✅ |
+| GET | `/api/router/status` | mc-router status | 🚧 |
+
+> 🚧 = Planned (see [Issue #157](https://github.com/your-repo/issues/157))
 
 ## 6. Response Format
 
@@ -329,3 +360,4 @@ curl -X POST -H "Content-Type: application/json" \
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0.0 | 2025-01-25 | - | Initial PRD |
+| 1.1.0 | 2025-01-28 | - | Added implementation status, SSE streaming docs, world detail/delete endpoints |
