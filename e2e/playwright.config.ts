@@ -10,6 +10,21 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Playwright configuration for E2E tests.
+ *
+ * Services are managed via PM2 (not Docker).
+ * - Console runs on localhost:3000
+ * - API runs on localhost:3001
+ *
+ * Before running tests:
+ * 1. Run 'mcctl console init' to generate ecosystem.config.cjs
+ * 2. Tests will auto-start services via PM2 (or use existing running services)
+ *
+ * Environment variables:
+ * - E2E_BASE_URL: Console URL (default: http://localhost:3000)
+ * - E2E_API_URL: API URL (default: http://localhost:3001)
+ * - E2E_SKIP_SERVICE_START: Skip PM2 service start (for pre-started services)
+ * - E2E_STOP_SERVICES: Stop services after tests (default: false, keep running)
+ *
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
@@ -45,6 +60,7 @@ export default defineConfig({
 
   /* Global setup/teardown */
   globalSetup: require.resolve('./global-setup'),
+  globalTeardown: require.resolve('./global-teardown'),
 
   /* Configure projects for major browsers */
   projects: [
@@ -75,15 +91,22 @@ export default defineConfig({
     */
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'docker compose -f ../platform/docker-compose.yml -f ../platform/docker-compose.admin.yml up',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes for Docker containers to start
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  /*
+   * Web server configuration removed.
+   * Services are managed via PM2 in global-setup.ts.
+   *
+   * PM2 advantages over Docker for E2E tests:
+   * - Faster startup time (~3s vs ~30s)
+   * - Easier debugging (direct access to Node.js processes)
+   * - Simpler CI integration
+   * - Services persist between test runs for faster development
+   *
+   * To start services manually:
+   *   cd platform && pm2 start ecosystem.config.cjs
+   *
+   * To view logs:
+   *   pm2 logs
+   */
 
   /* Expect timeout */
   expect: {
