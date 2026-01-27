@@ -6,16 +6,21 @@ This guide covers installing and configuring the Admin Service for Docker Minecr
 
 Before installing Admin Service, ensure you have:
 
+- [x] **Node.js 18 or higher**
+  ```bash
+  node --version  # Should be v18.0.0 or higher
+  ```
+
+- [x] **PM2 installed globally**
+  ```bash
+  npm install -g pm2
+  pm2 --version
+  ```
+
 - [x] **mcctl installed and initialized**
   ```bash
   npm install -g @minecraft-docker/mcctl
   mcctl init
-  ```
-
-- [x] **Docker running**
-  ```bash
-  docker --version
-  docker compose version
   ```
 
 - [x] **At least one Minecraft server created**
@@ -25,7 +30,7 @@ Before installing Admin Service, ensure you have:
 
 - [x] **Ports available**
   - Port 3000 for web console
-  - Port 3001 for API (internal)
+  - Port 3001 for API
 
 ## Installation Methods
 
@@ -47,29 +52,37 @@ This interactive command will prompt you for:
    - At least one uppercase letter
    - At least one lowercase letter
    - At least one number
-3. **API access mode** - Choose based on your security needs
-4. **Additional configuration** based on selected mode
+3. **Confirm password** - Must match
+4. **API access mode** - Choose based on your security needs
+5. **Custom ports** (optional) - Configure API and console ports
+6. **Additional configuration** based on selected mode
 
 Example session:
 
 ```
 $ mcctl console init
 
-Initialize Admin Service
+Initialize Console Service
+
+  Node.js: v20.10.0
+  PM2: 5.3.0
 
 ? Admin username? admin
 ? Admin password? ********
 ? Confirm password? ********
-? API access mode? internal - Docker network only (default, most secure)
+? API access mode? internal - Local network only (default, most secure)
+? Configure custom ports? No
 
 Creating admin user...  done
+Generating PM2 ecosystem config...  done
 Saving configuration...  done
 
-Admin Service initialized!
+Console Service initialized!
 
   Configuration:
-    Config file: /home/user/minecraft-servers/admin.yaml
+    Config file: /home/user/minecraft-servers/.mcctl-admin.yml
     Users file:  /home/user/minecraft-servers/users.yaml
+    PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
     Access mode: internal
 
   Endpoints:
@@ -77,7 +90,7 @@ Admin Service initialized!
     API:     http://localhost:3001
 
   Next steps:
-    1. Start the admin service: mcctl console service start
+    1. Start the console service: mcctl console service start
     2. Access the console in your browser
 ```
 
@@ -87,78 +100,51 @@ Admin Service initialized!
 mcctl console service start
 ```
 
-Wait for services to start and become healthy:
+Wait for services to start:
 
 ```
-Starting admin services...
-[+] Running 2/2
- ✔ Container mcctl-api      Healthy
- ✔ Container mcctl-console  Started
+Starting console services via PM2...
+  Started mcctl-api
+  Started mcctl-console
+Console services started successfully
 
-Admin services started successfully
-
-  Admin Service Status
+  Console Service Status (PM2)
 
   mcctl-api
-    Status: running
-    Port: 3001
-    Health: healthy
+    Status: online
+    PID: 12345
+    CPU: 0%
+    Memory: 50.2 MB
     Uptime: 5s
+    Restarts: 0
 
   mcctl-console
-    Status: running
-    Port: 3000
+    Status: online
+    PID: 12346
     URL: http://localhost:3000
-    Health: healthy
+    CPU: 0%
+    Memory: 80.5 MB
     Uptime: 3s
+    Restarts: 0
 
   All services healthy
 ```
 
-### Method 2: Docker Compose (Manual)
+### Method 2: Custom Port Configuration
 
-For advanced users who prefer manual Docker configuration.
-
-#### Step 1: Ensure docker-compose.admin.yml Exists
-
-The file should be at `~/minecraft-servers/docker-compose.admin.yml`. If not, copy from templates:
+For environments with port conflicts, specify custom ports during initialization:
 
 ```bash
-cp templates/docker-compose.admin.yml ~/minecraft-servers/
+mcctl console init --api-port 8001 --console-port 8000
 ```
 
-#### Step 2: Configure Environment
-
-Create or edit `~/minecraft-servers/.env`:
+Or configure interactively:
 
 ```bash
-# Admin Service Configuration
-MCCTL_ROOT=~/minecraft-servers
-MCCTL_JWT_SECRET=your-secure-jwt-secret-here
-MCCTL_JWT_EXPIRY=24h
-NEXTAUTH_SECRET=your-secure-nextauth-secret-here
-NEXTAUTH_URL=http://localhost:3000
+mcctl console init
 
-# API Configuration
-API_ACCESS_MODE=internal
-API_KEY=
-
-# Optional: Custom ports
-# MCCTL_API_PORT=3001
-# MCCTL_CONSOLE_PORT=3000
-```
-
-#### Step 3: Create Admin User
-
-```bash
-mcctl console user add admin --role admin --password "YourSecurePassword123"
-```
-
-#### Step 4: Start with Docker Compose
-
-```bash
-cd ~/minecraft-servers
-docker compose -f docker-compose.admin.yml up -d
+# When prompted "Configure custom ports?" select Yes
+# Then enter your desired API and console ports
 ```
 
 ## Configuration
@@ -168,24 +154,53 @@ docker compose -f docker-compose.admin.yml up -d
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `MCCTL_ROOT` | Data directory path | `~/minecraft-servers` |
-| `MCCTL_JWT_SECRET` | JWT signing secret | `change-me-in-production` |
-| `MCCTL_JWT_EXPIRY` | JWT token expiry | `24h` |
-| `NEXTAUTH_SECRET` | NextAuth.js secret | `change-me-in-production` |
-| `NEXTAUTH_URL` | Console URL | `http://localhost:3000` |
-| `API_ACCESS_MODE` | API authentication mode | `internal` |
-| `API_KEY` | API key (if using api-key mode) | - |
-| `LOG_LEVEL` | Logging level | `info` |
-| `MCCTL_API_PORT` | API server port | `3001` |
-| `MCCTL_CONSOLE_PORT` | Console port | `3000` |
+| `PORT` | API server port | `3001` |
+| `HOSTNAME` | Console server hostname | `0.0.0.0` |
+| `MCCTL_API_URL` | Internal API URL | `http://localhost:3001` |
+| `NODE_ENV` | Environment mode | `production` |
+
+### PM2 Ecosystem Configuration
+
+The `mcctl console init` command generates `ecosystem.config.cjs` in your platform directory:
+
+```javascript
+// ecosystem.config.cjs
+module.exports = {
+  apps: [
+    {
+      name: 'mcctl-api',
+      script: 'node_modules/@minecraft-docker/mcctl-api/dist/index.js',
+      cwd: process.env.MCCTL_ROOT || '.',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3001,
+        HOST: '0.0.0.0',
+        MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
+      },
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      autorestart: true,
+      max_memory_restart: '500M',
+    },
+    {
+      name: 'mcctl-console',
+      script: 'node_modules/@minecraft-docker/mcctl-console/.next/standalone/...',
+      // ... console configuration
+    },
+  ],
+};
+```
 
 ### Access Modes
 
 #### internal (Recommended for Production)
 
-Only allows access from within the Docker network. The API is not exposed to the host.
+Only allows access from the local network. The most secure option for home/local deployments.
 
 ```bash
-mcctl console api mode internal
+mcctl console init
+# Select "internal" when prompted for API access mode
 ```
 
 #### api-key
@@ -193,10 +208,12 @@ mcctl console api mode internal
 Requires `X-API-Key` header for all API requests.
 
 ```bash
-mcctl console api mode api-key
+mcctl console init
+# Select "api-key" when prompted
+# An API key will be generated and displayed
 ```
 
-After setting this mode, your API key will be displayed. Save it securely.
+After initialization, your API key will be displayed. Save it securely.
 
 To regenerate the API key:
 
@@ -209,9 +226,17 @@ mcctl console api key regenerate
 Only allows access from specified IP addresses or CIDR ranges.
 
 ```bash
-mcctl console api mode ip-whitelist
+mcctl console init
+# Select "ip-whitelist" when prompted
+# Enter allowed IPs when prompted (comma-separated)
+```
+
+After initialization, manage the whitelist:
+
+```bash
 mcctl console api whitelist add 192.168.1.100
 mcctl console api whitelist add 10.0.0.0/8
+mcctl console api whitelist list
 ```
 
 #### api-key-ip (Highest Security)
@@ -219,8 +244,8 @@ mcctl console api whitelist add 10.0.0.0/8
 Requires both a valid API key AND the client IP must be in the whitelist.
 
 ```bash
-mcctl console api mode api-key-ip
-mcctl console api whitelist add 192.168.1.0/24
+mcctl console init
+# Select "api-key-ip" when prompted
 ```
 
 #### open (Development Only)
@@ -318,19 +343,34 @@ Expected response:
 
 ### Services Won't Start
 
-1. **Check Docker is running:**
+1. **Check Node.js version:**
    ```bash
-   docker ps
+   node --version  # Must be v18.0.0 or higher
    ```
 
-2. **Check for port conflicts:**
+2. **Check PM2 is installed:**
+   ```bash
+   pm2 --version
+   ```
+
+3. **Check for port conflicts:**
    ```bash
    netstat -tlnp | grep -E "3000|3001"
+   # or on macOS
+   lsof -i :3000
+   lsof -i :3001
    ```
 
-3. **View service logs:**
+4. **View service logs:**
    ```bash
    mcctl console service logs -f
+   ```
+
+5. **Check PM2 process list:**
+   ```bash
+   pm2 list
+   pm2 logs mcctl-api
+   pm2 logs mcctl-console
    ```
 
 ### Can't Log In
@@ -345,8 +385,10 @@ Expected response:
    mcctl console user reset-password admin
    ```
 
-3. **Check NextAuth configuration:**
-   Ensure `NEXTAUTH_SECRET` is set in `.env`
+3. **Check configuration file:**
+   ```bash
+   cat ~/.mcctl-admin.yml
+   ```
 
 ### API Returns 401 Unauthorized
 
@@ -364,47 +406,69 @@ Expected response:
    mcctl console api whitelist list
    ```
 
-### Container Health Check Fails
+### PM2 Process Keeps Restarting
 
-1. **View container logs:**
+1. **Check logs for errors:**
    ```bash
-   docker logs mcctl-api
-   docker logs mcctl-console
+   pm2 logs mcctl-api --lines 100
+   pm2 logs mcctl-console --lines 100
    ```
 
-2. **Restart services:**
+2. **Check if dependencies are installed:**
+   ```bash
+   cd ~/minecraft-servers
+   npm ls @minecraft-docker/mcctl-api
+   npm ls @minecraft-docker/mcctl-console
+   ```
+
+3. **Restart services:**
    ```bash
    mcctl console service restart
    ```
 
+## Auto-Start on Boot
+
+Configure PM2 to start services automatically on system boot:
+
+```bash
+# Generate startup script
+pm2 startup
+
+# Follow the instructions to run the displayed command
+# For example:
+sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u $USER --hp $HOME
+
+# Save current process list
+pm2 save
+```
+
+Now your services will automatically start when the system boots.
+
 ## Upgrading
 
-### Update to Latest Version
+### Update mcctl and Services
 
 ```bash
 # Stop services
 mcctl console service stop
 
-# Pull latest images
-docker pull minecraft-docker/mcctl-api:latest
-docker pull minecraft-docker/mcctl-console:latest
+# Update mcctl globally
+npm update -g @minecraft-docker/mcctl
 
 # Start services
 mcctl console service start
 ```
 
-### Rebuild from Source
+### Reinitialize After Major Update
+
+If there are breaking changes, reinitialize the console:
 
 ```bash
 # Stop services
 mcctl console service stop
 
-# Navigate to project root
-cd ~/minecraft
-
-# Build new images
-pnpm build
-docker compose -f platform/docker-compose.admin.yml build
+# Reinitialize (keeps user data)
+mcctl console init --force
 
 # Start services
 mcctl console service start
@@ -415,15 +479,33 @@ mcctl console service start
 To completely remove Admin Service:
 
 ```bash
-# Stop and remove containers
-mcctl console service stop
-docker compose -f ~/minecraft-servers/docker-compose.admin.yml down -v
+# Remove console service (interactive)
+mcctl console remove
 
-# Remove configuration files (optional)
-rm ~/minecraft-servers/admin.yaml
-rm ~/minecraft-servers/users.yaml
-rm ~/minecraft-servers/api-config.json
+# Or force remove without confirmation
+mcctl console remove --force
+
+# Keep configuration files for later reinstall
+mcctl console remove --keep-config
 ```
+
+This will:
+
+- Stop and remove PM2 processes (mcctl-api, mcctl-console)
+- Delete configuration files (.mcctl-admin.yml, users.yaml)
+- Delete PM2 ecosystem config (ecosystem.config.cjs)
 
 !!! warning "Data Preservation"
     Removing Admin Service does not affect your Minecraft servers or world data.
+
+### Clean Up PM2 (Optional)
+
+If you want to completely remove PM2 configuration:
+
+```bash
+# Remove saved process list
+pm2 unstartup
+
+# Kill PM2 daemon
+pm2 kill
+```
