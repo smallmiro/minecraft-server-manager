@@ -135,17 +135,35 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       const spinner = isInteractive ? this.prompt.spinner() : null;
       spinner?.start('Creating world...');
 
-      // Check if server is running and stop it
+      // Create the world directory with seed
+      try {
+        await this.worldRepo.create(worldName, seed);
+        spinner?.message('World directory created');
+      } catch (error) {
+        spinner?.stop('Failed to create world');
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        if (isInteractive) {
+          this.prompt.error(errorMsg);
+          this.prompt.outro('World creation failed');
+        }
+        return {
+          success: false,
+          worldName,
+          seed,
+          serverName,
+          error: errorMsg,
+        };
+      }
+
+      // If server specified, configure it to use the new world
       if (serverName) {
+        // Check if server is running and stop it
         const statusResult = await this.shell.serverStatus(serverName);
         if (statusResult.success && statusResult.stdout?.includes('running')) {
           spinner?.message('Stopping server...');
           await this.shell.stopServer(serverName);
         }
-      }
 
-      // Set LEVEL and SEED in server config
-      if (serverName) {
         spinner?.message('Configuring server...');
 
         // Set LEVEL to new world name
@@ -155,7 +173,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
           const errorMsg = levelResult.stderr || 'Failed to set LEVEL';
           if (isInteractive) {
             this.prompt.error(errorMsg);
-            this.prompt.outro('World creation failed');
+            this.prompt.outro('World created but server configuration failed');
           }
           return {
             success: false,
@@ -174,7 +192,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
             const errorMsg = seedResult.stderr || 'Failed to set SEED';
             if (isInteractive) {
               this.prompt.error(errorMsg);
-              this.prompt.outro('World creation failed');
+              this.prompt.outro('World created but seed configuration failed');
             }
             return {
               success: false,
@@ -187,7 +205,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
         }
       }
 
-      spinner?.stop('World configured');
+      spinner?.stop('World created');
 
       // Start server if requested
       let started = false;

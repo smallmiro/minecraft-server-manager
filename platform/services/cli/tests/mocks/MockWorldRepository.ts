@@ -1,8 +1,9 @@
 import type {
   IWorldRepository,
   WorldLockData,
-} from '../../src/application/ports/outbound/IWorldRepository.js';
-import { World } from '../../src/domain/index.js';
+  WorldWithServerStatus,
+} from '@minecraft-docker/shared';
+import { World } from '@minecraft-docker/shared';
 
 /**
  * Mock world data for testing
@@ -113,5 +114,41 @@ export class MockWorldRepository implements IWorldRepository {
       serverName: world.lockedBy ?? 'unknown',
       timestamp: new Date(),
     };
+  }
+
+  async findAllWithServerStatus(): Promise<WorldWithServerStatus[]> {
+    const worlds = await this.findAll();
+    return worlds.map((world) => ({
+      world,
+      category: world.isLocked ? 'stopped' : 'available',
+      assignedServer: world.lockedBy,
+    }));
+  }
+
+  async delete(name: string): Promise<boolean> {
+    if (!this.worlds.has(name)) {
+      return false;
+    }
+    this.worlds.delete(name);
+    return true;
+  }
+
+  async create(name: string, seed?: string): Promise<World> {
+    if (this.worlds.has(name)) {
+      throw new Error(`World '${name}' already exists`);
+    }
+
+    const path = `/worlds/${name}`;
+    const world = new World(name, path);
+    if (seed) {
+      world.setSeed(seed);
+    }
+    this.worlds.set(name, world);
+    return world;
+  }
+
+  async getSeed(name: string): Promise<string | null> {
+    const world = this.worlds.get(name);
+    return world?.seed ?? null;
   }
 }

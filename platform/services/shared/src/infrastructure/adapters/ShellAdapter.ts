@@ -180,15 +180,17 @@ export class ShellAdapter implements IShellPort {
     serverName: string,
     force = false
   ): Promise<ShellResult> {
-    const args: string[] = ['assign', worldName, serverName];
+    // Use mcctl.sh world assign which delegates to lock.sh lock
+    const args: string[] = ['world', 'assign', worldName, serverName];
     if (force) {
       args.push('--force');
     }
-    return this.executeScript('lock.sh', args);
+    return this.executeScript('mcctl.sh', args);
   }
 
   async worldRelease(worldName: string): Promise<ShellResult> {
-    return this.executeScript('lock.sh', ['release', worldName]);
+    // Use mcctl.sh world release which delegates to lock.sh unlock
+    return this.executeScript('mcctl.sh', ['world', 'release', worldName]);
   }
 
   // ========================================

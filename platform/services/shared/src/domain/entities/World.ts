@@ -26,6 +26,7 @@ export class World {
   private _lock?: WorldLock;
   private _sizeBytes?: number;
   private _lastModified?: Date;
+  private _seed?: string;
 
   constructor(name: string, path: string) {
     this._name = name;
@@ -67,6 +68,10 @@ export class World {
 
   get lastModified(): Date | undefined {
     return this._lastModified;
+  }
+
+  get seed(): string | undefined {
+    return this._seed;
   }
 
   /**
@@ -124,9 +129,19 @@ export class World {
   /**
    * Set world metadata
    */
-  setMetadata(sizeBytes: number, lastModified: Date): void {
+  setMetadata(sizeBytes: number, lastModified: Date, seed?: string): void {
     this._sizeBytes = sizeBytes;
     this._lastModified = lastModified;
+    if (seed !== undefined) {
+      this._seed = seed;
+    }
+  }
+
+  /**
+   * Set world seed
+   */
+  setSeed(seed: string): void {
+    this._seed = seed;
   }
 
   /**
