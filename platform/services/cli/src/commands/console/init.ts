@@ -18,6 +18,7 @@ import {
   checkPm2Installation,
   ECOSYSTEM_CONFIG_FILE,
   PM2_SERVICE_NAMES,
+  resolveServiceScriptPaths,
 } from '../../lib/pm2-utils.js';
 
 /**
@@ -99,8 +100,24 @@ async function stopAdminServices(paths: Paths): Promise<boolean> {
 
 /**
  * Generate ecosystem.config.cjs content
+ * @param apiPort - API server port
+ * @param consolePort - Console server port
+ * @param apiScriptPath - Absolute path to API script
+ * @param consoleScriptPath - Absolute path to console script
+ * @param isDevelopment - Whether we're in development mode
  */
-function generateEcosystemConfig(apiPort: number, consolePort: number): string {
+function generateEcosystemConfig(
+  apiPort: number,
+  consolePort: number,
+  apiScriptPath: string,
+  consoleScriptPath: string,
+  isDevelopment: boolean,
+  nextAuthSecret: string
+): string {
+  const modeComment = isDevelopment
+    ? '// NOTE: Development mode - using workspace paths'
+    : '// NOTE: Production mode - using node_modules paths';
+
   return `// ecosystem.config.cjs
 // =============================================================================
 // PM2 Ecosystem Configuration for Minecraft Admin Service
@@ -120,15 +137,16 @@ function generateEcosystemConfig(apiPort: number, consolePort: number): string {
 //   pm2 startup                        # Configure auto-start on boot
 //   pm2 save                           # Save current process list
 // =============================================================================
+${modeComment}
 
 module.exports = {
   apps: [
     {
       name: 'mcctl-api',
-      script: 'node_modules/@minecraft-docker/mcctl-api/dist/index.js',
+      script: '${apiScriptPath}',
       cwd: process.env.MCCTL_ROOT || '.',
       env: {
-        NODE_ENV: 'production',
+        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',
         PORT: ${apiPort},
         HOST: '0.0.0.0',
         MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
@@ -141,14 +159,16 @@ module.exports = {
     },
     {
       name: 'mcctl-console',
-      script: 'node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js',
+      script: '${consoleScriptPath}',
       cwd: process.env.MCCTL_ROOT || '.',
       env: {
-        NODE_ENV: 'production',
+        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',
         PORT: ${consolePort},
         HOSTNAME: '0.0.0.0',
         MCCTL_API_URL: 'http://localhost:${apiPort}',
         MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
+        NEXTAUTH_SECRET: '${nextAuthSecret}',
+        NEXTAUTH_URL: 'http://localhost:${consolePort}',
       },
       instances: 1,
       exec_mode: 'fork',
@@ -520,10 +540,33 @@ export async function consoleInitCommand(
     spinner.stop('Admin user created');
 
     // Step 10: Generate ecosystem.config.cjs
+    spinner.start('Resolving service script paths...');
+
+    // Resolve script paths (development vs production)
+    const scriptPaths = resolveServiceScriptPaths(paths.root);
+
+    if (scriptPaths.isDevelopment) {
+      spinner.stop('Using development workspace paths');
+      console.log(colors.dim(`    API: ${scriptPaths.api}`));
+      console.log(colors.dim(`    Console: ${scriptPaths.console}`));
+    } else {
+      spinner.stop('Using production node_modules paths');
+    }
+
     spinner.start('Generating PM2 ecosystem config...');
 
+    // Generate NextAuth secret for session encryption
+    const nextAuthSecret = AdminConfigManager.generateApiKey();
+
     const ecosystemPath = join(paths.platform, ECOSYSTEM_CONFIG_FILE);
-    const ecosystemContent = generateEcosystemConfig(apiPort, consolePort);
+    const ecosystemContent = generateEcosystemConfig(
+      apiPort,
+      consolePort,
+      scriptPaths.api,
+      scriptPaths.console,
+      scriptPaths.isDevelopment,
+      nextAuthSecret
+    );
     writeFileSync(ecosystemPath, ecosystemContent, 'utf-8');
 
     spinner.stop('PM2 ecosystem config generated');

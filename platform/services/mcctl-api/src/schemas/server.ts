@@ -9,6 +9,7 @@ export const ContainerStatusSchema = Type.Union([
   Type.Literal('dead'),
   Type.Literal('created'),
   Type.Literal('not_found'),
+  Type.Literal('not_created'),
 ]);
 
 export const HealthStatusSchema = Type.Union([
@@ -86,6 +87,7 @@ export const LogsResponseSchema = Type.Object({
 
 export const LogsQuerySchema = Type.Object({
   lines: Type.Optional(Type.Number({ minimum: 1, maximum: 10000, default: 100 })),
+  follow: Type.Optional(Type.Boolean({ default: false, description: 'Enable SSE streaming for real-time logs' })),
 });
 
 export const ErrorResponseSchema = Type.Object({

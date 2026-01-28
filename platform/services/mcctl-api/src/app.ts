@@ -8,6 +8,7 @@ import serversRoutes from './routes/servers.js';
 import serverActionsRoutes from './routes/servers/actions.js';
 import consoleRoutes from './routes/console.js';
 import worldsRoutes from './routes/worlds.js';
+import authRoutes from './routes/auth.js';
 
 export interface BuildAppOptions {
   logger?: boolean;
@@ -20,16 +21,17 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     } : false,
   });
 
-  // Register security plugins
+  // Register CORS - allow all origins
   await app.register(cors, {
-    origin: true, // Allow all origins in development, configure for production
-    credentials: true,
+    origin: '*',
   });
 
-  await app.register(helmet, {
-    // Helmet default security headers
-    contentSecurityPolicy: config.nodeEnv === 'production',
-  });
+  // Only enable Helmet in production to avoid HTTPS issues in development
+  if (config.nodeEnv === 'production') {
+    await app.register(helmet, {
+      contentSecurityPolicy: true,
+    });
+  }
 
   // Register authentication plugin
   await app.register(authPlugin, {
@@ -63,6 +65,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
 
   // Register API routes
+  await app.register(authRoutes);
   await app.register(consoleRoutes);
 
   // Graceful shutdown handler

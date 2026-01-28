@@ -1,7 +1,7 @@
 /**
  * Server status types
  */
-export type ContainerStatus = 'running' | 'exited' | 'paused' | 'restarting' | 'dead' | 'created' | 'not_found';
+export type ContainerStatus = 'running' | 'exited' | 'paused' | 'restarting' | 'dead' | 'created' | 'not_found' | 'not_created';
 export type HealthStatus = 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown';
 
 export interface ServerInfo {

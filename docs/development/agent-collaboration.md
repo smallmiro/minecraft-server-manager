@@ -101,8 +101,8 @@ If you are blocked by another agent:
 │              │ │              │ │              │ │              │ │              │
 │ shared/      │ │ cli/,scripts/│ │ mcctl-api/   │ │ mcctl-console│ │ Integration  │
 │              │ │              │ │              │ │              │ │              │
-│ Phase 8.1    │ │ Phase 8.2    │ │ Phase 8.3    │ │ Phase 8.4    │ │ Phase 8.5    │
-│ #80-83       │ │ #84-87       │ │ #88-94       │ │ #95-100      │ │ #101-102     │
+│ Domain &     │ │ Commands &   │ │ REST API     │ │ Web UI       │ │ Docker &     │
+│ Interfaces   │ │ Prompts      │ │ Server       │ │ Console      │ │ E2E Tests    │
 └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
 ```
 
@@ -158,54 +158,50 @@ orchestrator:
 | Attribute | Description |
 |-----------|-------------|
 | **Module** | `platform/services/shared/` |
-| **Issues** | #80, #81, #82, #83 |
+| **Label** | `agent:core` |
 | **Documents** | `shared/prd.md`, `shared/plan.md` |
 | **Expertise** | Hexagonal Architecture, TypeScript, Domain Modeling |
 
-**Assigned Tasks**:
-```
-#80: IUserRepository port interface
-#81: YamlUserRepository adapter
-#82: SqliteUserRepository adapter (optional)
-#83: ApiPromptAdapter for non-interactive mode
-```
+**Example Tasks**:
+- Domain entity definitions (Server, World, etc.)
+- Port interfaces (IUserRepository, IModSourcePort, etc.)
+- Value objects (ServerName, ServerType, McVersion, etc.)
+- Infrastructure adapters (YamlUserRepository, etc.)
 
 **Provides** (→ to other agents):
-- `IUserRepository` interface → CLI, Backend
-- `YamlUserRepository` implementation → CLI
-- `ApiPromptAdapter` → Backend
+- Domain interfaces → CLI, Backend
+- Repository implementations → CLI
+- Adapter interfaces → Backend
 
 **Requires** (← from other agents):
-- (No dependencies - starts first)
+- (Often no dependencies - starts first in dependency chains)
 
 ---
 
 ### 💻 CLI Agent (cli/)
 
-**Role**: mcctl console command implementation
+**Role**: CLI command implementation
 
 | Attribute | Description |
 |-----------|-------------|
-| **Module** | `platform/services/cli/` |
-| **Issues** | #84, #85, #86, #87 |
+| **Module** | `platform/services/cli/`, `scripts/` |
+| **Label** | `agent:cli` |
 | **Documents** | `cli/prd.md`, `cli/plan.md` |
-| **Expertise** | @clack/prompts, Commander.js, YAML |
+| **Expertise** | @clack/prompts, Commander.js, YAML, Shell scripting |
 
-**Assigned Tasks**:
-```
-#84: mcctl console init command
-#85: mcctl console user command
-#86: mcctl console api command
-#87: mcctl console service command
-```
+**Example Tasks**:
+- New CLI commands (mcctl create, mcctl console, etc.)
+- Interactive prompts and wizards
+- Bash management scripts
+- Configuration file handling
 
 **Provides** (→ to other agents):
-- Admin config file spec (`.mcctl-admin.yml`) → Backend, Frontend
-- CLI command interface → DevOps (service command)
+- CLI command interface → DevOps
+- Config file specifications → Backend, Frontend
 
 **Requires** (← from other agents):
-- `IUserRepository`, `YamlUserRepository` ← Core (#80, #81)
-- API/Console Dockerfile ← Backend, Frontend (#94, #100)
+- Domain interfaces ← Core
+- Repository implementations ← Core
 
 ---
 
@@ -216,20 +212,15 @@ orchestrator:
 | Attribute | Description |
 |-----------|-------------|
 | **Module** | `platform/services/mcctl-api/` |
-| **Issues** | #88, #89, #90, #91, #92, #93, #94 |
+| **Label** | `agent:backend` |
 | **Documents** | `mcctl-api/prd.md`, `mcctl-api/plan.md` |
 | **Expertise** | Fastify, REST API, Authentication, OpenAPI |
 
-**Assigned Tasks**:
-```
-#88: Fastify project foundation
-#89: Authentication plugin (5 access modes)
-#90: Server management routes
-#91: World management routes
-#92: Player management routes
-#93: OpenAPI/Swagger documentation
-#94: Dockerfile and container build
-```
+**Example Tasks**:
+- API endpoint implementation
+- Authentication and authorization plugins
+- OpenAPI/Swagger documentation
+- Dockerfile and container builds
 
 **Provides** (→ to other agents):
 - REST API endpoint spec → Frontend
@@ -237,8 +228,8 @@ orchestrator:
 - Docker image → DevOps
 
 **Requires** (← from other agents):
-- `ApiPromptAdapter` ← Core (#83)
-- shared Use Cases ← Core (existing)
+- Domain adapters ← Core
+- Shared Use Cases ← Core
 
 ---
 
@@ -249,27 +240,23 @@ orchestrator:
 | Attribute | Description |
 |-----------|-------------|
 | **Module** | `platform/services/mcctl-console/` |
-| **Issues** | #95, #96, #97, #98, #99, #100 |
+| **Label** | `agent:frontend` |
 | **Documents** | `mcctl-console/prd.md`, `mcctl-console/plan.md` |
 | **Expertise** | Next.js, React, Tailwind CSS, NextAuth.js |
 
-**Assigned Tasks**:
-```
-#95: Next.js project foundation
-#96: NextAuth.js authentication
-#97: BFF proxy layer
-#98: Dashboard UI
-#99: Server management pages
-#100: Dockerfile and container build
-```
+**Example Tasks**:
+- Next.js pages and components
+- Authentication integration (NextAuth.js)
+- BFF proxy layer
+- Dashboard and management UI
 
 **Provides** (→ to other agents):
 - Docker image → DevOps
-- UI component spec → (documentation)
+- UI component specifications → (documentation)
 
 **Requires** (← from other agents):
-- API endpoint spec ← Backend (#88-92)
-- Auth plugin spec ← Backend (#89)
+- API endpoint spec ← Backend
+- Auth plugin spec ← Backend
 
 ---
 
@@ -280,24 +267,24 @@ orchestrator:
 | Attribute | Description |
 |-----------|-------------|
 | **Module** | `platform/` (docker-compose), `e2e/` |
-| **Issues** | #101, #102 |
+| **Label** | `agent:devops` |
 | **Documents** | `platform/README.md`, `e2e/README.md` |
 | **Expertise** | Docker Compose, Playwright, CI/CD |
 
-**Assigned Tasks**:
-```
-#101: Docker Compose integration
-#102: E2E tests with Playwright
-```
+**Example Tasks**:
+- Docker Compose integration
+- E2E tests with Playwright
+- Service orchestration
+- CI/CD pipeline configuration
 
 **Provides** (→ to other agents):
 - Integration test results → All
-- Deployment guide → (documentation)
+- Deployment configurations → All
 
 **Requires** (← from other agents):
-- API Dockerfile ← Backend (#94)
-- Console Dockerfile ← Frontend (#100)
-- CLI service command ← CLI (#87)
+- API Dockerfile ← Backend
+- Console Dockerfile ← Frontend
+- CLI service command ← CLI
 
 ---
 
@@ -404,13 +391,13 @@ type: WORK_REQUEST
 from: orchestrator
 to: core
 payload:
-  issue: "#80"
-  title: "feat(shared): Add IUserRepository port interface"
+  issue: "#XX"
+  title: "feat(shared): Add repository interface"
   priority: high
   deadline: null
   context:
-    milestone: 5
-    phase: "8.1"
+    milestone: N
+    phase: "X.Y"
     dependencies: []
 ```
 
@@ -418,16 +405,16 @@ payload:
 ```yaml
 type: DEPENDENCY_READY
 from: core
-to: broadcast  # to both cli and backend
+to: broadcast  # to multiple agents
 payload:
-  issue: "#80"
-  artifact: "IUserRepository interface"
-  location: "shared/src/application/ports/outbound/IUserRepository.ts"
+  issue: "#XX"
+  artifact: "IRepository interface"
+  location: "shared/src/application/ports/outbound/IRepository.ts"
   exports:
-    - "User"
-    - "IUserRepository"
+    - "Entity"
+    - "IRepository"
   usage_example: |
-    import { IUserRepository, User } from '@minecraft-docker/shared';
+    import { IRepository, Entity } from '@minecraft-docker/shared';
 ```
 
 **Work Complete (WORK_COMPLETE)**:
@@ -436,16 +423,16 @@ type: WORK_COMPLETE
 from: core
 to: orchestrator
 payload:
-  issue: "#80"
+  issue: "#XX"
   status: completed
   artifacts:
-    - path: "shared/src/application/ports/outbound/IUserRepository.ts"
+    - path: "shared/src/application/ports/outbound/IRepository.ts"
       type: "interface"
     - path: "shared/src/index.ts"
       type: "export"
   tests_passed: true
   ready_for_merge: true
-  unblocks: ["#81", "#82", "#84", "#88"]
+  unblocks: ["#YY", "#ZZ"]
 ```
 
 **Blocking Issue (BLOCKING_ISSUE)**:
@@ -454,8 +441,8 @@ type: BLOCKING_ISSUE
 from: frontend
 to: orchestrator
 payload:
-  issue: "#97"
-  blocked_by: "#89"
+  issue: "#XX"
+  blocked_by: "#YY"
   reason: "Need auth plugin spec to implement BFF proxy"
   suggested_action: "Request Backend agent to share auth spec early"
 ```
@@ -469,13 +456,13 @@ payload:
 ```
 Orchestrator                    All Agents
     │                               │
-    │  1. WORK_REQUEST (#80)        │
-    │──────────────────────────────▶│ Core
+    │  1. WORK_REQUEST (#A)         │
+    │──────────────────────────────▶│ Core (foundation tasks)
     │                               │
-    │  2. WORK_REQUEST (#88)        │
+    │  2. WORK_REQUEST (#B)         │
     │──────────────────────────────▶│ Backend (parallel - foundation)
     │                               │
-    │  3. WORK_REQUEST (#95)        │
+    │  3. WORK_REQUEST (#C)         │
     │──────────────────────────────▶│ Frontend (parallel - foundation)
     │                               │
 ```
@@ -485,13 +472,13 @@ Orchestrator                    All Agents
 ```
 Core                 Orchestrator              CLI / Backend
   │                       │                         │
-  │ WORK_COMPLETE (#80)   │                         │
+  │ WORK_COMPLETE (#A)    │                         │
   │──────────────────────▶│                         │
   │                       │                         │
   │                       │ DEPENDENCY_READY        │
   │                       │────────────────────────▶│
   │                       │                         │
-  │                       │ WORK_REQUEST (#81,#84)  │
+  │                       │ WORK_REQUEST (next)     │
   │                       │────────────────────────▶│
   │                       │                         │
 ```
@@ -505,20 +492,15 @@ Core                 Orchestrator              CLI / Backend
 │                                                                  │
 │  Core Agent          CLI Agent         Backend Agent            │
 │  ───────────         ──────────        ──────────────           │
-│  #81 YamlRepo        #84 admin init    #89 Auth Plugin          │
+│  Repository          CLI commands      Auth Plugin              │
+│  implementations          │            API routes               │
 │       │                   │                  │                   │
 │       ▼                   ▼                  ▼                   │
-│  #82 SqliteRepo      #85 user cmd      #90 Server Routes        │
-│  (optional)               │                  │                   │
-│       │                   │                  │                   │
-│       ▼                   ▼                  ▼                   │
-│  #83 ApiPrompt       #86 api cmd       #91 World Routes         │
+│  Additional          More commands     More routes              │
+│  adapters                 │                  │                   │
 │                           │                  │                   │
 │                           ▼                  ▼                   │
-│                                         #92 Player Routes       │
-│                                              │                   │
-│                                              ▼                   │
-│                                         #93 Swagger             │
+│                      Service cmd       OpenAPI docs             │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -528,14 +510,14 @@ Core                 Orchestrator              CLI / Backend
 ```
 Backend                Orchestrator              Frontend
    │                        │                        │
-   │ WORK_COMPLETE (#93)    │                        │
-   │ (Swagger Ready)        │                        │
+   │ WORK_COMPLETE          │                        │
+   │ (API Spec Ready)       │                        │
    │───────────────────────▶│                        │
    │                        │                        │
    │                        │ SYNC: API_SPEC_READY   │
    │                        │───────────────────────▶│
    │                        │                        │
-   │                        │ WORK_REQUEST (#97)     │
+   │                        │ WORK_REQUEST (BFF)     │
    │                        │───────────────────────▶│
    │                        │                        │
 ```
@@ -546,14 +528,15 @@ Backend                Orchestrator              Frontend
 Backend / Frontend          Orchestrator              DevOps
        │                         │                       │
        │ WORK_COMPLETE           │                       │
-       │ (#94, #100)             │                       │
+       │ (Dockerfiles)           │                       │
        │────────────────────────▶│                       │
        │                         │                       │
        │                         │ DEPENDENCY_READY      │
        │                         │ (Both Dockerfiles)    │
        │                         │──────────────────────▶│
        │                         │                       │
-       │                         │ WORK_REQUEST (#101)   │
+       │                         │ WORK_REQUEST          │
+       │                         │ (Integration)         │
        │                         │──────────────────────▶│
        │                         │                       │
 ```
@@ -564,68 +547,81 @@ Backend / Frontend          Orchestrator              DevOps
 
 ### Identifying Parallelizable Tasks
 
-| Group | Issues | Agents | Prerequisites |
-|-------|--------|--------|---------------|
-| **P1** | #80, #88, #95 | Core, Backend, Frontend | None (start) |
-| **P2** | #81, #82, #89, #96 | Core, Backend, Frontend | P1 complete |
-| **P3** | #83, #84, #90, #91, #92, #97 | Core, CLI, Backend, Frontend | Partial dependencies |
-| **P4** | #85, #86, #93, #98, #99 | CLI, Backend, Frontend | P3 complete |
-| **P5** | #87, #94, #100 | CLI, Backend, Frontend | P4 complete |
-| **P6** | #101, #102 | DevOps | P5 complete |
+| Criteria | Parallelizable | Sequential |
+|----------|----------------|------------|
+| No shared dependencies | ✅ Yes | - |
+| Different modules | ✅ Yes | - |
+| Same module, different features | ⚠️ Depends | - |
+| Explicit dependency exists | - | ✅ Required |
+| Output of one is input of another | - | ✅ Required |
 
-### Detailed Dependency Graph
+### Example Parallel Groups
+
+| Group | Agents | Can Run In Parallel | Prerequisites |
+|-------|--------|---------------------|---------------|
+| **Foundation** | Core, Backend, Frontend | Yes | None |
+| **Feature Development** | Core, CLI, Backend, Frontend | Yes | Foundation complete |
+| **Dockerization** | Backend, Frontend, CLI | Yes | Features complete |
+| **Integration** | DevOps | No (sequential) | Dockerfiles ready |
+
+### Conceptual Dependency Flow
 
 ```
 Legend: ─── direct dependency
         ··· optional/weak dependency
 
-#80 ───┬─── #81 ───┬─── #84 ─── #85 ───┐
-       │           │                    │
-       ├─── #82    │                    ├─── #86 ─── #87
-       │   (opt)   │                    │
-       │           └··· #88 ─── #89 ───┼─── #90 ───┐
-       │                       │       │           │
-       └─── #83 ───────────────┘       ├─── #91 ──┼─── #93 ─── #94
-                                       │           │
-                                       └─── #92 ───┘
-                                               │
-#95 ─── #96 ───────────────────────────────────┼─── #97 ─── #98 ─── #99 ─── #100
-                                               │
-                                               ▼
-                                    #94 + #100 ─── #101 ─── #102
+Foundation:  Core ─────┬─── Adapters ───┬─── CLI Commands ───┐
+                       │                │                     │
+                       ├─── Optional    │                     ├─── Service Cmd
+                       │   (extensions) │                     │
+                       │                └··· Backend ─── Auth │─── Routes ───┐
+                       │                         │            │               │
+                       └─── Interfaces ──────────┘            ├─── More Routes│─── Swagger ─── Dockerfile
+                                                              │               │
+Frontend:    Foundation ─── Auth ─────────────────────────────┼─── BFF ─── Pages ─── More Pages ─── Dockerfile
+                                                              │
+                                                              ▼
+Integration:                              Backend + Frontend Dockerfiles ─── Compose ─── E2E Tests
 ```
 
 ---
 
 ## Sync Points
 
-### Required Synchronization Points
+### Defining Sync Points
 
-| Sync ID | Condition | Participating Agents | Purpose |
-|---------|-----------|---------------------|---------|
-| **SYNC-1** | #80 complete | Core → All | Share IUserRepository interface |
-| **SYNC-2** | #89 complete | Backend → Frontend | Share Auth spec (for BFF) |
-| **SYNC-3** | #93 complete | Backend → Frontend | Share OpenAPI spec |
-| **SYNC-4** | #94, #100 complete | Backend, Frontend → DevOps | Docker images ready |
-| **SYNC-5** | #101 complete | DevOps → All | Integration test environment ready |
+A sync point is required when:
+1. One agent's output is needed by another agent
+2. Multiple agents must coordinate before proceeding
+3. Integration testing requires all components ready
+
+### Example Sync Points
+
+| Sync ID | Condition | From | To | Purpose |
+|---------|-----------|------|----|---------|
+| **SYNC-INTERFACE** | Interface complete | Core → All | Share domain interfaces |
+| **SYNC-AUTH** | Auth spec complete | Backend → Frontend | Share auth configuration |
+| **SYNC-API** | API docs complete | Backend → Frontend | Share OpenAPI spec |
+| **SYNC-DOCKER** | Dockerfiles complete | Backend, Frontend → DevOps | Docker images ready |
+| **SYNC-INTEGRATION** | Integration ready | DevOps → All | Test environment ready |
 
 ### Information Shared at Sync Points
 
-**SYNC-1: Interface Ready**
+**SYNC-INTERFACE: Interface Ready**
 ```yaml
-sync: SYNC-1
+sync: SYNC-INTERFACE
 artifacts:
-  - file: "shared/src/application/ports/outbound/IUserRepository.ts"
-    exports: ["User", "IUserRepository"]
+  - file: "shared/src/application/ports/outbound/IRepository.ts"
+    exports: ["Entity", "IRepository"]
 
 usage:
-  cli: "Used for YamlUserRepository implementation"
-  backend: "Used for future DB integration"
+  cli: "Used for repository implementation"
+  backend: "Used for API integration"
 ```
 
-**SYNC-2: Auth Spec Ready**
+**SYNC-AUTH: Auth Spec Ready**
 ```yaml
-sync: SYNC-2
+sync: SYNC-AUTH
 artifacts:
   - file: "mcctl-api/src/plugins/auth.ts"
     exports: ["AuthPluginOptions"]
@@ -638,9 +634,9 @@ usage:
   frontend: "Set X-API-Key header in BFF proxy"
 ```
 
-**SYNC-3: API Spec Ready**
+**SYNC-API: API Spec Ready**
 ```yaml
-sync: SYNC-3
+sync: SYNC-API
 artifacts:
   - file: "mcctl-api/docs/openapi.json"
   - url: "http://localhost:3001/docs"
@@ -732,50 +728,45 @@ The following issues can now start:
 Each agent updates their progress in plan.md:
 
 ```markdown
-<!-- platform/services/shared/plan.md -->
-# Shared Package Plan (Phase 8.1)
+<!-- platform/services/{module}/plan.md -->
+# Module Plan
 
 ## Progress
 
 | Issue | Title | Status | Agent | Updated |
 |-------|-------|--------|-------|---------|
-| #80 | IUserRepository port | ✅ Complete | core | 2025-01-26 |
-| #81 | YamlUserRepository | 🔄 In Progress | core | 2025-01-26 |
-| #82 | SqliteUserRepository | ⏳ Pending | - | - |
-| #83 | ApiPromptAdapter | ⏳ Blocked by #80 | - | - |
+| #XX | Feature A | ✅ Complete | {agent} | YYYY-MM-DD |
+| #YY | Feature B | 🔄 In Progress | {agent} | YYYY-MM-DD |
+| #ZZ | Feature C | ⏳ Pending | - | - |
+| #WW | Feature D | 🚫 Blocked by #XX | - | - |
 
 ## Dependencies Provided
-- [x] IUserRepository → CLI, Backend
-- [ ] YamlUserRepository → CLI
-- [ ] ApiPromptAdapter → Backend
+- [x] Interface A → Other agents
+- [ ] Interface B → Other agents
 
 ## Sync Points
-- [x] SYNC-1: IUserRepository interface shared
+- [x] SYNC-1: Interface shared
+- [ ] SYNC-2: Pending
 ```
 
 ### Dashboard View
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                  MILESTONE 5 PROGRESS DASHBOARD                  │
+│                    MILESTONE PROGRESS DASHBOARD                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Overall: ████████░░░░░░░░░░░░ 35% (8/23 issues)                │
+│  Overall: ████████░░░░░░░░░░░░ 35% (X/Y issues)                 │
 │                                                                  │
-│  🔧 Core (shared/)      ████████████░░░░░░░░ 50% (2/4)          │
-│     #80 ✅  #81 🔄  #82 ⏳  #83 ⏳                               │
+│  🔧 Core (shared/)      ████████████░░░░░░░░ 50% (A/B)          │
 │                                                                  │
-│  💻 CLI (cli/)          ████░░░░░░░░░░░░░░░░ 25% (1/4)          │
-│     #84 🔄  #85 ⏳  #86 ⏳  #87 ⏳                               │
+│  💻 CLI (cli/)          ████░░░░░░░░░░░░░░░░ 25% (C/D)          │
 │                                                                  │
-│  🖥️ Backend (mcctl-api/) ██████░░░░░░░░░░░░░░ 29% (2/7)          │
-│     #88 ✅  #89 🔄  #90 ⏳  #91 ⏳  #92 ⏳  #93 ⏳  #94 ⏳       │
+│  🖥️ Backend (mcctl-api/) ██████░░░░░░░░░░░░░░ 29% (E/F)          │
 │                                                                  │
-│  🎨 Frontend (console/)  ████████░░░░░░░░░░░░ 33% (2/6)          │
-│     #95 ✅  #96 🔄  #97 ⏳  #98 ⏳  #99 ⏳  #100 ⏳              │
+│  🎨 Frontend (console/)  ████████░░░░░░░░░░░░ 33% (G/H)          │
 │                                                                  │
-│  🐳 DevOps (integration) ░░░░░░░░░░░░░░░░░░░░ 0% (0/2)           │
-│     #101 ⏳  #102 ⏳                                             │
+│  🐳 DevOps (integration) ░░░░░░░░░░░░░░░░░░░░ 0% (I/J)           │
 │                                                                  │
 │  Legend: ✅ Complete  🔄 In Progress  ⏳ Pending  🚫 Blocked     │
 └─────────────────────────────────────────────────────────────────┘
@@ -788,27 +779,27 @@ Each agent updates their progress in plan.md:
 ### Handling Blockers
 
 ```yaml
-scenario: "Frontend #97 blocked by Backend #89"
+scenario: "Frontend blocked by Backend dependency"
 
 resolution_steps:
   1. Frontend sends BLOCKING_ISSUE to Orchestrator
   2. Orchestrator checks Backend progress
   3. Options:
-     a. If #89 near completion → Wait
-     b. If #89 delayed → Request early spec sharing
-     c. If #89 blocked → Escalate and replan
+     a. If dependency near completion → Wait
+     b. If dependency delayed → Request early spec sharing
+     c. If dependency blocked → Escalate and replan
 
 message_flow:
-  frontend → orchestrator: "BLOCKING_ISSUE: #97 needs #89"
-  orchestrator → backend: "SYNC_REQUEST: Share auth spec early"
-  backend → frontend: "DEPENDENCY_READY: Auth spec (partial)"
+  frontend → orchestrator: "BLOCKING_ISSUE: need dependency from backend"
+  orchestrator → backend: "SYNC_REQUEST: Share spec early"
+  backend → frontend: "DEPENDENCY_READY: Spec (partial)"
   frontend: Proceeds with partial spec, marks for later update
 ```
 
 ### Rollback Handling
 
 ```yaml
-scenario: "Integration test fails in #101"
+scenario: "Integration test fails"
 
 resolution_steps:
   1. DevOps reports BLOCKING_ISSUE with test results
@@ -817,9 +808,9 @@ resolution_steps:
   4. Re-runs integration after fix
 
 message_flow:
-  devops → orchestrator: "BLOCKING_ISSUE: API auth failure in E2E"
-  orchestrator → backend: "REVIEW_REQUEST: Auth plugin issue"
-  backend → orchestrator: "WORK_COMPLETE: Fix applied"
+  devops → orchestrator: "BLOCKING_ISSUE: Integration failure in E2E"
+  orchestrator → {responsible_agent}: "REVIEW_REQUEST: Fix issue"
+  {responsible_agent} → orchestrator: "WORK_COMPLETE: Fix applied"
   orchestrator → devops: "WORK_REQUEST: Re-run E2E tests"
 ```
 
@@ -827,43 +818,44 @@ message_flow:
 
 ## Quick Reference
 
-### Agent Contact Points
+### Agent Module Mapping
 
-| Agent | Module | PRD | Plan | Primary Focus |
-|-------|--------|-----|------|---------------|
-| 🔧 Core | shared/ | shared/prd.md | shared/plan.md | Domain/Ports |
-| 💻 CLI | cli/ | cli/prd.md | cli/plan.md | Commands |
-| 🖥️ Backend | mcctl-api/ | mcctl-api/prd.md | mcctl-api/plan.md | API Routes |
-| 🎨 Frontend | mcctl-console/ | mcctl-console/prd.md | mcctl-console/plan.md | UI Pages |
-| 🐳 DevOps | platform/ | - | - | Docker/E2E |
+| Agent | Module | Label | Primary Focus |
+|-------|--------|-------|---------------|
+| 🔧 Core | `platform/services/shared/` | `agent:core` | Domain/Ports |
+| 💻 CLI | `platform/services/cli/`, `scripts/` | `agent:cli` | Commands |
+| 🖥️ Backend | `platform/services/mcctl-api/` | `agent:backend` | API Routes |
+| 🎨 Frontend | `platform/services/mcctl-console/` | `agent:frontend` | UI Pages |
+| 🐳 DevOps | `platform/`, `e2e/` | `agent:devops` | Docker/E2E |
+| 📝 Docs | `docs/` | `agent:docs` | Documentation |
+| 🚀 Release | Git tags, releases | `agent:release` | Releases |
 
-### Issue Quick Map
+### Typical Dependency Flow
 
 ```
-Phase 8.1 (Core):     #80 → #81 → #82* → #83
-Phase 8.2 (CLI):      #84 → #85 → #86 → #87
-Phase 8.3 (Backend):  #88 → #89 → #90,#91,#92 → #93 → #94
-Phase 8.4 (Frontend): #95 → #96 → #97 → #98 → #99 → #100
-Phase 8.5 (DevOps):   #101 → #102
-
-* #82 is optional
+Core (Foundation)
+   ├─→ CLI (Commands, uses Core interfaces)
+   ├─→ Backend (API, uses Core interfaces)
+   │      └─→ Frontend (UI, uses Backend API)
+   │              └─→ DevOps (Integration, uses all Dockerfiles)
+   └─→ DevOps (Service scripts)
 ```
 
 ### Command Reference
 
 ```bash
 # Orchestrator commands
-/work --milestone 5              # Start milestone orchestration
-/work --issue 80                 # Work on specific issue
+/work --milestone N              # Start milestone orchestration
+/work --issue XX                 # Work on specific issue
 
 # Agent-specific
-/work --agent core --issue 80    # Assign to Core agent
+/work --agent core --issue XX    # Assign to Core agent
 /work --agent backend --parallel # Run backend tasks in parallel
 
 # Status
-/status --milestone 5            # Show progress
+/status --milestone N            # Show progress
 /status --agent core             # Show agent status
-/deps --issue 97                 # Show dependencies for issue
+/deps --issue XX                 # Show dependencies for issue
 ```
 
 ---
@@ -880,5 +872,7 @@ Each agent has its own prompt file in `.claude/agents/`:
 | Backend | `.claude/agents/backend-agent.md` |
 | Frontend | `.claude/agents/frontend-agent.md` |
 | DevOps | `.claude/agents/devops-agent.md` |
+| Technical Writer | `.claude/agents/technical-writer.md` |
+| Release Manager | `.claude/agents/release-manager.md` |
 
 Use these prompts to spawn specialized agents for each domain.

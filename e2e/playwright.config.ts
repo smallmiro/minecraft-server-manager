@@ -21,7 +21,7 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * Environment variables:
  * - E2E_BASE_URL: Console URL (default: http://localhost:3000)
- * - E2E_API_URL: API URL (default: http://localhost:3001)
+ * - E2E_API_URL: API URL (default: http://localhost:5000)
  * - E2E_SKIP_SERVICE_START: Skip PM2 service start (for pre-started services)
  * - E2E_STOP_SERVICES: Stop services after tests (default: false, keep running)
  *

@@ -54,6 +54,15 @@ export {
   getDetailedServerInfoWithPlayers,
   getRouterDetailInfo,
   formatBytes,
+  // Configured servers from filesystem
+  getConfiguredServers,
+  getServerInfoFromConfig,
+  getAllServers,
+  getServersDir,
+  readServerConfigEnv,
+  serverExists,
+  getDetailedServerInfoFromConfig,
+  getServerDetailedInfo,
 } from './docker/index.js';
 
 // Re-export domain layer (Value Objects and Entities)

@@ -1,11 +1,12 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import {
-  getMcContainers,
-  getServerInfo,
-  getDetailedServerInfoWithPlayers,
+  getAllServers,
+  getServerInfoFromConfig,
+  getServerDetailedInfo,
   getContainerLogs,
   containerExists,
+  serverExists,
 } from '@minecraft-docker/shared';
 import {
   ServerListResponseSchema,
@@ -56,9 +57,10 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (_request, reply) => {
     try {
-      const containers = getMcContainers();
-      const servers: ServerSummary[] = containers.map((container) => {
-        const info = getServerInfo(container);
+      // Get all servers (both configured and running containers)
+      const serverNames = getAllServers();
+      const servers: ServerSummary[] = serverNames.map((serverName) => {
+        const info = getServerInfoFromConfig(serverName);
         return {
           name: info.name,
           container: info.container,
@@ -96,17 +98,17 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<ServerNameRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    const containerName = `mc-${name}`;
 
     try {
-      if (!containerExists(containerName)) {
+      // Check if server exists (either as container or config)
+      if (!serverExists(name)) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
         });
       }
 
-      const info = await getDetailedServerInfoWithPlayers(containerName);
+      const info = await getServerDetailedInfo(name);
 
       const server: ServerDetail = {
         name: info.name,
@@ -137,7 +139,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
   /**
    * GET /api/servers/:name/logs
-   * Get server logs
+   * Get server logs (supports SSE streaming with follow=true)
    */
   fastify.get<LogsRoute>('/api/servers/:name/logs', {
     schema: {
@@ -151,7 +153,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<LogsRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    const { lines = 100 } = request.query;
+    const { lines = 100, follow = false } = request.query as LogsQuery & { follow?: boolean };
     const containerName = `mc-${name}`;
 
     try {
@@ -162,6 +164,64 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
+      // SSE streaming mode
+      if (follow) {
+        const { spawn } = await import('node:child_process');
+
+        reply.raw.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*',
+        });
+
+        // Send initial logs
+        const initialLogs = getContainerLogs(containerName, lines);
+        for (const line of initialLogs.split('\n')) {
+          if (line) {
+            reply.raw.write(`data: ${JSON.stringify({ log: line })}\n\n`);
+          }
+        }
+
+        // Follow new logs with docker logs -f
+        const dockerLogs = spawn('docker', ['logs', '-f', '--tail', '0', containerName], {
+          stdio: ['ignore', 'pipe', 'pipe'],
+        });
+
+        const sendLine = (data: Buffer) => {
+          const lines = data.toString().split('\n');
+          for (const line of lines) {
+            if (line.trim()) {
+              reply.raw.write(`data: ${JSON.stringify({ log: line })}\n\n`);
+            }
+          }
+        };
+
+        dockerLogs.stdout?.on('data', sendLine);
+        dockerLogs.stderr?.on('data', sendLine);
+
+        // Heartbeat to keep connection alive
+        const heartbeat = setInterval(() => {
+          reply.raw.write(': heartbeat\n\n');
+        }, 30000);
+
+        // Cleanup on client disconnect
+        request.raw.on('close', () => {
+          clearInterval(heartbeat);
+          dockerLogs.kill();
+          reply.raw.end();
+        });
+
+        dockerLogs.on('close', () => {
+          clearInterval(heartbeat);
+          reply.raw.write(`data: ${JSON.stringify({ event: 'closed' })}\n\n`);
+          reply.raw.end();
+        });
+
+        return;
+      }
+
+      // Standard JSON response (non-streaming)
       const logs = getContainerLogs(containerName, lines);
 
       return reply.send({

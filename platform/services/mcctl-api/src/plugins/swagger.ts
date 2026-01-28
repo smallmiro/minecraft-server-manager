@@ -52,8 +52,16 @@ const swaggerPlugin: FastifyPluginAsync<SwaggerPluginOptions> = async (
       },
       servers: [
         {
-          url: 'http://localhost:3001',
-          description: 'Development server',
+          url: '/',
+          description: 'Current server (relative)',
+        },
+        {
+          url: 'http://localhost:5000',
+          description: 'Local development server',
+        },
+        {
+          url: 'http://192.168.20.37:5000',
+          description: 'LAN server',
         },
       ],
       tags: [
@@ -105,7 +113,7 @@ const swaggerPlugin: FastifyPluginAsync<SwaggerPluginOptions> = async (
         next();
       },
     },
-    staticCSP: true,
+    staticCSP: false,
     transformStaticCSP: (header) => header,
     transformSpecification: (swaggerObject) => swaggerObject,
     transformSpecificationClone: true,

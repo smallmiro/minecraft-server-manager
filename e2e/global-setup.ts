@@ -13,7 +13,7 @@ import { join } from 'path';
  */
 async function globalSetup(config: FullConfig): Promise<void> {
   const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:3000';
-  const apiURL = process.env.E2E_API_URL || 'http://localhost:3001';
+  const apiURL = process.env.E2E_API_URL || 'http://localhost:5000';
 
   console.log('[Global Setup] Starting E2E test setup...');
   console.log(`[Global Setup] Console URL: ${baseURL}`);

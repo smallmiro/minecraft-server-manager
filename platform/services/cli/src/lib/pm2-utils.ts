@@ -169,3 +169,127 @@ export function normalizePm2Status(pm2Status: string): string {
       return 'stopped';
   }
 }
+
+/**
+ * Service script paths configuration
+ */
+export interface ServiceScriptPaths {
+  api: string;
+  console: string;
+  isDevelopment: boolean;
+}
+
+/**
+ * Resolve script paths for PM2 services.
+ * Tries to find scripts in node_modules (production) or workspace (development).
+ *
+ * @param rootDir - Root directory (MCCTL_ROOT)
+ * @returns Object with resolved script paths
+ */
+export function resolveServiceScriptPaths(rootDir: string): ServiceScriptPaths {
+  // Production paths (npm install)
+  const prodApiPath = join(rootDir, 'node_modules/@minecraft-docker/mcctl-api/dist/index.js');
+  const prodConsolePath = join(
+    rootDir,
+    'node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'
+  );
+
+  // Check if production paths exist
+  if (existsSync(prodApiPath) && existsSync(prodConsolePath)) {
+    return {
+      api: prodApiPath,
+      console: prodConsolePath,
+      isDevelopment: false,
+    };
+  }
+
+  // Development mode: Try to find via workspace
+  // The CLI is installed globally via pnpm link, so we need to find the workspace
+  // by looking at where this package is actually located
+
+  // Try common development workspace locations
+  const possibleWorkspaceRoots = [
+    // User's minecraft project directory (most common)
+    join(process.env.HOME || '~', 'minecraft'),
+    // If MCCTL_DEV_ROOT is set
+    process.env.MCCTL_DEV_ROOT,
+    // Current working directory might be in the workspace
+    findWorkspaceRoot(process.cwd()),
+  ].filter((p): p is string => p !== undefined && p !== null);
+
+  for (const workspaceRoot of possibleWorkspaceRoots) {
+    const devApiPath = join(workspaceRoot, 'platform/services/mcctl-api/dist/index.js');
+    const devConsolePath = join(
+      workspaceRoot,
+      'platform/services/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'
+    );
+
+    if (existsSync(devApiPath) && existsSync(devConsolePath)) {
+      return {
+        api: devApiPath,
+        console: devConsolePath,
+        isDevelopment: true,
+      };
+    }
+
+    // Also try without standalone (for development builds)
+    const devConsolePathAlt = join(
+      workspaceRoot,
+      'platform/services/mcctl-console/.next/standalone/server.js'
+    );
+    if (existsSync(devApiPath) && existsSync(devConsolePathAlt)) {
+      return {
+        api: devApiPath,
+        console: devConsolePathAlt,
+        isDevelopment: true,
+      };
+    }
+  }
+
+  // Fallback: return production paths (will fail at runtime if not found)
+  return {
+    api: prodApiPath,
+    console: prodConsolePath,
+    isDevelopment: false,
+  };
+}
+
+/**
+ * Find the workspace root by looking for pnpm-workspace.yaml or package.json with workspaces
+ * @param startDir - Directory to start searching from
+ * @returns Workspace root or undefined
+ */
+function findWorkspaceRoot(startDir: string): string | undefined {
+  let currentDir = startDir;
+  const root = '/';
+
+  while (currentDir !== root) {
+    // Check for pnpm workspace
+    if (existsSync(join(currentDir, 'pnpm-workspace.yaml'))) {
+      return currentDir;
+    }
+
+    // Check for package.json with workspaces field
+    const packageJsonPath = join(currentDir, 'package.json');
+    if (existsSync(packageJsonPath)) {
+      try {
+        const content = readFileSync(packageJsonPath, 'utf-8');
+        const pkg = JSON.parse(content);
+        if (pkg.workspaces) {
+          return currentDir;
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+
+    // Move up one directory
+    const parentDir = join(currentDir, '..');
+    if (parentDir === currentDir) {
+      break; // Reached root
+    }
+    currentDir = parentDir;
+  }
+
+  return undefined;
+}

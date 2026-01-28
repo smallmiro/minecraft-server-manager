@@ -179,33 +179,43 @@ Two independent microservices following the Backend-For-Frontend (BFF) pattern:
 ### Authentication Flow
 
 ```
-┌──────────┐     ┌──────────────┐     ┌───────────┐     ┌─────────────┐
-│  Browser │     │ mcctl-console│     │ mcctl-api │     │ User Store  │
-└────┬─────┘     └──────┬───────┘     └─────┬─────┘     └──────┬──────┘
-     │                  │                   │                   │
-     │ 1. POST /login   │                   │                   │
-     │ (credentials)    │                   │                   │
-     │─────────────────►│                   │                   │
-     │                  │                   │                   │
-     │                  │ 2. POST /auth/login                   │
-     │                  │──────────────────►│                   │
-     │                  │                   │                   │
-     │                  │                   │ 3. Validate       │
-     │                  │                   │───────────────────►
-     │                  │                   │                   │
-     │                  │                   │ 4. User data      │
-     │                  │                   │◄───────────────────
-     │                  │                   │                   │
-     │                  │ 5. JWT token      │                   │
-     │                  │◄──────────────────│                   │
-     │                  │                   │                   │
-     │ 6. Set session   │                   │                   │
-     │    cookie        │                   │                   │
-     │◄─────────────────│                   │                   │
-     │                  │                   │                   │
-     │ 7. Redirect to   │                   │                   │
-     │    /dashboard    │                   │                   │
-     │◄─────────────────│                   │                   │
+┌──────────┐      ┌──────────────┐      ┌─────────────┐      ┌───────────┐
+│  Browser │      │ mcctl-console│      │ User Store  │      │ mcctl-api │
+└────┬─────┘      └──────┬───────┘      └──────┬──────┘      └─────┬─────┘
+     │                   │                     │                   │
+     │ 1. POST /login    │                     │                   │
+     │──────────────────►│                     │                   │
+     │                   │                     │                   │
+     │                   │ 2. Validate User    │                   │
+     │                   │────────────────────►│                   │
+     │                   │                     │                   │
+     │                   │ 3. User Data        │                   │
+     │                   │◄────────────────────│                   │
+     │                   │                     │                   │
+     │ 4. Set Session    │                     │                   │
+     │    Cookie         │                     │                   │
+     │◄──────────────────│                     │                   │
+     │                   │                     │                   │
+     │                   │                     │                   │
+     │ [ 비즈니스 로직 요청 : App Key 인증 구간 ]  │                   │
+     │                   │                     │                   │
+     │ 5. GET /data      │                     │                   │
+     │   (with Cookie)   │                     │                   │
+     │──────────────────►│                     │                   │
+     │                   │                     │                   │
+     │                   │ 6. API Call         │                   │
+     │                   │    Header: X-App-Key│                   │
+     │                   │────────────────────────────────────────►│
+     │                   │                     │                   │
+     │                   │                     │ 7. Validate Key   │
+     │                   │                     │    & Process Logic│
+     │                   │                     │                   │
+     │                   │ 8. Business Data    │                   │
+     │                   │◄────────────────────────────────────────│
+     │                   │                     │                   │
+     │ 9. Response       │                     │                   │
+     │◄──────────────────│                     │                   │
+     └                   └                     └                   └
 ```
 
 ### 5 API Access Modes
@@ -352,63 +362,6 @@ minecraft/
 │      mcctl       │        │      shared      │
 │      (CLI)       │───────►│   (Domain)       │
 └──────────────────┘        └──────────────────┘
-```
-
----
-
-## Implementation Phases
-
-### Phase 8: Admin Service
-
-| Phase | Description | Issues | Dependencies |
-|-------|-------------|--------|--------------|
-| **8.1** | Shared Package Extension | #80-83 | - |
-| **8.2** | CLI Admin Commands | #84-87 | 8.1 |
-| **8.3** | mcctl-api Service | #88-94 | 8.1 |
-| **8.4** | mcctl-console Service | #95-100 | 8.3 |
-| **8.5** | Integration & Testing | #101-102 | 8.3, 8.4 |
-
-### Dependency Graph
-
-```
-Phase 8.1 (Shared)
-    ├── #80 IUserRepository ─┬─► #81 YamlUserRepo ─┐
-    │                        └─► #82 SqliteUserRepo │
-    └── #83 ApiPromptAdapter                       │
-                                                   ▼
-Phase 8.2 (CLI)                              #84 admin init
-                                                   │
-                                      ┌────────────┼────────────┐
-                                      ▼            ▼            ▼
-                                 #85 user     #86 api     (#87 waits)
-
-Phase 8.3 (API)                     Phase 8.4 (Console)
-#88 Project Setup                   #95 Project Setup
-      │                                   │
-      ▼                                   ▼
-#89 Auth Plugin                     #96 NextAuth.js
-      │                                   │
-      ├────┬────┐                         ▼
-      ▼    ▼    ▼                   #97 BFF Proxy ◄─── (#89)
-#90  #91  #92                             │
-      │                                   ▼
-      ▼                             #98 Dashboard
-#93 Swagger                               │
-      │                                   ▼
-      ▼                             #99 Server Pages
-#94 Dockerfile                            │
-      │                                   ▼
-      │                             #100 Dockerfile
-      │                                   │
-      └───────────┬───────────────────────┘
-                  ▼
-            #101 Docker Compose
-                  │
-                  ▼
-            #102 E2E Tests
-                  │
-                  ▼
-            #87 admin service
 ```
 
 ---

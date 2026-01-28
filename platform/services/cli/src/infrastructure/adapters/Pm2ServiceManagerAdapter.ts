@@ -63,7 +63,8 @@ function pm2StartConfig(configPath: string, appName?: string): Promise<pm2.Proc>
   return new Promise((resolve, reject) => {
     if (appName) {
       // Start only the specific app from config
-      pm2.start(configPath, { only: [appName] } as pm2.StartOptions, (err, proc) => {
+      // PM2's `only` option expects a string (comma-separated app names), not an array
+      pm2.start(configPath, { only: appName } as pm2.StartOptions, (err, proc) => {
         if (err) reject(err);
         else resolve(proc);
       });
