@@ -1,6 +1,8 @@
 # mcctl - Minecraft Server Management CLI Knowledge Base
 
 > **Purpose**: This document serves as a comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude) to understand and answer questions about mcctl, a Docker-based Minecraft server management tool.
+>
+> **Version**: 1.6.2 | **Last Updated**: January 2025
 
 ---
 
@@ -10,15 +12,16 @@
 2. [Installation](#installation)
 3. [Quick Start](#quick-start)
 4. [Architecture](#architecture)
-5. [Complete Command Reference](#complete-command-reference)
-6. [Configuration](#configuration)
-7. [Common Use Cases](#common-use-cases)
-8. [Troubleshooting](#troubleshooting)
-9. [FAQ](#faq)
-10. [Reference Documentation](#reference-documentation)
+5. [Admin Service (Web Console)](#admin-service-web-console)
+6. [Complete Command Reference](#complete-command-reference)
+7. [Configuration](#configuration)
+8. [Common Use Cases](#common-use-cases)
+9. [Troubleshooting](#troubleshooting)
+10. [FAQ](#faq)
+11. [Reference Documentation](#reference-documentation)
     - [itzg/minecraft-server](#itzgminecraft-server)
     - [mc-router](#mc-router)
-11. [Glossary](#glossary)
+12. [Glossary](#glossary)
 
 ---
 
@@ -51,10 +54,10 @@
 ### Package Information
 
 - **npm Package**: `@minecraft-docker/mcctl`
-- **Current Version**: 0.1.0
+- **Current Version**: 1.6.2
 - **Repository**: Part of the minecraft-server-manager monorepo
-- **License**: Open source
-- **Dependencies**: Docker, Docker Compose, Node.js 18+
+- **License**: Apache-2.0
+- **Dependencies**: Docker, Docker Compose, Node.js 18+, PM2 (for Admin Service)
 
 ---
 
@@ -100,7 +103,7 @@ pnpm link --global
 
 ```bash
 mcctl --version
-# Output: mcctl version 0.1.0
+# Output: mcctl version 1.6.2
 
 mcctl --help
 # Shows complete command reference
@@ -204,6 +207,296 @@ Replace `192.168.1.100` with your server's HOST_IP from `.env`.
 | **avahi-daemon** | System mDNS service for .local hostname discovery |
 | **itzg/minecraft-server** | Docker image running Minecraft servers |
 | **mcctl** | CLI tool for management operations |
+| **mcctl-api** | REST API service (Fastify, port 3001) |
+| **mcctl-console** | Web Admin Console (Next.js, port 3000) |
+| **PM2** | Process manager for Admin Service (API + Console) |
+
+---
+
+## Admin Service (Web Console)
+
+The Admin Service provides a web-based management console for mcctl. It consists of two components:
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       Web Browser                            │
+│                  (http://localhost:3000)                    │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│                  mcctl-console (:3000)                      │
+│  - Next.js Web UI                                           │
+│  - Server management dashboard                              │
+│  - User authentication (NextAuth)                           │
+└────────────────────────┬────────────────────────────────────┘
+                         │ Internal API calls
+┌────────────────────────▼────────────────────────────────────┐
+│                   mcctl-api (:3001)                         │
+│  - Fastify REST API                                         │
+│  - 5-mode authentication (internal, api-key, ip, etc.)     │
+│  - OpenAPI/Swagger documentation (/docs)                    │
+└────────────────────────┬────────────────────────────────────┘
+                         │ Docker API / RCON
+┌────────────────────────▼────────────────────────────────────┐
+│              Minecraft Servers (Docker)                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Native PM2 Execution
+
+The Admin Service runs natively using PM2 (not in Docker containers). This provides:
+- **Lower resource usage**: No container overhead
+- **Faster startup**: Direct Node.js execution
+- **Easier debugging**: Standard process management
+- **Auto-restart**: PM2 handles process recovery
+
+### Console Commands
+
+#### mcctl console init
+
+Initialize the console service with admin user and configuration.
+
+**Syntax:**
+```bash
+mcctl console init [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--force` | Reinitialize, overwrite existing config |
+| `--api-port <port>` | API server port (default: 3001) |
+| `--console-port <port>` | Console server port (default: 3000) |
+
+**What it does:**
+1. Checks Node.js version (>= 18)
+2. Checks PM2 installation
+3. Creates admin user with password
+4. Configures API access mode (internal, api-key, ip-whitelist, api-key-ip, open)
+5. Generates API key (if applicable)
+6. Creates `ecosystem.config.cjs` for PM2
+7. Saves configuration to `.mcctl-admin.yml`
+
+**Example:**
+```bash
+mcctl console init
+# Interactive prompts:
+# - Admin username?
+# - Admin password?
+# - Confirm password?
+# - API access mode?
+# - Configure custom ports?
+```
+
+---
+
+#### mcctl console user
+
+Manage console users.
+
+**Syntax:**
+```bash
+mcctl console user <action> [username] [options]
+```
+
+**Actions:**
+
+| Action | Description |
+|--------|-------------|
+| `list` | List all users |
+| `add [username]` | Add a new user |
+| `remove [username]` | Remove a user |
+| `update [username]` | Update user role |
+| `reset-password [username]` | Reset user password |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--role <role>` | User role: admin, viewer |
+| `--password <password>` | User password (for CLI mode) |
+| `--force` | Skip confirmation |
+| `--json` | JSON output |
+
+**Examples:**
+```bash
+# List all users
+mcctl console user list
+mcctl console user list --json
+
+# Add user (interactive)
+mcctl console user add
+
+# Add user (CLI mode)
+mcctl console user add operator1 --role viewer --password "SecurePass123"
+
+# Remove user
+mcctl console user remove operator1
+mcctl console user remove operator1 --force
+
+# Update user role
+mcctl console user update operator1 --role admin
+
+# Reset password
+mcctl console user reset-password operator1
+```
+
+---
+
+#### mcctl console api
+
+Manage API configuration.
+
+**Syntax:**
+```bash
+mcctl console api <action> [options]
+```
+
+**Actions:**
+
+| Action | Description |
+|--------|-------------|
+| `status` | Show API configuration |
+| `key regenerate` | Regenerate API key |
+| `mode [mode]` | Change access mode |
+| `whitelist list` | List IP whitelist |
+| `whitelist add <ip>` | Add IP to whitelist |
+| `whitelist remove <ip>` | Remove IP from whitelist |
+
+**Access Modes:**
+
+| Mode | Description |
+|------|-------------|
+| `internal` | Docker network only (default, most secure) |
+| `api-key` | External access with X-API-Key header |
+| `ip-whitelist` | IP-based access control |
+| `api-key-ip` | Both API key and IP required |
+| `open` | No authentication (development only!) |
+
+**Examples:**
+```bash
+# Show API configuration
+mcctl console api status
+mcctl console api status --json
+
+# Regenerate API key
+mcctl console api key regenerate
+mcctl console api key regenerate --force
+
+# Change access mode
+mcctl console api mode api-key
+mcctl console api mode  # Interactive selection
+
+# Manage IP whitelist
+mcctl console api whitelist list
+mcctl console api whitelist add 192.168.1.100
+mcctl console api whitelist add 10.0.0.0/8
+mcctl console api whitelist remove 192.168.1.100
+```
+
+---
+
+#### mcctl console service
+
+Manage console service lifecycle via PM2.
+
+**Syntax:**
+```bash
+mcctl console service <action> [options]
+```
+
+**Actions:**
+
+| Action | Description |
+|--------|-------------|
+| `start` | Start API + Console services |
+| `stop` | Stop services |
+| `restart` | Restart services |
+| `status` | Show service status with health checks |
+| `logs` | View service logs |
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--api-only` | Operate on API service only |
+| `--console-only` | Operate on Console service only |
+| `--follow`, `-f` | Follow log output (for logs) |
+| `--json` | JSON output (for status) |
+
+**Examples:**
+```bash
+# Start all services
+mcctl console service start
+
+# Stop all services
+mcctl console service stop
+
+# Restart all services
+mcctl console service restart
+
+# Check status
+mcctl console service status
+mcctl console service status --json
+
+# View logs
+mcctl console service logs
+mcctl console service logs --api-only
+mcctl console service logs --console-only
+mcctl console service logs -f  # Follow mode
+
+# Operate on single service
+mcctl console service start --api-only
+mcctl console service stop --console-only
+```
+
+**Status Output Example:**
+```
+  Console Service Status (PM2)
+
+  mcctl-api
+    Status: online
+    PID: 12345
+    CPU: 0.5%
+    Memory: 85.2 MB
+    Uptime: 2h 15m
+    Restarts: 0
+
+  mcctl-console
+    Status: online
+    PID: 12346
+    URL: http://localhost:3000
+    CPU: 0.3%
+    Memory: 120.5 MB
+    Uptime: 2h 15m
+    Restarts: 0
+
+  All services healthy
+```
+
+### REST API Endpoints
+
+The mcctl-api service provides these endpoints:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| GET | `/servers` | List all servers |
+| GET | `/servers/:name` | Get server details |
+| POST | `/servers/:name/start` | Start server |
+| POST | `/servers/:name/stop` | Stop server |
+| POST | `/servers/:name/restart` | Restart server |
+| GET | `/servers/:name/logs` | Get server logs (SSE streaming) |
+| POST | `/console/:name/exec` | Execute RCON command |
+| GET | `/worlds` | List all worlds |
+| GET | `/docs` | OpenAPI/Swagger documentation |
+
+**Authentication:**
+- Add `X-API-Key: <your-api-key>` header for api-key mode
+- IP-based access uses client IP validation
 
 ---
 
@@ -798,7 +1091,7 @@ Worlds:
 
 #### mcctl world new
 
-Create a new world directory.
+Create a new world directory with metadata.
 
 **Syntax:**
 ```bash
@@ -813,12 +1106,17 @@ mcctl world new [name] [options]
 | `--server` | | Server to assign world to |
 | `--no-start` | | Don't auto-start server |
 
+**Behavior:**
+- Creates actual world directory in `worlds/` immediately (even without `--server`)
+- Creates `.meta` file with seed and creation timestamp
+- Actual Minecraft world generation happens when a server first uses the world
+
 **Examples:**
 ```bash
 # Interactive
 mcctl world new
 
-# Create with seed
+# Create with seed (creates worlds/myworld/ directory with .meta)
 mcctl world new myworld --seed 12345
 
 # Create and assign to server
@@ -826,6 +1124,14 @@ mcctl world new myworld --server myserver
 
 # Create with seed, assign, don't start
 mcctl world new myworld --seed 12345 --server myserver --no-start
+```
+
+**World Directory Structure:**
+```
+worlds/
+└── myworld/
+    └── .meta         # JSON file with seed, created_at
+    # level.dat etc. are created when server starts
 ```
 
 ---
@@ -1386,6 +1692,67 @@ mcctl router restart
 
 ---
 
+### Use Case 8: Set Up Web Admin Console
+
+**Q: How do I set up the web-based management console?**
+
+```bash
+# 1. Install PM2 globally (required)
+npm install -g pm2
+
+# 2. Initialize console service
+mcctl console init
+# Follow prompts:
+# - Enter admin username
+# - Set admin password
+# - Choose API access mode (internal recommended for local use)
+
+# 3. Start the console services
+mcctl console service start
+
+# 4. Access the web console
+# Open browser: http://localhost:3000
+# Login with admin credentials
+
+# 5. Check status anytime
+mcctl console service status
+```
+
+---
+
+### Use Case 9: Manage Servers via REST API
+
+**Q: How do I control servers programmatically?**
+
+```bash
+# 1. Initialize with api-key mode
+mcctl console init
+# Select "api-key" access mode
+# Save the generated API key
+
+# 2. Start API service
+mcctl console service start
+
+# 3. Use the API
+# List servers
+curl -H "X-API-Key: mctk_your_api_key" http://localhost:3001/servers
+
+# Start a server
+curl -X POST -H "X-API-Key: mctk_your_api_key" \
+  http://localhost:3001/servers/myserver/start
+
+# Execute RCON command
+curl -X POST -H "X-API-Key: mctk_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"command": "list"}' \
+  http://localhost:3001/console/myserver/exec
+
+# View API documentation
+# Open browser: http://localhost:3001/docs
+```
+
+---
+
 ### Use Case 6: Add Players to Whitelist
 
 **Q: How do I enable whitelist and add players?**
@@ -1647,6 +2014,48 @@ A: World data is preserved in the worlds/ directory.
 
 **Q: How do I import an existing world?**
 A: Place it in `~/minecraft-servers/worlds/` and use `mcctl create --world <name>`.
+
+**Q: What happens when I run `mcctl world new` without --server?**
+A: The world directory is created immediately with a `.meta` file containing the seed and creation timestamp. The actual Minecraft world files are generated when a server first uses the world.
+
+---
+
+### Admin Service Questions
+
+**Q: What is the Admin Service?**
+A: The Admin Service consists of mcctl-api (REST API on port 3001) and mcctl-console (Web UI on port 3000). It provides a web-based management interface for mcctl.
+
+**Q: Why does the Admin Service use PM2 instead of Docker?**
+A: PM2 provides native Node.js execution with lower overhead, faster startup, easier debugging, and automatic process recovery. This is more efficient than running additional Docker containers.
+
+**Q: How do I install PM2?**
+A: Run `npm install -g pm2` to install PM2 globally.
+
+**Q: How do I start the web console?**
+A: First run `mcctl console init` to set up, then `mcctl console service start` to start the services.
+
+**Q: What access modes are available for the API?**
+A: Five modes:
+- `internal` - Docker network only (most secure, default)
+- `api-key` - External access with X-API-Key header
+- `ip-whitelist` - IP-based access control
+- `api-key-ip` - Both API key and IP required
+- `open` - No authentication (development only!)
+
+**Q: Where is the API documentation?**
+A: Access Swagger/OpenAPI docs at `http://localhost:3001/docs` when the API is running.
+
+**Q: How do I add more users to the console?**
+A: Use `mcctl console user add` to add users interactively, or with `--role` and `--password` options for CLI mode.
+
+**Q: How do I check if the Admin Service is running?**
+A: Run `mcctl console service status` to see the status of both API and Console services.
+
+**Q: How do I view Admin Service logs?**
+A: Run `mcctl console service logs` for recent logs, or `mcctl console service logs -f` to follow logs in real-time.
+
+**Q: Can I run only the API without the web console?**
+A: Yes, use `mcctl console service start --api-only` to start just the API service.
 
 ---
 
@@ -2220,7 +2629,10 @@ services:
 | Term | Definition |
 |------|------------|
 | **mcctl** | Minecraft Control - the CLI management tool |
+| **mcctl-api** | REST API service for programmatic server management (Fastify, port 3001) |
+| **mcctl-console** | Web-based admin console (Next.js, port 3000) |
 | **mc-router** | Hostname-based router that directs connections to correct servers |
+| **PM2** | Node.js process manager used to run Admin Service |
 | **avahi-daemon** | Linux mDNS service for .local hostname discovery |
 | **nip.io** | Magic DNS service that maps hostnames to IP addresses |
 | **RCON** | Remote Console protocol for executing server commands |
@@ -2232,6 +2644,8 @@ services:
 | **Spiget** | API for SpigotMC plugins |
 | **Auto-scale** | Feature that starts/stops servers based on player activity |
 | **World lock** | Mechanism to prevent simultaneous access to a world |
+| **ecosystem.config.cjs** | PM2 configuration file for Admin Service |
+| **Access Mode** | API authentication method (internal, api-key, ip-whitelist, api-key-ip, open) |
 
 ---
 
@@ -2239,6 +2653,14 @@ services:
 
 | Version | Changes |
 |---------|---------|
+| 1.6.2 | Current release - PM2-based Admin Service, enhanced world management |
+| 1.6.x | Admin Service (mcctl-api + mcctl-console) with PM2 native execution |
+| 1.5.x | World management improvements, mod sources integration |
+| 1.4.x | Player management, whitelist, ban commands |
+| 1.3.x | Server backup/restore, migration commands |
+| 1.2.x | Mod management (Modrinth, CurseForge, Spiget) |
+| 1.1.x | World locking, multi-server support |
+| 1.0.x | Initial stable release with core server management |
 | 0.1.0 | Initial release |
 
 ---
@@ -2250,7 +2672,8 @@ services:
 - **GitHub Repository**: https://github.com/smallmiro/minecraft-server-manager
 - **Docker Hub (itzg)**: https://hub.docker.com/r/itzg/minecraft-server/
 - **mc-router**: https://github.com/itzg/mc-router
+- **PM2 Process Manager**: https://pm2.keymetrics.io/
 
 ---
 
-*This document was generated for LLM agent consumption. Last updated: January 2026.*
+*This document was generated for LLM agent consumption. Last updated: January 2025.*
