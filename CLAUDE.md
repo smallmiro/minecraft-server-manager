@@ -29,7 +29,9 @@ minecraft/
 │   │   # Servers created by create-server.sh go here (gitignored)
 │   │
 │   ├── worlds/                  # Shared world storage (gitignored except .locks)
-│   │   └── .locks/              # Lock files (future)
+│   │   ├── .locks/              # Lock files for world-server assignment
+│   │   └── <world-name>/        # World directories
+│   │       └── .meta            # World metadata (seed, createdAt)
 │   │
 │   ├── shared/                  # Shared resources
 │   │   ├── plugins/             # Shared plugins (read-only mount)
@@ -387,7 +389,8 @@ mcctl migrate worlds --backup      # Create backup before migration
 # World management (interactive or with arguments)
 mcctl world list          # List all worlds with lock status
 mcctl world new           # Interactive: create new world with prompts
-mcctl world new myworld --seed 12345  # CLI: create with seed
+mcctl world new myworld   # CLI: create world directory (with .meta file)
+mcctl world new myworld --seed 12345  # CLI: create with seed (stored in .meta)
 mcctl world new myworld --server myserver  # Create and assign to server
 mcctl world new myworld --server myserver --no-start  # Don't auto-start server
 mcctl world assign        # Interactive: select world and server
@@ -985,6 +988,14 @@ The script automatically:
 - Server-to-server world sharing
 - Centralized world backup
 - Easy world migration between servers
+
+**World Metadata (.meta file)**: When creating a world with `mcctl world new`, the command creates:
+- A world directory in `/worlds/<world-name>/`
+- A `.meta` JSON file containing:
+  - `name`: World name
+  - `seed`: World seed (null if random)
+  - `createdAt`: ISO timestamp of creation
+- The seed is stored in `.meta` for reference; when assigned to a server, it's also set in `config.env`
 
 **mc-router auto-discovery**: mc-router uses `--in-docker` mode to automatically discover servers via Docker labels (`mc-router.host`). No manual MAPPING configuration is needed.
 

@@ -45,6 +45,8 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [x] Worlds can be assigned to different servers
   - [x] World data persists across server restarts
   - [x] New worlds can be created and managed
+  - [x] World metadata stored in `.meta` file (name, seed, createdAt)
+  - [x] `mcctl world new` creates world directory even without server assignment
 
 #### FR-003: World Locking Mechanism
 - **Priority**: High

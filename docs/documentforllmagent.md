@@ -111,12 +111,24 @@ mcctl player info <name> --offline # Offline UUID
 
 ```bash
 mcctl world list              # List worlds with lock status
-mcctl world new <name>        # Create new world
-mcctl world new <name> --seed 12345  # With seed
+mcctl world new               # Interactive: create new world
+mcctl world new <name>        # Create world directory with .meta file
+mcctl world new <name> --seed 12345  # Create with seed (stored in .meta)
+mcctl world new <name> --server <srv>  # Create and assign to server
+mcctl world new <name> --server <srv> --no-start  # Don't auto-start
 mcctl world assign <world> <server>  # Lock world to server
 mcctl world release <world>   # Release lock
-mcctl world delete <world>    # Delete world
+mcctl world delete <world>    # Delete world (with confirmation)
+mcctl world delete <world> --force  # Force delete without confirmation
 ```
+
+**World Metadata (.meta file)**:
+When creating a world with `mcctl world new`, a `.meta` JSON file is created containing:
+- `name`: World name
+- `seed`: World seed (null if random)
+- `createdAt`: Creation timestamp
+
+The world directory is created immediately in `~/minecraft-servers/worlds/<name>/`.
 
 ### Mod Management
 
@@ -261,7 +273,10 @@ A: mc-router auto-scales servers. They stop after 10 minutes of no players. They
 A: Use `mcctl mod add <server> <mod-name>`. Default source is Modrinth. Use `--curseforge` for CurseForge mods.
 
 ### Q: Where is world data stored?
-A: All worlds are in `~/minecraft-servers/worlds/`. They're shared across servers using locks.
+A: All worlds are in `~/minecraft-servers/worlds/`. They're shared across servers using locks. Each world has a `.meta` file storing metadata (name, seed, creation time).
+
+### Q: How do I create a world without assigning it to a server?
+A: Use `mcctl world new <name>` or `mcctl world new <name> --seed 12345`. This creates the world directory with a `.meta` file. You can later assign it with `mcctl world assign`.
 
 ### Q: How do I backup my server?
 A: Use `mcctl server-backup <server>` for config backup. For world backup, configure GitHub in `.env` and use `mcctl backup push`.
