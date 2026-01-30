@@ -294,7 +294,7 @@ mcctl console myserver
 | Slow performance | `mcctl status --detail` | Check memory, enable Aikar flags |
 | World corruption | `mcctl world list` | Check lock status |
 
-See the [Troubleshooting Guide](../getting-started/quickstart.md#troubleshooting) for more details.
+See the [Troubleshooting Guide](../troubleshooting/index.md) for more details.
 
 ## Next Steps
 

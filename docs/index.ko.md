@@ -2,6 +2,15 @@
 
 Docker와 **mcctl** CLI를 사용하여 여러 Minecraft Java Edition 서버를 관리하는 DevOps 솔루션입니다.
 
+!!! warning "중요: 버전 1.6.8 ~ 1.6.11의 월드 저장 버그"
+    mcctl 버전 1.6.8부터 1.6.11로 서버를 생성한 경우, 월드 데이터가 잘못된 위치에 저장되어 서버 재시작 시 월드가 새로 생성될 수 있습니다.
+
+    **빠른 확인:** `ls ~/minecraft-servers/servers/*/data/*/level.dat 2>/dev/null` 실행 - 출력이 있으면 영향받은 것입니다.
+
+    **해결:** 1.6.12 이상으로 업데이트 후 `mcctl migrate worlds --all` 실행
+
+    자세한 내용은 [문제 해결 가이드](troubleshooting/index.ko.md#월드가-worlds-디렉토리에-저장되지-않음)를 참조하세요.
+
 ## 주요 기능
 
 - **멀티 서버 관리**: 단일 호스트에서 여러 Minecraft 서버 실행

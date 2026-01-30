@@ -22,6 +22,7 @@ color: purple
 - DevOps, Docker, infrastructure documentation needs
 - CLI tool and API documentation with i18n support
 - Release documentation updates (called by release-manager)
+- **Bug fix documentation**: When critical bugs are fixed, document in `docs/troubleshooting/`
 - **npm package page updates** (README.md is displayed on https://www.npmjs.com/package/@minecraft-docker/mcctl)
 
 ## Command Usage
@@ -207,6 +208,61 @@ Add new version entry following [Keep a Changelog](https://keepachangelog.com/) 
 - Update affected documentation pages
 - Generate both English (.md) and Korean (.ko.md) versions
 
+## Bug Fix Documentation Guidelines
+
+When a bug fix is implemented, **always document the solution in `docs/troubleshooting/`**:
+
+### Required Documentation
+1. **Add to `docs/troubleshooting/index.md`** (and `.ko.md`):
+   - Add a "Known Issues" section if it affects specific versions
+   - Document symptoms users might experience
+   - Provide clear diagnostic commands
+   - Include step-by-step solution (both automated and manual options)
+
+2. **Add warning notice to homepage** (`docs/index.md` and `.ko.md`):
+   - Use MkDocs admonition format: `!!! warning "Important: ..."`
+   - Include affected version range
+   - Link to troubleshooting guide for details
+
+3. **Update CHANGELOG.md**:
+   - Document the bug fix with migration guide if needed
+   - Include "How to Check if Affected" section
+
+### Troubleshooting Document Structure
+```markdown
+## Known Issues
+
+### Issue Title
+
+!!! warning "Affects versions X.X.X ~ Y.Y.Y"
+    Brief description of the issue.
+
+**Symptoms:**
+- Symptom 1
+- Symptom 2
+
+**Cause:**
+Explanation of root cause.
+
+**How to Check if Affected:**
+\`\`\`bash
+# Diagnostic command
+\`\`\`
+
+**Solution:**
+
+=== "Option 1: Automated (Recommended)"
+    \`\`\`bash
+    # Solution commands
+    \`\`\`
+
+=== "Option 2: Manual Fix"
+    Step-by-step manual instructions
+
+**Prevention:**
+How to avoid this issue in the future.
+```
+
 ## Quality Checklist
 Before completing any document:
 - [ ] Used `/write-docs` command appropriately
@@ -224,6 +280,14 @@ When updating for a release:
 - [ ] README.md reflects current features (displayed on npm)
 - [ ] docs/documentforllmagent.md version updated
 - [ ] All new commands documented in docs/cli/commands.md
+
+### Bug Fix Documentation Checklist
+When documenting a bug fix:
+- [ ] Added to `docs/troubleshooting/index.md` (EN) with detailed solution
+- [ ] Added to `docs/troubleshooting/index.ko.md` (KO) translation
+- [ ] Added warning notice to `docs/index.md` and `docs/index.ko.md` if critical
+- [ ] Updated CHANGELOG.md with migration guide for affected users
+- [ ] Included diagnostic commands to check if affected
 
 ## Boundaries
 **Will:**
