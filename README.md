@@ -281,7 +281,10 @@ minecraft/
 │
 └── platform/services/
     ├── shared/               # @minecraft-docker/shared
-    │   └── src/              # Common types, utils, docker helpers
+    │   └── src/              # Common types, utils, domain models
+    │
+    ├── mod-source-modrinth/  # @minecraft-docker/mod-source-modrinth
+    │   └── src/              # Modrinth API adapter
     │
     └── cli/                  # @minecraft-docker/mcctl
         └── src/              # CLI commands and adapters
@@ -304,8 +307,9 @@ minecraft/
 pnpm automatically builds packages in dependency order:
 
 ```
-1️⃣ @minecraft-docker/shared  (no dependencies)
-2️⃣ @minecraft-docker/mcctl   (depends on shared)
+1. @minecraft-docker/shared              (no dependencies)
+2. @minecraft-docker/mod-source-modrinth (depends on shared)
+3. @minecraft-docker/mcctl               (depends on shared, mod-source-modrinth)
 ```
 
 ---

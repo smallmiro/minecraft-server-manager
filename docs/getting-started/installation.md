@@ -112,7 +112,7 @@ Verify installation:
 
 ```bash
 mcctl --version
-# mcctl version 0.1.0
+# mcctl version 1.6.3
 ```
 
 ### Using npx (No Installation)

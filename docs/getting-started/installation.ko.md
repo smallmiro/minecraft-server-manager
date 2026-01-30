@@ -112,7 +112,7 @@ pnpm add -g @minecraft-docker/mcctl
 
 ```bash
 mcctl --version
-# mcctl version 0.1.0
+# mcctl version 1.6.3
 ```
 
 ### npx 사용 (설치 없이)
