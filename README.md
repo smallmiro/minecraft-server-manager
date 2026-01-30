@@ -1,5 +1,11 @@
 # Docker Minecraft Server Manager
 
+[![npm version](https://img.shields.io/npm/v/@minecraft-docker/mcctl)](https://www.npmjs.com/package/@minecraft-docker/mcctl)
+[![npm downloads](https://img.shields.io/npm/dm/@minecraft-docker/mcctl)](https://www.npmjs.com/package/@minecraft-docker/mcctl)
+[![GitHub issues](https://img.shields.io/github/issues/smallmiro/minecraft-server-manager)](https://github.com/smallmiro/minecraft-server-manager/issues)
+[![Documentation](https://readthedocs.org/projects/minecraft-server-manager/badge/?version=latest)](https://minecraft-server-manager.readthedocs.io/)
+[![License](https://img.shields.io/github/license/smallmiro/minecraft-server-manager)](https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE)
+
 A multi-server Minecraft management system using `itzg/minecraft-server` with `itzg/mc-router` for automatic scaling and hostname-based routing.
 
 ## Features
@@ -275,7 +281,10 @@ minecraft/
 │
 └── platform/services/
     ├── shared/               # @minecraft-docker/shared
-    │   └── src/              # Common types, utils, docker helpers
+    │   └── src/              # Common types, utils, domain models
+    │
+    ├── mod-source-modrinth/  # @minecraft-docker/mod-source-modrinth
+    │   └── src/              # Modrinth API adapter
     │
     └── cli/                  # @minecraft-docker/mcctl
         └── src/              # CLI commands and adapters
@@ -298,8 +307,9 @@ minecraft/
 pnpm automatically builds packages in dependency order:
 
 ```
-1️⃣ @minecraft-docker/shared  (no dependencies)
-2️⃣ @minecraft-docker/mcctl   (depends on shared)
+1. @minecraft-docker/shared              (no dependencies)
+2. @minecraft-docker/mod-source-modrinth (depends on shared)
+3. @minecraft-docker/mcctl               (depends on shared, mod-source-modrinth)
 ```
 
 ---
