@@ -2,6 +2,15 @@
 
 A DevOps solution for managing multiple Minecraft Java Edition servers using Docker and the **mcctl** CLI.
 
+!!! warning "Important: World Storage Bug in versions 1.6.8 ~ 1.6.11"
+    If you created servers with mcctl versions 1.6.8 through 1.6.11, your world data may be stored in the wrong location, causing worlds to be recreated on server restart.
+
+    **Quick Check:** Run `ls ~/minecraft-servers/servers/*/data/*/level.dat 2>/dev/null` - if this shows any output, you're affected.
+
+    **Solution:** Update to 1.6.12+ and run `mcctl migrate worlds --all`
+
+    See the [Troubleshooting Guide](troubleshooting/index.md#world-not-saving-to-worlds-directory) for detailed instructions.
+
 ## Features
 
 - **Multi-Server Management**: Run multiple Minecraft servers on a single host

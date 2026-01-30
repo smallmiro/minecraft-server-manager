@@ -99,6 +99,7 @@ nav:
       - Overview: advanced/index.md
       - Networking: advanced/networking.md
       - Backup: advanced/backup.md
+  - Troubleshooting: troubleshooting/index.md
   - Development:
       - Overview: development/index.md
       - CLI Architecture: development/cli-architecture.md

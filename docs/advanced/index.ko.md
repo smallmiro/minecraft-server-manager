@@ -294,7 +294,7 @@ mcctl console myserver
 | 느린 성능 | `mcctl status --detail` | 메모리 확인, Aikar 플래그 활성화 |
 | 월드 손상 | `mcctl world list` | 잠금 상태 확인 |
 
-자세한 내용은 [문제 해결 가이드](../getting-started/quickstart.ko.md#문제-해결)를 참조하세요.
+자세한 내용은 [문제 해결 가이드](../troubleshooting/index.ko.md)를 참조하세요.
 
 ## 다음 단계
 
