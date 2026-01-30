@@ -406,7 +406,7 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
-  if (flags['version'] || command === '--version') {
+  if (flags['version'] === true || command === '--version') {
     console.log(`mcctl version ${VERSION}`);
     process.exit(0);
   }
