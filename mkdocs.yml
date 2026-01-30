@@ -107,6 +107,7 @@ nav:
       - CLI Architecture: development/cli-architecture.md
       - Agent Collaboration: development/agent-collaboration.md
   - LLM Knowledge Base: documentforllmagent.md
+  - AI Assistant: https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962
 
 extra:
   alternate:
