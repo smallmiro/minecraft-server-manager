@@ -1,8 +1,17 @@
 # mcctl - Minecraft Server Management CLI
 
-> **Version**: 1.6.4
+> **Version**: 1.6.9
 > **Last Updated**: 2026-01-30
 > **Purpose**: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions
+
+## System Requirements
+
+| Component | Minimum Version | Recommended | Notes |
+|-----------|-----------------|-------------|-------|
+| **Node.js** | >= 18.0.0 | 20 LTS | Required for mcctl CLI |
+| **Docker Engine** | >= 24.0.0 | Latest | Container runtime |
+| **Docker Compose** | >= 2.20.0 | Latest | `include` feature required |
+| **OS** | Linux, macOS | Ubuntu 22.04+ | Windows via WSL2 |
 
 ## Overview
 
@@ -292,6 +301,9 @@ A: Use `mcctl server-backup <server>` for config. For worlds, configure GitHub i
 
 ### Q: What server types are supported?
 A: PAPER (default, recommended), VANILLA, FORGE, NEOFORGE, FABRIC, PURPUR, SPIGOT, BUKKIT, QUILT.
+
+### Q: What are the system requirements?
+A: Node.js >= 18.0.0, Docker Engine >= 24.0.0, Docker Compose >= 2.20.0. The `include` feature in docker-compose requires v2.20.0 or higher.
 
 ### Q: How do I enable cheats?
 A: Use `mcctl config <server> --cheats` or set `ALLOW_CHEATS=true`.
