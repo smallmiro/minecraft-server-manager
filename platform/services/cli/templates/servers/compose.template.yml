@@ -1,0 +1,8 @@
+# =============================================================================
+# Server Include List (managed automatically by create-server.sh)
+# =============================================================================
+# This file is modified by scripts/create-server.sh and scripts/delete-server.sh
+# Do NOT modify docker-compose.yml - only this file is updated for server changes
+# =============================================================================
+
+# Server includes are added below by create-server.sh
