@@ -60,7 +60,25 @@ export class Paths {
 
   /** Templates directory (from package) */
   get templates(): string {
-    return process.env['MCCTL_TEMPLATES'] ?? join(this.packageRoot, '..', '..', '..', 'templates');
+    // Priority: env var > CLI package templates > repo root templates
+    if (process.env['MCCTL_TEMPLATES']) {
+      return process.env['MCCTL_TEMPLATES'];
+    }
+
+    // Try to find templates in mcctl CLI package (npm global install)
+    const cliTemplates = join(this.packageRoot, '..', 'mcctl', 'templates');
+    if (existsSync(cliTemplates)) {
+      return cliTemplates;
+    }
+
+    // Try templates in current package (if CLI is packageRoot)
+    const localTemplates = join(this.packageRoot, 'templates');
+    if (existsSync(localTemplates)) {
+      return localTemplates;
+    }
+
+    // Fallback: repo root templates (local dev)
+    return join(this.packageRoot, '..', '..', '..', 'templates');
   }
 
   /** Servers directory */
