@@ -1,7 +1,7 @@
 # mcctl - Minecraft Server Management CLI
 
-> **Version**: 1.6.2
-> **Last Updated**: 2025-01-28
+> **Version**: 1.6.4
+> **Last Updated**: 2026-01-30
 > **Purpose**: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions
 
 ## Overview
@@ -122,14 +122,6 @@ mcctl world delete <world>    # Delete world (with confirmation)
 mcctl world delete <world> --force  # Force delete without confirmation
 ```
 
-**World Metadata (.meta file)**:
-When creating a world with `mcctl world new`, a `.meta` JSON file is created containing:
-- `name`: World name
-- `seed`: World seed (null if random)
-- `createdAt`: Creation timestamp
-
-The world directory is created immediately in `~/minecraft-servers/worlds/<name>/`.
-
 ### Mod Management
 
 ```bash
@@ -160,18 +152,7 @@ mcctl backup history              # Show history
 mcctl backup restore <commit>     # Restore from commit
 ```
 
-### Migration
-
-```bash
-mcctl migrate status              # Check migration status
-mcctl migrate worlds              # Migrate to shared directory
-mcctl migrate worlds --all        # Migrate all servers
-mcctl migrate worlds --dry-run    # Preview changes
-```
-
-### Console Management (v2.0.0)
-
-> **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead.
+### Console Management (Admin Service)
 
 ```bash
 # Initialization
@@ -196,8 +177,55 @@ mcctl console service restart   # Restart services
 mcctl console service status    # Show status
 mcctl console service logs      # View logs
 mcctl console service logs -f   # Follow logs
-mcctl console service logs --api  # API logs only
-mcctl console service logs --console  # Console logs only
+```
+
+## Server Types
+
+| Type | Description | Plugins | Mods | Recommended For |
+|------|-------------|---------|------|-----------------|
+| **PAPER** | High-performance (default) | Yes | No | General use |
+| **VANILLA** | Official Minecraft | No | No | Pure experience |
+| **FORGE** | Forge mod server | No | Yes | Complex modpacks |
+| **FABRIC** | Lightweight mods | No | Yes | Performance mods |
+| **PURPUR** | Paper fork | Yes | No | Advanced customization |
+
+## REST API Reference
+
+Admin Service provides a REST API (port 3001) for programmatic access.
+
+### Authentication
+
+```bash
+# API Key (recommended)
+curl -H "X-API-Key: mctk_xxx" http://localhost:3001/api/servers
+
+# Basic Auth
+curl -u admin:password http://localhost:3001/api/servers
+```
+
+### Key Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| GET | `/api/servers` | List all servers |
+| GET | `/api/servers/:name` | Get server details |
+| POST | `/api/servers/:name/start` | Start server |
+| POST | `/api/servers/:name/stop` | Stop server |
+| POST | `/api/servers/:name/restart` | Restart server |
+| POST | `/api/servers/:name/exec` | Execute RCON command |
+| GET | `/api/servers/:name/logs` | Get logs (supports SSE) |
+| GET | `/api/worlds` | List all worlds |
+| POST | `/api/worlds/:name/assign` | Assign world to server |
+| POST | `/api/worlds/:name/release` | Release world lock |
+
+### Example: Execute Command
+
+```bash
+curl -X POST -H "X-API-Key: mctk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"command": "list"}' \
+  http://localhost:3001/api/servers/survival/exec
 ```
 
 ## Common Use Cases
@@ -205,66 +233,50 @@ mcctl console service logs --console  # Console logs only
 ### Setting Up a New Server
 
 ```bash
-# 1. Initialize platform (first time only)
-mcctl init
-
-# 2. Create a server
+mcctl init                        # First time only
 mcctl create myserver -t PAPER -v 1.21.1
-
-# 3. Server auto-starts, connect via:
-#    myserver.local:25565 (mDNS)
-#    myserver.<HOST_IP>.nip.io:25565 (nip.io)
+# Connect via myserver.<HOST_IP>.nip.io:25565
 ```
 
 ### Setting Up a Modded Server
 
 ```bash
-# 1. Create Forge server
 mcctl create modded -t FORGE -v 1.20.4
-
-# 2. Search and add mods
-mcctl mod search sodium
-mcctl mod add modded sodium lithium
-
-# 3. Restart to apply
+mcctl mod search create           # Search mods
+mcctl mod add modded create jei journeymap
 mcctl stop modded && mcctl start modded
+```
+
+### Performance Fabric Server
+
+```bash
+mcctl create perf -t FABRIC -v 1.21.1
+mcctl config perf MODRINTH_PROJECTS "fabric-api,lithium,starlight,krypton"
+mcctl config perf MODRINTH_DOWNLOAD_DEPENDENCIES required
+mcctl stop perf && mcctl start perf
 ```
 
 ### Managing Players
 
 ```bash
-# Add player to whitelist
 mcctl whitelist myserver add Steve
-
-# Give operator permissions
 mcctl op myserver add Notch
-
-# Kick troublemaker
 mcctl kick myserver Griefer "Griefing not allowed"
-
-# Ban player
 mcctl ban myserver add Griefer "Repeated griefing"
 ```
 
 ### Using Admin Web Console
 
 ```bash
-# 1. Initialize console service
-mcctl console init
-
-# 2. Start services
-mcctl console service start
-
-# 3. Access web console at http://localhost:3000
-
-# 4. Check status
-mcctl console service status
+mcctl console init                # Interactive setup
+mcctl console service start       # Start services
+# Access http://localhost:3000
 ```
 
 ## FAQ
 
 ### Q: How do I connect to my server?
-A: Use `<server-name>.local:25565` (requires mDNS/avahi) or `<server-name>.<your-ip>.nip.io:25565` (works anywhere).
+A: Use `<server>.<your-ip>.nip.io:25565` (works everywhere) or `<server>.local:25565` (requires mDNS/avahi).
 
 ### Q: Why does my server auto-stop?
 A: mc-router auto-scales servers. They stop after 10 minutes of no players. They auto-start when someone connects.
@@ -273,28 +285,28 @@ A: mc-router auto-scales servers. They stop after 10 minutes of no players. They
 A: Use `mcctl mod add <server> <mod-name>`. Default source is Modrinth. Use `--curseforge` for CurseForge mods.
 
 ### Q: Where is world data stored?
-A: All worlds are in `~/minecraft-servers/worlds/`. They're shared across servers using locks. Each world has a `.meta` file storing metadata (name, seed, creation time).
-
-### Q: How do I create a world without assigning it to a server?
-A: Use `mcctl world new <name>` or `mcctl world new <name> --seed 12345`. This creates the world directory with a `.meta` file. You can later assign it with `mcctl world assign`.
+A: All worlds are in `~/minecraft-servers/worlds/`. They're shared across servers using locks.
 
 ### Q: How do I backup my server?
-A: Use `mcctl server-backup <server>` for config backup. For world backup, configure GitHub in `.env` and use `mcctl backup push`.
+A: Use `mcctl server-backup <server>` for config. For worlds, configure GitHub in `.env` and use `mcctl backup push`.
 
 ### Q: What server types are supported?
-A: PAPER (default), VANILLA, FORGE, NEOFORGE, FABRIC. Set with `-t` flag on create.
+A: PAPER (default, recommended), VANILLA, FORGE, NEOFORGE, FABRIC, PURPUR, SPIGOT, BUKKIT, QUILT.
 
 ### Q: How do I enable cheats?
-A: Use `mcctl config <server> --cheats` or set `ALLOW_CHEATS=true` in config.env.
+A: Use `mcctl config <server> --cheats` or set `ALLOW_CHEATS=true`.
 
-### Q: How do I change the MOTD?
-A: Use `mcctl config <server> MOTD "Your message here"`.
+### Q: How do I change memory?
+A: Use `mcctl config <server> MEMORY 8G` then restart the server.
 
 ### Q: What is the Admin Service?
-A: It's a web-based management console (mcctl-console on port 3000) backed by a REST API (mcctl-api on port 3001). Initialize with `mcctl console init` and start with `mcctl console service start`.
+A: Web console (port 3000) + REST API (port 3001). Initialize with `mcctl console init` and start with `mcctl console service start`.
 
-### Q: How do I check server status?
-A: Use `mcctl status` for all servers or `mcctl status <server>` for a specific one. Add `--detail` for memory/CPU info.
+### Q: How do I use the REST API?
+A: After `mcctl console init`, use the generated API key with `X-API-Key` header. See REST API Reference section.
+
+### Q: How do I optimize performance?
+A: Use `mcctl config <server> USE_AIKAR_FLAGS true`. For modded servers, increase MEMORY to 6-8G.
 
 ## Architecture
 
@@ -324,9 +336,12 @@ A: Use `mcctl status` for all servers or `mcctl status <server>` for a specific 
 | Variable | Description |
 |----------|-------------|
 | `HOST_IP` | Your IP for nip.io hostnames |
+| `HOST_IPS` | Multiple IPs for VPN mesh (comma-separated) |
 | `RCON_PASSWORD` | Default RCON password |
-| `MCCTL_SUDO_PASSWORD` | Sudo password for automation |
+| `DEFAULT_MEMORY` | Default memory allocation (e.g., 4G) |
 | `CF_API_KEY` | CurseForge API key (for mods) |
+| `BACKUP_GITHUB_TOKEN` | GitHub PAT for backup |
+| `BACKUP_GITHUB_REPO` | Backup repository (user/repo) |
 
 ## Troubleshooting
 
@@ -336,17 +351,24 @@ A: Use `mcctl status` for all servers or `mcctl status <server>` for a specific 
 - Check config: `mcctl config <server>`
 
 ### Can't connect to server
-- Check if server is running: `mcctl status <server>`
-- Verify hostname: use nip.io if mDNS doesn't work
-- Check mc-router: `mcctl status router`
+- Check if running: `mcctl status <server>`
+- Use nip.io hostname if mDNS fails
+- Verify mc-router: `mcctl status router`
 
 ### Mod errors
 - Verify Minecraft version matches mod requirements
-- Check mod compatibility with server type (Forge mods need Forge server)
+- Check mod compatibility with server type
 - View mod config: `mcctl mod list <server>`
+
+### API connection issues
+- Check service status: `mcctl console service status`
+- Verify API key: check `~/minecraft-servers/api.key`
+- Test health: `curl http://localhost:3001/health`
 
 ## Links
 
 - **GitHub**: https://github.com/smallmiro/minecraft-server-manager
-- **Documentation**: https://docker-minecraft-server.readthedocs.io/
+- **Documentation**: https://minecraft-server-manager.readthedocs.io/
+- **REST API Docs**: https://minecraft-server-manager.readthedocs.io/en/latest/api/
+- **AI Assistant**: https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962
 - **itzg/minecraft-server**: https://hub.docker.com/r/itzg/minecraft-server/

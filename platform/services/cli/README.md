@@ -97,9 +97,22 @@ mcctl logs myserver
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
+## AI Assistant
+
+Get help using mcctl with our AI-powered assistant:
+
+- **[NotebookLM AI Assistant](https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962)** - Interactive Q&A about mcctl commands, configuration, and troubleshooting
+
+You can also use the [LLM Knowledge Base](https://minecraft-server-manager.readthedocs.io/en/latest/documentforllmagent/) with ChatGPT, Claude, or other AI assistants:
+
+1. Download the knowledge base document
+2. Upload to your preferred AI assistant
+3. Ask questions about mcctl usage
+
 ## Documentation
 
 - [Full Documentation](https://minecraft-server-manager.readthedocs.io/)
+- [REST API Reference](https://minecraft-server-manager.readthedocs.io/en/latest/api/)
 - [GitHub Repository](https://github.com/smallmiro/minecraft-server-manager)
 
 ## License

@@ -81,6 +81,9 @@ nav:
   - CLI Reference:
       - Overview: cli/index.md
       - Commands: cli/commands.md
+  - REST API:
+      - Overview: api/index.md
+      - Endpoints: api/endpoints.md
   - Configuration:
       - Overview: configuration/index.md
       - Environment Variables: configuration/environment.md
