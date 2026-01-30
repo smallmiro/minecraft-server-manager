@@ -4,235 +4,163 @@ The mcctl-api provides a RESTful interface for managing Docker Minecraft servers
 
 ## System Architecture
 
-```text
-┌───────────────────────────────────┐   ┌───────────────────────────────────┐
-│       Minecraft Clients           │   │        REST API Clients           │
-│  ┌─────────┐  ┌─────────┐        │   │  ┌──────┐ ┌──────┐ ┌───────────┐ │
-│  │ Player1 │  │ Player2 │        │   │  │ curl │ │Python│ │Web Console│ │
-│  └────┬────┘  └────┬────┘        │   │  └──┬───┘ └──┬───┘ └─────┬─────┘ │
-└───────┼────────────┼──────────────┘   └─────┼────────┼───────────┼───────┘
-        │            │                        │        │           │
-        └──────┬─────┘                        └────────┼───────────┘
-               │                                       │
-               ▼                                       ▼
-            :25565                                  :3001
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         Docker Network (minecraft-net)                       │
-│                                                                              │
-│  ┌─────────────────────┐              ┌─────────────────────────────────┐   │
-│  │     mc-router       │              │          mcctl-api              │   │
-│  │  (hostname routing) │◄─────────────│         (Fastify)               │   │
-│  │   auto-scale up/down│              │                                 │   │
-│  └──────────┬──────────┘              └───────────────┬─────────────────┘   │
-│             │                                         │                      │
-│             │         ┌───────────────────────────────┘                      │
-│             │         │                                                      │
-│             ▼         ▼                                                      │
-│  ┌───────────────┐ ┌───────────────┐ ┌───────────────┐                      │
-│  │  mc-survival  │ │  mc-creative  │ │   mc-modded   │                      │
-│  │    :25566     │ │    :25567     │ │    :25568     │                      │
-│  └───────┬───────┘ └───────┬───────┘ └───────┬───────┘                      │
-│          │                 │                 │                               │
-│          └─────────────────┼─────────────────┘                               │
-│                            │                                                 │
-│                 ┌──────────▼──────────┐                                      │
-│                 │      /worlds/       │                                      │
-│                 │  (shared storage)   │                                      │
-│                 └─────────────────────┘                                      │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Clients["Clients"]
+        subgraph MC["Minecraft Clients"]
+            P1[Player1]
+            P2[Player2]
+        end
+        subgraph API["REST API Clients"]
+            CURL[curl]
+            PY[Python]
+            WEB[Web Console]
+        end
+    end
+
+    subgraph Docker["Docker Network (minecraft-net)"]
+        subgraph Router["mc-router :25565"]
+            R[Hostname Routing<br/>Auto-scale up/down]
+        end
+
+        subgraph MCAPI["mcctl-api :3001"]
+            F[Fastify REST API]
+        end
+
+        subgraph Servers["Minecraft Servers"]
+            S1[mc-survival :25566]
+            S2[mc-creative :25567]
+            S3[mc-modded :25568]
+        end
+
+        WORLDS[("/worlds/<br/>(shared storage)")]
+    end
+
+    P1 & P2 --> Router
+    CURL & PY & WEB --> MCAPI
+
+    MCAPI --> Router
+    Router --> Servers
+    MCAPI --> Servers
+
+    Servers --> WORLDS
 ```
 
 ## mcctl-api Internal Architecture
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           mcctl-api (Fastify)                           │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                         Plugins Layer                            │   │
-│  │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐    │   │
-│  │  │   CORS    │  │  Helmet   │  │   Auth    │  │  Swagger  │    │   │
-│  │  └───────────┘  └───────────┘  └─────┬─────┘  └───────────┘    │   │
-│  │                                      │                          │   │
-│  │              ┌───────────────────────┴────────────────────┐     │   │
-│  │              │            Authentication Modes            │     │   │
-│  │              │  ┌─────────┐ ┌─────────┐ ┌─────────┐      │     │   │
-│  │              │  │ API Key │ │  Basic  │ │IP White │      │     │   │
-│  │              │  └─────────┘ └─────────┘ └─────────┘      │     │   │
-│  │              └────────────────────────────────────────────┘     │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                                    │                                    │
-│  ┌─────────────────────────────────▼───────────────────────────────┐   │
-│  │                         Routes Layer                             │   │
-│  │                                                                  │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │   │
-│  │  │   /health    │  │  /api/auth   │  │/api/servers  │          │   │
-│  │  └──────────────┘  └──────────────┘  └──────┬───────┘          │   │
-│  │                                             │                   │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────▼───────┐          │   │
-│  │  │ /api/worlds  │  │  /servers/   │  │   /actions   │          │   │
-│  │  │              │  │ :id/console  │  │start|stop|   │          │   │
-│  │  │              │  │    /exec     │  │  restart     │          │   │
-│  │  └──────┬───────┘  └──────┬───────┘  └──────────────┘          │   │
-│  │         │                 │                                     │   │
-│  └─────────┼─────────────────┼─────────────────────────────────────┘   │
-│            │                 │                                          │
-│  ┌─────────▼─────────────────▼─────────────────────────────────────┐   │
-│  │                      Services Layer                              │   │
-│  │                                                                  │   │
-│  │  ┌──────────────────┐  ┌──────────────────┐                     │   │
-│  │  │  @minecraft-     │  │   Docker         │                     │   │
-│  │  │  docker/shared   │  │   Compose        │                     │   │
-│  │  │                  │  │   Utils          │                     │   │
-│  │  │  • Paths         │  │                  │                     │   │
-│  │  │  • Repositories  │  │  • start/stop    │                     │   │
-│  │  │  • UseCases      │  │  • logs          │                     │   │
-│  │  │  • Adapters      │  │  • exec          │                     │   │
-│  │  └────────┬─────────┘  └────────┬─────────┘                     │   │
-│  │           │                     │                                │   │
-│  └───────────┼─────────────────────┼────────────────────────────────┘   │
-│              │                     │                                    │
-└──────────────┼─────────────────────┼────────────────────────────────────┘
-               │                     │
-      ┌────────▼─────────┐  ┌────────▼─────────┐
-      │   File System    │  │  Docker Engine   │
-      │                  │  │                  │
-      │  • worlds/       │  │  • containers    │
-      │  • servers/      │  │  • images        │
-      │  • users.yaml    │  │  • networks      │
-      │  • api.key       │  │                  │
-      └──────────────────┘  └──────────────────┘
+```mermaid
+flowchart TB
+    subgraph API["mcctl-api (Fastify)"]
+        subgraph Plugins["Plugins Layer"]
+            CORS[CORS]
+            Helmet[Helmet]
+            Auth[Auth]
+            Swagger[Swagger]
+        end
+
+        subgraph AuthModes["Authentication Modes"]
+            APIKey[API Key]
+            Basic[Basic Auth]
+            IPWhite[IP Whitelist]
+        end
+
+        subgraph Routes["Routes Layer"]
+            Health[/health]
+            AuthRoute[/api/auth]
+            ServersRoute[/api/servers]
+            WorldsRoute[/api/worlds]
+            Actions[/actions<br/>start/stop/restart]
+            Console[/console/exec]
+        end
+
+        subgraph Services["Services Layer"]
+            Shared["@minecraft-docker/shared<br/>Paths, Repositories,<br/>UseCases, Adapters"]
+            DockerUtils["Docker Compose Utils<br/>start/stop, logs, exec"]
+        end
+    end
+
+    subgraph External["External Systems"]
+        FS[("File System<br/>worlds/, servers/,<br/>users.yaml, api.key")]
+        DockerEngine[("Docker Engine<br/>containers, images,<br/>networks")]
+    end
+
+    Auth --> AuthModes
+    Plugins --> Routes
+    Routes --> Services
+    Services --> FS
+    Services --> DockerEngine
 ```
 
 ## Request Flow Sequence
 
 ### Server Start Request
 
-```text
-Client                    mcctl-api                 Docker Engine
-  │                          │                           │
-  │  POST /api/servers/      │                           │
-  │      survival/start      │                           │
-  │─────────────────────────>│                           │
-  │                          │                           │
-  │                    ┌─────┴─────┐                     │
-  │                    │   Auth    │                     │
-  │                    │  Plugin   │                     │
-  │                    └─────┬─────┘                     │
-  │                          │                           │
-  │                    ┌─────┴─────┐                     │
-  │                    │ Validate  │                     │
-  │                    │  Server   │                     │
-  │                    │   Name    │                     │
-  │                    └─────┬─────┘                     │
-  │                          │                           │
-  │                          │  docker compose up -d     │
-  │                          │     mc-survival           │
-  │                          │──────────────────────────>│
-  │                          │                           │
-  │                          │        success            │
-  │                          │<──────────────────────────│
-  │                          │                           │
-  │    { success: true,      │                           │
-  │      action: "start" }   │                           │
-  │<─────────────────────────│                           │
-  │                          │                           │
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as mcctl-api
+    participant D as Docker Engine
+
+    C->>A: POST /api/servers/survival/start
+    A->>A: Auth Plugin
+    A->>A: Validate Server Name
+    A->>D: docker compose up -d mc-survival
+    D-->>A: success
+    A-->>C: { success: true, action: "start" }
 ```
 
 ### RCON Command Execution
 
-```text
-Client                    mcctl-api                 MC Container
-  │                          │                           │
-  │  POST /api/servers/      │                           │
-  │    survival/exec         │                           │
-  │  { command: "list" }     │                           │
-  │─────────────────────────>│                           │
-  │                          │                           │
-  │                    ┌─────┴─────┐                     │
-  │                    │   Auth    │                     │
-  │                    └─────┬─────┘                     │
-  │                          │                           │
-  │                          │  docker exec mc-survival  │
-  │                          │    rcon-cli list          │
-  │                          │──────────────────────────>│
-  │                          │                           │
-  │                          │   "3 players online..."   │
-  │                          │<──────────────────────────│
-  │                          │                           │
-  │   { success: true,       │                           │
-  │     output: "3 players   │                           │
-  │       online..." }       │                           │
-  │<─────────────────────────│                           │
-  │                          │                           │
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as mcctl-api
+    participant MC as MC Container
+
+    C->>A: POST /api/servers/survival/exec<br/>{ command: "list" }
+    A->>A: Auth Plugin
+    A->>MC: docker exec mc-survival rcon-cli list
+    MC-->>A: "3 players online..."
+    A-->>C: { success: true, output: "3 players online..." }
 ```
 
 ### World Assignment Flow
 
-```text
-Client                    mcctl-api              WorldManagement
-  │                          │                    UseCase
-  │  POST /api/worlds/       │                       │
-  │   survival/assign        │                       │
-  │  { serverName:           │                       │
-  │    "mc-myserver" }       │                       │
-  │─────────────────────────>│                       │
-  │                          │                       │
-  │                    ┌─────┴─────┐                 │
-  │                    │   Auth    │                 │
-  │                    └─────┬─────┘                 │
-  │                          │                       │
-  │                          │  assignWorldByName()  │
-  │                          │──────────────────────>│
-  │                          │                       │
-  │                          │         ┌─────────────┴──────────────┐
-  │                          │         │ 1. Check world exists      │
-  │                          │         │ 2. Check not locked        │
-  │                          │         │ 3. Create lock file        │
-  │                          │         │ 4. Update server config    │
-  │                          │         └─────────────┬──────────────┘
-  │                          │                       │
-  │                          │   { success: true }   │
-  │                          │<──────────────────────│
-  │                          │                       │
-  │   { success: true,       │                       │
-  │     worldName: "survival"│                       │
-  │     serverName: "..." }  │                       │
-  │<─────────────────────────│                       │
-  │                          │                       │
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as mcctl-api
+    participant W as WorldManagement UseCase
+
+    C->>A: POST /api/worlds/survival/assign<br/>{ serverName: "mc-myserver" }
+    A->>A: Auth Plugin
+    A->>W: assignWorldByName()
+    W->>W: 1. Check world exists
+    W->>W: 2. Check not locked
+    W->>W: 3. Create lock file
+    W->>W: 4. Update server config
+    W-->>A: { success: true }
+    A-->>C: { success: true, worldName: "survival", serverName: "mc-myserver" }
 ```
 
 ### SSE Log Streaming
 
-```text
-Client                    mcctl-api                 Docker
-  │                          │                         │
-  │  GET /api/servers/       │                         │
-  │   survival/logs?         │                         │
-  │   follow=true            │                         │
-  │─────────────────────────>│                         │
-  │                          │                         │
-  │  Content-Type:           │                         │
-  │  text/event-stream       │                         │
-  │<─────────────────────────│                         │
-  │                          │                         │
-  │                          │  docker logs -f         │
-  │                          │    mc-survival          │
-  │                          │────────────────────────>│
-  │                          │                         │
-  │  data: {"log": "..."}    │       log line          │
-  │<─────────────────────────│<────────────────────────│
-  │                          │                         │
-  │  data: {"log": "..."}    │       log line          │
-  │<─────────────────────────│<────────────────────────│
-  │                          │                         │
-  │  : heartbeat             │                         │
-  │<─────────────────────────│  (every 30s)            │
-  │                          │                         │
-  │         ...              │         ...             │
-  │                          │                         │
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as mcctl-api
+    participant D as Docker
+
+    C->>A: GET /api/servers/survival/logs?follow=true
+    A-->>C: Content-Type: text/event-stream
+    A->>D: docker logs -f mc-survival
+    loop Log Streaming
+        D-->>A: log line
+        A-->>C: data: {"log": "..."}
+    end
+    loop Heartbeat
+        A-->>C: : heartbeat (every 30s)
+    end
 ```
 
 ## Base URL
