@@ -337,6 +337,13 @@
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/mods-and-plugins/spiget/"/>
     </url>
     <url>
+        <loc>https://minecraft-server-manager.readthedocs.io/troubleshooting/</loc>
+        <lastmod>2026-01-30</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/troubleshooting/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/troubleshooting/"/>
+    </url>
+    <url>
         <loc>https://minecraft-server-manager.readthedocs.io/usage/cli-usage-examples/</loc>
         <lastmod>2026-01-30</lastmod>
         <changefreq>daily</changefreq>
@@ -678,6 +685,13 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/mods-and-plugins/spiget/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/mods-and-plugins/spiget/"/>
+    </url>
+    <url>
+        <loc>https://minecraft-server-manager.readthedocs.io/ko/troubleshooting/</loc>
+        <lastmod>2026-01-30</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/troubleshooting/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/troubleshooting/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/usage/cli-usage-examples/</loc>
