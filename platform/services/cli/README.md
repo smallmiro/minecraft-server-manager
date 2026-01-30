@@ -71,6 +71,32 @@ mcctl logs myserver
 - Docker & Docker Compose
 - Linux or macOS
 
+## Changelog
+
+### v1.6.3 (2026-01-30)
+- **fix**: npm publish support for `@minecraft-docker/mod-source-modrinth` package
+- **docs**: Added project badges to README
+- **docs**: Created development guide (EN/KO)
+- **ci**: Added mod-source-modrinth to release workflow
+
+### v1.6.2 (2026-01-28)
+- **feat**: Improved API, E2E tests, and documentation
+- **fix**: Various bug fixes and stability improvements
+
+### v1.6.0 (2026-01-24)
+- **feat**: Added mod management commands (`mcctl mod search/add/remove`)
+- **feat**: Modrinth integration for mod search and installation
+
+### v1.5.0 (2026-01-21)
+- **feat**: Added player management with Mojang API integration
+- **feat**: Local player cache for offline UUID lookup
+
+### v1.4.0 (2026-01-20)
+- **feat**: World management commands (`mcctl world new/assign/release`)
+- **feat**: Server backup and restore functionality
+
+[Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
+
 ## Documentation
 
 - [Full Documentation](https://minecraft-server-manager.readthedocs.io/)
