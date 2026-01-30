@@ -272,6 +272,18 @@ This command performs the following tasks:
 - Reviews technical accuracy and translation quality
 - Expertise: DevOps, Docker, Bash, Network, Linux, TypeScript
 
+## System Requirements
+
+| Component | Minimum Version | Recommended | Notes |
+|-----------|-----------------|-------------|-------|
+| **Node.js** | >= 18.0.0 | 20 LTS | Required for mcctl CLI |
+| **Docker Engine** | >= 24.0.0 | Latest | Container runtime |
+| **Docker Compose** | >= 2.20.0 | Latest | `include` feature required |
+| **OS** | Linux, macOS | Ubuntu 22.04+ | Windows via WSL2 |
+| **pnpm** | >= 8.0.0 | Latest | For development only |
+
+**Important**: Docker Compose v2.20.0+ is required because mcctl uses the `include` directive for server configuration management.
+
 ## npm Package Installation (Global CLI)
 
 The management CLI can be installed globally via npm for easy access from anywhere.

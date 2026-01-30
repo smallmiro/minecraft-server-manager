@@ -246,10 +246,12 @@ See [CLI Commands Reference](docs/cli/commands.md) for complete documentation.
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
-- pnpm >= 8.0.0
-- Docker Engine 20.10+
-- Docker Compose v2.0+
+| Component | Minimum Version | Recommended | Notes |
+|-----------|-----------------|-------------|-------|
+| Node.js | >= 18.0.0 | 20 LTS | Required for mcctl CLI |
+| Docker Engine | >= 24.0.0 | Latest | Container runtime |
+| Docker Compose | >= 2.20.0 | Latest | `include` feature required |
+| pnpm | >= 8.0.0 | Latest | For development only |
 
 ### Build from Source
 

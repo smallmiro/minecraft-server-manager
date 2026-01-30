@@ -13,6 +13,14 @@ Docker와 **mcctl** CLI를 사용하여 여러 Minecraft Java Edition 서버를 
 - **플레이어 관리**: CLI를 통한 운영자, 화이트리스트, 밴, 킥
 - **GitHub 백업**: 비공개 저장소에 자동 월드 백업
 
+## 시스템 요구사항
+
+| 구성요소 | 최소 버전 | 비고 |
+|----------|-----------|------|
+| Node.js | >= 18.0.0 | 20 LTS 권장 |
+| Docker Engine | >= 24.0.0 | |
+| Docker Compose | >= 2.20.0 | `include` 기능 필요 |
+
 ## 빠른 시작
 
 ```bash

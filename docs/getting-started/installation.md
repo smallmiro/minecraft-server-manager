@@ -2,6 +2,18 @@
 
 This guide walks you through installing mcctl and setting up the required dependencies.
 
+## System Requirements
+
+| Component | Minimum Version | Recommended | Notes |
+|-----------|-----------------|-------------|-------|
+| **Node.js** | >= 18.0.0 | 20 LTS | Required for mcctl CLI |
+| **Docker Engine** | >= 24.0.0 | Latest | Container runtime |
+| **Docker Compose** | >= 2.20.0 | Latest | `include` feature required |
+| **OS** | Linux, macOS | Ubuntu 22.04+ | Windows via WSL2 |
+
+!!! warning "Docker Compose Version"
+    Docker Compose **v2.20.0 or higher** is required. The `include` directive used by mcctl was introduced in this version. Check your version with `docker compose version`.
+
 ## Prerequisites
 
 Before installing mcctl, ensure you have the following installed:
@@ -112,7 +124,7 @@ Verify installation:
 
 ```bash
 mcctl --version
-# mcctl version 1.6.3
+# mcctl version 1.6.9
 ```
 
 ### Using npx (No Installation)

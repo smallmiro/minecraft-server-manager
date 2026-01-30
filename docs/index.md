@@ -13,6 +13,14 @@ A DevOps solution for managing multiple Minecraft Java Edition servers using Doc
 - **Player Management**: Operators, whitelist, bans, and kicks via CLI
 - **GitHub Backup**: Automatic world backup to private repositories
 
+## System Requirements
+
+| Component | Minimum Version | Notes |
+|-----------|-----------------|-------|
+| Node.js | >= 18.0.0 | 20 LTS recommended |
+| Docker Engine | >= 24.0.0 | |
+| Docker Compose | >= 2.20.0 | `include` feature required |
+
 ## Quick Start
 
 ```bash

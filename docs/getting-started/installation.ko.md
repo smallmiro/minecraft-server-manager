@@ -2,6 +2,18 @@
 
 이 가이드는 mcctl 설치 및 필수 의존성 설정 과정을 안내합니다.
 
+## 시스템 요구사항
+
+| 구성요소 | 최소 버전 | 권장 버전 | 비고 |
+|----------|-----------|-----------|------|
+| **Node.js** | >= 18.0.0 | 20 LTS | mcctl CLI에 필요 |
+| **Docker Engine** | >= 24.0.0 | 최신 | 컨테이너 런타임 |
+| **Docker Compose** | >= 2.20.0 | 최신 | `include` 기능 필요 |
+| **OS** | Linux, macOS | Ubuntu 22.04+ | Windows는 WSL2 사용 |
+
+!!! warning "Docker Compose 버전"
+    Docker Compose **v2.20.0 이상**이 필요합니다. mcctl이 사용하는 `include` 지시어는 이 버전에서 도입되었습니다. `docker compose version`으로 버전을 확인하세요.
+
 ## 사전 요구사항
 
 mcctl을 설치하기 전에 다음 소프트웨어가 설치되어 있어야 합니다:
@@ -112,7 +124,7 @@ pnpm add -g @minecraft-docker/mcctl
 
 ```bash
 mcctl --version
-# mcctl version 1.6.3
+# mcctl version 1.6.9
 ```
 
 ### npx 사용 (설치 없이)
