@@ -79,7 +79,13 @@ jobs:
       - name: Publish @minecraft-docker/shared
         run: |
           cd platform/services/shared
-          npm publish --access public --provenance
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists, skipping..."
+          else
+            npm publish --access public --provenance
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -92,7 +98,13 @@ jobs:
       - name: Publish @minecraft-docker/mod-source-modrinth
         run: |
           cd platform/services/mod-source-modrinth
-          npm publish --access public --provenance
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists, skipping..."
+          else
+            npm publish --access public --provenance
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -106,7 +118,13 @@ jobs:
       - name: Publish @minecraft-docker/mcctl
         run: |
           cd platform/services/cli
-          npm publish --access public --provenance
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists, skipping..."
+          else
+            npm publish --access public --provenance
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
