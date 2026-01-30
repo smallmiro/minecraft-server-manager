@@ -4,6 +4,7 @@ export type {
   SelectPromptOptions,
   SelectOption,
   ConfirmPromptOptions,
+  PasswordPromptOptions,
   Spinner,
 } from './IPromptPort.js';
 
@@ -34,3 +35,15 @@ export type {
   ServerStatus,
   WorldAvailabilityCategory,
 } from './IWorldRepository.js';
+
+export type { IModSourcePort } from './IModSourcePort.js';
+
+export type { IUserRepository } from './IUserRepository.js';
+
+export type {
+  IServiceManagerPort,
+  ServiceStartOptions,
+  ServiceStopOptions,
+  ServiceRestartOptions,
+  ServiceLogsOptions,
+} from './IServiceManagerPort.js';

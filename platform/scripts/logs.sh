@@ -255,7 +255,7 @@ main() {
         [[ "$follow" == "true" ]] && journal_opts="$journal_opts -f"
         [[ -n "$since" ]] && journal_opts="$journal_opts --since=$since"
         # shellcheck disable=SC2086
-        sudo journalctl $journal_opts
+        run_with_sudo journalctl $journal_opts
         exit 0
     fi
 

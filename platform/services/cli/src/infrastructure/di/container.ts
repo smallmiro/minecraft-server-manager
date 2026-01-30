@@ -28,12 +28,18 @@ import {
 // CLI-specific adapter
 import { ClackPromptAdapter } from '../adapters/ClackPromptAdapter.js';
 
+export interface ContainerOptions {
+  rootDir?: string;
+  sudoPassword?: string;
+}
+
 /**
  * Dependency Injection Container
  * Manages creation and lifecycle of dependencies
  */
 export class Container {
   private readonly paths: Paths;
+  private readonly sudoPassword?: string;
 
   // Adapters (singleton)
   private _promptPort?: IPromptPort;
@@ -42,8 +48,18 @@ export class Container {
   private _worldRepo?: IWorldRepository;
   private _docProvider?: IDocProvider;
 
-  constructor(rootDir?: string) {
-    this.paths = new Paths(rootDir);
+  constructor(options?: ContainerOptions | string) {
+    if (typeof options === 'string') {
+      // Backward compatibility: rootDir as string
+      this.paths = new Paths(options);
+      this.sudoPassword = undefined;
+    } else if (options) {
+      this.paths = new Paths(options.rootDir);
+      this.sudoPassword = options.sudoPassword;
+    } else {
+      this.paths = new Paths();
+      this.sudoPassword = undefined;
+    }
   }
 
   // ========================================
@@ -59,7 +75,10 @@ export class Container {
 
   get shellPort(): IShellPort {
     if (!this._shellPort) {
-      this._shellPort = new ShellAdapter(this.paths);
+      this._shellPort = new ShellAdapter({
+        paths: this.paths,
+        sudoPassword: this.sudoPassword,
+      });
     }
     return this._shellPort;
   }
@@ -138,8 +157,8 @@ export class Container {
   /**
    * Create a container with default configuration
    */
-  static create(rootDir?: string): Container {
-    return new Container(rootDir);
+  static create(options?: ContainerOptions | string): Container {
+    return new Container(options);
   }
 
   /**
@@ -164,13 +183,24 @@ export class Container {
  * Global container instance
  */
 let globalContainer: Container | null = null;
+let globalContainerOptions: ContainerOptions | undefined = undefined;
 
 /**
  * Get or create the global container
  */
-export function getContainer(rootDir?: string): Container {
-  if (!globalContainer) {
-    globalContainer = Container.create(rootDir);
+export function getContainer(options?: ContainerOptions | string): Container {
+  // Convert string to options for comparison
+  const normalizedOptions: ContainerOptions | undefined =
+    typeof options === 'string' ? { rootDir: options } : options;
+
+  // Check if we need to recreate the container (options changed)
+  const optionsChanged =
+    globalContainerOptions?.rootDir !== normalizedOptions?.rootDir ||
+    globalContainerOptions?.sudoPassword !== normalizedOptions?.sudoPassword;
+
+  if (!globalContainer || optionsChanged) {
+    globalContainer = Container.create(normalizedOptions);
+    globalContainerOptions = normalizedOptions;
   }
   return globalContainer;
 }

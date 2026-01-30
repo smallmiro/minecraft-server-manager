@@ -54,6 +54,15 @@ export {
   getDetailedServerInfoWithPlayers,
   getRouterDetailInfo,
   formatBytes,
+  // Configured servers from filesystem
+  getConfiguredServers,
+  getServerInfoFromConfig,
+  getAllServers,
+  getServersDir,
+  readServerConfigEnv,
+  serverExists,
+  getDetailedServerInfoFromConfig,
+  getServerDetailedInfo,
 } from './docker/index.js';
 
 // Re-export domain layer (Value Objects and Entities)
@@ -68,6 +77,16 @@ export {
   WorldOptions,
   WorldSetupType,
   type WorldOptionsData,
+  UserId,
+  Username,
+  Role,
+  RoleEnum,
+  // Service management value objects
+  ServiceStatus,
+  ServiceStatusEnum,
+  ProcessInfo,
+  type ProcessInfoData,
+  type ProcessMetrics,
   // Entities
   Server,
   ServerStatus,
@@ -75,7 +94,29 @@ export {
   World,
   WorldLockStatus,
   type WorldLock,
+  User,
+  type UserData,
 } from './domain/index.js';
+
+// Re-export mod domain models
+export type {
+  ModSideSupport,
+  ModProjectType,
+  ModVersionType,
+  ModDependencyType,
+  ModSearchIndex,
+  ModSearchOptions,
+  ModVersionOptions,
+  ModProject,
+  ModVersion,
+  ModFile,
+  ModFileHashes,
+  ModDependency,
+  ModSearchResult,
+} from './domain/mod/index.js';
+
+// Re-export ModSourceFactory
+export { ModSourceFactory } from './infrastructure/factories/index.js';
 
 // Re-export application layer (ports and use-cases)
 export * from './application/index.js';

@@ -1,5 +1,6 @@
 import { Paths, log, colors } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
+import { promptSudoPasswordIfNeeded } from '../lib/sudo-utils.js';
 
 /**
  * Create command options from CLI arguments
@@ -13,6 +14,7 @@ export interface CreateCommandOptions {
   worldUrl?: string;
   worldName?: string;
   noStart?: boolean;
+  sudoPassword?: string;
 }
 
 /**
@@ -30,7 +32,13 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
     return 1;
   }
 
-  const container = getContainer(options.root);
+  // Prompt for sudo password if needed (avahi installed but no password provided)
+  const sudoPassword = await promptSudoPasswordIfNeeded(options.sudoPassword);
+
+  const container = getContainer({
+    rootDir: options.root,
+    sudoPassword,
+  });
 
   // Determine execution mode
   if (options.name) {

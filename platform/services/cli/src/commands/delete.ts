@@ -1,5 +1,6 @@
 import { Paths, log, colors } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
+import { promptSudoPasswordIfNeeded } from '../lib/sudo-utils.js';
 
 /**
  * Delete command options from CLI arguments
@@ -8,6 +9,7 @@ export interface DeleteCommandOptions {
   root?: string;
   name?: string;
   force?: boolean;
+  sudoPassword?: string;
 }
 
 /**
@@ -25,7 +27,13 @@ export async function deleteCommand(options: DeleteCommandOptions): Promise<numb
     return 1;
   }
 
-  const container = getContainer(options.root);
+  // Prompt for sudo password if needed (avahi installed but no password provided)
+  const sudoPassword = await promptSudoPasswordIfNeeded(options.sudoPassword);
+
+  const container = getContainer({
+    rootDir: options.root,
+    sudoPassword,
+  });
 
   // Determine execution mode
   if (options.name) {

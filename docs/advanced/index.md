@@ -8,6 +8,7 @@ The platform provides several advanced features for production deployments and c
 
 - **Networking** - nip.io magic DNS, mDNS, mc-router configuration
 - **Backup** - Automatic GitHub backup for world data
+- **RCON** - Remote console protocol for server administration
 - **World Management** - Multi-server world sharing with locking
 - **Auto-scaling** - Automatic server start/stop based on player activity
 
@@ -30,6 +31,14 @@ The platform provides several advanced features for production deployments and c
     Set up automatic GitHub backup for world data
 
     [:octicons-arrow-right-24: Backup Guide](backup.md)
+
+-   :material-console:{ .lg .middle } **RCON**
+
+    ---
+
+    Remote console protocol for server administration
+
+    [:octicons-arrow-right-24: RCON Specification](rcon.md)
 
 </div>
 
@@ -107,6 +116,19 @@ sequenceDiagram
     Note over W: Locked to B
 ```
 
+**Manage world locks with mcctl:**
+
+```bash
+# List all worlds with lock status
+mcctl world list
+
+# Assign a world to a server (locks it)
+mcctl world assign survival mc-myserver
+
+# Release a world lock
+mcctl world release survival
+```
+
 ## Performance Tuning
 
 ### JVM Optimization
@@ -114,14 +136,14 @@ sequenceDiagram
 Use Aikar's flags for optimal performance:
 
 ```bash
-# config.env
-USE_AIKAR_FLAGS=true
-MEMORY=8G
+mcctl config myserver USE_AIKAR_FLAGS true
+mcctl stop myserver && mcctl start myserver
 ```
 
-For large servers, adjust G1GC parameters:
+For large servers, adjust G1GC parameters (edit config.env directly):
 
 ```bash
+# In config.env
 JVM_OPTS="-XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:G1NewSizePercent=40"
 ```
 
@@ -130,15 +152,14 @@ JVM_OPTS="-XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:G1NewSizePercent=40"
 For high-player-count servers:
 
 ```bash
-# config.env
-NETWORK_COMPRESSION_THRESHOLD=256
-VIEW_DISTANCE=8
-SIMULATION_DISTANCE=6
+mcctl config myserver NETWORK_COMPRESSION_THRESHOLD 256
+mcctl config myserver VIEW_DISTANCE 8
+mcctl config myserver SIMULATION_DISTANCE 6
 ```
 
 ### Container Resources
 
-Limit container resources in docker-compose.yml:
+For Docker resource limits, edit the server's docker-compose.yml directly:
 
 ```yaml
 services:
@@ -153,15 +174,26 @@ services:
           memory: 4G
 ```
 
+Then restart:
+
+```bash
+mcctl stop myserver && mcctl start myserver
+```
+
 ## Security Considerations
 
 ### RCON Password
 
-Always change the default RCON password:
+Change the default RCON password in `.env`:
 
 ```bash
-# .env
 RCON_PASSWORD=your-very-secure-password-here
+```
+
+Then restart all services:
+
+```bash
+mcctl down && mcctl up
 ```
 
 ### Whitelist
@@ -169,9 +201,10 @@ RCON_PASSWORD=your-very-secure-password-here
 Enable whitelist for private servers:
 
 ```bash
-# config.env
-ENABLE_WHITELIST=true
-WHITELIST=Steve,Alex,Player3
+mcctl whitelist myserver on
+mcctl whitelist myserver add Steve
+mcctl whitelist myserver add Alex
+mcctl whitelist myserver status
 ```
 
 ### Online Mode
@@ -179,41 +212,92 @@ WHITELIST=Steve,Alex,Player3
 Keep online mode enabled unless you specifically need offline:
 
 ```bash
-# config.env
-ONLINE_MODE=true  # Default, validates with Mojang
+mcctl config myserver ONLINE_MODE true
 ```
 
 ## Monitoring
 
-### Docker Stats
+### Server Status
 
 ```bash
-# View resource usage
-docker stats mc-myserver
+# Basic status
+mcctl status
 
-# All Minecraft containers
-docker stats $(docker ps --filter name=mc- -q)
+# Detailed status with resources
+mcctl status --detail
+
+# Real-time monitoring
+mcctl status --watch
+
+# JSON output for scripting
+mcctl status --json
 ```
 
 ### Server Logs
 
 ```bash
-# Real-time logs
+# View recent logs
+mcctl logs myserver
+
+# Follow logs in real-time
 mcctl logs myserver -f
 
-# Search for errors
-docker logs mc-myserver 2>&1 | grep -i error
+# View last N lines
+mcctl logs myserver -n 100
 ```
 
-### Health Checks
+### Resource Usage
 
-mc-router provides health information via mc-router.host label lookup.
+```bash
+# Check specific server
+mcctl status myserver
+
+# Output includes:
+#   Resources: 3.1 GB / 8.0 GB (38.8%) | CPU: 15.2%
+#   Players:   2/20 - Steve, Alex
+```
+
+### Online Players
+
+```bash
+# Single server
+mcctl player online myserver
+
+# All servers
+mcctl player online --all
+```
 
 ## Troubleshooting
 
-See the [Troubleshooting Guide](../getting-started/quickstart.md#troubleshooting) for common issues.
+### Quick Diagnostics
+
+```bash
+# Check overall status
+mcctl status --detail
+
+# Check router health
+mcctl status router
+
+# Check specific server logs
+mcctl logs myserver -n 100
+
+# Test RCON connection
+mcctl console myserver
+```
+
+### Common Issues
+
+| Issue | Diagnosis | Solution |
+|-------|-----------|----------|
+| Server won't start | `mcctl logs myserver` | Check Java version, memory |
+| Can't connect | `mcctl status router` | Verify mc-router is running |
+| Slow performance | `mcctl status --detail` | Check memory, enable Aikar flags |
+| World corruption | `mcctl world list` | Check lock status |
+
+See the [Troubleshooting Guide](../getting-started/quickstart.md#troubleshooting) for more details.
 
 ## Next Steps
 
 - **[Networking Guide](networking.md)** - Configure hostname routing
 - **[Backup Guide](backup.md)** - Set up automatic backups
+- **[RCON Specification](rcon.md)** - Remote console protocol details

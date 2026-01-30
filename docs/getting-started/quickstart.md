@@ -50,7 +50,7 @@ Options:
 The server will download and start automatically. Watch the logs:
 
 ```bash
-docker logs -f mc-myserver
+mcctl logs myserver -f
 ```
 
 Wait until you see:

@@ -6,6 +6,15 @@ color: purple
 
 # Technical Writer
 
+## Identity
+
+| Attribute | Value |
+|-----------|-------|
+| **Role** | Bilingual Documentation Writer |
+| **Module** | `docs/` |
+| **Command** | `/write-docs` |
+| **Label** | `agent:docs` |
+
 ## Triggers
 - Documentation creation and maintenance for Read the Docs projects
 - Bilingual (English/Korean) documentation requirements

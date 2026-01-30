@@ -43,6 +43,9 @@ else
     PLATFORM_DIR="$(dirname "$SCRIPT_DIR")"
 fi
 
+# Source common functions
+source "$SCRIPT_DIR/lib/common.sh"
+
 SERVERS_DIR="$PLATFORM_DIR/servers"
 SERVERS_COMPOSE="$SERVERS_DIR/compose.yml"
 MAIN_COMPOSE="$PLATFORM_DIR/docker-compose.yml"
@@ -152,7 +155,13 @@ if docker compose ps "mc-$SERVER_NAME" 2>/dev/null | grep -q "mc-$SERVER_NAME"; 
     docker compose rm -f "mc-$SERVER_NAME" 2>/dev/null || true
     echo "   Container mc-$SERVER_NAME stopped and removed"
 else
-    echo "   Container mc-$SERVER_NAME not running"
+    # Check if container exists but not managed by compose (exited state)
+    if docker ps -a --format '{{.Names}}' | grep -q "^mc-$SERVER_NAME$"; then
+        docker rm -f "mc-$SERVER_NAME" 2>/dev/null || true
+        echo "   Container mc-$SERVER_NAME removed"
+    else
+        echo "   Container mc-$SERVER_NAME not found"
+    fi
 fi
 
 # =============================================================================
@@ -201,12 +210,16 @@ if [ "$KEEP_AVAHI" = "true" ]; then
     echo "   Skipped (--keep-avahi specified)"
 elif [ -f "$AVAHI_HOSTS" ]; then
     if grep -q "$SERVER_NAME.local" "$AVAHI_HOSTS" 2>/dev/null; then
-        if sudo sed -i "/$SERVER_NAME\.local/d" "$AVAHI_HOSTS" 2>/dev/null; then
-            sudo systemctl restart avahi-daemon 2>/dev/null || true
+        if run_with_sudo sed -i "/$SERVER_NAME\.local/d" "$AVAHI_HOSTS" 2>/dev/null; then
+            run_with_sudo systemctl restart avahi-daemon 2>/dev/null || true
             echo -e "   ${GREEN}Removed $SERVER_NAME.local from avahi${NC}"
         else
             echo -e "${YELLOW}   Warning: Failed to update avahi (sudo required)${NC}"
-            echo "   Remove manually: sudo sed -i '/$SERVER_NAME.local/d' $AVAHI_HOSTS"
+            if has_sudo_password; then
+                echo "   Check if MCCTL_SUDO_PASSWORD is correct"
+            else
+                echo "   Set MCCTL_SUDO_PASSWORD env var or remove manually: sudo sed -i '/$SERVER_NAME.local/d' $AVAHI_HOSTS"
+            fi
         fi
     else
         echo "   Hostname not found in avahi"

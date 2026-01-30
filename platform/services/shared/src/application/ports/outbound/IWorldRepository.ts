@@ -70,6 +70,28 @@ export interface IWorldRepository {
    * Returns worlds categorized by availability
    */
   findAllWithServerStatus(): Promise<WorldWithServerStatus[]>;
+
+  /**
+   * Delete a world directory
+   * @param name World name to delete
+   * @returns true if deleted successfully
+   */
+  delete(name: string): Promise<boolean>;
+
+  /**
+   * Create a new world directory with optional seed
+   * @param name World name to create
+   * @param seed Optional seed for world generation
+   * @returns Created World entity
+   */
+  create(name: string, seed?: string): Promise<World>;
+
+  /**
+   * Get seed for a world from .meta file
+   * @param name World name
+   * @returns Seed string or null if not found
+   */
+  getSeed(name: string): Promise<string | null>;
 }
 
 /**

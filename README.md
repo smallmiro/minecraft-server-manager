@@ -1,5 +1,11 @@
 # Docker Minecraft Server Manager
 
+[![npm version](https://img.shields.io/npm/v/@minecraft-docker/mcctl)](https://www.npmjs.com/package/@minecraft-docker/mcctl)
+[![npm downloads](https://img.shields.io/npm/dm/@minecraft-docker/mcctl)](https://www.npmjs.com/package/@minecraft-docker/mcctl)
+[![GitHub issues](https://img.shields.io/github/issues/smallmiro/minecraft-server-manager)](https://github.com/smallmiro/minecraft-server-manager/issues)
+[![Documentation](https://readthedocs.org/projects/minecraft-server-manager/badge/?version=latest)](https://minecraft-server-manager.readthedocs.io/)
+[![License](https://img.shields.io/github/license/smallmiro/minecraft-server-manager)](https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE)
+
 A multi-server Minecraft management system using `itzg/minecraft-server` with `itzg/mc-router` for automatic scaling and hostname-based routing.
 
 ## Features
@@ -10,6 +16,11 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **mDNS Discovery**: Clients auto-discover servers via Bonjour/Zeroconf (no hosts file needed)
 - **Zero Resources**: Only infrastructure services run when servers are idle (~40MB RAM)
 - **Modular Config**: Each server has its own directory with independent configuration
+- **Interactive CLI**: Guided prompts for server creation, player management, and more
+- **Player Management**: Unified `mcctl player` command with Mojang API integration and local cache
+- **Mod Management**: Search, add, and remove mods from Modrinth, CurseForge, Spiget, or direct URLs
+- **NeoForge Support**: Full support for NeoForge modded servers (Minecraft 1.20.1+)
+- **Automation Ready**: Environment variable and CLI options for sudo password handling
 
 ## Quick Start
 
@@ -72,6 +83,20 @@ With avahi/Bonjour, connect directly:
 
 See [mDNS Setup Guide](#mdns-setup-guide) for detailed installation instructions.
 
+**Option C: VPN Mesh (Remote Access)**
+
+For remote access without port forwarding, use [Tailscale](https://tailscale.com/) or [ZeroTier](https://zerotier.com/):
+
+```bash
+# .env - add your VPN IP alongside LAN IP
+HOST_IPS=192.168.1.100,100.64.0.5
+```
+
+Friends on your VPN network can connect via:
+- `myserver.100.64.0.5.nip.io:25565`
+
+See [VPN Mesh Networks Guide](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/networking/#vpn-mesh-networks) for setup instructions.
+
 Add more servers using `create-server.sh` - they're automatically discoverable!
 
 ## Architecture
@@ -97,6 +122,7 @@ cd platform
 # Basic examples:
 ./scripts/create-server.sh myworld              # Creates & starts myworld.local (PAPER)
 ./scripts/create-server.sh techcraft -t FORGE   # Creates & starts techcraft.local (FORGE)
+./scripts/create-server.sh modern -t NEOFORGE -v 1.21.1  # NeoForge for modern mods
 ./scripts/create-server.sh myworld --no-start   # Create only, don't start
 
 # With version:
@@ -110,16 +136,56 @@ cd platform
 
 The script automatically:
 1. Creates server directory with configuration
-2. Creates symlink to existing world (if `--world` specified)
-3. Updates `servers/compose.yml` (main docker-compose.yml is NOT modified)
-4. Registers hostname with avahi-daemon (mDNS)
-5. Starts the server (unless `--no-start` specified)
+2. Sets LEVEL to server name (world stored in `/worlds/<server-name>/`)
+3. Creates symlink to existing world (if `--world` specified)
+4. Updates `servers/compose.yml` (main docker-compose.yml is NOT modified)
+5. Registers hostname with avahi-daemon (mDNS)
+6. Starts the server (unless `--no-start` specified)
+
+**World Storage**: Worlds are stored in the shared `/worlds/` directory using `EXTRA_ARGS=--universe /worlds/`. This enables world sharing between servers.
 
 **mc-router auto-discovery**: Servers are auto-discovered via Docker labels (`mc-router.host`).
 
 New servers are automatically discoverable via mDNS - just connect!
 
 See [CLAUDE.md](CLAUDE.md) for detailed instructions.
+
+## Mod Management
+
+mcctl integrates with multiple mod sources for easy mod installation:
+
+```bash
+# Search for mods on Modrinth
+mcctl mod search sodium
+
+# Add mods to your server (from Modrinth, the default)
+mcctl mod add myserver sodium lithium phosphor
+
+# Add mods from CurseForge (requires CF_API_KEY in .env)
+mcctl mod add myserver --curseforge jei journeymap
+
+# Add plugins from SpigotMC (use resource ID)
+mcctl mod add myserver --spiget 9089  # EssentialsX
+
+# Add from direct URL
+mcctl mod add myserver --url https://example.com/mod.jar
+
+# List configured mods
+mcctl mod list myserver
+
+# Remove a mod
+mcctl mod remove myserver sodium
+
+# Show all available sources
+mcctl mod sources
+```
+
+After adding or removing mods, restart the server:
+```bash
+mcctl stop myserver && mcctl start myserver
+```
+
+See [CLI Commands Reference](docs/cli/commands.md) for complete documentation.
 
 ---
 
@@ -215,7 +281,10 @@ minecraft/
 │
 └── platform/services/
     ├── shared/               # @minecraft-docker/shared
-    │   └── src/              # Common types, utils, docker helpers
+    │   └── src/              # Common types, utils, domain models
+    │
+    ├── mod-source-modrinth/  # @minecraft-docker/mod-source-modrinth
+    │   └── src/              # Modrinth API adapter
     │
     └── cli/                  # @minecraft-docker/mcctl
         └── src/              # CLI commands and adapters
@@ -238,8 +307,9 @@ minecraft/
 pnpm automatically builds packages in dependency order:
 
 ```
-1️⃣ @minecraft-docker/shared  (no dependencies)
-2️⃣ @minecraft-docker/mcctl   (depends on shared)
+1. @minecraft-docker/shared              (no dependencies)
+2. @minecraft-docker/mod-source-modrinth (depends on shared)
+3. @minecraft-docker/mcctl               (depends on shared, mod-source-modrinth)
 ```
 
 ---
@@ -276,6 +346,19 @@ pnpm automatically builds packages in dependency order:
 | `RCON_PASSWORD` | RCON password |
 | `ENABLE_WHITELIST` | Enable whitelist |
 | `OPS` | Operator list |
+
+### Network
+
+| Variable | Description |
+|----------|-------------|
+| `HOST_IP` | Host IP for nip.io hostname |
+| `HOST_IPS` | Multiple IPs for VPN mesh (comma-separated) |
+
+### Automation
+
+| Variable | Description |
+|----------|-------------|
+| `MCCTL_SUDO_PASSWORD` | sudo password for mDNS registration (avahi-daemon) |
 
 ---
 
@@ -317,6 +400,7 @@ mcctl delete
 # Interactive world management
 mcctl world            # Shows subcommand help
 mcctl world list       # List all worlds with lock status
+mcctl world new        # Interactively create new world
 mcctl world assign     # Interactively assign world to server
 mcctl world release    # Interactively release world lock
 
@@ -339,6 +423,7 @@ mcctl create myserver -t PAPER -v 1.21.1 --seed 12345
 mcctl delete myserver --force
 
 # World management with names
+mcctl world new myworld --seed 12345 --server myserver
 mcctl world assign survival mc-myserver
 mcctl world release survival
 
@@ -480,6 +565,43 @@ mcctl player online myserver       # List online players on server
 mcctl player online --all          # List online players on all servers
 ```
 
+### Unified Player Management (Interactive)
+
+```bash
+# Interactive player management (server → player → action)
+mcctl player                       # Full interactive mode
+mcctl player myserver              # Skip server selection
+
+# Player info lookup (Mojang API with local cache)
+mcctl player info Steve            # Show UUID, skin URL, etc.
+mcctl player info Steve --json     # JSON output
+
+# Cache management (avoids Mojang API rate limiting)
+mcctl player cache stats           # Show cache statistics
+mcctl player cache clear           # Clear all cached data
+```
+
+**Interactive workflow**:
+```
+$ mcctl player
+
+? Select server:
+❯ survival (3 players online)
+  creative (0 players online)
+
+? Select player:
+❯ Steve (online)
+  Alex (online)
+  [Enter player name manually]
+
+? Select action:
+❯ View player info
+  Add to whitelist
+  Add as operator
+  Ban player
+  Kick player
+```
+
 ### Server Backup/Restore
 
 ```bash
@@ -492,6 +614,53 @@ mcctl server-backup myserver --list       # List all backups
 mcctl server-restore myserver             # Interactive restore (select from list)
 mcctl server-restore myserver abc123      # Restore specific backup
 mcctl server-restore myserver --dry-run   # Preview restore without applying
+```
+
+### Migration (Existing Servers)
+
+Migrate existing servers to the new shared world directory structure:
+
+```bash
+# Check migration status
+mcctl migrate status               # Show servers needing migration
+
+# Migrate worlds to /worlds/ directory
+mcctl migrate worlds               # Interactive server selection
+mcctl migrate worlds --all         # Migrate all servers
+mcctl migrate worlds --dry-run     # Preview changes without applying
+mcctl migrate worlds --backup      # Create backup before migration
+```
+
+The migration:
+- Moves world data from `servers/<name>/data/world` to `worlds/<server-name>/`
+- Updates `config.env` with `EXTRA_ARGS=--universe /worlds/` and `LEVEL=<server-name>`
+- Detects existing worlds with case-insensitive matching
+
+### Automation (sudo Password Handling)
+
+For CI/CD or scripting, you can provide sudo password for mDNS registration:
+
+```bash
+# Environment variable (recommended for automation)
+MCCTL_SUDO_PASSWORD=secret mcctl create myserver
+
+# CLI option
+mcctl create myserver --sudo-password "secret"
+mcctl delete myserver --sudo-password "secret"
+
+# Interactive mode (prompted when needed)
+mcctl create myserver
+# ? sudo password (for mDNS registration): ••••••••
+```
+
+**Alternative: sudoers NOPASSWD**
+
+For passwordless operation, add to `/etc/sudoers.d/mcctl`:
+```bash
+# Allow mcctl commands without password
+%docker ALL=(ALL) NOPASSWD: /usr/bin/tee -a /etc/avahi/hosts
+%docker ALL=(ALL) NOPASSWD: /usr/bin/sed -i * /etc/avahi/hosts
+%docker ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart avahi-daemon
 ```
 
 ### Docker Commands (Alternative)

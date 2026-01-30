@@ -1,6 +1,6 @@
 # Minecraft Docker Server Manager
 
-A DevOps solution for managing multiple Minecraft Java Edition servers using Docker.
+A DevOps solution for managing multiple Minecraft Java Edition servers using Docker and the **mcctl** CLI.
 
 ## Features
 
@@ -10,6 +10,8 @@ A DevOps solution for managing multiple Minecraft Java Edition servers using Doc
 - **Auto-Scaling**: Servers start on connect, stop after idle timeout
 - **Interactive CLI**: Beautiful terminal UI with @clack/prompts
 - **World Management**: Assign, lock, and release worlds between servers
+- **Player Management**: Operators, whitelist, bans, and kicks via CLI
+- **GitHub Backup**: Automatic world backup to private repositories
 
 ## Quick Start
 
@@ -22,7 +24,29 @@ mcctl init
 
 # Create a server (interactive mode)
 mcctl create
+
+# Or with arguments
+mcctl create myserver -t PAPER -v 1.21.1
+
+# Start/stop servers
+mcctl start myserver
+mcctl stop myserver
+
+# View status
+mcctl status
 ```
+
+## Common Commands
+
+| Command | Description |
+|---------|-------------|
+| `mcctl create` | Create a new server (interactive) |
+| `mcctl start <name>` | Start a server |
+| `mcctl stop <name>` | Stop a server |
+| `mcctl status` | Show all server status |
+| `mcctl logs <name>` | View server logs |
+| `mcctl console <name>` | Connect to RCON console |
+| `mcctl config <name>` | View/edit server configuration |
 
 ## Architecture
 
@@ -45,7 +69,11 @@ flowchart TB
 - [Installation](getting-started/installation.md) - Set up the platform
 - [Quick Start](getting-started/quickstart.md) - Create your first server
 - [CLI Commands](cli/commands.md) - Full command reference
-- [Configuration](configuration/environment.md) - Environment variables
+- [Configuration](configuration/index.md) - Server configuration with mcctl
+
+## Need Help?
+
+Have questions about usage or configuration? Ask our **[AI Assistant](https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962)** - it's trained on this documentation and can answer your questions interactively.
 
 ## Links
 

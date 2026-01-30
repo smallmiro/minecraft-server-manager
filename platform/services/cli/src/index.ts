@@ -17,10 +17,72 @@ import {
   banCommand,
   kickCommand,
   playerOnlineCommand,
+  playerCommand,
+  migrateCommand,
+  modCommand,
+  consoleInitCommand,
+  consoleServiceCommand,
+  consoleUserCommand,
+  consoleApiCommand,
+  consoleRemoveCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 
 const VERSION = '0.1.0';
+
+/**
+ * Handle console command (shared by both 'console' and deprecated 'admin' commands)
+ */
+async function handleConsoleCommand(
+  subCommand: string | undefined,
+  positional: string[],
+  flags: Record<string, string | boolean>,
+  rootDir: string | undefined
+): Promise<number> {
+  switch (subCommand) {
+    case 'init':
+      return consoleInitCommand({
+        root: rootDir,
+        force: flags['force'] === true,
+        apiPort: flags['api-port'] ? parseInt(flags['api-port'] as string, 10) : undefined,
+        consolePort: flags['console-port'] ? parseInt(flags['console-port'] as string, 10) : undefined,
+      });
+    case 'service':
+      return consoleServiceCommand({
+        root: rootDir,
+        subCommand: positional[0] as 'start' | 'stop' | 'restart' | 'status' | 'logs' | undefined,
+        apiOnly: flags['api'] === true,
+        consoleOnly: flags['console'] === true,
+        follow: flags['follow'] === true,
+        json: flags['json'] === true,
+        apiPort: flags['api-port'] ? parseInt(flags['api-port'] as string, 10) : undefined,
+        consolePort: flags['console-port'] ? parseInt(flags['console-port'] as string, 10) : undefined,
+        build: flags['build'] === true,
+        noBuild: flags['no-build'] === true,
+      });
+    case 'user': {
+      // Use Commander-based command
+      const userCmd = consoleUserCommand();
+      userCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
+      return 0;
+    }
+    case 'api': {
+      // Use Commander-based command
+      const apiCmd = consoleApiCommand();
+      apiCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
+      return 0;
+    }
+    case 'remove':
+      return consoleRemoveCommand({
+        root: rootDir,
+        force: flags['force'] === true,
+        keepConfig: flags['keep-config'] === true,
+      });
+    default:
+      log.error('Usage: mcctl console <init|service|user|api|remove>');
+      return 1;
+  }
+}
 
 /**
  * Print usage information
@@ -82,15 +144,55 @@ ${colors.cyan('Ban Actions:')}
 
 ${colors.cyan('World Management:')}
   ${colors.bold('world list')} [--json]        List worlds and lock status
+  ${colors.bold('world new')} [name] [options] Create new world with seed
   ${colors.bold('world assign')} <world> <srv> Lock world to server
   ${colors.bold('world release')} <world>      Release world lock
+  ${colors.bold('world delete')} <world> [-f]  Delete world permanently
 
-${colors.cyan('Player Lookup:')}
-  ${colors.bold('player lookup')} <name>       Look up player info
-  ${colors.bold('player uuid')} <name>         Get player UUID
-  ${colors.bold('player uuid')} <name> --offline  Get offline UUID
+${colors.cyan('Mod Management:')}
+  ${colors.bold('mod search')} <query>         Search mods on Modrinth
+  ${colors.bold('mod add')} <srv> <mod...>     Add mods to server
+  ${colors.bold('mod list')} <server>          List configured mods
+  ${colors.bold('mod remove')} <srv> <mod...>  Remove mods from server
+  ${colors.bold('mod sources')}                Show available mod sources
+
+${colors.cyan('Mod Add Options:')}
+  --modrinth                 Use Modrinth (default)
+  --curseforge               Use CurseForge (requires CF_API_KEY)
+  --spiget                   Use Spiget (SpigotMC plugins)
+  --url                      Direct JAR URL download
+
+${colors.cyan('Mod Management:')}
+  ${colors.bold('mod search')} <query>         Search mods on Modrinth
+  ${colors.bold('mod add')} <srv> <mod...>     Add mods to server
+  ${colors.bold('mod list')} <server>          List configured mods
+  ${colors.bold('mod remove')} <srv> <mod...>  Remove mods from server
+  ${colors.bold('mod sources')}                Show available mod sources
+
+${colors.cyan('Mod Add Options:')}
+  --modrinth                 Use Modrinth (default)
+  --curseforge               Use CurseForge (requires CF_API_KEY)
+  --spiget                   Use Spiget (SpigotMC plugins)
+  --url                      Direct JAR URL download
+
+${colors.cyan('World New Options:')}
+  --seed <seed>              World seed (optional, random if empty)
+  --server <name>            Server to assign world to
+  --no-start                 Don't start server after creation
+
+${colors.cyan('Player Management (Interactive):')}
+  ${colors.bold('player')}                     Interactive mode: server → player → action
+  ${colors.bold('player')} <server>            Interactive mode for specific server
+  ${colors.bold('player info')} <name>         Player info lookup (UUID, skin)
+  ${colors.bold('player info')} <name> --offline  Get offline player info
   ${colors.bold('player online')} <server>     List online players
   ${colors.bold('player online')} --all        List online players on all servers
+  ${colors.bold('player cache')} clear         Clear player info cache
+  ${colors.bold('player cache')} stats         Show cache statistics
+
+${colors.cyan('Player Lookup (Legacy):')}
+  ${colors.bold('player lookup')} <name>       Look up player info
+  ${colors.bold('player uuid')} <name>         Get player UUID
 
 ${colors.cyan('Server Backup/Restore:')}
   ${colors.bold('server-backup')} <server> [-m msg]  Backup server configuration
@@ -102,6 +204,32 @@ ${colors.cyan('World Backup (requires .env config):')}
   ${colors.bold('backup status')}              Show backup configuration
   ${colors.bold('backup history')} [--json]    Show backup history
   ${colors.bold('backup restore')} <commit>    Restore from commit
+
+${colors.cyan('Migration:')}
+  ${colors.bold('migrate worlds')}             Migrate worlds to shared directory
+  ${colors.bold('migrate status')}             Check migration status
+  ${colors.bold('migrate worlds')} --all       Migrate all servers
+  ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
+
+${colors.cyan('Console Management:')}
+  ${colors.bold('console init')} [options]       Initialize console service (create admin user)
+    --force                      Reinitialize (delete existing config)
+    --api-port <port>            API server port (default: 3001)
+    --console-port <port>        Console server port (default: 3000)
+  ${colors.bold('console user')} <action> [name] Manage console users (list, add, remove, reset)
+  ${colors.bold('console api')} <action>         Manage API settings (status, config, key)
+  ${colors.bold('console service')} <action>     Manage services via PM2 (start, stop, restart, status, logs)
+  ${colors.bold('console remove')} [options]     Remove console service completely
+    --force                      Skip confirmation prompt
+    --keep-config                Don't delete configuration files
+  ${colors.dim('admin <cmd>                  (deprecated, use "console" instead)')}
+
+${colors.cyan('Console Options:')}
+  --api-port <port>            API server port (default: 3001)
+  --console-port <port>        Console server port (default: 3000)
+  --api                        Target API service only
+  --console                    Target console service only
+  -f, --follow                 Follow log output
 
 ${colors.cyan('Create Options:')}
   -t, --type TYPE            Server type: PAPER, VANILLA, FORGE, FABRIC
@@ -118,6 +246,7 @@ ${colors.cyan('Status Options:')}
 
 ${colors.cyan('Global Options:')}
   --root <path>              Custom data directory
+  --sudo-password <pwd>      Sudo password for automation (or use MCCTL_SUDO_PASSWORD env)
   --json                     Output in JSON format
   -h, --help                 Show this help
   --version                  Show version
@@ -180,7 +309,13 @@ function parseArgs(args: string[]): {
       const key = arg.slice(2);
       const nextArg = args[i + 1];
 
-      if (nextArg && !nextArg.startsWith('-')) {
+      // Boolean-only flags (never take a value)
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config'];
+
+      if (booleanOnlyFlags.includes(key)) {
+        result.flags[key] = true;
+        i++;
+      } else if (nextArg && !nextArg.startsWith('-')) {
         result.flags[key] = nextArg;
         i += 2;
       } else {
@@ -210,7 +345,13 @@ function parseArgs(args: string[]): {
 
       const longKey = flagMap[key] ?? key;
 
-      if (nextArg && !nextArg.startsWith('-')) {
+      // Boolean-only short flags
+      const booleanOnlyShortFlags = ['h', 'f', 'y', 'a', 'd', 'W'];
+
+      if (booleanOnlyShortFlags.includes(key)) {
+        result.flags[longKey] = true;
+        i++;
+      } else if (nextArg && !nextArg.startsWith('-')) {
         result.flags[longKey] = nextArg;
         i += 2;
       } else {
@@ -220,7 +361,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'console', 'admin'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -258,8 +399,9 @@ async function main(): Promise<void> {
   }
 
   const rootDir = flags['root'] as string | undefined;
+  const sudoPassword = flags['sudo-password'] as string | undefined;
   const paths = new Paths(rootDir);
-  const shell = new ShellExecutor(paths);
+  const shell = new ShellExecutor({ paths, sudoPassword });
 
   let exitCode = 0;
 
@@ -316,6 +458,7 @@ async function main(): Promise<void> {
           worldUrl: flags['world-url'] as string | undefined,
           worldName: flags['world'] as string | undefined,
           noStart: flags['no-start'] === true,
+          sudoPassword,
         });
         break;
       }
@@ -327,6 +470,7 @@ async function main(): Promise<void> {
           root: rootDir,
           name: positional[0],
           force: flags['force'] === true || flags['yes'] === true,
+          sudoPassword,
         });
         break;
       }
@@ -365,7 +509,32 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'console':
+      case 'console': {
+        // Check if this is console management command (init, service, user, api, remove)
+        const consoleManagementSubCommands = ['init', 'service', 'user', 'api', 'remove'];
+        if (subCommand && consoleManagementSubCommands.includes(subCommand)) {
+          // Route to console management
+          exitCode = await handleConsoleCommand(subCommand, positional, flags, rootDir);
+          break;
+        }
+
+        // Otherwise, treat as RCON console (mcctl console <server>)
+        if (!paths.isInitialized()) {
+          log.error('Platform not initialized. Run: mcctl init');
+          exitCode = 1;
+          break;
+        }
+
+        // Pass through to mcctl.sh for RCON console
+        const mcctlArgs = [command, ...positional];
+        if (flags['json']) mcctlArgs.push('--json');
+        if (flags['follow']) mcctlArgs.push('-f');
+        if (flags['lines']) mcctlArgs.push('-n', flags['lines'] as string);
+
+        exitCode = await shell.mcctl(mcctlArgs);
+        break;
+      }
+
       case 'logs': {
         if (!paths.isInitialized()) {
           log.error('Platform not initialized. Run: mcctl init');
@@ -415,7 +584,11 @@ async function main(): Promise<void> {
           root: rootDir,
           subCommand: subCommand,
           worldName: positional[0],
-          serverName: positional[1],
+          serverName: subCommand === 'new'
+            ? (flags['server'] as string | undefined)
+            : positional[1],
+          seed: flags['seed'] as string | undefined,
+          autoStart: flags['no-start'] === true ? false : undefined,
           json: flags['json'] === true,
           force: flags['force'] === true,
         });
@@ -423,21 +596,46 @@ async function main(): Promise<void> {
       }
 
       case 'player': {
-        // Handle 'player online' subcommand separately
+        // Handle player subcommands
         if (subCommand === 'online') {
+          // player online <server> - List online players
           exitCode = await playerOnlineCommand({
             root: rootDir,
             serverName: positional[0],
             all: flags['all'] === true,
             json: flags['json'] === true,
           });
-        } else {
-          // Other player subcommands use legacy shell.player
-          const playerArgs = [subCommand ?? 'lookup', ...positional];
+        } else if (subCommand === 'info') {
+          // player info <name> - Player info lookup
+          exitCode = await playerCommand({
+            root: rootDir,
+            subCommand: 'info',
+            playerName: positional[0],
+            offline: flags['offline'] === true,
+            json: flags['json'] === true,
+          });
+        } else if (subCommand === 'cache') {
+          // player cache <clear|stats> - Cache management
+          exitCode = await playerCommand({
+            root: rootDir,
+            subCommand: 'cache',
+            cacheAction: positional[0] as 'clear' | 'stats',
+            json: flags['json'] === true,
+          });
+        } else if (subCommand === 'lookup' || subCommand === 'uuid') {
+          // Legacy lookup commands via shell.player
+          const playerArgs = [subCommand, ...positional];
           if (flags['json']) playerArgs.push('--json');
           if (flags['offline']) playerArgs.push('--offline');
-
           exitCode = await shell.player(playerArgs);
+        } else if (!subCommand || subCommand) {
+          // Interactive mode: player [server]
+          // If subCommand is provided but not a known command, treat it as server name
+          exitCode = await playerCommand({
+            root: rootDir,
+            serverName: subCommand || positional[0],
+            json: flags['json'] === true,
+          });
         }
         break;
       }
@@ -572,6 +770,52 @@ async function main(): Promise<void> {
             log.error('Usage: mcctl router <start|stop|restart>');
             exitCode = 1;
         }
+        break;
+      }
+
+      case 'migrate': {
+        // migrate command: migrate [worlds|status] [options]
+        exitCode = await migrateCommand({
+          root: rootDir,
+          subCommand: subCommand,
+          serverName: flags['server'] as string | undefined,
+          all: flags['all'] === true,
+          dryRun: flags['dry-run'] === true,
+          backup: flags['backup'] === true,
+          force: flags['force'] === true,
+          json: flags['json'] === true,
+        });
+        break;
+      }
+
+      case 'mod': {
+        // mod command: mod [search|add|list|remove|sources] [args...]
+        // subCommand = action, positional[0] = server or query, positional[1+] = mod names
+        const modSource = flags['modrinth'] ? 'modrinth' as const :
+                         flags['curseforge'] ? 'curseforge' as const :
+                         flags['spiget'] ? 'spiget' as const :
+                         flags['url'] ? 'url' as const : 'modrinth' as const;
+
+        exitCode = await modCommand({
+          root: rootDir,
+          subCommand: subCommand,
+          serverName: subCommand === 'search' ? undefined : positional[0],
+          query: subCommand === 'search' ? positional[0] : undefined,
+          modNames: subCommand === 'search' ? undefined : positional.slice(1),
+          source: modSource,
+          json: flags['json'] === true,
+          force: flags['force'] === true,
+        });
+        break;
+      }
+
+      case 'admin': {
+        // Show deprecation warning for 'admin' command
+        log.warn('The "admin" command is deprecated. Please use "console" instead.');
+        console.log(`  Example: ${colors.cyan('mcctl console init')} instead of ${colors.dim('mcctl admin init')}`);
+        console.log('');
+        // Route to console management handler
+        exitCode = await handleConsoleCommand(subCommand, positional, flags, rootDir);
         break;
       }
 

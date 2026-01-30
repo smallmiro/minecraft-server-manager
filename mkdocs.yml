@@ -81,14 +81,36 @@ nav:
   - CLI Reference:
       - Overview: cli/index.md
       - Commands: cli/commands.md
+  - REST API:
+      - Overview: api/index.md
+      - Endpoints: api/endpoints.md
   - Configuration:
       - Overview: configuration/index.md
       - Environment Variables: configuration/environment.md
       - Server Types: configuration/server-types.md
+  - Mods & Plugins:
+      - Overview: mods-and-plugins/index.md
+      - Modrinth: mods-and-plugins/modrinth.md
+      - CurseForge: mods-and-plugins/curseforge.md
+      - Spiget (SpigotMC): mods-and-plugins/spiget.md
+      - Direct Download: mods-and-plugins/direct-download.md
+      - Modpacks: mods-and-plugins/modpacks.md
+  - Admin Service:
+      - Overview: admin-service/index.md
+      - Installation: admin-service/installation.md
+      - CLI Commands: admin-service/cli-commands.md
+      - API Reference: admin-service/api-reference.md
+      - Web Console: admin-service/web-console.md
   - Advanced:
       - Overview: advanced/index.md
       - Networking: advanced/networking.md
       - Backup: advanced/backup.md
+  - Development:
+      - Overview: development/index.md
+      - CLI Architecture: development/cli-architecture.md
+      - Agent Collaboration: development/agent-collaboration.md
+  - LLM Knowledge Base: documentforllmagent.md
+  - AI Assistant: https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962
 
 extra:
   alternate:

@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/mcctl",
-  "version": "1.4.0",
+  "version": "1.6.5",
   "description": "CLI tool for managing Docker Minecraft servers with mc-router",
   "type": "module",
   "bin": {
@@ -48,13 +48,19 @@
   ],
   "dependencies": {
     "@clack/prompts": "^0.8.0",
+    "@minecraft-docker/mod-source-modrinth": "workspace:*",
     "@minecraft-docker/shared": "workspace:*",
+    "commander": "^12.0.0",
+    "js-yaml": "^4.1.0",
     "picocolors": "^1.1.0",
+    "pm2": "^6.0.14",
     "tar": "^7.5.4"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.10.0",
     "@types/tar": "^6.1.13",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.0"
   }
 }

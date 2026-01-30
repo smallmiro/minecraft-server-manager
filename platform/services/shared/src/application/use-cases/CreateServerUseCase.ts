@@ -84,9 +84,10 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         worldOptions,
       });
 
-      // Execute creation
+      // Execute creation - stop spinner before running script to avoid output conflicts
       const spinner = this.prompt.spinner();
       spinner.start('Creating server...');
+      spinner.stop('Running create script...');
 
       const result = await this.shell.createServer(name, {
         type,
@@ -97,12 +98,9 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       });
 
       if (!result.success) {
-        spinner.stop('Failed to create server');
         this.prompt.error(result.stderr || 'Unknown error occurred');
         throw new Error(result.stderr || 'Server creation failed');
       }
-
-      spinner.stop('Server created successfully');
 
       this.prompt.success(`Server '${name.value}' created!`);
       this.prompt.note(

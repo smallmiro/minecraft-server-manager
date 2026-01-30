@@ -115,6 +115,33 @@ Example:
 ```
 Checks for missing translations and outdated content.
 
+### Sync to GitHub Wiki
+```
+/write-docs wiki-sync [--dry-run]
+
+Example:
+/write-docs wiki-sync
+/write-docs wiki-sync --dry-run
+```
+Syncs docs/ to GitHub Wiki repository. Automatically:
+- Converts file paths to Wiki page names
+- Updates internal links
+- Creates/updates _Sidebar.md navigation
+- Pushes changes to wiki repository
+
+**Wiki File Mapping:**
+| docs/ Path | Wiki Page |
+|------------|-----------|
+| `index.md` | `Home.md` |
+| `index.ko.md` | `Home-ko.md` |
+| `getting-started/quickstart.md` | `Getting-Started-Quickstart.md` |
+| `cli/commands.ko.md` | `CLI-Commands-ko.md` |
+
+**Naming Convention:**
+- Directory separators (`/`) → hyphens (`-`)
+- Capitalize first letter of each segment
+- Korean suffix (`.ko.md`) → `-ko.md`
+
 ## Templates
 
 ### Basic Template
@@ -258,6 +285,7 @@ A: {Answer}
 - [ ] No broken external links
 - [ ] Terminology matches glossary
 - [ ] Korean translation reviewed for natural flow
+- [ ] GitHub Wiki synced (`/write-docs wiki-sync`)
 
 ### Technical Accuracy
 - [ ] Commands work as documented
@@ -297,7 +325,8 @@ mkdocs build
 4. **Translate (KO)**: Create Korean version
 5. **Review**: Technical and language review
 6. **Test**: Verify all code examples
-7. **Publish**: Commit and push
+7. **Publish**: Commit and push to main repo
+8. **Wiki Sync**: Run `/write-docs wiki-sync` to update GitHub Wiki
 
 ## Project-Specific Context
 

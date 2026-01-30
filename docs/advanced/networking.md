@@ -165,12 +165,28 @@ avahi-daemon --check
 
 mc-router handles hostname-based routing and auto-scaling.
 
+### Router Management with mcctl
+
+```bash
+# Check router status
+mcctl status router
+
+# Start router
+mcctl router start
+
+# Restart router (after config changes)
+mcctl router restart
+
+# Stop router
+mcctl router stop
+```
+
 ### Docker Labels
 
-Each server uses Docker labels for mc-router discovery:
+Each server uses Docker labels for mc-router discovery. These are automatically configured by `mcctl create`:
 
 ```yaml
-# servers/myserver/docker-compose.yml
+# servers/myserver/docker-compose.yml (auto-generated)
 services:
   mc-myserver:
     labels:
@@ -179,18 +195,19 @@ services:
 
 ### Auto-scaling Settings
 
-Configure in `docker-compose.yml`:
+Configure in `~/minecraft-servers/.env`:
 
-```yaml
-services:
-  router:
-    image: itzg/mc-router
-    environment:
-      IN_DOCKER: "true"
-      AUTO_SCALE_UP: "true"       # Start servers on connect
-      AUTO_SCALE_DOWN: "false"    # Stop idle servers (see note)
-      DOCKER_TIMEOUT: "120"       # Wait time for server startup (seconds)
-      AUTO_SCALE_ASLEEP_MOTD: "Server is sleeping. Connect to wake up!"
+```bash
+# Auto-scaling configuration
+AUTO_SCALE_UP=true       # Start servers on connect
+AUTO_SCALE_DOWN=false    # Stop idle servers (see note)
+DOCKER_TIMEOUT=120       # Wait time for server startup (seconds)
+```
+
+Then restart the router:
+
+```bash
+mcctl router restart
 ```
 
 !!! warning "AUTO_SCALE_DOWN"
@@ -198,22 +215,173 @@ services:
 
 ### Multiple Hostnames
 
-You can configure multiple hostnames for a server:
+To allow connections from multiple networks (LAN + VPN), configure multiple IPs:
 
-```yaml
-labels:
-  mc-router.host: "myserver.local,myserver.example.com,survival.mynetwork.local"
+```bash
+# ~/minecraft-servers/.env
+HOST_IPS=192.168.1.100,100.64.0.5
 ```
+
+This creates hostnames for each IP:
+- `myserver.192.168.1.100.nip.io` (LAN)
+- `myserver.100.64.0.5.nip.io` (VPN)
+
+!!! tip "HOST_IP vs HOST_IPS"
+    - `HOST_IP`: Single IP address (default)
+    - `HOST_IPS`: Comma-separated multiple IPs (for VPN mesh)
+
+    When `HOST_IPS` is set, it takes precedence over `HOST_IP`.
+
+---
+
+## VPN Mesh Networks
+
+Using a VPN mesh like Tailscale or ZeroTier allows access to your server from anywhere.
+
+### Why Use VPN Mesh?
+
+| Scenario | Solution |
+|----------|----------|
+| Friends on different networks | VPN mesh creates virtual LAN |
+| Access home server remotely | VPN access without port forwarding |
+| Connect from multiple locations | Multiple IPs support all networks |
+
+### Tailscale Setup
+
+[Tailscale](https://tailscale.com/) is a free VPN mesh service.
+
+#### 1. Install Tailscale
+
+=== "Ubuntu/Debian"
+    ```bash
+    curl -fsSL https://tailscale.com/install.sh | sh
+    sudo tailscale up
+    ```
+
+=== "Arch Linux"
+    ```bash
+    sudo pacman -S tailscale
+    sudo systemctl enable --now tailscaled
+    sudo tailscale up
+    ```
+
+#### 2. Get Tailscale IP
+
+```bash
+tailscale ip -4
+# Example: 100.64.0.5
+```
+
+#### 3. Configure Multiple IPs in mcctl
+
+```bash
+# ~/minecraft-servers/.env
+# LAN IP + Tailscale IP
+HOST_IPS=192.168.1.100,100.64.0.5
+```
+
+#### 4. Recreate Servers or Update Labels
+
+```bash
+# New servers automatically get multiple hostnames
+mcctl create myserver
+
+# For existing servers, run migration script
+cd ~/minecraft-servers
+./scripts/migrate-nip-io.sh
+```
+
+#### 5. Client Connection
+
+Have friends install Tailscale and invite them to your network, then:
+
+```
+# Add server in Minecraft
+myserver.100.64.0.5.nip.io:25565
+```
+
+### ZeroTier Setup
+
+[ZeroTier](https://zerotier.com/) is another free VPN mesh service.
+
+#### 1. Install ZeroTier
+
+```bash
+curl -s https://install.zerotier.com | sudo bash
+```
+
+#### 2. Create and Join Network
+
+1. Create network at [my.zerotier.com](https://my.zerotier.com/)
+2. Copy Network ID (e.g., `8056c2e21c000001`)
+3. Join the network:
+   ```bash
+   sudo zerotier-cli join 8056c2e21c000001
+   ```
+
+#### 3. Get ZeroTier IP
+
+```bash
+sudo zerotier-cli listnetworks
+# or
+ip addr show zt*
+# Example: 10.147.20.1
+```
+
+#### 4. Configure Multiple IPs in mcctl
+
+```bash
+# ~/minecraft-servers/.env
+HOST_IPS=192.168.1.100,10.147.20.1
+```
+
+### Using Multiple VPNs Simultaneously
+
+You can use both Tailscale and ZeroTier at the same time:
+
+```bash
+# ~/minecraft-servers/.env
+# LAN + Tailscale + ZeroTier
+HOST_IPS=192.168.1.100,100.64.0.5,10.147.20.1
+```
+
+Accessible from all networks:
+- `myserver.192.168.1.100.nip.io:25565` (LAN)
+- `myserver.100.64.0.5.nip.io:25565` (Tailscale)
+- `myserver.10.147.20.1.nip.io:25565` (ZeroTier)
+
+### VPN Mesh Troubleshooting
+
+```bash
+# Check Tailscale status
+tailscale status
+
+# Check ZeroTier status
+sudo zerotier-cli listnetworks
+
+# Verify hostname labels
+docker inspect mc-myserver | grep mc-router.host
+
+# Check mc-router logs for hostname
+docker logs router 2>&1 | grep myserver
+```
+
+!!! warning "When VPN IP Changes"
+    If your VPN IP changes, update `.env` and run `./scripts/migrate-nip-io.sh` again.
 
 ### Debug Mode
 
-Enable mc-router debug output:
+Enable mc-router debug output in `.env`:
 
-```yaml
-services:
-  router:
-    environment:
-      DEBUG: "true"
+```bash
+# ~/minecraft-servers/.env
+DEBUG=true
+```
+
+Then restart:
+
+```bash
+mcctl router restart
 ```
 
 ---
@@ -319,12 +487,12 @@ sudo firewall-cmd --reload
 
 1. Check mc-router is running:
    ```bash
-   docker ps | grep mc-router
+   mcctl status router
    ```
 
 2. Check hostname is configured:
    ```bash
-   docker inspect mc-myserver | grep mc-router.host
+   mcctl status myserver --detail
    ```
 
 3. Test DNS resolution:
@@ -334,14 +502,15 @@ sudo firewall-cmd --reload
 
 ### Server Not Starting
 
-1. Check Docker timeout:
-   ```yaml
-   DOCKER_TIMEOUT: "180"  # Increase if server takes long to start
+1. Check Docker timeout in `.env`:
+   ```bash
+   # ~/minecraft-servers/.env
+   DOCKER_TIMEOUT=180  # Increase if server takes long to start
    ```
 
 2. Check server logs:
    ```bash
-   docker logs mc-myserver
+   mcctl logs myserver
    ```
 
 ### mDNS Not Working

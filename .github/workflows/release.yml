@@ -38,6 +38,7 @@ jobs:
           name: dist
           path: |
             platform/services/shared/dist
+            platform/services/mod-source-modrinth/dist
             platform/services/cli/dist
           retention-days: 1
 
@@ -63,29 +64,67 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: .
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Verify build output
+        run: |
+          echo "=== Shared dist ===" && ls -la platform/services/shared/dist/
+          echo "=== Modrinth dist ===" && ls -la platform/services/mod-source-modrinth/dist/
+          echo "=== CLI dist ===" && ls -la platform/services/cli/dist/
 
       - name: Publish @minecraft-docker/shared
         run: |
           cd platform/services/shared
-          npm publish --access public --provenance
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists, skipping..."
+          else
+            npm publish --access public --provenance
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Update CLI dependency version
+      - name: Update mod-source-modrinth dependency version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          cd platform/services/mod-source-modrinth
+          sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
+
+      - name: Publish @minecraft-docker/mod-source-modrinth
+        run: |
+          cd platform/services/mod-source-modrinth
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists, skipping..."
+          else
+            npm publish --access public --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update CLI dependency versions
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           cd platform/services/cli
           sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
+          sed -i "s|\"@minecraft-docker/mod-source-modrinth\": \"workspace:\\*\"|\"@minecraft-docker/mod-source-modrinth\": \"^1.0.0\"|" package.json
 
       - name: Publish @minecraft-docker/mcctl
         run: |
           cd platform/services/cli
-          npm publish --access public --provenance
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists, skipping..."
+          else
+            npm publish --access public --provenance
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -139,6 +178,7 @@ jobs:
 
             - [@minecraft-docker/mcctl](https://www.npmjs.com/package/@minecraft-docker/mcctl)
             - [@minecraft-docker/shared](https://www.npmjs.com/package/@minecraft-docker/shared)
+            - [@minecraft-docker/mod-source-modrinth](https://www.npmjs.com/package/@minecraft-docker/mod-source-modrinth)
 
             ## Documentation
 

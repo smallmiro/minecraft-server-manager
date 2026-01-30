@@ -106,20 +106,20 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
       if (server.isRunning) {
         spinner.start('Stopping server...');
         await this.shell.stopServer(server.name);
-        spinner.message('Server stopped');
+        spinner.stop('Server stopped');
       }
 
-      // Delete server
+      // Delete server - stop spinner before running script to avoid output conflicts
+      // Always pass force=true since confirmation was already handled by UseCase
       spinner.start('Removing server...');
-      const result = await this.shell.deleteServer(server.name, force);
+      spinner.stop('Running delete script...');
+
+      const result = await this.shell.deleteServer(server.name, true);
 
       if (!result.success) {
-        spinner.stop('Failed to delete server');
         this.prompt.error(result.stderr || 'Unknown error occurred');
         return false;
       }
-
-      spinner.stop('Server deleted');
 
       this.prompt.success(`Server '${server.name.value}' deleted`);
 

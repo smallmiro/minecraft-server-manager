@@ -202,11 +202,16 @@ worlds/
 - Container data (logs, temp files)
 
 !!! tip "Backup Server Config Separately"
-    Consider backing up your configuration files separately:
+    Use mcctl to backup server configurations:
     ```bash
-    # Backup config
-    cp -r ~/minecraft-servers/servers ./servers-backup
-    cp ~/minecraft-servers/.env ./env-backup
+    # Backup specific server config
+    mcctl server-backup myserver
+
+    # List available backups
+    mcctl server-backup myserver --list
+
+    # Restore server config
+    mcctl server-restore myserver
     ```
 
 ---

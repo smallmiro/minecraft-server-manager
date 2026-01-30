@@ -1,14 +1,62 @@
 # Implementation Plan: Multi-Server Minecraft Management System
 
+## Module Plans Dashboard
+
+All modules have independent implementation plans. Use this dashboard for centralized tracking.
+
+### Module Status Overview
+
+| Module | Plan | Progress | Status | Agent |
+|--------|------|----------|--------|-------|
+| **shared** | [plan.md](platform/services/shared/plan.md) | Phase 1-6 ✅ | Completed | 🔧 Core |
+| **cli** | [plan.md](platform/services/cli/plan.md) | Phase 1-7 ✅, Admin ✅ | Completed | 💻 CLI |
+| **mcctl-api** | [plan.md](platform/services/mcctl-api/plan.md) | Phase 1-5 ✅ | Completed | 🖥️ Backend |
+| **mcctl-console** | [plan.md](platform/services/mcctl-console/plan.md) | Phase 1-7 ✅ | Completed | 🎨 Frontend |
+
+### Module Dependencies
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         shared                                   │
+│              (Domain, Use Cases, Common Adapters)               │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ imports
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+┌───────────────┐   ┌───────────────┐   ┌───────────────┐
+│     cli       │   │  mcctl-api    │   │mcctl-console  │
+│ Terminal UI   │   │  REST API     │   │  Web Console  │
+└───────────────┘   └───────┬───────┘   └───────┬───────┘
+                            │ HTTP              │
+                            └───────────────────┘
+```
+
+### Quick Navigation
+
+**Implementation Plans**:
+- [shared/plan.md](platform/services/shared/plan.md) - Domain Layer, Application Layer
+- [cli/plan.md](platform/services/cli/plan.md) - CLI Commands, Interactive Mode
+- [mcctl-api/plan.md](platform/services/mcctl-api/plan.md) - REST API, Authentication
+- [mcctl-console/plan.md](platform/services/mcctl-console/plan.md) - BFF, Dashboard UI
+
+**Related PRDs**:
+- [shared/prd.md](platform/services/shared/prd.md)
+- [cli/prd.md](platform/services/cli/prd.md)
+- [mcctl-api/prd.md](platform/services/mcctl-api/prd.md)
+- [mcctl-console/prd.md](platform/services/mcctl-console/prd.md)
+
+---
+
 ## Quick Reference
 
 ### Milestones
 | Version | Description | Status |
 |---------|-------------|--------|
 | [v0.2.0](https://github.com/smallmiro/minecraft-server-manager/milestone/1) | Infrastructure (Phase 1, 2) | ✅ Closed |
-| [v0.3.0](https://github.com/smallmiro/minecraft-server-manager/milestone/2) | Core Features (Phase 3, 4) | 🔄 Open |
-| [v0.4.0](https://github.com/smallmiro/minecraft-server-manager/milestone/4) | CLI Interactive Mode (Phase 7) | 🔄 Open |
-| [v1.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/3) | Release (Phase 5) | 🔄 Open |
+| [v0.3.0](https://github.com/smallmiro/minecraft-server-manager/milestone/2) | Core Features (Phase 3, 4) | ✅ Closed |
+| [v0.4.0](https://github.com/smallmiro/minecraft-server-manager/milestone/4) | CLI Interactive Mode (Phase 7) | ✅ Closed |
+| [v1.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/3) | Release (Phase 5) | ✅ Closed |
+| [v2.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/5) | Admin Service (Phase 8) | ✅ Closed |
 
 ### Issues by Phase
 | Phase | Issues | Status |
@@ -18,15 +66,22 @@
 | Phase 2.5: mDNS Publisher | [#20](https://github.com/smallmiro/minecraft-server-manager/issues/20) | ✅ Completed |
 | Phase 2.6: nip.io Magic DNS | [#52](https://github.com/smallmiro/minecraft-server-manager/issues/52) | ✅ Completed |
 | Phase 3: World Locking | [#7](https://github.com/smallmiro/minecraft-server-manager/issues/7) | ✅ Completed |
-| Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | 🔄 Open |
-| Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | 🔄 Open |
+| Phase 4: Management CLI | [#8](https://github.com/smallmiro/minecraft-server-manager/issues/8), [#9](https://github.com/smallmiro/minecraft-server-manager/issues/9), [#12](https://github.com/smallmiro/minecraft-server-manager/issues/12) | ✅ Completed |
+| Phase 5: Documentation | [#10](https://github.com/smallmiro/minecraft-server-manager/issues/10), [#11](https://github.com/smallmiro/minecraft-server-manager/issues/11) | ✅ Completed |
 | Phase 6: npm Package | [#28](https://github.com/smallmiro/minecraft-server-manager/issues/28) | ✅ Closed |
-| Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40), [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54), [#56](https://github.com/smallmiro/minecraft-server-manager/issues/56) ✅ | 🔄 Open |
+| Phase 7: CLI Interactive Mode | [#30](https://github.com/smallmiro/minecraft-server-manager/issues/30), [#31](https://github.com/smallmiro/minecraft-server-manager/issues/31), [#32](https://github.com/smallmiro/minecraft-server-manager/issues/32), [#33](https://github.com/smallmiro/minecraft-server-manager/issues/33), [#34](https://github.com/smallmiro/minecraft-server-manager/issues/34), [#35](https://github.com/smallmiro/minecraft-server-manager/issues/35), [#36](https://github.com/smallmiro/minecraft-server-manager/issues/36), [#37](https://github.com/smallmiro/minecraft-server-manager/issues/37), [#38](https://github.com/smallmiro/minecraft-server-manager/issues/38), [#39](https://github.com/smallmiro/minecraft-server-manager/issues/39), [#40](https://github.com/smallmiro/minecraft-server-manager/issues/40), [#54](https://github.com/smallmiro/minecraft-server-manager/issues/54), [#56](https://github.com/smallmiro/minecraft-server-manager/issues/56) | ✅ Completed |
 | Phase 7.1: Server Management Commands | [#58](https://github.com/smallmiro/minecraft-server-manager/issues/58) ✅, [#59](https://github.com/smallmiro/minecraft-server-manager/issues/59) ✅, [#60](https://github.com/smallmiro/minecraft-server-manager/issues/60) ✅ | ✅ Completed |
 | Phase 7.2: Server Backup Commands | [#64](https://github.com/smallmiro/minecraft-server-manager/issues/64) ✅ | ✅ Completed |
 | Phase 7.3: World Selection Enhancement | [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66) ✅ | ✅ Completed |
 | Phase 7.4: Player Management Commands | [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67) ✅ | ✅ Completed |
 | Phase 7.5: Detailed Monitoring | [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68) ✅ | ✅ Completed |
+| Phase 7.6: Sudo Password Handling | [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72) ✅ | ✅ Completed |
+| Phase 7.7: Unified Player Management | [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73) ✅ | ✅ Completed |
+| Phase 8.1: Shared Package Extension | [#80](https://github.com/smallmiro/minecraft-server-manager/issues/80) ✅, [#81](https://github.com/smallmiro/minecraft-server-manager/issues/81) ✅, [#82](https://github.com/smallmiro/minecraft-server-manager/issues/82) ✅, [#83](https://github.com/smallmiro/minecraft-server-manager/issues/83) ✅ | ✅ Completed |
+| Phase 8.2: CLI Admin Commands | [#84](https://github.com/smallmiro/minecraft-server-manager/issues/84) ✅, [#85](https://github.com/smallmiro/minecraft-server-manager/issues/85) ✅, [#86](https://github.com/smallmiro/minecraft-server-manager/issues/86) ✅, [#87](https://github.com/smallmiro/minecraft-server-manager/issues/87) ✅ | ✅ Completed |
+| Phase 8.3: mcctl-api Service | [#88](https://github.com/smallmiro/minecraft-server-manager/issues/88) ✅, [#89](https://github.com/smallmiro/minecraft-server-manager/issues/89) ✅, [#90](https://github.com/smallmiro/minecraft-server-manager/issues/90) ✅, [#91](https://github.com/smallmiro/minecraft-server-manager/issues/91) ✅, [#92](https://github.com/smallmiro/minecraft-server-manager/issues/92) ✅, [#93](https://github.com/smallmiro/minecraft-server-manager/issues/93) ✅, [#94](https://github.com/smallmiro/minecraft-server-manager/issues/94) ✅ | ✅ Completed |
+| Phase 8.4: mcctl-console Service | [#95](https://github.com/smallmiro/minecraft-server-manager/issues/95) ✅, [#96](https://github.com/smallmiro/minecraft-server-manager/issues/96) ✅, [#97](https://github.com/smallmiro/minecraft-server-manager/issues/97) ✅, [#98](https://github.com/smallmiro/minecraft-server-manager/issues/98) ✅, [#99](https://github.com/smallmiro/minecraft-server-manager/issues/99) ✅, [#100](https://github.com/smallmiro/minecraft-server-manager/issues/100) ✅ | ✅ Completed |
+| Phase 8.5: Integration & Testing | [#101](https://github.com/smallmiro/minecraft-server-manager/issues/101) ✅, [#102](https://github.com/smallmiro/minecraft-server-manager/issues/102) ✅ | ✅ Completed |
 
 ---
 
@@ -1540,6 +1595,367 @@ mcctl status --detail --json
 
 # 7. Run tests
 pnpm test
+```
+
+---
+
+## Phase 7.6: Sudo Password Handling for Automation ✅ COMPLETED
+
+> **Issue**: [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72)
+> **PR**: [#74](https://github.com/smallmiro/minecraft-server-manager/pull/74)
+> **Status**: ✅ Completed
+
+### 7.6.1 Overview
+
+Scripts requiring `sudo` (create-server.sh, delete-server.sh) block automation. Add password handling mechanism for CLI and environment variable support.
+
+**Problem Areas**:
+| Script | sudo Required For | Location |
+|--------|-------------------|----------|
+| `create-server.sh` | `/etc/avahi/hosts`, `systemctl restart avahi-daemon` | :121-133 |
+| `delete-server.sh` | `/etc/avahi/hosts`, `systemctl restart avahi-daemon` | :204-209 |
+| `logs.sh` | `journalctl` | :258 |
+
+### 7.6.2 Commands
+
+```bash
+# Parameter mode
+mcctl create myserver --sudo-password "mypassword"
+mcctl delete myserver --sudo-password "mypassword"
+
+# Environment variable mode
+MCCTL_SUDO_PASSWORD=secret mcctl create myserver
+
+# Interactive mode (prompted when needed)
+$ mcctl create myserver
+? sudo password (for mDNS registration): ••••••••
+```
+
+### 7.6.3 Implementation Tasks
+
+#### Phase 1: CLI Option & Environment Variable
+- [x] Add `--sudo-password` option to create/delete commands
+- [x] Support `MCCTL_SUDO_PASSWORD` environment variable
+- [x] Add password prompt in interactive mode using `@clack/prompts` password()
+- [x] Create `ISudoPort` interface in application layer
+
+#### Phase 2: Bash Script Modifications
+- [x] Update `create-server.sh` to support `sudo -S` with password from env
+- [x] Update `delete-server.sh` to support `sudo -S` with password from env
+- [x] Update `logs.sh` for journalctl sudo handling (optional)
+
+#### Phase 3: Security & Documentation
+- [x] Ensure password not visible in `ps` output
+- [x] Clear password from memory after use
+- [x] Never log passwords
+- [x] Document sudoers NOPASSWD configuration as alternative
+
+### 7.6.4 Verification
+
+```bash
+# 1. Build
+pnpm build
+
+# 2. Test with environment variable
+MCCTL_SUDO_PASSWORD=secret mcctl create testserver
+
+# 3. Test with parameter
+mcctl create testserver --sudo-password secret
+
+# 4. Test interactive mode
+mcctl create testserver
+# (Should prompt for password when sudo needed)
+
+# 5. Verify password not in process list
+ps aux | grep mcctl  # Should NOT show password
+```
+
+---
+
+## Phase 7.7: Unified Player Management with Interactive Mode ✅ COMPLETED
+
+> **Issue**: [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73)
+> **PR**: [#75](https://github.com/smallmiro/minecraft-server-manager/pull/75)
+> **Status**: ✅ Completed
+
+### 7.7.1 Overview
+
+Create unified `mcctl player` command with interactive mode for player management. Add Mojang API integration with encrypted local cache to minimize API calls.
+
+**Current State**:
+| Feature | Implementation | Interactive Mode |
+|---------|---------------|------------------|
+| Online player list | ✅ `player-online` | ❌ |
+| Player info lookup | ❌ None | ❌ |
+| Whitelist management | ✅ `whitelist` | ❌ |
+| Ban management | ✅ `ban` | ❌ |
+| OP management | ✅ `op` | ❌ |
+| Kick | ✅ `kick` | ❌ |
+
+### 7.7.2 Commands
+
+```bash
+# Unified interactive mode
+mcctl player                    # Interactive: server → player → action
+mcctl player myserver           # Interactive: player → action
+
+# Subcommands
+mcctl player online myserver    # List online players
+mcctl player info Steve         # Player info (UUID, skin, etc.)
+
+# Cache management
+mcctl player cache clear        # Clear cached data
+mcctl player cache stats        # Show cache statistics
+```
+
+### 7.7.3 Interactive Workflow
+
+```
+$ mcctl player
+
+? Select server: (Use arrow keys)
+❯ survival (3 players online)
+  creative (0 players online)
+  modded (1 player online)
+
+? Select player: (Use arrow keys)
+❯ Steve (online)
+  Alex (online)
+  Notch (online)
+  [Enter player name manually]
+
+? Select action:
+❯ View player info
+  Add to whitelist
+  Remove from whitelist
+  Add as operator
+  Remove as operator
+  Ban player
+  Kick player (online only)
+```
+
+### 7.7.4 Player Cache System
+
+**Purpose**: Cache Mojang API responses to avoid rate limiting.
+
+**Cache Location**: `~/.mcctl/.player-cache` (encrypted)
+
+**Cache Structure**:
+```typescript
+interface PlayerCache {
+  version: number;
+  players: {
+    [username_lowercase: string]: {
+      name: string;           // Original case-sensitive name
+      uuid: string;           // Immutable UUID
+      cachedAt: number;       // Timestamp
+      source: 'mojang' | 'offline';
+    }
+  }
+}
+```
+
+**Cache Policy**:
+| Data Type | Cache Duration | Reason |
+|-----------|---------------|--------|
+| UUID | Permanent | Never changes |
+| Username | 30 days | Can change (rare) |
+| Skin URL | 1 day | Can change frequently |
+
+**Cache Flow**:
+```
+Player lookup request
+        │
+        ▼
+┌─────────────────────┐
+│  Read cache file    │
+│  (decrypt if exists)│
+└─────────┬───────────┘
+          │
+          ▼
+    ┌───────────┐     Yes    ┌─────────────────┐
+    │ In cache? ├────────────► Return cached   │
+    └─────┬─────┘            │ data            │
+          │ No               └─────────────────┘
+          ▼
+┌─────────────────────┐
+│  Call Mojang API    │
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│  Encrypt & save     │
+│  to cache file      │
+└─────────┬───────────┘
+          │
+          ▼
+    Return data
+```
+
+### 7.7.5 Implementation Tasks
+
+#### Phase 1: Unified Player Command
+- [x] Create `mcctl player` unified command entry point
+- [x] Implement server selection prompt
+- [x] Implement player selection prompt (online + manual)
+- [x] Implement action selection prompt
+- [x] Add player action loop (continuous actions)
+
+#### Phase 2: Reusable Prompt Components
+- [x] Create `lib/prompts/server-select.ts`
+- [x] Create `lib/prompts/player-select.ts`
+- [x] Create `lib/prompts/action-select.ts`
+
+#### Phase 3: Player Info Command (Mojang API)
+- [x] Create `lib/mojang-api.ts` - Mojang API client
+- [x] Create `commands/player.ts` - Unified player command with info
+- [x] Integrate with existing PlayerLookupUseCase
+
+#### Phase 4: Player Cache System
+- [x] Create `lib/player-cache.ts` with AES-256-GCM encryption
+- [x] Implement cache read/write with machine-specific key
+- [x] Add cache statistics command
+- [x] Add cache clear command
+- [x] Set file permissions to `600`
+
+#### Phase 5: Interactive Mode for Existing Commands
+- [x] Add interactive mode to `whitelist.ts`
+- [x] Add interactive mode to `ban.ts`
+- [x] Add interactive mode to `op.ts`
+- [x] Add interactive mode to `kick.ts`
+
+#### Phase 6: Testing & Documentation
+- [x] Unit tests for Mojang API client
+- [x] Unit tests for cache encryption/decryption
+- [x] Integration tests for player workflow
+- [x] Update CLI documentation
+
+### 7.7.6 Technical Details
+
+**Mojang API**:
+```
+GET https://api.mojang.com/users/profiles/minecraft/{username}
+Response: { "id": "uuid", "name": "CaseSensitiveName" }
+```
+
+**Encryption**:
+- Algorithm: AES-256-GCM
+- Key: Derived from machine-specific identifier
+- File permissions: `600` (owner read/write only)
+
+**Offline UUID Calculation**:
+```typescript
+// For offline-mode servers
+function offlineUUID(name: string): string {
+  const hash = md5(`OfflinePlayer:${name}`);
+  // Set version 3 (name-based) UUID bits
+  return formatAsUUID(hash);
+}
+```
+
+### 7.7.7 Verification
+
+```bash
+# 1. Build
+pnpm build
+
+# 2. Test unified player command
+mcctl player
+# (Follow interactive prompts)
+
+# 3. Test player info
+mcctl player info Steve
+
+# 4. Test cache
+mcctl player cache stats
+mcctl player cache clear
+
+# 5. Test existing commands with interactive mode
+mcctl whitelist myserver
+# (Should prompt for action and player)
+
+# 6. Run tests
+pnpm test
+```
+
+---
+
+## Phase 8: Admin Service (Web Management)
+
+> **Milestone**: TBD
+> **Status**: Planned
+
+Implementation plan for web-based management console service. Consists of two independent services following MSA principles.
+
+### 8.1 Service Structure
+
+```
+platform/services/
+├── mcctl-api/              # @minecraft-docker/mcctl-api
+│   ├── prd.md              # API service PRD
+│   ├── plan.md             # API service Plan
+│   └── src/
+│
+└── mcctl-console/          # @minecraft-docker/mcctl-console
+    ├── prd.md              # Console service PRD
+    ├── plan.md             # Console service Plan
+    └── src/
+```
+
+### 8.2 Detailed Plan Documents
+
+Each service has independent implementation plans:
+
+- **mcctl-api**: [Plan](platform/services/mcctl-api/plan.md) - Fastify REST API
+- **mcctl-console**: [Plan](platform/services/mcctl-console/plan.md) - Next.js BFF + UI
+
+### 8.3 Implementation Order
+
+#### Phase 8.1: Shared Package Extension
+- [ ] Add `IUserRepository` port
+- [ ] Implement `YamlUserRepository` adapter
+- [ ] Implement `SqliteUserRepository` adapter
+- [ ] Implement `ApiPromptAdapter`
+
+#### Phase 8.2: CLI Console Commands
+> **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead.
+- [ ] `mcctl console init` - Initial setup
+- [ ] `mcctl console user` - User management
+- [ ] `mcctl console api` - API settings
+- [ ] `mcctl console service` - Service management
+
+#### Phase 8.3: mcctl-api Service
+- [ ] Fastify server structure
+- [ ] Authentication plugin (5 access modes)
+- [ ] REST API routes
+- [ ] OpenAPI/Swagger
+- [ ] Dockerfile
+
+#### Phase 8.4: mcctl-console Service
+- [ ] Next.js project setup
+- [ ] NextAuth.js authentication
+- [ ] BFF proxy
+- [ ] Dashboard UI
+- [ ] Dockerfile
+
+#### Phase 8.5: Integration and Testing
+- [ ] Docker Compose integration
+- [ ] E2E tests
+
+### 8.4 Verification
+
+```bash
+# 1. Initialize
+mcctl console init
+
+# 2. Start services
+mcctl console service start
+
+# 3. Access Console
+open http://localhost:3000
+
+# 4. API test (api-key mode)
+curl -H "X-API-Key: mctk_xxx" http://localhost:3001/api/servers
 ```
 
 ---

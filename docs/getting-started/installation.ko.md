@@ -112,7 +112,7 @@ pnpm add -g @minecraft-docker/mcctl
 
 ```bash
 mcctl --version
-# mcctl version 0.1.0
+# mcctl version 1.6.3
 ```
 
 ### npx 사용 (설치 없이)
@@ -190,6 +190,9 @@ nano ~/minecraft-servers/.env
 ```bash
 # 서버의 IP 주소 (nip.io에 필요)
 HOST_IP=192.168.1.100
+
+# VPN mesh 사용 시 다중 IP (Tailscale/ZeroTier)
+# HOST_IPS=192.168.1.100,100.64.0.5
 
 # 기본 서버 설정
 DEFAULT_MEMORY=4G

@@ -3,24 +3,49 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { Paths, execScript, execScriptInteractive, log } from '@minecraft-docker/shared';
 
+export interface ShellExecutorOptions {
+  paths?: Paths;
+  sudoPassword?: string;
+}
+
 /**
  * Shell script executor with environment variable injection
  */
 export class ShellExecutor {
   private readonly paths: Paths;
   private readonly env: Record<string, string>;
+  private readonly sudoPassword?: string;
 
-  constructor(paths?: Paths) {
-    this.paths = paths ?? new Paths();
+  constructor(pathsOrOptions?: Paths | ShellExecutorOptions) {
+    if (pathsOrOptions instanceof Paths) {
+      this.paths = pathsOrOptions;
+      this.sudoPassword = undefined;
+    } else if (pathsOrOptions) {
+      this.paths = pathsOrOptions.paths ?? new Paths();
+      this.sudoPassword = pathsOrOptions.sudoPassword;
+    } else {
+      this.paths = new Paths();
+      this.sudoPassword = undefined;
+    }
     this.env = this.buildEnv();
   }
 
   private buildEnv(): Record<string, string> {
-    return {
+    const env: Record<string, string> = {
       MCCTL_ROOT: this.paths.root,
       MCCTL_TEMPLATES: this.paths.templates,
       MCCTL_SCRIPTS: this.paths.scripts,
     };
+
+    // Support MCCTL_SUDO_PASSWORD from:
+    // 1. Constructor option (--sudo-password CLI flag)
+    // 2. Environment variable (for automation)
+    const sudoPassword = this.sudoPassword ?? process.env.MCCTL_SUDO_PASSWORD;
+    if (sudoPassword) {
+      env.MCCTL_SUDO_PASSWORD = sudoPassword;
+    }
+
+    return env;
   }
 
   /**
@@ -263,13 +288,15 @@ export class ShellExecutor {
 
   /**
    * Start all Minecraft servers (not router)
+   * Uses docker compose up to create containers if they don't exist
    */
   async startAll(): Promise<number> {
     log.info('Starting all Minecraft servers...');
-    // Start all mc-* containers except mc-router
+    // Get all mc-* services from compose config and start them
+    // This works even if containers haven't been created yet
     return new Promise((resolve) => {
       const child = spawn('sh', ['-c',
-        'docker ps -a --filter "name=mc-" --filter "status=exited" --format "{{.Names}}" | grep -v mc-router | xargs -r docker start'
+        'docker compose config --services | grep "^mc-" | xargs -r docker compose up -d'
       ], {
         cwd: this.paths.root,
         stdio: 'inherit',
@@ -289,13 +316,14 @@ export class ShellExecutor {
 
   /**
    * Stop all Minecraft servers (not router)
+   * Uses docker compose stop for consistency
    */
   async stopAll(): Promise<number> {
     log.info('Stopping all Minecraft servers...');
-    // Stop all mc-* containers except mc-router
+    // Get all mc-* services from compose config and stop them
     return new Promise((resolve) => {
       const child = spawn('sh', ['-c',
-        'docker ps --filter "name=mc-" --format "{{.Names}}" | grep -v mc-router | xargs -r docker stop'
+        'docker compose config --services | grep "^mc-" | xargs -r docker compose stop'
       ], {
         cwd: this.paths.root,
         stdio: 'inherit',

@@ -29,7 +29,9 @@ minecraft/
 │   │   # Servers created by create-server.sh go here (gitignored)
 │   │
 │   ├── worlds/                  # Shared world storage (gitignored except .locks)
-│   │   └── .locks/              # Lock files (future)
+│   │   ├── .locks/              # Lock files for world-server assignment
+│   │   └── <world-name>/        # World directories
+│   │       └── .meta            # World metadata (seed, createdAt)
 │   │
 │   ├── shared/                  # Shared resources
 │   │   ├── plugins/             # Shared plugins (read-only mount)
@@ -50,14 +52,79 @@ minecraft/
 │   │
 │   ├── services/                # TypeScript microservices (Monorepo)
 │   │   ├── cli/                 # @minecraft-docker/mcctl (npm CLI)
-│   │   │   ├── src/             # TypeScript source
+│   │   │   ├── src/
+│   │   │   │   ├── index.ts     # CLI entry point
+│   │   │   │   ├── commands/    # Command implementations
+│   │   │   │   │   ├── player.ts       # Unified player management
+│   │   │   │   │   ├── whitelist.ts    # Whitelist management
+│   │   │   │   │   ├── ban.ts          # Ban management
+│   │   │   │   │   ├── op.ts           # Operator management
+│   │   │   │   │   ├── kick.ts         # Kick player
+│   │   │   │   │   ├── migrate.ts      # World storage migration
+│   │   │   │   │   ├── mod.ts          # Mod management (search, add, remove)
+│   │   │   │   │   ├── console/        # Console Management (Web Admin)
+│   │   │   │   │   │   ├── init.ts     # Initialize console service
+│   │   │   │   │   │   ├── user.ts     # User management
+│   │   │   │   │   │   ├── api.ts      # API key management
+│   │   │   │   │   │   └── service.ts  # Service lifecycle
+│   │   │   │   │   └── ...
+│   │   │   │   ├── lib/         # Libraries
+│   │   │   │   │   ├── mojang-api.ts   # Mojang API client
+│   │   │   │   │   ├── player-cache.ts # Encrypted player cache
+│   │   │   │   │   ├── rcon.ts         # RCON helpers
+│   │   │   │   │   ├── sudo-utils.ts   # Sudo password handling
+│   │   │   │   │   └── prompts/        # Reusable prompt components
+│   │   │   │   │       ├── server-select.ts
+│   │   │   │   │       ├── player-select.ts
+│   │   │   │   │       └── action-select.ts
+│   │   │   │   └── infrastructure/     # DI and adapters
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
 │   │   ├── shared/              # @minecraft-docker/shared (common utilities)
-│   │   │   ├── src/             # Types, Docker utils, path helpers
+│   │   │   ├── src/
+│   │   │   │   ├── domain/      # Domain entities and value objects
+│   │   │   │   │   ├── entities/       # Server, World entities
+│   │   │   │   │   ├── value-objects/  # ServerName, ServerType, etc.
+│   │   │   │   │   └── mod/            # ModProject, ModVersion, ModSearchResult
+│   │   │   │   ├── application/ # Use cases and ports
+│   │   │   │   │   ├── ports/          # IModSourcePort, IPromptPort, etc.
+│   │   │   │   │   └── use-cases/      # CreateServer, DeleteServer, etc.
+│   │   │   │   └── infrastructure/     # Adapters and factories
+│   │   │   │       ├── adapters/       # ShellAdapter, DocsAdapter, etc.
+│   │   │   │       └── factories/      # ModSourceFactory
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
-│   │   └── web-admin/           # Future: Web management UI
+│   │   ├── mod-source-modrinth/ # @minecraft-docker/mod-source-modrinth
+│   │   │   ├── src/
+│   │   │   │   ├── ModrinthAdapter.ts  # IModSourcePort implementation
+│   │   │   │   └── infrastructure/     # API client, mappers
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   ├── mcctl-api/           # @minecraft-docker/mcctl-api (REST API)
+│   │   │   ├── src/
+│   │   │   │   ├── app.ts              # Fastify app setup
+│   │   │   │   ├── routes/             # API endpoints
+│   │   │   │   │   ├── servers.ts      # GET/POST /servers
+│   │   │   │   │   ├── servers/actions.ts  # start/stop/restart
+│   │   │   │   │   └── console.ts      # RCON exec endpoint
+│   │   │   │   └── plugins/            # Fastify plugins
+│   │   │   │       ├── auth.ts         # 5-mode authentication
+│   │   │   │       └── swagger.ts      # OpenAPI documentation
+│   │   │   ├── Dockerfile              # Multi-stage build (~156MB)
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   ├── mcctl-console/       # @minecraft-docker/mcctl-console (Web UI)
+│   │   │   ├── src/
+│   │   │   │   ├── app/                # Next.js App Router
+│   │   │   │   │   ├── api/            # BFF proxy routes
+│   │   │   │   │   ├── servers/        # Server management pages
+│   │   │   │   │   └── layout.tsx      # Root layout
+│   │   │   │   ├── components/         # React components
+│   │   │   │   └── hooks/              # Custom hooks (use-servers)
+│   │   │   ├── Dockerfile              # Standalone build (~158MB)
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   └── web-admin/           # Deprecated: Use mcctl-console
 │   │
 │   └── backups/                 # Backup storage
 │
@@ -70,6 +137,12 @@ minecraft/
 ├── docs/                        # Documentation (MkDocs + Read the Docs)
 │   ├── index.md                 # English homepage
 │   ├── index.ko.md              # Korean homepage
+│   ├── admin-service/           # Admin Service documentation
+│   │   ├── index.md             # Overview
+│   │   ├── installation.md      # Installation guide
+│   │   ├── cli-commands.md      # CLI reference
+│   │   ├── api-reference.md     # REST API docs
+│   │   └── web-console.md       # Web console guide
 │   ├── itzg-reference/          # itzg/docker-minecraft-server official docs
 │   │   ├── doc-list.md
 │   │   └── *.md
@@ -81,6 +154,17 @@ minecraft/
 │   ├── advanced/                # Advanced usage guides
 │   ├── development/             # Development guides
 │   └── usage/                   # Project usage guides
+│
+├── e2e/                         # End-to-end tests (Playwright)
+│   ├── playwright.config.ts     # Playwright configuration
+│   ├── global-setup.ts          # Test setup
+│   ├── fixtures/                # Test fixtures
+│   │   └── auth.ts              # Authentication fixture
+│   └── tests/                   # Test suites
+│       ├── auth.spec.ts         # Authentication tests
+│       ├── dashboard.spec.ts    # Dashboard tests
+│       ├── servers.spec.ts      # Server management tests
+│       └── api.spec.ts          # API endpoint tests
 │
 └── .claude/
     ├── agents/
@@ -221,6 +305,10 @@ mcctl delete              # Interactive: shows server list
 mcctl delete myserver     # CLI: deletes myserver
 mcctl delete myserver --force  # Force delete even with players online
 
+# Automation (sudo password for mDNS registration)
+MCCTL_SUDO_PASSWORD=secret mcctl create myserver   # Environment variable
+mcctl create myserver --sudo-password "secret"     # CLI option
+
 # Infrastructure management
 mcctl up                  # Start all (mc-router + all servers)
 mcctl down                # Stop all infrastructure
@@ -276,18 +364,52 @@ mcctl kick myserver PlayerName "reason"
 mcctl player online myserver       # List online players
 mcctl player online --all          # List all online players
 
+# Unified player management (interactive)
+mcctl player                       # Interactive: server → player → action
+mcctl player myserver              # Interactive: for specific server
+mcctl player info Steve            # Player info lookup (UUID, skin)
+mcctl player info Steve --offline  # Offline UUID calculation
+mcctl player info Steve --json     # JSON output
+mcctl player cache stats           # Show cache statistics
+mcctl player cache clear           # Clear cached data
+
 # Server backup/restore
 mcctl server-backup myserver       # Backup server config
 mcctl server-backup myserver --list  # List backups
 mcctl server-restore myserver      # Interactive restore
 mcctl server-restore myserver abc123  # Restore specific backup
 
+# Migration (for existing servers to new world directory structure)
+mcctl migrate status               # Check migration status for all servers
+mcctl migrate worlds               # Migrate worlds to /worlds/ directory
+mcctl migrate worlds --all         # Migrate all servers
+mcctl migrate worlds --dry-run     # Preview without changes
+mcctl migrate worlds --backup      # Create backup before migration
+
 # World management (interactive or with arguments)
 mcctl world list          # List all worlds with lock status
+mcctl world new           # Interactive: create new world with prompts
+mcctl world new myworld   # CLI: create world directory (with .meta file)
+mcctl world new myworld --seed 12345  # CLI: create with seed (stored in .meta)
+mcctl world new myworld --server myserver  # Create and assign to server
+mcctl world new myworld --server myserver --no-start  # Don't auto-start server
 mcctl world assign        # Interactive: select world and server
 mcctl world assign survival mc-myserver  # CLI: assign directly
 mcctl world release       # Interactive: select locked world
 mcctl world release survival  # CLI: release directly
+mcctl world delete        # Interactive: select world to delete
+mcctl world delete old-world  # CLI: delete with confirmation
+mcctl world delete old-world --force  # Force delete without confirmation
+
+# Mod management
+mcctl mod search sodium   # Search mods on Modrinth
+mcctl mod add myserver sodium lithium  # Add mods from Modrinth
+mcctl mod add myserver --curseforge jei  # Add from CurseForge
+mcctl mod add myserver --spiget 9089  # Add from SpigotMC (plugin ID)
+mcctl mod add myserver --url https://example.com/mod.jar  # Direct URL
+mcctl mod list myserver   # List configured mods
+mcctl mod remove myserver sodium  # Remove mod from config
+mcctl mod sources         # Show available mod sources
 
 # Backup management
 mcctl backup status       # Show backup configuration
@@ -296,6 +418,30 @@ mcctl backup push -m "Before upgrade"  # CLI: with message
 mcctl backup history      # Show backup history
 mcctl backup restore      # Interactive: select from history
 mcctl backup restore abc1234  # CLI: restore specific commit
+
+# Console Management (Web Admin)
+# Note: `mcctl admin` commands are deprecated. Use `mcctl console` instead.
+mcctl console init          # Initialize console service (create users.yaml, API key)
+mcctl console init --force  # Reinitialize (overwrite existing)
+
+mcctl console user list     # List console users
+mcctl console user add alice  # Add user interactively
+mcctl console user remove bob  # Remove user
+mcctl console user reset alice  # Reset user password
+
+mcctl console api start     # Start API service only
+mcctl console api stop      # Stop API service
+mcctl console api status    # Check API status
+
+mcctl console service start           # Start all services (API + Console)
+mcctl console service stop            # Stop all services
+mcctl console service restart         # Restart all services
+mcctl console service status          # Show service status
+mcctl console service status --json   # JSON output
+mcctl console service logs            # View logs
+mcctl console service logs --api      # API logs only
+mcctl console service logs --console  # Console logs only
+mcctl console service logs -f         # Follow logs
 
 # Custom data directory
 mcctl --root /path/to/data init
@@ -324,10 +470,12 @@ mcctl --version
 
 ### CLI-First, Web-Ready
 
-All features are implemented via CLI first, with Web Management UI as a future enhancement.
+All features are implemented via CLI first, with Web Management UI now available.
 
-**Current Phase**: CLI with Interactive Mode (`platform/services/cli`)
-**Future Phase**: Web UI (Next.js + Tailwind CSS + TypeScript)
+**Phase 1**: CLI with Interactive Mode (`platform/services/cli`) ✅
+**Phase 2**: Admin Service - REST API + Web Console ✅
+- `mcctl-api`: Fastify REST API on port 3001
+- `mcctl-console`: Next.js Web UI on port 3000
 
 When developing CLI tools:
 - Design scripts to be **callable from external programs** (Web API)
@@ -375,6 +523,181 @@ The CLI uses **Hexagonal Architecture** (Ports & Adapters) with **Clean Architec
 - **Adapters**: Concrete implementations (@clack/prompts, bash scripts)
 
 See [docs/development/cli-architecture.md](docs/development/cli-architecture.md) for detailed documentation.
+
+### Multi-Agent Collaboration
+
+This project uses a **Multi-Agent Collaboration** system where specialized agents are responsible for different modules. This applies to **ALL work**, not just specific milestones.
+
+#### 🔴 Orchestrator-First Rule
+
+**모든 비단순 업무는 Orchestrator Agent가 먼저 분석해야 합니다:**
+
+1. **업무 분석**: 요청된 작업의 범위와 복잡도 파악
+2. **에이전트 식별**: 필요한 에이전트와 관련 모듈 식별
+3. **협업 계획**: 병렬/순차 작업 구조 설계
+4. **의존성 매핑**: 에이전트 간 의존성 파악
+5. **작업 할당**: `WORK_REQUEST`로 각 에이전트에 작업 배정
+
+**Orchestrator 계획 출력 형식:**
+```markdown
+## 🎯 Orchestrator 업무 분석
+
+### 작업 요약
+[요청된 작업 요약]
+
+### 관련 에이전트
+| Agent | 역할 | 작업 내용 |
+|-------|------|----------|
+| 💻 CLI | ... | ... |
+| 🐳 DevOps | ... | ... |
+
+### 실행 계획
+1. **Phase 1** (병렬): [에이전트A, 에이전트B]
+2. **Phase 2** (순차): [에이전트C] ← Phase 1 완료 후
+
+### 의존성
+- 에이전트B → 에이전트C: [의존 내용]
+```
+
+**예외 (Orchestrator 분석 생략 가능):**
+- 단일 에이전트로 완료 가능한 단순 작업
+- 명확한 단일 모듈 수정 (예: "CLI에 옵션 추가")
+- 문서만 수정하는 작업
+
+#### 🔴 Critical Rules
+
+**NEVER do another agent's work.** Each agent has exclusive ownership of their module:
+
+| Agent | Exclusive Module | Do NOT Touch |
+|-------|------------------|--------------|
+| 🔧 **Core** | `platform/services/shared/` | Other agents' code |
+| 💻 **CLI** | `platform/services/cli/`, `scripts/` | Other agents' code |
+| 🖥️ **Backend** | `platform/services/mcctl-api/` | Other agents' code |
+| 🎨 **Frontend** | `platform/services/mcctl-console/` | Other agents' code |
+| 🐳 **DevOps** | `platform/`, `e2e/` | Other agents' code |
+
+**If you need something from another agent's module:**
+1. **DO NOT** implement it yourself
+2. **DO** send a `DEPENDENCY_NEEDED` message to that agent
+3. **DO** wait for `DEPENDENCY_READY` response
+4. **DO** use the provided interface/artifact
+
+#### Agent Registry
+
+**Development Agents** (Module Ownership):
+
+| Agent | Role | Module |
+|-------|------|--------|
+| 🎯 **Orchestrator** | Project Coordinator | All (coordination only) |
+| 🔧 **Core** | Shared Package | `platform/services/shared/` |
+| 💻 **CLI** | CLI Commands | `platform/services/cli/`, `scripts/` |
+| 🖥️ **Backend** | REST API | `platform/services/mcctl-api/` |
+| 🎨 **Frontend** | Web Console | `platform/services/mcctl-console/` |
+| 🐳 **DevOps** | Integration & E2E | `platform/`, `e2e/` |
+
+**Support Agents** (Cross-cutting Concerns):
+
+| Agent | Role | Module | Invoked By |
+|-------|------|--------|------------|
+| 📝 **Technical Writer** | Documentation | `docs/` | `/write-docs` command, Release Manager |
+| 🚀 **Release Manager** | Release & Deploy | Git tags, Docker | User request (릴리즈, 배포) |
+
+#### Agent Labels (GitHub Issues)
+
+**When creating issues, ALWAYS assign the appropriate agent label:**
+
+| Label | Agent | Module | Color |
+|-------|-------|--------|-------|
+| `agent:orchestrator` | 🎯 Orchestrator | Coordination | Gray |
+| `agent:core` | 🔧 Core | `shared/` | Blue |
+| `agent:cli` | 💻 CLI | `cli/`, `scripts/` | Green |
+| `agent:backend` | 🖥️ Backend | `mcctl-api/` | Purple |
+| `agent:frontend` | 🎨 Frontend | `mcctl-console/` | Pink |
+| `agent:devops` | 🐳 DevOps | `platform/`, `e2e/` | Cyan |
+| `agent:docs` | 📝 Technical Writer | `docs/` | Yellow |
+| `agent:release` | 🚀 Release Manager | releases | Orange |
+
+**Issue Creation Rules:**
+1. **Every issue MUST have an agent label** - No issue without agent assignment
+2. **One primary agent per issue** - If multiple agents needed, create separate issues
+3. **Use label for filtering** - `label:agent:backend` to see Backend agent's issues
+4. **Include agent info in body** - Add `## 🤖 Agent Assignment` section (see issue templates)
+
+```bash
+# Example: Create issue with agent label
+gh issue create --title "feat(api): Add auth endpoint" --label "agent:backend"
+
+# Filter issues by agent
+gh issue list --label "agent:backend"
+```
+
+#### Agent Files
+
+Each agent has a dedicated specification file:
+```
+.claude/agents/
+├── orchestrator-agent.md    # Coordination protocol
+├── core-agent.md            # Shared package tasks
+├── cli-agent.md             # CLI admin commands
+├── backend-agent.md         # mcctl-api service
+├── frontend-agent.md        # mcctl-console service
+├── devops-agent.md          # Docker + E2E tests
+├── technical-writer.md      # Documentation (EN/KO)
+└── release-manager.md       # Release & deployment
+```
+
+#### Collaboration Protocol
+
+**When you need something from another module:**
+
+```markdown
+## 📋 DEPENDENCY_NEEDED
+
+**From**: [your agent]
+**To**: [target agent]
+**Issue**: #XX
+
+### Need
+[What you need]
+
+### Reason
+[Why you need it]
+
+### Expected Format
+[Interface, spec, or artifact format]
+```
+
+**When you complete work that others depend on:**
+
+```markdown
+## ✅ DEPENDENCY_READY
+
+**From**: [your agent]
+**To**: [dependent agents]
+**Issue**: #XX
+
+### Artifact
+[What is now available]
+
+### Location
+[Where to find it]
+
+### Usage
+[How to use it]
+```
+
+#### Communication Message Types
+
+| Message | Purpose |
+|---------|---------|
+| `WORK_REQUEST` | Orchestrator assigns work to agent |
+| `WORK_COMPLETE` | Agent reports task completion |
+| `DEPENDENCY_READY` | Agent notifies dependency is available |
+| `DEPENDENCY_NEEDED` | Agent requests dependency from another |
+| `SYNC_REQUEST` | Request sync point coordination |
+| `BLOCKING_ISSUE` | Report a blocker |
+
+See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) for the complete collaboration guide.
 
 ### Git-Flow Workflow
 
@@ -578,8 +901,16 @@ myserver.192.168.20.37.nip.io → 192.168.20.37
 No client configuration needed - just connect directly in Minecraft.
 
 **Server Requirements**:
-- HOST_IP set in `.env` (required for nip.io)
+- HOST_IP or HOST_IPS set in `.env` (required for nip.io)
 - avahi-daemon installed (optional, for mDNS)
+
+**VPN Mesh Support**:
+For access from multiple networks (e.g., LAN + Tailscale/ZeroTier):
+```bash
+# .env - comma-separated IPs generate multiple nip.io hostnames
+HOST_IPS=192.168.20.37,100.64.0.5
+```
+This creates hostnames: `server.local`, `server.192.168.20.37.nip.io`, `server.100.64.0.5.nip.io`
 
 **mDNS Client Requirements** (if using .local):
 | OS | Requirement |
@@ -636,7 +967,7 @@ cd platform
 **Options**:
 | Option | Description |
 |--------|-------------|
-| `-t, --type TYPE` | Server type: PAPER (default), VANILLA, FORGE, FABRIC |
+| `-t, --type TYPE` | Server type: PAPER (default), VANILLA, FORGE, NEOFORGE, FABRIC |
 | `-v, --version VER` | Minecraft version (e.g., 1.21.1, 1.20.4) |
 | `-s, --seed NUMBER` | World seed for new world generation |
 | `-u, --world-url URL` | Download world from ZIP URL |
@@ -646,11 +977,25 @@ cd platform
 
 The script automatically:
 1. Creates server directory with configuration
-2. Creates symlink to existing world (if `--world` specified)
-3. Updates `servers/compose.yml` (include list only - main docker-compose.yml is NOT modified)
-4. Validates configuration
-5. Registers hostname with avahi-daemon (mDNS)
-6. Starts the server (unless `--no-start` specified)
+2. Sets LEVEL to server name (world stored in `/worlds/<server-name>/`)
+3. Creates symlink to existing world (if `--world` specified)
+4. Updates `servers/compose.yml` (include list only - main docker-compose.yml is NOT modified)
+5. Validates configuration
+6. Registers hostname with avahi-daemon (mDNS)
+7. Starts the server (unless `--no-start` specified)
+
+**World Storage**: All worlds are stored in the shared `/worlds/` directory using `EXTRA_ARGS=--universe /worlds/`. This enables:
+- Server-to-server world sharing
+- Centralized world backup
+- Easy world migration between servers
+
+**World Metadata (.meta file)**: When creating a world with `mcctl world new`, the command creates:
+- A world directory in `/worlds/<world-name>/`
+- A `.meta` JSON file containing:
+  - `name`: World name
+  - `seed`: World seed (null if random)
+  - `createdAt`: ISO timestamp of creation
+- The seed is stored in `.meta` for reference; when assigned to a server, it's also set in `config.env`
 
 **mc-router auto-discovery**: mc-router uses `--in-docker` mode to automatically discover servers via Docker labels (`mc-router.host`). No manual MAPPING configuration is needed.
 
@@ -679,10 +1024,12 @@ After creation, just:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `EULA` | **Required** | `TRUE` - Minecraft EULA agreement |
-| `TYPE` | Recommended | Server type (PAPER, FORGE, FABRIC) |
+| `TYPE` | Recommended | Server type (PAPER, FORGE, NEOFORGE, FABRIC) |
 | `VERSION` | Recommended | Minecraft version |
 | `MEMORY` | Recommended | JVM memory (e.g., `4G`) |
 | `RCON_PASSWORD` | Recommended | RCON password |
+| `LEVEL` | Auto-set | World folder name in `/worlds/` (default: server name) |
+| `EXTRA_ARGS` | Auto-set | `--universe /worlds/` for shared world storage |
 
 ## Optional: GitHub Backup Configuration
 
@@ -791,6 +1138,7 @@ Modify `TYPE` in server's `config.env`:
 # platform/servers/<server-name>/config.env
 TYPE=PAPER       # Paper server
 TYPE=FORGE       # Forge mod server
+TYPE=NEOFORGE    # NeoForge mod server (1.20.1+)
 TYPE=FABRIC      # Fabric mod server
 ```
 

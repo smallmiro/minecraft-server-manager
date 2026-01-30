@@ -1,0 +1,136 @@
+name: E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+# Cancel in-progress runs on new commits to the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install PM2 globally
+        run: npm install -g pm2
+
+      - name: Create platform directory structure
+        run: |
+          mkdir -p ~/minecraft-servers/platform
+          mkdir -p ~/minecraft-servers/platform/logs
+
+      - name: Generate ecosystem config
+        run: |
+          cat > ~/minecraft-servers/platform/ecosystem.config.cjs << 'EOF'
+          module.exports = {
+            apps: [
+              {
+                name: 'mcctl-api',
+                script: '${{ github.workspace }}/platform/services/mcctl-api/dist/index.js',
+                cwd: '${{ github.workspace }}/platform',
+                env: {
+                  NODE_ENV: 'production',
+                  PORT: 3001,
+                  HOST: '0.0.0.0',
+                  MCCTL_ROOT: '${{ github.workspace }}/platform',
+                  MCCTL_JWT_SECRET: 'test-secret-for-e2e',
+                },
+                instances: 1,
+                exec_mode: 'fork',
+                watch: false,
+                autorestart: true,
+                max_memory_restart: '500M',
+              },
+              // mcctl-console is not yet implemented (PRD only)
+              // Will be added when the Next.js console is built
+            ],
+          };
+          EOF
+
+      - name: Start services via PM2
+        run: |
+          pm2 start ~/minecraft-servers/platform/ecosystem.config.cjs
+          pm2 list
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for mcctl-api..."
+          timeout 60 bash -c 'until curl -s http://localhost:3001/health > /dev/null; do sleep 2; done' || {
+            echo "mcctl-api health check failed"
+            pm2 logs mcctl-api --lines 50
+            exit 1
+          }
+          echo "mcctl-api is ready"
+
+      - name: Run E2E tests
+        working-directory: e2e
+        run: pnpm test
+        env:
+          CI: true
+          E2E_API_URL: http://localhost:3001
+          E2E_SKIP_SERVICE_START: true
+          E2E_API_ONLY: true
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: e2e/test-results/
+          retention-days: 7
+
+      - name: Show PM2 logs on failure
+        if: failure()
+        run: |
+          echo "=== PM2 Status ==="
+          pm2 status
+          echo ""
+          echo "=== mcctl-api logs ==="
+          pm2 logs mcctl-api --lines 100 --nostream || true
+
+      - name: Stop PM2 services
+        if: always()
+        run: |
+          pm2 delete all || true
+          pm2 kill || true

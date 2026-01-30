@@ -2,6 +2,24 @@
 
 mcctl에서 지원하는 각 Minecraft 서버 플랫폼에 대한 상세 가이드입니다.
 
+## 빠른 시작
+
+mcctl을 사용하여 원하는 타입의 서버를 생성합니다:
+
+```bash
+# Paper (대부분의 사용자에게 권장)
+mcctl create myserver -t PAPER -v 1.21.1
+
+# Vanilla (순수 Minecraft)
+mcctl create myserver -t VANILLA -v 1.21.1
+
+# Forge (모드)
+mcctl create myserver -t FORGE -v 1.20.4
+
+# Fabric (경량 모드)
+mcctl create myserver -t FABRIC -v 1.21.1
+```
+
 ## 개요
 
 | 타입 | 플러그인 | 모드 | 성능 | 권장 용도 |
@@ -23,6 +41,12 @@ mcctl에서 지원하는 각 Minecraft 서버 플랫폼에 대한 상세 가이�
 
 Paper는 Bukkit 및 Spigot 플러그인을 지원하면서 상당한 성능 향상을 제공하는 고성능 Minecraft 서버입니다.
 
+### Paper 서버 생성
+
+```bash
+mcctl create myserver -t PAPER -v 1.21.1
+```
+
 ### 특징
 
 - Vanilla 대비 상당한 성능 향상
@@ -31,29 +55,27 @@ Paper는 Bukkit 및 Spigot 플러그인을 지원하면서 상당한 성능 향�
 - 악용 방지 패치
 - 광범위한 설정 옵션
 
-### 설정
+### 권장 설정
 
 ```bash
-# servers/myserver/config.env
-TYPE=PAPER
-VERSION=1.21.1
-MEMORY=4G
-
 # Aikar의 최적화된 JVM 플래그 활성화
-USE_AIKAR_FLAGS=true
+mcctl config myserver USE_AIKAR_FLAGS true
 ```
 
 ### 플러그인 추가
 
-플러그인 JAR 파일을 `shared/plugins/`에 넣거나 자동 다운로드를 사용합니다:
-
 ```bash
 # Modrinth에서
-MODRINTH_PROJECTS=essentialsx,luckperms
+mcctl config myserver MODRINTH_PROJECTS "essentialsx,luckperms"
 
 # Spigot에서
-SPIGET_RESOURCES=28140,81534
+mcctl config myserver SPIGET_RESOURCES "28140,81534"
+
+# 변경 사항 적용
+mcctl stop myserver && mcctl start myserver
 ```
+
+또는 플러그인 JAR 파일을 `shared/plugins/` 디렉토리에 넣습니다.
 
 ### 모범 사례
 
@@ -67,21 +89,18 @@ SPIGET_RESOURCES=28140,81534
 
 Mojang의 공식 Minecraft 서버입니다.
 
+### Vanilla 서버 생성
+
+```bash
+mcctl create myserver -t VANILLA -v 1.21.1
+```
+
 ### 특징
 
 - 공식 Minecraft 경험
 - 수정 없음
 - 모든 Minecraft 기능과의 호환성 보장
 - 가장 작은 용량
-
-### 설정
-
-```bash
-# servers/myserver/config.env
-TYPE=VANILLA
-VERSION=1.21.1
-MEMORY=2G
-```
 
 ### 사용 사례
 
@@ -95,6 +114,12 @@ MEMORY=2G
 
 Forge 모드를 실행하기 위한 서버입니다.
 
+### Forge 서버 생성
+
+```bash
+mcctl create myserver -t FORGE -v 1.20.4
+```
+
 ### 특징
 
 - 대규모 모드 생태계
@@ -105,31 +130,30 @@ Forge 모드를 실행하기 위한 서버입니다.
 ### 설정
 
 ```bash
-# servers/myserver/config.env
-TYPE=FORGE
-VERSION=1.20.4
-MEMORY=8G
+# 메모리 설정 (모드팩은 더 많이 필요)
+mcctl config myserver MEMORY 8G
 
-# 모드 다운로드에 CurseForge API 키 필요
-CF_API_KEY=${CF_API_KEY}
-CURSEFORGE_FILES=jei,journeymap,create
+# 모드 추가 (.env에 CF_API_KEY 필요)
+mcctl config myserver CURSEFORGE_FILES "jei,journeymap,create"
 
 # 또는 특정 Forge 버전
-FORGE_VERSION=47.2.0
+mcctl config myserver FORGE_VERSION "47.2.0"
+
+# 변경 사항 적용
+mcctl stop myserver && mcctl start myserver
 ```
 
 ### Java 버전 요구사항
 
-| Minecraft 버전 | 필요한 Java |
-|----------------|-------------|
-| 1.20.x+ | Java 17 또는 21 |
-| 1.17.x - 1.19.x | Java 17 |
-| 1.16.x 이하 | Java 8 |
+| Minecraft 버전 | 필요한 Java | 이미지 태그 |
+|----------------|-------------|-------------|
+| 1.20.x+ | Java 17 또는 21 | `latest` |
+| 1.17.x - 1.19.x | Java 17 | `java17` |
+| 1.16.x 이하 | Java 8 | `java8` |
 
 !!! warning "Forge 1.16.5 이하"
-    이전 Forge 버전의 경우 java8 이미지 태그를 사용합니다:
+    이전 Forge 버전의 경우 서버의 docker-compose.yml을 수정하여 java8 이미지를 사용해야 합니다:
     ```yaml
-    # docker-compose.yml
     image: itzg/minecraft-server:java8
     ```
 
@@ -141,11 +165,21 @@ FORGE_VERSION=47.2.0
 | 중간 (30-100개 모드) | 6-8G |
 | 무거움 (100개+ 모드) | 8-12G |
 
+```bash
+mcctl config myserver MEMORY 8G
+```
+
 ---
 
 ## Fabric
 
 뛰어난 성능을 가진 경량 모딩 플랫폼입니다.
+
+### Fabric 서버 생성
+
+```bash
+mcctl create myserver -t FABRIC -v 1.21.1
+```
 
 ### 특징
 
@@ -157,28 +191,33 @@ FORGE_VERSION=47.2.0
 ### 설정
 
 ```bash
-# servers/myserver/config.env
-TYPE=FABRIC
-VERSION=1.21.1
-MEMORY=6G
+# 메모리 설정
+mcctl config myserver MEMORY 6G
 
 # Modrinth에서 필수 Fabric 모드
-MODRINTH_PROJECTS=fabric-api,lithium,starlight
-MODRINTH_DOWNLOAD_DEPENDENCIES=required
+mcctl config myserver MODRINTH_PROJECTS "fabric-api,lithium,starlight"
+mcctl config myserver MODRINTH_DOWNLOAD_DEPENDENCIES required
 
 # 또는 특정 Fabric 로더 버전
-FABRIC_LOADER_VERSION=0.15.0
+mcctl config myserver FABRIC_LOADER_VERSION "0.15.0"
+
+# 변경 사항 적용
+mcctl stop myserver && mcctl start myserver
 ```
 
 ### 권장 모드
 
-| 모드 | 용도 |
-|------|------|
-| `fabric-api` | 대부분의 모드에 필요 |
-| `lithium` | 게임 로직 최적화 |
-| `starlight` | 조명 엔진 재작성 |
-| `krypton` | 네트워크 최적화 |
-| `ferritecore` | 메모리 최적화 |
+| 모드 | 용도 | mcctl config |
+|------|------|--------------|
+| `fabric-api` | 대부분의 모드에 필요 | `MODRINTH_PROJECTS` |
+| `lithium` | 게임 로직 최적화 | `MODRINTH_PROJECTS` |
+| `starlight` | 조명 엔진 재작성 | `MODRINTH_PROJECTS` |
+| `krypton` | 네트워크 최적화 | `MODRINTH_PROJECTS` |
+| `ferritecore` | 메모리 최적화 | `MODRINTH_PROJECTS` |
+
+```bash
+mcctl config myserver MODRINTH_PROJECTS "fabric-api,lithium,starlight,krypton,ferritecore"
+```
 
 ### 성능 비교
 
@@ -194,20 +233,17 @@ FABRIC_LOADER_VERSION=0.15.0
 
 플러그인을 지원하는 수정된 Bukkit 서버입니다.
 
+### Spigot 서버 생성
+
+```bash
+mcctl create myserver -t SPIGOT -v 1.21.1
+```
+
 ### 특징
 
 - Bukkit 플러그인 호환성
 - Bukkit 대비 성능 향상
 - 넓은 플러그인 생태계
-
-### 설정
-
-```bash
-# servers/myserver/config.env
-TYPE=SPIGOT
-VERSION=1.21.1
-MEMORY=4G
-```
 
 ### 사용 시기
 
@@ -224,20 +260,17 @@ MEMORY=4G
 
 클래식 Minecraft 플러그인 서버입니다.
 
+### Bukkit 서버 생성
+
+```bash
+mcctl create myserver -t BUKKIT -v 1.21.1
+```
+
 ### 특징
 
 - 원래의 플러그인 API
 - 레거시 플러그인 지원
 - 안정적이고 잘 문서화됨
-
-### 설정
-
-```bash
-# servers/myserver/config.env
-TYPE=BUKKIT
-VERSION=1.21.1
-MEMORY=4G
-```
 
 ### 사용 시기
 
@@ -250,6 +283,12 @@ MEMORY=4G
 
 추가 기능과 커스터마이징을 제공하는 Paper 포크입니다.
 
+### Purpur 서버 생성
+
+```bash
+mcctl create myserver -t PURPUR -v 1.21.1
+```
+
 ### 특징
 
 - 모든 Paper 기능과 그 이상
@@ -260,12 +299,7 @@ MEMORY=4G
 ### 설정
 
 ```bash
-# servers/myserver/config.env
-TYPE=PURPUR
-VERSION=1.21.1
-MEMORY=4G
-
-USE_AIKAR_FLAGS=true
+mcctl config myserver USE_AIKAR_FLAGS true
 ```
 
 ### 고유 기능
@@ -281,6 +315,12 @@ USE_AIKAR_FLAGS=true
 
 개선된 API를 가진 현대적인 Fabric 포크입니다.
 
+### Quilt 서버 생성
+
+```bash
+mcctl create myserver -t QUILT -v 1.21.1
+```
+
 ### 특징
 
 - Fabric 모드 호환성
@@ -291,12 +331,7 @@ USE_AIKAR_FLAGS=true
 ### 설정
 
 ```bash
-# servers/myserver/config.env
-TYPE=QUILT
-VERSION=1.21.1
-MEMORY=6G
-
-MODRINTH_PROJECTS=qsl,fabric-api
+mcctl config myserver MODRINTH_PROJECTS "qsl,fabric-api"
 ```
 
 ### 사용 시기
@@ -324,23 +359,80 @@ flowchart TD
     C -->|예| H{우선순위?}
     C -->|아니오| I[VANILLA]
 
-    H -->|성능| J[PAPER ⭐]
+    H -->|성능| J[PAPER]
     H -->|커스터마이징| K[PURPUR]
     H -->|레거시| L[SPIGOT/BUKKIT]
 ```
 
 ### 빠른 권장사항
 
-| 사용 사례 | 권장 타입 |
-|-----------|-----------|
-| 일반 멀티플레이어 | PAPER |
-| 성능 중심 | PAPER 또는 FABRIC |
-| 복잡한 모드팩 | FORGE |
-| 가벼운 최적화 모드 | FABRIC |
-| 순수 바닐라 | VANILLA |
-| 최대 커스터마이징 | PURPUR |
+| 사용 사례 | 명령어 |
+|-----------|--------|
+| 일반 멀티플레이어 | `mcctl create myserver -t PAPER -v 1.21.1` |
+| 성능 중심 | `mcctl create myserver -t PAPER -v 1.21.1` 또는 `-t FABRIC` |
+| 복잡한 모드팩 | `mcctl create myserver -t FORGE -v 1.20.4` |
+| 가벼운 최적화 모드 | `mcctl create myserver -t FABRIC -v 1.21.1` |
+| 순수 바닐라 | `mcctl create myserver -t VANILLA -v 1.21.1` |
+| 최대 커스터마이징 | `mcctl create myserver -t PURPUR -v 1.21.1` |
+
+## 완전한 설정 예제
+
+### 서바이벌 서버 (Paper)
+
+```bash
+# 서버 생성
+mcctl create survival -t PAPER -v 1.21.1
+
+# 설정
+mcctl config survival MOTD "서바이벌 서버 - 행운을 빕니다!"
+mcctl config survival DIFFICULTY hard
+mcctl config survival GAMEMODE survival
+mcctl config survival USE_AIKAR_FLAGS true
+
+# 플러그인 추가
+mcctl config survival MODRINTH_PROJECTS "essentialsx,luckperms"
+
+# 적용을 위해 재시작
+mcctl stop survival && mcctl start survival
+
+# 운영자 추가
+mcctl op survival add YourName
+```
+
+### 모드 서버 (Forge)
+
+```bash
+# 서버 생성
+mcctl create modded -t FORGE -v 1.20.4
+
+# 설정
+mcctl config modded MEMORY 8G
+mcctl config modded USE_AIKAR_FLAGS true
+
+# 모드 추가 (.env에 CF_API_KEY 필요)
+mcctl config modded CURSEFORGE_FILES "create,jei,journeymap"
+
+# 적용을 위해 재시작
+mcctl stop modded && mcctl start modded
+```
+
+### 성능 서버 (Fabric)
+
+```bash
+# 서버 생성
+mcctl create performance -t FABRIC -v 1.21.1
+
+# 설정
+mcctl config performance MEMORY 6G
+mcctl config performance MODRINTH_PROJECTS "fabric-api,lithium,starlight,krypton"
+mcctl config performance MODRINTH_DOWNLOAD_DEPENDENCIES required
+
+# 적용을 위해 재시작
+mcctl stop performance && mcctl start performance
+```
 
 ## 참고
 
 - **[환경 변수](environment.ko.md)** - 모든 설정 옵션
+- **[CLI 명령어](../cli/commands.ko.md)** - 전체 mcctl 레퍼런스
 - **[itzg/minecraft-server 타입](https://docker-minecraft-server.readthedocs.io/en/latest/types-and-platforms/)** - 전체 문서

@@ -31,6 +31,9 @@ platform/backups/
 # shared/plugins/
 # shared/mods/
 
+# GitHub Wiki (separate repository)
+.wiki/
+
 # OS files
 .DS_Store
 Thumbs.db
@@ -46,6 +49,13 @@ Thumbs.db
 docker-compose.test.yml
 docker-compose.*.yml
 !docker-compose.yml
+
+# PM2
+ecosystem.config.js
+!templates/ecosystem.config.js
+.pm2/
+logs/
+pids/
 
 .venv/
 site/

@@ -45,6 +45,8 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [x] Worlds can be assigned to different servers
   - [x] World data persists across server restarts
   - [x] New worlds can be created and managed
+  - [x] World metadata stored in `.meta` file (name, seed, createdAt)
+  - [x] `mcctl world new` creates world directory even without server assignment
 
 #### FR-003: World Locking Mechanism
 - **Priority**: High
@@ -175,48 +177,89 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [x] Restore prompts for confirmation (unless --force)
   - [x] `--dry-run` option shows what would be restored without changes
 
-#### FR-014: World Selection Enhancement
+#### FR-014: World Selection Enhancement ✅
 - **Priority**: Medium
 - **Description**: Enhanced world selection in `mcctl create` that shows available worlds with usage status, allowing users to select from existing worlds categorized by availability.
 - **Issue**: [#66](https://github.com/smallmiro/minecraft-server-manager/issues/66)
+- **Status**: ✅ Completed
 - **Acceptance Criteria**:
-  - [ ] Show available worlds in interactive mode when "Use existing world" is selected
-  - [ ] Display 3 categories: Available (not used), Reusable (server stopped), Locked (server running)
-  - [ ] Show server name and status for locked/reusable worlds
-  - [ ] Allow selection via @clack/prompts select UI
-  - [ ] Warn user when selecting world used by stopped server (will transfer ownership)
-  - [ ] Block selection of worlds used by running servers
-  - [ ] Maintain backward compatibility with CLI arguments (`-w <name>`)
+  - [x] Show available worlds in interactive mode when "Use existing world" is selected
+  - [x] Display 3 categories: Available (not used), Reusable (server stopped), Locked (server running)
+  - [x] Show server name and status for locked/reusable worlds
+  - [x] Allow selection via @clack/prompts select UI
+  - [x] Warn user when selecting world used by stopped server (will transfer ownership)
+  - [x] Block selection of worlds used by running servers
+  - [x] Maintain backward compatibility with CLI arguments (`-w <name>`)
 
-#### FR-015: Player Management Commands
+#### FR-015: Player Management Commands ✅
 - **Priority**: Medium
 - **Description**: Comprehensive player management commands for whitelist, ban/unban, and kick operations, integrated with existing player lookup feature for UUID resolution.
 - **Issue**: [#67](https://github.com/smallmiro/minecraft-server-manager/issues/67)
+- **Status**: ✅ Completed
 - **Acceptance Criteria**:
-  - [ ] `mcctl whitelist <server> <add|remove|list|on|off> [player]` - Whitelist management
-  - [ ] `mcctl ban <server> <add|remove|list> [player] [--reason]` - Ban management
-  - [ ] `mcctl kick <server> <player> [--reason]` - Kick player from server
-  - [ ] Integration with PlayerLookupUseCase for UUID resolution
-  - [ ] RCON command execution for runtime changes
-  - [ ] JSON file updates for persistence (whitelist.json, banned-players.json)
-  - [ ] `--json` output support for all commands
-  - [ ] Interactive mode with player name autocomplete from online players
+  - [x] `mcctl whitelist <server> <add|remove|list|on|off> [player]` - Whitelist management
+  - [x] `mcctl ban <server> <add|remove|list> [player] [--reason]` - Ban management
+  - [x] `mcctl kick <server> <player> [--reason]` - Kick player from server
+  - [x] Integration with PlayerLookupUseCase for UUID resolution
+  - [x] RCON command execution for runtime changes
+  - [x] JSON file updates for persistence (whitelist.json, banned-players.json)
+  - [x] `--json` output support for all commands
+  - [x] Interactive mode with player name autocomplete from online players
 
-#### FR-016: Detailed Server Monitoring
+#### FR-016: Detailed Server Monitoring ✅
 - **Priority**: Medium
 - **Description**: Enhanced monitoring capabilities showing detailed server and mc-router status including online players, resource usage, uptime, and real-time updates.
 - **Issue**: [#68](https://github.com/smallmiro/minecraft-server-manager/issues/68)
+- **Status**: ✅ Completed
 - **Acceptance Criteria**:
-  - [ ] `mcctl status --detail` shows comprehensive server information
-  - [ ] `mcctl status --watch` enables real-time status updates (5s interval)
-  - [ ] `mcctl status <server>` shows single server detailed status
-  - [ ] `mcctl router status` shows mc-router specific information
-  - [ ] Display online player count and names per server
-  - [ ] Display memory/CPU usage from Docker stats
-  - [ ] Display server uptime
-  - [ ] Display TPS (ticks per second) when available
-  - [ ] Display mc-router connection stats and routing table
-  - [ ] `--json` output support for all monitoring commands
+  - [x] `mcctl status --detail` shows comprehensive server information
+  - [x] `mcctl status --watch` enables real-time status updates (5s interval)
+  - [x] `mcctl status <server>` shows single server detailed status
+  - [x] `mcctl router status` shows mc-router specific information
+  - [x] Display online player count and names per server
+  - [x] Display memory/CPU usage from Docker stats
+  - [x] Display server uptime
+  - [x] Display TPS (ticks per second) when available
+  - [x] Display mc-router connection stats and routing table
+  - [x] `--json` output support for all monitoring commands
+
+#### FR-017: Sudo Password Handling for Automation ✅
+- **Priority**: Medium
+- **Description**: Add sudo password handling mechanism to enable CLI automation. Scripts requiring sudo (create-server.sh, delete-server.sh) currently block automation due to password prompts.
+- **Issue**: [#72](https://github.com/smallmiro/minecraft-server-manager/issues/72)
+- **PR**: [#74](https://github.com/smallmiro/minecraft-server-manager/pull/74)
+- **Status**: ✅ Completed
+- **Acceptance Criteria**:
+  - [x] `--sudo-password` CLI option for create/delete commands
+  - [x] `MCCTL_SUDO_PASSWORD` environment variable support
+  - [x] Interactive password prompt using `@clack/prompts` password() when needed
+  - [x] Bash scripts support `sudo -S` with password from environment
+  - [x] Password not visible in process list (`ps aux`)
+  - [x] Password never logged to files or console
+  - [x] Documentation for sudoers NOPASSWD configuration as alternative
+
+#### FR-018: Unified Player Management with Interactive Mode ✅
+- **Priority**: Medium
+- **Description**: Create unified `mcctl player` command with interactive mode for comprehensive player management. Integrate Mojang API with encrypted local cache to minimize API calls and avoid rate limiting.
+- **Issue**: [#73](https://github.com/smallmiro/minecraft-server-manager/issues/73)
+- **PR**: [#75](https://github.com/smallmiro/minecraft-server-manager/pull/75)
+- **Status**: ✅ Completed
+- **Acceptance Criteria**:
+  - [x] `mcctl player` unified interactive mode (server → player → action)
+  - [x] `mcctl player info <name>` shows player info (UUID, skin URL)
+  - [x] `mcctl player cache clear` clears cached player data
+  - [x] `mcctl player cache stats` shows cache statistics
+  - [x] Server selection prompt showing online player counts
+  - [x] Player selection from online players or manual entry
+  - [x] Action selection (view info, whitelist, ban, op, kick)
+  - [x] Reusable prompt components (`server-select`, `player-select`, `action-select`)
+  - [x] Interactive mode for existing commands (whitelist, ban, op, kick)
+  - [x] Mojang API integration with encrypted local cache
+  - [x] Cache location: `~/.minecraft-docker/.player-cache`
+  - [x] Cache encryption: AES-256-GCM with machine-specific key
+  - [x] Cache policy: UUID permanent, username 30 days, skin 1 day
+  - [x] Cache file permissions: `600`
+  - [x] Support offline UUID calculation for offline-mode servers
 
 ### 2.2 Non-Functional Requirements
 
@@ -671,10 +714,10 @@ When implementing CLI tools, always consider future Web UI integration:
 - [x] Test all CLI commands
 - [x] Add error handling with proper exit codes
 
-### Phase 5: Documentation
-- [ ] Update `CLAUDE.md`
-- [ ] Update `README.md`
-- [ ] Create usage examples
+### Phase 5: Documentation ✅
+- [x] Update `CLAUDE.md`
+- [x] Update `README.md`
+- [x] Create usage examples
 
 ### Phase 6: Testing & Refinement (Partial)
 - [x] Test multi-server startup
@@ -712,12 +755,26 @@ See **Section 9** for detailed CLI Architecture (Hexagonal + Clean Architecture)
 - [x] Unit and integration tests
 - [x] Documentation update
 
-### Future: Phase 8 (Web Management UI)
-See **Section 10.1** for detailed Web UI implementation plan.
-- Wrap CLI functions with Next.js API routes
-- Build Tailwind CSS dashboard components
-- Add SQLite/PostgreSQL for persistent state
-- Package as npm module
+### Phase 8: Admin Service (Web Management UI) ✅
+> **Milestone**: [v2.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/5) - Closed
+
+**Components**:
+- **mcctl-api**: Fastify REST API (5 authentication modes)
+- **mcctl-console**: Next.js BFF + Web UI (NextAuth.js)
+
+**Completed Features**:
+- [x] IUserRepository port interface (#80)
+- [x] YamlUserRepository adapter (#81)
+- [x] SqliteUserRepository adapter (#82)
+- [x] ApiPromptAdapter for non-interactive mode (#83)
+- [x] CLI admin init/user/api/service commands (#84-87)
+- [x] Fastify REST API with auth plugin (#88-89)
+- [x] Server/World/Player management routes (#90-92)
+- [x] OpenAPI/Swagger documentation (#93)
+- [x] Docker builds for mcctl-api and mcctl-console (#94, #100)
+- [x] Next.js BFF + Dashboard UI (#95-99)
+- [x] Docker Compose integration (#101)
+- [x] E2E tests (#102)
 
 ## 6. Configuration Reference
 
@@ -1318,26 +1375,26 @@ export function createContainer(paths: Paths) {
 
 ### 9.9 Migration Path
 
-#### Phase 1: Infrastructure Setup
-- [ ] Add dependencies: `@clack/prompts`, `picocolors`
-- [ ] Create port interfaces
-- [ ] Implement `ClackPromptAdapter`
-- [ ] Implement `DocsProviderAdapter`
+#### Phase 1: Infrastructure Setup ✅
+- [x] Add dependencies: `@clack/prompts`, `picocolors`
+- [x] Create port interfaces
+- [x] Implement `ClackPromptAdapter`
+- [x] Implement `DocsProviderAdapter`
 
-#### Phase 2: Core Use Cases
-- [ ] Implement `CreateServerUseCase` with prompts
-- [ ] Implement `DeleteServerUseCase` with confirmation
-- [ ] Implement `StatusCommand` (pure TypeScript)
+#### Phase 2: Core Use Cases ✅
+- [x] Implement `CreateServerUseCase` with prompts
+- [x] Implement `DeleteServerUseCase` with confirmation
+- [x] Implement `StatusCommand` (pure TypeScript)
 
-#### Phase 3: Enhanced Features
-- [ ] Add `PlayerCommand` (TypeScript, no Bash)
-- [ ] Add `WorldCommand` with interactive assignment
-- [ ] Add `BackupCommand` with prompts
+#### Phase 3: Enhanced Features ✅
+- [x] Add `PlayerCommand` (TypeScript, no Bash)
+- [x] Add `WorldCommand` with interactive assignment
+- [x] Add `BackupCommand` with prompts
 
-#### Phase 4: Polish
-- [ ] Add progress indicators
-- [ ] Improve error messages
-- [ ] Add `--yes` flag for non-interactive mode
+#### Phase 4: Polish ✅
+- [x] Add progress indicators
+- [x] Improve error messages
+- [x] Add `--yes` flag for non-interactive mode
 
 #### Phase 5: Shared Package Refactoring ([#54](https://github.com/smallmiro/minecraft-server-manager/issues/54))
 - [ ] Domain Layer 이동 (`domain/entities`, `domain/value-objects`) → shared
@@ -1441,12 +1498,233 @@ minecraft-server-manager/
 - [ ] Player synchronization between servers
 - [ ] Automated world migration
 
-## 10. Revision History
+## 10. Admin Service (Web Management)
+
+> **Milestone**: Phase 8 (Milestone 5)
+> **Status**: ✅ Completed (v2.0.0)
+
+Web-based management console service. Consists of two independent services following MSA (Microservice Architecture) principles.
+
+### 10.1 Service Components
+
+| Service | Package | Role |
+|---------|---------|------|
+| **mcctl-api** | `@minecraft-docker/mcctl-api` | Internal REST API service |
+| **mcctl-console** | `@minecraft-docker/mcctl-console` | BFF + Management UI |
+
+### 10.2 Detailed Documents
+
+Each service has independent PRD/Plan documents:
+
+- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md) | [Plan](platform/services/mcctl-api/plan.md)
+- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md) | [Plan](platform/services/mcctl-console/plan.md)
+
+### 10.3 Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     BROWSER                                  │
+│                   (React Client)                             │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ HTTP (localhost:3000)
+┌─────────────────────────▼───────────────────────────────────┐
+│                  mcctl-console (BFF + UI)                    │
+│                   Next.js App Router                         │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ HTTP (Docker network)
+┌─────────────────────────▼───────────────────────────────────┐
+│                      mcctl-api                               │
+│                  Fastify REST API                            │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────────┐
+│               @minecraft-docker/shared                       │
+│           (Domain, Use Cases, Adapters)                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 10.4 CLI Commands (`mcctl console`) ✅
+
+> **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead. The `admin` command alias still works for backward compatibility but will be removed in a future release.
+
+```bash
+# Initialization
+mcctl console init              # Initial setup (create users.yaml, API key)
+mcctl console init --force      # Reinitialize (overwrite existing)
+
+# User Management
+mcctl console user list         # List console users
+mcctl console user add <name>   # Add user interactively
+mcctl console user remove <name>  # Remove user
+mcctl console user reset <name>   # Reset user password
+
+# API Key Management
+mcctl console api start         # Start API service only
+mcctl console api stop          # Stop API service
+mcctl console api status        # Check API status
+
+# Service Lifecycle
+mcctl console service start     # Start all services (API + Console)
+mcctl console service stop      # Stop all services
+mcctl console service restart   # Restart services
+mcctl console service status    # Show service status (--json for JSON output)
+mcctl console service logs      # View logs (--api, --console, -f for follow)
+```
+
+### 10.5 Multi-Agent Collaboration
+
+This project uses a **Multi-Agent Collaboration** system for all development work. Each agent has exclusive ownership of their module and must **collaborate, not substitute** for other agents.
+
+#### 🔴 Critical Rules
+
+**NEVER do another agent's work.** Each agent owns their module exclusively:
+
+| Rule | Description |
+|------|-------------|
+| ❌ **Don't** | Implement code in another agent's module |
+| ❌ **Don't** | Modify files outside your assigned directory |
+| ❌ **Don't** | Make assumptions about another agent's implementation |
+| ✅ **Do** | Request dependencies via `DEPENDENCY_NEEDED` message |
+| ✅ **Do** | Wait for `DEPENDENCY_READY` response before proceeding |
+| ✅ **Do** | Communicate blockers via `BLOCKING_ISSUE` message |
+
+#### Agent Ownership
+
+**Development Agents** (Module Ownership):
+
+| Agent | Exclusive Module | Responsibility |
+|-------|------------------|----------------|
+| 🔧 **Core** | `platform/services/shared/` | Domain, Use Cases, Shared Adapters |
+| 💻 **CLI** | `platform/services/cli/`, `scripts/` | CLI Commands, Prompts, Bash Scripts |
+| 🖥️ **Backend** | `platform/services/mcctl-api/` | REST API, Auth, Swagger |
+| 🎨 **Frontend** | `platform/services/mcctl-console/` | BFF, UI Components |
+| 🐳 **DevOps** | `platform/`, `e2e/` | Docker, Integration Tests |
+
+**Support Agents** (Cross-cutting Concerns):
+
+| Agent | Module | Responsibility | Invoked By |
+|-------|--------|----------------|------------|
+| 📝 **Technical Writer** | `docs/` | Bilingual documentation (EN/KO) | `/write-docs`, Release Manager |
+| 🚀 **Release Manager** | Git, Docker | Version tagging, deployment | User request |
+
+#### Per-Agent Documentation
+
+Each module agent manages their own PRD and Plan:
+- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md) | [Plan](platform/services/mcctl-api/plan.md)
+- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md) | [Plan](platform/services/mcctl-console/plan.md)
+
+Agent specification files: `.claude/agents/` directory
+
+#### Collaboration Protocol
+
+**When you need something from another agent:**
+
+```markdown
+## 📋 DEPENDENCY_NEEDED
+
+**From**: [your agent]
+**To**: [target agent]
+
+### Need
+[What interface/artifact you need]
+
+### Reason
+[Why you need it for your work]
+```
+
+**When you complete work that others depend on:**
+
+```markdown
+## ✅ DEPENDENCY_READY
+
+**From**: [your agent]
+**To**: [dependent agents]
+
+### Artifact
+[Interface/spec now available]
+
+### Location
+[File path or import statement]
+```
+
+#### Sync Points (Milestone 5 Example)
+
+| ID | Trigger | From | To | Artifact |
+|----|---------|------|----|----------|
+| SYNC-1 | #80 complete | Core | CLI, Backend | IUserRepository interface |
+| SYNC-2 | #89 complete | Backend | Frontend | Auth plugin specification |
+| SYNC-3 | #93 complete | Backend | Frontend | OpenAPI specification |
+| SYNC-4 | #94+#100 | Backend, Frontend | DevOps | Docker images |
+| SYNC-5 | #101 complete | DevOps | All | Integration test environment |
+
+For the complete collaboration guide, see [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md).
+
+## 11. Module PRD Index
+
+All services have independent PRD documents for detailed specifications:
+
+### 11.1 Module Documents
+
+| Module | PRD | Description | Status |
+|--------|-----|-------------|--------|
+| **shared** | [prd.md](platform/services/shared/prd.md) | Core Domain Layer, Use Cases, Common Adapters | ✅ v1.0 |
+| **cli** | [prd.md](platform/services/cli/prd.md) | CLI Tool (@clack/prompts interactive) | ✅ v1.0 |
+| **mcctl-api** | [prd.md](platform/services/mcctl-api/prd.md) | Fastify REST API Service | ✅ v1.0 |
+| **mcctl-console** | [prd.md](platform/services/mcctl-console/prd.md) | Next.js BFF + Web Console | ✅ v1.0 |
+
+### 11.2 Module Responsibilities
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         shared                                   │
+│  Domain: Entities, Value Objects                                │
+│  Application: Use Cases, Ports                                  │
+│  Infrastructure: ShellAdapter, Repositories                     │
+├─────────────────────────────────────────────────────────────────┤
+│         cli              │    mcctl-api    │   mcctl-console    │
+│  ClackPromptAdapter      │  ApiPromptAdapter│  WebPromptAdapter  │
+│  @clack/prompts          │  Fastify Routes │  Next.js App       │
+│  Terminal UI             │  REST API       │  BFF + Web UI      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 11.3 Document Hierarchy
+
+```
+prd.md (This Document)
+├── Section 9: CLI Architecture → shared/prd.md, cli/prd.md
+├── Section 10: Admin Service → mcctl-api/prd.md, mcctl-console/prd.md
+│
+├── platform/services/shared/prd.md
+│   └── Domain Layer, Application Layer, Infrastructure Layer
+│
+├── platform/services/cli/prd.md
+│   └── CLI Commands, Interactive Mode, Player Management
+│
+├── platform/services/mcctl-api/prd.md
+│   └── REST API, Authentication, OpenAPI/Swagger
+│
+└── platform/services/mcctl-console/prd.md
+    └── BFF Pattern, NextAuth.js, Dashboard UI
+```
+
+### 11.4 Cross-References
+
+- **Section 9** (CLI Architecture) → Details in `cli/prd.md`, `shared/prd.md`
+- **Section 10** (Admin Service) → Details in `mcctl-api/prd.md`, `mcctl-console/prd.md`
+- **Agent Ownership** → See Section 10.5 for module ownership rules
+
+## 12. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0.0 | 2025-01-17 | - | Initial PRD |
 | 1.1.0 | 2025-01-17 | - | Add automatic port assignment (FR-007) |
 | 2.0.0 | 2025-01-17 | - | Replace port assignment with Lazymc auto start/stop |
-| 2.1.0 | 2026-01-17 | - | Migrate from Lazymc to mc-router (hostname routing, Docker auto-scale) |
-| 3.0.0 | 2026-01-18 | - | Add CLI Architecture (Hexagonal + Clean Architecture, SOLID principles) |
+| 2.1.0 | 2025-01-17 | - | Migrate from Lazymc to mc-router (hostname routing, Docker auto-scale) |
+| 3.0.0 | 2025-01-18 | - | Add CLI Architecture (Hexagonal + Clean Architecture, SOLID principles) |
+| 3.1.0 | 2025-01-24 | - | Update FR-014~FR-016 status to completed, update Phase 5 and Migration Path status |
+| 4.0.0 | 2025-01-25 | - | Add Section 10: Admin Service (mcctl-api, mcctl-console) |
+| 4.1.0 | 2025-01-25 | - | Add Section 10.5: Multi-Agent Collaboration with ownership rules |
+| 5.0.0 | 2025-01-26 | - | Mark Admin Service (Section 10) as Completed, update CLI commands |
+| 5.1.0 | 2025-01-26 | - | Add Section 11: Module PRD Index for centralized document management |

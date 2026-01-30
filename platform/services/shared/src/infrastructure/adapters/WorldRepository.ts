@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir, readFile, stat, rm, unlink, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { Paths } from '../../utils/index.js';
@@ -62,11 +62,12 @@ export class WorldRepository implements IWorldRepository {
       world.lockTo(lockData.serverName, lockData.pid);
     }
 
-    // Get world metadata
+    // Get world metadata and seed
     try {
       const worldStat = await stat(worldPath);
       const size = await this.getDirectorySize(worldPath);
-      world.setMetadata(size, worldStat.mtime);
+      const seed = await this.getSeed(name);
+      world.setMetadata(size, worldStat.mtime, seed ?? undefined);
     } catch {
       // Ignore metadata errors
     }
@@ -217,6 +218,31 @@ export class WorldRepository implements IWorldRepository {
   }
 
   /**
+   * Delete a world directory and its lock file
+   */
+  async delete(name: string): Promise<boolean> {
+    const worldPath = join(this.worldsDir, name);
+    const lockFile = join(this.locksDir, `${name}.lock`);
+
+    if (!existsSync(worldPath)) {
+      return false;
+    }
+
+    try {
+      // Delete lock file if exists
+      if (existsSync(lockFile)) {
+        await unlink(lockFile);
+      }
+
+      // Delete world directory
+      await rm(worldPath, { recursive: true, force: true });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Get directory size recursively
    */
   private async getDirectorySize(dirPath: string): Promise<number> {
@@ -240,5 +266,61 @@ export class WorldRepository implements IWorldRepository {
     }
 
     return totalSize;
+  }
+
+  /**
+   * Create a new world directory with optional seed
+   */
+  async create(name: string, seed?: string): Promise<World> {
+    const worldPath = join(this.worldsDir, name);
+
+    // Check if already exists
+    if (existsSync(worldPath)) {
+      throw new Error(`World '${name}' already exists`);
+    }
+
+    // Ensure worlds directory exists
+    if (!existsSync(this.worldsDir)) {
+      await mkdir(this.worldsDir, { recursive: true });
+    }
+
+    // Create world directory
+    await mkdir(worldPath, { recursive: true });
+
+    // Create .meta file with seed if provided
+    const metaPath = join(worldPath, '.meta');
+    const metaContent = {
+      name,
+      seed: seed || null,
+      createdAt: new Date().toISOString(),
+    };
+    await writeFile(metaPath, JSON.stringify(metaContent, null, 2), 'utf-8');
+
+    // Create and return the World entity
+    const world = new World(name, worldPath);
+    if (seed) {
+      world.setSeed(seed);
+    }
+
+    return world;
+  }
+
+  /**
+   * Get seed for a world from .meta file
+   */
+  async getSeed(name: string): Promise<string | null> {
+    const metaPath = join(this.worldsDir, name, '.meta');
+
+    if (!existsSync(metaPath)) {
+      return null;
+    }
+
+    try {
+      const content = await readFile(metaPath, 'utf-8');
+      const meta = JSON.parse(content);
+      return meta.seed || null;
+    } catch {
+      return null;
+    }
   }
 }

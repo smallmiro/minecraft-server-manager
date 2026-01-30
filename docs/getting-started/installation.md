@@ -112,7 +112,7 @@ Verify installation:
 
 ```bash
 mcctl --version
-# mcctl version 0.1.0
+# mcctl version 1.6.3
 ```
 
 ### Using npx (No Installation)
@@ -190,6 +190,9 @@ Key settings:
 ```bash
 # Your server's IP address (required for nip.io)
 HOST_IP=192.168.1.100
+
+# For VPN mesh with multiple IPs (Tailscale/ZeroTier)
+# HOST_IPS=192.168.1.100,100.64.0.5
 
 # Default server settings
 DEFAULT_MEMORY=4G

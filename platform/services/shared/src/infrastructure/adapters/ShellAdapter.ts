@@ -10,6 +10,11 @@ import type {
   ShellResult,
 } from '../../application/ports/outbound/IShellPort.js';
 
+export interface ShellAdapterOptions {
+  paths?: Paths;
+  sudoPassword?: string;
+}
+
 /**
  * ShellAdapter
  * Implements IShellPort by executing bash scripts
@@ -17,18 +22,38 @@ import type {
 export class ShellAdapter implements IShellPort {
   private readonly paths: Paths;
   private readonly env: Record<string, string>;
+  private readonly sudoPassword?: string;
 
-  constructor(paths?: Paths) {
-    this.paths = paths ?? new Paths();
+  constructor(pathsOrOptions?: Paths | ShellAdapterOptions) {
+    if (pathsOrOptions instanceof Paths) {
+      this.paths = pathsOrOptions;
+      this.sudoPassword = undefined;
+    } else if (pathsOrOptions) {
+      this.paths = pathsOrOptions.paths ?? new Paths();
+      this.sudoPassword = pathsOrOptions.sudoPassword;
+    } else {
+      this.paths = new Paths();
+      this.sudoPassword = undefined;
+    }
     this.env = this.buildEnv();
   }
 
   private buildEnv(): Record<string, string> {
-    return {
+    const env: Record<string, string> = {
       MCCTL_ROOT: this.paths.root,
       MCCTL_TEMPLATES: this.paths.templates,
       MCCTL_SCRIPTS: this.paths.scripts,
     };
+
+    // Support MCCTL_SUDO_PASSWORD from:
+    // 1. Constructor option (--sudo-password CLI flag)
+    // 2. Environment variable (for automation)
+    const sudoPassword = this.sudoPassword ?? process.env.MCCTL_SUDO_PASSWORD;
+    if (sudoPassword) {
+      env.MCCTL_SUDO_PASSWORD = sudoPassword;
+    }
+
+    return env;
   }
 
   private getScriptPath(script: string): string | null {
@@ -93,12 +118,22 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('delete-server.sh', args);
   }
 
-  async startServer(name: ServerName): Promise<ShellResult> {
-    return this.executeScript('mcctl.sh', ['start', name.value]);
+  async startServer(name: ServerName | string): Promise<ShellResult> {
+    const serverName = typeof name === 'string' ? name : name.value;
+    return this.executeScript('mcctl.sh', ['start', serverName]);
   }
 
-  async stopServer(name: ServerName): Promise<ShellResult> {
-    return this.executeScript('mcctl.sh', ['stop', name.value]);
+  async stopServer(name: ServerName | string): Promise<ShellResult> {
+    const serverName = typeof name === 'string' ? name : name.value;
+    return this.executeScript('mcctl.sh', ['stop', serverName]);
+  }
+
+  async serverStatus(name: string): Promise<ShellResult> {
+    return this.executeScript('mcctl.sh', ['status', name, '--json']);
+  }
+
+  async setServerConfig(serverName: string, key: string, value: string): Promise<ShellResult> {
+    return this.executeScript('mcctl.sh', ['config', serverName, key, value]);
   }
 
   async logs(name: ServerName, options?: LogsOptions): Promise<ShellResult> {
@@ -145,15 +180,17 @@ export class ShellAdapter implements IShellPort {
     serverName: string,
     force = false
   ): Promise<ShellResult> {
-    const args: string[] = ['assign', worldName, serverName];
+    // Use mcctl.sh world assign which delegates to lock.sh lock
+    const args: string[] = ['world', 'assign', worldName, serverName];
     if (force) {
       args.push('--force');
     }
-    return this.executeScript('lock.sh', args);
+    return this.executeScript('mcctl.sh', args);
   }
 
   async worldRelease(worldName: string): Promise<ShellResult> {
-    return this.executeScript('lock.sh', ['release', worldName]);
+    // Use mcctl.sh world release which delegates to lock.sh unlock
+    return this.executeScript('mcctl.sh', ['world', 'release', worldName]);
   }
 
   // ========================================

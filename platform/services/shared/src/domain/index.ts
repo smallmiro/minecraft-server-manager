@@ -9,6 +9,16 @@ export {
   WorldOptions,
   WorldSetupType,
   type WorldOptionsData,
+  UserId,
+  Username,
+  Role,
+  RoleEnum,
+  // Service management value objects
+  ServiceStatus,
+  ServiceStatusEnum,
+  ProcessInfo,
+  type ProcessInfoData,
+  type ProcessMetrics,
 } from './value-objects/index.js';
 
 // Entities
@@ -19,4 +29,6 @@ export {
   World,
   WorldLockStatus,
   type WorldLock,
+  User,
+  type UserData,
 } from './entities/index.js';

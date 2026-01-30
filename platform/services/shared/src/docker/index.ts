@@ -1,4 +1,7 @@
 import { spawn, execSync, spawnSync } from 'node:child_process';
+import { existsSync, readdirSync, statSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 import type {
   ContainerStatus,
   HealthStatus,
@@ -16,7 +19,7 @@ import type {
  * Execute a command and return stdout
  * Uses spawnSync to properly handle arguments with special characters
  */
-function execCommand(command: string, args: string[]): string {
+export function execCommand(command: string, args: string[]): string {
   try {
     const result = spawnSync(command, args, {
       encoding: 'utf-8',
@@ -255,9 +258,11 @@ export function getAvahiStatus(): string {
 
 /**
  * Get full platform status
+ * Includes both running containers and configured-but-not-running servers
  */
-export function getPlatformStatus(): PlatformStatus {
-  const containers = getMcContainers();
+export function getPlatformStatus(serversDir?: string): PlatformStatus {
+  // Get all servers (configured + running containers)
+  const allServerNames = getAllServers(serversDir);
 
   return {
     router: getRouterInfo(),
@@ -266,7 +271,7 @@ export function getPlatformStatus(): PlatformStatus {
       status: getAvahiStatus(),
       type: 'system',
     },
-    servers: containers.map(getServerInfo),
+    servers: allServerNames.map(serverName => getServerInfoFromConfig(serverName)),
   };
 }
 
@@ -299,6 +304,40 @@ export function stopContainer(container: string): boolean {
  */
 export function getContainerLogs(container: string, lines: number = 50): string {
   return execCommand('docker', ['logs', '--tail', String(lines), container]);
+}
+
+/**
+ * Execute a command asynchronously and return result
+ * For docker commands that need async/await pattern
+ */
+export function execCommandAsync(
+  command: string,
+  args: string[]
+): Promise<{ code: number; stdout: string; stderr: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout?.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    child.stderr?.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    child.on('close', (code) => {
+      resolve({ code: code ?? 1, stdout: stdout.trim(), stderr: stderr.trim() });
+    });
+
+    child.on('error', () => {
+      resolve({ code: 1, stdout: '', stderr: 'Failed to execute command' });
+    });
+  });
 }
 
 /**
@@ -598,4 +637,197 @@ export function formatBytes(bytes: number): string {
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+}
+
+/**
+ * Get configured servers from filesystem (servers/ directory)
+ * Returns server names (not container names)
+ */
+export function getConfiguredServers(serversDir?: string): string[] {
+  const dir = serversDir ?? join(
+    process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers'),
+    'servers'
+  );
+
+  if (!existsSync(dir)) return [];
+
+  try {
+    return readdirSync(dir)
+      .filter(name => {
+        // Skip _template and hidden directories
+        if (name === '_template' || name.startsWith('.')) return false;
+        // Check if it's a directory with config.env
+        const serverPath = join(dir, name);
+        return statSync(serverPath).isDirectory() &&
+               existsSync(join(serverPath, 'config.env'));
+      })
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get server info for a configured server (may or may not have a container)
+ */
+export function getServerInfoFromConfig(serverName: string): ServerInfo {
+  const container = `mc-${serverName}`;
+  const status = getContainerStatus(container);
+
+  // If container doesn't exist, mark as not_created
+  if (status === 'not_found') {
+    return {
+      name: serverName,
+      container,
+      status: 'not_created',
+      health: 'none',
+      hostname: '-',
+    };
+  }
+
+  return getServerInfo(container);
+}
+
+/**
+ * Get all servers (both configured and running containers)
+ * Merges filesystem-configured servers with Docker container status
+ */
+export function getAllServers(serversDir?: string): string[] {
+  // Get configured servers from filesystem
+  const configuredServers = getConfiguredServers(serversDir);
+
+  // Get running/stopped containers
+  const containerServers = getMcContainers()
+    .map(c => c.replace(/^mc-/, ''));
+
+  // Merge and dedupe
+  const allServers = new Set([...configuredServers, ...containerServers]);
+  return Array.from(allServers).sort();
+}
+
+/**
+ * Get the servers directory path
+ */
+export function getServersDir(): string {
+  return join(
+    process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers'),
+    'servers'
+  );
+}
+
+/**
+ * Read config.env file for a server
+ * Returns key-value pairs of environment variables
+ */
+export function readServerConfigEnv(serverName: string, serversDir?: string): Record<string, string> {
+  const dir = serversDir ?? getServersDir();
+  const configPath = join(dir, serverName, 'config.env');
+
+  if (!existsSync(configPath)) {
+    return {};
+  }
+
+  try {
+    const content = readFileSync(configPath, 'utf-8');
+    const config: Record<string, string> = {};
+
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      // Skip comments and empty lines
+      if (!trimmed || trimmed.startsWith('#')) continue;
+
+      const eqIndex = trimmed.indexOf('=');
+      if (eqIndex === -1) continue;
+
+      const key = trimmed.substring(0, eqIndex).trim();
+      let value = trimmed.substring(eqIndex + 1).trim();
+
+      // Remove quotes if present
+      if ((value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+
+      config[key] = value;
+    }
+
+    return config;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Check if a server exists (either as container or as configuration)
+ */
+export function serverExists(serverName: string, serversDir?: string): boolean {
+  const container = `mc-${serverName}`;
+
+  // Check if container exists
+  if (containerExists(container)) {
+    return true;
+  }
+
+  // Check if configured
+  const dir = serversDir ?? getServersDir();
+  const serverPath = join(dir, serverName);
+  return existsSync(join(serverPath, 'config.env'));
+}
+
+/**
+ * Get detailed server info from config.env (for servers without containers)
+ */
+export function getDetailedServerInfoFromConfig(
+  serverName: string,
+  serversDir?: string
+): DetailedServerInfo {
+  const container = `mc-${serverName}`;
+  const configEnv = readServerConfigEnv(serverName, serversDir);
+  const dir = serversDir ?? getServersDir();
+
+  // Read docker-compose.yml to get hostname
+  let hostname = '-';
+  const composePath = join(dir, serverName, 'docker-compose.yml');
+  if (existsSync(composePath)) {
+    try {
+      const composeContent = readFileSync(composePath, 'utf-8');
+      // Look for mc-router.host label
+      const hostMatch = composeContent.match(/mc-router\.host['":\s]+([^\s'"]+)/);
+      if (hostMatch && hostMatch[1]) {
+        hostname = hostMatch[1];
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
+  return {
+    name: serverName,
+    container,
+    status: 'not_created',
+    health: 'none',
+    hostname,
+    type: configEnv['TYPE'] || 'PAPER',
+    version: configEnv['VERSION'] || 'LATEST',
+    memory: configEnv['MEMORY'] || '2G',
+  };
+}
+
+/**
+ * Get detailed server info (works for both running containers and config-only servers)
+ */
+export async function getServerDetailedInfo(
+  serverName: string,
+  serversDir?: string
+): Promise<DetailedServerInfo> {
+  const container = `mc-${serverName}`;
+  const configEnv = readServerConfigEnv(serverName, serversDir);
+
+  // If container exists, get info from Docker
+  if (containerExists(container)) {
+    return getDetailedServerInfoWithPlayers(container, configEnv);
+  }
+
+  // Otherwise, get info from config only
+  return getDetailedServerInfoFromConfig(serverName, serversDir);
 }

@@ -3,28 +3,7 @@ import { join, dirname } from 'node:path';
 import { execSync } from 'node:child_process';
 import { Paths, Config, log, colors, checkDocker, checkDockerCompose } from '@minecraft-docker/shared';
 import type { McctlConfig } from '@minecraft-docker/shared';
-
-/**
- * Copy directory recursively
- */
-function copyDirSync(src: string, dest: string): void {
-  if (!existsSync(src)) return;
-
-  mkdirSync(dest, { recursive: true });
-
-  const entries = require('node:fs').readdirSync(src, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const srcPath = join(src, entry.name);
-    const destPath = join(dest, entry.name);
-
-    if (entry.isDirectory()) {
-      copyDirSync(srcPath, destPath);
-    } else {
-      copyFileSync(srcPath, destPath);
-    }
-  }
-}
+import { selectHostIPs, getNetworkInterfaces } from '../lib/prompts/ip-select.js';
 
 /**
  * Initialize the platform
@@ -59,7 +38,7 @@ export async function initCommand(options: {
 
   // Step 1: Validate prerequisites
   if (!options.skipValidation) {
-    console.log(colors.cyan('[1/5] Checking prerequisites...'));
+    console.log(colors.cyan('[1/6] Checking prerequisites...'));
 
     if (!checkDocker()) {
       log.error('Docker is not installed or not running');
@@ -92,7 +71,7 @@ export async function initCommand(options: {
   }
 
   // Step 2: Create directory structure
-  console.log(colors.cyan('[2/5] Creating directory structure...'));
+  console.log(colors.cyan('[2/6] Creating directory structure...'));
 
   const directories = [
     paths.root,
@@ -114,7 +93,7 @@ export async function initCommand(options: {
   console.log('');
 
   // Step 3: Copy template files
-  console.log(colors.cyan('[3/5] Copying template files...'));
+  console.log(colors.cyan('[3/6] Copying template files...'));
 
   const templateFiles: Array<{ src: string; dest: string; transform?: (content: string) => string }> = [
     { src: 'docker-compose.yml', dest: 'docker-compose.yml' },
@@ -151,8 +130,75 @@ export async function initCommand(options: {
   }
   console.log('');
 
-  // Step 4: Create mcctl config
-  console.log(colors.cyan('[4/5] Creating configuration...'));
+  // Step 4: Configure host IP(s)
+  console.log(colors.cyan('[4/6] Configuring host IP address(es)...'));
+
+  // Detect available network interfaces
+  const interfaces = getNetworkInterfaces();
+  if (interfaces.length > 0) {
+    console.log('');
+    console.log('  Detected network interfaces:');
+    for (const iface of interfaces.slice(0, 5)) {  // Show max 5
+      console.log(`    ${colors.cyan(iface.address)} (${iface.name})`);
+    }
+    if (interfaces.length > 5) {
+      console.log(`    ... and ${interfaces.length - 5} more`);
+    }
+    console.log('');
+  }
+
+  const selectedIPs = await selectHostIPs();
+
+  if (selectedIPs === null) {
+    log.warn('IP selection cancelled. Using auto-detection.');
+  } else {
+    // Update .env file with selected IPs
+    const envPath = join(paths.root, '.env');
+    if (existsSync(envPath)) {
+      let envContent = readFileSync(envPath, 'utf-8');
+
+      // Determine if single IP or multiple IPs
+      const ipList = selectedIPs.split(',');
+      const primaryIP = ipList[0];
+
+      if (ipList.length === 1) {
+        // Single IP - use HOST_IP
+        envContent = envContent.replace(
+          /^HOST_IP=.*$/m,
+          `HOST_IP=${primaryIP}`
+        );
+        console.log(`  ✓ Set HOST_IP=${primaryIP}`);
+      } else {
+        // Multiple IPs - use HOST_IPS and set HOST_IP to first
+        envContent = envContent.replace(
+          /^HOST_IP=.*$/m,
+          `HOST_IP=${primaryIP}`
+        );
+
+        // Add or update HOST_IPS
+        if (envContent.includes('HOST_IPS=')) {
+          envContent = envContent.replace(
+            /^HOST_IPS=.*$/m,
+            `HOST_IPS=${selectedIPs}`
+          );
+        } else {
+          // Add HOST_IPS after HOST_IP line
+          envContent = envContent.replace(
+            /^(HOST_IP=.*)$/m,
+            `$1\nHOST_IPS=${selectedIPs}`
+          );
+        }
+        console.log(`  ✓ Set HOST_IP=${primaryIP}`);
+        console.log(`  ✓ Set HOST_IPS=${selectedIPs}`);
+      }
+
+      writeFileSync(envPath, envContent, 'utf-8');
+    }
+  }
+  console.log('');
+
+  // Step 5: Create mcctl config
+  console.log(colors.cyan('[5/6] Creating configuration...'));
 
   const mcctlConfig: McctlConfig = {
     version: '0.1.0',
@@ -168,9 +214,9 @@ export async function initCommand(options: {
   console.log(`  Created: .mcctl.json`);
   console.log('');
 
-  // Step 5: Setup Docker (optional)
+  // Step 6: Setup Docker (optional)
   if (!options.skipDocker) {
-    console.log(colors.cyan('[5/5] Setting up Docker network...'));
+    console.log(colors.cyan('[6/6] Setting up Docker network...'));
 
     try {
       // Check if network exists

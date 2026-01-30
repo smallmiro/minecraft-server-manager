@@ -4,6 +4,7 @@
 # Architecture:
 #   - mc-router: Connection router with auto-scale support (hostname-based)
 #   - MC Servers: Each server in its own directory under servers/
+#   - Admin Service (optional): Web UI for server management
 #
 # Adding a new server (fully automated):
 #   ./scripts/create-server.sh <server-name> [options]
@@ -30,6 +31,11 @@
 #
 # Fallback (if mDNS unavailable):
 #   Add to /etc/hosts: <server-ip> <server-name>.local
+#
+# Admin Service (optional):
+#   To enable web management UI, use mcctl or manual compose:
+#   - mcctl admin service start
+#   - docker compose -f docker-compose.yml -f docker-compose.admin.yml up -d
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -55,9 +61,9 @@ services:
     environment:
       IN_DOCKER: "true"
       AUTO_SCALE_UP: "true"
-      AUTO_SCALE_DOWN: "false"
-      # AUTO_SCALE_DOWN disabled due to bug: disconnects players after timeout
-      # See: https://github.com/itzg/mc-router/issues/507
+      AUTO_SCALE_DOWN: "true"
+      AUTO_SCALE_DOWN_AFTER: "10m"
+      # Bug fixed in v1.39.1: https://github.com/itzg/mc-router/issues/507
       DOCKER_TIMEOUT: "120"
       AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"
     ports:

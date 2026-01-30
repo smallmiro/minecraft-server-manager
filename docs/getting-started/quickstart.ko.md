@@ -50,7 +50,7 @@ mcctl create myserver -t PAPER -v 1.21.1
 서버가 자동으로 다운로드되고 시작됩니다. 로그를 확인합니다:
 
 ```bash
-docker logs -f mc-myserver
+mcctl logs myserver -f
 ```
 
 다음 메시지가 나타날 때까지 기다립니다:
