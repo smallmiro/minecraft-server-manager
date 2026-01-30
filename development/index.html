@@ -8,31 +8,35 @@
       
       
       
-        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/01-getting-started/">
+        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/development/">
       
       
+        <link rel="prev" href="../advanced/backup/">
+      
+      
+        <link rel="next" href="cli-architecture/">
       
       
         
           <link rel="alternate" href="./" hreflang="en">
         
-          <link rel="alternate" href="../../ko/itzg-reference/01-getting-started/" hreflang="ko">
+          <link rel="alternate" href="../ko/development/" hreflang="ko">
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
-        <title>Getting Started - Minecraft Docker Server Manager</title>
+        <title>Overview - Minecraft Docker Server Manager</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -51,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -76,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#getting-started" class="md-skip">
+        <a href="#development-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +96,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Minecraft Docker Server Manager" class="md-header__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+    <a href=".." title="Minecraft Docker Server Manager" class="md-header__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Getting Started
+              Overview
             
           </span>
         </div>
@@ -165,7 +169,7 @@
           </li>
         
           <li class="md-select__item">
-            <a href="../../ko/itzg-reference/01-getting-started/" hreflang="ko" class="md-select__link">
+            <a href="../ko/development/" hreflang="ko" class="md-select__link">
               한국어
             </a>
           </li>
@@ -245,7 +249,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -266,7 +270,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../getting-started/" class="md-tabs__link">
+        <a href="../getting-started/" class="md-tabs__link">
           
   
   
@@ -288,7 +292,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../cli/" class="md-tabs__link">
+        <a href="../cli/" class="md-tabs__link">
           
   
   
@@ -310,7 +314,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../configuration/" class="md-tabs__link">
+        <a href="../configuration/" class="md-tabs__link">
           
   
   
@@ -332,7 +336,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../mods-and-plugins/" class="md-tabs__link">
+        <a href="../mods-and-plugins/" class="md-tabs__link">
           
   
   
@@ -354,7 +358,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../admin-service/" class="md-tabs__link">
+        <a href="../admin-service/" class="md-tabs__link">
           
   
   
@@ -376,7 +380,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../advanced/" class="md-tabs__link">
+        <a href="../advanced/" class="md-tabs__link">
           
   
   
@@ -394,11 +398,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../development/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -418,7 +424,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../documentforllmagent/" class="md-tabs__link">
+      <a href="../documentforllmagent/" class="md-tabs__link">
         
   
   
@@ -459,7 +465,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Minecraft Docker Server Manager" class="md-nav__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+    <a href=".." title="Minecraft Docker Server Manager" class="md-nav__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -489,7 +495,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -545,7 +551,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../getting-started/" class="md-nav__link ">
+            <a href="../getting-started/" class="md-nav__link ">
               
   
   
@@ -589,7 +595,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/installation/" class="md-nav__link">
+      <a href="../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -617,7 +623,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/quickstart/" class="md-nav__link">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
         
   
   
@@ -679,7 +685,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../cli/" class="md-nav__link ">
+            <a href="../cli/" class="md-nav__link ">
               
   
   
@@ -723,7 +729,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/commands/" class="md-nav__link">
+      <a href="../cli/commands/" class="md-nav__link">
         
   
   
@@ -787,7 +793,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../configuration/" class="md-nav__link ">
+            <a href="../configuration/" class="md-nav__link ">
               
   
   
@@ -831,7 +837,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/environment/" class="md-nav__link">
+      <a href="../configuration/environment/" class="md-nav__link">
         
   
   
@@ -859,7 +865,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/server-types/" class="md-nav__link">
+      <a href="../configuration/server-types/" class="md-nav__link">
         
   
   
@@ -929,7 +935,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../mods-and-plugins/" class="md-nav__link ">
+            <a href="../mods-and-plugins/" class="md-nav__link ">
               
   
   
@@ -973,7 +979,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../mods-and-plugins/modrinth/" class="md-nav__link">
+      <a href="../mods-and-plugins/modrinth/" class="md-nav__link">
         
   
   
@@ -1001,7 +1007,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../mods-and-plugins/curseforge/" class="md-nav__link">
+      <a href="../mods-and-plugins/curseforge/" class="md-nav__link">
         
   
   
@@ -1029,7 +1035,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../mods-and-plugins/spiget/" class="md-nav__link">
+      <a href="../mods-and-plugins/spiget/" class="md-nav__link">
         
   
   
@@ -1057,7 +1063,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../mods-and-plugins/direct-download/" class="md-nav__link">
+      <a href="../mods-and-plugins/direct-download/" class="md-nav__link">
         
   
   
@@ -1085,7 +1091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../mods-and-plugins/modpacks/" class="md-nav__link">
+      <a href="../mods-and-plugins/modpacks/" class="md-nav__link">
         
   
   
@@ -1153,7 +1159,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../admin-service/" class="md-nav__link ">
+            <a href="../admin-service/" class="md-nav__link ">
               
   
   
@@ -1197,7 +1203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin-service/installation/" class="md-nav__link">
+      <a href="../admin-service/installation/" class="md-nav__link">
         
   
   
@@ -1225,7 +1231,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin-service/cli-commands/" class="md-nav__link">
+      <a href="../admin-service/cli-commands/" class="md-nav__link">
         
   
   
@@ -1253,7 +1259,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin-service/api-reference/" class="md-nav__link">
+      <a href="../admin-service/api-reference/" class="md-nav__link">
         
   
   
@@ -1281,7 +1287,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../admin-service/web-console/" class="md-nav__link">
+      <a href="../admin-service/web-console/" class="md-nav__link">
         
   
   
@@ -1345,7 +1351,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../advanced/" class="md-nav__link ">
+            <a href="../advanced/" class="md-nav__link ">
               
   
   
@@ -1389,7 +1395,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../advanced/networking/" class="md-nav__link">
+      <a href="../advanced/networking/" class="md-nav__link">
         
   
   
@@ -1417,7 +1423,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../advanced/backup/" class="md-nav__link">
+      <a href="../advanced/backup/" class="md-nav__link">
         
   
   
@@ -1449,6 +1455,8 @@
       
   
   
+    
+  
   
   
     
@@ -1466,22 +1474,23 @@
     
     
       
+        
+        
+      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../development/" class="md-nav__link ">
+            <a href="./" class="md-nav__link md-nav__link--active">
               
   
   
@@ -1499,13 +1508,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+              <label class="md-nav__link md-nav__link--active" for="__nav_8" id="__nav_8_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1525,7 +1534,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/cli-architecture/" class="md-nav__link">
+      <a href="cli-architecture/" class="md-nav__link">
         
   
   
@@ -1553,7 +1562,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/agent-collaboration/" class="md-nav__link">
+      <a href="agent-collaboration/" class="md-nav__link">
         
   
   
@@ -1588,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../documentforllmagent/" class="md-nav__link">
+      <a href="../documentforllmagent/" class="md-nav__link">
         
   
   
@@ -1635,10 +1644,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Prerequisites
       
     </span>
   </a>
@@ -1646,22 +1655,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#quick-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
+        Quick Setup
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Quick Start">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project Structure">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#docker-cli" class="md-nav__link">
+  <a href="#monorepo-packages" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Docker CLI
+        Monorepo Packages
       
     </span>
   </a>
@@ -1669,10 +1689,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#docker-compose" class="md-nav__link">
+  <a href="#build-order" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Docker Compose
+        Build Order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#directory-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Layout
       
     </span>
   </a>
@@ -1685,10 +1716,149 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#required-environment-variables" class="md-nav__link">
+  <a href="#available-scripts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Required Environment Variables
+        Available Scripts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Available Scripts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#root-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Root Level
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#package-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Package Level
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Workflow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Development Workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-create-a-feature-branch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Create a Feature Branch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-make-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Make Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-build-and-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Build and Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-commit-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Commit Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-create-pull-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Create Pull Request
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Concepts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Documentation
       
     </span>
   </a>
@@ -1696,79 +1866,52 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#basic-environment-variables" class="md-nav__link">
+  <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Basic Environment Variables
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#build-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build Errors
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#default-ports" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#link-issues" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Default Ports
+        Link Issues
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#data-persistence" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#docker-issues" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Persistence
+        Docker Issues
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#view-server-logs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        View Server Logs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#access-server-console" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Access Server Console
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#stop-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stop Server
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1792,127 +1935,256 @@
   
 
 
-<h1 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
-<p>A guide for building Minecraft servers using Docker.</p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>The <code>itzg/minecraft-server</code> image allows you to easily run a Minecraft Java Edition server in a Docker container.</p>
-<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<h3 id="docker-cli">Docker CLI<a class="headerlink" href="#docker-cli" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>-it<span class="w"> </span>--name<span class="w"> </span>mc<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">25565</span>:25565<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">EULA</span><span class="o">=</span>TRUE<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>itzg/minecraft-server
-</code></pre></div>
-<h3 id="docker-compose">Docker Compose<a class="headerlink" href="#docker-compose" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">tty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">stdin_open</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./minecraft-data:/data</span>
-</code></pre></div>
-<h2 id="required-environment-variables">Required Environment Variables<a class="headerlink" href="#required-environment-variables" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Description</th>
-<th>Required</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>EULA</code></td>
-<td>Minecraft EULA agreement (must set <code>TRUE</code>)</td>
-<td><strong>Required</strong></td>
-</tr>
-</tbody>
-</table>
-<h2 id="basic-environment-variables">Basic Environment Variables<a class="headerlink" href="#basic-environment-variables" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>TYPE</code></td>
-<td><code>VANILLA</code></td>
-<td>Server type</td>
-</tr>
-<tr>
-<td><code>VERSION</code></td>
-<td><code>LATEST</code></td>
-<td>Minecraft version</td>
-</tr>
-<tr>
-<td><code>MEMORY</code></td>
-<td><code>1G</code></td>
-<td>JVM heap memory</td>
-</tr>
-<tr>
-<td><code>TZ</code></td>
-<td><code>UTC</code></td>
-<td>Timezone</td>
-</tr>
-</tbody>
-</table>
-<h2 id="default-ports">Default Ports<a class="headerlink" href="#default-ports" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Port</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>25565</code></td>
-<td>Minecraft server (TCP)</td>
-</tr>
-<tr>
-<td><code>25575</code></td>
-<td>RCON (TCP)</td>
-</tr>
-<tr>
-<td><code>19132</code></td>
-<td>Bedrock compatible (UDP, when using GeyserMC)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="data-persistence">Data Persistence<a class="headerlink" href="#data-persistence" title="Permanent link">&para;</a></h2>
-<p>To persist server data, you must mount the <code>/data</code> volume:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>-it<span class="w"> </span>--name<span class="w"> </span>mc<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">25565</span>:25565<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">EULA</span><span class="o">=</span>TRUE<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>-v<span class="w"> </span>/path/to/minecraft-data:/data<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>itzg/minecraft-server
-</code></pre></div>
-<h2 id="view-server-logs">View Server Logs<a class="headerlink" href="#view-server-logs" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>mc
-</code></pre></div>
-<h2 id="access-server-console">Access Server Console<a class="headerlink" href="#access-server-console" title="Permanent link">&para;</a></h2>
-<p>When RCON is enabled (default):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>mc<span class="w"> </span>rcon-cli
-</code></pre></div>
-<h2 id="stop-server">Stop Server<a class="headerlink" href="#stop-server" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker<span class="w"> </span>stop<span class="w"> </span>mc
-</code></pre></div>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<h1 id="development-guide">Development Guide<a class="headerlink" href="#development-guide" title="Permanent link">&para;</a></h1>
+<p>This guide covers development setup, project structure, and contribution guidelines for the minecraft-docker project.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>Before contributing, ensure you have the following installed:</p>
 <ul>
-<li><a href="../02-data-directory/">Data Directory</a> - Understanding data structure</li>
-<li><a href="../03-variables/">Environment Variables</a> - Complete variable list</li>
-<li><a href="../06-types-and-platforms/">Server Types</a> - Paper, Forge, Fabric, etc.</li>
-<li><a href="../08-mods-and-plugins/">Mods/Plugins</a> - Installing mods and plugins</li>
+<li><strong>Node.js</strong> &gt;= 18.0.0</li>
+<li><strong>pnpm</strong> &gt;= 8.0.0</li>
+<li><strong>Docker Engine</strong> 20.10+</li>
+<li><strong>Docker Compose</strong> v2.0+</li>
+<li><strong>Git</strong> for version control</li>
 </ul>
+<h2 id="quick-setup">Quick Setup<a class="headerlink" href="#quick-setup" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Clone the repository</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/smallmiro/minecraft-server-manager.git
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>minecraft-server-manager
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Install dependencies</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>pnpm<span class="w"> </span>install
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Build all packages</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pnpm<span class="w"> </span>build
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Link CLI globally for development</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nb">cd</span><span class="w"> </span>platform/services/cli
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>pnpm<span class="w"> </span>link<span class="w"> </span>--global
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># Verify installation</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>mcctl<span class="w"> </span>--version
+</code></pre></div>
+<h2 id="project-structure">Project Structure<a class="headerlink" href="#project-structure" title="Permanent link">&para;</a></h2>
+<p>This project uses a <strong>pnpm monorepo</strong> with multiple packages.</p>
+<h3 id="monorepo-packages">Monorepo Packages<a class="headerlink" href="#monorepo-packages" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>platform/services/shared</code></td>
+<td><code>@minecraft-docker/shared</code></td>
+<td>Shared types, domain models, and utilities</td>
+</tr>
+<tr>
+<td><code>platform/services/mod-source-modrinth</code></td>
+<td><code>@minecraft-docker/mod-source-modrinth</code></td>
+<td>Modrinth mod source adapter</td>
+</tr>
+<tr>
+<td><code>platform/services/cli</code></td>
+<td><code>@minecraft-docker/mcctl</code></td>
+<td>CLI tool (main user-facing package)</td>
+</tr>
+<tr>
+<td><code>platform/services/mcctl-api</code></td>
+<td><code>@minecraft-docker/mcctl-api</code></td>
+<td>REST API service</td>
+</tr>
+<tr>
+<td><code>platform/services/mcctl-console</code></td>
+<td><code>@minecraft-docker/mcctl-console</code></td>
+<td>Web console UI</td>
+</tr>
+</tbody>
+</table>
+<h3 id="build-order">Build Order<a class="headerlink" href="#build-order" title="Permanent link">&para;</a></h3>
+<p>pnpm automatically builds packages in dependency order:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>1. @minecraft-docker/shared        (no dependencies)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2. @minecraft-docker/mod-source-modrinth  (depends on shared)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>3. @minecraft-docker/mcctl         (depends on shared, mod-source-modrinth)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>4. @minecraft-docker/mcctl-api     (depends on shared)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>5. @minecraft-docker/mcctl-console (depends on shared)
+</code></pre></div>
+<h3 id="directory-layout">Directory Layout<a class="headerlink" href="#directory-layout" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>minecraft/
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>|-- package.json              # Root workspace
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>|-- pnpm-workspace.yaml       # pnpm workspace config
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>|-- tsconfig.base.json        # Shared TypeScript config
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>|
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>|-- platform/
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>|   |-- docker-compose.yml    # Main orchestration
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>|   |-- .env                  # Environment config
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>|   |
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>|   |-- services/
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>|   |   |-- shared/           # @minecraft-docker/shared
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>|   |   |-- mod-source-modrinth/  # @minecraft-docker/mod-source-modrinth
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>|   |   |-- cli/              # @minecraft-docker/mcctl
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>|   |   |-- mcctl-api/        # REST API
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>|   |   +-- mcctl-console/    # Web UI
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>|   |
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>|   +-- scripts/              # Bash management scripts
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>|
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>|-- docs/                     # MkDocs documentation
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>|-- e2e/                      # End-to-end tests
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>+-- templates/                # npm package templates
+</code></pre></div>
+<h2 id="available-scripts">Available Scripts<a class="headerlink" href="#available-scripts" title="Permanent link">&para;</a></h2>
+<h3 id="root-level">Root Level<a class="headerlink" href="#root-level" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pnpm install</code></td>
+<td>Install all dependencies</td>
+</tr>
+<tr>
+<td><code>pnpm build</code></td>
+<td>Build all packages (respects dependency order)</td>
+</tr>
+<tr>
+<td><code>pnpm clean</code></td>
+<td>Clean all build outputs</td>
+</tr>
+<tr>
+<td><code>pnpm test</code></td>
+<td>Run all tests</td>
+</tr>
+<tr>
+<td><code>pnpm test:e2e</code></td>
+<td>Run E2E tests</td>
+</tr>
+</tbody>
+</table>
+<h3 id="package-level">Package Level<a class="headerlink" href="#package-level" title="Permanent link">&para;</a></h3>
+<p>Navigate to any package directory and run:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pnpm build</code></td>
+<td>Build this package</td>
+</tr>
+<tr>
+<td><code>pnpm dev</code></td>
+<td>Watch mode (rebuild on changes)</td>
+</tr>
+<tr>
+<td><code>pnpm test</code></td>
+<td>Run package tests</td>
+</tr>
+<tr>
+<td><code>pnpm clean</code></td>
+<td>Clean build output</td>
+</tr>
+</tbody>
+</table>
+<h2 id="development-workflow">Development Workflow<a class="headerlink" href="#development-workflow" title="Permanent link">&para;</a></h2>
+<h3 id="1-create-a-feature-branch">1. Create a Feature Branch<a class="headerlink" href="#1-create-a-feature-branch" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>develop
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>develop
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/123-my-feature
+</code></pre></div>
+<h3 id="2-make-changes">2. Make Changes<a class="headerlink" href="#2-make-changes" title="Permanent link">&para;</a></h3>
+<p>Follow the TDD (Test-Driven Development) workflow:</p>
+<ol>
+<li><strong>Red</strong>: Write a failing test</li>
+<li><strong>Green</strong>: Write minimal code to pass</li>
+<li><strong>Refactor</strong>: Clean up while keeping tests green</li>
+</ol>
+<h3 id="3-build-and-test">3. Build and Test<a class="headerlink" href="#3-build-and-test" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Build all packages</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pnpm<span class="w"> </span>build
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Run tests</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>pnpm<span class="w"> </span><span class="nb">test</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Run E2E tests (requires Docker)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>pnpm<span class="w"> </span>test:e2e
+</code></pre></div>
+<h3 id="4-commit-changes">4. Commit Changes<a class="headerlink" href="#4-commit-changes" title="Permanent link">&para;</a></h3>
+<p>Use conventional commit messages:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat(cli): add new mod command (#123)&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;fix(api): correct auth token validation&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;docs: update installation guide&quot;</span>
+</code></pre></div>
+<h3 id="5-create-pull-request">5. Create Pull Request<a class="headerlink" href="#5-create-pull-request" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>feature/123-my-feature
+</code></pre></div>
+<p>Then create a PR to <code>develop</code> branch on GitHub.</p>
+<h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
+<p>The project follows <strong>Hexagonal Architecture</strong> (Ports &amp; Adapters) with <strong>Clean Architecture</strong> principles:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>+-------------------+
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>|    CLI Layer      |  Commands, argument parsing
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>+--------+----------+
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>         |
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>+--------v----------+
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>| Application Layer |  Use cases, business logic
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>+--------+----------+
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>         |
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>+--------v----------+
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>|   Domain Layer    |  Entities, value objects
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>+--------+----------+
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>         |
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>+--------v----------+
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>| Infrastructure    |  Adapters, external services
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>+-------------------+
+</code></pre></div>
+<h3 id="key-concepts">Key Concepts<a class="headerlink" href="#key-concepts" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Value Objects</strong>: Immutable, validated on construction (e.g., <code>ServerName.create("myserver")</code>)</li>
+<li><strong>Use Cases</strong>: Business logic with interactive and CLI modes</li>
+<li><strong>Ports</strong>: Interfaces for external dependencies</li>
+<li><strong>Adapters</strong>: Concrete implementations</li>
+</ul>
+<p>See <a href="cli-architecture/">CLI Architecture</a> for detailed documentation.</p>
+<h2 id="related-documentation">Related Documentation<a class="headerlink" href="#related-documentation" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="cli-architecture/">CLI Architecture</a> - Detailed architecture of the CLI</li>
+<li><a href="agent-collaboration/">Agent Collaboration</a> - Multi-agent development workflow</li>
+<li><a href="../cli/commands/">CLI Commands</a> - Complete CLI reference</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="build-errors">Build Errors<a class="headerlink" href="#build-errors" title="Permanent link">&para;</a></h3>
+<p>If you encounter build errors:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Clean and rebuild</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pnpm<span class="w"> </span>clean
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>pnpm<span class="w"> </span>install
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>pnpm<span class="w"> </span>build
+</code></pre></div>
+<h3 id="link-issues">Link Issues<a class="headerlink" href="#link-issues" title="Permanent link">&para;</a></h3>
+<p>If <code>mcctl</code> command is not found after linking:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Check npm global bin path</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>npm<span class="w"> </span>config<span class="w"> </span>get<span class="w"> </span>prefix
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Add to PATH if needed</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PATH</span><span class="s2">:</span><span class="k">$(</span>npm<span class="w"> </span>config<span class="w"> </span>get<span class="w"> </span>prefix<span class="k">)</span><span class="s2">/bin&quot;</span>
+</code></pre></div>
+<h3 id="docker-issues">Docker Issues<a class="headerlink" href="#docker-issues" title="Permanent link">&para;</a></h3>
+<p>Ensure Docker is running and your user has permissions:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Check Docker status</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>docker<span class="w"> </span>--version
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>docker<span class="w"> </span>compose<span class="w"> </span>version
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># Add user to docker group (if permission denied)</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>newgrp<span class="w"> </span>docker
+</code></pre></div>
 
 
 
@@ -1988,10 +2260,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
