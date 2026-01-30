@@ -50,38 +50,34 @@ flowchart TB
 
 ```mermaid
 flowchart TB
-    subgraph API["mcctl-api (Fastify)"]
-        subgraph Plugins["플러그인 레이어"]
-            CORS[CORS]
-            Helmet[Helmet]
-            Auth[Auth]
-            Swagger[Swagger]
-        end
+    subgraph Plugins["플러그인 레이어"]
+        CORS[CORS]
+        Helmet[Helmet]
+        Auth[Auth]
+        Swagger[Swagger]
+    end
 
-        subgraph AuthModes["인증 모드"]
-            APIKey[API Key]
-            Basic[Basic Auth]
-            IPWhite[IP Whitelist]
-        end
+    subgraph AuthModes["인증 모드"]
+        APIKey[API Key]
+        Basic[Basic Auth]
+        IPWhite[IP Whitelist]
+    end
 
-        subgraph Routes["라우트 레이어"]
-            Health[/health]
-            AuthRoute[/api/auth]
-            ServersRoute[/api/servers]
-            WorldsRoute[/api/worlds]
-            Actions[/actions<br/>start/stop/restart]
-            Console[/console/exec]
-        end
+    subgraph Routes["라우트 레이어"]
+        Health["GET /health"]
+        AuthRoute["POST /api/auth"]
+        ServersRoute["GET/POST /api/servers"]
+        WorldsRoute["GET/POST /api/worlds"]
+    end
 
-        subgraph Services["서비스 레이어"]
-            Shared["@minecraft-docker/shared<br/>Paths, Repositories,<br/>UseCases, Adapters"]
-            DockerUtils["Docker Compose Utils<br/>start/stop, logs, exec"]
-        end
+    subgraph Services["서비스 레이어"]
+        Shared["@minecraft-docker/shared"]
+        DockerUtils["Docker Compose Utils"]
     end
 
     subgraph External["외부 시스템"]
-        FS[("파일 시스템<br/>worlds/, servers/,<br/>users.yaml, api.key")]
-        DockerEngine[("Docker Engine<br/>containers, images,<br/>networks")]
+        FS[("파일 시스템")]
+        DockerEngine[("Docker Engine")]
     end
 
     Auth --> AuthModes
