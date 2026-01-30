@@ -11,6 +11,12 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
@@ -32,5 +38,12 @@
     "mods",
     "plugins"
   ],
-  "license": "MIT"
+  "author": "smallmiro",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smallmiro/minecraft-server-manager.git",
+    "directory": "platform/services/mod-source-modrinth"
+  },
+  "homepage": "https://minecraft-server-manager.readthedocs.io/"
 }
