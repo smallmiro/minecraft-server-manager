@@ -4,7 +4,7 @@ mcctl-api는 Docker Minecraft 서버를 관리하기 위한 RESTful 인터페이
 
 ## 시스템 아키텍처
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │                           클라이언트                                 │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐    │
@@ -46,7 +46,7 @@ mcctl-api는 Docker Minecraft 서버를 관리하기 위한 RESTful 인터페이
 
 ## mcctl-api 내부 아키텍처
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                           mcctl-api (Fastify)                           │
 ├─────────────────────────────────────────────────────────────────────────┤
@@ -111,7 +111,7 @@ mcctl-api는 Docker Minecraft 서버를 관리하기 위한 RESTful 인터페이
 
 ### 서버 시작 요청
 
-```
+```text
 Client                    mcctl-api                 Docker Engine
   │                          │                           │
   │  POST /api/servers/      │                           │
@@ -143,7 +143,7 @@ Client                    mcctl-api                 Docker Engine
 
 ### RCON 명령 실행
 
-```
+```text
 Client                    mcctl-api                 MC Container
   │                          │                           │
   │  POST /api/servers/      │                           │
@@ -171,7 +171,7 @@ Client                    mcctl-api                 MC Container
 
 ### 월드 할당 흐름
 
-```
+```text
 Client                    mcctl-api              WorldManagement
   │                          │                    UseCase
   │  POST /api/worlds/       │                       │
@@ -206,7 +206,7 @@ Client                    mcctl-api              WorldManagement
 
 ### SSE 로그 스트리밍
 
-```
+```text
 Client                    mcctl-api                 Docker
   │                          │                         │
   │  GET /api/servers/       │                         │
