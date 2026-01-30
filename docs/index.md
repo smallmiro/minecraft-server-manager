@@ -71,6 +71,10 @@ flowchart TB
 - [CLI Commands](cli/commands.md) - Full command reference
 - [Configuration](configuration/index.md) - Server configuration with mcctl
 
+## Need Help?
+
+Have questions about usage or configuration? Ask our **[AI Assistant](https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962)** - it's trained on this documentation and can answer your questions interactively.
+
 ## Links
 
 - [GitHub Repository](https://github.com/smallmiro/minecraft-server-manager)

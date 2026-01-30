@@ -71,6 +71,10 @@ flowchart TB
 - [CLI 명령어](cli/commands.ko.md) - 전체 명령어 참조
 - [설정](configuration/index.ko.md) - mcctl로 서버 설정
 
+## 도움이 필요하신가요?
+
+사용법이나 설정에 대해 궁금한 점이 있으신가요? **[AI 어시스턴트](https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962)**에게 물어보세요 - 이 문서를 학습한 AI가 질문에 대화형으로 답변해 드립니다.
+
 ## 링크
 
 - [GitHub 저장소](https://github.com/smallmiro/minecraft-server-manager)
