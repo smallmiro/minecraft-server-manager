@@ -5,6 +5,81 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.12] - 2026-01-31
+
+### Fixed
+- **Critical**: Add missing `EXTRA_ARGS=--universe /worlds/` to npm package template (#165)
+  - **Problem**: Servers created with `mcctl create` stored worlds in `/data/` instead of shared `/worlds/` directory
+  - **Impact**: Shared world storage feature was non-functional; worlds were recreated on server restart
+  - **Affected versions**: 1.6.8 ~ 1.6.11 (npm package users only)
+
+### Migration Guide for Affected Users
+
+If you created servers with mcctl versions 1.6.8 ~ 1.6.11, follow these steps:
+
+#### Option 1: Use Migration Command (Recommended)
+
+```bash
+# Check which servers need migration
+mcctl migrate status
+
+# Migrate all servers (moves world data and updates config)
+mcctl migrate worlds --all
+
+# Or migrate specific server
+mcctl migrate worlds myserver
+```
+
+#### Option 2: Manual Fix
+
+**Step 1**: Add `EXTRA_ARGS` to server's config.env:
+
+```bash
+# For each affected server
+echo 'EXTRA_ARGS=--universe /worlds/' >> ~/minecraft-servers/servers/<server-name>/config.env
+```
+
+Or add to global `.env` (applies to all servers):
+
+```bash
+echo 'EXTRA_ARGS=--universe /worlds/' >> ~/minecraft-servers/.env
+```
+
+**Step 2**: Move existing world data:
+
+```bash
+cd ~/minecraft-servers
+
+# Stop server first
+mcctl stop <server-name>
+
+# Move world from data/ to worlds/
+mv servers/<server-name>/data/<level-name> worlds/<level-name>
+
+# Start server
+mcctl start <server-name>
+```
+
+**Step 3**: Verify world is loading correctly:
+
+```bash
+mcctl logs <server-name> -f
+# Should NOT see "No existing world data, creating new world"
+```
+
+#### How to Check if Affected
+
+Your server is affected if:
+
+1. Created with `mcctl create` (versions 1.6.8 ~ 1.6.11)
+2. World data exists in `servers/<name>/data/<world>/` instead of `worlds/<world>/`
+3. Server logs show "No existing world data, creating new world" on restart
+
+```bash
+# Quick check: If this shows world folders, you're affected
+ls ~/minecraft-servers/servers/*/data/*/level.dat 2>/dev/null
+```
+
 ## [1.6.11] - 2026-01-31
 
 ### Fixed

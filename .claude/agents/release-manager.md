@@ -54,6 +54,13 @@ You will execute the following steps in order:
 - Commit documentation changes before tagging
 - If docs are already up-to-date, proceed to next step
 
+**Step 3.5: Sync CLI CHANGELOG (MANDATORY)**
+- **CRITICAL**: npm package에 포함되는 CHANGELOG.md 동기화
+- 루트 CHANGELOG.md를 `platform/services/cli/CHANGELOG.md`에 복사
+- 명령: `cp CHANGELOG.md platform/services/cli/CHANGELOG.md`
+- 이 파일이 npm 페이지의 Changelog 탭에 표시됨
+- 문서 변경사항과 함께 커밋
+
 **npm Package Page Note:**
 - The npm package page (https://www.npmjs.com/package/@minecraft-docker/mcctl) displays README.md content
 - Any README.md updates will be reflected on npm after the package is published

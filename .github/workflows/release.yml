@@ -115,6 +115,12 @@ jobs:
           sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
           sed -i "s|\"@minecraft-docker/mod-source-modrinth\": \"workspace:\\*\"|\"@minecraft-docker/mod-source-modrinth\": \"^1.0.0\"|" package.json
 
+      - name: Sync CHANGELOG.md to CLI package
+        run: |
+          echo "Syncing root CHANGELOG.md to CLI package..."
+          cp CHANGELOG.md platform/services/cli/CHANGELOG.md
+          echo "CHANGELOG.md synced successfully"
+
       - name: Publish @minecraft-docker/mcctl
         run: |
           cd platform/services/cli
