@@ -27,8 +27,21 @@ import {
   consoleRemoveCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
+import { checkForUpdates } from './lib/update-checker.js';
+import { readFileSync } from 'fs';
 
-const VERSION = '0.1.0';
+// Read version from package.json
+function getVersion(): string {
+  try {
+    const packageJsonPath = new URL('../package.json', import.meta.url);
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    return packageJson.version;
+  } catch {
+    return '0.0.0';
+  }
+}
+
+const VERSION = getVersion();
 
 /**
  * Handle console command (shared by both 'console' and deprecated 'admin' commands)
@@ -397,6 +410,9 @@ async function main(): Promise<void> {
     console.log(`mcctl version ${VERSION}`);
     process.exit(0);
   }
+
+  // Check for updates (with 24-hour cache)
+  await checkForUpdates();
 
   const rootDir = flags['root'] as string | undefined;
   const sudoPassword = flags['sudo-password'] as string | undefined;
