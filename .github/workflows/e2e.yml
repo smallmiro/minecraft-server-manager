@@ -74,25 +74,8 @@ jobs:
                 autorestart: true,
                 max_memory_restart: '500M',
               },
-              {
-                name: 'mcctl-console',
-                script: '${{ github.workspace }}/platform/services/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js',
-                cwd: '${{ github.workspace }}/platform/services/mcctl-console/.next/standalone',
-                env: {
-                  NODE_ENV: 'production',
-                  PORT: 3000,
-                  HOSTNAME: '0.0.0.0',
-                  MCCTL_API_URL: 'http://localhost:3001',
-                  MCCTL_ROOT: '${{ github.workspace }}/platform',
-                  NEXTAUTH_SECRET: 'test-secret-for-e2e',
-                  NEXTAUTH_URL: 'http://localhost:3000',
-                },
-                instances: 1,
-                exec_mode: 'fork',
-                watch: false,
-                autorestart: true,
-                max_memory_restart: '500M',
-              },
+              // mcctl-console is not yet implemented (PRD only)
+              // Will be added when the Next.js console is built
             ],
           };
           EOF
@@ -112,22 +95,14 @@ jobs:
           }
           echo "mcctl-api is ready"
 
-          echo "Waiting for mcctl-console..."
-          timeout 60 bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done' || {
-            echo "mcctl-console health check failed"
-            pm2 logs mcctl-console --lines 50
-            exit 1
-          }
-          echo "mcctl-console is ready"
-
       - name: Run E2E tests
         working-directory: e2e
         run: pnpm test
         env:
           CI: true
-          E2E_BASE_URL: http://localhost:3000
           E2E_API_URL: http://localhost:3001
           E2E_SKIP_SERVICE_START: true
+          E2E_API_ONLY: true
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
@@ -153,9 +128,6 @@ jobs:
           echo ""
           echo "=== mcctl-api logs ==="
           pm2 logs mcctl-api --lines 100 --nostream || true
-          echo ""
-          echo "=== mcctl-console logs ==="
-          pm2 logs mcctl-console --lines 100 --nostream || true
 
       - name: Stop PM2 services
         if: always()
