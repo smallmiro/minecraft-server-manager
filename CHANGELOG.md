@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.10] - 2026-01-30
+
+### Added
+- System Requirements section in README.md
+- Admin Service (Web Console + REST API) in Features list
+- AI Assistant link for user support
+- CHANGELOG.md with version history
+
+### Changed
+- Reorganized README.md Documentation section with Read the Docs links
+- Updated External Links to include project-specific resources
+
+### Fixed
+- Broken documentation links in README.md
+
 ## [1.6.9] - 2026-01-30
 
 ### Fixed

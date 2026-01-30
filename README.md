@@ -8,19 +8,29 @@
 
 A multi-server Minecraft management system using `itzg/minecraft-server` with `itzg/mc-router` for automatic scaling and hostname-based routing.
 
+## System Requirements
+
+| Component | Minimum Version | Recommended | Notes |
+|-----------|-----------------|-------------|-------|
+| **Node.js** | >= 18.0.0 | 20 LTS | Required for mcctl CLI |
+| **Docker Engine** | >= 24.0.0 | Latest | Container runtime |
+| **Docker Compose** | >= 2.20.0 | Latest | `include` feature required |
+| **OS** | Linux, macOS | Ubuntu 22.04+ | Windows via WSL2 |
+
 ## Features
 
 - **Multi-Server**: Run multiple Minecraft servers (survival, creative, modded, etc.)
 - **Single Port**: All servers accessible via port 25565 with hostname routing
 - **Auto-Scale**: Servers start on client connect, stop after idle timeout
-- **mDNS Discovery**: Clients auto-discover servers via Bonjour/Zeroconf (no hosts file needed)
+- **nip.io Magic DNS**: Connect via `server.<ip>.nip.io` - no client setup needed
+- **mDNS Discovery**: Clients auto-discover servers via Bonjour/Zeroconf
 - **Zero Resources**: Only infrastructure services run when servers are idle (~40MB RAM)
-- **Modular Config**: Each server has its own directory with independent configuration
 - **Interactive CLI**: Guided prompts for server creation, player management, and more
-- **Player Management**: Unified `mcctl player` command with Mojang API integration and local cache
-- **Mod Management**: Search, add, and remove mods from Modrinth, CurseForge, Spiget, or direct URLs
+- **Admin Service**: Web Console (port 3000) + REST API (port 3001) for remote management
+- **Player Management**: Unified `mcctl player` command with Mojang API integration
+- **Mod Management**: Search, add, and remove mods from Modrinth, CurseForge, Spiget
 - **NeoForge Support**: Full support for NeoForge modded servers (Minecraft 1.20.1+)
-- **Automation Ready**: Environment variable and CLI options for sudo password handling
+- **GitHub Backup**: Automatic world backup to private GitHub repositories
 
 ## Quick Start
 
@@ -189,55 +199,36 @@ See [CLI Commands Reference](docs/cli/commands.md) for complete documentation.
 
 ---
 
-## Table of Contents
+## Documentation
 
-### Basic Configuration
-
-| Document | Description |
-|----------|-------------|
-| [Getting Started](01-getting-started.md) | Basic usage, required settings |
-| [Data Directory](02-data-directory.md) | Volume mounts, data structure |
-| [Environment Variables](03-variables.md) | Complete environment variable reference |
-
-### Server Configuration
+### Getting Started
 
 | Document | Description |
 |----------|-------------|
-| [Server Properties](04-server-properties.md) | server.properties environment variables |
-| [JVM Options](05-jvm-options.md) | Memory, performance optimization |
-| [Server Types](06-types-and-platforms.md) | Paper, Forge, Fabric, modpacks |
-| [Java Versions](07-java-versions.md) | Java requirements by version |
+| [Installation](https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/installation/) | Install mcctl and prerequisites |
+| [Quick Start](https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/quickstart/) | Create your first server |
+| [CLI Commands](https://minecraft-server-manager.readthedocs.io/en/latest/cli/commands/) | Complete command reference |
 
-### Extensions
-
-| Document | Description |
-|----------|-------------|
-| [Mods/Plugins](08-mods-and-plugins.md) | Modrinth, CurseForge, Spiget |
-| [Advanced Configuration](09-configuration.md) | Variable interpolation, RCON automation |
-| [Sending Commands](10-commands.md) | RCON, SSH, WebSocket |
-
-### Operations
+### Configuration
 
 | Document | Description |
 |----------|-------------|
-| [Autopause/Autostop](11-autopause-autostop.md) | Resource saving features |
-| [Healthcheck](12-healthcheck.md) | Monitoring configuration |
-| [Deployment](13-deployment.md) | Kubernetes, AWS, Raspberry Pi |
-| [World Data](14-world-data.md) | World management, datapacks |
+| [Server Types](https://minecraft-server-manager.readthedocs.io/en/latest/configuration/server-types/) | Paper, Forge, Fabric, NeoForge |
+| [Environment Variables](https://minecraft-server-manager.readthedocs.io/en/latest/configuration/environment/) | All configuration options |
+| [Mods & Plugins](https://minecraft-server-manager.readthedocs.io/en/latest/mods-and-plugins/) | Modrinth, CurseForge, Spiget |
 
-### Reference
+### Advanced
 
 | Document | Description |
 |----------|-------------|
-| [Troubleshooting](15-troubleshooting.md) | Common problems and solutions |
-| [Examples](16-examples.md) | docker-compose example collection |
-| [Documentation Links](doc-list.md) | Original documentation URLs |
+| [Networking](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/networking/) | nip.io, mDNS, VPN mesh |
+| [Backup](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/backup/) | GitHub backup setup |
+| [Admin Service](https://minecraft-server-manager.readthedocs.io/en/latest/admin-service/) | Web Console & REST API |
 
 ### Development
 
 | Document | Description |
 |----------|-------------|
-| [CLI Usage Examples](docs/usage/cli-usage-examples.md) | Detailed CLI usage with examples (Korean) |
 | [CLI Architecture](docs/development/cli-architecture.md) | Hexagonal architecture and patterns |
 
 ---
@@ -821,9 +812,15 @@ cat /etc/avahi/hosts
 
 ---
 
-## External Links
+## Links
 
-- **GitHub**: https://github.com/itzg/docker-minecraft-server
-- **Docker Hub**: https://hub.docker.com/r/itzg/minecraft-server/
+- **Documentation**: https://minecraft-server-manager.readthedocs.io/
+- **GitHub**: https://github.com/smallmiro/minecraft-server-manager
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
+- **AI Assistant**: [Ask questions about mcctl](https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962)
+
+### Based On
+
+- **itzg/minecraft-server**: https://hub.docker.com/r/itzg/minecraft-server/
+- **itzg/mc-router**: https://github.com/itzg/mc-router
 - **Official Docs**: https://docker-minecraft-server.readthedocs.io/
-- **Setup Tool**: https://setupmc.com/java-server/

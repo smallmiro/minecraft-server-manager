@@ -1,6 +1,6 @@
 # mcctl - Minecraft Server Management CLI
 
-> **Version**: 1.6.9
+> **Version**: 1.6.10
 > **Last Updated**: 2026-01-30
 > **Purpose**: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions
 
