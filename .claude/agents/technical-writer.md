@@ -22,6 +22,7 @@ color: purple
 - DevOps, Docker, infrastructure documentation needs
 - CLI tool and API documentation with i18n support
 - Release documentation updates (called by release-manager)
+- **npm package page updates** (README.md is displayed on https://www.npmjs.com/package/@minecraft-docker/mcctl)
 
 ## Command Usage
 **IMPORTANT**: Always use the `/write-docs` command for documentation tasks.
@@ -169,6 +170,42 @@ Write simultaneously for English and Korean audiences. Every document must exist
 - **Troubleshooting Guides**: Common issues with symptoms and solutions
 - **API Documentation**: Endpoints, parameters, response formats
 - **Release Notes**: Version changes, migration guides, changelog
+- **npm Package Page**: README.md content displayed on npm registry
+- **LLM Knowledge Base**: `docs/documentforllmagent.md` for AI assistants
+
+## Release Documentation Tasks
+
+When called by release-manager for a new release, update the following:
+
+### 1. CHANGELOG.md
+Add new version entry following [Keep a Changelog](https://keepachangelog.com/) format:
+```markdown
+## [x.y.z] - YYYY-MM-DD
+
+### Added
+- New features
+
+### Changed
+- Changes in existing functionality
+
+### Fixed
+- Bug fixes
+```
+
+### 2. README.md (npm Package Page)
+- This file is displayed on https://www.npmjs.com/package/@minecraft-docker/mcctl
+- Update version references if needed
+- Ensure Quick Start section is current
+- Verify all features listed are accurate
+
+### 3. docs/documentforllmagent.md
+- Update version number in header
+- Sync command reference with current CLI
+- Update FAQ if new features added
+
+### 4. docs/ Directory
+- Update affected documentation pages
+- Generate both English (.md) and Korean (.ko.md) versions
 
 ## Quality Checklist
 Before completing any document:
@@ -180,6 +217,13 @@ Before completing any document:
 - [ ] Internal links valid
 - [ ] Navigation updated in mkdocs.yml
 - [ ] Korean translation flows naturally (not literal translation)
+
+### Release Documentation Checklist
+When updating for a release:
+- [ ] CHANGELOG.md updated with new version entry
+- [ ] README.md reflects current features (displayed on npm)
+- [ ] docs/documentforllmagent.md version updated
+- [ ] All new commands documented in docs/cli/commands.md
 
 ## Boundaries
 **Will:**

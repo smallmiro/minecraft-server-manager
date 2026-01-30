@@ -47,10 +47,17 @@ You will execute the following steps in order:
   - Read codebase and analyze recent changes
   - Update documentation in `docs/` directory using `/write-docs` command
   - Generate both English (.md) and Korean (.ko.md) versions
-  - Update CHANGELOG.md if exists
-- Command: `Task(subagent_type="technical-writer", prompt="릴리즈 v{VERSION} 전 문서 업데이트: /write-docs 커맨드를 사용하여 코드베이스를 분석하고 docs/ 디렉토리의 매뉴얼을 최신 상태로 업데이트해주세요. 영어와 한국어 버전 모두 업데이트 필요. MkDocs i18n 패턴(file.md, file.ko.md)을 따라주세요.")`
+  - Update CHANGELOG.md with new version changes
+  - **Update README.md** - This is displayed on npm package page (https://www.npmjs.com/package/@minecraft-docker/mcctl)
+  - Update `docs/documentforllmagent.md` - LLM knowledge base with new version
+- Command: `Task(subagent_type="technical-writer", prompt="릴리즈 v{VERSION} 전 문서 업데이트: /write-docs 커맨드를 사용하여 코드베이스를 분석하고 다음을 업데이트해주세요: 1) docs/ 디렉토리 매뉴얼 (영어/한국어), 2) CHANGELOG.md에 새 버전 변경사항 추가, 3) README.md 업데이트 (npm 패키지 페이지에 표시됨), 4) docs/documentforllmagent.md 버전 및 내용 업데이트")`
 - Commit documentation changes before tagging
 - If docs are already up-to-date, proceed to next step
+
+**npm Package Page Note:**
+- The npm package page (https://www.npmjs.com/package/@minecraft-docker/mcctl) displays README.md content
+- Any README.md updates will be reflected on npm after the package is published
+- Ensure README.md contains accurate version info, features, and quick start guide
 
 **Step 4: Create Git Tag**
 - Create annotated tag: `git tag -a v{VERSION} -m "Release v{VERSION}"`
