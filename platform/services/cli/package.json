@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/mcctl",
-  "version": "1.6.10",
+  "version": "1.6.11",
   "description": "CLI tool for managing Docker Minecraft servers with mc-router",
   "type": "module",
   "bin": {
@@ -10,7 +10,8 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "templates"
+    "templates",
+    "CHANGELOG.md"
   ],
   "publishConfig": {
     "access": "public"
