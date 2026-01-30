@@ -4,234 +4,163 @@ mcctl-api는 Docker Minecraft 서버를 관리하기 위한 RESTful 인터페이
 
 ## 시스템 아키텍처
 
-```text
-┌───────────────────────────────────┐   ┌───────────────────────────────────┐
-│      Minecraft 클라이언트          │   │       REST API 클라이언트          │
-│  ┌─────────┐  ┌─────────┐        │   │  ┌──────┐ ┌──────┐ ┌───────────┐ │
-│  │ Player1 │  │ Player2 │        │   │  │ curl │ │Python│ │Web Console│ │
-│  └────┬────┘  └────┬────┘        │   │  └──┬───┘ └──┬───┘ └─────┬─────┘ │
-└───────┼────────────┼──────────────┘   └─────┼────────┼───────────┼───────┘
-        │            │                        │        │           │
-        └──────┬─────┘                        └────────┼───────────┘
-               │                                       │
-               ▼                                       ▼
-            :25565                                  :3001
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         Docker Network (minecraft-net)                       │
-│                                                                              │
-│  ┌─────────────────────┐              ┌─────────────────────────────────┐   │
-│  │     mc-router       │              │          mcctl-api              │   │
-│  │  (hostname routing) │◄─────────────│         (Fastify)               │   │
-│  │   auto-scale up/down│              │                                 │   │
-│  └──────────┬──────────┘              └───────────────┬─────────────────┘   │
-│             │                                         │                      │
-│             │         ┌───────────────────────────────┘                      │
-│             │         │                                                      │
-│             ▼         ▼                                                      │
-│  ┌───────────────┐ ┌───────────────┐ ┌───────────────┐                      │
-│  │  mc-survival  │ │  mc-creative  │ │   mc-modded   │                      │
-│  │    :25566     │ │    :25567     │ │    :25568     │                      │
-│  └───────┬───────┘ └───────┬───────┘ └───────┬───────┘                      │
-│          │                 │                 │                               │
-│          └─────────────────┼─────────────────┘                               │
-│                            │                                                 │
-│                 ┌──────────▼──────────┐                                      │
-│                 │      /worlds/       │                                      │
-│                 │    (공유 저장소)     │                                      │
-│                 └─────────────────────┘                                      │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Clients["클라이언트"]
+        subgraph MC["Minecraft 클라이언트"]
+            P1[Player1]
+            P2[Player2]
+        end
+        subgraph API["REST API 클라이언트"]
+            CURL[curl]
+            PY[Python]
+            WEB[Web Console]
+        end
+    end
+
+    subgraph Docker["Docker Network (minecraft-net)"]
+        subgraph Router["mc-router :25565"]
+            R[Hostname Routing<br/>Auto-scale up/down]
+        end
+
+        subgraph MCAPI["mcctl-api :3001"]
+            F[Fastify REST API]
+        end
+
+        subgraph Servers["Minecraft 서버"]
+            S1[mc-survival :25566]
+            S2[mc-creative :25567]
+            S3[mc-modded :25568]
+        end
+
+        WORLDS[("/worlds/<br/>(공유 저장소)")]
+    end
+
+    P1 & P2 --> Router
+    CURL & PY & WEB --> MCAPI
+
+    MCAPI --> Router
+    Router --> Servers
+    MCAPI --> Servers
+
+    Servers --> WORLDS
 ```
 
 ## mcctl-api 내부 아키텍처
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           mcctl-api (Fastify)                           │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                         플러그인 레이어                          │   │
-│  │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐    │   │
-│  │  │   CORS    │  │  Helmet   │  │   Auth    │  │  Swagger  │    │   │
-│  │  └───────────┘  └───────────┘  └─────┬─────┘  └───────────┘    │   │
-│  │                                      │                          │   │
-│  │              ┌───────────────────────┴────────────────────┐     │   │
-│  │              │              인증 모드                      │     │   │
-│  │              │  ┌─────────┐ ┌─────────┐ ┌─────────┐      │     │   │
-│  │              │  │ API Key │ │  Basic  │ │IP White │      │     │   │
-│  │              │  └─────────┘ └─────────┘ └─────────┘      │     │   │
-│  │              └────────────────────────────────────────────┘     │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                                    │                                    │
-│  ┌─────────────────────────────────▼───────────────────────────────┐   │
-│  │                         라우트 레이어                            │   │
-│  │                                                                  │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │   │
-│  │  │   /health    │  │  /api/auth   │  │/api/servers  │          │   │
-│  │  └──────────────┘  └──────────────┘  └──────┬───────┘          │   │
-│  │                                             │                   │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────▼───────┐          │   │
-│  │  │ /api/worlds  │  │  /servers/   │  │   /actions   │          │   │
-│  │  │              │  │ :id/console  │  │start|stop|   │          │   │
-│  │  │              │  │    /exec     │  │  restart     │          │   │
-│  │  └──────┬───────┘  └──────┬───────┘  └──────────────┘          │   │
-│  │         │                 │                                     │   │
-│  └─────────┼─────────────────┼─────────────────────────────────────┘   │
-│            │                 │                                          │
-│  ┌─────────▼─────────────────▼─────────────────────────────────────┐   │
-│  │                      서비스 레이어                               │   │
-│  │                                                                  │   │
-│  │  ┌──────────────────┐  ┌──────────────────┐                     │   │
-│  │  │  @minecraft-     │  │   Docker         │                     │   │
-│  │  │  docker/shared   │  │   Compose        │                     │   │
-│  │  │                  │  │   Utils          │                     │   │
-│  │  │  • Paths         │  │                  │                     │   │
-│  │  │  • Repositories  │  │  • start/stop    │                     │   │
-│  │  │  • UseCases      │  │  • logs          │                     │   │
-│  │  │  • Adapters      │  │  • exec          │                     │   │
-│  │  └────────┬─────────┘  └────────┬─────────┘                     │   │
-│  │           │                     │                                │   │
-│  └───────────┼─────────────────────┼────────────────────────────────┘   │
-│              │                     │                                    │
-└──────────────┼─────────────────────┼────────────────────────────────────┘
-               │                     │
-      ┌────────▼─────────┐  ┌────────▼─────────┐
-      │    파일 시스템    │  │  Docker Engine   │
-      │                  │  │                  │
-      │  • worlds/       │  │  • containers    │
-      │  • servers/      │  │  • images        │
-      │  • users.yaml    │  │  • networks      │
-      │  • api.key       │  │                  │
-      └──────────────────┘  └──────────────────┘
+```mermaid
+flowchart TB
+    subgraph API["mcctl-api (Fastify)"]
+        subgraph Plugins["플러그인 레이어"]
+            CORS[CORS]
+            Helmet[Helmet]
+            Auth[Auth]
+            Swagger[Swagger]
+        end
+
+        subgraph AuthModes["인증 모드"]
+            APIKey[API Key]
+            Basic[Basic Auth]
+            IPWhite[IP Whitelist]
+        end
+
+        subgraph Routes["라우트 레이어"]
+            Health[/health]
+            AuthRoute[/api/auth]
+            ServersRoute[/api/servers]
+            WorldsRoute[/api/worlds]
+            Actions[/actions<br/>start/stop/restart]
+            Console[/console/exec]
+        end
+
+        subgraph Services["서비스 레이어"]
+            Shared["@minecraft-docker/shared<br/>Paths, Repositories,<br/>UseCases, Adapters"]
+            DockerUtils["Docker Compose Utils<br/>start/stop, logs, exec"]
+        end
+    end
+
+    subgraph External["외부 시스템"]
+        FS[("파일 시스템<br/>worlds/, servers/,<br/>users.yaml, api.key")]
+        DockerEngine[("Docker Engine<br/>containers, images,<br/>networks")]
+    end
+
+    Auth --> AuthModes
+    Plugins --> Routes
+    Routes --> Services
+    Services --> FS
+    Services --> DockerEngine
 ```
 
 ## 요청 흐름 시퀀스
 
 ### 서버 시작 요청
 
-```text
-Client                    mcctl-api                 Docker Engine
-  │                          │                           │
-  │  POST /api/servers/      │                           │
-  │      survival/start      │                           │
-  │─────────────────────────>│                           │
-  │                          │                           │
-  │                    ┌─────┴─────┐                     │
-  │                    │   인증    │                     │
-  │                    │  플러그인  │                     │
-  │                    └─────┬─────┘                     │
-  │                          │                           │
-  │                    ┌─────┴─────┐                     │
-  │                    │  서버명   │                     │
-  │                    │  검증     │                     │
-  │                    └─────┬─────┘                     │
-  │                          │                           │
-  │                          │  docker compose up -d     │
-  │                          │     mc-survival           │
-  │                          │──────────────────────────>│
-  │                          │                           │
-  │                          │        성공               │
-  │                          │<──────────────────────────│
-  │                          │                           │
-  │    { success: true,      │                           │
-  │      action: "start" }   │                           │
-  │<─────────────────────────│                           │
-  │                          │                           │
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as mcctl-api
+    participant D as Docker Engine
+
+    C->>A: POST /api/servers/survival/start
+    A->>A: Auth Plugin
+    A->>A: 서버명 검증
+    A->>D: docker compose up -d mc-survival
+    D-->>A: 성공
+    A-->>C: { success: true, action: "start" }
 ```
 
 ### RCON 명령 실행
 
-```text
-Client                    mcctl-api                 MC Container
-  │                          │                           │
-  │  POST /api/servers/      │                           │
-  │    survival/exec         │                           │
-  │  { command: "list" }     │                           │
-  │─────────────────────────>│                           │
-  │                          │                           │
-  │                    ┌─────┴─────┐                     │
-  │                    │   인증    │                     │
-  │                    └─────┬─────┘                     │
-  │                          │                           │
-  │                          │  docker exec mc-survival  │
-  │                          │    rcon-cli list          │
-  │                          │──────────────────────────>│
-  │                          │                           │
-  │                          │   "3 players online..."   │
-  │                          │<──────────────────────────│
-  │                          │                           │
-  │   { success: true,       │                           │
-  │     output: "3 players   │                           │
-  │       online..." }       │                           │
-  │<─────────────────────────│                           │
-  │                          │                           │
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as mcctl-api
+    participant MC as MC Container
+
+    C->>A: POST /api/servers/survival/exec<br/>{ command: "list" }
+    A->>A: Auth Plugin
+    A->>MC: docker exec mc-survival rcon-cli list
+    MC-->>A: "3 players online..."
+    A-->>C: { success: true, output: "3 players online..." }
 ```
 
 ### 월드 할당 흐름
 
-```text
-Client                    mcctl-api              WorldManagement
-  │                          │                    UseCase
-  │  POST /api/worlds/       │                       │
-  │   survival/assign        │                       │
-  │  { serverName:           │                       │
-  │    "mc-myserver" }       │                       │
-  │─────────────────────────>│                       │
-  │                          │                       │
-  │                    ┌─────┴─────┐                 │
-  │                    │   인증    │                 │
-  │                    └─────┬─────┘                 │
-  │                          │                       │
-  │                          │  assignWorldByName()  │
-  │                          │──────────────────────>│
-  │                          │                       │
-  │                          │         ┌─────────────┴──────────────┐
-  │                          │         │ 1. 월드 존재 확인          │
-  │                          │         │ 2. 잠금 상태 확인          │
-  │                          │         │ 3. 잠금 파일 생성          │
-  │                          │         │ 4. 서버 설정 업데이트      │
-  │                          │         └─────────────┬──────────────┘
-  │                          │                       │
-  │                          │   { success: true }   │
-  │                          │<──────────────────────│
-  │                          │                       │
-  │   { success: true,       │                       │
-  │     worldName: "survival"│                       │
-  │     serverName: "..." }  │                       │
-  │<─────────────────────────│                       │
-  │                          │                       │
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as mcctl-api
+    participant W as WorldManagement UseCase
+
+    C->>A: POST /api/worlds/survival/assign<br/>{ serverName: "mc-myserver" }
+    A->>A: Auth Plugin
+    A->>W: assignWorldByName()
+    W->>W: 1. 월드 존재 확인
+    W->>W: 2. 잠금 상태 확인
+    W->>W: 3. 잠금 파일 생성
+    W->>W: 4. 서버 설정 업데이트
+    W-->>A: { success: true }
+    A-->>C: { success: true, worldName: "survival", serverName: "mc-myserver" }
 ```
 
 ### SSE 로그 스트리밍
 
-```text
-Client                    mcctl-api                 Docker
-  │                          │                         │
-  │  GET /api/servers/       │                         │
-  │   survival/logs?         │                         │
-  │   follow=true            │                         │
-  │─────────────────────────>│                         │
-  │                          │                         │
-  │  Content-Type:           │                         │
-  │  text/event-stream       │                         │
-  │<─────────────────────────│                         │
-  │                          │                         │
-  │                          │  docker logs -f         │
-  │                          │    mc-survival          │
-  │                          │────────────────────────>│
-  │                          │                         │
-  │  data: {"log": "..."}    │       로그 라인         │
-  │<─────────────────────────│<────────────────────────│
-  │                          │                         │
-  │  data: {"log": "..."}    │       로그 라인         │
-  │<─────────────────────────│<────────────────────────│
-  │                          │                         │
-  │  : heartbeat             │                         │
-  │<─────────────────────────│  (30초마다)             │
-  │                          │                         │
-  │         ...              │         ...             │
-  │                          │                         │
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as mcctl-api
+    participant D as Docker
+
+    C->>A: GET /api/servers/survival/logs?follow=true
+    A-->>C: Content-Type: text/event-stream
+    A->>D: docker logs -f mc-survival
+    loop 로그 스트리밍
+        D-->>A: 로그 라인
+        A-->>C: data: {"log": "..."}
+    end
+    loop Heartbeat
+        A-->>C: : heartbeat (30초마다)
+    end
 ```
 
 ## 기본 URL
@@ -388,6 +317,6 @@ http://localhost:3001/docs
 
 ## 다음 단계
 
-- **[엔드포인트 레퍼런스](endpoints.ko.md)** - 상세 엔드포인트 문서
-- **[설치 가이드](../admin-service/installation.ko.md)** - 설정 가이드
-- **[CLI 명령어](../admin-service/cli-commands.ko.md)** - mcctl console 명령어
+- **[엔드포인트 레퍼런스](endpoints.md)** - 상세 엔드포인트 문서
+- **[설치 가이드](../admin-service/installation.md)** - 설정 가이드
+- **[CLI 명령어](../admin-service/cli-commands.md)** - mcctl console 명령어
