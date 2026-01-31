@@ -198,6 +198,9 @@ Add new version entry following [Keep a Changelog](https://keepachangelog.com/) 
 - Update version references if needed
 - Ensure Quick Start section is current
 - Verify all features listed are accurate
+- **IMPORTANT**: Update `## Changelog` section with latest 5-6 entries from `CHANGELOG.md`
+  - Keep the same format as existing entries
+  - Include link to full changelog at the bottom
 
 ### 3. docs/documentforllmagent.md
 - Update version number in header
@@ -278,6 +281,7 @@ Before completing any document:
 When updating for a release:
 - [ ] CHANGELOG.md updated with new version entry
 - [ ] README.md reflects current features (displayed on npm)
+- [ ] **README.md `## Changelog` section synced with latest 5-6 entries from CHANGELOG.md**
 - [ ] docs/documentforllmagent.md version updated
 - [ ] All new commands documented in docs/cli/commands.md
 

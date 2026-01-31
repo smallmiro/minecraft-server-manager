@@ -61,10 +61,29 @@ You will execute the following steps in order:
 - 이 파일이 npm 페이지의 Changelog 탭에 표시됨
 - 문서 변경사항과 함께 커밋
 
+**Step 3.6: Sync README Changelog Section (MANDATORY)**
+- **CRITICAL**: README.md의 `## Changelog` 섹션에 CHANGELOG.md 최신 내용 반영
+- `platform/services/cli/README.md`의 `## Changelog` 섹션 업데이트
+- 최신 5-6개 버전 항목을 CHANGELOG.md에서 복사 (간략화된 형태로)
+- 형식 예시:
+  ```markdown
+  ## Changelog
+
+  ### v1.6.13 (2026-01-31)
+  - **fix**: Sync CHANGELOG.md to CLI package for npm page display
+
+  ### v1.6.12 (2026-01-31)
+  - **fix(critical)**: Add missing `EXTRA_ARGS=--universe /worlds/` to npm package template
+
+  [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
+  ```
+- npm 패키지 페이지에서 사용자가 최신 변경사항을 쉽게 확인할 수 있도록 함
+
 **npm Package Page Note:**
 - The npm package page (https://www.npmjs.com/package/@minecraft-docker/mcctl) displays README.md content
 - Any README.md updates will be reflected on npm after the package is published
 - Ensure README.md contains accurate version info, features, and quick start guide
+- **IMPORTANT**: README.md의 `## Changelog` 섹션에 CHANGELOG.md의 최신 5-6개 항목을 동기화 필수
 
 **Step 4: Create Git Tag**
 - Create annotated tag: `git tag -a v{VERSION} -m "Release v{VERSION}"`
