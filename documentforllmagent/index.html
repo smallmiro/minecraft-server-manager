@@ -2126,7 +2126,7 @@
 
 <h1 id="mcctl---minecraft-server-management-cli">mcctl - Minecraft Server Management CLI<a class="headerlink" href="#mcctl---minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 1.6.14
+<p><strong>Version</strong>: 1.6.15
 <strong>Last Updated</strong>: 2026-01-31
 <strong>Purpose</strong>: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions</p>
 </blockquote>
@@ -2281,12 +2281,13 @@
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>&lt;server&gt;<span class="w">      </span><span class="c1"># Interactive restore</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;id&gt;<span class="w">   </span><span class="c1"># Restore specific backup</span>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># World backup (requires GitHub config)</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>status<span class="w">               </span><span class="c1"># Show backup config</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w">                 </span><span class="c1"># Backup to GitHub</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;message&quot;</span><span class="w">    </span><span class="c1"># With message</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span><span class="w">              </span><span class="c1"># Show history</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span>&lt;commit&gt;<span class="w">     </span><span class="c1"># Restore from commit</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># World backup (GitHub)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>init<span class="w">                 </span><span class="c1"># Interactive GitHub backup setup</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>status<span class="w">               </span><span class="c1"># Show backup config</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w">                 </span><span class="c1"># Backup to GitHub</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;message&quot;</span><span class="w">    </span><span class="c1"># With message</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span><span class="w">              </span><span class="c1"># Show history</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span>&lt;commit&gt;<span class="w">     </span><span class="c1"># Restore from commit</span>
 </code></pre></div>
 <h3 id="console-management-admin-service">Console Management (Admin Service)<a class="headerlink" href="#console-management-admin-service" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Initialization</span>
@@ -2482,7 +2483,7 @@
 <h3 id="q-where-is-world-data-stored">Q: Where is world data stored?<a class="headerlink" href="#q-where-is-world-data-stored" title="Permanent link">&para;</a></h3>
 <p>A: All worlds are in <code>~/minecraft-servers/worlds/</code>. They're shared across servers using locks.</p>
 <h3 id="q-how-do-i-backup-my-server">Q: How do I backup my server?<a class="headerlink" href="#q-how-do-i-backup-my-server" title="Permanent link">&para;</a></h3>
-<p>A: Use <code>mcctl server-backup &lt;server&gt;</code> for config. For worlds, configure GitHub in <code>.env</code> and use <code>mcctl backup push</code>.</p>
+<p>A: Use <code>mcctl server-backup &lt;server&gt;</code> for config. For worlds, run <code>mcctl backup init</code> for guided GitHub setup, then use <code>mcctl backup push</code>.</p>
 <h3 id="q-what-server-types-are-supported">Q: What server types are supported?<a class="headerlink" href="#q-what-server-types-are-supported" title="Permanent link">&para;</a></h3>
 <p>A: PAPER (default, recommended), VANILLA, FORGE, NEOFORGE, FABRIC, PURPUR, SPIGOT, BUKKIT, QUILT.</p>
 <h3 id="q-what-are-the-system-requirements">Q: What are the system requirements?<a class="headerlink" href="#q-what-are-the-system-requirements" title="Permanent link">&para;</a></h3>
