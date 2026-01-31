@@ -39,6 +39,7 @@ jobs:
           path: |
             platform/services/shared/dist
             platform/services/mod-source-modrinth/dist
+            platform/services/mcctl-api/dist
             platform/services/cli/dist
           retention-days: 1
 
@@ -74,6 +75,7 @@ jobs:
         run: |
           echo "=== Shared dist ===" && ls -la platform/services/shared/dist/
           echo "=== Modrinth dist ===" && ls -la platform/services/mod-source-modrinth/dist/
+          echo "=== mcctl-api dist ===" && ls -la platform/services/mcctl-api/dist/
           echo "=== CLI dist ===" && ls -la platform/services/cli/dist/
           echo "=== CLI scripts ===" && ls -la platform/services/cli/scripts/
           echo "=== CLI templates ===" && ls -la platform/services/cli/templates/
@@ -123,6 +125,23 @@ jobs:
           cp -r platform/scripts platform/services/cli/scripts
           ls -la platform/services/cli/scripts/
           echo "Scripts synced successfully"
+
+      - name: Publish @minecraft-docker/mcctl-api
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          cd platform/services/mcctl-api
+          # Update package.json version to match tag version
+          npm version ${VERSION} --no-git-tag-version --allow-same-version
+          # Update workspace dependency to npm version
+          sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          if npm view "${PACKAGE_NAME}@${VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${VERSION} already exists, skipping..."
+          else
+            npm publish --access public --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @minecraft-docker/mcctl
         run: |
@@ -191,6 +210,7 @@ jobs:
             ## npm Packages
 
             - [@minecraft-docker/mcctl](https://www.npmjs.com/package/@minecraft-docker/mcctl)
+            - [@minecraft-docker/mcctl-api](https://www.npmjs.com/package/@minecraft-docker/mcctl-api)
             - [@minecraft-docker/shared](https://www.npmjs.com/package/@minecraft-docker/shared)
             - [@minecraft-docker/mod-source-modrinth](https://www.npmjs.com/package/@minecraft-docker/mod-source-modrinth)
 

@@ -1,13 +1,19 @@
 {
   "name": "@minecraft-docker/mcctl-api",
-  "version": "0.1.0",
+  "version": "1.7.5",
   "description": "REST API server for managing Docker Minecraft servers",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "mcctl-api": "dist/index.js"
+  },
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

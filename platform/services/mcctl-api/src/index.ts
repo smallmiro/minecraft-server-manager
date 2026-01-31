@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { buildApp } from './app.js';
 import { config } from './config/index.js';
 
