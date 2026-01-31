@@ -491,7 +491,8 @@ fi
 # =============================================================================
 echo -e "${BLUE}[5/6]${NC} Registering mDNS hostname..."
 HOST_IP=$(get_host_ip)
-register_avahi_hostname "$SERVER_NAME.local" "$HOST_IP"
+# Note: || true prevents set -e from exiting if avahi is not available
+register_avahi_hostname "$SERVER_NAME.local" "$HOST_IP" || true
 
 # =============================================================================
 # Step 6: Start server (optional)
