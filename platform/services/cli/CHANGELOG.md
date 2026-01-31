@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2026-01-31
+
+### Fixed
+- Fix Docker network warning when running `mcctl up` (#199)
+- Mark `minecraft-net` as external network in docker-compose.yml
+
+## [1.7.2] - 2026-01-31
+
+### Fixed
+- Fix "Unknown error occurred" when avahi-daemon is not installed (#197)
+- Add `|| true` to prevent script exit on optional avahi registration
+
+## [1.7.1] - 2026-01-31
+
+### Fixed
+- Fix "Script not found: create-server.sh" error when mcctl installed via npm (#195)
+- Bundle scripts/ and templates/ directories with CLI npm package
+- Add `getCliPackageRoot()` function for correct path resolution
+
 ## [1.7.0] - 2026-01-31
 
 ### Added
