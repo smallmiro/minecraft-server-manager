@@ -3,6 +3,11 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import { Header } from './Header';
 
+// Mock UserMenu component
+vi.mock('@/components/auth', () => ({
+  UserMenu: () => <div data-testid="user-menu">UserMenu</div>,
+}));
+
 const renderWithTheme = (component: React.ReactNode) => {
   return render(<ThemeProvider>{component}</ThemeProvider>);
 };
@@ -36,23 +41,11 @@ describe('Header', () => {
     expect(onMenuClick).toHaveBeenCalledTimes(1);
   });
 
-  it('should render user menu button', () => {
+  it('should render UserMenu component', () => {
     renderWithTheme(
       <Header title="Dashboard" onMenuClick={vi.fn()} />
     );
 
-    expect(screen.getByLabelText('user menu')).toBeInTheDocument();
-  });
-
-  it('should open user menu when clicked', () => {
-    renderWithTheme(
-      <Header title="Dashboard" onMenuClick={vi.fn()} />
-    );
-
-    const userMenuButton = screen.getByLabelText('user menu');
-    fireEvent.click(userMenuButton);
-
-    expect(screen.getByText('Profile')).toBeInTheDocument();
-    expect(screen.getByText('Logout')).toBeInTheDocument();
+    expect(screen.getByTestId('user-menu')).toBeInTheDocument();
   });
 });
