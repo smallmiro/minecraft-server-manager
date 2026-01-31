@@ -58,6 +58,7 @@ export function getCliPackageRoot(): string {
   const sharedRoot = getPackageRoot();
   const possibleCliPaths = [
     join(sharedRoot, '..', 'mcctl'),           // sibling in node_modules/@minecraft-docker/
+    join(sharedRoot, '..', '..', '..'),        // parent CLI package in global install (shared inside mcctl/node_modules)
     join(sharedRoot, '..', 'cli'),             // development structure
     join(sharedRoot, '..', '..', '..', 'cli'), // workspace structure
   ];
@@ -87,11 +88,43 @@ export class Paths {
   private readonly dataDir: string;
   private readonly packageRoot: string;
   private readonly cliPackageRoot: string;
+  private readonly _scriptsPath: string;
+  private readonly _templatesPath: string;
 
   constructor(dataDir?: string) {
     this.packageRoot = getPackageRoot();
     this.cliPackageRoot = getCliPackageRoot();
     this.dataDir = dataDir ?? process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
+
+    // Cache resolved paths at construction time
+    this._scriptsPath = this.resolveScriptsPath();
+    this._templatesPath = this.resolveTemplatesPath();
+  }
+
+  private resolveScriptsPath(): string {
+    if (process.env['MCCTL_SCRIPTS']) {
+      return process.env['MCCTL_SCRIPTS'];
+    }
+    // Check CLI package's bundled scripts first
+    const cliScripts = join(this.cliPackageRoot, 'scripts');
+    if (existsSync(cliScripts)) {
+      return cliScripts;
+    }
+    // Fallback to development structure
+    return join(this.packageRoot, '..', '..', 'scripts');
+  }
+
+  private resolveTemplatesPath(): string {
+    if (process.env['MCCTL_TEMPLATES']) {
+      return process.env['MCCTL_TEMPLATES'];
+    }
+    // Check CLI package's bundled templates first
+    const cliTemplates = join(this.cliPackageRoot, 'templates');
+    if (existsSync(cliTemplates)) {
+      return cliTemplates;
+    }
+    // Fallback to development structure
+    return join(this.packageRoot, '..', '..', '..', 'templates');
   }
 
   /** User data directory (~/.minecraft-servers) */
@@ -106,30 +139,12 @@ export class Paths {
 
   /** Scripts directory (from CLI package) */
   get scripts(): string {
-    if (process.env['MCCTL_SCRIPTS']) {
-      return process.env['MCCTL_SCRIPTS'];
-    }
-    // Check CLI package's bundled scripts first
-    const cliScripts = join(this.cliPackageRoot, 'scripts');
-    if (existsSync(cliScripts)) {
-      return cliScripts;
-    }
-    // Fallback to development structure
-    return join(this.packageRoot, '..', '..', 'scripts');
+    return this._scriptsPath;
   }
 
   /** Templates directory (from CLI package) */
   get templates(): string {
-    if (process.env['MCCTL_TEMPLATES']) {
-      return process.env['MCCTL_TEMPLATES'];
-    }
-    // Check CLI package's bundled templates first
-    const cliTemplates = join(this.cliPackageRoot, 'templates');
-    if (existsSync(cliTemplates)) {
-      return cliTemplates;
-    }
-    // Fallback to development structure
-    return join(this.packageRoot, '..', '..', '..', 'templates');
+    return this._templatesPath;
   }
 
   /** Servers directory */
