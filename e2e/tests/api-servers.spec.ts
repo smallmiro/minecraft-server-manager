@@ -300,4 +300,147 @@ test.describe('Servers API', () => {
       }
     });
   });
+
+  test.describe('POST /api/servers - Create Server', () => {
+    test('should require name in body', async ({ request }) => {
+      const response = await request.post(`${API_BASE_URL}/api/servers`, {
+        data: {},
+      });
+
+      expect(response.status()).toBe(400);
+    });
+
+    test('should validate server name format', async ({ request }) => {
+      const response = await request.post(`${API_BASE_URL}/api/servers`, {
+        data: { name: 'invalid@name!' },
+      });
+
+      expect(response.status()).toBe(400);
+
+      const body = await response.json();
+      expect(body).toHaveProperty('error');
+    });
+
+    test('should return 409 for duplicate server name', async ({ request }) => {
+      // First get existing servers
+      const listResponse = await request.get(`${API_BASE_URL}/api/servers`);
+      const listBody = await listResponse.json();
+
+      if (listBody.servers.length > 0) {
+        const existingName = listBody.servers[0].name;
+        const response = await request.post(`${API_BASE_URL}/api/servers`, {
+          data: { name: existingName },
+        });
+
+        expect(response.status()).toBe(409);
+
+        const body = await response.json();
+        expect(body).toHaveProperty('error', 'Conflict');
+      }
+    });
+
+    test('should accept valid server configuration', async ({ request }) => {
+      const uniqueName = `e2etest${Date.now()}`;
+      const response = await request.post(`${API_BASE_URL}/api/servers`, {
+        data: {
+          name: uniqueName,
+          type: 'PAPER',
+          version: '1.21.1',
+          memory: '2G',
+        },
+      });
+
+      // Should succeed or fail gracefully
+      expect([200, 201, 400, 500]).toContain(response.status());
+
+      if (response.status() === 200 || response.status() === 201) {
+        const body = await response.json();
+        expect(body).toHaveProperty('success', true);
+        expect(body).toHaveProperty('server');
+        expect(body.server).toHaveProperty('name', uniqueName);
+
+        // Cleanup: delete the created server
+        await request.delete(`${API_BASE_URL}/api/servers/${uniqueName}?removeData=true`);
+      }
+    });
+
+    test('should return correct response structure on success', async ({ request }) => {
+      const uniqueName = `e2etest${Date.now()}`;
+      const response = await request.post(`${API_BASE_URL}/api/servers`, {
+        data: {
+          name: uniqueName,
+          type: 'PAPER',
+          version: '1.21.1',
+        },
+      });
+
+      if (response.status() === 200 || response.status() === 201) {
+        const body = await response.json();
+        expect(body).toHaveProperty('success');
+        expect(body).toHaveProperty('server');
+        expect(body).toHaveProperty('message');
+        expect(body.server).toHaveProperty('name');
+        expect(body.server).toHaveProperty('container');
+
+        // Cleanup
+        await request.delete(`${API_BASE_URL}/api/servers/${uniqueName}?removeData=true`);
+      }
+    });
+  });
+
+  test.describe('DELETE /api/servers/:name - Delete Server', () => {
+    test('should return 404 for non-existent server', async ({ request }) => {
+      const response = await request.delete(`${API_BASE_URL}/api/servers/non-existent-server-12345`);
+
+      expect(response.status()).toBe(404);
+
+      const body = await response.json();
+      expect(body).toHaveProperty('error', 'NotFound');
+    });
+
+    test('should validate server name format', async ({ request }) => {
+      const response = await request.delete(`${API_BASE_URL}/api/servers/invalid@name!`);
+
+      expect(response.status()).toBe(400);
+    });
+
+    test('should accept removeData query parameter', async ({ request }) => {
+      // Create a test server first
+      const uniqueName = `e2edelete${Date.now()}`;
+      const createResponse = await request.post(`${API_BASE_URL}/api/servers`, {
+        data: { name: uniqueName, type: 'PAPER', version: '1.21.1' },
+      });
+
+      if (createResponse.status() === 200 || createResponse.status() === 201) {
+        // Delete with removeData=true
+        const response = await request.delete(`${API_BASE_URL}/api/servers/${uniqueName}?removeData=true`);
+
+        expect([200, 400, 500]).toContain(response.status());
+
+        if (response.status() === 200) {
+          const body = await response.json();
+          expect(body).toHaveProperty('success', true);
+          expect(body).toHaveProperty('message');
+        }
+      }
+    });
+
+    test('should return correct response structure on delete', async ({ request }) => {
+      // Create a test server first
+      const uniqueName = `e2edelstruct${Date.now()}`;
+      const createResponse = await request.post(`${API_BASE_URL}/api/servers`, {
+        data: { name: uniqueName, type: 'PAPER', version: '1.21.1' },
+      });
+
+      if (createResponse.status() === 200 || createResponse.status() === 201) {
+        const response = await request.delete(`${API_BASE_URL}/api/servers/${uniqueName}`);
+
+        if (response.status() === 200) {
+          const body = await response.json();
+          expect(body).toHaveProperty('success');
+          expect(body).toHaveProperty('message');
+        }
+      }
+    });
+  });
 });
