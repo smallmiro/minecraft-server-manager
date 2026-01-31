@@ -78,42 +78,35 @@ jobs:
 
       - name: Publish @minecraft-docker/shared
         run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
           cd platform/services/shared
+          # Update package.json version to match tag version
+          npm version ${VERSION} --no-git-tag-version --allow-same-version
           PACKAGE_NAME=$(node -p "require('./package.json').name")
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null; then
-            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists, skipping..."
+          if npm view "${PACKAGE_NAME}@${VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${VERSION} already exists, skipping..."
           else
             npm publish --access public --provenance
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Update mod-source-modrinth dependency version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          cd platform/services/mod-source-modrinth
-          sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
 
       - name: Publish @minecraft-docker/mod-source-modrinth
         run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
           cd platform/services/mod-source-modrinth
+          # Update package.json version to match tag version
+          npm version ${VERSION} --no-git-tag-version --allow-same-version
+          # Update workspace dependency to npm version
+          sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
           PACKAGE_NAME=$(node -p "require('./package.json').name")
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null; then
-            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists, skipping..."
+          if npm view "${PACKAGE_NAME}@${VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${VERSION} already exists, skipping..."
           else
             npm publish --access public --provenance
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Update CLI dependency versions
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          cd platform/services/cli
-          sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
-          sed -i "s|\"@minecraft-docker/mod-source-modrinth\": \"workspace:\\*\"|\"@minecraft-docker/mod-source-modrinth\": \"^1.0.0\"|" package.json
 
       - name: Sync CHANGELOG.md to CLI package
         run: |
@@ -123,11 +116,16 @@ jobs:
 
       - name: Publish @minecraft-docker/mcctl
         run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
           cd platform/services/cli
+          # Update package.json version to match tag version
+          npm version ${VERSION} --no-git-tag-version --allow-same-version
+          # Update workspace dependencies to npm versions
+          sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
+          sed -i "s|\"@minecraft-docker/mod-source-modrinth\": \"workspace:\\*\"|\"@minecraft-docker/mod-source-modrinth\": \"^${VERSION}\"|" package.json
           PACKAGE_NAME=$(node -p "require('./package.json').name")
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version 2>/dev/null; then
-            echo "Package ${PACKAGE_NAME}@${PACKAGE_VERSION} already exists, skipping..."
+          if npm view "${PACKAGE_NAME}@${VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${VERSION} already exists, skipping..."
           else
             npm publish --access public --provenance
           fi
