@@ -1,6 +1,6 @@
 import { homedir } from 'os';
 import { join } from 'path';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 import { colors } from '@minecraft-docker/shared';
 
 const PACKAGE_NAME = '@minecraft-docker/mcctl';
@@ -135,19 +135,85 @@ function printUpdateNotification(currentVersion: string, latestVersion: string):
 }
 
 /**
+ * Check if cache should be invalidated
+ * Cache is invalid if:
+ * 1. Cache doesn't exist
+ * 2. Cache is older than CACHE_DURATION_MS (24 hours)
+ * 3. Cached version is older than current version (user upgraded)
+ */
+function isCacheValid(cache: CacheData | null, currentVersion: string): boolean {
+  if (!cache) return false;
+
+  const now = Date.now();
+  const isExpired = (now - cache.lastCheck) >= CACHE_DURATION_MS;
+  if (isExpired) return false;
+
+  // If cached version is older than current, invalidate cache
+  // This handles the case where user upgraded but cache still has old "latest" version
+  const cachedIsOlderThanCurrent = isNewerVersion(cache.latestVersion, currentVersion);
+  if (cachedIsOlderThanCurrent) return false;
+
+  return true;
+}
+
+/**
+ * Check for updates and print notification if available
+ */
+/**
+ * Get the current version (exported for update command)
+ */
+export function getInstalledVersion(): string {
+  return getCurrentVersion();
+}
+
+/**
+ * Force fetch latest version from npm (ignores cache)
+ */
+export async function fetchLatestVersionForced(): Promise<string | null> {
+  return fetchLatestVersion();
+}
+
+/**
+ * Get cached latest version if available
+ */
+export function getCachedVersion(): string | null {
+  const cache = readCache();
+  return cache?.latestVersion ?? null;
+}
+
+/**
+ * Clear the update check cache
+ */
+export function clearCache(): void {
+  try {
+    if (existsSync(CACHE_FILE)) {
+      unlinkSync(CACHE_FILE);
+    }
+  } catch {
+    // Ignore errors
+  }
+}
+
+/**
+ * Compare versions and return if update is available
+ */
+export function isUpdateAvailable(currentVersion: string, latestVersion: string): boolean {
+  return isNewerVersion(currentVersion, latestVersion);
+}
+
+/**
  * Check for updates and print notification if available
  */
 export async function checkForUpdates(): Promise<void> {
   try {
     const currentVersion = getCurrentVersion();
     const cache = readCache();
-    const now = Date.now();
 
-    // Check if cache is valid (within 24 hours)
-    if (cache && (now - cache.lastCheck) < CACHE_DURATION_MS) {
+    // Check if cache is valid
+    if (isCacheValid(cache, currentVersion)) {
       // Use cached version
-      if (isNewerVersion(currentVersion, cache.latestVersion)) {
-        printUpdateNotification(currentVersion, cache.latestVersion);
+      if (isNewerVersion(currentVersion, cache!.latestVersion)) {
+        printUpdateNotification(currentVersion, cache!.latestVersion);
       }
       return;
     }
@@ -158,7 +224,7 @@ export async function checkForUpdates(): Promise<void> {
     if (latestVersion) {
       // Update cache
       writeCache({
-        lastCheck: now,
+        lastCheck: Date.now(),
         latestVersion,
       });
 

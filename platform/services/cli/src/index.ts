@@ -20,6 +20,7 @@ import {
   playerCommand,
   migrateCommand,
   modCommand,
+  updateCommand,
   consoleInitCommand,
   consoleServiceCommand,
   consoleUserCommand,
@@ -225,6 +226,12 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')} --all       Migrate all servers
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
 
+${colors.cyan('Self Update:')}
+  ${colors.bold('update')}                     Check and update mcctl to latest version
+  ${colors.bold('update')} --check             Check for updates only (no install)
+  ${colors.bold('update')} --force             Force check (ignore cache)
+  ${colors.bold('update')} --yes               Auto-confirm update
+
 ${colors.cyan('Console Management:')}
   ${colors.bold('console init')} [options]       Initialize console service (create admin user)
     --force                      Reinitialize (delete existing config)
@@ -324,7 +331,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -823,6 +830,15 @@ async function main(): Promise<void> {
           source: modSource,
           json: flags['json'] === true,
           force: flags['force'] === true,
+        });
+        break;
+      }
+
+      case 'update': {
+        exitCode = await updateCommand({
+          check: flags['check'] === true,
+          force: flags['force'] === true,
+          yes: flags['yes'] === true,
         });
         break;
       }
