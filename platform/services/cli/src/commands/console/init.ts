@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { existsSync, unlinkSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import {
   Paths,
   log,
@@ -20,6 +21,49 @@ import {
   PM2_SERVICE_NAMES,
   resolveServiceScriptPaths,
 } from '../../lib/pm2-utils.js';
+
+/**
+ * Install mcctl-api package if not present
+ * @param rootDir - Root directory to install in
+ * @returns true if installation succeeded or already installed
+ */
+function installMcctlApiIfNeeded(rootDir: string): { installed: boolean; error?: string } {
+  const apiPackagePath = join(rootDir, 'node_modules/@minecraft-docker/mcctl-api/dist/index.js');
+
+  // Already installed
+  if (existsSync(apiPackagePath)) {
+    return { installed: true };
+  }
+
+  // Check if package.json exists, if not create it
+  const packageJsonPath = join(rootDir, 'package.json');
+  if (!existsSync(packageJsonPath)) {
+    const initResult = spawnSync('npm', ['init', '-y'], {
+      cwd: rootDir,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    if (initResult.status !== 0) {
+      return { installed: false, error: 'Failed to initialize package.json' };
+    }
+  }
+
+  // Install mcctl-api
+  const installResult = spawnSync('npm', ['install', '@minecraft-docker/mcctl-api@latest'], {
+    cwd: rootDir,
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+
+  if (installResult.status !== 0) {
+    return {
+      installed: false,
+      error: installResult.stderr || 'Failed to install @minecraft-docker/mcctl-api'
+    };
+  }
+
+  return { installed: true };
+}
 
 /**
  * Console init command options
@@ -539,7 +583,19 @@ export async function consoleInitCommand(
     await userRepo.save(adminUser);
     spinner.stop('Admin user created');
 
-    // Step 10: Generate ecosystem.config.cjs
+    // Step 10: Install mcctl-api if needed (production mode)
+    spinner.start('Checking mcctl-api installation...');
+
+    const installResult = installMcctlApiIfNeeded(paths.root);
+    if (!installResult.installed) {
+      spinner.stop('');
+      log.error(`Failed to install mcctl-api: ${installResult.error}`);
+      log.info('Try installing manually: npm install @minecraft-docker/mcctl-api');
+      return 1;
+    }
+    spinner.stop('mcctl-api ready');
+
+    // Step 11: Generate ecosystem.config.cjs
     spinner.start('Resolving service script paths...');
 
     // Resolve script paths (development vs production)
@@ -571,7 +627,7 @@ export async function consoleInitCommand(
 
     spinner.stop('PM2 ecosystem config generated');
 
-    // Step 11: Save configuration
+    // Step 12: Save configuration
     spinner.start('Saving configuration...');
 
     const config = await configManager.create({
@@ -584,7 +640,7 @@ export async function consoleInitCommand(
 
     spinner.stop('Configuration saved');
 
-    // Step 12: Display summary
+    // Step 13: Display summary
     console.log('');
     prompt.success('Console Service initialized!');
 
