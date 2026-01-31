@@ -1,9 +1,10 @@
-import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { execSync } from 'node:child_process';
 import { Paths, Config, log, colors, checkDocker, checkDockerCompose } from '@minecraft-docker/shared';
 import type { McctlConfig } from '@minecraft-docker/shared';
 import { selectHostIPs, getNetworkInterfaces } from '../lib/prompts/ip-select.js';
+import { multiselect, text, select, confirm, password, isCancel } from '@clack/prompts';
 
 /**
  * Initialize the platform
@@ -12,6 +13,7 @@ export async function initCommand(options: {
   root?: string;
   skipValidation?: boolean;
   skipDocker?: boolean;
+  reconfigure?: boolean;
 }): Promise<number> {
   const paths = new Paths(options.root);
   const config = new Config(paths);
@@ -26,9 +28,15 @@ export async function initCommand(options: {
 
   // Check if already initialized
   if (paths.isInitialized()) {
+    if (options.reconfigure) {
+      return reconfigureCommand(paths, config);
+    }
     log.warn('Platform is already initialized');
     console.log(`  Config: ${paths.configFile}`);
     console.log(`  Compose: ${paths.composeFile}`);
+    console.log('');
+    console.log('  To reconfigure settings:');
+    console.log(`    ${colors.cyan('mcctl init --reconfigure')}`);
     console.log('');
     console.log('  To reinitialize, delete the data directory first:');
     console.log(`    ${colors.dim(`rm -rf ${paths.root}`)}`);
@@ -257,4 +265,366 @@ export async function initCommand(options: {
   console.log('');
 
   return 0;
+}
+
+/**
+ * Configurable settings for reconfiguration
+ */
+interface ConfigurableSetting {
+  key: string;
+  label: string;
+  source: 'env' | 'config';
+  currentValue: string;
+  type: 'text' | 'select' | 'confirm' | 'password' | 'ip';
+  validate?: (value: string) => string | undefined;
+  options?: Array<{ value: string; label: string }>;
+}
+
+/**
+ * Reconfigure existing platform settings
+ */
+async function reconfigureCommand(paths: Paths, config: Config): Promise<number> {
+  console.log('');
+  console.log(colors.bold('═'.repeat(60)));
+  console.log(colors.bold('  Minecraft Server Platform - Reconfigure'));
+  console.log(colors.bold('═'.repeat(60)));
+  console.log('');
+
+  // Load current settings
+  const envConfig = config.loadEnv();
+  const mcctlConfig = config.load();
+
+  if (!mcctlConfig) {
+    log.error('Configuration file not found');
+    return 1;
+  }
+
+  // Display current settings
+  const displayIPs = envConfig.HOST_IPS || envConfig.HOST_IP || 'auto-detect';
+  console.log(colors.cyan('Current Settings:'));
+  console.log('');
+  console.log('  Network:');
+  console.log(`    HOST_IP(s):        ${colors.yellow(displayIPs)}`);
+  console.log(`    Timezone:          ${colors.yellow(envConfig.TZ || 'system default')}`);
+  console.log('');
+  console.log('  Defaults:');
+  console.log(`    Default Memory:    ${colors.yellow(envConfig.DEFAULT_MEMORY || '4G')}`);
+  console.log(`    Default Type:      ${colors.yellow(mcctlConfig.defaultType)}`);
+  console.log(`    Default Version:   ${colors.yellow(mcctlConfig.defaultVersion)}`);
+  console.log('');
+  console.log('  Behavior:');
+  console.log(`    Auto Start:        ${colors.yellow(String(mcctlConfig.autoStart))}`);
+  console.log(`    Avahi Enabled:     ${colors.yellow(String(mcctlConfig.avahiEnabled))}`);
+  console.log('');
+  console.log('  Security:');
+  console.log(`    RCON Password:     ${colors.yellow(envConfig.RCON_PASSWORD ? '********' : 'not set')}`);
+  console.log('');
+
+  // Build settings list
+  const settings: ConfigurableSetting[] = [
+    {
+      key: 'HOST_IP',
+      label: 'Host IP(s)',
+      source: 'env',
+      currentValue: displayIPs,
+      type: 'ip',
+    },
+    {
+      key: 'DEFAULT_MEMORY',
+      label: 'Default Memory',
+      source: 'env',
+      currentValue: envConfig.DEFAULT_MEMORY || '4G',
+      type: 'text',
+      validate: (value) => {
+        if (!/^\d+[MG]$/i.test(value)) {
+          return 'Invalid format. Use format like 4G or 2048M';
+        }
+        return undefined;
+      },
+    },
+    {
+      key: 'TZ',
+      label: 'Timezone',
+      source: 'env',
+      currentValue: envConfig.TZ || 'system default',
+      type: 'text',
+    },
+    {
+      key: 'defaultType',
+      label: 'Default Server Type',
+      source: 'config',
+      currentValue: mcctlConfig.defaultType,
+      type: 'select',
+      options: [
+        { value: 'PAPER', label: 'Paper (Recommended)' },
+        { value: 'VANILLA', label: 'Vanilla' },
+        { value: 'FORGE', label: 'Forge' },
+        { value: 'FABRIC', label: 'Fabric' },
+        { value: 'SPIGOT', label: 'Spigot' },
+        { value: 'BUKKIT', label: 'Bukkit' },
+      ],
+    },
+    {
+      key: 'defaultVersion',
+      label: 'Default MC Version',
+      source: 'config',
+      currentValue: mcctlConfig.defaultVersion,
+      type: 'text',
+      validate: (value) => {
+        if (!/^\d+\.\d+(\.\d+)?$/.test(value)) {
+          return 'Invalid version format. Use format like 1.21.1';
+        }
+        return undefined;
+      },
+    },
+    {
+      key: 'autoStart',
+      label: 'Auto Start Servers',
+      source: 'config',
+      currentValue: String(mcctlConfig.autoStart),
+      type: 'confirm',
+    },
+    {
+      key: 'avahiEnabled',
+      label: 'Avahi/mDNS Enabled',
+      source: 'config',
+      currentValue: String(mcctlConfig.avahiEnabled),
+      type: 'confirm',
+    },
+    {
+      key: 'RCON_PASSWORD',
+      label: 'RCON Password',
+      source: 'env',
+      currentValue: envConfig.RCON_PASSWORD ? '********' : 'not set',
+      type: 'password',
+      validate: (value) => {
+        if (value.length < 8) {
+          return 'Password must be at least 8 characters';
+        }
+        return undefined;
+      },
+    },
+  ];
+
+  // Multiselect for settings to change
+  const selectedKeys = await multiselect({
+    message: 'Select settings to change:',
+    options: settings.map((s) => ({
+      value: s.key,
+      label: s.label,
+      hint: `Current: ${s.currentValue}`,
+    })),
+    required: false,
+  });
+
+  if (isCancel(selectedKeys) || (selectedKeys as string[]).length === 0) {
+    console.log('');
+    log.info('No changes made');
+    return 0;
+  }
+
+  const keysToChange = selectedKeys as string[];
+  const envUpdates: Record<string, string> = {};
+  const configUpdates: Partial<McctlConfig> = {};
+  let ipChanged = false;
+  let newHostIPs = '';
+
+  // Prompt for each selected setting
+  for (const key of keysToChange) {
+    const setting = settings.find((s) => s.key === key);
+    if (!setting) continue;
+
+    console.log('');
+
+    if (setting.type === 'ip') {
+      // Use the existing IP selection prompt
+      const selectedIPs = await selectHostIPs();
+      if (isCancel(selectedIPs) || selectedIPs === null) {
+        continue;
+      }
+      const ipList = selectedIPs.split(',');
+      const primaryIP = ipList[0];
+      envUpdates['HOST_IP'] = primaryIP!;
+      if (ipList.length > 1) {
+        envUpdates['HOST_IPS'] = selectedIPs;
+      }
+      newHostIPs = selectedIPs;
+      ipChanged = true;
+      console.log(`  ${colors.green('✓')} HOST_IP=${primaryIP}`);
+      if (ipList.length > 1) {
+        console.log(`  ${colors.green('✓')} HOST_IPS=${selectedIPs}`);
+      }
+    } else if (setting.type === 'text') {
+      const result = await text({
+        message: `Enter ${setting.label}:`,
+        placeholder: setting.currentValue,
+        defaultValue: setting.currentValue === 'system default' ? '' : setting.currentValue,
+        validate: setting.validate,
+      });
+      if (isCancel(result)) continue;
+      const value = result as string;
+      if (setting.source === 'env') {
+        envUpdates[key] = value;
+      } else {
+        (configUpdates as Record<string, string>)[key] = value;
+      }
+      console.log(`  ${colors.green('✓')} ${key}=${value}`);
+    } else if (setting.type === 'select' && setting.options) {
+      const result = await select({
+        message: `Select ${setting.label}:`,
+        options: setting.options,
+        initialValue: setting.currentValue,
+      });
+      if (isCancel(result)) continue;
+      const value = result as string;
+      if (setting.source === 'env') {
+        envUpdates[key] = value;
+      } else {
+        (configUpdates as Record<string, string>)[key] = value;
+      }
+      console.log(`  ${colors.green('✓')} ${key}=${value}`);
+    } else if (setting.type === 'confirm') {
+      const result = await confirm({
+        message: `Enable ${setting.label}?`,
+        initialValue: setting.currentValue === 'true',
+      });
+      if (isCancel(result)) continue;
+      const value = result as boolean;
+      if (setting.source === 'env') {
+        envUpdates[key] = String(value);
+      } else {
+        (configUpdates as Record<string, boolean>)[key] = value;
+      }
+      console.log(`  ${colors.green('✓')} ${key}=${value}`);
+    } else if (setting.type === 'password') {
+      const result = await password({
+        message: `Enter ${setting.label}:`,
+        validate: setting.validate,
+      });
+      if (isCancel(result)) continue;
+      const value = result as string;
+      envUpdates[key] = value;
+      console.log(`  ${colors.green('✓')} ${key}=********`);
+    }
+  }
+
+  // Apply changes to .env file
+  if (Object.keys(envUpdates).length > 0) {
+    config.updateEnv(envUpdates);
+    console.log('');
+    log.info('Updated .env file');
+  }
+
+  // Apply changes to .mcctl.json
+  if (Object.keys(configUpdates).length > 0) {
+    const updatedConfig: McctlConfig = { ...mcctlConfig, ...configUpdates };
+    config.save(updatedConfig);
+    console.log('');
+    log.info('Updated .mcctl.json');
+  }
+
+  // Handle IP change - update server hostnames
+  if (ipChanged && newHostIPs) {
+    console.log('');
+    const updateServers = await confirm({
+      message: 'Update existing servers with new IP hostnames?',
+      initialValue: true,
+    });
+
+    if (!isCancel(updateServers) && updateServers) {
+      const updatedCount = await updateServerHostnames(paths, newHostIPs);
+      if (updatedCount > 0) {
+        console.log(`  ${colors.green('✓')} Updated ${updatedCount} server(s)`);
+      }
+    }
+
+    // Prompt to restart mc-router
+    const restartRouter = await confirm({
+      message: 'Restart mc-router to apply changes?',
+      initialValue: true,
+    });
+
+    if (!isCancel(restartRouter) && restartRouter) {
+      try {
+        // Using execSync with hardcoded command (no user input) - safe from injection
+        execSync('docker compose restart mc-router', {
+          cwd: paths.root,
+          stdio: 'pipe',
+        });
+        console.log(`  ${colors.green('✓')} mc-router restarted`);
+      } catch {
+        log.warn('Failed to restart mc-router (may not be running)');
+      }
+    }
+  }
+
+  // Success message
+  console.log('');
+  console.log(colors.green('═'.repeat(60)));
+  console.log(colors.green('  ✓ Configuration updated successfully!'));
+  console.log(colors.green('═'.repeat(60)));
+  console.log('');
+
+  return 0;
+}
+
+/**
+ * Update server docker-compose.yml files with new hostnames
+ */
+async function updateServerHostnames(paths: Paths, newHostIPs: string): Promise<number> {
+  const serversDir = paths.servers;
+  let updatedCount = 0;
+
+  if (!existsSync(serversDir)) {
+    return 0;
+  }
+
+  const serverDirs = readdirSync(serversDir, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory() && !dirent.name.startsWith('_'))
+    .map((dirent) => dirent.name);
+
+  for (const serverName of serverDirs) {
+    const composeFile = join(serversDir, serverName, 'docker-compose.yml');
+    if (!existsSync(composeFile)) {
+      continue;
+    }
+
+    try {
+      let content = readFileSync(composeFile, 'utf-8');
+
+      // Build new hostname list
+      const hostnames = buildHostnames(serverName, newHostIPs);
+
+      // Replace mc-router.host label value
+      // Match patterns like: mc-router.host: "server.local,server.ip.nip.io"
+      const hostLabelRegex = /(mc-router\.host:\s*["'])([^"']+)(["'])/;
+      const match = content.match(hostLabelRegex);
+
+      if (match) {
+        content = content.replace(hostLabelRegex, `$1${hostnames}$3`);
+        writeFileSync(composeFile, content, 'utf-8');
+        updatedCount++;
+      }
+    } catch {
+      log.warn(`Failed to update ${serverName}/docker-compose.yml`);
+    }
+  }
+
+  return updatedCount;
+}
+
+/**
+ * Build hostname string from server name and IPs
+ */
+function buildHostnames(serverName: string, hostIPs: string): string {
+  let hostnames = `${serverName}.local`;
+
+  if (hostIPs) {
+    const ips = hostIPs.split(',').map((ip) => ip.trim()).filter((ip) => ip);
+    for (const ip of ips) {
+      hostnames += `,${serverName}.${ip}.nip.io`;
+    }
+  }
+
+  return hostnames;
 }

@@ -109,7 +109,7 @@ ${colors.cyan('Usage:')}
   mcctl <command> [options]
 
 ${colors.cyan('Commands:')}
-  ${colors.bold('init')}                       Initialize platform (~/.minecraft-servers)
+  ${colors.bold('init')} [--reconfigure]        Initialize platform (~/.minecraft-servers)
   ${colors.bold('up')}                         Start all infrastructure (router + servers)
   ${colors.bold('down')}                       Stop all infrastructure
   ${colors.bold('router')} <start|stop|restart>  Manage mc-router only
@@ -331,7 +331,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -436,6 +436,7 @@ async function main(): Promise<void> {
           root: rootDir,
           skipValidation: flags['skip-validation'] === true,
           skipDocker: flags['skip-docker'] === true,
+          reconfigure: flags['reconfigure'] === true,
         });
         break;
 

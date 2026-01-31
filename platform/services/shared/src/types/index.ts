@@ -59,6 +59,7 @@ export interface ServerConfig {
 
 export interface EnvConfig {
   HOST_IP?: string;
+  HOST_IPS?: string;
   RCON_PASSWORD?: string;
   TZ?: string;
   DEFAULT_VERSION?: string;
