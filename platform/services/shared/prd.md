@@ -44,9 +44,28 @@ Core package providing shared domain logic, use cases, and adapters for CLI, API
 | Runtime | Node.js | 18+ |
 | Language | TypeScript | 5.x |
 
-## 3. Architecture
+## 3. Development Methodology
 
-### 3.1 Hexagonal Architecture
+> **Reference**: [CLAUDE.md](../../../CLAUDE.md) - Development Philosophy 섹션 참조
+>
+> 프로젝트 공통 개발 방법론:
+> - **XP (Extreme Programming)** 기반
+> - **TDD**: Red → Green → Refactor
+> - **Tidy First**: 구조 변경과 동작 변경 분리
+> - **CI/CD**: lint, type-check, test, build
+
+### Testing Strategy (Shared 특화)
+
+| 테스트 유형 | 도구 | 대상 |
+|------------|------|------|
+| Unit | Vitest | Domain Entities, Value Objects, Use Cases |
+| Integration | Vitest | Port/Adapter Contracts |
+
+**테스트 커버리지 목표**: 90% 이상 (공유 라이브러리 특성상 높은 커버리지 요구)
+
+## 4. Architecture
+
+### 4.1 Hexagonal Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -106,7 +125,7 @@ Core package providing shared domain logic, use cases, and adapters for CLI, API
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Directory Structure
+### 4.2 Directory Structure
 
 ```
 platform/services/shared/
@@ -159,7 +178,7 @@ platform/services/shared/
 └── tests/
 ```
 
-## 4. New Additions (For Admin Service)
+## 5. New Additions (For Admin Service)
 
 ### 4.1 IUserRepository Port
 
@@ -194,7 +213,7 @@ Adapter that uses the `mcctl-admin.db` SQLite database.
 
 Non-interactive `IPromptPort` implementation for API context. Throws an error when interactive prompts are called.
 
-## 5. Dependencies
+## 6. Dependencies
 
 ### 5.1 External Dependencies
 
@@ -207,7 +226,7 @@ Non-interactive `IPromptPort` implementation for API context. Throws an error wh
 }
 ```
 
-## 6. Export Structure
+## 7. Export Structure
 
 ```typescript
 // index.ts
@@ -222,7 +241,7 @@ export * from './types';
 export * from './utils';
 ```
 
-## 7. Revision History
+## 8. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|

@@ -46,9 +46,29 @@ Command-line interface (CLI) tool for Minecraft server management. Supports both
 | Colors | picocolors | 1.x |
 | Shared | @minecraft-docker/shared | workspace |
 
-## 3. Architecture
+## 3. Development Methodology
 
-### 3.1 Hexagonal Architecture
+> **Reference**: [CLAUDE.md](../../../CLAUDE.md) - Development Philosophy 섹션 참조
+>
+> 프로젝트 공통 개발 방법론:
+> - **XP (Extreme Programming)** 기반
+> - **TDD**: Red → Green → Refactor
+> - **Tidy First**: 구조 변경과 동작 변경 분리
+> - **CI/CD**: lint, type-check, test, build
+
+### Testing Strategy (CLI 특화)
+
+| 테스트 유형 | 도구 | 대상 |
+|------------|------|------|
+| Unit | Vitest | Use Cases, Utils, Domain |
+| Integration | Vitest | Shell Commands, Docker Integration |
+| E2E | Vitest | Full CLI Command Flows |
+
+**테스트 커버리지 목표**: 80% 이상
+
+## 4. Architecture
+
+### 4.1 Hexagonal Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -72,7 +92,7 @@ Command-line interface (CLI) tool for Minecraft server management. Supports both
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Directory Structure
+### 4.2 Directory Structure
 
 ```
 platform/services/cli/
@@ -106,7 +126,7 @@ platform/services/cli/
 └── tests/
 ```
 
-## 4. Command Structure
+## 5. Command Structure
 
 ### 4.1 Server Management
 
@@ -150,7 +170,7 @@ platform/services/cli/
 | `mcctl backup history` | Backup history |
 | `mcctl backup restore` | Restore backup |
 
-## 5. Interactive Mode
+## 6. Interactive Mode
 
 ### 5.1 Server Creation Flow
 
@@ -177,7 +197,7 @@ $ mcctl create
    Connect via: myserver.local:25565
 ```
 
-## 6. Dependencies
+## 7. Dependencies
 
 ### 6.1 Internal Dependencies
 
@@ -200,14 +220,14 @@ $ mcctl create
 }
 ```
 
-## 7. Environment Variables
+## 8. Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `MCCTL_ROOT` | Data directory | `~/minecraft-servers` |
 | `MCCTL_SUDO_PASSWORD` | sudo password (for automation) | - |
 
-## 8. Revision History
+## 9. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|

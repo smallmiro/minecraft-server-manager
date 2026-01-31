@@ -237,6 +237,27 @@ For full CLI reference, see [docs/cli/commands.md](docs/cli/commands.md).
 
 ## Development Philosophy
 
+### XP (Extreme Programming) Methodology
+
+This project follows **XP (Extreme Programming)** practices as the core development methodology.
+
+**Core Practices**:
+- **TDD (Test-Driven Development)**: Red → Green → Refactor cycle
+- **Tidy First**: Never mix structural and behavioral changes
+- **Pair Programming**: For complex features and architecture decisions
+- **Continuous Integration**: All PRs must pass lint, type-check, test, build
+- **Small Releases**: Frequent, incremental deployments
+
+**XP Values**:
+
+| Value | Application |
+|-------|-------------|
+| Communication | PR reviews, pair programming, documentation |
+| Simplicity | YAGNI, minimal code to solve the problem |
+| Feedback | TDD, CI/CD, code reviews |
+| Courage | Refactoring, addressing technical debt |
+| Respect | Code review etiquette, team collaboration |
+
 ### CLI-First, Web-Ready
 
 All features are implemented via CLI first, with Web Management UI available.

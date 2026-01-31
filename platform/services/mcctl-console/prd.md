@@ -38,7 +38,6 @@ Web-based management console for Minecraft server infrastructure. Provides real-
 
 ### 1.3 Non-Goals
 - Direct Docker/RCON access (handled by mcctl-api)
-- User authentication storage (handled by mcctl-api)
 - CLI functionality (handled by mcctl CLI)
 
 ## 2. Tech Stack
@@ -52,6 +51,7 @@ Web-based management console for Minecraft server infrastructure. Provides real-
 | Styling | Tailwind CSS | 3.x |
 | State | React Query (TanStack) | 5.x |
 | Real-time | EventSource (SSE) | Native |
+| **Authentication** | **Better Auth** | **1.x** |
 | Shared | @minecraft-docker/shared | workspace |
 
 ### 2.1 MUI + Tailwind CSS Integration
@@ -82,7 +82,86 @@ module.exports = {
 - MUI: 복잡한 컴포넌트 (Dialog, DataGrid, Autocomplete, Forms)
 - Tailwind: 레이아웃, 간격, 빠른 스타일링, 유틸리티
 
-## 3. Architecture
+## 3. Development Methodology
+
+> **Reference**: [CLAUDE.md](../../../CLAUDE.md) - Development Philosophy 섹션 참조
+>
+> 프로젝트 공통 개발 방법론:
+> - **XP (Extreme Programming)** 기반
+> - **TDD**: Red → Green → Refactor
+> - **Tidy First**: 구조 변경과 동작 변경 분리
+> - **CI/CD**: lint, type-check, test, build
+
+### Testing Strategy (mcctl-console 특화)
+
+| 테스트 유형 | 도구 | 대상 |
+|------------|------|------|
+| Unit | Vitest | Services, Hooks, Utils |
+| Component | React Testing Library | Components |
+| Integration | Vitest + MSW | API Routes, SSE |
+| E2E | Playwright | User Flows |
+
+**테스트 커버리지 목표**: 80% 이상
+
+## 4. Architecture
+
+mcctl-console은 **Hexagonal Architecture (Ports & Adapters)** 패턴을 확장한 구조를 사용합니다.
+
+### 3.0 Hexagonal Architecture
+
+MVC 패턴을 확장한 헥사고날 아키텍처로, 비즈니스 로직과 외부 의존성을 분리합니다.
+
+```
+                    ┌─────────────────────────────────────┐
+                    │           Presentation              │
+                    │   (React Components, Pages, Hooks)  │
+                    └─────────────────┬───────────────────┘
+                                      │
+                    ┌─────────────────▼───────────────────┐
+                    │           Application               │
+                    │    (Use Cases, Services, DTOs)      │
+                    │                                     │
+                    │  ┌───────────┐    ┌───────────┐    │
+                    │  │  Ports    │    │  Ports    │    │
+                    │  │   (in)    │    │   (out)   │    │
+                    │  └─────┬─────┘    └─────┬─────┘    │
+                    └────────┼────────────────┼──────────┘
+                             │                │
+              ┌──────────────▼──┐          ┌──▼──────────────┐
+              │    Adapters     │          │    Adapters     │
+              │ (API Routes,    │          │ (API Client,    │
+              │  BFF Handlers)  │          │  SSE Client,    │
+              │                 │          │  Auth Client)   │
+              └─────────────────┘          └─────────────────┘
+```
+
+**계층 구조**:
+
+| 계층 | 역할 | 예시 |
+|------|------|------|
+| **Presentation** | UI 렌더링, 사용자 상호작용 | React Components, Pages, Hooks |
+| **Application** | 비즈니스 로직, 유스케이스 | ServerService, AuthService |
+| **Ports (in)** | 외부에서 들어오는 요청 인터페이스 | IServerAPI, IAuthAPI |
+| **Ports (out)** | 외부로 나가는 요청 인터페이스 | IMcctlApiClient, ISSEClient |
+| **Adapters** | 포트 구현체 | McctlApiAdapter, SSEAdapter |
+
+**디렉토리 매핑**:
+```
+src/
+├── app/                    # Presentation (Pages)
+├── components/             # Presentation (UI Components)
+├── hooks/                  # Presentation (Custom Hooks)
+├── services/               # Application (Use Cases)
+├── ports/                  # Application (Interfaces)
+├── adapters/               # Infrastructure (Implementations)
+├── lib/                    # Infrastructure (Utilities)
+└── types/                  # Shared Types
+```
+
+**장점**:
+- 테스트 용이성: 포트를 통한 의존성 주입으로 Mock 테스트 가능
+- 유연성: 어댑터 교체만으로 외부 서비스 변경 가능
+- 관심사 분리: UI, 비즈니스 로직, 인프라 명확히 분리
 
 ### 3.1 System Architecture
 
@@ -106,7 +185,7 @@ module.exports = {
 │  │  └── api/ (BFF Routes)                                  │    │
 │  └─────────────────────────────────────────────────────────┘    │
 └─────────────────────────┬───────────────────────────────────────┘
-                          │ HTTP/SSE (Internal)
+                          │ HTTP/SSE (Internal) + X-API-Key
 ┌─────────────────────────▼───────────────────────────────────────┐
 │                      mcctl-api                                   │
 │                  Fastify REST API                                │
@@ -114,7 +193,127 @@ module.exports = {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Directory Structure
+### 3.2 BFF-API Authentication
+
+mcctl-console(BFF)과 mcctl-api 간의 통신은 **API Key 인증**을 사용합니다.
+
+```
+┌──────────────────┐                      ┌──────────────────┐
+│  mcctl-console   │  ───────────────────▶│    mcctl-api     │
+│      (BFF)       │  X-API-Key: <key>    │  (Fastify REST)  │
+└──────────────────┘                      └──────────────────┘
+```
+
+**인증 방식**:
+- Header: `X-API-Key`
+- mcctl-api의 `AUTH_MODE=api-key` 설정 필요
+- BFF는 서버 사이드에서만 API Key를 사용 (클라이언트에 노출되지 않음)
+
+**API Client 구현**:
+```typescript
+// lib/api-client.ts
+const apiClient = {
+  async fetch(endpoint: string, options?: RequestInit) {
+    const response = await fetch(`${process.env.MCCTL_API_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': process.env.MCCTL_API_KEY!,
+        ...options?.headers,
+      },
+    });
+    return response;
+  },
+};
+```
+
+### 3.3 User Authentication (Better Auth)
+
+브라우저와 mcctl-console(BFF) 간의 사용자 인증은 **Better Auth**를 사용합니다.
+
+```
+┌──────────────────┐                      ┌──────────────────┐
+│     Browser      │  ───────────────────▶│  mcctl-console   │
+│                  │  Session (Cookie)    │      (BFF)       │
+└──────────────────┘                      └──────────────────┘
+                                                   │
+                                                   │ Better Auth
+                                                   │ (세션/사용자 관리)
+                                                   ▼
+                                          ┌──────────────────┐
+                                          │    Database      │
+                                          │  (PostgreSQL)    │
+                                          └──────────────────┘
+```
+
+**Better Auth 선택 이유**:
+- TypeScript-first 설계로 완전한 타입 안전성
+- Self-hosted로 데이터 소유권 보장
+- 간결한 API와 빠른 설정
+- 모노레포 구조와 호환성 우수
+
+**인증 방식**:
+- Email/Password 기반 로그인
+- 세션 기반 인증 (Secure Cookie)
+- CSRF 보호 내장
+
+**서버 설정**:
+```typescript
+// lib/auth.ts
+import { betterAuth } from 'better-auth';
+import { postgres } from 'better-auth/adapters/postgres';
+import { pool } from './db';
+
+export const auth = betterAuth({
+  database: postgres(pool),
+  emailAndPassword: {
+    enabled: true,
+  },
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 60 * 24, // 24 hours
+    },
+  },
+});
+```
+
+**클라이언트 설정**:
+```typescript
+// lib/auth-client.ts
+import { createAuthClient } from 'better-auth/react';
+
+export const authClient = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_APP_URL,
+});
+
+export const { signIn, signUp, signOut, useSession } = authClient;
+```
+
+**보호된 라우트**:
+```typescript
+// middleware.ts
+import { auth } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function middleware(request: NextRequest) {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
+  if (!session) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ['/((?!api/auth|login|_next/static|favicon.ico).*)'],
+};
+```
+
+### 3.4 Directory Structure
 
 ```
 platform/services/mcctl-console/
@@ -125,9 +324,12 @@ platform/services/mcctl-console/
 ├── tailwind.config.js
 ├── next.config.js
 ├── src/
+│   ├── middleware.ts           # Auth middleware (route protection)
 │   ├── app/                    # Next.js App Router
 │   │   ├── layout.tsx          # Root layout (MUI ThemeProvider)
 │   │   ├── page.tsx            # Dashboard
+│   │   ├── login/
+│   │   │   └── page.tsx        # Login page
 │   │   ├── servers/
 │   │   │   ├── page.tsx        # Server list
 │   │   │   └── [name]/
@@ -146,6 +348,9 @@ platform/services/mcctl-console/
 │   │   ├── settings/
 │   │   │   └── page.tsx        # Platform settings
 │   │   └── api/                # BFF API routes
+│   │       ├── auth/
+│   │       │   └── [...all]/
+│   │       │       └── route.ts # Better Auth handler
 │   │       ├── servers/
 │   │       ├── worlds/
 │   │       ├── players/
@@ -181,6 +386,10 @@ platform/services/mcctl-console/
 │   │   │   └── RestoreDialog.tsx
 │   │   ├── router/
 │   │   │   └── RouterStatus.tsx
+│   │   ├── auth/
+│   │   │   ├── LoginForm.tsx       # Login form component
+│   │   │   ├── SignUpForm.tsx      # Sign up form component
+│   │   │   └── UserMenu.tsx        # User dropdown menu
 │   │   └── common/
 │   │       ├── StatusBadge.tsx
 │   │       ├── ConfirmDialog.tsx
@@ -193,9 +402,34 @@ platform/services/mcctl-console/
 │   │   ├── useApi.ts           # React Query wrapper
 │   │   └── useMcctl.ts         # API client hook
 │   │
+│   ├── services/               # Application Layer (Use Cases)
+│   │   ├── ServerService.ts    # Server management use cases
+│   │   ├── WorldService.ts     # World management use cases
+│   │   ├── PlayerService.ts    # Player management use cases
+│   │   ├── BackupService.ts    # Backup management use cases
+│   │   └── AuthService.ts      # Authentication use cases
+│   │
+│   ├── ports/                  # Application Layer (Interfaces)
+│   │   ├── in/                 # Inbound ports
+│   │   │   ├── IServerAPI.ts
+│   │   │   ├── IWorldAPI.ts
+│   │   │   └── IPlayerAPI.ts
+│   │   └── out/                # Outbound ports
+│   │       ├── IMcctlApiClient.ts
+│   │       ├── ISSEClient.ts
+│   │       └── IAuthClient.ts
+│   │
+│   ├── adapters/               # Infrastructure Layer (Implementations)
+│   │   ├── McctlApiAdapter.ts  # mcctl-api HTTP client
+│   │   ├── SSEAdapter.ts       # SSE connection adapter
+│   │   └── AuthAdapter.ts      # Better Auth adapter
+│   │
 │   ├── lib/
-│   │   ├── api-client.ts       # mcctl-api client
-│   │   ├── sse-client.ts       # SSE connection manager
+│   │   ├── auth.ts             # Better Auth server config
+│   │   ├── auth-client.ts      # Better Auth client
+│   │   ├── db.ts               # Database connection (PostgreSQL)
+│   │   ├── api-client.ts       # mcctl-api client (deprecated, use adapters)
+│   │   ├── sse-client.ts       # SSE connection manager (deprecated, use adapters)
 │   │   └── utils.ts            # Utility functions
 │   │
 │   ├── theme/
@@ -1089,7 +1323,9 @@ export const darkTheme = createTheme({
     "@emotion/react": "^11.x",
     "@emotion/styled": "^11.x",
     "@tanstack/react-query": "^5.x",
-    "tailwindcss": "^3.x"
+    "tailwindcss": "^3.x",
+    "better-auth": "^1.x",
+    "pg": "^8.x"
   }
 }
 ```
@@ -1099,8 +1335,48 @@ export const darkTheme = createTheme({
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `MCCTL_API_URL` | mcctl-api 내부 URL | `http://mcctl-api:3001` |
+| `MCCTL_API_KEY` | mcctl-api 인증용 API Key | (필수) |
 | `NEXT_PUBLIC_API_URL` | 클라이언트 API URL | `/api` |
+| `NEXT_PUBLIC_APP_URL` | 앱 기본 URL (Better Auth) | `http://localhost:3000` |
+| `DATABASE_URL` | PostgreSQL 연결 문자열 | (필수) |
+| `BETTER_AUTH_SECRET` | Better Auth 암호화 키 | (필수) |
 | `PORT` | Console 포트 | `3000` |
+
+### 12.1 API Key 설정
+
+mcctl-console과 mcctl-api 간의 인증을 위해 동일한 API Key를 설정해야 합니다.
+
+**mcctl-console (.env)**:
+```bash
+MCCTL_API_URL=http://mcctl-api:3001
+MCCTL_API_KEY=your-secure-api-key-here
+```
+
+**mcctl-api (.env)**:
+```bash
+AUTH_MODE=api-key
+AUTH_API_KEY=your-secure-api-key-here
+```
+
+> ⚠️ **보안 주의**: API Key는 충분히 길고 랜덤한 값을 사용하세요. 예: `openssl rand -base64 32`
+
+### 12.2 Better Auth 설정
+
+사용자 인증을 위한 Better Auth 설정입니다.
+
+**mcctl-console (.env)**:
+```bash
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/mcctl_console
+
+# Better Auth
+BETTER_AUTH_SECRET=your-super-secret-key-here
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+> ⚠️ **보안 주의**:
+> - `BETTER_AUTH_SECRET`는 최소 32자 이상의 랜덤 문자열을 사용하세요: `openssl rand -base64 32`
+> - 프로덕션에서는 반드시 HTTPS를 사용하세요
 
 ## 13. Test Plan
 
@@ -1125,3 +1401,7 @@ export const darkTheme = createTheme({
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0.0 | 2025-01-30 | - | Initial PRD with full UX specification |
+| 1.1.0 | 2026-01-31 | - | Add BFF-API authentication (API Key) |
+| 1.2.0 | 2026-01-31 | - | Add Better Auth for user authentication |
+| 1.3.0 | 2026-01-31 | - | Add Hexagonal Architecture pattern |
+| 1.4.0 | 2026-01-31 | - | Refactor: Move XP methodology to CLAUDE.md (project common) |

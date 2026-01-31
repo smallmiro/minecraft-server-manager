@@ -49,9 +49,29 @@ Internal REST API service for Minecraft server management. Provides the same fun
 | API Docs | @fastify/swagger | 8.x |
 | Shared | @minecraft-docker/shared | workspace |
 
-## 3. Architecture
+## 3. Development Methodology
 
-### 3.1 Hexagonal Architecture
+> **Reference**: [CLAUDE.md](../../../CLAUDE.md) - Development Philosophy 섹션 참조
+>
+> 프로젝트 공통 개발 방법론:
+> - **XP (Extreme Programming)** 기반
+> - **TDD**: Red → Green → Refactor
+> - **Tidy First**: 구조 변경과 동작 변경 분리
+> - **CI/CD**: lint, type-check, test, build
+
+### Testing Strategy (API 특화)
+
+| 테스트 유형 | 도구 | 대상 |
+|------------|------|------|
+| Unit | Vitest | Services, Utils, Domain |
+| Integration | Vitest + Supertest | API Routes, Middleware |
+| E2E | Vitest | Full API Flows |
+
+**테스트 커버리지 목표**: 80% 이상
+
+## 4. Architecture
+
+### 4.1 Hexagonal Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -77,7 +97,7 @@ Internal REST API service for Minecraft server management. Provides the same fun
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Directory Structure
+### 4.2 Directory Structure
 
 ```
 platform/services/mcctl-api/
@@ -110,7 +130,7 @@ platform/services/mcctl-api/
 └── Dockerfile
 ```
 
-## 4. API Access Modes
+## 5. API Access Modes
 
 ### 4.1 Access Mode Types
 
@@ -169,7 +189,7 @@ const authPlugin: FastifyPluginAsync<AuthPluginOptions> = async (fastify, option
 };
 ```
 
-## 5. API Endpoints
+## 6. API Endpoints
 
 **Status Legend**: ✅ Implemented | 🚧 Planned
 
@@ -258,7 +278,7 @@ data: {"line":"[14:23:46] [Server thread/INFO]: Done loading!"}
 
 > 🚧 = Planned (see [Issue #157](https://github.com/your-repo/issues/157))
 
-## 6. Response Format
+## 7. Response Format
 
 ### 6.1 Success Response
 
@@ -291,7 +311,7 @@ data: {"line":"[14:23:46] [Server thread/INFO]: Done loading!"}
 | `CONFLICT` | 409 | Resource conflict (e.g., deleting running server) |
 | `INTERNAL_ERROR` | 500 | Internal error |
 
-## 7. Environment Variables
+## 8. Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -303,7 +323,7 @@ data: {"line":"[14:23:46] [Server thread/INFO]: Done loading!"}
 | `API_PORT` | Listening port | `3001` |
 | `USER_STORE_TYPE` | User storage type | `yaml` |
 
-## 8. Dependencies
+## 9. Dependencies
 
 ### 8.1 Internal Dependencies
 
@@ -328,7 +348,7 @@ data: {"line":"[14:23:46] [Server thread/INFO]: Done loading!"}
 }
 ```
 
-## 9. Test Plan
+## 10. Test Plan
 
 ### 9.1 Unit Tests
 - Route handler tests
@@ -355,7 +375,7 @@ curl -X POST -H "Content-Type: application/json" \
   http://localhost:3001/api/servers
 ```
 
-## 10. Revision History
+## 11. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
