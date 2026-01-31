@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.7] - 2026-01-31
+
+### Added
+- **Auto-install mcctl-api on console init** - When running `mcctl console init`, mcctl-api package is now automatically installed if not already present
+- Streamlined Admin Service setup process
+
 ## [1.7.6] - 2026-01-31
 
 ### Added

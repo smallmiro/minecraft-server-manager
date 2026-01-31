@@ -73,6 +73,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.7.7 (2026-01-31)
+- **feat(cli)**: Auto-install mcctl-api on console init
+- Streamlined Admin Service setup process
+
 ### v1.7.6 (2026-01-31)
 - **feat(mcctl-api)**: First npm release of REST API package
 - Add @minecraft-docker/mcctl-api to npm registry
@@ -88,9 +92,6 @@ mcctl logs myserver
 
 ### v1.7.2 (2026-01-31)
 - **fix**: Fix "Unknown error occurred" when avahi-daemon is not installed (#197)
-
-### v1.7.1 (2026-01-31)
-- **fix**: Fix "Script not found: create-server.sh" error when mcctl installed via npm (#195)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
