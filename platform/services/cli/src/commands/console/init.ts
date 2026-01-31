@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { existsSync, unlinkSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { multiselect, isCancel } from '@clack/prompts';
 import {
   Paths,
   log,
@@ -21,6 +22,16 @@ import {
   PM2_SERVICE_NAMES,
   resolveServiceScriptPaths,
 } from '../../lib/pm2-utils.js';
+
+/**
+ * Check if mcctl-console is available on npm
+ * Currently returns false as it's not yet published
+ */
+function isConsoleAvailable(): boolean {
+  // mcctl-console is not yet published to npm
+  // This will be updated when console is available
+  return false;
+}
 
 /**
  * Install mcctl-api package if not present
@@ -151,6 +162,15 @@ interface ServiceInstallOptions {
 }
 
 /**
+ * Auth configuration for ecosystem config
+ */
+interface AuthConfig {
+  accessMode: string;
+  apiKey: string | null;
+  allowedIps: string[];
+}
+
+/**
  * Generate ecosystem.config.cjs content
  * Only includes services that are selected for installation
  */
@@ -161,7 +181,8 @@ function generateEcosystemConfig(
   consoleScriptPath: string,
   isDevelopment: boolean,
   nextAuthSecret: string,
-  serviceOptions: ServiceInstallOptions
+  serviceOptions: ServiceInstallOptions,
+  authConfig: AuthConfig
 ): string {
   const modeComment = isDevelopment
     ? '// NOTE: Development mode - using workspace paths'
@@ -170,15 +191,29 @@ function generateEcosystemConfig(
   const apps: string[] = [];
 
   if (serviceOptions.installApi) {
+    // Build API environment variables
+    const apiEnvVars = [
+      `        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',`,
+      `        PORT: ${apiPort},`,
+      `        HOST: '0.0.0.0',`,
+      `        MCCTL_ROOT: process.env.MCCTL_ROOT || '.',`,
+      `        AUTH_MODE: '${authConfig.accessMode}',`,
+    ];
+
+    if (authConfig.apiKey) {
+      apiEnvVars.push(`        AUTH_API_KEY: '${authConfig.apiKey}',`);
+    }
+
+    if (authConfig.allowedIps.length > 0) {
+      apiEnvVars.push(`        AUTH_IP_WHITELIST: '${authConfig.allowedIps.join(',')}',`);
+    }
+
     apps.push(`    {
       name: 'mcctl-api',
       script: '${apiScriptPath}',
       cwd: process.env.MCCTL_ROOT || '.',
       env: {
-        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',
-        PORT: ${apiPort},
-        HOST: '0.0.0.0',
-        MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
+${apiEnvVars.join('\n')}
       },
       instances: 1,
       exec_mode: 'fork',
@@ -379,56 +414,120 @@ export async function consoleInitCommand(
     console.log(colors.dim(`  PM2: ${pm2Check.version ?? 'installed'}`));
     console.log('');
 
-    // Step 1: Admin username
-    const username = await prompt.text({
-      message: 'Admin username?',
-      placeholder: 'admin',
-      initialValue: 'admin',
-      validate: (value) => {
-        try {
-          Username.create(value);
+    // Step 1: Select services to install
+    const consoleAvailable = isConsoleAvailable();
+
+    const serviceOptions = [
+      {
+        value: 'api' as const,
+        label: 'mcctl-api',
+        hint: 'REST API server for managing Minecraft servers',
+      },
+      {
+        value: 'console' as const,
+        label: 'mcctl-console',
+        hint: consoleAvailable ? 'Web UI for server management' : 'Coming soon (not yet available)',
+      },
+    ];
+
+    const selectedServices = await multiselect({
+      message: 'Select services to install:',
+      options: serviceOptions,
+      initialValues: ['api'], // API is selected by default
+      required: true,
+    });
+
+    if (isCancel(selectedServices)) {
+      return 0;
+    }
+
+    const services = selectedServices as ('api' | 'console')[];
+
+    // Check if user selected console but it's not available
+    if (services.includes('console') && !consoleAvailable) {
+      console.log('');
+      log.warn('mcctl-console is not yet available on npm.');
+      log.info('Only mcctl-api will be installed. Console support coming soon!');
+
+      // Remove console from selection
+      const apiOnlyServices = services.filter(s => s !== 'console');
+      if (apiOnlyServices.length === 0) {
+        log.error('At least one service must be selected.');
+        return 1;
+      }
+      services.length = 0;
+      services.push(...apiOnlyServices);
+    }
+
+    const installApi = services.includes('api');
+    const installConsole = services.includes('console') && consoleAvailable;
+
+    // Show selected services
+    console.log('');
+    console.log(colors.cyan('  Selected services:'));
+    if (installApi) {
+      console.log(`    ${colors.green('✓')} mcctl-api`);
+    }
+    if (installConsole) {
+      console.log(`    ${colors.green('✓')} mcctl-console`);
+    } else if (services.includes('console')) {
+      console.log(`    ${colors.yellow('○')} mcctl-console ${colors.dim('(skipped - not available)')}`);
+    }
+    console.log('');
+
+    // Admin setup is only required when console is installed
+    let username = '';
+    let password = '';
+
+    if (installConsole) {
+      // Step 2: Admin username (required for Console authentication)
+      username = await prompt.text({
+        message: 'Admin username?',
+        placeholder: 'admin',
+        initialValue: 'admin',
+        validate: (value) => {
+          try {
+            Username.create(value);
+            return undefined;
+          } catch (error) {
+            return error instanceof Error
+              ? error.message
+              : 'Invalid username format';
+          }
+        },
+      });
+
+      // Step 3: Admin password
+      password = await prompt.password({
+        message: 'Admin password?',
+        validate: (value) => {
+          if (!value || value.length < 8) {
+            return 'Password must be at least 8 characters';
+          }
+          // Check for basic password strength
+          if (!/[A-Z]/.test(value)) {
+            return 'Password must contain at least one uppercase letter';
+          }
+          if (!/[a-z]/.test(value)) {
+            return 'Password must contain at least one lowercase letter';
+          }
+          if (!/[0-9]/.test(value)) {
+            return 'Password must contain at least one number';
+          }
           return undefined;
-        } catch (error) {
-          return error instanceof Error
-            ? error.message
-            : 'Invalid username format';
-        }
-      },
-    });
+        },
+      });
+    }
 
-    // Step 2: Admin password
-    const password = await prompt.password({
-      message: 'Admin password?',
-      validate: (value) => {
-        if (!value || value.length < 8) {
-          return 'Password must be at least 8 characters';
-        }
-        // Check for basic password strength
-        if (!/[A-Z]/.test(value)) {
-          return 'Password must contain at least one uppercase letter';
-        }
-        if (!/[a-z]/.test(value)) {
-          return 'Password must contain at least one lowercase letter';
-        }
-        if (!/[0-9]/.test(value)) {
-          return 'Password must contain at least one number';
-        }
-        return undefined;
-      },
-    });
+    // Default port configuration
+    const DEFAULT_API_PORT = 5001;
+    const DEFAULT_CONSOLE_PORT = 5000;
+    const apiPort = options.apiPort ?? DEFAULT_API_PORT;
+    const consolePort = options.consolePort ?? DEFAULT_CONSOLE_PORT;
 
-    // Step 3: Confirm password
-    await prompt.password({
-      message: 'Confirm password?',
-      validate: (value) => {
-        if (value !== password) {
-          return 'Passwords do not match';
-        }
-        return undefined;
-      },
-    });
+    const spinner = prompt.spinner();
 
-    // Step 4: API access mode
+    // Step 4: API access mode (required for both API and Console)
     const accessMode = await prompt.select<ApiAccessMode>({
       message: 'API access mode?',
       options: [
@@ -461,70 +560,15 @@ export async function consoleInitCommand(
       initialValue: 'internal' as const,
     });
 
-    // Step 5: Port configuration
-    const DEFAULT_API_PORT = 5001;
-    const DEFAULT_CONSOLE_PORT = 5000;
-
-    let apiPort = options.apiPort ?? DEFAULT_API_PORT;
-    let consolePort = options.consolePort ?? DEFAULT_CONSOLE_PORT;
-
-    // Only ask for ports if not provided via CLI options
-    if (!options.apiPort || !options.consolePort) {
-      const customPorts = await prompt.confirm({
-        message: 'Configure custom ports?',
-        initialValue: false,
-      });
-
-      if (customPorts) {
-        if (!options.apiPort) {
-          const apiPortInput = await prompt.text({
-            message: 'API server port?',
-            placeholder: String(DEFAULT_API_PORT),
-            initialValue: String(DEFAULT_API_PORT),
-            validate: (value) => {
-              const port = parseInt(value, 10);
-              if (isNaN(port) || port < 1 || port > 65535) {
-                return 'Port must be a number between 1 and 65535';
-              }
-              return undefined;
-            },
-          });
-          apiPort = parseInt(apiPortInput, 10);
-        }
-
-        if (!options.consolePort) {
-          const consolePortInput = await prompt.text({
-            message: 'Console server port?',
-            placeholder: String(DEFAULT_CONSOLE_PORT),
-            initialValue: String(DEFAULT_CONSOLE_PORT),
-            validate: (value) => {
-              const port = parseInt(value, 10);
-              if (isNaN(port) || port < 1 || port > 65535) {
-                return 'Port must be a number between 1 and 65535';
-              }
-              if (port === apiPort) {
-                return 'Console port must be different from API port';
-              }
-              return undefined;
-            },
-          });
-          consolePort = parseInt(consolePortInput, 10);
-        }
-      }
-    }
-
-    // Step 6: Generate API key if needed
+    // Step 5: Generate API key if needed
     let apiKey: string | null = null;
     if (accessMode === 'api-key' || accessMode === 'api-key-ip') {
-      const spinner = prompt.spinner();
       spinner.start('Generating API key...');
-
       apiKey = AdminConfigManager.generateApiKey();
-
       spinner.stop('API key generated');
     }
 
-    // Step 7: Prompt for allowed IPs if needed
+    // Step 6: Prompt for allowed IPs if needed
     let allowedIps: string[] = [];
     if (accessMode === 'ip-whitelist' || accessMode === 'api-key-ip') {
       const ipsInput = await prompt.text({
@@ -534,10 +578,8 @@ export async function consoleInitCommand(
           if (!value.trim()) {
             return 'At least one IP or CIDR range is required';
           }
-          // Basic IP/CIDR validation
           const ips = value.split(',').map((ip) => ip.trim());
           for (const ip of ips) {
-            // Simple validation - allows IP or CIDR notation
             if (
               !/^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/.test(ip) &&
               ip !== 'localhost'
@@ -548,11 +590,10 @@ export async function consoleInitCommand(
           return undefined;
         },
       });
-
       allowedIps = ipsInput.split(',').map((ip) => ip.trim());
     }
 
-    // Step 8: Show warning for open mode
+    // Step 7: Show warning for open mode
     if (accessMode === 'open') {
       prompt.warn(
         'WARNING: Open mode has no authentication. Use only for local development!'
@@ -567,35 +608,33 @@ export async function consoleInitCommand(
       }
     }
 
-    // Step 9: Save user to YAML
-    const spinner = prompt.spinner();
-    spinner.start('Creating admin user...');
+    // Console-specific setup: admin user
+    if (installConsole) {
+      spinner.start('Creating admin user...');
 
-    const usersPath = join(paths.root, 'users.yaml');
-    const userRepo = new YamlUserRepository(usersPath);
+      const usersPath = join(paths.root, 'users.yaml');
+      const userRepo = new YamlUserRepository(usersPath);
 
-    // Check if user already exists
-    const usernameVO = Username.create(username);
-    const existingUser = await userRepo.findByUsername(usernameVO);
+      const usernameVO = Username.create(username);
+      const existingUser = await userRepo.findByUsername(usernameVO);
 
-    if (existingUser && !options.force) {
-      spinner.stop('');
-      log.error(`User '${username}' already exists`);
-      console.log('  To overwrite, use: mcctl console init --force');
-      return 1;
+      if (existingUser && !options.force) {
+        spinner.stop('');
+        log.error(`User '${username}' already exists`);
+        console.log('  To overwrite, use: mcctl console init --force');
+        return 1;
+      }
+
+      const passwordHash = await userRepo.hashPassword(password);
+      const adminUser = User.createAdmin(usernameVO, passwordHash);
+
+      if (existingUser && options.force) {
+        await userRepo.delete(existingUser.id);
+      }
+
+      await userRepo.save(adminUser);
+      spinner.stop('Admin user created');
     }
-
-    // Hash password and create user
-    const passwordHash = await userRepo.hashPassword(password);
-    const adminUser = User.createAdmin(usernameVO, passwordHash);
-
-    // If user exists and force is true, delete the old one first
-    if (existingUser && options.force) {
-      await userRepo.delete(existingUser.id);
-    }
-
-    await userRepo.save(adminUser);
-    spinner.stop('Admin user created');
 
     // Step 10: Install mcctl-api if needed (production mode)
     spinner.start('Checking mcctl-api installation...');
@@ -609,19 +648,11 @@ export async function consoleInitCommand(
     }
     spinner.stop('mcctl-api ready');
 
-    // Service options: currently only API is available via npm
-    // mcctl-console will be supported in future releases
-    const serviceOptions: ServiceInstallOptions = {
-      installApi: true,
-      installConsole: false, // Not yet available on npm
+    // Use service selection from earlier
+    const serviceInstallOptions: ServiceInstallOptions = {
+      installApi,
+      installConsole,
     };
-
-    // Show which services will be configured
-    console.log('');
-    console.log(colors.cyan('  Services to configure:'));
-    console.log(`    ${colors.green('✓')} mcctl-api (REST API)`);
-    console.log(`    ${colors.yellow('○')} mcctl-console (Web UI) - ${colors.dim('coming soon')}`);
-    console.log('');
 
     // Step 11: Generate ecosystem.config.cjs
     spinner.start('Resolving service script paths...');
@@ -632,7 +663,7 @@ export async function consoleInitCommand(
     if (scriptPaths.isDevelopment) {
       spinner.stop('Using development workspace paths');
       console.log(colors.dim(`    API: ${scriptPaths.api}`));
-      if (serviceOptions.installConsole) {
+      if (serviceInstallOptions.installConsole) {
         console.log(colors.dim(`    Console: ${scriptPaths.console}`));
       }
     } else {
@@ -652,7 +683,8 @@ export async function consoleInitCommand(
       scriptPaths.console,
       scriptPaths.isDevelopment,
       nextAuthSecret,
-      serviceOptions
+      serviceInstallOptions,
+      { accessMode, apiKey, allowedIps }
     );
     writeFileSync(ecosystemPath, ecosystemContent, 'utf-8');
 
@@ -678,7 +710,9 @@ export async function consoleInitCommand(
     console.log('');
     console.log(colors.cyan('  Configuration:'));
     console.log(`    Config file: ${colors.dim(configManager.path)}`);
-    console.log(`    Users file:  ${colors.dim(usersPath)}`);
+    if (installConsole) {
+      console.log(`    Users file:  ${colors.dim(join(paths.root, 'users.yaml'))}`);
+    }
     console.log(`    PM2 config:  ${colors.dim(ecosystemPath)}`);
     console.log(`    Access mode: ${colors.bold(accessMode)}`);
 
@@ -699,18 +733,22 @@ export async function consoleInitCommand(
     console.log('');
     console.log(colors.cyan('  Endpoints:'));
     console.log(
-      `    Console: ${colors.bold(`http://localhost:${config.console.port}`)}`
-    );
-    console.log(
       `    API:     ${colors.bold(`http://localhost:${config.api.port}`)}`
     );
+    if (installConsole) {
+      console.log(
+        `    Console: ${colors.bold(`http://localhost:${config.console.port}`)}`
+      );
+    }
 
     console.log('');
     console.log(colors.dim('  Next steps:'));
     console.log(
-      colors.dim('    1. Start the console service: mcctl console service start')
+      colors.dim('    1. Start the service: mcctl console service start')
     );
-    console.log(colors.dim('    2. Access the console in your browser'));
+    if (installConsole) {
+      console.log(colors.dim('    2. Access the console in your browser'));
+    }
     console.log('');
 
     return 0;
