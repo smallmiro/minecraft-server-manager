@@ -556,9 +556,44 @@ There are 2 of a max of 20 players online: Steve, Alex
 
 ---
 
+### mcctl rcon
+
+마인크래프트 서버의 대화형 RCON 콘솔에 연결합니다. 여러 명령을 연속으로 실행할 수 있는 세션을 엽니다.
+
+```bash
+mcctl rcon <server>
+```
+
+**예제:**
+
+```bash
+$ mcctl rcon survival
+Connecting to RCON console for 'survival'...
+Type "help" for commands, Ctrl+C or "exit" to quit
+
+> list
+There are 2 of 20 players online: Steve, Alex
+> say 서버 점검 10분 전입니다!
+[Server: 서버 점검 10분 전입니다!]
+> tp Steve 0 100 0
+Teleported Steve to 0.0, 100.0, 0.0
+> exit
+```
+
+**`rcon` vs `exec` 사용 시점:**
+
+| 명령어 | 모드 | 용도 |
+|--------|------|------|
+| `mcctl rcon <server>` | 대화형 | 수동 관리, 디버깅, 다중 명령 |
+| `mcctl exec <server> <cmd>` | 비대화형 | 스크립트, 자동화, CI/CD, 단일 명령 |
+
+사용 가능한 RCON 명령어 전체 목록은 [RCON 명령어 레퍼런스](rcon-commands.ko.md)를 참조하세요.
+
+---
+
 ### mcctl exec
 
-서버에서 단일 RCON 명령을 실행합니다.
+서버에서 단일 RCON 명령을 실행합니다. `mcctl rcon`의 비대화형 대안으로, 스크립트 및 자동화에 유용합니다.
 
 ```bash
 mcctl exec <server> <command...>
@@ -581,6 +616,12 @@ mcctl exec myserver weather clear
 
 # 시간 설정
 mcctl exec myserver time set day
+
+# 스크립트에서 사용
+PLAYERS=$(mcctl exec myserver list)
+if echo "$PLAYERS" | grep -q "0 of"; then
+  mcctl stop myserver
+fi
 ```
 
 ---

@@ -556,9 +556,44 @@ Press `Ctrl+C` to exit.
 
 ---
 
+### mcctl rcon
+
+Connect to an interactive RCON console for a Minecraft server. This opens a persistent session where you can execute multiple commands.
+
+```bash
+mcctl rcon <server>
+```
+
+**Example:**
+
+```bash
+$ mcctl rcon survival
+Connecting to RCON console for 'survival'...
+Type "help" for commands, Ctrl+C or "exit" to quit
+
+> list
+There are 2 of 20 players online: Steve, Alex
+> say Server maintenance in 10 minutes!
+[Server: Server maintenance in 10 minutes!]
+> tp Steve 0 100 0
+Teleported Steve to 0.0, 100.0, 0.0
+> exit
+```
+
+**When to use `rcon` vs `exec`:**
+
+| Command | Mode | Use Case |
+|---------|------|----------|
+| `mcctl rcon <server>` | Interactive | Manual administration, debugging, multiple commands |
+| `mcctl exec <server> <cmd>` | Non-interactive | Scripts, automation, CI/CD, single commands |
+
+For a complete list of available RCON commands, see [RCON Commands Reference](rcon-commands.md).
+
+---
+
 ### mcctl exec
 
-Execute a single RCON command on a server.
+Execute a single RCON command on a server. This is the non-interactive alternative to `mcctl rcon`, useful for scripts and automation.
 
 ```bash
 mcctl exec <server> <command...>
@@ -581,6 +616,12 @@ mcctl exec myserver weather clear
 
 # Set time
 mcctl exec myserver time set day
+
+# Use in scripts
+PLAYERS=$(mcctl exec myserver list)
+if echo "$PLAYERS" | grep -q "0 of"; then
+  mcctl stop myserver
+fi
 ```
 
 ---
