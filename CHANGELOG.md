@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.15] - 2026-01-31
+
+### Added
+- New `mcctl backup init` command for interactive GitHub backup setup (#167)
+  - Guided prompts for GitHub token, repository, and branch configuration
+  - Automatic `.env` file update with backup settings
+  - Token validation and repository existence check
+
+### Fixed
+- Include `scripts/` directory in npm package for template initialization
+
+### Tests
+- Add comprehensive tests for BackupUseCase.init() (12 test cases)
+
 ## [1.6.14] - 2026-01-31
 
 ### Fixed

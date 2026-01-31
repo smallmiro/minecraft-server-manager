@@ -1,6 +1,6 @@
 # mcctl - Minecraft Server Management CLI
 
-> **Version**: 1.6.14
+> **Version**: 1.6.15
 > **Last Updated**: 2026-01-31
 > **Purpose**: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions
 
@@ -153,7 +153,8 @@ mcctl server-backup <server> --list  # List backups
 mcctl server-restore <server>      # Interactive restore
 mcctl server-restore <server> <id>   # Restore specific backup
 
-# World backup (requires GitHub config)
+# World backup (GitHub)
+mcctl backup init                 # Interactive GitHub backup setup
 mcctl backup status               # Show backup config
 mcctl backup push                 # Backup to GitHub
 mcctl backup push -m "message"    # With message
@@ -297,7 +298,7 @@ A: Use `mcctl mod add <server> <mod-name>`. Default source is Modrinth. Use `--c
 A: All worlds are in `~/minecraft-servers/worlds/`. They're shared across servers using locks.
 
 ### Q: How do I backup my server?
-A: Use `mcctl server-backup <server>` for config. For worlds, configure GitHub in `.env` and use `mcctl backup push`.
+A: Use `mcctl server-backup <server>` for config. For worlds, run `mcctl backup init` for guided GitHub setup, then use `mcctl backup push`.
 
 ### Q: What server types are supported?
 A: PAPER (default, recommended), VANILLA, FORGE, NEOFORGE, FABRIC, PURPUR, SPIGOT, BUKKIT, QUILT.
