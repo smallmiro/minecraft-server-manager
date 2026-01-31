@@ -122,30 +122,73 @@ Claude:
    - Commit with issue reference: `feat: <description> (#<number>)`
    - Update `task.md` history
    - Update `plan.md` checkbox (mark with ✅)
-   - Update GitHub Issue body checkboxes:
-     ```bash
-     gh issue edit <number> --body "$(updated body with checked items)"
-     ```
+   - **Update GitHub Issue body checkboxes** (see details below)
 
-4. **Add E2E Tests** (if applicable)
+4. **GitHub Issue Checkbox Updates** ⚠️ CRITICAL
+
+   **When to update checkboxes:**
+   - ✅ After completing each requirement item
+   - ✅ After completing each acceptance criteria
+   - ✅ After completing each sub-task in the issue body
+
+   **How to update checkboxes:**
+   ```bash
+   # 1. Fetch current issue body
+   BODY=$(gh issue view <number> --json body -q .body)
+
+   # 2. Update specific checkbox (unchecked → checked)
+   # Replace the exact task text that was completed
+   UPDATED=$(echo "$BODY" | sed 's/- \[ \] <completed task>/- [x] <completed task>/')
+
+   # 3. Apply the update
+   gh issue edit <number> --body "$UPDATED"
+   ```
+
+   **Progress tracking pattern:**
+   | Status | Checkbox | Example |
+   |--------|----------|---------|
+   | Not started | `- [ ]` | `- [ ] Implement login API` |
+   | In progress | `- [ ]` + comment | `- [ ] Implement login API (WIP)` |
+   | Completed | `- [x]` | `- [x] Implement login API` |
+
+   **Example: Progressive updates during development**
+   ```bash
+   # Initial issue body:
+   # - [ ] Create database schema
+   # - [ ] Implement API endpoint
+   # - [ ] Add unit tests
+   # - [ ] Add E2E tests
+
+   # After completing database schema:
+   gh issue edit 175 --body "$(gh issue view 175 --json body -q .body | sed 's/- \[ \] Create database schema/- [x] Create database schema/')"
+
+   # After completing API endpoint:
+   gh issue edit 175 --body "$(gh issue view 175 --json body -q .body | sed 's/- \[ \] Implement API endpoint/- [x] Implement API endpoint/')"
+
+   # Continue until all checkboxes are checked...
+   ```
+
+5. **Add E2E Tests** (if applicable)
    - For API changes: Add tests to `e2e/tests/api-*.spec.ts`
    - For CLI changes: Add tests to `platform/services/cli/tests/e2e/`
    - Run and verify tests pass before PR
+   - **Update issue checkbox**: `- [x] Add E2E tests`
 
-5. **Create Pull Request**
+6. **Create Pull Request**
    ```bash
    gh pr create --base develop --title "<type>: <description> (#<number>)" --body "..."
    ```
 
-6. **Code Review**
+7. **Code Review**
    - Execute `/code-review:code-review`
    - Address any feedback
 
-7. **Merge (on approval)**
+8. **Merge (on approval)**
    ```bash
    gh pr merge --squash --delete-branch
    ```
    - Issue auto-closes via "Closes #N" in PR
+   - **Final checkbox update**: Ensure ALL checkboxes in issue body are checked
 
 ---
 
@@ -228,13 +271,46 @@ Claude:
 ### 1.1 Create Directory Structure ([#1](...)) ✅
 ```
 
-### GitHub Issue Body Update
+### GitHub Issue Body Update ⚠️ IMPORTANT
 
+Issue body checkboxes must be updated at each development checkpoint to reflect progress.
+
+**Update Frequency:**
+| Timing | Action |
+|--------|--------|
+| After each commit | Check completed items |
+| Before PR creation | Verify all implementation items checked |
+| After merge | Ensure 100% completion |
+
+**Command Pattern:**
 ```bash
-# Update checkbox in issue body
+# Single checkbox update
+BODY=$(gh issue view <number> --json body -q .body)
+UPDATED=$(echo "$BODY" | sed 's/- \[ \] <task text>/- [x] <task text>/')
+gh issue edit <number> --body "$UPDATED"
+```
+
+**Multiple checkboxes update (batch):**
+```bash
+# Update multiple items at once
 BODY=$(gh issue view 7 --json body -q .body)
-UPDATED=$(echo "$BODY" | sed 's/- \[ \] Task item/- [x] Task item/')
+UPDATED=$(echo "$BODY" | \
+  sed 's/- \[ \] Create component/- [x] Create component/' | \
+  sed 's/- \[ \] Add styles/- [x] Add styles/' | \
+  sed 's/- \[ \] Write tests/- [x] Write tests/')
 gh issue edit 7 --body "$UPDATED"
+```
+
+**Progress indicator in comments:**
+```bash
+# Add progress comment to issue
+gh issue comment 7 --body "Progress update: 3/5 tasks completed
+
+✅ Create component
+✅ Add styles
+✅ Write tests
+⬜ Add E2E tests
+⬜ Update documentation"
 ```
 
 ---
@@ -263,6 +339,7 @@ gh issue edit 7 --body "$UPDATED"
 4. **Code review required**: Unless `--skip-review` specified
 5. **Milestone alignment**: Keep work consistent with milestone goals
 6. **E2E tests required**: Add e2e tests for new features (see below)
+7. **Issue checkbox sync**: Update GitHub issue body checkboxes at each checkpoint
 
 ---
 
@@ -343,16 +420,41 @@ User: /project:work --issue 7
 
 Claude:
 1. Loading Issue #7: "Implement lock.sh"
+   Issue body checkboxes:
+   - [ ] Implement lock_world function
+   - [ ] Implement unlock_world function
+   - [ ] Add unit tests
+   - [ ] Add E2E tests
+
 2. Creating branch: feature/7-world-locking
+
 3. Reading issue body for requirements...
+
 4. Starting TDD implementation...
    [checkpoint] lock_world function → commit
+   → Update issue: ✅ Implement lock_world function
+
    [checkpoint] unlock_world function → commit
+   → Update issue: ✅ Implement unlock_world function
+
    [checkpoint] tests passing → commit
-5. Creating PR #15
-6. Running code review...
-7. Review passed, merging...
-8. Issue #7 closed, branch deleted
+   → Update issue: ✅ Add unit tests
+
+5. Adding E2E tests...
+   → Update issue: ✅ Add E2E tests
+
+6. Creating PR #15
+   Final issue state:
+   - [x] Implement lock_world function
+   - [x] Implement unlock_world function
+   - [x] Add unit tests
+   - [x] Add E2E tests
+
+7. Running code review...
+
+8. Review passed, merging...
+
+9. Issue #7 closed, branch deleted
 ```
 
 ### Milestone
