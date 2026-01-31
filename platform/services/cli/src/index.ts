@@ -212,7 +212,8 @@ ${colors.cyan('Server Backup/Restore:')}
   ${colors.bold('server-backup')} <server> --list   List all backups
   ${colors.bold('server-restore')} <server> [id]    Restore from backup
 
-${colors.cyan('World Backup (requires .env config):')}
+${colors.cyan('World Backup:')}
+  ${colors.bold('backup init')} [--force]      Setup GitHub backup (interactive)
   ${colors.bold('backup push')} [--message]    Backup worlds to GitHub
   ${colors.bold('backup status')}              Show backup configuration
   ${colors.bold('backup history')} [--json]    Show backup history
@@ -665,6 +666,7 @@ async function main(): Promise<void> {
           commitHash: positional[0],
           json: flags['json'] === true,
           auto: flags['auto'] === true,
+          force: flags['force'] === true,
         });
         break;
       }

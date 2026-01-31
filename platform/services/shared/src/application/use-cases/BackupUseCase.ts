@@ -1,5 +1,6 @@
 import type {
   IBackupUseCase,
+  BackupInitResult,
   BackupPushResult,
   BackupStatusResult,
   BackupHistoryResult,
@@ -13,10 +14,232 @@ import type {
  * Manages world backups to GitHub
  */
 export class BackupUseCase implements IBackupUseCase {
+  private configSaveCallback?: (config: Record<string, string | boolean>) => void;
+
   constructor(
     private readonly prompt: IPromptPort,
     private readonly shell: IShellPort
   ) {}
+
+  /**
+   * Set callback for saving configuration (called by CLI layer)
+   */
+  setConfigSaveCallback(callback: (config: Record<string, string | boolean>) => void): void {
+    this.configSaveCallback = callback;
+  }
+
+  /**
+   * Interactive backup initialization
+   */
+  async init(force = false): Promise<BackupInitResult> {
+    this.prompt.intro('GitHub Backup 설정');
+
+    try {
+      // Check if already configured
+      const currentStatus = await this.status();
+      if (currentStatus.configured && !force) {
+        const overwrite = await this.prompt.confirm({
+          message: '백업이 이미 설정되어 있습니다. 덮어쓰시겠습니까?',
+          initialValue: false,
+        });
+
+        if (this.prompt.isCancel(overwrite) || !overwrite) {
+          this.prompt.outro('설정이 취소되었습니다.');
+          return {
+            success: false,
+            error: 'Cancelled - existing configuration preserved',
+          };
+        }
+      }
+
+      // Get GitHub token
+      this.prompt.note(
+        'GitHub Personal Access Token이 필요합니다.\n' +
+        'https://github.com/settings/tokens 에서 생성하세요.\n' +
+        '필요한 권한: repo (Full control of private repositories)',
+        '토큰 생성 안내'
+      );
+
+      const token = await this.prompt.password({
+        message: 'GitHub Personal Access Token:',
+      });
+
+      if (this.prompt.isCancel(token) || !token) {
+        this.prompt.outro('설정이 취소되었습니다.');
+        return {
+          success: false,
+          error: 'Cancelled',
+        };
+      }
+
+      // Get repository
+      const repository = await this.prompt.text({
+        message: '백업 저장소를 입력하세요 (username/repo):',
+        placeholder: 'username/minecraft-worlds-backup',
+        validate: (value) => {
+          if (!value) return '저장소를 입력하세요.';
+          if (!value.includes('/')) return 'username/repo 형식으로 입력하세요.';
+          return undefined;
+        },
+      });
+
+      if (this.prompt.isCancel(repository) || !repository) {
+        this.prompt.outro('설정이 취소되었습니다.');
+        return {
+          success: false,
+          error: 'Cancelled',
+        };
+      }
+
+      // Get branch
+      const branchChoice = await this.prompt.select<string>({
+        message: '브랜치를 선택하세요:',
+        options: [
+          { value: 'main', label: 'main', hint: '권장' },
+          { value: 'master', label: 'master' },
+          { value: '_custom', label: '직접 입력' },
+        ],
+      });
+
+      if (this.prompt.isCancel(branchChoice)) {
+        this.prompt.outro('설정이 취소되었습니다.');
+        return {
+          success: false,
+          error: 'Cancelled',
+        };
+      }
+
+      let branch = branchChoice;
+      if (branchChoice === '_custom') {
+        const customBranch = await this.prompt.text({
+          message: '브랜치 이름을 입력하세요:',
+          placeholder: 'main',
+        });
+
+        if (this.prompt.isCancel(customBranch) || !customBranch) {
+          this.prompt.outro('설정이 취소되었습니다.');
+          return {
+            success: false,
+            error: 'Cancelled',
+          };
+        }
+        branch = customBranch;
+      }
+
+      // Auto backup on stop
+      const autoBackup = await this.prompt.confirm({
+        message: '서버 종료 시 자동으로 백업할까요?',
+        initialValue: true,
+      });
+
+      if (this.prompt.isCancel(autoBackup)) {
+        this.prompt.outro('설정이 취소되었습니다.');
+        return {
+          success: false,
+          error: 'Cancelled',
+        };
+      }
+
+      // Test connection
+      const spinner = this.prompt.spinner();
+      spinner.start('GitHub 연결 테스트 중...');
+
+      const testResult = await this.testGitHubConnection(token, repository);
+
+      if (!testResult.success) {
+        spinner.stop('연결 실패');
+        this.prompt.error(testResult.error || '저장소에 접근할 수 없습니다.');
+        this.prompt.note(
+          '토큰 권한 또는 저장소 이름을 확인하세요.\n' +
+          '저장소가 없으면 먼저 GitHub에서 생성하세요.',
+          '문제 해결'
+        );
+        this.prompt.outro('설정이 취소되었습니다.');
+        return {
+          success: false,
+          error: testResult.error,
+        };
+      }
+
+      spinner.stop('연결 성공');
+
+      // Save configuration
+      const config = {
+        BACKUP_GITHUB_TOKEN: token,
+        BACKUP_GITHUB_REPO: repository,
+        BACKUP_GITHUB_BRANCH: branch,
+        BACKUP_AUTO_ON_STOP: autoBackup,
+      };
+
+      if (this.configSaveCallback) {
+        this.configSaveCallback(config);
+      }
+
+      this.prompt.success('백업 설정이 완료되었습니다!');
+      this.prompt.note(
+        `저장소: ${repository}\n` +
+        `브랜치: ${branch}\n` +
+        `자동 백업: ${autoBackup ? '활성화' : '비활성화'}`,
+        '설정 정보'
+      );
+      this.prompt.outro('이제 mcctl backup push로 백업할 수 있습니다.');
+
+      return {
+        success: true,
+        repository,
+        branch,
+        autoBackupEnabled: autoBackup,
+      };
+    } catch (error) {
+      if (this.prompt.isCancel(error)) {
+        this.prompt.outro('설정이 취소되었습니다.');
+        return {
+          success: false,
+          error: 'Cancelled',
+        };
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Test GitHub connection
+   */
+  private async testGitHubConnection(
+    token: string,
+    repository: string
+  ): Promise<{ success: boolean; error?: string }> {
+    // Use git ls-remote to test connection
+    const result = await this.shell.exec('git', [
+      'ls-remote',
+      '--heads',
+      `https://${token}@github.com/${repository}.git`,
+    ]);
+
+    if (result.success) {
+      return { success: true };
+    }
+
+    // Parse error message
+    if (result.stderr.includes('not found') || result.stderr.includes('404')) {
+      return {
+        success: false,
+        error: '저장소를 찾을 수 없습니다. 저장소 이름을 확인하세요.',
+      };
+    }
+
+    if (result.stderr.includes('Authentication failed') || result.stderr.includes('403')) {
+      return {
+        success: false,
+        error: '인증에 실패했습니다. 토큰 권한을 확인하세요.',
+      };
+    }
+
+    return {
+      success: false,
+      error: result.stderr || '알 수 없는 오류가 발생했습니다.',
+    };
+  }
 
   /**
    * Interactive backup push

@@ -55,7 +55,25 @@ export class Paths {
 
   /** Scripts directory (from package or local) */
   get scripts(): string {
-    return process.env['MCCTL_SCRIPTS'] ?? join(this.packageRoot, '..', '..', 'scripts');
+    // Priority: env var > CLI package scripts > repo root scripts
+    if (process.env['MCCTL_SCRIPTS']) {
+      return process.env['MCCTL_SCRIPTS'];
+    }
+
+    // Try to find scripts in mcctl CLI package (npm global install)
+    const cliScripts = join(this.packageRoot, '..', 'mcctl', 'scripts');
+    if (existsSync(cliScripts)) {
+      return cliScripts;
+    }
+
+    // Try scripts in current package (if CLI is packageRoot)
+    const localScripts = join(this.packageRoot, 'scripts');
+    if (existsSync(localScripts)) {
+      return localScripts;
+    }
+
+    // Fallback: repo root scripts (local dev)
+    return join(this.packageRoot, '..', '..', 'scripts');
   }
 
   /** Templates directory (from package) */
@@ -226,6 +244,62 @@ export class Config {
     }
 
     return config;
+  }
+
+  /** Update specific keys in .env file (preserves comments and other settings) */
+  updateEnv(updates: Record<string, string | boolean>): void {
+    const envPath = this.paths.envFile;
+    let content = '';
+
+    if (existsSync(envPath)) {
+      content = readFileSync(envPath, 'utf-8');
+    }
+
+    const lines = content.split('\n');
+    const updatedKeys = new Set<string>();
+
+    // Update existing keys
+    const updatedLines = lines.map((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return line;
+
+      const eqIndex = trimmed.indexOf('=');
+      if (eqIndex === -1) return line;
+
+      const key = trimmed.slice(0, eqIndex).trim();
+
+      if (key in updates) {
+        updatedKeys.add(key);
+        const value = updates[key];
+        const strValue = typeof value === 'boolean' ? String(value) : value;
+        return `${key}=${strValue}`;
+      }
+
+      return line;
+    });
+
+    // Add new keys that weren't updated
+    const newKeys = Object.entries(updates).filter(([key]) => !updatedKeys.has(key));
+
+    if (newKeys.length > 0) {
+      // Add blank line before new section if file has content
+      if (updatedLines.length > 0 && updatedLines[updatedLines.length - 1]?.trim() !== '') {
+        updatedLines.push('');
+      }
+
+      for (const [key, value] of newKeys) {
+        const strValue = typeof value === 'boolean' ? String(value) : value;
+        updatedLines.push(`${key}=${strValue}`);
+      }
+    }
+
+    // Ensure directory exists
+    const dir = dirname(envPath);
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+    }
+
+    writeFileSync(envPath, updatedLines.join('\n'), 'utf-8');
   }
 }
 

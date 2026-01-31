@@ -23,6 +23,7 @@ export interface MockShellConfig {
   backupStatusResult?: Partial<ShellResult>;
   backupHistoryResult?: Partial<ShellResult>;
   backupRestoreResult?: Partial<ShellResult>;
+  execResult?: Partial<ShellResult>;
 }
 
 /**
@@ -229,7 +230,7 @@ export class MockShellAdapter implements IShellPort {
 
   async exec(script: string, args?: string[]): Promise<ShellResult> {
     this.log('exec', script, args);
-    return this.makeResult();
+    return this.makeResult(this.config.execResult);
   }
 
   async execInteractive(script: string, args?: string[]): Promise<number> {

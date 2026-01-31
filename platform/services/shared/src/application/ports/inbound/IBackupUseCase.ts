@@ -4,6 +4,16 @@
  */
 export interface IBackupUseCase {
   /**
+   * Set callback for saving configuration to .env
+   */
+  setConfigSaveCallback(callback: (config: Record<string, string | boolean>) => void): void;
+
+  /**
+   * Interactive backup initialization
+   */
+  init(force?: boolean): Promise<BackupInitResult>;
+
+  /**
    * Interactive backup push
    */
   push(): Promise<BackupPushResult>;
@@ -73,5 +83,16 @@ export interface BackupRestoreResult {
   success: boolean;
   commitHash: string;
   worldsRestored?: string[];
+  error?: string;
+}
+
+/**
+ * Backup init result
+ */
+export interface BackupInitResult {
+  success: boolean;
+  repository?: string;
+  branch?: string;
+  autoBackupEnabled?: boolean;
   error?: string;
 }

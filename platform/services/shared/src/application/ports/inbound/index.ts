@@ -12,6 +12,7 @@ export type {
 } from './IWorldManagementUseCase.js';
 export type {
   IBackupUseCase,
+  BackupInitResult,
   BackupPushResult,
   BackupStatusResult,
   BackupHistoryResult,
