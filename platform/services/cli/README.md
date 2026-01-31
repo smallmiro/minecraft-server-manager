@@ -73,6 +73,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.7.6 (2026-01-31)
+- **feat(mcctl-api)**: First npm release of REST API package
+- Add @minecraft-docker/mcctl-api to npm registry
+
 ### v1.7.5 (2026-01-31)
 - **fix**: Resolve Edge runtime error in mcctl-console middleware (#201)
 
@@ -87,11 +91,6 @@ mcctl logs myserver
 
 ### v1.7.1 (2026-01-31)
 - **fix**: Fix "Script not found: create-server.sh" error when mcctl installed via npm (#195)
-
-### v1.7.0 (2026-01-31)
-- **feat(api)**: Router Status API, Server Create/Delete API, Player Management API, Backup API
-- **feat(cli)**: Add `mcctl init --reconfigure` command
-- **test**: Comprehensive E2E tests for API and CLI commands
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
