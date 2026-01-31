@@ -8,15 +8,19 @@
       
       
       
-        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/admin-service/">
+        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/troubleshooting/">
       
       
+        <link rel="prev" href="../advanced/backup/">
+      
+      
+        <link rel="next" href="../development/">
       
       
         
           <link rel="alternate" href="./" hreflang="en">
         
-          <link rel="alternate" href="../ko/admin-service/" hreflang="ko">
+          <link rel="alternate" href="../ko/troubleshooting/" hreflang="ko">
         
       
       
@@ -25,7 +29,7 @@
     
     
       
-        <title>Admin Service Overview - Minecraft Docker Server Manager</title>
+        <title>Troubleshooting - Minecraft Docker Server Manager</title>
       
     
     
@@ -76,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#admin-service-overview" class="md-skip">
+        <a href="#troubleshooting" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Admin Service Overview
+              Troubleshooting
             
           </span>
         </div>
@@ -165,7 +169,7 @@
           </li>
         
           <li class="md-select__item">
-            <a href="../ko/admin-service/" hreflang="ko" class="md-select__link">
+            <a href="../ko/troubleshooting/" hreflang="ko" class="md-select__link">
               한국어
             </a>
           </li>
@@ -394,9 +398,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../troubleshooting/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -1378,10 +1384,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../troubleshooting/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1397,6 +1430,148 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Known Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#world-not-saving-to-worlds-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        World Not Saving to /worlds/ Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-wont-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Won't Start
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cannot-connect-to-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cannot Connect to Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slow-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slow Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#world-corruption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        World Corruption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modsplugins-not-loading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mods/Plugins Not Loading
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting Help
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1591,10 +1766,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#quick-diagnostics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture
+        Quick Diagnostics
       
     </span>
   </a>
@@ -1602,33 +1777,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#components" class="md-nav__link">
+  <a href="#known-issues" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Components
+        Known Issues
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Components">
+    <nav class="md-nav" aria-label="Known Issues">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mcctl-api-rest-api-server" class="md-nav__link">
+  <a href="#world-not-saving-to-worlds-directory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        mcctl-api (REST API Server)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcctl-console-web-management-ui" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mcctl-console (Web Management UI)
+        World Not Saving to /worlds/ Directory
       
     </span>
   </a>
@@ -1641,33 +1805,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#authentication-modes" class="md-nav__link">
+  <a href="#common-issues" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication Modes
+        Common Issues
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Features
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Features">
+    <nav class="md-nav" aria-label="Common Issues">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#server-management" class="md-nav__link">
+  <a href="#server-wont-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server Management
+        Server Won't Start
       
     </span>
   </a>
@@ -1675,10 +1828,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#console-integration" class="md-nav__link">
+  <a href="#cannot-connect-to-server" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Console Integration
+        Cannot Connect to Server
       
     </span>
   </a>
@@ -1686,10 +1839,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#user-management" class="md-nav__link">
+  <a href="#slow-performance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        User Management
+        Slow Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#world-corruption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        World Corruption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modsplugins-not-loading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mods/Plugins Not Loading
       
     </span>
   </a>
@@ -1702,82 +1877,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#getting-help" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick Start">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-initialize-admin-service" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Initialize Admin Service
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-start-admin-services" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Start Admin Services
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-access-web-console" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Access Web Console
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requirements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Files
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
+        Getting Help
       
     </span>
   </a>
@@ -1804,172 +1907,290 @@
   
 
 
-<h1 id="admin-service-overview">Admin Service Overview<a class="headerlink" href="#admin-service-overview" title="Permanent link">&para;</a></h1>
-<p>Admin Service provides a web-based management interface and REST API for Docker Minecraft servers. It enables remote server management, monitoring, and administration through a modern web console.</p>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                              +---------------------+
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                              |    Web Browser      |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                              |  (Admin Console)    |
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                              +----------+----------+
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                         |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                                    :5000 (HTTP)
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                                         |
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>+------------------------+     +---------v---------+
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>|                        |     |                   |
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>|  Minecraft Servers     |     |  mcctl-console    |
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>|  (mc-xxx containers)   |     |  (Next.js + Auth) |
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>|                        |     |                   |
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>+----------+-------------+     +---------+---------+
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>           ^                             |
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>           |                      :5001 (Internal)
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>           |                             |
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>           |                   +---------v---------+
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>           |                   |                   |
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>           +-------------------+    mcctl-api      |
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>            Docker Socket      |  (Fastify REST)   |
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>            (read-only)        |                   |
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                               +-------------------+
+<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
+<p>This guide covers common issues and their solutions when using mcctl and the Minecraft Docker Server platform.</p>
+<h2 id="quick-diagnostics">Quick Diagnostics<a class="headerlink" href="#quick-diagnostics" title="Permanent link">&para;</a></h2>
+<p>Before diving into specific issues, run these commands to gather information:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Check overall status</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mcctl<span class="w"> </span>status<span class="w"> </span>--detail
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Check mc-router health</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>status<span class="w"> </span>router
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Check specific server logs</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Test RCON connection</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>mcctl<span class="w"> </span>console<span class="w"> </span>&lt;server-name&gt;
 </code></pre></div>
-<h2 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h2>
-<h3 id="mcctl-api-rest-api-server">mcctl-api (REST API Server)<a class="headerlink" href="#mcctl-api-rest-api-server" title="Permanent link">&para;</a></h3>
-<p>A Fastify-based REST API server that provides:</p>
-<ul>
-<li><strong>Server Management</strong>: List, start, stop, restart Minecraft servers</li>
-<li><strong>Server Information</strong>: Health status, players, resource usage</li>
-<li><strong>RCON Integration</strong>: Execute console commands remotely</li>
-<li><strong>Swagger Documentation</strong>: Auto-generated API docs at <code>/docs</code></li>
-<li><strong>Health Checks</strong>: Built-in health endpoint at <code>/health</code></li>
-</ul>
-<p>Default port: <code>5001</code></p>
-<h3 id="mcctl-console-web-management-ui">mcctl-console (Web Management UI)<a class="headerlink" href="#mcctl-console-web-management-ui" title="Permanent link">&para;</a></h3>
-<p>A Next.js web application that provides:</p>
-<ul>
-<li><strong>Dashboard</strong>: Overview of all servers with real-time status</li>
-<li><strong>Server Details</strong>: Detailed server information and controls</li>
-<li><strong>User Authentication</strong>: Secure login with NextAuth.js</li>
-<li><strong>BFF Proxy</strong>: Backend-for-Frontend pattern for secure API access</li>
-</ul>
-<p>Default port: <code>5000</code></p>
-<h2 id="authentication-modes">Authentication Modes<a class="headerlink" href="#authentication-modes" title="Permanent link">&para;</a></h2>
-<p>Admin Service supports multiple authentication modes:</p>
-<table>
-<thead>
-<tr>
-<th>Mode</th>
-<th>Description</th>
-<th>Use Case</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>internal</code></td>
-<td>Docker network only (most secure)</td>
-<td>Default production</td>
-</tr>
-<tr>
-<td><code>api-key</code></td>
-<td>External access with X-API-Key header</td>
-<td>Automation/scripts</td>
-</tr>
-<tr>
-<td><code>ip-whitelist</code></td>
-<td>IP-based access control</td>
-<td>Known client IPs</td>
-</tr>
-<tr>
-<td><code>api-key-ip</code></td>
-<td>Both API key and IP required</td>
-<td>High security</td>
-</tr>
-<tr>
-<td><code>open</code></td>
-<td>No authentication</td>
-<td>Development only</td>
-</tr>
-</tbody>
-</table>
+<hr />
+<h2 id="known-issues">Known Issues<a class="headerlink" href="#known-issues" title="Permanent link">&para;</a></h2>
+<h3 id="world-not-saving-to-worlds-directory">World Not Saving to /worlds/ Directory<a class="headerlink" href="#world-not-saving-to-worlds-directory" title="Permanent link">&para;</a></h3>
 <div class="admonition warning">
-<p class="admonition-title">Security Warning</p>
-<p>Never use <code>open</code> mode in production. It disables all authentication and exposes your servers to unauthorized access.</p>
+<p class="admonition-title">Affects versions 1.6.8 ~ 1.6.11</p>
+<p>This is a critical bug affecting npm package users who created servers with mcctl versions 1.6.8 through 1.6.11.</p>
 </div>
-<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
-<h3 id="server-management">Server Management<a class="headerlink" href="#server-management" title="Permanent link">&para;</a></h3>
+<p><strong>Symptoms:</strong></p>
 <ul>
-<li>View all Minecraft servers with status</li>
-<li>Start, stop, and restart servers</li>
-<li>View server logs in real-time</li>
-<li>Monitor player counts and server health</li>
+<li>World data is stored in <code>servers/&lt;name&gt;/data/&lt;world&gt;/</code> instead of <code>worlds/&lt;world&gt;/</code></li>
+<li>Server logs show "No existing world data, creating new world" on every restart</li>
+<li>World sharing between servers doesn't work</li>
+<li>Players lose their progress after server restart</li>
 </ul>
-<h3 id="console-integration">Console Integration<a class="headerlink" href="#console-integration" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Execute RCON commands through the web interface</li>
-<li>View command output in real-time</li>
-<li>Supports all standard Minecraft commands</li>
-</ul>
-<h3 id="user-management">User Management<a class="headerlink" href="#user-management" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Multiple user accounts with role-based access</li>
-<li>Admin role: Full access to all features</li>
-<li>Viewer role: Read-only access to status and logs</li>
-</ul>
-<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p><strong>Note</strong>: <code>mcctl admin</code> commands are deprecated. Use <code>mcctl console</code> instead. The <code>admin</code> command alias still works for backward compatibility but will be removed in a future release.</p>
-</blockquote>
-<h3 id="1-initialize-admin-service">1. Initialize Admin Service<a class="headerlink" href="#1-initialize-admin-service" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
+<p><strong>Cause:</strong></p>
+<p>The npm package template was missing <code>EXTRA_ARGS=--universe /worlds/</code> configuration, causing servers to store worlds in the wrong location.</p>
+<p><strong>How to Check if Affected:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># If this command shows any output, you&#39;re affected</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ls<span class="w"> </span>~/minecraft-servers/servers/*/data/*/level.dat<span class="w"> </span><span class="m">2</span>&gt;/dev/null
 </code></pre></div>
-<p>Follow the interactive prompts to configure:</p>
-<ol>
-<li>Admin username</li>
-<li>Admin password (min 8 characters, requires uppercase, lowercase, number)</li>
-<li>API access mode</li>
-<li>IP whitelist (if applicable)</li>
-</ol>
-<h3 id="2-start-admin-services">2. Start Admin Services<a class="headerlink" href="#2-start-admin-services" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<p><strong>Solution:</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Option 1: Migration Command (Recommended)</label><label for="__tabbed_1_2">Option 2: Manual Fix</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Check which servers need migration</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Migrate all affected servers</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Or migrate a specific server</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>&lt;server-name&gt;
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Preview changes without applying</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all<span class="w"> </span>--dry-run
 </code></pre></div>
-<h3 id="3-access-web-console">3. Access Web Console<a class="headerlink" href="#3-access-web-console" title="Permanent link">&para;</a></h3>
-<p>Open your browser and navigate to:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>http://localhost:5000
+</div>
+<div class="tabbed-block">
+<p><strong>Step 1:</strong> Add <code>EXTRA_ARGS</code> to server's config.env:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;EXTRA_ARGS=--universe /worlds/&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/servers/&lt;server-name&gt;/config.env
 </code></pre></div>
-<p>Log in with the admin credentials created during initialization.</p>
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<ul>
-<li>mcctl platform initialized (<code>mcctl init</code>)</li>
-<li>Docker running</li>
-<li>Ports 5000 and 5001 available (or custom ports in <code>.env</code>)</li>
-</ul>
-<h2 id="configuration-files">Configuration Files<a class="headerlink" href="#configuration-files" title="Permanent link">&para;</a></h2>
-<p>After initialization, the following files are created:</p>
+<p>Or add to global <code>.env</code> (applies to all servers):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;EXTRA_ARGS=--universe /worlds/&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/.env
+</code></pre></div>
+<p><strong>Step 2:</strong> Move existing world data:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Stop server first</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>&lt;server-name&gt;
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Move world from data/ to worlds/</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>mv<span class="w"> </span>~/minecraft-servers/servers/&lt;server-name&gt;/data/&lt;level-name&gt;<span class="w"> </span>~/minecraft-servers/worlds/&lt;level-name&gt;
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Start server</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;server-name&gt;
+</code></pre></div>
+<p><strong>Step 3:</strong> Verify world is loading correctly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>-f
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Should NOT see &quot;No existing world data, creating new world&quot;</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><strong>Prevention:</strong></p>
+<p>Update to mcctl version 1.6.12 or later:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>npm<span class="w"> </span>update<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl
+</code></pre></div>
+<hr />
+<h2 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h2>
+<h3 id="server-wont-start">Server Won't Start<a class="headerlink" href="#server-wont-start" title="Permanent link">&para;</a></h3>
+<p><strong>Symptoms:</strong> Server container exits immediately or fails to start.</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span>
+</code></pre></div>
+<p><strong>Common Causes:</strong></p>
 <table>
 <thead>
 <tr>
-<th>File</th>
-<th>Description</th>
+<th>Cause</th>
+<th>Log Message</th>
+<th>Solution</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>~/minecraft-servers/admin.yaml</code></td>
-<td>Admin service configuration</td>
+<td>Wrong Java version</td>
+<td><code>UnsupportedClassVersionError</code></td>
+<td>Change image tag (java8, java17, java21)</td>
 </tr>
 <tr>
-<td><code>~/minecraft-servers/users.yaml</code></td>
-<td>User credentials (hashed passwords)</td>
+<td>Out of memory</td>
+<td><code>OutOfMemoryError</code></td>
+<td>Increase <code>MEMORY</code> in config.env</td>
 </tr>
 <tr>
-<td><code>~/minecraft-servers/api-config.json</code></td>
-<td>API access configuration</td>
+<td>EULA not accepted</td>
+<td><code>EULA must be accepted</code></td>
+<td>Set <code>EULA=TRUE</code> in .env</td>
+</tr>
+<tr>
+<td>Port conflict</td>
+<td><code>Address already in use</code></td>
+<td>Check other services using the port</td>
+</tr>
+<tr>
+<td>Corrupt world</td>
+<td><code>java.io.IOException</code></td>
+<td>Restore from backup</td>
 </tr>
 </tbody>
 </table>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p><strong>Java Version Guide:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Minecraft Version</th>
+<th>Required Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.21+</td>
+<td>Java 21</td>
+</tr>
+<tr>
+<td>1.18 - 1.20.4</td>
+<td>Java 17 or 21</td>
+</tr>
+<tr>
+<td>Forge 1.16.5 and below</td>
+<td>Java 8</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cannot-connect-to-server">Cannot Connect to Server<a class="headerlink" href="#cannot-connect-to-server" title="Permanent link">&para;</a></h3>
+<p><strong>Symptoms:</strong> Minecraft client shows "Can't connect to server" or "Connection refused".</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Check if mc-router is running</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>mcctl<span class="w"> </span>status<span class="w"> </span>router
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Check if server is running</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>mcctl<span class="w"> </span>status<span class="w"> </span>&lt;server-name&gt;
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Test RCON connection</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>&lt;server-name&gt;
+</code></pre></div>
+<p><strong>Common Causes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mc-router not running</td>
+<td><code>mcctl router start</code></td>
+</tr>
+<tr>
+<td>Server not running</td>
+<td><code>mcctl start &lt;server-name&gt;</code></td>
+</tr>
+<tr>
+<td>Wrong hostname</td>
+<td>Use correct format: <code>&lt;server&gt;.&lt;ip&gt;.nip.io:25565</code></td>
+</tr>
+<tr>
+<td>Firewall blocking</td>
+<td>Open port 25565</td>
+</tr>
+<tr>
+<td>DNS not resolving</td>
+<td>Use IP address directly or check nip.io</td>
+</tr>
+</tbody>
+</table>
+<h3 id="slow-performance">Slow Performance<a class="headerlink" href="#slow-performance" title="Permanent link">&para;</a></h3>
+<p><strong>Symptoms:</strong> Server lag, high TPS, slow chunk loading.</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>--detail
+</code></pre></div>
+<p><strong>Solutions:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Enable Aikar&#39;s JVM flags</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Reduce view distance</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>VIEW_DISTANCE<span class="w"> </span><span class="m">8</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Reduce simulation distance</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>SIMULATION_DISTANCE<span class="w"> </span><span class="m">6</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1"># Restart server</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;server-name&gt;
+</code></pre></div>
+<h3 id="world-corruption">World Corruption<a class="headerlink" href="#world-corruption" title="Permanent link">&para;</a></h3>
+<p><strong>Symptoms:</strong> Missing chunks, corrupted blocks, server crashes on load.</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Check world lock status</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Check server logs for errors</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span>error
+</code></pre></div>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Restore from backup:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Check world locking:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Ensure world is not assigned to multiple servers</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Release and reassign if needed</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>&lt;world-name&gt;
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>&lt;world-name&gt;<span class="w"> </span>&lt;server-name&gt;
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="modsplugins-not-loading">Mods/Plugins Not Loading<a class="headerlink" href="#modsplugins-not-loading" title="Permanent link">&para;</a></h3>
+<p><strong>Symptoms:</strong> Server starts but mods or plugins don't appear.</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;mod\|plugin&quot;</span>
+</code></pre></div>
+<p><strong>Common Causes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wrong server type</td>
+<td>Use FORGE/FABRIC for mods, PAPER for plugins</td>
+</tr>
+<tr>
+<td>Version mismatch</td>
+<td>Match mod version with Minecraft version</td>
+</tr>
+<tr>
+<td>Missing dependencies</td>
+<td>Install required dependency mods</td>
+</tr>
+<tr>
+<td>File permissions</td>
+<td>Check file ownership in shared/ directory</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
+<p>If your issue isn't covered here:</p>
+<ol>
+<li><strong>Check server logs:</strong> <code>mcctl logs &lt;server-name&gt; -n 200</code></li>
+<li><strong>Check Docker logs:</strong> <code>docker logs mc-&lt;server-name&gt;</code></li>
+<li><strong>Ask the AI Assistant:</strong> <a href="https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962">AI Assistant</a></li>
+<li><strong>Open a GitHub Issue:</strong> <a href="https://github.com/smallmiro/minecraft-server-manager/issues">GitHub Issues</a></li>
+</ol>
+<p>When reporting issues, please include:</p>
 <ul>
-<li><strong><a href="installation/">Installation Guide</a></strong> - Detailed setup instructions</li>
-<li><strong><a href="cli-commands/">CLI Commands</a></strong> - Complete CLI reference</li>
-<li><strong><a href="api-reference/">API Reference</a></strong> - REST API documentation</li>
-<li><strong><a href="web-console/">Web Console Guide</a></strong> - Using the web interface</li>
+<li>mcctl version (<code>mcctl --version</code>)</li>
+<li>Docker version (<code>docker --version</code>)</li>
+<li>Operating system</li>
+<li>Relevant log output</li>
+<li>Steps to reproduce</li>
 </ul>
 
 

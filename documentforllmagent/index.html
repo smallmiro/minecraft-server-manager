@@ -395,6 +395,25 @@
   
   
   
+    <li class="md-tabs__item">
+      <a href="../troubleshooting/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
     
     
       <li class="md-tabs__item">
@@ -1361,6 +1380,33 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
       
@@ -1387,7 +1433,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1409,14 +1455,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1543,6 +1589,17 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#system-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Requirements
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#overview" class="md-nav__link">
@@ -1883,6 +1940,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#q-what-are-the-system-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: What are the system requirements?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#q-how-do-i-enable-cheats" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2058,10 +2126,47 @@
 
 <h1 id="mcctl---minecraft-server-management-cli">mcctl - Minecraft Server Management CLI<a class="headerlink" href="#mcctl---minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 1.6.4
-<strong>Last Updated</strong>: 2026-01-30
+<p><strong>Version</strong>: 1.7.5
+<strong>Last Updated</strong>: 2026-01-31
 <strong>Purpose</strong>: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions</p>
 </blockquote>
+<h2 id="system-requirements">System Requirements<a class="headerlink" href="#system-requirements" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Minimum Version</th>
+<th>Recommended</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Node.js</strong></td>
+<td>&gt;= 18.0.0</td>
+<td>20 LTS</td>
+<td>Required for mcctl CLI</td>
+</tr>
+<tr>
+<td><strong>Docker Engine</strong></td>
+<td>&gt;= 24.0.0</td>
+<td>Latest</td>
+<td>Container runtime</td>
+</tr>
+<tr>
+<td><strong>Docker Compose</strong></td>
+<td>&gt;= 2.20.0</td>
+<td>Latest</td>
+<td><code>include</code> feature required</td>
+</tr>
+<tr>
+<td><strong>OS</strong></td>
+<td>Linux, macOS</td>
+<td>Ubuntu 22.04+</td>
+<td>Windows via WSL2</td>
+</tr>
+</tbody>
+</table>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p><code>mcctl</code> is a command-line tool for managing multiple Minecraft servers using Docker. It provides:</p>
 <ul>
@@ -2176,12 +2281,13 @@
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>&lt;server&gt;<span class="w">      </span><span class="c1"># Interactive restore</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;id&gt;<span class="w">   </span><span class="c1"># Restore specific backup</span>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># World backup (requires GitHub config)</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>status<span class="w">               </span><span class="c1"># Show backup config</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w">                 </span><span class="c1"># Backup to GitHub</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;message&quot;</span><span class="w">    </span><span class="c1"># With message</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span><span class="w">              </span><span class="c1"># Show history</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span>&lt;commit&gt;<span class="w">     </span><span class="c1"># Restore from commit</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># World backup (GitHub)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>init<span class="w">                 </span><span class="c1"># Interactive GitHub backup setup</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>status<span class="w">               </span><span class="c1"># Show backup config</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w">                 </span><span class="c1"># Backup to GitHub</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;message&quot;</span><span class="w">    </span><span class="c1"># With message</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span><span class="w">              </span><span class="c1"># Show history</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span>&lt;commit&gt;<span class="w">     </span><span class="c1"># Restore from commit</span>
 </code></pre></div>
 <h3 id="console-management-admin-service">Console Management (Admin Service)<a class="headerlink" href="#console-management-admin-service" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Initialization</span>
@@ -2257,13 +2363,13 @@
 </tbody>
 </table>
 <h2 id="rest-api-reference">REST API Reference<a class="headerlink" href="#rest-api-reference" title="Permanent link">&para;</a></h2>
-<p>Admin Service provides a REST API (port 3001) for programmatic access.</p>
+<p>Admin Service provides a REST API (port 5001) for programmatic access.</p>
 <h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># API Key (recommended)</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:3001/api/servers
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Basic Auth</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>curl<span class="w"> </span>-u<span class="w"> </span>admin:password<span class="w"> </span>http://localhost:3001/api/servers
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>curl<span class="w"> </span>-u<span class="w"> </span>admin:password<span class="w"> </span>http://localhost:5001/api/servers
 </code></pre></div>
 <h3 id="key-endpoints">Key Endpoints<a class="headerlink" href="#key-endpoints" title="Permanent link">&para;</a></h3>
 <table>
@@ -2292,6 +2398,16 @@
 </tr>
 <tr>
 <td>POST</td>
+<td><code>/api/servers</code></td>
+<td>Create new server</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/servers/:name</code></td>
+<td>Delete server</td>
+</tr>
+<tr>
+<td>POST</td>
 <td><code>/api/servers/:name/start</code></td>
 <td>Start server</td>
 </tr>
@@ -2317,6 +2433,91 @@
 </tr>
 <tr>
 <td>GET</td>
+<td><code>/api/router/status</code></td>
+<td>Get mc-router status and routes</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/servers/:name/players</code></td>
+<td>List online players</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/players/:username</code></td>
+<td>Get player info from Mojang</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/servers/:name/whitelist</code></td>
+<td>Get whitelist</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/servers/:name/whitelist</code></td>
+<td>Add to whitelist</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/servers/:name/whitelist/:player</code></td>
+<td>Remove from whitelist</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/servers/:name/bans</code></td>
+<td>Get banned players</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/servers/:name/bans</code></td>
+<td>Ban player</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/servers/:name/bans/:player</code></td>
+<td>Unban player</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/servers/:name/ops</code></td>
+<td>Get operators</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/servers/:name/ops</code></td>
+<td>Add operator</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/servers/:name/ops/:player</code></td>
+<td>Remove operator</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/servers/:name/kick</code></td>
+<td>Kick player</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/backup/status</code></td>
+<td>Get backup config status</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/backup/push</code></td>
+<td>Push backup to GitHub</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/backup/history</code></td>
+<td>Get backup history</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/backup/restore</code></td>
+<td>Restore from backup</td>
+</tr>
+<tr>
+<td>GET</td>
 <td><code>/api/worlds</code></td>
 <td>List all worlds</td>
 </tr>
@@ -2336,7 +2537,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;command&quot;: &quot;list&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>http://localhost:3001/api/servers/survival/exec
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>http://localhost:5001/api/servers/survival/exec
 </code></pre></div>
 <h2 id="common-use-cases">Common Use Cases<a class="headerlink" href="#common-use-cases" title="Permanent link">&para;</a></h2>
 <h3 id="setting-up-a-new-server">Setting Up a New Server<a class="headerlink" href="#setting-up-a-new-server" title="Permanent link">&para;</a></h3>
@@ -2365,7 +2566,7 @@
 <h3 id="using-admin-web-console">Using Admin Web Console<a class="headerlink" href="#using-admin-web-console" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w">                </span><span class="c1"># Interactive setup</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w">       </span><span class="c1"># Start services</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Access http://localhost:3000</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Access http://localhost:5000</span>
 </code></pre></div>
 <h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h2>
 <h3 id="q-how-do-i-connect-to-my-server">Q: How do I connect to my server?<a class="headerlink" href="#q-how-do-i-connect-to-my-server" title="Permanent link">&para;</a></h3>
@@ -2377,15 +2578,17 @@
 <h3 id="q-where-is-world-data-stored">Q: Where is world data stored?<a class="headerlink" href="#q-where-is-world-data-stored" title="Permanent link">&para;</a></h3>
 <p>A: All worlds are in <code>~/minecraft-servers/worlds/</code>. They're shared across servers using locks.</p>
 <h3 id="q-how-do-i-backup-my-server">Q: How do I backup my server?<a class="headerlink" href="#q-how-do-i-backup-my-server" title="Permanent link">&para;</a></h3>
-<p>A: Use <code>mcctl server-backup &lt;server&gt;</code> for config. For worlds, configure GitHub in <code>.env</code> and use <code>mcctl backup push</code>.</p>
+<p>A: Use <code>mcctl server-backup &lt;server&gt;</code> for config. For worlds, run <code>mcctl backup init</code> for guided GitHub setup, then use <code>mcctl backup push</code>.</p>
 <h3 id="q-what-server-types-are-supported">Q: What server types are supported?<a class="headerlink" href="#q-what-server-types-are-supported" title="Permanent link">&para;</a></h3>
 <p>A: PAPER (default, recommended), VANILLA, FORGE, NEOFORGE, FABRIC, PURPUR, SPIGOT, BUKKIT, QUILT.</p>
+<h3 id="q-what-are-the-system-requirements">Q: What are the system requirements?<a class="headerlink" href="#q-what-are-the-system-requirements" title="Permanent link">&para;</a></h3>
+<p>A: Node.js &gt;= 18.0.0, Docker Engine &gt;= 24.0.0, Docker Compose &gt;= 2.20.0. The <code>include</code> feature in docker-compose requires v2.20.0 or higher.</p>
 <h3 id="q-how-do-i-enable-cheats">Q: How do I enable cheats?<a class="headerlink" href="#q-how-do-i-enable-cheats" title="Permanent link">&para;</a></h3>
 <p>A: Use <code>mcctl config &lt;server&gt; --cheats</code> or set <code>ALLOW_CHEATS=true</code>.</p>
 <h3 id="q-how-do-i-change-memory">Q: How do I change memory?<a class="headerlink" href="#q-how-do-i-change-memory" title="Permanent link">&para;</a></h3>
 <p>A: Use <code>mcctl config &lt;server&gt; MEMORY 8G</code> then restart the server.</p>
 <h3 id="q-what-is-the-admin-service">Q: What is the Admin Service?<a class="headerlink" href="#q-what-is-the-admin-service" title="Permanent link">&para;</a></h3>
-<p>A: Web console (port 3000) + REST API (port 3001). Initialize with <code>mcctl console init</code> and start with <code>mcctl console service start</code>.</p>
+<p>A: Web console (port 5000) + REST API (port 5001). Initialize with <code>mcctl console init</code> and start with <code>mcctl console service start</code>.</p>
 <h3 id="q-how-do-i-use-the-rest-api">Q: How do I use the REST API?<a class="headerlink" href="#q-how-do-i-use-the-rest-api" title="Permanent link">&para;</a></h3>
 <p>A: After <code>mcctl console init</code>, use the generated API key with <code>X-API-Key</code> header. See REST API Reference section.</p>
 <h3 id="q-how-do-i-optimize-performance">Q: How do I optimize performance?<a class="headerlink" href="#q-how-do-i-optimize-performance" title="Permanent link">&para;</a></h3>
@@ -2472,7 +2675,7 @@
 <ul>
 <li>Check service status: <code>mcctl console service status</code></li>
 <li>Verify API key: check <code>~/minecraft-servers/api.key</code></li>
-<li>Test health: <code>curl http://localhost:3001/health</code></li>
+<li>Test health: <code>curl http://localhost:5001/health</code></li>
 </ul>
 <h2 id="links">Links<a class="headerlink" href="#links" title="Permanent link">&para;</a></h2>
 <ul>

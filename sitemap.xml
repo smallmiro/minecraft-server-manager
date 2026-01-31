@@ -155,6 +155,13 @@
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/development/documentforllmagent/"/>
     </url>
     <url>
+        <loc>https://minecraft-server-manager.readthedocs.io/development/git-workflow/</loc>
+        <lastmod>2026-01-31</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/development/git-workflow/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/development/git-workflow/"/>
+    </url>
+    <url>
         <loc>https://minecraft-server-manager.readthedocs.io/getting-started/</loc>
         <lastmod>2026-01-31</lastmod>
         <changefreq>daily</changefreq>
@@ -337,6 +344,13 @@
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/mods-and-plugins/spiget/"/>
     </url>
     <url>
+        <loc>https://minecraft-server-manager.readthedocs.io/troubleshooting/</loc>
+        <lastmod>2026-01-31</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/troubleshooting/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/troubleshooting/"/>
+    </url>
+    <url>
         <loc>https://minecraft-server-manager.readthedocs.io/usage/cli-usage-examples/</loc>
         <lastmod>2026-01-31</lastmod>
         <changefreq>daily</changefreq>
@@ -496,6 +510,13 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/development/documentforllmagent/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/development/documentforllmagent/"/>
+    </url>
+    <url>
+        <loc>https://minecraft-server-manager.readthedocs.io/ko/development/git-workflow/</loc>
+        <lastmod>2026-01-31</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/development/git-workflow/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/development/git-workflow/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/getting-started/</loc>
@@ -678,6 +699,13 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/mods-and-plugins/spiget/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/mods-and-plugins/spiget/"/>
+    </url>
+    <url>
+        <loc>https://minecraft-server-manager.readthedocs.io/ko/troubleshooting/</loc>
+        <lastmod>2026-01-31</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/troubleshooting/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/troubleshooting/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/usage/cli-usage-examples/</loc>

@@ -1,6 +1,6 @@
 
 <!doctype html>
-<html lang="en" class="no-js">
+<html lang="ko" class="no-js">
   <head>
     
       <meta charset="utf-8">
@@ -8,31 +8,35 @@
       
       
       
-        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/admin-service/">
+        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/ko/troubleshooting/">
       
       
+        <link rel="prev" href="../advanced/backup/">
+      
+      
+        <link rel="next" href="../development/">
       
       
         
-          <link rel="alternate" href="./" hreflang="en">
+          <link rel="alternate" href="../../troubleshooting/" hreflang="en">
         
-          <link rel="alternate" href="../ko/admin-service/" hreflang="ko">
+          <link rel="alternate" href="./" hreflang="ko">
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
-        <title>Admin Service Overview - Minecraft Docker Server Manager</title>
+        <title>Troubleshooting - Minecraft Docker Server Manager</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -51,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -76,8 +80,8 @@
     <div data-md-component="skip">
       
         
-        <a href="#admin-service-overview" class="md-skip">
-          Skip to content
+        <a href="#문제-해결" class="md-skip">
+          콘텐츠로 이동
         </a>
       
     </div>
@@ -91,8 +95,8 @@
   
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
-  <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="Minecraft Docker Server Manager" class="md-header__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+  <nav class="md-header__inner md-grid" aria-label="상단/헤더">
+    <a href="../" title="Minecraft Docker Server Manager" class="md-header__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Admin Service Overview
+              Troubleshooting
             
           </span>
         </div>
@@ -152,20 +156,20 @@
       <div class="md-header__option">
   <div class="md-select">
     
-    <button class="md-header__button md-icon" aria-label="Select language">
+    <button class="md-header__button md-icon" aria-label="언어설정">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
     </button>
     <div class="md-select__inner">
       <ul class="md-select__list">
         
           <li class="md-select__item">
-            <a href="./" hreflang="en" class="md-select__link">
+            <a href="../../troubleshooting/" hreflang="en" class="md-select__link">
               English
             </a>
           </li>
         
           <li class="md-select__item">
-            <a href="../ko/admin-service/" hreflang="ko" class="md-select__link">
+            <a href="./" hreflang="ko" class="md-select__link">
               한국어
             </a>
           </li>
@@ -186,16 +190,16 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="검색" placeholder="검색" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
         
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
-      <nav class="md-search__options" aria-label="Search">
+      <nav class="md-search__options" aria-label="검색">
         
-        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+        <button type="reset" class="md-search__icon md-icon" title="지우기" aria-label="지우기" tabindex="-1">
           
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
@@ -208,7 +212,7 @@
       <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
-            Initializing search
+            검색 초기화
           </div>
           <ol class="md-search-result__list" role="presentation"></ol>
         </div>
@@ -220,7 +224,7 @@
     
     
       <div class="md-header__source">
-        <a href="https://github.com/smallmiro/minecraft-server-manager" title="Go to repository" class="md-source" data-md-component="source">
+        <a href="https://github.com/smallmiro/minecraft-server-manager" title="저장소로 이동" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
@@ -235,7 +239,7 @@
   
     
       
-<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+<nav class="md-tabs" aria-label="탭" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
       
@@ -245,7 +249,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../" class="md-tabs__link">
         
   
   
@@ -394,9 +398,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../troubleshooting/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -476,9 +482,9 @@
   
 
 
-<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="네비게이션" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Minecraft Docker Server Manager" class="md-nav__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+    <a href="../" title="Minecraft Docker Server Manager" class="md-nav__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -488,7 +494,7 @@
   </label>
   
     <div class="md-nav__source">
-      <a href="https://github.com/smallmiro/minecraft-server-manager" title="Go to repository" class="md-source" data-md-component="source">
+      <a href="https://github.com/smallmiro/minecraft-server-manager" title="저장소로 이동" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
@@ -508,7 +514,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -1378,10 +1384,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../troubleshooting/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1397,6 +1430,148 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#빠른-진단" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        빠른 진단
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#알려진-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        알려진 문제
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="알려진 문제">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#월드가-worlds-디렉토리에-저장되지-않음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        월드가 /worlds/ 디렉토리에 저장되지 않음
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#일반적인-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        일반적인 문제
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="일반적인 문제">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#서버가-시작되지-않음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서버가 시작되지 않음
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#서버에-연결할-수-없음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서버에 연결할 수 없음
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#느린-성능" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        느린 성능
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#월드-손상" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        월드 손상
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#모드플러그인이-로드되지-않음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        모드/플러그인이 로드되지 않음
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#도움-받기" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        도움 받기
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1577,7 +1752,7 @@
                   <div class="md-sidebar__inner">
                     
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+<nav class="md-nav md-nav--secondary" aria-label="목차">
   
   
   
@@ -1586,15 +1761,15 @@
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
-      Table of contents
+      목차
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#빠른-진단" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture
+        빠른 진단
       
     </span>
   </a>
@@ -1602,33 +1777,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#components" class="md-nav__link">
+  <a href="#알려진-문제" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Components
+        알려진 문제
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Components">
+    <nav class="md-nav" aria-label="알려진 문제">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mcctl-api-rest-api-server" class="md-nav__link">
+  <a href="#월드가-worlds-디렉토리에-저장되지-않음" class="md-nav__link">
     <span class="md-ellipsis">
       
-        mcctl-api (REST API Server)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcctl-console-web-management-ui" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mcctl-console (Web Management UI)
+        월드가 /worlds/ 디렉토리에 저장되지 않음
       
     </span>
   </a>
@@ -1641,33 +1805,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#authentication-modes" class="md-nav__link">
+  <a href="#일반적인-문제" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication Modes
+        일반적인 문제
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Features
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Features">
+    <nav class="md-nav" aria-label="일반적인 문제">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#server-management" class="md-nav__link">
+  <a href="#서버가-시작되지-않음" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server Management
+        서버가 시작되지 않음
       
     </span>
   </a>
@@ -1675,10 +1828,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#console-integration" class="md-nav__link">
+  <a href="#서버에-연결할-수-없음" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Console Integration
+        서버에 연결할 수 없음
       
     </span>
   </a>
@@ -1686,10 +1839,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#user-management" class="md-nav__link">
+  <a href="#느린-성능" class="md-nav__link">
     <span class="md-ellipsis">
       
-        User Management
+        느린 성능
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#월드-손상" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        월드 손상
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#모드플러그인이-로드되지-않음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        모드/플러그인이 로드되지 않음
       
     </span>
   </a>
@@ -1702,82 +1877,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#도움-받기" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick Start">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-initialize-admin-service" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Initialize Admin Service
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-start-admin-services" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Start Admin Services
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-access-web-console" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Access Web Console
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requirements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Files
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next Steps
+        도움 받기
       
     </span>
   </a>
@@ -1804,172 +1907,290 @@
   
 
 
-<h1 id="admin-service-overview">Admin Service Overview<a class="headerlink" href="#admin-service-overview" title="Permanent link">&para;</a></h1>
-<p>Admin Service provides a web-based management interface and REST API for Docker Minecraft servers. It enables remote server management, monitoring, and administration through a modern web console.</p>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                              +---------------------+
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                              |    Web Browser      |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                              |  (Admin Console)    |
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                              +----------+----------+
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                         |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                                    :5000 (HTTP)
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                                         |
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>+------------------------+     +---------v---------+
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>|                        |     |                   |
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>|  Minecraft Servers     |     |  mcctl-console    |
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>|  (mc-xxx containers)   |     |  (Next.js + Auth) |
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>|                        |     |                   |
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>+----------+-------------+     +---------+---------+
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>           ^                             |
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>           |                      :5001 (Internal)
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>           |                             |
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>           |                   +---------v---------+
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>           |                   |                   |
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>           +-------------------+    mcctl-api      |
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>            Docker Socket      |  (Fastify REST)   |
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>            (read-only)        |                   |
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                               +-------------------+
+<h1 id="문제-해결">문제 해결<a class="headerlink" href="#문제-해결" title="Permanent link">&para;</a></h1>
+<p>mcctl과 Minecraft Docker Server 플랫폼 사용 시 발생하는 일반적인 문제와 해결 방법을 다룹니다.</p>
+<h2 id="빠른-진단">빠른 진단<a class="headerlink" href="#빠른-진단" title="Permanent link">&para;</a></h2>
+<p>특정 문제를 살펴보기 전에 다음 명령어로 정보를 수집하세요:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 전체 상태 확인</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mcctl<span class="w"> </span>status<span class="w"> </span>--detail
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># mc-router 상태 확인</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>status<span class="w"> </span>router
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># 특정 서버 로그 확인</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># RCON 연결 테스트</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>mcctl<span class="w"> </span>console<span class="w"> </span>&lt;server-name&gt;
 </code></pre></div>
-<h2 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h2>
-<h3 id="mcctl-api-rest-api-server">mcctl-api (REST API Server)<a class="headerlink" href="#mcctl-api-rest-api-server" title="Permanent link">&para;</a></h3>
-<p>A Fastify-based REST API server that provides:</p>
-<ul>
-<li><strong>Server Management</strong>: List, start, stop, restart Minecraft servers</li>
-<li><strong>Server Information</strong>: Health status, players, resource usage</li>
-<li><strong>RCON Integration</strong>: Execute console commands remotely</li>
-<li><strong>Swagger Documentation</strong>: Auto-generated API docs at <code>/docs</code></li>
-<li><strong>Health Checks</strong>: Built-in health endpoint at <code>/health</code></li>
-</ul>
-<p>Default port: <code>5001</code></p>
-<h3 id="mcctl-console-web-management-ui">mcctl-console (Web Management UI)<a class="headerlink" href="#mcctl-console-web-management-ui" title="Permanent link">&para;</a></h3>
-<p>A Next.js web application that provides:</p>
-<ul>
-<li><strong>Dashboard</strong>: Overview of all servers with real-time status</li>
-<li><strong>Server Details</strong>: Detailed server information and controls</li>
-<li><strong>User Authentication</strong>: Secure login with NextAuth.js</li>
-<li><strong>BFF Proxy</strong>: Backend-for-Frontend pattern for secure API access</li>
-</ul>
-<p>Default port: <code>5000</code></p>
-<h2 id="authentication-modes">Authentication Modes<a class="headerlink" href="#authentication-modes" title="Permanent link">&para;</a></h2>
-<p>Admin Service supports multiple authentication modes:</p>
-<table>
-<thead>
-<tr>
-<th>Mode</th>
-<th>Description</th>
-<th>Use Case</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>internal</code></td>
-<td>Docker network only (most secure)</td>
-<td>Default production</td>
-</tr>
-<tr>
-<td><code>api-key</code></td>
-<td>External access with X-API-Key header</td>
-<td>Automation/scripts</td>
-</tr>
-<tr>
-<td><code>ip-whitelist</code></td>
-<td>IP-based access control</td>
-<td>Known client IPs</td>
-</tr>
-<tr>
-<td><code>api-key-ip</code></td>
-<td>Both API key and IP required</td>
-<td>High security</td>
-</tr>
-<tr>
-<td><code>open</code></td>
-<td>No authentication</td>
-<td>Development only</td>
-</tr>
-</tbody>
-</table>
+<hr />
+<h2 id="알려진-문제">알려진 문제<a class="headerlink" href="#알려진-문제" title="Permanent link">&para;</a></h2>
+<h3 id="월드가-worlds-디렉토리에-저장되지-않음">월드가 /worlds/ 디렉토리에 저장되지 않음<a class="headerlink" href="#월드가-worlds-디렉토리에-저장되지-않음" title="Permanent link">&para;</a></h3>
 <div class="admonition warning">
-<p class="admonition-title">Security Warning</p>
-<p>Never use <code>open</code> mode in production. It disables all authentication and exposes your servers to unauthorized access.</p>
+<p class="admonition-title">영향 버전: 1.6.8 ~ 1.6.11</p>
+<p>mcctl 버전 1.6.8부터 1.6.11까지 npm 패키지 사용자에게 영향을 미치는 중요한 버그입니다.</p>
 </div>
-<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
-<h3 id="server-management">Server Management<a class="headerlink" href="#server-management" title="Permanent link">&para;</a></h3>
+<p><strong>증상:</strong></p>
 <ul>
-<li>View all Minecraft servers with status</li>
-<li>Start, stop, and restart servers</li>
-<li>View server logs in real-time</li>
-<li>Monitor player counts and server health</li>
+<li>월드 데이터가 <code>worlds/&lt;world&gt;/</code> 대신 <code>servers/&lt;name&gt;/data/&lt;world&gt;/</code>에 저장됨</li>
+<li>서버 재시작마다 로그에 "No existing world data, creating new world" 표시</li>
+<li>서버 간 월드 공유 기능이 작동하지 않음</li>
+<li>서버 재시작 후 플레이어 진행 상황이 초기화됨</li>
 </ul>
-<h3 id="console-integration">Console Integration<a class="headerlink" href="#console-integration" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Execute RCON commands through the web interface</li>
-<li>View command output in real-time</li>
-<li>Supports all standard Minecraft commands</li>
-</ul>
-<h3 id="user-management">User Management<a class="headerlink" href="#user-management" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Multiple user accounts with role-based access</li>
-<li>Admin role: Full access to all features</li>
-<li>Viewer role: Read-only access to status and logs</li>
-</ul>
-<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p><strong>Note</strong>: <code>mcctl admin</code> commands are deprecated. Use <code>mcctl console</code> instead. The <code>admin</code> command alias still works for backward compatibility but will be removed in a future release.</p>
-</blockquote>
-<h3 id="1-initialize-admin-service">1. Initialize Admin Service<a class="headerlink" href="#1-initialize-admin-service" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
+<p><strong>원인:</strong></p>
+<p>npm 패키지 템플릿에 <code>EXTRA_ARGS=--universe /worlds/</code> 설정이 누락되어 서버가 월드를 잘못된 위치에 저장했습니다.</p>
+<p><strong>영향 여부 확인:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 이 명령어가 출력을 보여주면 영향받은 것입니다</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ls<span class="w"> </span>~/minecraft-servers/servers/*/data/*/level.dat<span class="w"> </span><span class="m">2</span>&gt;/dev/null
 </code></pre></div>
-<p>Follow the interactive prompts to configure:</p>
-<ol>
-<li>Admin username</li>
-<li>Admin password (min 8 characters, requires uppercase, lowercase, number)</li>
-<li>API access mode</li>
-<li>IP whitelist (if applicable)</li>
-</ol>
-<h3 id="2-start-admin-services">2. Start Admin Services<a class="headerlink" href="#2-start-admin-services" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<p><strong>해결 방법:</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">방법 1: 마이그레이션 명령어 (권장)</label><label for="__tabbed_1_2">방법 2: 수동 수정</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># 마이그레이션이 필요한 서버 확인</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># 모든 영향받은 서버 마이그레이션</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># 또는 특정 서버만 마이그레이션</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>&lt;server-name&gt;
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># 변경 사항 미리보기 (실제 적용 안 함)</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all<span class="w"> </span>--dry-run
 </code></pre></div>
-<h3 id="3-access-web-console">3. Access Web Console<a class="headerlink" href="#3-access-web-console" title="Permanent link">&para;</a></h3>
-<p>Open your browser and navigate to:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>http://localhost:5000
+</div>
+<div class="tabbed-block">
+<p><strong>1단계:</strong> 서버의 config.env에 <code>EXTRA_ARGS</code> 추가:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;EXTRA_ARGS=--universe /worlds/&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/servers/&lt;server-name&gt;/config.env
 </code></pre></div>
-<p>Log in with the admin credentials created during initialization.</p>
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<ul>
-<li>mcctl platform initialized (<code>mcctl init</code>)</li>
-<li>Docker running</li>
-<li>Ports 5000 and 5001 available (or custom ports in <code>.env</code>)</li>
-</ul>
-<h2 id="configuration-files">Configuration Files<a class="headerlink" href="#configuration-files" title="Permanent link">&para;</a></h2>
-<p>After initialization, the following files are created:</p>
+<p>또는 전역 <code>.env</code>에 추가 (모든 서버에 적용):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;EXTRA_ARGS=--universe /worlds/&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/.env
+</code></pre></div>
+<p><strong>2단계:</strong> 기존 월드 데이터 이동:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># 먼저 서버 중지</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>&lt;server-name&gt;
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># 월드를 data/에서 worlds/로 이동</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>mv<span class="w"> </span>~/minecraft-servers/servers/&lt;server-name&gt;/data/&lt;level-name&gt;<span class="w"> </span>~/minecraft-servers/worlds/&lt;level-name&gt;
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># 서버 시작</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;server-name&gt;
+</code></pre></div>
+<p><strong>3단계:</strong> 월드가 올바르게 로딩되는지 확인:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>-f
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># &quot;No existing world data, creating new world&quot; 메시지가 나오면 안 됩니다</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><strong>예방:</strong></p>
+<p>mcctl 버전 1.6.12 이상으로 업데이트하세요:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>npm<span class="w"> </span>update<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl
+</code></pre></div>
+<hr />
+<h2 id="일반적인-문제">일반적인 문제<a class="headerlink" href="#일반적인-문제" title="Permanent link">&para;</a></h2>
+<h3 id="서버가-시작되지-않음">서버가 시작되지 않음<a class="headerlink" href="#서버가-시작되지-않음" title="Permanent link">&para;</a></h3>
+<p><strong>증상:</strong> 서버 컨테이너가 즉시 종료되거나 시작에 실패합니다.</p>
+<p><strong>진단:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span>
+</code></pre></div>
+<p><strong>일반적인 원인:</strong></p>
 <table>
 <thead>
 <tr>
-<th>File</th>
-<th>Description</th>
+<th>원인</th>
+<th>로그 메시지</th>
+<th>해결책</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>~/minecraft-servers/admin.yaml</code></td>
-<td>Admin service configuration</td>
+<td>잘못된 Java 버전</td>
+<td><code>UnsupportedClassVersionError</code></td>
+<td>이미지 태그 변경 (java8, java17, java21)</td>
 </tr>
 <tr>
-<td><code>~/minecraft-servers/users.yaml</code></td>
-<td>User credentials (hashed passwords)</td>
+<td>메모리 부족</td>
+<td><code>OutOfMemoryError</code></td>
+<td>config.env에서 <code>MEMORY</code> 증가</td>
 </tr>
 <tr>
-<td><code>~/minecraft-servers/api-config.json</code></td>
-<td>API access configuration</td>
+<td>EULA 미동의</td>
+<td><code>EULA must be accepted</code></td>
+<td>.env에서 <code>EULA=TRUE</code> 설정</td>
+</tr>
+<tr>
+<td>포트 충돌</td>
+<td><code>Address already in use</code></td>
+<td>해당 포트를 사용하는 다른 서비스 확인</td>
+</tr>
+<tr>
+<td>월드 손상</td>
+<td><code>java.io.IOException</code></td>
+<td>백업에서 복원</td>
 </tr>
 </tbody>
 </table>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p><strong>Java 버전 가이드:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Minecraft 버전</th>
+<th>필요한 Java</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.21+</td>
+<td>Java 21</td>
+</tr>
+<tr>
+<td>1.18 - 1.20.4</td>
+<td>Java 17 또는 21</td>
+</tr>
+<tr>
+<td>Forge 1.16.5 이하</td>
+<td>Java 8</td>
+</tr>
+</tbody>
+</table>
+<h3 id="서버에-연결할-수-없음">서버에 연결할 수 없음<a class="headerlink" href="#서버에-연결할-수-없음" title="Permanent link">&para;</a></h3>
+<p><strong>증상:</strong> Minecraft 클라이언트에서 "서버에 연결할 수 없습니다" 또는 "연결이 거부되었습니다" 표시.</p>
+<p><strong>진단:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># mc-router 실행 확인</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>mcctl<span class="w"> </span>status<span class="w"> </span>router
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># 서버 실행 확인</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>mcctl<span class="w"> </span>status<span class="w"> </span>&lt;server-name&gt;
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># RCON 연결 테스트</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>&lt;server-name&gt;
+</code></pre></div>
+<p><strong>일반적인 원인:</strong></p>
+<table>
+<thead>
+<tr>
+<th>원인</th>
+<th>해결책</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mc-router 미실행</td>
+<td><code>mcctl router start</code></td>
+</tr>
+<tr>
+<td>서버 미실행</td>
+<td><code>mcctl start &lt;server-name&gt;</code></td>
+</tr>
+<tr>
+<td>잘못된 호스트네임</td>
+<td>올바른 형식 사용: <code>&lt;server&gt;.&lt;ip&gt;.nip.io:25565</code></td>
+</tr>
+<tr>
+<td>방화벽 차단</td>
+<td>포트 25565 개방</td>
+</tr>
+<tr>
+<td>DNS 해석 실패</td>
+<td>IP 주소 직접 사용 또는 nip.io 확인</td>
+</tr>
+</tbody>
+</table>
+<h3 id="느린-성능">느린 성능<a class="headerlink" href="#느린-성능" title="Permanent link">&para;</a></h3>
+<p><strong>증상:</strong> 서버 렉, 높은 TPS, 느린 청크 로딩.</p>
+<p><strong>진단:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>--detail
+</code></pre></div>
+<p><strong>해결책:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Aikar의 JVM 플래그 활성화</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># 시야 거리 줄이기</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>VIEW_DISTANCE<span class="w"> </span><span class="m">8</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># 시뮬레이션 거리 줄이기</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span>SIMULATION_DISTANCE<span class="w"> </span><span class="m">6</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1"># 서버 재시작</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;server-name&gt;
+</code></pre></div>
+<h3 id="월드-손상">월드 손상<a class="headerlink" href="#월드-손상" title="Permanent link">&para;</a></h3>
+<p><strong>증상:</strong> 누락된 청크, 손상된 블록, 로드 시 서버 충돌.</p>
+<p><strong>진단:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># 월드 잠금 상태 확인</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># 서버 로그에서 오류 확인</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span>error
+</code></pre></div>
+<p><strong>해결책:</strong></p>
+<ol>
+<li>
+<p><strong>백업에서 복원:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>월드 잠금 확인:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># 월드가 여러 서버에 할당되지 않았는지 확인</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># 필요시 해제 후 재할당</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>&lt;world-name&gt;
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>&lt;world-name&gt;<span class="w"> </span>&lt;server-name&gt;
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="모드플러그인이-로드되지-않음">모드/플러그인이 로드되지 않음<a class="headerlink" href="#모드플러그인이-로드되지-않음" title="Permanent link">&para;</a></h3>
+<p><strong>증상:</strong> 서버가 시작되지만 모드나 플러그인이 나타나지 않습니다.</p>
+<p><strong>진단:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;mod\|plugin&quot;</span>
+</code></pre></div>
+<p><strong>일반적인 원인:</strong></p>
+<table>
+<thead>
+<tr>
+<th>원인</th>
+<th>해결책</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>잘못된 서버 타입</td>
+<td>모드는 FORGE/FABRIC, 플러그인은 PAPER 사용</td>
+</tr>
+<tr>
+<td>버전 불일치</td>
+<td>모드 버전을 Minecraft 버전과 일치</td>
+</tr>
+<tr>
+<td>누락된 의존성</td>
+<td>필요한 의존성 모드 설치</td>
+</tr>
+<tr>
+<td>파일 권한</td>
+<td>shared/ 디렉토리의 파일 소유권 확인</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="도움-받기">도움 받기<a class="headerlink" href="#도움-받기" title="Permanent link">&para;</a></h2>
+<p>여기서 문제를 찾을 수 없다면:</p>
+<ol>
+<li><strong>서버 로그 확인:</strong> <code>mcctl logs &lt;server-name&gt; -n 200</code></li>
+<li><strong>Docker 로그 확인:</strong> <code>docker logs mc-&lt;server-name&gt;</code></li>
+<li><strong>AI 어시스턴트에게 질문:</strong> <a href="https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962">AI 어시스턴트</a></li>
+<li><strong>GitHub 이슈 등록:</strong> <a href="https://github.com/smallmiro/minecraft-server-manager/issues">GitHub Issues</a></li>
+</ol>
+<p>문제 보고 시 다음 정보를 포함해 주세요:</p>
 <ul>
-<li><strong><a href="installation/">Installation Guide</a></strong> - Detailed setup instructions</li>
-<li><strong><a href="cli-commands/">CLI Commands</a></strong> - Complete CLI reference</li>
-<li><strong><a href="api-reference/">API Reference</a></strong> - REST API documentation</li>
-<li><strong><a href="web-console/">Web Console Guide</a></strong> - Using the web interface</li>
+<li>mcctl 버전 (<code>mcctl --version</code>)</li>
+<li>Docker 버전 (<code>docker --version</code>)</li>
+<li>운영 체제</li>
+<li>관련 로그 출력</li>
+<li>재현 단계</li>
 </ul>
 
 
@@ -1994,7 +2215,7 @@
           <button type="button" class="md-top md-icon" data-md-component="top" hidden>
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
-  Back to top
+  맨위로
 </button>
         
       </main>
@@ -2046,10 +2267,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
