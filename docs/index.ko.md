@@ -94,5 +94,6 @@ flowchart TB
 
 ## 링크
 
+- [문제 해결](troubleshooting/index.ko.md) - 자주 발생하는 문제와 해결책
 - [GitHub 저장소](https://github.com/smallmiro/minecraft-server-manager)
 - [itzg/minecraft-server 문서](https://docker-minecraft-server.readthedocs.io/)

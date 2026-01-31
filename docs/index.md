@@ -94,5 +94,6 @@ Have questions about usage or configuration? Ask our **[AI Assistant](https://no
 
 ## Links
 
+- [Troubleshooting](troubleshooting/index.md) - Common issues and solutions
 - [GitHub Repository](https://github.com/smallmiro/minecraft-server-manager)
 - [itzg/minecraft-server Documentation](https://docker-minecraft-server.readthedocs.io/)
