@@ -401,25 +401,6 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../troubleshooting/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Troubleshooting
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
     
     
       <li class="md-tabs__item">
@@ -675,17 +656,6 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#system-requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System Requirements
-      
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#prerequisites" class="md-nav__link">
@@ -1630,33 +1600,6 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../troubleshooting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Troubleshooting
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
     
     
       
@@ -1683,7 +1626,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1705,14 +1648,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1839,17 +1782,6 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#system-requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System Requirements
-      
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#prerequisites" class="md-nav__link">
@@ -2056,47 +1988,6 @@
 
 <h1 id="installation-guide">Installation Guide<a class="headerlink" href="#installation-guide" title="Permanent link">&para;</a></h1>
 <p>This guide walks you through installing mcctl and setting up the required dependencies.</p>
-<h2 id="system-requirements">System Requirements<a class="headerlink" href="#system-requirements" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Component</th>
-<th>Minimum Version</th>
-<th>Recommended</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Node.js</strong></td>
-<td>&gt;= 18.0.0</td>
-<td>20 LTS</td>
-<td>Required for mcctl CLI</td>
-</tr>
-<tr>
-<td><strong>Docker Engine</strong></td>
-<td>&gt;= 24.0.0</td>
-<td>Latest</td>
-<td>Container runtime</td>
-</tr>
-<tr>
-<td><strong>Docker Compose</strong></td>
-<td>&gt;= 2.20.0</td>
-<td>Latest</td>
-<td><code>include</code> feature required</td>
-</tr>
-<tr>
-<td><strong>OS</strong></td>
-<td>Linux, macOS</td>
-<td>Ubuntu 22.04+</td>
-<td>Windows via WSL2</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition warning">
-<p class="admonition-title">Docker Compose Version</p>
-<p>Docker Compose <strong>v2.20.0 or higher</strong> is required. The <code>include</code> directive used by mcctl was introduced in this version. Check your version with <code>docker compose version</code>.</p>
-</div>
 <h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <p>Before installing mcctl, ensure you have the following installed:</p>
 <h3 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">&para;</a></h3>
@@ -2188,7 +2079,7 @@
 </code></pre></div>
 <p>Verify installation:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mcctl<span class="w"> </span>--version
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># mcctl version 1.6.9</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># mcctl version 1.6.3</span>
 </code></pre></div>
 <h3 id="using-npx-no-installation">Using npx (No Installation)<a class="headerlink" href="#using-npx-no-installation" title="Permanent link">&para;</a></h3>
 <p>You can also run mcctl without installing:</p>

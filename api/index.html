@@ -401,25 +401,6 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../troubleshooting/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Troubleshooting
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
     
     
       <li class="md-tabs__item">
@@ -1389,33 +1370,6 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../troubleshooting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Troubleshooting
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
     
     
       
@@ -1442,7 +1396,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1464,14 +1418,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1939,7 +1893,7 @@
             R[Hostname Routing&lt;br/&gt;Auto-scale up/down]
         end
 
-        subgraph MCAPI["mcctl-api :5001"]
+        subgraph MCAPI["mcctl-api :3001"]
             F[Fastify REST API]
         end
 
@@ -2053,7 +2007,7 @@
         A--&gt;&gt;C: : heartbeat (every 30s)
     end</code></pre>
 <h2 id="base-url">Base URL<a class="headerlink" href="#base-url" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>http://localhost:5001
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>http://localhost:3001
 </code></pre></div>
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
 <p>The API supports 5 authentication modes:</p>
@@ -2094,10 +2048,10 @@
 </tbody>
 </table>
 <h3 id="api-key-authentication">API Key Authentication<a class="headerlink" href="#api-key-authentication" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_your_key_here&quot;</span><span class="w"> </span>http://localhost:5001/api/servers
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_your_key_here&quot;</span><span class="w"> </span>http://localhost:3001/api/servers
 </code></pre></div>
 <h3 id="basic-authentication">Basic Authentication<a class="headerlink" href="#basic-authentication" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-u<span class="w"> </span>admin:password<span class="w"> </span>http://localhost:5001/api/servers
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-u<span class="w"> </span>admin:password<span class="w"> </span>http://localhost:3001/api/servers
 </code></pre></div>
 <h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># 1. Initialize console service</span>
@@ -2107,11 +2061,11 @@
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>start
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># 3. Test connection</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>curl<span class="w"> </span>http://localhost:5001/health
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>curl<span class="w"> </span>http://localhost:3001/health
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># 4. List servers (with API key)</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: </span><span class="k">$(</span>cat<span class="w"> </span>~/minecraft-servers/api.key<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span>http://localhost:5001/api/servers
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span>http://localhost:3001/api/servers
 </code></pre></div>
 <h2 id="api-endpoint-groups">API Endpoint Groups<a class="headerlink" href="#api-endpoint-groups" title="Permanent link">&para;</a></h2>
 <h3 id="health-check">Health Check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h3>
@@ -2318,7 +2272,7 @@
 <h2 id="real-time-log-streaming-sse">Real-time Log Streaming (SSE)<a class="headerlink" href="#real-time-log-streaming-sse" title="Permanent link">&para;</a></h2>
 <p>The logs endpoint supports Server-Sent Events for real-time log streaming:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Accept: text/event-stream&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="s2">&quot;http://localhost:5001/api/servers/survival/logs?follow=true&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="s2">&quot;http://localhost:3001/api/servers/survival/logs?follow=true&quot;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>data: {&quot;log&quot;: &quot;[10:30:15] Player joined&quot;}
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>data: {&quot;log&quot;: &quot;[10:30:20] Player left&quot;}
@@ -2326,7 +2280,7 @@
 </code></pre></div>
 <h2 id="openapiswagger">OpenAPI/Swagger<a class="headerlink" href="#openapiswagger" title="Permanent link">&para;</a></h2>
 <p>Interactive API documentation is available at:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>http://localhost:5001/docs
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>http://localhost:3001/docs
 </code></pre></div>
 <p>This provides:
 - Interactive endpoint testing

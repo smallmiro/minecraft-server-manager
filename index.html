@@ -399,25 +399,6 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="troubleshooting/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Troubleshooting
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
     
     
       <li class="md-tabs__item">
@@ -576,17 +557,6 @@
     <span class="md-ellipsis">
       
         Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#system-requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System Requirements
       
     </span>
   </a>
@@ -1519,33 +1489,6 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="troubleshooting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Troubleshooting
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
     
     
       
@@ -1572,7 +1515,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1594,14 +1537,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1741,17 +1684,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#system-requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System Requirements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1839,13 +1771,6 @@
 
 <h1 id="minecraft-docker-server-manager">Minecraft Docker Server Manager<a class="headerlink" href="#minecraft-docker-server-manager" title="Permanent link">&para;</a></h1>
 <p>A DevOps solution for managing multiple Minecraft Java Edition servers using Docker and the <strong>mcctl</strong> CLI.</p>
-<div class="admonition warning">
-<p class="admonition-title">Important: World Storage Bug in versions 1.6.8 ~ 1.6.11</p>
-<p>If you created servers with mcctl versions 1.6.8 through 1.6.11, your world data may be stored in the wrong location, causing worlds to be recreated on server restart.</p>
-<p><strong>Quick Check:</strong> Run <code>ls ~/minecraft-servers/servers/*/data/*/level.dat 2&gt;/dev/null</code> - if this shows any output, you're affected.</p>
-<p><strong>Solution:</strong> Update to 1.6.12+ and run <code>mcctl migrate worlds --all</code></p>
-<p>See the <a href="troubleshooting/#world-not-saving-to-worlds-directory">Troubleshooting Guide</a> for detailed instructions.</p>
-</div>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Multi-Server Management</strong>: Run multiple Minecraft servers on a single host</li>
@@ -1857,33 +1782,6 @@
 <li><strong>Player Management</strong>: Operators, whitelist, bans, and kicks via CLI</li>
 <li><strong>GitHub Backup</strong>: Automatic world backup to private repositories</li>
 </ul>
-<h2 id="system-requirements">System Requirements<a class="headerlink" href="#system-requirements" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Component</th>
-<th>Minimum Version</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Node.js</td>
-<td>&gt;= 18.0.0</td>
-<td>20 LTS recommended</td>
-</tr>
-<tr>
-<td>Docker Engine</td>
-<td>&gt;= 24.0.0</td>
-<td></td>
-</tr>
-<tr>
-<td>Docker Compose</td>
-<td>&gt;= 2.20.0</td>
-<td><code>include</code> feature required</td>
-</tr>
-</tbody>
-</table>
 <h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Install CLI globally</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl
@@ -1966,7 +1864,6 @@
 <p>Have questions about usage or configuration? Ask our <strong><a href="https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962">AI Assistant</a></strong> - it's trained on this documentation and can answer your questions interactively.</p>
 <h2 id="links">Links<a class="headerlink" href="#links" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="troubleshooting/">Troubleshooting</a> - Common issues and solutions</li>
 <li><a href="https://github.com/smallmiro/minecraft-server-manager">GitHub Repository</a></li>
 <li><a href="https://docker-minecraft-server.readthedocs.io/">itzg/minecraft-server Documentation</a></li>
 </ul>

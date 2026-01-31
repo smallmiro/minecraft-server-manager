@@ -401,25 +401,6 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../troubleshooting/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Troubleshooting
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
     
     
       <li class="md-tabs__item">
@@ -675,17 +656,6 @@
       목차
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#시스템-요구사항" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        시스템 요구사항
-      
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#사전-요구사항" class="md-nav__link">
@@ -1630,33 +1600,6 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../troubleshooting/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Troubleshooting
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
     
     
       
@@ -1683,7 +1626,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1705,14 +1648,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1839,17 +1782,6 @@
       목차
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#시스템-요구사항" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        시스템 요구사항
-      
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#사전-요구사항" class="md-nav__link">
@@ -2056,47 +1988,6 @@
 
 <h1 id="설치-가이드">설치 가이드<a class="headerlink" href="#설치-가이드" title="Permanent link">&para;</a></h1>
 <p>이 가이드는 mcctl 설치 및 필수 의존성 설정 과정을 안내합니다.</p>
-<h2 id="시스템-요구사항">시스템 요구사항<a class="headerlink" href="#시스템-요구사항" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>구성요소</th>
-<th>최소 버전</th>
-<th>권장 버전</th>
-<th>비고</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Node.js</strong></td>
-<td>&gt;= 18.0.0</td>
-<td>20 LTS</td>
-<td>mcctl CLI에 필요</td>
-</tr>
-<tr>
-<td><strong>Docker Engine</strong></td>
-<td>&gt;= 24.0.0</td>
-<td>최신</td>
-<td>컨테이너 런타임</td>
-</tr>
-<tr>
-<td><strong>Docker Compose</strong></td>
-<td>&gt;= 2.20.0</td>
-<td>최신</td>
-<td><code>include</code> 기능 필요</td>
-</tr>
-<tr>
-<td><strong>OS</strong></td>
-<td>Linux, macOS</td>
-<td>Ubuntu 22.04+</td>
-<td>Windows는 WSL2 사용</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition warning">
-<p class="admonition-title">Docker Compose 버전</p>
-<p>Docker Compose <strong>v2.20.0 이상</strong>이 필요합니다. mcctl이 사용하는 <code>include</code> 지시어는 이 버전에서 도입되었습니다. <code>docker compose version</code>으로 버전을 확인하세요.</p>
-</div>
 <h2 id="사전-요구사항">사전 요구사항<a class="headerlink" href="#사전-요구사항" title="Permanent link">&para;</a></h2>
 <p>mcctl을 설치하기 전에 다음 소프트웨어가 설치되어 있어야 합니다:</p>
 <h3 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">&para;</a></h3>
@@ -2188,7 +2079,7 @@
 </code></pre></div>
 <p>설치를 확인합니다:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mcctl<span class="w"> </span>--version
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># mcctl version 1.6.9</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># mcctl version 1.6.3</span>
 </code></pre></div>
 <h3 id="npx-사용-설치-없이">npx 사용 (설치 없이)<a class="headerlink" href="#npx-사용-설치-없이" title="Permanent link">&para;</a></h3>
 <p>설치 없이 mcctl을 실행할 수도 있습니다:</p>
