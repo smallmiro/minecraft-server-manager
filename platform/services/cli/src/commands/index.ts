@@ -16,6 +16,7 @@ export { playerOnlineCommand, type PlayerOnlineCommandOptions } from './player-o
 export { playerCommand, type PlayerCommandOptions } from './player.js';
 export { migrateCommand, type MigrateCommandOptions } from './migrate.js';
 export { modCommand, type ModCommandOptions } from './mod.js';
+export { updateCommand, type UpdateCommandOptions } from './update.js';
 
 // Console commands (new names)
 export {

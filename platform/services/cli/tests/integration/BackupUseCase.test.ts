@@ -295,7 +295,7 @@ Auto backup: enabled`,
     it('should show intro message', async () => {
       await useCase.init();
 
-      assert.strictEqual(promptAdapter.introMessage, 'GitHub Backup 설정');
+      assert.strictEqual(promptAdapter.introMessage, 'GitHub Backup Setup');
     });
 
     it('should call config save callback with correct values', async () => {
@@ -330,7 +330,7 @@ Auto backup: enabled`,
       const result = await useCase.init();
 
       assert.strictEqual(result.success, false);
-      assert.ok(result.error?.includes('저장소를 찾을 수 없습니다'));
+      assert.ok(result.error?.includes('Repository not found'));
     });
 
     it('should return error when authentication fails', async () => {
@@ -346,7 +346,7 @@ Auto backup: enabled`,
       const result = await useCase.init();
 
       assert.strictEqual(result.success, false);
-      assert.ok(result.error?.includes('인증에 실패'));
+      assert.ok(result.error?.includes('Authentication failed'));
     });
 
     it('should ask to overwrite when already configured', async () => {
@@ -447,7 +447,7 @@ Auto backup: enabled`,
       promptAdapter.confirm = async (options) => {
         confirmCount++;
         // Return false for auto-backup (likely the first or second confirm)
-        if (options.message.includes('자동으로 백업')) {
+        if (options.message.includes('auto backup')) {
           return false;
         }
         return originalConfirm(options);
