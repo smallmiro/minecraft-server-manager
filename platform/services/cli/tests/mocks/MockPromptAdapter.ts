@@ -3,6 +3,7 @@ import type {
   TextPromptOptions,
   SelectPromptOptions,
   ConfirmPromptOptions,
+  PasswordPromptOptions,
   Spinner,
 } from '../../src/application/ports/outbound/IPromptPort.js';
 import {
@@ -29,6 +30,7 @@ export interface MockPromptValues {
   worldUrl?: string;
   confirm?: boolean;
   text?: string;
+  password?: string;
   selectIndex?: number;
 }
 
@@ -134,6 +136,13 @@ export class MockPromptAdapter implements IPromptPort {
       throw new MockCancelError();
     }
     return this.values.confirm ?? options.initialValue ?? false;
+  }
+
+  async password(_options: PasswordPromptOptions): Promise<string> {
+    if (this._cancelled) {
+      throw new MockCancelError();
+    }
+    return this.values.password ?? 'mock-token';
   }
 
   // ========================================

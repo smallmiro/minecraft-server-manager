@@ -260,4 +260,203 @@ Auto backup: enabled`,
       assert.ok(result.error?.includes('invalid commit'));
     });
   });
+
+  describe('init', () => {
+    let savedConfig: Record<string, string | boolean> | null;
+
+    beforeEach(() => {
+      savedConfig = null;
+      // Configure for init: not configured, successful GitHub connection
+      shellAdapter = new MockShellAdapter({
+        backupStatusResult: { success: false }, // Not configured
+        execResult: { success: true }, // GitHub connection test passes
+      });
+      promptAdapter = new MockPromptAdapter({
+        password: 'ghp_test_token_12345',
+        confirm: true,
+        selectIndex: 0, // 'main' branch
+      });
+      promptAdapter.textValues = ['user/minecraft-backup']; // Repository
+      useCase = new BackupUseCase(promptAdapter, shellAdapter);
+      useCase.setConfigSaveCallback((config) => {
+        savedConfig = config;
+      });
+    });
+
+    it('should complete init with all prompts', async () => {
+      const result = await useCase.init();
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.repository, 'user/minecraft-backup');
+      assert.strictEqual(result.branch, 'main');
+      assert.strictEqual(result.autoBackupEnabled, true);
+    });
+
+    it('should show intro message', async () => {
+      await useCase.init();
+
+      assert.strictEqual(promptAdapter.introMessage, 'GitHub Backup 설정');
+    });
+
+    it('should call config save callback with correct values', async () => {
+      await useCase.init();
+
+      assert.ok(savedConfig !== null);
+      assert.strictEqual(savedConfig!['BACKUP_GITHUB_TOKEN'], 'ghp_test_token_12345');
+      assert.strictEqual(savedConfig!['BACKUP_GITHUB_REPO'], 'user/minecraft-backup');
+      assert.strictEqual(savedConfig!['BACKUP_GITHUB_BRANCH'], 'main');
+      assert.strictEqual(savedConfig!['BACKUP_AUTO_ON_STOP'], true);
+    });
+
+    it('should test GitHub connection', async () => {
+      await useCase.init();
+
+      assert.ok(shellAdapter.wasCommandCalled('exec'));
+      const execLog = shellAdapter.commandLog.find((log) => log.command === 'exec');
+      assert.ok(execLog);
+      assert.strictEqual(execLog.args[0], 'git');
+    });
+
+    it('should return error when GitHub connection fails', async () => {
+      shellAdapter = new MockShellAdapter({
+        backupStatusResult: { success: false },
+        execResult: {
+          success: false,
+          stderr: 'Repository not found',
+        },
+      });
+      useCase = new BackupUseCase(promptAdapter, shellAdapter);
+
+      const result = await useCase.init();
+
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.includes('저장소를 찾을 수 없습니다'));
+    });
+
+    it('should return error when authentication fails', async () => {
+      shellAdapter = new MockShellAdapter({
+        backupStatusResult: { success: false },
+        execResult: {
+          success: false,
+          stderr: 'Authentication failed',
+        },
+      });
+      useCase = new BackupUseCase(promptAdapter, shellAdapter);
+
+      const result = await useCase.init();
+
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.includes('인증에 실패'));
+    });
+
+    it('should ask to overwrite when already configured', async () => {
+      shellAdapter = new MockShellAdapter({
+        backupStatusResult: {
+          success: true,
+          stdout: 'Repository: existing/repo\nBranch: main',
+        },
+        execResult: { success: true },
+      });
+      promptAdapter = new MockPromptAdapter({
+        password: 'ghp_new_token',
+        confirm: true, // Confirm overwrite
+        selectIndex: 0,
+      });
+      promptAdapter.textValues = ['new/repo'];
+      useCase = new BackupUseCase(promptAdapter, shellAdapter);
+
+      const result = await useCase.init();
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.repository, 'new/repo');
+    });
+
+    it('should cancel when user declines overwrite', async () => {
+      shellAdapter = new MockShellAdapter({
+        backupStatusResult: {
+          success: true,
+          stdout: 'Repository: existing/repo\nBranch: main',
+        },
+      });
+      promptAdapter = new MockPromptAdapter({
+        confirm: false, // Decline overwrite
+      });
+      useCase = new BackupUseCase(promptAdapter, shellAdapter);
+
+      const result = await useCase.init();
+
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.includes('existing configuration preserved'));
+    });
+
+    it('should skip overwrite prompt when force=true', async () => {
+      shellAdapter = new MockShellAdapter({
+        backupStatusResult: {
+          success: true,
+          stdout: 'Repository: existing/repo\nBranch: main',
+        },
+        execResult: { success: true },
+      });
+      promptAdapter = new MockPromptAdapter({
+        password: 'ghp_force_token',
+        confirm: true,
+        selectIndex: 0,
+      });
+      promptAdapter.textValues = ['force/repo'];
+      useCase = new BackupUseCase(promptAdapter, shellAdapter);
+
+      const result = await useCase.init(true); // force=true
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.repository, 'force/repo');
+    });
+
+    it('should handle cancellation at token prompt', async () => {
+      promptAdapter.setCancelled(true);
+
+      const result = await useCase.init();
+
+      assert.strictEqual(result.success, false);
+      assert.strictEqual(result.error, 'Cancelled');
+    });
+
+    it('should select custom branch', async () => {
+      promptAdapter = new MockPromptAdapter({
+        password: 'ghp_token',
+        confirm: true,
+        selectIndex: 2, // '_custom' option
+      });
+      promptAdapter.textValues = ['user/repo', 'develop']; // Repository, then custom branch
+      shellAdapter = new MockShellAdapter({
+        backupStatusResult: { success: false },
+        execResult: { success: true },
+      });
+      useCase = new BackupUseCase(promptAdapter, shellAdapter);
+
+      const result = await useCase.init();
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.branch, 'develop');
+    });
+
+    it('should disable auto-backup when user declines', async () => {
+      // Need to configure prompts more carefully
+      // First confirm is for overwrite (if needed), second is for auto-backup
+      let confirmCount = 0;
+      const originalConfirm = promptAdapter.confirm.bind(promptAdapter);
+      promptAdapter.confirm = async (options) => {
+        confirmCount++;
+        // Return false for auto-backup (likely the first or second confirm)
+        if (options.message.includes('자동으로 백업')) {
+          return false;
+        }
+        return originalConfirm(options);
+      };
+
+      const result = await useCase.init();
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.autoBackupEnabled, false);
+    });
+  });
 });
