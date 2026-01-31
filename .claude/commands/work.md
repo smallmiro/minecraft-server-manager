@@ -5,6 +5,7 @@ This command executes development work based on GitHub Issues or Milestones foll
 ## Usage
 
 ```bash
+/project:work                         # Context mode: create issue from conversation and execute
 /project:work --issue <number>        # Single issue implementation
 /project:work --milestone <number>    # All issues in milestone (Ralph Loop)
 ```
@@ -13,11 +14,82 @@ This command executes development work based on GitHub Issues or Milestones foll
 
 | Option | Description |
 |--------|-------------|
+| (none) | **Context Mode**: Analyze conversation, create GitHub issue, then execute |
 | `--issue <N>` | Implement single issue #N |
 | `--milestone <N>` | Process all issues in milestone N |
 | `--dry-run` | Show plan only, no execution |
 | `--skip-review` | Skip code review (emergency fixes only) |
 | `--parallel` | Auto-detect and execute parallelizable issues |
+
+---
+
+## Context Mode (no options)
+
+When `/work` is invoked **without any options**, analyze the current conversation context and create a GitHub issue automatically.
+
+### Workflow
+
+1. **Analyze Conversation Context**
+   - Review the conversation history
+   - Identify the task/feature being discussed
+   - Extract requirements, acceptance criteria, and implementation details
+
+2. **Create GitHub Issue**
+   ```bash
+   gh issue create --title "<type>: <description>" --body "$(cat <<'EOF'
+   ## Summary
+   <extracted summary from conversation>
+
+   ## Requirements
+   - [ ] <requirement 1>
+   - [ ] <requirement 2>
+
+   ## Acceptance Criteria
+   - [ ] <criteria 1>
+   - [ ] <criteria 2>
+
+   ## Technical Notes
+   <any technical details discussed>
+
+   ---
+   *Auto-generated from conversation context*
+   EOF
+   )"
+   ```
+
+3. **Execute the Created Issue**
+   - Automatically proceed with Single Issue Mode workflow
+   - Use the newly created issue number
+
+### Example
+
+```
+User: 로그인 페이지에 "비밀번호 찾기" 링크를 추가해주세요.
+      클릭하면 이메일 입력 모달이 뜨고, 이메일로 재설정 링크를 보내야 해요.
+
+User: /work
+
+Claude:
+1. Analyzing conversation context...
+   - Task: Add "Forgot Password" feature to login page
+   - Requirements: Link + Modal + Email sending
+
+2. Creating GitHub Issue #175...
+   Title: "feat(auth): add forgot password functionality"
+   Body: [auto-generated from context]
+
+3. Proceeding with Issue #175...
+   [... single issue workflow continues ...]
+```
+
+### Issue Title Format
+
+| Type | Prefix | Example |
+|------|--------|---------|
+| Feature | `feat(<scope>):` | `feat(auth): add forgot password` |
+| Bug Fix | `fix(<scope>):` | `fix(login): resolve session timeout` |
+| Refactor | `refactor(<scope>):` | `refactor(api): extract validation logic` |
+| Docs | `docs(<scope>):` | `docs(readme): update installation guide` |
 
 ---
 
