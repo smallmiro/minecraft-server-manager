@@ -40,6 +40,9 @@ Web-based management console for Minecraft server infrastructure. Provides real-
 - Direct Docker/RCON access (handled by mcctl-api)
 - CLI functionality (handled by mcctl CLI)
 
+### 1.4 Related Documents
+- [Implementation Plan](./plan.md)
+
 ## 2. Tech Stack
 
 | Component | Technology | Version |
@@ -52,6 +55,8 @@ Web-based management console for Minecraft server infrastructure. Provides real-
 | State | React Query (TanStack) | 5.x |
 | Real-time | EventSource (SSE) | Native |
 | **Authentication** | **Better Auth** | **1.x** |
+| **ORM** | **Drizzle ORM** | **0.x** |
+| **Database** | **SQLite** (expandable to PostgreSQL) | **better-sqlite3** |
 | Shared | @minecraft-docker/shared | workspace |
 
 ### 2.1 MUI + Tailwind CSS Integration
@@ -59,18 +64,18 @@ Web-based management console for Minecraft server infrastructure. Provides real-
 ```javascript
 // tailwind.config.js
 module.exports = {
-  important: '#__next',  // MUI 충돌 방지
+  important: '#__next',  // Prevent MUI conflicts
   corePlugins: {
-    preflight: false,    // MUI 기본 스타일 보존
+    preflight: false,    // Preserve MUI base styles
   },
   theme: {
     extend: {
       colors: {
-        primary: '#1bd96a',      // Modrinth 스타일 민트 그린
-        secondary: '#7c3aed',    // 보라색 액센트
+        primary: '#1bd96a',      // Modrinth-style mint green
+        secondary: '#7c3aed',    // Purple accent
         background: {
-          DEFAULT: '#111111',    // 메인 배경
-          paper: '#1a1a1a',      // 카드 배경
+          DEFAULT: '#111111',    // Main background
+          paper: '#1a1a1a',      // Card background
         },
       },
     },
@@ -79,73 +84,85 @@ module.exports = {
 ```
 
 **Usage Pattern**:
-- MUI: 복잡한 컴포넌트 (Dialog, DataGrid, Autocomplete, Forms)
-- Tailwind: 레이아웃, 간격, 빠른 스타일링, 유틸리티
+- MUI: Complex components (Dialog, DataGrid, Autocomplete, Forms)
+- Tailwind: Layout, spacing, quick styling, utilities
 
 ## 3. Development Methodology
 
-> **Reference**: [CLAUDE.md](../../../CLAUDE.md) - Development Philosophy 섹션 참조
+> **Reference**: [CLAUDE.md](../../../CLAUDE.md) - See Development Philosophy section
 >
-> 프로젝트 공통 개발 방법론:
-> - **XP (Extreme Programming)** 기반
+> Project-wide development methodology:
+> - **XP (Extreme Programming)** based
 > - **TDD**: Red → Green → Refactor
-> - **Tidy First**: 구조 변경과 동작 변경 분리
+> - **Tidy First**: Separate structural and behavioral changes
 > - **CI/CD**: lint, type-check, test, build
 
-### Testing Strategy (mcctl-console 특화)
+### Testing Strategy (mcctl-console specific)
 
-| 테스트 유형 | 도구 | 대상 |
-|------------|------|------|
+| Test Type | Tool | Target |
+|-----------|------|--------|
 | Unit | Vitest | Services, Hooks, Utils |
 | Component | React Testing Library | Components |
 | Integration | Vitest + MSW | API Routes, SSE |
 | E2E | Playwright | User Flows |
 
-**테스트 커버리지 목표**: 80% 이상
+**Test Coverage Target**: 80% or higher
 
 ## 4. Architecture
 
-mcctl-console은 **Hexagonal Architecture (Ports & Adapters)** 패턴을 확장한 구조를 사용합니다.
+mcctl-console uses an extended **Hexagonal Architecture (Ports & Adapters)** pattern.
 
-### 3.0 Hexagonal Architecture
+### 4.1 Hexagonal Architecture
 
-MVC 패턴을 확장한 헥사고날 아키텍처로, 비즈니스 로직과 외부 의존성을 분리합니다.
+An extension of the MVC pattern, Hexagonal Architecture separates business logic from external dependencies.
 
+```mermaid
+flowchart TB
+    subgraph Presentation["Presentation Layer"]
+        P1["React Components"]
+        P2["Pages"]
+        P3["Hooks"]
+    end
+
+    subgraph Application["Application Layer"]
+        A1["Use Cases"]
+        A2["Services"]
+        A3["DTOs"]
+
+        subgraph Ports
+            PI["Ports (in)"]
+            PO["Ports (out)"]
+        end
+    end
+
+    subgraph Adapters["Infrastructure Layer"]
+        subgraph AdaptersIn["Inbound Adapters"]
+            AI1["API Routes"]
+            AI2["BFF Handlers"]
+        end
+        subgraph AdaptersOut["Outbound Adapters"]
+            AO1["API Client"]
+            AO2["SSE Client"]
+            AO3["Auth Client"]
+        end
+    end
+
+    Presentation --> Application
+    PI --> AdaptersIn
+    PO --> AdaptersOut
 ```
-                    ┌─────────────────────────────────────┐
-                    │           Presentation              │
-                    │   (React Components, Pages, Hooks)  │
-                    └─────────────────┬───────────────────┘
-                                      │
-                    ┌─────────────────▼───────────────────┐
-                    │           Application               │
-                    │    (Use Cases, Services, DTOs)      │
-                    │                                     │
-                    │  ┌───────────┐    ┌───────────┐    │
-                    │  │  Ports    │    │  Ports    │    │
-                    │  │   (in)    │    │   (out)   │    │
-                    │  └─────┬─────┘    └─────┬─────┘    │
-                    └────────┼────────────────┼──────────┘
-                             │                │
-              ┌──────────────▼──┐          ┌──▼──────────────┐
-              │    Adapters     │          │    Adapters     │
-              │ (API Routes,    │          │ (API Client,    │
-              │  BFF Handlers)  │          │  SSE Client,    │
-              │                 │          │  Auth Client)   │
-              └─────────────────┘          └─────────────────┘
-```
 
-**계층 구조**:
+**Layer Structure**:
 
-| 계층 | 역할 | 예시 |
-|------|------|------|
-| **Presentation** | UI 렌더링, 사용자 상호작용 | React Components, Pages, Hooks |
-| **Application** | 비즈니스 로직, 유스케이스 | ServerService, AuthService |
-| **Ports (in)** | 외부에서 들어오는 요청 인터페이스 | IServerAPI, IAuthAPI |
-| **Ports (out)** | 외부로 나가는 요청 인터페이스 | IMcctlApiClient, ISSEClient |
-| **Adapters** | 포트 구현체 | McctlApiAdapter, SSEAdapter |
+| Layer | Role | Examples |
+|-------|------|----------|
+| **Presentation** | UI rendering, user interaction | React Components, Pages, Hooks |
+| **Application** | Business logic, use cases | ServerService, AuthService |
+| **Ports (in)** | Inbound request interfaces | IServerAPI, IAuthAPI |
+| **Ports (out)** | Outbound request interfaces | IMcctlApiClient, ISSEClient |
+| **Adapters** | Port implementations | McctlApiAdapter, SSEAdapter |
 
-**디렉토리 매핑**:
+**Directory Mapping**:
 ```
 src/
 ├── app/                    # Presentation (Pages)
@@ -158,58 +175,61 @@ src/
 └── types/                  # Shared Types
 ```
 
-**장점**:
-- 테스트 용이성: 포트를 통한 의존성 주입으로 Mock 테스트 가능
-- 유연성: 어댑터 교체만으로 외부 서비스 변경 가능
-- 관심사 분리: UI, 비즈니스 로직, 인프라 명확히 분리
+**Benefits**:
+- Testability: Mock testing through dependency injection via ports
+- Flexibility: Change external services by simply swapping adapters
+- Separation of Concerns: Clear separation of UI, business logic, and infrastructure
 
-### 3.1 System Architecture
+### 4.2 System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         BROWSER                                  │
-│                   (React + MUI + Tailwind)                       │
-└─────────────────────────┬───────────────────────────────────────┘
-                          │ HTTP/SSE
-┌─────────────────────────▼───────────────────────────────────────┐
-│                  mcctl-console (BFF + UI)                        │
-│                   Next.js App Router                             │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │  /app                                                    │    │
-│  │  ├── page.tsx (Dashboard)                               │    │
-│  │  ├── servers/                                           │    │
-│  │  ├── worlds/                                            │    │
-│  │  ├── players/                                           │    │
-│  │  ├── backups/                                           │    │
-│  │  ├── settings/                                          │    │
-│  │  └── api/ (BFF Routes)                                  │    │
-│  └─────────────────────────────────────────────────────────┘    │
-└─────────────────────────┬───────────────────────────────────────┘
-                          │ HTTP/SSE (Internal) + X-API-Key
-┌─────────────────────────▼───────────────────────────────────────┐
-│                      mcctl-api                                   │
-│                  Fastify REST API                                │
-│           (Server, World, Player, Backup endpoints)              │
-└─────────────────────────────────────────────────────────────────┘
-```
+```mermaid
+flowchart TB
+    subgraph Browser["BROWSER"]
+        UI["React + MUI + Tailwind"]
+    end
 
-### 3.2 BFF-API Authentication
+    subgraph Console["mcctl-console (BFF + UI)"]
+        direction TB
+        NextJS["Next.js App Router"]
 
-mcctl-console(BFF)과 mcctl-api 간의 통신은 **API Key 인증**을 사용합니다.
+        subgraph AppRoutes["/app"]
+            Dashboard["page.tsx (Dashboard)"]
+            Servers["servers/"]
+            Worlds["worlds/"]
+            Players["players/"]
+            Backups["backups/"]
+            Settings["settings/"]
+            BFF["api/ (BFF Routes)"]
+        end
+    end
 
-```
-┌──────────────────┐                      ┌──────────────────┐
-│  mcctl-console   │  ───────────────────▶│    mcctl-api     │
-│      (BFF)       │  X-API-Key: <key>    │  (Fastify REST)  │
-└──────────────────┘                      └──────────────────┘
+    subgraph API["mcctl-api"]
+        Fastify["Fastify REST API"]
+        Endpoints["Server, World, Player, Backup endpoints"]
+    end
+
+    Browser <-->|"HTTP/SSE"| Console
+    Console <-->|"HTTP/SSE (Internal) + X-API-Key"| API
 ```
 
-**인증 방식**:
+### 4.3 BFF-API Authentication
+
+Communication between mcctl-console (BFF) and mcctl-api uses **API Key authentication**.
+
+```mermaid
+flowchart LR
+    Console["mcctl-console<br/>(BFF)"]
+    API["mcctl-api<br/>(Fastify REST)"]
+
+    Console -->|"X-API-Key: <key>"| API
+```
+
+**Authentication Method**:
 - Header: `X-API-Key`
-- mcctl-api의 `AUTH_MODE=api-key` 설정 필요
-- BFF는 서버 사이드에서만 API Key를 사용 (클라이언트에 노출되지 않음)
+- Requires `AUTH_MODE=api-key` configuration in mcctl-api
+- BFF uses API Key only server-side (not exposed to client)
 
-**API Client 구현**:
+**API Client Implementation**:
 ```typescript
 // lib/api-client.ts
 const apiClient = {
@@ -227,45 +247,43 @@ const apiClient = {
 };
 ```
 
-### 3.3 User Authentication (Better Auth)
+### 4.4 User Authentication (Better Auth)
 
-브라우저와 mcctl-console(BFF) 간의 사용자 인증은 **Better Auth**를 사용합니다.
+User authentication between browser and mcctl-console (BFF) uses **Better Auth**.
 
-```
-┌──────────────────┐                      ┌──────────────────┐
-│     Browser      │  ───────────────────▶│  mcctl-console   │
-│                  │  Session (Cookie)    │      (BFF)       │
-└──────────────────┘                      └──────────────────┘
-                                                   │
-                                                   │ Better Auth
-                                                   │ (세션/사용자 관리)
-                                                   ▼
-                                          ┌──────────────────┐
-                                          │    Database      │
-                                          │  (PostgreSQL)    │
-                                          └──────────────────┘
+```mermaid
+flowchart TB
+    Browser["Browser"]
+    Console["mcctl-console<br/>(BFF)"]
+    DB[("Database<br/>(SQLite)")]
+
+    Browser <-->|"Session (Cookie)"| Console
+    Console <-->|"Better Auth + Drizzle ORM<br/>(Session/User Management)"| DB
 ```
 
-**Better Auth 선택 이유**:
-- TypeScript-first 설계로 완전한 타입 안전성
-- Self-hosted로 데이터 소유권 보장
-- 간결한 API와 빠른 설정
-- 모노레포 구조와 호환성 우수
+**Why Better Auth**:
+- TypeScript-first design with complete type safety
+- Self-hosted for data ownership
+- Clean API and quick setup
+- Excellent monorepo compatibility
 
-**인증 방식**:
-- Email/Password 기반 로그인
-- 세션 기반 인증 (Secure Cookie)
-- CSRF 보호 내장
+**Authentication Method**:
+- Email/Password based login
+- Session-based authentication (Secure Cookie)
+- Built-in CSRF protection
 
-**서버 설정**:
+**Server Configuration**:
 ```typescript
 // lib/auth.ts
 import { betterAuth } from 'better-auth';
-import { postgres } from 'better-auth/adapters/postgres';
-import { pool } from './db';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { admin } from 'better-auth/plugins';
+import { db } from './db';
 
 export const auth = betterAuth({
-  database: postgres(pool),
+  database: drizzleAdapter(db, {
+    provider: 'sqlite',  // Change to 'pg' for PostgreSQL
+  }),
   emailAndPassword: {
     enabled: true,
   },
@@ -275,22 +293,190 @@ export const auth = betterAuth({
       maxAge: 60 * 60 * 24, // 24 hours
     },
   },
+  plugins: [
+    admin({
+      defaultRole: 'user',
+      adminRole: 'admin',
+    }),
+  ],
 });
 ```
 
-**클라이언트 설정**:
+**Admin Plugin Features**:
+- Automatic `role` field on user table
+- Admin API endpoints for user management
+- Role-based middleware helpers
+- First registered user can be auto-promoted to admin
+
+**Database Configuration (Drizzle ORM)**:
+```typescript
+// lib/db.ts
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import Database from 'better-sqlite3';
+import * as schema from './schema';
+
+const sqlite = new Database(process.env.DATABASE_PATH ?? 'mcctl-console.db');
+export const db = drizzle(sqlite, { schema });
+
+// Future PostgreSQL migration:
+// import { drizzle } from 'drizzle-orm/node-postgres';
+// import { Pool } from 'pg';
+// const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// export const db = drizzle(pool, { schema });
+```
+
+### 4.6 Data Model
+
+#### 4.6.1 Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    User ||--o{ Session : "has"
+    User ||--o{ UserServer : "has access to"
+    UserServer }o--|| Server : "references"
+
+    User {
+        string id PK
+        string email
+        string name
+        string role
+        timestamp createdAt
+    }
+
+    Session {
+        string id PK
+        string userId FK
+        timestamp expiresAt
+    }
+
+    UserServer {
+        string id PK
+        string userId FK
+        string serverName FK
+        string role
+        timestamp createdAt
+    }
+
+    Server {
+        string name PK
+        string type
+        string version
+        string status
+    }
+```
+
+> **Note**: Server data is managed by mcctl-api (filesystem). Only the User-Server mapping is stored in SQLite.
+
+#### 4.6.2 User Roles
+
+| Role | Description | Permissions |
+|------|-------------|-------------|
+| `admin` | System administrator | Full access to all servers |
+| `user` | Regular user | Access only to assigned servers |
+
+#### 4.6.3 UserServer Roles
+
+| Role | Description | Server Permissions |
+|------|-------------|-------------------|
+| `owner` | Server owner | Full control (start, stop, delete, config) |
+| `operator` | Server operator | Operate (start, stop, console) |
+| `viewer` | Read-only access | View only (status, logs) |
+
+#### 4.6.4 Drizzle Schema
+
+```typescript
+// lib/schema.ts
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { relations } from 'drizzle-orm';
+
+// Better Auth manages these tables automatically:
+// - user
+// - session
+// - account
+// - verification
+
+// User-Server mapping (custom table)
+export const userServers = sqliteTable('user_servers', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  serverName: text('server_name').notNull(),
+  role: text('role', { enum: ['owner', 'operator', 'viewer'] }).notNull().default('viewer'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+// Relations
+export const userServersRelations = relations(userServers, ({ one }) => ({
+  user: one(users, {
+    fields: [userServers.userId],
+    references: [users.id],
+  }),
+}));
+
+// Indexes
+// CREATE UNIQUE INDEX idx_user_server ON user_servers(user_id, server_name);
+```
+
+#### 4.6.5 Authorization Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Console as mcctl-console
+    participant DB as Database
+    participant API as mcctl-api
+
+    User->>Console: GET /servers
+    Console->>DB: Get user's servers
+    DB-->>Console: [server1, server2]
+
+    Console->>API: GET /api/servers (filter by names)
+    API-->>Console: Server data
+
+    Note over Console: Merge & filter by permissions
+
+    Console-->>User: Response
+```
+
+#### 4.6.6 Permission Matrix
+
+| Action | Admin | Owner | Operator | Viewer |
+|--------|-------|-------|----------|--------|
+| View server list | ✅ All | ✅ Own | ✅ Own | ✅ Own |
+| View server detail | ✅ | ✅ | ✅ | ✅ |
+| View logs | ✅ | ✅ | ✅ | ✅ |
+| Start/Stop server | ✅ | ✅ | ✅ | ❌ |
+| Execute RCON | ✅ | ✅ | ✅ | ❌ |
+| Modify config | ✅ | ✅ | ❌ | ❌ |
+| Create server | ✅ | ✅ | ❌ | ❌ |
+| Delete server | ✅ | ✅ | ❌ | ❌ |
+| Manage players | ✅ | ✅ | ✅ | ❌ |
+| Assign world | ✅ | ✅ | ❌ | ❌ |
+| Manage backups | ✅ | ✅ | ❌ | ❌ |
+| Assign users | ✅ | ✅ | ❌ | ❌ |
+
+**Client Configuration**:
 ```typescript
 // lib/auth-client.ts
 import { createAuthClient } from 'better-auth/react';
+import { adminClient } from 'better-auth/client/plugins';
 
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_APP_URL,
+  plugins: [adminClient()],
 });
 
-export const { signIn, signUp, signOut, useSession } = authClient;
+export const { signIn, signUp, signOut, useSession, admin } = authClient;
+
+// Admin functions available:
+// admin.listUsers()
+// admin.createUser({ email, password, role })
+// admin.updateUser({ userId, role })
+// admin.deleteUser({ userId })
+// admin.banUser({ userId })
+// admin.unbanUser({ userId })
 ```
 
-**보호된 라우트**:
+**Protected Routes**:
 ```typescript
 // middleware.ts
 import { auth } from '@/lib/auth';
@@ -305,6 +491,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Admin-only routes protection
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (session.user.role !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
@@ -313,7 +506,38 @@ export const config = {
 };
 ```
 
-### 3.4 Directory Structure
+**Role Check Helper**:
+```typescript
+// lib/auth-utils.ts
+import { auth } from './auth';
+import { headers } from 'next/headers';
+
+export async function requireAdmin() {
+  const session = await auth.api.getSession({
+    headers: headers(),
+  });
+
+  if (!session || session.user.role !== 'admin') {
+    throw new Error('Admin access required');
+  }
+
+  return session;
+}
+
+export async function requireAuth() {
+  const session = await auth.api.getSession({
+    headers: headers(),
+  });
+
+  if (!session) {
+    throw new Error('Authentication required');
+  }
+
+  return session;
+}
+```
+
+### 4.5 Directory Structure
 
 ```
 platform/services/mcctl-console/
@@ -347,6 +571,10 @@ platform/services/mcctl-console/
 │   │   │   └── page.tsx        # Backup management
 │   │   ├── settings/
 │   │   │   └── page.tsx        # Platform settings
+│   │   ├── admin/              # Admin-only pages
+│   │   │   ├── page.tsx        # Admin dashboard
+│   │   │   └── users/
+│   │   │       └── page.tsx    # User management
 │   │   └── api/                # BFF API routes
 │   │       ├── auth/
 │   │       │   └── [...all]/
@@ -390,6 +618,10 @@ platform/services/mcctl-console/
 │   │   │   ├── LoginForm.tsx       # Login form component
 │   │   │   ├── SignUpForm.tsx      # Sign up form component
 │   │   │   └── UserMenu.tsx        # User dropdown menu
+│   │   ├── users/
+│   │   │   ├── UserList.tsx        # User management list (admin)
+│   │   │   ├── ServerAccessDialog.tsx # Assign server access dialog
+│   │   │   └── PermissionBadge.tsx # Role/permission badge
 │   │   └── common/
 │   │       ├── StatusBadge.tsx
 │   │       ├── ConfirmDialog.tsx
@@ -407,7 +639,8 @@ platform/services/mcctl-console/
 │   │   ├── WorldService.ts     # World management use cases
 │   │   ├── PlayerService.ts    # Player management use cases
 │   │   ├── BackupService.ts    # Backup management use cases
-│   │   └── AuthService.ts      # Authentication use cases
+│   │   ├── AuthService.ts      # Authentication use cases
+│   │   └── UserServerService.ts # User-Server permission management
 │   │
 │   ├── ports/                  # Application Layer (Interfaces)
 │   │   ├── in/                 # Inbound ports
@@ -417,17 +650,20 @@ platform/services/mcctl-console/
 │   │   └── out/                # Outbound ports
 │   │       ├── IMcctlApiClient.ts
 │   │       ├── ISSEClient.ts
-│   │       └── IAuthClient.ts
+│   │       ├── IAuthClient.ts
+│   │       └── IUserServerRepository.ts  # User-Server mapping repository
 │   │
 │   ├── adapters/               # Infrastructure Layer (Implementations)
 │   │   ├── McctlApiAdapter.ts  # mcctl-api HTTP client
 │   │   ├── SSEAdapter.ts       # SSE connection adapter
-│   │   └── AuthAdapter.ts      # Better Auth adapter
+│   │   ├── AuthAdapter.ts      # Better Auth adapter
+│   │   └── UserServerRepository.ts # Drizzle User-Server repository
 │   │
 │   ├── lib/
 │   │   ├── auth.ts             # Better Auth server config
 │   │   ├── auth-client.ts      # Better Auth client
-│   │   ├── db.ts               # Database connection (PostgreSQL)
+│   │   ├── db.ts               # Database connection (Drizzle + SQLite)
+│   │   ├── schema.ts           # Drizzle schema definitions
 │   │   ├── api-client.ts       # mcctl-api client (deprecated, use adapters)
 │   │   ├── sse-client.ts       # SSE connection manager (deprecated, use adapters)
 │   │   └── utils.ts            # Utility functions
@@ -448,23 +684,23 @@ platform/services/mcctl-console/
 └── Dockerfile
 ```
 
-## 4. Real-time Architecture (SSE)
+## 5. Real-time Architecture (SSE)
 
-### 4.1 SSE Endpoints (via mcctl-api)
+### 5.1 SSE Endpoints (via mcctl-api)
 
 | Endpoint | Data | Purpose |
 |----------|------|---------|
-| `/api/sse/status` | 전체 서버 상태 | Dashboard, Server List |
-| `/api/sse/server/:name` | 특정 서버 상세 | Server Detail Page |
-| `/api/sse/logs/:name` | 실시간 로그 | Console Tab |
-| `/api/sse/players` | 전체 플레이어 | Player Management |
+| `/api/sse/status` | All server status | Dashboard, Server List |
+| `/api/sse/server/:name` | Specific server details | Server Detail Page |
+| `/api/sse/logs/:name` | Real-time logs | Console Tab |
+| `/api/sse/players` | All players | Player Management |
 
-### 4.2 SSE Event Types
+### 5.2 SSE Event Types
 
 ```typescript
 // types/events.ts
 
-// 서버 상태 이벤트
+// Server status event
 interface ServerStatusEvent {
   type: 'server:status';
   data: {
@@ -492,7 +728,7 @@ interface ServerStatusEvent {
   };
 }
 
-// 로그 이벤트
+// Log event
 interface LogEvent {
   type: 'log:line';
   data: {
@@ -504,7 +740,7 @@ interface LogEvent {
   };
 }
 
-// 플레이어 이벤트
+// Player event
 interface PlayerEvent {
   type: 'player:join' | 'player:leave' | 'player:chat';
   data: {
@@ -516,7 +752,7 @@ interface PlayerEvent {
 }
 ```
 
-### 4.3 SSE Client Hook
+### 5.3 SSE Client Hook
 
 ```typescript
 // hooks/useSSE.ts
@@ -543,7 +779,7 @@ export function useSSE<T>({
 }
 ```
 
-### 4.4 Server Status Hook
+### 5.4 Server Status Hook
 
 ```typescript
 // hooks/useServerStatus.ts
@@ -562,7 +798,7 @@ export function useServerStatus() {
 }
 ```
 
-### 4.5 Log Stream Hook
+### 5.5 Log Stream Hook
 
 ```typescript
 // hooks/useServerLogs.ts
@@ -572,7 +808,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
   const handleLog = useCallback((log: LogLine) => {
     setLogs(prev => {
       const updated = [...prev, log];
-      return updated.slice(-maxLines);  // 최대 라인 수 제한
+      return updated.slice(-maxLines);  // Limit max lines
     });
   }, [maxLines]);
 
@@ -587,29 +823,31 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 }
 ```
 
-## 5. UI Screens
+## 6. UI Screens
 
-### 5.1 Screen Overview
+### 6.1 Screen Overview
 
 | Screen | Route | mcctl Mapping | Description |
 |--------|-------|--------------|-------------|
-| Dashboard | `/` | `status`, `player online --all` | 전체 서버 상태, 통계 |
-| Servers | `/servers` | `status` | 서버 목록 |
-| Server Detail | `/servers/[name]` | `status`, `config`, `logs` | 서버 상세 (탭) |
-| Console | `/servers/[name]/console` | `console`, `exec` | RCON 콘솔 |
-| Worlds | `/worlds` | `world list`, `assign`, `release` | 월드 관리 |
-| Players | `/players` | `op`, `whitelist`, `ban`, `kick` | 플레이어 관리 |
-| Backups | `/backups` | `backup`, `server-backup` | 백업 관리 |
-| Settings | `/settings` | `init`, `router` | 플랫폼 설정 |
+| Dashboard | `/` | `status`, `player online --all` | Overall server status, statistics |
+| Servers | `/servers` | `status` | Server list (filtered by user access) |
+| Server Detail | `/servers/[name]` | `status`, `config`, `logs` | Server details (tabs) |
+| Server Access | `/servers/[name]/access` | - | User access management (owner+) |
+| Console | `/servers/[name]/console` | `console`, `exec` | RCON console |
+| Worlds | `/worlds` | `world list`, `assign`, `release` | World management |
+| Players | `/players` | `op`, `whitelist`, `ban`, `kick` | Player management |
+| Backups | `/backups` | `backup`, `server-backup` | Backup management |
+| Settings | `/settings` | `init`, `router` | Platform settings |
+| **Admin: Users** | `/admin/users` | - | User management (admin only) |
 
-### 5.2 Layout Structure
+### 6.2 Layout Structure
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  🎮 Minecraft Server Manager                    [👤 User] [⚙️]  │
 ├────────────┬────────────────────────────────────────────────────┤
 │            │                                                    │
-│  Dashboard │   메인 컨텐츠 영역                                  │
+│  Dashboard │   Main Content Area                                │
 │  ─────────│                                                    │
 │  Servers   │                                                    │
 │  Worlds    │                                                    │
@@ -623,7 +861,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └────────────┴────────────────────────────────────────────────────┘
 ```
 
-### 5.3 Dashboard
+### 6.3 Dashboard
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -636,21 +874,21 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 │  │ running  │ │ servers  │ │ online   │ │ total    │           │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
 │                                                                 │
-│  서버 상태 Overview                          [+ New Server]     │
+│  Server Status Overview                      [+ New Server]     │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │ 🟢 survival    Paper 1.21   5 players   RAM: 2.1GB      │   │
 │  │ 🟢 creative    Paper 1.21   3 players   RAM: 1.8GB      │   │
 │  │ 🔴 modded      Forge 1.20   stopped     --              │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
-│  최근 활동 (실시간 SSE)                                          │
-│  • Player "Steve" joined survival (2분 전)                      │
-│  • Server "creative" auto-started (5분 전)                      │
-│  • Backup completed (1시간 전)                                  │
+│  Recent Activity (Real-time SSE)                                │
+│  • Player "Steve" joined survival (2 min ago)                   │
+│  • Server "creative" auto-started (5 min ago)                   │
+│  • Backup completed (1 hour ago)                                │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.4 Server List
+### 6.4 Server List
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -683,7 +921,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.5 Server Detail - Overview Tab
+### 6.5 Server Detail - Overview Tab
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -703,13 +941,13 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 │  │ Uptime    3h 24m 15s    │      Connection                   │
 │  └─────────────────────────┘      ┌─────────────────────────┐  │
 │                                   │ survival.192.168.1...   │  │
-│  Performance (실시간 SSE)    ─────────────────────────────────  │
+│  Performance (Real-time SSE)  ─────────────────────────────────  │
 │  ┌─────────────────────────────────────────────────────────┐  │
 │  │  Memory                         CPU                      │  │
 │  │  ████████████░░░░ 2.1/4GB      ███████░░░░░░░░░ 45%     │  │
 │  └─────────────────────────────────────────────────────────┘  │
 │                                                                 │
-│  Online Players (5/20) (실시간 SSE)                             │
+│  Online Players (5/20) (Real-time SSE)                          │
 │  ┌─────────────────────────────────────────────────────────┐  │
 │  │ 👑 Steve (OP)    │ 👑 Alex (OP)     │ 👤 Player1       │  │
 │  │ 👤 Player2       │ 👤 Player3       │                   │  │
@@ -717,7 +955,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.6 Server Detail - Console Tab (SSE 실시간 로그)
+### 6.6 Server Detail - Console Tab (SSE Real-time Logs)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -742,7 +980,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.7 Server Detail - Config Tab
+### 6.7 Server Detail - Config Tab
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -777,7 +1015,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.8 Worlds
+### 6.8 Worlds
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -810,7 +1048,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.9 Players
+### 6.9 Players
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -825,7 +1063,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 │  [Online Players] [Operators] [Whitelist] [Ban List]           │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  Online Players (12) (실시간 SSE)                               │
+│  Online Players (12) (Real-time SSE)                            │
 │                                                                 │
 │  survival (5 players)                                           │
 │  ┌─────────────────────────────────────────────────────────┐   │
@@ -842,7 +1080,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.10 Backups
+### 6.10 Backups
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -873,7 +1111,104 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.11 Settings
+### 6.11 Server Access Management (Owner/Admin Only)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Server Access - survival                      [+ Add User]     │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Users with access to this server                               │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ User              │ Role      │ Since       │ Actions   │   │
+│  ├───────────────────┼───────────┼─────────────┼───────────┤   │
+│  │ 👑 admin@mc.io    │ Owner     │ 2024-01-15  │ --        │   │
+│  │ 👤 steve@mc.io    │ Operator  │ 2024-02-20  │ [Edit][🗑]│   │
+│  │ 👤 alex@mc.io     │ Viewer    │ 2024-03-01  │ [Edit][🗑]│   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  Role Permissions:                                              │
+│  • Owner: Full control (config, delete, assign users)           │
+│  • Operator: Start/stop, console, player management             │
+│  • Viewer: View status and logs only                            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Add User Dialog:**
+```
+┌─────────────────────────────────────────┐
+│  Add User to Server                     │
+├─────────────────────────────────────────┤
+│                                         │
+│  User Email                             │
+│  ┌─────────────────────────────────┐   │
+│  │ user@example.com            🔍  │   │
+│  └─────────────────────────────────┘   │
+│                                         │
+│  Role                                   │
+│  ○ Owner - Full control                 │
+│  ● Operator - Start/stop, console       │
+│  ○ Viewer - Read-only                   │
+│                                         │
+│              [Cancel] [Add User]        │
+└─────────────────────────────────────────┘
+```
+
+### 6.12 User Management (Admin Only)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  User Management                                   [+ Add User]  │
+├─────────────────────────────────────────────────────────────────┤
+│  Filter: [All ▼] [Active ▼]    Search: [________________🔍]     │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ User              │ Role   │ Servers │ Status │ Actions │   │
+│  ├───────────────────┼────────┼─────────┼────────┼─────────┤   │
+│  │ 👑 admin@mc.io    │ Admin  │ All     │ Active │ [⋮]     │   │
+│  │ 👤 steve@mc.io    │ User   │ 3       │ Active │ [⋮]     │   │
+│  │ 👤 alex@mc.io     │ User   │ 2       │ Active │ [⋮]     │   │
+│  │ 🚫 banned@mc.io   │ User   │ 0       │ Banned │ [⋮]     │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  Actions Menu: [View] [Edit Role] [Manage Servers] [Ban/Unban]  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Create User Dialog (Admin):**
+```
+┌─────────────────────────────────────────┐
+│  Create New User                        │
+├─────────────────────────────────────────┤
+│                                         │
+│  Email *                                │
+│  ┌─────────────────────────────────┐   │
+│  │ newuser@example.com             │   │
+│  └─────────────────────────────────┘   │
+│                                         │
+│  Name                                   │
+│  ┌─────────────────────────────────┐   │
+│  │ New User                        │   │
+│  └─────────────────────────────────┘   │
+│                                         │
+│  Password *                             │
+│  ┌─────────────────────────────────┐   │
+│  │ ••••••••••••                    │   │
+│  └─────────────────────────────────┘   │
+│                                         │
+│  Role                                   │
+│  ○ Admin - Full system access           │
+│  ● User - Access assigned servers only  │
+│                                         │
+│              [Cancel] [Create User]     │
+└─────────────────────────────────────────┘
+```
+
+### 6.13 Settings
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -907,7 +1242,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.12 Router Status (Sidebar)
+### 6.14 Router Status (Sidebar)
 
 ```
 ┌────────────────┐
@@ -940,9 +1275,9 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## 6. API Mapping (mcctl-api)
+## 7. API Mapping (mcctl-api)
 
-### 6.1 Server Management
+### 7.1 Server Management
 
 | UI Action | API Endpoint | mcctl Command |
 |-----------|--------------|---------------|
@@ -958,7 +1293,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 | Get config | GET `/api/servers/:name/config` | `mcctl config` |
 | Update config | PUT `/api/servers/:name/config` | `mcctl config [key] [value]` |
 
-### 6.2 World Management
+### 7.2 World Management
 
 | UI Action | API Endpoint | mcctl Command |
 |-----------|--------------|---------------|
@@ -969,7 +1304,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 | Assign world | POST `/api/worlds/:name/assign` | `mcctl world assign` |
 | Release world | POST `/api/worlds/:name/release` | `mcctl world release` |
 
-### 6.3 Player Management
+### 7.3 Player Management
 
 | UI Action | API Endpoint | mcctl Command |
 |-----------|--------------|---------------|
@@ -985,7 +1320,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 | Unban player | DELETE `/api/servers/:name/bans/:player` | `mcctl ban remove` |
 | Kick player | POST `/api/servers/:name/kick` | `mcctl kick` |
 
-### 6.4 Backup Management
+### 7.4 Backup Management
 
 | UI Action | API Endpoint | mcctl Command |
 |-----------|--------------|---------------|
@@ -996,7 +1331,7 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 | Server backup | POST `/api/servers/:name/backup` | `mcctl server-backup` |
 | Server restore | POST `/api/servers/:name/restore` | `mcctl server-restore` |
 
-### 6.5 System
+### 7.5 System
 
 | UI Action | API Endpoint | mcctl Command |
 |-----------|--------------|---------------|
@@ -1004,227 +1339,228 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 | Router status | GET `/api/router/status` | `mcctl router status` |
 | Router restart | POST `/api/router/restart` | `mcctl router restart` |
 
-## 7. User Flows & Sequences
+### 7.6 User-Server Access (BFF Internal)
 
-### 7.1 Server Creation Flow
+| UI Action | API Endpoint | Storage |
+|-----------|--------------|---------|
+| List user's servers | GET `/api/user/servers` | SQLite |
+| Get server users | GET `/api/servers/:name/users` | SQLite |
+| Add user to server | POST `/api/servers/:name/users` | SQLite |
+| Update user role | PUT `/api/servers/:name/users/:userId` | SQLite |
+| Remove user from server | DELETE `/api/servers/:name/users/:userId` | SQLite |
+| Check permission | GET `/api/servers/:name/permission` | SQLite |
 
-```
-┌──────┐          ┌──────┐          ┌──────┐          ┌──────┐
-│ User │          │  UI  │          │  API │          │mcctl │
-└──┬───┘          └──┬───┘          └──┬───┘          └──┬───┘
-   │  Click +New     │                 │                 │
-   │────────────────>│                 │                 │
-   │                 │  Show Dialog    │                 │
-   │<────────────────│                 │                 │
-   │  Fill Form      │                 │                 │
-   │────────────────>│                 │                 │
-   │                 │  Validate       │                 │
-   │                 │────┐            │                 │
-   │                 │<───┘            │                 │
-   │                 │  POST /servers  │                 │
-   │                 │────────────────>│                 │
-   │                 │                 │  mcctl create   │
-   │                 │                 │────────────────>│
-   │                 │                 │     Result      │
-   │                 │                 │<────────────────│
-   │                 │  201 Created    │                 │
-   │                 │<────────────────│                 │
-   │                 │  SSE: status    │                 │
-   │                 │<═══════════════>│                 │
-   │  Update List    │                 │                 │
-   │<────────────────│                 │                 │
-```
+> Note: These endpoints are internal to mcctl-console BFF and do not call mcctl-api.
 
-### 7.2 Real-time Log Streaming Flow
+### 7.7 User Management (Better Auth Admin Plugin)
 
-```
-┌──────┐          ┌──────┐          ┌──────┐          ┌──────┐
-│ User │          │  UI  │          │  API │          │Docker│
-└──┬───┘          └──┬───┘          └──┬───┘          └──┬───┘
-   │  Open Console   │                 │                 │
-   │────────────────>│                 │                 │
-   │                 │  GET /logs?     │                 │
-   │                 │  follow=true    │                 │
-   │                 │═════════════════>│                │
-   │                 │                 │ docker logs -f  │
-   │                 │                 │────────────────>│
-   │                 │                 │                 │
-   │                 │  SSE: log:line  │  Log output     │
-   │                 │<════════════════│<────────────────│
-   │  Display log    │                 │                 │
-   │<────────────────│                 │                 │
-   │                 │  SSE: log:line  │  Log output     │
-   │                 │<════════════════│<────────────────│
-   │  Display log    │                 │                 │
-   │<────────────────│                 │                 │
-   │      ...        │       ...       │       ...       │
-   │                 │                 │                 │
-   │  Leave Console  │                 │                 │
-   │────────────────>│                 │                 │
-   │                 │  Close SSE      │                 │
-   │                 │═════════════════>│                │
-   │                 │                 │  Stop stream    │
-   │                 │                 │────────────────>│
+| UI Action | API Endpoint | Permission |
+|-----------|--------------|------------|
+| List all users | GET `/api/auth/admin/list-users` | Admin only |
+| Create user | POST `/api/auth/admin/create-user` | Admin only |
+| Update user role | POST `/api/auth/admin/set-role` | Admin only |
+| Ban user | POST `/api/auth/admin/ban-user` | Admin only |
+| Unban user | POST `/api/auth/admin/unban-user` | Admin only |
+| Delete user | POST `/api/auth/admin/remove-user` | Admin only |
+
+> Note: These endpoints are provided by Better Auth Admin Plugin automatically.
+
+## 8. User Flows & Sequences
+
+### 8.1 Server Creation Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant API
+    participant mcctl
+
+    User->>UI: Click +New
+    UI-->>User: Show Dialog
+    User->>UI: Fill Form
+    UI->>UI: Validate
+    UI->>API: POST /servers
+    API->>mcctl: mcctl create
+    mcctl-->>API: Result
+    API-->>UI: 201 Created
+    UI<-->API: SSE: status
+    UI-->>User: Update List
 ```
 
-### 7.3 Server Stop Flow
+### 8.2 Real-time Log Streaming Flow
 
-```
-┌──────┐          ┌──────┐          ┌──────┐          ┌──────┐
-│ User │          │  UI  │          │  API │          │mcctl │
-└──┬───┘          └──┬───┘          └──┬───┘          └──┬───┘
-   │  Click Stop     │                 │                 │
-   │────────────────>│                 │                 │
-   │                 │  Confirm Dialog │                 │
-   │<────────────────│                 │                 │
-   │  Confirm        │                 │                 │
-   │────────────────>│                 │                 │
-   │                 │ POST /stop      │                 │
-   │                 │────────────────>│                 │
-   │                 │                 │  mcctl stop     │
-   │                 │                 │────────────────>│
-   │                 │   202 Accepted  │                 │
-   │                 │<────────────────│                 │
-   │  Show "Stopping"│                 │                 │
-   │<────────────────│                 │                 │
-   │                 │  SSE: stopping  │                 │
-   │                 │<════════════════│                 │
-   │                 │  SSE: stopped   │                 │
-   │                 │<════════════════│                 │
-   │  Update Status  │                 │                 │
-   │<────────────────│                 │                 │
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant API
+    participant Docker
+
+    User->>UI: Open Console
+    UI->>API: GET /logs?follow=true
+    API->>Docker: docker logs -f
+
+    loop Log Streaming
+        Docker-->>API: Log output
+        API-->>UI: SSE: log:line
+        UI-->>User: Display log
+    end
+
+    User->>UI: Leave Console
+    UI->>API: Close SSE
+    API->>Docker: Stop stream
 ```
 
-### 7.4 World Assignment Flow
+### 8.3 Server Stop Flow
 
-```
-┌──────┐          ┌──────┐          ┌──────┐          ┌──────┐
-│ User │          │  UI  │          │  API │          │mcctl │
-└──┬───┘          └──┬───┘          └──┬───┘          └──┬───┘
-   │  Click Assign   │                 │                 │
-   │────────────────>│                 │                 │
-   │                 │  Check Server   │                 │
-   │                 │────────────────>│                 │
-   │                 │   Status Info   │                 │
-   │                 │<────────────────│                 │
-   │                 │                 │                 │
-   │   ┌─────────────────────────────────────────────┐   │
-   │   │ [Server Running?]                           │   │
-   │   │   Yes → Show "Stop server first" error      │   │
-   │   │   No  → Show assign dialog                  │   │
-   │   └─────────────────────────────────────────────┘   │
-   │                 │                 │                 │
-   │  Select Server  │                 │                 │
-   │────────────────>│                 │                 │
-   │                 │ POST /assign    │                 │
-   │                 │────────────────>│                 │
-   │                 │                 │ mcctl world     │
-   │                 │                 │ assign          │
-   │                 │                 │────────────────>│
-   │                 │   200 OK        │                 │
-   │                 │<────────────────│                 │
-   │  Success Toast  │                 │                 │
-   │<────────────────│                 │                 │
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant API
+    participant mcctl
+
+    User->>UI: Click Stop
+    UI-->>User: Confirm Dialog
+    User->>UI: Confirm
+    UI->>API: POST /stop
+    API->>mcctl: mcctl stop
+    API-->>UI: 202 Accepted
+    UI-->>User: Show "Stopping"
+    API-->>UI: SSE: stopping
+    API-->>UI: SSE: stopped
+    UI-->>User: Update Status
 ```
 
-### 7.5 Player Ban Flow
+### 8.4 World Assignment Flow
 
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant API
+    participant mcctl
+
+    User->>UI: Click Assign
+    UI->>API: Check Server
+    API-->>UI: Status Info
+
+    alt Server Running
+        UI-->>User: Show "Stop server first" error
+    else Server Stopped
+        UI-->>User: Show assign dialog
+        User->>UI: Select Server
+        UI->>API: POST /assign
+        API->>mcctl: mcctl world assign
+        mcctl-->>API: Result
+        API-->>UI: 200 OK
+        UI-->>User: Success Toast
+    end
 ```
-┌──────┐          ┌──────┐          ┌──────┐          ┌──────┐
-│ User │          │  UI  │          │  API │          │mcctl │
-└──┬───┘          └──┬───┘          └──┬───┘          └──┬───┘
-   │  Click Ban      │                 │                 │
-   │────────────────>│                 │                 │
-   │                 │  Show Dialog    │                 │
-   │<────────────────│                 │                 │
-   │  Enter Reason   │                 │                 │
-   │  Click Confirm  │                 │                 │
-   │────────────────>│                 │                 │
-   │                 │ POST /ban       │                 │
-   │                 │────────────────>│                 │
-   │                 │                 │ mcctl ban add   │
-   │                 │                 │────────────────>│
-   │                 │                 │    Success      │
-   │                 │                 │<────────────────│
-   │                 │   200 OK        │                 │
-   │                 │<────────────────│                 │
-   │                 │ SSE: player:leave                 │
-   │                 │<════════════════│                 │
-   │  Update List    │                 │                 │
-   │<────────────────│                 │                 │
+
+### 8.5 Player Ban Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant API
+    participant mcctl
+
+    User->>UI: Click Ban
+    UI-->>User: Show Dialog
+    User->>UI: Enter Reason & Click Confirm
+    UI->>API: POST /ban
+    API->>mcctl: mcctl ban add
+    mcctl-->>API: Success
+    API-->>UI: 200 OK
+    API-->>UI: SSE: player:leave
+    UI-->>User: Update List
 ```
 
-## 8. Policies
+## 9. Policies
 
-### 8.1 Server Policies
+### 9.1 Server Policies
 
 | Policy | Rule |
 |--------|------|
-| Server Name | 영문 소문자, 숫자, 하이픈만 허용. 3-20자 |
-| Delete Confirmation | 서버 이름 입력 + 확인 다이얼로그 필수 |
-| Running Server Delete | 불가 - 먼저 중지 필요 |
-| Concurrent Start | 리소스 한도 내 무제한 |
-| Config Change | 일부 설정은 재시작 필요 (표시) |
-| Console Permission | 모든 RCON 명령 실행 가능 |
+| Server Name | Lowercase letters, numbers, hyphens only. 3-20 characters |
+| Delete Confirmation | Server name input + confirmation dialog required |
+| Running Server Delete | Not allowed - must stop first |
+| Concurrent Start | Unlimited within resource limits |
+| Config Change | Some settings require restart (indicated) |
+| Console Permission | All RCON commands allowed |
 
-### 8.2 World Policies
-
-| Policy | Rule |
-|--------|------|
-| World Lock | 하나의 월드는 하나의 서버에만 할당 가능 |
-| Assignment Change | 서버 중지 상태에서만 가능 |
-| Force Release | 락 파일 수동 삭제로 가능 (위험) |
-| World Delete | 할당 해제 후에만 삭제 가능 |
-| Name Rule | 영문 소문자, 숫자, 언더스코어. 3-30자 |
-
-### 8.3 Player Policies
+### 9.2 World Policies
 
 | Policy | Rule |
 |--------|------|
-| OP Permission | 서버별로 독립 관리 |
-| Whitelist | OFF 상태면 모든 플레이어 접속 가능 |
-| Ban Reason | 필수 아님, 권장 |
-| Self Ban | 불가 (UI에서 비활성화) |
-| Player Name | Mojang API로 유효성 검증 |
+| World Lock | One world can only be assigned to one server |
+| Assignment Change | Only possible when server is stopped |
+| Force Release | Possible via manual lock file deletion (dangerous) |
+| World Delete | Only deletable after unassignment |
+| Name Rule | Lowercase letters, numbers, underscores. 3-30 characters |
 
-### 8.4 Backup Policies
-
-| Policy | Rule |
-|--------|------|
-| Backup Retention | 서버당 최대 10개 (설정 가능) |
-| Auto Backup | 선택적 (cron 설정) |
-| Restore Condition | 서버 중지 필수 |
-| GitHub Size | 월드 크기에 따라 시간 소요 |
-| Backup Content | docker-compose.yml, config.env, server.properties 등 |
-
-### 8.5 Router Policies
+### 9.3 Player Policies
 
 | Policy | Rule |
 |--------|------|
-| Router Dependency | 서버 연결을 위해 라우터 필수 실행 |
-| Auto Start | 서버 시작 시 라우터 자동 시작 |
-| Router Stop | 모든 서버 연결 불가 경고 표시 |
-| Auto-Start (mc-router) | 클라이언트 연결 시 서버 자동 시작 |
-| Auto-Stop (mc-router) | 10분 유휴 시 서버 자동 중지 |
+| OP Permission | Managed independently per server |
+| Whitelist | All players can connect when OFF |
+| Ban Reason | Not required, recommended |
+| Self Ban | Not allowed (disabled in UI) |
+| Player Name | Validated via Mojang API |
 
-## 9. Responsive Layout
+### 9.4 Backup Policies
 
-### 9.1 Breakpoints
+| Policy | Rule |
+|--------|------|
+| Backup Retention | Maximum 10 per server (configurable) |
+| Auto Backup | Optional (cron configuration) |
+| Restore Condition | Server must be stopped |
+| GitHub Size | Time varies based on world size |
+| Backup Content | docker-compose.yml, config.env, server.properties, etc. |
+
+### 9.5 Router Policies
+
+| Policy | Rule |
+|--------|------|
+| Router Dependency | Router must be running for server connections |
+| Auto Start | Router auto-starts when server starts |
+| Router Stop | Warning displayed: all server connections unavailable |
+| Auto-Start (mc-router) | Server auto-starts on client connection |
+| Auto-Stop (mc-router) | Server auto-stops after 10 minutes idle |
+
+### 9.6 User Access Policies
+
+| Policy | Rule |
+|--------|------|
+| Server Creator | Automatically assigned as Owner |
+| Admin Access | Admin role has access to all servers |
+| Role Inheritance | Owner > Operator > Viewer permissions |
+| Self Removal | Users cannot remove their own access |
+| Owner Transfer | At least one Owner required per server |
+| Access Revocation | Immediate effect on next request |
+
+## 10. Responsive Layout
+
+### 10.1 Breakpoints
 
 | Size | Width | Layout |
 |------|-------|--------|
-| Desktop | ≥1200px | 사이드바 펼침 + 넓은 컨텐츠 |
-| Tablet | 768-1199px | 사이드바 접힘 + 중간 컨텐츠 |
-| Mobile | <768px | 하단 네비게이션 + 전체 컨텐츠 |
+| Desktop | ≥1200px | Sidebar expanded + wide content |
+| Tablet | 768-1199px | Sidebar collapsed + medium content |
+| Mobile | <768px | Bottom navigation + full-width content |
 
-### 9.2 Mobile Layout
+### 10.2 Mobile Layout
 
 ```
 ┌─────────────────────────────┐
 │  🎮 MC Manager      [☰]    │
 ├─────────────────────────────┤
 │                             │
-│     메인 컨텐츠 영역         │
+│     Main Content Area       │
 │                             │
 │                             │
 │                             │
@@ -1235,9 +1571,9 @@ export function useServerLogs(serverName: string, maxLines = 500) {
 └─────────────────────────────┘
 ```
 
-## 10. Theme Configuration
+## 11. Theme Configuration
 
-### 10.1 MUI Dark Theme
+### 11.1 MUI Dark Theme
 
 ```typescript
 // theme/muiTheme.ts
@@ -1247,27 +1583,27 @@ export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#1bd96a',      // 민트 그린 (Modrinth 스타일)
+      main: '#1bd96a',      // Mint green (Modrinth style)
       light: '#4de38a',
       dark: '#15a852',
     },
     secondary: {
-      main: '#7c3aed',      // 보라색 액센트
+      main: '#7c3aed',      // Purple accent
       light: '#9f67f0',
       dark: '#5b21b6',
     },
     background: {
-      default: '#111111',   // 메인 배경
-      paper: '#1a1a1a',     // 카드 배경
+      default: '#111111',   // Main background
+      paper: '#1a1a1a',     // Card background
     },
     success: {
-      main: '#22c55e',      // 온라인/실행중
+      main: '#22c55e',      // Online/Running
     },
     error: {
-      main: '#ef4444',      // 오프라인/에러
+      main: '#ef4444',      // Offline/Error
     },
     warning: {
-      main: '#f59e0b',      // 시작중/경고
+      main: '#f59e0b',      // Starting/Warning
     },
     text: {
       primary: '#ffffff',
@@ -1298,9 +1634,9 @@ export const darkTheme = createTheme({
 });
 ```
 
-## 11. Dependencies
+## 12. Dependencies
 
-### 11.1 Internal Dependencies
+### 12.1 Internal Dependencies
 
 ```json
 {
@@ -1310,7 +1646,7 @@ export const darkTheme = createTheme({
 }
 ```
 
-### 11.2 External Dependencies
+### 12.2 External Dependencies
 
 ```json
 {
@@ -1325,30 +1661,34 @@ export const darkTheme = createTheme({
     "@tanstack/react-query": "^5.x",
     "tailwindcss": "^3.x",
     "better-auth": "^1.x",
-    "pg": "^8.x"
+    "drizzle-orm": "^0.x",
+    "better-sqlite3": "^11.x"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.x"
   }
 }
 ```
 
-## 12. Environment Variables
+## 13. Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MCCTL_API_URL` | mcctl-api 내부 URL | `http://mcctl-api:3001` |
-| `MCCTL_API_KEY` | mcctl-api 인증용 API Key | (필수) |
-| `NEXT_PUBLIC_API_URL` | 클라이언트 API URL | `/api` |
-| `NEXT_PUBLIC_APP_URL` | 앱 기본 URL (Better Auth) | `http://localhost:3000` |
-| `DATABASE_URL` | PostgreSQL 연결 문자열 | (필수) |
-| `BETTER_AUTH_SECRET` | Better Auth 암호화 키 | (필수) |
-| `PORT` | Console 포트 | `3000` |
+| `MCCTL_API_URL` | mcctl-api internal URL | `http://localhost:5001` |
+| `MCCTL_API_KEY` | API Key for mcctl-api authentication | (required) |
+| `NEXT_PUBLIC_API_URL` | Client API URL | `/api` |
+| `NEXT_PUBLIC_APP_URL` | App base URL (Better Auth) | `http://localhost:5000` |
+| `DATABASE_PATH` | SQLite database file path | `mcctl-console.db` |
+| `BETTER_AUTH_SECRET` | Better Auth encryption key | (required) |
+| `PORT` | Console port | `5000` |
 
-### 12.1 API Key 설정
+### 13.1 API Key Configuration
 
-mcctl-console과 mcctl-api 간의 인증을 위해 동일한 API Key를 설정해야 합니다.
+Both mcctl-console and mcctl-api must be configured with the same API Key for authentication.
 
 **mcctl-console (.env)**:
 ```bash
-MCCTL_API_URL=http://mcctl-api:3001
+MCCTL_API_URL=http://localhost:5001
 MCCTL_API_KEY=your-secure-api-key-here
 ```
 
@@ -1358,45 +1698,67 @@ AUTH_MODE=api-key
 AUTH_API_KEY=your-secure-api-key-here
 ```
 
-> ⚠️ **보안 주의**: API Key는 충분히 길고 랜덤한 값을 사용하세요. 예: `openssl rand -base64 32`
+> ⚠️ **Security Warning**: Use a sufficiently long and random value for the API Key. Example: `openssl rand -base64 32`
 
-### 12.2 Better Auth 설정
+### 13.2 Better Auth + Drizzle Configuration
 
-사용자 인증을 위한 Better Auth 설정입니다.
+Better Auth configuration with Drizzle ORM and SQLite.
 
 **mcctl-console (.env)**:
 ```bash
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/mcctl_console
+# Database (SQLite)
+DATABASE_PATH=./data/mcctl-console.db
 
 # Better Auth
 BETTER_AUTH_SECRET=your-super-secret-key-here
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:5000
 ```
 
-> ⚠️ **보안 주의**:
-> - `BETTER_AUTH_SECRET`는 최소 32자 이상의 랜덤 문자열을 사용하세요: `openssl rand -base64 32`
-> - 프로덕션에서는 반드시 HTTPS를 사용하세요
+**Drizzle Configuration (drizzle.config.ts)**:
+```typescript
+import { defineConfig } from 'drizzle-kit';
 
-## 13. Test Plan
+export default defineConfig({
+  schema: './src/lib/schema.ts',
+  out: './drizzle',
+  dialect: 'sqlite',  // Change to 'postgresql' for future migration
+  dbCredentials: {
+    url: process.env.DATABASE_PATH ?? 'mcctl-console.db',
+  },
+});
+```
 
-### 13.1 Unit Tests
+**Migration to PostgreSQL** (Future):
+```bash
+# 1. Update drizzle.config.ts dialect to 'postgresql'
+# 2. Change DATABASE_PATH to DATABASE_URL
+# 3. Update lib/db.ts to use node-postgres driver
+# 4. Run: pnpm drizzle-kit generate && pnpm drizzle-kit migrate
+```
+
+> ⚠️ **Security Warning**:
+> - Use a random string of at least 32 characters for `BETTER_AUTH_SECRET`: `openssl rand -base64 32`
+> - Always use HTTPS in production
+
+## 14. Test Plan
+
+### 14.1 Unit Tests
 - Component rendering tests
 - Hook tests (useSSE, useServerStatus)
 - Utility function tests
 
-### 13.2 Integration Tests
+### 14.2 Integration Tests
 - Page navigation tests
 - API integration tests
 - SSE connection tests
 
-### 13.3 E2E Tests
+### 14.3 E2E Tests
 - Server lifecycle (create → start → stop → delete)
 - Console command execution
 - World assignment flow
 - Player management flow
 
-## 14. Revision History
+## 15. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
@@ -1405,3 +1767,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 | 1.2.0 | 2026-01-31 | - | Add Better Auth for user authentication |
 | 1.3.0 | 2026-01-31 | - | Add Hexagonal Architecture pattern |
 | 1.4.0 | 2026-01-31 | - | Refactor: Move XP methodology to CLAUDE.md (project common) |
+| 1.5.0 | 2026-01-31 | - | Translate entire PRD to English |
+| 1.6.0 | 2026-01-31 | - | Change database from PostgreSQL to SQLite with Drizzle ORM |
+| 1.7.0 | 2026-01-31 | - | Add User-Server relationship model and permission system |
+| 1.8.0 | 2026-01-31 | - | Add Better Auth Admin Plugin for user role management |
+| 1.9.0 | 2026-01-31 | - | Convert ASCII diagrams to Mermaid format |
