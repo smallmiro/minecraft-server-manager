@@ -18,6 +18,8 @@ import {
   getEcosystemConfigPath,
   ecosystemConfigExists,
   PM2_SERVICE_NAMES,
+  getAvailableServices,
+  checkServiceAvailability,
 } from '../../lib/pm2-utils.js';
 
 /**
@@ -75,16 +77,21 @@ function ensurePm2Installed(): boolean {
 }
 
 /**
- * Get service names based on options
+ * Get service names based on options and availability
+ * Only returns services that are actually installed
  */
-function getServiceNames(options: ConsoleServiceOptions): string[] {
+function getServiceNames(options: ConsoleServiceOptions, rootDir: string): string[] {
+  const availableServices = getAvailableServices(rootDir);
+
   if (options.apiOnly) {
-    return [PM2_SERVICE_NAMES.API];
+    return availableServices.includes(PM2_SERVICE_NAMES.API) ? [PM2_SERVICE_NAMES.API] : [];
   }
   if (options.consoleOnly) {
-    return [PM2_SERVICE_NAMES.CONSOLE];
+    return availableServices.includes(PM2_SERVICE_NAMES.CONSOLE) ? [PM2_SERVICE_NAMES.CONSOLE] : [];
   }
-  return [PM2_SERVICE_NAMES.API, PM2_SERVICE_NAMES.CONSOLE];
+
+  // Return only available services
+  return availableServices;
 }
 
 /**
@@ -213,11 +220,27 @@ async function startServices(
     return 1;
   }
 
-  const services = getServiceNames(options);
+  const services = getServiceNames(options, paths.root);
   const apiPort = options.apiPort ?? API_PORT_DEFAULT;
   const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
 
+  if (services.length === 0) {
+    log.error('No console services are installed.');
+    log.info("Please run 'mcctl console init' to install services");
+    return 1;
+  }
+
+  // Show which services are available
+  const availability = checkServiceAvailability(paths.root);
   log.info('Starting console services via PM2...');
+
+  if (!availability.api.available) {
+    log.warn('  mcctl-api: not installed (skipping)');
+  }
+  if (!availability.console.available) {
+    log.warn('  mcctl-console: not installed (skipping)');
+  }
+
   if (options.apiPort || options.consolePort) {
     log.info(`  API port: ${apiPort}, Console port: ${consolePort}`);
   }
@@ -253,7 +276,12 @@ async function stopServices(
   pm2Adapter: Pm2ServiceManagerAdapter,
   options: ConsoleServiceOptions
 ): Promise<number> {
-  const services = getServiceNames(options);
+  const services = getServiceNames(options, paths.root);
+
+  if (services.length === 0) {
+    log.warn('No console services are installed.');
+    return 0;
+  }
 
   log.info('Stopping console services...');
 
@@ -279,9 +307,15 @@ async function restartServices(
   pm2Adapter: Pm2ServiceManagerAdapter,
   options: ConsoleServiceOptions
 ): Promise<number> {
-  const services = getServiceNames(options);
+  const services = getServiceNames(options, paths.root);
   const apiPort = options.apiPort ?? API_PORT_DEFAULT;
   const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
+
+  if (services.length === 0) {
+    log.error('No console services are installed.');
+    log.info("Please run 'mcctl console init' to install services");
+    return 1;
+  }
 
   log.info('Restarting console services...');
   if (options.apiPort || options.consolePort) {
@@ -316,7 +350,12 @@ async function showLogs(
   pm2Adapter: Pm2ServiceManagerAdapter,
   options: ConsoleServiceOptions
 ): Promise<number> {
-  const services = getServiceNames(options);
+  const services = getServiceNames(options, paths.root);
+
+  if (services.length === 0) {
+    log.warn('No console services are installed.');
+    return 0;
+  }
 
   if (options.follow) {
     // Use pm2 logs command for follow mode

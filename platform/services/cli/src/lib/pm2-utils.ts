@@ -171,6 +171,58 @@ export function normalizePm2Status(pm2Status: string): string {
 }
 
 /**
+ * Available services for console
+ */
+export type ConsoleServiceType = 'api' | 'console';
+
+/**
+ * Service availability status
+ */
+export interface ServiceAvailability {
+  api: { available: boolean; path?: string };
+  console: { available: boolean; path?: string };
+}
+
+/**
+ * Check which console services are available (installed)
+ * @param rootDir - Root directory (MCCTL_ROOT)
+ * @returns Object with availability status for each service
+ */
+export function checkServiceAvailability(rootDir: string): ServiceAvailability {
+  const scriptPaths = resolveServiceScriptPaths(rootDir);
+
+  return {
+    api: {
+      available: existsSync(scriptPaths.api),
+      path: scriptPaths.api,
+    },
+    console: {
+      available: existsSync(scriptPaths.console),
+      path: scriptPaths.console,
+    },
+  };
+}
+
+/**
+ * Get list of available service names
+ * @param rootDir - Root directory (MCCTL_ROOT)
+ * @returns Array of available service names
+ */
+export function getAvailableServices(rootDir: string): string[] {
+  const availability = checkServiceAvailability(rootDir);
+  const services: string[] = [];
+
+  if (availability.api.available) {
+    services.push(PM2_SERVICE_NAMES.API);
+  }
+  if (availability.console.available) {
+    services.push(PM2_SERVICE_NAMES.CONSOLE);
+  }
+
+  return services;
+}
+
+/**
  * Service script paths configuration
  */
 export interface ServiceScriptPaths {

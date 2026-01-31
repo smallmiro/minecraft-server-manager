@@ -143,12 +143,16 @@ async function stopAdminServices(paths: Paths): Promise<boolean> {
 }
 
 /**
+ * Service installation options
+ */
+interface ServiceInstallOptions {
+  installApi: boolean;
+  installConsole: boolean;
+}
+
+/**
  * Generate ecosystem.config.cjs content
- * @param apiPort - API server port
- * @param consolePort - Console server port
- * @param apiScriptPath - Absolute path to API script
- * @param consoleScriptPath - Absolute path to console script
- * @param isDevelopment - Whether we're in development mode
+ * Only includes services that are selected for installation
  */
 function generateEcosystemConfig(
   apiPort: number,
@@ -156,11 +160,55 @@ function generateEcosystemConfig(
   apiScriptPath: string,
   consoleScriptPath: string,
   isDevelopment: boolean,
-  nextAuthSecret: string
+  nextAuthSecret: string,
+  serviceOptions: ServiceInstallOptions
 ): string {
   const modeComment = isDevelopment
     ? '// NOTE: Development mode - using workspace paths'
     : '// NOTE: Production mode - using node_modules paths';
+
+  const apps: string[] = [];
+
+  if (serviceOptions.installApi) {
+    apps.push(`    {
+      name: 'mcctl-api',
+      script: '${apiScriptPath}',
+      cwd: process.env.MCCTL_ROOT || '.',
+      env: {
+        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',
+        PORT: ${apiPort},
+        HOST: '0.0.0.0',
+        MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
+      },
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      autorestart: true,
+      max_memory_restart: '500M',
+    }`);
+  }
+
+  if (serviceOptions.installConsole) {
+    apps.push(`    {
+      name: 'mcctl-console',
+      script: '${consoleScriptPath}',
+      cwd: process.env.MCCTL_ROOT || '.',
+      env: {
+        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',
+        PORT: ${consolePort},
+        HOSTNAME: '0.0.0.0',
+        MCCTL_API_URL: 'http://localhost:${apiPort}',
+        MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
+        NEXTAUTH_SECRET: '${nextAuthSecret}',
+        NEXTAUTH_URL: 'http://localhost:${consolePort}',
+      },
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      autorestart: true,
+      max_memory_restart: '500M',
+    }`);
+  }
 
   return `// ecosystem.config.cjs
 // =============================================================================
@@ -185,41 +233,7 @@ ${modeComment}
 
 module.exports = {
   apps: [
-    {
-      name: 'mcctl-api',
-      script: '${apiScriptPath}',
-      cwd: process.env.MCCTL_ROOT || '.',
-      env: {
-        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',
-        PORT: ${apiPort},
-        HOST: '0.0.0.0',
-        MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
-      },
-      instances: 1,
-      exec_mode: 'fork',
-      watch: false,
-      autorestart: true,
-      max_memory_restart: '500M',
-    },
-    {
-      name: 'mcctl-console',
-      script: '${consoleScriptPath}',
-      cwd: process.env.MCCTL_ROOT || '.',
-      env: {
-        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',
-        PORT: ${consolePort},
-        HOSTNAME: '0.0.0.0',
-        MCCTL_API_URL: 'http://localhost:${apiPort}',
-        MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
-        NEXTAUTH_SECRET: '${nextAuthSecret}',
-        NEXTAUTH_URL: 'http://localhost:${consolePort}',
-      },
-      instances: 1,
-      exec_mode: 'fork',
-      watch: false,
-      autorestart: true,
-      max_memory_restart: '500M',
-    },
+${apps.join(',\n')}
   ],
 };
 `;
@@ -595,6 +609,20 @@ export async function consoleInitCommand(
     }
     spinner.stop('mcctl-api ready');
 
+    // Service options: currently only API is available via npm
+    // mcctl-console will be supported in future releases
+    const serviceOptions: ServiceInstallOptions = {
+      installApi: true,
+      installConsole: false, // Not yet available on npm
+    };
+
+    // Show which services will be configured
+    console.log('');
+    console.log(colors.cyan('  Services to configure:'));
+    console.log(`    ${colors.green('✓')} mcctl-api (REST API)`);
+    console.log(`    ${colors.yellow('○')} mcctl-console (Web UI) - ${colors.dim('coming soon')}`);
+    console.log('');
+
     // Step 11: Generate ecosystem.config.cjs
     spinner.start('Resolving service script paths...');
 
@@ -604,7 +632,9 @@ export async function consoleInitCommand(
     if (scriptPaths.isDevelopment) {
       spinner.stop('Using development workspace paths');
       console.log(colors.dim(`    API: ${scriptPaths.api}`));
-      console.log(colors.dim(`    Console: ${scriptPaths.console}`));
+      if (serviceOptions.installConsole) {
+        console.log(colors.dim(`    Console: ${scriptPaths.console}`));
+      }
     } else {
       spinner.stop('Using production node_modules paths');
     }
@@ -621,7 +651,8 @@ export async function consoleInitCommand(
       scriptPaths.api,
       scriptPaths.console,
       scriptPaths.isDevelopment,
-      nextAuthSecret
+      nextAuthSecret,
+      serviceOptions
     );
     writeFileSync(ecosystemPath, ecosystemContent, 'utf-8');
 
