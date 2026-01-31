@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMcctlApiClient, McctlApiError } from '@/adapters/McctlApiAdapter';
+import { createMcctlApiClient, McctlApiError, UserContext } from '@/adapters/McctlApiAdapter';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 
 interface RouteParams {
   params: Promise<{ name: string }>;
+}
+
+/**
+ * Extract user context from session for API forwarding
+ */
+function getUserContext(session: { user: { name?: string | null; email: string; role?: string | null } }): UserContext {
+  return {
+    username: session.user.name || session.user.email,
+    role: session.user.role || 'user',
+  };
 }
 
 /**
@@ -26,7 +36,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     const { name } = await params;
-    const client = createMcctlApiClient();
+    const client = createMcctlApiClient(getUserContext(session));
     const data = await client.getWorld(name);
 
     return NextResponse.json(data);
@@ -68,7 +78,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
 
-    const client = createMcctlApiClient();
+    const client = createMcctlApiClient(getUserContext(session));
     const data = await client.deleteWorld(name, force);
 
     return NextResponse.json(data);

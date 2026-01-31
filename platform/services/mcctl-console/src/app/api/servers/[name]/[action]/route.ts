@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMcctlApiClient, McctlApiError } from '@/adapters/McctlApiAdapter';
+import { createMcctlApiClient, McctlApiError, UserContext } from '@/adapters/McctlApiAdapter';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 
@@ -10,6 +10,16 @@ interface RouteParams {
 type ServerAction = 'start' | 'stop' | 'restart' | 'exec' | 'logs';
 
 const validActions: ServerAction[] = ['start', 'stop', 'restart', 'exec', 'logs'];
+
+/**
+ * Extract user context from session for API forwarding
+ */
+function getUserContext(session: { user: { name?: string | null; email: string; role?: string | null } }): UserContext {
+  return {
+    username: session.user.name || session.user.email,
+    role: session.user.role || 'user',
+  };
+}
 
 /**
  * GET /api/servers/:name/:action
@@ -38,7 +48,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const client = createMcctlApiClient();
+    const client = createMcctlApiClient(getUserContext(session));
 
     if (action === 'logs') {
       const { searchParams } = new URL(request.url);
@@ -94,7 +104,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const client = createMcctlApiClient();
+    const client = createMcctlApiClient(getUserContext(session));
 
     switch (action) {
       case 'start': {

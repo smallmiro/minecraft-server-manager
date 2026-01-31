@@ -33,11 +33,20 @@ export class McctlApiError extends Error {
 }
 
 /**
+ * User context for request headers
+ */
+export interface UserContext {
+  username: string;
+  role: string;
+}
+
+/**
  * Configuration for McctlApiAdapter
  */
 export interface McctlApiConfig {
   baseUrl: string;
   apiKey: string;
+  userContext?: UserContext;
 }
 
 /**
@@ -47,10 +56,12 @@ export interface McctlApiConfig {
 export class McctlApiAdapter implements IMcctlApiClient {
   private readonly baseUrl: string;
   private readonly apiKey: string;
+  private readonly userContext?: UserContext;
 
   constructor(config: McctlApiConfig) {
     this.baseUrl = config.baseUrl.replace(/\/$/, ''); // Remove trailing slash
     this.apiKey = config.apiKey;
+    this.userContext = config.userContext;
   }
 
   /**
@@ -62,11 +73,22 @@ export class McctlApiAdapter implements IMcctlApiClient {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
+    // Build headers with optional user context
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-API-Key': this.apiKey,
+    };
+
+    // Add user context headers if available
+    if (this.userContext) {
+      headers['X-User'] = this.userContext.username;
+      headers['X-Role'] = this.userContext.role;
+    }
+
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.apiKey,
+        ...headers,
         ...options.headers,
       },
     });
@@ -199,8 +221,9 @@ export class McctlApiAdapter implements IMcctlApiClient {
 
 /**
  * Create a McctlApiAdapter instance from environment variables
+ * @param userContext Optional user context for X-User and X-Role headers
  */
-export function createMcctlApiClient(): McctlApiAdapter {
+export function createMcctlApiClient(userContext?: UserContext): McctlApiAdapter {
   const baseUrl = process.env.MCCTL_API_URL || 'http://localhost:5001';
   const apiKey = process.env.MCCTL_API_KEY || '';
 
@@ -208,5 +231,5 @@ export function createMcctlApiClient(): McctlApiAdapter {
     console.warn('MCCTL_API_KEY is not set. API requests may fail.');
   }
 
-  return new McctlApiAdapter({ baseUrl, apiKey });
+  return new McctlApiAdapter({ baseUrl, apiKey, userContext });
 }

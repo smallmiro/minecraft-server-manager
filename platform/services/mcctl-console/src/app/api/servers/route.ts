@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMcctlApiClient, McctlApiError } from '@/adapters/McctlApiAdapter';
+import { createMcctlApiClient, McctlApiError, UserContext } from '@/adapters/McctlApiAdapter';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+
+/**
+ * Extract user context from session for API forwarding
+ */
+function getUserContext(session: { user: { name?: string | null; email: string; role?: string | null } }): UserContext {
+  return {
+    username: session.user.name || session.user.email,
+    role: session.user.role || 'user',
+  };
+}
 
 /**
  * GET /api/servers
@@ -21,7 +31,7 @@ export async function GET() {
       );
     }
 
-    const client = createMcctlApiClient();
+    const client = createMcctlApiClient(getUserContext(session));
     const data = await client.getServers();
 
     return NextResponse.json(data);
@@ -60,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const client = createMcctlApiClient();
+    const client = createMcctlApiClient(getUserContext(session));
     const data = await client.createServer(body);
 
     return NextResponse.json(data, { status: 201 });
