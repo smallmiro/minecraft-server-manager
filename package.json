@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/root",
-  "version": "1.6.16",
+  "version": "1.7.5",
   "private": true,
   "description": "Multi-server Docker Minecraft management platform",
   "scripts": {

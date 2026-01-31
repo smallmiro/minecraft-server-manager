@@ -73,26 +73,25 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.7.5 (2026-01-31)
+- **fix**: Resolve Edge runtime error in mcctl-console middleware (#201)
+
+### v1.7.4 (2026-01-31)
+- **docs**: Add CHANGELOG.md with v1.7.1-1.7.3 hotfix history
+
+### v1.7.3 (2026-01-31)
+- **fix**: Fix Docker network warning when running `mcctl up` (#199)
+
+### v1.7.2 (2026-01-31)
+- **fix**: Fix "Unknown error occurred" when avahi-daemon is not installed (#197)
+
+### v1.7.1 (2026-01-31)
+- **fix**: Fix "Script not found: create-server.sh" error when mcctl installed via npm (#195)
+
 ### v1.7.0 (2026-01-31)
 - **feat(api)**: Router Status API, Server Create/Delete API, Player Management API, Backup API
 - **feat(cli)**: Add `mcctl init --reconfigure` command
 - **test**: Comprehensive E2E tests for API and CLI commands
-
-### v1.6.16 (2026-01-31)
-- **chore**: Add README Changelog sync instructions to agent definitions
-
-### v1.6.15 (2026-01-31)
-- **feat**: New `mcctl backup init` command for interactive GitHub backup setup
-- **fix**: Include `scripts/` directory in npm package for template initialization
-
-### v1.6.14 (2026-01-31)
-- **fix**: Sync all package versions to tag version before npm publish
-
-### v1.6.13 (2026-01-31)
-- **fix**: Sync CHANGELOG.md to CLI package for npm page display
-
-### v1.6.12 (2026-01-31)
-- **fix(critical)**: Add missing `EXTRA_ARGS=--universe /worlds/` to npm package template
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
