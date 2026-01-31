@@ -9,6 +9,7 @@ import {
   worldCommand,
   backupCommand,
   execCommand,
+  rconCommand,
   configCommand,
   opCommand,
   serverBackupCommand,
@@ -121,8 +122,8 @@ ${colors.cyan('Commands:')}
   ${colors.bold('start')} <server> [--all]     Start a server (--all for all servers)
   ${colors.bold('stop')} <server> [--all]      Stop a server (--all for all servers)
   ${colors.bold('logs')} <server> [lines]      View server logs
-  ${colors.bold('console')} <server>           Connect to RCON console
-  ${colors.bold('exec')} <server> <cmd...>     Execute RCON command
+  ${colors.bold('rcon')} <server>              Interactive RCON console
+  ${colors.bold('exec')} <server> <cmd...>     Execute single RCON command
   ${colors.bold('config')} <server> [key] [val]  View/set server config
 
 ${colors.cyan('Config Shortcuts:')}
@@ -288,7 +289,8 @@ ${colors.cyan('Examples:')}
   mcctl status myserver              # Single server status
   mcctl status router                # mc-router status
   mcctl logs myserver -f
-  mcctl exec myserver say "Hello!"   # Execute RCON command
+  mcctl rcon myserver                # Interactive RCON console
+  mcctl exec myserver say "Hello!"   # Single RCON command
   mcctl exec myserver list           # List online players
   mcctl config myserver              # View all config
   mcctl config myserver --cheats     # Enable cheats
@@ -582,6 +584,14 @@ async function main(): Promise<void> {
           root: rootDir,
           serverName: positional[0],
           command: positional.slice(1),
+        });
+        break;
+      }
+
+      case 'rcon': {
+        exitCode = await rconCommand({
+          root: rootDir,
+          serverName: positional[0],
         });
         break;
       }

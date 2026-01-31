@@ -34,8 +34,6 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 
 ## Quick Start
 
-### Option A: npm Package (Recommended)
-
 ```bash
 # Install globally
 npm install -g @minecraft-docker/mcctl
@@ -51,21 +49,6 @@ mcctl create myserver -t VANILLA -v 1.21.1
 
 # Check status
 mcctl status
-```
-
-### Option B: Clone Repository
-
-```bash
-git clone <repository>
-cd minecraft/platform
-cp .env.example .env
-# Edit .env with your settings
-
-# Start infrastructure
-docker compose up -d
-
-# Create your first server
-./scripts/create-server.sh myserver -t VANILLA -v 1.21.1
 ```
 
 ### Connect via Minecraft
@@ -445,7 +428,9 @@ mcctl stop --all           # or mcctl stop -a
 mcctl start myserver
 mcctl stop myserver
 mcctl logs myserver
-mcctl console myserver
+
+# RCON console access (via Docker)
+docker exec -i mc-myserver rcon-cli
 ```
 
 ### mc-router Configuration
@@ -485,7 +470,13 @@ mcctl router restart
 ### Server Commands (RCON)
 
 ```bash
-# Execute RCON commands
+# Interactive RCON console (multiple commands)
+mcctl rcon myserver
+> list
+> say Hello!
+> exit
+
+# Single RCON command (for scripts/automation)
 mcctl exec myserver say "Hello!"         # Broadcast message
 mcctl exec myserver list                 # List online players
 mcctl exec myserver give Player diamond 64  # Give items
