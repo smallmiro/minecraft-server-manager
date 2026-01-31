@@ -6,7 +6,7 @@ mcctl-api 서버의 완전한 REST API 문서입니다.
 
 mcctl-api는 Docker Minecraft 서버를 관리하기 위한 RESTful 인터페이스를 제공합니다. 모든 엔드포인트는 JSON 응답을 반환합니다.
 
-**기본 URL:** `http://localhost:3001`
+**기본 URL:** `http://localhost:5001`
 
 **문서:** 서비스가 실행 중일 때 `/docs`에서 Swagger UI를 사용할 수 있습니다.
 
@@ -34,10 +34,10 @@ Authorization: Basic base64(username:password)
 
 ```bash
 # API 키 인증
-curl -H "X-API-Key: mctk_your_key" http://localhost:3001/api/servers
+curl -H "X-API-Key: mctk_your_key" http://localhost:5001/api/servers
 
 # 기본 인증
-curl -u admin:password http://localhost:3001/api/servers
+curl -u admin:password http://localhost:5001/api/servers
 ```
 
 ## 엔드포인트
@@ -187,7 +187,7 @@ API 서버 상태를 확인합니다.
 **예제:**
 
 ```bash
-curl "http://localhost:3001/api/servers/survival/logs?lines=50"
+curl "http://localhost:5001/api/servers/survival/logs?lines=50"
 ```
 
 **응답:**
@@ -321,22 +321,22 @@ curl "http://localhost:3001/api/servers/survival/logs?lines=50"
 
 ```bash
 # 플레이어 목록
-curl -X POST http://localhost:3001/api/servers/survival/exec \
+curl -X POST http://localhost:5001/api/servers/survival/exec \
   -H "Content-Type: application/json" \
   -d '{"command": "list"}'
 
 # 메시지 방송
-curl -X POST http://localhost:3001/api/servers/survival/exec \
+curl -X POST http://localhost:5001/api/servers/survival/exec \
   -H "Content-Type: application/json" \
   -d '{"command": "say Server will restart in 5 minutes!"}'
 
 # 플레이어에게 아이템 지급
-curl -X POST http://localhost:3001/api/servers/survival/exec \
+curl -X POST http://localhost:5001/api/servers/survival/exec \
   -H "Content-Type: application/json" \
   -d '{"command": "give Player1 diamond 64"}'
 
 # 월드 저장
-curl -X POST http://localhost:3001/api/servers/survival/exec \
+curl -X POST http://localhost:5001/api/servers/survival/exec \
   -H "Content-Type: application/json" \
   -d '{"command": "save-all"}'
 ```
@@ -408,7 +408,7 @@ RCON 명령 실행을 위한 대체 엔드포인트입니다.
 ```python
 import requests
 
-API_URL = "http://localhost:3001"
+API_URL = "http://localhost:5001"
 API_KEY = "mctk_your_key_here"
 
 headers = {"X-API-Key": API_KEY}
@@ -435,7 +435,7 @@ print(response.json()["output"])
 ### JavaScript/TypeScript
 
 ```typescript
-const API_URL = "http://localhost:3001";
+const API_URL = "http://localhost:5001";
 const API_KEY = "mctk_your_key_here";
 
 const headers = {
@@ -467,7 +467,7 @@ console.log(result.output);
 
 ```bash
 #!/bin/bash
-API_URL="http://localhost:3001"
+API_URL="http://localhost:5001"
 API_KEY="mctk_your_key_here"
 
 # 서버 목록
@@ -497,7 +497,7 @@ curl -H "X-API-Key: $API_KEY" "$API_URL/api/servers/survival/logs?lines=50"
 전체 OpenAPI 명세는 다음에서 확인할 수 있습니다:
 
 ```
-http://localhost:3001/docs
+http://localhost:5001/docs
 ```
 
 이를 통해 API 엔드포인트를 탐색하고 테스트할 수 있는 대화형 인터페이스를 제공합니다.

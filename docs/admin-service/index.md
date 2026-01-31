@@ -10,7 +10,7 @@ Admin Service provides a web-based management interface and REST API for Docker 
                               |  (Admin Console)    |
                               +----------+----------+
                                          |
-                                    :3000 (HTTP)
+                                    :5000 (HTTP)
                                          |
 +------------------------+     +---------v---------+
 |                        |     |                   |
@@ -19,7 +19,7 @@ Admin Service provides a web-based management interface and REST API for Docker 
 |                        |     |                   |
 +----------+-------------+     +---------+---------+
            ^                             |
-           |                      :3001 (Internal)
+           |                      :5001 (Internal)
            |                             |
            |                   +---------v---------+
            |                   |                   |
@@ -41,7 +41,7 @@ A Fastify-based REST API server that provides:
 - **Swagger Documentation**: Auto-generated API docs at `/docs`
 - **Health Checks**: Built-in health endpoint at `/health`
 
-Default port: `3001`
+Default port: `5001`
 
 ### mcctl-console (Web Management UI)
 
@@ -52,7 +52,7 @@ A Next.js web application that provides:
 - **User Authentication**: Secure login with NextAuth.js
 - **BFF Proxy**: Backend-for-Frontend pattern for secure API access
 
-Default port: `3000`
+Default port: `5000`
 
 ## Authentication Modes
 
@@ -118,7 +118,7 @@ mcctl console service start
 Open your browser and navigate to:
 
 ```
-http://localhost:3000
+http://localhost:5000
 ```
 
 Log in with the admin credentials created during initialization.
@@ -127,7 +127,7 @@ Log in with the admin credentials created during initialization.
 
 - mcctl platform initialized (`mcctl init`)
 - Docker running
-- Ports 3000 and 3001 available (or custom ports in `.env`)
+- Ports 5000 and 5001 available (or custom ports in `.env`)
 
 ## Configuration Files
 

@@ -26,7 +26,7 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **mDNS Discovery**: Clients auto-discover servers via Bonjour/Zeroconf
 - **Zero Resources**: Only infrastructure services run when servers are idle (~40MB RAM)
 - **Interactive CLI**: Guided prompts for server creation, player management, and more
-- **Admin Service**: Web Console (port 3000) + REST API (port 3001) for remote management
+- **Admin Service**: Web Console (port 5000) + REST API (port 5001) for remote management
 - **Player Management**: Unified `mcctl player` command with Mojang API integration
 - **Mod Management**: Search, add, and remove mods from Modrinth, CurseForge, Spiget
 - **NeoForge Support**: Full support for NeoForge modded servers (Minecraft 1.20.1+)

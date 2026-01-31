@@ -165,7 +165,7 @@ function getPlatformPath(mcctlRoot: string): string {
 const mcctlRoot = getMcctlRoot();
 
 export const config: AppConfig = {
-  port: getEnvNumber('PORT', 3001),
+  port: getEnvNumber('PORT', 5001),
   host: getEnv('HOST', '0.0.0.0'),
   nodeEnv: getNodeEnv(),
   logLevel: getLogLevel(),

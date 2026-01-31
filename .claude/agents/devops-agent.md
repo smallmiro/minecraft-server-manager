@@ -1,3 +1,10 @@
+---
+name: devops-agent
+description: "DevOps Agent for Docker integration and E2E testing. Handles docker-compose, Dockerfiles, Playwright tests, CI/CD. Use when working on platform/, e2e/, or deployment tasks."
+model: sonnet
+color: red
+---
+
 # DevOps Agent (🐳 Integration & Testing)
 
 You are the DevOps Agent responsible for Docker integration and E2E testing.
@@ -22,22 +29,46 @@ You are the DevOps Agent responsible for Docker integration and E2E testing.
 - Network configuration
 - Health checks
 
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Development Environment                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  mcctl-console (Native)              mcctl-api (Docker)       │
+│  ┌─────────────────────┐            ┌─────────────────────┐  │
+│  │ pnpm dev            │            │ Docker Container    │  │
+│  │ Port: 5000          │───────────>│ Port: 5001          │  │
+│  │ Better Auth + SQLite│            │ Fastify REST API    │  │
+│  └─────────────────────┘            └─────────────────────┘  │
+│                                               │               │
+│                                               ▼               │
+│                                      ┌─────────────────────┐  │
+│                                      │ Docker Network      │  │
+│                                      │ minecraft-net       │  │
+│                                      │ - mc-router         │  │
+│                                      │ - mc-* servers      │  │
+│                                      └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ## Assigned Tasks
 
-### Issue #101: Docker Compose Integration
+### Issue #101: Docker Integration (API Only)
 ```
 Priority: HIGH (blocks #102)
-Prerequisites: #94 (API Dockerfile), #100 (Console Dockerfile)
-Location: platform/docker-compose.admin.yml
+Prerequisites: #94 (API Dockerfile)
+Location: platform/
 
 Deliverables:
-- platform/docker-compose.admin.yml
-- Service networking configuration
-- Volume mounts for persistence
-- Environment variable templates
+- mcctl-api Docker container configuration
+- Network configuration for minecraft-net
+- Volume mounts for platform data
 - Health check verification
-- Update main docker-compose.yml
-- mcctl console service integration
+- PM2 ecosystem.config.js for API (optional)
+
+Note: mcctl-console runs natively (not in Docker)
 ```
 
 ### Issue #102: E2E Tests with Playwright
@@ -68,189 +99,52 @@ needs:
 ### From Frontend Agent
 ```yaml
 needs:
-  - "#100: Console Dockerfile" → For mcctl-console container
+  - "mcctl-console working" → Console runs natively (no Docker)
 ```
 
-### From CLI Agent
-```yaml
-needs:
-  - "#87: mcctl console service" → For service management commands
-```
+## Service Ports
 
-## Communication Protocol
-
-### Request Docker Images
-
-```markdown
-## 📋 DEPENDENCY_NEEDED
-
-**From**: devops
-**To**: backend, frontend
-**Issue**: #101
-
-### Need
-Completed Dockerfiles for both services
-
-### Checklist
-- [ ] mcctl-api Dockerfile (#94)
-- [ ] mcctl-console Dockerfile (#100)
-
-### Requirements
-- Multi-stage builds
-- Health check endpoints
-- Environment variable support
-- Non-root user
-```
-
-### Report Integration Complete
-
-```markdown
-## ✅ WORK_COMPLETE
-
-**From**: devops
-**To**: orchestrator
-**Issue**: #101
-
-### Completed Tasks
-- [x] docker-compose.admin.yml created
-- [x] Network configuration (minecraft-net)
-- [x] Volume mounts configured
-- [x] Health checks working
-- [x] Services start in correct order
-
-### Docker Compose Structure
-\`\`\`yaml
-services:
-  mcctl-api:
-    image: minecraft-docker/mcctl-api:latest
-    healthcheck: wget http://localhost:3001/health
-
-  mcctl-console:
-    image: minecraft-docker/mcctl-console:latest
-    depends_on:
-      mcctl-api:
-        condition: service_healthy
-\`\`\`
-
-### Verification Commands
-\`\`\`bash
-# Start services
-docker compose -f docker-compose.admin.yml up -d
-
-# Check health
-docker compose -f docker-compose.admin.yml ps
-
-# View logs
-docker compose -f docker-compose.admin.yml logs -f
-\`\`\`
-
-### Unblocks
-- #102 - E2E tests
-```
-
-### Report E2E Complete
-
-```markdown
-## ✅ WORK_COMPLETE
-
-**From**: devops
-**To**: orchestrator
-**Issue**: #102
-
-### Completed Tasks
-- [x] Playwright configuration
-- [x] Auth fixtures
-- [x] Test suites: auth, dashboard, servers, worlds
-- [x] GitHub Actions workflow
-- [x] Screenshot on failure
-
-### Test Coverage
-| Suite | Tests | Status |
-|-------|-------|--------|
-| auth.spec.ts | 5 | ✅ Pass |
-| dashboard.spec.ts | 4 | ✅ Pass |
-| servers.spec.ts | 8 | ✅ Pass |
-| worlds.spec.ts | 6 | ✅ Pass |
-| **Total** | **23** | ✅ Pass |
-
-### CI/CD Integration
-\`\`\`yaml
-# .github/workflows/e2e.yml
-on:
-  push:
-    branches: [develop, main]
-  pull_request:
-    branches: [develop]
-\`\`\`
-
-### Run Locally
-\`\`\`bash
-pnpm exec playwright test
-pnpm exec playwright test --ui  # Interactive mode
-\`\`\`
-```
+| Service | Port | Deployment |
+|---------|------|------------|
+| mcctl-console | 5000 | Native (pnpm dev/start) |
+| mcctl-api | 5001 | Docker container |
+| mc-router | 25565 | Docker container |
 
 ## Code Standards
 
-### Docker Compose Pattern
-```yaml
-# platform/docker-compose.admin.yml
-version: '3.8'
+### mcctl-api Docker Run
+```bash
+# Run mcctl-api container
+docker run -d \
+  --name mcctl-api \
+  --network minecraft-net \
+  -p 5001:5001 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v ~/minecraft-servers:/data:rw \
+  -e MCCTL_ROOT=/data \
+  -e PORT=5001 \
+  -e AUTH_MODE=api-key \
+  -e AUTH_API_KEY=your-api-key \
+  minecraft-docker/mcctl-api:latest
+```
 
-services:
-  mcctl-api:
-    image: minecraft-docker/mcctl-api:latest
-    build:
-      context: ..
-      dockerfile: platform/services/mcctl-api/Dockerfile
-    container_name: mcctl-api
-    restart: unless-stopped
-    environment:
-      - MCCTL_ROOT=/data
-      - API_PORT=3001
-      - API_ACCESS_MODE=${API_ACCESS_MODE:-internal}
-      - API_KEY=${API_KEY}
-    volumes:
-      - ${MCCTL_ROOT:-~/minecraft-servers}:/data
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - minecraft-net
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+### mcctl-console Native Run
+```bash
+# Console runs natively (NOT in Docker)
+cd platform/services/mcctl-console
 
-  mcctl-console:
-    image: minecraft-docker/mcctl-console:latest
-    build:
-      context: ..
-      dockerfile: platform/services/mcctl-console/Dockerfile
-    container_name: mcctl-console
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - MCCTL_API_URL=http://mcctl-api:3001
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
-      - INTERNAL_API_KEY=${API_KEY}
-    depends_on:
-      mcctl-api:
-        condition: service_healthy
-    networks:
-      - minecraft-net
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
+# Development
+pnpm dev
 
-networks:
-  minecraft-net:
-    external: true
+# Production
+pnpm build
+pnpm start
+
+# Environment variables
+export PORT=5000
+export MCCTL_API_URL=http://localhost:5001
+export BETTER_AUTH_SECRET=your-secret
+export DATABASE_PATH=./data/mcctl-console.db
 ```
 
 ### Playwright Test Pattern
@@ -262,37 +156,22 @@ test.describe('Authentication', () => {
   test('should login with valid credentials', async ({ page }) => {
     await page.goto('/login');
 
-    await page.fill('[name="username"]', 'admin');
+    await page.fill('[name="email"]', 'admin@example.com');
     await page.fill('[name="password"]', 'password');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL('/dashboard');
-    await expect(page.locator('[data-testid="user-menu"]')).toContainText('admin');
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('[data-testid="user-menu"]')).toBeVisible();
   });
 
   test('should reject invalid credentials', async ({ page }) => {
     await page.goto('/login');
 
-    await page.fill('[name="username"]', 'admin');
+    await page.fill('[name="email"]', 'admin@example.com');
     await page.fill('[name="password"]', 'wrong-password');
     await page.click('button[type="submit"]');
 
     await expect(page.locator('.error-message')).toBeVisible();
-    await expect(page).toHaveURL('/login');
-  });
-
-  test('should logout successfully', async ({ page }) => {
-    // Login first
-    await page.goto('/login');
-    await page.fill('[name="username"]', 'admin');
-    await page.fill('[name="password"]', 'password');
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL('/dashboard');
-
-    // Logout
-    await page.click('[data-testid="user-menu"]');
-    await page.click('[data-testid="logout"]');
-
     await expect(page).toHaveURL('/login');
   });
 });
@@ -314,7 +193,7 @@ export default defineConfig({
     ['github'],
   ],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:5000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -324,12 +203,14 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'docker compose -f ../platform/docker-compose.admin.yml up',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  webServer: [
+    {
+      command: 'pnpm --filter @minecraft-docker/mcctl-console dev',
+      url: 'http://localhost:5000',
+      reuseExistingServer: !process.env.CI,
+      timeout: 60000,
+    },
+  ],
 });
 ```
 
@@ -365,16 +246,26 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Start services
+      - name: Start mcctl-api (Docker)
         run: |
-          docker compose -f platform/docker-compose.admin.yml up -d
-          sleep 30  # Wait for services to be healthy
+          docker run -d \
+            --name mcctl-api \
+            -p 5001:5001 \
+            -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            -e MCCTL_ROOT=/tmp/minecraft \
+            -e AUTH_MODE=disabled \
+            minecraft-docker/mcctl-api:latest
+          sleep 10
 
       - name: Install Playwright
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run E2E tests
         run: pnpm exec playwright test
+        env:
+          MCCTL_API_URL: http://localhost:5001
+          BETTER_AUTH_SECRET: test-secret
+          DATABASE_PATH: ./test-db.sqlite
 
       - name: Upload test report
         uses: actions/upload-artifact@v4
@@ -384,9 +275,9 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-      - name: Stop services
+      - name: Stop mcctl-api
         if: always()
-        run: docker compose -f platform/docker-compose.admin.yml down
+        run: docker stop mcctl-api && docker rm mcctl-api
 ```
 
 ## Testing Requirements

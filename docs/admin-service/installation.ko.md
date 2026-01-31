@@ -24,8 +24,8 @@ Admin Service를 설치하기 전에 다음을 확인하세요:
   ```
 
 - [x] **포트 사용 가능**
-  - 웹 콘솔용 포트 3000
-  - API용 포트 3001 (내부)
+  - 웹 콘솔용 포트 5000
+  - API용 포트 5001 (내부)
 
 ## 설치 방법
 
@@ -73,8 +73,8 @@ Admin Service initialized!
     Access mode: internal
 
   Endpoints:
-    Console: http://localhost:3000
-    API:     http://localhost:3001
+    Console: http://localhost:5000
+    API:     http://localhost:5001
 
   Next steps:
     1. Start the admin service: mcctl console service start
@@ -101,14 +101,14 @@ Admin services started successfully
 
   mcctl-api
     Status: running
-    Port: 3001
+    Port: 5001
     Health: healthy
     Uptime: 5s
 
   mcctl-console
     Status: running
-    Port: 3000
-    URL: http://localhost:3000
+    Port: 5000
+    URL: http://localhost:5000
     Health: healthy
     Uptime: 3s
 
@@ -137,15 +137,15 @@ MCCTL_ROOT=~/minecraft-servers
 MCCTL_JWT_SECRET=your-secure-jwt-secret-here
 MCCTL_JWT_EXPIRY=24h
 NEXTAUTH_SECRET=your-secure-nextauth-secret-here
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=http://localhost:5000
 
 # API 설정
 API_ACCESS_MODE=internal
 API_KEY=
 
 # 선택 사항: 사용자 정의 포트
-# MCCTL_API_PORT=3001
-# MCCTL_CONSOLE_PORT=3000
+# MCCTL_API_PORT=5001
+# MCCTL_CONSOLE_PORT=5000
 ```
 
 #### 3단계: 관리자 사용자 생성
@@ -171,12 +171,12 @@ docker compose -f docker-compose.admin.yml up -d
 | `MCCTL_JWT_SECRET` | JWT 서명 비밀키 | `change-me-in-production` |
 | `MCCTL_JWT_EXPIRY` | JWT 토큰 만료 시간 | `24h` |
 | `NEXTAUTH_SECRET` | NextAuth.js 비밀키 | `change-me-in-production` |
-| `NEXTAUTH_URL` | 콘솔 URL | `http://localhost:3000` |
+| `NEXTAUTH_URL` | 콘솔 URL | `http://localhost:5000` |
 | `API_ACCESS_MODE` | API 인증 모드 | `internal` |
 | `API_KEY` | API 키 (api-key 모드 사용 시) | - |
 | `LOG_LEVEL` | 로깅 레벨 | `info` |
-| `MCCTL_API_PORT` | API 서버 포트 | `3001` |
-| `MCCTL_CONSOLE_PORT` | 콘솔 포트 | `3000` |
+| `MCCTL_API_PORT` | API 서버 포트 | `5001` |
+| `MCCTL_CONSOLE_PORT` | 콘솔 포트 | `5000` |
 
 ### 접근 모드
 
@@ -299,7 +299,7 @@ mcctl console service status
 ### API 상태 확인
 
 ```bash
-curl http://localhost:3001/health
+curl http://localhost:5001/health
 ```
 
 예상 응답:
@@ -310,7 +310,7 @@ curl http://localhost:3001/health
 
 ### 웹 콘솔 접속
 
-1. 브라우저에서 `http://localhost:3000` 열기
+1. 브라우저에서 `http://localhost:5000` 열기
 2. 관리자 자격 증명으로 로그인
 3. 서버 목록이 표시되는지 확인
 
@@ -325,7 +325,7 @@ curl http://localhost:3001/health
 
 2. **포트 충돌 확인:**
    ```bash
-   netstat -tlnp | grep -E "3000|3001"
+   netstat -tlnp | grep -E "5000|5001"
    ```
 
 3. **서비스 로그 확인:**

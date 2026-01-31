@@ -551,7 +551,7 @@ All error responses follow this format:
 ```python
 import requests
 
-API_URL = "http://localhost:3001"
+API_URL = "http://localhost:5001"
 API_KEY = "mctk_your_key_here"
 
 headers = {"X-API-Key": API_KEY}
@@ -582,7 +582,7 @@ requests.post(
 ### JavaScript/TypeScript
 
 ```typescript
-const API_URL = "http://localhost:3001";
+const API_URL = "http://localhost:5001";
 const API_KEY = "mctk_your_key_here";
 
 const headers = {
@@ -621,7 +621,7 @@ eventSource.onmessage = (event) => {
 
 ```bash
 #!/bin/bash
-API_URL="http://localhost:3001"
+API_URL="http://localhost:5001"
 API_KEY="mctk_your_key_here"
 
 # List servers

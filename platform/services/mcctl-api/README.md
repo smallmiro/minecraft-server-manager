@@ -56,7 +56,7 @@ docker build -f platform/services/mcctl-api/docker/Dockerfile -t mcctl-api .
 
 docker run -d \
   --name mcctl-api \
-  -p 3001:3001 \
+  -p 5001:5001 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v ~/minecraft-servers:/data \
   -e MCCTL_ROOT=/data \
@@ -69,7 +69,7 @@ docker run -d \
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | API server port | `3001` |
+| `PORT` | API server port | `5001` |
 | `HOST` | Bind address | `0.0.0.0` |
 | `NODE_ENV` | Environment (`development`, `production`, `test`) | `development` |
 | `LOG_LEVEL` | Log level (`fatal`, `error`, `warn`, `info`, `debug`, `trace`) | `debug` (dev) / `info` (prod) |
@@ -91,7 +91,7 @@ docker run -d \
 ### Example .env
 
 ```env
-PORT=3001
+PORT=5001
 HOST=0.0.0.0
 NODE_ENV=production
 LOG_LEVEL=info

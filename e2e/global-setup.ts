@@ -12,8 +12,8 @@ import { join } from 'path';
  * - Creating test users if needed
  */
 async function globalSetup(config: FullConfig): Promise<void> {
-  const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:3000';
-  const apiURL = process.env.E2E_API_URL || 'http://localhost:5000';
+  const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:5000';
+  const apiURL = process.env.E2E_API_URL || 'http://localhost:5001';
 
   console.log('[Global Setup] Starting E2E test setup...');
   console.log(`[Global Setup] Console URL: ${baseURL}`);

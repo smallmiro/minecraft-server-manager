@@ -404,8 +404,8 @@ export async function consoleInitCommand(
     });
 
     // Step 5: Port configuration
-    const DEFAULT_API_PORT = 3001;
-    const DEFAULT_CONSOLE_PORT = 3000;
+    const DEFAULT_API_PORT = 5001;
+    const DEFAULT_CONSOLE_PORT = 5000;
 
     let apiPort = options.apiPort ?? DEFAULT_API_PORT;
     let consolePort = options.consolePort ?? DEFAULT_CONSOLE_PORT;

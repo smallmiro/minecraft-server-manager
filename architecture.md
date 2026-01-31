@@ -26,7 +26,7 @@ This document describes the overall architecture of the Minecraft Server Manager
 │  │   (CLI)      │     │  ┌─────────────┐       ┌─────────────────────┐  │  │
 │  │              │     │  │ mcctl-api   │ ◄───► │   mcctl-console     │  │  │
 │  │  Terminal    │     │  │ (REST API)  │       │   (Web UI + BFF)    │  │  │
-│  │  Interface   │     │  │ :3001       │       │   :3000             │  │  │
+│  │  Interface   │     │  │ :5001       │       │   :5000             │  │  │
 │  └──────┬───────┘     │  └──────┬──────┘       └─────────────────────┘  │  │
 │         │             │         │                                        │  │
 │         │             └─────────┼────────────────────────────────────────┘  │
@@ -135,7 +135,7 @@ Two independent microservices following the Backend-For-Frontend (BFF) pattern:
                                  │ HTTPS
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                         mcctl-console (:3000)                            │
+│                         mcctl-console (:5000)                            │
 │                    @minecraft-docker/mcctl-console                       │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  Tech Stack:                                                             │
@@ -154,7 +154,7 @@ Two independent microservices following the Backend-For-Frontend (BFF) pattern:
                                  │ HTTP (internal network)
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                          mcctl-api (:3001)                               │
+│                          mcctl-api (:5001)                               │
 │                     @minecraft-docker/mcctl-api                          │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  Tech Stack:                                                             │
@@ -223,16 +223,16 @@ Two independent microservices following the Backend-For-Frontend (BFF) pattern:
 | Mode | Port Exposure | Authentication | Use Case |
 |------|---------------|----------------|----------|
 | `internal` | None (Docker only) | Network origin | Default, secure |
-| `api-key` | 3001 | X-API-Key header | External scripts |
-| `ip-whitelist` | 3001 | Client IP check | Trusted networks |
-| `api-key-ip` | 3001 | Both required | High security |
-| `open` | 3001 | None | Development only |
+| `api-key` | 5001 | X-API-Key header | External scripts |
+| `ip-whitelist` | 5001 | Client IP check | Trusted networks |
+| `api-key-ip` | 5001 | Both required | High security |
+| `open` | 5001 | None | Development only |
 
 ```yaml
 # .mcctl-admin.yml
 api:
   access_mode: api-key
-  port: 3001
+  port: 5001
   api_key:
     key: "mctk_xxxxxxxxxxxx"
     header: "X-API-Key"
@@ -425,7 +425,7 @@ minecraft/
 ```
 ┌──────────┐     HTTPS      ┌─────────────┐    Internal     ┌───────────┐
 │  Browser │ ──────────────► │   Console   │ ─────────────► │    API    │
-│          │   (TLS 1.3)    │   (:3000)   │  (Docker net)  │  (:3001)  │
+│          │   (TLS 1.3)    │   (:5000)   │  (Docker net)  │  (:5001)  │
 └──────────┘                └─────────────┘                └───────────┘
      │                            │                              │
      │ Session Cookie             │ NextAuth JWT                 │ API Key

@@ -40,7 +40,7 @@ mcctl console init [options]
 |--------|-------------|
 | `--root <path>` | Custom data directory |
 | `--force` | Reinitialize even if already configured |
-| `--api-port <port>` | API server port (default: 3001) |
+| `--api-port <port>` | API server port (default: 5001) |
 | `--console-port <port>` | Console server port (default: 3000) |
 
 ### Interactive Flow
@@ -378,7 +378,7 @@ mcctl console api status [options]
 API Configuration
 
   Access Mode: api-key
-  Port: 3001
+  Port: 5001
   API Key: mctk_abc1...xyz9
 
   IP Whitelist: (empty)
@@ -554,7 +554,7 @@ Console services started successfully
   mcctl-console
     Status: online
     PID: 12346
-    URL: http://localhost:3000
+    URL: http://localhost:5000
     CPU: 0%
     Memory: 80.5 MB
     Uptime: 3s
@@ -643,7 +643,7 @@ mcctl console service status [options]
   mcctl-console
     Status: online
     PID: 12346
-    URL: http://localhost:3000
+    URL: http://localhost:5000
     CPU: 1%
     Memory: 85.3 MB
     Uptime: 2h 15m
@@ -673,7 +673,7 @@ mcctl console service status [options]
     "memory": "85.3 MB",
     "uptime": "2h 15m",
     "restarts": 0,
-    "url": "http://localhost:3000"
+    "url": "http://localhost:5000"
   },
   "healthy": true
 }

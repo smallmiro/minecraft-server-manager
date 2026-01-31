@@ -264,8 +264,8 @@ All features are implemented via CLI first, with Web Management UI available.
 
 - **Phase 1**: CLI with Interactive Mode (`platform/services/cli`)
 - **Phase 2**: Admin Service - REST API + Web Console
-  - `mcctl-api`: Fastify REST API on port 3001
-  - `mcctl-console`: Next.js Web UI on port 3000
+  - `mcctl-api`: Fastify REST API on port 5001
+  - `mcctl-console`: Next.js Web UI on port 5000
 
 ### CLI Architecture
 

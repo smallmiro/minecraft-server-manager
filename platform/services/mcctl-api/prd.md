@@ -137,10 +137,10 @@ platform/services/mcctl-api/
 | Mode | Port Exposure | Authentication | Use Case |
 |------|---------------|----------------|----------|
 | `internal` | None (Docker network only) | None | Default, mcctl-console only |
-| `api-key` | 3001 exposed | X-API-Key header | External tool integration |
-| `ip-whitelist` | 3001 exposed | IP verification | Trusted networks |
-| `api-key-ip` | 3001 exposed | Both | Maximum security |
-| `open` | 3001 exposed | None | Development only |
+| `api-key` | 5001 exposed | X-API-Key header | External tool integration |
+| `ip-whitelist` | 5001 exposed | IP verification | Trusted networks |
+| `api-key-ip` | 5001 exposed | Both | Maximum security |
+| `open` | 5001 exposed | None | Development only |
 
 ### 4.2 Authentication Plugin Implementation
 
@@ -320,7 +320,7 @@ data: {"line":"[14:23:46] [Server thread/INFO]: Done loading!"}
 | `API_KEY` | API key (api-key mode) | - |
 | `API_KEY_HEADER` | API key header name | `X-API-Key` |
 | `API_IP_WHITELIST` | IP whitelist (comma-separated) | - |
-| `API_PORT` | Listening port | `3001` |
+| `API_PORT` | Listening port | `5001` |
 | `USER_STORE_TYPE` | User storage type | `yaml` |
 
 ## 9. Dependencies
@@ -363,16 +363,16 @@ data: {"line":"[14:23:46] [Server thread/INFO]: Done loading!"}
 
 ```bash
 # Health check
-curl http://localhost:3001/api/health
+curl http://localhost:5001/api/health
 
 # Server list (api-key mode)
-curl -H "X-API-Key: mctk_xxx" http://localhost:3001/api/servers
+curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/servers
 
 # Create server
 curl -X POST -H "Content-Type: application/json" \
   -H "X-API-Key: mctk_xxx" \
   -d '{"name":"myserver","type":"PAPER","version":"1.21.1"}' \
-  http://localhost:3001/api/servers
+  http://localhost:5001/api/servers
 ```
 
 ## 11. Revision History

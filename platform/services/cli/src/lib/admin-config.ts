@@ -41,13 +41,13 @@ const DEFAULT_CONFIG: AdminConfig = {
   version: '1.0',
   api: {
     access_mode: 'internal',
-    port: 3001,
+    port: 5001,
     api_key: null,
     allowed_ips: [],
   },
   console: {
     enabled: true,
-    port: 3000,
+    port: 5000,
   },
   initialized_at: new Date().toISOString(),
 };

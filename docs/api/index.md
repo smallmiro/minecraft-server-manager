@@ -23,7 +23,7 @@ flowchart TB
             R[Hostname Routing<br/>Auto-scale up/down]
         end
 
-        subgraph MCAPI["mcctl-api :3001"]
+        subgraph MCAPI["mcctl-api :5001"]
             F[Fastify REST API]
         end
 
@@ -162,7 +162,7 @@ sequenceDiagram
 ## Base URL
 
 ```
-http://localhost:3001
+http://localhost:5001
 ```
 
 ## Authentication
@@ -180,13 +180,13 @@ The API supports 5 authentication modes:
 ### API Key Authentication
 
 ```bash
-curl -H "X-API-Key: mctk_your_key_here" http://localhost:3001/api/servers
+curl -H "X-API-Key: mctk_your_key_here" http://localhost:5001/api/servers
 ```
 
 ### Basic Authentication
 
 ```bash
-curl -u admin:password http://localhost:3001/api/servers
+curl -u admin:password http://localhost:5001/api/servers
 ```
 
 ## Quick Start
@@ -199,11 +199,11 @@ mcctl console init
 mcctl console api start
 
 # 3. Test connection
-curl http://localhost:3001/health
+curl http://localhost:5001/health
 
 # 4. List servers (with API key)
 curl -H "X-API-Key: $(cat ~/minecraft-servers/api.key)" \
-  http://localhost:3001/api/servers
+  http://localhost:5001/api/servers
 ```
 
 ## API Endpoint Groups
@@ -289,7 +289,7 @@ The logs endpoint supports Server-Sent Events for real-time log streaming:
 
 ```bash
 curl -H "Accept: text/event-stream" \
-  "http://localhost:3001/api/servers/survival/logs?follow=true"
+  "http://localhost:5001/api/servers/survival/logs?follow=true"
 ```
 
 ```
@@ -303,7 +303,7 @@ data: {"log": "[10:30:20] Player left"}
 Interactive API documentation is available at:
 
 ```
-http://localhost:3001/docs
+http://localhost:5001/docs
 ```
 
 This provides:

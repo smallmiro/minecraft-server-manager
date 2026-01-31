@@ -63,7 +63,7 @@ jobs:
                 cwd: '${{ github.workspace }}/platform',
                 env: {
                   NODE_ENV: 'production',
-                  PORT: 3001,
+                  PORT: 5001,
                   HOST: '0.0.0.0',
                   MCCTL_ROOT: '${{ github.workspace }}/platform',
                   MCCTL_JWT_SECRET: 'test-secret-for-e2e',
@@ -88,7 +88,7 @@ jobs:
       - name: Wait for services to be ready
         run: |
           echo "Waiting for mcctl-api..."
-          timeout 60 bash -c 'until curl -s http://localhost:3001/health > /dev/null; do sleep 2; done' || {
+          timeout 60 bash -c 'until curl -s http://localhost:5001/health > /dev/null; do sleep 2; done' || {
             echo "mcctl-api health check failed"
             pm2 logs mcctl-api --lines 50
             exit 1
@@ -100,7 +100,7 @@ jobs:
         run: pnpm test
         env:
           CI: true
-          E2E_API_URL: http://localhost:3001
+          E2E_API_URL: http://localhost:5001
           E2E_SKIP_SERVICE_START: true
           E2E_API_ONLY: true
 

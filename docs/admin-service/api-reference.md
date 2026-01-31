@@ -6,7 +6,7 @@ Complete REST API documentation for the mcctl-api server.
 
 The mcctl-api provides a RESTful interface for managing Docker Minecraft servers. All endpoints return JSON responses.
 
-**Base URL:** `http://localhost:3001`
+**Base URL:** `http://localhost:5001`
 
 **Documentation:** Swagger UI is available at `/docs` when the service is running.
 
@@ -34,10 +34,10 @@ Authorization: Basic base64(username:password)
 
 ```bash
 # API Key authentication
-curl -H "X-API-Key: mctk_your_key" http://localhost:3001/api/servers
+curl -H "X-API-Key: mctk_your_key" http://localhost:5001/api/servers
 
 # Basic authentication
-curl -u admin:password http://localhost:3001/api/servers
+curl -u admin:password http://localhost:5001/api/servers
 ```
 
 ## Endpoints
@@ -187,7 +187,7 @@ Get server console logs.
 **Example:**
 
 ```bash
-curl "http://localhost:3001/api/servers/survival/logs?lines=50"
+curl "http://localhost:5001/api/servers/survival/logs?lines=50"
 ```
 
 **Response:**
@@ -321,22 +321,22 @@ Execute an RCON command on the server.
 
 ```bash
 # List players
-curl -X POST http://localhost:3001/api/servers/survival/exec \
+curl -X POST http://localhost:5001/api/servers/survival/exec \
   -H "Content-Type: application/json" \
   -d '{"command": "list"}'
 
 # Broadcast message
-curl -X POST http://localhost:3001/api/servers/survival/exec \
+curl -X POST http://localhost:5001/api/servers/survival/exec \
   -H "Content-Type: application/json" \
   -d '{"command": "say Server will restart in 5 minutes!"}'
 
 # Give item to player
-curl -X POST http://localhost:3001/api/servers/survival/exec \
+curl -X POST http://localhost:5001/api/servers/survival/exec \
   -H "Content-Type: application/json" \
   -d '{"command": "give Player1 diamond 64"}'
 
 # Save world
-curl -X POST http://localhost:3001/api/servers/survival/exec \
+curl -X POST http://localhost:5001/api/servers/survival/exec \
   -H "Content-Type: application/json" \
   -d '{"command": "save-all"}'
 ```
@@ -408,7 +408,7 @@ Currently, no rate limiting is implemented. Consider using a reverse proxy (ngin
 ```python
 import requests
 
-API_URL = "http://localhost:3001"
+API_URL = "http://localhost:5001"
 API_KEY = "mctk_your_key_here"
 
 headers = {"X-API-Key": API_KEY}
@@ -435,7 +435,7 @@ print(response.json()["output"])
 ### JavaScript/TypeScript
 
 ```typescript
-const API_URL = "http://localhost:3001";
+const API_URL = "http://localhost:5001";
 const API_KEY = "mctk_your_key_here";
 
 const headers = {
@@ -467,7 +467,7 @@ console.log(result.output);
 
 ```bash
 #!/bin/bash
-API_URL="http://localhost:3001"
+API_URL="http://localhost:5001"
 API_KEY="mctk_your_key_here"
 
 # List servers
@@ -497,7 +497,7 @@ curl -H "X-API-Key: $API_KEY" "$API_URL/api/servers/survival/logs?lines=50"
 The full OpenAPI specification is available at:
 
 ```
-http://localhost:3001/docs
+http://localhost:5001/docs
 ```
 
 This provides an interactive interface for exploring and testing API endpoints.

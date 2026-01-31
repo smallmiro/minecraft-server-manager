@@ -1,6 +1,6 @@
 # mcctl - Minecraft Server Management CLI
 
-> **Version**: 1.6.15
+> **Version**: 1.7.0
 > **Last Updated**: 2026-01-31
 > **Purpose**: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions
 
@@ -201,16 +201,16 @@ mcctl console service logs -f   # Follow logs
 
 ## REST API Reference
 
-Admin Service provides a REST API (port 3001) for programmatic access.
+Admin Service provides a REST API (port 5001) for programmatic access.
 
 ### Authentication
 
 ```bash
 # API Key (recommended)
-curl -H "X-API-Key: mctk_xxx" http://localhost:3001/api/servers
+curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/servers
 
 # Basic Auth
-curl -u admin:password http://localhost:3001/api/servers
+curl -u admin:password http://localhost:5001/api/servers
 ```
 
 ### Key Endpoints
@@ -235,7 +235,7 @@ curl -u admin:password http://localhost:3001/api/servers
 curl -X POST -H "X-API-Key: mctk_xxx" \
   -H "Content-Type: application/json" \
   -d '{"command": "list"}' \
-  http://localhost:3001/api/servers/survival/exec
+  http://localhost:5001/api/servers/survival/exec
 ```
 
 ## Common Use Cases
@@ -280,7 +280,7 @@ mcctl ban myserver add Griefer "Repeated griefing"
 ```bash
 mcctl console init                # Interactive setup
 mcctl console service start       # Start services
-# Access http://localhost:3000
+# Access http://localhost:5000
 ```
 
 ## FAQ
@@ -313,7 +313,7 @@ A: Use `mcctl config <server> --cheats` or set `ALLOW_CHEATS=true`.
 A: Use `mcctl config <server> MEMORY 8G` then restart the server.
 
 ### Q: What is the Admin Service?
-A: Web console (port 3000) + REST API (port 3001). Initialize with `mcctl console init` and start with `mcctl console service start`.
+A: Web console (port 5000) + REST API (port 5001). Initialize with `mcctl console init` and start with `mcctl console service start`.
 
 ### Q: How do I use the REST API?
 A: After `mcctl console init`, use the generated API key with `X-API-Key` header. See REST API Reference section.
@@ -376,7 +376,7 @@ A: Use `mcctl config <server> USE_AIKAR_FLAGS true`. For modded servers, increas
 ### API connection issues
 - Check service status: `mcctl console service status`
 - Verify API key: check `~/minecraft-servers/api.key`
-- Test health: `curl http://localhost:3001/health`
+- Test health: `curl http://localhost:5001/health`
 
 ## Links
 

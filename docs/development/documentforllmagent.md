@@ -207,8 +207,8 @@ Replace `192.168.1.100` with your server's HOST_IP from `.env`.
 | **avahi-daemon** | System mDNS service for .local hostname discovery |
 | **itzg/minecraft-server** | Docker image running Minecraft servers |
 | **mcctl** | CLI tool for management operations |
-| **mcctl-api** | REST API service (Fastify, port 3001) |
-| **mcctl-console** | Web Admin Console (Next.js, port 3000) |
+| **mcctl-api** | REST API service (Fastify, port 5001) |
+| **mcctl-console** | Web Admin Console (Next.js, port 5000) |
 | **PM2** | Process manager for Admin Service (API + Console) |
 
 ---
@@ -222,18 +222,18 @@ The Admin Service provides a web-based management console for mcctl. It consists
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                       Web Browser                            │
-│                  (http://localhost:3000)                    │
+│                  (http://localhost:5000)                    │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────────┐
-│                  mcctl-console (:3000)                      │
+│                  mcctl-console (:5000)                      │
 │  - Next.js Web UI                                           │
 │  - Server management dashboard                              │
 │  - User authentication (NextAuth)                           │
 └────────────────────────┬────────────────────────────────────┘
                          │ Internal API calls
 ┌────────────────────────▼────────────────────────────────────┐
-│                   mcctl-api (:3001)                         │
+│                   mcctl-api (:5001)                         │
 │  - Fastify REST API                                         │
 │  - 5-mode authentication (internal, api-key, ip, etc.)     │
 │  - OpenAPI/Swagger documentation (/docs)                    │
@@ -268,7 +268,7 @@ mcctl console init [options]
 | Option | Description |
 |--------|-------------|
 | `--force` | Reinitialize, overwrite existing config |
-| `--api-port <port>` | API server port (default: 3001) |
+| `--api-port <port>` | API server port (default: 5001) |
 | `--console-port <port>` | Console server port (default: 3000) |
 
 **What it does:**
@@ -468,7 +468,7 @@ mcctl console service stop --console-only
   mcctl-console
     Status: online
     PID: 12346
-    URL: http://localhost:3000
+    URL: http://localhost:5000
     CPU: 0.3%
     Memory: 120.5 MB
     Uptime: 2h 15m
@@ -1711,7 +1711,7 @@ mcctl console init
 mcctl console service start
 
 # 4. Access the web console
-# Open browser: http://localhost:3000
+# Open browser: http://localhost:5000
 # Login with admin credentials
 
 # 5. Check status anytime
@@ -1735,20 +1735,20 @@ mcctl console service start
 
 # 3. Use the API
 # List servers
-curl -H "X-API-Key: mctk_your_api_key" http://localhost:3001/servers
+curl -H "X-API-Key: mctk_your_api_key" http://localhost:5001/servers
 
 # Start a server
 curl -X POST -H "X-API-Key: mctk_your_api_key" \
-  http://localhost:3001/servers/myserver/start
+  http://localhost:5001/servers/myserver/start
 
 # Execute RCON command
 curl -X POST -H "X-API-Key: mctk_your_api_key" \
   -H "Content-Type: application/json" \
   -d '{"command": "list"}' \
-  http://localhost:3001/console/myserver/exec
+  http://localhost:5001/console/myserver/exec
 
 # View API documentation
-# Open browser: http://localhost:3001/docs
+# Open browser: http://localhost:5001/docs
 ```
 
 ---
@@ -2023,7 +2023,7 @@ A: The world directory is created immediately with a `.meta` file containing the
 ### Admin Service Questions
 
 **Q: What is the Admin Service?**
-A: The Admin Service consists of mcctl-api (REST API on port 3001) and mcctl-console (Web UI on port 3000). It provides a web-based management interface for mcctl.
+A: The Admin Service consists of mcctl-api (REST API on port 5001) and mcctl-console (Web UI on port 5000). It provides a web-based management interface for mcctl.
 
 **Q: Why does the Admin Service use PM2 instead of Docker?**
 A: PM2 provides native Node.js execution with lower overhead, faster startup, easier debugging, and automatic process recovery. This is more efficient than running additional Docker containers.
@@ -2043,7 +2043,7 @@ A: Five modes:
 - `open` - No authentication (development only!)
 
 **Q: Where is the API documentation?**
-A: Access Swagger/OpenAPI docs at `http://localhost:3001/docs` when the API is running.
+A: Access Swagger/OpenAPI docs at `http://localhost:5001/docs` when the API is running.
 
 **Q: How do I add more users to the console?**
 A: Use `mcctl console user add` to add users interactively, or with `--role` and `--password` options for CLI mode.
@@ -2629,8 +2629,8 @@ services:
 | Term | Definition |
 |------|------------|
 | **mcctl** | Minecraft Control - the CLI management tool |
-| **mcctl-api** | REST API service for programmatic server management (Fastify, port 3001) |
-| **mcctl-console** | Web-based admin console (Next.js, port 3000) |
+| **mcctl-api** | REST API service for programmatic server management (Fastify, port 5001) |
+| **mcctl-console** | Web-based admin console (Next.js, port 5000) |
 | **mc-router** | Hostname-based router that directs connections to correct servers |
 | **PM2** | Node.js process manager used to run Admin Service |
 | **avahi-daemon** | Linux mDNS service for .local hostname discovery |

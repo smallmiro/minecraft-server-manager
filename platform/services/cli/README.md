@@ -73,9 +73,13 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.7.0 (2026-01-31)
+- **feat(api)**: Router Status API, Server Create/Delete API, Player Management API, Backup API
+- **feat(cli)**: Add `mcctl init --reconfigure` command
+- **test**: Comprehensive E2E tests for API and CLI commands
+
 ### v1.6.16 (2026-01-31)
 - **chore**: Add README Changelog sync instructions to agent definitions
-- **chore**: Ensure npm package page displays latest changelog entries
 
 ### v1.6.15 (2026-01-31)
 - **feat**: New `mcctl backup init` command for interactive GitHub backup setup
@@ -89,9 +93,6 @@ mcctl logs myserver
 
 ### v1.6.12 (2026-01-31)
 - **fix(critical)**: Add missing `EXTRA_ARGS=--universe /worlds/` to npm package template
-
-### v1.6.11 (2026-01-31)
-- **fix**: Include CHANGELOG.md in npm package for proper changelog display
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

@@ -193,7 +193,7 @@ test.describe('API Endpoints', () => {
 
   test.describe('Console Health API', () => {
     test('should return 200 OK from console health endpoint', async ({ request }) => {
-      const consoleURL = process.env.E2E_BASE_URL || 'http://localhost:3000';
+      const consoleURL = process.env.E2E_BASE_URL || 'http://localhost:5000';
       const response = await request.get(`${consoleURL}/api/health`);
 
       expect(response.status()).toBe(200);

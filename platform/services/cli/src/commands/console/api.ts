@@ -50,7 +50,7 @@ function loadConfig(): ApiConfig {
     return {
       accessMode: 'internal',
       apiKey: generateApiKey(),
-      port: 3001,
+      port: 5001,
       ipWhitelist: [],
     };
   }
@@ -62,7 +62,7 @@ function loadConfig(): ApiConfig {
     return {
       accessMode: 'internal',
       apiKey: generateApiKey(),
-      port: 3001,
+      port: 5001,
       ipWhitelist: [],
     };
   }

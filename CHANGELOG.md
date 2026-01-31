@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-01-31
+
+### Added
+- **Router Status API** (`GET /api/router/status`) - Real-time mc-router status (#157, #171)
+- **Server Create/Delete API** (`POST/DELETE /api/servers/:name`) - REST API for server management (#154, #172)
+- **Player Management API** - Whitelist, ban, op, kick operations via REST (#155, #173)
+- **Backup API** (`POST /api/backup/:name`) - Trigger backups via REST (#156, #173)
+- **mcctl init --reconfigure** - Reconfigure existing installation (#170)
+- **E2E Tests** - Comprehensive API tests for router, players, backup, server create/delete
+- **CLI E2E Tests** - Vitest-based e2e tests for CLI commands
+
+### Changed
+- Update XP methodology documentation in PRD
+- Improve /work command with context mode and e2e test requirements
+- Add issue checkbox update instructions to /work command
+- Agent documentation updates for multi-agent collaboration
+
+### Documentation
+- Add mcctl-console implementation plan with GitHub issues #174-#190
+- Update Admin Service documentation for new API endpoints
+
 ## [1.6.16] - 2026-01-31
 
 ### Changed

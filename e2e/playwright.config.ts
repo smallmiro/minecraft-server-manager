@@ -12,16 +12,16 @@ import { defineConfig, devices } from '@playwright/test';
  * Playwright configuration for E2E tests.
  *
  * Services are managed via PM2 (not Docker).
- * - Console runs on localhost:3000
- * - API runs on localhost:3001
+ * - Console runs on localhost:5000
+ * - API runs on localhost:5001
  *
  * Before running tests:
  * 1. Run 'mcctl console init' to generate ecosystem.config.cjs
  * 2. Tests will auto-start services via PM2 (or use existing running services)
  *
  * Environment variables:
- * - E2E_BASE_URL: Console URL (default: http://localhost:3000)
- * - E2E_API_URL: API URL (default: http://localhost:5000)
+ * - E2E_BASE_URL: Console URL (default: http://localhost:5000)
+ * - E2E_API_URL: API URL (default: http://localhost:5001)
  * - E2E_SKIP_SERVICE_START: Skip PM2 service start (for pre-started services)
  * - E2E_STOP_SERVICES: Stop services after tests (default: false, keep running)
  *
@@ -46,7 +46,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.E2E_BASE_URL || 'http://localhost:5000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

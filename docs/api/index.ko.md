@@ -23,7 +23,7 @@ flowchart TB
             R[Hostname Routing<br/>Auto-scale up/down]
         end
 
-        subgraph MCAPI["mcctl-api :3001"]
+        subgraph MCAPI["mcctl-api :5001"]
             F[Fastify REST API]
         end
 
@@ -162,7 +162,7 @@ sequenceDiagram
 ## 기본 URL
 
 ```
-http://localhost:3001
+http://localhost:5001
 ```
 
 ## 인증
@@ -180,13 +180,13 @@ API는 5가지 인증 모드를 지원합니다:
 ### API 키 인증
 
 ```bash
-curl -H "X-API-Key: mctk_your_key_here" http://localhost:3001/api/servers
+curl -H "X-API-Key: mctk_your_key_here" http://localhost:5001/api/servers
 ```
 
 ### Basic 인증
 
 ```bash
-curl -u admin:password http://localhost:3001/api/servers
+curl -u admin:password http://localhost:5001/api/servers
 ```
 
 ## 빠른 시작
@@ -199,11 +199,11 @@ mcctl console init
 mcctl console api start
 
 # 3. 연결 테스트
-curl http://localhost:3001/health
+curl http://localhost:5001/health
 
 # 4. 서버 목록 조회 (API 키 사용)
 curl -H "X-API-Key: $(cat ~/minecraft-servers/api.key)" \
-  http://localhost:3001/api/servers
+  http://localhost:5001/api/servers
 ```
 
 ## API 엔드포인트 그룹
@@ -289,7 +289,7 @@ curl -H "X-API-Key: $(cat ~/minecraft-servers/api.key)" \
 
 ```bash
 curl -H "Accept: text/event-stream" \
-  "http://localhost:3001/api/servers/survival/logs?follow=true"
+  "http://localhost:5001/api/servers/survival/logs?follow=true"
 ```
 
 ```
@@ -303,7 +303,7 @@ data: {"log": "[10:30:20] Player left"}
 인터랙티브 API 문서는 다음 주소에서 이용 가능합니다:
 
 ```
-http://localhost:3001/docs
+http://localhost:5001/docs
 ```
 
 제공 기능:

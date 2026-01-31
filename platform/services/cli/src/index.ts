@@ -235,8 +235,8 @@ ${colors.cyan('Self Update:')}
 ${colors.cyan('Console Management:')}
   ${colors.bold('console init')} [options]       Initialize console service (create admin user)
     --force                      Reinitialize (delete existing config)
-    --api-port <port>            API server port (default: 3001)
-    --console-port <port>        Console server port (default: 3000)
+    --api-port <port>            API server port (default: 5001)
+    --console-port <port>        Console server port (default: 5000)
   ${colors.bold('console user')} <action> [name] Manage console users (list, add, remove, reset)
   ${colors.bold('console api')} <action>         Manage API settings (status, config, key)
   ${colors.bold('console service')} <action>     Manage services via PM2 (start, stop, restart, status, logs)
@@ -246,8 +246,8 @@ ${colors.cyan('Console Management:')}
   ${colors.dim('admin <cmd>                  (deprecated, use "console" instead)')}
 
 ${colors.cyan('Console Options:')}
-  --api-port <port>            API server port (default: 3001)
-  --console-port <port>        Console server port (default: 3000)
+  --api-port <port>            API server port (default: 5001)
+  --console-port <port>        Console server port (default: 5000)
   --api                        Target API service only
   --console                    Target console service only
   -f, --follow                 Follow log output

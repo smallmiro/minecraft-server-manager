@@ -29,8 +29,8 @@ Before installing Admin Service, ensure you have:
   ```
 
 - [x] **Ports available**
-  - Port 3000 for web console
-  - Port 3001 for API
+  - Port 5000 for web console
+  - Port 5001 for API
 
 ## Installation Methods
 
@@ -86,8 +86,8 @@ Console Service initialized!
     Access mode: internal
 
   Endpoints:
-    Console: http://localhost:3000
-    API:     http://localhost:3001
+    Console: http://localhost:5000
+    API:     http://localhost:5001
 
   Next steps:
     1. Start the console service: mcctl console service start
@@ -121,7 +121,7 @@ Console services started successfully
   mcctl-console
     Status: online
     PID: 12346
-    URL: http://localhost:3000
+    URL: http://localhost:5000
     CPU: 0%
     Memory: 80.5 MB
     Uptime: 3s
@@ -154,9 +154,9 @@ mcctl console init
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `MCCTL_ROOT` | Data directory path | `~/minecraft-servers` |
-| `PORT` | API server port | `3001` |
+| `PORT` | API server port | `5001` |
 | `HOSTNAME` | Console server hostname | `0.0.0.0` |
-| `MCCTL_API_URL` | Internal API URL | `http://localhost:3001` |
+| `MCCTL_API_URL` | Internal API URL | `http://localhost:5001` |
 | `NODE_ENV` | Environment mode | `production` |
 
 ### PM2 Ecosystem Configuration
@@ -173,7 +173,7 @@ module.exports = {
       cwd: process.env.MCCTL_ROOT || '.',
       env: {
         NODE_ENV: 'production',
-        PORT: 3001,
+        PORT: 5001,
         HOST: '0.0.0.0',
         MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
       },
@@ -324,7 +324,7 @@ mcctl console service status
 ### Verify API Health
 
 ```bash
-curl http://localhost:3001/health
+curl http://localhost:5001/health
 ```
 
 Expected response:
@@ -335,7 +335,7 @@ Expected response:
 
 ### Access Web Console
 
-1. Open browser to `http://localhost:3000`
+1. Open browser to `http://localhost:5000`
 2. Log in with admin credentials
 3. Verify server list is displayed
 
@@ -355,10 +355,10 @@ Expected response:
 
 3. **Check for port conflicts:**
    ```bash
-   netstat -tlnp | grep -E "3000|3001"
+   netstat -tlnp | grep -E "5000|5001"
    # or on macOS
-   lsof -i :3000
-   lsof -i :3001
+   lsof -i :5000
+   lsof -i :5001
    ```
 
 4. **View service logs:**

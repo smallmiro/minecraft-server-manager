@@ -639,7 +639,7 @@ usage:
 sync: SYNC-API
 artifacts:
   - file: "mcctl-api/docs/openapi.json"
-  - url: "http://localhost:3001/docs"
+  - url: "http://localhost:5001/docs"
 
 endpoints:
   servers: "GET/POST /api/servers, GET/POST/DELETE /api/servers/:name"

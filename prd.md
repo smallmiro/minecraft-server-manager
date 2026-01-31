@@ -1439,7 +1439,7 @@ npm install -g minecraft-server-manager
 
 # Start the management UI
 minecraft-manager start
-# → Opens http://localhost:3000
+# → Opens http://localhost:5000
 # → All Docker containers, Lazymc, and servers managed from UI
 ```
 
@@ -1467,7 +1467,7 @@ minecraft-server-manager/
 ```
 ┌─────────────────────────────────────────────────┐
 │           Web Management UI (Next.js)           │
-│                 http://localhost:3000           │
+│                 http://localhost:5000           │
 ├─────────────────────────────────────────────────┤
 │  Dashboard │ Servers │ Worlds │ Logs │ Settings │
 └──────────────────────┬──────────────────────────┘
@@ -1526,7 +1526,7 @@ Each service has independent PRD/Plan documents:
 │                     BROWSER                                  │
 │                   (React Client)                             │
 └─────────────────────────┬───────────────────────────────────┘
-                          │ HTTP (localhost:3000)
+                          │ HTTP (localhost:5000)
 ┌─────────────────────────▼───────────────────────────────────┐
 │                  mcctl-console (BFF + UI)                    │
 │                   Next.js App Router                         │

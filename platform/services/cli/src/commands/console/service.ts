@@ -56,8 +56,8 @@ interface ConsoleServiceStatus {
   healthy: boolean;
 }
 
-const API_PORT_DEFAULT = 3001;
-const CONSOLE_PORT_DEFAULT = 3000;
+const API_PORT_DEFAULT = 5001;
+const CONSOLE_PORT_DEFAULT = 5000;
 
 /**
  * Check PM2 is installed

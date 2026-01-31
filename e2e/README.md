@@ -50,8 +50,8 @@ pnpm test
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `E2E_BASE_URL` | `http://localhost:3000` | Console URL |
-| `E2E_API_URL` | `http://localhost:3001` | API URL |
+| `E2E_BASE_URL` | `http://localhost:5000` | Console URL |
+| `E2E_API_URL` | `http://localhost:5001` | API URL |
 | `E2E_SKIP_SERVICE_START` | `false` | Skip PM2 service startup |
 | `E2E_STOP_SERVICES` | `false` | Stop services after tests |
 
@@ -118,7 +118,7 @@ test('authenticated test', async ({ authenticatedPage }) => {
 ```typescript
 import { test, expect } from '@playwright/test';
 
-const API_URL = process.env.E2E_API_URL || 'http://localhost:3001';
+const API_URL = process.env.E2E_API_URL || 'http://localhost:5001';
 
 test('health check', async ({ request }) => {
   const response = await request.get(`${API_URL}/health`);
@@ -172,7 +172,7 @@ The GitHub Actions workflow:
 
 ### Services won't start
 
-1. Check if ports 3000/3001 are available
+1. Check if ports 5000/5001 are available
 2. Verify `mcctl console init` was run
 3. Check PM2 logs: `pm2 logs`
 
@@ -186,4 +186,4 @@ The GitHub Actions workflow:
 
 1. Ensure default credentials (admin/admin) work
 2. Check if `users.yaml` exists in platform directory
-3. Verify API is responding: `curl http://localhost:3001/health`
+3. Verify API is responding: `curl http://localhost:5001/health`

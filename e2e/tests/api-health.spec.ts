@@ -119,7 +119,7 @@ test.describe('Health & System API', () => {
     test('should allow CORS requests', async ({ request }) => {
       const response = await request.get(`${API_BASE_URL}/health`, {
         headers: {
-          Origin: 'http://localhost:3000',
+          Origin: 'http://localhost:5000',
         },
       });
 
@@ -133,7 +133,7 @@ test.describe('Health & System API', () => {
       const response = await request.fetch(`${API_BASE_URL}/api/servers`, {
         method: 'OPTIONS',
         headers: {
-          Origin: 'http://localhost:3000',
+          Origin: 'http://localhost:5000',
           'Access-Control-Request-Method': 'POST',
           'Access-Control-Request-Headers': 'Content-Type',
         },

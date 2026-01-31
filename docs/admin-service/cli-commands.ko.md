@@ -40,7 +40,7 @@ mcctl console init [options]
 |--------|-------------|
 | `--root <path>` | 사용자 지정 데이터 디렉토리 |
 | `--force` | 이미 구성된 경우에도 재초기화 |
-| `--api-port <port>` | API 서버 포트 (기본값: 3001) |
+| `--api-port <port>` | API 서버 포트 (기본값: 5001) |
 | `--console-port <port>` | 콘솔 서버 포트 (기본값: 3000) |
 
 ### 대화형 흐름
@@ -378,7 +378,7 @@ mcctl console api status [options]
 API Configuration
 
   Access Mode: api-key
-  Port: 3001
+  Port: 5001
   API Key: mctk_abc1...xyz9
 
   IP Whitelist: (비어있음)
@@ -554,7 +554,7 @@ PM2를 통해 콘솔 서비스 시작 중...
   mcctl-console
     Status: online
     PID: 12346
-    URL: http://localhost:3000
+    URL: http://localhost:5000
     CPU: 0%
     Memory: 80.5 MB
     Uptime: 3s
@@ -643,7 +643,7 @@ mcctl console service status [options]
   mcctl-console
     Status: online
     PID: 12346
-    URL: http://localhost:3000
+    URL: http://localhost:5000
     CPU: 1%
     Memory: 85.3 MB
     Uptime: 2h 15m
@@ -673,7 +673,7 @@ mcctl console service status [options]
     "memory": "85.3 MB",
     "uptime": "2h 15m",
     "restarts": 0,
-    "url": "http://localhost:3000"
+    "url": "http://localhost:5000"
   },
   "healthy": true
 }

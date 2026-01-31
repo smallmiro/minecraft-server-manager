@@ -6,7 +6,7 @@ User guide for the mcctl-console web management interface.
 
 The mcctl-console provides a modern web interface for managing your Docker Minecraft servers. Built with Next.js and featuring real-time updates, it offers a user-friendly alternative to CLI commands.
 
-**Default URL:** `http://localhost:3000`
+**Default URL:** `http://localhost:5000`
 
 ## Accessing the Console
 
@@ -17,7 +17,7 @@ The mcctl-console provides a modern web interface for managing your Docker Minec
    mcctl console service start
    ```
 
-2. Open your browser and navigate to `http://localhost:3000`
+2. Open your browser and navigate to `http://localhost:5000`
 
 3. Enter your credentials:
    - **Username:** The admin username created during `mcctl console init`
@@ -216,7 +216,7 @@ The console panel allows you to:
 
 1. **Check API Health:**
    ```bash
-   curl http://localhost:3001/health
+   curl http://localhost:5001/health
    ```
 
 2. **Verify Docker Socket:**

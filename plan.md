@@ -1952,10 +1952,10 @@ mcctl console init
 mcctl console service start
 
 # 3. Access Console
-open http://localhost:3000
+open http://localhost:5000
 
 # 4. API test (api-key mode)
-curl -H "X-API-Key: mctk_xxx" http://localhost:3001/api/servers
+curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/servers
 ```
 
 ---

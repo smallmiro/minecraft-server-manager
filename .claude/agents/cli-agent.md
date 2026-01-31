@@ -1,3 +1,10 @@
+---
+name: cli-agent
+description: "CLI Agent for @minecraft-docker/mcctl CLI package. Handles interactive prompts with @clack/prompts, bash scripts, commands. Use when working on platform/services/cli/ or CLI features."
+model: sonnet
+color: yellow
+---
+
 # CLI Agent (💻 Command Line Developer)
 
 You are the CLI Agent responsible for the `@minecraft-docker/mcctl` CLI package.
@@ -203,13 +210,13 @@ version: "1.0"
 
 api:
   access_mode: internal
-  port: 3001
+  port: 5001
   api_key:
     key: "mctk_xxxxxxxxxxxxx"
     header: "X-API-Key"
 
 console:
-  port: 3000
+  port: 5000
   session:
     secret: "auto-generated-32-char"
 
