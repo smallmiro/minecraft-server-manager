@@ -26,7 +26,7 @@ module.exports = {
       cwd: process.env.MCCTL_ROOT || '.',
       env: {
         NODE_ENV: 'production',
-        PORT: 5001,
+        PORT: 3001,
         HOST: '0.0.0.0',
         MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
       },
@@ -42,9 +42,9 @@ module.exports = {
       cwd: process.env.MCCTL_ROOT || '.',
       env: {
         NODE_ENV: 'production',
-        PORT: 5000,
+        PORT: 3000,
         HOSTNAME: '0.0.0.0',
-        MCCTL_API_URL: 'http://localhost:5001',
+        MCCTL_API_URL: 'http://localhost:3001',
         MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
       },
       instances: 1,
