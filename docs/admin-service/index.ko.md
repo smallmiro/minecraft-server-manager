@@ -2,6 +2,9 @@
 
 Admin Service는 Docker Minecraft 서버를 위한 웹 기반 관리 인터페이스와 REST API를 제공합니다. 현대적인 웹 콘솔을 통해 원격 서버 관리, 모니터링, 운영이 가능합니다.
 
+!!! warning "개발 상태"
+    **mcctl-console (웹 UI)은 현재 활발히 개발 중입니다.** 일부 기능이 불완전하거나 변경될 수 있습니다. REST API (mcctl-api)는 안정적이며 프로덕션 환경에서 사용 가능합니다.
+
 ## 아키텍처
 
 ```

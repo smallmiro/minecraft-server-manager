@@ -113,7 +113,7 @@ minecraft/
 │   │   │   ├── Dockerfile              # Multi-stage build (~156MB)
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
-│   │   ├── mcctl-console/       # @minecraft-docker/mcctl-console (Web UI)
+│   │   ├── mcctl-console/       # @minecraft-docker/mcctl-console (Web UI) [UNDER DEVELOPMENT]
 │   │   │   ├── src/
 │   │   │   │   ├── app/                # Next.js App Router
 │   │   │   │   │   ├── api/            # BFF proxy routes

@@ -2,7 +2,9 @@
 
 > **Purpose**: This document serves as a comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude) to understand and answer questions about mcctl, a Docker-based Minecraft server management tool.
 >
-> **Version**: 1.6.2 | **Last Updated**: January 2025
+> **Version**: 1.7.8 | **Last Updated**: January 2025
+>
+> ⚠️ **Note**: mcctl-console (Web UI) is currently under active development. Some features may be incomplete or subject to change. The REST API (mcctl-api) is stable and production-ready.
 
 ---
 
@@ -54,10 +56,12 @@
 ### Package Information
 
 - **npm Package**: `@minecraft-docker/mcctl`
-- **Current Version**: 1.6.2
+- **Current Version**: 1.7.8
 - **Repository**: Part of the minecraft-server-manager monorepo
 - **License**: Apache-2.0
 - **Dependencies**: Docker, Docker Compose, Node.js 18+, PM2 (for Admin Service)
+
+> ⚠️ **Development Status**: mcctl-console (Web UI) is under active development. mcctl-api (REST API) is stable.
 
 ---
 
@@ -208,7 +212,7 @@ Replace `192.168.1.100` with your server's HOST_IP from `.env`.
 | **itzg/minecraft-server** | Docker image running Minecraft servers |
 | **mcctl** | CLI tool for management operations |
 | **mcctl-api** | REST API service (Fastify, port 5001) |
-| **mcctl-console** | Web Admin Console (Next.js, port 5000) |
+| **mcctl-console** | Web Admin Console (Next.js, port 5000) - **Under Development** |
 | **PM2** | Process manager for Admin Service (API + Console) |
 
 ---
@@ -2023,7 +2027,7 @@ A: The world directory is created immediately with a `.meta` file containing the
 ### Admin Service Questions
 
 **Q: What is the Admin Service?**
-A: The Admin Service consists of mcctl-api (REST API on port 5001) and mcctl-console (Web UI on port 5000). It provides a web-based management interface for mcctl.
+A: The Admin Service consists of mcctl-api (REST API on port 5001) and mcctl-console (Web UI on port 5000). It provides a web-based management interface for mcctl. **Note: mcctl-console is currently under active development.**
 
 **Q: Why does the Admin Service use PM2 instead of Docker?**
 A: PM2 provides native Node.js execution with lower overhead, faster startup, easier debugging, and automatic process recovery. This is more efficient than running additional Docker containers.
@@ -2630,7 +2634,7 @@ services:
 |------|------------|
 | **mcctl** | Minecraft Control - the CLI management tool |
 | **mcctl-api** | REST API service for programmatic server management (Fastify, port 5001) |
-| **mcctl-console** | Web-based admin console (Next.js, port 5000) |
+| **mcctl-console** | Web-based admin console (Next.js, port 5000) - **Under Development** |
 | **mc-router** | Hostname-based router that directs connections to correct servers |
 | **PM2** | Node.js process manager used to run Admin Service |
 | **avahi-daemon** | Linux mDNS service for .local hostname discovery |
