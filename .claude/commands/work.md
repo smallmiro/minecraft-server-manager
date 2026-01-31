@@ -55,16 +55,21 @@ This command executes development work based on GitHub Issues or Milestones foll
      gh issue edit <number> --body "$(updated body with checked items)"
      ```
 
-4. **Create Pull Request**
+4. **Add E2E Tests** (if applicable)
+   - For API changes: Add tests to `e2e/tests/api-*.spec.ts`
+   - For CLI changes: Add tests to `platform/services/cli/tests/e2e/`
+   - Run and verify tests pass before PR
+
+5. **Create Pull Request**
    ```bash
    gh pr create --base develop --title "<type>: <description> (#<number>)" --body "..."
    ```
 
-5. **Code Review**
+6. **Code Review**
    - Execute `/code-review:code-review`
    - Address any feedback
 
-6. **Merge (on approval)**
+7. **Merge (on approval)**
    ```bash
    gh pr merge --squash --delete-branch
    ```
@@ -185,6 +190,65 @@ gh issue edit 7 --body "$UPDATED"
 3. **Update tracking files**: task.md, plan.md, GitHub Issue
 4. **Code review required**: Unless `--skip-review` specified
 5. **Milestone alignment**: Keep work consistent with milestone goals
+6. **E2E tests required**: Add e2e tests for new features (see below)
+
+---
+
+## E2E Test Requirements
+
+When implementing new features, **e2e tests must be added** for the following:
+
+### API Endpoints (mcctl-api)
+- Location: `e2e/tests/api-*.spec.ts`
+- Framework: Playwright
+- Required for:
+  - New REST API endpoints
+  - Modified API response structures
+  - New query parameters or request bodies
+
+**Example:**
+```typescript
+// e2e/tests/api-newfeature.spec.ts
+test.describe('New Feature API', () => {
+  test('should return correct structure', async ({ request }) => {
+    const response = await request.get(`${API_BASE_URL}/api/newfeature`);
+    expect(response.status()).toBe(200);
+  });
+});
+```
+
+### CLI Commands (mcctl)
+- Location: `platform/services/cli/tests/e2e/cli-*.test.ts`
+- Framework: Vitest
+- Required for:
+  - New CLI commands
+  - New command flags/options
+  - Modified command output
+
+**Example:**
+```typescript
+// tests/e2e/cli-newcmd.test.ts
+describe('mcctl newcmd', () => {
+  it('should display help', async () => {
+    const result = await runCli(['newcmd', '--help']);
+    expect(result.exitCode).toBe(0);
+  });
+});
+```
+
+### Test Scripts
+```bash
+# Run API e2e tests
+cd e2e && npx playwright test
+
+# Run CLI e2e tests
+cd platform/services/cli && pnpm test:e2e
+```
+
+### When to Skip E2E Tests
+- Documentation-only changes
+- Internal refactoring with no external behavior change
+- Bug fixes covered by existing tests
 
 ---
 
