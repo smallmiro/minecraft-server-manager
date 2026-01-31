@@ -9,6 +9,7 @@ import serverActionsRoutes from './routes/servers/actions.js';
 import consoleRoutes from './routes/console.js';
 import worldsRoutes from './routes/worlds.js';
 import authRoutes from './routes/auth.js';
+import routerRoutes from './routes/router.js';
 
 export interface BuildAppOptions {
   logger?: boolean;
@@ -51,6 +52,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   // Register server routes
   await app.register(serversRoutes);
   await app.register(serverActionsRoutes);
+
+  // Register router routes
+  await app.register(routerRoutes);
 
   // Register world routes
   await app.register(worldsRoutes);
