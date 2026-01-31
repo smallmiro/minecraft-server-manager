@@ -73,27 +73,25 @@ mcctl logs myserver
 
 ## Changelog
 
-### v1.6.3 (2026-01-30)
-- **fix**: npm publish support for `@minecraft-docker/mod-source-modrinth` package
-- **docs**: Added project badges to README
-- **docs**: Created development guide (EN/KO)
-- **ci**: Added mod-source-modrinth to release workflow
+### v1.6.16 (2026-01-31)
+- **chore**: Add README Changelog sync instructions to agent definitions
+- **chore**: Ensure npm package page displays latest changelog entries
 
-### v1.6.2 (2026-01-28)
-- **feat**: Improved API, E2E tests, and documentation
-- **fix**: Various bug fixes and stability improvements
+### v1.6.15 (2026-01-31)
+- **feat**: New `mcctl backup init` command for interactive GitHub backup setup
+- **fix**: Include `scripts/` directory in npm package for template initialization
 
-### v1.6.0 (2026-01-24)
-- **feat**: Added mod management commands (`mcctl mod search/add/remove`)
-- **feat**: Modrinth integration for mod search and installation
+### v1.6.14 (2026-01-31)
+- **fix**: Sync all package versions to tag version before npm publish
 
-### v1.5.0 (2026-01-21)
-- **feat**: Added player management with Mojang API integration
-- **feat**: Local player cache for offline UUID lookup
+### v1.6.13 (2026-01-31)
+- **fix**: Sync CHANGELOG.md to CLI package for npm page display
 
-### v1.4.0 (2026-01-20)
-- **feat**: World management commands (`mcctl world new/assign/release`)
-- **feat**: Server backup and restore functionality
+### v1.6.12 (2026-01-31)
+- **fix(critical)**: Add missing `EXTRA_ARGS=--universe /worlds/` to npm package template
+
+### v1.6.11 (2026-01-31)
+- **fix**: Include CHANGELOG.md in npm package for proper changelog display
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
