@@ -73,6 +73,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.7.8 (2026-01-31)
+- **feat(cli)**: Add selective console service support - choose api/console/all (#203)
+- **fix(cli)**: Correct environment variable names for mcctl-api auth (#203)
+
 ### v1.7.7 (2026-01-31)
 - **feat(cli)**: Auto-install mcctl-api on console init
 - Streamlined Admin Service setup process
@@ -89,9 +93,6 @@ mcctl logs myserver
 
 ### v1.7.3 (2026-01-31)
 - **fix**: Fix Docker network warning when running `mcctl up` (#199)
-
-### v1.7.2 (2026-01-31)
-- **fix**: Fix "Unknown error occurred" when avahi-daemon is not installed (#197)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

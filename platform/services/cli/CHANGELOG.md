@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.8] - 2026-01-31
+
+### Added
+- **Selective console service support** - Choose which services to start (api/console/all) during `mcctl console init` (#203)
+- Improved service selection prompts for Admin Service setup
+
+### Fixed
+- Correct environment variable names for mcctl-api authentication (`MCCTL_*` prefix) (#203)
+- Fix PM2 service management with selective service control
+
 ## [1.7.7] - 2026-01-31
 
 ### Added
