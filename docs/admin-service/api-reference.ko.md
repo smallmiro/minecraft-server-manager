@@ -343,21 +343,208 @@ curl -X POST http://localhost:5001/api/servers/survival/exec \
 
 ---
 
-#### POST /servers/:id/console/exec
+### 서버 생성/삭제
 
-RCON 명령 실행을 위한 대체 엔드포인트입니다.
+#### POST /api/servers
 
-**매개변수:**
-
-| 매개변수 | 타입 | 설명 |
-|----------|------|------|
-| `id` | string | 서버 이름 |
+새 Minecraft 서버를 생성합니다.
 
 **요청 본문:**
 
 ```json
 {
-  "command": "help"
+  "name": "newserver",
+  "type": "PAPER",
+  "version": "1.21.1",
+  "memory": "4G",
+  "seed": "12345",
+  "autoStart": true
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `name` | string | 예 | 서버 이름 (영숫자, 하이픈 허용) |
+| `type` | string | 아니오 | 서버 유형: PAPER, VANILLA, FORGE, FABRIC 등 (기본값: PAPER) |
+| `version` | string | 아니오 | Minecraft 버전 (기본값: LATEST) |
+| `memory` | string | 아니오 | 메모리 할당 (예: "4G") |
+| `seed` | string | 아니오 | 월드 시드 |
+| `worldUrl` | string | 아니오 | 월드 ZIP 다운로드 URL |
+| `worldName` | string | 아니오 | 사용할 기존 월드 이름 |
+| `autoStart` | boolean | 아니오 | 생성 후 서버 시작 (기본값: true) |
+
+**응답 (201):**
+
+```json
+{
+  "success": true,
+  "server": {
+    "name": "newserver",
+    "container": "mc-newserver",
+    "status": "starting"
+  }
+}
+```
+
+**오류 응답 (409 - 충돌):**
+
+```json
+{
+  "error": "Conflict",
+  "message": "Server 'newserver' already exists"
+}
+```
+
+---
+
+#### DELETE /api/servers/:name
+
+Minecraft 서버를 삭제합니다.
+
+**매개변수:**
+
+| 매개변수 | 타입 | 설명 |
+|----------|------|------|
+| `name` | string | 서버 이름 |
+
+**쿼리 매개변수:**
+
+| 매개변수 | 타입 | 기본값 | 설명 |
+|----------|------|--------|------|
+| `force` | boolean | false | 실행 중이어도 강제 삭제 |
+
+**예제:**
+
+```bash
+curl -X DELETE "http://localhost:5001/api/servers/myserver?force=true" \
+  -H "X-API-Key: mctk_xxx"
+```
+
+**응답:**
+
+```json
+{
+  "success": true,
+  "server": "myserver",
+  "message": "Server deleted successfully"
+}
+```
+
+!!! note "월드 데이터 보존"
+    서버를 삭제해도 월드 데이터는 삭제되지 않습니다. 월드는 공유 `/worlds/` 디렉터리에 저장됩니다.
+
+---
+
+### 라우터 상태
+
+#### GET /api/router/status
+
+mc-router 상태와 라우팅 정보를 조회합니다.
+
+**응답:**
+
+```json
+{
+  "router": {
+    "name": "mc-router",
+    "status": "running",
+    "health": "healthy",
+    "port": 25565,
+    "uptime": "5d 12h 30m",
+    "uptimeSeconds": 477000,
+    "mode": "auto-scale",
+    "routes": [
+      {
+        "hostname": "survival.192.168.1.100.nip.io",
+        "target": "mc-survival:25565",
+        "serverStatus": "running"
+      },
+      {
+        "hostname": "creative.192.168.1.100.nip.io",
+        "target": "mc-creative:25565",
+        "serverStatus": "exited"
+      }
+    ]
+  }
+}
+```
+
+| 필드 | 설명 |
+|------|------|
+| `status` | 라우터 컨테이너 상태 |
+| `health` | 헬스 체크 상태 |
+| `port` | 외부 리스닝 포트 |
+| `mode` | 라우팅 모드 (자동 스케일 활성화) |
+| `routes` | 호스트명-서버 매핑 목록 |
+
+---
+
+### 플레이어 관리
+
+#### GET /api/servers/:name/players
+
+서버의 온라인 플레이어를 조회합니다.
+
+**응답:**
+
+```json
+{
+  "online": 3,
+  "max": 20,
+  "players": ["Player1", "Player2", "Player3"]
+}
+```
+
+---
+
+#### GET /api/players/:username
+
+Mojang API에서 플레이어 정보를 조회합니다.
+
+**매개변수:**
+
+| 매개변수 | 타입 | 설명 |
+|----------|------|------|
+| `username` | string | Minecraft 사용자 이름 |
+
+**응답:**
+
+```json
+{
+  "username": "Notch",
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "skinUrl": "https://crafatar.com/avatars/069a79f444e94726a5befca90e38aaf5?overlay"
+}
+```
+
+---
+
+### 화이트리스트 관리
+
+#### GET /api/servers/:name/whitelist
+
+서버 화이트리스트를 조회합니다.
+
+**응답:**
+
+```json
+{
+  "players": ["Player1", "Player2"],
+  "total": 2
+}
+```
+
+---
+
+#### POST /api/servers/:name/whitelist
+
+화이트리스트에 플레이어를 추가합니다.
+
+**요청 본문:**
+
+```json
+{
+  "player": "Steve"
 }
 ```
 
@@ -365,10 +552,268 @@ RCON 명령 실행을 위한 대체 엔드포인트입니다.
 
 ```json
 {
-  "output": "...",
-  "exitCode": 0
+  "success": true,
+  "message": "Added Steve to whitelist"
 }
 ```
+
+---
+
+#### DELETE /api/servers/:name/whitelist/:player
+
+화이트리스트에서 플레이어를 제거합니다.
+
+**응답:**
+
+```json
+{
+  "success": true,
+  "message": "Removed Steve from whitelist"
+}
+```
+
+---
+
+### 밴 관리
+
+#### GET /api/servers/:name/bans
+
+밴된 플레이어 목록을 조회합니다.
+
+**응답:**
+
+```json
+{
+  "players": ["Griefer1"],
+  "total": 1
+}
+```
+
+---
+
+#### POST /api/servers/:name/bans
+
+플레이어를 밴합니다.
+
+**요청 본문:**
+
+```json
+{
+  "player": "Griefer",
+  "reason": "Griefing is not allowed"
+}
+```
+
+**응답:**
+
+```json
+{
+  "success": true,
+  "message": "Banned Griefer"
+}
+```
+
+---
+
+#### DELETE /api/servers/:name/bans/:player
+
+플레이어 밴을 해제합니다.
+
+**응답:**
+
+```json
+{
+  "success": true,
+  "message": "Unbanned Griefer"
+}
+```
+
+---
+
+### 관리자 관리
+
+#### GET /api/servers/:name/ops
+
+서버 관리자 목록을 조회합니다.
+
+**응답:**
+
+```json
+{
+  "players": ["Admin1", "Admin2"],
+  "total": 2
+}
+```
+
+---
+
+#### POST /api/servers/:name/ops
+
+플레이어를 관리자로 추가합니다.
+
+**요청 본문:**
+
+```json
+{
+  "player": "TrustedPlayer"
+}
+```
+
+**응답:**
+
+```json
+{
+  "success": true,
+  "message": "Made TrustedPlayer an operator"
+}
+```
+
+---
+
+#### DELETE /api/servers/:name/ops/:player
+
+관리자 권한을 제거합니다.
+
+**응답:**
+
+```json
+{
+  "success": true,
+  "message": "Removed operator status from TrustedPlayer"
+}
+```
+
+---
+
+### 플레이어 추방
+
+#### POST /api/servers/:name/kick
+
+서버에서 플레이어를 추방합니다.
+
+**요청 본문:**
+
+```json
+{
+  "player": "AFKPlayer",
+  "reason": "AFK timeout"
+}
+```
+
+**응답:**
+
+```json
+{
+  "success": true,
+  "message": "Kicked AFKPlayer"
+}
+```
+
+---
+
+### 백업 관리
+
+#### GET /api/backup/status
+
+백업 구성 상태를 조회합니다.
+
+**응답:**
+
+```json
+{
+  "configured": true,
+  "repository": "username/minecraft-worlds",
+  "branch": "main",
+  "lastBackup": "2026-01-31T10:30:00.000Z"
+}
+```
+
+---
+
+#### POST /api/backup/push
+
+월드 백업을 GitHub에 푸시합니다.
+
+**요청 본문:**
+
+```json
+{
+  "message": "Before server upgrade"
+}
+```
+
+**응답:**
+
+```json
+{
+  "success": true,
+  "commitHash": "abc1234",
+  "message": "Backup pushed successfully"
+}
+```
+
+**오류 응답 (400 - 구성 안 됨):**
+
+```json
+{
+  "error": "BadRequest",
+  "message": "Backup not configured. Set BACKUP_GITHUB_REPO and BACKUP_GITHUB_TOKEN environment variables."
+}
+```
+
+---
+
+#### GET /api/backup/history
+
+백업 이력(git 커밋)을 조회합니다.
+
+**응답:**
+
+```json
+{
+  "commits": [
+    {
+      "hash": "abc1234",
+      "message": "Before server upgrade",
+      "date": "2026-01-31T10:30:00.000Z",
+      "author": "mcctl"
+    },
+    {
+      "hash": "def5678",
+      "message": "Daily backup",
+      "date": "2026-01-30T10:30:00.000Z",
+      "author": "mcctl"
+    }
+  ],
+  "total": 2
+}
+```
+
+---
+
+#### POST /api/backup/restore
+
+백업 커밋에서 월드를 복원합니다.
+
+**요청 본문:**
+
+```json
+{
+  "commitHash": "abc1234"
+}
+```
+
+**응답:**
+
+```json
+{
+  "success": true,
+  "message": "Restored to commit abc1234"
+}
+```
+
+!!! warning "복원 시 주의사항"
+    백업을 복원하면 현재 월드 데이터를 덮어씁니다. 복원 전에 모든 서버를 중지하세요.
 
 ---
 

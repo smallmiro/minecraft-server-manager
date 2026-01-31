@@ -343,21 +343,208 @@ curl -X POST http://localhost:5001/api/servers/survival/exec \
 
 ---
 
-#### POST /servers/:id/console/exec
+### Server Create/Delete
 
-Alternative endpoint for RCON command execution.
+#### POST /api/servers
 
-**Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `id` | string | Server name |
+Create a new Minecraft server.
 
 **Request Body:**
 
 ```json
 {
-  "command": "help"
+  "name": "newserver",
+  "type": "PAPER",
+  "version": "1.21.1",
+  "memory": "4G",
+  "seed": "12345",
+  "autoStart": true
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Server name (alphanumeric, hyphens allowed) |
+| `type` | string | No | Server type: PAPER, VANILLA, FORGE, FABRIC, etc. (default: PAPER) |
+| `version` | string | No | Minecraft version (default: LATEST) |
+| `memory` | string | No | Memory allocation (e.g., "4G") |
+| `seed` | string | No | World seed |
+| `worldUrl` | string | No | URL to download world ZIP |
+| `worldName` | string | No | Existing world name to use |
+| `autoStart` | boolean | No | Start server after creation (default: true) |
+
+**Response (201):**
+
+```json
+{
+  "success": true,
+  "server": {
+    "name": "newserver",
+    "container": "mc-newserver",
+    "status": "starting"
+  }
+}
+```
+
+**Error Response (409 - Conflict):**
+
+```json
+{
+  "error": "Conflict",
+  "message": "Server 'newserver' already exists"
+}
+```
+
+---
+
+#### DELETE /api/servers/:name
+
+Delete a Minecraft server.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Server name |
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `force` | boolean | false | Force delete even if running |
+
+**Example:**
+
+```bash
+curl -X DELETE "http://localhost:5001/api/servers/myserver?force=true" \
+  -H "X-API-Key: mctk_xxx"
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "server": "myserver",
+  "message": "Server deleted successfully"
+}
+```
+
+!!! note "World Data Preserved"
+    Deleting a server does NOT delete the world data. Worlds are stored in the shared `/worlds/` directory.
+
+---
+
+### Router Status
+
+#### GET /api/router/status
+
+Get mc-router status and routing information.
+
+**Response:**
+
+```json
+{
+  "router": {
+    "name": "mc-router",
+    "status": "running",
+    "health": "healthy",
+    "port": 25565,
+    "uptime": "5d 12h 30m",
+    "uptimeSeconds": 477000,
+    "mode": "auto-scale",
+    "routes": [
+      {
+        "hostname": "survival.192.168.1.100.nip.io",
+        "target": "mc-survival:25565",
+        "serverStatus": "running"
+      },
+      {
+        "hostname": "creative.192.168.1.100.nip.io",
+        "target": "mc-creative:25565",
+        "serverStatus": "exited"
+      }
+    ]
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `status` | Router container status |
+| `health` | Health check status |
+| `port` | External listening port |
+| `mode` | Routing mode (auto-scale enabled) |
+| `routes` | List of hostname-to-server mappings |
+
+---
+
+### Player Management
+
+#### GET /api/servers/:name/players
+
+List online players on a server.
+
+**Response:**
+
+```json
+{
+  "online": 3,
+  "max": 20,
+  "players": ["Player1", "Player2", "Player3"]
+}
+```
+
+---
+
+#### GET /api/players/:username
+
+Get player information from Mojang API.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `username` | string | Minecraft username |
+
+**Response:**
+
+```json
+{
+  "username": "Notch",
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "skinUrl": "https://crafatar.com/avatars/069a79f444e94726a5befca90e38aaf5?overlay"
+}
+```
+
+---
+
+### Whitelist Management
+
+#### GET /api/servers/:name/whitelist
+
+Get server whitelist.
+
+**Response:**
+
+```json
+{
+  "players": ["Player1", "Player2"],
+  "total": 2
+}
+```
+
+---
+
+#### POST /api/servers/:name/whitelist
+
+Add player to whitelist.
+
+**Request Body:**
+
+```json
+{
+  "player": "Steve"
 }
 ```
 
@@ -365,10 +552,268 @@ Alternative endpoint for RCON command execution.
 
 ```json
 {
-  "output": "...",
-  "exitCode": 0
+  "success": true,
+  "message": "Added Steve to whitelist"
 }
 ```
+
+---
+
+#### DELETE /api/servers/:name/whitelist/:player
+
+Remove player from whitelist.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Removed Steve from whitelist"
+}
+```
+
+---
+
+### Ban Management
+
+#### GET /api/servers/:name/bans
+
+Get banned players list.
+
+**Response:**
+
+```json
+{
+  "players": ["Griefer1"],
+  "total": 1
+}
+```
+
+---
+
+#### POST /api/servers/:name/bans
+
+Ban a player.
+
+**Request Body:**
+
+```json
+{
+  "player": "Griefer",
+  "reason": "Griefing is not allowed"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Banned Griefer"
+}
+```
+
+---
+
+#### DELETE /api/servers/:name/bans/:player
+
+Unban a player.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Unbanned Griefer"
+}
+```
+
+---
+
+### Operator Management
+
+#### GET /api/servers/:name/ops
+
+Get server operators list.
+
+**Response:**
+
+```json
+{
+  "players": ["Admin1", "Admin2"],
+  "total": 2
+}
+```
+
+---
+
+#### POST /api/servers/:name/ops
+
+Add player as operator.
+
+**Request Body:**
+
+```json
+{
+  "player": "TrustedPlayer"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Made TrustedPlayer an operator"
+}
+```
+
+---
+
+#### DELETE /api/servers/:name/ops/:player
+
+Remove operator status.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Removed operator status from TrustedPlayer"
+}
+```
+
+---
+
+### Kick Player
+
+#### POST /api/servers/:name/kick
+
+Kick a player from the server.
+
+**Request Body:**
+
+```json
+{
+  "player": "AFKPlayer",
+  "reason": "AFK timeout"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Kicked AFKPlayer"
+}
+```
+
+---
+
+### Backup Management
+
+#### GET /api/backup/status
+
+Get backup configuration status.
+
+**Response:**
+
+```json
+{
+  "configured": true,
+  "repository": "username/minecraft-worlds",
+  "branch": "main",
+  "lastBackup": "2026-01-31T10:30:00.000Z"
+}
+```
+
+---
+
+#### POST /api/backup/push
+
+Push worlds backup to GitHub.
+
+**Request Body:**
+
+```json
+{
+  "message": "Before server upgrade"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "commitHash": "abc1234",
+  "message": "Backup pushed successfully"
+}
+```
+
+**Error Response (400 - Not Configured):**
+
+```json
+{
+  "error": "BadRequest",
+  "message": "Backup not configured. Set BACKUP_GITHUB_REPO and BACKUP_GITHUB_TOKEN environment variables."
+}
+```
+
+---
+
+#### GET /api/backup/history
+
+Get backup history (git commits).
+
+**Response:**
+
+```json
+{
+  "commits": [
+    {
+      "hash": "abc1234",
+      "message": "Before server upgrade",
+      "date": "2026-01-31T10:30:00.000Z",
+      "author": "mcctl"
+    },
+    {
+      "hash": "def5678",
+      "message": "Daily backup",
+      "date": "2026-01-30T10:30:00.000Z",
+      "author": "mcctl"
+    }
+  ],
+  "total": 2
+}
+```
+
+---
+
+#### POST /api/backup/restore
+
+Restore worlds from a backup commit.
+
+**Request Body:**
+
+```json
+{
+  "commitHash": "abc1234"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Restored to commit abc1234"
+}
+```
+
+!!! warning "Restore Impact"
+    Restoring a backup will overwrite current world data. Stop all servers before restoring.
 
 ---
 

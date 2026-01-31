@@ -812,6 +812,47 @@ cat /etc/avahi/hosts
 
 ---
 
+## Changelog
+
+### [1.7.0] - 2026-01-31
+
+**Added:**
+- **Router Status API** (`GET /api/router/status`) - Real-time mc-router status
+- **Server Create/Delete API** (`POST/DELETE /api/servers/:name`) - REST API for server management
+- **Player Management API** - Whitelist, ban, op, kick operations via REST
+- **Backup API** (`POST /api/backup/:name`) - Trigger backups via REST
+- **mcctl init --reconfigure** - Reconfigure existing installation
+- **E2E Tests** - Comprehensive API and CLI tests
+
+### [1.6.16] - 2026-01-31
+
+**Changed:**
+- Add README Changelog sync instructions to release-manager and technical-writer agents
+
+### [1.6.15] - 2026-01-31
+
+**Added:**
+- New `mcctl backup init` command for interactive GitHub backup setup
+
+**Fixed:**
+- Include `scripts/` directory in npm package for template initialization
+
+### [1.6.14] - 2026-01-31
+
+**Fixed:**
+- Sync all package versions to tag version before npm publish
+
+### [1.6.12] - 2026-01-31
+
+**Fixed:**
+- **Critical**: Add missing `EXTRA_ARGS=--universe /worlds/` to npm package template
+  - Servers created with versions 1.6.8 ~ 1.6.11 may have worlds in wrong directory
+  - Use `mcctl migrate worlds` to fix affected servers
+
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
+
+---
+
 ## Links
 
 - **Documentation**: https://minecraft-server-manager.readthedocs.io/

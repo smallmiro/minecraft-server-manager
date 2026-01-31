@@ -220,11 +220,30 @@ curl -u admin:password http://localhost:5001/api/servers
 | GET | `/health` | Health check |
 | GET | `/api/servers` | List all servers |
 | GET | `/api/servers/:name` | Get server details |
+| POST | `/api/servers` | Create new server |
+| DELETE | `/api/servers/:name` | Delete server |
 | POST | `/api/servers/:name/start` | Start server |
 | POST | `/api/servers/:name/stop` | Stop server |
 | POST | `/api/servers/:name/restart` | Restart server |
 | POST | `/api/servers/:name/exec` | Execute RCON command |
 | GET | `/api/servers/:name/logs` | Get logs (supports SSE) |
+| GET | `/api/router/status` | Get mc-router status and routes |
+| GET | `/api/servers/:name/players` | List online players |
+| GET | `/api/players/:username` | Get player info from Mojang |
+| GET | `/api/servers/:name/whitelist` | Get whitelist |
+| POST | `/api/servers/:name/whitelist` | Add to whitelist |
+| DELETE | `/api/servers/:name/whitelist/:player` | Remove from whitelist |
+| GET | `/api/servers/:name/bans` | Get banned players |
+| POST | `/api/servers/:name/bans` | Ban player |
+| DELETE | `/api/servers/:name/bans/:player` | Unban player |
+| GET | `/api/servers/:name/ops` | Get operators |
+| POST | `/api/servers/:name/ops` | Add operator |
+| DELETE | `/api/servers/:name/ops/:player` | Remove operator |
+| POST | `/api/servers/:name/kick` | Kick player |
+| GET | `/api/backup/status` | Get backup config status |
+| POST | `/api/backup/push` | Push backup to GitHub |
+| GET | `/api/backup/history` | Get backup history |
+| POST | `/api/backup/restore` | Restore from backup |
 | GET | `/api/worlds` | List all worlds |
 | POST | `/api/worlds/:name/assign` | Assign world to server |
 | POST | `/api/worlds/:name/release` | Release world lock |
