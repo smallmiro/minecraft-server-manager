@@ -1,6 +1,6 @@
 # mcctl - Minecraft Server Management CLI
 
-> **Version**: 1.7.5
+> **Version**: 1.7.8
 > **Last Updated**: 2026-01-31
 > **Purpose**: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions
 
@@ -396,6 +396,175 @@ A: Use `mcctl config <server> USE_AIKAR_FLAGS true`. For modded servers, increas
 - Check service status: `mcctl console service status`
 - Verify API key: check `~/minecraft-servers/api.key`
 - Test health: `curl http://localhost:5001/health`
+
+## Version-specific Issues and Solutions
+
+### Version 1.7.8
+
+**Changes:**
+- Selective console service support - Choose which services to start (api/console/all) during `mcctl console init`
+- Fixed environment variable names for mcctl-api authentication (`MCCTL_*` prefix)
+
+**Known Issues:** None
+
+### Version 1.7.5 ~ 1.7.7
+
+**Changes:**
+- 1.7.7: Auto-install mcctl-api on console init
+- 1.7.6: mcctl-api npm publishing support
+- 1.7.5: Fixed Edge runtime error in mcctl-console middleware
+
+**Known Issue - Edge Runtime Error (v1.7.4 and below):**
+- **Symptom:** `mcctl-console` fails with `@better-auth/*` package incompatibility error
+- **Solution:** Update to v1.7.5 or later
+
+### Version 1.7.0 ~ 1.7.4
+
+**Major Features:**
+- Router Status API (`GET /api/router/status`)
+- Server Create/Delete API (`POST/DELETE /api/servers/:name`)
+- Player Management API
+- Backup API
+- `mcctl init --reconfigure` option
+
+### Version 1.6.8 ~ 1.6.11
+
+!!! warning "Critical Bug - World Storage Location"
+    Servers created with these versions store worlds in wrong directory.
+
+**Issue:** Missing `EXTRA_ARGS=--universe /worlds/` in npm package template
+
+**Symptoms:**
+- World data stored in `servers/<name>/data/` instead of `worlds/`
+- Server creates new world on every restart
+- World sharing doesn't work
+
+**Detection:**
+```bash
+# If this shows output, you're affected
+ls ~/minecraft-servers/servers/*/data/*/level.dat 2>/dev/null
+```
+
+**Solution:**
+```bash
+# Option 1: Automated migration (recommended)
+mcctl migrate status
+mcctl migrate worlds --all
+
+# Option 2: Manual fix
+echo 'EXTRA_ARGS=--universe /worlds/' >> ~/minecraft-servers/servers/<name>/config.env
+mcctl stop <name>
+mv ~/minecraft-servers/servers/<name>/data/<world> ~/minecraft-servers/worlds/<world>
+mcctl start <name>
+```
+
+### Version 1.6.0 ~ 1.6.7
+
+**Features:**
+- Admin Service (REST API + Web Console)
+- `mcctl console` commands
+- User management with roles
+
+**Deprecation:**
+- `mcctl admin` commands deprecated (use `mcctl console` instead)
+
+### Version 1.5.x
+
+**Features:**
+- Mod management (`mcctl mod search/add/remove/list/sources`)
+- Modrinth, CurseForge, Spiget, direct URL mod sources
+- Server backup/restore commands
+
+### Version 1.4.x
+
+**Features:**
+- Player management (whitelist, ban, op, kick)
+- World management with `.meta` file support
+- Interactive world selection in `mcctl create`
+
+### Version 1.3.x
+
+**Features:**
+- nip.io magic DNS support
+- VPN mesh network support (Tailscale, ZeroTier)
+- Migration script for nip.io hostnames
+
+## Web Console Architecture (BFF Proxy)
+
+### Overview
+
+mcctl-console uses a Backend-for-Frontend (BFF) proxy pattern for secure API access:
+
+```
++------------------+      +-----------------+      +---------------+
+|   Web Browser    | ---> | mcctl-console   | ---> |   mcctl-api   |
+|   (React Query)  |      | (Next.js BFF)   |      |   (Fastify)   |
++------------------+      +-----------------+      +---------------+
+                              |
+                              | Session-based auth
+                              | + X-API-Key forwarding
+```
+
+### BFF Proxy Routes
+
+| Console Route | Method | mcctl-api Route | Description |
+|---------------|--------|-----------------|-------------|
+| `/api/servers` | GET | `/api/servers` | List all servers |
+| `/api/servers` | POST | `/api/servers` | Create server |
+| `/api/servers/:name` | GET | `/api/servers/:name` | Get server details |
+| `/api/servers/:name` | DELETE | `/api/servers/:name` | Delete server |
+| `/api/servers/:name/start` | POST | `/api/servers/:name/start` | Start server |
+| `/api/servers/:name/stop` | POST | `/api/servers/:name/stop` | Stop server |
+| `/api/servers/:name/restart` | POST | `/api/servers/:name/restart` | Restart server |
+| `/api/servers/:name/exec` | POST | `/api/servers/:name/exec` | Execute RCON command |
+| `/api/servers/:name/logs` | GET | `/api/servers/:name/logs` | Get server logs |
+| `/api/worlds` | GET | `/api/worlds` | List all worlds |
+| `/api/worlds` | POST | `/api/worlds` | Create world |
+| `/api/worlds/:name` | GET | `/api/worlds/:name` | Get world details |
+| `/api/worlds/:name` | DELETE | `/api/worlds/:name` | Delete world |
+| `/api/worlds/:name/assign` | POST | `/api/worlds/:name/assign` | Assign world to server |
+| `/api/worlds/:name/release` | POST | `/api/worlds/:name/release` | Release world lock |
+
+### Authentication Flow
+
+1. User logs in via Better Auth (session-based)
+2. Console BFF routes validate session before forwarding
+3. BFF forwards requests to mcctl-api with `X-API-Key` header
+4. mcctl-api validates API key and processes request
+
+### React Query Hooks
+
+The console provides type-safe hooks for data fetching:
+
+```typescript
+// Server hooks
+useServers()                    // List all servers (auto-refresh 10s)
+useServer(name)                 // Get server details (auto-refresh 5s)
+useCreateServer()               // Create server mutation
+useDeleteServer()               // Delete server mutation
+useStartServer()                // Start server mutation
+useStopServer()                 // Stop server mutation
+useRestartServer()              // Restart server mutation
+useExecCommand()                // Execute RCON command
+useServerLogs(name, lines)      // Get server logs (auto-refresh 3s)
+
+// World hooks
+useWorlds()                     // List all worlds (auto-refresh 30s)
+useWorld(name)                  // Get world details
+useCreateWorld()                // Create world mutation
+useAssignWorld()                // Assign world mutation
+useReleaseWorld()               // Release world mutation
+useDeleteWorld()                // Delete world mutation
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCCTL_API_URL` | mcctl-api URL (internal) | `http://localhost:5001` |
+| `MCCTL_API_KEY` | API key for authentication | Required |
+| `BETTER_AUTH_SECRET` | Session encryption secret | Required |
+| `BETTER_AUTH_URL` | Console URL for auth | `http://localhost:5000` |
 
 ## Links
 

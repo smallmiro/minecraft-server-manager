@@ -8,6 +8,77 @@ The mcctl-console provides a modern web interface for managing your Docker Minec
 
 **Default URL:** `http://localhost:5000`
 
+## Architecture
+
+mcctl-console uses a Backend-for-Frontend (BFF) proxy pattern for secure API communication:
+
+```
++------------------+      +-------------------+      +---------------+
+|   Web Browser    | ---> |   mcctl-console   | ---> |   mcctl-api   |
+|   (React/Query)  |      |   (Next.js BFF)   |      |   (Fastify)   |
++------------------+      +-------------------+      +---------------+
+       ^                          |
+       |                   Session Auth +
+       |                   X-API-Key forwarding
+       |
+   React Query
+   (auto-refresh)
+```
+
+### Why BFF Proxy?
+
+1. **Security**: API keys stay server-side, never exposed to browser
+2. **Session Management**: Better Auth handles user authentication
+3. **Type Safety**: Shared TypeScript interfaces between frontend and backend
+4. **Caching**: React Query provides optimistic updates and caching
+
+### API Routes (BFF Layer)
+
+The console proxies requests through Next.js API routes:
+
+| Console Route | Method | Description |
+|---------------|--------|-------------|
+| `/api/servers` | GET | List all servers |
+| `/api/servers` | POST | Create new server |
+| `/api/servers/:name` | GET | Get server details |
+| `/api/servers/:name` | DELETE | Delete server |
+| `/api/servers/:name/start` | POST | Start server |
+| `/api/servers/:name/stop` | POST | Stop server |
+| `/api/servers/:name/restart` | POST | Restart server |
+| `/api/servers/:name/exec` | POST | Execute RCON command |
+| `/api/servers/:name/logs` | GET | Get server logs |
+| `/api/worlds` | GET | List all worlds |
+| `/api/worlds` | POST | Create new world |
+| `/api/worlds/:name` | GET | Get world details |
+| `/api/worlds/:name` | DELETE | Delete world |
+| `/api/worlds/:name/assign` | POST | Assign world to server |
+| `/api/worlds/:name/release` | POST | Release world lock |
+
+### React Query Hooks
+
+The console provides type-safe React Query hooks for data fetching:
+
+```typescript
+// Server operations
+const { data: servers } = useServers();           // Auto-refresh every 10s
+const { data: server } = useServer('myserver');   // Auto-refresh every 5s
+const startMutation = useStartServer();
+const stopMutation = useStopServer();
+const execMutation = useExecCommand();
+
+// World operations
+const { data: worlds } = useWorlds();             // Auto-refresh every 30s
+const assignMutation = useAssignWorld();
+const releaseMutation = useReleaseWorld();
+```
+
+All hooks automatically handle:
+
+- Loading states
+- Error handling
+- Cache invalidation on mutations
+- Optimistic updates
+
 ## Accessing the Console
 
 ### First Time Login
