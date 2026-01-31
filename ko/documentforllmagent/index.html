@@ -2126,7 +2126,7 @@
 
 <h1 id="mcctl---minecraft-server-management-cli">mcctl - Minecraft Server Management CLI<a class="headerlink" href="#mcctl---minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 1.6.15
+<p><strong>Version</strong>: 1.7.0
 <strong>Last Updated</strong>: 2026-01-31
 <strong>Purpose</strong>: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions</p>
 </blockquote>
@@ -2363,13 +2363,13 @@
 </tbody>
 </table>
 <h2 id="rest-api-reference">REST API Reference<a class="headerlink" href="#rest-api-reference" title="Permanent link">&para;</a></h2>
-<p>Admin Service provides a REST API (port 3001) for programmatic access.</p>
+<p>Admin Service provides a REST API (port 5001) for programmatic access.</p>
 <h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># API Key (recommended)</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:3001/api/servers
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Basic Auth</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>curl<span class="w"> </span>-u<span class="w"> </span>admin:password<span class="w"> </span>http://localhost:3001/api/servers
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>curl<span class="w"> </span>-u<span class="w"> </span>admin:password<span class="w"> </span>http://localhost:5001/api/servers
 </code></pre></div>
 <h3 id="key-endpoints">Key Endpoints<a class="headerlink" href="#key-endpoints" title="Permanent link">&para;</a></h3>
 <table>
@@ -2442,7 +2442,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;command&quot;: &quot;list&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>http://localhost:3001/api/servers/survival/exec
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>http://localhost:5001/api/servers/survival/exec
 </code></pre></div>
 <h2 id="common-use-cases">Common Use Cases<a class="headerlink" href="#common-use-cases" title="Permanent link">&para;</a></h2>
 <h3 id="setting-up-a-new-server">Setting Up a New Server<a class="headerlink" href="#setting-up-a-new-server" title="Permanent link">&para;</a></h3>
@@ -2471,7 +2471,7 @@
 <h3 id="using-admin-web-console">Using Admin Web Console<a class="headerlink" href="#using-admin-web-console" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w">                </span><span class="c1"># Interactive setup</span>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w">       </span><span class="c1"># Start services</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Access http://localhost:3000</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Access http://localhost:5000</span>
 </code></pre></div>
 <h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h2>
 <h3 id="q-how-do-i-connect-to-my-server">Q: How do I connect to my server?<a class="headerlink" href="#q-how-do-i-connect-to-my-server" title="Permanent link">&para;</a></h3>
@@ -2493,7 +2493,7 @@
 <h3 id="q-how-do-i-change-memory">Q: How do I change memory?<a class="headerlink" href="#q-how-do-i-change-memory" title="Permanent link">&para;</a></h3>
 <p>A: Use <code>mcctl config &lt;server&gt; MEMORY 8G</code> then restart the server.</p>
 <h3 id="q-what-is-the-admin-service">Q: What is the Admin Service?<a class="headerlink" href="#q-what-is-the-admin-service" title="Permanent link">&para;</a></h3>
-<p>A: Web console (port 3000) + REST API (port 3001). Initialize with <code>mcctl console init</code> and start with <code>mcctl console service start</code>.</p>
+<p>A: Web console (port 5000) + REST API (port 5001). Initialize with <code>mcctl console init</code> and start with <code>mcctl console service start</code>.</p>
 <h3 id="q-how-do-i-use-the-rest-api">Q: How do I use the REST API?<a class="headerlink" href="#q-how-do-i-use-the-rest-api" title="Permanent link">&para;</a></h3>
 <p>A: After <code>mcctl console init</code>, use the generated API key with <code>X-API-Key</code> header. See REST API Reference section.</p>
 <h3 id="q-how-do-i-optimize-performance">Q: How do I optimize performance?<a class="headerlink" href="#q-how-do-i-optimize-performance" title="Permanent link">&para;</a></h3>
@@ -2580,7 +2580,7 @@
 <ul>
 <li>Check service status: <code>mcctl console service status</code></li>
 <li>Verify API key: check <code>~/minecraft-servers/api.key</code></li>
-<li>Test health: <code>curl http://localhost:3001/health</code></li>
+<li>Test health: <code>curl http://localhost:5001/health</code></li>
 </ul>
 <h2 id="links">Links<a class="headerlink" href="#links" title="Permanent link">&para;</a></h2>
 <ul>

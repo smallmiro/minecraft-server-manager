@@ -3419,11 +3419,11 @@
 </tr>
 <tr>
 <td><strong>mcctl-api</strong></td>
-<td>REST API service (Fastify, port 3001)</td>
+<td>REST API service (Fastify, port 5001)</td>
 </tr>
 <tr>
 <td><strong>mcctl-console</strong></td>
-<td>Web Admin Console (Next.js, port 3000)</td>
+<td>Web Admin Console (Next.js, port 5000)</td>
 </tr>
 <tr>
 <td><strong>PM2</strong></td>
@@ -3437,18 +3437,18 @@
 <h3 id="architecture_1">Architecture<a class="headerlink" href="#architecture_1" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>┌─────────────────────────────────────────────────────────────┐
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>│                       Web Browser                            │
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>│                  (http://localhost:3000)                    │
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>│                  (http://localhost:5000)                    │
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>└────────────────────────┬────────────────────────────────────┘
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>                         │
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>┌────────────────────────▼────────────────────────────────────┐
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>│                  mcctl-console (:3000)                      │
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>│                  mcctl-console (:5000)                      │
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>│  - Next.js Web UI                                           │
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>│  - Server management dashboard                              │
 <a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>│  - User authentication (NextAuth)                           │
 <a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>└────────────────────────┬────────────────────────────────────┘
 <a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>                         │ Internal API calls
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>┌────────────────────────▼────────────────────────────────────┐
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>│                   mcctl-api (:3001)                         │
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>│                   mcctl-api (:5001)                         │
 <a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>│  - Fastify REST API                                         │
 <a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>│  - 5-mode authentication (internal, api-key, ip, etc.)     │
 <a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>│  - OpenAPI/Swagger documentation (/docs)                    │
@@ -3485,7 +3485,7 @@
 </tr>
 <tr>
 <td><code>--api-port &lt;port&gt;</code></td>
-<td>API server port (default: 3001)</td>
+<td>API server port (default: 5001)</td>
 </tr>
 <tr>
 <td><code>--console-port &lt;port&gt;</code></td>
@@ -3788,7 +3788,7 @@
 <a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>  mcctl-console
 <a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>    Status: online
 <a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>    PID: 12346
-<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>    URL: http://localhost:3000
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>    URL: http://localhost:5000
 <a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>    CPU: 0.3%
 <a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a>    Memory: 120.5 MB
 <a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a>    Uptime: 2h 15m
@@ -5307,7 +5307,7 @@
 <a id="__codelineno-93-12" name="__codelineno-93-12" href="#__codelineno-93-12"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
 <a id="__codelineno-93-13" name="__codelineno-93-13" href="#__codelineno-93-13"></a>
 <a id="__codelineno-93-14" name="__codelineno-93-14" href="#__codelineno-93-14"></a><span class="c1"># 4. Access the web console</span>
-<a id="__codelineno-93-15" name="__codelineno-93-15" href="#__codelineno-93-15"></a><span class="c1"># Open browser: http://localhost:3000</span>
+<a id="__codelineno-93-15" name="__codelineno-93-15" href="#__codelineno-93-15"></a><span class="c1"># Open browser: http://localhost:5000</span>
 <a id="__codelineno-93-16" name="__codelineno-93-16" href="#__codelineno-93-16"></a><span class="c1"># Login with admin credentials</span>
 <a id="__codelineno-93-17" name="__codelineno-93-17" href="#__codelineno-93-17"></a>
 <a id="__codelineno-93-18" name="__codelineno-93-18" href="#__codelineno-93-18"></a><span class="c1"># 5. Check status anytime</span>
@@ -5326,20 +5326,20 @@
 <a id="__codelineno-94-8" name="__codelineno-94-8" href="#__codelineno-94-8"></a>
 <a id="__codelineno-94-9" name="__codelineno-94-9" href="#__codelineno-94-9"></a><span class="c1"># 3. Use the API</span>
 <a id="__codelineno-94-10" name="__codelineno-94-10" href="#__codelineno-94-10"></a><span class="c1"># List servers</span>
-<a id="__codelineno-94-11" name="__codelineno-94-11" href="#__codelineno-94-11"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_your_api_key&quot;</span><span class="w"> </span>http://localhost:3001/servers
+<a id="__codelineno-94-11" name="__codelineno-94-11" href="#__codelineno-94-11"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_your_api_key&quot;</span><span class="w"> </span>http://localhost:5001/servers
 <a id="__codelineno-94-12" name="__codelineno-94-12" href="#__codelineno-94-12"></a>
 <a id="__codelineno-94-13" name="__codelineno-94-13" href="#__codelineno-94-13"></a><span class="c1"># Start a server</span>
 <a id="__codelineno-94-14" name="__codelineno-94-14" href="#__codelineno-94-14"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_your_api_key&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-94-15" name="__codelineno-94-15" href="#__codelineno-94-15"></a><span class="w">  </span>http://localhost:3001/servers/myserver/start
+<a id="__codelineno-94-15" name="__codelineno-94-15" href="#__codelineno-94-15"></a><span class="w">  </span>http://localhost:5001/servers/myserver/start
 <a id="__codelineno-94-16" name="__codelineno-94-16" href="#__codelineno-94-16"></a>
 <a id="__codelineno-94-17" name="__codelineno-94-17" href="#__codelineno-94-17"></a><span class="c1"># Execute RCON command</span>
 <a id="__codelineno-94-18" name="__codelineno-94-18" href="#__codelineno-94-18"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_your_api_key&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-94-19" name="__codelineno-94-19" href="#__codelineno-94-19"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-94-20" name="__codelineno-94-20" href="#__codelineno-94-20"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;command&quot;: &quot;list&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-94-21" name="__codelineno-94-21" href="#__codelineno-94-21"></a><span class="w">  </span>http://localhost:3001/console/myserver/exec
+<a id="__codelineno-94-21" name="__codelineno-94-21" href="#__codelineno-94-21"></a><span class="w">  </span>http://localhost:5001/console/myserver/exec
 <a id="__codelineno-94-22" name="__codelineno-94-22" href="#__codelineno-94-22"></a>
 <a id="__codelineno-94-23" name="__codelineno-94-23" href="#__codelineno-94-23"></a><span class="c1"># View API documentation</span>
-<a id="__codelineno-94-24" name="__codelineno-94-24" href="#__codelineno-94-24"></a><span class="c1"># Open browser: http://localhost:3001/docs</span>
+<a id="__codelineno-94-24" name="__codelineno-94-24" href="#__codelineno-94-24"></a><span class="c1"># Open browser: http://localhost:5001/docs</span>
 </code></pre></div>
 <hr />
 <h3 id="use-case-6-add-players-to-whitelist">Use Case 6: Add Players to Whitelist<a class="headerlink" href="#use-case-6-add-players-to-whitelist" title="Permanent link">&para;</a></h3>
@@ -5522,7 +5522,7 @@ A: The world directory is created immediately with a <code>.meta</code> file con
 <hr />
 <h3 id="admin-service-questions">Admin Service Questions<a class="headerlink" href="#admin-service-questions" title="Permanent link">&para;</a></h3>
 <p><strong>Q: What is the Admin Service?</strong>
-A: The Admin Service consists of mcctl-api (REST API on port 3001) and mcctl-console (Web UI on port 3000). It provides a web-based management interface for mcctl.</p>
+A: The Admin Service consists of mcctl-api (REST API on port 5001) and mcctl-console (Web UI on port 5000). It provides a web-based management interface for mcctl.</p>
 <p><strong>Q: Why does the Admin Service use PM2 instead of Docker?</strong>
 A: PM2 provides native Node.js execution with lower overhead, faster startup, easier debugging, and automatic process recovery. This is more efficient than running additional Docker containers.</p>
 <p><strong>Q: How do I install PM2?</strong>
@@ -5537,7 +5537,7 @@ A: Five modes:
 - <code>api-key-ip</code> - Both API key and IP required
 - <code>open</code> - No authentication (development only!)</p>
 <p><strong>Q: Where is the API documentation?</strong>
-A: Access Swagger/OpenAPI docs at <code>http://localhost:3001/docs</code> when the API is running.</p>
+A: Access Swagger/OpenAPI docs at <code>http://localhost:5001/docs</code> when the API is running.</p>
 <p><strong>Q: How do I add more users to the console?</strong>
 A: Use <code>mcctl console user add</code> to add users interactively, or with <code>--role</code> and <code>--password</code> options for CLI mode.</p>
 <p><strong>Q: How do I check if the Admin Service is running?</strong>
@@ -6749,11 +6749,11 @@ A: Yes, use <code>mcctl console service start --api-only</code> to start just th
 </tr>
 <tr>
 <td><strong>mcctl-api</strong></td>
-<td>REST API service for programmatic server management (Fastify, port 3001)</td>
+<td>REST API service for programmatic server management (Fastify, port 5001)</td>
 </tr>
 <tr>
 <td><strong>mcctl-console</strong></td>
-<td>Web-based admin console (Next.js, port 3000)</td>
+<td>Web-based admin console (Next.js, port 5000)</td>
 </tr>
 <tr>
 <td><strong>mc-router</strong></td>
