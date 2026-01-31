@@ -99,9 +99,52 @@ export const ServerNameParamsSchema = Type.Object({
   name: Type.String(),
 });
 
+// Create Server Request Schema
+export const CreateServerRequestSchema = Type.Object({
+  name: Type.String({ minLength: 1, maxLength: 64, pattern: '^[a-z][a-z0-9-]*$' }),
+  type: Type.Optional(Type.Union([
+    Type.Literal('PAPER'),
+    Type.Literal('VANILLA'),
+    Type.Literal('FORGE'),
+    Type.Literal('FABRIC'),
+    Type.Literal('SPIGOT'),
+    Type.Literal('NEOFORGE'),
+  ])),
+  version: Type.Optional(Type.String()),
+  memory: Type.Optional(Type.String({ pattern: '^\\d+[MG]$' })),
+  seed: Type.Optional(Type.String()),
+  worldUrl: Type.Optional(Type.String({ format: 'uri' })),
+  worldName: Type.Optional(Type.String()),
+  autoStart: Type.Optional(Type.Boolean({ default: true })),
+});
+
+// Create Server Response Schema
+export const CreateServerResponseSchema = Type.Object({
+  success: Type.Boolean(),
+  server: Type.Object({
+    name: Type.String(),
+    container: Type.String(),
+    status: Type.String(),
+  }),
+});
+
+// Delete Server Response Schema
+export const DeleteServerResponseSchema = Type.Object({
+  success: Type.Boolean(),
+  server: Type.String(),
+  message: Type.String(),
+});
+
+// Delete Server Query Schema
+export const DeleteServerQuerySchema = Type.Object({
+  force: Type.Optional(Type.Boolean({ default: false })),
+});
+
 // Type exports
 export type ServerSummary = Static<typeof ServerSummarySchema>;
 export type ServerDetail = Static<typeof ServerDetailSchema>;
 export type ServerNameParams = Static<typeof ServerNameParamsSchema>;
 export type ExecCommandRequest = Static<typeof ExecCommandRequestSchema>;
 export type LogsQuery = Static<typeof LogsQuerySchema>;
+export type CreateServerRequest = Static<typeof CreateServerRequestSchema>;
+export type DeleteServerQuery = Static<typeof DeleteServerQuerySchema>;

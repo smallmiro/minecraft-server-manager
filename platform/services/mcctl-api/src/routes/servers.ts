@@ -7,6 +7,8 @@ import {
   getContainerLogs,
   containerExists,
   serverExists,
+  getContainerStatus,
+  stopContainer,
 } from '@minecraft-docker/shared';
 import {
   ServerListResponseSchema,
@@ -17,16 +19,38 @@ import {
   LogsQuerySchema,
   ErrorResponseSchema,
   ServerNameParamsSchema,
+  CreateServerRequestSchema,
+  CreateServerResponseSchema,
+  DeleteServerResponseSchema,
+  DeleteServerQuerySchema,
   type ServerSummary,
   type ServerDetail,
   type ServerNameParams,
   type ExecCommandRequest,
   type LogsQuery,
+  type CreateServerRequest,
+  type DeleteServerQuery,
 } from '../schemas/server.js';
+import { config } from '../config/index.js';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { join } from 'path';
+import { existsSync } from 'fs';
+
+const execPromise = promisify(exec);
 
 // Route generic interfaces for type-safe request handling
 interface ServerNameRoute {
   Params: ServerNameParams;
+}
+
+interface CreateServerRoute {
+  Body: CreateServerRequest;
+}
+
+interface DeleteServerRoute {
+  Params: ServerNameParams;
+  Querystring: DeleteServerQuery;
 }
 
 interface LogsRoute {
@@ -287,6 +311,176 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to execute command',
+      });
+    }
+  });
+
+  /**
+   * POST /api/servers
+   * Create a new server
+   */
+  fastify.post<CreateServerRoute>('/api/servers', {
+    schema: {
+      description: 'Create a new Minecraft server',
+      tags: ['servers'],
+      body: CreateServerRequestSchema,
+      response: {
+        201: CreateServerResponseSchema,
+        400: ErrorResponseSchema,
+        409: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<CreateServerRoute>, reply: FastifyReply) => {
+    const { name, type, version, memory, seed, worldUrl, worldName, autoStart } = request.body;
+
+    try {
+      // Check if server already exists
+      if (serverExists(name)) {
+        return reply.code(409).send({
+          error: 'Conflict',
+          message: `Server '${name}' already exists`,
+        });
+      }
+
+      // Build create-server.sh command arguments
+      const args: string[] = [name];
+
+      if (type) {
+        args.push('-t', type);
+      }
+      if (version) {
+        args.push('-v', version);
+      }
+      if (seed) {
+        args.push('-s', seed);
+      }
+      if (worldUrl) {
+        args.push('-u', worldUrl);
+      }
+      if (worldName) {
+        args.push('-w', worldName);
+      }
+      if (autoStart === false) {
+        args.push('--no-start');
+      }
+
+      // Find create-server.sh script
+      const platformPath = config.platformPath;
+      const scriptPath = join(platformPath, 'scripts', 'create-server.sh');
+
+      // Check if script exists, fallback to global mcctl
+      let command: string;
+      if (existsSync(scriptPath)) {
+        command = `bash "${scriptPath}" ${args.map(a => `"${a}"`).join(' ')}`;
+      } else {
+        // Use mcctl CLI if script not found
+        command = `mcctl create ${args.map(a => `"${a}"`).join(' ')}`;
+      }
+
+      const { stdout, stderr } = await execPromise(command, {
+        cwd: platformPath,
+        timeout: 120000, // 2 minute timeout for server creation
+        env: {
+          ...process.env,
+          MCCTL_ROOT: platformPath,
+        },
+      });
+
+      fastify.log.info({ stdout, stderr }, 'Server created');
+
+      return reply.code(201).send({
+        success: true,
+        server: {
+          name,
+          container: `mc-${name}`,
+          status: autoStart !== false ? 'starting' : 'created',
+        },
+      });
+    } catch (error) {
+      const execError = error as { stderr?: string; message?: string };
+      fastify.log.error(error, 'Failed to create server');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: execError.stderr || execError.message || 'Failed to create server',
+      });
+    }
+  });
+
+  /**
+   * DELETE /api/servers/:name
+   * Delete a server
+   */
+  fastify.delete<DeleteServerRoute>('/api/servers/:name', {
+    schema: {
+      description: 'Delete a Minecraft server',
+      tags: ['servers'],
+      params: ServerNameParamsSchema,
+      querystring: DeleteServerQuerySchema,
+      response: {
+        200: DeleteServerResponseSchema,
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<DeleteServerRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+    const { force } = request.query;
+    const containerName = `mc-${name}`;
+
+    try {
+      // Check if server exists
+      if (!serverExists(name)) {
+        return reply.code(404).send({
+          error: 'NotFound',
+          message: `Server '${name}' not found`,
+        });
+      }
+
+      // Check if running and stop if needed
+      const status = getContainerStatus(containerName);
+      if (status === 'running') {
+        if (!force) {
+          // Stop the server first
+          stopContainer(containerName);
+        }
+      }
+
+      // Find delete-server.sh script
+      const platformPath = config.platformPath;
+      const scriptPath = join(platformPath, 'scripts', 'delete-server.sh');
+
+      // Build command
+      let command: string;
+      if (existsSync(scriptPath)) {
+        command = `bash "${scriptPath}" "${name}" --force`;
+      } else {
+        // Use mcctl CLI if script not found
+        command = `mcctl delete "${name}" --force`;
+      }
+
+      const { stdout, stderr } = await execPromise(command, {
+        cwd: platformPath,
+        timeout: 60000, // 1 minute timeout
+        env: {
+          ...process.env,
+          MCCTL_ROOT: platformPath,
+        },
+      });
+
+      fastify.log.info({ stdout, stderr }, 'Server deleted');
+
+      return reply.send({
+        success: true,
+        server: name,
+        message: 'Server deleted successfully',
+      });
+    } catch (error) {
+      const execError = error as { stderr?: string; message?: string };
+      fastify.log.error(error, 'Failed to delete server');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: execError.stderr || execError.message || 'Failed to delete server',
       });
     }
   });
