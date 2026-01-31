@@ -75,6 +75,8 @@ jobs:
           echo "=== Shared dist ===" && ls -la platform/services/shared/dist/
           echo "=== Modrinth dist ===" && ls -la platform/services/mod-source-modrinth/dist/
           echo "=== CLI dist ===" && ls -la platform/services/cli/dist/
+          echo "=== CLI scripts ===" && ls -la platform/services/cli/scripts/
+          echo "=== CLI templates ===" && ls -la platform/services/cli/templates/
 
       - name: Publish @minecraft-docker/shared
         run: |

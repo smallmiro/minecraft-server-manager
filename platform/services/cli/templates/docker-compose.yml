@@ -1,0 +1,80 @@
+# =============================================================================
+# Multi-Server Minecraft Docker Compose Configuration
+# =============================================================================
+# Architecture:
+#   - mc-router: Connection router with auto-scale support (hostname-based)
+#   - MC Servers: Each server in its own directory under servers/
+#
+# Adding a new server (fully automated):
+#   mcctl create <server-name> [options]
+#
+#   The script automatically:
+#     - Creates server directory and configuration
+#     - Registers hostname with avahi-daemon (mDNS)
+#     - Updates servers/compose.yml (this file is NOT modified)
+#     - Starts the server (use --no-start to skip)
+#
+#   Server naming convention:
+#     - Directory: servers/<server-name>/
+#     - Service: mc-<server-name>
+#     - Container: mc-<server-name>
+#     - Hostname: <server-name>.local
+#
+# mc-router auto-discovery:
+#   mc-router uses --in-docker mode to automatically discover servers
+#   via Docker labels (mc-router.host). No manual MAPPING needed.
+#
+# Connection (via avahi-daemon mDNS):
+#   Clients on the same LAN automatically discover servers via mDNS.
+#   Just connect to: <server-name>.local:25565
+#
+# Fallback (if mDNS unavailable):
+#   Add to /etc/hosts: <server-ip> <server-name>.local
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Include server configurations (from servers/compose.yml)
+# -----------------------------------------------------------------------------
+include:
+  - servers/compose.yml
+
+# -----------------------------------------------------------------------------
+# Services
+# -----------------------------------------------------------------------------
+services:
+  # ===========================================================================
+  # MC Router - Connection Router with Auto-Scale
+  # ===========================================================================
+  # mc-router auto-discovers servers via Docker labels (mc-router.host)
+  # No MAPPING environment variable needed with --in-docker mode
+  # ===========================================================================
+  router:
+    image: itzg/mc-router
+    container_name: mc-router
+    restart: unless-stopped
+    environment:
+      IN_DOCKER: "true"
+      AUTO_SCALE_UP: "true"
+      AUTO_SCALE_DOWN: "true"
+      AUTO_SCALE_DOWN_AFTER: "1m"
+      DOCKER_TIMEOUT: "120"
+      AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"
+      API_BINDING: ":8080"
+    ports:
+      - "25565:25565"
+      - "127.0.0.1:25580:8080"  # Management API (localhost only, for healthcheck)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - minecraft-net
+
+# -----------------------------------------------------------------------------
+# Networks
+# -----------------------------------------------------------------------------
+networks:
+  minecraft-net:
+    name: ${MINECRAFT_NETWORK:-minecraft-net}
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${MINECRAFT_SUBNET:-172.28.0.0/16}

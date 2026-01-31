@@ -32,15 +32,99 @@ export function getPackageRoot(): string {
 }
 
 /**
+ * Get the CLI package root directory (for scripts/templates)
+ */
+export function getCliPackageRoot(): string {
+  const currentFile = fileURLToPath(import.meta.url);
+  let dir = dirname(currentFile);
+
+  // Walk up until we find package.json with @minecraft-docker/mcctl
+  while (dir !== '/') {
+    const pkgPath = join(dir, 'package.json');
+    if (existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+        if (pkg.name === '@minecraft-docker/mcctl') {
+          return dir;
+        }
+      } catch {
+        // Continue searching
+      }
+    }
+    dir = dirname(dir);
+  }
+
+  // Fallback: try to find CLI package in node_modules
+  const sharedRoot = getPackageRoot();
+  const possibleCliPaths = [
+    join(sharedRoot, '..', 'mcctl'),           // sibling in node_modules/@minecraft-docker/
+    join(sharedRoot, '..', '..', '..'),        // parent CLI package in global install (shared inside mcctl/node_modules)
+    join(sharedRoot, '..', 'cli'),             // development structure
+    join(sharedRoot, '..', '..', '..', 'cli'), // workspace structure
+  ];
+
+  for (const cliPath of possibleCliPaths) {
+    const cliPkgPath = join(cliPath, 'package.json');
+    if (existsSync(cliPkgPath)) {
+      try {
+        const pkg = JSON.parse(readFileSync(cliPkgPath, 'utf-8'));
+        if (pkg.name === '@minecraft-docker/mcctl') {
+          return cliPath;
+        }
+      } catch {
+        // Continue searching
+      }
+    }
+  }
+
+  // Final fallback: return shared package root
+  return sharedRoot;
+}
+
+/**
  * Path resolution utilities
  */
 export class Paths {
   private readonly dataDir: string;
   private readonly packageRoot: string;
+  private readonly cliPackageRoot: string;
+  private readonly _scriptsPath: string;
+  private readonly _templatesPath: string;
 
   constructor(dataDir?: string) {
     this.packageRoot = getPackageRoot();
+    this.cliPackageRoot = getCliPackageRoot();
     this.dataDir = dataDir ?? process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
+
+    // Cache resolved paths at construction time
+    this._scriptsPath = this.resolveScriptsPath();
+    this._templatesPath = this.resolveTemplatesPath();
+  }
+
+  private resolveScriptsPath(): string {
+    if (process.env['MCCTL_SCRIPTS']) {
+      return process.env['MCCTL_SCRIPTS'];
+    }
+    // Check CLI package's bundled scripts first
+    const cliScripts = join(this.cliPackageRoot, 'scripts');
+    if (existsSync(cliScripts)) {
+      return cliScripts;
+    }
+    // Fallback to development structure
+    return join(this.packageRoot, '..', '..', 'scripts');
+  }
+
+  private resolveTemplatesPath(): string {
+    if (process.env['MCCTL_TEMPLATES']) {
+      return process.env['MCCTL_TEMPLATES'];
+    }
+    // Check CLI package's bundled templates first
+    const cliTemplates = join(this.cliPackageRoot, 'templates');
+    if (existsSync(cliTemplates)) {
+      return cliTemplates;
+    }
+    // Fallback to development structure
+    return join(this.packageRoot, '..', '..', '..', 'templates');
   }
 
   /** User data directory (~/.minecraft-servers) */
@@ -53,14 +137,14 @@ export class Paths {
     return this.dataDir;
   }
 
-  /** Scripts directory (from package or local) */
+  /** Scripts directory (from CLI package) */
   get scripts(): string {
-    return process.env['MCCTL_SCRIPTS'] ?? join(this.packageRoot, '..', '..', 'scripts');
+    return this._scriptsPath;
   }
 
-  /** Templates directory (from package) */
+  /** Templates directory (from CLI package) */
   get templates(): string {
-    return process.env['MCCTL_TEMPLATES'] ?? join(this.packageRoot, '..', '..', '..', 'templates');
+    return this._templatesPath;
   }
 
   /** Servers directory */
