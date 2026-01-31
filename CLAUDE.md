@@ -237,13 +237,65 @@ For full CLI reference, see [docs/cli/commands.md](docs/cli/commands.md).
 
 ## Development Philosophy
 
+### Mandatory Development Practices
+
+> **IMPORTANT**: The following practices are **MANDATORY**, not optional. All code contributions MUST follow these principles.
+
+#### Required Practices (Non-Negotiable)
+
+| Practice | Description | Enforcement |
+|----------|-------------|-------------|
+| **TDD** | Test-Driven Development: Red → Green → Refactor | All new features MUST have tests written BEFORE implementation |
+| **Tidy First** | Never mix structural and behavioral changes | Separate commits for refactoring vs features |
+| **DDD** | Domain-Driven Design | Use domain entities, value objects, aggregates |
+| **Clean Architecture** | Dependency inversion, use cases, ports/adapters | Business logic independent of frameworks |
+| **Hexagonal Architecture** | Ports & Adapters pattern | All external dependencies behind interfaces |
+
+#### TDD is NOT Optional
+
+```
+❌ WRONG: Write code first, add tests later (or skip tests)
+✅ RIGHT: Write failing test → Write minimal code → Refactor
+```
+
+Every new command, feature, or bug fix MUST follow the TDD cycle:
+1. **Red**: Write a failing test that defines the expected behavior
+2. **Green**: Write the minimum code to make the test pass
+3. **Refactor**: Clean up while keeping tests green
+
+#### Architecture Enforcement
+
+All TypeScript code MUST follow this layered architecture:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Presentation Layer                    │
+│              (CLI commands, API routes)                  │
+├─────────────────────────────────────────────────────────┤
+│                    Application Layer                     │
+│           (Use cases, application services)              │
+├─────────────────────────────────────────────────────────┤
+│                      Domain Layer                        │
+│    (Entities, Value Objects, Domain Services, Ports)     │
+├─────────────────────────────────────────────────────────┤
+│                   Infrastructure Layer                   │
+│       (Adapters: DB, External APIs, File System)         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Key Rules**:
+- Domain layer has NO external dependencies
+- Use cases orchestrate domain logic
+- All I/O operations go through adapters
+- Dependency injection for testability
+
 ### XP (Extreme Programming) Methodology
 
 This project follows **XP (Extreme Programming)** practices as the core development methodology.
 
 **Core Practices**:
-- **TDD (Test-Driven Development)**: Red → Green → Refactor cycle
-- **Tidy First**: Never mix structural and behavioral changes
+- **TDD (Test-Driven Development)**: Red → Green → Refactor cycle **(MANDATORY)**
+- **Tidy First**: Never mix structural and behavioral changes **(MANDATORY)**
 - **Pair Programming**: For complex features and architecture decisions
 - **Continuous Integration**: All PRs must pass lint, type-check, test, build
 - **Small Releases**: Frequent, incremental deployments
@@ -269,7 +321,7 @@ All features are implemented via CLI first, with Web Management UI available.
 
 ### CLI Architecture
 
-The CLI uses **Hexagonal Architecture** (Ports & Adapters) with **Clean Architecture** principles.
+The CLI uses **Hexagonal Architecture** (Ports & Adapters) with **Clean Architecture** principles. This is **MANDATORY** for all CLI code.
 
 See [docs/development/cli-architecture.md](docs/development/cli-architecture.md) for details.
 
@@ -311,14 +363,32 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
-#### TDD (Test-Driven Development)
+#### TDD (Test-Driven Development) - MANDATORY
+
+> **This is NOT optional.** Every feature, bug fix, or enhancement MUST follow TDD.
 
 Follow the **Red → Green → Refactor** cycle:
 1. **Red**: Write a failing test first
 2. **Green**: Write minimal code to make the test pass
 3. **Refactor**: Clean up while keeping tests green
 
-#### Tidy First
+**PRs without tests will be rejected** unless:
+- Documentation-only changes
+- Configuration changes with no code logic
+
+```bash
+# Example TDD workflow for a new command
+# 1. RED: Write failing test
+pnpm test -- --watch src/commands/newcmd.test.ts
+
+# 2. GREEN: Implement minimal code
+# 3. REFACTOR: Clean up, then commit
+git commit -m "feat(cli): add newcmd command (#123)"
+```
+
+#### Tidy First - MANDATORY
+
+> **This is NOT optional.** Structural and behavioral changes MUST be in separate commits.
 
 **Never mix structural and behavioral changes in the same commit.**
 
@@ -330,6 +400,11 @@ git commit -m "feat: add world existence check (#7)"
 # Bad: Mixed in one commit - AVOID
 git commit -m "feat: add validation with new helper function"
 ```
+
+**Why this matters**:
+- Easier code review (reviewers can focus on one type of change)
+- Safer rollbacks (can revert behavior without losing refactoring)
+- Cleaner git history
 
 #### Task Checkpoint (task.md)
 

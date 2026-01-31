@@ -1,14 +1,11 @@
 name: E2E Tests
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+  # Scheduled: Daily at 3 AM KST (18:00 UTC)
+  schedule:
+    - cron: '0 18 * * *'
+  # Manual trigger (select branch in GitHub Actions UI)
+  workflow_dispatch:
 
 # Cancel in-progress runs on new commits to the same branch
 concurrency:
@@ -120,14 +117,82 @@ jobs:
           path: e2e/test-results/
           retention-days: 7
 
-      - name: Show PM2 logs on failure
+      - name: Collect error logs on failure
+        id: collect-logs
         if: failure()
         run: |
-          echo "=== PM2 Status ==="
-          pm2 status
-          echo ""
-          echo "=== mcctl-api logs ==="
-          pm2 logs mcctl-api --lines 100 --nostream || true
+          mkdir -p /tmp/e2e-error-logs
+
+          echo "=== PM2 Status ===" > /tmp/e2e-error-logs/pm2-status.txt
+          pm2 status >> /tmp/e2e-error-logs/pm2-status.txt 2>&1 || true
+
+          echo "=== mcctl-api logs ===" > /tmp/e2e-error-logs/mcctl-api.log
+          pm2 logs mcctl-api --lines 200 --nostream >> /tmp/e2e-error-logs/mcctl-api.log 2>&1 || true
+
+          # Copy Playwright test results if available
+          if [ -d "e2e/test-results" ]; then
+            cp -r e2e/test-results /tmp/e2e-error-logs/ || true
+          fi
+
+          # Count failed tests
+          FAILED_COUNT=$(find e2e/test-results -name "*.json" -exec cat {} \; 2>/dev/null | grep -c '"status":"failed"' || echo "0")
+          echo "failed_count=$FAILED_COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Create bug issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          BRANCH: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          # Check if similar issue already exists (prevent duplicates)
+          EXISTING=$(gh issue list --label "bug,e2e-failure" --state open --limit 1 --json number -q '.[0].number' || echo "")
+
+          if [ -n "$EXISTING" ]; then
+            echo "Similar open issue #$EXISTING already exists, adding comment instead"
+            gh issue comment "$EXISTING" --body "Another E2E test failure occurred.
+
+**Run:** $RUN_URL
+**Branch:** $BRANCH
+**Commit:** $COMMIT_SHA
+**Date:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+See the workflow run for details and artifacts."
+          else
+            gh issue create \
+              --title "bug(e2e): E2E test failure on scheduled run" \
+              --label "bug,e2e-failure" \
+              --body "## E2E Test Failure
+
+An automated E2E test run has failed.
+
+### Details
+
+| Field | Value |
+|-------|-------|
+| **Workflow Run** | $RUN_URL |
+| **Branch** | $BRANCH |
+| **Commit** | \`$COMMIT_SHA\` |
+| **Date** | $(date -u +%Y-%m-%dT%H:%M:%SZ) |
+
+### Artifacts
+
+Download the test artifacts from the workflow run:
+- \`playwright-report\` - Detailed HTML report
+- \`test-results\` - Raw test results
+
+### Next Steps
+
+1. Review the Playwright report artifact
+2. Check PM2 logs in the workflow run
+3. Reproduce locally if needed: \`cd e2e && pnpm test\`
+4. Fix the issue and close this ticket
+
+---
+*This issue was automatically created by the E2E test workflow.*"
+          fi
 
       - name: Stop PM2 services
         if: always()
