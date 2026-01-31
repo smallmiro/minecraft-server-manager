@@ -1,4 +1,4 @@
-import { Paths, log, colors } from '@minecraft-docker/shared';
+import { Paths, Config, log, colors } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
 
 /**
@@ -11,6 +11,7 @@ export interface BackupCommandOptions {
   commitHash?: string;
   json?: boolean;
   auto?: boolean;
+  force?: boolean;
 }
 
 /**
@@ -29,6 +30,9 @@ export async function backupCommand(options: BackupCommandOptions): Promise<numb
   const subCommand = options.subCommand ?? 'status';
 
   switch (subCommand) {
+    case 'init':
+      return backupInit(paths, container, options);
+
     case 'status':
       return backupStatus(container, options);
 
@@ -43,8 +47,39 @@ export async function backupCommand(options: BackupCommandOptions): Promise<numb
 
     default:
       log.error(`Unknown backup subcommand: ${subCommand}`);
-      console.log('Usage: mcctl backup [status|push|history|restore]');
+      console.log('Usage: mcctl backup [init|status|push|history|restore]');
       return 1;
+  }
+}
+
+/**
+ * Initialize backup configuration
+ */
+async function backupInit(
+  paths: Paths,
+  container: ReturnType<typeof getContainer>,
+  options: BackupCommandOptions
+): Promise<number> {
+  const useCase = container.backupUseCase;
+  const config = new Config(paths);
+
+  // Set callback to save configuration to .env
+  useCase.setConfigSaveCallback((envConfig) => {
+    config.updateEnv(envConfig);
+  });
+
+  try {
+    const result = await useCase.init(options.force);
+    return result.success ? 0 : 1;
+  } catch (error) {
+    const prompt = container.promptPort;
+    if (prompt.isCancel(error)) {
+      return 0;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    log.error(message);
+    return 1;
   }
 }
 

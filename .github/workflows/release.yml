@@ -114,6 +114,14 @@ jobs:
           cp CHANGELOG.md platform/services/cli/CHANGELOG.md
           echo "CHANGELOG.md synced successfully"
 
+      - name: Sync scripts to CLI package
+        run: |
+          echo "Syncing scripts to CLI package..."
+          rm -rf platform/services/cli/scripts
+          cp -r platform/scripts platform/services/cli/scripts
+          ls -la platform/services/cli/scripts/
+          echo "Scripts synced successfully"
+
       - name: Publish @minecraft-docker/mcctl
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}

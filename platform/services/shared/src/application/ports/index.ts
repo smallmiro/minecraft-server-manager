@@ -14,6 +14,7 @@ export type {
   WorldCreateOptions,
   WorldCreateResult,
   IBackupUseCase,
+  BackupInitResult,
   BackupPushResult,
   BackupStatusResult,
   BackupHistoryResult,
