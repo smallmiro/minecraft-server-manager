@@ -8,6 +8,77 @@ mcctl-console은 Docker Minecraft 서버를 관리하기 위한 현대적인 웹
 
 **기본 URL:** `http://localhost:5000`
 
+## 아키텍처
+
+mcctl-console은 안전한 API 통신을 위해 Backend-for-Frontend (BFF) 프록시 패턴을 사용합니다:
+
+```
++------------------+      +-------------------+      +---------------+
+|   웹 브라우저     | ---> |   mcctl-console   | ---> |   mcctl-api   |
+|   (React Query)  |      |   (Next.js BFF)   |      |   (Fastify)   |
++------------------+      +-------------------+      +---------------+
+       ^                          |
+       |                   세션 인증 +
+       |                   X-API-Key 전달
+       |
+   React Query
+   (자동 새로고침)
+```
+
+### BFF 프록시를 사용하는 이유
+
+1. **보안**: API 키가 서버 측에 유지되어 브라우저에 노출되지 않음
+2. **세션 관리**: Better Auth가 사용자 인증 처리
+3. **타입 안정성**: 프론트엔드와 백엔드 간 공유 TypeScript 인터페이스
+4. **캐싱**: React Query가 낙관적 업데이트와 캐싱 제공
+
+### API 라우트 (BFF 레이어)
+
+콘솔은 Next.js API 라우트를 통해 요청을 프록시합니다:
+
+| 콘솔 라우트 | 메서드 | 설명 |
+|-------------|--------|------|
+| `/api/servers` | GET | 모든 서버 목록 |
+| `/api/servers` | POST | 새 서버 생성 |
+| `/api/servers/:name` | GET | 서버 상세 정보 |
+| `/api/servers/:name` | DELETE | 서버 삭제 |
+| `/api/servers/:name/start` | POST | 서버 시작 |
+| `/api/servers/:name/stop` | POST | 서버 중지 |
+| `/api/servers/:name/restart` | POST | 서버 재시작 |
+| `/api/servers/:name/exec` | POST | RCON 명령 실행 |
+| `/api/servers/:name/logs` | GET | 서버 로그 조회 |
+| `/api/worlds` | GET | 모든 월드 목록 |
+| `/api/worlds` | POST | 새 월드 생성 |
+| `/api/worlds/:name` | GET | 월드 상세 정보 |
+| `/api/worlds/:name` | DELETE | 월드 삭제 |
+| `/api/worlds/:name/assign` | POST | 월드를 서버에 할당 |
+| `/api/worlds/:name/release` | POST | 월드 잠금 해제 |
+
+### React Query 훅
+
+콘솔은 데이터 페칭을 위한 타입 안전 React Query 훅을 제공합니다:
+
+```typescript
+// 서버 작업
+const { data: servers } = useServers();           // 10초마다 자동 새로고침
+const { data: server } = useServer('myserver');   // 5초마다 자동 새로고침
+const startMutation = useStartServer();
+const stopMutation = useStopServer();
+const execMutation = useExecCommand();
+
+// 월드 작업
+const { data: worlds } = useWorlds();             // 30초마다 자동 새로고침
+const assignMutation = useAssignWorld();
+const releaseMutation = useReleaseWorld();
+```
+
+모든 훅이 자동으로 처리하는 것:
+
+- 로딩 상태
+- 에러 처리
+- 뮤테이션 시 캐시 무효화
+- 낙관적 업데이트
+
 ## 콘솔 접속
 
 ### 첫 로그인

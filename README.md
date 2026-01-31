@@ -814,6 +814,29 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [1.7.8] - 2026-01-31
+
+**Added:**
+- **Selective console service support** - Choose which services to start (api/console/all) during `mcctl console init`
+
+**Fixed:**
+- Correct environment variable names for mcctl-api authentication (`MCCTL_*` prefix)
+
+### [1.7.7] - 2026-01-31
+
+**Added:**
+- **Auto-install mcctl-api on console init** - Streamlined Admin Service setup process
+
+### [1.7.6] - 2026-01-31
+
+**Added:**
+- **mcctl-api npm publishing support** - First npm release of REST API package
+
+### [1.7.5] - 2026-01-31
+
+**Fixed:**
+- Fix Edge runtime error in mcctl-console middleware
+
 ### [1.7.0] - 2026-01-31
 
 **Added:**
@@ -823,24 +846,6 @@ cat /etc/avahi/hosts
 - **Backup API** (`POST /api/backup/:name`) - Trigger backups via REST
 - **mcctl init --reconfigure** - Reconfigure existing installation
 - **E2E Tests** - Comprehensive API and CLI tests
-
-### [1.6.16] - 2026-01-31
-
-**Changed:**
-- Add README Changelog sync instructions to release-manager and technical-writer agents
-
-### [1.6.15] - 2026-01-31
-
-**Added:**
-- New `mcctl backup init` command for interactive GitHub backup setup
-
-**Fixed:**
-- Include `scripts/` directory in npm package for template initialization
-
-### [1.6.14] - 2026-01-31
-
-**Fixed:**
-- Sync all package versions to tag version before npm publish
 
 ### [1.6.12] - 2026-01-31
 

@@ -49,10 +49,25 @@ A Next.js web application that provides:
 
 - **Dashboard**: Overview of all servers with real-time status
 - **Server Details**: Detailed server information and controls
-- **User Authentication**: Secure login with NextAuth.js
+- **User Authentication**: Secure login with Better Auth
 - **BFF Proxy**: Backend-for-Frontend pattern for secure API access
+- **React Query Hooks**: Type-safe data fetching with automatic caching
+- **World Management**: List, create, assign, and release worlds
 
 Default port: `5000`
+
+#### BFF Proxy Routes (v1.7.8+)
+
+The console proxies all API requests through Next.js server routes:
+
+| Route | Description |
+|-------|-------------|
+| `/api/servers/*` | Server management (list, create, delete, start/stop/restart) |
+| `/api/servers/:name/exec` | Execute RCON commands |
+| `/api/servers/:name/logs` | Fetch server logs |
+| `/api/worlds/*` | World management (list, create, delete, assign/release) |
+
+This architecture ensures API keys never reach the browser.
 
 ## Authentication Modes
 
