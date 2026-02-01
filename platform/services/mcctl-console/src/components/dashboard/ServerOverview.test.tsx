@@ -92,7 +92,7 @@ describe('ServerOverview', () => {
 
   it('should call onServerClick when server is clicked', () => {
     const onServerClick = vi.fn();
-    renderWithTheme(
+    const { container } = renderWithTheme(
       <ServerOverview
         servers={mockServers}
         isLoading={false}
@@ -101,7 +101,7 @@ describe('ServerOverview', () => {
     );
 
     const serverCard = screen.getByText('server1').closest('div[role="button"]');
-    if (serverCard) {
+    if (serverCard && serverCard instanceof HTMLElement) {
       serverCard.click();
       expect(onServerClick).toHaveBeenCalledWith('server1');
     }
