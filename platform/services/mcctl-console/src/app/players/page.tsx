@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
@@ -43,9 +43,11 @@ export default function PlayersPage() {
   };
 
   // Set default server when servers load
-  if (!selectedServer && servers && servers.length > 0) {
-    setSelectedServer(servers[0].name);
-  }
+  useEffect(() => {
+    if (!selectedServer && servers && servers.length > 0) {
+      setSelectedServer(servers[0].name);
+    }
+  }, [servers, selectedServer]);
 
   return (
     <MainLayout>
