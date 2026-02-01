@@ -6,7 +6,11 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import { alpha } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
+import StorageIcon from '@mui/icons-material/Storage';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ServerList } from '@/components/servers/ServerList';
 import { CreateServerDialog } from '@/components/servers/CreateServerDialog';
@@ -68,16 +72,54 @@ export default function ServersPage() {
 
   return (
     <MainLayout title="Servers">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box />
+      {/* Page Header */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 4,
+          p: 3,
+          background: (theme) =>
+            `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.1)} 100%)`,
+          borderRadius: 2,
+          border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 56,
+              height: 56,
+              borderRadius: 2,
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+            }}
+          >
+            <StorageIcon sx={{ fontSize: 32 }} />
+          </Box>
+          <Box>
+            <Typography variant="h4" component="h1" fontWeight="bold">
+              Servers
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Manage your Minecraft servers
+            </Typography>
+          </Box>
+        </Box>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setCreateDialogOpen(true)}
+          size="large"
         >
           Create Server
         </Button>
-      </Box>
+      </Paper>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>

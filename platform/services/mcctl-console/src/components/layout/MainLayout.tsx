@@ -47,9 +47,13 @@ export function MainLayout({ children, title = 'Dashboard' }: MainLayoutProps) {
           component="main"
           sx={{
             flexGrow: 1,
-            p: { xs: 2, sm: 3 },
+            px: { xs: 2, sm: 3, md: 4 },
+            py: { xs: 2, sm: 3, md: 4 },
             mt: '64px', // AppBar height
             backgroundColor: 'background.default',
+            maxWidth: '1600px',
+            mx: 'auto',
+            width: '100%',
           }}
         >
           {children}
