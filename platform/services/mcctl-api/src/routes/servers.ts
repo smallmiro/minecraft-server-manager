@@ -8,6 +8,7 @@ import {
   containerExists,
   serverExists,
   getContainerStatus,
+  getContainerHealth,
   stopContainer,
 } from '@minecraft-docker/shared';
 import {
@@ -17,6 +18,8 @@ import {
   ExecCommandRequestSchema,
   LogsResponseSchema,
   LogsQuerySchema,
+  StatusQuerySchema,
+  StatusResponseSchema,
   ErrorResponseSchema,
   ServerNameParamsSchema,
   CreateServerRequestSchema,
@@ -28,6 +31,7 @@ import {
   type ServerNameParams,
   type ExecCommandRequest,
   type LogsQuery,
+  type StatusQuery,
   type CreateServerRequest,
   type DeleteServerQuery,
 } from '../schemas/server.js';
@@ -61,6 +65,11 @@ interface LogsRoute {
 interface ExecRoute {
   Params: ServerNameParams;
   Body: ExecCommandRequest;
+}
+
+interface StatusRoute {
+  Params: ServerNameParams;
+  Querystring: StatusQuery;
 }
 
 /**
@@ -157,6 +166,145 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to get server details',
+      });
+    }
+  });
+
+  /**
+   * GET /api/servers/:name/status
+   * Get real-time server status (supports SSE streaming with follow=true)
+   */
+  fastify.get<StatusRoute>('/api/servers/:name/status', {
+    schema: {
+      description: 'Get server status (supports SSE streaming)',
+      tags: ['servers'],
+      params: ServerNameParamsSchema,
+      querystring: StatusQuerySchema,
+      response: {
+        200: StatusResponseSchema,
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<StatusRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+    const { follow = false, interval = 5000 } = request.query;
+    const containerName = `mc-${name}`;
+
+    // Check if server exists first (before SSE mode check)
+    if (!serverExists(name)) {
+      return reply.code(404).send({
+        error: 'NotFound',
+        message: `Server '${name}' not found`,
+      });
+    }
+
+    /**
+     * Map Docker container status to SSE-compatible status
+     * Frontend expects: 'running' | 'stopped' | 'created' | 'exited' | 'unknown'
+     */
+    const mapContainerStatus = (dockerStatus: string): 'running' | 'stopped' | 'created' | 'exited' | 'unknown' => {
+      switch (dockerStatus) {
+        case 'running':
+          return 'running';
+        case 'exited':
+          return 'exited';
+        case 'created':
+          return 'created';
+        case 'paused':
+        case 'dead':
+        case 'not_found':
+        case 'not_created':
+          return 'stopped';
+        case 'restarting':
+        default:
+          return 'unknown';
+      }
+    };
+
+    /**
+     * Map Docker health status to SSE-compatible health
+     * Frontend expects: 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown'
+     */
+    const mapHealthStatus = (dockerHealth: string): 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown' => {
+      switch (dockerHealth) {
+        case 'healthy':
+          return 'healthy';
+        case 'unhealthy':
+          return 'unhealthy';
+        case 'starting':
+          return 'starting';
+        case 'none':
+          return 'none';
+        default:
+          return 'unknown';
+      }
+    };
+
+    // SSE streaming mode
+    if (follow) {
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      });
+
+      // Send status update
+      const sendStatus = () => {
+        const dockerStatus = getContainerStatus(containerName);
+        const dockerHealth = getContainerHealth(containerName);
+        const status = mapContainerStatus(dockerStatus);
+        const health = mapHealthStatus(dockerHealth);
+
+        reply.raw.write(`event: server-status\n`);
+        reply.raw.write(`data: ${JSON.stringify({
+          serverName: name,
+          status,
+          health,
+          timestamp: new Date().toISOString(),
+        })}\n\n`);
+      };
+
+      // Send initial status immediately
+      sendStatus();
+
+      // Poll for status updates at the specified interval
+      const polling = setInterval(sendStatus, interval);
+
+      // Heartbeat to keep connection alive (every 30 seconds)
+      const heartbeat = setInterval(() => {
+        reply.raw.write(': heartbeat\n\n');
+      }, 30000);
+
+      // Cleanup on client disconnect
+      request.raw.on('close', () => {
+        clearInterval(polling);
+        clearInterval(heartbeat);
+        reply.raw.end();
+      });
+
+      return;
+    }
+
+    // Standard JSON response (non-streaming)
+    try {
+      const dockerStatus = getContainerStatus(containerName);
+      const dockerHealth = getContainerHealth(containerName);
+      const status = mapContainerStatus(dockerStatus);
+      const health = mapHealthStatus(dockerHealth);
+
+      return reply.send({
+        serverName: name,
+        status,
+        health,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to get server status');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'Failed to get server status',
       });
     }
   });

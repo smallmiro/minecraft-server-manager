@@ -13,26 +13,32 @@ vi.mock('child_process', async (importOriginal) => {
 
 // Mock @minecraft-docker/shared module
 vi.mock('@minecraft-docker/shared', () => ({
-  getMcContainers: vi.fn(),
-  getServerInfo: vi.fn(),
-  getDetailedServerInfoWithPlayers: vi.fn(),
+  getAllServers: vi.fn(),
+  getServerInfoFromConfig: vi.fn(),
+  getServerDetailedInfo: vi.fn(),
   getContainerLogs: vi.fn(),
   containerExists: vi.fn(),
+  serverExists: vi.fn(),
+  getContainerStatus: vi.fn(),
+  getContainerHealth: vi.fn(),
+  stopContainer: vi.fn(),
 }));
 
 import {
-  getMcContainers,
-  getServerInfo,
-  getDetailedServerInfoWithPlayers,
+  getAllServers,
+  getServerInfoFromConfig,
+  getServerDetailedInfo,
   getContainerLogs,
   containerExists,
+  serverExists,
 } from '@minecraft-docker/shared';
 
-const mockedGetMcContainers = vi.mocked(getMcContainers);
-const mockedGetServerInfo = vi.mocked(getServerInfo);
-const mockedGetDetailedServerInfoWithPlayers = vi.mocked(getDetailedServerInfoWithPlayers);
+const mockedGetAllServers = vi.mocked(getAllServers);
+const mockedGetServerInfoFromConfig = vi.mocked(getServerInfoFromConfig);
+const mockedGetServerDetailedInfo = vi.mocked(getServerDetailedInfo);
 const mockedGetContainerLogs = vi.mocked(getContainerLogs);
 const mockedContainerExists = vi.mocked(containerExists);
+const mockedServerExists = vi.mocked(serverExists);
 
 describe('Server Routes', () => {
   let app: FastifyInstance;
@@ -51,14 +57,14 @@ describe('Server Routes', () => {
 
   describe('GET /api/servers', () => {
     it('should return list of servers', async () => {
-      const mockContainers = ['mc-survival', 'mc-creative'];
-      mockedGetMcContainers.mockReturnValue(mockContainers);
-      mockedGetServerInfo.mockImplementation((container: string) => ({
-        name: container.replace('mc-', ''),
-        container,
+      const mockServerNames = ['survival', 'creative'];
+      mockedGetAllServers.mockReturnValue(mockServerNames);
+      mockedGetServerInfoFromConfig.mockImplementation((serverName: string) => ({
+        name: serverName,
+        container: `mc-${serverName}`,
         status: 'running' as const,
         health: 'healthy' as const,
-        hostname: `${container.replace('mc-', '')}.local`,
+        hostname: `${serverName}.local`,
       }));
 
       const response = await app.inject({
@@ -75,7 +81,7 @@ describe('Server Routes', () => {
     });
 
     it('should return empty list when no servers', async () => {
-      mockedGetMcContainers.mockReturnValue([]);
+      mockedGetAllServers.mockReturnValue([]);
 
       const response = await app.inject({
         method: 'GET',
@@ -89,7 +95,7 @@ describe('Server Routes', () => {
     });
 
     it('should return 500 on error', async () => {
-      mockedGetMcContainers.mockImplementation(() => {
+      mockedGetAllServers.mockImplementation(() => {
         throw new Error('Docker not available');
       });
 
@@ -106,8 +112,8 @@ describe('Server Routes', () => {
 
   describe('GET /api/servers/:name', () => {
     it('should return server details', async () => {
-      mockedContainerExists.mockReturnValue(true);
-      mockedGetDetailedServerInfoWithPlayers.mockResolvedValue({
+      mockedServerExists.mockReturnValue(true);
+      mockedGetServerDetailedInfo.mockResolvedValue({
         name: 'survival',
         container: 'mc-survival',
         status: 'running' as const,
@@ -146,7 +152,7 @@ describe('Server Routes', () => {
     });
 
     it('should return 404 for non-existent server', async () => {
-      mockedContainerExists.mockReturnValue(false);
+      mockedServerExists.mockReturnValue(false);
 
       const response = await app.inject({
         method: 'GET',
@@ -252,7 +258,7 @@ describe('Server Routes - Response Format', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedGetMcContainers.mockReturnValue([]);
+    mockedGetAllServers.mockReturnValue([]);
   });
 
   it('should return JSON content type', async () => {

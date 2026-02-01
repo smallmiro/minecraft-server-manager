@@ -90,6 +90,41 @@ export const LogsQuerySchema = Type.Object({
   follow: Type.Optional(Type.Boolean({ default: false, description: 'Enable SSE streaming for real-time logs' })),
 });
 
+// Status SSE Schemas (for real-time status streaming)
+export const StatusQuerySchema = Type.Object({
+  follow: Type.Optional(Type.Boolean({ default: false, description: 'Enable SSE streaming for real-time status updates' })),
+  interval: Type.Optional(Type.Number({
+    minimum: 1000,
+    maximum: 60000,
+    default: 5000,
+    description: 'Polling interval in milliseconds (SSE mode only)',
+  })),
+});
+
+// Status values compatible with frontend ServerStatusEvent
+export const SSEStatusSchema = Type.Union([
+  Type.Literal('running'),
+  Type.Literal('stopped'),
+  Type.Literal('created'),
+  Type.Literal('exited'),
+  Type.Literal('unknown'),
+]);
+
+export const SSEHealthSchema = Type.Union([
+  Type.Literal('healthy'),
+  Type.Literal('unhealthy'),
+  Type.Literal('starting'),
+  Type.Literal('none'),
+  Type.Literal('unknown'),
+]);
+
+export const StatusResponseSchema = Type.Object({
+  serverName: Type.String(),
+  status: SSEStatusSchema,
+  health: SSEHealthSchema,
+  timestamp: Type.String({ format: 'date-time', description: 'ISO 8601 timestamp' }),
+});
+
 export const ErrorResponseSchema = Type.Object({
   error: Type.String(),
   message: Type.String(),
@@ -146,5 +181,7 @@ export type ServerDetail = Static<typeof ServerDetailSchema>;
 export type ServerNameParams = Static<typeof ServerNameParamsSchema>;
 export type ExecCommandRequest = Static<typeof ExecCommandRequestSchema>;
 export type LogsQuery = Static<typeof LogsQuerySchema>;
+export type StatusQuery = Static<typeof StatusQuerySchema>;
+export type StatusResponse = Static<typeof StatusResponseSchema>;
 export type CreateServerRequest = Static<typeof CreateServerRequestSchema>;
 export type DeleteServerQuery = Static<typeof DeleteServerQuerySchema>;
