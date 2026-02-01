@@ -17,7 +17,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import { MainLayout } from '@/components/layout';
 import { PlayerList, WhitelistManager, OpManager, BanManager } from '@/components/players';
-import { useMcctl } from '@/hooks/useMcctl';
+import { useServers } from '@/hooks/useMcctl';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -36,7 +36,8 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 export default function PlayersPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedServer, setSelectedServer] = useState<string>('');
-  const { servers, isLoading: serversLoading } = useMcctl();
+  const { data: serversData, isLoading: serversLoading } = useServers();
+  const servers = serversData?.servers;
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
