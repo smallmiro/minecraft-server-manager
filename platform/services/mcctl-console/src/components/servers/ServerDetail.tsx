@@ -155,7 +155,7 @@ export function ServerDetail({ server }: ServerDetailProps) {
                     value={`${server.players.online} / ${server.players.max}`}
                   />
 
-                  {server.players.list.length > 0 && (
+                  {server.players.list && server.players.list.length > 0 && (
                     <>
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 2, mb: 1 }}>
                         Online Players
