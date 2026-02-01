@@ -1,11 +1,12 @@
 'use client';
 
-import { Box, Grid, Typography, CircularProgress } from '@mui/material';
+import { Box, Grid, Typography, CircularProgress, Paper, alpha } from '@mui/material';
 import {
   Storage as ServerIcon,
   CheckCircle as OnlineIcon,
   People as PlayersIcon,
   Public as WorldIcon,
+  Dashboard as DashboardIcon,
 } from '@mui/icons-material';
 import { useServers, useWorlds } from '@/hooks/useMcctl';
 import { StatCard, ServerOverview, ActivityFeed } from '@/components/dashboard';
@@ -39,14 +40,42 @@ export default function DashboardPage() {
   return (
     <Box>
       {/* Page Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Dashboard
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Overview of your Minecraft server infrastructure
-        </Typography>
-      </Box>
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 4,
+          p: 3,
+          background: (theme) =>
+            `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
+          borderRadius: 2,
+          border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 56,
+              height: 56,
+              borderRadius: 2,
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+            }}
+          >
+            <DashboardIcon sx={{ fontSize: 32 }} />
+          </Box>
+          <Box>
+            <Typography variant="h4" component="h1" fontWeight="bold">
+              Dashboard
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Overview of your Minecraft server infrastructure
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
 
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

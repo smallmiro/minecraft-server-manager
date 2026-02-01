@@ -9,10 +9,13 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import { alpha } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import DnsIcon from '@mui/icons-material/Dns';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ServerDetail } from '@/components/servers/ServerDetail';
 import {
@@ -83,22 +86,47 @@ export default function ServerDetailPage() {
         </Typography>
       </Breadcrumbs>
 
-      {/* Header with actions */}
-      <Box
+      {/* Page Header */}
+      <Paper
+        elevation={0}
         sx={{
+          mb: 4,
+          p: 3,
+          background: (theme) =>
+            `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.1)} 100%)`,
+          borderRadius: 2,
+          border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          mb: 3,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => router.push('/servers')}>
+          <IconButton onClick={() => router.push('/servers')} sx={{ mr: 1 }}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h5" component="h1">
-            {serverName}
-          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 56,
+              height: 56,
+              borderRadius: 2,
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+            }}
+          >
+            <DnsIcon sx={{ fontSize: 32 }} />
+          </Box>
+          <Box>
+            <Typography variant="h4" component="h1" fontWeight="bold">
+              {serverName}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Server configuration and management
+            </Typography>
+          </Box>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -109,6 +137,7 @@ export default function ServerDetailPage() {
               startIcon={<PlayArrowIcon />}
               onClick={handleStartServer}
               disabled={isActionPending}
+              size="large"
             >
               Start
             </Button>
@@ -120,6 +149,7 @@ export default function ServerDetailPage() {
                 startIcon={<RestartAltIcon />}
                 onClick={handleRestartServer}
                 disabled={isActionPending}
+                size="large"
               >
                 Restart
               </Button>
@@ -129,13 +159,14 @@ export default function ServerDetailPage() {
                 startIcon={<StopIcon />}
                 onClick={handleStopServer}
                 disabled={isActionPending}
+                size="large"
               >
                 Stop
               </Button>
             </>
           )}
         </Box>
-      </Box>
+      </Paper>
 
       {/* Error messages */}
       {error && (
