@@ -23,6 +23,7 @@ import {
   ErrorResponseSchema,
   ServerNameParamsSchema,
   CreateServerRequestSchema,
+  CreateServerQuerySchema,
   CreateServerResponseSchema,
   DeleteServerResponseSchema,
   DeleteServerQuerySchema,
@@ -33,6 +34,7 @@ import {
   type LogsQuery,
   type StatusQuery,
   type CreateServerRequest,
+  type CreateServerQuery,
   type DeleteServerQuery,
 } from '../schemas/server.js';
 import { config } from '../config/index.js';
@@ -50,6 +52,7 @@ interface ServerNameRoute {
 
 interface CreateServerRoute {
   Body: CreateServerRequest;
+  Querystring: CreateServerQuery;
 }
 
 interface DeleteServerRoute {
@@ -465,13 +468,14 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
   /**
    * POST /api/servers
-   * Create a new server
+   * Create a new server (supports SSE streaming with follow=true)
    */
   fastify.post<CreateServerRoute>('/api/servers', {
     schema: {
-      description: 'Create a new Minecraft server',
+      description: 'Create a new Minecraft server (supports SSE streaming)',
       tags: ['servers'],
       body: CreateServerRequestSchema,
+      querystring: CreateServerQuerySchema,
       response: {
         201: CreateServerResponseSchema,
         400: ErrorResponseSchema,
@@ -481,52 +485,172 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<CreateServerRoute>, reply: FastifyReply) => {
     const { name, type, version, memory, seed, worldUrl, worldName, autoStart } = request.body;
+    const { follow = false } = request.query;
 
+    // Check if server already exists (before SSE mode check)
+    if (serverExists(name)) {
+      return reply.code(409).send({
+        error: 'Conflict',
+        message: `Server '${name}' already exists`,
+      });
+    }
+
+    // Build create-server.sh command arguments
+    const args: string[] = [name];
+
+    if (type) {
+      args.push('-t', type);
+    }
+    if (version) {
+      args.push('-v', version);
+    }
+    if (seed) {
+      args.push('-s', seed);
+    }
+    if (worldUrl) {
+      args.push('-u', worldUrl);
+    }
+    if (worldName) {
+      args.push('-w', worldName);
+    }
+    if (autoStart === false) {
+      args.push('--no-start');
+    }
+
+    // Find create-server.sh script
+    const platformPath = config.platformPath;
+    const scriptPath = join(platformPath, 'scripts', 'create-server.sh');
+
+    // Check if script exists, fallback to global mcctl
+    let command: string;
+    let commandArgs: string[];
+    if (existsSync(scriptPath)) {
+      command = 'bash';
+      commandArgs = [scriptPath, ...args];
+    } else {
+      // Use mcctl CLI if script not found
+      command = 'mcctl';
+      commandArgs = ['create', ...args];
+    }
+
+    // SSE streaming mode
+    if (follow) {
+      const { spawn } = await import('node:child_process');
+
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      });
+
+      // Send initial status
+      reply.raw.write(`data: ${JSON.stringify({
+        type: 'server-create',
+        data: { status: 'initializing', message: 'Initializing server creation...' },
+      })}\n\n`);
+
+      // Spawn create-server.sh with spawn for real-time output
+      const createProcess = spawn(command, commandArgs, {
+        cwd: platformPath,
+        env: {
+          ...process.env,
+          MCCTL_ROOT: platformPath,
+        },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+
+      let hasError = false;
+
+      // Track creation stages based on output patterns
+      const sendStageEvent = (status: string, message: string) => {
+        reply.raw.write(`data: ${JSON.stringify({
+          type: 'server-create',
+          data: { status, message },
+        })}\n\n`);
+      };
+
+      const sendLogEvent = (log: string) => {
+        reply.raw.write(`data: ${JSON.stringify({
+          type: 'server-create-log',
+          data: { log },
+        })}\n\n`);
+      };
+
+      // Process stdout for progress tracking
+      createProcess.stdout?.on('data', (data) => {
+        const output = data.toString();
+        sendLogEvent(output);
+
+        // Detect stages based on script output patterns
+        if (output.includes('Creating server directory')) {
+          sendStageEvent('creating', 'Creating server directory...');
+        } else if (output.includes('Writing docker-compose') || output.includes('Writing config')) {
+          sendStageEvent('configuring', 'Configuring server...');
+        } else if (output.includes('Starting container') || output.includes('docker compose up')) {
+          sendStageEvent('starting', 'Starting container...');
+        }
+      });
+
+      // Process stderr
+      createProcess.stderr?.on('data', (data) => {
+        const output = data.toString();
+        sendLogEvent(output);
+
+        // Check for errors
+        if (output.toLowerCase().includes('error') || output.toLowerCase().includes('failed')) {
+          hasError = true;
+        }
+      });
+
+      // Heartbeat to keep connection alive
+      const heartbeat = setInterval(() => {
+        reply.raw.write(': heartbeat\n\n');
+      }, 30000);
+
+      // Handle process completion
+      createProcess.on('close', (code) => {
+        clearInterval(heartbeat);
+
+        if (code === 0 && !hasError) {
+          reply.raw.write(`data: ${JSON.stringify({
+            type: 'server-create',
+            data: {
+              status: 'completed',
+              message: 'Server created successfully',
+              server: {
+                name,
+                container: `mc-${name}`,
+                status: autoStart !== false ? 'starting' : 'created',
+              },
+            },
+          })}\n\n`);
+        } else {
+          reply.raw.write(`data: ${JSON.stringify({
+            type: 'server-create',
+            data: {
+              status: 'error',
+              message: `Server creation failed with exit code ${code}`,
+            },
+          })}\n\n`);
+        }
+
+        reply.raw.end();
+      });
+
+      // Cleanup on client disconnect
+      request.raw.on('close', () => {
+        clearInterval(heartbeat);
+        createProcess.kill();
+        reply.raw.end();
+      });
+
+      return;
+    }
+
+    // Standard JSON response (non-streaming)
     try {
-      // Check if server already exists
-      if (serverExists(name)) {
-        return reply.code(409).send({
-          error: 'Conflict',
-          message: `Server '${name}' already exists`,
-        });
-      }
-
-      // Build create-server.sh command arguments
-      const args: string[] = [name];
-
-      if (type) {
-        args.push('-t', type);
-      }
-      if (version) {
-        args.push('-v', version);
-      }
-      if (seed) {
-        args.push('-s', seed);
-      }
-      if (worldUrl) {
-        args.push('-u', worldUrl);
-      }
-      if (worldName) {
-        args.push('-w', worldName);
-      }
-      if (autoStart === false) {
-        args.push('--no-start');
-      }
-
-      // Find create-server.sh script
-      const platformPath = config.platformPath;
-      const scriptPath = join(platformPath, 'scripts', 'create-server.sh');
-
-      // Check if script exists, fallback to global mcctl
-      let command: string;
-      if (existsSync(scriptPath)) {
-        command = `bash "${scriptPath}" ${args.map(a => `"${a}"`).join(' ')}`;
-      } else {
-        // Use mcctl CLI if script not found
-        command = `mcctl create ${args.map(a => `"${a}"`).join(' ')}`;
-      }
-
-      const { stdout, stderr } = await execPromise(command, {
+      const { stdout, stderr } = await execPromise(`${command} ${commandArgs.map(a => `"${a}"`).join(' ')}`, {
         cwd: platformPath,
         timeout: 120000, // 2 minute timeout for server creation
         env: {
