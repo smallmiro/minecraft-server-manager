@@ -19,8 +19,8 @@ describe('darkTheme', () => {
   });
 
   it('should have correct background colors', () => {
-    expect(darkTheme.palette.background.default).toBe('#111111');
-    expect(darkTheme.palette.background.paper).toBe('#1a1a1a');
+    expect(darkTheme.palette.background.default).toBe('#16181c');
+    expect(darkTheme.palette.background.paper).toBe('#1a1d22');
   });
 
   it('should have correct status colors', () => {
@@ -31,6 +31,6 @@ describe('darkTheme', () => {
 
   it('should have correct text colors', () => {
     expect(darkTheme.palette.text.primary).toBe('#ffffff');
-    expect(darkTheme.palette.text.secondary).toBe('#a1a1aa');
+    expect(darkTheme.palette.text.secondary).toBe('#9a9a9a');
   });
 });

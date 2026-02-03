@@ -25,8 +25,8 @@ describe('GNB', () => {
     renderWithTheme(<GNB mobileOpen={false} onMenuToggle={vi.fn()} />);
 
     // Both AppBar and mobile drawer render the logo
-    const mcctlElements = screen.getAllByText('MCCTL');
-    expect(mcctlElements.length).toBeGreaterThan(0);
+    const logoElements = screen.getAllByText('Minecraft Console');
+    expect(logoElements.length).toBeGreaterThan(0);
   });
 
   it('should render navigation items in desktop view', () => {
@@ -85,7 +85,7 @@ describe('GNB', () => {
     const playersLinks = screen.getAllByRole('link', { name: /players/i });
     const settingsLinks = screen.getAllByRole('link', { name: /settings/i });
 
-    expect(dashboardLinks[0]).toHaveAttribute('href', '/');
+    expect(dashboardLinks[0]).toHaveAttribute('href', '/dashboard');
     expect(serversLinks[0]).toHaveAttribute('href', '/servers');
     expect(playersLinks[0]).toHaveAttribute('href', '/players');
     expect(settingsLinks[0]).toHaveAttribute('href', '/settings');

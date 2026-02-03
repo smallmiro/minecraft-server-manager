@@ -75,9 +75,13 @@ export class McctlApiAdapter implements IMcctlApiClient {
 
     // Build headers with optional user context
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       'X-API-Key': this.apiKey,
     };
+
+    // Only set Content-Type when there's a body
+    if (options.body) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     // Add user context headers if available
     if (this.userContext) {

@@ -2,22 +2,44 @@
 
 import { createTheme } from '@mui/material/styles';
 
+// Modrinth-style color palette
+const colors = {
+  // Background colors (darkest to lightest)
+  bgBase: '#16181c',
+  bgRaised: '#1a1d22',
+  bgSurface: '#26282e',
+  bgElevated: '#313338',
+  // Text colors
+  textPrimary: '#ffffff',
+  textSecondary: '#9a9a9a',
+  textTertiary: '#72767d',
+  // Border
+  border: '#2e3035',
+  // Brand colors
+  primary: '#1bd96a',
+  primaryLight: '#4de38a',
+  primaryDark: '#15a852',
+  secondary: '#7c3aed',
+  secondaryLight: '#9f67f0',
+  secondaryDark: '#5b21b6',
+};
+
 export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#1bd96a',
-      light: '#4de38a',
-      dark: '#15a852',
+      main: colors.primary,
+      light: colors.primaryLight,
+      dark: colors.primaryDark,
     },
     secondary: {
-      main: '#7c3aed',
-      light: '#9f67f0',
-      dark: '#5b21b6',
+      main: colors.secondary,
+      light: colors.secondaryLight,
+      dark: colors.secondaryDark,
     },
     background: {
-      default: '#111111',
-      paper: '#1a1a1a',
+      default: colors.bgBase,
+      paper: colors.bgRaised,
     },
     success: {
       main: '#22c55e',
@@ -29,8 +51,13 @@ export const darkTheme = createTheme({
       main: '#f59e0b',
     },
     text: {
-      primary: '#ffffff',
-      secondary: '#a1a1aa',
+      primary: colors.textPrimary,
+      secondary: colors.textSecondary,
+    },
+    divider: colors.border,
+    action: {
+      hover: colors.bgSurface,
+      selected: colors.bgSurface,
     },
   },
   typography: {
@@ -40,8 +67,16 @@ export const darkTheme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          backgroundColor: '#1a1a1a',
+          backgroundColor: colors.bgRaised,
           borderRadius: '12px',
+          border: `1px solid ${colors.border}`,
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
         },
       },
     },
@@ -53,21 +88,37 @@ export const darkTheme = createTheme({
         },
       },
     },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: colors.bgRaised,
+          borderBottom: `1px solid ${colors.border}`,
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: colors.bgRaised,
+          borderRight: `1px solid ${colors.border}`,
+        },
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          scrollbarColor: '#6b6b6b #2b2b2b',
+          scrollbarColor: `${colors.bgElevated} ${colors.bgBase}`,
           '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
-            backgroundColor: '#2b2b2b',
+            backgroundColor: colors.bgBase,
             width: 8,
           },
           '&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb': {
             borderRadius: 8,
-            backgroundColor: '#6b6b6b',
+            backgroundColor: colors.bgElevated,
             minHeight: 24,
           },
           '&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover': {
-            backgroundColor: '#959595',
+            backgroundColor: colors.bgSurface,
           },
         },
       },

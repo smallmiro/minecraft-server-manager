@@ -12,6 +12,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Modrinth-style background colors
+        'bg-base': '#16181c',
+        'bg-raised': '#1a1d22',
+        'bg-surface': '#26282e',
+        'bg-elevated': '#313338',
+        // Modrinth-style text colors
+        'text-primary': '#ffffff',
+        'text-secondary': '#9a9a9a',
+        'text-tertiary': '#72767d',
+        // Border color
+        'border-default': '#2e3035',
+        // Brand colors
         primary: {
           DEFAULT: '#1bd96a',
           light: '#4de38a',
@@ -23,8 +35,8 @@ module.exports = {
           dark: '#5b21b6',
         },
         background: {
-          DEFAULT: '#111111',
-          paper: '#1a1a1a',
+          DEFAULT: '#16181c',
+          paper: '#1a1d22',
         },
       },
     },
