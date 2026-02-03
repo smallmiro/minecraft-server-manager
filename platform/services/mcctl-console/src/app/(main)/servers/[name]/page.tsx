@@ -215,10 +215,12 @@ export default function ServerDetailPage() {
                 variant="h4"
                 component="h1"
                 sx={{
-                  fontWeight: 700,
+                  fontFamily: '"Minecraft", sans-serif',
+                  fontWeight: 400,
                   color: 'text.primary',
-                  letterSpacing: '-0.3px',
+                  letterSpacing: '0.5px',
                   m: 0,
+                  textTransform: 'uppercase',
                 }}
               >
                 {serverName}

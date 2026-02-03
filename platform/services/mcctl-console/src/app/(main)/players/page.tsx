@@ -15,6 +15,9 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
+import { alpha } from '@mui/material/styles';
+import PeopleIcon from '@mui/icons-material/People';
 import { PlayerList, WhitelistManager, OpManager, BanManager } from '@/components/players';
 import { useServers } from '@/hooks/useMcctl';
 
@@ -51,14 +54,43 @@ export default function PlayersPage() {
 
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Player Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage players, whitelist, operators, and bans across your servers.
-        </Typography>
-      </Box>
+      {/* Page Header */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 4,
+          p: 3,
+          background: (theme) =>
+            `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`,
+          borderRadius: 2,
+          border: (theme) => `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 56,
+              height: 56,
+              borderRadius: 2,
+              bgcolor: 'info.main',
+              color: 'info.contrastText',
+            }}
+          >
+            <PeopleIcon sx={{ fontSize: 32 }} />
+          </Box>
+          <Box>
+            <Typography variant="h4" component="h1" fontWeight="bold">
+              Player Management
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Manage players, whitelist, operators, and bans across your servers
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
 
       {/* Server Selector */}
       <Box sx={{ mb: 3 }}>
