@@ -2,15 +2,13 @@
 
 import { useState, ReactNode } from 'react';
 import Box from '@mui/material/Box';
-import { GNB, GNB_HEIGHT } from './GNB';
-import { Footer } from './Footer';
+import { GNB, GNB_HEIGHT, Footer } from '@/components/layout';
 
 interface MainLayoutProps {
   children: ReactNode;
-  title?: string;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export default function MainLayout({ children }: MainLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleMenuToggle = () => {
