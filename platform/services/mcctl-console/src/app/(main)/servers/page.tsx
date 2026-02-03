@@ -11,7 +11,6 @@ import Typography from '@mui/material/Typography';
 import { alpha } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import StorageIcon from '@mui/icons-material/Storage';
-import { MainLayout } from '@/components/layout/MainLayout';
 import { ServerList } from '@/components/servers/ServerList';
 import { CreateServerDialog } from '@/components/servers/CreateServerDialog';
 import {
@@ -71,7 +70,7 @@ export default function ServersPage() {
   };
 
   return (
-    <MainLayout title="Servers">
+    <>
       {/* Page Header */}
       <Paper
         elevation={0}
@@ -166,6 +165,6 @@ export default function ServersPage() {
         onSubmit={handleCreateServer}
         loading={createServer.isPending}
       />
-    </MainLayout>
+    </>
   );
 }

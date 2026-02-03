@@ -15,7 +15,6 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import { MainLayout } from '@/components/layout';
 import { PlayerList, WhitelistManager, OpManager, BanManager } from '@/components/players';
 import { useServers } from '@/hooks/useMcctl';
 
@@ -51,7 +50,7 @@ export default function PlayersPage() {
   }, [servers, selectedServer]);
 
   return (
-    <MainLayout>
+    <>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Player Management
@@ -178,6 +177,6 @@ export default function PlayersPage() {
           </Grid>
         )}
       </TabPanel>
-    </MainLayout>
+    </>
   );
 }

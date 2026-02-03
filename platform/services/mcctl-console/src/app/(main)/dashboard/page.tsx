@@ -38,7 +38,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <Box>
+    <>
       {/* Page Header */}
       <Paper
         elevation={0}
@@ -131,6 +131,6 @@ export default function DashboardPage() {
           <ActivityFeed activities={activities} maxItems={10} />
         </Grid>
       </Grid>
-    </Box>
+    </>
   );
 }
