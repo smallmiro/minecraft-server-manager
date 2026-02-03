@@ -571,7 +571,8 @@ export function getDetailedServerInfo(container: string, configEnv?: Record<stri
  */
 export async function getDetailedServerInfoWithPlayers(
   container: string,
-  configEnv?: Record<string, string>
+  configEnv?: Record<string, string>,
+  worldsDir?: string
 ): Promise<DetailedServerInfo> {
   const detailed = getDetailedServerInfo(container, configEnv);
 
@@ -582,6 +583,16 @@ export async function getDetailedServerInfoWithPlayers(
       detailed.players = players;
     }
   }
+
+  // Get world name and size
+  // World name priority: config WORLD_NAME > server name
+  const serverName = container.replace(/^mc-/, '');
+  const worldName = configEnv?.['WORLD_NAME'] || serverName;
+  detailed.worldName = worldName;
+
+  // Calculate world size
+  const worldSize = await getWorldDirectorySize(worldName, worldsDir);
+  detailed.worldSize = formatBytes(worldSize);
 
   return detailed;
 }
@@ -637,6 +648,62 @@ export function formatBytes(bytes: number): string {
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+}
+
+/**
+ * Get the worlds directory path
+ */
+export function getWorldsDir(): string {
+  return join(
+    process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers'),
+    'worlds'
+  );
+}
+
+/**
+ * Calculate the total size of a world directory recursively
+ * @param worldName The name of the world
+ * @param worldsDir Optional custom worlds directory path
+ * @returns Total size in bytes
+ */
+export async function getWorldDirectorySize(worldName: string, worldsDir?: string): Promise<number> {
+  const dir = worldsDir ?? getWorldsDir();
+  const worldPath = join(dir, worldName);
+
+  if (!existsSync(worldPath)) {
+    return 0;
+  }
+
+  return calculateDirectorySize(worldPath);
+}
+
+/**
+ * Calculate directory size recursively
+ */
+async function calculateDirectorySize(dirPath: string): Promise<number> {
+  let totalSize = 0;
+
+  try {
+    const entries = readdirSync(dirPath);
+
+    for (const entry of entries) {
+      const entryPath = join(dirPath, entry);
+      try {
+        const stats = statSync(entryPath);
+        if (stats.isDirectory()) {
+          totalSize += await calculateDirectorySize(entryPath);
+        } else if (stats.isFile()) {
+          totalSize += stats.size;
+        }
+      } catch {
+        // Skip entries that can't be accessed
+      }
+    }
+  } catch {
+    // Return 0 if directory can't be read
+  }
+
+  return totalSize;
 }
 
 /**
@@ -777,10 +844,11 @@ export function serverExists(serverName: string, serversDir?: string): boolean {
 /**
  * Get detailed server info from config.env (for servers without containers)
  */
-export function getDetailedServerInfoFromConfig(
+export async function getDetailedServerInfoFromConfig(
   serverName: string,
-  serversDir?: string
-): DetailedServerInfo {
+  serversDir?: string,
+  worldsDir?: string
+): Promise<DetailedServerInfo> {
   const container = `mc-${serverName}`;
   const configEnv = readServerConfigEnv(serverName, serversDir);
   const dir = serversDir ?? getServersDir();
@@ -801,6 +869,10 @@ export function getDetailedServerInfoFromConfig(
     }
   }
 
+  // Get world name and size
+  const worldName = configEnv['WORLD_NAME'] || serverName;
+  const worldSize = await getWorldDirectorySize(worldName, worldsDir);
+
   return {
     name: serverName,
     container,
@@ -810,6 +882,8 @@ export function getDetailedServerInfoFromConfig(
     type: configEnv['TYPE'] || 'PAPER',
     version: configEnv['VERSION'] || 'LATEST',
     memory: configEnv['MEMORY'] || '2G',
+    worldName,
+    worldSize: formatBytes(worldSize),
   };
 }
 
@@ -818,16 +892,17 @@ export function getDetailedServerInfoFromConfig(
  */
 export async function getServerDetailedInfo(
   serverName: string,
-  serversDir?: string
+  serversDir?: string,
+  worldsDir?: string
 ): Promise<DetailedServerInfo> {
   const container = `mc-${serverName}`;
   const configEnv = readServerConfigEnv(serverName, serversDir);
 
   // If container exists, get info from Docker
   if (containerExists(container)) {
-    return getDetailedServerInfoWithPlayers(container, configEnv);
+    return getDetailedServerInfoWithPlayers(container, configEnv, worldsDir);
   }
 
   // Otherwise, get info from config only
-  return getDetailedServerInfoFromConfig(serverName, serversDir);
+  return getDetailedServerInfoFromConfig(serverName, serversDir, worldsDir);
 }

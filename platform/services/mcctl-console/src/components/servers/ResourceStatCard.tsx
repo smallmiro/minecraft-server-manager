@@ -35,8 +35,6 @@ export function ResourceStatCard({
     <Card
       data-testid="resource-stat-card"
       sx={{
-        flex: 1,
-        minWidth: 0,
         p: 2.5,
         bgcolor: 'background.paper',
         border: '1px solid',
@@ -44,8 +42,8 @@ export function ResourceStatCard({
         borderRadius: 3,
       }}
     >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, flexWrap: 'wrap', minWidth: 0 }}>
           <Typography
             variant="h4"
             component="span"
@@ -66,7 +64,7 @@ export function ResourceStatCard({
             {unit}
           </Typography>
         </Box>
-        <Box sx={{ color: 'text.secondary', mt: 0.5 }}>{icon}</Box>
+        <Box sx={{ color: 'text.secondary', flexShrink: 0 }}>{icon}</Box>
       </Box>
 
       <Typography

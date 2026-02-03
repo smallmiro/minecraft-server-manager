@@ -63,6 +63,16 @@ export interface ErrorEvent {
 }
 
 /**
+ * Connection closed event (sent when SSE stream ends)
+ */
+export interface ConnectionClosedEvent {
+  type: 'connection-closed';
+  data: {
+    timestamp: string;
+  };
+}
+
+/**
  * Union type of all possible SSE events
  */
 export type SSEEvent =
@@ -70,7 +80,8 @@ export type SSEEvent =
   | ServerLogEvent
   | PlayerEvent
   | HeartbeatEvent
-  | ErrorEvent;
+  | ErrorEvent
+  | ConnectionClosedEvent;
 
 /**
  * SSE connection state

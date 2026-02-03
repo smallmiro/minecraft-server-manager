@@ -13,8 +13,9 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Grid from '@mui/material/Grid';
 import Divider from '@mui/material/Divider';
 import { alpha } from '@mui/material/styles';
-import MemoryIcon from '@mui/icons-material/Memory';
-import StorageIcon from '@mui/icons-material/Storage';
+import SpeedIcon from '@mui/icons-material/Speed';
+import SdStorageIcon from '@mui/icons-material/SdStorage';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import TerminalIcon from '@mui/icons-material/Terminal';
@@ -31,25 +32,8 @@ interface ServerDetailProps {
 const TABS = ['Overview', 'Content', 'Files', 'Backups', 'Options'] as const;
 type TabType = (typeof TABS)[number];
 
-// CPU Icon Component
-function CpuIcon() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="4" y="4" width="16" height="16" rx="2" />
-      <rect x="9" y="9" width="6" height="6" rx="1" />
-      <path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3" />
-    </svg>
-  );
-}
+// Icon size for stat cards
+const STAT_ICON_SIZE = 28;
 
 // Parse log line for console display
 interface ParsedLog {
@@ -156,11 +140,11 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
     }
   };
 
-  // Parse resource stats
-  const cpuPercent = server.stats?.cpu ? parseFloat(server.stats.cpu) : 0;
-  const memoryUsedMB = server.stats?.memory ? parseMemoryToMB(server.stats.memory) : 0;
+  // Parse resource stats (API returns numeric values directly)
+  const cpuPercent = server.stats?.cpuPercent ?? 0;
+  const memoryUsedMB = server.stats?.memoryUsage ? server.stats.memoryUsage / (1024 * 1024) : 0;
   const memoryAllocatedMB = parseAllocatedMemoryToMB(server.memory);
-  const memoryPercent = memoryAllocatedMB > 0 ? (memoryUsedMB / memoryAllocatedMB) * 100 : 0;
+  const memoryPercent = server.stats?.memoryPercent ?? 0;
 
   return (
     <Box>
@@ -190,12 +174,19 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
       </Box>
 
       {/* Stats Cards */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 2.5 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+          gap: 2,
+          mb: 2.5,
+        }}
+      >
         <ResourceStatCard
           value={`${cpuPercent.toFixed(2)}%`}
           unit="/ 100%"
           label="CPU usage"
-          icon={<CpuIcon />}
+          icon={<SpeedIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
           progress={cpuPercent}
           progressMax={100}
           color="#1bd96a"
@@ -204,18 +195,18 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
           value={`${memoryPercent.toFixed(2)}%`}
           unit="/ 100%"
           label="Memory usage"
-          icon={<MemoryIcon />}
+          icon={<SdStorageIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
           progress={memoryPercent}
           progressMax={100}
           color="#1bd96a"
         />
         <ResourceStatCard
-          value={server.worldSize || '0 MB'}
-          unit={`/ ${server.memory || '4G'}`}
-          label="Storage usage"
-          icon={<StorageIcon />}
+          value={server.worldSize || '0 B'}
+          unit="/ 10 GB"
+          label="World size"
+          icon={<FolderOpenIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
           progress={parseMemoryToMB(server.worldSize)}
-          progressMax={memoryAllocatedMB}
+          progressMax={10240}
           color="#1bd96a"
         />
       </Box>

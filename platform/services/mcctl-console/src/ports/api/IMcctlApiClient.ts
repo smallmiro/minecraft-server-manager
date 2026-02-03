@@ -12,11 +12,10 @@ export interface ServerSummary {
 }
 
 export interface ServerStats {
-  cpu: string;
-  memory: string;
-  memoryPercent: string;
-  network: string;
-  blockIO: string;
+  cpuPercent: number;
+  memoryUsage: number;
+  memoryLimit: number;
+  memoryPercent: number;
 }
 
 export interface ServerDetail extends ServerSummary {

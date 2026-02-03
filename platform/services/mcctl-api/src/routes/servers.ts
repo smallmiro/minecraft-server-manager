@@ -351,7 +351,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         const initialLogs = getContainerLogs(containerName, lines);
         for (const line of initialLogs.split('\n')) {
           if (line) {
-            reply.raw.write(`data: ${JSON.stringify({ log: line })}\n\n`);
+            reply.raw.write(`data: ${JSON.stringify({ type: 'server-log', data: { log: line } })}\n\n`);
           }
         }
 
@@ -364,7 +364,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           const lines = data.toString().split('\n');
           for (const line of lines) {
             if (line.trim()) {
-              reply.raw.write(`data: ${JSON.stringify({ log: line })}\n\n`);
+              reply.raw.write(`data: ${JSON.stringify({ type: 'server-log', data: { log: line } })}\n\n`);
             }
           }
         };
@@ -386,7 +386,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
         dockerLogs.on('close', () => {
           clearInterval(heartbeat);
-          reply.raw.write(`data: ${JSON.stringify({ event: 'closed' })}\n\n`);
+          reply.raw.write(`data: ${JSON.stringify({ type: 'connection-closed', data: { timestamp: new Date().toISOString() } })}\n\n`);
           reply.raw.end();
         });
 
