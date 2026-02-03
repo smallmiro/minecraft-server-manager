@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/ko/admin-service/web-console/">
+        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/ko/cli/rcon-commands/">
       
       
       
       
         
-          <link rel="alternate" href="../../../admin-service/web-console/" hreflang="en">
+          <link rel="alternate" href="../../../cli/rcon-commands/" hreflang="en">
         
           <link rel="alternate" href="./" hreflang="ko">
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>웹 콘솔 가이드 - Minecraft Docker Server Manager</title>
+        <title>RCON 명령어 레퍼런스 - Minecraft Docker Server Manager</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#웹-콘솔-가이드" class="md-skip">
+        <a href="#rcon-명령어-레퍼런스" class="md-skip">
           콘텐츠로 이동
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              웹 콘솔 가이드
+              RCON 명령어 레퍼런스
             
           </span>
         </div>
@@ -159,7 +159,7 @@
       <ul class="md-select__list">
         
           <li class="md-select__item">
-            <a href="../../../admin-service/web-console/" hreflang="en" class="md-select__link">
+            <a href="../../../cli/rcon-commands/" hreflang="en" class="md-select__link">
               English
             </a>
           </li>
@@ -288,7 +288,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../cli/" class="md-tabs__link">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -698,7 +698,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../cli/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   
@@ -742,7 +742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/commands/" class="md-nav__link">
+      <a href="../commands/" class="md-nav__link">
         
   
   
@@ -1599,25 +1599,14 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#아키텍처" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        아키텍처
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="아키텍처">
+    <nav class="md-nav" aria-label="개요">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#bff-프록시를-사용하는-이유" class="md-nav__link">
+  <a href="#mcctl-rcon-명령어" class="md-nav__link">
     <span class="md-ellipsis">
       
-        BFF 프록시를 사용하는 이유
+        mcctl RCON 명령어
       
     </span>
   </a>
@@ -1625,21 +1614,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-라우트-bff-레이어" class="md-nav__link">
+  <a href="#사용-시점" class="md-nav__link">
     <span class="md-ellipsis">
       
-        API 라우트 (BFF 레이어)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#react-query-훅" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        React Query 훅
+        사용 시점
       
     </span>
   </a>
@@ -1652,22 +1630,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#콘솔-접속" class="md-nav__link">
+  <a href="#사용-예시" class="md-nav__link">
     <span class="md-ellipsis">
       
-        콘솔 접속
+        사용 예시
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="콘솔 접속">
+    <nav class="md-nav" aria-label="사용 예시">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#첫-로그인" class="md-nav__link">
+  <a href="#대화형-모드-rcon" class="md-nav__link">
     <span class="md-ellipsis">
       
-        첫 로그인
+        대화형 모드 (rcon)
       
     </span>
   </a>
@@ -1675,10 +1653,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#세션-관리" class="md-nav__link">
+  <a href="#비대화형-모드-exec" class="md-nav__link">
     <span class="md-ellipsis">
       
-        세션 관리
+        비대화형 모드 (exec)
       
     </span>
   </a>
@@ -1691,44 +1669,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#대시보드" class="md-nav__link">
+  <a href="#플레이어-관리-명령어" class="md-nav__link">
     <span class="md-ellipsis">
       
-        대시보드
+        플레이어 관리 명령어
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="대시보드">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#커뮤니케이션-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        커뮤니케이션 명령어
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#텔레포트-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        텔레포트 명령어
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="텔레포트 명령어">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#서버-목록" class="md-nav__link">
+  <a href="#대상-선택자" class="md-nav__link">
     <span class="md-ellipsis">
       
-        서버 목록
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#빠른-작업" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        빠른 작업
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#상태-새로고침" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        상태 새로고침
+        대상 선택자
       
     </span>
   </a>
@@ -1741,133 +1719,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#서버-상세-페이지" class="md-nav__link">
+  <a href="#아이템-명령어" class="md-nav__link">
     <span class="md-ellipsis">
       
-        서버 상세 페이지
+        아이템 명령어
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="서버 상세 페이지">
+    <nav class="md-nav" aria-label="아이템 명령어">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#서버-정보" class="md-nav__link">
+  <a href="#자주-사용하는-아이템-id" class="md-nav__link">
     <span class="md-ellipsis">
       
-        서버 정보
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#플레이어-섹션" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        플레이어 섹션
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#통계" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        통계
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#서버-컨트롤" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        서버 컨트롤
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#콘솔-패널" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        콘솔 패널
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="콘솔 패널">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#명령-실행" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        명령 실행
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#사용자-인터페이스-요소" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        사용자 인터페이스 요소
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="사용자 인터페이스 요소">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#내비게이션-바" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        내비게이션 바
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#서버-카드" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        서버 카드
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#상태-표시기" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        상태 표시기
+        자주 사용하는 아이템 ID
       
     </span>
   </a>
@@ -1880,22 +1747,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#모범-사례" class="md-nav__link">
+  <a href="#월드-설정-명령어" class="md-nav__link">
     <span class="md-ellipsis">
       
-        모범 사례
+        월드 설정 명령어
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="모범 사례">
+    <nav class="md-nav" aria-label="월드 설정 명령어">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#보안" class="md-nav__link">
+  <a href="#시간" class="md-nav__link">
     <span class="md-ellipsis">
       
-        보안
+        시간
       
     </span>
   </a>
@@ -1903,10 +1770,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#모니터링" class="md-nav__link">
+  <a href="#날씨" class="md-nav__link">
     <span class="md-ellipsis">
       
-        모니터링
+        날씨
       
     </span>
   </a>
@@ -1914,10 +1781,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#성능" class="md-nav__link">
+  <a href="#난이도" class="md-nav__link">
     <span class="md-ellipsis">
       
-        성능
+        난이도
       
     </span>
   </a>
@@ -1930,55 +1797,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#문제-해결" class="md-nav__link">
+  <a href="#게임-규칙" class="md-nav__link">
     <span class="md-ellipsis">
       
-        문제 해결
+        게임 규칙
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="문제 해결">
+    <nav class="md-nav" aria-label="게임 규칙">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#콘솔에-접근할-수-없음" class="md-nav__link">
+  <a href="#게임-규칙-조회" class="md-nav__link">
     <span class="md-ellipsis">
       
-        콘솔에 접근할 수 없음
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#로그인-실패" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        로그인 실패
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#서버-상태가-업데이트되지-않음" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        서버 상태가 업데이트되지 않음
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#명령이-작동하지-않음" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        명령이 작동하지 않음
+        게임 규칙 조회
       
     </span>
   </a>
@@ -1991,77 +1825,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#모바일-접근" class="md-nav__link">
+  <a href="#서버-관리-명령어" class="md-nav__link">
     <span class="md-ellipsis">
       
-        모바일 접근
+        서버 관리 명령어
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#키보드-단축키" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        키보드 단축키
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#스크린샷" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        스크린샷
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="스크린샷">
+    <nav class="md-nav" aria-label="서버 관리 명령어">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#대시보드-뷰" class="md-nav__link">
+  <a href="#백업-워크플로우" class="md-nav__link">
     <span class="md-ellipsis">
       
-        대시보드 뷰
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#서버-상세-뷰" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        서버 상세 뷰
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#콘솔-패널_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        콘솔 패널
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#로그인-페이지" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        로그인 페이지
+        백업 워크플로우
       
     </span>
   </a>
@@ -2070,6 +1849,167 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#게임모드-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        게임모드 명령어
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#효과-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        효과 명령어
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="효과 명령어">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#주요-효과" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        주요 효과
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#경험치-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        경험치 명령어
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#고급-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        고급 명령어
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="고급 명령어">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#execute-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute 명령어
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scoreboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoreboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data 명령어
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#도움말-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        도움말 명령어
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#오류-처리" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        오류 처리
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="오류 처리">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#일반적인-오류" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        일반적인 오류
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#서버-미실행-오류" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서버 미실행 오류
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#참조" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        참조
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2093,267 +2033,419 @@
   
 
 
-<h1 id="웹-콘솔-가이드">웹 콘솔 가이드<a class="headerlink" href="#웹-콘솔-가이드" title="Permanent link">&para;</a></h1>
-<p>mcctl-console 웹 관리 인터페이스 사용 가이드입니다.</p>
+<h1 id="rcon-명령어-레퍼런스">RCON 명령어 레퍼런스<a class="headerlink" href="#rcon-명령어-레퍼런스" title="Permanent link">&para;</a></h1>
 <h2 id="개요">개요<a class="headerlink" href="#개요" title="Permanent link">&para;</a></h2>
-<p>mcctl-console은 Docker Minecraft 서버를 관리하기 위한 현대적인 웹 인터페이스를 제공합니다. Next.js로 구축되었으며 실시간 업데이트 기능을 갖추고 있어 CLI 명령의 사용자 친화적인 대안을 제공합니다.</p>
-<p><strong>기본 URL:</strong> <code>http://localhost:5000</code></p>
-<h2 id="아키텍처">아키텍처<a class="headerlink" href="#아키텍처" title="Permanent link">&para;</a></h2>
-<p>mcctl-console은 안전한 API 통신을 위해 Backend-for-Frontend (BFF) 프록시 패턴을 사용합니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+------------------+      +-------------------+      +---------------+
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|   웹 브라우저     | ---&gt; |   mcctl-console   | ---&gt; |   mcctl-api   |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|   (React Query)  |      |   (Next.js BFF)   |      |   (Fastify)   |
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>+------------------+      +-------------------+      +---------------+
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>       ^                          |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>       |                   세션 인증 +
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>       |                   X-API-Key 전달
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>       |
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>   React Query
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>   (자동 새로고침)
-</code></pre></div>
-<h3 id="bff-프록시를-사용하는-이유">BFF 프록시를 사용하는 이유<a class="headerlink" href="#bff-프록시를-사용하는-이유" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>보안</strong>: API 키가 서버 측에 유지되어 브라우저에 노출되지 않음</li>
-<li><strong>세션 관리</strong>: Better Auth가 사용자 인증 처리</li>
-<li><strong>타입 안정성</strong>: 프론트엔드와 백엔드 간 공유 TypeScript 인터페이스</li>
-<li><strong>캐싱</strong>: React Query가 낙관적 업데이트와 캐싱 제공</li>
-</ol>
-<h3 id="api-라우트-bff-레이어">API 라우트 (BFF 레이어)<a class="headerlink" href="#api-라우트-bff-레이어" title="Permanent link">&para;</a></h3>
-<p>콘솔은 Next.js API 라우트를 통해 요청을 프록시합니다:</p>
+<p>RCON (Remote Console)을 통해 서버 관리자는 마인크래프트 서버 명령어를 원격으로 실행할 수 있습니다. 이 가이드는 mcctl에서 사용할 수 있는 모든 RCON 명령어를 다룹니다.</p>
+<h3 id="mcctl-rcon-명령어">mcctl RCON 명령어<a class="headerlink" href="#mcctl-rcon-명령어" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>콘솔 라우트</th>
-<th>메서드</th>
+<th>명령어</th>
+<th>모드</th>
 <th>설명</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>/api/servers</code></td>
-<td>GET</td>
-<td>모든 서버 목록</td>
+<td><code>mcctl rcon &lt;서버&gt;</code></td>
+<td>대화형</td>
+<td>RCON 콘솔 세션 열기</td>
 </tr>
 <tr>
-<td><code>/api/servers</code></td>
-<td>POST</td>
-<td>새 서버 생성</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name</code></td>
-<td>GET</td>
-<td>서버 상세 정보</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name</code></td>
-<td>DELETE</td>
-<td>서버 삭제</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name/start</code></td>
-<td>POST</td>
-<td>서버 시작</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name/stop</code></td>
-<td>POST</td>
-<td>서버 중지</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name/restart</code></td>
-<td>POST</td>
-<td>서버 재시작</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name/exec</code></td>
-<td>POST</td>
-<td>RCON 명령 실행</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name/logs</code></td>
-<td>GET</td>
-<td>서버 로그 조회</td>
-</tr>
-<tr>
-<td><code>/api/worlds</code></td>
-<td>GET</td>
-<td>모든 월드 목록</td>
-</tr>
-<tr>
-<td><code>/api/worlds</code></td>
-<td>POST</td>
-<td>새 월드 생성</td>
-</tr>
-<tr>
-<td><code>/api/worlds/:name</code></td>
-<td>GET</td>
-<td>월드 상세 정보</td>
-</tr>
-<tr>
-<td><code>/api/worlds/:name</code></td>
-<td>DELETE</td>
-<td>월드 삭제</td>
-</tr>
-<tr>
-<td><code>/api/worlds/:name/assign</code></td>
-<td>POST</td>
-<td>월드를 서버에 할당</td>
-</tr>
-<tr>
-<td><code>/api/worlds/:name/release</code></td>
-<td>POST</td>
-<td>월드 잠금 해제</td>
+<td><code>mcctl exec &lt;서버&gt; &lt;명령&gt;</code></td>
+<td>비대화형</td>
+<td>단일 명령 실행</td>
 </tr>
 </tbody>
 </table>
-<h3 id="react-query-훅">React Query 훅<a class="headerlink" href="#react-query-훅" title="Permanent link">&para;</a></h3>
-<p>콘솔은 데이터 페칭을 위한 타입 안전 React Query 훅을 제공합니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// 서버 작업</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="kt">servers</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useServers</span><span class="p">();</span><span class="w">           </span><span class="c1">// 10초마다 자동 새로고침</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="kt">server</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useServer</span><span class="p">(</span><span class="s1">&#39;myserver&#39;</span><span class="p">);</span><span class="w">   </span><span class="c1">// 5초마다 자동 새로고침</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kd">const</span><span class="w"> </span><span class="nx">startMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useStartServer</span><span class="p">();</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="kd">const</span><span class="w"> </span><span class="nx">stopMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useStopServer</span><span class="p">();</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kd">const</span><span class="w"> </span><span class="nx">execMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useExecCommand</span><span class="p">();</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1">// 월드 작업</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="kt">worlds</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useWorlds</span><span class="p">();</span><span class="w">             </span><span class="c1">// 30초마다 자동 새로고침</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="kd">const</span><span class="w"> </span><span class="nx">assignMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useAssignWorld</span><span class="p">();</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="kd">const</span><span class="w"> </span><span class="nx">releaseMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useReleaseWorld</span><span class="p">();</span>
-</code></pre></div>
-<p>모든 훅이 자동으로 처리하는 것:</p>
-<ul>
-<li>로딩 상태</li>
-<li>에러 처리</li>
-<li>뮤테이션 시 캐시 무효화</li>
-<li>낙관적 업데이트</li>
-</ul>
-<h2 id="콘솔-접속">콘솔 접속<a class="headerlink" href="#콘솔-접속" title="Permanent link">&para;</a></h2>
-<h3 id="첫-로그인">첫 로그인<a class="headerlink" href="#첫-로그인" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p>Admin Service 시작:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
-</code></pre></div></p>
-</li>
-<li>
-<p>브라우저를 열고 <code>http://localhost:5000</code>으로 이동</p>
-</li>
-<li>
-<p>자격 증명 입력:</p>
-</li>
-<li><strong>사용자명:</strong> <code>mcctl console init</code> 중 생성한 관리자 사용자명</li>
-<li>
-<p><strong>비밀번호:</strong> 관리자 비밀번호</p>
-</li>
-<li>
-<p><strong>로그인</strong> 클릭</p>
-</li>
-</ol>
-<div class="admonition tip">
-<p class="admonition-title">자동 로그인</p>
-<p>기본적으로 세션은 24시간 동안 유지됩니다. 더 긴 세션을 원하면 설정에서 <code>MCCTL_JWT_EXPIRY</code>를 수정하세요.</p>
-</div>
-<h3 id="세션-관리">세션 관리<a class="headerlink" href="#세션-관리" title="Permanent link">&para;</a></h3>
-<ul>
-<li>세션은 구성된 JWT 만료 시간 이후에 만료됩니다</li>
-<li>리프레시 토큰이 활성 세션을 연장하는 데 사용됩니다</li>
-<li>사용자 메뉴에서 <strong>로그아웃</strong>을 클릭하여 세션을 종료합니다</li>
-</ul>
-<h2 id="대시보드">대시보드<a class="headerlink" href="#대시보드" title="Permanent link">&para;</a></h2>
-<p>대시보드는 모든 Minecraft 서버의 개요를 제공합니다.</p>
-<h3 id="서버-목록">서버 목록<a class="headerlink" href="#서버-목록" title="Permanent link">&para;</a></h3>
-<p>각 서버 카드에 표시되는 정보:</p>
-<ul>
-<li><strong>서버 이름</strong> - 고유 식별자</li>
-<li><strong>상태 표시기</strong></li>
-<li>녹색: 실행 중이고 정상</li>
-<li>노란색: 시작 중이거나 헬스 체크 진행 중</li>
-<li>빨간색: 중지됨 또는 비정상</li>
-<li><strong>서버 유형</strong> - PAPER, VANILLA, FORGE, FABRIC 등</li>
-<li><strong>버전</strong> - Minecraft 버전</li>
-<li><strong>플레이어</strong> - 현재/최대 플레이어 수</li>
-<li><strong>호스트명</strong> - Minecraft 클라이언트 연결 주소</li>
-</ul>
-<h3 id="빠른-작업">빠른 작업<a class="headerlink" href="#빠른-작업" title="Permanent link">&para;</a></h3>
-<p>대시보드에서 할 수 있는 작업:</p>
-<ul>
-<li><strong>시작</strong> - 중지된 서버 시작 (재생 버튼)</li>
-<li><strong>중지</strong> - 실행 중인 서버 중지 (중지 버튼)</li>
-<li><strong>재시작</strong> - 서버 재시작 (새로고침 버튼)</li>
-<li><strong>상세 보기</strong> - 서버 카드 클릭</li>
-</ul>
-<h3 id="상태-새로고침">상태 새로고침<a class="headerlink" href="#상태-새로고침" title="Permanent link">&para;</a></h3>
-<p>대시보드는 자동으로 서버 상태를 새로고침합니다:</p>
-<ul>
-<li><strong>기본 간격:</strong> 30초</li>
-<li><strong>수동 새로고침:</strong> 헤더의 새로고침 버튼 클릭</li>
-</ul>
-<h2 id="서버-상세-페이지">서버 상세 페이지<a class="headerlink" href="#서버-상세-페이지" title="Permanent link">&para;</a></h2>
-<p>서버를 클릭하면 상세 정보를 볼 수 있습니다.</p>
-<h3 id="서버-정보">서버 정보<a class="headerlink" href="#서버-정보" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>컨테이너 이름</strong> - Docker 컨테이너 식별자</li>
-<li><strong>상태</strong> - 실행 상태 및 헬스</li>
-<li><strong>가동 시간</strong> - 마지막 시작 이후 시간</li>
-<li><strong>메모리</strong> - 할당된 메모리</li>
-<li><strong>월드</strong> - 현재 월드 이름과 크기</li>
-</ul>
-<h3 id="플레이어-섹션">플레이어 섹션<a class="headerlink" href="#플레이어-섹션" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>온라인 플레이어</strong> - 현재 접속 중인 플레이어 목록</li>
-<li><strong>플레이어 수</strong> - 현재 / 최대</li>
-</ul>
-<h3 id="통계">통계<a class="headerlink" href="#통계" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>CPU 사용량</strong> - 현재 CPU 활용도</li>
-<li><strong>메모리 사용량</strong> - RAM 소비량</li>
-</ul>
-<h3 id="서버-컨트롤">서버 컨트롤<a class="headerlink" href="#서버-컨트롤" title="Permanent link">&para;</a></h3>
+<h3 id="사용-시점">사용 시점<a class="headerlink" href="#사용-시점" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>버튼</th>
-<th>동작</th>
+<th>용도</th>
+<th>명령어</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>수동 서버 관리</td>
+<td><code>mcctl rcon myserver</code></td>
+</tr>
+<tr>
+<td>연속 명령 실행</td>
+<td><code>mcctl rcon myserver</code></td>
+</tr>
+<tr>
+<td>디버깅 및 문제 해결</td>
+<td><code>mcctl rcon myserver</code></td>
+</tr>
+<tr>
+<td>쉘 스크립트 및 자동화</td>
+<td><code>mcctl exec myserver &lt;cmd&gt;</code></td>
+</tr>
+<tr>
+<td>CI/CD 파이프라인</td>
+<td><code>mcctl exec myserver &lt;cmd&gt;</code></td>
+</tr>
+<tr>
+<td>크론 작업</td>
+<td><code>mcctl exec myserver &lt;cmd&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="사용-예시">사용 예시<a class="headerlink" href="#사용-예시" title="Permanent link">&para;</a></h2>
+<h3 id="대화형-모드-rcon">대화형 모드 (rcon)<a class="headerlink" href="#대화형-모드-rcon" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$<span class="w"> </span>mcctl<span class="w"> </span>rcon<span class="w"> </span>survival
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Connecting<span class="w"> </span>to<span class="w"> </span>RCON<span class="w"> </span>console<span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="s1">&#39;survival&#39;</span>...
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Type<span class="w"> </span><span class="s2">&quot;help&quot;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>commands,<span class="w"> </span>Ctrl+C<span class="w"> </span>or<span class="w"> </span><span class="s2">&quot;exit&quot;</span><span class="w"> </span>to<span class="w"> </span>quit
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>&gt;<span class="w"> </span>list
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>There<span class="w"> </span>are<span class="w"> </span><span class="m">2</span><span class="w"> </span>of<span class="w"> </span><span class="m">20</span><span class="w"> </span>players<span class="w"> </span>online:<span class="w"> </span>Steve,<span class="w"> </span>Alex
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>&gt;<span class="w"> </span>say<span class="w"> </span>서버<span class="w"> </span>점검<span class="w"> </span>10분<span class="w"> </span>전입니다!
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="o">[</span>Server:<span class="w"> </span>서버<span class="w"> </span>점검<span class="w"> </span>10분<span class="w"> </span>전입니다!<span class="o">]</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>&gt;<span class="w"> </span>tp<span class="w"> </span>Steve<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="m">0</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>Teleported<span class="w"> </span>Steve<span class="w"> </span>to<span class="w"> </span><span class="m">0</span>.0,<span class="w"> </span><span class="m">100</span>.0,<span class="w"> </span><span class="m">0</span>.0
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>&gt;<span class="w"> </span><span class="nb">exit</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>$
+</code></pre></div>
+<h3 id="비대화형-모드-exec">비대화형 모드 (exec)<a class="headerlink" href="#비대화형-모드-exec" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 단일 명령 실행</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>$<span class="w"> </span>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>survival<span class="w"> </span>list
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>There<span class="w"> </span>are<span class="w"> </span><span class="m">2</span><span class="w"> </span>of<span class="w"> </span><span class="m">20</span><span class="w"> </span>players<span class="w"> </span>online:<span class="w"> </span>Steve,<span class="w"> </span>Alex
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># 스크립트에서 사용</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>$<span class="w"> </span>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">&quot;백업 시작...&quot;</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="o">[</span>Server:<span class="w"> </span>백업<span class="w"> </span>시작...<span class="o">]</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># 스크립트 예시</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="nv">PLAYERS</span><span class="o">=</span><span class="k">$(</span>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>list<span class="k">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">if</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PLAYERS</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;0 of&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">  </span>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="k">fi</span>
+</code></pre></div>
+<hr />
+<h2 id="플레이어-관리-명령어">플레이어 관리 명령어<a class="headerlink" href="#플레이어-관리-명령어" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>list</code></td>
+<td>온라인 플레이어 표시</td>
+<td><code>list</code></td>
+</tr>
+<tr>
+<td><code>kick &lt;플레이어&gt; [사유]</code></td>
+<td>플레이어 추방</td>
+<td><code>kick Steve 장기 AFK</code></td>
+</tr>
+<tr>
+<td><code>ban &lt;플레이어&gt; [사유]</code></td>
+<td>플레이어 영구 밴</td>
+<td><code>ban Griefer 스폰 그리핑</code></td>
+</tr>
+<tr>
+<td><code>ban-ip &lt;IP&gt; [사유]</code></td>
+<td>IP 주소 밴</td>
+<td><code>ban-ip 192.168.1.100 VPN</code></td>
+</tr>
+<tr>
+<td><code>pardon &lt;플레이어&gt;</code></td>
+<td>밴 해제</td>
+<td><code>pardon Steve</code></td>
+</tr>
+<tr>
+<td><code>pardon-ip &lt;IP&gt;</code></td>
+<td>IP 밴 해제</td>
+<td><code>pardon-ip 192.168.1.100</code></td>
+</tr>
+<tr>
+<td><code>banlist [players\|ips]</code></td>
+<td>밴 목록 표시</td>
+<td><code>banlist players</code></td>
+</tr>
+<tr>
+<td><code>op &lt;플레이어&gt;</code></td>
+<td>관리자 권한 부여</td>
+<td><code>op Steve</code></td>
+</tr>
+<tr>
+<td><code>deop &lt;플레이어&gt;</code></td>
+<td>관리자 권한 해제</td>
+<td><code>deop Steve</code></td>
+</tr>
+<tr>
+<td><code>whitelist add &lt;플레이어&gt;</code></td>
+<td>화이트리스트 추가</td>
+<td><code>whitelist add Steve</code></td>
+</tr>
+<tr>
+<td><code>whitelist remove &lt;플레이어&gt;</code></td>
+<td>화이트리스트 제거</td>
+<td><code>whitelist remove Steve</code></td>
+</tr>
+<tr>
+<td><code>whitelist list</code></td>
+<td>화이트리스트 표시</td>
+<td><code>whitelist list</code></td>
+</tr>
+<tr>
+<td><code>whitelist on</code></td>
+<td>화이트리스트 활성화</td>
+<td><code>whitelist on</code></td>
+</tr>
+<tr>
+<td><code>whitelist off</code></td>
+<td>화이트리스트 비활성화</td>
+<td><code>whitelist off</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="커뮤니케이션-명령어">커뮤니케이션 명령어<a class="headerlink" href="#커뮤니케이션-명령어" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>say &lt;메시지&gt;</code></td>
+<td>전체 공지</td>
+<td><code>say 서버 재시작 5분 전</code></td>
+</tr>
+<tr>
+<td><code>tell &lt;플레이어&gt; &lt;메시지&gt;</code></td>
+<td>귓속말</td>
+<td><code>tell Steve 인벤토리 확인해</code></td>
+</tr>
+<tr>
+<td><code>tellraw &lt;플레이어&gt; &lt;json&gt;</code></td>
+<td>JSON 포맷 메시지 전송</td>
+<td><code>tellraw @a {"text":"안녕","color":"gold"}</code></td>
+</tr>
+<tr>
+<td><code>title &lt;플레이어&gt; &lt;동작&gt;</code></td>
+<td>화면에 타이틀 표시</td>
+<td><code>title @a title {"text":"환영합니다!"}</code></td>
+</tr>
+<tr>
+<td><code>me &lt;동작&gt;</code></td>
+<td>액션 메시지 표시</td>
+<td><code>me 서버를 재시작합니다</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="텔레포트-명령어">텔레포트 명령어<a class="headerlink" href="#텔레포트-명령어" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tp &lt;플레이어&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt;</code></td>
+<td>좌표로 텔레포트</td>
+<td><code>tp Steve 0 100 0</code></td>
+</tr>
+<tr>
+<td><code>tp &lt;플레이어&gt; &lt;대상&gt;</code></td>
+<td>다른 플레이어에게 텔레포트</td>
+<td><code>tp Steve Alex</code></td>
+</tr>
+<tr>
+<td><code>tp @a &lt;x&gt; &lt;y&gt; &lt;z&gt;</code></td>
+<td>모든 플레이어 텔레포트</td>
+<td><code>tp @a 0 100 0</code></td>
+</tr>
+<tr>
+<td><code>spawnpoint &lt;플레이어&gt;</code></td>
+<td>스폰 지점 설정</td>
+<td><code>spawnpoint Steve 100 64 100</code></td>
+</tr>
+<tr>
+<td><code>setworldspawn &lt;x&gt; &lt;y&gt; &lt;z&gt;</code></td>
+<td>월드 스폰 설정</td>
+<td><code>setworldspawn 0 64 0</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="대상-선택자">대상 선택자<a class="headerlink" href="#대상-선택자" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>선택자</th>
 <th>설명</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>시작</td>
-<td>서버 시작</td>
-<td>중지됨일 때 사용 가능</td>
+<td><code>@a</code></td>
+<td>모든 플레이어</td>
 </tr>
 <tr>
-<td>중지</td>
-<td>서버 중지</td>
-<td>정상적인 종료</td>
+<td><code>@p</code></td>
+<td>가장 가까운 플레이어</td>
 </tr>
 <tr>
-<td>재시작</td>
-<td>서버 재시작</td>
-<td>중지 후 시작</td>
+<td><code>@r</code></td>
+<td>무작위 플레이어</td>
 </tr>
 <tr>
-<td>로그 보기</td>
-<td>로그 패널 열기</td>
-<td>콘솔 출력 확인</td>
+<td><code>@e</code></td>
+<td>모든 엔티티</td>
+</tr>
+<tr>
+<td><code>@s</code></td>
+<td>실행 엔티티</td>
 </tr>
 </tbody>
 </table>
-<h3 id="콘솔-패널">콘솔 패널<a class="headerlink" href="#콘솔-패널" title="Permanent link">&para;</a></h3>
-<p>콘솔 패널에서 할 수 있는 작업:</p>
-<ol>
-<li><strong>로그 보기</strong> - 최근 서버 출력 확인</li>
-<li><strong>명령 실행</strong> - RCON 명령 실행</li>
-</ol>
-<h4 id="명령-실행">명령 실행<a class="headerlink" href="#명령-실행" title="Permanent link">&para;</a></h4>
-<ol>
-<li><strong>로그 보기</strong> 또는 콘솔 아이콘 클릭</li>
-<li>입력 필드에 명령 입력</li>
-<li><strong>Enter</strong> 또는 <strong>전송</strong> 클릭</li>
-<li>명령 출력 확인</li>
-</ol>
-<p><strong>일반 명령어:</strong></p>
+<hr />
+<h2 id="아이템-명령어">아이템 명령어<a class="headerlink" href="#아이템-명령어" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>give &lt;플레이어&gt; &lt;아이템&gt; [수량]</code></td>
+<td>아이템 지급</td>
+<td><code>give Steve diamond 64</code></td>
+</tr>
+<tr>
+<td><code>clear &lt;플레이어&gt; [아이템] [수량]</code></td>
+<td>인벤토리에서 제거</td>
+<td><code>clear Steve dirt</code></td>
+</tr>
+<tr>
+<td><code>item replace &lt;대상&gt; &lt;슬롯&gt;</code></td>
+<td>슬롯의 아이템 교체</td>
+<td><code>item replace entity Steve armor.head with diamond_helmet</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="자주-사용하는-아이템-id">자주 사용하는 아이템 ID<a class="headerlink" href="#자주-사용하는-아이템-id" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>카테고리</th>
+<th>아이템</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>광석</td>
+<td><code>diamond</code>, <code>iron_ingot</code>, <code>gold_ingot</code>, <code>emerald</code>, <code>netherite_ingot</code></td>
+</tr>
+<tr>
+<td>도구</td>
+<td><code>diamond_pickaxe</code>, <code>netherite_sword</code>, <code>elytra</code>, <code>trident</code></td>
+</tr>
+<tr>
+<td>블록</td>
+<td><code>dirt</code>, <code>stone</code>, <code>oak_log</code>, <code>cobblestone</code></td>
+</tr>
+<tr>
+<td>음식</td>
+<td><code>cooked_beef</code>, <code>golden_apple</code>, <code>enchanted_golden_apple</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="월드-설정-명령어">월드 설정 명령어<a class="headerlink" href="#월드-설정-명령어" title="Permanent link">&para;</a></h2>
+<h3 id="시간">시간<a class="headerlink" href="#시간" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>time set day</code></td>
+<td>낮으로 설정 (1000)</td>
+<td><code>time set day</code></td>
+</tr>
+<tr>
+<td><code>time set night</code></td>
+<td>밤으로 설정 (13000)</td>
+<td><code>time set night</code></td>
+</tr>
+<tr>
+<td><code>time set noon</code></td>
+<td>정오로 설정 (6000)</td>
+<td><code>time set noon</code></td>
+</tr>
+<tr>
+<td><code>time set midnight</code></td>
+<td>자정으로 설정 (18000)</td>
+<td><code>time set midnight</code></td>
+</tr>
+<tr>
+<td><code>time set &lt;틱&gt;</code></td>
+<td>특정 틱으로 설정</td>
+<td><code>time set 0</code></td>
+</tr>
+<tr>
+<td><code>time add &lt;틱&gt;</code></td>
+<td>시간 추가</td>
+<td><code>time add 1000</code></td>
+</tr>
+<tr>
+<td><code>time query daytime</code></td>
+<td>현재 시간 표시</td>
+<td><code>time query daytime</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="날씨">날씨<a class="headerlink" href="#날씨" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>weather clear [지속시간]</code></td>
+<td>맑은 날씨</td>
+<td><code>weather clear 1000000</code></td>
+</tr>
+<tr>
+<td><code>weather rain [지속시간]</code></td>
+<td>비 시작</td>
+<td><code>weather rain</code></td>
+</tr>
+<tr>
+<td><code>weather thunder [지속시간]</code></td>
+<td>천둥번개 시작</td>
+<td><code>weather thunder</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="난이도">난이도<a class="headerlink" href="#난이도" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -2363,224 +2455,450 @@
 </thead>
 <tbody>
 <tr>
-<td><code>list</code></td>
-<td>온라인 플레이어 표시</td>
+<td><code>difficulty peaceful</code></td>
+<td>평화로움 (적대적 몹 없음)</td>
 </tr>
 <tr>
-<td><code>say &lt;메시지&gt;</code></td>
-<td>모든 플레이어에게 메시지 방송</td>
+<td><code>difficulty easy</code></td>
+<td>쉬움</td>
 </tr>
 <tr>
-<td><code>give &lt;플레이어&gt; &lt;아이템&gt; [수량]</code></td>
-<td>플레이어에게 아이템 지급</td>
+<td><code>difficulty normal</code></td>
+<td>보통</td>
 </tr>
 <tr>
-<td><code>time set day</code></td>
-<td>시간을 낮으로 설정</td>
+<td><code>difficulty hard</code></td>
+<td>어려움</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="게임-규칙">게임 규칙<a class="headerlink" href="#게임-규칙" title="Permanent link">&para;</a></h2>
+<p><code>gamerule</code> 명령어로 게임플레이 메커니즘 변경:</p>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+<th>기본값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gamerule keepInventory true</code></td>
+<td>사망 시 아이템 유지</td>
+<td>false</td>
 </tr>
 <tr>
-<td><code>weather clear</code></td>
-<td>날씨 맑게</td>
+<td><code>gamerule doDaylightCycle false</code></td>
+<td>시간 흐름 정지</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule doWeatherCycle false</code></td>
+<td>날씨 변화 정지</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule mobGriefing false</code></td>
+<td>몹의 블록 파괴 방지</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule doFireTick false</code></td>
+<td>불 번짐 방지</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule pvp false</code></td>
+<td>PvP 비활성화</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule announceAdvancements false</code></td>
+<td>발전과제 메시지 숨김</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule showDeathMessages false</code></td>
+<td>사망 메시지 숨김</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule naturalRegeneration false</code></td>
+<td>자연 회복 비활성화</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule commandBlockOutput false</code></td>
+<td>커맨드 블록 출력 숨김</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule sendCommandFeedback false</code></td>
+<td>명령어 피드백 숨김</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule randomTickSpeed 0</code></td>
+<td>작물/식물 성장 비활성화</td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>gamerule spawnRadius 0</code></td>
+<td>정확한 스폰 지점에서 스폰</td>
+<td>10</td>
+</tr>
+</tbody>
+</table>
+<h3 id="게임-규칙-조회">게임 규칙 조회<a class="headerlink" href="#게임-규칙-조회" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span>gamerule<span class="w"> </span>keepInventory
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">keepInventory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>&gt;<span class="w"> </span>gamerule
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># 모든 게임 규칙 목록</span>
+</code></pre></div>
+<hr />
+<h2 id="서버-관리-명령어">서버 관리 명령어<a class="headerlink" href="#서버-관리-명령어" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stop</code></td>
+<td>서버 정상 종료</td>
+<td><code>stop</code></td>
 </tr>
 <tr>
 <td><code>save-all</code></td>
-<td>월드 데이터 저장</td>
+<td>모든 월드 데이터 저장</td>
+<td><code>save-all</code></td>
 </tr>
 <tr>
-<td><code>stop</code></td>
-<td>서버 중지</td>
+<td><code>save-off</code></td>
+<td>자동 저장 비활성화</td>
+<td><code>save-off</code></td>
+</tr>
+<tr>
+<td><code>save-on</code></td>
+<td>자동 저장 활성화</td>
+<td><code>save-on</code></td>
+</tr>
+<tr>
+<td><code>seed</code></td>
+<td>월드 시드 표시</td>
+<td><code>seed</code></td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>온라인 플레이어 표시</td>
+<td><code>list</code></td>
+</tr>
+<tr>
+<td><code>setidletimeout &lt;분&gt;</code></td>
+<td>AFK 추방 시간 설정</td>
+<td><code>setidletimeout 30</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="사용자-인터페이스-요소">사용자 인터페이스 요소<a class="headerlink" href="#사용자-인터페이스-요소" title="Permanent link">&para;</a></h2>
-<h3 id="내비게이션-바">내비게이션 바<a class="headerlink" href="#내비게이션-바" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>로고/홈</strong> - 대시보드로 돌아가기</li>
-<li><strong>사용자 메뉴</strong> - 계정 옵션과 로그아웃</li>
-<li><strong>테마 전환</strong> - 라이트 모드와 다크 모드 전환</li>
-</ul>
-<h3 id="서버-카드">서버 카드<a class="headerlink" href="#서버-카드" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>+---------------------------+
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>|  서버 이름          [&gt;]   |
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>|  PAPER 1.21.1             |
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>|                           |
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>|  상태: 실행 중            |
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>|  플레이어: 3/20           |
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>|  survival.nip.io:25565    |
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>|                           |
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>|  [시작] [중지] [재시작]   |
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>+---------------------------+
+<h3 id="백업-워크플로우">백업 워크플로우<a class="headerlink" href="#백업-워크플로우" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&gt;<span class="w"> </span>save-off
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Automatic<span class="w"> </span>saving<span class="w"> </span>is<span class="w"> </span>now<span class="w"> </span>disabled
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>&gt;<span class="w"> </span>save-all
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Saving<span class="w"> </span>the<span class="w"> </span>game<span class="w"> </span><span class="o">(</span>this<span class="w"> </span>may<span class="w"> </span>take<span class="w"> </span>a<span class="w"> </span>moment!<span class="o">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Saved<span class="w"> </span>the<span class="w"> </span>game
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># ... 백업 수행 ...</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>&gt;<span class="w"> </span>save-on
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>Automatic<span class="w"> </span>saving<span class="w"> </span>is<span class="w"> </span>now<span class="w"> </span>enabled
 </code></pre></div>
-<h3 id="상태-표시기">상태 표시기<a class="headerlink" href="#상태-표시기" title="Permanent link">&para;</a></h3>
+<hr />
+<h2 id="게임모드-명령어">게임모드 명령어<a class="headerlink" href="#게임모드-명령어" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>색상</th>
-<th>의미</th>
+<th>명령어</th>
+<th>설명</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>녹색</td>
-<td>실행 중, 정상</td>
+<td><code>gamemode survival &lt;플레이어&gt;</code></td>
+<td>서바이벌 모드</td>
 </tr>
 <tr>
-<td>노란색</td>
-<td>시작 중, 전환 중</td>
+<td><code>gamemode creative &lt;플레이어&gt;</code></td>
+<td>크리에이티브 모드</td>
 </tr>
 <tr>
-<td>빨간색</td>
-<td>중지됨, 비정상</td>
+<td><code>gamemode adventure &lt;플레이어&gt;</code></td>
+<td>어드벤처 모드</td>
 </tr>
 <tr>
-<td>회색</td>
-<td>알 수 없음, 구성되지 않음</td>
+<td><code>gamemode spectator &lt;플레이어&gt;</code></td>
+<td>관전 모드</td>
+</tr>
+<tr>
+<td><code>defaultgamemode &lt;모드&gt;</code></td>
+<td>신규 플레이어 기본 모드 설정</td>
 </tr>
 </tbody>
 </table>
-<h2 id="모범-사례">모범 사례<a class="headerlink" href="#모범-사례" title="Permanent link">&para;</a></h2>
-<h3 id="보안">보안<a class="headerlink" href="#보안" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>강력한 비밀번호 사용</strong> - 설정 중 비밀번호 요구 사항 따르기</li>
-<li><strong>접근 제한</strong> - <code>ip-whitelist</code> 모드를 사용하여 접근 제한</li>
-<li><strong>HTTPS 사용</strong> - 프로덕션 환경에서는 SSL이 포함된 리버스 프록시 구성</li>
-<li><strong>정기 업데이트</strong> - Admin Service를 최신 상태로 유지</li>
-</ol>
-<h3 id="모니터링">모니터링<a class="headerlink" href="#모니터링" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>대시보드 정기 확인</strong> - 서버 상태와 플레이어 수 모니터링</li>
-<li><strong>로그 검토</strong> - 오류나 비정상적인 활동 확인</li>
-<li><strong>알림 설정</strong> - 중요한 서버에 대해 외부 모니터링 고려</li>
-</ol>
-<h3 id="성능">성능<a class="headerlink" href="#성능" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>과부하 금지</strong> - 너무 많은 명령을 동시에 실행하지 않기</li>
-<li><strong>정상적인 종료</strong> - 컨테이너를 강제 종료하지 말고 stop 사용</li>
-<li><strong>정기 백업</strong> - 주요 변경 전 <code>mcctl backup</code> 사용</li>
-</ol>
-<h2 id="문제-해결">문제 해결<a class="headerlink" href="#문제-해결" title="Permanent link">&para;</a></h2>
-<h3 id="콘솔에-접근할-수-없음">콘솔에 접근할 수 없음<a class="headerlink" href="#콘솔에-접근할-수-없음" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>서비스 상태 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>포트 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">3000</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>로그 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>--console-only
-</code></pre></div></p>
-</li>
-</ol>
-<h3 id="로그인-실패">로그인 실패<a class="headerlink" href="#로그인-실패" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>자격 증명 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>비밀번호 재설정:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>admin
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>NextAuth 구성 확인:</strong>
-   <code>NEXTAUTH_SECRET</code>과 <code>NEXTAUTH_URL</code>이 올바르게 설정되어 있는지 확인</p>
-</li>
-</ol>
-<h3 id="서버-상태가-업데이트되지-않음">서버 상태가 업데이트되지 않음<a class="headerlink" href="#서버-상태가-업데이트되지-않음" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>API 상태 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>curl<span class="w"> </span>http://localhost:5001/health
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Docker 소켓 확인:</strong>
-   <code>docker-compose.admin.yml</code>에서 Docker 소켓이 올바르게 마운트되어 있는지 확인</p>
-</li>
-<li>
-<p><strong>네트워크 확인:</strong>
-   mcctl-console이 mcctl-api에 연결할 수 있는지 확인</p>
-</li>
-</ol>
-<h3 id="명령이-작동하지-않음">명령이 작동하지 않음<a class="headerlink" href="#명령이-작동하지-않음" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>서버 실행 중 확인:</strong>
-   서버가 <code>running</code> 상태여야 합니다</p>
-</li>
-<li>
-<p><strong>RCON 확인:</strong>
-   서버에서 RCON이 활성화되어 있어야 합니다</p>
-</li>
-<li>
-<p><strong>API 로그 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>--api-only
-</code></pre></div></p>
-</li>
-</ol>
-<h2 id="모바일-접근">모바일 접근<a class="headerlink" href="#모바일-접근" title="Permanent link">&para;</a></h2>
-<p>웹 콘솔은 반응형이며 모바일 장치에서 작동합니다:</p>
-<ul>
-<li><strong>폰</strong> - 간소화된 카드 레이아웃, 접을 수 있는 메뉴</li>
-<li><strong>태블릿</strong> - 최적화된 컨트롤이 있는 전체 대시보드</li>
-<li><strong>데스크톱</strong> - 전체 기능 세트</li>
-</ul>
-<div class="admonition tip">
-<p class="admonition-title">모바일 고려 사항</p>
-<ul>
-<li>더 나은 명령 입력을 위해 가로 모드 사용</li>
-<li>모바일에서 접근할 때 2FA 활성화</li>
-<li>안전한 모바일 접근을 위해 VPN 고려</li>
-</ul>
-</div>
-<h2 id="키보드-단축키">키보드 단축키<a class="headerlink" href="#키보드-단축키" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span>gamemode<span class="w"> </span>creative<span class="w"> </span>Steve
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Set<span class="w"> </span>Steve<span class="err">&#39;</span>s<span class="w"> </span>game<span class="w"> </span>mode<span class="w"> </span>to<span class="w"> </span>Creative<span class="w"> </span>Mode
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>&gt;<span class="w"> </span>defaultgamemode<span class="w"> </span>survival
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>The<span class="w"> </span>default<span class="w"> </span>game<span class="w"> </span>mode<span class="w"> </span>is<span class="w"> </span>now<span class="w"> </span>Survival<span class="w"> </span>Mode
+</code></pre></div>
+<hr />
+<h2 id="효과-명령어">효과 명령어<a class="headerlink" href="#효과-명령어" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>단축키</th>
-<th>동작</th>
+<th>명령어</th>
+<th>설명</th>
+<th>예시</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>Ctrl+/</code></td>
-<td>명령 입력에 포커스</td>
+<td><code>effect give &lt;플레이어&gt; &lt;효과&gt; [지속시간] [레벨]</code></td>
+<td>효과 적용</td>
+<td><code>effect give Steve speed 600 2</code></td>
 </tr>
 <tr>
-<td><code>Enter</code></td>
-<td>명령 전송</td>
-</tr>
-<tr>
-<td><code>Escape</code></td>
-<td>모달/패널 닫기</td>
-</tr>
-<tr>
-<td><code>r</code></td>
-<td>대시보드 새로고침 (입력 중이 아닐 때)</td>
+<td><code>effect clear &lt;플레이어&gt; [효과]</code></td>
+<td>효과 제거</td>
+<td><code>effect clear Steve</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="스크린샷">스크린샷<a class="headerlink" href="#스크린샷" title="Permanent link">&para;</a></h2>
-<div class="admonition note">
-<p class="admonition-title">스크린샷 플레이스홀더</p>
-<p>스크린샷은 향후 업데이트에서 추가될 예정입니다. 실제 인터페이스는 위의 설명과 약간 다를 수 있습니다.</p>
-</div>
-<h3 id="대시보드-뷰">대시보드 뷰<a class="headerlink" href="#대시보드-뷰" title="Permanent link">&para;</a></h3>
-<p><em>[스크린샷: 상태 표시기가 있는 여러 서버 카드를 보여주는 대시보드]</em></p>
-<h3 id="서버-상세-뷰">서버 상세 뷰<a class="headerlink" href="#서버-상세-뷰" title="Permanent link">&para;</a></h3>
-<p><em>[스크린샷: 플레이어 목록과 컨트롤이 있는 서버 상세 페이지]</em></p>
-<h3 id="콘솔-패널_1">콘솔 패널<a class="headerlink" href="#콘솔-패널_1" title="Permanent link">&para;</a></h3>
-<p><em>[스크린샷: 명령 입력과 로그 출력이 있는 콘솔 패널]</em></p>
-<h3 id="로그인-페이지">로그인 페이지<a class="headerlink" href="#로그인-페이지" title="Permanent link">&para;</a></h3>
-<p><em>[스크린샷: 사용자명과 비밀번호 필드가 있는 로그인 페이지]</em></p>
+<h3 id="주요-효과">주요 효과<a class="headerlink" href="#주요-효과" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>효과</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>speed</code></td>
+<td>이동 속도 증가</td>
+</tr>
+<tr>
+<td><code>slowness</code></td>
+<td>이동 속도 감소</td>
+</tr>
+<tr>
+<td><code>haste</code></td>
+<td>채굴 속도 증가</td>
+</tr>
+<tr>
+<td><code>mining_fatigue</code></td>
+<td>채굴 속도 감소</td>
+</tr>
+<tr>
+<td><code>strength</code></td>
+<td>근접 공격력 증가</td>
+</tr>
+<tr>
+<td><code>instant_health</code></td>
+<td>즉시 회복</td>
+</tr>
+<tr>
+<td><code>instant_damage</code></td>
+<td>즉시 피해</td>
+</tr>
+<tr>
+<td><code>jump_boost</code></td>
+<td>점프력 증가</td>
+</tr>
+<tr>
+<td><code>regeneration</code></td>
+<td>체력 재생</td>
+</tr>
+<tr>
+<td><code>resistance</code></td>
+<td>피해 저항</td>
+</tr>
+<tr>
+<td><code>fire_resistance</code></td>
+<td>화염 저항</td>
+</tr>
+<tr>
+<td><code>water_breathing</code></td>
+<td>수중 호흡</td>
+</tr>
+<tr>
+<td><code>invisibility</code></td>
+<td>투명화</td>
+</tr>
+<tr>
+<td><code>night_vision</code></td>
+<td>야간 투시</td>
+</tr>
+<tr>
+<td><code>saturation</code></td>
+<td>포만감 회복</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="경험치-명령어">경험치 명령어<a class="headerlink" href="#경험치-명령어" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xp add &lt;플레이어&gt; &lt;양&gt;</code></td>
+<td>경험치 포인트 추가</td>
+<td><code>xp add Steve 1000</code></td>
+</tr>
+<tr>
+<td><code>xp add &lt;플레이어&gt; &lt;양&gt; levels</code></td>
+<td>경험치 레벨 추가</td>
+<td><code>xp add Steve 30 levels</code></td>
+</tr>
+<tr>
+<td><code>xp set &lt;플레이어&gt; &lt;양&gt;</code></td>
+<td>경험치 포인트 설정</td>
+<td><code>xp set Steve 0</code></td>
+</tr>
+<tr>
+<td><code>xp query &lt;플레이어&gt; points</code></td>
+<td>XP 포인트 조회</td>
+<td><code>xp query Steve points</code></td>
+</tr>
+<tr>
+<td><code>xp query &lt;플레이어&gt; levels</code></td>
+<td>XP 레벨 조회</td>
+<td><code>xp query Steve levels</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="고급-명령어">고급 명령어<a class="headerlink" href="#고급-명령어" title="Permanent link">&para;</a></h2>
+<h3 id="execute-명령어">Execute 명령어<a class="headerlink" href="#execute-명령어" title="Permanent link">&para;</a></h3>
+<p>특정 컨텍스트로 명령 실행:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># 다른 플레이어로 실행</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>&gt;<span class="w"> </span>execute<span class="w"> </span>as<span class="w"> </span>Steve<span class="w"> </span>run<span class="w"> </span>say<span class="w"> </span>Steve가<span class="w"> </span>보낸<span class="w"> </span>메시지!
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># 특정 위치에서 실행</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>&gt;<span class="w"> </span>execute<span class="w"> </span>positioned<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">64</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>run<span class="w"> </span>summon<span class="w"> </span>lightning_bolt
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># 조건 충족 시 실행</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>&gt;<span class="w"> </span>execute<span class="w"> </span><span class="k">if</span><span class="w"> </span>entity<span class="w"> </span>@a<span class="o">[</span><span class="nv">distance</span><span class="o">=</span>..10<span class="o">]</span><span class="w"> </span>run<span class="w"> </span>say<span class="w"> </span>누군가<span class="w"> </span>근처에<span class="w"> </span>있습니다!
+</code></pre></div>
+<h3 id="scoreboard">Scoreboard<a class="headerlink" href="#scoreboard" title="Permanent link">&para;</a></h3>
+<p>값 추적 및 표시:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># 목표 생성</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>&gt;<span class="w"> </span>scoreboard<span class="w"> </span>objectives<span class="w"> </span>add<span class="w"> </span>kills<span class="w"> </span>playerKillCount
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># 사이드바에 표시</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>&gt;<span class="w"> </span>scoreboard<span class="w"> </span>objectives<span class="w"> </span>setdisplay<span class="w"> </span>sidebar<span class="w"> </span>kills
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># 점수 설정</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>&gt;<span class="w"> </span>scoreboard<span class="w"> </span>players<span class="w"> </span><span class="nb">set</span><span class="w"> </span>Steve<span class="w"> </span>kills<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># 점수 조회</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>&gt;<span class="w"> </span>scoreboard<span class="w"> </span>players<span class="w"> </span>get<span class="w"> </span>Steve<span class="w"> </span>kills
+</code></pre></div>
+<h3 id="data-명령어">Data 명령어<a class="headerlink" href="#data-명령어" title="Permanent link">&para;</a></h3>
+<p>엔티티/블록 NBT 데이터 수정:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># 플레이어 데이터 보기</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>&gt;<span class="w"> </span>data<span class="w"> </span>get<span class="w"> </span>entity<span class="w"> </span>Steve
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># 엔티티 데이터 수정</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>&gt;<span class="w"> </span>data<span class="w"> </span>modify<span class="w"> </span>entity<span class="w"> </span>Steve<span class="w"> </span>Health<span class="w"> </span><span class="nb">set</span><span class="w"> </span>value<span class="w"> </span><span class="m">20</span>.0f
+</code></pre></div>
+<hr />
+<h2 id="도움말-명령어">도움말 명령어<a class="headerlink" href="#도움말-명령어" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>help</code></td>
+<td>사용 가능한 모든 명령어 목록</td>
+</tr>
+<tr>
+<td><code>help &lt;명령어&gt;</code></td>
+<td>특정 명령어 사용법 표시</td>
+</tr>
+<tr>
+<td><code>help &lt;페이지&gt;</code></td>
+<td>도움말 페이지 표시 (1-8)</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt;<span class="w"> </span><span class="nb">help</span><span class="w"> </span>tp
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>/tp<span class="w"> </span>&lt;destination&gt;
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>/tp<span class="w"> </span>&lt;location&gt;
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>/tp<span class="w"> </span>&lt;targets&gt;<span class="w"> </span>&lt;destination&gt;
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>/tp<span class="w"> </span>&lt;targets&gt;<span class="w"> </span>&lt;location&gt;
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>...
+</code></pre></div>
+<hr />
+<h2 id="오류-처리">오류 처리<a class="headerlink" href="#오류-처리" title="Permanent link">&para;</a></h2>
+<h3 id="일반적인-오류">일반적인 오류<a class="headerlink" href="#일반적인-오류" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>오류</th>
+<th>원인</th>
+<th>해결책</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Unknown command</code></td>
+<td>오타 또는 잘못된 명령어</td>
+<td>철자 확인, <code>help</code> 사용</td>
+</tr>
+<tr>
+<td><code>Player not found</code></td>
+<td>플레이어 오프라인 또는 잘못된 이름</td>
+<td>플레이어 온라인 확인</td>
+</tr>
+<tr>
+<td><code>Expected whitespace</code></td>
+<td>명령어에 공백 누락</td>
+<td>명령어 문법 확인</td>
+</tr>
+<tr>
+<td><code>Not a valid number</code></td>
+<td>잘못된 인수 타입</td>
+<td>올바른 데이터 타입 사용</td>
+</tr>
+</tbody>
+</table>
+<h3 id="서버-미실행-오류">서버 미실행 오류<a class="headerlink" href="#서버-미실행-오류" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>$<span class="w"> </span>mcctl<span class="w"> </span>rcon<span class="w"> </span>myserver
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Server<span class="w"> </span><span class="s1">&#39;myserver&#39;</span><span class="w"> </span>is<span class="w"> </span>not<span class="w"> </span>running
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Start<span class="w"> </span>the<span class="w"> </span>server<span class="w"> </span>first:<span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
+</code></pre></div>
+<hr />
+<h2 id="참조">참조<a class="headerlink" href="#참조" title="Permanent link">&para;</a></h2>
+<ul>
+<li>마인크래프트 전체 명령어: <a href="https://minecraft.wiki/w/Commands">Minecraft Wiki - Commands</a></li>
+<li>Java Edition 명령어 문법: <a href="https://minecraft.wiki/w/Commands#Syntax">Command Syntax</a></li>
+<li>대상 선택자: <a href="https://minecraft.wiki/w/Target_selectors">Target Selector</a></li>
+<li>NBT 포맷: <a href="https://minecraft.wiki/w/NBT_format">NBT Format</a></li>
+</ul>
 
 
 

@@ -8,7 +8,7 @@
       
       
       
-        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/admin-service/web-console/">
+        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/cli/rcon-commands/">
       
       
       
@@ -16,7 +16,7 @@
         
           <link rel="alternate" href="./" hreflang="en">
         
-          <link rel="alternate" href="../../ko/admin-service/web-console/" hreflang="ko">
+          <link rel="alternate" href="../../ko/cli/rcon-commands/" hreflang="ko">
         
       
       
@@ -25,7 +25,7 @@
     
     
       
-        <title>Web Console Guide - Minecraft Docker Server Manager</title>
+        <title>RCON Commands Reference - Minecraft Docker Server Manager</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#web-console-guide" class="md-skip">
+        <a href="#rcon-commands-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Web Console Guide
+              RCON Commands Reference
             
           </span>
         </div>
@@ -165,7 +165,7 @@
           </li>
         
           <li class="md-select__item">
-            <a href="../../ko/admin-service/web-console/" hreflang="ko" class="md-select__link">
+            <a href="../../ko/cli/rcon-commands/" hreflang="ko" class="md-select__link">
               한국어
             </a>
           </li>
@@ -288,7 +288,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../cli/" class="md-tabs__link">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -698,7 +698,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../cli/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   
@@ -742,7 +742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/commands/" class="md-nav__link">
+      <a href="../commands/" class="md-nav__link">
         
   
   
@@ -1599,25 +1599,14 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Architecture">
+    <nav class="md-nav" aria-label="Overview">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#why-bff-proxy" class="md-nav__link">
+  <a href="#mcctl-rcon-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why BFF Proxy?
+        mcctl RCON Commands
       
     </span>
   </a>
@@ -1625,21 +1614,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-routes-bff-layer" class="md-nav__link">
+  <a href="#when-to-use-each" class="md-nav__link">
     <span class="md-ellipsis">
       
-        API Routes (BFF Layer)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#react-query-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        React Query Hooks
+        When to Use Each
       
     </span>
   </a>
@@ -1652,22 +1630,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#accessing-the-console" class="md-nav__link">
+  <a href="#usage-examples" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Accessing the Console
+        Usage Examples
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Accessing the Console">
+    <nav class="md-nav" aria-label="Usage Examples">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#first-time-login" class="md-nav__link">
+  <a href="#interactive-mode-rcon" class="md-nav__link">
     <span class="md-ellipsis">
       
-        First Time Login
+        Interactive Mode (rcon)
       
     </span>
   </a>
@@ -1675,10 +1653,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#session-management" class="md-nav__link">
+  <a href="#non-interactive-mode-exec" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Session Management
+        Non-interactive Mode (exec)
       
     </span>
   </a>
@@ -1691,44 +1669,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dashboard" class="md-nav__link">
+  <a href="#player-management-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dashboard
+        Player Management Commands
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Dashboard">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#communication-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Communication Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#teleportation-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Teleportation Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Teleportation Commands">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#server-list" class="md-nav__link">
+  <a href="#target-selectors" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server List
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-actions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Actions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#status-refresh" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Status Refresh
+        Target Selectors
       
     </span>
   </a>
@@ -1741,133 +1719,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#server-detail-page" class="md-nav__link">
+  <a href="#item-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server Detail Page
+        Item Commands
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Server Detail Page">
+    <nav class="md-nav" aria-label="Item Commands">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#server-information" class="md-nav__link">
+  <a href="#common-item-ids" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server Information
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#players-section" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Players Section
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#statistics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Statistics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#server-controls" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Server Controls
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#console-panel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Console Panel
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Console Panel">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#executing-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Executing Commands
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#user-interface-elements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        User Interface Elements
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="User Interface Elements">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#navigation-bar" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Navigation Bar
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#server-cards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Server Cards
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#status-indicators" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Status Indicators
+        Common Item IDs
       
     </span>
   </a>
@@ -1880,22 +1747,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
+  <a href="#world-settings-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Best Practices
+        World Settings Commands
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Best Practices">
+    <nav class="md-nav" aria-label="World Settings Commands">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#security" class="md-nav__link">
+  <a href="#time" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security
+        Time
       
     </span>
   </a>
@@ -1903,10 +1770,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#monitoring" class="md-nav__link">
+  <a href="#weather" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Monitoring
+        Weather
       
     </span>
   </a>
@@ -1914,10 +1781,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#performance" class="md-nav__link">
+  <a href="#difficulty" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Performance
+        Difficulty
       
     </span>
   </a>
@@ -1930,55 +1797,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
+  <a href="#game-rules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Troubleshooting
+        Game Rules
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Troubleshooting">
+    <nav class="md-nav" aria-label="Game Rules">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#cant-access-console" class="md-nav__link">
+  <a href="#query-game-rules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Can't Access Console
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#login-fails" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Login Fails
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#server-status-not-updating" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Server Status Not Updating
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#commands-not-working" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Commands Not Working
+        Query Game Rules
       
     </span>
   </a>
@@ -1991,77 +1825,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#mobile-access" class="md-nav__link">
+  <a href="#server-administration-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Mobile Access
+        Server Administration Commands
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#keyboard-shortcuts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Keyboard Shortcuts
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#screenshots" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Screenshots
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Screenshots">
+    <nav class="md-nav" aria-label="Server Administration Commands">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#dashboard-view" class="md-nav__link">
+  <a href="#backup-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dashboard View
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#server-detail-view" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Server Detail View
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#console-panel_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Console Panel
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#login-page" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Login Page
+        Backup Workflow
       
     </span>
   </a>
@@ -2070,6 +1849,167 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gamemode-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gamemode Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#effect-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Effect Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Effect Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-effects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Effects
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#experience-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Experience Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#execute-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Command
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scoreboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoreboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#help-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Help Commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-not-running-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Not Running Error
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2093,267 +2033,419 @@
   
 
 
-<h1 id="web-console-guide">Web Console Guide<a class="headerlink" href="#web-console-guide" title="Permanent link">&para;</a></h1>
-<p>User guide for the mcctl-console web management interface.</p>
+<h1 id="rcon-commands-reference">RCON Commands Reference<a class="headerlink" href="#rcon-commands-reference" title="Permanent link">&para;</a></h1>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>The mcctl-console provides a modern web interface for managing your Docker Minecraft servers. Built with Next.js and featuring real-time updates, it offers a user-friendly alternative to CLI commands.</p>
-<p><strong>Default URL:</strong> <code>http://localhost:5000</code></p>
-<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<p>mcctl-console uses a Backend-for-Frontend (BFF) proxy pattern for secure API communication:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>+------------------+      +-------------------+      +---------------+
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>|   Web Browser    | ---&gt; |   mcctl-console   | ---&gt; |   mcctl-api   |
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>|   (React/Query)  |      |   (Next.js BFF)   |      |   (Fastify)   |
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>+------------------+      +-------------------+      +---------------+
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>       ^                          |
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>       |                   Session Auth +
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>       |                   X-API-Key forwarding
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>       |
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>   React Query
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>   (auto-refresh)
-</code></pre></div>
-<h3 id="why-bff-proxy">Why BFF Proxy?<a class="headerlink" href="#why-bff-proxy" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Security</strong>: API keys stay server-side, never exposed to browser</li>
-<li><strong>Session Management</strong>: Better Auth handles user authentication</li>
-<li><strong>Type Safety</strong>: Shared TypeScript interfaces between frontend and backend</li>
-<li><strong>Caching</strong>: React Query provides optimistic updates and caching</li>
-</ol>
-<h3 id="api-routes-bff-layer">API Routes (BFF Layer)<a class="headerlink" href="#api-routes-bff-layer" title="Permanent link">&para;</a></h3>
-<p>The console proxies requests through Next.js API routes:</p>
+<p>RCON (Remote Console) allows server administrators to execute Minecraft server commands remotely. This guide covers all available RCON commands you can use with mcctl.</p>
+<h3 id="mcctl-rcon-commands">mcctl RCON Commands<a class="headerlink" href="#mcctl-rcon-commands" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Console Route</th>
-<th>Method</th>
+<th>Command</th>
+<th>Mode</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>/api/servers</code></td>
-<td>GET</td>
-<td>List all servers</td>
+<td><code>mcctl rcon &lt;server&gt;</code></td>
+<td>Interactive</td>
+<td>Open RCON console session</td>
 </tr>
 <tr>
-<td><code>/api/servers</code></td>
-<td>POST</td>
-<td>Create new server</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name</code></td>
-<td>GET</td>
-<td>Get server details</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name</code></td>
-<td>DELETE</td>
-<td>Delete server</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name/start</code></td>
-<td>POST</td>
-<td>Start server</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name/stop</code></td>
-<td>POST</td>
-<td>Stop server</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name/restart</code></td>
-<td>POST</td>
-<td>Restart server</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name/exec</code></td>
-<td>POST</td>
-<td>Execute RCON command</td>
-</tr>
-<tr>
-<td><code>/api/servers/:name/logs</code></td>
-<td>GET</td>
-<td>Get server logs</td>
-</tr>
-<tr>
-<td><code>/api/worlds</code></td>
-<td>GET</td>
-<td>List all worlds</td>
-</tr>
-<tr>
-<td><code>/api/worlds</code></td>
-<td>POST</td>
-<td>Create new world</td>
-</tr>
-<tr>
-<td><code>/api/worlds/:name</code></td>
-<td>GET</td>
-<td>Get world details</td>
-</tr>
-<tr>
-<td><code>/api/worlds/:name</code></td>
-<td>DELETE</td>
-<td>Delete world</td>
-</tr>
-<tr>
-<td><code>/api/worlds/:name/assign</code></td>
-<td>POST</td>
-<td>Assign world to server</td>
-</tr>
-<tr>
-<td><code>/api/worlds/:name/release</code></td>
-<td>POST</td>
-<td>Release world lock</td>
+<td><code>mcctl exec &lt;server&gt; &lt;cmd&gt;</code></td>
+<td>Non-interactive</td>
+<td>Execute single command</td>
 </tr>
 </tbody>
 </table>
-<h3 id="react-query-hooks">React Query Hooks<a class="headerlink" href="#react-query-hooks" title="Permanent link">&para;</a></h3>
-<p>The console provides type-safe React Query hooks for data fetching:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// Server operations</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="kt">servers</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useServers</span><span class="p">();</span><span class="w">           </span><span class="c1">// Auto-refresh every 10s</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="kt">server</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useServer</span><span class="p">(</span><span class="s1">&#39;myserver&#39;</span><span class="p">);</span><span class="w">   </span><span class="c1">// Auto-refresh every 5s</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kd">const</span><span class="w"> </span><span class="nx">startMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useStartServer</span><span class="p">();</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="kd">const</span><span class="w"> </span><span class="nx">stopMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useStopServer</span><span class="p">();</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kd">const</span><span class="w"> </span><span class="nx">execMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useExecCommand</span><span class="p">();</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1">// World operations</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="kt">worlds</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useWorlds</span><span class="p">();</span><span class="w">             </span><span class="c1">// Auto-refresh every 30s</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="kd">const</span><span class="w"> </span><span class="nx">assignMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useAssignWorld</span><span class="p">();</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="kd">const</span><span class="w"> </span><span class="nx">releaseMutation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useReleaseWorld</span><span class="p">();</span>
-</code></pre></div>
-<p>All hooks automatically handle:</p>
-<ul>
-<li>Loading states</li>
-<li>Error handling</li>
-<li>Cache invalidation on mutations</li>
-<li>Optimistic updates</li>
-</ul>
-<h2 id="accessing-the-console">Accessing the Console<a class="headerlink" href="#accessing-the-console" title="Permanent link">&para;</a></h2>
-<h3 id="first-time-login">First Time Login<a class="headerlink" href="#first-time-login" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p>Start Admin Service:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
-</code></pre></div></p>
-</li>
-<li>
-<p>Open your browser and navigate to <code>http://localhost:5000</code></p>
-</li>
-<li>
-<p>Enter your credentials:</p>
-</li>
-<li><strong>Username:</strong> The admin username created during <code>mcctl console init</code></li>
-<li>
-<p><strong>Password:</strong> The admin password</p>
-</li>
-<li>
-<p>Click <strong>Sign In</strong></p>
-</li>
-</ol>
-<div class="admonition tip">
-<p class="admonition-title">Remember Me</p>
-<p>Your session will persist for 24 hours by default. For longer sessions, modify <code>MCCTL_JWT_EXPIRY</code> in your configuration.</p>
-</div>
-<h3 id="session-management">Session Management<a class="headerlink" href="#session-management" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Sessions expire after the configured JWT expiry time</li>
-<li>Refresh tokens are used to extend active sessions</li>
-<li>Click <strong>Sign Out</strong> in the user menu to end your session</li>
-</ul>
-<h2 id="dashboard">Dashboard<a class="headerlink" href="#dashboard" title="Permanent link">&para;</a></h2>
-<p>The dashboard provides an overview of all your Minecraft servers.</p>
-<h3 id="server-list">Server List<a class="headerlink" href="#server-list" title="Permanent link">&para;</a></h3>
-<p>Each server card displays:</p>
-<ul>
-<li><strong>Server Name</strong> - The unique identifier</li>
-<li><strong>Status Indicator</strong></li>
-<li>Green: Running and healthy</li>
-<li>Yellow: Starting or health check in progress</li>
-<li>Red: Stopped or unhealthy</li>
-<li><strong>Server Type</strong> - PAPER, VANILLA, FORGE, FABRIC, etc.</li>
-<li><strong>Version</strong> - Minecraft version</li>
-<li><strong>Players</strong> - Current/Maximum player count</li>
-<li><strong>Hostname</strong> - Connection address for Minecraft clients</li>
-</ul>
-<h3 id="quick-actions">Quick Actions<a class="headerlink" href="#quick-actions" title="Permanent link">&para;</a></h3>
-<p>From the dashboard, you can:</p>
-<ul>
-<li><strong>Start</strong> stopped servers (play button)</li>
-<li><strong>Stop</strong> running servers (stop button)</li>
-<li><strong>Restart</strong> servers (refresh button)</li>
-<li><strong>View Details</strong> - Click on server card</li>
-</ul>
-<h3 id="status-refresh">Status Refresh<a class="headerlink" href="#status-refresh" title="Permanent link">&para;</a></h3>
-<p>The dashboard automatically refreshes server status:</p>
-<ul>
-<li><strong>Default interval:</strong> 30 seconds</li>
-<li><strong>Manual refresh:</strong> Click the refresh button in the header</li>
-</ul>
-<h2 id="server-detail-page">Server Detail Page<a class="headerlink" href="#server-detail-page" title="Permanent link">&para;</a></h2>
-<p>Click on any server to view detailed information.</p>
-<h3 id="server-information">Server Information<a class="headerlink" href="#server-information" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Container Name</strong> - Docker container identifier</li>
-<li><strong>Status</strong> - Running state and health</li>
-<li><strong>Uptime</strong> - Time since last start</li>
-<li><strong>Memory</strong> - Allocated memory</li>
-<li><strong>World</strong> - Current world name and size</li>
-</ul>
-<h3 id="players-section">Players Section<a class="headerlink" href="#players-section" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Online Players</strong> - List of currently connected players</li>
-<li><strong>Player Count</strong> - Current / Maximum</li>
-</ul>
-<h3 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>CPU Usage</strong> - Current CPU utilization</li>
-<li><strong>Memory Usage</strong> - RAM consumption</li>
-</ul>
-<h3 id="server-controls">Server Controls<a class="headerlink" href="#server-controls" title="Permanent link">&para;</a></h3>
+<h3 id="when-to-use-each">When to Use Each<a class="headerlink" href="#when-to-use-each" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Button</th>
-<th>Action</th>
+<th>Use Case</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Manual server administration</td>
+<td><code>mcctl rcon myserver</code></td>
+</tr>
+<tr>
+<td>Multiple commands in sequence</td>
+<td><code>mcctl rcon myserver</code></td>
+</tr>
+<tr>
+<td>Debugging and troubleshooting</td>
+<td><code>mcctl rcon myserver</code></td>
+</tr>
+<tr>
+<td>Shell scripts and automation</td>
+<td><code>mcctl exec myserver &lt;cmd&gt;</code></td>
+</tr>
+<tr>
+<td>CI/CD pipelines</td>
+<td><code>mcctl exec myserver &lt;cmd&gt;</code></td>
+</tr>
+<tr>
+<td>Cron jobs</td>
+<td><code>mcctl exec myserver &lt;cmd&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
+<h3 id="interactive-mode-rcon">Interactive Mode (rcon)<a class="headerlink" href="#interactive-mode-rcon" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$<span class="w"> </span>mcctl<span class="w"> </span>rcon<span class="w"> </span>survival
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Connecting<span class="w"> </span>to<span class="w"> </span>RCON<span class="w"> </span>console<span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="s1">&#39;survival&#39;</span>...
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Type<span class="w"> </span><span class="s2">&quot;help&quot;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>commands,<span class="w"> </span>Ctrl+C<span class="w"> </span>or<span class="w"> </span><span class="s2">&quot;exit&quot;</span><span class="w"> </span>to<span class="w"> </span>quit
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>&gt;<span class="w"> </span>list
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>There<span class="w"> </span>are<span class="w"> </span><span class="m">2</span><span class="w"> </span>of<span class="w"> </span><span class="m">20</span><span class="w"> </span>players<span class="w"> </span>online:<span class="w"> </span>Steve,<span class="w"> </span>Alex
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>&gt;<span class="w"> </span>say<span class="w"> </span>Server<span class="w"> </span>maintenance<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">10</span><span class="w"> </span>minutes!
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="o">[</span>Server:<span class="w"> </span>Server<span class="w"> </span>maintenance<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">10</span><span class="w"> </span>minutes!<span class="o">]</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>&gt;<span class="w"> </span>tp<span class="w"> </span>Steve<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">100</span><span class="w"> </span><span class="m">0</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>Teleported<span class="w"> </span>Steve<span class="w"> </span>to<span class="w"> </span><span class="m">0</span>.0,<span class="w"> </span><span class="m">100</span>.0,<span class="w"> </span><span class="m">0</span>.0
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>&gt;<span class="w"> </span><span class="nb">exit</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>$
+</code></pre></div>
+<h3 id="non-interactive-mode-exec">Non-interactive Mode (exec)<a class="headerlink" href="#non-interactive-mode-exec" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Single command execution</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>$<span class="w"> </span>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>survival<span class="w"> </span>list
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>There<span class="w"> </span>are<span class="w"> </span><span class="m">2</span><span class="w"> </span>of<span class="w"> </span><span class="m">20</span><span class="w"> </span>players<span class="w"> </span>online:<span class="w"> </span>Steve,<span class="w"> </span>Alex
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Scripting example</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>$<span class="w"> </span>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">&quot;Backup starting...&quot;</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="o">[</span>Server:<span class="w"> </span>Backup<span class="w"> </span>starting...<span class="o">]</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># Use in scripts</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="nv">PLAYERS</span><span class="o">=</span><span class="k">$(</span>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>list<span class="k">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">if</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PLAYERS</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;0 of&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">  </span>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="k">fi</span>
+</code></pre></div>
+<hr />
+<h2 id="player-management-commands">Player Management Commands<a class="headerlink" href="#player-management-commands" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>list</code></td>
+<td>Show online players</td>
+<td><code>list</code></td>
+</tr>
+<tr>
+<td><code>kick &lt;player&gt; [reason]</code></td>
+<td>Kick player from server</td>
+<td><code>kick Steve AFK too long</code></td>
+</tr>
+<tr>
+<td><code>ban &lt;player&gt; [reason]</code></td>
+<td>Ban player permanently</td>
+<td><code>ban Griefer Griefing spawn</code></td>
+</tr>
+<tr>
+<td><code>ban-ip &lt;ip&gt; [reason]</code></td>
+<td>Ban IP address</td>
+<td><code>ban-ip 192.168.1.100 VPN</code></td>
+</tr>
+<tr>
+<td><code>pardon &lt;player&gt;</code></td>
+<td>Unban player</td>
+<td><code>pardon Steve</code></td>
+</tr>
+<tr>
+<td><code>pardon-ip &lt;ip&gt;</code></td>
+<td>Unban IP address</td>
+<td><code>pardon-ip 192.168.1.100</code></td>
+</tr>
+<tr>
+<td><code>banlist [players\|ips]</code></td>
+<td>Show banned list</td>
+<td><code>banlist players</code></td>
+</tr>
+<tr>
+<td><code>op &lt;player&gt;</code></td>
+<td>Grant operator status</td>
+<td><code>op Steve</code></td>
+</tr>
+<tr>
+<td><code>deop &lt;player&gt;</code></td>
+<td>Revoke operator status</td>
+<td><code>deop Steve</code></td>
+</tr>
+<tr>
+<td><code>whitelist add &lt;player&gt;</code></td>
+<td>Add to whitelist</td>
+<td><code>whitelist add Steve</code></td>
+</tr>
+<tr>
+<td><code>whitelist remove &lt;player&gt;</code></td>
+<td>Remove from whitelist</td>
+<td><code>whitelist remove Steve</code></td>
+</tr>
+<tr>
+<td><code>whitelist list</code></td>
+<td>Show whitelist</td>
+<td><code>whitelist list</code></td>
+</tr>
+<tr>
+<td><code>whitelist on</code></td>
+<td>Enable whitelist</td>
+<td><code>whitelist on</code></td>
+</tr>
+<tr>
+<td><code>whitelist off</code></td>
+<td>Disable whitelist</td>
+<td><code>whitelist off</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="communication-commands">Communication Commands<a class="headerlink" href="#communication-commands" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>say &lt;message&gt;</code></td>
+<td>Broadcast to all players</td>
+<td><code>say Server restart in 5 minutes</code></td>
+</tr>
+<tr>
+<td><code>tell &lt;player&gt; &lt;message&gt;</code></td>
+<td>Private message</td>
+<td><code>tell Steve Check your inventory</code></td>
+</tr>
+<tr>
+<td><code>tellraw &lt;player&gt; &lt;json&gt;</code></td>
+<td>Send JSON formatted message</td>
+<td><code>tellraw @a {"text":"Hello","color":"gold"}</code></td>
+</tr>
+<tr>
+<td><code>title &lt;player&gt; &lt;action&gt;</code></td>
+<td>Display title on screen</td>
+<td><code>title @a title {"text":"Welcome!"}</code></td>
+</tr>
+<tr>
+<td><code>me &lt;action&gt;</code></td>
+<td>Display action message</td>
+<td><code>me is restarting the server</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="teleportation-commands">Teleportation Commands<a class="headerlink" href="#teleportation-commands" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tp &lt;player&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt;</code></td>
+<td>Teleport to coordinates</td>
+<td><code>tp Steve 0 100 0</code></td>
+</tr>
+<tr>
+<td><code>tp &lt;player&gt; &lt;target&gt;</code></td>
+<td>Teleport to another player</td>
+<td><code>tp Steve Alex</code></td>
+</tr>
+<tr>
+<td><code>tp @a &lt;x&gt; &lt;y&gt; &lt;z&gt;</code></td>
+<td>Teleport all players</td>
+<td><code>tp @a 0 100 0</code></td>
+</tr>
+<tr>
+<td><code>spawnpoint &lt;player&gt;</code></td>
+<td>Set spawn point</td>
+<td><code>spawnpoint Steve 100 64 100</code></td>
+</tr>
+<tr>
+<td><code>setworldspawn &lt;x&gt; &lt;y&gt; &lt;z&gt;</code></td>
+<td>Set world spawn</td>
+<td><code>setworldspawn 0 64 0</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="target-selectors">Target Selectors<a class="headerlink" href="#target-selectors" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Selector</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Start</td>
-<td>Start server</td>
-<td>Available when stopped</td>
+<td><code>@a</code></td>
+<td>All players</td>
 </tr>
 <tr>
-<td>Stop</td>
-<td>Stop server</td>
-<td>Graceful shutdown</td>
+<td><code>@p</code></td>
+<td>Nearest player</td>
 </tr>
 <tr>
-<td>Restart</td>
-<td>Restart server</td>
-<td>Stop then start</td>
+<td><code>@r</code></td>
+<td>Random player</td>
 </tr>
 <tr>
-<td>View Logs</td>
-<td>Open logs panel</td>
-<td>View console output</td>
+<td><code>@e</code></td>
+<td>All entities</td>
+</tr>
+<tr>
+<td><code>@s</code></td>
+<td>Executing entity</td>
 </tr>
 </tbody>
 </table>
-<h3 id="console-panel">Console Panel<a class="headerlink" href="#console-panel" title="Permanent link">&para;</a></h3>
-<p>The console panel allows you to:</p>
-<ol>
-<li><strong>View Logs</strong> - See recent server output</li>
-<li><strong>Execute Commands</strong> - Run RCON commands</li>
-</ol>
-<h4 id="executing-commands">Executing Commands<a class="headerlink" href="#executing-commands" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Click <strong>View Logs</strong> or the console icon</li>
-<li>Type a command in the input field</li>
-<li>Press <strong>Enter</strong> or click <strong>Send</strong></li>
-<li>View the command output</li>
-</ol>
-<p><strong>Common Commands:</strong></p>
+<hr />
+<h2 id="item-commands">Item Commands<a class="headerlink" href="#item-commands" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>give &lt;player&gt; &lt;item&gt; [count]</code></td>
+<td>Give item to player</td>
+<td><code>give Steve diamond 64</code></td>
+</tr>
+<tr>
+<td><code>clear &lt;player&gt; [item] [count]</code></td>
+<td>Remove items from inventory</td>
+<td><code>clear Steve dirt</code></td>
+</tr>
+<tr>
+<td><code>item replace &lt;target&gt; &lt;slot&gt;</code></td>
+<td>Replace item in slot</td>
+<td><code>item replace entity Steve armor.head with diamond_helmet</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="common-item-ids">Common Item IDs<a class="headerlink" href="#common-item-ids" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Items</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ores</td>
+<td><code>diamond</code>, <code>iron_ingot</code>, <code>gold_ingot</code>, <code>emerald</code>, <code>netherite_ingot</code></td>
+</tr>
+<tr>
+<td>Tools</td>
+<td><code>diamond_pickaxe</code>, <code>netherite_sword</code>, <code>elytra</code>, <code>trident</code></td>
+</tr>
+<tr>
+<td>Blocks</td>
+<td><code>dirt</code>, <code>stone</code>, <code>oak_log</code>, <code>cobblestone</code></td>
+</tr>
+<tr>
+<td>Food</td>
+<td><code>cooked_beef</code>, <code>golden_apple</code>, <code>enchanted_golden_apple</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="world-settings-commands">World Settings Commands<a class="headerlink" href="#world-settings-commands" title="Permanent link">&para;</a></h2>
+<h3 id="time">Time<a class="headerlink" href="#time" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>time set day</code></td>
+<td>Set to daytime (1000)</td>
+<td><code>time set day</code></td>
+</tr>
+<tr>
+<td><code>time set night</code></td>
+<td>Set to nighttime (13000)</td>
+<td><code>time set night</code></td>
+</tr>
+<tr>
+<td><code>time set noon</code></td>
+<td>Set to noon (6000)</td>
+<td><code>time set noon</code></td>
+</tr>
+<tr>
+<td><code>time set midnight</code></td>
+<td>Set to midnight (18000)</td>
+<td><code>time set midnight</code></td>
+</tr>
+<tr>
+<td><code>time set &lt;ticks&gt;</code></td>
+<td>Set to specific tick</td>
+<td><code>time set 0</code></td>
+</tr>
+<tr>
+<td><code>time add &lt;ticks&gt;</code></td>
+<td>Add time</td>
+<td><code>time add 1000</code></td>
+</tr>
+<tr>
+<td><code>time query daytime</code></td>
+<td>Show current time</td>
+<td><code>time query daytime</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="weather">Weather<a class="headerlink" href="#weather" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>weather clear [duration]</code></td>
+<td>Clear weather</td>
+<td><code>weather clear 1000000</code></td>
+</tr>
+<tr>
+<td><code>weather rain [duration]</code></td>
+<td>Start rain</td>
+<td><code>weather rain</code></td>
+</tr>
+<tr>
+<td><code>weather thunder [duration]</code></td>
+<td>Start thunderstorm</td>
+<td><code>weather thunder</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="difficulty">Difficulty<a class="headerlink" href="#difficulty" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -2363,224 +2455,450 @@
 </thead>
 <tbody>
 <tr>
-<td><code>list</code></td>
-<td>Show online players</td>
+<td><code>difficulty peaceful</code></td>
+<td>Peaceful mode (no hostile mobs)</td>
 </tr>
 <tr>
-<td><code>say &lt;message&gt;</code></td>
-<td>Broadcast message to all players</td>
+<td><code>difficulty easy</code></td>
+<td>Easy difficulty</td>
 </tr>
 <tr>
-<td><code>give &lt;player&gt; &lt;item&gt; [amount]</code></td>
-<td>Give item to player</td>
+<td><code>difficulty normal</code></td>
+<td>Normal difficulty</td>
 </tr>
 <tr>
-<td><code>time set day</code></td>
-<td>Set time to day</td>
+<td><code>difficulty hard</code></td>
+<td>Hard difficulty</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="game-rules">Game Rules<a class="headerlink" href="#game-rules" title="Permanent link">&para;</a></h2>
+<p>Change gameplay mechanics with <code>gamerule</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gamerule keepInventory true</code></td>
+<td>Keep items on death</td>
+<td>false</td>
 </tr>
 <tr>
-<td><code>weather clear</code></td>
-<td>Clear weather</td>
+<td><code>gamerule doDaylightCycle false</code></td>
+<td>Stop time progression</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule doWeatherCycle false</code></td>
+<td>Stop weather changes</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule mobGriefing false</code></td>
+<td>Prevent mob damage to blocks</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule doFireTick false</code></td>
+<td>Prevent fire spread</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule pvp false</code></td>
+<td>Disable player vs player</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule announceAdvancements false</code></td>
+<td>Hide advancement messages</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule showDeathMessages false</code></td>
+<td>Hide death messages</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule naturalRegeneration false</code></td>
+<td>Disable health regen</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule commandBlockOutput false</code></td>
+<td>Hide command block output</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule sendCommandFeedback false</code></td>
+<td>Hide command feedback</td>
+<td>true</td>
+</tr>
+<tr>
+<td><code>gamerule randomTickSpeed 0</code></td>
+<td>Disable crop/plant growth</td>
+<td>3</td>
+</tr>
+<tr>
+<td><code>gamerule spawnRadius 0</code></td>
+<td>Spawn at exact spawn point</td>
+<td>10</td>
+</tr>
+</tbody>
+</table>
+<h3 id="query-game-rules">Query Game Rules<a class="headerlink" href="#query-game-rules" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>&gt;<span class="w"> </span>gamerule<span class="w"> </span>keepInventory
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">keepInventory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>&gt;<span class="w"> </span>gamerule
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Lists all game rules</span>
+</code></pre></div>
+<hr />
+<h2 id="server-administration-commands">Server Administration Commands<a class="headerlink" href="#server-administration-commands" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stop</code></td>
+<td>Stop the server gracefully</td>
+<td><code>stop</code></td>
 </tr>
 <tr>
 <td><code>save-all</code></td>
-<td>Save world data</td>
+<td>Save all world data</td>
+<td><code>save-all</code></td>
 </tr>
 <tr>
-<td><code>stop</code></td>
-<td>Stop the server</td>
+<td><code>save-off</code></td>
+<td>Disable auto-save</td>
+<td><code>save-off</code></td>
+</tr>
+<tr>
+<td><code>save-on</code></td>
+<td>Enable auto-save</td>
+<td><code>save-on</code></td>
+</tr>
+<tr>
+<td><code>seed</code></td>
+<td>Display world seed</td>
+<td><code>seed</code></td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>Show online players</td>
+<td><code>list</code></td>
+</tr>
+<tr>
+<td><code>setidletimeout &lt;minutes&gt;</code></td>
+<td>Set AFK kick timeout</td>
+<td><code>setidletimeout 30</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="user-interface-elements">User Interface Elements<a class="headerlink" href="#user-interface-elements" title="Permanent link">&para;</a></h2>
-<h3 id="navigation-bar">Navigation Bar<a class="headerlink" href="#navigation-bar" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Logo/Home</strong> - Return to dashboard</li>
-<li><strong>User Menu</strong> - Account options and sign out</li>
-<li><strong>Theme Toggle</strong> - Switch between light and dark mode</li>
-</ul>
-<h3 id="server-cards">Server Cards<a class="headerlink" href="#server-cards" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>+---------------------------+
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>|  Server Name        [&gt;]   |
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>|  PAPER 1.21.1             |
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>|                           |
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>|  Status: Running          |
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>|  Players: 3/20            |
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>|  survival.nip.io:25565    |
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>|                           |
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>|  [Start] [Stop] [Restart] |
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>+---------------------------+
+<h3 id="backup-workflow">Backup Workflow<a class="headerlink" href="#backup-workflow" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&gt;<span class="w"> </span>save-off
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Automatic<span class="w"> </span>saving<span class="w"> </span>is<span class="w"> </span>now<span class="w"> </span>disabled
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>&gt;<span class="w"> </span>save-all
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Saving<span class="w"> </span>the<span class="w"> </span>game<span class="w"> </span><span class="o">(</span>this<span class="w"> </span>may<span class="w"> </span>take<span class="w"> </span>a<span class="w"> </span>moment!<span class="o">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Saved<span class="w"> </span>the<span class="w"> </span>game
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># ... perform backup ...</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>&gt;<span class="w"> </span>save-on
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>Automatic<span class="w"> </span>saving<span class="w"> </span>is<span class="w"> </span>now<span class="w"> </span>enabled
 </code></pre></div>
-<h3 id="status-indicators">Status Indicators<a class="headerlink" href="#status-indicators" title="Permanent link">&para;</a></h3>
+<hr />
+<h2 id="gamemode-commands">Gamemode Commands<a class="headerlink" href="#gamemode-commands" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Color</th>
-<th>Meaning</th>
+<th>Command</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Green</td>
-<td>Running, healthy</td>
+<td><code>gamemode survival &lt;player&gt;</code></td>
+<td>Survival mode</td>
 </tr>
 <tr>
-<td>Yellow</td>
-<td>Starting, transitioning</td>
+<td><code>gamemode creative &lt;player&gt;</code></td>
+<td>Creative mode</td>
 </tr>
 <tr>
-<td>Red</td>
-<td>Stopped, unhealthy</td>
+<td><code>gamemode adventure &lt;player&gt;</code></td>
+<td>Adventure mode</td>
 </tr>
 <tr>
-<td>Gray</td>
-<td>Unknown, not configured</td>
+<td><code>gamemode spectator &lt;player&gt;</code></td>
+<td>Spectator mode</td>
+</tr>
+<tr>
+<td><code>defaultgamemode &lt;mode&gt;</code></td>
+<td>Set default for new players</td>
 </tr>
 </tbody>
 </table>
-<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
-<h3 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Use Strong Passwords</strong> - Follow the password requirements during setup</li>
-<li><strong>Limit Access</strong> - Use <code>ip-whitelist</code> mode to restrict access</li>
-<li><strong>Use HTTPS</strong> - Configure a reverse proxy with SSL for production</li>
-<li><strong>Regular Updates</strong> - Keep the Admin Service updated</li>
-</ol>
-<h3 id="monitoring">Monitoring<a class="headerlink" href="#monitoring" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Check Dashboard Regularly</strong> - Monitor server health and player counts</li>
-<li><strong>Review Logs</strong> - Check for errors or unusual activity</li>
-<li><strong>Set Up Alerts</strong> - Consider external monitoring for critical servers</li>
-</ol>
-<h3 id="performance">Performance<a class="headerlink" href="#performance" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Don't Overload</strong> - Don't run too many commands simultaneously</li>
-<li><strong>Graceful Shutdowns</strong> - Use stop instead of force-killing containers</li>
-<li><strong>Regular Backups</strong> - Use <code>mcctl backup</code> before major changes</li>
-</ol>
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<h3 id="cant-access-console">Can't Access Console<a class="headerlink" href="#cant-access-console" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>Check Service Status:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Verify Port:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">3000</span>
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Check Logs:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>--console-only
-</code></pre></div></p>
-</li>
-</ol>
-<h3 id="login-fails">Login Fails<a class="headerlink" href="#login-fails" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>Verify Credentials:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Reset Password:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>admin
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Check NextAuth Configuration:</strong>
-   Ensure <code>NEXTAUTH_SECRET</code> and <code>NEXTAUTH_URL</code> are set correctly</p>
-</li>
-</ol>
-<h3 id="server-status-not-updating">Server Status Not Updating<a class="headerlink" href="#server-status-not-updating" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>Check API Health:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>curl<span class="w"> </span>http://localhost:5001/health
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Verify Docker Socket:</strong>
-   Ensure Docker socket is mounted correctly in <code>docker-compose.admin.yml</code></p>
-</li>
-<li>
-<p><strong>Check Network:</strong>
-   Ensure mcctl-console can reach mcctl-api</p>
-</li>
-</ol>
-<h3 id="commands-not-working">Commands Not Working<a class="headerlink" href="#commands-not-working" title="Permanent link">&para;</a></h3>
-<ol>
-<li>
-<p><strong>Verify Server is Running:</strong>
-   Server must be in <code>running</code> state</p>
-</li>
-<li>
-<p><strong>Check RCON:</strong>
-   RCON must be enabled on the server</p>
-</li>
-<li>
-<p><strong>View API Logs:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>--api-only
-</code></pre></div></p>
-</li>
-</ol>
-<h2 id="mobile-access">Mobile Access<a class="headerlink" href="#mobile-access" title="Permanent link">&para;</a></h2>
-<p>The web console is responsive and works on mobile devices:</p>
-<ul>
-<li><strong>Phone</strong> - Simplified card layout, collapsible menus</li>
-<li><strong>Tablet</strong> - Full dashboard with optimized controls</li>
-<li><strong>Desktop</strong> - Full feature set</li>
-</ul>
-<div class="admonition tip">
-<p class="admonition-title">Mobile Considerations</p>
-<ul>
-<li>Use landscape mode for better command input</li>
-<li>Enable 2FA if accessing from mobile</li>
-<li>Consider VPN for secure mobile access</li>
-</ul>
-</div>
-<h2 id="keyboard-shortcuts">Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span>gamemode<span class="w"> </span>creative<span class="w"> </span>Steve
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Set<span class="w"> </span>Steve<span class="err">&#39;</span>s<span class="w"> </span>game<span class="w"> </span>mode<span class="w"> </span>to<span class="w"> </span>Creative<span class="w"> </span>Mode
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>&gt;<span class="w"> </span>defaultgamemode<span class="w"> </span>survival
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>The<span class="w"> </span>default<span class="w"> </span>game<span class="w"> </span>mode<span class="w"> </span>is<span class="w"> </span>now<span class="w"> </span>Survival<span class="w"> </span>Mode
+</code></pre></div>
+<hr />
+<h2 id="effect-commands">Effect Commands<a class="headerlink" href="#effect-commands" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Shortcut</th>
-<th>Action</th>
+<th>Command</th>
+<th>Description</th>
+<th>Example</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>Ctrl+/</code></td>
-<td>Focus command input</td>
+<td><code>effect give &lt;player&gt; &lt;effect&gt; [duration] [level]</code></td>
+<td>Apply effect</td>
+<td><code>effect give Steve speed 600 2</code></td>
 </tr>
 <tr>
-<td><code>Enter</code></td>
-<td>Send command</td>
-</tr>
-<tr>
-<td><code>Escape</code></td>
-<td>Close modal/panel</td>
-</tr>
-<tr>
-<td><code>r</code></td>
-<td>Refresh dashboard (when not in input)</td>
+<td><code>effect clear &lt;player&gt; [effect]</code></td>
+<td>Remove effects</td>
+<td><code>effect clear Steve</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="screenshots">Screenshots<a class="headerlink" href="#screenshots" title="Permanent link">&para;</a></h2>
-<div class="admonition note">
-<p class="admonition-title">Screenshots Placeholder</p>
-<p>Screenshots will be added in a future update. The actual interface may vary slightly from the descriptions above.</p>
-</div>
-<h3 id="dashboard-view">Dashboard View<a class="headerlink" href="#dashboard-view" title="Permanent link">&para;</a></h3>
-<p><em>[Screenshot: Dashboard showing multiple server cards with status indicators]</em></p>
-<h3 id="server-detail-view">Server Detail View<a class="headerlink" href="#server-detail-view" title="Permanent link">&para;</a></h3>
-<p><em>[Screenshot: Server detail page with player list and controls]</em></p>
-<h3 id="console-panel_1">Console Panel<a class="headerlink" href="#console-panel_1" title="Permanent link">&para;</a></h3>
-<p><em>[Screenshot: Console panel with command input and log output]</em></p>
-<h3 id="login-page">Login Page<a class="headerlink" href="#login-page" title="Permanent link">&para;</a></h3>
-<p><em>[Screenshot: Login page with username and password fields]</em></p>
+<h3 id="common-effects">Common Effects<a class="headerlink" href="#common-effects" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Effect</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>speed</code></td>
+<td>Increased movement speed</td>
+</tr>
+<tr>
+<td><code>slowness</code></td>
+<td>Decreased movement speed</td>
+</tr>
+<tr>
+<td><code>haste</code></td>
+<td>Faster mining</td>
+</tr>
+<tr>
+<td><code>mining_fatigue</code></td>
+<td>Slower mining</td>
+</tr>
+<tr>
+<td><code>strength</code></td>
+<td>Increased melee damage</td>
+</tr>
+<tr>
+<td><code>instant_health</code></td>
+<td>Instant healing</td>
+</tr>
+<tr>
+<td><code>instant_damage</code></td>
+<td>Instant damage</td>
+</tr>
+<tr>
+<td><code>jump_boost</code></td>
+<td>Higher jumps</td>
+</tr>
+<tr>
+<td><code>regeneration</code></td>
+<td>Health regeneration</td>
+</tr>
+<tr>
+<td><code>resistance</code></td>
+<td>Damage resistance</td>
+</tr>
+<tr>
+<td><code>fire_resistance</code></td>
+<td>Fire immunity</td>
+</tr>
+<tr>
+<td><code>water_breathing</code></td>
+<td>Underwater breathing</td>
+</tr>
+<tr>
+<td><code>invisibility</code></td>
+<td>Invisibility</td>
+</tr>
+<tr>
+<td><code>night_vision</code></td>
+<td>See in dark</td>
+</tr>
+<tr>
+<td><code>saturation</code></td>
+<td>Food bar restoration</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="experience-commands">Experience Commands<a class="headerlink" href="#experience-commands" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xp add &lt;player&gt; &lt;amount&gt;</code></td>
+<td>Add experience points</td>
+<td><code>xp add Steve 1000</code></td>
+</tr>
+<tr>
+<td><code>xp add &lt;player&gt; &lt;amount&gt; levels</code></td>
+<td>Add experience levels</td>
+<td><code>xp add Steve 30 levels</code></td>
+</tr>
+<tr>
+<td><code>xp set &lt;player&gt; &lt;amount&gt;</code></td>
+<td>Set experience points</td>
+<td><code>xp set Steve 0</code></td>
+</tr>
+<tr>
+<td><code>xp query &lt;player&gt; points</code></td>
+<td>Query XP points</td>
+<td><code>xp query Steve points</code></td>
+</tr>
+<tr>
+<td><code>xp query &lt;player&gt; levels</code></td>
+<td>Query XP levels</td>
+<td><code>xp query Steve levels</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="advanced-commands">Advanced Commands<a class="headerlink" href="#advanced-commands" title="Permanent link">&para;</a></h2>
+<h3 id="execute-command">Execute Command<a class="headerlink" href="#execute-command" title="Permanent link">&para;</a></h3>
+<p>Run commands with specific context:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Run as another player</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>&gt;<span class="w"> </span>execute<span class="w"> </span>as<span class="w"> </span>Steve<span class="w"> </span>run<span class="w"> </span>say<span class="w"> </span>Hello<span class="w"> </span>from<span class="w"> </span>Steve!
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Run at location</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>&gt;<span class="w"> </span>execute<span class="w"> </span>positioned<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">64</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>run<span class="w"> </span>summon<span class="w"> </span>lightning_bolt
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Run if condition met</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>&gt;<span class="w"> </span>execute<span class="w"> </span><span class="k">if</span><span class="w"> </span>entity<span class="w"> </span>@a<span class="o">[</span><span class="nv">distance</span><span class="o">=</span>..10<span class="o">]</span><span class="w"> </span>run<span class="w"> </span>say<span class="w"> </span>Someone<span class="w"> </span>is<span class="w"> </span>nearby!
+</code></pre></div>
+<h3 id="scoreboard">Scoreboard<a class="headerlink" href="#scoreboard" title="Permanent link">&para;</a></h3>
+<p>Track and display values:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Create objective</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>&gt;<span class="w"> </span>scoreboard<span class="w"> </span>objectives<span class="w"> </span>add<span class="w"> </span>kills<span class="w"> </span>playerKillCount
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Display in sidebar</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>&gt;<span class="w"> </span>scoreboard<span class="w"> </span>objectives<span class="w"> </span>setdisplay<span class="w"> </span>sidebar<span class="w"> </span>kills
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Set score</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>&gt;<span class="w"> </span>scoreboard<span class="w"> </span>players<span class="w"> </span><span class="nb">set</span><span class="w"> </span>Steve<span class="w"> </span>kills<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># Query score</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>&gt;<span class="w"> </span>scoreboard<span class="w"> </span>players<span class="w"> </span>get<span class="w"> </span>Steve<span class="w"> </span>kills
+</code></pre></div>
+<h3 id="data-commands">Data Commands<a class="headerlink" href="#data-commands" title="Permanent link">&para;</a></h3>
+<p>Modify entity/block NBT data:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># View player data</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>&gt;<span class="w"> </span>data<span class="w"> </span>get<span class="w"> </span>entity<span class="w"> </span>Steve
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Modify entity data</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>&gt;<span class="w"> </span>data<span class="w"> </span>modify<span class="w"> </span>entity<span class="w"> </span>Steve<span class="w"> </span>Health<span class="w"> </span><span class="nb">set</span><span class="w"> </span>value<span class="w"> </span><span class="m">20</span>.0f
+</code></pre></div>
+<hr />
+<h2 id="help-commands">Help Commands<a class="headerlink" href="#help-commands" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>help</code></td>
+<td>List all available commands</td>
+</tr>
+<tr>
+<td><code>help &lt;command&gt;</code></td>
+<td>Show usage for specific command</td>
+</tr>
+<tr>
+<td><code>help &lt;page&gt;</code></td>
+<td>Show help page (1-8)</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&gt;<span class="w"> </span><span class="nb">help</span><span class="w"> </span>tp
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>/tp<span class="w"> </span>&lt;destination&gt;
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>/tp<span class="w"> </span>&lt;location&gt;
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>/tp<span class="w"> </span>&lt;targets&gt;<span class="w"> </span>&lt;destination&gt;
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>/tp<span class="w"> </span>&lt;targets&gt;<span class="w"> </span>&lt;location&gt;
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>...
+</code></pre></div>
+<hr />
+<h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
+<h3 id="common-errors">Common Errors<a class="headerlink" href="#common-errors" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Error</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Unknown command</code></td>
+<td>Typo or invalid command</td>
+<td>Check spelling, use <code>help</code></td>
+</tr>
+<tr>
+<td><code>Player not found</code></td>
+<td>Player offline or wrong name</td>
+<td>Verify player is online</td>
+</tr>
+<tr>
+<td><code>Expected whitespace</code></td>
+<td>Missing space in command</td>
+<td>Check command syntax</td>
+</tr>
+<tr>
+<td><code>Not a valid number</code></td>
+<td>Wrong argument type</td>
+<td>Use correct data type</td>
+</tr>
+</tbody>
+</table>
+<h3 id="server-not-running-error">Server Not Running Error<a class="headerlink" href="#server-not-running-error" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>$<span class="w"> </span>mcctl<span class="w"> </span>rcon<span class="w"> </span>myserver
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Server<span class="w"> </span><span class="s1">&#39;myserver&#39;</span><span class="w"> </span>is<span class="w"> </span>not<span class="w"> </span>running
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Start<span class="w"> </span>the<span class="w"> </span>server<span class="w"> </span>first:<span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
+</code></pre></div>
+<hr />
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Full Minecraft commands: <a href="https://minecraft.wiki/w/Commands">Minecraft Wiki - Commands</a></li>
+<li>Java Edition command syntax: <a href="https://minecraft.wiki/w/Commands#Syntax">Command Syntax</a></li>
+<li>Target selectors: <a href="https://minecraft.wiki/w/Target_selectors">Target Selector</a></li>
+<li>NBT format: <a href="https://minecraft.wiki/w/NBT_format">NBT Format</a></li>
+</ul>
 
 
 

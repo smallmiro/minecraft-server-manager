@@ -2094,6 +2094,183 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#version-specific-issues-and-solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version-specific Issues and Solutions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Version-specific Issues and Solutions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#version-178" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.7.8
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-175--177" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.7.5 ~ 1.7.7
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-170--174" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.7.0 ~ 1.7.4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-168--1611" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.6.8 ~ 1.6.11
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-160--167" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.6.0 ~ 1.6.7
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-15x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.5.x
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-14x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.4.x
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-13x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.3.x
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-console-architecture-bff-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Console Architecture (BFF Proxy)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web Console Architecture (BFF Proxy)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bff-proxy-routes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BFF Proxy Routes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#react-query-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        React Query Hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-variables_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#links" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2126,7 +2303,7 @@
 
 <h1 id="mcctl---minecraft-server-management-cli">mcctl - Minecraft Server Management CLI<a class="headerlink" href="#mcctl---minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 1.7.5
+<p><strong>Version</strong>: 1.7.8
 <strong>Last Updated</strong>: 2026-01-31
 <strong>Purpose</strong>: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions</p>
 </blockquote>
@@ -2677,6 +2854,248 @@
 <li>Verify API key: check <code>~/minecraft-servers/api.key</code></li>
 <li>Test health: <code>curl http://localhost:5001/health</code></li>
 </ul>
+<h2 id="version-specific-issues-and-solutions">Version-specific Issues and Solutions<a class="headerlink" href="#version-specific-issues-and-solutions" title="Permanent link">&para;</a></h2>
+<h3 id="version-178">Version 1.7.8<a class="headerlink" href="#version-178" title="Permanent link">&para;</a></h3>
+<p><strong>Changes:</strong>
+- Selective console service support - Choose which services to start (api/console/all) during <code>mcctl console init</code>
+- Fixed environment variable names for mcctl-api authentication (<code>MCCTL_*</code> prefix)</p>
+<p><strong>Known Issues:</strong> None</p>
+<h3 id="version-175--177">Version 1.7.5 ~ 1.7.7<a class="headerlink" href="#version-175--177" title="Permanent link">&para;</a></h3>
+<p><strong>Changes:</strong>
+- 1.7.7: Auto-install mcctl-api on console init
+- 1.7.6: mcctl-api npm publishing support
+- 1.7.5: Fixed Edge runtime error in mcctl-console middleware</p>
+<p><strong>Known Issue - Edge Runtime Error (v1.7.4 and below):</strong>
+- <strong>Symptom:</strong> <code>mcctl-console</code> fails with <code>@better-auth/*</code> package incompatibility error
+- <strong>Solution:</strong> Update to v1.7.5 or later</p>
+<h3 id="version-170--174">Version 1.7.0 ~ 1.7.4<a class="headerlink" href="#version-170--174" title="Permanent link">&para;</a></h3>
+<p><strong>Major Features:</strong>
+- Router Status API (<code>GET /api/router/status</code>)
+- Server Create/Delete API (<code>POST/DELETE /api/servers/:name</code>)
+- Player Management API
+- Backup API
+- <code>mcctl init --reconfigure</code> option</p>
+<h3 id="version-168--1611">Version 1.6.8 ~ 1.6.11<a class="headerlink" href="#version-168--1611" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Critical Bug - World Storage Location</p>
+<p>Servers created with these versions store worlds in wrong directory.</p>
+</div>
+<p><strong>Issue:</strong> Missing <code>EXTRA_ARGS=--universe /worlds/</code> in npm package template</p>
+<p><strong>Symptoms:</strong>
+- World data stored in <code>servers/&lt;name&gt;/data/</code> instead of <code>worlds/</code>
+- Server creates new world on every restart
+- World sharing doesn't work</p>
+<p><strong>Detection:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># If this shows output, you&#39;re affected</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>ls<span class="w"> </span>~/minecraft-servers/servers/*/data/*/level.dat<span class="w"> </span><span class="m">2</span>&gt;/dev/null
+</code></pre></div></p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Option 1: Automated migration (recommended)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="c1"># Option 2: Manual fix</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;EXTRA_ARGS=--universe /worlds/&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/servers/&lt;name&gt;/config.env
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>&lt;name&gt;
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>mv<span class="w"> </span>~/minecraft-servers/servers/&lt;name&gt;/data/&lt;world&gt;<span class="w"> </span>~/minecraft-servers/worlds/&lt;world&gt;
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;name&gt;
+</code></pre></div></p>
+<h3 id="version-160--167">Version 1.6.0 ~ 1.6.7<a class="headerlink" href="#version-160--167" title="Permanent link">&para;</a></h3>
+<p><strong>Features:</strong>
+- Admin Service (REST API + Web Console)
+- <code>mcctl console</code> commands
+- User management with roles</p>
+<p><strong>Deprecation:</strong>
+- <code>mcctl admin</code> commands deprecated (use <code>mcctl console</code> instead)</p>
+<h3 id="version-15x">Version 1.5.x<a class="headerlink" href="#version-15x" title="Permanent link">&para;</a></h3>
+<p><strong>Features:</strong>
+- Mod management (<code>mcctl mod search/add/remove/list/sources</code>)
+- Modrinth, CurseForge, Spiget, direct URL mod sources
+- Server backup/restore commands</p>
+<h3 id="version-14x">Version 1.4.x<a class="headerlink" href="#version-14x" title="Permanent link">&para;</a></h3>
+<p><strong>Features:</strong>
+- Player management (whitelist, ban, op, kick)
+- World management with <code>.meta</code> file support
+- Interactive world selection in <code>mcctl create</code></p>
+<h3 id="version-13x">Version 1.3.x<a class="headerlink" href="#version-13x" title="Permanent link">&para;</a></h3>
+<p><strong>Features:</strong>
+- nip.io magic DNS support
+- VPN mesh network support (Tailscale, ZeroTier)
+- Migration script for nip.io hostnames</p>
+<h2 id="web-console-architecture-bff-proxy">Web Console Architecture (BFF Proxy)<a class="headerlink" href="#web-console-architecture-bff-proxy" title="Permanent link">&para;</a></h2>
+<h3 id="overview_1">Overview<a class="headerlink" href="#overview_1" title="Permanent link">&para;</a></h3>
+<p>mcctl-console uses a Backend-for-Frontend (BFF) proxy pattern for secure API access:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>+------------------+      +-----------------+      +---------------+
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>|   Web Browser    | ---&gt; | mcctl-console   | ---&gt; |   mcctl-api   |
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>|   (React Query)  |      | (Next.js BFF)   |      |   (Fastify)   |
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>+------------------+      +-----------------+      +---------------+
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>                              |
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>                              | Session-based auth
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>                              | + X-API-Key forwarding
+</code></pre></div>
+<h3 id="bff-proxy-routes">BFF Proxy Routes<a class="headerlink" href="#bff-proxy-routes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Console Route</th>
+<th>Method</th>
+<th>mcctl-api Route</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/servers</code></td>
+<td>GET</td>
+<td><code>/api/servers</code></td>
+<td>List all servers</td>
+</tr>
+<tr>
+<td><code>/api/servers</code></td>
+<td>POST</td>
+<td><code>/api/servers</code></td>
+<td>Create server</td>
+</tr>
+<tr>
+<td><code>/api/servers/:name</code></td>
+<td>GET</td>
+<td><code>/api/servers/:name</code></td>
+<td>Get server details</td>
+</tr>
+<tr>
+<td><code>/api/servers/:name</code></td>
+<td>DELETE</td>
+<td><code>/api/servers/:name</code></td>
+<td>Delete server</td>
+</tr>
+<tr>
+<td><code>/api/servers/:name/start</code></td>
+<td>POST</td>
+<td><code>/api/servers/:name/start</code></td>
+<td>Start server</td>
+</tr>
+<tr>
+<td><code>/api/servers/:name/stop</code></td>
+<td>POST</td>
+<td><code>/api/servers/:name/stop</code></td>
+<td>Stop server</td>
+</tr>
+<tr>
+<td><code>/api/servers/:name/restart</code></td>
+<td>POST</td>
+<td><code>/api/servers/:name/restart</code></td>
+<td>Restart server</td>
+</tr>
+<tr>
+<td><code>/api/servers/:name/exec</code></td>
+<td>POST</td>
+<td><code>/api/servers/:name/exec</code></td>
+<td>Execute RCON command</td>
+</tr>
+<tr>
+<td><code>/api/servers/:name/logs</code></td>
+<td>GET</td>
+<td><code>/api/servers/:name/logs</code></td>
+<td>Get server logs</td>
+</tr>
+<tr>
+<td><code>/api/worlds</code></td>
+<td>GET</td>
+<td><code>/api/worlds</code></td>
+<td>List all worlds</td>
+</tr>
+<tr>
+<td><code>/api/worlds</code></td>
+<td>POST</td>
+<td><code>/api/worlds</code></td>
+<td>Create world</td>
+</tr>
+<tr>
+<td><code>/api/worlds/:name</code></td>
+<td>GET</td>
+<td><code>/api/worlds/:name</code></td>
+<td>Get world details</td>
+</tr>
+<tr>
+<td><code>/api/worlds/:name</code></td>
+<td>DELETE</td>
+<td><code>/api/worlds/:name</code></td>
+<td>Delete world</td>
+</tr>
+<tr>
+<td><code>/api/worlds/:name/assign</code></td>
+<td>POST</td>
+<td><code>/api/worlds/:name/assign</code></td>
+<td>Assign world to server</td>
+</tr>
+<tr>
+<td><code>/api/worlds/:name/release</code></td>
+<td>POST</td>
+<td><code>/api/worlds/:name/release</code></td>
+<td>Release world lock</td>
+</tr>
+</tbody>
+</table>
+<h3 id="authentication-flow">Authentication Flow<a class="headerlink" href="#authentication-flow" title="Permanent link">&para;</a></h3>
+<ol>
+<li>User logs in via Better Auth (session-based)</li>
+<li>Console BFF routes validate session before forwarding</li>
+<li>BFF forwards requests to mcctl-api with <code>X-API-Key</code> header</li>
+<li>mcctl-api validates API key and processes request</li>
+</ol>
+<h3 id="react-query-hooks">React Query Hooks<a class="headerlink" href="#react-query-hooks" title="Permanent link">&para;</a></h3>
+<p>The console provides type-safe hooks for data fetching:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1">// Server hooks</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nx">useServers</span><span class="p">()</span><span class="w">                    </span><span class="c1">// List all servers (auto-refresh 10s)</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="nx">useServer</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w">                 </span><span class="c1">// Get server details (auto-refresh 5s)</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="nx">useCreateServer</span><span class="p">()</span><span class="w">               </span><span class="c1">// Create server mutation</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="nx">useDeleteServer</span><span class="p">()</span><span class="w">               </span><span class="c1">// Delete server mutation</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="nx">useStartServer</span><span class="p">()</span><span class="w">                </span><span class="c1">// Start server mutation</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="nx">useStopServer</span><span class="p">()</span><span class="w">                 </span><span class="c1">// Stop server mutation</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="nx">useRestartServer</span><span class="p">()</span><span class="w">              </span><span class="c1">// Restart server mutation</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="nx">useExecCommand</span><span class="p">()</span><span class="w">                </span><span class="c1">// Execute RCON command</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="nx">useServerLogs</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">lines</span><span class="p">)</span><span class="w">      </span><span class="c1">// Get server logs (auto-refresh 3s)</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="c1">// World hooks</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="nx">useWorlds</span><span class="p">()</span><span class="w">                     </span><span class="c1">// List all worlds (auto-refresh 30s)</span>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="nx">useWorld</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w">                  </span><span class="c1">// Get world details</span>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="nx">useCreateWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Create world mutation</span>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a><span class="nx">useAssignWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Assign world mutation</span>
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a><span class="nx">useReleaseWorld</span><span class="p">()</span><span class="w">               </span><span class="c1">// Release world mutation</span>
+<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a><span class="nx">useDeleteWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Delete world mutation</span>
+</code></pre></div>
+<h3 id="environment-variables_1">Environment Variables<a class="headerlink" href="#environment-variables_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MCCTL_API_URL</code></td>
+<td>mcctl-api URL (internal)</td>
+<td><code>http://localhost:5001</code></td>
+</tr>
+<tr>
+<td><code>MCCTL_API_KEY</code></td>
+<td>API key for authentication</td>
+<td>Required</td>
+</tr>
+<tr>
+<td><code>BETTER_AUTH_SECRET</code></td>
+<td>Session encryption secret</td>
+<td>Required</td>
+</tr>
+<tr>
+<td><code>BETTER_AUTH_URL</code></td>
+<td>Console URL for auth</td>
+<td><code>http://localhost:5000</code></td>
+</tr>
+</tbody>
+</table>
 <h2 id="links">Links<a class="headerlink" href="#links" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>GitHub</strong>: https://github.com/smallmiro/minecraft-server-manager</li>

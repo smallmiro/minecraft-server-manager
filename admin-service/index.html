@@ -1633,6 +1633,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="mcctl-console (Web Management UI)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bff-proxy-routes-v178" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BFF Proxy Routes (v1.7.8+)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1806,6 +1823,10 @@
 
 <h1 id="admin-service-overview">Admin Service Overview<a class="headerlink" href="#admin-service-overview" title="Permanent link">&para;</a></h1>
 <p>Admin Service provides a web-based management interface and REST API for Docker Minecraft servers. It enables remote server management, monitoring, and administration through a modern web console.</p>
+<div class="admonition warning">
+<p class="admonition-title">Development Status</p>
+<p><strong>mcctl-console (Web UI) is currently under active development.</strong> Some features may be incomplete or subject to change. The REST API (mcctl-api) is stable and production-ready.</p>
+</div>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                              +---------------------+
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                              |    Web Browser      |
@@ -1846,10 +1867,41 @@
 <ul>
 <li><strong>Dashboard</strong>: Overview of all servers with real-time status</li>
 <li><strong>Server Details</strong>: Detailed server information and controls</li>
-<li><strong>User Authentication</strong>: Secure login with NextAuth.js</li>
+<li><strong>User Authentication</strong>: Secure login with Better Auth</li>
 <li><strong>BFF Proxy</strong>: Backend-for-Frontend pattern for secure API access</li>
+<li><strong>React Query Hooks</strong>: Type-safe data fetching with automatic caching</li>
+<li><strong>World Management</strong>: List, create, assign, and release worlds</li>
 </ul>
 <p>Default port: <code>5000</code></p>
+<h4 id="bff-proxy-routes-v178">BFF Proxy Routes (v1.7.8+)<a class="headerlink" href="#bff-proxy-routes-v178" title="Permanent link">&para;</a></h4>
+<p>The console proxies all API requests through Next.js server routes:</p>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/api/servers/*</code></td>
+<td>Server management (list, create, delete, start/stop/restart)</td>
+</tr>
+<tr>
+<td><code>/api/servers/:name/exec</code></td>
+<td>Execute RCON commands</td>
+</tr>
+<tr>
+<td><code>/api/servers/:name/logs</code></td>
+<td>Fetch server logs</td>
+</tr>
+<tr>
+<td><code>/api/worlds/*</code></td>
+<td>World management (list, create, delete, assign/release)</td>
+</tr>
+</tbody>
+</table>
+<p>This architecture ensures API keys never reach the browser.</p>
 <h2 id="authentication-modes">Authentication Modes<a class="headerlink" href="#authentication-modes" title="Permanent link">&para;</a></h2>
 <p>Admin Service supports multiple authentication modes:</p>
 <table>

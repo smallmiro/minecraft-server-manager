@@ -3165,7 +3165,8 @@
 <h1 id="mcctl---minecraft-server-management-cli-knowledge-base">mcctl - Minecraft Server Management CLI Knowledge Base<a class="headerlink" href="#mcctl---minecraft-server-management-cli-knowledge-base" title="Permanent link">&para;</a></h1>
 <blockquote>
 <p><strong>Purpose</strong>: This document serves as a comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude) to understand and answer questions about mcctl, a Docker-based Minecraft server management tool.</p>
-<p><strong>Version</strong>: 1.6.2 | <strong>Last Updated</strong>: January 2025</p>
+<p><strong>Version</strong>: 1.7.8 | <strong>Last Updated</strong>: January 2025</p>
+<p>⚠️ <strong>Note</strong>: mcctl-console (Web UI) is currently under active development. Some features may be incomplete or subject to change. The REST API (mcctl-api) is stable and production-ready.</p>
 </blockquote>
 <hr />
 <h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
@@ -3242,11 +3243,14 @@
 <h3 id="package-information">Package Information<a class="headerlink" href="#package-information" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>npm Package</strong>: <code>@minecraft-docker/mcctl</code></li>
-<li><strong>Current Version</strong>: 1.6.2</li>
+<li><strong>Current Version</strong>: 1.7.8</li>
 <li><strong>Repository</strong>: Part of the minecraft-server-manager monorepo</li>
 <li><strong>License</strong>: Apache-2.0</li>
 <li><strong>Dependencies</strong>: Docker, Docker Compose, Node.js 18+, PM2 (for Admin Service)</li>
 </ul>
+<blockquote>
+<p>⚠️ <strong>Development Status</strong>: mcctl-console (Web UI) is under active development. mcctl-api (REST API) is stable.</p>
+</blockquote>
 <hr />
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
 <h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
@@ -3423,7 +3427,7 @@
 </tr>
 <tr>
 <td><strong>mcctl-console</strong></td>
-<td>Web Admin Console (Next.js, port 5000)</td>
+<td>Web Admin Console (Next.js, port 5000) - <strong>Under Development</strong></td>
 </tr>
 <tr>
 <td><strong>PM2</strong></td>
@@ -5522,7 +5526,7 @@ A: The world directory is created immediately with a <code>.meta</code> file con
 <hr />
 <h3 id="admin-service-questions">Admin Service Questions<a class="headerlink" href="#admin-service-questions" title="Permanent link">&para;</a></h3>
 <p><strong>Q: What is the Admin Service?</strong>
-A: The Admin Service consists of mcctl-api (REST API on port 5001) and mcctl-console (Web UI on port 5000). It provides a web-based management interface for mcctl.</p>
+A: The Admin Service consists of mcctl-api (REST API on port 5001) and mcctl-console (Web UI on port 5000). It provides a web-based management interface for mcctl. <strong>Note: mcctl-console is currently under active development.</strong></p>
 <p><strong>Q: Why does the Admin Service use PM2 instead of Docker?</strong>
 A: PM2 provides native Node.js execution with lower overhead, faster startup, easier debugging, and automatic process recovery. This is more efficient than running additional Docker containers.</p>
 <p><strong>Q: How do I install PM2?</strong>
@@ -6753,7 +6757,7 @@ A: Yes, use <code>mcctl console service start --api-only</code> to start just th
 </tr>
 <tr>
 <td><strong>mcctl-console</strong></td>
-<td>Web-based admin console (Next.js, port 5000)</td>
+<td>Web-based admin console (Next.js, port 5000) - <strong>Under Development</strong></td>
 </tr>
 <tr>
 <td><strong>mc-router</strong></td>
