@@ -1,66 +1,542 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
 import Grid from '@mui/material/Grid';
 import Divider from '@mui/material/Divider';
+import { alpha } from '@mui/material/styles';
+import MemoryIcon from '@mui/icons-material/Memory';
+import StorageIcon from '@mui/icons-material/Storage';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import TerminalIcon from '@mui/icons-material/Terminal';
 import type { ServerDetail as ServerDetailType } from '@/ports/api/IMcctlApiClient';
+import { ResourceStatCard } from './ResourceStatCard';
+import { useServerLogs } from '@/hooks/useServerLogs';
 
 interface ServerDetailProps {
   server: ServerDetailType;
+  onSendCommand?: (command: string) => Promise<void>;
 }
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
+// Tab configuration
+const TABS = ['Overview', 'Content', 'Files', 'Backups', 'Options'] as const;
+type TabType = (typeof TABS)[number];
 
-function TabPanel({ children, value, index }: TabPanelProps) {
+// CPU Icon Component
+function CpuIcon() {
   return (
-    <div role="tabpanel" hidden={value !== index}>
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </div>
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <rect x="9" y="9" width="6" height="6" rx="1" />
+      <path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3" />
+    </svg>
   );
 }
 
-const getStatusColor = (
-  status: ServerDetailType['status']
-): 'success' | 'error' | 'default' | 'warning' => {
-  switch (status) {
-    case 'running':
-      return 'success';
-    case 'stopped':
-    case 'exited':
-      return 'error';
-    case 'created':
-      return 'warning';
-    default:
-      return 'default';
-  }
-};
+// Parse log line for console display
+interface ParsedLog {
+  time: string;
+  thread: string;
+  level: 'INFO' | 'WARN' | 'ERROR';
+  msg: string;
+}
 
-const getHealthColor = (
-  health: ServerDetailType['health']
-): 'success' | 'error' | 'warning' | 'default' => {
-  switch (health) {
-    case 'healthy':
-      return 'success';
-    case 'unhealthy':
-      return 'error';
-    case 'starting':
-      return 'warning';
-    default:
-      return 'default';
+function parseLogLine(log: string): ParsedLog | null {
+  // Format: [HH:MM:SS] [Thread/LEVEL]: Message
+  const match = log.match(/\[(\d{2}:\d{2}:\d{2})\]\s*\[([^/]+)\/(\w+)\]:\s*(.+)/);
+  if (match) {
+    return {
+      time: match[1],
+      thread: match[2],
+      level: (match[3] as 'INFO' | 'WARN' | 'ERROR') || 'INFO',
+      msg: match[4],
+    };
   }
-};
+  return null;
+}
 
+// Format uptime from seconds
+function formatUptime(seconds?: number): string {
+  if (!seconds || seconds < 0) return '0s';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+// Parse memory string to MB value
+function parseMemoryToMB(memStr?: string): number {
+  if (!memStr) return 0;
+  const match = memStr.match(/^([\d.]+)\s*(B|KB|MB|MiB|GB|GiB)?$/i);
+  if (!match) return 0;
+  const value = parseFloat(match[1]);
+  const unit = (match[2] || 'B').toUpperCase();
+  switch (unit) {
+    case 'GB':
+    case 'GIB':
+      return value * 1024;
+    case 'MB':
+    case 'MIB':
+      return value;
+    case 'KB':
+      return value / 1024;
+    default:
+      return value / (1024 * 1024);
+  }
+}
+
+// Parse allocated memory to MB
+function parseAllocatedMemoryToMB(memStr?: string): number {
+  if (!memStr) return 4096; // Default 4GB
+  const match = memStr.match(/^(\d+)\s*(M|G)?$/i);
+  if (!match) return 4096;
+  const value = parseInt(match[1], 10);
+  const unit = (match[2] || 'M').toUpperCase();
+  return unit === 'G' ? value * 1024 : value;
+}
+
+export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
+  const [activeTab, setActiveTab] = useState<TabType>('Overview');
+  const [command, setCommand] = useState('');
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const consoleRef = useRef<HTMLDivElement>(null);
+
+  // Connect to server logs
+  const { logs, isConnected } = useServerLogs({ serverName: server.name });
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (consoleRef.current && isAtBottom) {
+      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+    }
+  }, [logs, isAtBottom]);
+
+  const handleScroll = () => {
+    if (!consoleRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = consoleRef.current;
+    setIsAtBottom(scrollHeight - scrollTop - clientHeight < 30);
+  };
+
+  const scrollToBottom = () => {
+    if (consoleRef.current) {
+      consoleRef.current.scrollTo({ top: consoleRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  };
+
+  const handleSendCommand = async () => {
+    if (!command.trim() || !onSendCommand) return;
+    await onSendCommand(command.trim());
+    setCommand('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSendCommand();
+    }
+  };
+
+  // Parse resource stats
+  const cpuPercent = server.stats?.cpu ? parseFloat(server.stats.cpu) : 0;
+  const memoryUsedMB = server.stats?.memory ? parseMemoryToMB(server.stats.memory) : 0;
+  const memoryAllocatedMB = parseAllocatedMemoryToMB(server.memory);
+  const memoryPercent = memoryAllocatedMB > 0 ? (memoryUsedMB / memoryAllocatedMB) * 100 : 0;
+
+  return (
+    <Box>
+      {/* Tabs - Pill Style */}
+      <Box sx={{ display: 'flex', gap: 0.5, mb: 3 }}>
+        {TABS.map((tab) => (
+          <Button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            sx={{
+              px: 2,
+              py: 1,
+              borderRadius: 5,
+              fontSize: 14,
+              fontWeight: 500,
+              textTransform: 'none',
+              bgcolor: activeTab === tab ? 'primary.main' : 'transparent',
+              color: activeTab === tab ? '#0a0e14' : 'text.secondary',
+              '&:hover': {
+                bgcolor: activeTab === tab ? 'primary.main' : alpha('#1bd96a', 0.1),
+              },
+            }}
+          >
+            {tab}
+          </Button>
+        ))}
+      </Box>
+
+      {/* Stats Cards */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 2.5 }}>
+        <ResourceStatCard
+          value={`${cpuPercent.toFixed(2)}%`}
+          unit="/ 100%"
+          label="CPU usage"
+          icon={<CpuIcon />}
+          progress={cpuPercent}
+          progressMax={100}
+          color="#1bd96a"
+        />
+        <ResourceStatCard
+          value={`${memoryPercent.toFixed(2)}%`}
+          unit="/ 100%"
+          label="Memory usage"
+          icon={<MemoryIcon />}
+          progress={memoryPercent}
+          progressMax={100}
+          color="#1bd96a"
+        />
+        <ResourceStatCard
+          value={server.worldSize || '0 MB'}
+          unit={`/ ${server.memory || '4G'}`}
+          label="Storage usage"
+          icon={<StorageIcon />}
+          progress={parseMemoryToMB(server.worldSize)}
+          progressMax={memoryAllocatedMB}
+          color="#1bd96a"
+        />
+      </Box>
+
+      {/* Console */}
+      <Card
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: 'divider',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Console Header */}
+        <Box
+          sx={{
+            px: 3,
+            py: 2,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.25,
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+            Console
+          </Typography>
+          <Box
+            sx={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              bgcolor: isConnected ? 'primary.main' : 'error.main',
+              boxShadow: isConnected
+                ? '0 0 8px rgba(27, 217, 106, 0.4)'
+                : '0 0 8px rgba(239, 68, 68, 0.4)',
+            }}
+          />
+        </Box>
+
+        {/* Console Body */}
+        <Box sx={{ position: 'relative' }}>
+          <Box
+            ref={consoleRef}
+            onScroll={handleScroll}
+            sx={{
+              height: 360,
+              overflowY: 'auto',
+              px: 2.5,
+              py: 2,
+              fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
+              fontSize: 13,
+              lineHeight: 1.85,
+              color: '#b4b6c4',
+              bgcolor: 'background.paper',
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#3a3d4e #1e2030',
+              '&::-webkit-scrollbar': {
+                width: 8,
+              },
+              '&::-webkit-scrollbar-track': {
+                bgcolor: '#1e2030',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: '#3a3d4e',
+                borderRadius: 4,
+              },
+            }}
+          >
+            {logs.length === 0 ? (
+              <Typography
+                sx={{
+                  color: 'text.secondary',
+                  textAlign: 'center',
+                  py: 8,
+                }}
+              >
+                Waiting for logs...
+              </Typography>
+            ) : (
+              logs.map((log, i) => {
+                const parsed = parseLogLine(log);
+                if (parsed) {
+                  return (
+                    <Box
+                      key={i}
+                      sx={{
+                        display: 'flex',
+                        gap: 0,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      <Box component="span" sx={{ color: '#4a4d60' }}>
+                        [{parsed.time}]
+                      </Box>
+                      <Box component="span" sx={{ color: '#4a4d60' }}>
+                        &nbsp;[{parsed.thread}/
+                        <Box
+                          component="span"
+                          sx={{
+                            color: parsed.level === 'WARN' ? '#e8a848' : '#6b6e80',
+                          }}
+                        >
+                          {parsed.level}
+                        </Box>
+                        ]:&nbsp;
+                      </Box>
+                      <Box
+                        component="span"
+                        sx={{
+                          color: parsed.level === 'WARN' ? '#c4a45a' : '#b4b6c4',
+                        }}
+                      >
+                        {parsed.msg}
+                      </Box>
+                    </Box>
+                  );
+                }
+                // Raw log line
+                return (
+                  <Box key={i} sx={{ color: '#b4b6c4' }}>
+                    {log}
+                  </Box>
+                );
+              })
+            )}
+          </Box>
+
+          {/* Expand button */}
+          <IconButton
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              bgcolor: '#282a3a',
+              border: '1px solid #3a3d4e',
+              color: '#8b8da0',
+              '&:hover': {
+                bgcolor: '#313440',
+              },
+            }}
+          >
+            <OpenInFullIcon sx={{ fontSize: 18 }} />
+          </IconButton>
+
+          {/* Scroll to bottom button */}
+          {!isAtBottom && (
+            <IconButton
+              onClick={scrollToBottom}
+              sx={{
+                position: 'absolute',
+                bottom: 12,
+                right: 12,
+                width: 36,
+                height: 36,
+                borderRadius: 2,
+                bgcolor: '#282a3a',
+                border: '1px solid #3a3d4e',
+                color: '#8b8da0',
+                '&:hover': {
+                  bgcolor: '#313440',
+                },
+              }}
+            >
+              <KeyboardArrowDownIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          )}
+        </Box>
+
+        {/* Command Input */}
+        <Box
+          sx={{
+            px: 2.5,
+            py: 1.5,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Send a command"
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={!isConnected}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <TerminalIcon sx={{ fontSize: 16, color: '#999' }} />
+                </InputAdornment>
+              ),
+              sx: {
+                bgcolor: '#13141c',
+                borderRadius: 2,
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                fontSize: 14,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#2a2d3e',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#3a3d4e',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                },
+              },
+            }}
+          />
+        </Box>
+      </Card>
+
+      {/* Additional content based on tab */}
+      {activeTab === 'Overview' && (
+        <Grid container spacing={3} sx={{ mt: 1 }}>
+          {/* Server Information */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ borderRadius: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom fontWeight={600}>
+                  Server Information
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+
+                <InfoRow label="Name" value={server.name} />
+                <InfoRow label="Container" value={server.container} />
+                <InfoRow label="Hostname" value={server.hostname} />
+                <InfoRow label="Type" value={server.type} />
+                <InfoRow label="Version" value={server.version} />
+                <InfoRow label="Memory" value={server.memory} />
+                <InfoRow
+                  label="Uptime"
+                  value={server.uptime || formatUptime(server.uptimeSeconds)}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Players */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ borderRadius: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom fontWeight={600}>
+                  Players
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+
+                {server.players ? (
+                  <>
+                    <InfoRow
+                      label="Online"
+                      value={`${server.players.online} / ${server.players.max}`}
+                    />
+
+                    {server.players.list && server.players.list.length > 0 && (
+                      <>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 2, mb: 1 }}>
+                          Online Players
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                          {server.players.list.map((player) => (
+                            <Chip key={player} label={player} size="small" />
+                          ))}
+                        </Box>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Player information unavailable
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
+      {activeTab === 'Content' && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="body1" color="text.secondary">
+            Content management coming soon
+          </Typography>
+        </Box>
+      )}
+
+      {activeTab === 'Files' && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="body1" color="text.secondary">
+            File browser coming soon
+          </Typography>
+        </Box>
+      )}
+
+      {activeTab === 'Backups' && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="body1" color="text.secondary">
+            Backup management coming soon
+          </Typography>
+        </Box>
+      )}
+
+      {activeTab === 'Options' && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="body1" color="text.secondary">
+            Server options coming soon
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// Info Row component for displaying key-value pairs
 function InfoRow({ label, value }: { label: string; value?: string | React.ReactNode }) {
   if (!value) return null;
 
@@ -72,179 +548,6 @@ function InfoRow({ label, value }: { label: string; value?: string | React.React
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
         {value}
       </Typography>
-    </Box>
-  );
-}
-
-export function ServerDetail({ server }: ServerDetailProps) {
-  const [activeTab, setActiveTab] = useState(0);
-
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
-  return (
-    <Box>
-      <Tabs
-        value={activeTab}
-        onChange={handleTabChange}
-        sx={{ borderBottom: 1, borderColor: 'divider' }}
-      >
-        <Tab label="Overview" />
-        <Tab label="Console" />
-        <Tab label="Config" />
-        <Tab label="Players" />
-        <Tab label="Logs" />
-        <Tab label="Backups" />
-      </Tabs>
-
-      {/* Overview Tab */}
-      <TabPanel value={activeTab} index={0}>
-        <Grid container spacing={3}>
-          {/* Server Information */}
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Server Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <InfoRow label="Name" value={server.name} />
-                <InfoRow label="Container" value={server.container} />
-                <InfoRow label="Hostname" value={server.hostname} />
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Status
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Chip
-                      label={server.status}
-                      size="small"
-                      color={getStatusColor(server.status)}
-                    />
-                    <Chip
-                      label={server.health}
-                      size="small"
-                      color={getHealthColor(server.health)}
-                    />
-                  </Box>
-                </Box>
-
-                {server.type && <InfoRow label="Type" value={server.type} />}
-                {server.version && <InfoRow label="Version" value={server.version} />}
-                {server.memory && <InfoRow label="Memory" value={server.memory} />}
-                {server.uptime && <InfoRow label="Uptime" value={server.uptime} />}
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Players */}
-          {server.players && (
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Players
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <InfoRow
-                    label="Online"
-                    value={`${server.players.online} / ${server.players.max}`}
-                  />
-
-                  {server.players.list && server.players.list.length > 0 && (
-                    <>
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 2, mb: 1 }}>
-                        Online Players
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {server.players.list.map((player) => (
-                          <Chip key={player} label={player} size="small" />
-                        ))}
-                      </Box>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
-          {/* Resource Stats */}
-          {server.stats && (
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Resources
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <InfoRow label="CPU" value={server.stats.cpu} />
-                  <InfoRow label="Memory" value={server.stats.memory} />
-                  <InfoRow label="Memory %" value={server.stats.memoryPercent} />
-                  <InfoRow label="Network" value={server.stats.network} />
-                  <InfoRow label="Block I/O" value={server.stats.blockIO} />
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
-          {/* World Information */}
-          {server.worldName && (
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    World
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <InfoRow label="Name" value={server.worldName} />
-                  {server.worldSize && <InfoRow label="Size" value={server.worldSize} />}
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-        </Grid>
-      </TabPanel>
-
-      {/* Console Tab */}
-      <TabPanel value={activeTab} index={1}>
-        <Typography variant="body1" color="text.secondary">
-          Console coming soon
-        </Typography>
-      </TabPanel>
-
-      {/* Config Tab */}
-      <TabPanel value={activeTab} index={2}>
-        <Typography variant="body1" color="text.secondary">
-          Configuration coming soon
-        </Typography>
-      </TabPanel>
-
-      {/* Players Tab */}
-      <TabPanel value={activeTab} index={3}>
-        <Typography variant="body1" color="text.secondary">
-          Player management coming soon
-        </Typography>
-      </TabPanel>
-
-      {/* Logs Tab */}
-      <TabPanel value={activeTab} index={4}>
-        <Typography variant="body1" color="text.secondary">
-          Logs coming soon
-        </Typography>
-      </TabPanel>
-
-      {/* Backups Tab */}
-      <TabPanel value={activeTab} index={5}>
-        <Typography variant="body1" color="text.secondary">
-          Backups coming soon
-        </Typography>
-      </TabPanel>
     </Box>
   );
 }
