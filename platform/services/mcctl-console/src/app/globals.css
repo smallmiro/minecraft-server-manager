@@ -1,20 +1,38 @@
+@import url('https://fonts.cdnfonts.com/css/minecraft-4');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 17, 17, 17;
-  --background-end-rgb: 17, 17, 17;
+  /* Modrinth-style color palette */
+  --bg-base: #16181c;
+  --bg-raised: #1a1d22;
+  --bg-surface: #26282e;
+  --bg-elevated: #313338;
+  --text-primary: #ffffff;
+  --text-secondary: #9a9a9a;
+  --text-tertiary: #72767d;
+  --border-default: #2e3035;
+  --primary: #1bd96a;
+  --primary-light: #4de38a;
+  --primary-dark: #15a852;
+  --secondary: #7c3aed;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: var(--text-primary);
+  background-color: var(--bg-base);
   min-height: 100vh;
+}
+
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom focus styles */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }

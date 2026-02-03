@@ -99,9 +99,11 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
               variant="h6"
               component="span"
               sx={{
-                fontWeight: 700,
+                fontFamily: '"Minecraft", sans-serif',
+                fontWeight: 400,
                 color: 'common.white',
-                letterSpacing: '0.02em',
+                letterSpacing: '0.05em',
+                fontSize: '1.1rem',
               }}
             >
               Minecraft Console
@@ -221,9 +223,11 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
                 variant="h6"
                 component="span"
                 sx={{
-                  fontWeight: 700,
+                  fontFamily: '"Minecraft", sans-serif',
+                  fontWeight: 400,
                   color: 'primary.main',
-                  letterSpacing: '0.02em',
+                  letterSpacing: '0.05em',
+                  fontSize: '1rem',
                 }}
               >
                 Minecraft Console
