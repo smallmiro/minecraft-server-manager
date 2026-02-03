@@ -73,6 +73,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.7.9 (2026-02-03)
+- **fix(ci)**: Fix YAML syntax error in E2E workflow configuration
+- Resolve CI pipeline failure due to malformed YAML
+
 ### v1.7.8 (2026-01-31)
 - **feat(cli)**: Add selective console service support - choose api/console/all (#203)
 - **fix(cli)**: Correct environment variable names for mcctl-api auth (#203)
@@ -90,9 +94,6 @@ mcctl logs myserver
 
 ### v1.7.4 (2026-01-31)
 - **docs**: Add CHANGELOG.md with v1.7.1-1.7.3 hotfix history
-
-### v1.7.3 (2026-01-31)
-- **fix**: Fix Docker network warning when running `mcctl up` (#199)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
