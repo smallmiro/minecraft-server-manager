@@ -73,6 +73,20 @@ export interface ConnectionClosedEvent {
 }
 
 /**
+ * Server creation progress event
+ */
+export interface ServerCreateEvent {
+  type: 'server-create';
+  data: {
+    status: 'initializing' | 'creating' | 'configuring' | 'starting' | 'completed' | 'error';
+    message: string;
+    progress?: number; // 0-100
+    error?: string;
+    timestamp: string;
+  };
+}
+
+/**
  * Union type of all possible SSE events
  */
 export type SSEEvent =
@@ -81,7 +95,8 @@ export type SSEEvent =
   | PlayerEvent
   | HeartbeatEvent
   | ErrorEvent
-  | ConnectionClosedEvent;
+  | ConnectionClosedEvent
+  | ServerCreateEvent;
 
 /**
  * SSE connection state
