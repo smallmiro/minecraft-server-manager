@@ -29,20 +29,20 @@ describe('ServerCard', () => {
 
   it('should display running status with green badge', () => {
     renderWithTheme(<ServerCard server={mockServer} />);
-    const statusBadge = screen.getByText('running');
+    const statusBadge = screen.getByText('Running');
     expect(statusBadge).toBeInTheDocument();
   });
 
   it('should display stopped status with red badge', () => {
     const stoppedServer = { ...mockServer, status: 'stopped' as const };
     renderWithTheme(<ServerCard server={stoppedServer} />);
-    const statusBadge = screen.getByText('stopped');
+    const statusBadge = screen.getByText('Stopped');
     expect(statusBadge).toBeInTheDocument();
   });
 
-  it('should display healthy status', () => {
+  it('should display container name', () => {
     renderWithTheme(<ServerCard server={mockServer} />);
-    expect(screen.getByText('healthy')).toBeInTheDocument();
+    expect(screen.getByText('mc-test-server')).toBeInTheDocument();
   });
 
   it('should call onClick when card is clicked', () => {

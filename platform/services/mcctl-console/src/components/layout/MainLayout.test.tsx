@@ -11,6 +11,11 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock UserMenu component
+vi.mock('@/components/auth', () => ({
+  UserMenu: () => <div data-testid="user-menu">UserMenu</div>,
+}));
+
 const renderWithTheme = (component: React.ReactNode) => {
   return render(<ThemeProvider>{component}</ThemeProvider>);
 };
@@ -26,26 +31,37 @@ describe('MainLayout', () => {
     expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
 
-  it('should render sidebar', () => {
+  it('should render GNB with logo', () => {
     renderWithTheme(
       <MainLayout>
         <div>Content</div>
       </MainLayout>
     );
 
-    // Both mobile and desktop drawers render the logo
-    const mcctlElements = screen.getAllByText('MCCTL');
-    expect(mcctlElements.length).toBeGreaterThan(0);
+    // Both AppBar and mobile drawer render the logo
+    const logoElements = screen.getAllByText('Minecraft Console');
+    expect(logoElements.length).toBeGreaterThan(0);
   });
 
-  it('should render header', () => {
+  it('should render GNB with mobile menu button', () => {
     renderWithTheme(
       <MainLayout>
         <div>Content</div>
       </MainLayout>
     );
 
-    expect(screen.getByLabelText('open sidebar')).toBeInTheDocument();
+    expect(screen.getByLabelText('open menu')).toBeInTheDocument();
+  });
+
+  it('should render Footer', () => {
+    renderWithTheme(
+      <MainLayout>
+        <div>Content</div>
+      </MainLayout>
+    );
+
+    expect(screen.getByText('Resources')).toBeInTheDocument();
+    expect(screen.getByText('Documentation')).toBeInTheDocument();
   });
 
   it('should apply correct layout structure', () => {
@@ -57,5 +73,18 @@ describe('MainLayout', () => {
 
     const mainContent = screen.getByTestId('main-content');
     expect(mainContent).toBeInTheDocument();
+  });
+
+  it('should render navigation links in GNB', () => {
+    renderWithTheme(
+      <MainLayout>
+        <div>Content</div>
+      </MainLayout>
+    );
+
+    expect(screen.getAllByText('Dashboard').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Servers').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Players').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Settings').length).toBeGreaterThan(0);
   });
 });

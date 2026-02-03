@@ -56,6 +56,24 @@ describe('McctlApiAdapter', () => {
         'http://localhost:5001/api/servers',
         expect.objectContaining({
           headers: expect.objectContaining({
+            'X-API-Key': 'test-api-key',
+          }),
+        })
+      );
+    });
+
+    it('should include Content-Type header only when body is present', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ success: true }),
+      });
+
+      await adapter.createServer({ name: 'test', type: 'PAPER', version: '1.21.1' });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers',
+        expect.objectContaining({
+          headers: expect.objectContaining({
             'Content-Type': 'application/json',
             'X-API-Key': 'test-api-key',
           }),
