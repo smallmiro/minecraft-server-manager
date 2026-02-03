@@ -7,8 +7,11 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 import Box from '@mui/material/Box';
+import Tooltip from '@mui/material/Tooltip';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
+import DnsIcon from '@mui/icons-material/Dns';
+import LinkIcon from '@mui/icons-material/Link';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
 
 interface ServerCardProps {
@@ -33,17 +36,26 @@ const getStatusColor = (status: ServerSummary['status']): 'success' | 'error' | 
   }
 };
 
-const getHealthColor = (health: ServerSummary['health']): 'success' | 'error' | 'warning' | 'default' => {
-  switch (health) {
-    case 'healthy':
-      return 'success';
-    case 'unhealthy':
-      return 'error';
-    case 'starting':
-      return 'warning';
+const getStatusLabel = (status: ServerSummary['status']): string => {
+  switch (status) {
+    case 'running':
+      return 'Running';
+    case 'stopped':
+    case 'exited':
+      return 'Stopped';
+    case 'created':
+      return 'Created';
     default:
-      return 'default';
+      return status || 'Unknown';
   }
+};
+
+// Get primary hostname (first one, preferring .local)
+const getPrimaryHostname = (hostname: string | undefined): string => {
+  if (!hostname) return '-';
+  const hosts = hostname.split(',').map(h => h.trim());
+  const localHost = hosts.find(h => h.endsWith('.local'));
+  return localHost || hosts[0] || '-';
 };
 
 export function ServerCard({ server, onClick, onStart, onStop, loading = false }: ServerCardProps) {
@@ -57,12 +69,14 @@ export function ServerCard({ server, onClick, onStart, onStop, loading = false }
     e: React.MouseEvent,
     action: (serverName: string) => void
   ) => {
-    e.stopPropagation(); // Prevent card onClick from firing
+    e.stopPropagation();
     action(server.name);
   };
 
   const isRunning = server.status === 'running';
   const isStopped = server.status === 'stopped' || server.status === 'exited';
+  const primaryHostname = getPrimaryHostname(server.hostname);
+  const allHostnames = server.hostname?.split(',').map(h => h.trim()) || [];
 
   return (
     <Card
@@ -71,45 +85,82 @@ export function ServerCard({ server, onClick, onStart, onStop, loading = false }
       sx={{
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s',
+        height: 180,
+        display: 'flex',
+        flexDirection: 'column',
         '&:hover': onClick
           ? {
-              transform: 'translateY(-4px)',
+              transform: 'translateY(-2px)',
               boxShadow: 4,
             }
           : {},
       }}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
-          <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
+      <CardContent sx={{ flex: 1, pb: 1 }}>
+        {/* Header: Name + Status */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography
+            variant="h6"
+            component="h3"
+            sx={{
+              fontWeight: 600,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              flex: 1,
+              mr: 1,
+            }}
+          >
             {server.name}
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Chip
-              label={server.status}
-              size="small"
-              color={getStatusColor(server.status)}
-              sx={{ textTransform: 'capitalize' }}
-            />
-            <Chip
-              label={server.health}
-              size="small"
-              color={getHealthColor(server.health)}
-              sx={{ textTransform: 'capitalize' }}
-            />
-          </Box>
+          <Chip
+            label={getStatusLabel(server.status)}
+            size="small"
+            color={getStatusColor(server.status)}
+            sx={{
+              fontWeight: 500,
+              minWidth: 70,
+            }}
+          />
         </Box>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          {server.hostname}
-        </Typography>
+        {/* Hostname */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+          <LinkIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+          <Tooltip title={allHostnames.length > 1 ? allHostnames.join('\n') : ''} arrow>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {primaryHostname}
+              {allHostnames.length > 1 && ` (+${allHostnames.length - 1})`}
+            </Typography>
+          </Tooltip>
+        </Box>
 
-        <Typography variant="caption" color="text.secondary">
-          Container: {server.container}
-        </Typography>
+        {/* Container */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DnsIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {server.container}
+          </Typography>
+        </Box>
       </CardContent>
 
-      <CardActions sx={{ justifyContent: 'flex-end', px: 2, pb: 2 }}>
+      <CardActions sx={{ justifyContent: 'flex-end', px: 2, py: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
         {isStopped && onStart && (
           <IconButton
             aria-label="Start server"
@@ -131,6 +182,9 @@ export function ServerCard({ server, onClick, onStart, onStop, loading = false }
           >
             <StopIcon />
           </IconButton>
+        )}
+        {!isStopped && !isRunning && (
+          <Box sx={{ height: 34 }} />
         )}
       </CardActions>
     </Card>
