@@ -6,7 +6,7 @@
 'use client';
 
 import { use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useAppRouter } from '@/hooks/useAppRouter';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
@@ -20,7 +20,7 @@ interface PageProps {
 }
 
 export default function ConsolePage({ params }: PageProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const { name } = use(params);
   const serverName = decodeURIComponent(name);
 

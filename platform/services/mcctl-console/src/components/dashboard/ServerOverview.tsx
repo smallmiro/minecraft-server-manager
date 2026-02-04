@@ -8,9 +8,10 @@ import {
   Typography,
   CircularProgress,
   Chip,
-  Link,
 } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
+import { startLoading } from '@/components/providers';
+import { useAppRouter } from '@/hooks/useAppRouter';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
 
 export interface ServerOverviewProps {
@@ -28,7 +29,7 @@ export function ServerOverview({
   showViewAll = false,
   onServerClick,
 }: ServerOverviewProps) {
-  const router = useRouter();
+  const router = useAppRouter();
 
   const displayedServers = maxItems ? servers.slice(0, maxItems) : servers;
 
@@ -99,13 +100,13 @@ export function ServerOverview({
         title="Servers"
         action={
           showViewAll && servers.length > (maxItems || 0) ? (
-            <Link
+            <NextLink
               href="/servers"
-              color="primary"
-              sx={{ textDecoration: 'none', fontSize: '0.875rem' }}
+              onClick={() => startLoading()}
+              style={{ textDecoration: 'none', color: 'inherit', fontSize: '0.875rem' }}
             >
               View All ({servers.length})
-            </Link>
+            </NextLink>
           ) : null
         }
       />

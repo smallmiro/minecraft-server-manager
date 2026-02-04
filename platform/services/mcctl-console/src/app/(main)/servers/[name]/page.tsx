@@ -1,6 +1,7 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useAppRouter } from '@/hooks/useAppRouter';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -76,7 +77,7 @@ function RestartButtonIcon() {
 
 export default function ServerDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  const router = useAppRouter();
   const serverName = decodeURIComponent(params.name as string);
 
   // Fetch server detail

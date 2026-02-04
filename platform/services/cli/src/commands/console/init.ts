@@ -182,7 +182,8 @@ function generateEcosystemConfig(
   isDevelopment: boolean,
   nextAuthSecret: string,
   serviceOptions: ServiceInstallOptions,
-  authConfig: AuthConfig
+  authConfig: AuthConfig,
+  rootDir: string
 ): string {
   const modeComment = isDevelopment
     ? '// NOTE: Development mode - using workspace paths'
@@ -196,7 +197,7 @@ function generateEcosystemConfig(
       `        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',`,
       `        PORT: ${apiPort},`,
       `        HOST: '0.0.0.0',`,
-      `        MCCTL_ROOT: process.env.MCCTL_ROOT || '.',`,
+      `        MCCTL_ROOT: '${rootDir}',`,
       `        AUTH_MODE: '${authConfig.accessMode}',`,
     ];
 
@@ -211,7 +212,7 @@ function generateEcosystemConfig(
     apps.push(`    {
       name: 'mcctl-api',
       script: '${apiScriptPath}',
-      cwd: process.env.MCCTL_ROOT || '.',
+      cwd: '${rootDir}',
       env: {
 ${apiEnvVars.join('\n')}
       },
@@ -227,13 +228,13 @@ ${apiEnvVars.join('\n')}
     apps.push(`    {
       name: 'mcctl-console',
       script: '${consoleScriptPath}',
-      cwd: process.env.MCCTL_ROOT || '.',
+      cwd: '${rootDir}',
       env: {
         NODE_ENV: '${isDevelopment ? 'development' : 'production'}',
         PORT: ${consolePort},
         HOSTNAME: '0.0.0.0',
         MCCTL_API_URL: 'http://localhost:${apiPort}',
-        MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
+        MCCTL_ROOT: '${rootDir}',
         NEXTAUTH_SECRET: '${nextAuthSecret}',
         NEXTAUTH_URL: 'http://localhost:${consolePort}',
       },
@@ -684,7 +685,8 @@ export async function consoleInitCommand(
       scriptPaths.isDevelopment,
       nextAuthSecret,
       serviceInstallOptions,
-      { accessMode, apiKey, allowedIps }
+      { accessMode, apiKey, allowedIps },
+      paths.root
     );
     writeFileSync(ecosystemPath, ecosystemContent, 'utf-8');
 

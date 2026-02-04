@@ -503,11 +503,18 @@ export function getContainerUptime(container: string): { uptime: string; seconds
  */
 export async function getOnlinePlayers(container: string): Promise<PlayerListResult | null> {
   try {
-    const result = execSync(`docker exec ${container} rcon-cli list`, {
+    const rawResult = execSync(`docker exec ${container} rcon-cli list`, {
       encoding: 'utf-8',
       timeout: 5000,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
+
+    // Strip ANSI escape codes and get first line only
+    const result = rawResult
+      .replace(/\x1b\[[0-9;]*m/g, '') // Remove ANSI codes
+      .replace(/\[\d*m/g, '')         // Remove partial ANSI codes like [0m
+      .split('\n')[0]                  // Get first line only
+      ?.trim() ?? '';
 
     // Parse: "There are 3 of a max of 20 players online: Notch, Steve, Alex"
     // Or: "There are 0 of a max of 20 players online:"

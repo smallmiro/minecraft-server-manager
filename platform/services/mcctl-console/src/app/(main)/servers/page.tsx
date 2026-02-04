@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useAppRouter } from '@/hooks/useAppRouter';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
@@ -22,7 +22,7 @@ import { useCreateServerSSE } from '@/hooks/useCreateServerSSE';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 
 export default function ServersPage() {
-  const router = useRouter();
+  const router = useAppRouter();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [loadingServers, setLoadingServers] = useState<string[]>([]);
 
