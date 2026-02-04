@@ -109,10 +109,10 @@ export async function POST(
 ) {
   const { path } = params;
 
-  // Build target URL
+  // Build target URL with follow=true to enable SSE mode
   const apiUrl = process.env.MCCTL_API_URL || 'http://localhost:5001';
   const apiPath = path.join('/');
-  const targetUrl = `${apiUrl}/api/${apiPath}`;
+  const targetUrl = `${apiUrl}/api/${apiPath}?follow=true`;
 
   // Get API key
   const apiKey = process.env.MCCTL_API_KEY || '';

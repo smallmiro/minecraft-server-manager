@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 import type { ServerCreateEvent } from '@/types/events';
 
@@ -206,8 +206,14 @@ export function useCreateServerSSE(
   );
 
   // Cleanup on unmount
-  // Note: This is handled via eventSourceRef.current.close() in reset()
-  // React will clean up automatically when component unmounts
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, []);
 
   return {
     status,
