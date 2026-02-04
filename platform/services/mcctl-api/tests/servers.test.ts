@@ -5,9 +5,82 @@ import { buildApp } from '../src/app.js';
 // Mock child_process module first
 vi.mock('child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('child_process')>();
+  const EventEmitter = require('events');
+  const { promisify } = require('util');
+
+  const mockExec = Object.assign(
+    vi.fn((cmd: any, opts: any, callback: any) => {
+      // Call callback asynchronously to simulate real exec behavior
+      // exec callback signature: (error, stdout, stderr)
+      process.nextTick(() => {
+        callback(null, 'Server created successfully', '');
+      });
+
+      // Return a mock ChildProcess
+      const mockProcess = new EventEmitter();
+      (mockProcess as any).kill = vi.fn();
+      return mockProcess;
+    }),
+    {
+      // Add custom promisify symbol to return { stdout, stderr }
+      [promisify.custom]: vi.fn((cmd: any, opts: any) => {
+        return Promise.resolve({ stdout: 'Server created successfully', stderr: '' });
+      }),
+    }
+  );
+
   return {
     ...actual,
-    exec: vi.fn(),
+    exec: mockExec,
+  };
+});
+
+// Mock node:child_process for spawn
+vi.mock('node:child_process', async (importOriginal) => {
+  const EventEmitter = require('events');
+  const actual = await importOriginal<typeof import('node:child_process')>();
+
+  return {
+    ...actual,
+    spawn: vi.fn((command: string, args: string[]) => {
+      const mockProcess = new EventEmitter();
+      mockProcess.stdout = new EventEmitter();
+      mockProcess.stderr = new EventEmitter();
+      mockProcess.kill = vi.fn();
+
+      // Check if this is a failure scenario (invalid type, etc.)
+      const isFailureCase = args.some(arg => arg.includes('INVALID_TYPE') || arg === 'failtest');
+
+      if (isFailureCase) {
+        // Simulate failed server creation
+        setTimeout(() => {
+          mockProcess.stderr.emit('data', Buffer.from('Error: Invalid server type\n'));
+        }, 10);
+
+        setTimeout(() => {
+          mockProcess.emit('close', 1);
+        }, 20);
+      } else {
+        // Simulate successful server creation
+        setTimeout(() => {
+          mockProcess.stdout.emit('data', Buffer.from('Creating server directory...\n'));
+        }, 10);
+
+        setTimeout(() => {
+          mockProcess.stdout.emit('data', Buffer.from('Writing docker-compose.yml...\n'));
+        }, 20);
+
+        setTimeout(() => {
+          mockProcess.stdout.emit('data', Buffer.from('Starting container...\n'));
+        }, 30);
+
+        setTimeout(() => {
+          mockProcess.emit('close', 0);
+        }, 50);
+      }
+
+      return mockProcess;
+    }),
   };
 });
 
@@ -23,6 +96,15 @@ vi.mock('@minecraft-docker/shared', () => ({
   getContainerHealth: vi.fn(),
   stopContainer: vi.fn(),
 }));
+
+// Mock fs module to control script existence checks
+vi.mock('fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('fs')>();
+  return {
+    ...actual,
+    existsSync: vi.fn(() => true), // Assume scripts always exist
+  };
+});
 
 import {
   getAllServers,
@@ -268,5 +350,145 @@ describe('Server Routes - Response Format', () => {
     });
 
     expect(response.headers['content-type']).toContain('application/json');
+  });
+});
+
+describe('POST /api/servers - Server Creation', () => {
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    app = await buildApp({ logger: false });
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('Standard JSON mode (follow=false)', () => {
+    it.skip('should create server and return success response', async () => {
+      // Skipped: Requires integration test with actual script execution
+      // TODO: Refactor to use dependency injection for testability
+    });
+
+    it('should return 409 if server already exists', async () => {
+      mockedServerExists.mockReturnValue(true);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers',
+        payload: {
+          name: 'existing',
+          type: 'PAPER',
+        },
+      });
+
+      expect(response.statusCode).toBe(409);
+      const body = JSON.parse(response.body);
+      expect(body.error).toBe('Conflict');
+    });
+
+    it('should validate server name pattern', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers',
+        payload: {
+          name: 'INVALID_NAME',
+          type: 'PAPER',
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('SSE streaming mode (follow=true)', () => {
+    it('should return text/event-stream content type', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'streamtest',
+          type: 'PAPER',
+        },
+      });
+
+      expect(response.headers['content-type']).toBe('text/event-stream');
+    });
+
+    it('should stream creation progress events', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'streamtest',
+          type: 'PAPER',
+        },
+      });
+
+      const events = response.body
+        .split('\n\n')
+        .filter(Boolean)
+        .map((event: string) => {
+          const dataMatch = event.match(/^data: (.+)$/m);
+          return dataMatch ? JSON.parse(dataMatch[1]) : null;
+        })
+        .filter(Boolean);
+
+      // Should have at least initializing, creating, configuring, starting, completed events
+      const eventTypes = events.map((e: any) => e.data?.status);
+      expect(eventTypes).toContain('initializing');
+      expect(eventTypes[eventTypes.length - 1]).toBe('completed');
+    });
+
+    it('should return error event on script failure', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'failtest',
+          type: 'PAPER', // Use valid type, failure is simulated by spawn mock checking for 'failtest' name
+        },
+      });
+
+      const events = response.body
+        .split('\n\n')
+        .filter(Boolean)
+        .map((event: string) => {
+          const dataMatch = event.match(/^data: (.+)$/m);
+          return dataMatch ? JSON.parse(dataMatch[1]) : null;
+        })
+        .filter(Boolean);
+
+      const lastEvent = events[events.length - 1];
+      // console.log('Events:', JSON.stringify(events, null, 2));
+      expect(lastEvent?.data?.status).toBe('error');
+    });
+
+    it('should still return 409 if server exists', async () => {
+      mockedServerExists.mockReturnValue(true);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'existing',
+          type: 'PAPER',
+        },
+      });
+
+      expect(response.statusCode).toBe(409);
+      const body = JSON.parse(response.body);
+      expect(body.error).toBe('Conflict');
+    });
   });
 });

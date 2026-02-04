@@ -153,6 +153,11 @@ export const CreateServerRequestSchema = Type.Object({
   autoStart: Type.Optional(Type.Boolean({ default: true })),
 });
 
+// Create Server Query Schema (for SSE streaming support)
+export const CreateServerQuerySchema = Type.Object({
+  follow: Type.Optional(Type.Boolean({ default: false, description: 'Enable SSE streaming for real-time creation progress' })),
+});
+
 // Create Server Response Schema
 export const CreateServerResponseSchema = Type.Object({
   success: Type.Boolean(),
@@ -184,4 +189,5 @@ export type LogsQuery = Static<typeof LogsQuerySchema>;
 export type StatusQuery = Static<typeof StatusQuerySchema>;
 export type StatusResponse = Static<typeof StatusResponseSchema>;
 export type CreateServerRequest = Static<typeof CreateServerRequestSchema>;
+export type CreateServerQuery = Static<typeof CreateServerQuerySchema>;
 export type DeleteServerQuery = Static<typeof DeleteServerQuerySchema>;

@@ -15,10 +15,10 @@ import { ServerList } from '@/components/servers/ServerList';
 import { CreateServerDialog } from '@/components/servers/CreateServerDialog';
 import {
   useServers,
-  useCreateServer,
   useStartServer,
   useStopServer,
 } from '@/hooks/useMcctl';
+import { useCreateServerSSE } from '@/hooks/useCreateServerSSE';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 
 export default function ServersPage() {
@@ -30,21 +30,23 @@ export default function ServersPage() {
   const { data, isLoading, error } = useServers();
 
   // Mutations
-  const createServer = useCreateServer();
   const startServer = useStartServer();
   const stopServer = useStopServer();
+  const createServer = useCreateServerSSE({
+    onSuccess: () => {
+      setCreateDialogOpen(false);
+    },
+    onError: (error) => {
+      console.error('Failed to create server:', error);
+    },
+  });
 
   const handleServerClick = (serverName: string) => {
     router.push(`/servers/${encodeURIComponent(serverName)}`);
   };
 
-  const handleCreateServer = async (request: CreateServerRequest) => {
-    try {
-      await createServer.mutateAsync(request);
-      setCreateDialogOpen(false);
-    } catch (err) {
-      console.error('Failed to create server:', err);
-    }
+  const handleCreateServer = (request: CreateServerRequest) => {
+    createServer.createServer(request);
   };
 
   const handleStartServer = async (serverName: string) => {
@@ -126,9 +128,9 @@ export default function ServersPage() {
         </Alert>
       )}
 
-      {createServer.isError && (
+      {createServer.error && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          Failed to create server: {createServer.error?.message}
+          Failed to create server: {createServer.error}
         </Alert>
       )}
 
@@ -161,9 +163,15 @@ export default function ServersPage() {
 
       <CreateServerDialog
         open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
+        onClose={() => {
+          setCreateDialogOpen(false);
+          createServer.reset();
+        }}
         onSubmit={handleCreateServer}
-        loading={createServer.isPending}
+        loading={createServer.isCreating}
+        status={createServer.status}
+        progress={createServer.progress}
+        message={createServer.message}
       />
     </>
   );

@@ -145,18 +145,23 @@ describe('CreateServerDialog', () => {
     });
   });
 
-  it('should disable create button when loading', () => {
+  it('should show progress UI when creating', () => {
     renderWithTheme(
       <CreateServerDialog
         open={true}
         onClose={vi.fn()}
         onSubmit={vi.fn()}
         loading={true}
+        status="creating"
+        progress={25}
+        message="Creating server configuration..."
       />
     );
 
-    const createButton = screen.getByRole('button', { name: /creating/i });
-    expect(createButton).toBeDisabled();
+    // Should show progress stepper
+    expect(screen.getByText('Creating')).toBeInTheDocument();
+    expect(screen.getByText('Creating server configuration...')).toBeInTheDocument();
+    expect(screen.getByText('25%')).toBeInTheDocument();
   });
 
   it('should set autoStart checkbox', async () => {

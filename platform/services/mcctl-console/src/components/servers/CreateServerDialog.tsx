@@ -12,13 +12,24 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import LinearProgress from '@mui/material/LinearProgress';
+import Typography from '@mui/material/Typography';
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
+import type { CreateServerStatus } from '@/hooks/useCreateServerSSE';
 
 interface CreateServerDialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: CreateServerRequest) => void;
   loading?: boolean;
+  status?: CreateServerStatus;
+  progress?: number;
+  message?: string;
 }
 
 const SERVER_TYPES = ['VANILLA', 'PAPER', 'FABRIC', 'FORGE', 'NEOFORGE'];
@@ -31,9 +42,28 @@ const DEFAULT_FORM_VALUES: CreateServerRequest = {
   autoStart: false,
 };
 
-export function CreateServerDialog({ open, onClose, onSubmit, loading = false }: CreateServerDialogProps) {
+const PROGRESS_STEPS = [
+  { key: 'initializing', label: 'Initializing' },
+  { key: 'creating', label: 'Creating' },
+  { key: 'configuring', label: 'Configuring' },
+  { key: 'starting', label: 'Starting' },
+];
+
+export function CreateServerDialog({
+  open,
+  onClose,
+  onSubmit,
+  loading = false,
+  status = 'idle',
+  progress = 0,
+  message = '',
+}: CreateServerDialogProps) {
   const [formData, setFormData] = useState<CreateServerRequest>(DEFAULT_FORM_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Determine active step based on status
+  const activeStep = PROGRESS_STEPS.findIndex((step) => step.key === status);
+  const isCreating = status !== 'idle' && status !== 'completed' && status !== 'error';
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -89,74 +119,141 @@ export function CreateServerDialog({ open, onClose, onSubmit, loading = false }:
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={isCreating ? undefined : onClose} maxWidth="sm" fullWidth>
       <form onSubmit={handleSubmit}>
-        <DialogTitle>Create New Server</DialogTitle>
+        <DialogTitle>
+          {status === 'completed' ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CheckCircleIcon color="success" />
+              Server Created Successfully
+            </Box>
+          ) : status === 'error' ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ErrorIcon color="error" />
+              Creation Failed
+            </Box>
+          ) : (
+            'Create New Server'
+          )}
+        </DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-            <TextField
-              label="Server Name"
-              value={formData.name}
-              onChange={handleChange('name')}
-              error={!!errors.name}
-              helperText={errors.name || 'Only lowercase letters, numbers, and hyphens'}
-              fullWidth
-              autoFocus
-            />
+          {isCreating || status === 'completed' || status === 'error' ? (
+            <Box sx={{ py: 2 }}>
+              {/* Progress Stepper */}
+              <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 3 }}>
+                {PROGRESS_STEPS.map((step) => (
+                  <Step key={step.key}>
+                    <StepLabel>{step.label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
 
-            <TextField
-              label="Server Type"
-              select
-              value={formData.type}
-              onChange={handleChange('type')}
-              fullWidth
-            >
-              {SERVER_TYPES.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </TextField>
+              {/* Progress Bar */}
+              {isCreating && (
+                <Box sx={{ mb: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {message}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {progress}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress variant="determinate" value={progress} />
+                </Box>
+              )}
 
-            <TextField
-              label="Minecraft Version"
-              value={formData.version}
-              onChange={handleChange('version')}
-              helperText="e.g., 1.21.1, 1.20.4, latest"
-              fullWidth
-            />
+              {/* Completion/Error Message */}
+              {status === 'completed' && (
+                <Typography color="success.main" sx={{ textAlign: 'center' }}>
+                  {message}
+                </Typography>
+              )}
+              {status === 'error' && (
+                <Typography color="error.main" sx={{ textAlign: 'center' }}>
+                  {message}
+                </Typography>
+              )}
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+              <TextField
+                label="Server Name"
+                value={formData.name}
+                onChange={handleChange('name')}
+                error={!!errors.name}
+                helperText={errors.name || 'Only lowercase letters, numbers, and hyphens'}
+                fullWidth
+                autoFocus
+                disabled={isCreating}
+              />
 
-            <TextField
-              label="Memory"
-              value={formData.memory}
-              onChange={handleChange('memory')}
-              helperText="e.g., 4G, 8G, 16G"
-              fullWidth
-            />
+              <TextField
+                label="Server Type"
+                select
+                value={formData.type}
+                onChange={handleChange('type')}
+                fullWidth
+                disabled={isCreating}
+              >
+                {SERVER_TYPES.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </TextField>
 
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={formData.autoStart || false}
-                  onChange={handleCheckboxChange('autoStart')}
-                />
-              }
-              label="Auto-start after creation"
-            />
-          </Box>
+              <TextField
+                label="Minecraft Version"
+                value={formData.version}
+                onChange={handleChange('version')}
+                helperText="e.g., 1.21.1, 1.20.4, latest"
+                fullWidth
+                disabled={isCreating}
+              />
+
+              <TextField
+                label="Memory"
+                value={formData.memory}
+                onChange={handleChange('memory')}
+                helperText="e.g., 4G, 8G, 16G"
+                fullWidth
+                disabled={isCreating}
+              />
+
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.autoStart || false}
+                    onChange={handleCheckboxChange('autoStart')}
+                    disabled={isCreating}
+                  />
+                }
+                label="Auto-start after creation"
+              />
+            </Box>
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={16} /> : null}
-          >
-            {loading ? 'Creating...' : 'Create'}
-          </Button>
+          {status === 'completed' || status === 'error' ? (
+            <Button onClick={onClose} variant="contained" fullWidth>
+              Close
+            </Button>
+          ) : (
+            <>
+              <Button onClick={onClose} disabled={isCreating}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isCreating}
+                startIcon={isCreating ? <CircularProgress size={16} /> : null}
+              >
+                {isCreating ? 'Creating...' : 'Create'}
+              </Button>
+            </>
+          )}
         </DialogActions>
       </form>
     </Dialog>
