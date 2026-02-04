@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.10] - 2026-02-04
+
+### Added
+- **Console UI ANSI color support** - Display colored log output using ansi-to-html library
+- **Loading indicator** - nprogress loading bar for page navigation
+- **Console UX improvements** - Hide RCON toggle, fullscreen console dialog, Ubuntu font
+- **SSE streaming for server creation** - Real-time progress updates during server creation (#227, #228)
+
+### Fixed
+- **MCCTL_ROOT path resolution** - Fix relative path '.' to absolute path
+- **Player list parsing** - Remove ANSI escape codes from RCON response for correct parsing
+
 ## [1.7.9] - 2026-02-03
 
 ### Fixed

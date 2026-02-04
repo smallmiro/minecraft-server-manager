@@ -73,9 +73,15 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.7.10 (2026-02-04)
+- **feat(console)**: Add ANSI color support for console logs
+- **feat(console)**: Add loading indicator with nprogress
+- **feat(api,console)**: Add SSE streaming for server creation (#227, #228)
+- **fix**: Fix MCCTL_ROOT path resolution (relative to absolute)
+- **fix**: Fix player list parsing by removing ANSI escape codes from RCON
+
 ### v1.7.9 (2026-02-03)
 - **fix(ci)**: Fix YAML syntax error in E2E workflow configuration
-- Resolve CI pipeline failure due to malformed YAML
 
 ### v1.7.8 (2026-01-31)
 - **feat(cli)**: Add selective console service support - choose api/console/all (#203)
@@ -83,17 +89,12 @@ mcctl logs myserver
 
 ### v1.7.7 (2026-01-31)
 - **feat(cli)**: Auto-install mcctl-api on console init
-- Streamlined Admin Service setup process
 
 ### v1.7.6 (2026-01-31)
 - **feat(mcctl-api)**: First npm release of REST API package
-- Add @minecraft-docker/mcctl-api to npm registry
 
 ### v1.7.5 (2026-01-31)
 - **fix**: Resolve Edge runtime error in mcctl-console middleware (#201)
-
-### v1.7.4 (2026-01-31)
-- **docs**: Add CHANGELOG.md with v1.7.1-1.7.3 hotfix history
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
