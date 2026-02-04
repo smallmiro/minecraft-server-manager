@@ -73,6 +73,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.7.11 (2026-02-04)
+- **fix(shared)**: Check LEVEL config before WORLD_NAME for world size calculation
+  - Fixes servers using LEVEL config showing "0 B" for world size
+
 ### v1.7.10 (2026-02-04)
 - **feat(console)**: Add ANSI color support for console logs
 - **feat(console)**: Add loading indicator with nprogress
@@ -92,9 +96,6 @@ mcctl logs myserver
 
 ### v1.7.6 (2026-01-31)
 - **feat(mcctl-api)**: First npm release of REST API package
-
-### v1.7.5 (2026-01-31)
-- **fix**: Resolve Edge runtime error in mcctl-console middleware (#201)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

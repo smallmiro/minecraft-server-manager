@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.11] - 2026-02-04
+
+### Fixed
+- **World size calculation** - Check LEVEL config before WORLD_NAME for correct world directory resolution
+  - itzg/minecraft-server uses LEVEL to specify the world directory name
+  - Servers configured with LEVEL (like Wild-Deity) were showing "0 B" for world size
+  - Now properly checks LEVEL first, then falls back to WORLD_NAME
+
 ## [1.7.10] - 2026-02-04
 
 ### Added
