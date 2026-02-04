@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Creeper Face - Minecraft Style -->
+  <rect width="32" height="32" fill="#5DA840"/>
+  <!-- Eyes -->
+  <rect x="4" y="8" width="8" height="8" fill="#000"/>
+  <rect x="20" y="8" width="8" height="8" fill="#000"/>
+  <!-- Mouth -->
+  <rect x="12" y="16" width="8" height="4" fill="#000"/>
+  <rect x="8" y="20" width="16" height="8" fill="#000"/>
+  <rect x="8" y="28" width="4" height="4" fill="#000"/>
+  <rect x="20" y="28" width="4" height="4" fill="#000"/>
+  <!-- Texture -->
+  <rect x="0" y="0" width="4" height="4" fill="#4A9030" opacity="0.5"/>
+  <rect x="8" y="4" width="4" height="4" fill="#4A9030" opacity="0.5"/>
+  <rect x="24" y="0" width="4" height="4" fill="#4A9030" opacity="0.5"/>
+  <rect x="28" y="8" width="4" height="4" fill="#4A9030" opacity="0.5"/>
+  <rect x="0" y="24" width="4" height="4" fill="#4A9030" opacity="0.5"/>
+</svg>

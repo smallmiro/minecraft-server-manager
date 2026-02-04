@@ -19,8 +19,9 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import DnsIcon from '@mui/icons-material/Dns';
 import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
-import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import { UserMenu } from '@/components/auth';
+import { CreeperIcon } from '@/components/icons/CreeperIcon';
+import { startLoading } from '@/components/providers';
 
 export const GNB_HEIGHT = 64;
 
@@ -88,7 +89,7 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
 
           {/* Logo */}
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-            <ViewInArIcon
+            <CreeperIcon
               sx={{
                 fontSize: 28,
                 color: 'primary.main',
@@ -128,6 +129,7 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
                   key={item.href}
                   href={item.href}
                   style={{ textDecoration: 'none' }}
+                  onClick={() => !active && startLoading()}
                 >
                   <Box
                     sx={{
@@ -212,7 +214,7 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <ViewInArIcon
+              <CreeperIcon
                 sx={{
                   fontSize: 24,
                   color: 'primary.main',
@@ -247,7 +249,10 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
                   <ListItemButton
                     component={Link}
                     href={item.href}
-                    onClick={onMenuToggle}
+                    onClick={() => {
+                      onMenuToggle();
+                      if (!active) startLoading();
+                    }}
                     aria-current={active ? 'page' : undefined}
                     sx={{
                       borderRadius: 2,

@@ -104,12 +104,22 @@ export function useServerLogs(
   // Handle incoming log messages
   const handleMessage = useCallback(
     (event: SSEEvent) => {
+      let logLine: string | undefined;
+
+      // Handle both formats:
+      // 1. New format: { type: 'server-log', data: { log: '...' } }
+      // 2. Legacy format: { log: '...' }
       if (event.type === 'server-log') {
         const logEvent = event as ServerLogEvent;
-        const logLine = logEvent.data.log;
+        logLine = logEvent.data.log;
+      } else if ('log' in event && typeof (event as { log?: string }).log === 'string') {
+        // Legacy format without type field
+        logLine = (event as { log: string }).log;
+      }
 
+      if (logLine) {
         setLogs((prevLogs) => {
-          const newLogs = [...prevLogs, logLine];
+          const newLogs = [...prevLogs, logLine!];
 
           // Trim to maxLines
           if (newLogs.length > maxLines) {

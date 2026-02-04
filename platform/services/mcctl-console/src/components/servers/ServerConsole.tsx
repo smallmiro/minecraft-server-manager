@@ -5,7 +5,8 @@
 
 'use client';
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
+import Convert from 'ansi-to-html';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
@@ -54,6 +55,75 @@ const QUICK_COMMANDS: QuickCommand[] = [
   { label: 'gamemode', template: 'gamemode ' },
 ];
 
+// ANSI to HTML converter instance
+const ansiConverter = new Convert({
+  fg: '#aaa',
+  bg: '#000',
+  newline: false,
+  escapeXML: true,
+  colors: {
+    0: '#000000', // Black
+    1: '#cc0000', // Red
+    2: '#4e9a06', // Green
+    3: '#c4a000', // Yellow
+    4: '#3465a4', // Blue
+    5: '#75507b', // Magenta
+    6: '#06989a', // Cyan
+    7: '#d3d7cf', // White
+    8: '#555753', // Bright Black
+    9: '#ef2929', // Bright Red
+    10: '#8ae234', // Bright Green
+    11: '#fce94f', // Bright Yellow
+    12: '#729fcf', // Bright Blue
+    13: '#ad7fa8', // Bright Magenta
+    14: '#34e2e2', // Bright Cyan
+    15: '#eeeeec', // Bright White
+  },
+});
+
+/**
+ * Convert ANSI codes to HTML and clean up control characters
+ */
+function convertAnsiToHtml(text: string): string {
+  // Remove cursor/screen control codes like [K, [?1h, [?2004h, etc.
+  // Handle both with ESC character (\x1b) and without (when ESC is stripped)
+  const cleaned = text
+    // With ESC character
+    .replace(/\x1b\[\?[\d;]*[a-zA-Z]/g, '') // Remove ? sequences
+    .replace(/\x1b\[[0-9;]*[KJH]/g, '')     // Remove K, J, H sequences
+    .replace(/\x1b=/g, '')                   // Remove = sequences
+    // Without ESC character (already stripped by backend)
+    .replace(/\[\?[\d;]*[a-zA-Z]/g, '')     // Remove ? sequences like [?1h, [?2004h
+    .replace(/\[[0-9;]*[KJH]/g, '')         // Remove K, J, H sequences like [K
+    .replace(/\[m/g, '')                     // Remove reset [m
+    .replace(/\[(\d+)m/g, '\x1b[$1m')       // Convert [32m to \x1b[32m for ansi-to-html
+    .replace(/>\.\.\.\.\r?/g, '')           // Remove >.... progress indicators
+    .replace(/\r/g, '');                     // Remove carriage returns
+
+  return ansiConverter.toHtml(cleaned);
+}
+
+/**
+ * Memoized log line component to prevent unnecessary re-renders
+ */
+const LogLine = memo(function LogLine({ log }: { log: string }) {
+  const html = useMemo(() => convertAnsiToHtml(log), [log]);
+
+  return (
+    <Box
+      sx={{
+        py: 0.25,
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-all',
+        '& span': {
+          // Ensure ANSI colors are visible
+        },
+      }}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+});
+
 /**
  * Extract log level from log line
  */
@@ -88,6 +158,7 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [logFilter, setLogFilter] = useState<LogLevel>('ALL');
   const [autoScroll, setAutoScroll] = useState(true);
+  const [hideRcon, setHideRcon] = useState(true); // Hide RCON logs by default
   const [isExecuting, setIsExecuting] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -98,11 +169,24 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
     serverName,
   });
 
-  // Filter logs based on selected level
+  // Filter logs based on selected level and RCON filter
   const filteredLogs = useMemo(() => {
-    if (logFilter === 'ALL') return logs;
-    return logs.filter((log) => getLogLevel(log) === logFilter);
-  }, [logs, logFilter]);
+    let filtered = logs;
+
+    // Filter out RCON messages if enabled
+    if (hideRcon) {
+      filtered = filtered.filter(
+        (log) => !log.includes('RCON Listener') && !log.includes('RCON Client') && !log.includes('RconClient')
+      );
+    }
+
+    // Filter by log level
+    if (logFilter !== 'ALL') {
+      filtered = filtered.filter((log) => getLogLevel(log) === logFilter);
+    }
+
+    return filtered;
+  }, [logs, logFilter, hideRcon]);
 
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
@@ -252,6 +336,19 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
             label="Auto-scroll"
           />
 
+          {/* Hide RCON toggle */}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={hideRcon}
+                onChange={(e) => setHideRcon(e.target.checked)}
+                size="small"
+                inputProps={{ 'aria-label': 'Hide RCON' }}
+              />
+            }
+            label="Hide RCON"
+          />
+
           {/* Clear button */}
           <IconButton
             size="small"
@@ -296,22 +393,9 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
             Waiting for logs...
           </Typography>
         ) : (
-          filteredLogs.map((log, index) => {
-            const level = getLogLevel(log);
-            return (
-              <Box
-                key={index}
-                sx={{
-                  py: 0.25,
-                  color: getLogLevelColor(level),
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                }}
-              >
-                {log}
-              </Box>
-            );
-          })
+          filteredLogs.map((log, index) => (
+            <LogLine key={index} log={log} />
+          ))
         )}
       </Box>
 

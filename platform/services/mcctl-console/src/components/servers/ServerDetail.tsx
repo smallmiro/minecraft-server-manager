@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -13,6 +13,9 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Grid from '@mui/material/Grid';
 import Divider from '@mui/material/Divider';
 import { alpha } from '@mui/material/styles';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import CloseIcon from '@mui/icons-material/Close';
 import SpeedIcon from '@mui/icons-material/Speed';
 import SdStorageIcon from '@mui/icons-material/SdStorage';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
@@ -22,6 +25,7 @@ import TerminalIcon from '@mui/icons-material/Terminal';
 import type { ServerDetail as ServerDetailType } from '@/ports/api/IMcctlApiClient';
 import { ResourceStatCard } from './ResourceStatCard';
 import { useServerLogs } from '@/hooks/useServerLogs';
+import { ServerConsole } from './ServerConsole';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -43,9 +47,30 @@ interface ParsedLog {
   msg: string;
 }
 
+/**
+ * Strip ANSI codes and control characters from log line
+ */
+function stripAnsi(text: string): string {
+  return text
+    // ESC sequences with \x1b
+    .replace(/\x1b\[\?[\d;]*[a-zA-Z]/g, '')
+    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+    .replace(/\x1b=/g, '')
+    // ESC sequences without \x1b (already stripped)
+    .replace(/\[\?[\d;]*[a-zA-Z]/g, '')
+    .replace(/\[[0-9;]*[a-zA-Z]/g, '')
+    .replace(/\[m/g, '')
+    // Control characters
+    .replace(/>\.\.\.\.\r?/g, '')
+    .replace(/\r/g, '')
+    .trim();
+}
+
 function parseLogLine(log: string): ParsedLog | null {
+  // Strip ANSI codes first
+  const cleanLog = stripAnsi(log);
   // Format: [HH:MM:SS] [Thread/LEVEL]: Message
-  const match = log.match(/\[(\d{2}:\d{2}:\d{2})\]\s*\[([^/]+)\/(\w+)\]:\s*(.+)/);
+  const match = cleanLog.match(/\[(\d{2}:\d{2}:\d{2})\]\s*\[([^/]+)\/(\w+)\]:\s*(.+)/);
   if (match) {
     return {
       time: match[1],
@@ -103,10 +128,18 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
   const [activeTab, setActiveTab] = useState<TabType>('Overview');
   const [command, setCommand] = useState('');
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [consoleOpen, setConsoleOpen] = useState(false);
   const consoleRef = useRef<HTMLDivElement>(null);
 
   // Connect to server logs
-  const { logs, isConnected } = useServerLogs({ serverName: server.name });
+  const { logs: rawLogs, isConnected } = useServerLogs({ serverName: server.name });
+
+  // Filter out RCON logs
+  const logs = useMemo(() => {
+    return rawLogs.filter(
+      (log) => !log.includes('RCON Listener') && !log.includes('RCON Client') && !log.includes('RconClient')
+    );
+  }, [rawLogs]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -263,14 +296,14 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
               fontSize: 13,
               lineHeight: 1.85,
               color: '#b4b6c4',
-              bgcolor: 'background.paper',
+              bgcolor: '#0a0a0a',
               scrollbarWidth: 'thin',
-              scrollbarColor: '#3a3d4e #1e2030',
+              scrollbarColor: '#3a3d4e #0a0a0a',
               '&::-webkit-scrollbar': {
                 width: 8,
               },
               '&::-webkit-scrollbar-track': {
-                bgcolor: '#1e2030',
+                bgcolor: '#0a0a0a',
               },
               '&::-webkit-scrollbar-thumb': {
                 bgcolor: '#3a3d4e',
@@ -329,10 +362,10 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
                     </Box>
                   );
                 }
-                // Raw log line
+                // Raw log line (strip ANSI codes)
                 return (
                   <Box key={i} sx={{ color: '#b4b6c4' }}>
-                    {log}
+                    {stripAnsi(log)}
                   </Box>
                 );
               })
@@ -341,6 +374,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
 
           {/* Expand button */}
           <IconButton
+            onClick={() => setConsoleOpen(true)}
             sx={{
               position: 'absolute',
               top: 12,
@@ -523,6 +557,39 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
           </Typography>
         </Box>
       )}
+
+      {/* Full-screen Console Dialog */}
+      <Dialog
+        open={consoleOpen}
+        onClose={() => setConsoleOpen(false)}
+        maxWidth="xl"
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: '90vh',
+            bgcolor: 'background.paper',
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontFamily: '"Minecraft", sans-serif',
+              fontWeight: 400,
+              letterSpacing: '0.05em',
+            }}
+          >
+            Console - {server.name}
+          </Typography>
+          <IconButton onClick={() => setConsoleOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
+          <ServerConsole serverName={server.name} />
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

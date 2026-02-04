@@ -36,11 +36,10 @@ const mockServer: ServerDetailType = {
     list: ['player1', 'player2', 'player3'],
   },
   stats: {
-    cpu: '25',
-    memory: '2560MiB',
-    memoryPercent: '62.5%',
-    network: '1.2MB / 800KB',
-    blockIO: '50MB / 20MB',
+    cpuPercent: 25,
+    memoryUsage: 2684354560, // 2560 MiB in bytes
+    memoryLimit: 4294967296, // 4 GB in bytes
+    memoryPercent: 62.5,
   },
   worldName: 'survival-world',
   worldSize: '1.2GB',

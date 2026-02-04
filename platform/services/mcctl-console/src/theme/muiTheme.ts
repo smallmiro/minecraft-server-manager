@@ -61,7 +61,7 @@ export const darkTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Ubuntu", "Roboto", "Helvetica", "Arial", sans-serif',
   },
   components: {
     MuiCard: {

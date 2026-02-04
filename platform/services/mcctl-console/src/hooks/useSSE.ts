@@ -144,6 +144,10 @@ export function useSSE<T extends SSEEvent = SSEEvent>(
   const handleError = useCallback(
     (err: SSEError) => {
       setError(err);
+      // Update retry count from error object
+      if (typeof err.retryCount === 'number') {
+        setRetryCount(err.retryCount);
+      }
       onError?.(err);
     },
     [onError]
@@ -191,19 +195,8 @@ export function useSSE<T extends SSEEvent = SSEEvent>(
       withCredentials,
     });
 
-    // Update retry count from adapter
-    const updateRetryCount = () => {
-      if (adapterRef.current) {
-        setRetryCount(adapterRef.current.getRetryCount());
-      }
-    };
-
-    // Update retry count periodically
-    const retryCountInterval = setInterval(updateRetryCount, 500);
-
     // Cleanup on unmount or dependency change
     return () => {
-      clearInterval(retryCountInterval);
       if (adapterRef.current) {
         adapterRef.current.disconnect();
         adapterRef.current = null;
