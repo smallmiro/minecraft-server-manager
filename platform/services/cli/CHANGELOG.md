@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-02-05
+
+### Added
+- **Audit Log System** - Comprehensive activity tracking across CLI, API, and Web Console (#234, #235)
+  - **Domain**: `AuditLog` entity with `AuditActionEnum` value object supporting 13 action types (server lifecycle, player management, audit purge)
+  - **Infrastructure**: `SqliteAuditLogRepository` adapter with better-sqlite3, WAL mode, auto-migration, and configurable auto-cleanup
+  - **CLI**: `mcctl audit` command with `list`, `purge`, and `stats` subcommands, supporting filtering by action, actor, target, status, and date range
+  - **API**: 5 REST endpoints - list (GET /api/audit), stats (GET /api/audit/stats), detail (GET /api/audit/:id), purge (DELETE /api/audit), and SSE stream (GET /api/audit/stream)
+  - **Web UI**: Full audit log page with `AuditLogTable`, `AuditLogFilters`, `AuditLogStats`, `AuditLogDetail`, and `AuditLogExport` components
+  - **Dashboard**: `RecentActivityFeed` widget showing latest audit events
+  - **Server Detail**: Activity tab with per-server audit log view
+  - **Audit Integration**: Automatic logging in CreateServerUseCase, DeleteServerUseCase, start/stop commands, and all player management commands (whitelist, ban, op, kick)
+  - **Configuration**: `AUDIT_AUTO_CLEANUP` (default: true) and `AUDIT_RETENTION_DAYS` (default: 90) environment variables
+  - **Tests**: 29 CLI tests + 16 domain/infrastructure tests for comprehensive coverage
+
 ## [1.9.0] - 2026-02-05
 
 ### Added

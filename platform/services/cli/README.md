@@ -75,16 +75,23 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.10.0 (2026-02-05)
+- **feat**: Audit Log System - comprehensive activity tracking (#234, #235)
+  - `mcctl audit list/purge/stats` CLI commands with filtering
+  - 5 REST API endpoints (list, stats, purge, SSE stream)
+  - Full Web UI: audit log page, dashboard widget, server activity tab
+  - SQLite storage with WAL mode, auto-cleanup (90-day retention)
+  - `AUDIT_AUTO_CLEANUP`, `AUDIT_RETENTION_DAYS` environment variables
+  - 29 CLI tests + 16 domain/infrastructure tests
+
 ### v1.9.0 (2026-02-05)
 - **feat(cli)**: Add `--all` flag to `mcctl update` command
   - Update CLI and all installed services (mcctl-api, mcctl-console) together
   - Auto npm update + PM2 restart for each service
-  - `--check --all` to view available service updates without installing
 
 ### v1.8.0 (2026-02-05)
 - **feat(api,console)**: Pass sudo password from web console to server creation API (#230)
 - **feat(console)**: Replace ActivityFeed with ChangelogFeed on dashboard
-- **change(api)**: Add optional `sudoPassword` field to CreateServerRequest schema
 
 ### v1.7.12 (2026-02-05)
 - **fix(scripts)**: Correct TEMPLATE_DIR path duplication in create-server.sh (#230)

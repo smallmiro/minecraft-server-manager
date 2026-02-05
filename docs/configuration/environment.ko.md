@@ -224,6 +224,41 @@ mcctl stop myserver && mcctl start myserver
 
 ---
 
+## 감사 로그 변수
+
+감사 로그 동작을 위해 `~/minecraft-servers/.env`에 설정합니다:
+
+| 변수 | 설명 | 기본값 | 관리 |
+|------|------|--------|------|
+| `AUDIT_AUTO_CLEANUP` | 오래된 감사 로그 자동 삭제 | `true` | 수동 |
+| `AUDIT_RETENTION_DAYS` | 감사 로그 보관 일수 | `90` | 수동 |
+
+**AUDIT_AUTO_CLEANUP:**
+- `true`: 시스템 시작 시 `AUDIT_RETENTION_DAYS`보다 오래된 로그 자동 삭제
+- `false`: 자동 정리 비활성화 (`mcctl audit purge`를 통한 수동 삭제만 가능)
+
+**AUDIT_RETENTION_DAYS:**
+- 자동 정리 전에 감사 로그를 보관할 일수
+- 권장값: 규정 준수 요구사항에 따라 30-180일
+- 프로덕션 환경: 90일 이상
+
+**데이터베이스 위치:**
+```
+~/.minecraft-servers/audit.db
+```
+
+**예제:**
+```bash
+# 사용자 지정 보관 정책 설정
+echo "AUDIT_RETENTION_DAYS=180" >> ~/minecraft-servers/.env
+echo "AUDIT_AUTO_CLEANUP=true" >> ~/minecraft-servers/.env
+
+# 서비스 재시작하여 적용
+mcctl console service restart
+```
+
+---
+
 ## mc-router 변수
 
 `~/minecraft-servers/.env`에 설정하고 mc-router에 전달됩니다:

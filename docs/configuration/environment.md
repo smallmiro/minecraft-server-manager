@@ -224,6 +224,41 @@ mcctl stop myserver && mcctl start myserver
 
 ---
 
+## Audit Log Variables
+
+These are set in `~/minecraft-servers/.env` for audit log behavior:
+
+| Variable | Description | Default | Management |
+|----------|-------------|---------|------------|
+| `AUDIT_AUTO_CLEANUP` | Automatically delete old audit logs | `true` | Manual |
+| `AUDIT_RETENTION_DAYS` | Number of days to retain audit logs | `90` | Manual |
+
+**AUDIT_AUTO_CLEANUP:**
+- `true`: Automatically delete logs older than `AUDIT_RETENTION_DAYS` on system startup
+- `false`: Disable automatic cleanup (manual purge only via `mcctl audit purge`)
+
+**AUDIT_RETENTION_DAYS:**
+- Number of days to retain audit logs before auto-cleanup
+- Recommended: 30-180 days depending on compliance requirements
+- Production environments: 90+ days
+
+**Database Location:**
+```
+~/.minecraft-servers/audit.db
+```
+
+**Example:**
+```bash
+# Set custom retention policy
+echo "AUDIT_RETENTION_DAYS=180" >> ~/minecraft-servers/.env
+echo "AUDIT_AUTO_CLEANUP=true" >> ~/minecraft-servers/.env
+
+# Restart services to apply
+mcctl console service restart
+```
+
+---
+
 ## mc-router Variables
 
 These are set in `~/minecraft-servers/.env` and passed to mc-router:

@@ -62,6 +62,7 @@ minecraft/
 │   │   │   │   │   ├── kick.ts         # Kick player
 │   │   │   │   │   ├── migrate.ts      # World storage migration
 │   │   │   │   │   ├── mod.ts          # Mod management (search, add, remove)
+│   │   │   │   │   ├── audit.ts        # Audit log management (list, purge, stats)
 │   │   │   │   │   ├── console/        # Console Management (Web Admin)
 │   │   │   │   │   │   ├── init.ts     # Initialize console service
 │   │   │   │   │   │   ├── user.ts     # User management
@@ -83,14 +84,14 @@ minecraft/
 │   │   ├── shared/              # @minecraft-docker/shared (common utilities)
 │   │   │   ├── src/
 │   │   │   │   ├── domain/      # Domain entities and value objects
-│   │   │   │   │   ├── entities/       # Server, World entities
-│   │   │   │   │   ├── value-objects/  # ServerName, ServerType, etc.
+│   │   │   │   │   ├── entities/       # Server, World, AuditLog entities
+│   │   │   │   │   ├── value-objects/  # ServerName, ServerType, AuditAction, etc.
 │   │   │   │   │   └── mod/            # ModProject, ModVersion, ModSearchResult
 │   │   │   │   ├── application/ # Use cases and ports
-│   │   │   │   │   ├── ports/          # IModSourcePort, IPromptPort, etc.
+│   │   │   │   │   ├── ports/          # IModSourcePort, IPromptPort, IAuditLogPort, etc.
 │   │   │   │   │   └── use-cases/      # CreateServer, DeleteServer, etc.
 │   │   │   │   └── infrastructure/     # Adapters and factories
-│   │   │   │       ├── adapters/       # ShellAdapter, DocsAdapter, etc.
+│   │   │   │       ├── adapters/       # ShellAdapter, DocsAdapter, SqliteAuditLogRepository, etc.
 │   │   │   │       └── factories/      # ModSourceFactory
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
@@ -106,7 +107,8 @@ minecraft/
 │   │   │   │   ├── routes/             # API endpoints
 │   │   │   │   │   ├── servers.ts      # GET/POST /servers
 │   │   │   │   │   ├── servers/actions.ts  # start/stop/restart
-│   │   │   │   │   └── console.ts      # RCON exec endpoint
+│   │   │   │   │   ├── console.ts      # RCON exec endpoint
+│   │   │   │   │   └── audit-logs.ts   # Audit log API endpoints
 │   │   │   │   └── plugins/            # Fastify plugins
 │   │   │   │       ├── auth.ts         # 5-mode authentication
 │   │   │   │       └── swagger.ts      # OpenAPI documentation
@@ -118,6 +120,7 @@ minecraft/
 │   │   │   │   ├── app/                # Next.js App Router
 │   │   │   │   │   ├── api/            # BFF proxy routes
 │   │   │   │   │   ├── servers/        # Server management pages
+│   │   │   │   │   ├── audit-logs/     # Audit log pages
 │   │   │   │   │   └── layout.tsx      # Root layout
 │   │   │   │   ├── components/         # React components
 │   │   │   │   └── hooks/              # Custom hooks (use-servers)

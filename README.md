@@ -31,6 +31,7 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **Mod Management**: Search, add, and remove mods from Modrinth, CurseForge, Spiget
 - **NeoForge Support**: Full support for NeoForge modded servers (Minecraft 1.20.1+)
 - **GitHub Backup**: Automatic world backup to private GitHub repositories
+- **Audit Logs**: Comprehensive activity tracking with SQLite storage, auto-cleanup, and web UI
 
 ## Quick Start
 
@@ -336,6 +337,13 @@ pnpm automatically builds packages in dependency order:
 |----------|-------------|
 | `MCCTL_SUDO_PASSWORD` | sudo password for mDNS registration (avahi-daemon) |
 
+### Audit Logs
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AUDIT_AUTO_CLEANUP` | `true` | Automatically delete old audit logs |
+| `AUDIT_RETENTION_DAYS` | `90` | Number of days to retain audit logs |
+
 ---
 
 ## Server Type Selection Guide
@@ -600,6 +608,37 @@ mcctl server-restore myserver abc123      # Restore specific backup
 mcctl server-restore myserver --dry-run   # Preview restore without applying
 ```
 
+### Audit Log Management
+
+View and manage audit logs of all server operations:
+
+```bash
+# List audit logs with filtering
+mcctl audit list                   # List recent 50 logs
+mcctl audit list --limit 100       # List 100 logs
+mcctl audit list --action server.create  # Filter by action
+mcctl audit list --actor cli:local  # Filter by actor
+mcctl audit list --target myserver  # Filter by target server
+mcctl audit list --status failure   # Show only failures
+mcctl audit list --from 2026-01-01  # Date range filtering
+
+# Show statistics
+mcctl audit stats                  # Overview of all logs
+
+# Purge old logs
+mcctl audit purge                  # Delete logs older than 90 days (default)
+mcctl audit purge --days 30        # Delete logs older than 30 days
+mcctl audit purge --before 2026-01-01  # Delete before specific date
+mcctl audit purge --dry-run        # Preview without deleting
+mcctl audit purge --force          # Skip confirmation
+```
+
+Audit logs capture all critical operations:
+- Server lifecycle (create, delete, start, stop, restart)
+- Player management (whitelist, ban, op, kick)
+- Log retention configurable via `AUDIT_RETENTION_DAYS` (default: 90)
+- Auto-cleanup enabled by default (`AUDIT_AUTO_CLEANUP=true`)
+
 ### Migration (Existing Servers)
 
 Migrate existing servers to the new shared world directory structure:
@@ -805,6 +844,17 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [1.10.0] - 2026-02-05
+
+**Added:**
+- **Audit Log System** - Comprehensive activity tracking across CLI, API, and Web Console (#234, #235)
+  - Domain: `AuditLog` entity with 13 action types (server lifecycle, player management, audit purge)
+  - CLI: `mcctl audit list/purge/stats` commands with filtering and pagination
+  - API: 5 REST endpoints (list, stats, purge, SSE streaming) with TypeBox validation
+  - Web UI: Audit log page with filtering, expandable rows, dashboard widget, server activity tab
+  - Infrastructure: SQLite storage with WAL mode, auto-migration, auto-cleanup (90-day retention)
+  - Configuration: `AUDIT_AUTO_CLEANUP`, `AUDIT_RETENTION_DAYS` environment variables
+
 ### [1.9.0] - 2026-02-05
 
 **Added:**
@@ -815,9 +865,6 @@ cat /etc/avahi/hosts
 **Added:**
 - **Web Console sudo password support** - Pass sudo password from CreateServerDialog to server creation API for mDNS hostname registration (#230)
 - **Dashboard ChangelogFeed** - Real changelog from GitHub replaces placeholder ActivityFeed
-
-**Changed:**
-- Add optional `sudoPassword` field (writeOnly) to CreateServerRequest schema
 
 ### [1.7.12] - 2026-02-05
 
@@ -837,19 +884,6 @@ cat /etc/avahi/hosts
 
 **Fixed:**
 - MCCTL_ROOT path resolution, player list ANSI parsing
-
-### [1.7.9] - 2026-02-03
-
-**Fixed:**
-- Fix YAML syntax error in E2E workflow configuration
-
-### [1.7.8] - 2026-01-31
-
-**Added:**
-- Selective console service support - choose api/console/all (#203)
-
-**Fixed:**
-- Correct environment variable names for mcctl-api authentication
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
