@@ -1,6 +1,6 @@
 # mcctl - Minecraft Server Management CLI
 
-> **Version**: 1.8.0
+> **Version**: 1.9.0
 > **Last Updated**: 2026-02-05
 > **Purpose**: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions
 
@@ -188,6 +188,19 @@ mcctl console service status    # Show status
 mcctl console service logs      # View logs
 mcctl console service logs -f   # Follow logs
 ```
+
+### Self Update
+
+```bash
+mcctl update                    # Update CLI to latest version
+mcctl update --check            # Check for updates only
+mcctl update --force            # Force check (ignore cache)
+mcctl update --yes              # Auto-confirm update
+mcctl update --all              # Update CLI + all installed services
+mcctl update --check --all      # Check updates for CLI and services
+```
+
+The `--all` flag updates mcctl-api and mcctl-console services via `npm install <pkg>@latest` and restarts their PM2 processes automatically.
 
 ## Server Types
 
@@ -398,6 +411,15 @@ A: Use `mcctl config <server> USE_AIKAR_FLAGS true`. For modded servers, increas
 - Test health: `curl http://localhost:5001/health`
 
 ## Version-specific Issues and Solutions
+
+### Version 1.9.0
+
+**Changes:**
+- `mcctl update --all` flag - Update CLI and all installed services (mcctl-api, mcctl-console) in one command
+- Automatically runs npm update + PM2 restart for each installed service
+- Supports `--check --all` to view available service updates without installing
+
+**Known Issues:** None
 
 ### Version 1.8.0
 

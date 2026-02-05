@@ -805,6 +805,11 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [1.9.0] - 2026-02-05
+
+**Added:**
+- **`mcctl update --all` flag** - Update CLI and all installed services (mcctl-api, mcctl-console) in a single command with npm update + PM2 restart
+
 ### [1.8.0] - 2026-02-05
 
 **Added:**

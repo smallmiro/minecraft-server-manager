@@ -55,6 +55,8 @@ mcctl logs myserver
 | `mcctl world release` | Release world from server |
 | `mcctl backup push` | Backup worlds to GitHub |
 | `mcctl backup restore` | Restore worlds from backup |
+| `mcctl update` | Update mcctl CLI to latest version |
+| `mcctl update --all` | Update CLI and all installed services |
 
 ## Server Types
 
@@ -73,6 +75,12 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.9.0 (2026-02-05)
+- **feat(cli)**: Add `--all` flag to `mcctl update` command
+  - Update CLI and all installed services (mcctl-api, mcctl-console) together
+  - Auto npm update + PM2 restart for each service
+  - `--check --all` to view available service updates without installing
+
 ### v1.8.0 (2026-02-05)
 - **feat(api,console)**: Pass sudo password from web console to server creation API (#230)
 - **feat(console)**: Replace ActivityFeed with ChangelogFeed on dashboard
@@ -89,13 +97,6 @@ mcctl logs myserver
 - **feat(console)**: Add ANSI color support for console logs
 - **feat(api,console)**: Add SSE streaming for server creation (#227, #228)
 - **fix**: Fix MCCTL_ROOT path and player list parsing
-
-### v1.7.9 (2026-02-03)
-- **fix(ci)**: Fix YAML syntax error in E2E workflow configuration
-
-### v1.7.8 (2026-01-31)
-- **feat(cli)**: Add selective console service support (#203)
-- **fix(cli)**: Correct environment variable names for mcctl-api auth (#203)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

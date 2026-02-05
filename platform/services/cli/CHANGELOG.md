@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-02-05
+
+### Added
+- **`mcctl update --all` flag** - Update CLI and all installed services (mcctl-api, mcctl-console) in a single command
+  - Automatically runs `npm install <package>@latest` for each installed service
+  - Restarts PM2 processes after successful update
+  - Supports `--check --all` to view available service updates without installing
+  - Shows version comparison and update status for each service
+
 ## [1.8.0] - 2026-02-05
 
 ### Added
