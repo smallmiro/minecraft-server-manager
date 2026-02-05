@@ -2106,6 +2106,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-180" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.8.0
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-179--1712" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.7.9 ~ 1.7.12
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-178" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2303,8 +2325,8 @@
 
 <h1 id="mcctl---minecraft-server-management-cli">mcctl - Minecraft Server Management CLI<a class="headerlink" href="#mcctl---minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 1.7.10
-<strong>Last Updated</strong>: 2026-02-04
+<p><strong>Version</strong>: 1.8.0
+<strong>Last Updated</strong>: 2026-02-05
 <strong>Purpose</strong>: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions</p>
 </blockquote>
 <h2 id="system-requirements">System Requirements<a class="headerlink" href="#system-requirements" title="Permanent link">&para;</a></h2>
@@ -2855,6 +2877,18 @@
 <li>Test health: <code>curl http://localhost:5001/health</code></li>
 </ul>
 <h2 id="version-specific-issues-and-solutions">Version-specific Issues and Solutions<a class="headerlink" href="#version-specific-issues-and-solutions" title="Permanent link">&para;</a></h2>
+<h3 id="version-180">Version 1.8.0<a class="headerlink" href="#version-180" title="Permanent link">&para;</a></h3>
+<p><strong>Changes:</strong>
+- Web Console sudo password support - Pass sudo password from CreateServerDialog to server creation API for mDNS hostname registration (#230)
+- Dashboard ChangelogFeed - Replace placeholder ActivityFeed with real changelog from GitHub
+- CreateServerRequest schema now accepts optional <code>sudoPassword</code> field (writeOnly)</p>
+<p><strong>Known Issues:</strong> None</p>
+<h3 id="version-179--1712">Version 1.7.9 ~ 1.7.12<a class="headerlink" href="#version-179--1712" title="Permanent link">&para;</a></h3>
+<p><strong>Changes:</strong>
+- 1.7.12: Fix TEMPLATE_DIR path duplication and improve API error reporting (#230)
+- 1.7.11: Fix world size calculation for servers using LEVEL config
+- 1.7.10: Console ANSI colors, SSE streaming for server creation, MCCTL_ROOT path fix
+- 1.7.9: Fix YAML syntax error in E2E workflow</p>
 <h3 id="version-178">Version 1.7.8<a class="headerlink" href="#version-178" title="Permanent link">&para;</a></h3>
 <p><strong>Changes:</strong>
 - Selective console service support - Choose which services to start (api/console/all) during <code>mcctl console init</code>
