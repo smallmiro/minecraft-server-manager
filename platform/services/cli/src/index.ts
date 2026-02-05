@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Paths, log, colors } from '@minecraft-docker/shared';
+import { Paths, log, colors, AuditActionEnum } from '@minecraft-docker/shared';
 import {
   initCommand,
   statusCommand,
@@ -27,10 +27,12 @@ import {
   consoleUserCommand,
   consoleApiCommand,
   consoleRemoveCommand,
+  auditCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 import { checkForUpdates } from './lib/update-checker.js';
 import { readFileSync } from 'fs';
+import { getContainer } from './infrastructure/di/container.js';
 
 // Read version from package.json
 function getVersion(): string {
@@ -517,6 +519,18 @@ async function main(): Promise<void> {
           if (flags['json']) mcctlArgs.push('--json');
           exitCode = await shell.mcctl(mcctlArgs);
         }
+
+        // Log audit
+        const container = getContainer({ rootDir, sudoPassword });
+        await container.auditLogPort.log({
+          action: AuditActionEnum.SERVER_START,
+          actor: 'cli:local',
+          targetType: 'server',
+          targetName: positional[0] || 'all',
+          status: exitCode === 0 ? 'success' : 'failure',
+          details: null,
+          errorMessage: null,
+        });
         break;
       }
 
@@ -534,6 +548,18 @@ async function main(): Promise<void> {
           if (flags['json']) mcctlArgs.push('--json');
           exitCode = await shell.mcctl(mcctlArgs);
         }
+
+        // Log audit
+        const container = getContainer({ rootDir, sudoPassword });
+        await container.auditLogPort.log({
+          action: AuditActionEnum.SERVER_STOP,
+          actor: 'cli:local',
+          targetType: 'server',
+          targetName: positional[0] || 'all',
+          status: exitCode === 0 ? 'success' : 'failure',
+          details: null,
+          errorMessage: null,
+        });
         break;
       }
 
@@ -864,6 +890,25 @@ async function main(): Promise<void> {
         console.log('');
         // Route to console management handler
         exitCode = await handleConsoleCommand(subCommand, positional, flags, rootDir);
+        break;
+      }
+
+      case 'audit': {
+        exitCode = await auditCommand({
+          subcommand: subCommand,
+          limit: flags['limit'] ? parseInt(flags['limit'] as string, 10) : undefined,
+          action: flags['action'] as string | undefined,
+          target: flags['target'] as string | undefined,
+          actor: flags['actor'] as string | undefined,
+          status: flags['status'] as 'success' | 'failure' | undefined,
+          from: flags['from'] as string | undefined,
+          to: flags['to'] as string | undefined,
+          days: flags['days'] ? parseInt(flags['days'] as string, 10) : undefined,
+          before: flags['before'] as string | undefined,
+          dryRun: flags['dry-run'] === true,
+          force: flags['force'] === true,
+          sudoPassword,
+        });
         break;
       }
 
