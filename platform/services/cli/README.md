@@ -73,30 +73,29 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.8.0 (2026-02-05)
+- **feat(api,console)**: Pass sudo password from web console to server creation API (#230)
+- **feat(console)**: Replace ActivityFeed with ChangelogFeed on dashboard
+- **change(api)**: Add optional `sudoPassword` field to CreateServerRequest schema
+
 ### v1.7.12 (2026-02-05)
 - **fix(scripts)**: Correct TEMPLATE_DIR path duplication in create-server.sh (#230)
 - **fix(api)**: Improve error reporting for server creation script failures (#230)
 
 ### v1.7.11 (2026-02-04)
 - **fix(shared)**: Check LEVEL config before WORLD_NAME for world size calculation
-  - Fixes servers using LEVEL config showing "0 B" for world size
 
 ### v1.7.10 (2026-02-04)
 - **feat(console)**: Add ANSI color support for console logs
-- **feat(console)**: Add loading indicator with nprogress
 - **feat(api,console)**: Add SSE streaming for server creation (#227, #228)
-- **fix**: Fix MCCTL_ROOT path resolution (relative to absolute)
-- **fix**: Fix player list parsing by removing ANSI escape codes from RCON
+- **fix**: Fix MCCTL_ROOT path and player list parsing
 
 ### v1.7.9 (2026-02-03)
 - **fix(ci)**: Fix YAML syntax error in E2E workflow configuration
 
 ### v1.7.8 (2026-01-31)
-- **feat(cli)**: Add selective console service support - choose api/console/all (#203)
+- **feat(cli)**: Add selective console service support (#203)
 - **fix(cli)**: Correct environment variable names for mcctl-api auth (#203)
-
-### v1.7.7 (2026-01-31)
-- **feat(cli)**: Auto-install mcctl-api on console init
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

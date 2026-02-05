@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-02-05
+
+### Added
+- **Web Console sudo password support** - Pass sudo password from CreateServerDialog to server creation API for mDNS hostname registration (#230)
+- **Dashboard ChangelogFeed** - Replace placeholder ActivityFeed with real ChangelogFeed component that fetches CHANGELOG.md from GitHub
+
+### Changed
+- **CreateServerRequest schema** - Add optional `sudoPassword` field (writeOnly) to server creation API
+- **Dashboard layout** - Replace ActivityFeed with ChangelogFeed showing recent project updates
+
 ## [1.7.12] - 2026-02-05
 
 ### Fixed

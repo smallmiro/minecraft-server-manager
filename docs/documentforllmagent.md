@@ -1,7 +1,7 @@
 # mcctl - Minecraft Server Management CLI
 
-> **Version**: 1.7.10
-> **Last Updated**: 2026-02-04
+> **Version**: 1.8.0
+> **Last Updated**: 2026-02-05
 > **Purpose**: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions
 
 ## System Requirements
@@ -398,6 +398,23 @@ A: Use `mcctl config <server> USE_AIKAR_FLAGS true`. For modded servers, increas
 - Test health: `curl http://localhost:5001/health`
 
 ## Version-specific Issues and Solutions
+
+### Version 1.8.0
+
+**Changes:**
+- Web Console sudo password support - Pass sudo password from CreateServerDialog to server creation API for mDNS hostname registration (#230)
+- Dashboard ChangelogFeed - Replace placeholder ActivityFeed with real changelog from GitHub
+- CreateServerRequest schema now accepts optional `sudoPassword` field (writeOnly)
+
+**Known Issues:** None
+
+### Version 1.7.9 ~ 1.7.12
+
+**Changes:**
+- 1.7.12: Fix TEMPLATE_DIR path duplication and improve API error reporting (#230)
+- 1.7.11: Fix world size calculation for servers using LEVEL config
+- 1.7.10: Console ANSI colors, SSE streaming for server creation, MCCTL_ROOT path fix
+- 1.7.9: Fix YAML syntax error in E2E workflow
 
 ### Version 1.7.8
 

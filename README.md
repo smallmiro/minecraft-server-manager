@@ -805,45 +805,46 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [1.8.0] - 2026-02-05
+
+**Added:**
+- **Web Console sudo password support** - Pass sudo password from CreateServerDialog to server creation API for mDNS hostname registration (#230)
+- **Dashboard ChangelogFeed** - Real changelog from GitHub replaces placeholder ActivityFeed
+
+**Changed:**
+- Add optional `sudoPassword` field (writeOnly) to CreateServerRequest schema
+
+### [1.7.12] - 2026-02-05
+
+**Fixed:**
+- Correct TEMPLATE_DIR path duplication in create-server.sh (#230)
+- Improve error reporting for server creation script failures (#230)
+
+### [1.7.11] - 2026-02-04
+
+**Fixed:**
+- Check LEVEL config before WORLD_NAME for world size calculation
+
+### [1.7.10] - 2026-02-04
+
+**Added:**
+- Console UI ANSI color support, loading indicator, SSE streaming for server creation
+
+**Fixed:**
+- MCCTL_ROOT path resolution, player list ANSI parsing
+
+### [1.7.9] - 2026-02-03
+
+**Fixed:**
+- Fix YAML syntax error in E2E workflow configuration
+
 ### [1.7.8] - 2026-01-31
 
 **Added:**
-- **Selective console service support** - Choose which services to start (api/console/all) during `mcctl console init`
+- Selective console service support - choose api/console/all (#203)
 
 **Fixed:**
-- Correct environment variable names for mcctl-api authentication (`MCCTL_*` prefix)
-
-### [1.7.7] - 2026-01-31
-
-**Added:**
-- **Auto-install mcctl-api on console init** - Streamlined Admin Service setup process
-
-### [1.7.6] - 2026-01-31
-
-**Added:**
-- **mcctl-api npm publishing support** - First npm release of REST API package
-
-### [1.7.5] - 2026-01-31
-
-**Fixed:**
-- Fix Edge runtime error in mcctl-console middleware
-
-### [1.7.0] - 2026-01-31
-
-**Added:**
-- **Router Status API** (`GET /api/router/status`) - Real-time mc-router status
-- **Server Create/Delete API** (`POST/DELETE /api/servers/:name`) - REST API for server management
-- **Player Management API** - Whitelist, ban, op, kick operations via REST
-- **Backup API** (`POST /api/backup/:name`) - Trigger backups via REST
-- **mcctl init --reconfigure** - Reconfigure existing installation
-- **E2E Tests** - Comprehensive API and CLI tests
-
-### [1.6.12] - 2026-01-31
-
-**Fixed:**
-- **Critical**: Add missing `EXTRA_ARGS=--universe /worlds/` to npm package template
-  - Servers created with versions 1.6.8 ~ 1.6.11 may have worlds in wrong directory
-  - Use `mcctl migrate worlds` to fix affected servers
+- Correct environment variable names for mcctl-api authentication
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
