@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.js';
 import routerRoutes from './routes/router.js';
 import playersRoutes from './routes/players.js';
 import backupRoutes from './routes/backup.js';
+import auditLogsRoutes from './routes/audit-logs.js';
 
 export interface BuildAppOptions {
   logger?: boolean;
@@ -66,6 +67,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   // Register world routes
   await app.register(worldsRoutes);
+
+  // Register audit log routes
+  await app.register(auditLogsRoutes);
 
   // Health check endpoint
   app.get('/health', async () => {

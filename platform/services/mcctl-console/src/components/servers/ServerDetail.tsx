@@ -26,6 +26,7 @@ import type { ServerDetail as ServerDetailType } from '@/ports/api/IMcctlApiClie
 import { ResourceStatCard } from './ResourceStatCard';
 import { useServerLogs } from '@/hooks/useServerLogs';
 import { ServerConsole } from './ServerConsole';
+import { ServerActivityTab } from './ServerActivityTab';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -33,7 +34,7 @@ interface ServerDetailProps {
 }
 
 // Tab configuration
-const TABS = ['Overview', 'Content', 'Files', 'Backups', 'Options'] as const;
+const TABS = ['Overview', 'Activity', 'Content', 'Files', 'Backups', 'Options'] as const;
 type TabType = (typeof TABS)[number];
 
 // Icon size for stat cards
@@ -524,6 +525,20 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
             </Card>
           </Grid>
         </Grid>
+      )}
+
+      {activeTab === 'Activity' && (
+        <Box sx={{ mt: 3 }}>
+          <Card sx={{ borderRadius: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                Server Activity
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <ServerActivityTab serverName={server.name} />
+            </CardContent>
+          </Card>
+        </Box>
       )}
 
       {activeTab === 'Content' && (
