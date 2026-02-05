@@ -1723,6 +1723,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#self-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Self Update
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2106,6 +2117,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-190" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1.9.0
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-180" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2325,7 +2347,7 @@
 
 <h1 id="mcctl---minecraft-server-management-cli">mcctl - Minecraft Server Management CLI<a class="headerlink" href="#mcctl---minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 1.8.0
+<p><strong>Version</strong>: 1.9.0
 <strong>Last Updated</strong>: 2026-02-05
 <strong>Purpose</strong>: Knowledge base for LLM agents (ChatGPT, Gemini, Claude) to answer mcctl questions</p>
 </blockquote>
@@ -2512,6 +2534,15 @@
 <a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w">      </span><span class="c1"># View logs</span>
 <a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>-f<span class="w">   </span><span class="c1"># Follow logs</span>
 </code></pre></div>
+<h3 id="self-update">Self Update<a class="headerlink" href="#self-update" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mcctl<span class="w"> </span>update<span class="w">                    </span><span class="c1"># Update CLI to latest version</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w">            </span><span class="c1"># Check for updates only</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--force<span class="w">            </span><span class="c1"># Force check (ignore cache)</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--yes<span class="w">              </span><span class="c1"># Auto-confirm update</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--all<span class="w">              </span><span class="c1"># Update CLI + all installed services</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w"> </span>--all<span class="w">      </span><span class="c1"># Check updates for CLI and services</span>
+</code></pre></div>
+<p>The <code>--all</code> flag updates mcctl-api and mcctl-console services via <code>npm install &lt;pkg&gt;@latest</code> and restarts their PM2 processes automatically.</p>
 <h2 id="server-types">Server Types<a class="headerlink" href="#server-types" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2564,11 +2595,11 @@
 <h2 id="rest-api-reference">REST API Reference<a class="headerlink" href="#rest-api-reference" title="Permanent link">&para;</a></h2>
 <p>Admin Service provides a REST API (port 5001) for programmatic access.</p>
 <h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># API Key (recommended)</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Basic Auth</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>curl<span class="w"> </span>-u<span class="w"> </span>admin:password<span class="w"> </span>http://localhost:5001/api/servers
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># API Key (recommended)</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Basic Auth</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>curl<span class="w"> </span>-u<span class="w"> </span>admin:password<span class="w"> </span>http://localhost:5001/api/servers
 </code></pre></div>
 <h3 id="key-endpoints">Key Endpoints<a class="headerlink" href="#key-endpoints" title="Permanent link">&para;</a></h3>
 <table>
@@ -2733,39 +2764,39 @@
 </tbody>
 </table>
 <h3 id="example-execute-command">Example: Execute Command<a class="headerlink" href="#example-execute-command" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;command&quot;: &quot;list&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span>http://localhost:5001/api/servers/survival/exec
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;command&quot;: &quot;list&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>http://localhost:5001/api/servers/survival/exec
 </code></pre></div>
 <h2 id="common-use-cases">Common Use Cases<a class="headerlink" href="#common-use-cases" title="Permanent link">&para;</a></h2>
 <h3 id="setting-up-a-new-server">Setting Up a New Server<a class="headerlink" href="#setting-up-a-new-server" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mcctl<span class="w"> </span>init<span class="w">                        </span><span class="c1"># First time only</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># Connect via myserver.&lt;HOST_IP&gt;.nip.io:25565</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mcctl<span class="w"> </span>init<span class="w">                        </span><span class="c1"># First time only</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1"># Connect via myserver.&lt;HOST_IP&gt;.nip.io:25565</span>
 </code></pre></div>
 <h3 id="setting-up-a-modded-server">Setting Up a Modded Server<a class="headerlink" href="#setting-up-a-modded-server" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>-t<span class="w"> </span>FORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>create<span class="w">           </span><span class="c1"># Search mods</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>modded<span class="w"> </span>create<span class="w"> </span>jei<span class="w"> </span>journeymap
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>-t<span class="w"> </span>FORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>create<span class="w">           </span><span class="c1"># Search mods</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>modded<span class="w"> </span>create<span class="w"> </span>jei<span class="w"> </span>journeymap
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
 </code></pre></div>
 <h3 id="performance-fabric-server">Performance Fabric Server<a class="headerlink" href="#performance-fabric-server" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>perf<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>perf<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,starlight,krypton&quot;</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>perf<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span>required
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>perf<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>perf
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>perf<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>perf<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,starlight,krypton&quot;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>perf<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span>required
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>perf<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>perf
 </code></pre></div>
 <h3 id="managing-players">Managing Players<a class="headerlink" href="#managing-players" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Steve
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>op<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Notch
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>myserver<span class="w"> </span>Griefer<span class="w"> </span><span class="s2">&quot;Griefing not allowed&quot;</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Griefer<span class="w"> </span><span class="s2">&quot;Repeated griefing&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Steve
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>mcctl<span class="w"> </span>op<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Notch
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>myserver<span class="w"> </span>Griefer<span class="w"> </span><span class="s2">&quot;Griefing not allowed&quot;</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Griefer<span class="w"> </span><span class="s2">&quot;Repeated griefing&quot;</span>
 </code></pre></div>
 <h3 id="using-admin-web-console">Using Admin Web Console<a class="headerlink" href="#using-admin-web-console" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w">                </span><span class="c1"># Interactive setup</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w">       </span><span class="c1"># Start services</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Access http://localhost:5000</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w">                </span><span class="c1"># Interactive setup</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w">       </span><span class="c1"># Start services</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1"># Access http://localhost:5000</span>
 </code></pre></div>
 <h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h2>
 <h3 id="q-how-do-i-connect-to-my-server">Q: How do I connect to my server?<a class="headerlink" href="#q-how-do-i-connect-to-my-server" title="Permanent link">&para;</a></h3>
@@ -2793,24 +2824,24 @@
 <h3 id="q-how-do-i-optimize-performance">Q: How do I optimize performance?<a class="headerlink" href="#q-how-do-i-optimize-performance" title="Permanent link">&para;</a></h3>
 <p>A: Use <code>mcctl config &lt;server&gt; USE_AIKAR_FLAGS true</code>. For modded servers, increase MEMORY to 6-8G.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>┌─────────────────────────────────────────────────────────────┐
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>│                     mc-router (:25565)                       │
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>│                  hostname-based routing                      │
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>└─────────────────────────┬───────────────────────────────────┘
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>                          │
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    ┌─────────────────────┼─────────────────────┐
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>    ▼                     ▼                     ▼
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>┌─────────┐         ┌─────────┐         ┌─────────┐
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>│ mc-srv1 │         │ mc-srv2 │         │ mc-srv3 │
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>│ :25566  │         │ :25567  │         │ :25568  │
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>└────┬────┘         └────┬────┘         └────┬────┘
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>     │                   │                   │
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>     └───────────────────┴───────────────────┘
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>                         │
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>              ┌──────────▼──────────┐
-<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>              │     worlds/         │
-<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a>              │  (shared storage)   │
-<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>              └─────────────────────┘
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>┌─────────────────────────────────────────────────────────────┐
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>│                     mc-router (:25565)                       │
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>│                  hostname-based routing                      │
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>└─────────────────────────┬───────────────────────────────────┘
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>                          │
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    ┌─────────────────────┼─────────────────────┐
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    ▼                     ▼                     ▼
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>┌─────────┐         ┌─────────┐         ┌─────────┐
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>│ mc-srv1 │         │ mc-srv2 │         │ mc-srv3 │
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>│ :25566  │         │ :25567  │         │ :25568  │
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>└────┬────┘         └────┬────┘         └────┬────┘
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>     │                   │                   │
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>     └───────────────────┴───────────────────┘
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>                         │
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>              ┌──────────▼──────────┐
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>              │     worlds/         │
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>              │  (shared storage)   │
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>              └─────────────────────┘
 </code></pre></div>
 <h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
 <table>
@@ -2877,6 +2908,12 @@
 <li>Test health: <code>curl http://localhost:5001/health</code></li>
 </ul>
 <h2 id="version-specific-issues-and-solutions">Version-specific Issues and Solutions<a class="headerlink" href="#version-specific-issues-and-solutions" title="Permanent link">&para;</a></h2>
+<h3 id="version-190">Version 1.9.0<a class="headerlink" href="#version-190" title="Permanent link">&para;</a></h3>
+<p><strong>Changes:</strong>
+- <code>mcctl update --all</code> flag - Update CLI and all installed services (mcctl-api, mcctl-console) in one command
+- Automatically runs npm update + PM2 restart for each installed service
+- Supports <code>--check --all</code> to view available service updates without installing</p>
+<p><strong>Known Issues:</strong> None</p>
 <h3 id="version-180">Version 1.8.0<a class="headerlink" href="#version-180" title="Permanent link">&para;</a></h3>
 <p><strong>Changes:</strong>
 - Web Console sudo password support - Pass sudo password from CreateServerDialog to server creation API for mDNS hostname registration (#230)
@@ -2920,19 +2957,19 @@
 - Server creates new world on every restart
 - World sharing doesn't work</p>
 <p><strong>Detection:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># If this shows output, you&#39;re affected</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>ls<span class="w"> </span>~/minecraft-servers/servers/*/data/*/level.dat<span class="w"> </span><span class="m">2</span>&gt;/dev/null
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># If this shows output, you&#39;re affected</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>ls<span class="w"> </span>~/minecraft-servers/servers/*/data/*/level.dat<span class="w"> </span><span class="m">2</span>&gt;/dev/null
 </code></pre></div></p>
 <p><strong>Solution:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Option 1: Automated migration (recommended)</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="c1"># Option 2: Manual fix</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;EXTRA_ARGS=--universe /worlds/&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/servers/&lt;name&gt;/config.env
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>&lt;name&gt;
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>mv<span class="w"> </span>~/minecraft-servers/servers/&lt;name&gt;/data/&lt;world&gt;<span class="w"> </span>~/minecraft-servers/worlds/&lt;world&gt;
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Option 1: Automated migration (recommended)</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="c1"># Option 2: Manual fix</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;EXTRA_ARGS=--universe /worlds/&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/servers/&lt;name&gt;/config.env
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>&lt;name&gt;
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>mv<span class="w"> </span>~/minecraft-servers/servers/&lt;name&gt;/data/&lt;world&gt;<span class="w"> </span>~/minecraft-servers/worlds/&lt;world&gt;
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;name&gt;
 </code></pre></div></p>
 <h3 id="version-160--167">Version 1.6.0 ~ 1.6.7<a class="headerlink" href="#version-160--167" title="Permanent link">&para;</a></h3>
 <p><strong>Features:</strong>
@@ -2959,13 +2996,13 @@
 <h2 id="web-console-architecture-bff-proxy">Web Console Architecture (BFF Proxy)<a class="headerlink" href="#web-console-architecture-bff-proxy" title="Permanent link">&para;</a></h2>
 <h3 id="overview_1">Overview<a class="headerlink" href="#overview_1" title="Permanent link">&para;</a></h3>
 <p>mcctl-console uses a Backend-for-Frontend (BFF) proxy pattern for secure API access:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>+------------------+      +-----------------+      +---------------+
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>|   Web Browser    | ---&gt; | mcctl-console   | ---&gt; |   mcctl-api   |
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>|   (React Query)  |      | (Next.js BFF)   |      |   (Fastify)   |
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>+------------------+      +-----------------+      +---------------+
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>                              |
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>                              | Session-based auth
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>                              | + X-API-Key forwarding
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>+------------------+      +-----------------+      +---------------+
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>|   Web Browser    | ---&gt; | mcctl-console   | ---&gt; |   mcctl-api   |
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>|   (React Query)  |      | (Next.js BFF)   |      |   (Fastify)   |
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>+------------------+      +-----------------+      +---------------+
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>                              |
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>                              | Session-based auth
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>                              | + X-API-Key forwarding
 </code></pre></div>
 <h3 id="bff-proxy-routes">BFF Proxy Routes<a class="headerlink" href="#bff-proxy-routes" title="Permanent link">&para;</a></h3>
 <table>
@@ -3079,24 +3116,24 @@
 </ol>
 <h3 id="react-query-hooks">React Query Hooks<a class="headerlink" href="#react-query-hooks" title="Permanent link">&para;</a></h3>
 <p>The console provides type-safe hooks for data fetching:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1">// Server hooks</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nx">useServers</span><span class="p">()</span><span class="w">                    </span><span class="c1">// List all servers (auto-refresh 10s)</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="nx">useServer</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w">                 </span><span class="c1">// Get server details (auto-refresh 5s)</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="nx">useCreateServer</span><span class="p">()</span><span class="w">               </span><span class="c1">// Create server mutation</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="nx">useDeleteServer</span><span class="p">()</span><span class="w">               </span><span class="c1">// Delete server mutation</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="nx">useStartServer</span><span class="p">()</span><span class="w">                </span><span class="c1">// Start server mutation</span>
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="nx">useStopServer</span><span class="p">()</span><span class="w">                 </span><span class="c1">// Stop server mutation</span>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="nx">useRestartServer</span><span class="p">()</span><span class="w">              </span><span class="c1">// Restart server mutation</span>
-<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="nx">useExecCommand</span><span class="p">()</span><span class="w">                </span><span class="c1">// Execute RCON command</span>
-<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="nx">useServerLogs</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">lines</span><span class="p">)</span><span class="w">      </span><span class="c1">// Get server logs (auto-refresh 3s)</span>
-<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>
-<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="c1">// World hooks</span>
-<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="nx">useWorlds</span><span class="p">()</span><span class="w">                     </span><span class="c1">// List all worlds (auto-refresh 30s)</span>
-<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="nx">useWorld</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w">                  </span><span class="c1">// Get world details</span>
-<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="nx">useCreateWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Create world mutation</span>
-<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a><span class="nx">useAssignWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Assign world mutation</span>
-<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a><span class="nx">useReleaseWorld</span><span class="p">()</span><span class="w">               </span><span class="c1">// Release world mutation</span>
-<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a><span class="nx">useDeleteWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Delete world mutation</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1">// Server hooks</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="nx">useServers</span><span class="p">()</span><span class="w">                    </span><span class="c1">// List all servers (auto-refresh 10s)</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="nx">useServer</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w">                 </span><span class="c1">// Get server details (auto-refresh 5s)</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="nx">useCreateServer</span><span class="p">()</span><span class="w">               </span><span class="c1">// Create server mutation</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="nx">useDeleteServer</span><span class="p">()</span><span class="w">               </span><span class="c1">// Delete server mutation</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="nx">useStartServer</span><span class="p">()</span><span class="w">                </span><span class="c1">// Start server mutation</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="nx">useStopServer</span><span class="p">()</span><span class="w">                 </span><span class="c1">// Stop server mutation</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="nx">useRestartServer</span><span class="p">()</span><span class="w">              </span><span class="c1">// Restart server mutation</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="nx">useExecCommand</span><span class="p">()</span><span class="w">                </span><span class="c1">// Execute RCON command</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="nx">useServerLogs</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">lines</span><span class="p">)</span><span class="w">      </span><span class="c1">// Get server logs (auto-refresh 3s)</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="c1">// World hooks</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a><span class="nx">useWorlds</span><span class="p">()</span><span class="w">                     </span><span class="c1">// List all worlds (auto-refresh 30s)</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a><span class="nx">useWorld</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w">                  </span><span class="c1">// Get world details</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a><span class="nx">useCreateWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Create world mutation</span>
+<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a><span class="nx">useAssignWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Assign world mutation</span>
+<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a><span class="nx">useReleaseWorld</span><span class="p">()</span><span class="w">               </span><span class="c1">// Release world mutation</span>
+<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a><span class="nx">useDeleteWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Delete world mutation</span>
 </code></pre></div>
 <h3 id="environment-variables_1">Environment Variables<a class="headerlink" href="#environment-variables_1" title="Permanent link">&para;</a></h3>
 <table>
