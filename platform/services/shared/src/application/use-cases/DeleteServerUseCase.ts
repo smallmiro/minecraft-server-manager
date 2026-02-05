@@ -1,9 +1,11 @@
 import { Server, ServerStatus } from '../../domain/index.js';
+import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import type {
   IDeleteServerUseCase,
   IPromptPort,
   IShellPort,
   IServerRepository,
+  IAuditLogPort,
 } from '../ports/index.js';
 
 /**
@@ -14,7 +16,8 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
   constructor(
     private readonly prompt: IPromptPort,
     private readonly shell: IShellPort,
-    private readonly serverRepo: IServerRepository
+    private readonly serverRepo: IServerRepository,
+    private readonly auditLog?: IAuditLogPort
   ) {}
 
   /**
@@ -87,6 +90,16 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
 
     // If not force mode and server has players, throw error
     if (!force && server.isRunning && server.hasPlayers) {
+      // Log audit failure
+      await this.auditLog?.log({
+        action: AuditActionEnum.SERVER_DELETE,
+        actor: 'cli:local',
+        targetType: 'server',
+        targetName: name,
+        status: 'failure',
+        errorMessage: `Server has ${server.playerCount} player(s) online`,
+        details: null,
+      });
       throw new Error(
         `Server '${name}' has ${server.playerCount} player(s) online. Use --force to delete anyway.`
       );
@@ -118,8 +131,29 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
 
       if (!result.success) {
         this.prompt.error(result.stderr || 'Unknown error occurred');
+        // Log audit failure
+        await this.auditLog?.log({
+          action: AuditActionEnum.SERVER_DELETE,
+          actor: 'cli:local',
+          targetType: 'server',
+          targetName: server.name.value,
+          status: 'failure',
+          errorMessage: result.stderr || 'Unknown error occurred',
+          details: null,
+        });
         return false;
       }
+
+      // Log audit success
+      await this.auditLog?.log({
+        action: AuditActionEnum.SERVER_DELETE,
+        actor: 'cli:local',
+        targetType: 'server',
+        targetName: server.name.value,
+        status: 'success',
+        details: null,
+        errorMessage: null,
+      });
 
       this.prompt.success(`Server '${server.name.value}' deleted`);
 

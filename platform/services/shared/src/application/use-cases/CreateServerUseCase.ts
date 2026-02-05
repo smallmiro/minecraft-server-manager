@@ -7,6 +7,7 @@ import {
   WorldOptions,
   WorldSetupType,
 } from '../../domain/index.js';
+import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import type {
   ICreateServerUseCase,
   CreateServerConfig,
@@ -14,6 +15,7 @@ import type {
   IShellPort,
   IServerRepository,
   IWorldRepository,
+  IAuditLogPort,
 } from '../ports/index.js';
 
 /**
@@ -25,7 +27,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     private readonly prompt: IPromptPort,
     private readonly shell: IShellPort,
     private readonly serverRepo: IServerRepository,
-    private readonly worldRepo?: IWorldRepository
+    private readonly worldRepo?: IWorldRepository,
+    private readonly auditLog?: IAuditLogPort
   ) {}
 
   /**
@@ -99,8 +102,33 @@ export class CreateServerUseCase implements ICreateServerUseCase {
 
       if (!result.success) {
         this.prompt.error(result.stderr || 'Unknown error occurred');
+        // Log audit failure
+        await this.auditLog?.log({
+          action: AuditActionEnum.SERVER_CREATE,
+          actor: 'cli:local',
+          targetType: 'server',
+          targetName: name.value,
+          status: 'failure',
+          errorMessage: result.stderr || 'Unknown error occurred',
+          details: null,
+        });
         throw new Error(result.stderr || 'Server creation failed');
       }
+
+      // Log audit success
+      await this.auditLog?.log({
+        action: AuditActionEnum.SERVER_CREATE,
+        actor: 'cli:local',
+        targetType: 'server',
+        targetName: name.value,
+        status: 'success',
+        details: {
+          type: type.value,
+          version: version.value,
+          memory: memory.value,
+        },
+        errorMessage: null,
+      });
 
       this.prompt.success(`Server '${name.value}' created!`);
       this.prompt.note(
@@ -172,8 +200,33 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     });
 
     if (!result.success) {
+      // Log audit failure
+      await this.auditLog?.log({
+        action: AuditActionEnum.SERVER_CREATE,
+        actor: 'cli:local',
+        targetType: 'server',
+        targetName: name.value,
+        status: 'failure',
+        errorMessage: result.stderr || 'Server creation failed',
+        details: null,
+      });
       throw new Error(result.stderr || 'Server creation failed');
     }
+
+    // Log audit success
+    await this.auditLog?.log({
+      action: AuditActionEnum.SERVER_CREATE,
+      actor: 'cli:local',
+      targetType: 'server',
+      targetName: name.value,
+      status: 'success',
+      details: {
+        type: type.value,
+        version: version.value,
+        memory: memory.value,
+      },
+      errorMessage: null,
+    });
 
     return server;
   }
