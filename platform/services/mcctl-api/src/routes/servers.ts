@@ -561,6 +561,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
 
       let hasError = false;
+      let stderrOutput = '';
 
       // Track creation stages based on output patterns
       const sendStageEvent = (status: string, message: string) => {
@@ -595,6 +596,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       // Process stderr
       createProcess.stderr?.on('data', (data) => {
         const output = data.toString();
+        stderrOutput += output;
         sendLogEvent(output);
 
         // Check for errors
@@ -626,11 +628,17 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
             },
           })}\n\n`);
         } else {
+          const errorDetail = stderrOutput.trim();
+          const errorMessage = errorDetail
+            ? `Server creation failed: ${errorDetail}`
+            : `Server creation failed with exit code ${code}`;
           reply.raw.write(`data: ${JSON.stringify({
             type: 'server-create',
             data: {
               status: 'error',
-              message: `Server creation failed with exit code ${code}`,
+              message: errorMessage,
+              exitCode: code,
+              stderr: errorDetail || undefined,
             },
           })}\n\n`);
         }
@@ -670,11 +678,17 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         },
       });
     } catch (error) {
-      const execError = error as { stderr?: string; message?: string };
+      const execError = error as { stderr?: string; stdout?: string; message?: string; code?: number };
       fastify.log.error(error, 'Failed to create server');
+      // Include stderr and stdout for better error diagnosis
+      // Script errors (e.g., "Template directory not found") appear in stdout
+      const errorDetail = execError.stderr?.trim() || execError.stdout?.trim() || '';
+      const errorMessage = errorDetail
+        ? `Failed to create server: ${errorDetail}`
+        : (execError.message || 'Failed to create server');
       return reply.code(500).send({
         error: 'InternalServerError',
-        message: execError.stderr || execError.message || 'Failed to create server',
+        message: errorMessage,
       });
     }
   });
