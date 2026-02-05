@@ -114,6 +114,7 @@ import {
   containerExists,
   serverExists,
 } from '@minecraft-docker/shared';
+import { spawn } from 'node:child_process';
 
 const mockedGetAllServers = vi.mocked(getAllServers);
 const mockedGetServerInfoFromConfig = vi.mocked(getServerInfoFromConfig);
@@ -121,6 +122,7 @@ const mockedGetServerDetailedInfo = vi.mocked(getServerDetailedInfo);
 const mockedGetContainerLogs = vi.mocked(getContainerLogs);
 const mockedContainerExists = vi.mocked(containerExists);
 const mockedServerExists = vi.mocked(serverExists);
+const mockedSpawn = vi.mocked(spawn);
 
 describe('Server Routes', () => {
   let app: FastifyInstance;
@@ -403,6 +405,10 @@ describe('POST /api/servers - Server Creation', () => {
 
       expect(response.statusCode).toBe(400);
     });
+
+    // Note: sudoPassword env tests for standard mode are covered by SSE mode tests below.
+    // Both paths use the same env construction logic. The standard mode uses promisify(exec)
+    // which bypasses the mock (see skipped test above), so we test via SSE spawn instead.
   });
 
   describe('SSE streaming mode (follow=true)', () => {
@@ -489,6 +495,47 @@ describe('POST /api/servers - Server Creation', () => {
       expect(response.statusCode).toBe(409);
       const body = JSON.parse(response.body);
       expect(body.error).toBe('Conflict');
+    });
+
+    it('should pass MCCTL_SUDO_PASSWORD env when sudoPassword is provided', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'test-sudo-sse',
+          type: 'PAPER',
+          sudoPassword: 'ssepassword',
+        },
+      });
+
+      expect(mockedSpawn).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(Array),
+        expect.objectContaining({
+          env: expect.objectContaining({
+            MCCTL_SUDO_PASSWORD: 'ssepassword',
+          }),
+        })
+      );
+    });
+
+    it('should not include MCCTL_SUDO_PASSWORD env when sudoPassword is not provided', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'test-nosudo-sse',
+          type: 'PAPER',
+        },
+      });
+
+      const lastCall = mockedSpawn.mock.calls[mockedSpawn.mock.calls.length - 1];
+      const options = lastCall[2] as any;
+      expect(options.env).not.toHaveProperty('MCCTL_SUDO_PASSWORD');
     });
   });
 });

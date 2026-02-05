@@ -484,7 +484,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       },
     },
   }, async (request: FastifyRequest<CreateServerRoute>, reply: FastifyReply) => {
-    const { name, type, version, memory, seed, worldUrl, worldName, autoStart } = request.body;
+    const { name, type, version, memory, seed, worldUrl, worldName, autoStart, sudoPassword } = request.body;
     const { follow = false } = request.query;
 
     // Check if server already exists (before SSE mode check)
@@ -556,6 +556,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         env: {
           ...process.env,
           MCCTL_ROOT: platformPath,
+          ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
       });
@@ -664,6 +665,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         env: {
           ...process.env,
           MCCTL_ROOT: platformPath,
+          ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
         },
       });
 

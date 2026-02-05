@@ -40,6 +40,7 @@ const DEFAULT_FORM_VALUES: CreateServerRequest = {
   version: '1.21.1',
   memory: '4G',
   autoStart: false,
+  sudoPassword: '',
 };
 
 const PROGRESS_STEPS = [
@@ -217,6 +218,16 @@ export function CreateServerDialog({
                 value={formData.memory}
                 onChange={handleChange('memory')}
                 helperText="e.g., 4G, 8G, 16G"
+                fullWidth
+                disabled={isCreating}
+              />
+
+              <TextField
+                label="Sudo Password"
+                type="password"
+                value={formData.sudoPassword || ''}
+                onChange={handleChange('sudoPassword')}
+                helperText="Required for mDNS hostname registration (avahi)"
                 fullWidth
                 disabled={isCreating}
               />

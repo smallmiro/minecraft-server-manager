@@ -9,8 +9,7 @@ import {
   Dashboard as DashboardIcon,
 } from '@mui/icons-material';
 import { useServers, useWorlds } from '@/hooks/useMcctl';
-import { StatCard, ServerOverview, ActivityFeed } from '@/components/dashboard';
-import type { ActivityItem } from '@/components/dashboard';
+import { StatCard, ServerOverview, ChangelogFeed } from '@/components/dashboard';
 
 export default function DashboardPage() {
   const { data: serversData, isLoading: serversLoading } = useServers();
@@ -25,9 +24,6 @@ export default function DashboardPage() {
 
   // TODO: Calculate total players from server details (requires player data)
   const totalPlayers = 0;
-
-  // TODO: This will be replaced with real-time SSE data
-  const activities: ActivityItem[] = [];
 
   if (isLoading) {
     return (
@@ -128,7 +124,7 @@ export default function DashboardPage() {
           />
         </Grid>
         <Grid item xs={12} lg={5}>
-          <ActivityFeed activities={activities} maxItems={10} />
+          <ChangelogFeed maxVersions={2} />
         </Grid>
       </Grid>
     </>
