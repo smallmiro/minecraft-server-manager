@@ -1202,6 +1202,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#감사-로그-변수" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        감사 로그 변수
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mc-router-변수" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2095,6 +2106,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#감사-로그-변수" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        감사 로그 변수
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mc-router-변수" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2827,6 +2849,51 @@
 </tbody>
 </table>
 <hr />
+<h2 id="감사-로그-변수">감사 로그 변수<a class="headerlink" href="#감사-로그-변수" title="Permanent link">&para;</a></h2>
+<p>감사 로그 동작을 위해 <code>~/minecraft-servers/.env</code>에 설정합니다:</p>
+<table>
+<thead>
+<tr>
+<th>변수</th>
+<th>설명</th>
+<th>기본값</th>
+<th>관리</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AUDIT_AUTO_CLEANUP</code></td>
+<td>오래된 감사 로그 자동 삭제</td>
+<td><code>true</code></td>
+<td>수동</td>
+</tr>
+<tr>
+<td><code>AUDIT_RETENTION_DAYS</code></td>
+<td>감사 로그 보관 일수</td>
+<td><code>90</code></td>
+<td>수동</td>
+</tr>
+</tbody>
+</table>
+<p><strong>AUDIT_AUTO_CLEANUP:</strong>
+- <code>true</code>: 시스템 시작 시 <code>AUDIT_RETENTION_DAYS</code>보다 오래된 로그 자동 삭제
+- <code>false</code>: 자동 정리 비활성화 (<code>mcctl audit purge</code>를 통한 수동 삭제만 가능)</p>
+<p><strong>AUDIT_RETENTION_DAYS:</strong>
+- 자동 정리 전에 감사 로그를 보관할 일수
+- 권장값: 규정 준수 요구사항에 따라 30-180일
+- 프로덕션 환경: 90일 이상</p>
+<p><strong>데이터베이스 위치:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>~/.minecraft-servers/audit.db
+</code></pre></div></p>
+<p><strong>예제:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># 사용자 지정 보관 정책 설정</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;AUDIT_RETENTION_DAYS=180&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/.env
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;AUDIT_AUTO_CLEANUP=true&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/.env
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># 서비스 재시작하여 적용</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart
+</code></pre></div></p>
+<hr />
 <h2 id="mc-router-변수">mc-router 변수<a class="headerlink" href="#mc-router-변수" title="Permanent link">&para;</a></h2>
 <p><code>~/minecraft-servers/.env</code>에 설정하고 mc-router에 전달됩니다:</p>
 <table>
@@ -2884,77 +2951,77 @@
 </tbody>
 </table>
 <p><strong>mc-router 설정 변경 후:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mcctl<span class="w"> </span>router<span class="w"> </span>restart
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>router<span class="w"> </span>restart
 </code></pre></div>
 <hr />
 <h2 id="예제-설정">예제 설정<a class="headerlink" href="#예제-설정" title="Permanent link">&para;</a></h2>
 <h3 id="서바이벌-서버">서바이벌 서버<a class="headerlink" href="#서바이벌-서버" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># 서버 생성</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># 설정</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;서바이벌 서버 - 행운을 빕니다!&quot;</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>DIFFICULTY<span class="w"> </span>hard
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">30</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>--pvp
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>VIEW_DISTANCE<span class="w"> </span><span class="m">12</span>
-</code></pre></div>
-<h3 id="크리에이티브-서버">크리에이티브 서버<a class="headerlink" href="#크리에이티브-서버" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># 서버 생성</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>creative<span class="w"> </span>-t<span class="w"> </span>VANILLA<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># 설정</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;크리에이티브 모드 - 자유롭게 건축하세요!&quot;</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>DIFFICULTY<span class="w"> </span>peaceful
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>GAMEMODE<span class="w"> </span>creative
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">20</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>SPAWN_PROTECTION<span class="w"> </span><span class="m">0</span>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>--command-block
-</code></pre></div>
-<h3 id="모드-서버-forge">모드 서버 (Forge)<a class="headerlink" href="#모드-서버-forge" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># 서버 생성</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>-t<span class="w"> </span>FORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># 설정</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;모드 서버 - 향상된 경험&quot;</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>DIFFICULTY<span class="w"> </span>normal
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MEMORY<span class="w"> </span>8G
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="c1"># 모드 추가 (.env에 CF_API_KEY 필요)</span>
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>CURSEFORGE_FILES<span class="w"> </span><span class="s2">&quot;jei,journeymap,create&quot;</span>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="c1"># 적용을 위해 재시작</span>
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;서바이벌 서버 - 행운을 빕니다!&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>DIFFICULTY<span class="w"> </span>hard
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">30</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>--pvp
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>VIEW_DISTANCE<span class="w"> </span><span class="m">12</span>
 </code></pre></div>
-<h3 id="모드-서버-fabric">모드 서버 (Fabric)<a class="headerlink" href="#모드-서버-fabric" title="Permanent link">&para;</a></h3>
+<h3 id="크리에이티브-서버">크리에이티브 서버<a class="headerlink" href="#크리에이티브-서버" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># 서버 생성</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>fabric<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>creative<span class="w"> </span>-t<span class="w"> </span>VANILLA<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># 설정</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Fabric 서버 - 성능 모드&quot;</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>DIFFICULTY<span class="w"> </span>normal
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MEMORY<span class="w"> </span>6G
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="c1"># Modrinth에서 모드 추가</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,sodium,starlight&quot;</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span>required
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="c1"># 적용을 위해 재시작</span>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>fabric<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>fabric
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;크리에이티브 모드 - 자유롭게 건축하세요!&quot;</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>DIFFICULTY<span class="w"> </span>peaceful
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>GAMEMODE<span class="w"> </span>creative
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">20</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>SPAWN_PROTECTION<span class="w"> </span><span class="m">0</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>--command-block
+</code></pre></div>
+<h3 id="모드-서버-forge">모드 서버 (Forge)<a class="headerlink" href="#모드-서버-forge" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># 서버 생성</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>-t<span class="w"> </span>FORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># 설정</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;모드 서버 - 향상된 경험&quot;</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>DIFFICULTY<span class="w"> </span>normal
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MEMORY<span class="w"> </span>8G
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="c1"># 모드 추가 (.env에 CF_API_KEY 필요)</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>CURSEFORGE_FILES<span class="w"> </span><span class="s2">&quot;jei,journeymap,create&quot;</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="c1"># 적용을 위해 재시작</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
+</code></pre></div>
+<h3 id="모드-서버-fabric">모드 서버 (Fabric)<a class="headerlink" href="#모드-서버-fabric" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># 서버 생성</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>fabric<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># 설정</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Fabric 서버 - 성능 모드&quot;</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>DIFFICULTY<span class="w"> </span>normal
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MEMORY<span class="w"> </span>6G
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="c1"># Modrinth에서 모드 추가</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,sodium,starlight&quot;</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span>required
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="c1"># 적용을 위해 재시작</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>fabric<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>fabric
 </code></pre></div>
 <hr />
 <h2 id="변수-보간">변수 보간<a class="headerlink" href="#변수-보간" title="Permanent link">&para;</a></h2>
 <p>설정 파일을 직접 편집할 때 다른 변수를 참조할 수 있습니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># .env</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nv">HOST_IP</span><span class="o">=</span><span class="m">192</span>.168.1.100
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># config.env</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="nv">MOTD</span><span class="o">=</span><span class="si">${</span><span class="nv">HOST_IP</span><span class="si">}</span>를<span class="w"> </span>통해<span class="w"> </span>접속하세요
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># .env</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nv">HOST_IP</span><span class="o">=</span><span class="m">192</span>.168.1.100
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># config.env</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="nv">MOTD</span><span class="o">=</span><span class="si">${</span><span class="nv">HOST_IP</span><span class="si">}</span>를<span class="w"> </span>통해<span class="w"> </span>접속하세요
 </code></pre></div>
 <h2 id="참고">참고<a class="headerlink" href="#참고" title="Permanent link">&para;</a></h2>
 <ul>

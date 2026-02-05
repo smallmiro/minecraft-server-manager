@@ -1202,6 +1202,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#audit-log-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit Log Variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mc-router-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2095,6 +2106,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#audit-log-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit Log Variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#mc-router-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2827,6 +2849,51 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 </tbody>
 </table>
 <hr />
+<h2 id="audit-log-variables">Audit Log Variables<a class="headerlink" href="#audit-log-variables" title="Permanent link">&para;</a></h2>
+<p>These are set in <code>~/minecraft-servers/.env</code> for audit log behavior:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+<th>Management</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AUDIT_AUTO_CLEANUP</code></td>
+<td>Automatically delete old audit logs</td>
+<td><code>true</code></td>
+<td>Manual</td>
+</tr>
+<tr>
+<td><code>AUDIT_RETENTION_DAYS</code></td>
+<td>Number of days to retain audit logs</td>
+<td><code>90</code></td>
+<td>Manual</td>
+</tr>
+</tbody>
+</table>
+<p><strong>AUDIT_AUTO_CLEANUP:</strong>
+- <code>true</code>: Automatically delete logs older than <code>AUDIT_RETENTION_DAYS</code> on system startup
+- <code>false</code>: Disable automatic cleanup (manual purge only via <code>mcctl audit purge</code>)</p>
+<p><strong>AUDIT_RETENTION_DAYS:</strong>
+- Number of days to retain audit logs before auto-cleanup
+- Recommended: 30-180 days depending on compliance requirements
+- Production environments: 90+ days</p>
+<p><strong>Database Location:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>~/.minecraft-servers/audit.db
+</code></pre></div></p>
+<p><strong>Example:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Set custom retention policy</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;AUDIT_RETENTION_DAYS=180&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/.env
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;AUDIT_AUTO_CLEANUP=true&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/.env
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># Restart services to apply</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart
+</code></pre></div></p>
+<hr />
 <h2 id="mc-router-variables">mc-router Variables<a class="headerlink" href="#mc-router-variables" title="Permanent link">&para;</a></h2>
 <p>These are set in <code>~/minecraft-servers/.env</code> and passed to mc-router:</p>
 <table>
@@ -2884,77 +2951,77 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 </tbody>
 </table>
 <p><strong>After changing mc-router settings:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mcctl<span class="w"> </span>router<span class="w"> </span>restart
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>router<span class="w"> </span>restart
 </code></pre></div>
 <hr />
 <h2 id="example-configurations">Example Configurations<a class="headerlink" href="#example-configurations" title="Permanent link">&para;</a></h2>
 <h3 id="survival-server">Survival Server<a class="headerlink" href="#survival-server" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Create server</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Configure</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Survival Server - Good luck!&quot;</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>DIFFICULTY<span class="w"> </span>hard
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">30</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>--pvp
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>VIEW_DISTANCE<span class="w"> </span><span class="m">12</span>
-</code></pre></div>
-<h3 id="creative-server">Creative Server<a class="headerlink" href="#creative-server" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Create server</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>creative<span class="w"> </span>-t<span class="w"> </span>VANILLA<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Configure</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Creative Mode - Build freely!&quot;</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>DIFFICULTY<span class="w"> </span>peaceful
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>GAMEMODE<span class="w"> </span>creative
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">20</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>SPAWN_PROTECTION<span class="w"> </span><span class="m">0</span>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>--command-block
-</code></pre></div>
-<h3 id="modded-server-forge">Modded Server (Forge)<a class="headerlink" href="#modded-server-forge" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Create server</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>-t<span class="w"> </span>FORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Configure</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Modded Server - Enhanced Experience&quot;</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>DIFFICULTY<span class="w"> </span>normal
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MEMORY<span class="w"> </span>8G
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="c1"># Add mods (requires CF_API_KEY in .env)</span>
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>CURSEFORGE_FILES<span class="w"> </span><span class="s2">&quot;jei,journeymap,create&quot;</span>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="c1"># Restart to apply</span>
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Survival Server - Good luck!&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>DIFFICULTY<span class="w"> </span>hard
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">30</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>--pvp
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>VIEW_DISTANCE<span class="w"> </span><span class="m">12</span>
 </code></pre></div>
-<h3 id="modded-server-fabric">Modded Server (Fabric)<a class="headerlink" href="#modded-server-fabric" title="Permanent link">&para;</a></h3>
+<h3 id="creative-server">Creative Server<a class="headerlink" href="#creative-server" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Create server</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>fabric<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>creative<span class="w"> </span>-t<span class="w"> </span>VANILLA<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Configure</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Fabric Server - Performance Mods&quot;</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>DIFFICULTY<span class="w"> </span>normal
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MEMORY<span class="w"> </span>6G
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="c1"># Add mods from Modrinth</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,sodium,starlight&quot;</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span>required
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="c1"># Restart to apply</span>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>fabric<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>fabric
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Creative Mode - Build freely!&quot;</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>DIFFICULTY<span class="w"> </span>peaceful
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>GAMEMODE<span class="w"> </span>creative
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">20</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>SPAWN_PROTECTION<span class="w"> </span><span class="m">0</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>--command-block
+</code></pre></div>
+<h3 id="modded-server-forge">Modded Server (Forge)<a class="headerlink" href="#modded-server-forge" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Create server</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>-t<span class="w"> </span>FORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Configure</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Modded Server - Enhanced Experience&quot;</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>DIFFICULTY<span class="w"> </span>normal
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MEMORY<span class="w"> </span>8G
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="c1"># Add mods (requires CF_API_KEY in .env)</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>CURSEFORGE_FILES<span class="w"> </span><span class="s2">&quot;jei,journeymap,create&quot;</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="c1"># Restart to apply</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
+</code></pre></div>
+<h3 id="modded-server-fabric">Modded Server (Fabric)<a class="headerlink" href="#modded-server-fabric" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Create server</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>fabric<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Configure</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Fabric Server - Performance Mods&quot;</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>DIFFICULTY<span class="w"> </span>normal
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MEMORY<span class="w"> </span>6G
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="c1"># Add mods from Modrinth</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,sodium,starlight&quot;</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span>required
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="c1"># Restart to apply</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>fabric<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>fabric
 </code></pre></div>
 <hr />
 <h2 id="variable-interpolation">Variable Interpolation<a class="headerlink" href="#variable-interpolation" title="Permanent link">&para;</a></h2>
 <p>When editing config files directly, you can reference other variables:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># .env</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nv">HOST_IP</span><span class="o">=</span><span class="m">192</span>.168.1.100
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># config.env</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="nv">MOTD</span><span class="o">=</span>Connect<span class="w"> </span>via<span class="w"> </span><span class="si">${</span><span class="nv">HOST_IP</span><span class="si">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># .env</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nv">HOST_IP</span><span class="o">=</span><span class="m">192</span>.168.1.100
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># config.env</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="nv">MOTD</span><span class="o">=</span>Connect<span class="w"> </span>via<span class="w"> </span><span class="si">${</span><span class="nv">HOST_IP</span><span class="si">}</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
