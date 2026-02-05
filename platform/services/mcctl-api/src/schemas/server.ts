@@ -151,6 +151,7 @@ export const CreateServerRequestSchema = Type.Object({
   worldUrl: Type.Optional(Type.String({ format: 'uri' })),
   worldName: Type.Optional(Type.String()),
   autoStart: Type.Optional(Type.Boolean({ default: true })),
+  sudoPassword: Type.Optional(Type.String({ writeOnly: true })),
 });
 
 // Create Server Query Schema (for SSE streaming support)

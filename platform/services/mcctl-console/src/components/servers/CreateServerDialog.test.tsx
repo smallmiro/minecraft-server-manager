@@ -33,7 +33,8 @@ describe('CreateServerDialog', () => {
     expect(screen.getByLabelText(/server name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/server type/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/minecraft version/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/memory/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^memory$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/sudo password/i)).toBeInTheDocument();
   });
 
   it('should call onClose when cancel button is clicked', () => {
@@ -91,6 +92,7 @@ describe('CreateServerDialog', () => {
         version: '1.21.1',
         memory: '4G',
         autoStart: false,
+        sudoPassword: '',
       });
     });
   });
@@ -186,6 +188,40 @@ describe('CreateServerDialog', () => {
         })
       );
     });
+  });
+
+  it('should include sudoPassword in form submission when provided', async () => {
+    const onSubmit = vi.fn();
+    renderWithTheme(
+      <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+    );
+
+    const nameInput = screen.getByLabelText(/server name/i);
+    fireEvent.change(nameInput, { target: { value: 'test-server' } });
+
+    const passwordInput = screen.getByLabelText(/sudo password/i);
+    fireEvent.change(passwordInput, { target: { value: 'test-pass' } });
+
+    const createButton = screen.getByRole('button', { name: /create/i });
+    fireEvent.click(createButton);
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'test-server',
+          sudoPassword: 'test-pass',
+        })
+      );
+    });
+  });
+
+  it('should render sudo password field with helper text', () => {
+    renderWithTheme(
+      <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+    );
+
+    expect(screen.getByLabelText(/sudo password/i)).toBeInTheDocument();
+    expect(screen.getByText(/required for mdns hostname registration/i)).toBeInTheDocument();
   });
 
   it('should reset form when dialog is closed', async () => {

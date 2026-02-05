@@ -52,6 +52,7 @@ export interface CreateServerRequest {
   worldUrl?: string;
   worldName?: string;
   autoStart?: boolean;
+  sudoPassword?: string;
 }
 
 export interface CreateServerResponse {
