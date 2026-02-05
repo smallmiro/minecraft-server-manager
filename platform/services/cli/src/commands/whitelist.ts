@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { Paths, log, colors } from '@minecraft-docker/shared';
+import { Paths, log, colors, AuditActionEnum } from '@minecraft-docker/shared';
 import { ShellExecutor } from '../lib/shell.js';
 import { isContainerRunning, execRconWithOutput, getContainerName } from '../lib/rcon.js';
 import {
@@ -8,6 +8,7 @@ import {
   findPlayerByName,
   type PlayerEntry,
 } from '../lib/player-json.js';
+import { getContainer } from '../infrastructure/di/container.js';
 
 export interface WhitelistCommandOptions {
   root?: string;
@@ -223,6 +224,18 @@ async function addToWhitelist(
     shell.writeConfigValue(options.serverName!, 'WHITELIST', newList);
   }
 
+  // Log audit
+  const container = getContainer({ rootDir: options.root });
+  await container.auditLogPort.log({
+    action: AuditActionEnum.PLAYER_WHITELIST_ADD,
+    actor: 'cli:local',
+    targetType: 'player',
+    targetName: playerName,
+    status: 'success',
+    details: { server: options.serverName },
+    errorMessage: null,
+  });
+
   if (options.json) {
     console.log(
       JSON.stringify({
@@ -279,6 +292,18 @@ async function removeFromWhitelist(
     (n) => n.toLowerCase() !== playerName.toLowerCase()
   );
   shell.writeConfigValue(options.serverName!, 'WHITELIST', newConfigList.join(','));
+
+  // Log audit
+  const container = getContainer({ rootDir: options.root });
+  await container.auditLogPort.log({
+    action: AuditActionEnum.PLAYER_WHITELIST_REMOVE,
+    actor: 'cli:local',
+    targetType: 'player',
+    targetName: playerName,
+    status: 'success',
+    details: { server: options.serverName },
+    errorMessage: null,
+  });
 
   if (options.json) {
     console.log(
