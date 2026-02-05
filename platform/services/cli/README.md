@@ -73,6 +73,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.7.12 (2026-02-05)
+- **fix(scripts)**: Correct TEMPLATE_DIR path duplication in create-server.sh (#230)
+- **fix(api)**: Improve error reporting for server creation script failures (#230)
+
 ### v1.7.11 (2026-02-04)
 - **fix(shared)**: Check LEVEL config before WORLD_NAME for world size calculation
   - Fixes servers using LEVEL config showing "0 B" for world size
@@ -93,9 +97,6 @@ mcctl logs myserver
 
 ### v1.7.7 (2026-01-31)
 - **feat(cli)**: Auto-install mcctl-api on console init
-
-### v1.7.6 (2026-01-31)
-- **feat(mcctl-api)**: First npm release of REST API package
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
