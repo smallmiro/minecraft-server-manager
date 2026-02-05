@@ -87,6 +87,24 @@ export interface ServerCreateEvent {
 }
 
 /**
+ * Audit log event (real-time audit log stream)
+ */
+export interface AuditLogEvent {
+  type: 'audit-log';
+  data: {
+    id: string;
+    action: string;
+    actor: string;
+    targetType: string;
+    targetName: string;
+    details: Record<string, unknown> | null;
+    status: 'success' | 'failure';
+    errorMessage: string | null;
+    timestamp: string;
+  };
+}
+
+/**
  * Union type of all possible SSE events
  */
 export type SSEEvent =
@@ -96,7 +114,8 @@ export type SSEEvent =
   | HeartbeatEvent
   | ErrorEvent
   | ConnectionClosedEvent
-  | ServerCreateEvent;
+  | ServerCreateEvent
+  | AuditLogEvent;
 
 /**
  * SSE connection state
