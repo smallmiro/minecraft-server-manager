@@ -232,6 +232,7 @@ ${colors.cyan('Self Update:')}
   ${colors.bold('update')} --check             Check for updates only (no install)
   ${colors.bold('update')} --force             Force check (ignore cache)
   ${colors.bold('update')} --yes               Auto-confirm update
+  ${colors.bold('update')} --all               Update CLI and all installed services
 
 ${colors.cyan('Console Management:')}
   ${colors.bold('console init')} [options]       Initialize console service (create admin user)
@@ -850,6 +851,8 @@ async function main(): Promise<void> {
           check: flags['check'] === true,
           force: flags['force'] === true,
           yes: flags['yes'] === true,
+          all: flags['all'] === true,
+          root: rootDir,
         });
         break;
       }
