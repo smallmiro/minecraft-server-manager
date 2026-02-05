@@ -1,6 +1,7 @@
-import { Paths, log, colors } from '@minecraft-docker/shared';
+import { Paths, log, colors, AuditActionEnum } from '@minecraft-docker/shared';
 import { ShellExecutor } from '../lib/shell.js';
 import { isContainerRunning, execRconWithOutput, getContainerName } from '../lib/rcon.js';
+import { getContainer } from '../infrastructure/di/container.js';
 
 export interface KickCommandOptions {
   root?: string;
@@ -65,6 +66,18 @@ export async function kickCommand(options: KickCommandOptions): Promise<number> 
   // Execute kick via RCON
   const rconCmd = reason ? ['kick', playerName, reason] : ['kick', playerName];
   const result = await execRconWithOutput(containerName, rconCmd);
+
+  // Log audit
+  const container = getContainer({ rootDir: options.root });
+  await container.auditLogPort.log({
+    action: AuditActionEnum.PLAYER_KICK,
+    actor: 'cli:local',
+    targetType: 'player',
+    targetName: playerName,
+    status: result.code === 0 ? 'success' : 'failure',
+    details: { server: options.serverName, reason },
+    errorMessage: result.code === 0 ? null : result.output.trim(),
+  });
 
   if (options.json) {
     console.log(

@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import {
   Paths,
   // Infrastructure adapters from shared
@@ -5,6 +6,7 @@ import {
   ServerRepository,
   WorldRepository,
   DocsAdapter,
+  SqliteAuditLogRepository,
   // Use cases from shared
   CreateServerUseCase,
   DeleteServerUseCase,
@@ -18,6 +20,7 @@ import {
   type IServerRepository,
   type IWorldRepository,
   type IDocProvider,
+  type IAuditLogPort,
   type ICreateServerUseCase,
   type IDeleteServerUseCase,
   type IServerStatusUseCase,
@@ -47,6 +50,7 @@ export class Container {
   private _serverRepo?: IServerRepository;
   private _worldRepo?: IWorldRepository;
   private _docProvider?: IDocProvider;
+  private _auditLogPort?: IAuditLogPort;
 
   constructor(options?: ContainerOptions | string) {
     if (typeof options === 'string') {
@@ -104,6 +108,14 @@ export class Container {
     return this._docProvider;
   }
 
+  get auditLogPort(): IAuditLogPort {
+    if (!this._auditLogPort) {
+      const dbPath = join(this.paths.root, 'audit.db');
+      this._auditLogPort = new SqliteAuditLogRepository(dbPath);
+    }
+    return this._auditLogPort;
+  }
+
   // ========================================
   // Use Cases
   // ========================================
@@ -113,7 +125,8 @@ export class Container {
       this.promptPort,
       this.shellPort,
       this.serverRepository,
-      this.worldRepository
+      this.worldRepository,
+      this.auditLogPort
     );
   }
 
@@ -121,7 +134,8 @@ export class Container {
     return new DeleteServerUseCase(
       this.promptPort,
       this.shellPort,
-      this.serverRepository
+      this.serverRepository,
+      this.auditLogPort
     );
   }
 

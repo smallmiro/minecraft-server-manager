@@ -19,6 +19,8 @@ export {
   ProcessInfo,
   type ProcessInfoData,
   type ProcessMetrics,
+  // Audit log value objects
+  AuditActionEnum,
 } from './value-objects/index.js';
 
 // Entities
@@ -31,4 +33,7 @@ export {
   type WorldLock,
   User,
   type UserData,
+  AuditLog,
+  type AuditLogData,
+  type AuditLogRow,
 } from './entities/index.js';

@@ -12,3 +12,6 @@ export { Role, RoleEnum } from './Role.js';
 // Service management value objects
 export { ServiceStatus, ServiceStatusEnum } from './ServiceStatus.js';
 export { ProcessInfo, type ProcessInfoData, type ProcessMetrics } from './ProcessInfo.js';
+
+// Audit log value objects
+export { AuditActionEnum } from './AuditAction.js';

@@ -57,4 +57,6 @@ export type {
   ServiceStopOptions,
   ServiceRestartOptions,
   ServiceLogsOptions,
+  IAuditLogPort,
+  AuditLogQueryOptions,
 } from './outbound/index.js';

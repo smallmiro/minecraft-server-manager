@@ -1,6 +1,7 @@
-import { Paths, log, colors } from '@minecraft-docker/shared';
+import { Paths, log, colors, AuditActionEnum } from '@minecraft-docker/shared';
 import { ShellExecutor } from '../lib/shell.js';
 import { isContainerRunning, execRconWithOutput, getContainerName } from '../lib/rcon.js';
+import { getContainer } from '../infrastructure/di/container.js';
 
 export interface OpCommandOptions {
   root?: string;
@@ -159,6 +160,18 @@ async function addOp(
   const newOps = [...currentOps, playerName].join(',');
   const configSuccess = shell.writeConfigValue(options.serverName!, 'OPS', newOps);
 
+  // Log audit
+  const container = getContainer({ rootDir: options.root });
+  await container.auditLogPort.log({
+    action: AuditActionEnum.PLAYER_OP,
+    actor: 'cli:local',
+    targetType: 'player',
+    targetName: playerName,
+    status: 'success',
+    details: { server: options.serverName },
+    errorMessage: null,
+  });
+
   if (options.json) {
     console.log(JSON.stringify({
       success: true,
@@ -236,6 +249,18 @@ async function removeOp(
   const configSuccess = newOps
     ? shell.writeConfigValue(options.serverName!, 'OPS', newOps)
     : shell.writeConfigValue(options.serverName!, 'OPS', '');
+
+  // Log audit
+  const container = getContainer({ rootDir: options.root });
+  await container.auditLogPort.log({
+    action: AuditActionEnum.PLAYER_DEOP,
+    actor: 'cli:local',
+    targetType: 'player',
+    targetName: playerName,
+    status: 'success',
+    details: { server: options.serverName },
+    errorMessage: null,
+  });
 
   if (options.json) {
     console.log(JSON.stringify({
