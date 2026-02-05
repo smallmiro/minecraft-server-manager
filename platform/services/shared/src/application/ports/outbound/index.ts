@@ -47,3 +47,5 @@ export type {
   ServiceRestartOptions,
   ServiceLogsOptions,
 } from './IServiceManagerPort.js';
+
+export type { IAuditLogPort, AuditLogQueryOptions } from './IAuditLogPort.js';

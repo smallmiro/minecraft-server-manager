@@ -96,6 +96,11 @@ export {
   type WorldLock,
   User,
   type UserData,
+  // Audit log
+  AuditLog,
+  type AuditLogData,
+  type AuditLogRow,
+  AuditActionEnum,
 } from './domain/index.js';
 
 // Re-export mod domain models
