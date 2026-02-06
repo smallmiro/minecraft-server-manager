@@ -21,6 +21,13 @@ const SERVICE_PACKAGES = {
 } as const;
 
 /**
+ * Library packages (no PM2 restart needed)
+ */
+const LIBRARY_PACKAGES = {
+  shared: '@minecraft-docker/shared',
+} as const;
+
+/**
  * Update command options
  */
 export interface UpdateCommandOptions {
@@ -126,6 +133,98 @@ interface ServiceUpdateResult {
 }
 
 /**
+ * Update a library package (no PM2 restart needed)
+ */
+async function updateLibraryPackage(
+  rootDir: string,
+  name: string,
+  packageName: string,
+  options: { check?: boolean },
+  spinner: ReturnType<typeof prompts.spinner>
+): Promise<ServiceUpdateResult> {
+  // Check if package is installed
+  const currentVersion = getInstalledServiceVersion(rootDir, packageName);
+
+  if (!currentVersion) {
+    return {
+      name,
+      packageName,
+      installed: false,
+      currentVersion: null,
+      latestVersion: null,
+      updated: false,
+      restarted: false,
+    };
+  }
+
+  // Fetch latest version from npm
+  spinner.start(`Checking ${name}...`);
+  const latestVersion = await fetchLatestServiceVersion(packageName);
+  spinner.stop(`${name} checked`);
+
+  if (!latestVersion) {
+    return {
+      name,
+      packageName,
+      installed: true,
+      currentVersion,
+      latestVersion: null,
+      updated: false,
+      restarted: false,
+      error: 'Failed to fetch latest version',
+    };
+  }
+
+  const needsUpdate = isUpdateAvailable(currentVersion, latestVersion);
+
+  if (!needsUpdate || options.check) {
+    return {
+      name,
+      packageName,
+      installed: true,
+      currentVersion,
+      latestVersion,
+      updated: false,
+      restarted: false,
+    };
+  }
+
+  // Install the latest version
+  spinner.start(`Updating ${name}...`);
+  const installResult = spawnSync('npm', ['install', `${packageName}@latest`], {
+    cwd: rootDir,
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+
+  if (installResult.status !== 0) {
+    spinner.stop(`${name} update failed`);
+    return {
+      name,
+      packageName,
+      installed: true,
+      currentVersion,
+      latestVersion,
+      updated: false,
+      restarted: false,
+      error: installResult.stderr || 'npm install failed',
+    };
+  }
+
+  spinner.stop(`${name} updated`);
+
+  return {
+    name,
+    packageName,
+    installed: true,
+    currentVersion,
+    latestVersion,
+    updated: true,
+    restarted: false, // Libraries don't need restart
+  };
+}
+
+/**
  * Update all installed services (npm install + PM2 restart)
  */
 export async function updateServices(
@@ -140,7 +239,9 @@ export async function updateServices(
     { name: PM2_SERVICE_NAMES.CONSOLE, available: availability.console.available },
   ];
 
-  const anyInstalled = services.some((s) => s.available);
+  // Check if shared library is installed
+  const sharedInstalled = getInstalledServiceVersion(rootDir, LIBRARY_PACKAGES.shared) !== null;
+  const anyInstalled = services.some((s) => s.available) || sharedInstalled;
 
   if (!anyInstalled) {
     console.log('');
@@ -268,6 +369,16 @@ export async function updateServices(
       restarted,
     });
   }
+
+  // Update library packages (shared)
+  const sharedResult = await updateLibraryPackage(
+    rootDir,
+    'shared',
+    LIBRARY_PACKAGES.shared,
+    options,
+    spinner
+  );
+  results.push(sharedResult);
 
   // Print results summary
   printServiceResults(results, options.check);
