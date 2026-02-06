@@ -6,6 +6,8 @@ import {
   executeServerAction,
   ServerAction,
 } from '../../utils/docker-compose.js';
+import { writeAuditLog } from '../../services/audit-log-service.js';
+import { AuditActionEnum } from '@minecraft-docker/shared';
 
 // ============================================================
 // Types
@@ -27,6 +29,17 @@ interface ActionResponse {
 // ============================================================
 // Route Handlers
 // ============================================================
+
+/**
+ * Map server action to audit action enum
+ */
+function toAuditAction(action: ServerAction): AuditActionEnum {
+  switch (action) {
+    case 'start': return AuditActionEnum.SERVER_START;
+    case 'stop': return AuditActionEnum.SERVER_STOP;
+    case 'restart': return AuditActionEnum.SERVER_RESTART;
+  }
+}
 
 async function handleServerAction(
   request: FastifyRequest<{ Params: ServerNameParams }>,
@@ -51,6 +64,16 @@ async function handleServerAction(
   const result = await executeServerAction(serverName, action);
 
   if (!result.success) {
+    await writeAuditLog({
+      action: toAuditAction(action),
+      actor: 'api:console',
+      targetType: 'server',
+      targetName: serverName,
+      status: 'failure',
+      details: null,
+      errorMessage: result.error ?? 'Failed to execute action',
+    });
+
     reply.code(500);
     return {
       success: false,
@@ -61,6 +84,16 @@ async function handleServerAction(
       message: result.stderr,
     };
   }
+
+  await writeAuditLog({
+    action: toAuditAction(action),
+    actor: 'api:console',
+    targetType: 'server',
+    targetName: serverName,
+    status: 'success',
+    details: null,
+    errorMessage: null,
+  });
 
   return {
     success: true,
