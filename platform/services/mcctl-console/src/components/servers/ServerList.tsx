@@ -54,7 +54,7 @@ export function ServerList({
       if (statusFilter === 'running' && currentStatus !== 'running') {
         return false;
       }
-      if (statusFilter === 'stopped' && currentStatus !== 'stopped' && currentStatus !== 'exited') {
+      if (statusFilter === 'stopped' && currentStatus !== 'stopped' && currentStatus !== 'exited' && currentStatus !== 'not_created') {
         return false;
       }
 

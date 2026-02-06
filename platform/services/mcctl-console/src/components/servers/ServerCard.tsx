@@ -30,6 +30,7 @@ const getStatusColor = (status: ServerSummary['status']): 'success' | 'error' | 
       return 'success';
     case 'stopped':
     case 'exited':
+    case 'not_created':
       return 'error';
     case 'created':
       return 'warning';
@@ -45,6 +46,8 @@ const getStatusLabel = (status: ServerSummary['status']): string => {
     case 'stopped':
     case 'exited':
       return 'Stopped';
+    case 'not_created':
+      return 'Not Created';
     case 'created':
       return 'Created';
     default:
@@ -79,7 +82,7 @@ export function ServerCard({ server, statusOverride, onClick, onStart, onStop, l
   };
 
   const isRunning = currentStatus === 'running';
-  const isStopped = currentStatus === 'stopped' || currentStatus === 'exited';
+  const isStopped = currentStatus === 'stopped' || currentStatus === 'exited' || currentStatus === 'not_created';
   const primaryHostname = getPrimaryHostname(server.hostname);
   const allHostnames = server.hostname?.split(',').map(h => h.trim()) || [];
 
