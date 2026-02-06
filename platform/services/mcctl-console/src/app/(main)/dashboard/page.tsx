@@ -9,17 +9,28 @@ import {
   Dashboard as DashboardIcon,
 } from '@mui/icons-material';
 import { useServers, useWorlds } from '@/hooks/useMcctl';
+import { useServersSSE } from '@/hooks/useServersSSE';
 import { StatCard, ServerOverview, ChangelogFeed, RecentActivityFeed } from '@/components/dashboard';
 
 export default function DashboardPage() {
   const { data: serversData, isLoading: serversLoading } = useServers();
   const { data: worldsData, isLoading: worldsLoading } = useWorlds();
 
+  // Real-time server status updates
+  const { statusMap } = useServersSSE();
+
   const isLoading = serversLoading || worldsLoading;
 
-  // Calculate statistics
+  // Calculate statistics with real-time status overlay
   const totalServers = serversData?.total || 0;
-  const onlineServers = serversData?.servers.filter(s => s.status === 'running').length || 0;
+
+  // Count online servers using SSE status if available
+  const onlineServers = serversData?.servers.filter(server => {
+    const sseStatus = statusMap[server.name];
+    const currentStatus = sseStatus?.status || server.status;
+    return currentStatus === 'running';
+  }).length || 0;
+
   const totalWorlds = worldsData?.total || 0;
 
   // TODO: Calculate total players from server details (requires player data)
@@ -118,6 +129,7 @@ export default function DashboardPage() {
         <Grid item xs={12} lg={7}>
           <ServerOverview
             servers={serversData?.servers || []}
+            statusMap={statusMap}
             isLoading={serversLoading}
             maxItems={5}
             showViewAll={true}

@@ -13,9 +13,11 @@ import StopIcon from '@mui/icons-material/Stop';
 import DnsIcon from '@mui/icons-material/Dns';
 import LinkIcon from '@mui/icons-material/Link';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
+import type { ServerStatusMap } from '@/hooks/useServersSSE';
 
 interface ServerCardProps {
   server: ServerSummary;
+  statusOverride?: ServerStatusMap[string];
   onClick?: (serverName: string) => void;
   onStart?: (serverName: string) => void;
   onStop?: (serverName: string) => void;
@@ -58,7 +60,10 @@ const getPrimaryHostname = (hostname: string | undefined): string => {
   return localHost || hosts[0] || '-';
 };
 
-export function ServerCard({ server, onClick, onStart, onStop, loading = false }: ServerCardProps) {
+export function ServerCard({ server, statusOverride, onClick, onStart, onStop, loading = false }: ServerCardProps) {
+  // Use SSE status if available, otherwise fall back to server data
+  const currentStatus = statusOverride?.status || server.status;
+
   const handleCardClick = () => {
     if (onClick) {
       onClick(server.name);
@@ -73,8 +78,8 @@ export function ServerCard({ server, onClick, onStart, onStop, loading = false }
     action(server.name);
   };
 
-  const isRunning = server.status === 'running';
-  const isStopped = server.status === 'stopped' || server.status === 'exited';
+  const isRunning = currentStatus === 'running';
+  const isStopped = currentStatus === 'stopped' || currentStatus === 'exited';
   const primaryHostname = getPrimaryHostname(server.hostname);
   const allHostnames = server.hostname?.split(',').map(h => h.trim()) || [];
 
@@ -114,9 +119,9 @@ export function ServerCard({ server, onClick, onStart, onStop, loading = false }
             {server.name}
           </Typography>
           <Chip
-            label={getStatusLabel(server.status)}
+            label={getStatusLabel(currentStatus)}
             size="small"
-            color={getStatusColor(server.status)}
+            color={getStatusColor(currentStatus)}
             sx={{
               fontWeight: 500,
               minWidth: 70,

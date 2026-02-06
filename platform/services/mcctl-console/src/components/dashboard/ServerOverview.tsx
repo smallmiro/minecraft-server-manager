@@ -13,9 +13,11 @@ import NextLink from 'next/link';
 import { startLoading } from '@/components/providers';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
+import type { ServerStatusMap } from '@/hooks/useServersSSE';
 
 export interface ServerOverviewProps {
   servers: ServerSummary[];
+  statusMap?: ServerStatusMap;
   isLoading: boolean;
   maxItems?: number;
   showViewAll?: boolean;
@@ -24,6 +26,7 @@ export interface ServerOverviewProps {
 
 export function ServerOverview({
   servers,
+  statusMap = {},
   isLoading,
   maxItems,
   showViewAll = false,
@@ -112,51 +115,58 @@ export function ServerOverview({
       />
       <CardContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {displayedServers.map((server) => (
-            <Box
-              key={server.name}
-              role="button"
-              onClick={() => handleServerClick(server.name)}
-              sx={{
-                p: 2,
-                borderRadius: 1,
-                border: '1px solid',
-                borderColor: 'divider',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  backgroundColor: 'action.hover',
-                },
-              }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                  <Typography variant="subtitle1" fontWeight={600}>
-                    {server.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {server.hostname}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Chip
-                    label={server.status}
-                    color={getStatusColor(server.status)}
-                    size="small"
-                  />
-                  {server.health !== 'none' && (
+          {displayedServers.map((server) => {
+            // Use SSE status if available
+            const sseStatus = statusMap[server.name];
+            const currentStatus = sseStatus?.status || server.status;
+            const currentHealth = sseStatus?.health || server.health;
+
+            return (
+              <Box
+                key={server.name}
+                role="button"
+                onClick={() => handleServerClick(server.name)}
+                sx={{
+                  p: 2,
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    backgroundColor: 'action.hover',
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight={600}>
+                      {server.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {server.hostname}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
                     <Chip
-                      label={server.health}
-                      color={getHealthColor(server.health)}
+                      label={currentStatus}
+                      color={getStatusColor(currentStatus)}
                       size="small"
-                      variant="outlined"
                     />
-                  )}
+                    {currentHealth !== 'none' && (
+                      <Chip
+                        label={currentHealth}
+                        color={getHealthColor(currentHealth)}
+                        size="small"
+                        variant="outlined"
+                      />
+                    )}
+                  </Box>
                 </Box>
               </Box>
-            </Box>
-          ))}
+            );
+          })}
         </Box>
       </CardContent>
     </Card>

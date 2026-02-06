@@ -18,6 +18,7 @@ import {
   useStartServer,
   useStopServer,
 } from '@/hooks/useMcctl';
+import { useServersSSE } from '@/hooks/useServersSSE';
 import { useCreateServerSSE } from '@/hooks/useCreateServerSSE';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 
@@ -26,8 +27,11 @@ export default function ServersPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [loadingServers, setLoadingServers] = useState<string[]>([]);
 
-  // Fetch servers
+  // Fetch servers (initial data)
   const { data, isLoading, error } = useServers();
+
+  // Real-time server status updates
+  const { statusMap } = useServersSSE();
 
   // Mutations
   const startServer = useStartServer();
@@ -153,6 +157,7 @@ export default function ServersPage() {
       ) : (
         <ServerList
           servers={data?.servers || []}
+          statusMap={statusMap}
           onServerClick={handleServerClick}
           onStart={handleStartServer}
           onStop={handleStopServer}
