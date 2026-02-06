@@ -40,7 +40,7 @@ export function AssignWorldDialog({
 
   const servers = serversData?.servers || [];
   const stoppedServers = servers.filter(
-    (s) => s.status === 'stopped' || s.status === 'exited'
+    (s) => s.status !== 'running'
   );
   const runningServers = servers.filter((s) => s.status === 'running');
 
@@ -86,7 +86,7 @@ export function AssignWorldDialog({
                   {stoppedServers.length > 0 && (
                     <MenuItem disabled>
                       <Typography variant="caption" color="text.secondary">
-                        Stopped Servers
+                        Available Servers
                       </Typography>
                     </MenuItem>
                   )}
