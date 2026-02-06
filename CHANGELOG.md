@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-02-06
+
+### Added
+- **World Management UI** - Full world management interface in Web Console (#175)
+  - World list page with size, lock status, and server assignment display
+  - World reset functionality with safety confirmation dialog
+  - Integration with server detail page for per-server world operations
+- **Server Options Tab** - Configuration management UI in Web Console (#229)
+  - Server config viewing and editing through web interface
+  - Real-time config updates via REST API
+- **SSE Real-time Server Status** - Replace polling with Server-Sent Events for live server status updates (#223)
+  - Efficient real-time updates without polling overhead
+  - Automatic reconnection on connection loss
+- **Server Config & World Reset API** - New REST endpoints for server configuration and world management (#229)
+  - `GET/PUT /api/servers/:name/config` - Server configuration endpoints
+  - `POST /api/servers/:name/world/reset` - World reset endpoint with safety checks
+- **Shared Package in Update** - Add `@minecraft-docker/shared` to `mcctl update --all` scope
+
+### Fixed
+- **Path Traversal Prevention** - Security fix to prevent path traversal attacks in world reset endpoint
+- **Container Status Checks** - Verify container is stopped before allowing world reset operations
+- **Force Update Check** - Always perform update check when running `mcctl update` (bypass cache)
+
+### Tests
+- Add tests for ConfigService, config routes, and useServersSSE hook
+
 ## [1.10.0] - 2026-02-05
 
 ### Added

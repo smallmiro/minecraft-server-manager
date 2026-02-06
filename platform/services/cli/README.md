@@ -75,19 +75,25 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.11.0 (2026-02-06)
+- **feat(console)**: World management UI - list, reset, server assignment (#175)
+- **feat(console)**: Server options tab with config management (#229)
+- **feat(console)**: SSE real-time server status replaces polling (#223)
+- **feat(api)**: Server config and world reset endpoints (#229)
+- **feat(cli)**: Add shared package to `mcctl update --all`
+- **fix(api)**: Path traversal prevention and container status checks in world reset
+- **fix(cli)**: Always force update check when running `mcctl update`
+
 ### v1.10.0 (2026-02-05)
 - **feat**: Audit Log System - comprehensive activity tracking (#234, #235)
   - `mcctl audit list/purge/stats` CLI commands with filtering
   - 5 REST API endpoints (list, stats, purge, SSE stream)
   - Full Web UI: audit log page, dashboard widget, server activity tab
   - SQLite storage with WAL mode, auto-cleanup (90-day retention)
-  - `AUDIT_AUTO_CLEANUP`, `AUDIT_RETENTION_DAYS` environment variables
-  - 29 CLI tests + 16 domain/infrastructure tests
 
 ### v1.9.0 (2026-02-05)
 - **feat(cli)**: Add `--all` flag to `mcctl update` command
   - Update CLI and all installed services (mcctl-api, mcctl-console) together
-  - Auto npm update + PM2 restart for each service
 
 ### v1.8.0 (2026-02-05)
 - **feat(api,console)**: Pass sudo password from web console to server creation API (#230)
@@ -95,15 +101,9 @@ mcctl logs myserver
 
 ### v1.7.12 (2026-02-05)
 - **fix(scripts)**: Correct TEMPLATE_DIR path duplication in create-server.sh (#230)
-- **fix(api)**: Improve error reporting for server creation script failures (#230)
 
 ### v1.7.11 (2026-02-04)
 - **fix(shared)**: Check LEVEL config before WORLD_NAME for world size calculation
-
-### v1.7.10 (2026-02-04)
-- **feat(console)**: Add ANSI color support for console logs
-- **feat(api,console)**: Add SSE streaming for server creation (#227, #228)
-- **fix**: Fix MCCTL_ROOT path and player list parsing
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

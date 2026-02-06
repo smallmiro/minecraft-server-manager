@@ -32,6 +32,7 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **NeoForge Support**: Full support for NeoForge modded servers (Minecraft 1.20.1+)
 - **GitHub Backup**: Automatic world backup to private GitHub repositories
 - **Audit Logs**: Comprehensive activity tracking with SQLite storage, auto-cleanup, and web UI
+- **World Management UI**: Web-based world management with reset, assignment, and real-time status
 
 ## Quick Start
 
@@ -844,46 +845,47 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [1.11.0] - 2026-02-06
+
+**Added:**
+- **World Management UI** - Full world management interface in Web Console (#175)
+- **Server Options Tab** - Config management UI with real-time updates (#229)
+- **SSE Real-time Server Status** - Replace polling with Server-Sent Events (#223)
+- **Server Config & World Reset API** - New REST endpoints (#229)
+
+**Fixed:**
+- Path traversal prevention and container status checks in world reset
+- Force update check bypass for `mcctl update`
+
 ### [1.10.0] - 2026-02-05
 
 **Added:**
 - **Audit Log System** - Comprehensive activity tracking across CLI, API, and Web Console (#234, #235)
-  - Domain: `AuditLog` entity with 13 action types (server lifecycle, player management, audit purge)
-  - CLI: `mcctl audit list/purge/stats` commands with filtering and pagination
-  - API: 5 REST endpoints (list, stats, purge, SSE streaming) with TypeBox validation
-  - Web UI: Audit log page with filtering, expandable rows, dashboard widget, server activity tab
-  - Infrastructure: SQLite storage with WAL mode, auto-migration, auto-cleanup (90-day retention)
-  - Configuration: `AUDIT_AUTO_CLEANUP`, `AUDIT_RETENTION_DAYS` environment variables
+  - CLI: `mcctl audit list/purge/stats` commands with filtering
+  - API: 5 REST endpoints (list, stats, purge, SSE streaming)
+  - Web UI: Audit log page with filtering, dashboard widget, server activity tab
+  - SQLite storage with WAL mode, auto-cleanup (90-day retention)
 
 ### [1.9.0] - 2026-02-05
 
 **Added:**
-- **`mcctl update --all` flag** - Update CLI and all installed services (mcctl-api, mcctl-console) in a single command with npm update + PM2 restart
+- **`mcctl update --all` flag** - Update CLI and all installed services with npm update + PM2 restart
 
 ### [1.8.0] - 2026-02-05
 
 **Added:**
-- **Web Console sudo password support** - Pass sudo password from CreateServerDialog to server creation API for mDNS hostname registration (#230)
+- **Web Console sudo password support** - Pass sudo password from CreateServerDialog (#230)
 - **Dashboard ChangelogFeed** - Real changelog from GitHub replaces placeholder ActivityFeed
 
 ### [1.7.12] - 2026-02-05
 
 **Fixed:**
 - Correct TEMPLATE_DIR path duplication in create-server.sh (#230)
-- Improve error reporting for server creation script failures (#230)
 
 ### [1.7.11] - 2026-02-04
 
 **Fixed:**
 - Check LEVEL config before WORLD_NAME for world size calculation
-
-### [1.7.10] - 2026-02-04
-
-**Added:**
-- Console UI ANSI color support, loading indicator, SSE streaming for server creation
-
-**Fixed:**
-- MCCTL_ROOT path resolution, player list ANSI parsing
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
