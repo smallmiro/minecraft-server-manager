@@ -10,7 +10,7 @@ export interface ServerStatusEvent {
   type: 'server-status';
   data: {
     serverName: string;
-    status: 'running' | 'stopped' | 'created' | 'exited' | 'unknown';
+    status: 'running' | 'stopped' | 'created' | 'exited' | 'not_created' | 'unknown';
     health: 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown';
     timestamp: string;
   };

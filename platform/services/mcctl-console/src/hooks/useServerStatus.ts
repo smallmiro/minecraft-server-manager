@@ -22,7 +22,7 @@ export interface UseServerStatusOptions {
    * Callback when status changes
    */
   onStatusChange?: (
-    status: 'running' | 'stopped' | 'created' | 'exited' | 'unknown',
+    status: 'running' | 'stopped' | 'created' | 'exited' | 'not_created' | 'unknown',
     health: 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown'
   ) => void;
 
@@ -46,7 +46,7 @@ export interface UseServerStatusReturn {
   /**
    * Current server status
    */
-  status: 'running' | 'stopped' | 'created' | 'exited' | 'unknown' | null;
+  status: 'running' | 'stopped' | 'created' | 'exited' | 'not_created' | 'unknown' | null;
 
   /**
    * Current server health
@@ -100,7 +100,7 @@ export function useServerStatus(
   } = options;
 
   const [status, setStatus] = useState<
-    'running' | 'stopped' | 'created' | 'exited' | 'unknown' | null
+    'running' | 'stopped' | 'created' | 'exited' | 'not_created' | 'unknown' | null
   >(null);
 
   const [health, setHealth] = useState<

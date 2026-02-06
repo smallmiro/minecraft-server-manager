@@ -14,7 +14,7 @@ import type { SSEEvent, ServerStatusEvent } from '@/types/events';
  */
 export interface ServerStatusMap {
   [serverName: string]: {
-    status: 'running' | 'stopped' | 'created' | 'exited' | 'unknown';
+    status: 'running' | 'stopped' | 'created' | 'exited' | 'not_created' | 'unknown';
     health: 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown';
     timestamp: string;
   };
@@ -29,7 +29,7 @@ export interface UseServersSSEOptions {
    */
   onStatusChange?: (
     serverName: string,
-    status: 'running' | 'stopped' | 'created' | 'exited' | 'unknown',
+    status: 'running' | 'stopped' | 'created' | 'exited' | 'not_created' | 'unknown',
     health: 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown'
   ) => void;
 

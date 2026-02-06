@@ -6,7 +6,7 @@
 export interface ServerSummary {
   name: string;
   container: string;
-  status: 'running' | 'stopped' | 'created' | 'exited' | 'unknown';
+  status: 'running' | 'stopped' | 'created' | 'exited' | 'not_created' | 'unknown';
   health: 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown';
   hostname: string;
 }
