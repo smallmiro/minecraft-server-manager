@@ -132,6 +132,15 @@ function pm2Dump(): Promise<void> {
   });
 }
 
+function pm2KillDaemon(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    pm2.killDaemon((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
 /**
  * PM2 Service Manager Adapter
  * Implements IServiceManagerPort for managing services via PM2
@@ -435,5 +444,21 @@ export class Pm2ServiceManagerAdapter implements IServiceManagerPort {
     // PM2 doesn't have a direct API for resurrect
     // It's typically done via CLI: pm2 resurrect
     throw new Error('Resurrect is not supported via API. Use: pm2 resurrect');
+  }
+
+  /**
+   * Kill PM2 daemon
+   * Stops all processes and kills the PM2 daemon process.
+   * After calling this, the adapter is disconnected.
+   */
+  async killDaemon(): Promise<void> {
+    try {
+      await this.ensureConnected();
+      await pm2KillDaemon();
+      this.connected = false;
+    } catch (error) {
+      this.connected = false;
+      throw new Error(`Failed to kill PM2 daemon: ${formatPm2Error(error)}`);
+    }
   }
 }
