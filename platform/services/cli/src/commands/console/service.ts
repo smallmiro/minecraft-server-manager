@@ -36,6 +36,7 @@ export interface ConsoleServiceOptions {
   consolePort?: number;
   build?: boolean;
   noBuild?: boolean;
+  force?: boolean;
 }
 
 // Backward compatibility alias
@@ -283,12 +284,30 @@ async function stopServices(
     return 0;
   }
 
-  log.info('Stopping console services...');
+  if (options.force) {
+    log.info('Force stopping console services (killing PM2 daemon)...');
+  } else {
+    log.info('Stopping console services...');
+  }
 
   try {
     for (const service of services) {
-      await pm2Adapter.stop(service);
-      log.info(`  Stopped ${service}`);
+      if (options.force) {
+        try {
+          await pm2Adapter.delete(service);
+        } catch {
+          // Ignore errors - process may not exist
+        }
+        log.info(`  Deleted ${service}`);
+      } else {
+        await pm2Adapter.stop(service);
+        log.info(`  Stopped ${service}`);
+      }
+    }
+
+    if (options.force) {
+      await pm2Adapter.killDaemon();
+      log.info('PM2 daemon killed');
     }
 
     log.info('Console services stopped');
@@ -317,15 +336,51 @@ async function restartServices(
     return 1;
   }
 
-  log.info('Restarting console services...');
+  if (options.force) {
+    if (!ecosystemConfigExists(paths)) {
+      log.error('Ecosystem config not found.');
+      log.info("Please run 'mcctl console init' to initialize console services");
+      return 1;
+    }
+    log.info('Force restarting console services (killing PM2 daemon)...');
+  } else {
+    log.info('Restarting console services...');
+  }
   if (options.apiPort || options.consolePort) {
     log.info(`  API port: ${apiPort}, Console port: ${consolePort}`);
   }
 
   try {
-    for (const service of services) {
-      await pm2Adapter.restart(service, { wait: true, waitTimeout: 30000 });
-      log.info(`  Restarted ${service}`);
+    if (options.force) {
+      // Force restart: delete all, kill daemon, start fresh
+      for (const service of services) {
+        try {
+          await pm2Adapter.delete(service);
+        } catch {
+          // Ignore errors - process may not exist
+        }
+        log.info(`  Deleted ${service}`);
+      }
+
+      await pm2Adapter.killDaemon();
+      log.info('  PM2 daemon killed');
+
+      // Wait for daemon to fully terminate before reconnecting
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Start fresh (ensureConnected will reconnect to a new PM2 daemon)
+      for (const service of services) {
+        await pm2Adapter.start(service, { wait: true, waitTimeout: 30000 });
+        log.info(`  Started ${service}`);
+      }
+
+      // Save process list for resurrect on reboot
+      await pm2Adapter.save();
+    } else {
+      for (const service of services) {
+        await pm2Adapter.restart(service, { wait: true, waitTimeout: 30000 });
+        log.info(`  Restarted ${service}`);
+      }
     }
 
     log.info('Console services restarted');
