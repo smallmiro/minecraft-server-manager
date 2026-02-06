@@ -135,7 +135,7 @@ export default function ServerDetailPage() {
   const currentStatus = sseStatus || data?.server.status;
 
   const isRunning = currentStatus === 'running';
-  const isStopped = currentStatus === 'stopped' || currentStatus === 'exited';
+  const isStopped = currentStatus === 'stopped' || currentStatus === 'exited' || currentStatus === 'not_created';
 
   const isActionPending =
     startServer.isPending || stopServer.isPending || restartServer.isPending;
