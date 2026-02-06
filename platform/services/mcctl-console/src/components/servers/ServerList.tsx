@@ -13,9 +13,11 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import { ServerCard } from './ServerCard';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
+import type { ServerStatusMap } from '@/hooks/useServersSSE';
 
 interface ServerListProps {
   servers: ServerSummary[];
+  statusMap?: ServerStatusMap;
   onServerClick?: (serverName: string) => void;
   onStart?: (serverName: string) => void;
   onStop?: (serverName: string) => void;
@@ -27,6 +29,7 @@ type StatusFilter = 'all' | 'running' | 'stopped';
 
 export function ServerList({
   servers,
+  statusMap = {},
   onServerClick,
   onStart,
   onStop,
@@ -43,17 +46,21 @@ export function ServerList({
         return false;
       }
 
+      // Get real-time status from SSE if available
+      const sseStatus = statusMap[server.name];
+      const currentStatus = sseStatus?.status || server.status;
+
       // Filter by status
-      if (statusFilter === 'running' && server.status !== 'running') {
+      if (statusFilter === 'running' && currentStatus !== 'running') {
         return false;
       }
-      if (statusFilter === 'stopped' && server.status !== 'stopped' && server.status !== 'exited') {
+      if (statusFilter === 'stopped' && currentStatus !== 'stopped' && currentStatus !== 'exited') {
         return false;
       }
 
       return true;
     });
-  }, [servers, searchQuery, statusFilter]);
+  }, [servers, statusMap, searchQuery, statusFilter]);
 
   const handleStatusFilterChange = (_: React.MouseEvent<HTMLElement>, newFilter: StatusFilter) => {
     if (newFilter !== null) {
@@ -153,6 +160,7 @@ export function ServerList({
             <Grid item xs={12} sm={6} md={4} key={server.name}>
               <ServerCard
                 server={server}
+                statusOverride={statusMap[server.name]}
                 onClick={onServerClick}
                 onStart={onStart}
                 onStop={onStop}

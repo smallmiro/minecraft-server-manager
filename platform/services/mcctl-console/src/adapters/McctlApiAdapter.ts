@@ -15,6 +15,10 @@ import {
   AssignWorldResponse,
   ReleaseWorldResponse,
   DeleteWorldResponse,
+  ServerConfigResponse,
+  UpdateServerConfigRequest,
+  UpdateServerConfigResponse,
+  WorldResetResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -219,6 +223,36 @@ export class McctlApiAdapter implements IMcctlApiClient {
     return this.fetch<DeleteWorldResponse>(
       `/api/worlds/${encodeURIComponent(worldName)}${query}`,
       { method: 'DELETE' }
+    );
+  }
+
+  // ============================================================
+  // Server Configuration Operations
+  // ============================================================
+
+  async getServerConfig(serverName: string): Promise<ServerConfigResponse> {
+    return this.fetch<ServerConfigResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/config`
+    );
+  }
+
+  async updateServerConfig(
+    serverName: string,
+    config: UpdateServerConfigRequest
+  ): Promise<UpdateServerConfigResponse> {
+    return this.fetch<UpdateServerConfigResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/config`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(config),
+      }
+    );
+  }
+
+  async resetWorld(serverName: string): Promise<WorldResetResponse> {
+    return this.fetch<WorldResetResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/world/reset`,
+      { method: 'POST' }
     );
   }
 }

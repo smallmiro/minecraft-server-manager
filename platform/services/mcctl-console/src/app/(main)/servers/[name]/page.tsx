@@ -23,6 +23,7 @@ import {
   useStopServer,
   useRestartServer,
 } from '@/hooks/useMcctl';
+import { useServerStatus } from '@/hooks/useServerStatus';
 
 // Format uptime from seconds
 function formatUptime(seconds?: number): string {
@@ -80,8 +81,14 @@ export default function ServerDetailPage() {
   const router = useAppRouter();
   const serverName = decodeURIComponent(params.name as string);
 
-  // Fetch server detail
+  // Fetch server detail (initial data)
   const { data, isLoading, error } = useServer(serverName);
+
+  // Real-time status updates
+  const { status: sseStatus, health: sseHealth } = useServerStatus({
+    serverName,
+    enabled: !!serverName,
+  });
 
   // Mutations
   const startServer = useStartServer();
@@ -124,9 +131,11 @@ export default function ServerDetailPage() {
     }
   };
 
-  const isRunning = data?.server.status === 'running';
-  const isStopped =
-    data?.server.status === 'stopped' || data?.server.status === 'exited';
+  // Use SSE status if available, otherwise fall back to server data
+  const currentStatus = sseStatus || data?.server.status;
+
+  const isRunning = currentStatus === 'running';
+  const isStopped = currentStatus === 'stopped' || currentStatus === 'exited';
 
   const isActionPending =
     startServer.isPending || stopServer.isPending || restartServer.isPending;

@@ -16,6 +16,10 @@ import type {
   AssignWorldResponse,
   ReleaseWorldResponse,
   DeleteWorldResponse,
+  ServerConfigResponse,
+  UpdateServerConfigRequest,
+  UpdateServerConfigResponse,
+  WorldResetResponse,
 } from '@/ports/api/IMcctlApiClient';
 
 // ============================================================
@@ -24,24 +28,26 @@ import type {
 
 /**
  * Hook to fetch all servers
+ * Note: Polling is reduced since SSE provides real-time updates
  */
 export function useServers() {
   return useQuery<ServerListResponse, Error>({
     queryKey: ['servers'],
     queryFn: () => apiFetch<ServerListResponse>('/api/servers'),
-    refetchInterval: 10000, // Auto-refresh every 10 seconds
+    refetchInterval: 60000, // Reduced to 60 seconds (SSE provides real-time updates)
   });
 }
 
 /**
  * Hook to fetch a single server
+ * Note: Polling is reduced since SSE provides real-time status updates
  */
 export function useServer(name: string, options?: { enabled?: boolean }) {
   return useQuery<ServerDetailResponse, Error>({
     queryKey: ['servers', name],
     queryFn: () => apiFetch<ServerDetailResponse>(`/api/servers/${encodeURIComponent(name)}`),
     enabled: options?.enabled !== false && !!name,
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    refetchInterval: 30000, // Reduced to 30 seconds (SSE provides real-time status)
   });
 }
 
@@ -153,6 +159,8 @@ export function useExecCommand() {
 
 /**
  * Hook to fetch server logs
+ * Note: This is deprecated in favor of useServerLogs SSE hook
+ * Only used for initial data or when SSE is not available
  */
 export function useServerLogs(serverName: string, lines: number = 100, options?: { enabled?: boolean }) {
   return useQuery<LogsResponse, Error>({
@@ -162,7 +170,7 @@ export function useServerLogs(serverName: string, lines: number = 100, options?:
         `/api/servers/${encodeURIComponent(serverName)}/logs?lines=${lines}`
       ),
     enabled: options?.enabled !== false && !!serverName,
-    refetchInterval: 3000, // Auto-refresh every 3 seconds for logs
+    refetchInterval: false, // Disabled - use useServerLogs SSE hook instead
   });
 }
 
@@ -263,6 +271,67 @@ export function useDeleteWorld() {
         { method: 'DELETE' }
       ),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['worlds'] });
+    },
+  });
+}
+
+// ============================================================
+// Server Configuration Hooks
+// ============================================================
+
+/**
+ * Hook to fetch server configuration
+ */
+export function useServerConfig(serverName: string, options?: { enabled?: boolean }) {
+  return useQuery<ServerConfigResponse, Error>({
+    queryKey: ['servers', serverName, 'config'],
+    queryFn: () =>
+      apiFetch<ServerConfigResponse>(`/api/servers/${encodeURIComponent(serverName)}/config`),
+    enabled: options?.enabled !== false && !!serverName,
+  });
+}
+
+/**
+ * Hook to update server configuration
+ */
+export function useUpdateServerConfig() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    UpdateServerConfigResponse,
+    Error,
+    { serverName: string; config: UpdateServerConfigRequest }
+  >({
+    mutationFn: ({ serverName, config }) =>
+      apiFetch<UpdateServerConfigResponse>(
+        `/api/servers/${encodeURIComponent(serverName)}/config`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify(config),
+        }
+      ),
+    onSuccess: (_, { serverName }) => {
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName, 'config'] });
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName] });
+    },
+  });
+}
+
+/**
+ * Hook to reset world
+ */
+export function useResetWorld() {
+  const queryClient = useQueryClient();
+
+  return useMutation<WorldResetResponse, Error, string>({
+    mutationFn: (serverName) =>
+      apiFetch<WorldResetResponse>(
+        `/api/servers/${encodeURIComponent(serverName)}/world/reset`,
+        { method: 'POST' }
+      ),
+    onSuccess: (_, serverName) => {
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName] });
       queryClient.invalidateQueries({ queryKey: ['worlds'] });
     },
   });

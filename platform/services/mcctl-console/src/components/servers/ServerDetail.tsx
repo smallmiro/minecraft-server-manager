@@ -27,6 +27,7 @@ import { ResourceStatCard } from './ResourceStatCard';
 import { useServerLogs } from '@/hooks/useServerLogs';
 import { ServerConsole } from './ServerConsole';
 import { ServerActivityTab } from './ServerActivityTab';
+import { ServerOptionsTab } from './ServerOptionsTab';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -567,9 +568,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
 
       {activeTab === 'Options' && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="body1" color="text.secondary">
-            Server options coming soon
-          </Typography>
+          <ServerOptionsTab serverName={server.name} isRunning={server.status === 'running'} />
         </Box>
       )}
 

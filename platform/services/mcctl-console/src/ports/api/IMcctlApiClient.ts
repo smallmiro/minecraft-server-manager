@@ -148,6 +148,57 @@ export interface DeleteWorldResponse {
   size?: string;
 }
 
+// ============================================================
+// Server Configuration Types
+// ============================================================
+
+export type Difficulty = 'peaceful' | 'easy' | 'normal' | 'hard';
+export type GameMode = 'survival' | 'creative' | 'adventure' | 'spectator';
+
+export interface ServerConfig {
+  // Server Properties (hot-reload capable)
+  motd?: string;
+  maxPlayers?: number;
+  difficulty?: Difficulty;
+  gameMode?: GameMode;
+  pvp?: boolean;
+  viewDistance?: number;
+  spawnProtection?: number;
+
+  // Performance Settings (restart required)
+  memory?: string;
+  useAikarFlags?: boolean;
+}
+
+export interface ServerConfigResponse {
+  config: ServerConfig;
+}
+
+export interface UpdateServerConfigRequest {
+  motd?: string;
+  maxPlayers?: number;
+  difficulty?: Difficulty;
+  gameMode?: GameMode;
+  pvp?: boolean;
+  viewDistance?: number;
+  spawnProtection?: number;
+  memory?: string;
+  useAikarFlags?: boolean;
+}
+
+export interface UpdateServerConfigResponse {
+  success: boolean;
+  config: ServerConfig;
+  restartRequired: boolean;
+  changedFields: string[];
+}
+
+export interface WorldResetResponse {
+  success: boolean;
+  message: string;
+  worldName: string;
+}
+
 export interface ApiError {
   error: string;
   message: string;
@@ -176,4 +227,9 @@ export interface IMcctlApiClient {
   assignWorld(worldName: string, serverName: string): Promise<AssignWorldResponse>;
   releaseWorld(worldName: string, force?: boolean): Promise<ReleaseWorldResponse>;
   deleteWorld(worldName: string, force?: boolean): Promise<DeleteWorldResponse>;
+
+  // Server configuration operations
+  getServerConfig(serverName: string): Promise<ServerConfigResponse>;
+  updateServerConfig(serverName: string, config: UpdateServerConfigRequest): Promise<UpdateServerConfigResponse>;
+  resetWorld(serverName: string): Promise<WorldResetResponse>;
 }
