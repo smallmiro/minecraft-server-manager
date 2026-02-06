@@ -312,43 +312,20 @@ function printServiceResults(results: ServiceUpdateResult[], checkOnly?: boolean
 export async function updateCommand(options: UpdateCommandOptions): Promise<number> {
   const currentVersion = getInstalledVersion();
 
-  // If --force, clear cache first
-  if (options.force) {
-    clearCache();
+  // Always clear cache when running update command to ensure fresh check
+  clearCache();
+
+  // Get latest version (always fetch from npm, ignore cache)
+  const spinner = prompts.spinner();
+  spinner.start('Checking for updates...');
+
+  const latestVersion = await fetchLatestVersionForced();
+
+  if (!latestVersion) {
+    spinner.stop('Failed to fetch latest version from npm registry');
+    return 1;
   }
-
-  // Get latest version
-  let latestVersion: string | null;
-
-  if (options.force) {
-    // Force fetch from npm
-    const spinner = prompts.spinner();
-    spinner.start('Checking for updates...');
-
-    latestVersion = await fetchLatestVersionForced();
-
-    if (!latestVersion) {
-      spinner.stop('Failed to fetch latest version from npm registry');
-      return 1;
-    }
-    spinner.stop('Version check complete');
-  } else {
-    // Try cache first, then fetch
-    latestVersion = getCachedVersion();
-
-    if (!latestVersion) {
-      const spinner = prompts.spinner();
-      spinner.start('Checking for updates...');
-
-      latestVersion = await fetchLatestVersionForced();
-
-      if (!latestVersion) {
-        spinner.stop('Failed to fetch latest version from npm registry');
-        return 1;
-      }
-      spinner.stop('Version check complete');
-    }
-  }
+  spinner.stop('Version check complete');
 
   const hasUpdate = isUpdateAvailable(currentVersion, latestVersion);
 
