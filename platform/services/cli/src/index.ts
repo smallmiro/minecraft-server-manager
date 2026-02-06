@@ -76,6 +76,7 @@ async function handleConsoleCommand(
         consolePort: flags['console-port'] ? parseInt(flags['console-port'] as string, 10) : undefined,
         build: flags['build'] === true,
         noBuild: flags['no-build'] === true,
+        force: flags['force'] === true,
       });
     case 'user': {
       // Use Commander-based command
@@ -244,6 +245,7 @@ ${colors.cyan('Console Management:')}
   ${colors.bold('console user')} <action> [name] Manage console users (list, add, remove, reset)
   ${colors.bold('console api')} <action>         Manage API settings (status, config, key)
   ${colors.bold('console service')} <action>     Manage services via PM2 (start, stop, restart, status, logs)
+    --force                      Kill PM2 daemon and restart fresh (stop, restart)
   ${colors.bold('console remove')} [options]     Remove console service completely
     --force                      Skip confirmation prompt
     --keep-config                Don't delete configuration files
