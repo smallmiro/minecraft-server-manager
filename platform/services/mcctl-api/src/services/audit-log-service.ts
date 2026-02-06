@@ -311,6 +311,29 @@ export function notifyNewAuditLog(entry: AuditLogEntry): void {
 }
 
 /**
+ * Write an audit log entry and notify SSE listeners
+ */
+export async function writeAuditLog(data: AuditLogData): Promise<void> {
+  const repo = getAuditLogRepository();
+  await repo.log(data);
+
+  // Notify SSE listeners
+  const log = AuditLog.create(data);
+  const json = log.toJSON();
+  notifyNewAuditLog({
+    id: json.id,
+    action: json.action,
+    actor: json.actor,
+    targetType: json.targetType,
+    targetName: json.targetName,
+    details: json.details,
+    status: json.status,
+    errorMessage: json.errorMessage ?? null,
+    timestamp: json.timestamp,
+  });
+}
+
+/**
  * Close the repository (for graceful shutdown)
  */
 export function closeAuditLogRepository(): void {

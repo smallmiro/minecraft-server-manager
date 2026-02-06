@@ -38,12 +38,56 @@ import {
   type DeleteServerQuery,
 } from '../schemas/server.js';
 import { config } from '../config/index.js';
+import { writeAuditLog } from '../services/audit-log-service.js';
+import { AuditActionEnum } from '@minecraft-docker/shared';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
 const execPromise = promisify(exec);
+
+/**
+ * Map Docker container status to SSE-compatible status
+ * Frontend expects: 'running' | 'stopped' | 'created' | 'exited' | 'unknown'
+ */
+function mapContainerStatus(dockerStatus: string): 'running' | 'stopped' | 'created' | 'exited' | 'unknown' {
+  switch (dockerStatus) {
+    case 'running':
+      return 'running';
+    case 'exited':
+      return 'exited';
+    case 'created':
+      return 'created';
+    case 'paused':
+    case 'dead':
+    case 'not_found':
+    case 'not_created':
+      return 'stopped';
+    case 'restarting':
+    default:
+      return 'unknown';
+  }
+}
+
+/**
+ * Map Docker health status to SSE-compatible health
+ * Frontend expects: 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown'
+ */
+function mapHealthStatus(dockerHealth: string): 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown' {
+  switch (dockerHealth) {
+    case 'healthy':
+      return 'healthy';
+    case 'unhealthy':
+      return 'unhealthy';
+    case 'starting':
+      return 'starting';
+    case 'none':
+      return 'none';
+    default:
+      return 'unknown';
+  }
+}
 
 // Route generic interfaces for type-safe request handling
 interface ServerNameRoute {
@@ -115,6 +159,101 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to list servers',
+      });
+    }
+  });
+
+  /**
+   * GET /api/servers-status
+   * Get real-time status for all servers (supports SSE streaming with follow=true)
+   */
+  fastify.get<{ Querystring: StatusQuery }>('/api/servers-status', {
+    schema: {
+      description: 'Get all servers status (supports SSE streaming)',
+      tags: ['servers'],
+      querystring: StatusQuerySchema,
+      response: {
+        200: {
+          type: 'array',
+          items: StatusResponseSchema,
+        },
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<{ Querystring: StatusQuery }>, reply: FastifyReply) => {
+    const { follow = false, interval = 5000 } = request.query;
+
+    // SSE streaming mode
+    if (follow) {
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      });
+
+      // Send status update for all servers
+      const sendAllStatuses = () => {
+        const serverNames = getAllServers();
+        for (const name of serverNames) {
+          const containerName = `mc-${name}`;
+          const dockerStatus = getContainerStatus(containerName);
+          const dockerHealth = getContainerHealth(containerName);
+          const status = mapContainerStatus(dockerStatus);
+          const health = mapHealthStatus(dockerHealth);
+
+          reply.raw.write(`event: server-status\n`);
+          reply.raw.write(`data: ${JSON.stringify({
+            serverName: name,
+            status,
+            health,
+            timestamp: new Date().toISOString(),
+          })}\n\n`);
+        }
+      };
+
+      // Send initial status immediately
+      sendAllStatuses();
+
+      // Poll for status updates at the specified interval
+      const polling = setInterval(sendAllStatuses, interval);
+
+      // Heartbeat to keep connection alive (every 30 seconds)
+      const heartbeat = setInterval(() => {
+        reply.raw.write(': heartbeat\n\n');
+      }, 30000);
+
+      // Cleanup on client disconnect
+      request.raw.on('close', () => {
+        clearInterval(polling);
+        clearInterval(heartbeat);
+        reply.raw.end();
+      });
+
+      return;
+    }
+
+    // Standard JSON response (non-streaming)
+    try {
+      const serverNames = getAllServers();
+      const statuses = serverNames.map((name) => {
+        const containerName = `mc-${name}`;
+        const dockerStatus = getContainerStatus(containerName);
+        const dockerHealth = getContainerHealth(containerName);
+        return {
+          serverName: name,
+          status: mapContainerStatus(dockerStatus),
+          health: mapHealthStatus(dockerHealth),
+          timestamp: new Date().toISOString(),
+        };
+      });
+
+      return reply.send(statuses);
+    } catch (error) {
+      fastify.log.error(error, 'Failed to get all server statuses');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'Failed to get all server statuses',
       });
     }
   });
@@ -201,48 +340,6 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         message: `Server '${name}' not found`,
       });
     }
-
-    /**
-     * Map Docker container status to SSE-compatible status
-     * Frontend expects: 'running' | 'stopped' | 'created' | 'exited' | 'unknown'
-     */
-    const mapContainerStatus = (dockerStatus: string): 'running' | 'stopped' | 'created' | 'exited' | 'unknown' => {
-      switch (dockerStatus) {
-        case 'running':
-          return 'running';
-        case 'exited':
-          return 'exited';
-        case 'created':
-          return 'created';
-        case 'paused':
-        case 'dead':
-        case 'not_found':
-        case 'not_created':
-          return 'stopped';
-        case 'restarting':
-        default:
-          return 'unknown';
-      }
-    };
-
-    /**
-     * Map Docker health status to SSE-compatible health
-     * Frontend expects: 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown'
-     */
-    const mapHealthStatus = (dockerHealth: string): 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown' => {
-      switch (dockerHealth) {
-        case 'healthy':
-          return 'healthy';
-        case 'unhealthy':
-          return 'unhealthy';
-        case 'starting':
-          return 'starting';
-        case 'none':
-          return 'none';
-        default:
-          return 'unknown';
-      }
-    };
 
     // SSE streaming mode
     if (follow) {
@@ -612,10 +709,20 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }, 30000);
 
       // Handle process completion
-      createProcess.on('close', (code) => {
+      createProcess.on('close', async (code) => {
         clearInterval(heartbeat);
 
         if (code === 0 && !hasError) {
+          await writeAuditLog({
+            action: AuditActionEnum.SERVER_CREATE,
+            actor: 'api:console',
+            targetType: 'server',
+            targetName: name,
+            status: 'success',
+            details: { type: type ?? null, version: version ?? null, memory: memory ?? null },
+            errorMessage: null,
+          });
+
           reply.raw.write(`data: ${JSON.stringify({
             type: 'server-create',
             data: {
@@ -633,6 +740,17 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           const errorMessage = errorDetail
             ? `Server creation failed: ${errorDetail}`
             : `Server creation failed with exit code ${code}`;
+
+          await writeAuditLog({
+            action: AuditActionEnum.SERVER_CREATE,
+            actor: 'api:console',
+            targetType: 'server',
+            targetName: name,
+            status: 'failure',
+            details: null,
+            errorMessage,
+          });
+
           reply.raw.write(`data: ${JSON.stringify({
             type: 'server-create',
             data: {
@@ -671,6 +789,16 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       fastify.log.info({ stdout, stderr }, 'Server created');
 
+      await writeAuditLog({
+        action: AuditActionEnum.SERVER_CREATE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        status: 'success',
+        details: { type: type ?? null, version: version ?? null, memory: memory ?? null },
+        errorMessage: null,
+      });
+
       return reply.code(201).send({
         success: true,
         server: {
@@ -688,6 +816,17 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const errorMessage = errorDetail
         ? `Failed to create server: ${errorDetail}`
         : (execError.message || 'Failed to create server');
+
+      await writeAuditLog({
+        action: AuditActionEnum.SERVER_CREATE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        status: 'failure',
+        details: null,
+        errorMessage,
+      });
+
       return reply.code(500).send({
         error: 'InternalServerError',
         message: errorMessage,
@@ -758,6 +897,16 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       fastify.log.info({ stdout, stderr }, 'Server deleted');
 
+      await writeAuditLog({
+        action: AuditActionEnum.SERVER_DELETE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        status: 'success',
+        details: { force: force ?? false },
+        errorMessage: null,
+      });
+
       return reply.send({
         success: true,
         server: name,
@@ -766,9 +915,21 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     } catch (error) {
       const execError = error as { stderr?: string; message?: string };
       fastify.log.error(error, 'Failed to delete server');
+      const errorMessage = execError.stderr || execError.message || 'Failed to delete server';
+
+      await writeAuditLog({
+        action: AuditActionEnum.SERVER_DELETE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        status: 'failure',
+        details: null,
+        errorMessage,
+      });
+
       return reply.code(500).send({
         error: 'InternalServerError',
-        message: execError.stderr || execError.message || 'Failed to delete server',
+        message: errorMessage,
       });
     }
   });
