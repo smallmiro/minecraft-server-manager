@@ -326,12 +326,6 @@ async function restartServices(
   pm2Adapter: Pm2ServiceManagerAdapter,
   options: ConsoleServiceOptions
 ): Promise<number> {
-  if (!ecosystemConfigExists(paths)) {
-    log.error('Ecosystem config not found.');
-    log.info("Please run 'mcctl console init' to initialize console services");
-    return 1;
-  }
-
   const services = getServiceNames(options, paths.root);
   const apiPort = options.apiPort ?? API_PORT_DEFAULT;
   const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
@@ -343,6 +337,11 @@ async function restartServices(
   }
 
   if (options.force) {
+    if (!ecosystemConfigExists(paths)) {
+      log.error('Ecosystem config not found.');
+      log.info("Please run 'mcctl console init' to initialize console services");
+      return 1;
+    }
     log.info('Force restarting console services (killing PM2 daemon)...');
   } else {
     log.info('Restarting console services...');
@@ -366,20 +365,23 @@ async function restartServices(
       await pm2Adapter.killDaemon();
       log.info('  PM2 daemon killed');
 
+      // Wait for daemon to fully terminate before reconnecting
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Start fresh (ensureConnected will reconnect to a new PM2 daemon)
       for (const service of services) {
         await pm2Adapter.start(service, { wait: true, waitTimeout: 30000 });
         log.info(`  Started ${service}`);
       }
+
+      // Save process list for resurrect on reboot
+      await pm2Adapter.save();
     } else {
       for (const service of services) {
         await pm2Adapter.restart(service, { wait: true, waitTimeout: 30000 });
         log.info(`  Restarted ${service}`);
       }
     }
-
-    // Save process list for resurrect on reboot
-    await pm2Adapter.save();
 
     log.info('Console services restarted');
 
