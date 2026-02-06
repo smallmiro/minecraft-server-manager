@@ -70,11 +70,11 @@ describe('useServersSSE Hook', () => {
       expect(result.current.retryCount).toBe(0);
     });
 
-    it('should connect to /api/sse/servers/status endpoint', () => {
+    it('should connect to /api/sse/servers-status endpoint', () => {
       renderHook(() => useServersSSE());
 
       expect(EventSource).toHaveBeenCalledWith(
-        '/api/sse/servers/status',
+        '/api/sse/servers-status',
         expect.any(Object)
       );
     });

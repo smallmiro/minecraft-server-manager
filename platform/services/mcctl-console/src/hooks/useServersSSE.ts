@@ -137,7 +137,7 @@ export function useServersSSE(
 
   // SSE connection to servers/status endpoint
   const { isConnected, reconnect, retryCount } = useSSE({
-    url: '/api/sse/servers/status',
+    url: '/api/sse/servers-status',
     onMessage: handleMessage,
     enabled,
     reconnectInterval,
