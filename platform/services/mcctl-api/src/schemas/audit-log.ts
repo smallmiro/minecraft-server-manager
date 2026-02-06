@@ -42,7 +42,7 @@ export const AuditLogEntrySchema = Type.Object({
   targetName: Type.String(),
   details: Type.Union([Type.Record(Type.String(), Type.Unknown()), Type.Null()]),
   status: AuditStatusSchema,
-  errorMessage: Type.Union([Type.String(), Type.Null(), Type.Undefined()]),
+  errorMessage: Type.Optional(Type.Union([Type.String(), Type.Null()])),
   timestamp: Type.String({ format: 'date-time' }),
 });
 

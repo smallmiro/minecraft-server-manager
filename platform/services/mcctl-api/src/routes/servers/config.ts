@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { join } from 'path';
-import { existsSync, rmSync } from 'fs';
+import { join, resolve } from 'path';
+import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
 import { serverExists, getContainerStatus } from '@minecraft-docker/shared';
 import {
   ServerConfigResponseSchema,
@@ -181,20 +181,27 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      // Check if server is running - must be stopped to reset world
+      // Check if server is stopped - must be fully stopped to reset world
       const status = getContainerStatus(containerName);
-      if (status === 'running') {
+      if (status === 'running' || status === 'paused' || status === 'restarting' || status === 'created') {
         return reply.code(409).send({
           error: 'Conflict',
-          message: 'Server must be stopped before resetting world. Please stop the server first.',
+          message: `Server must be stopped before resetting world (current status: ${status}). Please stop the server first.`,
         });
       }
 
       // Get world name from configuration
       const worldName = configService.getWorldName(name);
 
-      // Construct world path
-      const worldPath = join(config.platformPath, 'worlds', worldName);
+      // Validate world path to prevent path traversal
+      const worldsBase = resolve(config.platformPath, 'worlds');
+      const worldPath = resolve(worldsBase, worldName);
+      if (!worldPath.startsWith(worldsBase + '/')) {
+        return reply.code(400).send({
+          error: 'BadRequest',
+          message: 'Invalid world name in server configuration',
+        });
+      }
 
       if (!existsSync(worldPath)) {
         return reply.code(404).send({
@@ -203,34 +210,16 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      // Get .meta file path (to preserve)
-      const metaPath = join(worldPath, '.meta');
-      const hasMeta = existsSync(metaPath);
-
-      // Read .meta content before deletion
-      let metaContent: string | null = null;
-      if (hasMeta) {
-        const { readFileSync } = await import('fs');
-        metaContent = readFileSync(metaPath, 'utf-8');
-      }
-
-      // Delete world directory contents (but not the directory itself)
-      const { readdirSync } = await import('fs');
+      // Delete world directory contents, preserving .meta file
       const entries = readdirSync(worldPath, { withFileTypes: true });
 
       for (const entry of entries) {
         if (entry.name === '.meta') {
-          continue; // Skip .meta file
+          continue;
         }
 
         const entryPath = join(worldPath, entry.name);
         rmSync(entryPath, { recursive: true, force: true });
-      }
-
-      // Restore .meta if it existed
-      if (hasMeta && metaContent) {
-        const { writeFileSync } = await import('fs');
-        writeFileSync(metaPath, metaContent, 'utf-8');
       }
 
       fastify.log.info({
