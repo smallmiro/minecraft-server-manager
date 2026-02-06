@@ -20,6 +20,7 @@ import DnsIcon from '@mui/icons-material/Dns';
 import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
 import HistoryIcon from '@mui/icons-material/History';
+import PublicIcon from '@mui/icons-material/Public';
 import { UserMenu } from '@/components/auth';
 import { CreeperIcon } from '@/components/icons/CreeperIcon';
 import { startLoading } from '@/components/providers';
@@ -35,6 +36,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon /> },
   { label: 'Servers', href: '/servers', icon: <DnsIcon /> },
+  { label: 'Worlds', href: '/worlds', icon: <PublicIcon /> },
   { label: 'Players', href: '/players', icon: <PeopleIcon /> },
   { label: 'Audit Log', href: '/audit-logs', icon: <HistoryIcon /> },
   { label: 'Settings', href: '/settings', icon: <SettingsIcon /> },
