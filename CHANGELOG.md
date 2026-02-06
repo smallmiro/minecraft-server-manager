@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2026-02-06
+
+### Added
+- **All-Servers SSE Status Endpoint** - `GET /api/servers-status` for streaming all server statuses via Server-Sent Events
+- **Server Detail Delete Menu** - MoreVert button with delete option and confirmation dialog on server detail page
+- **API Audit Logging** - Automatic audit log recording for server create, delete, start, stop, and restart actions via REST API
+  - `writeAuditLog()` helper function in audit-log-service for consistent logging
+  - Audit events logged in server actions endpoint (start/stop/restart)
+
+### Fixed
+- **SSE URL Path** - Update SSE URL to `/api/sse/servers-status` in useServersSSE hook
+- **Not Created Status Handling** - Handle `not_created` server status in card, list, and detail page views
+- **Assign World Dialog** - Show all non-running servers in assign world dialog
+
+### Refactored
+- Extract `mapContainerStatus()` and `mapHealthStatus()` to module-level functions in servers route
+
 ## [1.11.0] - 2026-02-06
 
 ### Added

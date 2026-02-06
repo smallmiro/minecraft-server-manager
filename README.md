@@ -845,6 +845,18 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [1.12.0] - 2026-02-06
+
+**Added:**
+- **All-Servers SSE Status Endpoint** - `GET /api/servers-status` for streaming all server statuses
+- **Server Detail Delete Menu** - MoreVert button with delete option and confirmation dialog
+- **API Audit Logging** - Automatic audit log recording for server CRUD and actions via REST API
+
+**Fixed:**
+- SSE URL path updated to `/api/sse/servers-status`
+- Handle `not_created` server status in card, list, and detail page views
+- Show all non-running servers in assign world dialog
+
 ### [1.11.0] - 2026-02-06
 
 **Added:**
@@ -876,16 +888,6 @@ cat /etc/avahi/hosts
 **Added:**
 - **Web Console sudo password support** - Pass sudo password from CreateServerDialog (#230)
 - **Dashboard ChangelogFeed** - Real changelog from GitHub replaces placeholder ActivityFeed
-
-### [1.7.12] - 2026-02-05
-
-**Fixed:**
-- Correct TEMPLATE_DIR path duplication in create-server.sh (#230)
-
-### [1.7.11] - 2026-02-04
-
-**Fixed:**
-- Check LEVEL config before WORLD_NAME for world size calculation
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
