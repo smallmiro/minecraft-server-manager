@@ -845,6 +845,11 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [1.12.1] - 2026-02-07
+
+**Fixed:**
+- Add `not_created` status to all SSE and API interface type definitions (useServerStatus, useServersSSE, IMcctlApiClient, events.ts)
+
 ### [1.12.0] - 2026-02-06
 
 **Added:**
