@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import Box from '@mui/material/Box';
@@ -8,10 +9,20 @@ import IconButton from '@mui/material/IconButton';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
 import { alpha } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import DeleteIcon from '@mui/icons-material/Delete';
 import ViewInArIcon from '@mui/icons-material/ViewInAr';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import LinkIcon from '@mui/icons-material/Link';
@@ -22,6 +33,7 @@ import {
   useStartServer,
   useStopServer,
   useRestartServer,
+  useDeleteServer,
 } from '@/hooks/useMcctl';
 import { useServerStatus } from '@/hooks/useServerStatus';
 
@@ -90,10 +102,16 @@ export default function ServerDetailPage() {
     enabled: !!serverName,
   });
 
+  // Menu & delete dialog state
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
+
   // Mutations
   const startServer = useStartServer();
   const stopServer = useStopServer();
   const restartServer = useRestartServer();
+  const deleteServer = useDeleteServer();
 
   const handleStartServer = async () => {
     try {
@@ -131,6 +149,18 @@ export default function ServerDetailPage() {
     }
   };
 
+  const handleDeleteServer = () => {
+    if (deleteConfirmInput !== serverName) return;
+    deleteServer.mutate(
+      { name: serverName, force: true },
+      {
+        onSuccess: () => {
+          router.push('/servers');
+        },
+      }
+    );
+  };
+
   // Use SSE status if available, otherwise fall back to server data
   const currentStatus = sseStatus || data?.server.status;
 
@@ -166,6 +196,12 @@ export default function ServerDetailPage() {
       {restartServer.isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
           Failed to restart server: {restartServer.error?.message}
+        </Alert>
+      )}
+
+      {deleteServer.isError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Failed to delete server: {deleteServer.error?.message}
         </Alert>
       )}
 
@@ -356,6 +392,7 @@ export default function ServerDetailPage() {
                 </>
               )}
               <IconButton
+                onClick={(e) => setMenuAnchorEl(e.currentTarget)}
                 sx={{
                   width: 36,
                   height: 36,
@@ -367,6 +404,25 @@ export default function ServerDetailPage() {
               >
                 <MoreVertIcon sx={{ fontSize: 18 }} />
               </IconButton>
+              <Menu
+                anchorEl={menuAnchorEl}
+                open={Boolean(menuAnchorEl)}
+                onClose={() => setMenuAnchorEl(null)}
+              >
+                <MenuItem
+                  onClick={() => {
+                    setMenuAnchorEl(null);
+                    setDeleteDialogOpen(true);
+                    setDeleteConfirmInput('');
+                  }}
+                  sx={{ color: 'error.main' }}
+                >
+                  <ListItemIcon>
+                    <DeleteIcon fontSize="small" sx={{ color: 'error.main' }} />
+                  </ListItemIcon>
+                  <ListItemText>Delete Server</ListItemText>
+                </MenuItem>
+              </Menu>
             </Box>
           </Box>
 
@@ -376,6 +432,55 @@ export default function ServerDetailPage() {
       ) : (
         <Alert severity="warning">Server not found</Alert>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeleteConfirmInput('');
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Delete Server</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            This action cannot be undone. Type <strong>{serverName}</strong> to confirm deletion.
+          </Typography>
+          <TextField
+            label="Server name"
+            value={deleteConfirmInput}
+            onChange={(e) => setDeleteConfirmInput(e.target.value)}
+            fullWidth
+            autoFocus
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setDeleteDialogOpen(false);
+              setDeleteConfirmInput('');
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteServer}
+            disabled={
+              deleteConfirmInput !== serverName ||
+              deleteServer.isPending
+            }
+            startIcon={
+              deleteServer.isPending ? <CircularProgress size={16} /> : null
+            }
+          >
+            {deleteServer.isPending ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
