@@ -175,6 +175,7 @@ minecraft/
 | `/update-docs` | Update docs/itzg-reference/ from official documentation |
 | `/sync-docs` | Sync project documentation (CLAUDE.md, README.md) with codebase |
 | `/write-docs` | Bilingual (EN/KO) technical documentation writer |
+| `/build-kb` | Deep source code analysis to build comprehensive LLM Knowledge Base (2,500-3,000 lines) |
 
 See `.claude/commands/` for detailed command specifications.
 
