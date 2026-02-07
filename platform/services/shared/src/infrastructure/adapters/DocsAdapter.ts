@@ -200,12 +200,17 @@ export class DocsAdapter implements IDocProvider {
             const enumValue = typeValue as ServerTypeEnum;
 
             if (Object.values(ServerTypeEnum).includes(enumValue)) {
+              const isModpack =
+                enumValue === ServerTypeEnum.MODRINTH ||
+                enumValue === ServerTypeEnum.AUTO_CURSEFORGE;
+
               types.push({
                 value: enumValue,
                 label: this.formatLabel(typeValue),
                 description: purpose.trim(),
                 supportsPlugins: plugins === 'O',
                 supportsMods: mods === 'O',
+                isModpack,
                 recommended: typeValue === 'PAPER',
                 javaVersions: this.getDefaultJavaVersions(typeValue),
               });
@@ -382,6 +387,7 @@ export class DocsAdapter implements IDocProvider {
         description: 'High performance server with plugin support',
         supportsPlugins: true,
         supportsMods: false,
+        isModpack: false,
         recommended: true,
         javaVersions: ['java21', 'java17'],
       },
@@ -391,6 +397,7 @@ export class DocsAdapter implements IDocProvider {
         description: 'Official Minecraft server',
         supportsPlugins: false,
         supportsMods: false,
+        isModpack: false,
         recommended: false,
         javaVersions: ['java21', 'java17'],
       },
@@ -400,6 +407,7 @@ export class DocsAdapter implements IDocProvider {
         description: 'Mod server for Forge mods',
         supportsPlugins: false,
         supportsMods: true,
+        isModpack: false,
         recommended: false,
         javaVersions: ['java8', 'java17', 'java21'],
       },
@@ -409,6 +417,7 @@ export class DocsAdapter implements IDocProvider {
         description: 'Lightweight modded server',
         supportsPlugins: false,
         supportsMods: true,
+        isModpack: false,
         recommended: false,
         javaVersions: ['java17', 'java21'],
       },
@@ -418,6 +427,7 @@ export class DocsAdapter implements IDocProvider {
         description: 'Fabric-compatible mod loader',
         supportsPlugins: false,
         supportsMods: true,
+        isModpack: false,
         recommended: false,
         javaVersions: ['java17', 'java21'],
       },
@@ -427,6 +437,7 @@ export class DocsAdapter implements IDocProvider {
         description: 'Modified Bukkit server with plugin support',
         supportsPlugins: true,
         supportsMods: false,
+        isModpack: false,
         recommended: false,
         javaVersions: ['java17', 'java21'],
       },
@@ -436,6 +447,7 @@ export class DocsAdapter implements IDocProvider {
         description: 'Classic plugin server',
         supportsPlugins: true,
         supportsMods: false,
+        isModpack: false,
         recommended: false,
         javaVersions: ['java17', 'java21'],
       },
@@ -445,8 +457,29 @@ export class DocsAdapter implements IDocProvider {
         description: 'Paper fork with additional features',
         supportsPlugins: true,
         supportsMods: false,
+        isModpack: false,
         recommended: false,
         javaVersions: ['java17', 'java21'],
+      },
+      {
+        value: ServerTypeEnum.MODRINTH,
+        label: 'Modrinth Modpack',
+        description: 'Modpack from Modrinth platform',
+        supportsPlugins: false,
+        supportsMods: true,
+        isModpack: true,
+        recommended: false,
+        javaVersions: ['java8', 'java17', 'java21'],
+      },
+      {
+        value: ServerTypeEnum.AUTO_CURSEFORGE,
+        label: 'CurseForge Modpack',
+        description: 'Modpack from CurseForge platform',
+        supportsPlugins: false,
+        supportsMods: true,
+        isModpack: true,
+        recommended: false,
+        javaVersions: ['java8', 'java17', 'java21'],
       },
     ];
   }
