@@ -20,6 +20,7 @@ import type {
   UpdateServerConfigRequest,
   UpdateServerConfigResponse,
   WorldResetResponse,
+  RouterStatusResponse,
 } from '@/ports/api/IMcctlApiClient';
 
 // ============================================================
@@ -334,5 +335,20 @@ export function useResetWorld() {
       queryClient.invalidateQueries({ queryKey: ['servers', serverName] });
       queryClient.invalidateQueries({ queryKey: ['worlds'] });
     },
+  });
+}
+
+// ============================================================
+// Router Hooks
+// ============================================================
+
+/**
+ * Hook to fetch router status
+ */
+export function useRouterStatus() {
+  return useQuery<RouterStatusResponse, Error>({
+    queryKey: ['router-status'],
+    queryFn: () => apiFetch<RouterStatusResponse>('/api/router/status'),
+    refetchInterval: 30000,
   });
 }
