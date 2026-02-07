@@ -1,0 +1,19 @@
+{
+  "name": "claude-code-sandbox",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "workspaceFolder": "/workspaces/minecraft-server-manager",
+  "initializeCommand": "touch ${localEnv:HOME}/.gitconfig && touch ${localEnv:HOME}/.claude.json",
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
+    "source=${localEnv:HOME}/.claude.json,target=/home/vscode/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly"
+  ],
+  "updateRemoteUserUID": true,
+  "postCreateCommand": "claude --version && docker --version && echo '✅ Claude Code + Docker ready'",
+  "remoteUser": "vscode"
+}
