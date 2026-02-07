@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/audit-logs/[id]
  * Proxy to mcctl-api: Get single audit log detail with related logs

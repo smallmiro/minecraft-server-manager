@@ -3,6 +3,8 @@ import { createMcctlApiClient, McctlApiError, UserContext } from '@/adapters/Mcc
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Extract user context from session
  */
