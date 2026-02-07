@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -19,6 +19,10 @@ import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Collapse from '@mui/material/Collapse';
+import Alert from '@mui/material/Alert';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 import type { CreateServerStatus } from '@/hooks/useCreateServerSSE';
 
@@ -32,7 +36,11 @@ interface CreateServerDialogProps {
   message?: string;
 }
 
-const SERVER_TYPES = ['VANILLA', 'PAPER', 'FABRIC', 'FORGE', 'NEOFORGE'];
+const STANDARD_SERVER_TYPES = ['VANILLA', 'PAPER', 'FABRIC', 'FORGE', 'NEOFORGE'];
+const MODPACK_PLATFORMS = ['MODRINTH'];
+const MOD_LOADERS = ['', 'forge', 'fabric', 'quilt'];
+
+type ServerCategory = 'standard' | 'modpack';
 
 const DEFAULT_FORM_VALUES: CreateServerRequest = {
   name: '',
@@ -41,6 +49,17 @@ const DEFAULT_FORM_VALUES: CreateServerRequest = {
   memory: '4G',
   autoStart: false,
   sudoPassword: '',
+};
+
+const DEFAULT_MODPACK_VALUES: CreateServerRequest = {
+  name: '',
+  type: 'MODRINTH',
+  memory: '6G',
+  autoStart: false,
+  sudoPassword: '',
+  modpack: '',
+  modpackVersion: '',
+  modLoader: '',
 };
 
 const PROGRESS_STEPS = [
@@ -59,8 +78,14 @@ export function CreateServerDialog({
   progress = 0,
   message = '',
 }: CreateServerDialogProps) {
+  const [category, setCategory] = useState<ServerCategory>('standard');
   const [formData, setFormData] = useState<CreateServerRequest>(DEFAULT_FORM_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [memoryTouched, setMemoryTouched] = useState(false);
+
+  // Refs for accessibility
+  const firstModpackFieldRef = useRef<HTMLInputElement>(null);
+  const liveRegionRef = useRef<HTMLDivElement>(null);
 
   // Determine active step based on status
   const activeStep = PROGRESS_STEPS.findIndex((step) => step.key === status);
@@ -69,8 +94,10 @@ export function CreateServerDialog({
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
+      setCategory('standard');
       setFormData(DEFAULT_FORM_VALUES);
       setErrors({});
+      setMemoryTouched(false);
     }
   }, [open]);
 
@@ -84,11 +111,49 @@ export function CreateServerDialog({
     return null;
   };
 
+  const validateModpackSlug = (slug: string): string | null => {
+    if (!slug) {
+      return 'Modpack slug is required';
+    }
+    return null;
+  };
+
+  const handleCategoryChange = (_: React.MouseEvent<HTMLElement>, newCategory: ServerCategory | null) => {
+    if (newCategory === null) return;
+
+    setCategory(newCategory);
+
+    // Update aria-live region
+    if (liveRegionRef.current) {
+      liveRegionRef.current.textContent = `${newCategory === 'standard' ? 'Standard Server' : 'Modpack'} category selected`;
+    }
+
+    // Update memory default if not touched by user
+    if (!memoryTouched) {
+      setFormData((prev) => ({
+        ...prev,
+        memory: newCategory === 'standard' ? '4G' : '6G',
+      }));
+    }
+
+    // Focus first field after category switch (with delay for Collapse animation)
+    setTimeout(() => {
+      if (newCategory === 'modpack' && firstModpackFieldRef.current) {
+        firstModpackFieldRef.current.focus();
+      }
+    }, 300);
+  };
+
   const handleChange = (field: keyof CreateServerRequest) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = e.target.value;
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // Track if user manually modified memory
+    if (field === 'memory') {
+      setMemoryTouched(true);
+    }
 
     // Clear error for this field
     if (errors[field]) {
@@ -108,15 +173,44 @@ export function CreateServerDialog({
     // Clear existing errors
     setErrors({});
 
-    // Validate
+    // Validate server name
     const nameError = validateName(formData.name);
     if (nameError) {
       setErrors({ name: nameError });
       return;
     }
 
+    // Validate modpack slug if in modpack mode
+    if (category === 'modpack') {
+      const slugError = validateModpackSlug(formData.modpack || '');
+      if (slugError) {
+        setErrors({ modpack: slugError });
+        return;
+      }
+    }
+
+    // Prepare submission data based on category
+    const submitData: CreateServerRequest = {
+      name: formData.name,
+      memory: formData.memory,
+      autoStart: formData.autoStart,
+      sudoPassword: formData.sudoPassword,
+    };
+
+    if (category === 'standard') {
+      // Standard server: include type and version
+      submitData.type = formData.type;
+      submitData.version = formData.version;
+    } else {
+      // Modpack: include modpack fields
+      submitData.type = 'MODRINTH';
+      submitData.modpack = formData.modpack;
+      submitData.modpackVersion = formData.modpackVersion || '';
+      submitData.modLoader = formData.modLoader || '';
+    }
+
     // Submit
-    onSubmit(formData);
+    onSubmit(submitData);
   };
 
   return (
@@ -178,6 +272,15 @@ export function CreateServerDialog({
             </Box>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+              {/* Aria-live region for category changes */}
+              <Box
+                ref={liveRegionRef}
+                role="status"
+                aria-live="polite"
+                sx={{ position: 'absolute', left: '-10000px', width: '1px', height: '1px', overflow: 'hidden' }}
+              />
+
+              {/* Group 1: Identity */}
               <TextField
                 label="Server Name"
                 value={formData.name}
@@ -189,30 +292,108 @@ export function CreateServerDialog({
                 disabled={isCreating}
               />
 
-              <TextField
-                label="Server Type"
-                select
-                value={formData.type}
-                onChange={handleChange('type')}
-                fullWidth
-                disabled={isCreating}
-              >
-                {SERVER_TYPES.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </TextField>
+              {/* Group 2: Server Type */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Server Type
+                </Typography>
 
-              <TextField
-                label="Minecraft Version"
-                value={formData.version}
-                onChange={handleChange('version')}
-                helperText="e.g., 1.21.1, 1.20.4, latest"
-                fullWidth
-                disabled={isCreating}
-              />
+                {/* Category Toggle */}
+                <ToggleButtonGroup
+                  value={category}
+                  exclusive
+                  onChange={handleCategoryChange}
+                  aria-label="Server category"
+                  fullWidth
+                  disabled={isCreating}
+                >
+                  <ToggleButton value="standard" aria-label="Standard Server">
+                    Standard Server
+                  </ToggleButton>
+                  <ToggleButton value="modpack" aria-label="Modpack">
+                    Modpack
+                  </ToggleButton>
+                </ToggleButtonGroup>
 
+                {/* Standard Server Fields */}
+                <Collapse in={category === 'standard'} unmountOnExit>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                    <TextField
+                      label="Server Type"
+                      select
+                      value={formData.type}
+                      onChange={handleChange('type')}
+                      fullWidth
+                      disabled={isCreating}
+                    >
+                      {STANDARD_SERVER_TYPES.map((type) => (
+                        <MenuItem key={type} value={type}>
+                          {type}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+
+                    <TextField
+                      label="Minecraft Version"
+                      value={formData.version}
+                      onChange={handleChange('version')}
+                      helperText="e.g., 1.21.1, 1.20.4, latest"
+                      fullWidth
+                      disabled={isCreating}
+                    />
+                  </Box>
+                </Collapse>
+
+                {/* Modpack Fields */}
+                <Collapse in={category === 'modpack'} unmountOnExit>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                    <Alert severity="info">
+                      Minecraft version is automatically determined by the modpack
+                    </Alert>
+
+                    <TextField
+                      label="Modpack Slug"
+                      value={formData.modpack || ''}
+                      onChange={handleChange('modpack')}
+                      error={!!errors.modpack}
+                      helperText={
+                        errors.modpack || 'e.g., cobblemon, adrenaserver (from modrinth.com/modpacks/SLUG)'
+                      }
+                      fullWidth
+                      disabled={isCreating}
+                      inputRef={firstModpackFieldRef}
+                    />
+
+                    <TextField
+                      label="Mod Loader"
+                      select
+                      value={formData.modLoader || ''}
+                      onChange={handleChange('modLoader')}
+                      helperText="Leave empty to auto-detect from modpack"
+                      fullWidth
+                      disabled={isCreating}
+                    >
+                      <MenuItem value="">Auto-detect</MenuItem>
+                      {MOD_LOADERS.filter((l) => l).map((loader) => (
+                        <MenuItem key={loader} value={loader}>
+                          {loader}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+
+                    <TextField
+                      label="Modpack Version"
+                      value={formData.modpackVersion || ''}
+                      onChange={handleChange('modpackVersion')}
+                      helperText="Leave empty for latest"
+                      fullWidth
+                      disabled={isCreating}
+                    />
+                  </Box>
+                </Collapse>
+              </Box>
+
+              {/* Group 3: Configuration */}
               <TextField
                 label="Memory"
                 value={formData.memory}
