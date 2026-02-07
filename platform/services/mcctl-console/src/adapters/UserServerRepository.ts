@@ -2,19 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { userServers, users } from '@/lib/schema';
 import type { UserServer, NewUserServer, ServerPermission } from '@/lib/schema';
-import type { IUserServerRepository } from '@/ports/out/IUserServerRepository';
-
-/**
- * UserServer with user details (for API responses)
- */
-export interface UserServerWithUser extends UserServer {
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    image: string | null;
-  };
-}
+import type { IUserServerRepository, UserServerWithUser } from '@/ports/out/IUserServerRepository';
 
 /**
  * Drizzle implementation of IUserServerRepository
