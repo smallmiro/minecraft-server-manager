@@ -255,6 +255,39 @@ export interface ApiError {
   message: string;
 }
 
+// ============================================================
+// Backup Types
+// ============================================================
+
+export interface BackupStatusResponse {
+  configured: boolean;
+  lastBackup?: string;
+  repository?: string;
+}
+
+export interface BackupPushResponse {
+  success: boolean;
+  commitHash?: string;
+  message?: string;
+}
+
+export interface BackupCommit {
+  hash: string;
+  date: string;
+  message: string;
+  author: string;
+}
+
+export interface BackupHistoryResponse {
+  commits: BackupCommit[];
+  total: number;
+}
+
+export interface BackupRestoreResponse {
+  success: boolean;
+  message?: string;
+}
+
 /**
  * mcctl-api Client Interface
  * Defines the contract for API communication

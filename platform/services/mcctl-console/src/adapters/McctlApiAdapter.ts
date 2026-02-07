@@ -20,6 +20,10 @@ import {
   UpdateServerConfigResponse,
   WorldResetResponse,
   RouterStatusResponse,
+  BackupStatusResponse,
+  BackupPushResponse,
+  BackupHistoryResponse,
+  BackupRestoreResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -263,6 +267,35 @@ export class McctlApiAdapter implements IMcctlApiClient {
 
   async getRouterStatus(): Promise<RouterStatusResponse> {
     return this.fetch<RouterStatusResponse>('/api/router/status');
+  }
+
+  // ============================================================
+  // Backup Operations
+  // ============================================================
+
+  async getBackupStatus(): Promise<BackupStatusResponse> {
+    return this.fetch<BackupStatusResponse>('/api/backup/status');
+  }
+
+  async pushBackup(message?: string): Promise<BackupPushResponse> {
+    const body = message ? JSON.stringify({ message }) : undefined;
+    return this.fetch<BackupPushResponse>('/api/backup/push', {
+      method: 'POST',
+      body,
+    });
+  }
+
+  async getBackupHistory(limit: number = 20): Promise<BackupHistoryResponse> {
+    return this.fetch<BackupHistoryResponse>(
+      `/api/backup/history?limit=${limit}`
+    );
+  }
+
+  async restoreBackup(commitHash: string): Promise<BackupRestoreResponse> {
+    return this.fetch<BackupRestoreResponse>('/api/backup/restore', {
+      method: 'POST',
+      body: JSON.stringify({ commitHash }),
+    });
   }
 }
 

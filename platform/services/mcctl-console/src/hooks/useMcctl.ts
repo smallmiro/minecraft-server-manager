@@ -21,6 +21,10 @@ import type {
   UpdateServerConfigResponse,
   WorldResetResponse,
   RouterStatusResponse,
+  BackupStatusResponse,
+  BackupPushResponse,
+  BackupHistoryResponse,
+  BackupRestoreResponse,
 } from '@/ports/api/IMcctlApiClient';
 
 // ============================================================
@@ -350,5 +354,69 @@ export function useRouterStatus() {
     queryKey: ['router-status'],
     queryFn: () => apiFetch<RouterStatusResponse>('/api/router/status'),
     refetchInterval: 30000,
+  });
+}
+
+// ============================================================
+// Backup Hooks
+// ============================================================
+
+/**
+ * Hook to fetch backup status
+ */
+export function useBackupStatus() {
+  return useQuery<BackupStatusResponse, Error>({
+    queryKey: ['backup-status'],
+    queryFn: () => apiFetch<BackupStatusResponse>('/api/backup'),
+    refetchInterval: 60000, // Refresh every minute
+  });
+}
+
+/**
+ * Hook to fetch backup history
+ */
+export function useBackupHistory(limit: number = 20) {
+  return useQuery<BackupHistoryResponse, Error>({
+    queryKey: ['backup-history', limit],
+    queryFn: () => apiFetch<BackupHistoryResponse>(`/api/backup/history?limit=${limit}`),
+    refetchInterval: 60000,
+  });
+}
+
+/**
+ * Hook to push backup
+ */
+export function usePushBackup() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BackupPushResponse, Error, { message?: string }>({
+    mutationFn: ({ message }) =>
+      apiFetch<BackupPushResponse>('/api/backup', {
+        method: 'POST',
+        body: JSON.stringify({ message }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backup-status'] });
+      queryClient.invalidateQueries({ queryKey: ['backup-history'] });
+    },
+  });
+}
+
+/**
+ * Hook to restore backup
+ */
+export function useRestoreBackup() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BackupRestoreResponse, Error, string>({
+    mutationFn: (commitHash) =>
+      apiFetch<BackupRestoreResponse>('/api/backup/restore', {
+        method: 'POST',
+        body: JSON.stringify({ commitHash }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['worlds'] });
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+    },
   });
 }

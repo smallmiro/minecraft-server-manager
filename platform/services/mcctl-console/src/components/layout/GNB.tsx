@@ -21,6 +21,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import RouterIcon from '@mui/icons-material/Router';
 import HistoryIcon from '@mui/icons-material/History';
 import PublicIcon from '@mui/icons-material/Public';
+import BackupIcon from '@mui/icons-material/Backup';
 import { UserMenu } from '@/components/auth';
 import { CreeperIcon } from '@/components/icons/CreeperIcon';
 import { startLoading } from '@/components/providers';
@@ -39,6 +40,7 @@ const navItems: NavItem[] = [
   { label: 'Worlds', href: '/worlds', icon: <PublicIcon /> },
   { label: 'Players', href: '/players', icon: <PeopleIcon /> },
   { label: 'Audit Log', href: '/audit-logs', icon: <HistoryIcon /> },
+  { label: 'Backups', href: '/backups', icon: <BackupIcon /> },
   { label: 'Routing', href: '/routing', icon: <RouterIcon /> },
 ];
 
