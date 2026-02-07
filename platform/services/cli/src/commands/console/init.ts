@@ -9,6 +9,7 @@ import {
   User,
   Username,
   YamlUserRepository,
+  checkConsolePrerequisites,
 } from '@minecraft-docker/shared';
 import { getContainer } from '../../infrastructure/index.js';
 import {
@@ -22,6 +23,7 @@ import {
   PM2_SERVICE_NAMES,
   resolveServiceScriptPaths,
 } from '../../lib/pm2-utils.js';
+import { displayPrerequisiteReport } from '../../lib/prerequisite-display.js';
 
 /**
  * Check if mcctl-console is available on npm
@@ -336,23 +338,17 @@ async function cleanupExistingConfig(
 export async function consoleInitCommand(
   options: ConsoleInitOptions
 ): Promise<number> {
-  // Check Node.js version first
-  const nodeCheck = checkNodeVersion();
-  if (!nodeCheck.valid) {
-    log.error(
-      `Node.js version ${nodeCheck.version} is not supported. Minimum required: v${nodeCheck.required}`
-    );
-    log.info('Please upgrade Node.js: https://nodejs.org/');
+  // Check all prerequisites (Node.js, Docker, Docker Compose, PM2)
+  console.log(colors.cyan('Checking prerequisites...'));
+  const prereqReport = checkConsolePrerequisites();
+  if (!displayPrerequisiteReport(prereqReport)) {
     return 1;
   }
+  console.log('');
 
-  // Check PM2 installation
-  const pm2Check = checkPm2Installation();
-  if (!pm2Check.installed) {
-    log.error('PM2 is not installed.');
-    log.info('Install PM2 globally with: npm install -g pm2');
-    return 1;
-  }
+  // Extract version info for display later
+  const nodeResult = prereqReport.results.find(r => r.name === 'Node.js');
+  const pm2Result = prereqReport.results.find(r => r.name === 'PM2');
 
   const paths = new Paths(options.root);
 
@@ -411,8 +407,8 @@ export async function consoleInitCommand(
     prompt.intro('Initialize Console Service');
 
     // Show environment info
-    console.log(colors.dim(`  Node.js: v${nodeCheck.version}`));
-    console.log(colors.dim(`  PM2: ${pm2Check.version ?? 'installed'}`));
+    console.log(colors.dim(`  Node.js: v${nodeResult?.version ?? process.version.replace(/^v/, '')}`));
+    console.log(colors.dim(`  PM2: ${pm2Result?.version ?? 'installed'}`));
     console.log('');
 
     // Step 1: Select services to install

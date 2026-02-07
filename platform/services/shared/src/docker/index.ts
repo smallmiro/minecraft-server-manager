@@ -59,6 +59,38 @@ export function checkDockerCompose(): boolean {
 }
 
 /**
+ * Get Docker version
+ */
+export function getDockerVersion(): { installed: boolean; version?: string } {
+  try {
+    const result = execSync('docker version --format {{.Server.Version}}', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+    return { installed: true, version: result || undefined };
+  } catch {
+    return { installed: false };
+  }
+}
+
+/**
+ * Get Docker Compose version
+ */
+export function getDockerComposeVersion(): { installed: boolean; version?: string } {
+  try {
+    const result = execSync('docker compose version --short', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+    // Remove leading 'v' if present
+    const version = result.replace(/^v/, '');
+    return { installed: true, version: version || undefined };
+  } catch {
+    return { installed: false };
+  }
+}
+
+/**
  * Get container status
  */
 export function getContainerStatus(container: string): ContainerStatus {

@@ -1,10 +1,11 @@
 import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { execSync } from 'node:child_process';
-import { Paths, Config, log, colors, checkDocker, checkDockerCompose } from '@minecraft-docker/shared';
+import { Paths, Config, log, colors, checkPlatformPrerequisites } from '@minecraft-docker/shared';
 import type { McctlConfig } from '@minecraft-docker/shared';
 import { selectHostIPs, getNetworkInterfaces } from '../lib/prompts/ip-select.js';
 import { multiselect, text, select, confirm, password, isCancel } from '@clack/prompts';
+import { displayPrerequisiteReport } from '../lib/prerequisite-display.js';
 
 /**
  * Initialize the platform
@@ -48,31 +49,9 @@ export async function initCommand(options: {
   if (!options.skipValidation) {
     console.log(colors.cyan('[1/6] Checking prerequisites...'));
 
-    if (!checkDocker()) {
-      log.error('Docker is not installed or not running');
-      console.log('');
-      console.log('  Please install Docker:');
-      console.log('    https://docs.docker.com/get-docker/');
+    const report = checkPlatformPrerequisites();
+    if (!displayPrerequisiteReport(report)) {
       return 1;
-    }
-    console.log('  ✓ Docker is available');
-
-    if (!checkDockerCompose()) {
-      log.error('Docker Compose is not installed');
-      console.log('');
-      console.log('  Please install Docker Compose v2:');
-      console.log('    https://docs.docker.com/compose/install/');
-      return 1;
-    }
-    console.log('  ✓ Docker Compose is available');
-
-    // Check avahi-daemon (optional)
-    try {
-      execSync('which avahi-daemon', { stdio: 'pipe' });
-      console.log('  ✓ avahi-daemon is available (mDNS support)');
-    } catch {
-      log.warn('avahi-daemon not found - mDNS will not work');
-      console.log('    Install with: sudo apt install avahi-daemon');
     }
 
     console.log('');
