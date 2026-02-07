@@ -13,11 +13,14 @@
 #                  - Hostname: <server-name>.local
 #
 # Options:
-#   -t, --type TYPE      Server type: PAPER (default), VANILLA, FORGE, FABRIC
+#   -t, --type TYPE      Server type: PAPER (default), VANILLA, FORGE, FABRIC, MODRINTH, AUTO_CURSEFORGE
 #   -v, --version VER    Minecraft version (e.g., 1.21.1, 1.20.4)
 #   -s, --seed NUMBER    World seed for new world generation
 #   -u, --world-url URL  Download world from ZIP URL
 #   -w, --world NAME     Use existing world from worlds/ directory (creates symlink)
+#   --modpack SLUG       Modpack slug (required for MODRINTH/AUTO_CURSEFORGE)
+#   --modpack-version VER  Modpack version (optional)
+#   --mod-loader LOADER  Mod loader: fabric, forge, neoforge, quilt (optional)
 #   --no-start           Don't start the server after creation
 #   --start              Start the server after creation (default)
 #
@@ -222,6 +225,9 @@ MC_VERSION=""
 WORLD_SEED=""
 WORLD_URL=""
 WORLD_NAME=""
+MODPACK_SLUG=""
+MODPACK_VERSION=""
+MOD_LOADER=""
 START_SERVER="true"
 
 # Show usage
@@ -232,11 +238,14 @@ show_usage() {
     echo "  server-name  : Name for the new server (lowercase, no spaces)"
     echo ""
     echo "Options:"
-    echo "  -t, --type TYPE      Server type: PAPER (default), VANILLA, FORGE, FABRIC"
+    echo "  -t, --type TYPE      Server type: PAPER (default), VANILLA, FORGE, FABRIC, MODRINTH, AUTO_CURSEFORGE"
     echo "  -v, --version VER    Minecraft version (e.g., 1.21.1, 1.20.4)"
     echo "  -s, --seed NUMBER    World seed for new world generation"
     echo "  -u, --world-url URL  Download world from ZIP URL"
     echo "  -w, --world NAME     Use existing world from worlds/ directory (creates symlink)"
+    echo "  --modpack SLUG       Modpack slug (required for MODRINTH/AUTO_CURSEFORGE)"
+    echo "  --modpack-version VER  Modpack version (optional)"
+    echo "  --mod-loader LOADER  Mod loader: fabric, forge, neoforge, quilt (optional)"
     echo "  --no-start           Don't start the server after creation"
     echo "  --start              Start the server after creation (default)"
     echo ""
@@ -249,6 +258,7 @@ show_usage() {
     echo "  $0 myserver --seed 12345"
     echo "  $0 myserver --world-url https://example.com/world.zip"
     echo "  $0 myserver --world existing-world -v 1.21.1 --no-start"
+    echo "  $0 myserver -t MODRINTH --modpack fabric-example --modpack-version 1.0.0"
 }
 
 # Check if first argument exists
@@ -286,6 +296,18 @@ while [[ $# -gt 0 ]]; do
             WORLD_NAME="$2"
             shift 2
             ;;
+        --modpack)
+            MODPACK_SLUG="$2"
+            shift 2
+            ;;
+        --modpack-version)
+            MODPACK_VERSION="$2"
+            shift 2
+            ;;
+        --mod-loader)
+            MOD_LOADER="$2"
+            shift 2
+            ;;
         --no-start)
             START_SERVER="false"
             shift
@@ -300,7 +322,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         *)
             # For backward compatibility: if it looks like a server type, use it
-            if [[ "$1" =~ ^(PAPER|VANILLA|FORGE|FABRIC|NEOFORGE|QUILT|SPIGOT)$ ]]; then
+            if [[ "$1" =~ ^(PAPER|VANILLA|FORGE|FABRIC|NEOFORGE|QUILT|SPIGOT|MODRINTH|AUTO_CURSEFORGE)$ ]]; then
                 SERVER_TYPE="$1"
                 shift
             else
@@ -323,6 +345,15 @@ if [ "$WORLD_OPTIONS_COUNT" -gt 1 ]; then
     echo -e "${RED}Error: World options (--seed, --world-url, --world) are mutually exclusive${NC}"
     echo "Please specify only one world option."
     exit 1
+fi
+
+# Validate modpack options for MODRINTH and AUTO_CURSEFORGE types
+if [[ "$SERVER_TYPE" =~ ^(MODRINTH|AUTO_CURSEFORGE)$ ]]; then
+    if [ -z "$MODPACK_SLUG" ]; then
+        echo -e "${RED}Error: --modpack SLUG is required for $SERVER_TYPE server type${NC}"
+        echo "Example: $0 $SERVER_NAME -t $SERVER_TYPE --modpack fabric-example"
+        exit 1
+    fi
 fi
 
 # Validate server name (lowercase, alphanumeric, hyphens only)
@@ -438,6 +469,35 @@ if [ -f "$CONFIG_FILE" ]; then
             echo -e "${YELLOW}   Warning: World '$WORLD_NAME' not found in worlds/ directory${NC}"
             echo "   LEVEL set to '$WORLD_NAME' - world will be created on first start"
             sed -i "s/^LEVEL=.*/LEVEL=$WORLD_NAME/" "$CONFIG_FILE"
+        fi
+    fi
+
+    # Apply modpack options
+    if [ -n "$MODPACK_SLUG" ]; then
+        echo "" >> "$CONFIG_FILE"
+        echo "# Modpack Configuration" >> "$CONFIG_FILE"
+        if [[ "$SERVER_TYPE" == "MODRINTH" ]]; then
+            echo "MODRINTH_MODPACK=$MODPACK_SLUG" >> "$CONFIG_FILE"
+            echo "   Modpack: $MODPACK_SLUG (Modrinth)"
+            if [ -n "$MODPACK_VERSION" ]; then
+                echo "MODRINTH_VERSION=$MODPACK_VERSION" >> "$CONFIG_FILE"
+                echo "   Modpack version: $MODPACK_VERSION"
+            fi
+            if [ -n "$MOD_LOADER" ]; then
+                echo "MODRINTH_LOADER=$MOD_LOADER" >> "$CONFIG_FILE"
+                echo "   Mod loader: $MOD_LOADER"
+            fi
+        elif [[ "$SERVER_TYPE" == "AUTO_CURSEFORGE" ]]; then
+            echo "CF_SLUG=$MODPACK_SLUG" >> "$CONFIG_FILE"
+            echo "   Modpack: $MODPACK_SLUG (CurseForge)"
+            if [ -n "$MODPACK_VERSION" ]; then
+                echo "CF_VERSION=$MODPACK_VERSION" >> "$CONFIG_FILE"
+                echo "   Modpack version: $MODPACK_VERSION"
+            fi
+            if [ -n "$MOD_LOADER" ]; then
+                echo "CF_LOADER=$MOD_LOADER" >> "$CONFIG_FILE"
+                echo "   Mod loader: $MOD_LOADER"
+            fi
         fi
     fi
 fi

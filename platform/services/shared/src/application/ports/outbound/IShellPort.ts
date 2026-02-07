@@ -142,6 +142,9 @@ export interface CreateServerOptions {
   worldOptions: WorldOptions;
   memory?: Memory;
   autoStart?: boolean;
+  modpackSlug?: string;
+  modpackVersion?: string;
+  modLoader?: string;
 }
 
 /**

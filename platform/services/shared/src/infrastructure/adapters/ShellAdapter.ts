@@ -103,6 +103,17 @@ export class ShellAdapter implements IShellPort {
     // Add world options
     args.push(...options.worldOptions.toCliArgs());
 
+    // Add modpack options if provided
+    if (options.modpackSlug) {
+      args.push('--modpack', options.modpackSlug);
+    }
+    if (options.modpackVersion) {
+      args.push('--modpack-version', options.modpackVersion);
+    }
+    if (options.modLoader) {
+      args.push('--mod-loader', options.modLoader);
+    }
+
     if (options.autoStart === false) {
       args.push('--no-start');
     }

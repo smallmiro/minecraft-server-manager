@@ -47,6 +47,12 @@ export interface ApiPromptOptions {
   password?: string;
   /** Default value for confirm prompts (defaults to true) */
   confirmValue?: boolean;
+  /** Modpack slug (for MODRINTH/AUTO_CURSEFORGE types) */
+  modpackSlug?: string;
+  /** Modpack version (optional) */
+  modpackVersion?: string;
+  /** Mod loader (optional) */
+  modLoader?: string;
 }
 
 /**
@@ -277,6 +283,21 @@ export class ApiPromptAdapter implements IPromptPort {
 
     // In API mode, we don't warn about stopped servers - caller should check
     return worldEntry.world;
+  }
+
+  async promptModpackSlug(): Promise<string> {
+    if (!this.options.modpackSlug) {
+      throw new ApiModeError('modpackSlug is required in API mode for modpack server types');
+    }
+    return this.options.modpackSlug;
+  }
+
+  async promptModpackVersion(): Promise<string | undefined> {
+    return this.options.modpackVersion;
+  }
+
+  async promptModpackLoader(): Promise<string | undefined> {
+    return this.options.modLoader;
   }
 
   // ========================================

@@ -97,6 +97,21 @@ export interface IPromptPort {
     worlds: WorldWithServerStatus[]
   ): Promise<World | null>;
 
+  /**
+   * Prompt for modpack slug (project identifier)
+   */
+  promptModpackSlug(): Promise<string>;
+
+  /**
+   * Prompt for modpack version (optional)
+   */
+  promptModpackVersion(): Promise<string | undefined>;
+
+  /**
+   * Prompt for modpack loader (optional)
+   */
+  promptModpackLoader(): Promise<string | undefined>;
+
   // ========================================
   // Status Display
   // ========================================
