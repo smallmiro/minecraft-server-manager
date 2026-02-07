@@ -19,6 +19,7 @@ import {
   UpdateServerConfigRequest,
   UpdateServerConfigResponse,
   WorldResetResponse,
+  RouterStatusResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -254,6 +255,14 @@ export class McctlApiAdapter implements IMcctlApiClient {
       `/api/servers/${encodeURIComponent(serverName)}/world/reset`,
       { method: 'POST' }
     );
+  }
+
+  // ============================================================
+  // Router Operations
+  // ============================================================
+
+  async getRouterStatus(): Promise<RouterStatusResponse> {
+    return this.fetch<RouterStatusResponse>('/api/router/status');
   }
 }
 

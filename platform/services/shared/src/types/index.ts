@@ -167,4 +167,6 @@ export interface RouteInfo {
   hostname: string;
   target: string;
   serverStatus: ContainerStatus;
+  serverType?: string;
+  serverVersion?: string;
 }

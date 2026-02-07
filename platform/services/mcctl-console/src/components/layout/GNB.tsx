@@ -18,7 +18,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import DnsIcon from '@mui/icons-material/Dns';
 import PeopleIcon from '@mui/icons-material/People';
-import SettingsIcon from '@mui/icons-material/Settings';
+import RouterIcon from '@mui/icons-material/Router';
 import HistoryIcon from '@mui/icons-material/History';
 import PublicIcon from '@mui/icons-material/Public';
 import { UserMenu } from '@/components/auth';
@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
   { label: 'Worlds', href: '/worlds', icon: <PublicIcon /> },
   { label: 'Players', href: '/players', icon: <PeopleIcon /> },
   { label: 'Audit Log', href: '/audit-logs', icon: <HistoryIcon /> },
-  { label: 'Settings', href: '/settings', icon: <SettingsIcon /> },
+  { label: 'Routing', href: '/routing', icon: <RouterIcon /> },
 ];
 
 interface GNBProps {

@@ -9,7 +9,7 @@ const SESSION_COOKIE_NAME = 'better-auth.session_token';
 /**
  * Routes that require authentication
  */
-const protectedRoutes = ['/dashboard', '/servers', '/worlds', '/players', '/backups', '/settings', '/audit-logs'];
+const protectedRoutes = ['/dashboard', '/servers', '/worlds', '/players', '/backups', '/routing', '/audit-logs'];
 
 /**
  * Routes that require admin role

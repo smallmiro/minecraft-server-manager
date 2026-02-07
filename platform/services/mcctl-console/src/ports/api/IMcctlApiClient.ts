@@ -199,6 +199,57 @@ export interface WorldResetResponse {
   worldName: string;
 }
 
+// ============================================================
+// Router Status Types
+// ============================================================
+
+export type ContainerStatus =
+  | 'running'
+  | 'exited'
+  | 'paused'
+  | 'restarting'
+  | 'dead'
+  | 'created'
+  | 'not_found'
+  | 'not_created';
+
+export type HealthStatus =
+  | 'healthy'
+  | 'unhealthy'
+  | 'starting'
+  | 'none'
+  | 'unknown';
+
+export interface RouteInfo {
+  hostname: string;
+  target: string;
+  serverStatus: ContainerStatus;
+  serverType?: string;
+  serverVersion?: string;
+}
+
+export interface RouterDetail {
+  name: string;
+  status: ContainerStatus;
+  health: HealthStatus;
+  port: number;
+  uptime?: string;
+  uptimeSeconds?: number;
+  mode?: string;
+  routes: RouteInfo[];
+}
+
+export interface AvahiInfo {
+  name: string;
+  status: string;
+  type: string;
+}
+
+export interface RouterStatusResponse {
+  router: RouterDetail;
+  avahi?: AvahiInfo;
+}
+
 export interface ApiError {
   error: string;
   message: string;
@@ -232,4 +283,7 @@ export interface IMcctlApiClient {
   getServerConfig(serverName: string): Promise<ServerConfigResponse>;
   updateServerConfig(serverName: string, config: UpdateServerConfigRequest): Promise<UpdateServerConfigResponse>;
   resetWorld(serverName: string): Promise<WorldResetResponse>;
+
+  // Router operations
+  getRouterStatus(): Promise<RouterStatusResponse>;
 }

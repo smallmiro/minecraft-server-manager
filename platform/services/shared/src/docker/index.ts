@@ -633,11 +633,19 @@ export function getRouterDetailInfo(): RouterDetailInfo {
       const hostnames = hostname.split(',').map((h) => h.trim());
       const serverStatus = getContainerStatus(container);
 
+      // Read config.env for server type/version
+      const serverName = container.replace(/^mc-/, '');
+      const configEnv = readServerConfigEnv(serverName);
+      const serverType = configEnv['TYPE'] || undefined;
+      const serverVersion = configEnv['VERSION'] || undefined;
+
       for (const h of hostnames) {
         detailed.routes.push({
           hostname: h,
           target: `${container}:25565`,
           serverStatus,
+          serverType,
+          serverVersion,
         });
       }
     }
