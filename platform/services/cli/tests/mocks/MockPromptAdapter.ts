@@ -32,6 +32,9 @@ export interface MockPromptValues {
   text?: string;
   password?: string;
   selectIndex?: number;
+  modpackSlug?: string;
+  modpackVersion?: string;
+  modpackLoader?: string;
 }
 
 /**
@@ -170,7 +173,7 @@ export class MockPromptAdapter implements IPromptPort {
     return McVersion.create(this.values.version!);
   }
 
-  async promptMemory(): Promise<Memory> {
+  async promptMemory(_defaultValue?: string): Promise<Memory> {
     if (this._cancelled) {
       throw new MockCancelError();
     }
@@ -210,6 +213,34 @@ export class MockPromptAdapter implements IPromptPort {
     }
     const index = this.values.selectIndex ?? 0;
     return worlds[index] ?? worlds[0]!;
+  }
+
+  async promptExistingWorldSelection(_worlds: any[]): Promise<World | null> {
+    if (this._cancelled) {
+      throw new MockCancelError();
+    }
+    return null;
+  }
+
+  async promptModpackSlug(): Promise<string> {
+    if (this._cancelled) {
+      throw new MockCancelError();
+    }
+    return this.values.modpackSlug ?? 'cobblemon';
+  }
+
+  async promptModpackVersion(): Promise<string | undefined> {
+    if (this._cancelled) {
+      throw new MockCancelError();
+    }
+    return this.values.modpackVersion;
+  }
+
+  async promptModpackLoader(): Promise<string | undefined> {
+    if (this._cancelled) {
+      throw new MockCancelError();
+    }
+    return this.values.modpackLoader;
   }
 
   // ========================================

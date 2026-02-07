@@ -6,6 +6,7 @@ import {
   Memory,
   WorldOptions,
   WorldSetupType,
+  ModpackOptions,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import type {
@@ -50,8 +51,21 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       // Prompt for server type
       const type = await this.prompt.promptServerType();
 
-      // Prompt for Minecraft version
-      const version = await this.prompt.promptMcVersion(type);
+      // For modpack servers, prompt for modpack details
+      let modpackSlug: string | undefined;
+      let modpackVersion: string | undefined;
+      let modLoader: string | undefined;
+
+      if (type.isModpack) {
+        modpackSlug = await this.prompt.promptModpackSlug();
+        modLoader = await this.prompt.promptModpackLoader();
+        modpackVersion = await this.prompt.promptModpackVersion();
+      }
+
+      // Prompt for Minecraft version (skip for modpack servers)
+      const version = type.isModpack
+        ? McVersion.latest() // Modpack determines version
+        : await this.prompt.promptMcVersion(type);
 
       // Prompt for world options
       let worldOptions = await this.prompt.promptWorldOptions();
@@ -75,8 +89,17 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         }
       }
 
-      // Prompt for memory
-      const memory = await this.prompt.promptMemory();
+      // Prompt for memory (6G default for modpacks)
+      const memory = await this.prompt.promptMemory(type.isModpack ? '6G' : '4G');
+
+      // Build modpack options if this is a modpack server
+      const modpackOptions =
+        type.isModpack && modpackSlug
+          ? ModpackOptions.modrinth(modpackSlug, {
+              version: modpackVersion,
+              loader: modLoader,
+            })
+          : undefined;
 
       // Create server configuration
       const server = Server.create({
@@ -85,6 +108,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         version,
         memory,
         worldOptions,
+        modpackOptions,
       });
 
       // Execute creation - stop spinner before running script to avoid output conflicts
@@ -98,6 +122,9 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         worldOptions,
         memory,
         autoStart: true,
+        modpackSlug,
+        modpackVersion,
+        modLoader,
       });
 
       if (!result.success) {
@@ -157,12 +184,20 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     const type = config.type
       ? ServerType.create(config.type)
       : ServerType.getRecommended();
+
+    // Validate modpack requirements
+    if (type.isModpack && !config.modpackSlug) {
+      throw new Error(`Modpack slug is required for ${type.label} server type`);
+    }
+
     const version = config.version
       ? McVersion.create(config.version)
       : McVersion.latest();
     const memory = config.memory
       ? Memory.create(config.memory)
-      : Memory.default();
+      : type.isModpack
+        ? Memory.create('6G') // Default 6G for modpacks
+        : Memory.default();
 
     // Determine world options
     let worldOptions: WorldOptions;
@@ -181,6 +216,15 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       throw new Error(`Server '${name.value}' already exists`);
     }
 
+    // Build modpack options if this is a modpack server
+    const modpackOptions =
+      type.isModpack && config.modpackSlug
+        ? ModpackOptions.modrinth(config.modpackSlug, {
+            version: config.modpackVersion,
+            loader: config.modLoader,
+          })
+        : undefined;
+
     // Create server
     const server = Server.create({
       name,
@@ -188,6 +232,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       version,
       memory,
       worldOptions,
+      modpackOptions,
     });
 
     // Execute creation
@@ -197,6 +242,9 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       worldOptions,
       memory,
       autoStart: config.autoStart ?? true,
+      modpackSlug: config.modpackSlug,
+      modpackVersion: config.modpackVersion,
+      modLoader: config.modLoader,
     });
 
     if (!result.success) {

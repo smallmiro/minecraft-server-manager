@@ -15,6 +15,9 @@ export interface CreateCommandOptions {
   worldName?: string;
   noStart?: boolean;
   sudoPassword?: string;
+  modpack?: string;
+  modpackVersion?: string;
+  modLoader?: string;
 }
 
 /**
@@ -69,13 +72,29 @@ async function createWithArguments(
       worldUrl: options.worldUrl,
       worldName: options.worldName,
       autoStart: !options.noStart,
+      modpackSlug: options.modpack,
+      modpackVersion: options.modpackVersion,
+      modLoader: options.modLoader,
     });
 
     console.log('');
     console.log(colors.green(`✓ Server '${server.name.value}' created successfully!`));
     console.log(`  Container: ${colors.cyan(server.containerName)}`);
     console.log(`  Type: ${server.type.label}`);
-    console.log(`  Version: ${server.version.value}`);
+
+    // Show modpack info if it's a modpack server
+    if (server.type.isModpack && server.modpackOptions) {
+      console.log(`  Modpack: ${server.modpackOptions.slug}`);
+      if (server.modpackOptions.version) {
+        console.log(`  Modpack Version: ${server.modpackOptions.version}`);
+      }
+      if (server.modpackOptions.loader) {
+        console.log(`  Mod Loader: ${server.modpackOptions.loader}`);
+      }
+    } else {
+      console.log(`  Version: ${server.version.value}`);
+    }
+
     console.log(`  Memory: ${server.memory.value}`);
     console.log('');
     console.log(`  Connect via: ${colors.cyan(server.name.hostname + ':25565')}`);
