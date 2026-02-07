@@ -2,8 +2,8 @@
 
 Admin Service provides a web-based management interface and REST API for Docker Minecraft servers. It enables remote server management, monitoring, and administration through a modern web console.
 
-!!! warning "Development Status"
-    **mcctl-console (Web UI) is currently under active development.** Some features may be incomplete or subject to change. The REST API (mcctl-api) is stable and production-ready.
+!!! info "Status"
+    Both **mcctl-api** (REST API) and **mcctl-console** (Web UI) are available on npm and production-ready as of v1.13.0. Install with `mcctl console init`.
 
 ## Architecture
 
@@ -50,12 +50,14 @@ Default port: `5001`
 
 A Next.js web application that provides:
 
-- **Dashboard**: Overview of all servers with real-time status
-- **Server Details**: Detailed server information and controls
+- **Dashboard**: Overview of all servers with real-time SSE status updates
+- **Server Details**: Detailed server info, console, logs, options, and activity tabs
+- **World Management**: List, create, assign, release, delete, and reset worlds (v1.11+)
+- **Audit Logs**: Activity tracking with filtering, stats, and export (v1.10+)
+- **Routing**: Avahi mDNS monitoring and hostname configuration (v1.13+)
 - **User Authentication**: Secure login with Better Auth
 - **BFF Proxy**: Backend-for-Frontend pattern for secure API access
 - **React Query Hooks**: Type-safe data fetching with automatic caching
-- **World Management**: List, create, assign, and release worlds
 
 Default port: `5000`
 
@@ -120,10 +122,11 @@ mcctl console init
 
 Follow the interactive prompts to configure:
 
-1. Admin username
-2. Admin password (min 8 characters, requires uppercase, lowercase, number)
-3. API access mode
-4. IP whitelist (if applicable)
+1. Select services to install (mcctl-api, mcctl-console)
+2. Admin username (required if console selected)
+3. Admin password (min 8 characters, requires uppercase, lowercase, number)
+4. API access mode (internal, api-key, ip-whitelist, api-key-ip, open)
+5. IP whitelist (if applicable)
 
 ### 2. Start Admin Services
 
@@ -153,9 +156,9 @@ After initialization, the following files are created:
 
 | File | Description |
 |------|-------------|
-| `~/minecraft-servers/admin.yaml` | Admin service configuration |
+| `~/minecraft-servers/.mcctl-admin.yml` | Admin service configuration |
 | `~/minecraft-servers/users.yaml` | User credentials (hashed passwords) |
-| `~/minecraft-servers/api-config.json` | API access configuration |
+| `~/minecraft-servers/platform/ecosystem.config.cjs` | PM2 ecosystem configuration |
 
 ## Next Steps
 

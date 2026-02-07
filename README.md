@@ -264,6 +264,12 @@ minecraft/
     ├── mod-source-modrinth/  # @minecraft-docker/mod-source-modrinth
     │   └── src/              # Modrinth API adapter
     │
+    ├── mcctl-api/            # @minecraft-docker/mcctl-api
+    │   └── src/              # Fastify REST API (port 5001)
+    │
+    ├── mcctl-console/        # @minecraft-docker/mcctl-console
+    │   └── src/              # Next.js Web UI (port 5000)
+    │
     └── cli/                  # @minecraft-docker/mcctl
         └── src/              # CLI commands and adapters
 ```
@@ -844,6 +850,22 @@ cat /etc/avahi/hosts
 ---
 
 ## Changelog
+
+### [1.13.0] - 2026-02-07
+
+**Added:**
+- **Interactive Service Selection** - `mcctl console service start/stop/restart` now shows interactive prompt
+  - Start: choose "API only" or "API + Console"
+  - Stop: choose "All services" or "Console only"
+  - Console always requires API; stopping API also stops Console
+- **Unified Prerequisite Checker** - Consolidated dependency validation for `mcctl init` and `mcctl console init`
+- **Console npm Publishing** - `@minecraft-docker/mcctl-console` now available on npm
+- **Console --force Option** - Force PM2 process termination for stop/restart
+- **Routing Page** - Avahi mDNS monitoring in Web Console
+
+**Fixed:**
+- `force-dynamic` export added to all 22 API routes to prevent SQLITE_BUSY at build time
+- `isConsoleAvailable()` now returns `true` (console is GA)
 
 ### [1.12.1] - 2026-02-07
 

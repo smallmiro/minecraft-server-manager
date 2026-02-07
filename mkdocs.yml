@@ -95,6 +95,14 @@ nav:
       - Spiget (SpigotMC): mods-and-plugins/spiget.md
       - Direct Download: mods-and-plugins/direct-download.md
       - Modpacks: mods-and-plugins/modpacks.md
+  - Admin Service:
+      - Overview: admin-service/index.md
+      - Installation: admin-service/installation.md
+      - CLI Commands: admin-service/cli-commands.md
+      - Web Console: admin-service/web-console.md
+      - API Reference: admin-service/api-reference.md
+      - Audit Logs (API): admin-service/audit-log-api.md
+      - Audit Logs (UI): admin-service/audit-log-ui.md
   - Advanced:
       - Overview: advanced/index.md
       - Networking: advanced/networking.md
