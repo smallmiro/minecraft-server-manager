@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMcctlApiClient, McctlApiError, UserContext } from '@/adapters/McctlApiAdapter';
-import { auth } from '@/lib/auth';
+import { requireAuth, AuthError } from '@/lib/auth-utils';
 import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -21,16 +21,7 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized', message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
+    const session = await requireAuth(await headers());
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '20', 10);
@@ -40,6 +31,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     if (error instanceof McctlApiError) {
       return NextResponse.json(
         { error: error.error, message: error.message },
