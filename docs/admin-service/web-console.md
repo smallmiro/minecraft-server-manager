@@ -132,12 +132,13 @@ From the dashboard, you can:
 - **Restart** servers (refresh button)
 - **View Details** - Click on server card
 
-### Status Refresh
+### Real-time Status (SSE)
 
-The dashboard automatically refreshes server status:
+Since v1.11, the dashboard uses Server-Sent Events (SSE) for real-time server status updates:
 
-- **Default interval:** 30 seconds
-- **Manual refresh:** Click the refresh button in the header
+- **No polling**: Status updates are pushed instantly via SSE
+- **Automatic reconnection**: Reconnects on connection loss
+- **Manual refresh**: Click the refresh button in the header
 
 ## Server Detail Page
 
@@ -195,6 +196,44 @@ The console panel allows you to:
 | `weather clear` | Clear weather |
 | `save-all` | Save world data |
 | `stop` | Stop the server |
+
+## World Management (v1.11+)
+
+The Worlds page (`/worlds`) provides full world management:
+
+- **World List**: Shows name, size, lock status, and assigned server
+- **Create World**: Create new world with optional seed
+- **Assign World**: Assign to server (only non-running servers shown)
+- **Release Lock**: Release world lock from server
+- **Delete World**: Delete with confirmation dialog
+- **Reset World**: Reset world data with safety checks (server must be stopped)
+
+## Server Options Tab (v1.11+)
+
+The Options tab on Server Detail page allows:
+
+- View server configuration (config.env values)
+- Edit configuration through web UI
+- Real-time config updates via REST API
+
+## Audit Logs (v1.10+)
+
+The Audit Logs page (`/audit-logs`) provides activity tracking:
+
+- **Filterable Table**: Filter by action, actor, target, status, date range
+- **Statistics Overview**: Total events, action breakdown, success/failure rates
+- **Detail View**: Click any entry for full details
+- **Export**: Export audit data
+- **Real-time Streaming**: SSE stream for new audit events
+- **Dashboard Widget**: Recent Activity Feed on dashboard
+- **Server Activity**: Per-server audit history in Server Detail Activity tab
+
+## Routing Page (v1.13+)
+
+The Routing page (`/routing`) provides:
+
+- Avahi mDNS hostname monitoring
+- Hostname routing configuration and status
 
 ## User Interface Elements
 
@@ -260,12 +299,12 @@ The console panel allows you to:
 
 2. **Verify Port:**
    ```bash
-   netstat -tlnp | grep 3000
+   netstat -tlnp | grep 5000
    ```
 
 3. **Check Logs:**
    ```bash
-   mcctl console service logs --console-only
+   pm2 logs mcctl-console --lines 100
    ```
 
 ### Login Fails
