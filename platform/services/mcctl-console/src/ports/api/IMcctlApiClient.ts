@@ -319,4 +319,10 @@ export interface IMcctlApiClient {
 
   // Router operations
   getRouterStatus(): Promise<RouterStatusResponse>;
+
+  // Backup operations
+  getBackupStatus(): Promise<BackupStatusResponse>;
+  pushBackup(message?: string): Promise<BackupPushResponse>;
+  getBackupHistory(limit?: number): Promise<BackupHistoryResponse>;
+  restoreBackup(commitHash: string): Promise<BackupRestoreResponse>;
 }
