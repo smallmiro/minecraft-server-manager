@@ -53,6 +53,10 @@ export interface CreateServerRequest {
   worldName?: string;
   autoStart?: boolean;
   sudoPassword?: string;
+  // Modpack-specific fields (for MODRINTH/AUTO_CURSEFORGE types)
+  modpack?: string;
+  modpackVersion?: string;
+  modLoader?: string;
 }
 
 export interface CreateServerResponse {
