@@ -28,6 +28,9 @@ importers:
       '@minecraft-docker/shared':
         specifier: workspace:*
         version: link:../shared
+      better-sqlite3:
+        specifier: ^12.6.2
+        version: 12.6.2
       commander:
         specifier: ^12.0.0
         version: 12.1.0
@@ -47,6 +50,9 @@ importers:
         specifier: ^7.5.4
         version: 7.5.4
     devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^7.6.13
+        version: 7.6.13
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9

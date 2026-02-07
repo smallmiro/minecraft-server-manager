@@ -57,6 +57,7 @@
     "@clack/prompts": "^0.8.0",
     "@minecraft-docker/mod-source-modrinth": "workspace:*",
     "@minecraft-docker/shared": "workspace:*",
+    "better-sqlite3": "^12.6.2",
     "commander": "^12.0.0",
     "js-yaml": "^4.1.0",
     "picocolors": "^1.1.0",
@@ -65,6 +66,7 @@
     "tar": "^7.5.4"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.10.0",
     "@types/tar": "^6.1.13",
