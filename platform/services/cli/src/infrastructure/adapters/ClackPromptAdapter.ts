@@ -126,13 +126,52 @@ export class ClackPromptAdapter implements IPromptPort {
   async promptServerType(): Promise<ServerType> {
     const types = ServerType.getAll();
 
+    // Separate standard servers and modpack platforms
+    const standardServers = types.filter((t) => !t.isModpack);
+    const modpackPlatforms = types.filter((t) => t.isModpack);
+
+    // Build grouped options
+    type ServerTypeOption = {
+      value: string;
+      label: string;
+      hint?: string;
+    };
+
+    const options: ServerTypeOption[] = [];
+
+    // Add standard servers group
+    if (standardServers.length > 0) {
+      options.push({
+        value: '__header_standard__',
+        label: pc.cyan('── Standard Servers ──'),
+      });
+      for (const t of standardServers) {
+        options.push({
+          value: t.value,
+          label: `  ${t.label}${t.recommended ? ' (Recommended)' : ''}`,
+          hint: t.description,
+        });
+      }
+    }
+
+    // Add modpack platforms group
+    if (modpackPlatforms.length > 0) {
+      options.push({
+        value: '__header_modpack__',
+        label: pc.magenta('── Modpack Platforms ──'),
+      });
+      for (const t of modpackPlatforms) {
+        options.push({
+          value: t.value,
+          label: `  ${t.label}`,
+          hint: t.description,
+        });
+      }
+    }
+
     const result = await p.select({
       message: 'Server type:',
-      options: types.map((t) => ({
-        value: t.value,
-        label: t.label + (t.recommended ? ' (Recommended)' : ''),
-        hint: t.description,
-      })),
+      options,
       initialValue: 'PAPER',
     });
 
@@ -140,7 +179,14 @@ export class ClackPromptAdapter implements IPromptPort {
       this.handleCancel();
     }
 
-    return ServerType.create(result as string);
+    const selected = result as string;
+
+    // Handle header selection - re-prompt
+    if (selected.startsWith('__header_')) {
+      return this.promptServerType();
+    }
+
+    return ServerType.create(selected);
   }
 
   async promptMcVersion(serverType: ServerType): Promise<McVersion> {
@@ -187,11 +233,11 @@ export class ClackPromptAdapter implements IPromptPort {
     return McVersion.create(result as string);
   }
 
-  async promptMemory(): Promise<Memory> {
+  async promptMemory(defaultValue: string = '4G'): Promise<Memory> {
     const memoryOptions = [
       { value: '2G', label: '2 GB', hint: 'Minimum for vanilla' },
       { value: '4G', label: '4 GB', hint: 'Recommended for most servers' },
-      { value: '6G', label: '6 GB', hint: 'For modded servers' },
+      { value: '6G', label: '6 GB', hint: 'Recommended for modpacks' },
       { value: '8G', label: '8 GB', hint: 'For large modpacks' },
       { value: 'other', label: 'Other...', hint: 'Enter custom value' },
     ];
@@ -199,7 +245,7 @@ export class ClackPromptAdapter implements IPromptPort {
     const result = await p.select({
       message: 'Memory allocation:',
       options: memoryOptions,
-      initialValue: '4G',
+      initialValue: defaultValue,
     });
 
     if (this.isCancel(result)) {
@@ -489,6 +535,58 @@ export class ClackPromptAdapter implements IPromptPort {
     }
 
     return worldEntry.world;
+  }
+
+  async promptModpackSlug(): Promise<string> {
+    const result = await p.text({
+      message: 'Modrinth modpack slug or URL:',
+      placeholder: 'cobblemon',
+      validate: (value) => {
+        if (!value.trim()) {
+          return 'Modpack slug is required for Modrinth servers';
+        }
+        return undefined;
+      },
+    });
+
+    if (this.isCancel(result)) {
+      this.handleCancel();
+    }
+
+    return result as string;
+  }
+
+  async promptModpackVersion(): Promise<string | undefined> {
+    const result = await p.text({
+      message: 'Modpack version (leave empty for latest):',
+      placeholder: 'latest',
+    });
+
+    if (this.isCancel(result)) {
+      this.handleCancel();
+    }
+
+    const value = (result as string).trim();
+    return value === '' ? undefined : value;
+  }
+
+  async promptModpackLoader(): Promise<string | undefined> {
+    const result = await p.select({
+      message: 'Mod loader:',
+      options: [
+        { value: 'auto', label: 'Auto-detect', hint: 'Detect from modpack metadata' },
+        { value: 'fabric', label: 'Fabric' },
+        { value: 'forge', label: 'Forge' },
+        { value: 'quilt', label: 'Quilt' },
+      ],
+      initialValue: 'auto',
+    });
+
+    if (this.isCancel(result)) {
+      this.handleCancel();
+    }
+
+    return result === 'auto' ? undefined : (result as string);
   }
 
   // ========================================

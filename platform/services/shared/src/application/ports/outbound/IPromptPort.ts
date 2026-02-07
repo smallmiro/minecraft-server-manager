@@ -70,7 +70,7 @@ export interface IPromptPort {
   /**
    * Prompt for memory allocation
    */
-  promptMemory(): Promise<Memory>;
+  promptMemory(defaultValue?: string): Promise<Memory>;
 
   /**
    * Prompt for world options (new/existing/download)

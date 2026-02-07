@@ -259,12 +259,15 @@ ${colors.cyan('Console Options:')}
   -f, --follow                 Follow log output
 
 ${colors.cyan('Create Options:')}
-  -t, --type TYPE            Server type: PAPER, VANILLA, FORGE, FABRIC
+  -t, --type TYPE            Server type: PAPER, VANILLA, FORGE, FABRIC, MODRINTH
   -v, --version VERSION      Minecraft version (e.g., 1.21.1)
   -s, --seed NUMBER          World seed
   -u, --world-url URL        Download world from ZIP URL
   -w, --world NAME           Use existing world (symlink)
   --no-start                 Create without starting
+  --modpack SLUG             Modrinth modpack slug (required for MODRINTH type)
+  --modpack-version VERSION  Modpack version (optional, default: latest)
+  --mod-loader LOADER        Mod loader (auto/fabric/forge/quilt, default: auto)
 
 ${colors.cyan('Status Options:')}
   --detail, -d               Show detailed info (memory, CPU, players)
@@ -287,6 +290,7 @@ ${colors.cyan('Examples:')}
   mcctl start --all                  # Start all MC servers
   mcctl stop --all                   # Stop all MC servers
   mcctl create myserver -t FORGE -v 1.20.4
+  mcctl create cobblemon -t MODRINTH --modpack cobblemon
   mcctl status --json
   mcctl status --detail              # Show detailed info
   mcctl status --watch               # Real-time monitoring
@@ -491,6 +495,9 @@ async function main(): Promise<void> {
           worldName: flags['world'] as string | undefined,
           noStart: flags['no-start'] === true,
           sudoPassword,
+          modpack: flags['modpack'] as string | undefined,
+          modpackVersion: flags['modpack-version'] as string | undefined,
+          modLoader: flags['mod-loader'] as string | undefined,
         });
         break;
       }

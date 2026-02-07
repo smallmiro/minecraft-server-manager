@@ -163,6 +163,72 @@ describe('CreateServerUseCase Integration', () => {
       const log = shellAdapter.lastCommand;
       assert.strictEqual((log?.args[1] as { autoStart: boolean }).autoStart, false);
     });
+
+    it('should create MODRINTH modpack server', async () => {
+      const server = await useCase.executeWithConfig({
+        name: 'cobblemon',
+        type: 'MODRINTH',
+        modpackSlug: 'cobblemon',
+      });
+
+      assert.strictEqual(server.name.value, 'cobblemon');
+      assert.strictEqual(server.type.value, 'MODRINTH');
+      assert.strictEqual(server.type.isModpack, true);
+      assert.strictEqual(server.modpackOptions?.slug, 'cobblemon');
+    });
+
+    it('should create MODRINTH modpack with version and loader', async () => {
+      const server = await useCase.executeWithConfig({
+        name: 'modpack',
+        type: 'MODRINTH',
+        modpackSlug: 'test-pack',
+        modpackVersion: '1.0.0',
+        modLoader: 'fabric',
+      });
+
+      assert.strictEqual(server.type.value, 'MODRINTH');
+      assert.strictEqual(server.modpackOptions?.slug, 'test-pack');
+      assert.strictEqual(server.modpackOptions?.version, '1.0.0');
+      assert.strictEqual(server.modpackOptions?.loader, 'fabric');
+    });
+
+    it('should default to 6G memory for modpack servers', async () => {
+      const server = await useCase.executeWithConfig({
+        name: 'modpack',
+        type: 'MODRINTH',
+        modpackSlug: 'test-pack',
+      });
+
+      assert.strictEqual(server.memory.value, '6G');
+    });
+
+    it('should pass modpack options to shell', async () => {
+      await useCase.executeWithConfig({
+        name: 'modpack',
+        type: 'MODRINTH',
+        modpackSlug: 'test-pack',
+        modpackVersion: '1.0.0',
+        modLoader: 'fabric',
+      });
+
+      const log = shellAdapter.lastCommand;
+      const options = log?.args[1] as any;
+      assert.strictEqual(options.modpackSlug, 'test-pack');
+      assert.strictEqual(options.modpackVersion, '1.0.0');
+      assert.strictEqual(options.modLoader, 'fabric');
+    });
+
+    it('should throw error when MODRINTH type without modpack slug', async () => {
+      await assert.rejects(
+        async () => {
+          await useCase.executeWithConfig({
+            name: 'invalid',
+            type: 'MODRINTH',
+          });
+        },
+        { message: 'Modpack slug is required for Modrinth Modpack server type' }
+      );
+    });
   });
 
   describe('cancellation handling', () => {

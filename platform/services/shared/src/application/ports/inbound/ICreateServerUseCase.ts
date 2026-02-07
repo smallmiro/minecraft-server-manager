@@ -31,4 +31,7 @@ export interface CreateServerConfig {
   worldName?: string;
   worldUrl?: string;
   autoStart?: boolean;
+  modpackSlug?: string;
+  modpackVersion?: string;
+  modLoader?: string;
 }

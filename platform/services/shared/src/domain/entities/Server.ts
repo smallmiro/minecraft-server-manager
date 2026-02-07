@@ -3,6 +3,7 @@ import { ServerType } from '../value-objects/ServerType.js';
 import { McVersion } from '../value-objects/McVersion.js';
 import { Memory } from '../value-objects/Memory.js';
 import { WorldOptions } from '../value-objects/WorldOptions.js';
+import { ModpackOptions } from '../value-objects/ModpackOptions.js';
 
 /**
  * Server status enumeration
@@ -27,6 +28,7 @@ export interface ServerConfig {
   worldOptions: WorldOptions;
   rconPassword?: string;
   autoStart?: boolean;
+  modpackOptions?: ModpackOptions;
 }
 
 /**
@@ -71,6 +73,10 @@ export class Server {
 
   get autoStart(): boolean {
     return this._config.autoStart ?? true;
+  }
+
+  get modpackOptions(): ModpackOptions | undefined {
+    return this._config.modpackOptions;
   }
 
   // Status management
