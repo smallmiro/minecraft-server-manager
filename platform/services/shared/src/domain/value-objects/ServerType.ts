@@ -12,6 +12,8 @@ export enum ServerTypeEnum {
   BUKKIT = 'BUKKIT',
   PURPUR = 'PURPUR',
   QUILT = 'QUILT',
+  MODRINTH = 'MODRINTH',
+  AUTO_CURSEFORGE = 'AUTO_CURSEFORGE',
 }
 
 export interface ServerTypeInfo {
@@ -20,6 +22,7 @@ export interface ServerTypeInfo {
   description: string;
   supportsPlugins: boolean;
   supportsMods: boolean;
+  isModpack: boolean;
   recommended: boolean;
 }
 
@@ -29,6 +32,7 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
     description: 'High performance server with plugin support (Recommended)',
     supportsPlugins: true,
     supportsMods: false,
+    isModpack: false,
     recommended: true,
   },
   [ServerTypeEnum.VANILLA]: {
@@ -36,6 +40,7 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
     description: 'Official Minecraft server',
     supportsPlugins: false,
     supportsMods: false,
+    isModpack: false,
     recommended: false,
   },
   [ServerTypeEnum.FORGE]: {
@@ -43,6 +48,7 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
     description: 'Modded server for Forge mods',
     supportsPlugins: false,
     supportsMods: true,
+    isModpack: false,
     recommended: false,
   },
   [ServerTypeEnum.NEOFORGE]: {
@@ -50,6 +56,7 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
     description: 'Modern Forge fork for Minecraft 1.20.1+',
     supportsPlugins: false,
     supportsMods: true,
+    isModpack: false,
     recommended: false,
   },
   [ServerTypeEnum.FABRIC]: {
@@ -57,6 +64,7 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
     description: 'Lightweight modded server',
     supportsPlugins: false,
     supportsMods: true,
+    isModpack: false,
     recommended: false,
   },
   [ServerTypeEnum.SPIGOT]: {
@@ -64,6 +72,7 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
     description: 'Modified Bukkit server with plugin support',
     supportsPlugins: true,
     supportsMods: false,
+    isModpack: false,
     recommended: false,
   },
   [ServerTypeEnum.BUKKIT]: {
@@ -71,6 +80,7 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
     description: 'Classic plugin server',
     supportsPlugins: true,
     supportsMods: false,
+    isModpack: false,
     recommended: false,
   },
   [ServerTypeEnum.PURPUR]: {
@@ -78,6 +88,7 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
     description: 'Paper fork with additional features',
     supportsPlugins: true,
     supportsMods: false,
+    isModpack: false,
     recommended: false,
   },
   [ServerTypeEnum.QUILT]: {
@@ -85,6 +96,23 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
     description: 'Modern modding toolchain',
     supportsPlugins: false,
     supportsMods: true,
+    isModpack: false,
+    recommended: false,
+  },
+  [ServerTypeEnum.MODRINTH]: {
+    label: 'Modrinth Modpack',
+    description: 'Modpack from Modrinth platform',
+    supportsPlugins: false,
+    supportsMods: true,
+    isModpack: true,
+    recommended: false,
+  },
+  [ServerTypeEnum.AUTO_CURSEFORGE]: {
+    label: 'CurseForge Modpack',
+    description: 'Modpack from CurseForge platform',
+    supportsPlugins: false,
+    supportsMods: true,
+    isModpack: true,
     recommended: false,
   },
 };
@@ -119,6 +147,10 @@ export class ServerType {
 
   get supportsMods(): boolean {
     return SERVER_TYPE_INFO[this._value].supportsMods;
+  }
+
+  get isModpack(): boolean {
+    return SERVER_TYPE_INFO[this._value].isModpack;
   }
 
   static create(value: string): ServerType {
