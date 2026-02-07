@@ -32,40 +32,18 @@ cmd_up() {
   log "✅ 컨테이너 준비 완료"
 }
 
-has_session() {
-  devcontainer exec --workspace-folder "$SCRIPT_DIR" \
-    tmux has-session -t "$PROJECT_NAME" 2>/dev/null
-}
-
 cmd_run() {
-  local claude_cmd="claude"
   local args=("$@")
-  if [[ ${#args[@]} -gt 0 ]]; then
-    claude_cmd="claude ${args[*]}"
-  fi
-  if has_session; then
-    log "기존 세션 '$PROJECT_NAME'에 접속합니다."
-    devcontainer exec --workspace-folder "$SCRIPT_DIR" \
-      tmux attach -t "$PROJECT_NAME"
-  else
-    log "새 세션 '$PROJECT_NAME'을 시작합니다."
-    devcontainer exec --workspace-folder "$SCRIPT_DIR" \
-      tmux new-session -s "$PROJECT_NAME" "$claude_cmd"
-  fi
+  log "Claude Code 실행 중..."
+  devcontainer exec --workspace-folder "$SCRIPT_DIR" \
+    claude "${args[@]}"
 }
 
 cmd_yolo() {
   local args=("$@")
-  if has_session; then
-    log "기존 세션 '$PROJECT_NAME'에 접속합니다."
-    devcontainer exec --workspace-folder "$SCRIPT_DIR" \
-      tmux attach -t "$PROJECT_NAME"
-  else
-    log "새 세션 '$PROJECT_NAME'을 시작합니다. (자동승인 모드)"
-    devcontainer exec --workspace-folder "$SCRIPT_DIR" \
-      tmux new-session -s "$PROJECT_NAME" \
-      "claude --dangerously-skip-permissions ${args[*]}"
-  fi
+  log "Claude Code 실행 중... (자동승인 모드)"
+  devcontainer exec --workspace-folder "$SCRIPT_DIR" \
+    claude --dangerously-skip-permissions "${args[@]}"
 }
 
 cmd_shell() {
@@ -91,8 +69,7 @@ cmd_help() {
 사용법: ./dcc [command] [args...]
 
 Commands:
-  (없음)    컨테이너 시작 + tmux 세션으로 Claude Code 실행
-            이미 세션이 있으면 자동으로 재접속
+  (없음)    컨테이너 시작 + Claude Code 실행
   yolo      자동승인 모드로 실행
   shell     컨테이너 셸 접속
   up        컨테이너 시작만 (Claude Code 실행 안 함)
@@ -100,17 +77,11 @@ Commands:
   rebuild   컨테이너 재빌드
   help      이 도움말 표시
 
-tmux 세션명: ${PROJECT_NAME} (프로젝트 디렉토리명)
-
 Examples:
-  ./dcc                   # 시작 또는 재접속
+  ./dcc                   # Claude Code 실행
   ./dcc "fix the bug"     # 프롬프트와 함께 실행
   ./dcc yolo              # 자동승인 모드
   ./dcc shell             # 컨테이너 셸 접속
-
-tmux 단축키:
-  Ctrl+B, D              세션에서 빠져나오기 (detach)
-  Ctrl+B, [              스크롤 모드 (q로 나가기)
 EOF
 }
 
