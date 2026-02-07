@@ -1,7 +1,19 @@
 {
   "name": "@minecraft-docker/mcctl-console",
   "version": "0.1.0",
-  "private": true,
+  "description": "Web management console for Docker Minecraft servers",
+  "bin": {
+    "mcctl-console": "bin/start.js"
+  },
+  "files": [
+    ".next/standalone",
+    ".next/static",
+    "public",
+    "bin"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "next dev -p 5000",
     "build": "next build",
@@ -12,6 +24,25 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
+  },
+  "keywords": [
+    "minecraft",
+    "docker",
+    "console",
+    "nextjs",
+    "mc-router",
+    "server-management"
+  ],
+  "author": "smallmiro",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smallmiro/minecraft-server-manager.git",
+    "directory": "platform/services/mcctl-console"
+  },
+  "homepage": "https://minecraft-server-manager.readthedocs.io/",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@emotion/react": "^11.13.5",

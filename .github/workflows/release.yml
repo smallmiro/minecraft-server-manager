@@ -41,6 +41,8 @@ jobs:
             platform/services/mod-source-modrinth/dist
             platform/services/mcctl-api/dist
             platform/services/cli/dist
+            platform/services/mcctl-console/.next/standalone
+            platform/services/mcctl-console/.next/static
           retention-days: 1
 
   publish-npm:
@@ -79,6 +81,8 @@ jobs:
           echo "=== CLI dist ===" && ls -la platform/services/cli/dist/
           echo "=== CLI scripts ===" && ls -la platform/services/cli/scripts/
           echo "=== CLI templates ===" && ls -la platform/services/cli/templates/
+          echo "=== mcctl-console standalone ===" && ls -la platform/services/mcctl-console/.next/standalone/
+          echo "=== mcctl-console static ===" && ls -la platform/services/mcctl-console/.next/static/
 
       - name: Publish @minecraft-docker/shared
         run: |
@@ -134,6 +138,36 @@ jobs:
           npm version ${VERSION} --no-git-tag-version --allow-same-version
           # Update workspace dependency to npm version
           sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          if npm view "${PACKAGE_NAME}@${VERSION}" version 2>/dev/null; then
+            echo "Package ${PACKAGE_NAME}@${VERSION} already exists, skipping..."
+          else
+            npm publish --access public --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @minecraft-docker/mcctl-console
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          cd platform/services/mcctl-console
+          # Update package.json version to match tag version
+          npm version ${VERSION} --no-git-tag-version --allow-same-version
+          # Update workspace dependency to npm version
+          sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
+          # Copy static assets into standalone directory (required for Next.js standalone)
+          # In monorepo, standalone preserves the full path: .next/standalone/platform/services/mcctl-console/
+          STANDALONE_APP=".next/standalone/platform/services/mcctl-console"
+          if [ -d ".next/static" ]; then
+            mkdir -p "${STANDALONE_APP}/.next"
+            cp -r .next/static "${STANDALONE_APP}/.next/static"
+            echo "Copied .next/static to ${STANDALONE_APP}/.next/static"
+          fi
+          # Copy public assets into standalone directory
+          if [ -d "public" ]; then
+            cp -r public "${STANDALONE_APP}/public"
+            echo "Copied public/ to ${STANDALONE_APP}/public"
+          fi
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           if npm view "${PACKAGE_NAME}@${VERSION}" version 2>/dev/null; then
             echo "Package ${PACKAGE_NAME}@${VERSION} already exists, skipping..."
@@ -211,6 +245,7 @@ jobs:
 
             - [@minecraft-docker/mcctl](https://www.npmjs.com/package/@minecraft-docker/mcctl)
             - [@minecraft-docker/mcctl-api](https://www.npmjs.com/package/@minecraft-docker/mcctl-api)
+            - [@minecraft-docker/mcctl-console](https://www.npmjs.com/package/@minecraft-docker/mcctl-console)
             - [@minecraft-docker/shared](https://www.npmjs.com/package/@minecraft-docker/shared)
             - [@minecraft-docker/mod-source-modrinth](https://www.npmjs.com/package/@minecraft-docker/mod-source-modrinth)
 
