@@ -377,6 +377,42 @@ describe('McctlApiAdapter', () => {
     });
   });
 
+  describe('Router operations', () => {
+    it('getRouterStatus should fetch router status', async () => {
+      const mockResponse = {
+        router: {
+          name: 'mc-router',
+          status: 'running',
+          health: 'healthy',
+          port: 25565,
+          uptime: '2d 3h',
+          uptimeSeconds: 183600,
+          mode: 'auto',
+          routes: [
+            {
+              hostname: 'survival.192.168.1.100.nip.io',
+              target: 'mc-survival:25565',
+              serverStatus: 'running',
+            },
+          ],
+        },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await adapter.getRouterStatus();
+
+      expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/router/status',
+        expect.any(Object)
+      );
+    });
+  });
+
   describe('URL encoding', () => {
     it('should properly encode server names with special characters', async () => {
       mockFetch.mockResolvedValueOnce({
