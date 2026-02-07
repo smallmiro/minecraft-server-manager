@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     const service = createService();
-    const users = await service.getServerUsers(serverId);
+    const users = await service.getServerUsersWithDetails(serverId);
 
     return NextResponse.json({ users, total: users.length });
   } catch (error) {

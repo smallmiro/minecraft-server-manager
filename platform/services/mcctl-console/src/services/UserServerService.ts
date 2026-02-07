@@ -1,5 +1,6 @@
 import type { IUserServerRepository } from '@/ports/out/IUserServerRepository';
 import type { UserServer, ServerPermission } from '@/lib/schema';
+import type { UserServerWithUser } from '@/adapters/UserServerRepository';
 
 /**
  * Business logic error for permission operations
@@ -99,6 +100,19 @@ export class UserServerService {
    * Get all users with access to a server
    */
   async getServerUsers(serverId: string): Promise<UserServer[]> {
+    return this.repository.findByServer(serverId);
+  }
+
+  /**
+   * Get all users with access to a server (with user details)
+   */
+  async getServerUsersWithDetails(serverId: string): Promise<UserServerWithUser[]> {
+    // Type assertion - repository might not have this method yet
+    const repo = this.repository as any;
+    if (repo.findByServerWithUsers) {
+      return repo.findByServerWithUsers(serverId);
+    }
+    // Fallback to basic method
     return this.repository.findByServer(serverId);
   }
 
