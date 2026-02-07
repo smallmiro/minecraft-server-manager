@@ -224,6 +224,8 @@ export interface RouteInfo {
   hostname: string;
   target: string;
   serverStatus: ContainerStatus;
+  serverType?: string;
+  serverVersion?: string;
 }
 
 export interface RouterDetail {
@@ -237,8 +239,15 @@ export interface RouterDetail {
   routes: RouteInfo[];
 }
 
+export interface AvahiInfo {
+  name: string;
+  status: string;
+  type: string;
+}
+
 export interface RouterStatusResponse {
   router: RouterDetail;
+  avahi?: AvahiInfo;
 }
 
 export interface ApiError {

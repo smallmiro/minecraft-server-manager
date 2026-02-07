@@ -4,6 +4,7 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableRow from '@mui/material/TableRow';
@@ -15,10 +16,28 @@ interface PlatformInfoProps {
   router: RouterDetail;
 }
 
+interface ModeDisplay {
+  label: string;
+  color: 'info' | 'default' | 'warning';
+}
+
+function getModeDisplay(mode?: string): ModeDisplay {
+  if (!mode) return { label: 'Unknown', color: 'default' };
+  if (mode.includes('in-docker') || mode.includes('auto-discovery')) {
+    return { label: 'Auto Discovery', color: 'info' };
+  }
+  if (mode.includes('mapping')) {
+    return { label: 'Manual Mapping', color: 'warning' };
+  }
+  return { label: mode, color: 'default' };
+}
+
 const cellLabelSx = { fontWeight: 500, color: 'text.secondary', border: 0, width: '40%', py: 1 } as const;
 const cellValueSx = { border: 0, py: 1 } as const;
 
 export function PlatformInfo({ router }: PlatformInfoProps) {
+  const modeDisplay = getModeDisplay(router.mode);
+
   return (
     <Card>
       <CardContent>
@@ -40,7 +59,9 @@ export function PlatformInfo({ router }: PlatformInfoProps) {
             </TableRow>
             <TableRow>
               <TableCell sx={cellLabelSx}>Mode</TableCell>
-              <TableCell sx={cellValueSx}>{router.mode || '-'}</TableCell>
+              <TableCell sx={cellValueSx}>
+                <Chip label={modeDisplay.label} size="small" color={modeDisplay.color} variant="outlined" />
+              </TableCell>
             </TableRow>
             <TableRow>
               <TableCell sx={cellLabelSx}>Uptime</TableCell>

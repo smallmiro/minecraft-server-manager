@@ -85,6 +85,6 @@ describe('MainLayout', () => {
     expect(screen.getAllByText('Dashboard').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Servers').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Players').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Settings').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Routing').length).toBeGreaterThan(0);
   });
 });

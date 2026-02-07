@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
-import { getRouterDetailInfo } from '@minecraft-docker/shared';
+import { getRouterDetailInfo, getAvahiStatus } from '@minecraft-docker/shared';
 import {
   RouterStatusResponseSchema,
   ErrorResponseSchema,
@@ -41,10 +41,18 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           hostname: route.hostname,
           target: route.target,
           serverStatus: route.serverStatus,
+          serverType: route.serverType,
+          serverVersion: route.serverVersion,
         })),
       };
 
-      return reply.send({ router });
+      const avahi = {
+        name: 'avahi-daemon',
+        status: getAvahiStatus(),
+        type: 'system',
+      };
+
+      return reply.send({ router, avahi });
     } catch (error) {
       fastify.log.error(error, 'Failed to get router status');
       return reply.code(500).send({

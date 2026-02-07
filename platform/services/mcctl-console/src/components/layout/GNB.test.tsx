@@ -36,7 +36,7 @@ describe('GNB', () => {
     expect(screen.getAllByText('Dashboard').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Servers').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Players').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Settings').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Routing').length).toBeGreaterThan(0);
   });
 
   it('should render mobile menu button', () => {
@@ -83,11 +83,11 @@ describe('GNB', () => {
     const dashboardLinks = screen.getAllByRole('link', { name: /dashboard/i });
     const serversLinks = screen.getAllByRole('link', { name: /servers/i });
     const playersLinks = screen.getAllByRole('link', { name: /players/i });
-    const settingsLinks = screen.getAllByRole('link', { name: /settings/i });
+    const routingLinks = screen.getAllByRole('link', { name: /routing/i });
 
     expect(dashboardLinks[0]).toHaveAttribute('href', '/dashboard');
     expect(serversLinks[0]).toHaveAttribute('href', '/servers');
     expect(playersLinks[0]).toHaveAttribute('href', '/players');
-    expect(settingsLinks[0]).toHaveAttribute('href', '/settings');
+    expect(routingLinks[0]).toHaveAttribute('href', '/routing');
   });
 });
