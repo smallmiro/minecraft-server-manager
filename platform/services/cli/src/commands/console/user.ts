@@ -1,15 +1,11 @@
 import { Command } from 'commander';
 import * as p from '@clack/prompts';
+import { join } from 'node:path';
 import {
-  User,
-  Username,
-  Role,
-  RoleEnum,
-  YamlUserRepository,
   Paths,
   colors,
 } from '@minecraft-docker/shared';
-import { resolve } from 'node:path';
+import { ConsoleDatabase, type ConsoleUser } from '../../lib/console-db.js';
 
 /**
  * Console user command options
@@ -25,161 +21,176 @@ export interface ConsoleUserCommandOptions {
 export type AdminUserCommandOptions = ConsoleUserCommandOptions;
 
 /**
- * Get the user repository instance
+ * Get the ConsoleDatabase instance
  */
-function getUserRepository(): YamlUserRepository {
+function getConsoleDb(): ConsoleDatabase {
   const paths = new Paths();
-  const usersFile = resolve(paths.platform, 'users.yaml');
-  return new YamlUserRepository(usersFile);
+  const dbPath = join(paths.root, 'data', 'mcctl.db');
+  const db = new ConsoleDatabase(dbPath);
+  db.ensureSchema();
+  return db;
 }
 
 /**
  * List all users
  */
 async function listUsers(options: ConsoleUserCommandOptions): Promise<void> {
-  const repo = getUserRepository();
-  const users = await repo.findAll();
+  const db = getConsoleDb();
 
-  if (options.json) {
-    console.log(JSON.stringify(users.map((u) => u.toJSON()), null, 2));
-    return;
+  try {
+    const users = db.findAllUsers();
+
+    if (options.json) {
+      console.log(JSON.stringify(users.map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        emailVerified: u.emailVerified,
+        banned: u.banned,
+        createdAt: u.createdAt.toISOString(),
+        updatedAt: u.updatedAt.toISOString(),
+      })), null, 2));
+      return;
+    }
+
+    if (users.length === 0) {
+      console.log(colors.yellow('No users found.'));
+      console.log(`Run ${colors.cyan('mcctl console init')} to create an admin user.`);
+      return;
+    }
+
+    console.log();
+    console.log(colors.bold('Users:'));
+    console.log();
+
+    // Table header
+    const header = `${colors.dim('Email'.padEnd(30))}${colors.dim('Name'.padEnd(20))}${colors.dim('Role'.padEnd(12))}${colors.dim('Created')}`;
+    console.log(header);
+    console.log(colors.dim('-'.repeat(75)));
+
+    // Table rows
+    for (const user of users) {
+      const roleColor = user.role === 'admin' ? colors.red : colors.blue;
+      const row = `${user.email.padEnd(30)}${user.name.padEnd(20)}${roleColor(user.role.padEnd(12))}${user.createdAt.toISOString().split('T')[0]}`;
+      console.log(row);
+    }
+
+    console.log();
+    console.log(`Total: ${colors.cyan(users.length.toString())} user(s)`);
+  } finally {
+    db.close();
   }
-
-  if (users.length === 0) {
-    console.log(colors.yellow('No users found.'));
-    console.log(`Run ${colors.cyan('mcctl console init')} to create an admin user.`);
-    return;
-  }
-
-  console.log();
-  console.log(colors.bold('Users:'));
-  console.log();
-
-  // Table header
-  const header = `${colors.dim('Username'.padEnd(20))}${colors.dim('Role'.padEnd(12))}${colors.dim('Created')}`;
-  console.log(header);
-  console.log(colors.dim('-'.repeat(50)));
-
-  // Table rows
-  for (const user of users) {
-    const roleColor = user.role.isAdmin ? colors.red : colors.blue;
-    const row = `${user.username.value.padEnd(20)}${roleColor(user.role.value.padEnd(12))}${user.createdAt.toISOString().split('T')[0]}`;
-    console.log(row);
-  }
-
-  console.log();
-  console.log(`Total: ${colors.cyan(users.length.toString())} user(s)`);
 }
 
 /**
  * Add a new user
  */
 async function addUser(
-  usernameArg: string | undefined,
+  emailArg: string | undefined,
   options: ConsoleUserCommandOptions
 ): Promise<void> {
-  const repo = getUserRepository();
+  const db = getConsoleDb();
 
-  let username: string;
-  let role: RoleEnum;
-  let password: string;
-
-  if (usernameArg && options.role && options.password) {
-    // CLI mode
-    username = usernameArg;
-    role = options.role.toLowerCase() as RoleEnum;
-    password = options.password;
-  } else {
-    // Interactive mode
-    p.intro(colors.cyan('Add New User'));
-
-    const result = await p.group(
-      {
-        username: () =>
-          p.text({
-            message: 'Username:',
-            placeholder: 'operator1',
-            validate: (value) => {
-              if (!value || value.trim().length === 0) {
-                return 'Username is required';
-              }
-              if (value.length < 3) {
-                return 'Username must be at least 3 characters';
-              }
-              if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
-                return 'Username can only contain letters, numbers, underscores, and hyphens';
-              }
-              return undefined;
-            },
-          }),
-        role: () =>
-          p.select({
-            message: 'Role:',
-            options: [
-              { value: RoleEnum.ADMIN, label: 'Admin - Full access' },
-              { value: RoleEnum.VIEWER, label: 'Viewer - Read-only access' },
-            ],
-          }),
-        password: () =>
-          p.password({
-            message: 'Password:',
-            validate: (value) => {
-              if (!value || value.length < 8) {
-                return 'Password must be at least 8 characters';
-              }
-              return undefined;
-            },
-          }),
-        confirmPassword: () =>
-          p.password({
-            message: 'Confirm password:',
-          }),
-      },
-      {
-        onCancel: () => {
-          p.cancel('Operation cancelled.');
-          process.exit(0);
-        },
-      }
-    );
-
-    if (result.password !== result.confirmPassword) {
-      p.cancel('Passwords do not match.');
-      process.exit(1);
-    }
-
-    username = result.username as string;
-    role = result.role as RoleEnum;
-    password = result.password as string;
-  }
-
-  // Check if user already exists
   try {
-    const existingUser = await repo.findByUsername(Username.create(username));
+    let email: string;
+    let name: string;
+    let role: string;
+    let password: string;
+
+    if (emailArg && options.role && options.password) {
+      // CLI mode
+      email = emailArg;
+      name = emailArg.split('@')[0] ?? emailArg;
+      role = options.role.toLowerCase();
+      password = options.password;
+    } else {
+      // Interactive mode
+      p.intro(colors.cyan('Add New User'));
+
+      const result = await p.group(
+        {
+          email: () =>
+            p.text({
+              message: 'Email:',
+              placeholder: 'user@example.com',
+              validate: (value) => {
+                if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                  return 'Valid email address is required';
+                }
+                return undefined;
+              },
+            }),
+          name: () =>
+            p.text({
+              message: 'Name:',
+              placeholder: 'User Name',
+              validate: (value) => {
+                if (!value || value.trim().length === 0) {
+                  return 'Name is required';
+                }
+                return undefined;
+              },
+            }),
+          role: () =>
+            p.select({
+              message: 'Role:',
+              options: [
+                { value: 'admin', label: 'Admin - Full access' },
+                { value: 'user', label: 'User - Standard access' },
+              ],
+            }),
+          password: () =>
+            p.password({
+              message: 'Password:',
+              validate: (value) => {
+                if (!value || value.length < 8) {
+                  return 'Password must be at least 8 characters';
+                }
+                return undefined;
+              },
+            }),
+          confirmPassword: () =>
+            p.password({
+              message: 'Confirm password:',
+            }),
+        },
+        {
+          onCancel: () => {
+            p.cancel('Operation cancelled.');
+            process.exit(0);
+          },
+        }
+      );
+
+      if (result.password !== result.confirmPassword) {
+        p.cancel('Passwords do not match.');
+        process.exit(1);
+      }
+
+      email = result.email as string;
+      name = result.name as string;
+      role = result.role as string;
+      password = result.password as string;
+    }
+
+    // Check if user already exists
+    const existingUser = db.findUserByEmail(email);
     if (existingUser) {
-      console.error(colors.red(`User '${username}' already exists.`));
+      console.error(colors.red(`User '${email}' already exists.`));
       process.exit(1);
     }
-  } catch {
-    // Username validation failed
-    console.error(colors.red(`Invalid username: ${username}`));
-    process.exit(1);
-  }
 
-  // Create user
-  const passwordHash = await repo.hashPassword(password);
-  const user = User.create({
-    username: Username.create(username),
-    passwordHash,
-    role: Role.create(role),
-  });
+    // Create user
+    db.createUser({ email, name, password, role });
 
-  await repo.save(user);
-
-  if (usernameArg) {
-    console.log(JSON.stringify({ success: true, username: user.username.value }));
-  } else {
-    p.outro(colors.green(`User '${username}' created successfully!`));
+    if (emailArg) {
+      console.log(JSON.stringify({ success: true, email }));
+    } else {
+      p.outro(colors.green(`User '${email}' created successfully!`));
+    }
+  } finally {
+    db.close();
   }
 }
 
@@ -187,243 +198,261 @@ async function addUser(
  * Remove a user
  */
 async function removeUser(
-  usernameArg: string | undefined,
+  emailArg: string | undefined,
   options: ConsoleUserCommandOptions
 ): Promise<void> {
-  const repo = getUserRepository();
+  const db = getConsoleDb();
 
-  let username: string;
+  try {
+    let targetUser: ConsoleUser;
 
-  if (usernameArg) {
-    username = usernameArg;
-  } else {
-    // Interactive mode
-    const users = await repo.findAll();
-    if (users.length === 0) {
-      console.error(colors.red('No users found.'));
-      process.exit(1);
+    if (emailArg) {
+      const user = db.findUserByEmail(emailArg);
+      if (!user) {
+        console.error(colors.red(`User '${emailArg}' not found.`));
+        process.exit(1);
+      }
+      targetUser = user;
+    } else {
+      // Interactive mode
+      const users = db.findAllUsers();
+      if (users.length === 0) {
+        console.error(colors.red('No users found.'));
+        process.exit(1);
+      }
+
+      const result = await p.select({
+        message: 'Select user to remove:',
+        options: users.map((u) => ({
+          value: u.email,
+          label: `${u.email} (${u.role})`,
+        })),
+      });
+
+      if (p.isCancel(result)) {
+        p.cancel('Operation cancelled.');
+        process.exit(0);
+      }
+
+      const user = db.findUserByEmail(result as string);
+      if (!user) {
+        console.error(colors.red('User not found.'));
+        process.exit(1);
+      }
+      targetUser = user;
     }
 
-    const result = await p.select({
-      message: 'Select user to remove:',
-      options: users.map((u) => ({
-        value: u.username.value,
-        label: `${u.username.value} (${u.role.value})`,
-      })),
-    });
-
-    if (p.isCancel(result)) {
-      p.cancel('Operation cancelled.');
-      process.exit(0);
+    // Check if this is the last admin
+    if (targetUser.role === 'admin') {
+      const allUsers = db.findAllUsers();
+      const adminCount = allUsers.filter((u) => u.role === 'admin').length;
+      if (adminCount <= 1) {
+        console.error(colors.red('Cannot delete the last admin user.'));
+        process.exit(1);
+      }
     }
 
-    username = result as string;
-  }
+    // Confirm deletion
+    if (!options.force) {
+      const confirmed = await p.confirm({
+        message: `Are you sure you want to delete user '${targetUser.email}'?`,
+      });
 
-  // Find user
-  const user = await repo.findByUsername(Username.create(username));
-  if (!user) {
-    console.error(colors.red(`User '${username}' not found.`));
-    process.exit(1);
-  }
-
-  // Check if this is the last admin
-  if (user.isAdmin) {
-    const allUsers = await repo.findAll();
-    const adminCount = allUsers.filter((u) => u.isAdmin).length;
-    if (adminCount <= 1) {
-      console.error(colors.red('Cannot delete the last admin user.'));
-      process.exit(1);
+      if (p.isCancel(confirmed) || !confirmed) {
+        p.cancel('Operation cancelled.');
+        process.exit(0);
+      }
     }
+
+    db.deleteUser(targetUser.id);
+
+    console.log(colors.green(`User '${targetUser.email}' deleted successfully.`));
+  } finally {
+    db.close();
   }
-
-  // Confirm deletion
-  if (!options.force) {
-    const confirmed = await p.confirm({
-      message: `Are you sure you want to delete user '${username}'?`,
-    });
-
-    if (p.isCancel(confirmed) || !confirmed) {
-      p.cancel('Operation cancelled.');
-      process.exit(0);
-    }
-  }
-
-  await repo.delete(user.id);
-
-  console.log(colors.green(`User '${username}' deleted successfully.`));
 }
 
 /**
- * Update a user
+ * Update a user's role
  */
 async function updateUser(
-  usernameArg: string | undefined,
+  emailArg: string | undefined,
   options: ConsoleUserCommandOptions
 ): Promise<void> {
-  const repo = getUserRepository();
+  const db = getConsoleDb();
 
-  let username: string;
+  try {
+    let targetUser: ConsoleUser;
 
-  if (usernameArg) {
-    username = usernameArg;
-  } else {
-    // Interactive mode
-    const users = await repo.findAll();
-    if (users.length === 0) {
-      console.error(colors.red('No users found.'));
-      process.exit(1);
+    if (emailArg) {
+      const user = db.findUserByEmail(emailArg);
+      if (!user) {
+        console.error(colors.red(`User '${emailArg}' not found.`));
+        process.exit(1);
+      }
+      targetUser = user;
+    } else {
+      // Interactive mode
+      const users = db.findAllUsers();
+      if (users.length === 0) {
+        console.error(colors.red('No users found.'));
+        process.exit(1);
+      }
+
+      const result = await p.select({
+        message: 'Select user to update:',
+        options: users.map((u) => ({
+          value: u.email,
+          label: `${u.email} (${u.role})`,
+        })),
+      });
+
+      if (p.isCancel(result)) {
+        p.cancel('Operation cancelled.');
+        process.exit(0);
+      }
+
+      const user = db.findUserByEmail(result as string);
+      if (!user) {
+        console.error(colors.red('User not found.'));
+        process.exit(1);
+      }
+      targetUser = user;
     }
 
-    const result = await p.select({
-      message: 'Select user to update:',
-      options: users.map((u) => ({
-        value: u.username.value,
-        label: `${u.username.value} (${u.role.value})`,
-      })),
-    });
+    // Update role
+    let newRole: string;
+    if (options.role) {
+      newRole = options.role.toLowerCase();
+    } else {
+      const result = await p.select({
+        message: 'New role:',
+        initialValue: targetUser.role,
+        options: [
+          { value: 'admin', label: 'Admin - Full access' },
+          { value: 'user', label: 'User - Standard access' },
+        ],
+      });
 
-    if (p.isCancel(result)) {
-      p.cancel('Operation cancelled.');
-      process.exit(0);
+      if (p.isCancel(result)) {
+        p.cancel('Operation cancelled.');
+        process.exit(0);
+      }
+
+      newRole = result as string;
     }
 
-    username = result as string;
-  }
-
-  // Find user
-  const user = await repo.findByUsername(Username.create(username));
-  if (!user) {
-    console.error(colors.red(`User '${username}' not found.`));
-    process.exit(1);
-  }
-
-  // Update role
-  let newRole: RoleEnum;
-  if (options.role) {
-    newRole = options.role.toLowerCase() as RoleEnum;
-  } else {
-    const result = await p.select({
-      message: 'New role:',
-      initialValue: user.role.value,
-      options: [
-        { value: RoleEnum.ADMIN, label: 'Admin - Full access' },
-        { value: RoleEnum.VIEWER, label: 'Viewer - Read-only access' },
-      ],
-    });
-
-    if (p.isCancel(result)) {
-      p.cancel('Operation cancelled.');
-      process.exit(0);
+    // Check if this would remove the last admin
+    if (targetUser.role === 'admin' && newRole !== 'admin') {
+      const allUsers = db.findAllUsers();
+      const adminCount = allUsers.filter((u) => u.role === 'admin').length;
+      if (adminCount <= 1) {
+        console.error(colors.red('Cannot change role of the last admin user.'));
+        process.exit(1);
+      }
     }
 
-    newRole = result as RoleEnum;
+    db.updateUserRole(targetUser.id, newRole);
+
+    console.log(colors.green(`User '${targetUser.email}' updated to role '${newRole}'.`));
+  } finally {
+    db.close();
   }
-
-  // Check if this would remove the last admin
-  if (user.isAdmin && newRole !== RoleEnum.ADMIN) {
-    const allUsers = await repo.findAll();
-    const adminCount = allUsers.filter((u) => u.isAdmin).length;
-    if (adminCount <= 1) {
-      console.error(colors.red('Cannot change role of the last admin user.'));
-      process.exit(1);
-    }
-  }
-
-  user.updateRole(Role.create(newRole));
-  await repo.save(user);
-
-  console.log(colors.green(`User '${username}' updated to role '${newRole}'.`));
 }
 
 /**
  * Reset a user's password
  */
 async function resetPassword(
-  usernameArg: string | undefined,
+  emailArg: string | undefined,
   options: ConsoleUserCommandOptions
 ): Promise<void> {
-  const repo = getUserRepository();
+  const db = getConsoleDb();
 
-  let username: string;
+  try {
+    let targetUser: ConsoleUser;
 
-  if (usernameArg) {
-    username = usernameArg;
-  } else {
-    // Interactive mode
-    const users = await repo.findAll();
-    if (users.length === 0) {
-      console.error(colors.red('No users found.'));
-      process.exit(1);
-    }
-
-    const result = await p.select({
-      message: 'Select user to reset password:',
-      options: users.map((u) => ({
-        value: u.username.value,
-        label: `${u.username.value} (${u.role.value})`,
-      })),
-    });
-
-    if (p.isCancel(result)) {
-      p.cancel('Operation cancelled.');
-      process.exit(0);
-    }
-
-    username = result as string;
-  }
-
-  // Find user
-  const user = await repo.findByUsername(Username.create(username));
-  if (!user) {
-    console.error(colors.red(`User '${username}' not found.`));
-    process.exit(1);
-  }
-
-  // Get new password
-  let newPassword: string;
-  if (options.password) {
-    newPassword = options.password;
-  } else {
-    const result = await p.group(
-      {
-        password: () =>
-          p.password({
-            message: 'New password:',
-            validate: (value) => {
-              if (!value || value.length < 8) {
-                return 'Password must be at least 8 characters';
-              }
-              return undefined;
-            },
-          }),
-        confirmPassword: () =>
-          p.password({
-            message: 'Confirm password:',
-          }),
-      },
-      {
-        onCancel: () => {
-          p.cancel('Operation cancelled.');
-          process.exit(0);
-        },
+    if (emailArg) {
+      const user = db.findUserByEmail(emailArg);
+      if (!user) {
+        console.error(colors.red(`User '${emailArg}' not found.`));
+        process.exit(1);
       }
-    );
+      targetUser = user;
+    } else {
+      // Interactive mode
+      const users = db.findAllUsers();
+      if (users.length === 0) {
+        console.error(colors.red('No users found.'));
+        process.exit(1);
+      }
 
-    if (result.password !== result.confirmPassword) {
-      p.cancel('Passwords do not match.');
-      process.exit(1);
+      const result = await p.select({
+        message: 'Select user to reset password:',
+        options: users.map((u) => ({
+          value: u.email,
+          label: `${u.email} (${u.role})`,
+        })),
+      });
+
+      if (p.isCancel(result)) {
+        p.cancel('Operation cancelled.');
+        process.exit(0);
+      }
+
+      const user = db.findUserByEmail(result as string);
+      if (!user) {
+        console.error(colors.red('User not found.'));
+        process.exit(1);
+      }
+      targetUser = user;
     }
 
-    newPassword = result.password as string;
+    // Get new password
+    let newPassword: string;
+    if (options.password) {
+      newPassword = options.password;
+    } else {
+      const result = await p.group(
+        {
+          password: () =>
+            p.password({
+              message: 'New password:',
+              validate: (value) => {
+                if (!value || value.length < 8) {
+                  return 'Password must be at least 8 characters';
+                }
+                return undefined;
+              },
+            }),
+          confirmPassword: () =>
+            p.password({
+              message: 'Confirm password:',
+            }),
+        },
+        {
+          onCancel: () => {
+            p.cancel('Operation cancelled.');
+            process.exit(0);
+          },
+        }
+      );
+
+      if (result.password !== result.confirmPassword) {
+        p.cancel('Passwords do not match.');
+        process.exit(1);
+      }
+
+      newPassword = result.password as string;
+    }
+
+    // Update password
+    db.updatePassword(targetUser.id, newPassword);
+
+    console.log(colors.green(`Password for '${targetUser.email}' has been reset.`));
+  } finally {
+    db.close();
   }
-
-  // Update password
-  const passwordHash = await repo.hashPassword(newPassword);
-  user.updatePasswordHash(passwordHash);
-  await repo.save(user);
-
-  console.log(colors.green(`Password for '${username}' has been reset.`));
 }
 
 /**
@@ -439,14 +468,14 @@ Examples:
   $ mcctl console user list                        List all users
   $ mcctl console user list --json                 List users in JSON format
   $ mcctl console user add                         Add user (interactive)
-  $ mcctl console user add operator1 --role viewer --password "secret"
+  $ mcctl console user add user@example.com --role admin --password "secret"
   $ mcctl console user remove                      Remove user (interactive)
-  $ mcctl console user remove operator1            Remove user directly
-  $ mcctl console user remove operator1 --force    Remove without confirmation
+  $ mcctl console user remove user@example.com     Remove user directly
+  $ mcctl console user remove user@example.com --force    Remove without confirmation
   $ mcctl console user update                      Update user (interactive)
-  $ mcctl console user update operator1 --role admin
+  $ mcctl console user update user@example.com --role admin
   $ mcctl console user reset-password              Reset password (interactive)
-  $ mcctl console user reset-password operator1
+  $ mcctl console user reset-password user@example.com
 `
     );
 
@@ -466,13 +495,13 @@ Examples:
 
   // add subcommand
   cmd
-    .command('add [username]')
+    .command('add [email]')
     .description('Add a new user')
-    .option('--role <role>', 'User role (admin, viewer)')
+    .option('--role <role>', 'User role (admin, user)')
     .option('--password <password>', 'User password')
-    .action(async (username: string | undefined, options: ConsoleUserCommandOptions) => {
+    .action(async (email: string | undefined, options: ConsoleUserCommandOptions) => {
       try {
-        await addUser(username, options);
+        await addUser(email, options);
       } catch (error) {
         console.error(colors.red(`Error: ${(error as Error).message}`));
         process.exit(1);
@@ -481,12 +510,12 @@ Examples:
 
   // remove subcommand
   cmd
-    .command('remove [username]')
+    .command('remove [email]')
     .description('Remove a user')
     .option('--force', 'Skip confirmation')
-    .action(async (username: string | undefined, options: ConsoleUserCommandOptions) => {
+    .action(async (email: string | undefined, options: ConsoleUserCommandOptions) => {
       try {
-        await removeUser(username, options);
+        await removeUser(email, options);
       } catch (error) {
         console.error(colors.red(`Error: ${(error as Error).message}`));
         process.exit(1);
@@ -495,12 +524,12 @@ Examples:
 
   // update subcommand
   cmd
-    .command('update [username]')
+    .command('update [email]')
     .description('Update a user')
-    .option('--role <role>', 'New role (admin, viewer)')
-    .action(async (username: string | undefined, options: ConsoleUserCommandOptions) => {
+    .option('--role <role>', 'New role (admin, user)')
+    .action(async (email: string | undefined, options: ConsoleUserCommandOptions) => {
       try {
-        await updateUser(username, options);
+        await updateUser(email, options);
       } catch (error) {
         console.error(colors.red(`Error: ${(error as Error).message}`));
         process.exit(1);
@@ -509,12 +538,12 @@ Examples:
 
   // reset-password subcommand
   cmd
-    .command('reset-password [username]')
+    .command('reset-password [email]')
     .description('Reset a user password')
     .option('--password <password>', 'New password (for non-interactive use)')
-    .action(async (username: string | undefined, options: ConsoleUserCommandOptions) => {
+    .action(async (email: string | undefined, options: ConsoleUserCommandOptions) => {
       try {
-        await resetPassword(username, options);
+        await resetPassword(email, options);
       } catch (error) {
         console.error(colors.red(`Error: ${(error as Error).message}`));
         process.exit(1);
