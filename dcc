@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_NAME="$(basename "$SCRIPT_DIR")"
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+log()  { echo -e "${GREEN}[dcc]${NC} $*"; }
+warn() { echo -e "${YELLOW}[dcc]${NC} $*"; }
+err()  { echo -e "${RED}[dcc]${NC} $*" >&2; }
+
+check_deps() {
+  if ! command -v devcontainer &>/dev/null; then
+    err "devcontainer CLI가 설치되어 있지 않습니다."
+    echo "  npm install -g @devcontainers/cli"
+    exit 1
+  fi
+  if ! command -v docker &>/dev/null; then
+    err "Docker가 설치되어 있지 않습니다."
+    exit 1
+  fi
+  mkdir -p "$HOME/.claude"
+}
+
+cmd_up() {
+  log "컨테이너 시작 중..."
+  devcontainer up --workspace-folder "$SCRIPT_DIR"
+  log "✅ 컨테이너 준비 완료"
+}
+
+has_session() {
+  devcontainer exec --workspace-folder "$SCRIPT_DIR" \
+    tmux has-session -t "$PROJECT_NAME" 2>/dev/null
+}
+
+cmd_run() {
+  local claude_cmd="claude"
+  local args=("$@")
+  if [[ ${#args[@]} -gt 0 ]]; then
+    claude_cmd="claude ${args[*]}"
+  fi
+  if has_session; then
+    log "기존 세션 '$PROJECT_NAME'에 접속합니다."
+    devcontainer exec --workspace-folder "$SCRIPT_DIR" \
+      tmux attach -t "$PROJECT_NAME"
+  else
+    log "새 세션 '$PROJECT_NAME'을 시작합니다."
+    devcontainer exec --workspace-folder "$SCRIPT_DIR" \
+      tmux new-session -s "$PROJECT_NAME" "$claude_cmd"
+  fi
+}
+
+cmd_yolo() {
+  local args=("$@")
+  if has_session; then
+    log "기존 세션 '$PROJECT_NAME'에 접속합니다."
+    devcontainer exec --workspace-folder "$SCRIPT_DIR" \
+      tmux attach -t "$PROJECT_NAME"
+  else
+    log "새 세션 '$PROJECT_NAME'을 시작합니다. (자동승인 모드)"
+    devcontainer exec --workspace-folder "$SCRIPT_DIR" \
+      tmux new-session -s "$PROJECT_NAME" \
+      "claude --dangerously-skip-permissions ${args[*]}"
+  fi
+}
+
+cmd_shell() {
+  devcontainer exec --workspace-folder "$SCRIPT_DIR" bash
+}
+
+cmd_down() {
+  log "컨테이너 정리 중..."
+  local label="devcontainer.local_folder=${SCRIPT_DIR}"
+  docker ps -aq --filter "label=${label}" | xargs -r docker rm -f
+  log "✅ 정리 완료"
+}
+
+cmd_rebuild() {
+  cmd_down
+  log "이미지 재빌드 중..."
+  devcontainer up --workspace-folder "$SCRIPT_DIR" --remove-existing-container
+  log "✅ 재빌드 완료"
+}
+
+cmd_help() {
+  cat <<EOF
+사용법: ./dcc [command] [args...]
+
+Commands:
+  (없음)    컨테이너 시작 + tmux 세션으로 Claude Code 실행
+            이미 세션이 있으면 자동으로 재접속
+  yolo      자동승인 모드로 실행
+  shell     컨테이너 셸 접속
+  up        컨테이너 시작만 (Claude Code 실행 안 함)
+  down      컨테이너 정리
+  rebuild   컨테이너 재빌드
+  help      이 도움말 표시
+
+tmux 세션명: ${PROJECT_NAME} (프로젝트 디렉토리명)
+
+Examples:
+  ./dcc                   # 시작 또는 재접속
+  ./dcc "fix the bug"     # 프롬프트와 함께 실행
+  ./dcc yolo              # 자동승인 모드
+  ./dcc shell             # 컨테이너 셸 접속
+
+tmux 단축키:
+  Ctrl+B, D              세션에서 빠져나오기 (detach)
+  Ctrl+B, [              스크롤 모드 (q로 나가기)
+EOF
+}
+
+main() {
+  check_deps
+  local cmd="${1:-}"
+  if [[ -z "$cmd" ]]; then
+    cmd_up
+    cmd_run
+    cmd_down
+    return
+  fi
+  shift
+  case "$cmd" in
+    up)      cmd_up ;;
+    yolo)    cmd_up; cmd_yolo "$@"; cmd_down ;;
+    shell)   cmd_up; cmd_shell ;;
+    down)    cmd_down ;;
+    rebuild) cmd_rebuild ;;
+    help|-h|--help) cmd_help ;;
+    *)       cmd_up; cmd_run "$cmd" "$@"; cmd_down ;;
+  esac
+}
+
+main "$@"
