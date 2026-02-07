@@ -314,5 +314,5 @@ http://localhost:5001/docs
 ## 다음 단계
 
 - **[엔드포인트 레퍼런스](endpoints.md)** - 상세 엔드포인트 문서
-- **[설치 가이드](../admin-service/installation.md)** - 설정 가이드
-- **[CLI 명령어](../admin-service/cli-commands.md)** - mcctl console 명령어
+- **[설치 가이드](../console/installation.md)** - 설정 가이드
+- **[CLI 명령어](../console/cli-commands.md)** - mcctl console 명령어

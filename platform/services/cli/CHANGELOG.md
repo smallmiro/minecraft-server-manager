@@ -154,7 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Selective console service support** - Choose which services to start (api/console/all) during `mcctl console init` (#203)
-- Improved service selection prompts for Admin Service setup
+- Improved service selection prompts for Management Console setup
 
 ### Fixed
 - Correct environment variable names for mcctl-api authentication (`MCCTL_*` prefix) (#203)
@@ -164,7 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Auto-install mcctl-api on console init** - When running `mcctl console init`, mcctl-api package is now automatically installed if not already present
-- Streamlined Admin Service setup process
+- Streamlined Management Console setup process
 
 ## [1.7.6] - 2026-01-31
 
@@ -223,7 +223,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 - Add mcctl-console implementation plan with GitHub issues #174-#190
-- Update Admin Service documentation for new API endpoints
+- Update Management Console documentation for new API endpoints
 
 ## [1.6.16] - 2026-01-31
 
@@ -344,7 +344,7 @@ ls ~/minecraft-servers/servers/*/data/*/level.dat 2>/dev/null
 
 ### Added
 - System Requirements section in README.md
-- Admin Service (Web Console + REST API) in Features list
+- Management Console (Web Console + REST API) in Features list
 - AI Assistant link for user support
 - CHANGELOG.md with version history
 
@@ -435,12 +435,12 @@ ls ~/minecraft-servers/servers/*/data/*/level.dat 2>/dev/null
 
 ### Changed
 - Major refactoring for PM2 native service execution
-- Remove Docker dependency for Admin Service
+- Remove Docker dependency for Management Console
 
 ## [1.6.0] - 2026-01-24
 
 ### Added
-- Admin Service: REST API (mcctl-api) + Web Console (mcctl-console)
+- Management Console: REST API (mcctl-api) + Web Console (mcctl-console)
 - `mcctl console` commands for admin service management
 - User management with role-based access
 - API key authentication support

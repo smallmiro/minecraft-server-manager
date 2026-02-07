@@ -755,7 +755,7 @@ See **Section 9** for detailed CLI Architecture (Hexagonal + Clean Architecture)
 - [x] Unit and integration tests
 - [x] Documentation update
 
-### Phase 8: Admin Service (Web Management UI) ✅
+### Phase 8: Management Console (Web Management UI) ✅
 > **Milestone**: [v2.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/5) - Closed
 
 **Components**:
@@ -1498,7 +1498,7 @@ minecraft-server-manager/
 - [ ] Player synchronization between servers
 - [ ] Automated world migration
 
-## 10. Admin Service (Web Management)
+## 10. Management Console (Web Management)
 
 > **Milestone**: Phase 8 (Milestone 5)
 > **Status**: ✅ Completed (v2.0.0)
@@ -1693,7 +1693,7 @@ All services have independent PRD documents for detailed specifications:
 ```
 prd.md (This Document)
 ├── Section 9: CLI Architecture → shared/prd.md, cli/prd.md
-├── Section 10: Admin Service → mcctl-api/prd.md, mcctl-console/prd.md
+├── Section 10: Management Console → mcctl-api/prd.md, mcctl-console/prd.md
 │
 ├── platform/services/shared/prd.md
 │   └── Domain Layer, Application Layer, Infrastructure Layer
@@ -1711,7 +1711,7 @@ prd.md (This Document)
 ### 11.4 Cross-References
 
 - **Section 9** (CLI Architecture) → Details in `cli/prd.md`, `shared/prd.md`
-- **Section 10** (Admin Service) → Details in `mcctl-api/prd.md`, `mcctl-console/prd.md`
+- **Section 10** (Management Console) → Details in `mcctl-api/prd.md`, `mcctl-console/prd.md`
 - **Agent Ownership** → See Section 10.5 for module ownership rules
 
 ## 12. Revision History
@@ -1724,7 +1724,7 @@ prd.md (This Document)
 | 2.1.0 | 2025-01-17 | - | Migrate from Lazymc to mc-router (hostname routing, Docker auto-scale) |
 | 3.0.0 | 2025-01-18 | - | Add CLI Architecture (Hexagonal + Clean Architecture, SOLID principles) |
 | 3.1.0 | 2025-01-24 | - | Update FR-014~FR-016 status to completed, update Phase 5 and Migration Path status |
-| 4.0.0 | 2025-01-25 | - | Add Section 10: Admin Service (mcctl-api, mcctl-console) |
+| 4.0.0 | 2025-01-25 | - | Add Section 10: Management Console (mcctl-api, mcctl-console) |
 | 4.1.0 | 2025-01-25 | - | Add Section 10.5: Multi-Agent Collaboration with ownership rules |
-| 5.0.0 | 2025-01-26 | - | Mark Admin Service (Section 10) as Completed, update CLI commands |
+| 5.0.0 | 2025-01-26 | - | Mark Management Console (Section 10) as Completed, update CLI commands |
 | 5.1.0 | 2025-01-26 | - | Add Section 11: Module PRD Index for centralized document management |

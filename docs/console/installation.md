@@ -1,10 +1,10 @@
 # Installation Guide
 
-This guide covers installing and configuring the Admin Service for Docker Minecraft servers.
+This guide covers installing and configuring the Management Console for Docker Minecraft servers.
 
 ## Prerequisites
 
-Before installing Admin Service, ensure you have:
+Before installing Management Console, ensure you have:
 
 - [x] **Node.js 18 or higher**
   ```bash
@@ -36,9 +36,9 @@ Before installing Admin Service, ensure you have:
 
 ### Method 1: CLI Installation (Recommended)
 
-The simplest way to install Admin Service is using the mcctl CLI.
+The simplest way to install Management Console is using the mcctl CLI.
 
-#### Step 1: Initialize Admin Service
+#### Step 1: Initialize Management Console
 
 ```bash
 mcctl console init
@@ -476,7 +476,7 @@ mcctl console service start
 
 ## Uninstallation
 
-To completely remove Admin Service:
+To completely remove Management Console:
 
 ```bash
 # Remove console service (interactive)
@@ -496,7 +496,7 @@ This will:
 - Delete PM2 ecosystem config (ecosystem.config.cjs)
 
 !!! warning "Data Preservation"
-    Removing Admin Service does not affect your Minecraft servers or world data.
+    Removing Management Console does not affect your Minecraft servers or world data.
 
 ### Clean Up PM2 (Optional)
 

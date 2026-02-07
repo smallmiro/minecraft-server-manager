@@ -83,7 +83,7 @@ const releaseMutation = useReleaseWorld();
 
 ### 첫 로그인
 
-1. Admin Service 시작:
+1. Management Console 시작:
    ```bash
    mcctl console service start
    ```
@@ -235,7 +235,7 @@ const releaseMutation = useReleaseWorld();
 1. **강력한 비밀번호 사용** - 설정 중 비밀번호 요구 사항 따르기
 2. **접근 제한** - `ip-whitelist` 모드를 사용하여 접근 제한
 3. **HTTPS 사용** - 프로덕션 환경에서는 SSL이 포함된 리버스 프록시 구성
-4. **정기 업데이트** - Admin Service를 최신 상태로 유지
+4. **정기 업데이트** - Management Console를 최신 상태로 유지
 
 ### 모니터링
 

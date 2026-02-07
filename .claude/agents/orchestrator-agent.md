@@ -82,7 +82,7 @@ Phase 8.5 (DevOps):                               #101 → #102
 ## 🚀 MILESTONE_START
 
 **Milestone**: 5
-**Title**: v2.0.0 - Admin Service
+**Title**: v2.0.0 - Management Console
 **Total Issues**: 23
 
 ### Phase 1 - Parallel Start

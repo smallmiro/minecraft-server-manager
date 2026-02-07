@@ -140,7 +140,7 @@ minecraft/
 ├── docs/                        # Documentation (MkDocs + Read the Docs)
 │   ├── index.md                 # English homepage
 │   ├── index.ko.md              # Korean homepage
-│   ├── admin-service/           # Admin Service documentation
+│   ├── console/                 # Management Console documentation
 │   ├── itzg-reference/          # itzg/docker-minecraft-server official docs
 │   ├── cli/                     # CLI command reference
 │   ├── getting-started/         # Getting started guides
@@ -341,7 +341,7 @@ This project follows **XP (Extreme Programming)** practices as the core developm
 All features are implemented via CLI first, with Web Management UI available.
 
 - **Phase 1**: CLI with Interactive Mode (`platform/services/cli`)
-- **Phase 2**: Admin Service - REST API + Web Console
+- **Phase 2**: Management Console - REST API + Web Console
   - `mcctl-api`: Fastify REST API on port 5001
   - `mcctl-console`: Next.js Web UI on port 5000
 

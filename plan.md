@@ -56,7 +56,7 @@ All modules have independent implementation plans. Use this dashboard for centra
 | [v0.3.0](https://github.com/smallmiro/minecraft-server-manager/milestone/2) | Core Features (Phase 3, 4) | ✅ Closed |
 | [v0.4.0](https://github.com/smallmiro/minecraft-server-manager/milestone/4) | CLI Interactive Mode (Phase 7) | ✅ Closed |
 | [v1.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/3) | Release (Phase 5) | ✅ Closed |
-| [v2.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/5) | Admin Service (Phase 8) | ✅ Closed |
+| [v2.0.0](https://github.com/smallmiro/minecraft-server-manager/milestone/5) | Management Console (Phase 8) | ✅ Closed |
 
 ### Issues by Phase
 | Phase | Issues | Status |
@@ -1880,7 +1880,7 @@ pnpm test
 
 ---
 
-## Phase 8: Admin Service (Web Management)
+## Phase 8: Management Console (Web Management)
 
 > **Milestone**: TBD
 > **Status**: Planned

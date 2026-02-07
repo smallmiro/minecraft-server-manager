@@ -2,7 +2,7 @@
   "name": "e2e",
   "version": "0.1.0",
   "private": true,
-  "description": "E2E tests for Admin Service (mcctl-api + mcctl-console)",
+  "description": "E2E tests for Management Console (mcctl-api + mcctl-console)",
   "scripts": {
     "test": "playwright test",
     "test:ui": "playwright test --ui",

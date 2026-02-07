@@ -1,6 +1,6 @@
-# Admin Service Overview
+# Management Console Overview
 
-Admin Service provides a web-based management interface and REST API for Docker Minecraft servers. It enables remote server management, monitoring, and administration through a modern web console.
+Management Console provides a web-based management interface and REST API for Docker Minecraft servers. It enables remote server management, monitoring, and administration through a modern web console.
 
 !!! info "Status"
     Both **mcctl-api** (REST API) and **mcctl-console** (Web UI) are available on npm and production-ready as of v1.13.0. Install with `mcctl console init`.
@@ -76,7 +76,7 @@ This architecture ensures API keys never reach the browser.
 
 ## Authentication Modes
 
-Admin Service supports multiple authentication modes:
+Management Console supports multiple authentication modes:
 
 | Mode | Description | Use Case |
 |------|-------------|----------|
@@ -114,7 +114,7 @@ Admin Service supports multiple authentication modes:
 
 > **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead. The `admin` command alias still works for backward compatibility but will be removed in a future release.
 
-### 1. Initialize Admin Service
+### 1. Initialize Management Console
 
 ```bash
 mcctl console init
@@ -128,7 +128,7 @@ Follow the interactive prompts to configure:
 4. API access mode (internal, api-key, ip-whitelist, api-key-ip, open)
 5. IP whitelist (if applicable)
 
-### 2. Start Admin Services
+### 2. Start Management Consoles
 
 ```bash
 mcctl console service start

@@ -1,10 +1,10 @@
 # 설치 가이드
 
-이 가이드에서는 Docker Minecraft 서버를 위한 Admin Service 설치 및 구성 방법을 설명합니다.
+이 가이드에서는 Docker Minecraft 서버를 위한 Management Console 설치 및 구성 방법을 설명합니다.
 
 ## 사전 요구 사항
 
-Admin Service를 설치하기 전에 다음을 확인하세요:
+Management Console를 설치하기 전에 다음을 확인하세요:
 
 - [x] **mcctl 설치 및 초기화 완료**
   ```bash
@@ -31,9 +31,9 @@ Admin Service를 설치하기 전에 다음을 확인하세요:
 
 ### 방법 1: CLI 설치 (권장)
 
-mcctl CLI를 사용하는 것이 가장 간단한 Admin Service 설치 방법입니다.
+mcctl CLI를 사용하는 것이 가장 간단한 Management Console 설치 방법입니다.
 
-#### 1단계: Admin Service 초기화
+#### 1단계: Management Console 초기화
 
 ```bash
 mcctl console init
@@ -55,7 +55,7 @@ mcctl console init
 ```
 $ mcctl console init
 
-Initialize Admin Service
+Initialize Management Console
 
 ? Admin username? admin
 ? Admin password? ********
@@ -65,7 +65,7 @@ Initialize Admin Service
 Creating admin user...  done
 Saving configuration...  done
 
-Admin Service initialized!
+Management Console initialized!
 
   Configuration:
     Config file: /home/user/minecraft-servers/admin.yaml
@@ -97,7 +97,7 @@ Starting admin services...
 
 Admin services started successfully
 
-  Admin Service Status
+  Management Console Status
 
   mcctl-api
     Status: running
@@ -132,7 +132,7 @@ cp templates/docker-compose.admin.yml ~/minecraft-servers/
 `~/minecraft-servers/.env` 파일을 생성하거나 편집합니다:
 
 ```bash
-# Admin Service 설정
+# Management Console 설정
 MCCTL_ROOT=~/minecraft-servers
 MCCTL_JWT_SECRET=your-secure-jwt-secret-here
 MCCTL_JWT_EXPIRY=24h
@@ -412,7 +412,7 @@ mcctl console service start
 
 ## 제거
 
-Admin Service를 완전히 제거하려면:
+Management Console를 완전히 제거하려면:
 
 ```bash
 # 컨테이너 중지 및 제거
@@ -426,4 +426,4 @@ rm ~/minecraft-servers/api-config.json
 ```
 
 !!! warning "데이터 보존"
-    Admin Service를 제거해도 Minecraft 서버나 월드 데이터에는 영향이 없습니다.
+    Management Console를 제거해도 Minecraft 서버나 월드 데이터에는 영향이 없습니다.

@@ -297,6 +297,6 @@ mcctl audit list --action player.whitelist.add --actor web:admin
 
 ## 참고
 
-- [Admin Service - 감사 로그 API](../admin-service/audit-log-api.ko.md)
-- [Web Console - 감사 로그 UI](../admin-service/audit-log-ui.ko.md)
+- [Management Console - 감사 로그 API](../console/audit-log-api.ko.md)
+- [Web Console - 감사 로그 UI](../console/audit-log-ui.ko.md)
 - [문제 해결](../troubleshooting/index.ko.md)

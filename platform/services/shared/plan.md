@@ -12,7 +12,7 @@
 
 ## Overview
 
-Implementation plan for the shared package. Most features are already implemented, with extensions needed for the Admin Service.
+Implementation plan for the shared package. Most features are already implemented, with extensions needed for the Management Console.
 
 ## Implementation Status
 
@@ -55,7 +55,7 @@ Implementation plan for the shared package. Most features are already implemente
   - [x] `getPlatformStatus()`
   - [x] `getDetailedServerInfoWithPlayers()`
 
-## New Plans (For Admin Service)
+## New Plans (For Management Console)
 
 ### Phase 5: User Repository (Planned)
 - [ ] Define `IUserRepository` port
