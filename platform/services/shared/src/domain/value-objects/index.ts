@@ -3,6 +3,7 @@ export { ServerType, ServerTypeEnum, type ServerTypeInfo } from './ServerType.js
 export { McVersion } from './McVersion.js';
 export { Memory } from './Memory.js';
 export { WorldOptions, WorldSetupType, type WorldOptionsData } from './WorldOptions.js';
+export { ModpackOptions, type ModpackConfig, type ModpackSource } from './ModpackOptions.js';
 
 // User-related value objects
 export { UserId } from './UserId.js';
