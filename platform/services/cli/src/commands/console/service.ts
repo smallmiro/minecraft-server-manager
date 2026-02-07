@@ -12,6 +12,7 @@
 import { Paths, colors, log, ProcessInfo, ServiceStatusEnum } from '@minecraft-docker/shared';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { select, isCancel } from '@clack/prompts';
 import { Pm2ServiceManagerAdapter } from '../../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import {
   checkPm2Installation,
@@ -77,21 +78,84 @@ function ensurePm2Installed(): boolean {
   return true;
 }
 
+type ServiceAction = 'start' | 'stop' | 'restart' | 'logs';
+
 /**
- * Get service names based on options and availability
- * Only returns services that are actually installed
+ * Get service names based on options, action, and availability
+ *
+ * Start/Restart rules (console depends on API):
+ * - --api flag: API only
+ * - --console flag: API + Console
+ * - No flags + both available: interactive prompt
+ *
+ * Stop rules (respect dependency):
+ * - --api flag: API + Console (console can't run without API)
+ * - --console flag: Console only
+ * - No flags + both available: interactive prompt
  */
-function getServiceNames(options: ConsoleServiceOptions, rootDir: string): string[] {
+async function getServiceNames(
+  options: ConsoleServiceOptions,
+  rootDir: string,
+  action: ServiceAction = 'start'
+): Promise<string[] | null> {
   const availableServices = getAvailableServices(rootDir);
+  const hasApi = availableServices.includes(PM2_SERVICE_NAMES.API);
+  const hasConsole = availableServices.includes(PM2_SERVICE_NAMES.CONSOLE);
+  const isStop = action === 'stop';
 
+  // Explicit --api flag
   if (options.apiOnly) {
-    return availableServices.includes(PM2_SERVICE_NAMES.API) ? [PM2_SERVICE_NAMES.API] : [];
-  }
-  if (options.consoleOnly) {
-    return availableServices.includes(PM2_SERVICE_NAMES.CONSOLE) ? [PM2_SERVICE_NAMES.CONSOLE] : [];
+    if (isStop && hasConsole) {
+      // Stopping API must also stop Console (dependency)
+      return availableServices;
+    }
+    return hasApi ? [PM2_SERVICE_NAMES.API] : [];
   }
 
-  // Return only available services
+  // Explicit --console flag
+  if (options.consoleOnly) {
+    if (isStop) {
+      // Stop console only
+      return hasConsole ? [PM2_SERVICE_NAMES.CONSOLE] : [];
+    }
+    // Start/restart: console needs API
+    const services: string[] = [];
+    if (hasApi) services.push(PM2_SERVICE_NAMES.API);
+    if (hasConsole) services.push(PM2_SERVICE_NAMES.CONSOLE);
+    return services;
+  }
+
+  // No explicit flag: interactive prompt if both services available
+  if (hasApi && hasConsole) {
+    if (isStop) {
+      const choice = await select({
+        message: 'Which services to stop?',
+        options: [
+          { value: 'all', label: 'All services', hint: 'mcctl-api + mcctl-console' },
+          { value: 'console', label: 'Console only', hint: 'mcctl-console' },
+        ],
+      });
+
+      if (isCancel(choice)) return null;
+      if (choice === 'console') return [PM2_SERVICE_NAMES.CONSOLE];
+      return [PM2_SERVICE_NAMES.API, PM2_SERVICE_NAMES.CONSOLE];
+    }
+
+    // start / restart / logs
+    const choice = await select({
+      message: `Which services to ${action}?`,
+      options: [
+        { value: 'api', label: 'API only', hint: 'mcctl-api' },
+        { value: 'all', label: 'API + Console', hint: 'mcctl-api + mcctl-console' },
+      ],
+    });
+
+    if (isCancel(choice)) return null;
+    if (choice === 'api') return [PM2_SERVICE_NAMES.API];
+    return [PM2_SERVICE_NAMES.API, PM2_SERVICE_NAMES.CONSOLE];
+  }
+
+  // Only one service available
   return availableServices;
 }
 
@@ -221,9 +285,13 @@ async function startServices(
     return 1;
   }
 
-  const services = getServiceNames(options, paths.root);
+  const services = await getServiceNames(options, paths.root, 'start');
   const apiPort = options.apiPort ?? API_PORT_DEFAULT;
   const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
+
+  if (services === null) {
+    return 0; // User cancelled
+  }
 
   if (services.length === 0) {
     log.error('No console services are installed.');
@@ -231,16 +299,7 @@ async function startServices(
     return 1;
   }
 
-  // Show which services are available
-  const availability = checkServiceAvailability(paths.root);
   log.info('Starting console services via PM2...');
-
-  if (!availability.api.available) {
-    log.warn('  mcctl-api: not installed (skipping)');
-  }
-  if (!availability.console.available) {
-    log.warn('  mcctl-console: not installed (skipping)');
-  }
 
   if (options.apiPort || options.consolePort) {
     log.info(`  API port: ${apiPort}, Console port: ${consolePort}`);
@@ -277,7 +336,11 @@ async function stopServices(
   pm2Adapter: Pm2ServiceManagerAdapter,
   options: ConsoleServiceOptions
 ): Promise<number> {
-  const services = getServiceNames(options, paths.root);
+  const services = await getServiceNames(options, paths.root, 'stop');
+
+  if (services === null) {
+    return 0; // User cancelled
+  }
 
   if (services.length === 0) {
     log.warn('No console services are installed.');
@@ -326,9 +389,13 @@ async function restartServices(
   pm2Adapter: Pm2ServiceManagerAdapter,
   options: ConsoleServiceOptions
 ): Promise<number> {
-  const services = getServiceNames(options, paths.root);
+  const services = await getServiceNames(options, paths.root, 'restart');
   const apiPort = options.apiPort ?? API_PORT_DEFAULT;
   const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
+
+  if (services === null) {
+    return 0; // User cancelled
+  }
 
   if (services.length === 0) {
     log.error('No console services are installed.');
@@ -405,7 +472,11 @@ async function showLogs(
   pm2Adapter: Pm2ServiceManagerAdapter,
   options: ConsoleServiceOptions
 ): Promise<number> {
-  const services = getServiceNames(options, paths.root);
+  const services = await getServiceNames(options, paths.root, 'logs');
+
+  if (services === null) {
+    return 0; // User cancelled
+  }
 
   if (services.length === 0) {
     log.warn('No console services are installed.');
