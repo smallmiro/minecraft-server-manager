@@ -8,6 +8,9 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
+import Skeleton from '@mui/material/Skeleton';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -18,6 +21,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
+import Grid from '@mui/material/Grid';
 import { alpha } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -86,6 +90,24 @@ function RestartButtonIcon() {
       <path d="M21 12a9 9 0 01-15.36 6.36L3 16" />
     </svg>
   );
+}
+
+/**
+ * Server type icon mapping
+ * - Plugin servers (Paper, Spigot, Bukkit, Purpur): 🔌
+ * - Mod servers (Forge, NeoForge, Fabric, Quilt): 🔧
+ * - Vanilla: 🎮
+ */
+function getServerTypeIcon(type?: string): string {
+  if (!type) return '🎮';
+  const t = type.toUpperCase();
+  // Plugin servers
+  if (['PAPER', 'SPIGOT', 'BUKKIT', 'PURPUR'].includes(t)) return '🔌';
+  // Mod servers
+  if (['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT'].includes(t)) return '🔧';
+  // Vanilla
+  if (t === 'VANILLA') return '🎮';
+  return '🎮';
 }
 
 export default function ServerDetailPage() {
@@ -207,14 +229,96 @@ export default function ServerDetailPage() {
 
       {/* Loading */}
       {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
+        <>
+          {/* Skeleton Header */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2.5 }}>
+            <Skeleton variant="rounded" width={64} height={64} sx={{ borderRadius: 3, flexShrink: 0 }} />
+            <Box sx={{ flex: 1 }}>
+              <Skeleton variant="text" width={80} height={18} sx={{ mb: 0.5 }} />
+              <Skeleton variant="text" width="40%" height={40} />
+              <Box sx={{ display: 'flex', gap: 2, mt: 0.75 }}>
+                <Skeleton variant="text" width={100} />
+                <Skeleton variant="text" width={60} />
+                <Skeleton variant="text" width={140} />
+                <Skeleton variant="text" width={50} />
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+              <Skeleton variant="rounded" width={90} height={40} sx={{ borderRadius: 2 }} />
+              <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: 2 }} />
+            </Box>
+          </Box>
+
+          {/* Skeleton Tabs */}
+          <Box sx={{ display: 'flex', gap: 0.5, mb: 3 }}>
+            {[80, 70, 65, 50, 65, 65].map((w, i) => (
+              <Skeleton key={i} variant="rounded" width={w} height={36} sx={{ borderRadius: 5 }} />
+            ))}
+          </Box>
+
+          {/* Skeleton Stat Cards */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2, mb: 2.5 }}>
+            {[0, 1, 2].map((i) => (
+              <Card key={i} sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Skeleton variant="text" width="50%" />
+                    <Skeleton variant="circular" width={28} height={28} />
+                  </Box>
+                  <Skeleton variant="text" width="60%" height={36} />
+                  <Skeleton variant="rounded" width="100%" height={6} sx={{ borderRadius: 3, mt: 1 }} />
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+
+          {/* Skeleton Console */}
+          <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+            <Box sx={{ px: 3, py: 2, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.25 }}>
+              <Skeleton variant="text" width={80} height={28} />
+              <Skeleton variant="circular" width={10} height={10} />
+            </Box>
+            <Skeleton variant="rectangular" height={360} sx={{ bgcolor: '#0a0a0a' }} />
+            <Box sx={{ px: 2.5, py: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
+              <Skeleton variant="rounded" width="100%" height={40} sx={{ borderRadius: 2 }} />
+            </Box>
+          </Card>
+
+          {/* Skeleton Overview Cards */}
+          <Grid container spacing={3} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Skeleton variant="text" width="40%" height={28} sx={{ mb: 1 }} />
+                  <Skeleton variant="rectangular" height={1} sx={{ mb: 2 }} />
+                  {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                    <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                      <Skeleton variant="text" width="30%" />
+                      <Skeleton variant="text" width="40%" />
+                    </Box>
+                  ))}
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card sx={{ borderRadius: 3 }}>
+                <CardContent>
+                  <Skeleton variant="text" width="30%" height={28} sx={{ mb: 1 }} />
+                  <Skeleton variant="rectangular" height={1} sx={{ mb: 2 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                    <Skeleton variant="text" width="25%" />
+                    <Skeleton variant="text" width="20%" />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </>
       ) : server ? (
         <>
           {/* Page Header - Pyro SMP style */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2.5 }}>
-            {/* Server Icon */}
+            {/* Server Icon - type-based emoji */}
             <Box
               sx={{
                 width: 64,
@@ -231,11 +335,7 @@ export default function ServerDetailPage() {
                 fontSize: 36,
               }}
             >
-              {server.type?.toLowerCase().includes('fabric') && '🧵'}
-              {server.type?.toLowerCase().includes('forge') && '🔨'}
-              {server.type?.toLowerCase().includes('paper') && '📄'}
-              {server.type?.toLowerCase().includes('spigot') && '🔌'}
-              {!server.type && '🎮'}
+              {getServerTypeIcon(server.type)}
             </Box>
 
             {/* Server Info */}

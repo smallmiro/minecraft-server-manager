@@ -27,8 +27,10 @@ body {
 }
 
 /* Smooth scrolling for the entire page */
+/* scrollbar-gutter: stable prevents layout shift when scrollbar appears/disappears */
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 /* Custom focus styles */

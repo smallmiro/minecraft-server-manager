@@ -61,7 +61,7 @@ export default function PlayersPage() {
           mb: 4,
           p: 3,
           background: (theme) =>
-            `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`,
+            `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
           borderRadius: 2,
           border: (theme) => `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
         }}

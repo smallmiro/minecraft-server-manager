@@ -111,9 +111,9 @@ export default function WorldsPage() {
           mb: 4,
           p: 3,
           background: (theme) =>
-            `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.1)} 100%)`,
+            `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`,
           borderRadius: 2,
-          border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+          border: (theme) => `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -128,8 +128,8 @@ export default function WorldsPage() {
               width: 56,
               height: 56,
               borderRadius: 2,
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
+              bgcolor: 'success.main',
+              color: 'success.contrastText',
             }}
           >
             <PublicIcon sx={{ fontSize: 32 }} />
