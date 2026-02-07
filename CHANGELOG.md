@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-02-07
+
+### Added
+- **Unified Prerequisite Checker** - Consolidated dependency validation for `mcctl init` and `mcctl console init` (#241)
+  - `PrerequisiteChecker` in shared package with `checkPlatformPrerequisites()` and `checkConsolePrerequisites()`
+  - `getDockerVersion()` and `getDockerComposeVersion()` version parsing functions
+  - `satisfiesMinVersion()` semver comparison utility
+  - `displayPrerequisiteReport()` CLI display helper with color-coded output
+  - 20 unit tests added, total 120 tests passing
+- **Console npm Publishing** - `@minecraft-docker/mcctl-console` now published to npm as standalone package
+  - `bin/start.js` entry script supporting monorepo and flat standalone builds
+  - Release workflow updated with mcctl-console publish step
+- **Console --force Option** - `mcctl console service stop/restart --force` for forceful PM2 process termination (#238)
+- **Console Routing Page** - Settings renamed to Routing with Avahi mDNS monitoring (#240)
+
+### Changed
+- **init Command** - Replace inline Docker/Compose/avahi checks with unified `checkPlatformPrerequisites()`
+- **console init Command** - Replace inline Node.js/PM2 checks with unified `checkConsolePrerequisites()`
+- **System Requirements** - CLAUDE.md updated with runtime/development separation, PM2 requirement, port table
+
+### Infrastructure
+- **E2E Workflow** - Add mcctl-console to PM2 config, health checks, and error log collection
+- **DevContainer** - Forward port 5000 for console access
+
 ## [1.12.1] - 2026-02-07
 
 ### Fixed
