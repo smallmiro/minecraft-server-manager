@@ -190,6 +190,9 @@ export function ServerAccessTab({ serverId }: ServerAccessTabProps) {
         anchorEl={menuAnchorEl}
         open={Boolean(menuAnchorEl)}
         onClose={handleMenuClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        disableScrollLock
       >
         <MenuItem
           onClick={() => handleChangePermission('admin')}

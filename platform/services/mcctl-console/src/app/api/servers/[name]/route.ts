@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMcctlApiClient, McctlApiError, UserContext } from '@/adapters/McctlApiAdapter';
-import { auth } from '@/lib/auth';
+import { requireServerPermission, AuthError } from '@/lib/auth-utils';
 import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -25,24 +25,20 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
  */
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    // Verify session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized', message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const { name } = await params;
+    const session = await requireServerPermission(await headers(), name, 'view');
+
     const client = createMcctlApiClient(getUserContext(session));
     const data = await client.getServer(name);
 
     return NextResponse.json(data);
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: 'Forbidden', message: error.message },
+        { status: error.statusCode }
+      );
+    }
     if (error instanceof McctlApiError) {
       return NextResponse.json(
         { error: error.error, message: error.message },
@@ -64,19 +60,9 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    // Verify session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized', message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const { name } = await params;
+    const session = await requireServerPermission(await headers(), name, 'admin');
+
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
 
@@ -85,6 +71,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(data);
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: 'Forbidden', message: error.message },
+        { status: error.statusCode }
+      );
+    }
     if (error instanceof McctlApiError) {
       return NextResponse.json(
         { error: error.error, message: error.message },
