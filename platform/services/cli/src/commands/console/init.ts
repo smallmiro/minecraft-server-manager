@@ -6,11 +6,9 @@ import {
   Paths,
   log,
   colors,
-  User,
-  Username,
-  YamlUserRepository,
   checkConsolePrerequisites,
 } from '@minecraft-docker/shared';
+import { ConsoleDatabase } from '../../lib/console-db.js';
 import { getContainer } from '../../infrastructure/index.js';
 import {
   AdminConfigManager,
@@ -298,7 +296,6 @@ async function cleanupExistingConfig(
   spinner.start('Cleaning up configuration files...');
   const filesToDelete = [
     configManager.path, // .mcctl-admin.yml
-    join(paths.root, 'users.yaml'),
     join(paths.platform, ECOSYSTEM_CONFIG_FILE), // ecosystem.config.cjs
   ];
 
@@ -470,28 +467,37 @@ export async function consoleInitCommand(
     console.log('');
 
     // Admin setup is only required when console is installed
-    let username = '';
+    let adminEmail = '';
+    let adminName = '';
     let password = '';
 
     if (installConsole) {
-      // Step 2: Admin username (required for Console authentication)
-      username = await prompt.text({
-        message: 'Admin username?',
-        placeholder: 'admin',
-        initialValue: 'admin',
+      // Step 2: Admin email (required for Console authentication via Better Auth)
+      adminEmail = await prompt.text({
+        message: 'Admin email?',
+        placeholder: 'admin@example.com',
         validate: (value) => {
-          try {
-            Username.create(value);
-            return undefined;
-          } catch (error) {
-            return error instanceof Error
-              ? error.message
-              : 'Invalid username format';
+          if (!value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            return 'Valid email address is required';
           }
+          return undefined;
         },
       });
 
-      // Step 3: Admin password
+      // Step 3: Admin display name
+      adminName = await prompt.text({
+        message: 'Admin name?',
+        placeholder: 'Administrator',
+        initialValue: 'Administrator',
+        validate: (value) => {
+          if (!value || value.trim().length === 0) {
+            return 'Name is required';
+          }
+          return undefined;
+        },
+      });
+
+      // Step 4: Admin password
       password = await prompt.password({
         message: 'Admin password?',
         validate: (value) => {
@@ -602,32 +608,41 @@ export async function consoleInitCommand(
       }
     }
 
-    // Console-specific setup: admin user
+    // Console-specific setup: admin user in Better Auth SQLite DB
     if (installConsole) {
       spinner.start('Creating admin user...');
 
-      const usersPath = join(paths.root, 'users.yaml');
-      const userRepo = new YamlUserRepository(usersPath);
+      const dbPath = join(paths.root, 'data', 'mcctl.db');
+      const consoleDb = new ConsoleDatabase(dbPath);
 
-      const usernameVO = Username.create(username);
-      const existingUser = await userRepo.findByUsername(usernameVO);
+      try {
+        consoleDb.ensureSchema();
 
-      if (existingUser && !options.force) {
-        spinner.stop('');
-        log.error(`User '${username}' already exists`);
-        console.log('  To overwrite, use: mcctl console init --force');
-        return 1;
+        const existingUser = consoleDb.findUserByEmail(adminEmail);
+
+        if (existingUser && !options.force) {
+          spinner.stop('');
+          log.error(`User '${adminEmail}' already exists`);
+          console.log('  To overwrite, use: mcctl console init --force');
+          consoleDb.close();
+          return 1;
+        }
+
+        if (existingUser && options.force) {
+          consoleDb.deleteUser(existingUser.id);
+        }
+
+        consoleDb.createUser({
+          email: adminEmail,
+          name: adminName,
+          password,
+          role: 'admin',
+        });
+
+        spinner.stop('Admin user created');
+      } finally {
+        consoleDb.close();
       }
-
-      const passwordHash = await userRepo.hashPassword(password);
-      const adminUser = User.createAdmin(usernameVO, passwordHash);
-
-      if (existingUser && options.force) {
-        await userRepo.delete(existingUser.id);
-      }
-
-      await userRepo.save(adminUser);
-      spinner.stop('Admin user created');
     }
 
     // Step 10: Install mcctl-api if needed (production mode)
@@ -706,7 +721,7 @@ export async function consoleInitCommand(
     console.log(colors.cyan('  Configuration:'));
     console.log(`    Config file: ${colors.dim(configManager.path)}`);
     if (installConsole) {
-      console.log(`    Users file:  ${colors.dim(join(paths.root, 'users.yaml'))}`);
+      console.log(`    Console DB:  ${colors.dim(join(paths.root, 'data', 'mcctl.db'))}`);
     }
     console.log(`    PM2 config:  ${colors.dim(ecosystemPath)}`);
     console.log(`    Access mode: ${colors.bold(accessMode)}`);
