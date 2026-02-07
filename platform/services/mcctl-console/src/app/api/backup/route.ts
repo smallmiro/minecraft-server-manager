@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMcctlApiClient, McctlApiError, UserContext } from '@/adapters/McctlApiAdapter';
-import { auth } from '@/lib/auth';
+import { requireAuth, requireAdmin, AuthError } from '@/lib/auth-utils';
 import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -21,22 +21,20 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
  */
 export async function GET() {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized', message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
+    const session = await requireAuth(await headers());
 
     const client = createMcctlApiClient(getUserContext(session));
     const data = await client.getBackupStatus();
 
     return NextResponse.json(data);
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     if (error instanceof McctlApiError) {
       return NextResponse.json(
         { error: error.error, message: error.message },
@@ -58,16 +56,7 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized', message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
+    const session = await requireAdmin(await headers());
 
     const body = await request.json().catch(() => ({}));
     const message = body.message;
@@ -77,6 +66,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: 'Forbidden', message: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     if (error instanceof McctlApiError) {
       return NextResponse.json(
         { error: error.error, message: error.message },
