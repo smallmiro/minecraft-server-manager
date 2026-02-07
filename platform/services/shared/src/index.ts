@@ -63,6 +63,8 @@ export {
   serverExists,
   getDetailedServerInfoFromConfig,
   getServerDetailedInfo,
+  getDockerVersion,
+  getDockerComposeVersion,
 } from './docker/index.js';
 
 // Re-export domain layer (Value Objects and Entities)
@@ -128,3 +130,6 @@ export * from './application/index.js';
 
 // Re-export infrastructure layer (adapters)
 export * from './infrastructure/index.js';
+
+// Re-export prerequisite checker
+export * from './prerequisite/index.js';
