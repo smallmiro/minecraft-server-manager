@@ -1,6 +1,18 @@
 import type { UserServer, NewUserServer, ServerPermission } from '@/lib/schema';
 
 /**
+ * UserServer with user details (for API responses)
+ */
+export interface UserServerWithUser extends UserServer {
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    image: string | null;
+  };
+}
+
+/**
  * Repository interface for user-server permission management
  */
 export interface IUserServerRepository {
@@ -43,6 +55,11 @@ export interface IUserServerRepository {
    * Delete a user-server permission mapping by userId and serverId
    */
   deleteByUserAndServer(userId: string, serverId: string): Promise<void>;
+
+  /**
+   * Find all users with access to a server (with user details)
+   */
+  findByServerWithUsers(serverId: string): Promise<UserServerWithUser[]>;
 
   /**
    * Count users with a specific permission level for a server

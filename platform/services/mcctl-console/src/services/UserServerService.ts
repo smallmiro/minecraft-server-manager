@@ -1,4 +1,4 @@
-import type { IUserServerRepository } from '@/ports/out/IUserServerRepository';
+import type { IUserServerRepository, UserServerWithUser } from '@/ports/out/IUserServerRepository';
 import type { UserServer, ServerPermission } from '@/lib/schema';
 
 /**
@@ -100,6 +100,13 @@ export class UserServerService {
    */
   async getServerUsers(serverId: string): Promise<UserServer[]> {
     return this.repository.findByServer(serverId);
+  }
+
+  /**
+   * Get all users with access to a server (with user details)
+   */
+  async getServerUsersWithDetails(serverId: string): Promise<UserServerWithUser[]> {
+    return this.repository.findByServerWithUsers(serverId);
   }
 
   /**

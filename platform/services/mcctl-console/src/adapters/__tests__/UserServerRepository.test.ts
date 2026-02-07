@@ -156,6 +156,58 @@ describe('UserServerRepository', () => {
     });
   });
 
+  describe('findByServerWithUsers', () => {
+    beforeEach(async () => {
+      await db.insert(users).values({
+        id: 'test-user-2',
+        name: 'Test User 2',
+        email: 'test2@example.com',
+        emailVerified: false,
+        role: 'user',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await db.insert(userServers).values([
+        { userId: testUserId, serverId: testServerId, permission: 'admin' },
+        { userId: 'test-user-2', serverId: testServerId, permission: 'view' },
+      ]);
+    });
+
+    it('should return users with user details', async () => {
+      const results = await repository.findByServerWithUsers(testServerId);
+
+      expect(results).toHaveLength(2);
+
+      const admin = results.find((r) => r.userId === testUserId);
+      expect(admin).toBeDefined();
+      expect(admin?.user).toBeDefined();
+      expect(admin?.user?.name).toBe('Test User');
+      expect(admin?.user?.email).toBe('test@example.com');
+      expect(admin?.permission).toBe('admin');
+
+      const viewer = results.find((r) => r.userId === 'test-user-2');
+      expect(viewer).toBeDefined();
+      expect(viewer?.user?.name).toBe('Test User 2');
+      expect(viewer?.permission).toBe('view');
+    });
+
+    it('should return empty array when no users have access', async () => {
+      const results = await repository.findByServerWithUsers('non-existent-server');
+
+      expect(results).toEqual([]);
+    });
+
+    it('should include user image field', async () => {
+      const results = await repository.findByServerWithUsers(testServerId);
+
+      // image field should be present (null for test users)
+      for (const result of results) {
+        expect(result.user).toHaveProperty('image');
+      }
+    });
+  });
+
   describe('findByUser', () => {
     beforeEach(async () => {
       await db.insert(userServers).values([

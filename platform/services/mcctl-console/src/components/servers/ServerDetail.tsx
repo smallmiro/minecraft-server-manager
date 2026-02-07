@@ -28,6 +28,7 @@ import { useServerLogs } from '@/hooks/useServerLogs';
 import { ServerConsole } from './ServerConsole';
 import { ServerActivityTab } from './ServerActivityTab';
 import { ServerOptionsTab } from './ServerOptionsTab';
+import { ServerAccessTab } from './ServerAccessTab';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -35,7 +36,7 @@ interface ServerDetailProps {
 }
 
 // Tab configuration
-const TABS = ['Overview', 'Activity', 'Content', 'Files', 'Backups', 'Options'] as const;
+const TABS = ['Overview', 'Activity', 'Content', 'Files', 'Backups', 'Access', 'Options'] as const;
 type TabType = (typeof TABS)[number];
 
 // Icon size for stat cards
@@ -563,6 +564,12 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
           <Typography variant="body1" color="text.secondary">
             Backup management coming soon
           </Typography>
+        </Box>
+      )}
+
+      {activeTab === 'Access' && (
+        <Box sx={{ mt: 3 }}>
+          <ServerAccessTab serverId={server.name} />
         </Box>
       )}
 
