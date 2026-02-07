@@ -75,6 +75,13 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.13.0 (2026-02-07)
+- **feat(shared,cli)**: Unified PrerequisiteChecker for `mcctl init` and `mcctl console init`
+- **feat(console)**: `@minecraft-docker/mcctl-console` npm package publishing
+- **feat(cli)**: `mcctl console service stop/restart --force` option (#238)
+- **feat(console)**: Settings renamed to Routing with Avahi mDNS monitoring (#240)
+- **chore(ci)**: E2E workflow now includes mcctl-console
+
 ### v1.12.1 (2026-02-07)
 - **fix(console)**: Add `not_created` status to all SSE and API interface type definitions
 
@@ -82,28 +89,17 @@ mcctl logs myserver
 - **feat(api)**: All-servers SSE status endpoint (`GET /api/servers-status`)
 - **feat(console)**: Server detail delete menu with confirmation dialog
 - **feat(api)**: Audit logging for server create, delete, start, stop, restart actions
-- **fix(console)**: SSE URL path updated to `/api/sse/servers-status`
-- **fix(console)**: Handle `not_created` server status in card, list, and detail page
 
 ### v1.11.0 (2026-02-06)
 - **feat(console)**: World management UI - list, reset, server assignment (#175)
 - **feat(console)**: Server options tab with config management (#229)
 - **feat(console)**: SSE real-time server status replaces polling (#223)
-- **feat(api)**: Server config and world reset endpoints (#229)
-- **fix(api)**: Path traversal prevention and container status checks in world reset
 
 ### v1.10.0 (2026-02-05)
 - **feat**: Audit Log System - comprehensive activity tracking (#234, #235)
-  - `mcctl audit list/purge/stats` CLI commands with filtering
-  - 5 REST API endpoints (list, stats, purge, SSE stream)
-  - Full Web UI: audit log page, dashboard widget, server activity tab
 
 ### v1.9.0 (2026-02-05)
 - **feat(cli)**: Add `--all` flag to `mcctl update` command
-
-### v1.8.0 (2026-02-05)
-- **feat(api,console)**: Pass sudo password from web console to server creation API (#230)
-- **feat(console)**: Replace ActivityFeed with ChangelogFeed on dashboard
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
