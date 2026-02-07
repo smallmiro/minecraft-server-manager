@@ -581,7 +581,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       },
     },
   }, async (request: FastifyRequest<CreateServerRoute>, reply: FastifyReply) => {
-    const { name, type, version, memory, seed, worldUrl, worldName, autoStart, sudoPassword } = request.body;
+    const { name, type, version, memory, seed, worldUrl, worldName, autoStart, sudoPassword, modpack, modpackVersion, modLoader } = request.body;
     const { follow = false } = request.query;
 
     // Check if server already exists (before SSE mode check)
@@ -589,6 +589,14 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.code(409).send({
         error: 'Conflict',
         message: `Server '${name}' already exists`,
+      });
+    }
+
+    // Validate modpack requirement for MODRINTH and AUTO_CURSEFORGE types
+    if ((type === 'MODRINTH' || type === 'AUTO_CURSEFORGE') && !modpack) {
+      return reply.code(400).send({
+        error: 'BadRequest',
+        message: `Modpack slug is required for ${type} server type`,
       });
     }
 
@@ -609,6 +617,15 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     }
     if (worldName) {
       args.push('-w', worldName);
+    }
+    if (modpack) {
+      args.push('--modpack', modpack);
+    }
+    if (modpackVersion) {
+      args.push('--modpack-version', modpackVersion);
+    }
+    if (modLoader) {
+      args.push('--mod-loader', modLoader);
     }
     if (autoStart === false) {
       args.push('--no-start');
@@ -719,7 +736,14 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
             targetType: 'server',
             targetName: name,
             status: 'success',
-            details: { type: type ?? null, version: version ?? null, memory: memory ?? null },
+            details: {
+              type: type ?? null,
+              version: version ?? null,
+              memory: memory ?? null,
+              modpack: modpack ?? null,
+              modpackVersion: modpackVersion ?? null,
+              modLoader: modLoader ?? null,
+            },
             errorMessage: null,
           });
 
@@ -795,7 +819,14 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         targetType: 'server',
         targetName: name,
         status: 'success',
-        details: { type: type ?? null, version: version ?? null, memory: memory ?? null },
+        details: {
+          type: type ?? null,
+          version: version ?? null,
+          memory: memory ?? null,
+          modpack: modpack ?? null,
+          modpackVersion: modpackVersion ?? null,
+          modLoader: modLoader ?? null,
+        },
         errorMessage: null,
       });
 

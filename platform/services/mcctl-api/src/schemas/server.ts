@@ -144,6 +144,8 @@ export const CreateServerRequestSchema = Type.Object({
     Type.Literal('FABRIC'),
     Type.Literal('SPIGOT'),
     Type.Literal('NEOFORGE'),
+    Type.Literal('MODRINTH'),
+    Type.Literal('AUTO_CURSEFORGE'),
   ])),
   version: Type.Optional(Type.String()),
   memory: Type.Optional(Type.String({ pattern: '^\\d+[MG]$' })),
@@ -152,6 +154,17 @@ export const CreateServerRequestSchema = Type.Object({
   worldName: Type.Optional(Type.String()),
   autoStart: Type.Optional(Type.Boolean({ default: true })),
   sudoPassword: Type.Optional(Type.String({ writeOnly: true })),
+  modpack: Type.Optional(Type.String({
+    description: 'Modrinth modpack slug, ID, or URL (required for MODRINTH/AUTO_CURSEFORGE)',
+  })),
+  modpackVersion: Type.Optional(Type.String({
+    description: 'Specific modpack version ID',
+  })),
+  modLoader: Type.Optional(Type.Union([
+    Type.Literal('forge'),
+    Type.Literal('fabric'),
+    Type.Literal('quilt'),
+  ], { description: 'Mod loader override' })),
 });
 
 // Create Server Query Schema (for SSE streaming support)
