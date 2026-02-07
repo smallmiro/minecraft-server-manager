@@ -8,6 +8,7 @@ const mockRepository: IUserServerRepository = {
   findById: vi.fn(),
   findByUserAndServer: vi.fn(),
   findByServer: vi.fn(),
+  findByServerWithUsers: vi.fn(),
   findByUser: vi.fn(),
   create: vi.fn(),
   updatePermission: vi.fn(),
@@ -199,6 +200,58 @@ describe('UserServerService', () => {
 
       expect(mockRepository.findByServer).toHaveBeenCalledWith('server-1');
       expect(results).toHaveLength(2);
+    });
+  });
+
+  describe('getServerUsersWithDetails', () => {
+    it('should return users with details from repository', async () => {
+      const usersWithDetails = [
+        {
+          id: 'us-1',
+          userId: 'user-1',
+          serverId: 'server-1',
+          permission: 'admin' as const,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          user: {
+            id: 'user-1',
+            name: 'Admin User',
+            email: 'admin@example.com',
+            image: null,
+          },
+        },
+        {
+          id: 'us-2',
+          userId: 'user-2',
+          serverId: 'server-1',
+          permission: 'view' as const,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          user: {
+            id: 'user-2',
+            name: 'Viewer',
+            email: 'viewer@example.com',
+            image: null,
+          },
+        },
+      ];
+
+      vi.mocked(mockRepository.findByServerWithUsers).mockResolvedValue(usersWithDetails);
+
+      const results = await service.getServerUsersWithDetails('server-1');
+
+      expect(mockRepository.findByServerWithUsers).toHaveBeenCalledWith('server-1');
+      expect(results).toHaveLength(2);
+      expect(results[0].user?.name).toBe('Admin User');
+      expect(results[1].user?.name).toBe('Viewer');
+    });
+
+    it('should return empty array when no users have access', async () => {
+      vi.mocked(mockRepository.findByServerWithUsers).mockResolvedValue([]);
+
+      const results = await service.getServerUsersWithDetails('empty-server');
+
+      expect(results).toEqual([]);
     });
   });
 
