@@ -27,12 +27,9 @@ import { displayPrerequisiteReport } from '../../lib/prerequisite-display.js';
 
 /**
  * Check if mcctl-console is available on npm
- * Currently returns false as it's not yet published
  */
 function isConsoleAvailable(): boolean {
-  // mcctl-console is not yet published to npm
-  // This will be updated when console is available
-  return false;
+  return true;
 }
 
 /**
