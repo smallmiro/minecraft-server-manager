@@ -14,6 +14,8 @@
     "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly",
     "source=${localEnv:HOME}/.config/gh,target=/home/vscode/.config/gh,type=bind"
   ],
+  "forwardPorts": [5000],
+  "appPort": [5000],
   "updateRemoteUserUID": true,
   "postCreateCommand": "claude --version && docker --version && gh --version && echo '✅ Claude Code + Docker + GitHub CLI ready'",
   "remoteUser": "vscode"
