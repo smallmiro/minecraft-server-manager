@@ -48,11 +48,11 @@ export async function GET() {
     const userServers = await repository.findByUser(session.user.id);
     const allowedServerNames = new Set(userServers.map((us) => us.serverId));
 
-    const filteredServers = allServers.filter((server: { name: string }) =>
+    const filteredServers = allServers.servers.filter((server) =>
       allowedServerNames.has(server.name)
     );
 
-    return NextResponse.json(filteredServers);
+    return NextResponse.json({ servers: filteredServers, total: filteredServers.length });
   } catch (error) {
     if (error instanceof McctlApiError) {
       return NextResponse.json(
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       const service = new UserServerService(repository);
 
       try {
-        await service.grantAccess(session.user.id, data.name, 'admin');
+        await service.grantAccess(session.user.id, data.server.name, 'admin');
       } catch (permError) {
         console.error('Failed to grant admin permission:', permError);
         // Don't fail server creation if permission grant fails
