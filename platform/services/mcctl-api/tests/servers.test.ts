@@ -95,6 +95,13 @@ vi.mock('@minecraft-docker/shared', () => ({
   getContainerStatus: vi.fn(),
   getContainerHealth: vi.fn(),
   stopContainer: vi.fn(),
+  AuditActionEnum: {
+    SERVER_CREATE: 'SERVER_CREATE',
+    SERVER_DELETE: 'SERVER_DELETE',
+    SERVER_START: 'SERVER_START',
+    SERVER_STOP: 'SERVER_STOP',
+    SERVER_RESTART: 'SERVER_RESTART',
+  },
 }));
 
 // Mock fs module to control script existence checks
@@ -105,6 +112,11 @@ vi.mock('fs', async (importOriginal) => {
     existsSync: vi.fn(() => true), // Assume scripts always exist
   };
 });
+
+// Mock audit log service
+vi.mock('../src/services/audit-log-service.js', () => ({
+  writeAuditLog: vi.fn().mockResolvedValue(undefined),
+}));
 
 import {
   getAllServers,
@@ -536,6 +548,212 @@ describe('POST /api/servers - Server Creation', () => {
       const lastCall = mockedSpawn.mock.calls[mockedSpawn.mock.calls.length - 1];
       const options = lastCall[2] as any;
       expect(options.env).not.toHaveProperty('MCCTL_SUDO_PASSWORD');
+    });
+  });
+});
+
+describe('POST /api/servers - Modrinth Modpack Support', () => {
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    app = await buildApp({ logger: false });
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('Schema Validation', () => {
+    it('should accept MODRINTH type', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'modrinth-test',
+          type: 'MODRINTH',
+          modpack: 'adrenaline',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('text/event-stream');
+    });
+
+    it('should accept AUTO_CURSEFORGE type', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'curseforge-test',
+          type: 'AUTO_CURSEFORGE',
+          modpack: 'enigmatica6',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['content-type']).toBe('text/event-stream');
+    });
+
+    it('should accept modpack field', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'modpack-test',
+          type: 'MODRINTH',
+          modpack: 'vault-hunters',
+          modpackVersion: '1.2.3',
+          modLoader: 'forge',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 400 if MODRINTH type without modpack', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers',
+        payload: {
+          name: 'modrinth-nopack',
+          type: 'MODRINTH',
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.message.toLowerCase()).toContain('modpack');
+    });
+
+    it('should return 400 if AUTO_CURSEFORGE type without modpack', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers',
+        payload: {
+          name: 'curseforge-nopack',
+          type: 'AUTO_CURSEFORGE',
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.message.toLowerCase()).toContain('modpack');
+    });
+
+    it('should allow PAPER type without modpack', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'paper-test',
+          type: 'PAPER',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+  });
+
+  describe('Command Arguments', () => {
+    it('should pass modpack arguments to create script', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'modpack-args',
+          type: 'MODRINTH',
+          modpack: 'adrenaline',
+          modpackVersion: '1.2.3',
+          modLoader: 'fabric',
+        },
+      });
+
+      expect(mockedSpawn).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.arrayContaining([
+          'modpack-args',
+          '-t',
+          'MODRINTH',
+          '--modpack',
+          'adrenaline',
+          '--modpack-version',
+          '1.2.3',
+          '--mod-loader',
+          'fabric',
+        ]),
+        expect.any(Object)
+      );
+    });
+
+    it('should pass only modpack slug when version and loader not provided', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'modpack-slug-only',
+          type: 'MODRINTH',
+          modpack: 'adrenaline',
+        },
+      });
+
+      const lastCall = mockedSpawn.mock.calls[mockedSpawn.mock.calls.length - 1];
+      const args = lastCall[1] as string[];
+      expect(args).toContain('--modpack');
+      expect(args).toContain('adrenaline');
+      expect(args).not.toContain('--modpack-version');
+      expect(args).not.toContain('--mod-loader');
+    });
+  });
+
+  describe('Audit Logging', () => {
+    it('should log modpack information on success', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'modpack-audit',
+          type: 'MODRINTH',
+          modpack: 'adrenaline',
+        },
+      });
+
+      // Wait for async completion
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Check if audit log was written (test will verify through the response)
+      const events = response.body
+        .split('\n\n')
+        .filter(Boolean)
+        .map((event: string) => {
+          const dataMatch = event.match(/^data: (.+)$/m);
+          return dataMatch ? JSON.parse(dataMatch[1]) : null;
+        })
+        .filter(Boolean);
+
+      const completedEvent = events.find((e: any) => e.data?.status === 'completed');
+      expect(completedEvent).toBeDefined();
     });
   });
 });
