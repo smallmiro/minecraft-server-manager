@@ -80,7 +80,7 @@ mcctl logs myserver
 - **feat(console)**: `@minecraft-docker/mcctl-console` npm package publishing
 - **feat(cli)**: `mcctl console service stop/restart --force` option (#238)
 - **feat(console)**: Settings renamed to Routing with Avahi mDNS monitoring (#240)
-- **chore(ci)**: E2E workflow now includes mcctl-console
+- **fix(console)**: Add force-dynamic to all API routes for Next.js build
 
 ### v1.12.1 (2026-02-07)
 - **fix(console)**: Add `not_created` status to all SSE and API interface type definitions

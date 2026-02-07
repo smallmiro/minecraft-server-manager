@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Console --force Option** - `mcctl console service stop/restart --force` for forceful PM2 process termination (#238)
 - **Console Routing Page** - Settings renamed to Routing with Avahi mDNS monitoring (#240)
 
+### Fixed
+- **Console Build** - Add `export const dynamic = 'force-dynamic'` to all 22 API routes to prevent `SQLITE_BUSY` error during Next.js static page data collection at build time
+
 ### Changed
 - **init Command** - Replace inline Docker/Compose/avahi checks with unified `checkPlatformPrerequisites()`
 - **console init Command** - Replace inline Node.js/PM2 checks with unified `checkConsolePrerequisites()`
