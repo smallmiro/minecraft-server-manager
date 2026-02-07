@@ -63,6 +63,39 @@ describe('UserServerRepository', () => {
     });
   });
 
+  describe('findById', () => {
+    let createdId: string;
+
+    beforeEach(async () => {
+      const created = await db
+        .insert(userServers)
+        .values({
+          userId: testUserId,
+          serverId: testServerId,
+          permission: 'manage',
+        })
+        .returning();
+
+      createdId = created[0].id;
+    });
+
+    it('should find record by ID', async () => {
+      const result = await repository.findById(createdId);
+
+      expect(result).toBeDefined();
+      expect(result?.id).toBe(createdId);
+      expect(result?.userId).toBe(testUserId);
+      expect(result?.serverId).toBe(testServerId);
+      expect(result?.permission).toBe('manage');
+    });
+
+    it('should return null when ID not found', async () => {
+      const result = await repository.findById('non-existent-id');
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('findByUserAndServer', () => {
     beforeEach(async () => {
       await db.insert(userServers).values({

@@ -5,6 +5,11 @@ import type { UserServer, NewUserServer, ServerPermission } from '@/lib/schema';
  */
 export interface IUserServerRepository {
   /**
+   * Find a user-server permission mapping by ID
+   */
+  findById(id: string): Promise<UserServer | null>;
+
+  /**
    * Find a specific user-server permission mapping
    */
   findByUserAndServer(userId: string, serverId: string): Promise<UserServer | null>;

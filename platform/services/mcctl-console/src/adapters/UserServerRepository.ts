@@ -8,6 +8,16 @@ import type { IUserServerRepository } from '@/ports/out/IUserServerRepository';
  * Drizzle implementation of IUserServerRepository
  */
 export class UserServerRepository implements IUserServerRepository {
+  async findById(id: string): Promise<UserServer | null> {
+    const results = await db
+      .select()
+      .from(userServers)
+      .where(eq(userServers.id, id))
+      .limit(1);
+
+    return results[0] ?? null;
+  }
+
   async findByUserAndServer(
     userId: string,
     serverId: string

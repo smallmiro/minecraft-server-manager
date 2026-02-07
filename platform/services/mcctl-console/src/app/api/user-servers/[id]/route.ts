@@ -44,20 +44,26 @@ export async function PATCH(
       );
     }
 
-    // Get the record to check authorization
+    // Look up the target record by ID
+    const service = createService();
     const repository = new UserServerRepository();
-    const existing = await repository.findByUserAndServer(id, '');
+    const targetRecord = await repository.findById(id);
 
-    // For PATCH, we use the ID from the URL to find the record
+    if (!targetRecord) {
+      return NextResponse.json(
+        { error: 'NotFound', message: 'Permission record not found' },
+        { status: 404 }
+      );
+    }
+
     // The caller must be a platform admin or server admin
     if (session.user.role !== 'admin') {
-      // Need to look up the record by ID to get serverId
-      const allUserServers = await repository.findByUser(session.user.id);
-      const targetRecord = allUserServers.find((us) => us.id === id);
-
-      if (!targetRecord) {
-        const service = createService();
-        // Try to find the target by ID in the server's users
+      const hasAdmin = await service.hasPermission(
+        session.user.id,
+        targetRecord.serverId,
+        'admin'
+      );
+      if (!hasAdmin) {
         return NextResponse.json(
           { error: 'Forbidden', message: 'Admin permission required' },
           { status: 403 }
@@ -65,16 +71,14 @@ export async function PATCH(
       }
     }
 
-    const service = createService();
+    // Use service to enforce business rules (last-admin protection)
+    const result = await service.updatePermission(
+      targetRecord.userId,
+      targetRecord.serverId,
+      permission
+    );
 
-    // Look up the record to get userId and serverId
-    // Since we have the record ID, update directly
-    try {
-      const result = await repository.updatePermission(id, permission);
-      return NextResponse.json(result);
-    } catch (updateError) {
-      throw updateError;
-    }
+    return NextResponse.json(result);
   } catch (error) {
     if (error instanceof PermissionError) {
       return NextResponse.json(

@@ -5,6 +5,7 @@ import type { UserServer, ServerPermission } from '@/lib/schema';
 
 // Mock repository
 const mockRepository: IUserServerRepository = {
+  findById: vi.fn(),
   findByUserAndServer: vi.fn(),
   findByServer: vi.fn(),
   findByUser: vi.fn(),
