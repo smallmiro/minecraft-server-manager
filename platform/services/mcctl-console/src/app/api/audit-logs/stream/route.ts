@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/audit-logs/stream
  * Proxy to mcctl-api: SSE stream for real-time audit log updates

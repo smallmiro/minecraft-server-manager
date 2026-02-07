@@ -5,6 +5,8 @@
 
 import { NextRequest } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/sse/[...path]
  * Proxy SSE requests to mcctl-api
