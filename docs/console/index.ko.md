@@ -1,6 +1,6 @@
-# Admin Service 개요
+# Management Console 개요
 
-Admin Service는 Docker Minecraft 서버를 위한 웹 기반 관리 인터페이스와 REST API를 제공합니다. 현대적인 웹 콘솔을 통해 원격 서버 관리, 모니터링, 운영이 가능합니다.
+Management Console는 Docker Minecraft 서버를 위한 웹 기반 관리 인터페이스와 REST API를 제공합니다. 현대적인 웹 콘솔을 통해 원격 서버 관리, 모니터링, 운영이 가능합니다.
 
 !!! warning "개발 상태"
     **mcctl-console (웹 UI)은 현재 활발히 개발 중입니다.** 일부 기능이 불완전하거나 변경될 수 있습니다. REST API (mcctl-api)는 안정적이며 프로덕션 환경에서 사용 가능합니다.
@@ -74,7 +74,7 @@ Next.js 웹 애플리케이션으로 다음 기능을 제공합니다:
 
 ## 인증 모드
 
-Admin Service는 다양한 인증 모드를 지원합니다:
+Management Console는 다양한 인증 모드를 지원합니다:
 
 | 모드 | 설명 | 사용 사례 |
 |------|------|----------|
@@ -112,7 +112,7 @@ Admin Service는 다양한 인증 모드를 지원합니다:
 
 > **참고**: `mcctl admin` 명령어는 지원 중단(deprecated)되었습니다. 대신 `mcctl console`을 사용하세요. `admin` 명령어 별칭은 하위 호환성을 위해 계속 작동하지만 향후 버전에서 제거될 예정입니다.
 
-### 1. Admin Service 초기화
+### 1. Management Console 초기화
 
 ```bash
 mcctl console init
@@ -125,7 +125,7 @@ mcctl console init
 3. API 접근 모드
 4. IP 화이트리스트 (해당하는 경우)
 
-### 2. Admin Service 시작
+### 2. Management Console 시작
 
 ```bash
 mcctl console service start
@@ -153,7 +153,7 @@ http://localhost:5000
 
 | 파일 | 설명 |
 |------|------|
-| `~/minecraft-servers/admin.yaml` | Admin Service 설정 |
+| `~/minecraft-servers/admin.yaml` | Management Console 설정 |
 | `~/minecraft-servers/users.yaml` | 사용자 자격 증명 (해시된 비밀번호) |
 | `~/minecraft-servers/api-config.json` | API 접근 설정 |
 

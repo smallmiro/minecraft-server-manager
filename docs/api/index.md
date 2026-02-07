@@ -314,5 +314,5 @@ This provides:
 ## Next Steps
 
 - **[Endpoints Reference](endpoints.md)** - Detailed endpoint documentation
-- **[Installation](../admin-service/installation.md)** - Setup guide
-- **[CLI Commands](../admin-service/cli-commands.md)** - mcctl console commands
+- **[Installation](../console/installation.md)** - Setup guide
+- **[CLI Commands](../console/cli-commands.md)** - mcctl console commands

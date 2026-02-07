@@ -149,7 +149,7 @@ Waiting for #81 completion
 \`\`\`
 $ mcctl console init
 
-┌  Initialize Admin Service
+┌  Initialize Management Console
 │
 ◆  Admin username?
 │  admin
@@ -160,7 +160,7 @@ $ mcctl console init
 ◆  API access mode?
 │  ● internal (Docker network only)
 │
-└  ✓ Admin Service initialized!
+└  ✓ Management Console initialized!
 \`\`\`
 
 ### Unblocks
@@ -179,16 +179,16 @@ import * as p from '@clack/prompts';
 export function registerAdminInitCommand(program: Command): void {
   program
     .command('admin')
-    .description('Admin Service management')
+    .description('Management Console management')
     .command('init')
-    .description('Initialize Admin Service')
+    .description('Initialize Management Console')
     .action(async () => {
       await runAdminInit();
     });
 }
 
 async function runAdminInit(): Promise<void> {
-  p.intro('Initialize Admin Service');
+  p.intro('Initialize Management Console');
 
   const username = await p.text({
     message: 'Admin username?',

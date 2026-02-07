@@ -28,7 +28,7 @@ docs/
 ├── cli/                 # ✅ Include (commands reference)
 ├── mods-and-plugins/    # ✅ Include (modrinth, curseforge, etc.)
 ├── advanced/            # ✅ Include (backup, networking, rcon)
-├── admin-service/       # ✅ Include (API, web console)
+├── console/       # ✅ Include (API, web console)
 ├── itzg-reference/      # ❌ Exclude (external reference docs)
 ├── development/         # ❌ Exclude (developer-only docs)
 └── usage/               # ❌ Exclude (legacy usage examples)
@@ -42,7 +42,7 @@ docs/
    - `docs/cli/index.md`, `commands.md`
    - `docs/mods-and-plugins/index.md`, `modrinth.md`, `curseforge.md`, `spiget.md`, `direct-download.md`, `modpacks.md`
    - `docs/advanced/index.md`, `backup.md`, `networking.md`, `rcon.md`
-   - `docs/admin-service/index.md`, `installation.md`, `cli-commands.md`, `api-reference.md`, `web-console.md`
+   - `docs/console/index.md`, `installation.md`, `cli-commands.md`, `api-reference.md`, `web-console.md`
 
 2. **Extract and consolidate** into these sections:
    - **Overview**: Project purpose and capabilities
@@ -114,7 +114,7 @@ docs/
 cat platform/services/cli/package.json | jq -r '.version'
 
 # Step 2: Read source docs (English only)
-for doc in getting-started configuration cli mods-and-plugins advanced admin-service; do
+for doc in getting-started configuration cli mods-and-plugins advanced console; do
   find docs/$doc -name "*.md" ! -name "*.ko.md"
 done
 
@@ -265,7 +265,7 @@ docs/configuration/*.md       → Environment Variables section
 docs/cli/*.md                 → Command Reference section (main source)
 docs/mods-and-plugins/*.md    → Mod commands in Command Reference
 docs/advanced/*.md            → FAQ, Troubleshooting sections
-docs/admin-service/*.md       → Console Management section
+docs/console/*.md       → Console Management section
 
 # Excludes:
 docs/itzg-reference/          → External reference (managed by /update-docs)

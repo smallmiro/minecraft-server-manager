@@ -6,7 +6,7 @@ Complete reference for all `mcctl console` subcommands.
 
 ## Overview
 
-The `mcctl console` command group provides management capabilities for the Admin Service:
+The `mcctl console` command group provides management capabilities for the Management Console:
 
 ```bash
 mcctl console <subcommand> [options]
@@ -16,17 +16,17 @@ mcctl console <subcommand> [options]
 
 | Command | Description |
 |---------|-------------|
-| `mcctl console init` | Initialize Admin Service configuration |
-| `mcctl console remove` | Remove Admin Service completely |
+| `mcctl console init` | Initialize Management Console configuration |
+| `mcctl console remove` | Remove Management Console completely |
 | `mcctl console user` | Manage admin console users |
 | `mcctl console api` | Manage API configuration |
-| `mcctl console service` | Manage Admin Service lifecycle |
+| `mcctl console service` | Manage Management Console lifecycle |
 
 ---
 
 ## mcctl console init
 
-Initialize Admin Service configuration and create the first admin user.
+Initialize Management Console configuration and create the first admin user.
 
 ### Usage
 
@@ -83,7 +83,7 @@ mcctl console init --api-port 8001 --console-port 8000
 
 | File | Description |
 |------|-------------|
-| `.mcctl-admin.yml` | Main Admin Service configuration |
+| `.mcctl-admin.yml` | Main Management Console configuration |
 | `users.yaml` | User credentials with hashed passwords |
 | `ecosystem.config.cjs` | PM2 process configuration |
 
@@ -91,7 +91,7 @@ mcctl console init --api-port 8001 --console-port 8000
 
 ## mcctl console remove
 
-Remove Admin Service completely, including PM2 processes and configuration files.
+Remove Management Console completely, including PM2 processes and configuration files.
 
 ### Usage
 
@@ -493,21 +493,21 @@ mcctl console api whitelist remove 192.168.1.100
 
 ## mcctl console service
 
-Manage Admin Service lifecycle via PM2.
+Manage Management Console lifecycle via PM2.
 
 ### Subcommands
 
 | Subcommand | Description |
 |------------|-------------|
-| `start` | Start Admin Service via PM2 |
-| `stop` | Stop Admin Service |
-| `restart` | Restart Admin Service |
+| `start` | Start Management Console via PM2 |
+| `stop` | Stop Management Console |
+| `restart` | Restart Management Console |
 | `status` | Show service status |
 | `logs` | View service logs |
 
 ### mcctl console service start
 
-Start Admin Service processes (API and Console) via PM2.
+Start Management Console processes (API and Console) via PM2.
 
 ```bash
 mcctl console service start [options]
@@ -565,7 +565,7 @@ Console services started successfully
 
 ### mcctl console service stop
 
-Stop Admin Service processes.
+Stop Management Console processes.
 
 ```bash
 mcctl console service stop [options]
@@ -590,7 +590,7 @@ mcctl console service stop --api-only
 
 ### mcctl console service restart
 
-Restart Admin Service processes.
+Restart Management Console processes.
 
 ```bash
 mcctl console service restart [options]
@@ -615,7 +615,7 @@ mcctl console service restart --api-only
 
 ### mcctl console service status
 
-Show Admin Service status via PM2.
+Show Management Console status via PM2.
 
 ```bash
 mcctl console service status [options]
@@ -681,7 +681,7 @@ mcctl console service status [options]
 
 ### mcctl console service logs
 
-View Admin Service logs via PM2.
+View Management Console logs via PM2.
 
 ```bash
 mcctl console service logs [options]

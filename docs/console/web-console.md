@@ -83,7 +83,7 @@ All hooks automatically handle:
 
 ### First Time Login
 
-1. Start Admin Service:
+1. Start Management Console:
    ```bash
    mcctl console service start
    ```
@@ -274,7 +274,7 @@ The Routing page (`/routing`) provides:
 1. **Use Strong Passwords** - Follow the password requirements during setup
 2. **Limit Access** - Use `ip-whitelist` mode to restrict access
 3. **Use HTTPS** - Configure a reverse proxy with SSL for production
-4. **Regular Updates** - Keep the Admin Service updated
+4. **Regular Updates** - Keep the Management Console updated
 
 ### Monitoring
 

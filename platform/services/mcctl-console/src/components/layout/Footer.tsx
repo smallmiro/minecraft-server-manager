@@ -42,7 +42,7 @@ const footerSections: FooterSection[] = [
     title: 'Documentation',
     links: [
       { label: 'CLI Commands', href: 'https://minecraft-server-manager.readthedocs.io/en/latest/cli/', external: true },
-      { label: 'API Reference', href: 'https://minecraft-server-manager.readthedocs.io/en/latest/admin-service/', external: true },
+      { label: 'API Reference', href: 'https://minecraft-server-manager.readthedocs.io/en/latest/console/', external: true },
       { label: 'itzg Reference', href: 'https://minecraft-server-manager.readthedocs.io/en/latest/itzg-reference/', external: true },
     ],
   },

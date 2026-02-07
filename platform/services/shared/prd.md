@@ -178,7 +178,7 @@ platform/services/shared/
 └── tests/
 ```
 
-## 5. New Additions (For Admin Service)
+## 5. New Additions (For Management Console)
 
 ### 4.1 IUserRepository Port
 

@@ -1,12 +1,12 @@
 # Architecture: Minecraft Server Manager
 
-This document describes the overall architecture of the Minecraft Server Manager project, with a focus on the Admin Service (Phase 8).
+This document describes the overall architecture of the Minecraft Server Manager project, with a focus on the Management Console (Phase 8).
 
 ## Table of Contents
 
 1. [System Overview](#system-overview)
 2. [Current Architecture (v1.x)](#current-architecture-v1x)
-3. [Admin Service Architecture (v2.0)](#admin-service-architecture-v20)
+3. [Management Console Architecture (v2.0)](#management-console-architecture-v20)
 4. [Package Structure](#package-structure)
 5. [Implementation Phases](#implementation-phases)
 6. [API Reference](#api-reference)
@@ -22,7 +22,7 @@ This document describes the overall architecture of the Minecraft Server Manager
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌──────────────┐     ┌──────────────────────────────────────────────────┐  │
-│  │   mcctl      │     │              Admin Service (v2.0)                │  │
+│  │   mcctl      │     │              Management Console (v2.0)                │  │
 │  │   (CLI)      │     │  ┌─────────────┐       ┌─────────────────────┐  │  │
 │  │              │     │  │ mcctl-api   │ ◄───► │   mcctl-console     │  │  │
 │  │  Terminal    │     │  │ (REST API)  │       │   (Web UI + BFF)    │  │  │
@@ -122,7 +122,7 @@ The current system is CLI-based, using the `mcctl` command for all operations.
 
 ---
 
-## Admin Service Architecture (v2.0)
+## Management Console Architecture (v2.0)
 
 ### MSA Structure
 
@@ -466,5 +466,5 @@ console:
 ## Milestone
 
 - **Version**: v2.0.0
-- **Milestone**: [Admin Service](https://github.com/smallmiro/minecraft-server-manager/milestone/5)
+- **Milestone**: [Management Console](https://github.com/smallmiro/minecraft-server-manager/milestone/5)
 - **Issues**: #80 - #102 (23 issues)

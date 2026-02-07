@@ -11,7 +11,7 @@
 | **Node.js** | >= 18.0.0 | 20 LTS | Required for mcctl CLI |
 | **Docker Engine** | >= 24.0.0 | Latest | Container runtime |
 | **Docker Compose** | >= 2.20.0 | Latest | `include` feature required |
-| **PM2** | >= 6.0.14 | Latest | Admin Service process management (bundled with mcctl) |
+| **PM2** | >= 6.0.14 | Latest | Management Console process management (bundled with mcctl) |
 | **OS** | Linux, macOS | Ubuntu 22.04+ | Windows via WSL2 |
 
 **Ports:**
@@ -31,7 +31,7 @@
 - Shared world storage with locking mechanism
 - Player management (whitelist, ban, op, kick)
 - Mod management (Modrinth, CurseForge, Spiget)
-- Admin Service (REST API + Web Console)
+- Management Console (REST API + Web Console)
 - Audit Log System (activity tracking with SQLite storage)
 - Real-time server monitoring via SSE (Server-Sent Events)
 
@@ -173,7 +173,7 @@ mcctl backup history              # Show history
 mcctl backup restore <commit>     # Restore from commit
 ```
 
-### Console Management (Admin Service)
+### Console Management (Management Console)
 
 #### Initialization
 
@@ -323,7 +323,7 @@ The `--all` flag updates mcctl-api, mcctl-console, and @minecraft-docker/shared 
 
 ## REST API Reference
 
-Admin Service provides a REST API (port 5001) for programmatic access.
+Management Console provides a REST API (port 5001) for programmatic access.
 
 ### Authentication
 
@@ -620,7 +620,7 @@ mcctl kick myserver Griefer "Griefing not allowed"
 mcctl ban myserver add Griefer "Repeated griefing"
 ```
 
-### Setting Up Admin Service (API + Web Console)
+### Setting Up Management Console (API + Web Console)
 
 ```bash
 # Step 1: Initialize (interactive prompts)
@@ -707,7 +707,7 @@ A: Use `mcctl config <server> --cheats` or set `ALLOW_CHEATS=true`.
 ### Q: How do I change memory?
 A: Use `mcctl config <server> MEMORY 8G` then restart the server.
 
-### Q: What is the Admin Service?
+### Q: What is the Management Console?
 A: Web console (port 5000) + REST API (port 5001). Initialize with `mcctl console init` and start with `mcctl console service start`. The web console provides dashboard, server management, world management, audit logs, and routing configuration.
 
 ### Q: How do I use the REST API?
@@ -752,7 +752,7 @@ A: The console uses Server-Sent Events (SSE) for real-time server status updates
      +----------------------+
 
 +-----------------------------------------------------------+
-|                   Admin Service Layer                       |
+|                   Management Console Layer                       |
 |                                                            |
 |  +-------------------+      +-------------------+          |
 |  |  mcctl-console    | ---> |    mcctl-api      |          |
@@ -964,7 +964,7 @@ mcctl start <name>
 ### Version 1.6.0 ~ 1.6.7
 
 **Features:**
-- Admin Service (REST API + Web Console)
+- Management Console (REST API + Web Console)
 - `mcctl console` commands
 - User management with roles
 

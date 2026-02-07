@@ -14,7 +14,7 @@
 2. [Installation](#installation)
 3. [Quick Start](#quick-start)
 4. [Architecture](#architecture)
-5. [Admin Service (Web Console)](#admin-service-web-console)
+5. [Management Console (Web Console)](#management-console-web-console)
 6. [Complete Command Reference](#complete-command-reference)
 7. [Configuration](#configuration)
 8. [Common Use Cases](#common-use-cases)
@@ -59,7 +59,7 @@
 - **Current Version**: 1.7.8
 - **Repository**: Part of the minecraft-server-manager monorepo
 - **License**: Apache-2.0
-- **Dependencies**: Docker, Docker Compose, Node.js 18+, PM2 (for Admin Service)
+- **Dependencies**: Docker, Docker Compose, Node.js 18+, PM2 (for Management Console)
 
 > ⚠️ **Development Status**: mcctl-console (Web UI) is under active development. mcctl-api (REST API) is stable.
 
@@ -213,13 +213,13 @@ Replace `192.168.1.100` with your server's HOST_IP from `.env`.
 | **mcctl** | CLI tool for management operations |
 | **mcctl-api** | REST API service (Fastify, port 5001) |
 | **mcctl-console** | Web Admin Console (Next.js, port 5000) - **Under Development** |
-| **PM2** | Process manager for Admin Service (API + Console) |
+| **PM2** | Process manager for Management Console (API + Console) |
 
 ---
 
-## Admin Service (Web Console)
+## Management Console (Web Console)
 
-The Admin Service provides a web-based management console for mcctl. It consists of two components:
+The Management Console provides a web-based management console for mcctl. It consists of two components:
 
 ### Architecture
 
@@ -250,7 +250,7 @@ The Admin Service provides a web-based management console for mcctl. It consists
 
 ### Native PM2 Execution
 
-The Admin Service runs natively using PM2 (not in Docker containers). This provides:
+The Management Console runs natively using PM2 (not in Docker containers). This provides:
 - **Lower resource usage**: No container overhead
 - **Faster startup**: Direct Node.js execution
 - **Easier debugging**: Standard process management
@@ -2024,12 +2024,12 @@ A: The world directory is created immediately with a `.meta` file containing the
 
 ---
 
-### Admin Service Questions
+### Management Console Questions
 
-**Q: What is the Admin Service?**
-A: The Admin Service consists of mcctl-api (REST API on port 5001) and mcctl-console (Web UI on port 5000). It provides a web-based management interface for mcctl. **Note: mcctl-console is currently under active development.**
+**Q: What is the Management Console?**
+A: The Management Console consists of mcctl-api (REST API on port 5001) and mcctl-console (Web UI on port 5000). It provides a web-based management interface for mcctl. **Note: mcctl-console is currently under active development.**
 
-**Q: Why does the Admin Service use PM2 instead of Docker?**
+**Q: Why does the Management Console use PM2 instead of Docker?**
 A: PM2 provides native Node.js execution with lower overhead, faster startup, easier debugging, and automatic process recovery. This is more efficient than running additional Docker containers.
 
 **Q: How do I install PM2?**
@@ -2052,10 +2052,10 @@ A: Access Swagger/OpenAPI docs at `http://localhost:5001/docs` when the API is r
 **Q: How do I add more users to the console?**
 A: Use `mcctl console user add` to add users interactively, or with `--role` and `--password` options for CLI mode.
 
-**Q: How do I check if the Admin Service is running?**
+**Q: How do I check if the Management Console is running?**
 A: Run `mcctl console service status` to see the status of both API and Console services.
 
-**Q: How do I view Admin Service logs?**
+**Q: How do I view Management Console logs?**
 A: Run `mcctl console service logs` for recent logs, or `mcctl console service logs -f` to follow logs in real-time.
 
 **Q: Can I run only the API without the web console?**
@@ -2636,7 +2636,7 @@ services:
 | **mcctl-api** | REST API service for programmatic server management (Fastify, port 5001) |
 | **mcctl-console** | Web-based admin console (Next.js, port 5000) - **Under Development** |
 | **mc-router** | Hostname-based router that directs connections to correct servers |
-| **PM2** | Node.js process manager used to run Admin Service |
+| **PM2** | Node.js process manager used to run Management Console |
 | **avahi-daemon** | Linux mDNS service for .local hostname discovery |
 | **nip.io** | Magic DNS service that maps hostnames to IP addresses |
 | **RCON** | Remote Console protocol for executing server commands |
@@ -2648,7 +2648,7 @@ services:
 | **Spiget** | API for SpigotMC plugins |
 | **Auto-scale** | Feature that starts/stops servers based on player activity |
 | **World lock** | Mechanism to prevent simultaneous access to a world |
-| **ecosystem.config.cjs** | PM2 configuration file for Admin Service |
+| **ecosystem.config.cjs** | PM2 configuration file for Management Console |
 | **Access Mode** | API authentication method (internal, api-key, ip-whitelist, api-key-ip, open) |
 
 ---
@@ -2657,8 +2657,8 @@ services:
 
 | Version | Changes |
 |---------|---------|
-| 1.6.2 | Current release - PM2-based Admin Service, enhanced world management |
-| 1.6.x | Admin Service (mcctl-api + mcctl-console) with PM2 native execution |
+| 1.6.2 | Current release - PM2-based Management Console, enhanced world management |
+| 1.6.x | Management Console (mcctl-api + mcctl-console) with PM2 native execution |
 | 1.5.x | World management improvements, mod sources integration |
 | 1.4.x | Player management, whitelist, ban commands |
 | 1.3.x | Server backup/restore, migration commands |

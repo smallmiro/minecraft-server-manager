@@ -6,7 +6,7 @@
 
 ## 개요
 
-`mcctl console` 명령어 그룹은 Admin Service 관리 기능을 제공합니다:
+`mcctl console` 명령어 그룹은 Management Console 관리 기능을 제공합니다:
 
 ```bash
 mcctl console <subcommand> [options]
@@ -16,17 +16,17 @@ mcctl console <subcommand> [options]
 
 | 명령어 | 설명 |
 |---------|-------------|
-| `mcctl console init` | Admin Service 설정 초기화 |
-| `mcctl console remove` | Admin Service 완전 제거 |
+| `mcctl console init` | Management Console 설정 초기화 |
+| `mcctl console remove` | Management Console 완전 제거 |
 | `mcctl console user` | 관리자 콘솔 사용자 관리 |
 | `mcctl console api` | API 설정 관리 |
-| `mcctl console service` | Admin Service 수명주기 관리 |
+| `mcctl console service` | Management Console 수명주기 관리 |
 
 ---
 
 ## mcctl console init
 
-Admin Service 설정을 초기화하고 첫 번째 관리자 사용자를 생성합니다.
+Management Console 설정을 초기화하고 첫 번째 관리자 사용자를 생성합니다.
 
 ### 사용법
 
@@ -83,7 +83,7 @@ mcctl console init --api-port 8001 --console-port 8000
 
 | 파일 | 설명 |
 |------|-------------|
-| `.mcctl-admin.yml` | 메인 Admin Service 설정 |
+| `.mcctl-admin.yml` | 메인 Management Console 설정 |
 | `users.yaml` | 해시된 비밀번호가 포함된 사용자 인증정보 |
 | `ecosystem.config.cjs` | PM2 프로세스 설정 |
 
@@ -91,7 +91,7 @@ mcctl console init --api-port 8001 --console-port 8000
 
 ## mcctl console remove
 
-PM2 프로세스와 설정 파일을 포함한 Admin Service를 완전히 제거합니다.
+PM2 프로세스와 설정 파일을 포함한 Management Console를 완전히 제거합니다.
 
 ### 사용법
 
@@ -493,21 +493,21 @@ mcctl console api whitelist remove 192.168.1.100
 
 ## mcctl console service
 
-PM2를 통해 Admin Service 수명주기를 관리합니다.
+PM2를 통해 Management Console 수명주기를 관리합니다.
 
 ### 하위 명령어
 
 | 하위 명령어 | 설명 |
 |------------|-------------|
-| `start` | PM2를 통해 Admin Service 시작 |
-| `stop` | Admin Service 중지 |
-| `restart` | Admin Service 재시작 |
+| `start` | PM2를 통해 Management Console 시작 |
+| `stop` | Management Console 중지 |
+| `restart` | Management Console 재시작 |
 | `status` | 서비스 상태 표시 |
 | `logs` | 서비스 로그 보기 |
 
 ### mcctl console service start
 
-PM2를 통해 Admin Service 프로세스 (API와 Console)를 시작합니다.
+PM2를 통해 Management Console 프로세스 (API와 Console)를 시작합니다.
 
 ```bash
 mcctl console service start [options]
@@ -565,7 +565,7 @@ PM2를 통해 콘솔 서비스 시작 중...
 
 ### mcctl console service stop
 
-Admin Service 프로세스를 중지합니다.
+Management Console 프로세스를 중지합니다.
 
 ```bash
 mcctl console service stop [options]
@@ -590,7 +590,7 @@ mcctl console service stop --api-only
 
 ### mcctl console service restart
 
-Admin Service 프로세스를 재시작합니다.
+Management Console 프로세스를 재시작합니다.
 
 ```bash
 mcctl console service restart [options]
@@ -615,7 +615,7 @@ mcctl console service restart --api-only
 
 ### mcctl console service status
 
-PM2를 통해 Admin Service 상태를 표시합니다.
+PM2를 통해 Management Console 상태를 표시합니다.
 
 ```bash
 mcctl console service status [options]
@@ -681,7 +681,7 @@ mcctl console service status [options]
 
 ### mcctl console service logs
 
-PM2를 통해 Admin Service 로그를 확인합니다.
+PM2를 통해 Management Console 로그를 확인합니다.
 
 ```bash
 mcctl console service logs [options]

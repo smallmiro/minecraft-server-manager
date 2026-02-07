@@ -1,6 +1,6 @@
 # E2E Tests
 
-End-to-end tests for the Admin Service (mcctl-api + mcctl-console) using Playwright.
+End-to-end tests for the Management Console (mcctl-api + mcctl-console) using Playwright.
 
 ## Overview
 
