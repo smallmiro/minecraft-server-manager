@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.4] - 2026-02-08
+
+### Fixed
+- **Console Better Auth Config** - Explicitly pass `baseURL` and `secret` to Better Auth configuration
+  - Better Auth was not auto-detecting environment variables in some deployment scenarios
+  - Now reads `BETTER_AUTH_BASE_URL` and `BETTER_AUTH_SECRET` explicitly in config
+- **Console HTTP Session Persistence** - Fix login redirect loop in HTTP environments
+  - Added `advanced.useSecureCookies` toggle based on protocol detection
+  - Previously, production mode defaulted to Secure cookies, causing browsers to reject cookies over HTTP (e.g., `http://192.168.x.x:5000`)
+  - Resolves 307 redirect loop after successful login on HTTP deployments
+- **Console trustedOrigins Dedup** - Remove duplicate `localhost:5000` entry from trustedOrigins
+  - Only add `baseURL` to trustedOrigins when it differs from the default `http://localhost:5000`
+
 ## [1.15.3] - 2026-02-08
 
 ### Fixed

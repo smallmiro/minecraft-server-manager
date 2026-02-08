@@ -853,6 +853,21 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [1.15.4] - 2026-02-08
+
+**Fixed:**
+- **Console Better Auth Config** - Explicitly pass `baseURL` and `secret` to Better Auth configuration
+- **Console HTTP Session Persistence** - Disable Secure cookies on HTTP environments to fix login redirect loop
+- **Console trustedOrigins Dedup** - Remove duplicate localhost:5000 entry from trustedOrigins
+
+### [1.15.3] - 2026-02-08
+
+**Fixed:**
+- **CLI BETTER_AUTH env var** - Correct `BETTER_AUTH_URL` to `BETTER_AUTH_BASE_URL` in ecosystem.config.cjs
+- **Console DB path** - Use `MCCTL_ROOT` env var for DB path resolution
+- **Console user_servers table** - Add missing table to auto-creation DDL
+- **Audit DB path** - Move to `MCCTL_ROOT/data/audit.db`
+
 ### [1.15.2] - 2026-02-08
 
 **Fixed:**
