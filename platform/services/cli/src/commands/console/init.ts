@@ -279,7 +279,7 @@ ${apiEnvVars.join('\n')}
         MCCTL_API_URL: 'http://localhost:${apiPort}',
         MCCTL_ROOT: '${rootDir}',
         BETTER_AUTH_SECRET: '${nextAuthSecret}',
-        BETTER_AUTH_URL: 'http://localhost:${consolePort}',
+        BETTER_AUTH_BASE_URL: 'http://localhost:${consolePort}',
       },
       instances: 1,
       exec_mode: 'fork',

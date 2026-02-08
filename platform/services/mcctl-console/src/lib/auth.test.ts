@@ -10,7 +10,7 @@ describe('auth', () => {
   beforeEach(() => {
     vi.resetModules();
     process.env.BETTER_AUTH_SECRET = 'test-secret-key-for-testing';
-    process.env.BETTER_AUTH_URL = 'http://localhost:5000';
+    process.env.BETTER_AUTH_BASE_URL = 'http://localhost:5000';
   });
 
   it('should export auth instance', async () => {

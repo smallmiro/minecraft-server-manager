@@ -77,6 +77,13 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.15.3 (2026-02-08)
+- **fix(cli)**: Correct `BETTER_AUTH_URL` to `BETTER_AUTH_BASE_URL` in ecosystem.config.cjs
+- **fix(console)**: Fix trustedOrigins env var name to `BETTER_AUTH_BASE_URL`
+- **fix(console)**: Use `MCCTL_ROOT` env var for DB path resolution in db.ts
+- **fix(console)**: Add missing `user_servers` table to auto-creation DDL
+- **fix(cli,api)**: Move audit.db to `MCCTL_ROOT/data/audit.db`
+
 ### v1.15.2 (2026-02-08)
 - **fix(cli)**: Replace `NEXTAUTH_SECRET`/`NEXTAUTH_URL` with `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL` in ecosystem.config.cjs
 - **fix(console)**: Auto-create Better Auth SQLite tables (users, accounts, sessions, verifications) on startup
@@ -99,9 +106,6 @@ mcctl logs myserver
 - **feat(shared,cli)**: Unified PrerequisiteChecker for `mcctl init` and `mcctl console init`
 - **feat(console)**: `@minecraft-docker/mcctl-console` npm package publishing
 - **feat(cli)**: `mcctl console service stop/restart --force` option (#238)
-
-### v1.12.1 (2026-02-07)
-- **fix(console)**: Add `not_created` status to all SSE and API interface type definitions
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

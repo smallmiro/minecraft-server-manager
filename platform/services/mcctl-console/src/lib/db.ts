@@ -6,14 +6,16 @@ import { mkdirSync, existsSync } from 'fs';
 
 /**
  * Get the database file path from environment or default location
+ * Priority: DATABASE_URL > MCCTL_ROOT/data/mcctl.db > cwd/data/mcctl.db
  */
 export function getDatabasePath(): string {
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
   }
 
-  // Default to data/mcctl.db in the project root
-  const dataDir = path.join(process.cwd(), 'data');
+  // Use MCCTL_ROOT if available (set by ecosystem.config.cjs via PM2)
+  const rootDir = process.env.MCCTL_ROOT || process.cwd();
+  const dataDir = path.join(rootDir, 'data');
   return path.join(dataDir, 'mcctl.db');
 }
 
@@ -89,6 +91,15 @@ CREATE TABLE IF NOT EXISTS verifications (
   created_at INTEGER,
   updated_at INTEGER
 );
+CREATE TABLE IF NOT EXISTS user_servers (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  server_id TEXT NOT NULL,
+  permission TEXT NOT NULL DEFAULT 'view',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS user_server_idx ON user_servers(user_id, server_id);
 `);
 
 /**
