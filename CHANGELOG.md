@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.5] - 2026-02-08
+
+### Fixed
+- **CLI Better Auth Password Hashing** - Fix scrypt salt to use hex string instead of raw bytes in console-db.ts
+  - Better Auth uses hex-encoded salt STRING as the scrypt salt parameter, not raw bytes
+  - Previously, CLI-created passwords were incompatible with Better Auth's verification
+  - Now matches Better Auth's exact hashing behavior for cross-system password compatibility
+- **CLI ecosystem.config.cjs MCCTL_API_KEY** - Add `MCCTL_API_KEY` environment variable to mcctl-console PM2 config (#261)
+  - Console service now receives the API key for authenticated API communication
+  - Only added when API key is configured during `mcctl console init`
+
 ## [1.15.4] - 2026-02-08
 
 ### Fixed

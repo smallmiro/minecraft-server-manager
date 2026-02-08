@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.15.5 (2026-02-08)
+- **fix(cli)**: Fix Better Auth password hashing - use hex string salt for compatibility
+- **fix(cli)**: Add `MCCTL_API_KEY` env var to mcctl-console PM2 config (#261)
+
 ### v1.15.4 (2026-02-08)
 - **fix(console)**: Explicitly pass `baseURL` and `secret` to Better Auth config
 - **fix(console)**: Fix HTTP session persistence - disable Secure cookies on HTTP environments
@@ -101,16 +105,6 @@ mcctl logs myserver
 - **feat(cli)**: Auto-install mcctl-console package in `console init`
 - **fix(cli)**: Resolve service script paths independently for each service
 - **fix(cli)**: Add defaultValue to modpack version prompt to prevent trim error
-
-### v1.14.0 (2026-02-08)
-- **feat**: Add NeoForge to mod loader options (CLI, API, Web Console)
-- **feat(cli)**: MODRINTH modpack server creation support (#244)
-- **feat(console)**: MODRINTH modpack server creation UI (#246)
-
-### v1.13.0 (2026-02-07)
-- **feat(shared,cli)**: Unified PrerequisiteChecker for `mcctl init` and `mcctl console init`
-- **feat(console)**: `@minecraft-docker/mcctl-console` npm package publishing
-- **feat(cli)**: `mcctl console service stop/restart --force` option (#238)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
