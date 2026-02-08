@@ -3,6 +3,11 @@ import { getContainer } from '../infrastructure/index.js';
 import { promptSudoPasswordIfNeeded } from '../lib/sudo-utils.js';
 
 /**
+ * Modpack server types
+ */
+const MODPACK_TYPES = ['MODRINTH', 'AUTO_CURSEFORGE'] as const;
+
+/**
  * Create command options from CLI arguments
  */
 export interface CreateCommandOptions {
@@ -64,6 +69,12 @@ async function createWithArguments(
   const prompt = container.promptPort;
 
   try {
+    // Validate modpack options before calling use case
+    const validationError = validateModpackOptions(options);
+    if (validationError) {
+      return validationError;
+    }
+
     const server = await useCase.executeWithConfig({
       name: options.name!,
       type: options.type,
@@ -106,6 +117,33 @@ async function createWithArguments(
     log.error(message);
     return 1;
   }
+}
+
+/**
+ * Validate modpack options consistency
+ * Returns non-zero exit code if validation fails, undefined otherwise
+ */
+function validateModpackOptions(options: CreateCommandOptions): number | undefined {
+  if (!options.type) {
+    return undefined; // No type specified, let use case handle defaults
+  }
+
+  const normalizedType = options.type.toUpperCase();
+
+  // Check if MODRINTH type without modpack slug
+  if (normalizedType === 'MODRINTH' && !options.modpack) {
+    log.error('--modpack <slug> is required when using -t MODRINTH');
+    log.info('Example: mcctl create myserver -t MODRINTH --modpack cobblemon');
+    return 1;
+  }
+
+  // Warn if modpack option used with non-modpack type
+  if (options.modpack && !MODPACK_TYPES.includes(normalizedType as typeof MODPACK_TYPES[number])) {
+    log.warn(`--modpack option is only used for modpack server types (${MODPACK_TYPES.join(', ')}).`);
+    log.warn(`Server type ${normalizedType} does not use modpacks. The --modpack option will be ignored.`);
+  }
+
+  return undefined; // Validation passed
 }
 
 /**
