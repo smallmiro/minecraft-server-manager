@@ -320,11 +320,12 @@ mcctl create [name] [options]
 
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
-| `--type` | `-t` | 서버 타입: PAPER, VANILLA, FORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT |
+| `--type` | `-t` | 서버 타입: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, MODRINTH |
 | `--version` | `-v` | 마인크래프트 버전 (예: 1.21.1) |
 | `--seed` | `-s` | 월드 생성 시드 |
 | `--world-url` | `-u` | ZIP URL에서 월드 다운로드 |
 | `--world` | `-w` | worlds/ 디렉토리의 기존 월드 사용 |
+| `--modpack` | | Modrinth 모드팩 서버 생성 활성화 (대화형 검색) |
 | `--no-start` | | 생성만 하고 시작하지 않음 |
 | `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
 
@@ -362,6 +363,18 @@ mcctl create [name] [options]
     mcctl create myserver --no-start
     ```
 
+=== "모드팩 (Modrinth)"
+    ```bash
+    # 대화형 모드팩 생성 (검색, 버전 선택, 로더 선택)
+    mcctl create myserver --modpack
+
+    # CLI가 다음을 안내합니다:
+    # 1. Modrinth에서 모드팩 검색
+    # 2. 모드팩 버전 선택
+    # 3. 모드 로더 선택 (지원되는 로더만 표시)
+    # 4. 메모리 및 기타 설정 구성
+    ```
+
 === "자동화 (CI/CD)"
     ```bash
     # 환경 변수로 sudo 비밀번호 전달
@@ -385,6 +398,7 @@ mcctl create [name] [options]
 | `BUKKIT` | 클래식 플러그인 서버 | Yes | No |
 | `PURPUR` | 더 많은 기능이 있는 Paper 포크 | Yes | No |
 | `QUILT` | 현대적인 모딩 툴체인 | No | Yes |
+| `MODRINTH` | Modrinth 모드팩 서버 | No | Yes |
 
 ---
 

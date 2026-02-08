@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-02-08
+
+### Added
+- **MODRINTH Modpack Server Creation (CLI)** - Create servers from Modrinth modpacks with interactive search (#244)
+  - `mcctl create --modpack` flag enables modpack server creation flow
+  - Modrinth API integration for modpack search, version listing, and loader detection
+  - Dynamic mod loader filtering: only show loaders the modpack actually supports
+  - Automatic environment variable configuration (TYPE=MODRINTH, MODRINTH_MODPACK, etc.)
+- **MODRINTH Modpack Server Creation (Web Console)** - Modpack server creation UI in Management Console (#246)
+  - Modpack search with debounced input in CreateServerDialog
+  - Version and loader selection with dynamic filtering
+  - Extended `CreateServerRequest` type with modpack fields (modpackSlug, modpackVersion, modpackLoader)
+- **NeoForge Mod Loader Option** - NeoForge added to mod loader selection in CLI, API, and Web Console
+  - Available as mod loader choice when creating modpack servers
+  - Filtered dynamically based on modpack support via Modrinth API
+
 ## [1.13.0] - 2026-02-07
 
 ### Added

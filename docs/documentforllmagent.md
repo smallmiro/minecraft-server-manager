@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 1.13.0
-> **Last Updated**: 2026-02-07
+> **Version**: 1.14.0
+> **Last Updated**: 2026-02-08
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -324,6 +324,21 @@ mcctl create [name] [options]
 | `--no-start` | | Create without starting | - |
 
 **Interactive mode**: Run `mcctl create` without a name for guided prompts.
+
+**Interactive mode flow for MODRINTH type** (v1.14.0+):
+
+When selecting MODRINTH as the server type in interactive mode, the flow changes:
+
+1. **Server name** - alphanumeric, lowercase, hyphens allowed
+2. **Server type** - select MODRINTH
+3. **Modpack slug** - enter Modrinth modpack slug or URL (e.g., `cobblemon`)
+4. **Mod loader** - select from loaders supported by the modpack (dynamically fetched from Modrinth API). Options: Auto-detect, Fabric, Forge, NeoForge, Quilt (only loaders supported by the modpack are shown)
+5. **Modpack version** - specific version or leave empty for latest
+6. **Memory** - defaults to 6G for modpacks
+7. **World selection** - create new world, use existing, or download from URL
+8. **Confirmation** - review settings before creation
+
+> **Note**: Minecraft version is not prompted for modpack servers; it is determined by the modpack.
 
 **What happens during creation:**
 1. Server directory created at `~/minecraft-servers/servers/<name>/`
@@ -724,9 +739,18 @@ The `--all` flag updates mcctl-api, mcctl-console, and @minecraft-docker/shared 
 | Platform | Environment Variable | Description |
 |----------|---------------------|-------------|
 | `AUTO_CURSEFORGE` | `CF_API_KEY`, `CF_SLUG` | Automatic CurseForge modpack installation |
-| `MODRINTH` | `MODRINTH_MODPACK` | Modrinth modpack installation |
+| `MODRINTH` | `MODRINTH_MODPACK`, `MODRINTH_LOADER`, `MODRINTH_VERSION` | Modrinth modpack installation with dynamic loader detection |
 | `FTBA` | `FTB_MODPACK_ID` | Feed The Beast modpacks |
 | `CUSTOM` | `CUSTOM_SERVER` | Custom server JAR URL or path |
+
+**MODRINTH Modpack Server** (v1.14.0+): When creating a MODRINTH server via interactive CLI, the system:
+
+1. Prompts for **modpack slug** (e.g., `cobblemon`, `adrenaserver`)
+2. Queries Modrinth API to detect **supported loaders** dynamically (e.g., if a modpack only supports `fabric` and `quilt`, then `forge` and `neoforge` are excluded from the selection)
+3. Prompts for **mod loader** selection (auto-detect, or choose from available loaders: `forge`, `fabric`, `neoforge`, `quilt`)
+4. Prompts for **modpack version** (leave empty for latest)
+5. Skips Minecraft version prompt (determined by the modpack)
+6. Defaults memory to `6G` (modpacks are heavier than standard servers)
 
 ### Type-Specific Variables
 
@@ -1172,11 +1196,42 @@ curl -X POST -H "X-API-Key: mctk_xxx" \
 ### Example: Create Server
 
 ```bash
+# Standard server
 curl -X POST -H "X-API-Key: mctk_xxx" \
   -H "Content-Type: application/json" \
   -d '{"name": "survival", "type": "PAPER", "version": "1.21.1", "memory": "4G"}' \
   http://localhost:5001/api/servers
+
+# MODRINTH modpack server (v1.14.0+)
+curl -X POST -H "X-API-Key: mctk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "cobblemon",
+    "type": "MODRINTH",
+    "memory": "6G",
+    "modpack": "cobblemon-modpack",
+    "modLoader": "fabric",
+    "modpackVersion": ""
+  }' \
+  http://localhost:5001/api/servers
 ```
+
+**Create Server request body fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Server name |
+| `type` | string | No | Server type (default: `PAPER`). Use `MODRINTH` for modpacks |
+| `version` | string | No | Minecraft version (default: `LATEST`) |
+| `memory` | string | No | Memory allocation (default: `4G`) |
+| `modpack` | string | No | Modrinth modpack slug, ID, or URL (required for `MODRINTH` type) |
+| `modpackVersion` | string | No | Specific modpack version ID (empty for latest) |
+| `modLoader` | string | No | Mod loader override: `forge`, `fabric`, `neoforge`, `quilt` (empty for auto-detect) |
+| `seed` | string | No | World seed |
+| `worldUrl` | string | No | Download world from a ZIP URL |
+| `worldName` | string | No | Use existing world from worlds/ |
+| `autoStart` | boolean | No | Start server after creation (default: `true`) |
+| `sudoPassword` | string | No | Sudo password for mDNS registration |
 
 ### Example: Start/Stop/Restart Server
 
@@ -1366,7 +1421,9 @@ mcctl-console is a Next.js web application providing a modern UI for managing Mi
 - Server cards showing: name, type, version, status, players, hostname
 - Quick action buttons: Start / Stop / Restart per server
 - Real-time status via SSE (no polling)
-- Create Server dialog with type, version, memory, world options
+- Create Server dialog with type, version, memory, world options (supports Standard and Modpack modes)
+  - **Standard mode**: Select server type (PAPER, FORGE, etc.), version, memory
+  - **Modpack mode** (v1.14.0+): Enter Modrinth modpack slug, select mod loader (forge/fabric/neoforge/quilt), specify version
 - Recent Activity Feed from audit logs
 - Changelog Feed from GitHub releases
 
@@ -2471,6 +2528,16 @@ A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix kno
 ---
 
 ## 16. Version History
+
+### Version 1.14.0 (2026-02-08)
+
+**Added:**
+- MODRINTH modpack server creation via CLI interactive mode with slug, loader, and version prompts
+- Dynamic mod loader detection from Modrinth API (only loaders supported by the modpack are shown)
+- NeoForge added as mod loader option for MODRINTH modpack servers (`forge`, `fabric`, `neoforge`, `quilt`)
+- MODRINTH modpack server creation via Web Console (Create Server dialog with Standard/Modpack toggle)
+- REST API `POST /api/servers` supports `modpack`, `modpackVersion`, `modLoader` fields for MODRINTH type
+- `modLoader` schema includes `neoforge` option in REST API
 
 ### Version 1.13.0 (2026-02-07)
 

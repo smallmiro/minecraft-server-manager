@@ -16,8 +16,14 @@ mcctl create myserver -t VANILLA -v 1.21.1
 # Forge (모드)
 mcctl create myserver -t FORGE -v 1.20.4
 
+# NeoForge (현대적인 Forge 포크, 1.20.1+)
+mcctl create myserver -t NEOFORGE -v 1.21.1
+
 # Fabric (경량 모드)
 mcctl create myserver -t FABRIC -v 1.21.1
+
+# Modrinth 모드팩
+mcctl create myserver --modpack
 ```
 
 ## 개요
@@ -27,7 +33,9 @@ mcctl create myserver -t FABRIC -v 1.21.1
 | **PAPER** | 예 | 아니오 | 매우 좋음 | 일반 사용, 플러그인 |
 | **VANILLA** | 아니오 | 아니오 | 좋음 | 순수 Minecraft 경험 |
 | **FORGE** | 아니오 | 예 | 다양함 | Forge 모드팩 |
+| **NEOFORGE** | 아니오 | 예 | 다양함 | 현대적인 Forge 모드 (1.20.1+) |
 | **FABRIC** | 아니오 | 예 | 매우 좋음 | 성능 모드 |
+| **MODRINTH** | 아니오 | 예 | 다양함 | Modrinth 모드팩 |
 | **SPIGOT** | 예 | 아니오 | 좋음 | 레거시 플러그인 호환성 |
 | **BUKKIT** | 예 | 아니오 | 보통 | 매우 오래된 플러그인 |
 | **PURPUR** | 예 | 아니오 | 매우 좋음 | 고급 커스터마이징 |
@@ -168,6 +176,96 @@ mcctl stop myserver && mcctl start myserver
 ```bash
 mcctl config myserver MEMORY 8G
 ```
+
+---
+
+## NeoForge
+
+개선된 API와 활발한 개발이 이루어지는 현대적인 Forge 포크입니다. Minecraft 1.20.1 이상을 지원합니다.
+
+### NeoForge 서버 생성
+
+```bash
+mcctl create myserver -t NEOFORGE -v 1.21.1
+```
+
+### 특징
+
+- 현대적인 API로 활발한 개발
+- Forge 모드 호환성 (많은 Forge 모드가 NeoForge에서 작동)
+- 레거시 Forge 대비 향상된 성능
+- 개선된 모드 로딩 및 의존성 관리
+
+### 설정
+
+```bash
+# 메모리 설정 (모드팩은 더 많이 필요)
+mcctl config myserver MEMORY 8G
+
+# Modrinth에서 모드 추가
+mcctl config myserver MODRINTH_PROJECTS "jei,create"
+
+# 변경 사항 적용
+mcctl stop myserver && mcctl start myserver
+```
+
+### 사용 시기
+
+- Minecraft 1.20.1+를 대상으로 하는 새 모드 서버 프로젝트
+- 현대적인 Forge API와 활발한 커뮤니티 개발을 선호하는 경우
+- 레거시 Forge 대비 향상된 성능을 원하는 경우
+
+!!! note "Minecraft 버전 요구사항"
+    NeoForge는 Minecraft 1.20.1 이상이 필요합니다. 이전 버전의 경우 FORGE를 사용하세요.
+
+---
+
+## Modrinth 모드팩
+
+Modrinth 모드팩으로 서버를 생성합니다. 모드팩에는 필요한 모든 모드, 설정, 구성이 미리 포함되어 있습니다.
+
+### Modrinth 모드팩 서버 생성
+
+```bash
+# 대화형 모드 (권장) - 모드팩 검색 및 선택
+mcctl create myserver --modpack
+
+# 대화형 흐름:
+# 1. Modrinth에서 모드팩 검색
+# 2. 버전 선택
+# 3. 모드 로더 선택 (지원되는 로더만 표시)
+# 4. 메모리 및 기타 설정 구성
+```
+
+### 특징
+
+- CLI에서 직접 Modrinth 모드팩 검색
+- 동적 로더 감지: 모드팩이 지원하는 로더만 표시 (Forge, NeoForge, Fabric, Quilt)
+- 버전 목록으로 자동 버전 선택
+- 즉시 플레이를 위한 미리 구성된 모드 세트
+
+### 설정
+
+모드팩 서버는 다음으로 구성됩니다:
+
+```bash
+TYPE=MODRINTH
+MODRINTH_MODPACK=<modpack-slug>
+MODRINTH_VERSION=<version-id>       # 선택사항
+MODRINTH_LOADER=<loader>            # forge, neoforge, fabric, quilt
+```
+
+### 메모리 권장사항
+
+| 모드팩 크기 | 권장 메모리 |
+|-------------|-------------|
+| 가벼움 (10-30개 모드) | 4-6G |
+| 중간 (30-100개 모드) | 6-8G |
+| 무거움 (100개+ 모드) | 8-12G |
+
+### Web Console
+
+Modrinth 모드팩 서버는 Web Console (Management Console)에서도 동일한 모드팩 검색 및 동적 로더 선택으로 생성할 수 있습니다.
 
 ---
 
@@ -351,7 +449,10 @@ flowchart TD
     A{모드가 필요한가요?} -->|예| B{어떤 타입?}
     A -->|아니오| C{플러그인이 필요한가요?}
 
-    B -->|Forge 모드| D[FORGE]
+    B -->|Modrinth 모드팩| M[MODRINTH 모드팩]
+    B -->|Forge 모드| D{Minecraft 버전?}
+    D -->|1.20.1+| N[NEOFORGE 또는 FORGE]
+    D -->|이전 버전| O[FORGE]
     B -->|Fabric/Quilt| E{우선순위?}
     E -->|최신 기능| F[QUILT]
     E -->|호환성| G[FABRIC]
@@ -370,7 +471,9 @@ flowchart TD
 |-----------|--------|
 | 일반 멀티플레이어 | `mcctl create myserver -t PAPER -v 1.21.1` |
 | 성능 중심 | `mcctl create myserver -t PAPER -v 1.21.1` 또는 `-t FABRIC` |
-| 복잡한 모드팩 | `mcctl create myserver -t FORGE -v 1.20.4` |
+| 복잡한 모드팩 | `mcctl create myserver --modpack` |
+| Forge 모드 (현대) | `mcctl create myserver -t NEOFORGE -v 1.21.1` |
+| Forge 모드 (레거시) | `mcctl create myserver -t FORGE -v 1.20.4` |
 | 가벼운 최적화 모드 | `mcctl create myserver -t FABRIC -v 1.21.1` |
 | 순수 바닐라 | `mcctl create myserver -t VANILLA -v 1.21.1` |
 | 최대 커스터마이징 | `mcctl create myserver -t PURPUR -v 1.21.1` |
@@ -414,6 +517,36 @@ mcctl config modded CURSEFORGE_FILES "create,jei,journeymap"
 
 # 적용을 위해 재시작
 mcctl stop modded && mcctl start modded
+```
+
+### 모드 서버 (NeoForge)
+
+```bash
+# 서버 생성
+mcctl create modern -t NEOFORGE -v 1.21.1
+
+# 설정
+mcctl config modern MEMORY 8G
+mcctl config modern USE_AIKAR_FLAGS true
+
+# Modrinth에서 모드 추가
+mcctl config modern MODRINTH_PROJECTS "create,jei,journeymap"
+
+# 적용을 위해 재시작
+mcctl stop modern && mcctl start modern
+```
+
+### 모드팩 서버 (Modrinth)
+
+```bash
+# 모드팩 서버 생성 (대화형)
+mcctl create modpack-server --modpack
+
+# CLI가 다음을 안내합니다:
+# 1. Modrinth에서 모드팩 검색
+# 2. 모드팩 버전 선택
+# 3. 모드 로더 선택 (Forge, NeoForge, Fabric, Quilt)
+# 4. 메모리 할당 설정
 ```
 
 ### 성능 서버 (Fabric)

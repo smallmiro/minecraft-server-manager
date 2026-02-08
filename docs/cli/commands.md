@@ -320,11 +320,12 @@ mcctl create [name] [options]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--type` | `-t` | Server type: PAPER, VANILLA, FORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT |
+| `--type` | `-t` | Server type: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, MODRINTH |
 | `--version` | `-v` | Minecraft version (e.g., 1.21.1) |
 | `--seed` | `-s` | World seed for generation |
 | `--world-url` | `-u` | Download world from ZIP URL |
 | `--world` | `-w` | Use existing world from worlds/ directory |
+| `--modpack` | | Enable Modrinth modpack server creation (interactive search) |
 | `--no-start` | | Create without starting |
 | `--sudo-password` | | Sudo password for mDNS registration (automation) |
 
@@ -362,6 +363,18 @@ mcctl create [name] [options]
     mcctl create myserver --no-start
     ```
 
+=== "Modpack (Modrinth)"
+    ```bash
+    # Interactive modpack creation (search, select version, choose loader)
+    mcctl create myserver --modpack
+
+    # The CLI will guide you through:
+    # 1. Search Modrinth for modpacks
+    # 2. Select a modpack version
+    # 3. Choose a mod loader (only supported loaders shown)
+    # 4. Configure memory and other settings
+    ```
+
 === "Automation (CI/CD)"
     ```bash
     # Using environment variable for sudo password
@@ -385,6 +398,7 @@ mcctl create [name] [options]
 | `BUKKIT` | Classic plugin server | Yes | No |
 | `PURPUR` | Paper fork with more features | Yes | No |
 | `QUILT` | Modern modding toolchain | No | Yes |
+| `MODRINTH` | Modrinth modpack server | No | Yes |
 
 ---
 

@@ -16,8 +16,14 @@ mcctl create myserver -t VANILLA -v 1.21.1
 # Forge (mods)
 mcctl create myserver -t FORGE -v 1.20.4
 
+# NeoForge (modern Forge fork, 1.20.1+)
+mcctl create myserver -t NEOFORGE -v 1.21.1
+
 # Fabric (lightweight mods)
 mcctl create myserver -t FABRIC -v 1.21.1
+
+# Modrinth modpack
+mcctl create myserver --modpack
 ```
 
 ## Overview
@@ -27,7 +33,9 @@ mcctl create myserver -t FABRIC -v 1.21.1
 | **PAPER** | Yes | No | Excellent | General use, plugins |
 | **VANILLA** | No | No | Good | Pure Minecraft experience |
 | **FORGE** | No | Yes | Varies | Forge mod packs |
+| **NEOFORGE** | No | Yes | Varies | Modern Forge mods (1.20.1+) |
 | **FABRIC** | No | Yes | Excellent | Performance mods |
+| **MODRINTH** | No | Yes | Varies | Modrinth modpacks |
 | **SPIGOT** | Yes | No | Good | Legacy plugin compatibility |
 | **BUKKIT** | Yes | No | Moderate | Very old plugins |
 | **PURPUR** | Yes | No | Excellent | Advanced customization |
@@ -168,6 +176,96 @@ mcctl stop myserver && mcctl start myserver
 ```bash
 mcctl config myserver MEMORY 8G
 ```
+
+---
+
+## NeoForge
+
+Modern fork of Forge with improved APIs and active development. Supports Minecraft 1.20.1 and above.
+
+### Create NeoForge Server
+
+```bash
+mcctl create myserver -t NEOFORGE -v 1.21.1
+```
+
+### Features
+
+- Active development with modern APIs
+- Forge mod compatibility (many Forge mods work on NeoForge)
+- Improved performance over legacy Forge
+- Better mod loading and dependency management
+
+### Configuration
+
+```bash
+# Set memory (modpacks need more)
+mcctl config myserver MEMORY 8G
+
+# Add mods from Modrinth
+mcctl config myserver MODRINTH_PROJECTS "jei,create"
+
+# Apply changes
+mcctl stop myserver && mcctl start myserver
+```
+
+### When to Use
+
+- New modded server projects targeting Minecraft 1.20.1+
+- Prefer modern Forge APIs and active community development
+- Want improved performance over legacy Forge
+
+!!! note "Minecraft Version Requirement"
+    NeoForge requires Minecraft 1.20.1 or newer. For older versions, use FORGE instead.
+
+---
+
+## Modrinth Modpack
+
+Create a server from a Modrinth modpack. The modpack includes all required mods, configurations, and settings pre-configured.
+
+### Create Modrinth Modpack Server
+
+```bash
+# Interactive mode (recommended) - search and select modpack
+mcctl create myserver --modpack
+
+# The interactive flow will:
+# 1. Search Modrinth for modpacks
+# 2. Select a version
+# 3. Choose a mod loader (only supported loaders shown)
+# 4. Configure memory and other settings
+```
+
+### Features
+
+- Search Modrinth modpacks directly from CLI
+- Dynamic loader detection: only shows loaders the modpack supports (Forge, NeoForge, Fabric, Quilt)
+- Automatic version selection with version listing
+- Pre-configured mod sets for immediate play
+
+### Configuration
+
+The modpack server is configured with:
+
+```bash
+TYPE=MODRINTH
+MODRINTH_MODPACK=<modpack-slug>
+MODRINTH_VERSION=<version-id>       # optional
+MODRINTH_LOADER=<loader>            # forge, neoforge, fabric, quilt
+```
+
+### Memory Recommendations
+
+| Modpack Size | Recommended Memory |
+|--------------|-------------------|
+| Light (10-30 mods) | 4-6G |
+| Medium (30-100 mods) | 6-8G |
+| Heavy (100+ mods) | 8-12G |
+
+### Web Console
+
+Modrinth modpack servers can also be created from the Web Console (Management Console) with the same modpack search and dynamic loader selection.
 
 ---
 
@@ -351,7 +449,10 @@ flowchart TD
     A{Need mods?} -->|Yes| B{Which type?}
     A -->|No| C{Need plugins?}
 
-    B -->|Forge mods| D[FORGE]
+    B -->|Modpack from Modrinth| M[MODRINTH modpack]
+    B -->|Forge mods| D{Minecraft version?}
+    D -->|1.20.1+| N[NEOFORGE or FORGE]
+    D -->|Older| O[FORGE]
     B -->|Fabric/Quilt| E{Priority?}
     E -->|Cutting-edge| F[QUILT]
     E -->|Compatibility| G[FABRIC]
@@ -370,7 +471,9 @@ flowchart TD
 |----------|---------|
 | General multiplayer | `mcctl create myserver -t PAPER -v 1.21.1` |
 | Performance-focused | `mcctl create myserver -t PAPER -v 1.21.1` or `-t FABRIC` |
-| Complex modpacks | `mcctl create myserver -t FORGE -v 1.20.4` |
+| Complex modpacks | `mcctl create myserver --modpack` |
+| Forge mods (modern) | `mcctl create myserver -t NEOFORGE -v 1.21.1` |
+| Forge mods (legacy) | `mcctl create myserver -t FORGE -v 1.20.4` |
 | Light optimization mods | `mcctl create myserver -t FABRIC -v 1.21.1` |
 | Pure vanilla | `mcctl create myserver -t VANILLA -v 1.21.1` |
 | Maximum customization | `mcctl create myserver -t PURPUR -v 1.21.1` |
@@ -414,6 +517,36 @@ mcctl config modded CURSEFORGE_FILES "create,jei,journeymap"
 
 # Restart to apply
 mcctl stop modded && mcctl start modded
+```
+
+### Modded Server (NeoForge)
+
+```bash
+# Create server
+mcctl create modern -t NEOFORGE -v 1.21.1
+
+# Configure
+mcctl config modern MEMORY 8G
+mcctl config modern USE_AIKAR_FLAGS true
+
+# Add mods from Modrinth
+mcctl config modern MODRINTH_PROJECTS "create,jei,journeymap"
+
+# Restart to apply
+mcctl stop modern && mcctl start modern
+```
+
+### Modpack Server (Modrinth)
+
+```bash
+# Create modpack server (interactive)
+mcctl create modpack-server --modpack
+
+# The CLI will guide you through:
+# 1. Searching for modpacks on Modrinth
+# 2. Selecting a modpack version
+# 3. Choosing a mod loader (Forge, NeoForge, Fabric, Quilt)
+# 4. Setting memory allocation
 ```
 
 ### Performance Server (Fabric)

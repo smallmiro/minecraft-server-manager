@@ -40,7 +40,7 @@ mcctl create myserver -t PAPER -v 1.21.1
 
 | 옵션 | 설명 | 기본값 |
 |------|------|--------|
-| `-t, --type` | 서버 타입 (PAPER, VANILLA, FORGE, FABRIC) | PAPER |
+| `-t, --type` | 서버 타입 (PAPER, VANILLA, FORGE, NEOFORGE, FABRIC) | PAPER |
 | `-v, --version` | Minecraft 버전 | 최신 버전 |
 | `-s, --seed` | 월드 시드 | 랜덤 |
 | `--no-start` | 시작하지 않고 생성만 | 자동 시작 |

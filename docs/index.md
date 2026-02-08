@@ -18,6 +18,7 @@ A DevOps solution for managing multiple Minecraft Java Edition servers using Doc
 - **nip.io Magic DNS**: No client configuration needed with `server.<ip>.nip.io`
 - **Auto-Scaling**: Servers start on connect, stop after idle timeout
 - **Interactive CLI**: Beautiful terminal UI with @clack/prompts
+- **Modpack Support**: Create servers from Modrinth modpacks with dynamic loader detection
 - **World Management**: Assign, lock, and release worlds between servers
 - **Player Management**: Operators, whitelist, bans, and kicks via CLI
 - **GitHub Backup**: Automatic world backup to private repositories

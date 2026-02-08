@@ -40,7 +40,7 @@ Options:
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `-t, --type` | Server type (PAPER, VANILLA, FORGE, FABRIC) | PAPER |
+| `-t, --type` | Server type (PAPER, VANILLA, FORGE, NEOFORGE, FABRIC) | PAPER |
 | `-v, --version` | Minecraft version | Latest |
 | `-s, --seed` | World seed | Random |
 | `--no-start` | Create without starting | Start automatically |

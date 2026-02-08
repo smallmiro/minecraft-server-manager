@@ -29,6 +29,7 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **Management Console**: Web Console (port 5000) + REST API (port 5001) for remote management
 - **Player Management**: Unified `mcctl player` command with Mojang API integration
 - **Mod Management**: Search, add, and remove mods from Modrinth, CurseForge, Spiget
+- **Modpack Support**: Create servers from Modrinth modpacks with dynamic loader detection
 - **NeoForge Support**: Full support for NeoForge modded servers (Minecraft 1.20.1+)
 - **GitHub Backup**: Automatic world backup to private GitHub repositories
 - **Audit Logs**: Comprehensive activity tracking with SQLite storage, auto-cleanup, and web UI
@@ -357,10 +358,11 @@ pnpm automatically builds packages in dependency order:
 
 ```
 Plugin server → TYPE=PAPER
-Forge mods → TYPE=FORGE + java17/java8
-Fabric mods → TYPE=FABRIC + java21
-Modpacks → TYPE=AUTO_CURSEFORGE or TYPE=MODRINTH
-Vanilla → TYPE=VANILLA (default)
+Forge mods    → TYPE=FORGE + java17/java8
+NeoForge mods → TYPE=NEOFORGE (1.20.1+)
+Fabric mods   → TYPE=FABRIC + java21
+Modpacks      → TYPE=MODRINTH (mcctl create --modpack)
+Vanilla       → TYPE=VANILLA (default)
 ```
 
 ---
@@ -850,6 +852,16 @@ cat /etc/avahi/hosts
 ---
 
 ## Changelog
+
+### [1.14.0] - 2026-02-08
+
+**Added:**
+- **MODRINTH Modpack Server Creation** - Create servers from Modrinth modpacks via CLI and Web Console (#244, #246)
+  - `mcctl create --modpack` enables interactive modpack search and selection
+  - Modrinth API integration for modpack search, version listing, and loader detection
+  - Dynamic mod loader filtering: only show loaders the modpack actually supports
+- **NeoForge Mod Loader Option** - NeoForge added to mod loader selection in CLI, API, and Web Console
+- **Extended CreateServerRequest** - Add modpack fields (modpackSlug, modpackVersion, modpackLoader) to server creation API
 
 ### [1.13.0] - 2026-02-07
 

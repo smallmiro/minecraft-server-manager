@@ -1,7 +1,7 @@
 # mcctl Server Configuration Reference
 
-> **Version**: 1.13.0
-> **Last Updated**: 2026-02-07
+> **Version**: 1.14.0
+> **Last Updated**: 2026-02-08
 > **Purpose**: Complete reference for all server creation and configuration options in mcctl
 
 This document provides an exhaustive reference for creating and configuring Minecraft servers using `mcctl`. It covers every environment variable, server type, Java version requirement, mod installation method, and performance tuning option available through the `itzg/minecraft-server` Docker image as managed by mcctl.
@@ -75,12 +75,28 @@ mcctl create imported -t PAPER -v 1.21.1 --world-url https://example.com/world.z
 
 When running `mcctl create` without a name, the interactive prompts are:
 
+**Standard server types (PAPER, FORGE, FABRIC, etc.):**
+
 1. **Server name** - alphanumeric, lowercase, hyphens allowed
 2. **Server type** - select from available types (PAPER is default)
 3. **Minecraft version** - type or select version
 4. **World selection** - create new world, use existing, or download from URL
 5. **World seed** (optional) - if creating new world
-6. **Confirmation** - review settings before creation
+6. **Memory** - memory allocation (default: 4G)
+7. **Confirmation** - review settings before creation
+
+**MODRINTH modpack servers (v1.14.0+):**
+
+1. **Server name** - alphanumeric, lowercase, hyphens allowed
+2. **Server type** - select MODRINTH
+3. **Modpack slug** - enter Modrinth modpack slug or URL (e.g., `cobblemon`, `adrenaserver`)
+4. **Mod loader** - select from loaders dynamically fetched from Modrinth API. Only loaders supported by the modpack are shown (e.g., if the modpack only supports `fabric` and `quilt`, then `forge` and `neoforge` are excluded). Options: Auto-detect, Fabric, Forge, NeoForge, Quilt
+5. **Modpack version** - specific version or leave empty for latest
+6. **Memory** - memory allocation (default: 6G for modpacks)
+7. **World selection** - create new world, use existing, or download from URL
+8. **Confirmation** - review settings before creation
+
+> **Note**: Minecraft version is skipped for modpack servers as it is determined by the modpack.
 
 ### Via REST API: `POST /api/servers`
 
@@ -101,9 +117,32 @@ curl -X POST -H "X-API-Key: mctk_xxx" \
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `name` | string | Yes | Server name |
-| `type` | string | No | Server type (default: `PAPER`) |
+| `type` | string | No | Server type (default: `PAPER`). Use `MODRINTH` for modpacks |
 | `version` | string | No | Minecraft version (default: `LATEST`) |
 | `memory` | string | No | Memory allocation (default: `4G`) |
+| `modpack` | string | No | Modrinth modpack slug, ID, or URL (required for `MODRINTH` type) |
+| `modpackVersion` | string | No | Specific modpack version ID (empty for latest) |
+| `modLoader` | string | No | Mod loader override: `forge`, `fabric`, `neoforge`, `quilt` (empty for auto-detect) |
+| `seed` | string | No | World seed |
+| `worldUrl` | string | No | Download world from a ZIP URL |
+| `worldName` | string | No | Use existing world from worlds/ |
+| `autoStart` | boolean | No | Start server after creation (default: `true`) |
+| `sudoPassword` | string | No | Sudo password for mDNS registration |
+
+**Example: MODRINTH modpack server via REST API (v1.14.0+):**
+
+```bash
+curl -X POST -H "X-API-Key: mctk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "cobblemon",
+    "type": "MODRINTH",
+    "memory": "6G",
+    "modpack": "cobblemon-modpack",
+    "modLoader": "fabric"
+  }' \
+  http://localhost:5001/api/servers
+```
 
 ### What Happens During Creation
 
@@ -531,7 +570,7 @@ MEMORY=8G
 
 ### MODRINTH (Modpack Platform)
 
-Installs modpacks from Modrinth.
+Installs modpacks from Modrinth. When creating via CLI interactive mode (v1.14.0+), the system queries the Modrinth API to dynamically detect which loaders the modpack supports, so only valid loader options are presented.
 
 **Specific Variables:**
 
@@ -539,13 +578,27 @@ Installs modpacks from Modrinth.
 |----------|-------------|
 | `MODRINTH_MODPACK` | Modpack slug, ID, or URL |
 | `MODRINTH_VERSION` | Specific version |
-| `MODRINTH_LOADER` | Mod loader (`forge`, `fabric`, `quilt`) |
+| `MODRINTH_LOADER` | Mod loader (`forge`, `fabric`, `neoforge`, `quilt`) |
+
+> **Note** (v1.14.0+): `neoforge` is now supported as a `MODRINTH_LOADER` option. When creating a MODRINTH server interactively, the CLI fetches the modpack's version data from the Modrinth API and only shows loaders that the modpack actually supports.
 
 ```env
 # config.env
 TYPE=MODRINTH
 MODRINTH_MODPACK=cobblemon-modpack
+MODRINTH_LOADER=fabric
 MEMORY=6G
+```
+
+```bash
+# CLI interactive mode (v1.14.0+)
+mcctl create
+# 1. Enter server name
+# 2. Select type: MODRINTH
+# 3. Enter modpack slug: cobblemon-modpack
+# 4. Select loader: (only loaders supported by the modpack are shown)
+# 5. Enter version: (leave empty for latest)
+# 6. Select memory: 6G (default for modpacks)
 ```
 
 ---
@@ -1770,6 +1823,7 @@ mcctl start atm9
 # config.env
 TYPE=MODRINTH
 MODRINTH_MODPACK=cobblemon-modpack
+MODRINTH_LOADER=fabric
 MEMORY=6G
 USE_AIKAR_FLAGS=true
 DIFFICULTY=normal
@@ -1783,8 +1837,14 @@ MOTD=Cobblemon Modpack Server
 ```
 
 ```bash
+# Option 1: Interactive mode (v1.14.0+ recommended)
+mcctl create
+# Follow prompts: name, type=MODRINTH, slug=cobblemon-modpack, loader=fabric, version=latest
+
+# Option 2: Non-interactive with manual config
 mcctl create cobblemon -t MODRINTH --no-start
 mcctl config cobblemon MODRINTH_MODPACK cobblemon-modpack
+mcctl config cobblemon MODRINTH_LOADER fabric
 mcctl config cobblemon MEMORY 6G
 mcctl start cobblemon
 ```
