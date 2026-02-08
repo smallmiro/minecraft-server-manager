@@ -236,7 +236,7 @@ export class MockPromptAdapter implements IPromptPort {
     return this.values.modpackVersion;
   }
 
-  async promptModpackLoader(): Promise<string | undefined> {
+  async promptModpackLoader(_availableLoaders?: string[]): Promise<string | undefined> {
     if (this._cancelled) {
       throw new MockCancelError();
     }

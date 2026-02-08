@@ -109,8 +109,9 @@ export interface IPromptPort {
 
   /**
    * Prompt for modpack loader (optional)
+   * @param availableLoaders - If provided, only show these loaders as options
    */
-  promptModpackLoader(): Promise<string | undefined>;
+  promptModpackLoader(availableLoaders?: string[]): Promise<string | undefined>;
 
   // ========================================
   // Status Display

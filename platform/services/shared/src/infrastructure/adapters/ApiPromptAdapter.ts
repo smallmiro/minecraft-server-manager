@@ -296,7 +296,7 @@ export class ApiPromptAdapter implements IPromptPort {
     return this.options.modpackVersion;
   }
 
-  async promptModpackLoader(): Promise<string | undefined> {
+  async promptModpackLoader(_availableLoaders?: string[]): Promise<string | undefined> {
     return this.options.modLoader;
   }
 
