@@ -177,6 +177,11 @@ export class Paths {
     return join(this.dataDir, 'backups');
   }
 
+  /** Services installation directory (.services/) - isolates node_modules from user data */
+  get services(): string {
+    return join(this.dataDir, '.services');
+  }
+
   /** .env file path */
   get envFile(): string {
     return join(this.dataDir, '.env');
