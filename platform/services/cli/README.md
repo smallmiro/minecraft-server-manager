@@ -65,7 +65,9 @@ mcctl logs myserver
 | `PAPER` | Paper server (default, recommended) |
 | `VANILLA` | Official Minecraft server |
 | `FORGE` | Forge mod server |
+| `NEOFORGE` | NeoForge mod server (1.20.1+) |
 | `FABRIC` | Fabric mod server |
+| `MODRINTH` | Modrinth modpack server |
 
 ## Requirements
 
@@ -74,6 +76,12 @@ mcctl logs myserver
 - Linux or macOS
 
 ## Changelog
+
+### v1.14.0 (2026-02-08)
+- **feat**: Add NeoForge to mod loader options (CLI, API, Web Console)
+- **feat**: Dynamic modpack loader filtering via Modrinth API - only show loaders the modpack supports
+- **feat(cli)**: MODRINTH modpack server creation support (#244)
+- **feat(console)**: MODRINTH modpack server creation UI (#246)
 
 ### v1.13.0 (2026-02-07)
 - **feat(shared,cli)**: Unified PrerequisiteChecker for `mcctl init` and `mcctl console init`
