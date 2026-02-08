@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/mod-source-modrinth",
-  "version": "1.15.0",
+  "version": "1.15.1",
   "description": "Modrinth adapter for minecraft-docker mod source system",
   "type": "module",
   "main": "./dist/index.js",

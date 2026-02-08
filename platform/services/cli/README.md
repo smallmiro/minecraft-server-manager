@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.15.1 (2026-02-08)
+- **fix(console)**: Change auth client baseURL from `localhost:5000` to empty string for production deployment
+- **fix(console)**: Add `NEXT_PUBLIC_APP_URL` env var support to trustedOrigins
+
 ### v1.15.0 (2026-02-08)
 - **feat(cli)**: Auto-install mcctl-console package in `console init`
 - **fix(cli)**: Resolve service script paths independently for each service
@@ -92,7 +96,6 @@ mcctl logs myserver
 - **feat(shared,cli)**: Unified PrerequisiteChecker for `mcctl init` and `mcctl console init`
 - **feat(console)**: `@minecraft-docker/mcctl-console` npm package publishing
 - **feat(cli)**: `mcctl console service stop/restart --force` option (#238)
-- **feat(console)**: Settings renamed to Routing with Avahi mDNS monitoring (#240)
 - **fix(console)**: Add force-dynamic to all API routes for Next.js build
 
 ### v1.12.1 (2026-02-07)
@@ -102,11 +105,6 @@ mcctl logs myserver
 - **feat(api)**: All-servers SSE status endpoint (`GET /api/servers-status`)
 - **feat(console)**: Server detail delete menu with confirmation dialog
 - **feat(api)**: Audit logging for server create, delete, start, stop, restart actions
-
-### v1.11.0 (2026-02-06)
-- **feat(console)**: World management UI - list, reset, server assignment (#175)
-- **feat(console)**: Server options tab with config management (#229)
-- **feat(console)**: SSE real-time server status replaces polling (#223)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

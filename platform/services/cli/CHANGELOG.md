@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.1] - 2026-02-08
+
+### Fixed
+- **Console Auth BaseURL** - Change Better Auth client baseURL default from `http://localhost:5000` to empty string for production deployment
+  - Browser previously sent auth requests to `localhost:5000` instead of the deployed host
+  - Now uses relative URLs that correctly match the deployed server address
+- **Console Trusted Origins** - Add `NEXT_PUBLIC_APP_URL` environment variable support to trustedOrigins
+  - Enables flexible production origin configuration for cross-origin auth requests
+
 ## [1.15.0] - 2026-02-08
 
 ### Added
