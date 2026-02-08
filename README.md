@@ -853,6 +853,27 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [1.15.2] - 2026-02-08
+
+**Fixed:**
+- **CLI ecosystem.config.cjs** - Replace `NEXTAUTH_SECRET`/`NEXTAUTH_URL` with `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL` in ecosystem config generation
+- **Console SQLite Auto-Creation** - Auto-create Better Auth core tables (users, accounts, sessions, verifications) on startup
+
+### [1.15.1] - 2026-02-08
+
+**Fixed:**
+- **Console Auth BaseURL** - Change Better Auth client baseURL default to empty string for production deployment
+- **Console Trusted Origins** - Add `NEXT_PUBLIC_APP_URL` env var support to trustedOrigins
+
+### [1.15.0] - 2026-02-08
+
+**Added:**
+- **Console Auto-Install** - `mcctl console init` auto-installs mcctl-console package if missing
+
+**Fixed:**
+- Service script paths resolved independently for each service
+- Modpack version prompt trim error on undefined values
+
 ### [1.14.0] - 2026-02-08
 
 **Added:**

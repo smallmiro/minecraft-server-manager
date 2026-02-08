@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.15.2 (2026-02-08)
+- **fix(cli)**: Replace `NEXTAUTH_SECRET`/`NEXTAUTH_URL` with `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL` in ecosystem.config.cjs
+- **fix(console)**: Auto-create Better Auth SQLite tables (users, accounts, sessions, verifications) on startup
+
 ### v1.15.1 (2026-02-08)
 - **fix(console)**: Change auth client baseURL from `localhost:5000` to empty string for production deployment
 - **fix(console)**: Add `NEXT_PUBLIC_APP_URL` env var support to trustedOrigins
@@ -88,7 +92,6 @@ mcctl logs myserver
 
 ### v1.14.0 (2026-02-08)
 - **feat**: Add NeoForge to mod loader options (CLI, API, Web Console)
-- **feat**: Dynamic modpack loader filtering via Modrinth API - only show loaders the modpack supports
 - **feat(cli)**: MODRINTH modpack server creation support (#244)
 - **feat(console)**: MODRINTH modpack server creation UI (#246)
 
@@ -96,15 +99,9 @@ mcctl logs myserver
 - **feat(shared,cli)**: Unified PrerequisiteChecker for `mcctl init` and `mcctl console init`
 - **feat(console)**: `@minecraft-docker/mcctl-console` npm package publishing
 - **feat(cli)**: `mcctl console service stop/restart --force` option (#238)
-- **fix(console)**: Add force-dynamic to all API routes for Next.js build
 
 ### v1.12.1 (2026-02-07)
 - **fix(console)**: Add `not_created` status to all SSE and API interface type definitions
-
-### v1.12.0 (2026-02-06)
-- **feat(api)**: All-servers SSE status endpoint (`GET /api/servers-status`)
-- **feat(console)**: Server detail delete menu with confirmation dialog
-- **feat(api)**: Audit logging for server create, delete, start, stop, restart actions
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

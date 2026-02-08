@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.2] - 2026-02-08
+
+### Fixed
+- **CLI ecosystem.config.cjs Environment Variables** - Replace `NEXTAUTH_SECRET`/`NEXTAUTH_URL` with `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL` in `generateEcosystemConfig()`
+  - Better Auth reads `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL`, not NEXTAUTH variants
+  - Resolves 500 Internal Server Error when accessing Management Console after `mcctl console init`
+- **Console SQLite Table Auto-Creation** - Add `CREATE TABLE IF NOT EXISTS` for Better Auth core tables on app startup
+  - Auto-creates `users`, `accounts`, `sessions`, `verifications` tables when DB file is empty or tables are missing
+  - Prevents crash on first run or when DB is recreated
+  - Enables `foreign_keys` pragma for referential integrity
+
 ## [1.15.1] - 2026-02-08
 
 ### Fixed
