@@ -16,7 +16,7 @@ import {
   Button,
   Chip,
 } from '@mui/material';
-import { Logout, Person } from '@mui/icons-material';
+import { Logout, Person, Settings } from '@mui/icons-material';
 import { useSession, signOut } from '@/lib/auth-client';
 
 export function UserMenu() {
@@ -36,6 +36,11 @@ export function UserMenu() {
     handleCloseMenu();
     await signOut();
     router.push('/login');
+  };
+
+  const handleSettings = () => {
+    handleCloseMenu();
+    router.push('/settings');
   };
 
   const handleLogin = () => {
@@ -115,6 +120,13 @@ export function UserMenu() {
         </Box>
 
         <Divider />
+
+        <MenuItem onClick={handleSettings}>
+          <ListItemIcon>
+            <Settings fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Settings</ListItemText>
+        </MenuItem>
 
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
