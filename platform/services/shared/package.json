@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/shared",
-  "version": "1.15.3",
+  "version": "1.15.4",
   "description": "Shared utilities and types for Minecraft Docker platform",
   "type": "module",
   "main": "dist/index.js",

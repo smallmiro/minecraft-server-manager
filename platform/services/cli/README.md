@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.15.4 (2026-02-08)
+- **fix(console)**: Explicitly pass `baseURL` and `secret` to Better Auth config
+- **fix(console)**: Fix HTTP session persistence - disable Secure cookies on HTTP environments
+- **fix(console)**: Remove duplicate trustedOrigins entry for localhost:5000
+
 ### v1.15.3 (2026-02-08)
 - **fix(cli)**: Correct `BETTER_AUTH_URL` to `BETTER_AUTH_BASE_URL` in ecosystem.config.cjs
 - **fix(console)**: Fix trustedOrigins env var name to `BETTER_AUTH_BASE_URL`
