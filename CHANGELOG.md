@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.3] - 2026-02-08
+
+### Fixed
+- **CLI BETTER_AUTH_BASE_URL** - Fix environment variable name from `BETTER_AUTH_URL` to `BETTER_AUTH_BASE_URL` in ecosystem.config.cjs generation
+  - Better Auth reads `BETTER_AUTH_BASE_URL`, not `BETTER_AUTH_URL`
+  - Resolves authentication failures in Management Console when deployed via PM2
+- **Console trustedOrigins Env Var** - Fix `process.env.BETTER_AUTH_URL` to `process.env.BETTER_AUTH_BASE_URL` in auth.ts trustedOrigins
+  - Ensures production-deployed console correctly includes the base URL in trusted origins
+- **Console DB Path with MCCTL_ROOT** - Use `MCCTL_ROOT` environment variable for database path resolution in db.ts
+  - `process.cwd()` fallback preserved when MCCTL_ROOT is not set
+  - Fixes DB path issues in standalone Next.js where cwd may differ from expected
+- **Console user_servers Table Missing** - Add `user_servers` table to auto-creation DDL in db.ts
+  - Previously only 4 of 5 required tables were auto-created (users, accounts, sessions, verifications)
+  - Now creates all 5 tables including user_servers with proper index
+- **Audit DB Path** - Move audit.db from `MCCTL_ROOT/audit.db` to `MCCTL_ROOT/data/audit.db`
+  - Aligns with mcctl.db location in the same `data/` directory
+  - Applied to both CLI (container.ts) and API (audit-log-service.ts)
+- **Console .env.example Sync** - Update `BETTER_AUTH_URL` to `BETTER_AUTH_BASE_URL` in .env.example and auth.test.ts
+
 ## [1.15.2] - 2026-02-08
 
 ### Fixed
