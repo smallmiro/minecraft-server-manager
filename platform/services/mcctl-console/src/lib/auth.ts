@@ -4,10 +4,15 @@ import { admin } from 'better-auth/plugins';
 import { db } from './db';
 import * as schema from './schema';
 
+const baseURL = process.env.BETTER_AUTH_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+const isHttps = baseURL.startsWith('https://');
+
 /**
  * Better Auth server configuration
  */
 export const auth = betterAuth({
+  baseURL,
+  secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: 'sqlite',
     schema: {
@@ -19,7 +24,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Can be enabled later
+    requireEmailVerification: false,
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
@@ -29,13 +34,16 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // 5 minutes
     },
   },
+  advanced: {
+    useSecureCookies: isHttps, // HTTP 환경에서는 Secure 쿠키 비활성화
+  },
   user: {
     additionalFields: {
       role: {
         type: 'string',
         required: false,
         defaultValue: 'user',
-        input: false, // Don't allow user to set role on signup
+        input: false,
       },
     },
   },
@@ -48,7 +56,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     'http://localhost:5000',
     'http://localhost:3000',
-    ...(process.env.BETTER_AUTH_BASE_URL ? [process.env.BETTER_AUTH_BASE_URL] : []),
+    ...(baseURL !== 'http://localhost:5000' ? [baseURL] : []),
     ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
   ],
 });
