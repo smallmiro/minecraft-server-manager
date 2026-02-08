@@ -49,3 +49,5 @@ export type {
 } from './IServiceManagerPort.js';
 
 export type { IAuditLogPort, AuditLogQueryOptions } from './IAuditLogPort.js';
+
+export type { IOperatorPort } from './IOperatorPort.js';
