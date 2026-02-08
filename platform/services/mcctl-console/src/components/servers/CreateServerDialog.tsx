@@ -205,8 +205,12 @@ export function CreateServerDialog({
       // Modpack: include modpack fields
       submitData.type = 'MODRINTH';
       submitData.modpack = formData.modpack;
-      submitData.modpackVersion = formData.modpackVersion || '';
-      submitData.modLoader = formData.modLoader || '';
+      if (formData.modpackVersion) {
+        submitData.modpackVersion = formData.modpackVersion;
+      }
+      if (formData.modLoader) {
+        submitData.modLoader = formData.modLoader;
+      }
     }
 
     // Submit
