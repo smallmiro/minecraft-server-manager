@@ -17,6 +17,7 @@ import type {
   IServerRepository,
   IWorldRepository,
   IAuditLogPort,
+  IModSourcePort,
 } from '../ports/index.js';
 
 /**
@@ -29,7 +30,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     private readonly shell: IShellPort,
     private readonly serverRepo: IServerRepository,
     private readonly worldRepo?: IWorldRepository,
-    private readonly auditLog?: IAuditLogPort
+    private readonly auditLog?: IAuditLogPort,
+    private readonly modSource?: IModSourcePort
   ) {}
 
   /**
@@ -58,7 +60,27 @@ export class CreateServerUseCase implements ICreateServerUseCase {
 
       if (type.isModpack) {
         modpackSlug = await this.prompt.promptModpackSlug();
-        modLoader = await this.prompt.promptModpackLoader();
+
+        // Fetch supported loaders from mod source API
+        let availableLoaders: string[] | undefined;
+        if (this.modSource && modpackSlug) {
+          try {
+            const versions = await this.modSource.getVersions(modpackSlug);
+            const loaderSet = new Set<string>();
+            for (const v of versions) {
+              for (const loader of v.loaders) {
+                loaderSet.add(loader);
+              }
+            }
+            if (loaderSet.size > 0) {
+              availableLoaders = [...loaderSet];
+            }
+          } catch {
+            // Fallback: show all loaders if API call fails
+          }
+        }
+
+        modLoader = await this.prompt.promptModpackLoader(availableLoaders);
         modpackVersion = await this.prompt.promptModpackVersion();
       }
 

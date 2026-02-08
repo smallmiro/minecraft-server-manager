@@ -21,6 +21,7 @@ import {
   type IWorldRepository,
   type IDocProvider,
   type IAuditLogPort,
+  type IModSourcePort,
   type ICreateServerUseCase,
   type IDeleteServerUseCase,
   type IServerStatusUseCase,
@@ -28,6 +29,7 @@ import {
   type IBackupUseCase,
   type IPlayerLookupUseCase,
 } from '@minecraft-docker/shared';
+import { ModrinthAdapter } from '@minecraft-docker/mod-source-modrinth';
 // CLI-specific adapter
 import { ClackPromptAdapter } from '../adapters/ClackPromptAdapter.js';
 
@@ -51,6 +53,7 @@ export class Container {
   private _worldRepo?: IWorldRepository;
   private _docProvider?: IDocProvider;
   private _auditLogPort?: IAuditLogPort;
+  private _modSourcePort?: IModSourcePort;
 
   constructor(options?: ContainerOptions | string) {
     if (typeof options === 'string') {
@@ -116,6 +119,13 @@ export class Container {
     return this._auditLogPort;
   }
 
+  get modSourcePort(): IModSourcePort {
+    if (!this._modSourcePort) {
+      this._modSourcePort = new ModrinthAdapter();
+    }
+    return this._modSourcePort;
+  }
+
   // ========================================
   // Use Cases
   // ========================================
@@ -126,7 +136,8 @@ export class Container {
       this.shellPort,
       this.serverRepository,
       this.worldRepository,
-      this.auditLogPort
+      this.auditLogPort,
+      this.modSourcePort
     );
   }
 
