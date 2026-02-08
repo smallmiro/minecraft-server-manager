@@ -103,19 +103,46 @@ export async function fetchLatestServiceVersion(packageName: string): Promise<st
 }
 
 /**
- * Get installed version of a service package from node_modules
+ * Get installed version of a service package from node_modules.
+ * Checks .services/ directory first, then falls back to legacy rootDir location.
  */
 export function getInstalledServiceVersion(rootDir: string, packageName: string): string | null {
+  // Check .services/ directory first (new installs)
+  const servicesPath = join(rootDir, '.services', 'node_modules', packageName, 'package.json');
+  if (existsSync(servicesPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(servicesPath, 'utf-8'));
+      return pkg.version ?? null;
+    } catch {
+      // fall through to legacy check
+    }
+  }
+
+  // Legacy location (backward compatibility)
   try {
-    const packageJsonPath = join(rootDir, 'node_modules', packageName, 'package.json');
-    if (!existsSync(packageJsonPath)) {
+    const legacyPath = join(rootDir, 'node_modules', packageName, 'package.json');
+    if (!existsSync(legacyPath)) {
       return null;
     }
-    const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    const pkg = JSON.parse(readFileSync(legacyPath, 'utf-8'));
     return pkg.version ?? null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Get the install directory for services.
+ * Returns .services/ if it exists or if the service is installed there,
+ * otherwise returns rootDir for legacy installations.
+ */
+function getServiceInstallDir(rootDir: string): string {
+  const servicesDir = join(rootDir, '.services');
+  if (existsSync(servicesDir)) {
+    return servicesDir;
+  }
+  // Legacy: install in rootDir
+  return rootDir;
 }
 
 /**
@@ -191,8 +218,9 @@ async function updateLibraryPackage(
 
   // Install the latest version
   spinner.start(`Updating ${name}...`);
+  const installDir = getServiceInstallDir(rootDir);
   const installResult = spawnSync('npm', ['install', `${packageName}@latest`], {
-    cwd: rootDir,
+    cwd: installDir,
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
   });
@@ -324,8 +352,9 @@ export async function updateServices(
 
     // Install the latest version
     spinner.start(`Updating ${service.name}...`);
+    const serviceInstallDir = getServiceInstallDir(rootDir);
     const installResult = spawnSync('npm', ['install', `${packageName}@latest`], {
-      cwd: rootDir,
+      cwd: serviceInstallDir,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
     });
