@@ -268,18 +268,26 @@ ${apiEnvVars.join('\n')}
   }
 
   if (serviceOptions.installConsole) {
+    const consoleEnvVars = [
+      `        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',`,
+      `        PORT: ${consolePort},`,
+      `        HOSTNAME: '0.0.0.0',`,
+      `        MCCTL_API_URL: 'http://localhost:${apiPort}',`,
+      `        MCCTL_ROOT: '${rootDir}',`,
+      `        BETTER_AUTH_SECRET: '${nextAuthSecret}',`,
+      `        BETTER_AUTH_BASE_URL: 'http://localhost:${consolePort}',`,
+    ];
+
+    if (authConfig.apiKey) {
+      consoleEnvVars.push(`        MCCTL_API_KEY: '${authConfig.apiKey}',`);
+    }
+
     apps.push(`    {
       name: 'mcctl-console',
       script: '${consoleScriptPath}',
       cwd: '${rootDir}',
       env: {
-        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',
-        PORT: ${consolePort},
-        HOSTNAME: '0.0.0.0',
-        MCCTL_API_URL: 'http://localhost:${apiPort}',
-        MCCTL_ROOT: '${rootDir}',
-        BETTER_AUTH_SECRET: '${nextAuthSecret}',
-        BETTER_AUTH_BASE_URL: 'http://localhost:${consolePort}',
+${consoleEnvVars.join('\n')}
       },
       instances: 1,
       exec_mode: 'fork',
