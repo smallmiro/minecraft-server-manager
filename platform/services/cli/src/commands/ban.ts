@@ -14,6 +14,7 @@ import {
   type BannedIpEntry,
 } from '../lib/player-json.js';
 import { getContainer } from '../infrastructure/di/container.js';
+import { getMojangApiClient } from '../lib/mojang-api.js';
 
 export interface BanCommandOptions {
   root?: string;
@@ -206,8 +207,20 @@ async function banPlayer(
 
   // Update JSON file for non-running server
   if (!isRunning) {
+    // Try to look up UUID from Mojang API
+    let uuid = '';
+    try {
+      const mojang = getMojangApiClient();
+      const playerInfo = await mojang.lookupByUsername(playerName);
+      if (playerInfo) {
+        uuid = playerInfo.uuid;
+      }
+    } catch {
+      // Mojang API unavailable - continue without UUID
+    }
+
     const newEntry: BannedPlayerEntry = {
-      uuid: '', // Will be populated by server on start
+      uuid,
       name: playerName,
       created: createTimestamp(),
       source: 'mcctl',
