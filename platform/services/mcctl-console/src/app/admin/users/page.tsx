@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Box, Typography, CircularProgress, Alert } from '@mui/material';
 import { useAdminUsers, type User } from '@/hooks/use-admin-users';
 import { UserList } from '@/components/admin/UserList';
+import { UserDetailDialog } from '@/components/admin/UserDetailDialog';
 
 export default function UsersPage() {
   const { data: users, isLoading, isError, error } = useAdminUsers();
@@ -11,7 +12,10 @@ export default function UsersPage() {
 
   const handleUserClick = (user: User) => {
     setSelectedUser(user);
-    // TODO: Open user detail dialog in Phase 3
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedUser(null);
   };
 
   if (isLoading) {
@@ -46,6 +50,14 @@ export default function UsersPage() {
       </Typography>
 
       <UserList users={users || []} onUserClick={handleUserClick} />
+
+      {selectedUser && (
+        <UserDetailDialog
+          user={selectedUser}
+          open={true}
+          onClose={handleCloseDialog}
+        />
+      )}
     </Box>
   );
 }
