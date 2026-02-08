@@ -560,6 +560,7 @@ export class ClackPromptAdapter implements IPromptPort {
     const result = await p.text({
       message: 'Modpack version (leave empty for latest):',
       placeholder: 'latest',
+      defaultValue: '',
     });
 
     if (this.isCancel(result)) {
