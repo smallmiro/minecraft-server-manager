@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v1.15.0 (2026-02-08)
+- **feat(cli)**: Auto-install mcctl-console package in `console init`
+- **fix(cli)**: Resolve service script paths independently for each service
+- **fix(cli)**: Add defaultValue to modpack version prompt to prevent trim error
+
 ### v1.14.0 (2026-02-08)
 - **feat**: Add NeoForge to mod loader options (CLI, API, Web Console)
 - **feat**: Dynamic modpack loader filtering via Modrinth API - only show loaders the modpack supports
@@ -102,12 +107,6 @@ mcctl logs myserver
 - **feat(console)**: World management UI - list, reset, server assignment (#175)
 - **feat(console)**: Server options tab with config management (#229)
 - **feat(console)**: SSE real-time server status replaces polling (#223)
-
-### v1.10.0 (2026-02-05)
-- **feat**: Audit Log System - comprehensive activity tracking (#234, #235)
-
-### v1.9.0 (2026-02-05)
-- **feat(cli)**: Add `--all` flag to `mcctl update` command
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-02-08
+
+### Added
+- **Console Auto-Install in Console Init** - `mcctl console init` now automatically installs `@minecraft-docker/mcctl-console` package if not already present (#dbfeb38)
+  - Detects missing mcctl-console package during initialization
+  - Prompts user for auto-installation with npm
+  - Streamlines Management Console setup to a single command
+
+### Fixed
+- **Service Script Path Resolution** - Resolve service script paths independently for each service (#4243391)
+  - Previously, service scripts shared a single path resolution, causing errors when services were installed in different locations
+  - Each service now resolves its own script path independently
+- **Modpack Version Prompt Trim Error** - Add defaultValue to modpack version prompt to prevent trim error on undefined values (#62c9068)
+  - Fix crash when modpack version selection returned undefined
+  - Add safe default value handling for version prompt
+
 ## [1.14.0] - 2026-02-08
 
 ### Added
