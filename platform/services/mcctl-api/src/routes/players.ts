@@ -47,15 +47,27 @@ interface KickPlayerRoute {
  */
 const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
-  // Helper to check server running
-  const checkServerRunning = (name: string, reply: FastifyReply): boolean => {
+  // Helper to check server exists (container created)
+  const checkServerExists = (name: string, reply: FastifyReply): boolean => {
     const containerName = `mc-${name}`;
     if (!containerExists(containerName)) {
       reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       return false;
     }
-    const status = getContainerStatus(containerName);
-    if (status !== 'running') {
+    return true;
+  };
+
+  // Helper to check if server is running
+  const isServerRunning = (name: string): boolean => {
+    const containerName = `mc-${name}`;
+    if (!containerExists(containerName)) return false;
+    return getContainerStatus(containerName) === 'running';
+  };
+
+  // Helper to check server is running (for commands that require it, like kick/online players)
+  const checkServerRunning = (name: string, reply: FastifyReply): boolean => {
+    if (!checkServerExists(name, reply)) return false;
+    if (!isServerRunning(name)) {
       reply.code(400).send({ error: 'BadRequest', message: `Server '${name}' is not running` });
       return false;
     }
