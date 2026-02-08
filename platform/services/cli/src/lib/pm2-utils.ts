@@ -246,8 +246,8 @@ export function resolveServiceScriptPaths(rootDir: string): ServiceScriptPaths {
     'node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'
   );
 
-  // Check if production paths exist
-  if (existsSync(prodApiPath) && existsSync(prodConsolePath)) {
+  // Check if any production paths exist (each service is independent)
+  if (existsSync(prodApiPath) || existsSync(prodConsolePath)) {
     return {
       api: prodApiPath,
       console: prodConsolePath,
@@ -276,23 +276,23 @@ export function resolveServiceScriptPaths(rootDir: string): ServiceScriptPaths {
       'platform/services/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'
     );
 
-    if (existsSync(devApiPath) && existsSync(devConsolePath)) {
-      return {
-        api: devApiPath,
-        console: devConsolePath,
-        isDevelopment: true,
-      };
-    }
-
     // Also try without standalone (for development builds)
     const devConsolePathAlt = join(
       workspaceRoot,
       'platform/services/mcctl-console/.next/standalone/server.js'
     );
-    if (existsSync(devApiPath) && existsSync(devConsolePathAlt)) {
+
+    // Check if any development paths exist (each service is independent)
+    const devConsoleResolved = existsSync(devConsolePath)
+      ? devConsolePath
+      : existsSync(devConsolePathAlt)
+        ? devConsolePathAlt
+        : devConsolePath;
+
+    if (existsSync(devApiPath) || existsSync(devConsolePath) || existsSync(devConsolePathAlt)) {
       return {
         api: devApiPath,
-        console: devConsolePathAlt,
+        console: devConsoleResolved,
         isDevelopment: true,
       };
     }
