@@ -48,8 +48,9 @@ export const auth = betterAuth({
   trustedOrigins: [
     'http://localhost:5000',
     'http://localhost:3000',
-    process.env.BETTER_AUTH_URL || 'http://localhost:5000',
-  ].filter(Boolean),
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+    ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
+  ],
 });
 
 export type Auth = typeof auth;

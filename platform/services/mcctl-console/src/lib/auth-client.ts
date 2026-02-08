@@ -7,7 +7,7 @@ import { adminClient } from 'better-auth/client/plugins';
  * Better Auth client for browser/React usage
  */
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:5000',
+  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || '',
   plugins: [
     adminClient(),
   ],
