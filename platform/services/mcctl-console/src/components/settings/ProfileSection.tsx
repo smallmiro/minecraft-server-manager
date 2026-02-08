@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
@@ -21,8 +21,18 @@ export function ProfileSection({ onSuccess, onError }: ProfileSectionProps) {
   const { data: session } = useSession();
   const [name, setName] = useState(session?.user?.name || '');
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const user = session?.user;
+
+  // Sync name when session loads (handles SSR→CSR hydration)
+  useEffect(() => {
+    if (user?.name && !initialized) {
+      setName(user.name);
+      setInitialized(true);
+    }
+  }, [user?.name, initialized]);
+
   const hasChanged = name !== (user?.name || '');
 
   const handleSave = async () => {
