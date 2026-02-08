@@ -16,7 +16,7 @@ import {
   Button,
   Chip,
 } from '@mui/material';
-import { Logout, Person, Settings } from '@mui/icons-material';
+import { Logout, Settings, AdminPanelSettings } from '@mui/icons-material';
 import { useSession, signOut } from '@/lib/auth-client';
 
 export function UserMenu() {
@@ -41,6 +41,11 @@ export function UserMenu() {
   const handleSettings = () => {
     handleCloseMenu();
     router.push('/settings');
+  };
+
+  const handleAdminPanel = () => {
+    handleCloseMenu();
+    router.push('/admin');
   };
 
   const handleLogin = () => {
@@ -120,6 +125,15 @@ export function UserMenu() {
         </Box>
 
         <Divider />
+
+        {user.role === 'admin' && (
+          <MenuItem onClick={handleAdminPanel}>
+            <ListItemIcon>
+              <AdminPanelSettings fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Admin Panel</ListItemText>
+          </MenuItem>
+        )}
 
         <MenuItem onClick={handleSettings}>
           <ListItemIcon>
