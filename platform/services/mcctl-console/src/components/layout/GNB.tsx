@@ -22,9 +22,11 @@ import RouterIcon from '@mui/icons-material/Router';
 import HistoryIcon from '@mui/icons-material/History';
 import PublicIcon from '@mui/icons-material/Public';
 import BackupIcon from '@mui/icons-material/Backup';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { UserMenu } from '@/components/auth';
 import { CreeperIcon } from '@/components/icons/CreeperIcon';
 import { startLoading } from '@/components/providers';
+import { useSession } from '@/lib/auth-client';
 
 export const GNB_HEIGHT = 64;
 
@@ -44,6 +46,12 @@ const navItems: NavItem[] = [
   { label: 'Routing', href: '/routing', icon: <RouterIcon /> },
 ];
 
+const adminNavItem: NavItem = {
+  label: 'Admin',
+  href: '/admin',
+  icon: <AdminPanelSettingsIcon />,
+};
+
 interface GNBProps {
   mobileOpen: boolean;
   onMenuToggle: () => void;
@@ -51,6 +59,7 @@ interface GNBProps {
 
 export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const isActive = (href: string) => {
     if (href === '/dashboard') {
@@ -58,6 +67,9 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
     }
     return pathname.startsWith(href);
   };
+
+  const isAdmin = session?.user?.role === 'admin';
+  const displayNavItems = isAdmin ? [...navItems, adminNavItem] : navItems;
 
   return (
     <>
@@ -128,7 +140,7 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
               flex: 1,
             }}
           >
-            {navItems.map((item) => {
+            {displayNavItems.map((item) => {
               const active = isActive(item.href);
               return (
                 <Link
@@ -248,7 +260,7 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
 
           {/* Mobile Navigation */}
           <List sx={{ flex: 1, px: 1, py: 2 }}>
-            {navItems.map((item) => {
+            {displayNavItems.map((item) => {
               const active = isActive(item.href);
               return (
                 <ListItem key={item.href} disablePadding sx={{ mb: 0.5 }}>
