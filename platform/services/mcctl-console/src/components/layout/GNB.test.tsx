@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import { GNB } from './GNB';
@@ -11,6 +11,16 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock auth-client for session management
+let mockSession: any = null;
+vi.mock('@/lib/auth-client', () => ({
+  useSession: () => ({
+    data: mockSession,
+    isPending: false,
+  }),
+  signOut: vi.fn(),
+}));
+
 // Mock UserMenu component
 vi.mock('@/components/auth', () => ({
   UserMenu: () => <div data-testid="user-menu">UserMenu</div>,
@@ -21,6 +31,11 @@ const renderWithTheme = (component: React.ReactNode) => {
 };
 
 describe('GNB', () => {
+  beforeEach(() => {
+    // Reset session before each test
+    mockSession = null;
+  });
+
   it('should render logo/brand', () => {
     renderWithTheme(<GNB mobileOpen={false} onMenuToggle={vi.fn()} />);
 
@@ -89,5 +104,99 @@ describe('GNB', () => {
     expect(serversLinks[0]).toHaveAttribute('href', '/servers');
     expect(playersLinks[0]).toHaveAttribute('href', '/players');
     expect(routingLinks[0]).toHaveAttribute('href', '/routing');
+  });
+
+  describe('Admin menu', () => {
+    it('should not render Admin menu item for non-admin users', () => {
+      mockSession = {
+        user: {
+          id: '1',
+          email: 'user@example.com',
+          role: 'user',
+        },
+      };
+
+      renderWithTheme(<GNB mobileOpen={false} onMenuToggle={vi.fn()} />);
+
+      // Admin menu should not be present in desktop navigation
+      const adminItems = screen.queryAllByText('Admin');
+      expect(adminItems.length).toBe(0);
+    });
+
+    it('should not render Admin menu item when user is not logged in', () => {
+      mockSession = null;
+
+      renderWithTheme(<GNB mobileOpen={false} onMenuToggle={vi.fn()} />);
+
+      const adminItems = screen.queryAllByText('Admin');
+      expect(adminItems.length).toBe(0);
+    });
+
+    it('should render Admin menu item in desktop navigation for admin users', () => {
+      mockSession = {
+        user: {
+          id: '1',
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      };
+
+      renderWithTheme(<GNB mobileOpen={false} onMenuToggle={vi.fn()} />);
+
+      // Should render Admin in desktop navigation
+      const adminItems = screen.getAllByText('Admin');
+      expect(adminItems.length).toBeGreaterThan(0);
+
+      // Verify it's a link to /admin
+      const adminLinks = screen.getAllByRole('link', { name: /admin/i });
+      expect(adminLinks[0]).toHaveAttribute('href', '/admin');
+    });
+
+    it('should render Admin menu item in mobile drawer for admin users', () => {
+      mockSession = {
+        user: {
+          id: '1',
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      };
+
+      renderWithTheme(<GNB mobileOpen={true} onMenuToggle={vi.fn()} />);
+
+      // Should render Admin in mobile drawer
+      const adminItems = screen.getAllByText('Admin');
+      expect(adminItems.length).toBeGreaterThan(0);
+
+      // Verify it's a link to /admin
+      const adminLinks = screen.getAllByRole('link', { name: /admin/i });
+      const mobileAdminLink = adminLinks.find((link) =>
+        link.getAttribute('href') === '/admin'
+      );
+      expect(mobileAdminLink).toBeDefined();
+    });
+
+    it('should call onMenuToggle when Admin menu item is clicked in mobile drawer', () => {
+      mockSession = {
+        user: {
+          id: '1',
+          email: 'admin@example.com',
+          role: 'admin',
+        },
+      };
+
+      const onMenuToggle = vi.fn();
+      renderWithTheme(<GNB mobileOpen={true} onMenuToggle={onMenuToggle} />);
+
+      // Find and click the Admin menu item in mobile drawer
+      const adminLinks = screen.getAllByRole('link', { name: /admin/i });
+      const mobileAdminLink = adminLinks.find((link) =>
+        link.getAttribute('href') === '/admin'
+      );
+
+      expect(mobileAdminLink).toBeDefined();
+      fireEvent.click(mobileAdminLink!);
+
+      expect(onMenuToggle).toHaveBeenCalledTimes(1);
+    });
   });
 });
