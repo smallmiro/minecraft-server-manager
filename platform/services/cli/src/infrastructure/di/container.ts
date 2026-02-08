@@ -113,7 +113,7 @@ export class Container {
 
   get auditLogPort(): IAuditLogPort {
     if (!this._auditLogPort) {
-      const dbPath = join(this.paths.root, 'audit.db');
+      const dbPath = join(this.paths.root, 'data', 'audit.db');
       this._auditLogPort = new SqliteAuditLogRepository(dbPath);
     }
     return this._auditLogPort;

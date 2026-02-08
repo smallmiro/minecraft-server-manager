@@ -33,7 +33,7 @@ const listeners = new Set<AuditLogListener>();
  */
 export function getAuditLogRepository(): SqliteAuditLogRepository {
   if (!repository) {
-    const dbPath = join(config.mcctlRoot, 'audit.db');
+    const dbPath = join(config.mcctlRoot, 'data', 'audit.db');
     repository = new SqliteAuditLogRepository(dbPath);
   }
   return repository;
