@@ -40,22 +40,24 @@ const SCRYPT_KEYLEN = 64;
 const SCRYPT_MAXMEM = 128 * SCRYPT_N * SCRYPT_R * 2;
 
 function hashPassword(password: string): string {
-  const salt = randomBytes(16);
+  // Better Auth uses hex-encoded salt STRING as the scrypt salt parameter,
+  // NOT raw bytes. We must match this behavior for compatibility.
+  const salt = randomBytes(16).toString('hex');
   const key = scryptSync(password.normalize('NFKC'), salt, SCRYPT_KEYLEN, {
     N: SCRYPT_N,
     r: SCRYPT_R,
     p: SCRYPT_P,
     maxmem: SCRYPT_MAXMEM,
   });
-  return `${salt.toString('hex')}:${key.toString('hex')}`;
+  return `${salt}:${key.toString('hex')}`;
 }
 
 function verifyPasswordHash(hash: string, password: string): boolean {
-  const [saltHex, keyHex] = hash.split(':');
-  if (!saltHex || !keyHex) return false;
+  const [salt, keyHex] = hash.split(':');
+  if (!salt || !keyHex) return false;
 
-  const salt = Buffer.from(saltHex, 'hex');
   const expectedKey = Buffer.from(keyHex, 'hex');
+  // Use hex string directly as salt (matching Better Auth's behavior)
   const derivedKey = scryptSync(password.normalize('NFKC'), salt, SCRYPT_KEYLEN, {
     N: SCRYPT_N,
     r: SCRYPT_R,
