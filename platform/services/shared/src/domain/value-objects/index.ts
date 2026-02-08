@@ -16,3 +16,6 @@ export { ProcessInfo, type ProcessInfoData, type ProcessMetrics } from './Proces
 
 // Audit log value objects
 export { AuditActionEnum } from './AuditAction.js';
+
+// Operator value objects
+export { OpLevel } from './OpLevel.js';
