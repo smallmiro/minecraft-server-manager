@@ -1,6 +1,7 @@
 /**
  * Whitelist API Route
  * GET/POST/DELETE /api/players/whitelist
+ * Uses dedicated mcctl-api whitelist endpoints (supports offline servers)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,9 +11,6 @@ import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Extract user context from session for API forwarding
- */
 function getUserContext(session: { user: { name?: string | null; email: string; role?: string | null } }): UserContext {
   return {
     username: session.user.name || session.user.email,
@@ -22,7 +20,6 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
 
 /**
  * GET /api/players/whitelist?server=<name>
- * Get whitelist for a server
  */
 export async function GET(request: NextRequest) {
   try {
@@ -39,21 +36,11 @@ export async function GET(request: NextRequest) {
     const session = await requireServerPermission(await headers(), server, 'view');
     const client = createMcctlApiClient(getUserContext(session));
 
-    // Execute whitelist list command via RCON
-    const result = await client.execCommand(server, 'whitelist list');
+    const result = await client.getWhitelist(server);
 
-    // Parse whitelist output
-    // Format: "There are X whitelisted players: name1, name2, name3"
-    const players: { name: string; uuid: string }[] = [];
-    const match = result.output.match(/:\s*(.+)$/);
-    if (match) {
-      const names = match[1].split(',').map((n) => n.trim()).filter(Boolean);
-      names.forEach((name) => {
-        players.push({ name, uuid: '' });
-      });
-    }
+    const players = result.players.map((name) => ({ name, uuid: '' }));
 
-    return NextResponse.json({ players });
+    return NextResponse.json({ players, source: result.source });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json(
@@ -78,7 +65,6 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/players/whitelist
- * Add player to whitelist
  */
 export async function POST(request: NextRequest) {
   try {
@@ -95,12 +81,12 @@ export async function POST(request: NextRequest) {
     const session = await requireServerPermission(await headers(), server, 'manage');
     const client = createMcctlApiClient(getUserContext(session));
 
-    // Add to whitelist
-    const result = await client.execCommand(server, `whitelist add ${player}`);
+    const result = await client.addToWhitelist(server, player);
 
     return NextResponse.json({
-      success: true,
-      message: result.output,
+      success: result.success,
+      message: result.message,
+      source: result.source,
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -126,7 +112,6 @@ export async function POST(request: NextRequest) {
 
 /**
  * DELETE /api/players/whitelist?player=<name>&server=<name>
- * Remove player from whitelist
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -144,12 +129,12 @@ export async function DELETE(request: NextRequest) {
     const session = await requireServerPermission(await headers(), server, 'manage');
     const client = createMcctlApiClient(getUserContext(session));
 
-    // Remove from whitelist
-    const result = await client.execCommand(server, `whitelist remove ${player}`);
+    const result = await client.removeFromWhitelist(server, player);
 
     return NextResponse.json({
-      success: true,
-      message: result.output,
+      success: result.success,
+      message: result.message,
+      source: result.source,
     });
   } catch (error) {
     if (error instanceof AuthError) {

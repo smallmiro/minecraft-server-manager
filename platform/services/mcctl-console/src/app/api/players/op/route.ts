@@ -1,6 +1,7 @@
 /**
  * Operators API Route
  * GET/POST/DELETE /api/players/op
+ * Uses dedicated mcctl-api ops endpoints (supports offline servers)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,9 +11,6 @@ import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Extract user context from session for API forwarding
- */
 function getUserContext(session: { user: { name?: string | null; email: string; role?: string | null } }): UserContext {
   return {
     username: session.user.name || session.user.email,
@@ -22,7 +20,6 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
 
 /**
  * GET /api/players/op?server=<name>
- * Get operators for a server
  */
 export async function GET(request: NextRequest) {
   try {
@@ -37,19 +34,13 @@ export async function GET(request: NextRequest) {
     }
 
     const session = await requireServerPermission(await headers(), server, 'view');
-
     const client = createMcctlApiClient(getUserContext(session));
 
-    // Execute list operators command
-    // Note: Minecraft doesn't have a native command to list ops via RCON
-    // This would typically require reading ops.json from the server
-    // For now, we return an empty list - the backend API should handle this
-    const result = await client.execCommand(server, 'list');
+    const result = await client.getOps(server);
 
-    // Parse ops list if available (depends on server implementation)
-    const operators: { name: string; uuid: string; level: number }[] = [];
+    const operators = result.players.map((name) => ({ name, uuid: '', level: 4 }));
 
-    return NextResponse.json({ operators });
+    return NextResponse.json({ operators, source: result.source });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json(
@@ -75,7 +66,6 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/players/op
- * Add operator
  */
 export async function POST(request: NextRequest) {
   try {
@@ -90,15 +80,14 @@ export async function POST(request: NextRequest) {
     }
 
     const session = await requireServerPermission(await headers(), server, 'admin');
-
     const client = createMcctlApiClient(getUserContext(session));
 
-    // Add operator
-    const result = await client.execCommand(server, `op ${player}`);
+    const result = await client.addOp(server, player);
 
     return NextResponse.json({
-      success: true,
-      message: result.output,
+      success: result.success,
+      message: result.message,
+      source: result.source,
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -125,7 +114,6 @@ export async function POST(request: NextRequest) {
 
 /**
  * DELETE /api/players/op?player=<name>&server=<name>
- * Remove operator
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -141,15 +129,14 @@ export async function DELETE(request: NextRequest) {
     }
 
     const session = await requireServerPermission(await headers(), server, 'admin');
-
     const client = createMcctlApiClient(getUserContext(session));
 
-    // Remove operator
-    const result = await client.execCommand(server, `deop ${player}`);
+    const result = await client.removeOp(server, player);
 
     return NextResponse.json({
-      success: true,
-      message: result.output,
+      success: result.success,
+      message: result.message,
+      source: result.source,
     });
   } catch (error) {
     if (error instanceof AuthError) {
