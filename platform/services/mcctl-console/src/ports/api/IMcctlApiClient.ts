@@ -292,6 +292,24 @@ export interface BackupRestoreResponse {
   message?: string;
 }
 
+// ============================================================
+// Player Management Types
+// ============================================================
+
+export type PlayerDataSource = 'rcon' | 'file' | 'config';
+
+export interface PlayerListResponse {
+  players: string[];
+  total: number;
+  source?: PlayerDataSource;
+}
+
+export interface PlayerActionResponse {
+  success: boolean;
+  message: string;
+  source?: PlayerDataSource;
+}
+
 /**
  * mcctl-api Client Interface
  * Defines the contract for API communication
@@ -329,4 +347,15 @@ export interface IMcctlApiClient {
   pushBackup(message?: string): Promise<BackupPushResponse>;
   getBackupHistory(limit?: number): Promise<BackupHistoryResponse>;
   restoreBackup(commitHash: string): Promise<BackupRestoreResponse>;
+
+  // Player management operations
+  getWhitelist(serverName: string): Promise<PlayerListResponse>;
+  addToWhitelist(serverName: string, player: string): Promise<PlayerActionResponse>;
+  removeFromWhitelist(serverName: string, player: string): Promise<PlayerActionResponse>;
+  getBans(serverName: string): Promise<PlayerListResponse>;
+  banPlayer(serverName: string, player: string, reason?: string): Promise<PlayerActionResponse>;
+  unbanPlayer(serverName: string, player: string): Promise<PlayerActionResponse>;
+  getOps(serverName: string): Promise<PlayerListResponse>;
+  addOp(serverName: string, player: string): Promise<PlayerActionResponse>;
+  removeOp(serverName: string, player: string): Promise<PlayerActionResponse>;
 }

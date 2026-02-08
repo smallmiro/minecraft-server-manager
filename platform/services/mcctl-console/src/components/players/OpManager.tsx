@@ -40,6 +40,7 @@ interface Operator {
  */
 interface OpListResponse {
   operators: Operator[];
+  source?: 'rcon' | 'file' | 'config';
 }
 
 /**
@@ -59,6 +60,7 @@ export function OpManager({ serverName }: OpManagerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [operators, setOperators] = useState<Operator[]>([]);
+  const [source, setSource] = useState<'rcon' | 'file' | 'config' | undefined>();
   const [newOp, setNewOp] = useState('');
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
@@ -75,6 +77,7 @@ export function OpManager({ serverName }: OpManagerProps) {
       }
       const data: OpListResponse = await response.json();
       setOperators(data.operators);
+      setSource(data.source);
     } catch (err) {
       setError('Failed to load operators');
       console.error('Error fetching operators:', err);
@@ -177,6 +180,12 @@ export function OpManager({ serverName }: OpManagerProps) {
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
+          </Alert>
+        )}
+
+        {!loading && source && source !== 'rcon' && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Server is offline. Showing data from {source === 'config' ? 'config.env' : 'ops.json'}. Changes will apply on next server start.
           </Alert>
         )}
 

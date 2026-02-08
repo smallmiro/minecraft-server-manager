@@ -38,6 +38,7 @@ interface Player {
  */
 interface WhitelistResponse {
   players: Player[];
+  source?: 'rcon' | 'file' | 'config';
 }
 
 /**
@@ -57,6 +58,7 @@ export function WhitelistManager({ serverName }: WhitelistManagerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [source, setSource] = useState<'rcon' | 'file' | 'config' | undefined>();
   const [newPlayer, setNewPlayer] = useState('');
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
@@ -73,6 +75,7 @@ export function WhitelistManager({ serverName }: WhitelistManagerProps) {
       }
       const data: WhitelistResponse = await response.json();
       setPlayers(data.players);
+      setSource(data.source);
     } catch (err) {
       setError('Failed to load whitelist');
       console.error('Error fetching whitelist:', err);
@@ -161,6 +164,12 @@ export function WhitelistManager({ serverName }: WhitelistManagerProps) {
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
+          </Alert>
+        )}
+
+        {!loading && source && source !== 'rcon' && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Server is offline. Showing data from {source === 'config' ? 'config.env' : 'whitelist.json'}. Changes will apply on next server start.
           </Alert>
         )}
 

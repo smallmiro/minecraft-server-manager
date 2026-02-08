@@ -45,6 +45,7 @@ interface BannedPlayer {
  */
 interface BanListResponse {
   players: BannedPlayer[];
+  source?: 'rcon' | 'file' | 'config';
 }
 
 /**
@@ -64,6 +65,7 @@ export function BanManager({ serverName }: BanManagerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bannedPlayers, setBannedPlayers] = useState<BannedPlayer[]>([]);
+  const [dataSource, setDataSource] = useState<'rcon' | 'file' | 'config' | undefined>();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newBan, setNewBan] = useState({ player: '', reason: '' });
   const [adding, setAdding] = useState(false);
@@ -81,6 +83,7 @@ export function BanManager({ serverName }: BanManagerProps) {
       }
       const data: BanListResponse = await response.json();
       setBannedPlayers(data.players);
+      setDataSource(data.source);
     } catch (err) {
       setError('Failed to load ban list');
       console.error('Error fetching bans:', err);
@@ -193,6 +196,12 @@ export function BanManager({ serverName }: BanManagerProps) {
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
+          </Alert>
+        )}
+
+        {!loading && dataSource && dataSource !== 'rcon' && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Server is offline. Showing data from {dataSource === 'config' ? 'config.env' : 'banned-players.json'}. Changes will apply on next server start.
           </Alert>
         )}
 

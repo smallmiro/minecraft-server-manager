@@ -24,6 +24,8 @@ import {
   BackupPushResponse,
   BackupHistoryResponse,
   BackupRestoreResponse,
+  PlayerListResponse,
+  PlayerActionResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -296,6 +298,70 @@ export class McctlApiAdapter implements IMcctlApiClient {
       method: 'POST',
       body: JSON.stringify({ commitHash }),
     });
+  }
+
+  // ============================================================
+  // Player Management Operations
+  // ============================================================
+
+  async getWhitelist(serverName: string): Promise<PlayerListResponse> {
+    return this.fetch<PlayerListResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/whitelist`
+    );
+  }
+
+  async addToWhitelist(serverName: string, player: string): Promise<PlayerActionResponse> {
+    return this.fetch<PlayerActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/whitelist`,
+      { method: 'POST', body: JSON.stringify({ player }) }
+    );
+  }
+
+  async removeFromWhitelist(serverName: string, player: string): Promise<PlayerActionResponse> {
+    return this.fetch<PlayerActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/whitelist/${encodeURIComponent(player)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async getBans(serverName: string): Promise<PlayerListResponse> {
+    return this.fetch<PlayerListResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/bans`
+    );
+  }
+
+  async banPlayer(serverName: string, player: string, reason?: string): Promise<PlayerActionResponse> {
+    return this.fetch<PlayerActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/bans`,
+      { method: 'POST', body: JSON.stringify({ player, reason }) }
+    );
+  }
+
+  async unbanPlayer(serverName: string, player: string): Promise<PlayerActionResponse> {
+    return this.fetch<PlayerActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/bans/${encodeURIComponent(player)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async getOps(serverName: string): Promise<PlayerListResponse> {
+    return this.fetch<PlayerListResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/ops`
+    );
+  }
+
+  async addOp(serverName: string, player: string): Promise<PlayerActionResponse> {
+    return this.fetch<PlayerActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/ops`,
+      { method: 'POST', body: JSON.stringify({ player }) }
+    );
+  }
+
+  async removeOp(serverName: string, player: string): Promise<PlayerActionResponse> {
+    return this.fetch<PlayerActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/ops/${encodeURIComponent(player)}`,
+      { method: 'DELETE' }
+    );
   }
 }
 

@@ -20,6 +20,11 @@ export const OnlinePlayersResponseSchema = Type.Object({
 export const PlayerListResponseSchema = Type.Object({
   players: Type.Array(Type.String()),
   total: Type.Number(),
+  source: Type.Optional(Type.Union([
+    Type.Literal('rcon'),
+    Type.Literal('file'),
+    Type.Literal('config'),
+  ])),
 });
 
 // Add player request
@@ -38,6 +43,11 @@ export const KickPlayerRequestSchema = Type.Object({
 export const PlayerActionResponseSchema = Type.Object({
   success: Type.Boolean(),
   message: Type.String(),
+  source: Type.Optional(Type.Union([
+    Type.Literal('rcon'),
+    Type.Literal('file'),
+    Type.Literal('config'),
+  ])),
 });
 
 // Player params
