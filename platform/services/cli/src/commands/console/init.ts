@@ -74,6 +74,52 @@ function installMcctlApiIfNeeded(rootDir: string): { installed: boolean; error?:
 }
 
 /**
+ * Install mcctl-console package if not present
+ * @param rootDir - Root directory to install in
+ * @returns true if installation succeeded or already installed
+ */
+function installMcctlConsoleIfNeeded(rootDir: string): { installed: boolean; error?: string } {
+  const consolePackagePath = join(
+    rootDir,
+    'node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'
+  );
+
+  // Already installed
+  if (existsSync(consolePackagePath)) {
+    return { installed: true };
+  }
+
+  // Check if package.json exists, if not create it
+  const packageJsonPath = join(rootDir, 'package.json');
+  if (!existsSync(packageJsonPath)) {
+    const initResult = spawnSync('npm', ['init', '-y'], {
+      cwd: rootDir,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    if (initResult.status !== 0) {
+      return { installed: false, error: 'Failed to initialize package.json' };
+    }
+  }
+
+  // Install mcctl-console
+  const installResult = spawnSync('npm', ['install', '@minecraft-docker/mcctl-console@latest'], {
+    cwd: rootDir,
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+
+  if (installResult.status !== 0) {
+    return {
+      installed: false,
+      error: installResult.stderr || 'Failed to install @minecraft-docker/mcctl-console'
+    };
+  }
+
+  return { installed: true };
+}
+
+/**
  * Console init command options
  */
 export interface ConsoleInitOptions {
@@ -645,17 +691,32 @@ export async function consoleInitCommand(
       }
     }
 
-    // Step 10: Install mcctl-api if needed (production mode)
-    spinner.start('Checking mcctl-api installation...');
+    // Step 10: Install service packages if needed (production mode)
+    if (installApi) {
+      spinner.start('Checking mcctl-api installation...');
 
-    const installResult = installMcctlApiIfNeeded(paths.root);
-    if (!installResult.installed) {
-      spinner.stop('');
-      log.error(`Failed to install mcctl-api: ${installResult.error}`);
-      log.info('Try installing manually: npm install @minecraft-docker/mcctl-api');
-      return 1;
+      const apiInstallResult = installMcctlApiIfNeeded(paths.root);
+      if (!apiInstallResult.installed) {
+        spinner.stop('');
+        log.error(`Failed to install mcctl-api: ${apiInstallResult.error}`);
+        log.info('Try installing manually: npm install @minecraft-docker/mcctl-api');
+        return 1;
+      }
+      spinner.stop('mcctl-api ready');
     }
-    spinner.stop('mcctl-api ready');
+
+    if (installConsole) {
+      spinner.start('Checking mcctl-console installation...');
+
+      const consoleInstallResult = installMcctlConsoleIfNeeded(paths.root);
+      if (!consoleInstallResult.installed) {
+        spinner.stop('');
+        log.error(`Failed to install mcctl-console: ${consoleInstallResult.error}`);
+        log.info('Try installing manually: npm install @minecraft-docker/mcctl-console');
+        return 1;
+      }
+      spinner.stop('mcctl-console ready');
+    }
 
     // Use service selection from earlier
     const serviceInstallOptions: ServiceInstallOptions = {
