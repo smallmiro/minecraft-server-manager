@@ -50,6 +50,12 @@ vi.mock('@minecraft-docker/shared', async () => {
   };
 });
 
+// Mock @clack/prompts (prevent interactive prompts from blocking tests)
+vi.mock('@clack/prompts', () => ({
+  select: vi.fn().mockResolvedValue('all'),
+  isCancel: vi.fn().mockReturnValue(false),
+}));
+
 // Mock pm2-utils
 vi.mock('../../../../src/lib/pm2-utils.js', () => ({
   checkPm2Installation: vi.fn().mockReturnValue({ installed: true, version: '5.0.0' }),

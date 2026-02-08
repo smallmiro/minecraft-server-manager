@@ -161,8 +161,8 @@ jobs:
           fi
 
           # Count failed tests
-          FAILED_COUNT=$(find e2e/test-results -name "*.json" -exec cat {} \; 2>/dev/null | grep -c '"status":"failed"' || echo "0")
-          echo "failed_count=$FAILED_COUNT" >> "$GITHUB_OUTPUT"
+          FAILED_COUNT=$(find e2e/test-results -name "*.json" -exec cat {} \; 2>/dev/null | { grep -c '"status":"failed"' || true; })
+          echo "failed_count=${FAILED_COUNT:-0}" >> "$GITHUB_OUTPUT"
 
       - name: Create bug issue on failure
         if: failure()
