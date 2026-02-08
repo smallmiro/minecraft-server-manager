@@ -570,14 +570,23 @@ export class ClackPromptAdapter implements IPromptPort {
     return value === '' ? undefined : value;
   }
 
-  async promptModpackLoader(): Promise<string | undefined> {
+  async promptModpackLoader(availableLoaders?: string[]): Promise<string | undefined> {
+    const allLoaders = [
+      { value: 'fabric', label: 'Fabric' },
+      { value: 'forge', label: 'Forge' },
+      { value: 'neoforge', label: 'NeoForge' },
+      { value: 'quilt', label: 'Quilt' },
+    ];
+
+    const loaderOptions = availableLoaders
+      ? allLoaders.filter((l) => availableLoaders.includes(l.value))
+      : allLoaders;
+
     const result = await p.select({
       message: 'Mod loader:',
       options: [
         { value: 'auto', label: 'Auto-detect', hint: 'Detect from modpack metadata' },
-        { value: 'fabric', label: 'Fabric' },
-        { value: 'forge', label: 'Forge' },
-        { value: 'quilt', label: 'Quilt' },
+        ...loaderOptions,
       ],
       initialValue: 'auto',
     });

@@ -38,7 +38,7 @@ interface CreateServerDialogProps {
 
 const STANDARD_SERVER_TYPES = ['VANILLA', 'PAPER', 'FABRIC', 'FORGE', 'NEOFORGE'];
 const MODPACK_PLATFORMS = ['MODRINTH'];
-const MOD_LOADERS = ['', 'forge', 'fabric', 'quilt'];
+const MOD_LOADERS = ['', 'forge', 'fabric', 'neoforge', 'quilt'];
 
 type ServerCategory = 'standard' | 'modpack';
 

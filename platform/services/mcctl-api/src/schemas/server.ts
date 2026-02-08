@@ -163,6 +163,7 @@ export const CreateServerRequestSchema = Type.Object({
   modLoader: Type.Optional(Type.Union([
     Type.Literal('forge'),
     Type.Literal('fabric'),
+    Type.Literal('neoforge'),
     Type.Literal('quilt'),
   ], { description: 'Mod loader override' })),
 });
