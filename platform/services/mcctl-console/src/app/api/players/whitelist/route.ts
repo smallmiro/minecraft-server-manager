@@ -38,9 +38,8 @@ export async function GET(request: NextRequest) {
 
     const result = await client.getWhitelist(server);
 
-    const players = result.players.map((name) => ({ name, uuid: '' }));
-
-    return NextResponse.json({ players, source: result.source });
+    // API now returns players with UUID, pass through directly
+    return NextResponse.json({ players: result.players, source: result.source });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json(
