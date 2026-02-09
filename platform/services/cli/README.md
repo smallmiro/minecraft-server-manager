@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.1.2 (2026-02-09)
+- **feat(cli)**: Add loading indicator to mcctl update command (#306, #307)
+- **fix(console)**: Move admin/users page to (main) route group for GNB/Footer layout (#308, #309)
+- **feat(console)**: Apply responsive grid layout to Settings page (#310, #311)
+
 ### v2.1.1 (2026-02-09)
 - **fix(console)**: Remove GNB admin menu, rename UserMenu "Admin Panel" to "Users" (#302, #304)
 - **fix(api)**: Return UUID in whitelist/ban API responses (#303, #305)
