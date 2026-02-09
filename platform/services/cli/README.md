@@ -77,6 +77,9 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.1.3 (2026-02-09)
+- **fix(api)**: Enrich whitelist RCON response with UUIDs from whitelist.json (#312, #313)
+
 ### v2.1.2 (2026-02-09)
 - **feat(cli)**: Add loading indicator to mcctl update command (#306, #307)
 - **fix(console)**: Move admin/users page to (main) route group for GNB/Footer layout (#308, #309)
@@ -102,15 +105,6 @@ mcctl logs myserver
 ### v1.15.0 (2026-02-08)
 - **feat(cli)**: Auto-install mcctl-console package in `console init`
 - **fix(cli)**: Resolve service script paths independently for each service
-
-### v1.14.0 (2026-02-08)
-- **feat**: MODRINTH modpack server creation (CLI & Web Console) (#244, #246)
-- **feat**: NeoForge mod loader option for modpack servers
-
-### v1.13.0 (2026-02-07)
-- **feat**: Unified prerequisite checker for `init` and `console init` (#241)
-- **feat**: Console npm publishing as standalone package
-- **feat**: Console `--force` option for PM2 process termination (#238)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

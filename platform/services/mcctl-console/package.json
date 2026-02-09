@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/mcctl-console",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Web management console for Docker Minecraft servers",
   "bin": {
     "mcctl-console": "bin/start.js"
@@ -47,7 +47,7 @@
   "dependencies": {
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
-    "@minecraft-docker/shared": "workspace:*",
+    "@minecraft-docker/shared": "^2.1.3",
     "@mui/icons-material": "^5.17.1",
     "@mui/material": "^5.17.1",
     "@mui/material-nextjs": "^5.17.1",
