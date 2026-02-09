@@ -5,6 +5,8 @@ import {
   PlayerInfoSchema,
   OnlinePlayersResponseSchema,
   PlayerListResponseSchema,
+  WhitelistResponseSchema,
+  BannedPlayersResponseSchema,
   AddPlayerRequestSchema,
   KickPlayerRequestSchema,
   PlayerActionResponseSchema,
@@ -197,7 +199,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       description: 'Get server whitelist',
       tags: ['players'],
       params: ServerNameParamsSchema,
-      response: { 200: PlayerListResponseSchema, 400: ErrorResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
+      response: { 200: WhitelistResponseSchema, 400: ErrorResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
   }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
@@ -209,7 +211,10 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       try {
         const result = await execRconCommand(name, 'whitelist list');
         const match = result.match(/:\s*(.*)$/);
-        const players = match && match[1] ? match[1].split(',').map(p => p.trim()).filter(Boolean) : [];
+        const playerNames = match && match[1] ? match[1].split(',').map(p => p.trim()).filter(Boolean) : [];
+
+        // RCON doesn't provide UUIDs, so we return empty uuids
+        const players = playerNames.map(name => ({ name, uuid: '' }));
         return reply.send({ players, total: players.length, source: 'rcon' });
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for whitelist, falling back to file');
@@ -316,7 +321,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       description: 'Get banned players list',
       tags: ['players'],
       params: ServerNameParamsSchema,
-      response: { 200: PlayerListResponseSchema, 400: ErrorResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
+      response: { 200: BannedPlayersResponseSchema, 400: ErrorResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
   }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
@@ -328,8 +333,18 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       try {
         const result = await execRconCommand(name, 'banlist players');
         const match = result.match(/:\s*(.*)$/);
-        const players = match && match[1] ? match[1].split(',').map(p => p.trim()).filter(Boolean) : [];
-        return reply.send({ players, total: players.length, source: 'rcon' });
+        const playerNames = match && match[1] ? match[1].split(',').map(p => p.trim()).filter(Boolean) : [];
+
+        // RCON doesn't provide full ban details, so we return minimal info
+        const players = playerNames.map(name => ({
+          name,
+          uuid: '',
+          reason: '',
+          created: '',
+          source: '',
+          expires: 'forever',
+        }));
+        return reply.send({ players, total: players.length, source: 'file' });
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for ban list, falling back to file');
       }

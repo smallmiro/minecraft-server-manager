@@ -25,6 +25,8 @@ import {
   BackupHistoryResponse,
   BackupRestoreResponse,
   PlayerListResponse,
+  WhitelistResponse,
+  BannedPlayersResponse,
   PlayerActionResponse,
   OperatorsListResponse,
   OperatorActionResponse,
@@ -306,8 +308,8 @@ export class McctlApiAdapter implements IMcctlApiClient {
   // Player Management Operations
   // ============================================================
 
-  async getWhitelist(serverName: string): Promise<PlayerListResponse> {
-    return this.fetch<PlayerListResponse>(
+  async getWhitelist(serverName: string): Promise<WhitelistResponse> {
+    return this.fetch<WhitelistResponse>(
       `/api/servers/${encodeURIComponent(serverName)}/whitelist`
     );
   }
@@ -326,8 +328,8 @@ export class McctlApiAdapter implements IMcctlApiClient {
     );
   }
 
-  async getBans(serverName: string): Promise<PlayerListResponse> {
-    return this.fetch<PlayerListResponse>(
+  async getBans(serverName: string): Promise<BannedPlayersResponse> {
+    return this.fetch<BannedPlayersResponse>(
       `/api/servers/${encodeURIComponent(serverName)}/bans`
     );
   }

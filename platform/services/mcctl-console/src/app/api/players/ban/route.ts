@@ -38,15 +38,8 @@ export async function GET(request: NextRequest) {
 
     const result = await client.getBans(server);
 
-    const players = result.players.map((name) => ({
-      name,
-      uuid: '',
-      reason: '',
-      created: '',
-      source: '',
-    }));
-
-    return NextResponse.json({ players, source: result.source });
+    // API now returns players with full ban details, pass through directly
+    return NextResponse.json({ players: result.players, source: result.source });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json(

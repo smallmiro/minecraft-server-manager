@@ -29,6 +29,15 @@ vi.mock('@/lib/auth-utils', () => {
 const mockExecCommand = vi.fn();
 const mockGetServers = vi.fn();
 const mockGetServer = vi.fn();
+const mockGetWhitelist = vi.fn();
+const mockAddToWhitelist = vi.fn();
+const mockRemoveFromWhitelist = vi.fn();
+const mockGetBans = vi.fn();
+const mockBanPlayer = vi.fn();
+const mockUnbanPlayer = vi.fn();
+const mockGetOpsWithLevel = vi.fn();
+const mockAddOpWithLevel = vi.fn();
+const mockRemoveOp = vi.fn();
 
 vi.mock('@/adapters/McctlApiAdapter', () => {
   class McctlApiError extends Error {
@@ -45,6 +54,15 @@ vi.mock('@/adapters/McctlApiAdapter', () => {
       execCommand: mockExecCommand,
       getServers: mockGetServers,
       getServer: mockGetServer,
+      getWhitelist: mockGetWhitelist,
+      addToWhitelist: mockAddToWhitelist,
+      removeFromWhitelist: mockRemoveFromWhitelist,
+      getBans: mockGetBans,
+      banPlayer: mockBanPlayer,
+      unbanPlayer: mockUnbanPlayer,
+      getOpsWithLevel: mockGetOpsWithLevel,
+      addOpWithLevel: mockAddOpWithLevel,
+      removeOp: mockRemoveOp,
     })),
     McctlApiError,
     UserContext: undefined,
@@ -96,6 +114,15 @@ describe('Players BFF Routes - Permission Wiring', () => {
     mockExecCommand.mockResolvedValue({ output: 'Success' });
     mockGetServers.mockResolvedValue({ servers: [] });
     mockGetServer.mockResolvedValue({ server: { players: { list: [] } } });
+    mockGetWhitelist.mockResolvedValue({ players: [{ name: 'Player1', uuid: 'uuid1' }], total: 1, source: 'file' });
+    mockAddToWhitelist.mockResolvedValue({ success: true, message: 'Added', source: 'file' });
+    mockRemoveFromWhitelist.mockResolvedValue({ success: true, message: 'Removed', source: 'file' });
+    mockGetBans.mockResolvedValue({ players: [{ name: 'Griefer', uuid: 'uuid2', reason: 'Griefing', created: '2025-01-01', source: 'Server', expires: 'forever' }], total: 1, source: 'file' });
+    mockBanPlayer.mockResolvedValue({ success: true, message: 'Banned', source: 'file' });
+    mockUnbanPlayer.mockResolvedValue({ success: true, message: 'Unbanned', source: 'file' });
+    mockGetOpsWithLevel.mockResolvedValue({ operators: [{ name: 'Admin', uuid: 'uuid3', level: 4, role: 'Owner', bypassesPlayerLimit: false }], count: 1, source: 'file' });
+    mockAddOpWithLevel.mockResolvedValue({ success: true, operator: { name: 'Admin', uuid: 'uuid3', level: 4, role: 'Owner', bypassesPlayerLimit: false }, source: 'file' });
+    mockRemoveOp.mockResolvedValue({ success: true, message: 'Removed', source: 'file' });
   });
 
   // ===== /api/players (GET) =====
@@ -174,7 +201,7 @@ describe('Players BFF Routes - Permission Wiring', () => {
       });
 
       it('should proxy to mcctl-api on success', async () => {
-        mockExecCommand.mockResolvedValue({ output: 'There are 2 whitelisted players: Alice, Bob' });
+        mockGetWhitelist.mockResolvedValue({ players: [{ name: 'Alice', uuid: 'uuid-alice' }, { name: 'Bob', uuid: 'uuid-bob' }], total: 2, source: 'file' });
         const { GET } = await import('../whitelist/route');
         const req = makeGetRequest('http://localhost:5000/api/players/whitelist?server=sv1');
 
@@ -183,7 +210,7 @@ describe('Players BFF Routes - Permission Wiring', () => {
         expect(res.status).toBe(200);
         const body = await res.json();
         expect(body.players).toHaveLength(2);
-        expect(mockExecCommand).toHaveBeenCalledWith('sv1', 'whitelist list');
+        expect(mockGetWhitelist).toHaveBeenCalledWith('sv1');
       });
     });
 
@@ -234,7 +261,7 @@ describe('Players BFF Routes - Permission Wiring', () => {
         const res = await POST(req);
 
         expect(res.status).toBe(200);
-        expect(mockExecCommand).toHaveBeenCalledWith('sv1', 'whitelist add Steve');
+        expect(mockAddToWhitelist).toHaveBeenCalledWith('sv1', 'Steve');
       });
     });
 
@@ -280,7 +307,7 @@ describe('Players BFF Routes - Permission Wiring', () => {
         const res = await DELETE(req);
 
         expect(res.status).toBe(200);
-        expect(mockExecCommand).toHaveBeenCalledWith('sv1', 'whitelist remove Steve');
+        expect(mockRemoveFromWhitelist).toHaveBeenCalledWith('sv1', 'Steve');
       });
     });
   });
@@ -308,14 +335,14 @@ describe('Players BFF Routes - Permission Wiring', () => {
       });
 
       it('should proxy to mcctl-api on success', async () => {
-        mockExecCommand.mockResolvedValue({ output: 'There are 1 banned players: Griefer' });
+        mockGetBans.mockResolvedValue({ players: [{ name: 'Griefer', uuid: 'uuid-griefer', reason: 'Griefing', created: '2025-01-01', source: 'Server', expires: 'forever' }], total: 1, source: 'file' });
         const { GET } = await import('../ban/route');
         const req = makeGetRequest('http://localhost:5000/api/players/ban?server=sv1');
 
         const res = await GET(req);
 
         expect(res.status).toBe(200);
-        expect(mockExecCommand).toHaveBeenCalledWith('sv1', 'banlist players');
+        expect(mockGetBans).toHaveBeenCalledWith('sv1');
       });
     });
 
@@ -356,7 +383,7 @@ describe('Players BFF Routes - Permission Wiring', () => {
         const res = await POST(req);
 
         expect(res.status).toBe(200);
-        expect(mockExecCommand).toHaveBeenCalledWith('sv1', 'ban Griefer griefing');
+        expect(mockBanPlayer).toHaveBeenCalledWith('sv1', 'Griefer', 'griefing');
       });
     });
 
@@ -393,7 +420,7 @@ describe('Players BFF Routes - Permission Wiring', () => {
         const res = await DELETE(req);
 
         expect(res.status).toBe(200);
-        expect(mockExecCommand).toHaveBeenCalledWith('sv1', 'pardon Griefer');
+        expect(mockUnbanPlayer).toHaveBeenCalledWith('sv1', 'Griefer');
       });
     });
   });
@@ -539,7 +566,7 @@ describe('Players BFF Routes - Permission Wiring', () => {
         const res = await POST(req);
 
         expect(res.status).toBe(200);
-        expect(mockExecCommand).toHaveBeenCalledWith('sv1', 'op Steve');
+        expect(mockAddOpWithLevel).toHaveBeenCalledWith('sv1', 'Steve', 4);
       });
     });
 
@@ -585,7 +612,7 @@ describe('Players BFF Routes - Permission Wiring', () => {
         const res = await DELETE(req);
 
         expect(res.status).toBe(200);
-        expect(mockExecCommand).toHaveBeenCalledWith('sv1', 'deop Steve');
+        expect(mockRemoveOp).toHaveBeenCalledWith('sv1', 'Steve');
       });
     });
   });

@@ -16,6 +16,22 @@ export const OnlinePlayersResponseSchema = Type.Object({
   players: Type.Array(Type.String()),
 });
 
+// Whitelist entry
+export const WhitelistEntrySchema = Type.Object({
+  name: Type.String(),
+  uuid: Type.String(),
+});
+
+// Banned player entry
+export const BannedPlayerEntrySchema = Type.Object({
+  name: Type.String(),
+  uuid: Type.String(),
+  reason: Type.String(),
+  created: Type.String(),
+  source: Type.String(),
+  expires: Type.String(),
+});
+
 // Player list (whitelist, bans, ops)
 export const PlayerListResponseSchema = Type.Object({
   players: Type.Array(Type.String()),
@@ -25,6 +41,24 @@ export const PlayerListResponseSchema = Type.Object({
     Type.Literal('file'),
     Type.Literal('config'),
   ])),
+});
+
+// Whitelist response
+export const WhitelistResponseSchema = Type.Object({
+  players: Type.Array(WhitelistEntrySchema),
+  total: Type.Number(),
+  source: Type.Optional(Type.Union([
+    Type.Literal('rcon'),
+    Type.Literal('file'),
+    Type.Literal('config'),
+  ])),
+});
+
+// Banned players response
+export const BannedPlayersResponseSchema = Type.Object({
+  players: Type.Array(BannedPlayerEntrySchema),
+  total: Type.Number(),
+  source: Type.Literal('file'),
 });
 
 // Add player request
@@ -67,6 +101,10 @@ export { ErrorResponseSchema };
 export type PlayerInfo = Static<typeof PlayerInfoSchema>;
 export type OnlinePlayersResponse = Static<typeof OnlinePlayersResponseSchema>;
 export type PlayerListResponse = Static<typeof PlayerListResponseSchema>;
+export type WhitelistEntry = Static<typeof WhitelistEntrySchema>;
+export type BannedPlayerEntry = Static<typeof BannedPlayerEntrySchema>;
+export type WhitelistResponse = Static<typeof WhitelistResponseSchema>;
+export type BannedPlayersResponse = Static<typeof BannedPlayersResponseSchema>;
 export type AddPlayerRequest = Static<typeof AddPlayerRequestSchema>;
 export type KickPlayerRequest = Static<typeof KickPlayerRequestSchema>;
 export type PlayerActionResponse = Static<typeof PlayerActionResponseSchema>;

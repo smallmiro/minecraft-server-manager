@@ -1,10 +1,36 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
+interface WhitelistPlayer {
+  name: string;
+  uuid: string;
+}
+
+interface BannedPlayer {
+  name: string;
+  uuid: string;
+  reason: string;
+  created: string;
+  source: string;
+  expires: string;
+}
+
 interface PlayerListResult {
   players: string[];
   total: number;
   source: 'file' | 'config';
+}
+
+interface WhitelistResult {
+  players: WhitelistPlayer[];
+  total: number;
+  source: 'file' | 'config';
+}
+
+interface BannedPlayersResult {
+  players: BannedPlayer[];
+  total: number;
+  source: 'file';
 }
 
 interface WhitelistEntry {
@@ -86,13 +112,13 @@ export class PlayerFileService {
 
   // ==================== READ ====================
 
-  readWhitelist(serverName: string): PlayerListResult {
+  readWhitelist(serverName: string): WhitelistResult {
     const jsonPath = join(this.getServerDataPath(serverName), 'whitelist.json');
     const entries = this.readJsonFile<WhitelistEntry>(jsonPath);
 
     if (entries.length > 0) {
       return {
-        players: entries.map(e => e.name),
+        players: entries.map(e => ({ name: e.name, uuid: e.uuid })),
         total: entries.length,
         source: 'file',
       };
@@ -102,7 +128,11 @@ export class PlayerFileService {
     const env = this.readConfigEnv(serverName);
     const configPlayers = this.parseCommaSeparated(env.get('WHITELIST'));
     if (configPlayers.length > 0) {
-      return { players: configPlayers, total: configPlayers.length, source: 'config' };
+      return {
+        players: configPlayers.map(name => ({ name, uuid: '' })),
+        total: configPlayers.length,
+        source: 'config'
+      };
     }
 
     return { players: [], total: 0, source: 'file' };
@@ -130,12 +160,19 @@ export class PlayerFileService {
     return { players: [], total: 0, source: 'file' };
   }
 
-  readBannedPlayers(serverName: string): PlayerListResult {
+  readBannedPlayers(serverName: string): BannedPlayersResult {
     const jsonPath = join(this.getServerDataPath(serverName), 'banned-players.json');
     const entries = this.readJsonFile<BannedPlayerEntry>(jsonPath);
 
     return {
-      players: entries.map(e => e.name),
+      players: entries.map(e => ({
+        name: e.name,
+        uuid: e.uuid,
+        reason: e.reason,
+        created: e.created,
+        source: e.source,
+        expires: e.expires,
+      })),
       total: entries.length,
       source: 'file',
     };

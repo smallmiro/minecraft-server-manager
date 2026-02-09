@@ -298,10 +298,36 @@ export interface BackupRestoreResponse {
 
 export type PlayerDataSource = 'rcon' | 'file' | 'config';
 
+export interface WhitelistEntry {
+  name: string;
+  uuid: string;
+}
+
+export interface BannedPlayerEntry {
+  name: string;
+  uuid: string;
+  reason: string;
+  created: string;
+  source: string;
+  expires: string;
+}
+
 export interface PlayerListResponse {
   players: string[];
   total: number;
   source?: PlayerDataSource;
+}
+
+export interface WhitelistResponse {
+  players: WhitelistEntry[];
+  total: number;
+  source?: PlayerDataSource;
+}
+
+export interface BannedPlayersResponse {
+  players: BannedPlayerEntry[];
+  total: number;
+  source: 'file';
 }
 
 export interface PlayerActionResponse {
@@ -379,10 +405,10 @@ export interface IMcctlApiClient {
   restoreBackup(commitHash: string): Promise<BackupRestoreResponse>;
 
   // Player management operations
-  getWhitelist(serverName: string): Promise<PlayerListResponse>;
+  getWhitelist(serverName: string): Promise<WhitelistResponse>;
   addToWhitelist(serverName: string, player: string): Promise<PlayerActionResponse>;
   removeFromWhitelist(serverName: string, player: string): Promise<PlayerActionResponse>;
-  getBans(serverName: string): Promise<PlayerListResponse>;
+  getBans(serverName: string): Promise<BannedPlayersResponse>;
   banPlayer(serverName: string, player: string, reason?: string): Promise<PlayerActionResponse>;
   unbanPlayer(serverName: string, player: string): Promise<PlayerActionResponse>;
 
