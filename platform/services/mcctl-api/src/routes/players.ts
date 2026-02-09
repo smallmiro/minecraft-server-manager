@@ -213,8 +213,14 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         const match = result.match(/:\s*(.*)$/);
         const playerNames = match && match[1] ? match[1].split(',').map(p => p.trim()).filter(Boolean) : [];
 
-        // RCON doesn't provide UUIDs, so we return empty uuids
-        const players = playerNames.map(name => ({ name, uuid: '' }));
+        // Enrich RCON names with UUIDs from whitelist.json
+        const fileData = playerFileService.readWhitelist(name);
+        const uuidMap = new Map(fileData.players.map(p => [p.name.toLowerCase(), p.uuid]));
+
+        const players = playerNames.map(pName => ({
+          name: pName,
+          uuid: uuidMap.get(pName.toLowerCase()) || '',
+        }));
         return reply.send({ players, total: players.length, source: 'rcon' });
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for whitelist, falling back to file');
