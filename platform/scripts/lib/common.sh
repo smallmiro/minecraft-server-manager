@@ -17,7 +17,8 @@ if [[ -n "${MCCTL_ROOT:-}" ]]; then
     # Running via npm package (mcctl CLI)
     PLATFORM_DIR="$MCCTL_ROOT"
     SCRIPT_DIR="${MCCTL_SCRIPTS:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-    TEMPLATES_DIR="${MCCTL_TEMPLATES:-$PLATFORM_DIR/servers/_template}"
+    TEMPLATES_DIR="${MCCTL_TEMPLATES:+$MCCTL_TEMPLATES/servers/_template}"
+    TEMPLATES_DIR="${TEMPLATES_DIR:-$PLATFORM_DIR/servers/_template}"
 else
     # Running directly (development mode)
     SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"

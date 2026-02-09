@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -13,9 +13,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession(await headers());
 
     if (!session) {
       return NextResponse.json(

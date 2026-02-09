@@ -77,34 +77,35 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.1.1 (2026-02-09)
+- **fix(console)**: Remove GNB admin menu, rename UserMenu "Admin Panel" to "Users" (#302, #304)
+- **fix(api)**: Return UUID in whitelist/ban API responses (#303, #305)
+- **fix(api)**: Update PlayerFileService test assertions for object return types
+
+### v2.1.0 (2026-02-09) - Console Feature Completion
+- **feat**: Modrinth modpack CLI/API support - search, create, manage modpack servers (#244, #245)
+- **feat**: Admin user management Console UI - list, detail, role management (#189)
+- **feat**: OP Level support across all layers - domain model, CLI, API, Console (#284, #285, #286, #287)
+- **fix**: Console sign-out 403 bug with LAN IP addresses (#300, #301)
+- **feat**: Offline player management support (#288, #289)
+- **feat**: User profile settings page with password change (#265, #266)
+
 ### v1.15.5 (2026-02-08)
 - **fix(cli)**: Fix Better Auth password hashing - use hex string salt for compatibility
 - **fix(cli)**: Add `MCCTL_API_KEY` env var to mcctl-console PM2 config (#261)
 
-### v1.15.4 (2026-02-08)
-- **fix(console)**: Explicitly pass `baseURL` and `secret` to Better Auth config
-- **fix(console)**: Fix HTTP session persistence - disable Secure cookies on HTTP environments
-- **fix(console)**: Remove duplicate trustedOrigins entry for localhost:5000
-
-### v1.15.3 (2026-02-08)
-- **fix(cli)**: Correct `BETTER_AUTH_URL` to `BETTER_AUTH_BASE_URL` in ecosystem.config.cjs
-- **fix(console)**: Fix trustedOrigins env var name to `BETTER_AUTH_BASE_URL`
-- **fix(console)**: Use `MCCTL_ROOT` env var for DB path resolution in db.ts
-- **fix(console)**: Add missing `user_servers` table to auto-creation DDL
-- **fix(cli,api)**: Move audit.db to `MCCTL_ROOT/data/audit.db`
-
-### v1.15.2 (2026-02-08)
-- **fix(cli)**: Replace `NEXTAUTH_SECRET`/`NEXTAUTH_URL` with `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL` in ecosystem.config.cjs
-- **fix(console)**: Auto-create Better Auth SQLite tables (users, accounts, sessions, verifications) on startup
-
-### v1.15.1 (2026-02-08)
-- **fix(console)**: Change auth client baseURL from `localhost:5000` to empty string for production deployment
-- **fix(console)**: Add `NEXT_PUBLIC_APP_URL` env var support to trustedOrigins
-
 ### v1.15.0 (2026-02-08)
 - **feat(cli)**: Auto-install mcctl-console package in `console init`
 - **fix(cli)**: Resolve service script paths independently for each service
-- **fix(cli)**: Add defaultValue to modpack version prompt to prevent trim error
+
+### v1.14.0 (2026-02-08)
+- **feat**: MODRINTH modpack server creation (CLI & Web Console) (#244, #246)
+- **feat**: NeoForge mod loader option for modpack servers
+
+### v1.13.0 (2026-02-07)
+- **feat**: Unified prerequisite checker for `init` and `console init` (#241)
+- **feat**: Console npm publishing as standalone package
+- **feat**: Console `--force` option for PM2 process termination (#238)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

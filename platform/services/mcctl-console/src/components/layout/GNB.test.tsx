@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import { GNB } from './GNB';
@@ -11,6 +11,16 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock auth-client for session management
+let mockSession: any = null;
+vi.mock('@/lib/auth-client', () => ({
+  useSession: () => ({
+    data: mockSession,
+    isPending: false,
+  }),
+  signOut: vi.fn(),
+}));
+
 // Mock UserMenu component
 vi.mock('@/components/auth', () => ({
   UserMenu: () => <div data-testid="user-menu">UserMenu</div>,
@@ -21,6 +31,11 @@ const renderWithTheme = (component: React.ReactNode) => {
 };
 
 describe('GNB', () => {
+  beforeEach(() => {
+    // Reset session before each test
+    mockSession = null;
+  });
+
   it('should render logo/brand', () => {
     renderWithTheme(<GNB mobileOpen={false} onMenuToggle={vi.fn()} />);
 
@@ -90,4 +105,5 @@ describe('GNB', () => {
     expect(playersLinks[0]).toHaveAttribute('href', '/players');
     expect(routingLinks[0]).toHaveAttribute('href', '/routing');
   });
+
 });

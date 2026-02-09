@@ -103,6 +103,11 @@ export {
   type AuditLogData,
   type AuditLogRow,
   AuditActionEnum,
+  // Operator
+  Operator,
+  type OperatorData,
+  type MinecraftOpsJson,
+  OpLevel,
 } from './domain/index.js';
 
 // Re-export mod domain models

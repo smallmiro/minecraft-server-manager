@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-02-09
+
+### Fixed
+- **Console GNB Admin Menu Cleanup** - Remove admin menu from GNB, rename UserMenu "Admin Panel" to "Users" (#302, #304)
+  - Admin menu in GNB was redundant with UserMenu admin link
+  - Simplified navigation by consolidating admin access to UserMenu
+- **API Whitelist/Banned-Players UUID Display** - Return UUID in whitelist and ban API responses (#303, #305)
+  - UUID was missing from player list API responses for whitelist and banned-players
+  - PlayerFileService now returns full player objects including UUID
+- **API PlayerFileService Test Assertions** - Update test assertions for object return types (#303)
+
+## [2.1.0] - 2026-02-09
+
+### Added
+- **Modrinth Modpack CLI/API Support** - Full modpack server creation and management (#244, #245)
+  - CLI `mcctl create --modpack` with Modrinth modpack search, version selection, and loader detection
+  - API endpoints for modpack server creation with validation
+  - MODRINTH modpack server validation in CLI
+- **Admin User Management Console UI** - Web-based admin user management (#189)
+  - Admin user list page with search and filtering
+  - User detail dialog with role and status management
+  - Admin menu in GNB for admin users
+  - Admin layout with UserMenu admin panel link
+- **OP Level Domain Model** - Structured OP level support across all layers (#284)
+  - `OpLevel` value object in shared domain layer
+  - OP level semantics: 1 (bypass spawn), 2 (cheat commands), 3 (multiplayer management), 4 (server management)
+- **OP Level CLI Commands** - Interactive OP level management (#285)
+  - `mcctl op set <player> --level <1-4>` for setting OP levels
+  - Interactive OP level selection with level descriptions
+  - `OpsJsonAdapter` for direct ops.json file management
+- **OP Level API Endpoints** - REST API for OP level management (#286)
+  - `PUT /api/servers/:name/ops/:player/level` endpoint
+  - OP level infrastructure with validation
+- **OP Level Console Web UI** - Web interface for OP level management (#287)
+  - `OpLevelBadge` component for visual OP level display
+  - `OpLevelSelector` component for interactive level selection
+  - OP level management integrated into OpManager
+
+### Fixed
+- **Console Sign-out 403 LAN IP Bug** - Fix typed `getServerSession` wrapper and allow private network origins (#300, #301)
+  - Sign-out was failing with 403 error when accessing from LAN IP addresses
+  - Added private network IP ranges to trusted origins
+- **Offline Player Management** - Support for managing players who are not currently online (#288, #289)
+
+### Changed
+- **User Profile Settings** - Add password change functionality to user profile page (#265, #266)
+- **Service Isolation** - Isolate service node_modules into `.services/` directory (#262, #267)
+- **Template Path Resolution** - Fix MCCTL_TEMPLATES path resolution and console modLoader validation (#263, #264)
+
 ## [1.15.5] - 2026-02-08
 
 ### Fixed

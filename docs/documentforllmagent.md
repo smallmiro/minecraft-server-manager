@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 1.14.0
-> **Last Updated**: 2026-02-08
+> **Version**: 2.1.0
+> **Last Updated**: 2026-02-09
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -2528,6 +2528,23 @@ A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix kno
 ---
 
 ## 16. Version History
+
+### Version 2.1.0 (2026-02-09) - Console Feature Completion
+
+**Added:**
+- Modrinth modpack CLI/API support - full modpack server creation and management (#244, #245)
+- Admin user management Console UI - list, detail, role management (#189)
+- OP Level domain model with levels 1-4 and semantic descriptions (#284)
+- OP Level CLI commands: `mcctl op set <player> --level <1-4>` with interactive mode (#285)
+- OP Level REST API: `PUT /api/servers/:name/ops/:player/level` (#286)
+- OP Level Console Web UI: OpLevelBadge, OpLevelSelector, OpManager integration (#287)
+- Offline player management support (#288, #289)
+- User profile settings page with password change (#265, #266)
+
+**Fixed:**
+- Console sign-out 403 error with LAN IP addresses (#300, #301)
+- Service node_modules isolation into `.services/` directory (#262, #267)
+- MCCTL_TEMPLATES path resolution and console modLoader validation (#263, #264)
 
 ### Version 1.14.0 (2026-02-08)
 

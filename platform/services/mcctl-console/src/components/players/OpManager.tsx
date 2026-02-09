@@ -21,18 +21,29 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
-import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import EditIcon from '@mui/icons-material/Edit';
+import { OpLevelBadge } from './OpLevelBadge';
+import { OpLevelSelector } from './OpLevelSelector';
 
 /**
- * Operator type
+ * Operator type (matches API response)
  */
 interface Operator {
   name: string;
   uuid: string;
   level: number;
+  role: string;
+  bypassesPlayerLimit: boolean;
 }
 
 /**
@@ -40,6 +51,8 @@ interface Operator {
  */
 interface OpListResponse {
   operators: Operator[];
+  count: number;
+  source?: 'rcon' | 'file' | 'config';
 }
 
 /**
@@ -59,9 +72,24 @@ export function OpManager({ serverName }: OpManagerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [operators, setOperators] = useState<Operator[]>([]);
+  const [source, setSource] = useState<'rcon' | 'file' | 'config' | undefined>();
   const [newOp, setNewOp] = useState('');
   const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
+
+  // Add operator dialog state
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState<1 | 2 | 3 | 4>(4);
+
+  // Change level dialog state
+  const [changeLevelDialogOpen, setChangeLevelDialogOpen] = useState(false);
+  const [changingOperator, setChangingOperator] = useState<Operator | null>(null);
+  const [newLevel, setNewLevel] = useState<1 | 2 | 3 | 4>(4);
+  const [changingLevel, setChangingLevel] = useState(false);
+
+  // Menu state
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuOperator, setMenuOperator] = useState<Operator | null>(null);
 
   // Fetch operators
   const fetchOperators = useCallback(async () => {
@@ -75,6 +103,7 @@ export function OpManager({ serverName }: OpManagerProps) {
       }
       const data: OpListResponse = await response.json();
       setOperators(data.operators);
+      setSource(data.source);
     } catch (err) {
       setError('Failed to load operators');
       console.error('Error fetching operators:', err);
@@ -87,7 +116,7 @@ export function OpManager({ serverName }: OpManagerProps) {
     fetchOperators();
   }, [fetchOperators]);
 
-  // Add operator
+  // Add operator with level
   const handleAdd = async () => {
     if (!newOp.trim()) return;
 
@@ -103,6 +132,7 @@ export function OpManager({ serverName }: OpManagerProps) {
         body: JSON.stringify({
           player: newOp.trim(),
           server: serverName,
+          level: selectedLevel,
         }),
       });
 
@@ -111,6 +141,8 @@ export function OpManager({ serverName }: OpManagerProps) {
       }
 
       setNewOp('');
+      setSelectedLevel(4);
+      setAddDialogOpen(false);
       await fetchOperators();
     } catch (err) {
       setError('Failed to add operator');
@@ -124,6 +156,8 @@ export function OpManager({ serverName }: OpManagerProps) {
   const handleRemove = async (playerName: string) => {
     setRemoving(playerName);
     setError(null);
+    setAnchorEl(null);
+    setMenuOperator(null);
 
     try {
       const response = await fetch(
@@ -146,24 +180,66 @@ export function OpManager({ serverName }: OpManagerProps) {
     }
   };
 
-  // Handle Enter key
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAdd();
+  // Change operator level
+  const handleChangeLevel = async () => {
+    if (!changingOperator) return;
+
+    setChangingLevel(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `/api/players/op/${encodeURIComponent(changingOperator.name)}?server=${encodeURIComponent(serverName)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            level: newLevel,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to change operator level');
+      }
+
+      setChangeLevelDialogOpen(false);
+      setChangingOperator(null);
+      await fetchOperators();
+    } catch (err) {
+      setError('Failed to change operator level');
+      console.error('Error changing operator level:', err);
+    } finally {
+      setChangingLevel(false);
     }
   };
 
-  // Get level color
-  const getLevelColor = (level: number): 'default' | 'primary' | 'secondary' | 'error' => {
-    switch (level) {
-      case 4:
-        return 'error';
-      case 3:
-        return 'secondary';
-      case 2:
-        return 'primary';
-      default:
-        return 'default';
+  // Menu handlers
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, operator: Operator) => {
+    setAnchorEl(event.currentTarget);
+    setMenuOperator(operator);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuOperator(null);
+  };
+
+  const handleOpenChangeLevelDialog = () => {
+    if (menuOperator) {
+      setChangingOperator(menuOperator);
+      setNewLevel(menuOperator.level as 1 | 2 | 3 | 4);
+      setChangeLevelDialogOpen(true);
+      handleMenuClose();
+    }
+  };
+
+  // Handle Enter key (quick add without dialog)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      setAddDialogOpen(true);
     }
   };
 
@@ -180,27 +256,24 @@ export function OpManager({ serverName }: OpManagerProps) {
           </Alert>
         )}
 
-        {/* Add Operator Form */}
-        <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-          <TextField
-            size="small"
-            placeholder="Player name"
-            value={newOp}
-            onChange={(e) => setNewOp(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={adding}
-            fullWidth
-          />
+        {!loading && source && source !== 'rcon' && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Server is offline. Showing data from {source === 'config' ? 'config.env' : 'ops.json'}. Changes will apply on next server start.
+          </Alert>
+        )}
+
+        {/* Add Operator Button */}
+        <Box sx={{ mb: 2 }}>
           <Button
             variant="contained"
-            onClick={handleAdd}
-            disabled={!newOp.trim() || adding}
-            startIcon={adding ? <CircularProgress size={16} /> : <PersonAddIcon />}
+            onClick={() => setAddDialogOpen(true)}
+            startIcon={<PersonAddIcon />}
             aria-label="Add operator"
+            fullWidth
           >
-            Add
+            Add Operator
           </Button>
-        </Stack>
+        </Box>
 
         {loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -215,53 +288,143 @@ export function OpManager({ serverName }: OpManagerProps) {
         )}
 
         {!loading && operators.length > 0 && (
-          <List dense>
-            {operators.map((op) => (
-              <ListItem
-                key={op.uuid || op.name}
-                secondaryAction={
-                  <IconButton
-                    edge="end"
-                    aria-label="Remove operator"
-                    onClick={() => handleRemove(op.name)}
-                    disabled={removing === op.name}
-                    color="error"
-                  >
-                    {removing === op.name ? (
-                      <CircularProgress size={20} />
-                    ) : (
-                      <DeleteIcon />
-                    )}
-                  </IconButton>
-                }
-              >
-                <ListItemAvatar>
-                  <Avatar
-                    src={op.uuid ? `https://mc-heads.net/avatar/${op.uuid}/40` : undefined}
-                    alt={op.name}
-                    sx={{ bgcolor: 'warning.main' }}
-                  >
-                    <AdminPanelSettingsIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {op.name}
-                      <Chip
-                        label={`Level ${op.level}`}
-                        size="small"
-                        color={getLevelColor(op.level)}
-                      />
-                    </Box>
+          <>
+            <List dense>
+              {operators.map((op) => (
+                <ListItem
+                  key={op.uuid || op.name}
+                  secondaryAction={
+                    <IconButton
+                      edge="end"
+                      aria-label="Operator actions"
+                      onClick={(e) => handleMenuOpen(e, op)}
+                      disabled={removing === op.name}
+                    >
+                      {removing === op.name ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        <MoreVertIcon />
+                      )}
+                    </IconButton>
                   }
-                  secondary={op.uuid ? op.uuid.substring(0, 8) + '...' : 'UUID not available'}
-                />
-              </ListItem>
-            ))}
-          </List>
+                >
+                  <ListItemAvatar>
+                    <Avatar
+                      src={op.uuid ? `https://mc-heads.net/avatar/${op.uuid}/40` : undefined}
+                      alt={op.name}
+                      sx={{ bgcolor: 'warning.main' }}
+                    >
+                      <AdminPanelSettingsIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                        <Typography component="span">{op.name}</Typography>
+                        <OpLevelBadge level={op.level as 1 | 2 | 3 | 4} showIcon size="small" />
+                      </Box>
+                    }
+                    secondary={op.uuid ? op.uuid.substring(0, 8) + '...' : 'UUID not available'}
+                  />
+                </ListItem>
+              ))}
+            </List>
+
+            {/* Action Menu */}
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={handleOpenChangeLevelDialog}>
+                <EditIcon sx={{ mr: 1 }} fontSize="small" />
+                Change Level
+              </MenuItem>
+              <MenuItem onClick={() => menuOperator && handleRemove(menuOperator.name)}>
+                <DeleteIcon sx={{ mr: 1 }} fontSize="small" color="error" />
+                Remove OP
+              </MenuItem>
+            </Menu>
+          </>
         )}
       </CardContent>
+
+      {/* Add Operator Dialog */}
+      <Dialog open={addDialogOpen} onClose={() => !adding && setAddDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Add Operator</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Player Name"
+            placeholder="Enter player name"
+            fullWidth
+            value={newOp}
+            onChange={(e) => setNewOp(e.target.value)}
+            disabled={adding}
+            sx={{ mb: 2 }}
+          />
+          <OpLevelSelector
+            value={selectedLevel}
+            onChange={setSelectedLevel}
+            label="OP Level"
+            disabled={adding}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddDialogOpen(false)} disabled={adding}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleAdd}
+            disabled={!newOp.trim() || adding}
+            startIcon={adding ? <CircularProgress size={16} /> : undefined}
+          >
+            {adding ? 'Adding...' : 'Add OP'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Change Level Dialog */}
+      <Dialog
+        open={changeLevelDialogOpen}
+        onClose={() => !changingLevel && setChangeLevelDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Change OP Level - {changingOperator?.name}
+        </DialogTitle>
+        <DialogContent>
+          {changingOperator && (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Current: Level {changingOperator.level} ({changingOperator.role})
+              </Typography>
+              <OpLevelSelector
+                value={newLevel}
+                onChange={setNewLevel}
+                label="New Level"
+                disabled={changingLevel}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setChangeLevelDialogOpen(false)} disabled={changingLevel}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleChangeLevel}
+            disabled={changingLevel || newLevel === changingOperator?.level}
+            startIcon={changingLevel ? <CircularProgress size={16} /> : undefined}
+          >
+            {changingLevel ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 }

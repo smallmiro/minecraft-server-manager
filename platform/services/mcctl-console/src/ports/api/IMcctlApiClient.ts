@@ -292,6 +292,80 @@ export interface BackupRestoreResponse {
   message?: string;
 }
 
+// ============================================================
+// Player Management Types
+// ============================================================
+
+export type PlayerDataSource = 'rcon' | 'file' | 'config';
+
+export interface WhitelistEntry {
+  name: string;
+  uuid: string;
+}
+
+export interface BannedPlayerEntry {
+  name: string;
+  uuid: string;
+  reason: string;
+  created: string;
+  source: string;
+  expires: string;
+}
+
+export interface PlayerListResponse {
+  players: string[];
+  total: number;
+  source?: PlayerDataSource;
+}
+
+export interface WhitelistResponse {
+  players: WhitelistEntry[];
+  total: number;
+  source?: PlayerDataSource;
+}
+
+export interface BannedPlayersResponse {
+  players: BannedPlayerEntry[];
+  total: number;
+  source: 'file';
+}
+
+export interface PlayerActionResponse {
+  success: boolean;
+  message: string;
+  source?: PlayerDataSource;
+}
+
+/**
+ * Operator info with level and role
+ */
+export interface OperatorInfo {
+  name: string;
+  uuid: string;
+  level: number;
+  role: string;
+  bypassesPlayerLimit: boolean;
+}
+
+/**
+ * Operators list response (with level information)
+ */
+export interface OperatorsListResponse {
+  operators: OperatorInfo[];
+  count: number;
+  source?: PlayerDataSource;
+}
+
+/**
+ * Operator action response (add/update/remove)
+ */
+export interface OperatorActionResponse {
+  success: boolean;
+  operator?: OperatorInfo;
+  message?: string;
+  source?: PlayerDataSource;
+}
+
 /**
  * mcctl-api Client Interface
  * Defines the contract for API communication
@@ -329,4 +403,22 @@ export interface IMcctlApiClient {
   pushBackup(message?: string): Promise<BackupPushResponse>;
   getBackupHistory(limit?: number): Promise<BackupHistoryResponse>;
   restoreBackup(commitHash: string): Promise<BackupRestoreResponse>;
+
+  // Player management operations
+  getWhitelist(serverName: string): Promise<WhitelistResponse>;
+  addToWhitelist(serverName: string, player: string): Promise<PlayerActionResponse>;
+  removeFromWhitelist(serverName: string, player: string): Promise<PlayerActionResponse>;
+  getBans(serverName: string): Promise<BannedPlayersResponse>;
+  banPlayer(serverName: string, player: string, reason?: string): Promise<PlayerActionResponse>;
+  unbanPlayer(serverName: string, player: string): Promise<PlayerActionResponse>;
+
+  // OP management operations (with level support)
+  getOpsWithLevel(serverName: string): Promise<OperatorsListResponse>;
+  addOpWithLevel(serverName: string, player: string, level?: number): Promise<OperatorActionResponse>;
+  updateOpLevel(serverName: string, player: string, level: number): Promise<OperatorActionResponse>;
+  removeOp(serverName: string, player: string): Promise<OperatorActionResponse>;
+
+  // Legacy OP operations (backwards compatibility)
+  getOps(serverName: string): Promise<PlayerListResponse>;
+  addOp(serverName: string, player: string): Promise<PlayerActionResponse>;
 }

@@ -1,6 +1,7 @@
 /**
  * Ban API Route
  * GET/POST/DELETE /api/players/ban
+ * Uses dedicated mcctl-api bans endpoints (supports offline servers)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,9 +11,6 @@ import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Extract user context from session for API forwarding
- */
 function getUserContext(session: { user: { name?: string | null; email: string; role?: string | null } }): UserContext {
   return {
     username: session.user.name || session.user.email,
@@ -22,7 +20,6 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
 
 /**
  * GET /api/players/ban?server=<name>
- * Get ban list for a server
  */
 export async function GET(request: NextRequest) {
   try {
@@ -37,30 +34,12 @@ export async function GET(request: NextRequest) {
     }
 
     const session = await requireServerPermission(await headers(), server, 'view');
-
     const client = createMcctlApiClient(getUserContext(session));
 
-    // Execute banlist command
-    const result = await client.execCommand(server, 'banlist players');
+    const result = await client.getBans(server);
 
-    // Parse ban list output
-    // Format varies, commonly: "There are X banned players: name1, name2"
-    const players: { name: string; uuid: string; reason: string; created: string; source: string }[] = [];
-    const match = result.output.match(/:\s*(.+)$/);
-    if (match) {
-      const names = match[1].split(',').map((n) => n.trim()).filter(Boolean);
-      names.forEach((name) => {
-        players.push({
-          name,
-          uuid: '',
-          reason: 'No reason provided',
-          created: new Date().toISOString(),
-          source: 'Server',
-        });
-      });
-    }
-
-    return NextResponse.json({ players });
+    // API now returns players with full ban details, pass through directly
+    return NextResponse.json({ players: result.players, source: result.source });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json(
@@ -86,7 +65,6 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/players/ban
- * Ban a player
  */
 export async function POST(request: NextRequest) {
   try {
@@ -101,16 +79,14 @@ export async function POST(request: NextRequest) {
     }
 
     const session = await requireServerPermission(await headers(), server, 'manage');
-
     const client = createMcctlApiClient(getUserContext(session));
 
-    // Ban player with optional reason
-    const command = reason ? `ban ${player} ${reason}` : `ban ${player}`;
-    const result = await client.execCommand(server, command);
+    const result = await client.banPlayer(server, player, reason);
 
     return NextResponse.json({
-      success: true,
-      message: result.output,
+      success: result.success,
+      message: result.message,
+      source: result.source,
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -137,7 +113,6 @@ export async function POST(request: NextRequest) {
 
 /**
  * DELETE /api/players/ban?player=<name>&server=<name>
- * Unban a player (pardon)
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -153,15 +128,14 @@ export async function DELETE(request: NextRequest) {
     }
 
     const session = await requireServerPermission(await headers(), server, 'manage');
-
     const client = createMcctlApiClient(getUserContext(session));
 
-    // Pardon (unban) player
-    const result = await client.execCommand(server, `pardon ${player}`);
+    const result = await client.unbanPlayer(server, player);
 
     return NextResponse.json({
-      success: true,
-      message: result.output,
+      success: result.success,
+      message: result.message,
+      source: result.source,
     });
   } catch (error) {
     if (error instanceof AuthError) {

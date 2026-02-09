@@ -239,18 +239,34 @@ export interface ServiceScriptPaths {
  * @returns Object with resolved script paths
  */
 export function resolveServiceScriptPaths(rootDir: string): ServiceScriptPaths {
-  // Production paths (npm install)
-  const prodApiPath = join(rootDir, 'node_modules/@minecraft-docker/mcctl-api/dist/index.js');
-  const prodConsolePath = join(
+  // New isolated paths (.services/ directory)
+  const servicesDir = join(rootDir, '.services');
+  const isolatedApiPath = join(servicesDir, 'node_modules/@minecraft-docker/mcctl-api/dist/index.js');
+  const isolatedConsolePath = join(
+    servicesDir,
+    'node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'
+  );
+
+  // Check isolated .services/ directory first (new installs)
+  if (existsSync(isolatedApiPath) || existsSync(isolatedConsolePath)) {
+    return {
+      api: isolatedApiPath,
+      console: isolatedConsolePath,
+      isDevelopment: false,
+    };
+  }
+
+  // Legacy paths (rootDir/node_modules) - backward compatibility
+  const legacyApiPath = join(rootDir, 'node_modules/@minecraft-docker/mcctl-api/dist/index.js');
+  const legacyConsolePath = join(
     rootDir,
     'node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'
   );
 
-  // Check if any production paths exist (each service is independent)
-  if (existsSync(prodApiPath) || existsSync(prodConsolePath)) {
+  if (existsSync(legacyApiPath) || existsSync(legacyConsolePath)) {
     return {
-      api: prodApiPath,
-      console: prodConsolePath,
+      api: legacyApiPath,
+      console: legacyConsolePath,
       isDevelopment: false,
     };
   }
@@ -300,8 +316,8 @@ export function resolveServiceScriptPaths(rootDir: string): ServiceScriptPaths {
 
   // Fallback: return production paths (will fail at runtime if not found)
   return {
-    api: prodApiPath,
-    console: prodConsolePath,
+    api: isolatedApiPath,
+    console: isolatedConsolePath,
     isDevelopment: false,
   };
 }

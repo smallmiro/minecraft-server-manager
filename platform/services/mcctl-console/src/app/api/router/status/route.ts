@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createMcctlApiClient, McctlApiError, UserContext } from '@/adapters/McctlApiAdapter';
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -21,9 +21,7 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
  */
 export async function GET() {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession(await headers());
 
     if (!session) {
       return NextResponse.json(

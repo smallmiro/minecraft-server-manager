@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { existsSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { multiselect, isCancel } from '@clack/prompts';
 import {
@@ -35,19 +35,41 @@ function isConsoleAvailable(): boolean {
  * @param rootDir - Root directory to install in
  * @returns true if installation succeeded or already installed
  */
-function installMcctlApiIfNeeded(rootDir: string): { installed: boolean; error?: string } {
-  const apiPackagePath = join(rootDir, 'node_modules/@minecraft-docker/mcctl-api/dist/index.js');
+function getServicesDir(rootDir: string): string {
+  return join(rootDir, '.services');
+}
 
-  // Already installed
+function ensureServicesDir(rootDir: string): string {
+  const servicesDir = getServicesDir(rootDir);
+  if (!existsSync(servicesDir)) {
+    mkdirSync(servicesDir, { recursive: true });
+  }
+  return servicesDir;
+}
+
+function installMcctlApiIfNeeded(rootDir: string): { installed: boolean; error?: string } {
+  const servicesDir = getServicesDir(rootDir);
+  const apiPackagePath = join(servicesDir, 'node_modules/@minecraft-docker/mcctl-api/dist/index.js');
+
+  // Check new .services/ location first
   if (existsSync(apiPackagePath)) {
     return { installed: true };
   }
 
+  // Check legacy location (backward compatibility)
+  const legacyApiPath = join(rootDir, 'node_modules/@minecraft-docker/mcctl-api/dist/index.js');
+  if (existsSync(legacyApiPath)) {
+    return { installed: true };
+  }
+
+  // Install into .services/ directory
+  const installDir = ensureServicesDir(rootDir);
+
   // Check if package.json exists, if not create it
-  const packageJsonPath = join(rootDir, 'package.json');
+  const packageJsonPath = join(installDir, 'package.json');
   if (!existsSync(packageJsonPath)) {
     const initResult = spawnSync('npm', ['init', '-y'], {
-      cwd: rootDir,
+      cwd: installDir,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -58,7 +80,7 @@ function installMcctlApiIfNeeded(rootDir: string): { installed: boolean; error?:
 
   // Install mcctl-api
   const installResult = spawnSync('npm', ['install', '@minecraft-docker/mcctl-api@latest'], {
-    cwd: rootDir,
+    cwd: installDir,
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
   });
@@ -79,21 +101,34 @@ function installMcctlApiIfNeeded(rootDir: string): { installed: boolean; error?:
  * @returns true if installation succeeded or already installed
  */
 function installMcctlConsoleIfNeeded(rootDir: string): { installed: boolean; error?: string } {
+  const servicesDir = getServicesDir(rootDir);
   const consolePackagePath = join(
-    rootDir,
+    servicesDir,
     'node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'
   );
 
-  // Already installed
+  // Check new .services/ location first
   if (existsSync(consolePackagePath)) {
     return { installed: true };
   }
 
+  // Check legacy location (backward compatibility)
+  const legacyConsolePath = join(
+    rootDir,
+    'node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'
+  );
+  if (existsSync(legacyConsolePath)) {
+    return { installed: true };
+  }
+
+  // Install into .services/ directory
+  const installDir = ensureServicesDir(rootDir);
+
   // Check if package.json exists, if not create it
-  const packageJsonPath = join(rootDir, 'package.json');
+  const packageJsonPath = join(installDir, 'package.json');
   if (!existsSync(packageJsonPath)) {
     const initResult = spawnSync('npm', ['init', '-y'], {
-      cwd: rootDir,
+      cwd: installDir,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -104,7 +139,7 @@ function installMcctlConsoleIfNeeded(rootDir: string): { installed: boolean; err
 
   // Install mcctl-console
   const installResult = spawnSync('npm', ['install', '@minecraft-docker/mcctl-console@latest'], {
-    cwd: rootDir,
+    cwd: installDir,
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
   });

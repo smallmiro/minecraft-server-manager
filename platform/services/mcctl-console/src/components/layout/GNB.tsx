@@ -25,6 +25,7 @@ import BackupIcon from '@mui/icons-material/Backup';
 import { UserMenu } from '@/components/auth';
 import { CreeperIcon } from '@/components/icons/CreeperIcon';
 import { startLoading } from '@/components/providers';
+import { useSession } from '@/lib/auth-client';
 
 export const GNB_HEIGHT = 64;
 
@@ -51,6 +52,7 @@ interface GNBProps {
 
 export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const isActive = (href: string) => {
     if (href === '/dashboard') {

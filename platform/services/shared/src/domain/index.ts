@@ -24,6 +24,8 @@ export {
   type ProcessMetrics,
   // Audit log value objects
   AuditActionEnum,
+  // Operator value objects
+  OpLevel,
 } from './value-objects/index.js';
 
 // Entities
@@ -39,4 +41,7 @@ export {
   AuditLog,
   type AuditLogData,
   type AuditLogRow,
+  Operator,
+  type OperatorData,
+  type MinecraftOpsJson,
 } from './entities/index.js';
