@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
@@ -40,11 +41,17 @@ export default function SettingsPage() {
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 700 }}>
-        <ProfileSection onSuccess={handleSuccess} onError={handleError} />
-        <PasswordSection onSuccess={handleSuccess} onError={handleError} />
-        <AccountInfoSection />
-      </Box>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <ProfileSection onSuccess={handleSuccess} onError={handleError} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <AccountInfoSection />
+        </Grid>
+        <Grid item xs={12}>
+          <PasswordSection onSuccess={handleSuccess} onError={handleError} />
+        </Grid>
+      </Grid>
 
       <Snackbar
         open={snackbar.open}

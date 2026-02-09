@@ -33,7 +33,7 @@ export function AccountInfoSection() {
   if (!user) return null;
 
   return (
-    <Card>
+    <Card sx={{ height: '100%' }}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <InfoIcon color="primary" />
