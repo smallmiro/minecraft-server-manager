@@ -33,6 +33,7 @@ vi.mock('./auth', () => ({
       getSession: vi.fn(),
     },
   },
+  getServerSession: vi.fn(),
 }));
 
 vi.mock('./db', () => ({
@@ -55,7 +56,7 @@ describe('auth-utils', () => {
   describe('requireAuth', () => {
     it('should return session when authenticated', async () => {
       const authModule = await import('./auth');
-      vi.mocked(authModule.auth.api.getSession).mockResolvedValue(mockSession);
+      vi.mocked(authModule.getServerSession).mockResolvedValue(mockSession);
 
       const { requireAuth } = await import('./auth-utils');
       const mockHeaders = new Headers();
@@ -66,7 +67,7 @@ describe('auth-utils', () => {
 
     it('should throw error when not authenticated', async () => {
       const authModule = await import('./auth');
-      vi.mocked(authModule.auth.api.getSession).mockResolvedValue(null);
+      vi.mocked(authModule.getServerSession).mockResolvedValue(null);
 
       const { requireAuth } = await import('./auth-utils');
       const mockHeaders = new Headers();
@@ -82,7 +83,7 @@ describe('auth-utils', () => {
         user: { ...mockSession.user, role: 'admin' },
       };
       const authModule = await import('./auth');
-      vi.mocked(authModule.auth.api.getSession).mockResolvedValue(adminSession);
+      vi.mocked(authModule.getServerSession).mockResolvedValue(adminSession);
 
       const { requireAdmin } = await import('./auth-utils');
       const mockHeaders = new Headers();
@@ -93,7 +94,7 @@ describe('auth-utils', () => {
 
     it('should throw error when user is not admin', async () => {
       const authModule = await import('./auth');
-      vi.mocked(authModule.auth.api.getSession).mockResolvedValue(mockSession);
+      vi.mocked(authModule.getServerSession).mockResolvedValue(mockSession);
 
       const { requireAdmin } = await import('./auth-utils');
       const mockHeaders = new Headers();
@@ -114,7 +115,7 @@ describe('auth-utils', () => {
       } as unknown as ReturnType<typeof dbModule.db.select>);
 
       const authModule = await import('./auth');
-      vi.mocked(authModule.auth.api.getSession).mockResolvedValue(mockSession);
+      vi.mocked(authModule.getServerSession).mockResolvedValue(mockSession);
 
       const { requireServerPermission } = await import('./auth-utils');
       const mockHeaders = new Headers();
@@ -129,7 +130,7 @@ describe('auth-utils', () => {
         user: { ...mockSession.user, role: 'admin' },
       };
       const authModule = await import('./auth');
-      vi.mocked(authModule.auth.api.getSession).mockResolvedValue(adminSession);
+      vi.mocked(authModule.getServerSession).mockResolvedValue(adminSession);
 
       const { requireServerPermission } = await import('./auth-utils');
       const mockHeaders = new Headers();

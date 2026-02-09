@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -14,9 +14,7 @@ interface AdminLayoutProps {
  * we need to verify admin role in the layout using Node.js runtime.
  */
 export default async function AdminLayout({ children }: AdminLayoutProps) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession(await headers());
 
   // Redirect if not authenticated or not admin
   if (!session || session.user.role !== 'admin') {

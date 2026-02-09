@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { UserServerRepository } from '@/adapters/UserServerRepository';
 import { UserServerService, PermissionError } from '@/services/UserServerService';
@@ -22,9 +22,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession(await headers());
 
     if (!session) {
       return NextResponse.json(
@@ -104,9 +102,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession(await headers());
 
     if (!session) {
       return NextResponse.json(
