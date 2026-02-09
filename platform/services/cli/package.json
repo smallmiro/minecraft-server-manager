@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/mcctl",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "CLI tool for managing Docker Minecraft servers with mc-router",
   "type": "module",
   "bin": {
@@ -55,8 +55,8 @@
   ],
   "dependencies": {
     "@clack/prompts": "^0.8.0",
-    "@minecraft-docker/mod-source-modrinth": "workspace:*",
-    "@minecraft-docker/shared": "workspace:*",
+    "@minecraft-docker/mod-source-modrinth": "^2.1.3",
+    "@minecraft-docker/shared": "^2.1.3",
     "better-sqlite3": "^12.6.2",
     "commander": "^12.0.0",
     "js-yaml": "^4.1.0",
