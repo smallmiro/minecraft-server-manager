@@ -26,6 +26,8 @@ import {
   BackupRestoreResponse,
   PlayerListResponse,
   PlayerActionResponse,
+  OperatorsListResponse,
+  OperatorActionResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -344,24 +346,57 @@ export class McctlApiAdapter implements IMcctlApiClient {
     );
   }
 
-  async getOps(serverName: string): Promise<PlayerListResponse> {
-    return this.fetch<PlayerListResponse>(
+  // ============================================================
+  // OP Management Operations (with level support)
+  // ============================================================
+
+  async getOpsWithLevel(serverName: string): Promise<OperatorsListResponse> {
+    return this.fetch<OperatorsListResponse>(
       `/api/servers/${encodeURIComponent(serverName)}/ops`
     );
   }
 
-  async addOp(serverName: string, player: string): Promise<PlayerActionResponse> {
-    return this.fetch<PlayerActionResponse>(
+  async addOpWithLevel(serverName: string, player: string, level: number = 4): Promise<OperatorActionResponse> {
+    return this.fetch<OperatorActionResponse>(
       `/api/servers/${encodeURIComponent(serverName)}/ops`,
-      { method: 'POST', body: JSON.stringify({ player }) }
+      { method: 'POST', body: JSON.stringify({ player, level }) }
     );
   }
 
-  async removeOp(serverName: string, player: string): Promise<PlayerActionResponse> {
-    return this.fetch<PlayerActionResponse>(
+  async updateOpLevel(serverName: string, player: string, level: number): Promise<OperatorActionResponse> {
+    return this.fetch<OperatorActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/ops/${encodeURIComponent(player)}`,
+      { method: 'PATCH', body: JSON.stringify({ level }) }
+    );
+  }
+
+  async removeOp(serverName: string, player: string): Promise<OperatorActionResponse> {
+    return this.fetch<OperatorActionResponse>(
       `/api/servers/${encodeURIComponent(serverName)}/ops/${encodeURIComponent(player)}`,
       { method: 'DELETE' }
     );
+  }
+
+  // ============================================================
+  // Legacy OP Operations (backwards compatibility)
+  // ============================================================
+
+  async getOps(serverName: string): Promise<PlayerListResponse> {
+    // Map new response to legacy format
+    return this.getOpsWithLevel(serverName).then((response) => ({
+      players: response.operators.map((op) => op.name),
+      total: response.count,
+      source: response.source,
+    }));
+  }
+
+  async addOp(serverName: string, player: string): Promise<PlayerActionResponse> {
+    // Use default level 4
+    return this.addOpWithLevel(serverName, player, 4).then((response) => ({
+      success: response.success,
+      message: response.message || `Added ${player} as operator`,
+      source: response.source,
+    }));
   }
 }
 
