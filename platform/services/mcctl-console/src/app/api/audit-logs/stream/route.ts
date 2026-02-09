@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -10,9 +10,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession(await headers());
 
     if (!session) {
       return new Response('Unauthorized', { status: 401 });

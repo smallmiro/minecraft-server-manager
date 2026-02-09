@@ -1,4 +1,4 @@
-import { auth } from './auth';
+import { getServerSession } from './auth';
 import { db } from './db';
 import { userServers } from './schema';
 import { eq, and } from 'drizzle-orm';
@@ -22,9 +22,7 @@ export class AuthError extends Error {
  * @returns The session object
  */
 export async function requireAuth(headers: Headers) {
-  const session = await auth.api.getSession({
-    headers,
-  });
+  const session = await getServerSession(headers);
 
   if (!session) {
     throw new AuthError('Unauthorized', 401);
@@ -103,7 +101,5 @@ export async function requireServerPermission(
  * @returns The session object or null
  */
 export async function getOptionalSession(headers: Headers) {
-  return auth.api.getSession({
-    headers,
-  });
+  return getServerSession(headers);
 }

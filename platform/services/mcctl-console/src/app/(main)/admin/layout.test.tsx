@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { redirect } from 'next/navigation';
 import AdminLayout from './layout';
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 
 // Mock Next.js navigation
 vi.mock('next/navigation', () => ({
@@ -10,11 +10,7 @@ vi.mock('next/navigation', () => ({
 
 // Mock auth
 vi.mock('@/lib/auth', () => ({
-  auth: {
-    api: {
-      getSession: vi.fn(),
-    },
-  },
+  getServerSession: vi.fn(),
 }));
 
 // Mock headers
@@ -39,7 +35,7 @@ describe('AdminLayout', () => {
       session: {},
     } as any;
 
-    vi.mocked(auth.api.getSession).mockResolvedValue(mockSession);
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
 
     // Act
     const result = await AdminLayout({ children: <div>Admin Content</div> });
@@ -61,7 +57,7 @@ describe('AdminLayout', () => {
       session: {},
     } as any;
 
-    vi.mocked(auth.api.getSession).mockResolvedValue(mockSession);
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
 
     // Act
     await AdminLayout({ children: <div>Admin Content</div> });
@@ -72,7 +68,7 @@ describe('AdminLayout', () => {
 
   it('should redirect unauthenticated users to dashboard', async () => {
     // Arrange
-    vi.mocked(auth.api.getSession).mockResolvedValue(null);
+    vi.mocked(getServerSession).mockResolvedValue(null);
 
     // Act
     await AdminLayout({ children: <div>Admin Content</div> });
