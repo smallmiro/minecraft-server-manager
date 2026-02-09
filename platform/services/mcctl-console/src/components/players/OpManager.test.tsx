@@ -60,9 +60,10 @@ describe('OpManager', () => {
         json: () =>
           Promise.resolve({
             operators: [
-              { name: 'Admin1', uuid: 'uuid-1', level: 4 },
-              { name: 'Mod1', uuid: 'uuid-2', level: 3 },
+              { name: 'Admin1', uuid: 'uuid-1', level: 4, role: 'Owner', bypassesPlayerLimit: true },
+              { name: 'Mod1', uuid: 'uuid-2', level: 3, role: 'Admin', bypassesPlayerLimit: false },
             ],
+            count: 2,
           }),
       });
 
@@ -74,26 +75,28 @@ describe('OpManager', () => {
       });
     });
 
-    it('should display operator levels', async () => {
+    it('should display operator levels with badges', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         json: () =>
           Promise.resolve({
-            operators: [{ name: 'Admin1', uuid: 'uuid-1', level: 4 }],
+            operators: [{ name: 'Admin1', uuid: 'uuid-1', level: 4, role: 'Owner', bypassesPlayerLimit: true }],
+            count: 1,
           }),
       });
 
       renderWithTheme(<OpManager serverName="test-server" />);
 
       await waitFor(() => {
-        expect(screen.getByText('Level 4')).toBeInTheDocument();
+        expect(screen.getByText(/Level 4/i)).toBeInTheDocument();
+        expect(screen.getByText(/Owner/i)).toBeInTheDocument();
       });
     });
 
     it('should show empty state when no operators', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ operators: [] }),
+        json: () => Promise.resolve({ operators: [], count: 0 }),
       });
 
       renderWithTheme(<OpManager serverName="test-server" />);
@@ -105,33 +108,45 @@ describe('OpManager', () => {
   });
 
   describe('Add Operator', () => {
-    it('should render add operator input', () => {
+    it('should render add operator button', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ operators: [] }),
+        json: () => Promise.resolve({ operators: [], count: 0 }),
       });
 
       renderWithTheme(<OpManager serverName="test-server" />);
 
-      expect(screen.getByPlaceholderText(/player name/i)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /add operator/i })).toBeInTheDocument();
+      });
     });
 
-    it('should render add button', () => {
+    it('should open add dialog when button clicked', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ operators: [] }),
+        json: () => Promise.resolve({ operators: [], count: 0 }),
       });
 
       renderWithTheme(<OpManager serverName="test-server" />);
 
-      expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /add operator/i })).toBeInTheDocument();
+      });
+
+      const addButton = screen.getByRole('button', { name: /add operator/i });
+      fireEvent.click(addButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+        expect(screen.getByLabelText(/player name/i)).toBeInTheDocument();
+      });
     });
 
-    it('should call add API when add button is clicked', async () => {
+    it('should call add API with level when submitting', async () => {
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          json: () => Promise.resolve({ operators: [] }),
+          json: () => Promise.resolve({ operators: [], count: 0 }),
         })
         .mockResolvedValueOnce({
           ok: true,
@@ -141,17 +156,27 @@ describe('OpManager', () => {
           ok: true,
           json: () =>
             Promise.resolve({
-              operators: [{ name: 'NewOp', uuid: 'uuid-new', level: 4 }],
+              operators: [{ name: 'NewOp', uuid: 'uuid-new', level: 4, role: 'Owner', bypassesPlayerLimit: true }],
+              count: 1,
             }),
         });
 
       renderWithTheme(<OpManager serverName="test-server" />);
 
-      const input = screen.getByPlaceholderText(/player name/i);
+      await waitFor(() => {
+        const addButton = screen.getByRole('button', { name: /add operator/i });
+        fireEvent.click(addButton);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      const input = screen.getByLabelText(/player name/i);
       fireEvent.change(input, { target: { value: 'NewOp' } });
 
-      const addButton = screen.getByRole('button', { name: /add/i });
-      fireEvent.click(addButton);
+      const submitButton = screen.getByRole('button', { name: /add op/i });
+      fireEvent.click(submitButton);
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
@@ -163,72 +188,59 @@ describe('OpManager', () => {
         );
       });
     });
-
-    it('should clear input after successful add', async () => {
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ operators: [] }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ success: true }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ operators: [] }),
-        });
-
-      renderWithTheme(<OpManager serverName="test-server" />);
-
-      const input = screen.getByPlaceholderText(/player name/i) as HTMLInputElement;
-      fireEvent.change(input, { target: { value: 'NewOp' } });
-
-      const addButton = screen.getByRole('button', { name: /add/i });
-      fireEvent.click(addButton);
-
-      await waitFor(() => {
-        expect(input.value).toBe('');
-      });
-    });
-
-    it('should disable add button when input is empty', () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ operators: [] }),
-      });
-
-      renderWithTheme(<OpManager serverName="test-server" />);
-
-      const addButton = screen.getByRole('button', { name: /add/i });
-      expect(addButton).toBeDisabled();
-    });
   });
 
-  describe('Remove Operator', () => {
-    it('should render remove button for each operator', async () => {
+  describe('Operator Actions', () => {
+    it('should render action menu button for each operator', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         json: () =>
           Promise.resolve({
-            operators: [{ name: 'Admin1', uuid: 'uuid-1', level: 4 }],
+            operators: [{ name: 'Admin1', uuid: 'uuid-1', level: 4, role: 'Owner', bypassesPlayerLimit: true }],
+            count: 1,
           }),
       });
 
       renderWithTheme(<OpManager serverName="test-server" />);
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /remove operator/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /operator actions/i })).toBeInTheDocument();
       });
     });
 
-    it('should call remove API when remove button is clicked', async () => {
+    it('should open menu when action button clicked', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            operators: [{ name: 'Admin1', uuid: 'uuid-1', level: 4, role: 'Owner', bypassesPlayerLimit: true }],
+            count: 1,
+          }),
+      });
+
+      renderWithTheme(<OpManager serverName="test-server" />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Admin1')).toBeInTheDocument();
+      });
+
+      const menuButton = screen.getByRole('button', { name: /operator actions/i });
+      fireEvent.click(menuButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(/change level/i)).toBeInTheDocument();
+        expect(screen.getByText(/remove op/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should call remove API when remove menu item clicked', async () => {
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
           json: () =>
             Promise.resolve({
-              operators: [{ name: 'Admin1', uuid: 'uuid-1', level: 4 }],
+              operators: [{ name: 'Admin1', uuid: 'uuid-1', level: 4, role: 'Owner', bypassesPlayerLimit: true }],
+              count: 1,
             }),
         })
         .mockResolvedValueOnce({
@@ -237,7 +249,7 @@ describe('OpManager', () => {
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: () => Promise.resolve({ operators: [] }),
+          json: () => Promise.resolve({ operators: [], count: 0 }),
         });
 
       renderWithTheme(<OpManager serverName="test-server" />);
@@ -246,8 +258,13 @@ describe('OpManager', () => {
         expect(screen.getByText('Admin1')).toBeInTheDocument();
       });
 
-      const removeButton = screen.getByRole('button', { name: /remove operator/i });
-      fireEvent.click(removeButton);
+      const menuButton = screen.getByRole('button', { name: /operator actions/i });
+      fireEvent.click(menuButton);
+
+      await waitFor(() => {
+        const removeItem = screen.getByText(/remove op/i);
+        fireEvent.click(removeItem);
+      });
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
@@ -275,7 +292,7 @@ describe('OpManager', () => {
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          json: () => Promise.resolve({ operators: [] }),
+          json: () => Promise.resolve({ operators: [], count: 0 }),
         })
         .mockResolvedValueOnce({
           ok: false,
@@ -283,10 +300,19 @@ describe('OpManager', () => {
 
       renderWithTheme(<OpManager serverName="test-server" />);
 
-      const input = screen.getByPlaceholderText(/player name/i);
+      await waitFor(() => {
+        const openButton = screen.getByRole('button', { name: /add operator/i });
+        fireEvent.click(openButton);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      const input = screen.getByLabelText(/player name/i);
       fireEvent.change(input, { target: { value: 'NewOp' } });
 
-      const addButton = screen.getByRole('button', { name: /add/i });
+      const addButton = screen.getByRole('button', { name: /add op/i });
       fireEvent.click(addButton);
 
       await waitFor(() => {
