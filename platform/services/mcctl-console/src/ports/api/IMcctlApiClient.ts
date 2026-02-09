@@ -311,6 +311,36 @@ export interface PlayerActionResponse {
 }
 
 /**
+ * Operator info with level and role
+ */
+export interface OperatorInfo {
+  name: string;
+  uuid: string;
+  level: number;
+  role: string;
+  bypassesPlayerLimit: boolean;
+}
+
+/**
+ * Operators list response (with level information)
+ */
+export interface OperatorsListResponse {
+  operators: OperatorInfo[];
+  count: number;
+  source?: PlayerDataSource;
+}
+
+/**
+ * Operator action response (add/update/remove)
+ */
+export interface OperatorActionResponse {
+  success: boolean;
+  operator?: OperatorInfo;
+  message?: string;
+  source?: PlayerDataSource;
+}
+
+/**
  * mcctl-api Client Interface
  * Defines the contract for API communication
  */
@@ -355,7 +385,14 @@ export interface IMcctlApiClient {
   getBans(serverName: string): Promise<PlayerListResponse>;
   banPlayer(serverName: string, player: string, reason?: string): Promise<PlayerActionResponse>;
   unbanPlayer(serverName: string, player: string): Promise<PlayerActionResponse>;
+
+  // OP management operations (with level support)
+  getOpsWithLevel(serverName: string): Promise<OperatorsListResponse>;
+  addOpWithLevel(serverName: string, player: string, level?: number): Promise<OperatorActionResponse>;
+  updateOpLevel(serverName: string, player: string, level: number): Promise<OperatorActionResponse>;
+  removeOp(serverName: string, player: string): Promise<OperatorActionResponse>;
+
+  // Legacy OP operations (backwards compatibility)
   getOps(serverName: string): Promise<PlayerListResponse>;
   addOp(serverName: string, player: string): Promise<PlayerActionResponse>;
-  removeOp(serverName: string, player: string): Promise<PlayerActionResponse>;
 }

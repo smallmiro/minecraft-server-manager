@@ -20,6 +20,7 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
 
 /**
  * GET /api/players/op?server=<name>
+ * Returns operators with level and role information
  */
 export async function GET(request: NextRequest) {
   try {
@@ -36,11 +37,14 @@ export async function GET(request: NextRequest) {
     const session = await requireServerPermission(await headers(), server, 'view');
     const client = createMcctlApiClient(getUserContext(session));
 
-    const result = await client.getOps(server);
+    // Use new API with level information
+    const result = await client.getOpsWithLevel(server);
 
-    const operators = result.players.map((name) => ({ name, uuid: '', level: 4 }));
-
-    return NextResponse.json({ operators, source: result.source });
+    return NextResponse.json({
+      operators: result.operators,
+      count: result.count,
+      source: result.source,
+    });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json(
@@ -66,11 +70,12 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/players/op
+ * Add operator with optional level (default: 4)
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { player, server } = body;
+    const { player, server, level = 4 } = body;
 
     if (!player || !server) {
       return NextResponse.json(
@@ -79,13 +84,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate level
+    if (level < 1 || level > 4) {
+      return NextResponse.json(
+        { error: 'BadRequest', message: 'Level must be between 1 and 4' },
+        { status: 400 }
+      );
+    }
+
     const session = await requireServerPermission(await headers(), server, 'admin');
     const client = createMcctlApiClient(getUserContext(session));
 
-    const result = await client.addOp(server, player);
+    // Use new API with level support
+    const result = await client.addOpWithLevel(server, player, level);
 
     return NextResponse.json({
       success: result.success,
+      operator: result.operator,
       message: result.message,
       source: result.source,
     });
@@ -135,6 +150,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({
       success: result.success,
+      operator: result.operator,
       message: result.message,
       source: result.source,
     });
