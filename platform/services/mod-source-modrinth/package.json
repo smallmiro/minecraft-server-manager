@@ -26,7 +26,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@minecraft-docker/shared": "^2.1.3"
+    "@minecraft-docker/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
