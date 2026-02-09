@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2] - 2026-02-09
+
+### Added
+- **CLI Update Loading Indicator** - Improve mcctl update command with loading indicator for better UX (#306, #307)
+
+### Fixed
+- **Console Admin/Users Route Group** - Move admin/users page to (main) route group for proper GNB/Footer layout (#308, #309)
+
+### Changed
+- **Console Settings Responsive Layout** - Apply responsive grid layout to Settings page (#310, #311)
+
 ## [2.1.1] - 2026-02-09
 
 ### Fixed
