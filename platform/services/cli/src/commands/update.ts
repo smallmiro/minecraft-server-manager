@@ -65,14 +65,19 @@ function printVersionInfo(
 /**
  * Execute npm install command using spawnSync (safe, no shell injection)
  */
-function runNpmInstall(): boolean {
-  console.log('');
-  console.log(colors.dim(`Running: npm install -g ${PACKAGE_NAME}`));
-  console.log('');
+function runNpmInstall(spinner: ReturnType<typeof prompts.spinner>): boolean {
+  spinner.start(`Installing ${PACKAGE_NAME}...`);
 
   const result = spawnSync('npm', ['install', '-g', PACKAGE_NAME], {
-    stdio: 'inherit',
+    stdio: ['pipe', 'pipe', 'pipe'],
+    encoding: 'utf-8',
   });
+
+  if (result.status === 0) {
+    spinner.stop(`${PACKAGE_NAME} installed successfully`);
+  } else {
+    spinner.stop(`${PACKAGE_NAME} installation failed`);
+  }
 
   return result.status === 0;
 }
@@ -167,7 +172,8 @@ async function updateLibraryPackage(
   name: string,
   packageName: string,
   options: { check?: boolean },
-  spinner: ReturnType<typeof prompts.spinner>
+  spinner: ReturnType<typeof prompts.spinner>,
+  progress?: { current: number; total: number }
 ): Promise<ServiceUpdateResult> {
   // Check if package is installed
   const currentVersion = getInstalledServiceVersion(rootDir, packageName);
@@ -185,7 +191,8 @@ async function updateLibraryPackage(
   }
 
   // Fetch latest version from npm
-  spinner.start(`Checking ${name}...`);
+  const progressText = progress ? ` (${progress.current}/${progress.total})` : '';
+  spinner.start(`Checking ${name}${progressText}...`);
   const latestVersion = await fetchLatestServiceVersion(packageName);
   spinner.stop(`${name} checked`);
 
@@ -217,7 +224,8 @@ async function updateLibraryPackage(
   }
 
   // Install the latest version
-  spinner.start(`Updating ${name}...`);
+  const updateProgressText = progress ? ` (${progress.current}/${progress.total})` : '';
+  spinner.start(`Updating ${name}${updateProgressText}...`);
   const installDir = getServiceInstallDir(rootDir);
   const installResult = spawnSync('npm', ['install', `${packageName}@latest`], {
     cwd: installDir,
@@ -281,7 +289,12 @@ export async function updateServices(
   console.log(colors.bold('Updating services...'));
   console.log('');
 
+  const startTime = Date.now();
   const spinner = prompts.spinner();
+
+  // Calculate total items (services + shared library)
+  const totalItems = services.filter((s) => s.available).length + (sharedInstalled ? 1 : 0);
+  let currentItem = 0;
 
   for (const service of services) {
     const packageName = SERVICE_PACKAGES[service.name as keyof typeof SERVICE_PACKAGES];
@@ -299,11 +312,13 @@ export async function updateServices(
       continue;
     }
 
+    currentItem++;
+
     // Get current installed version
     const currentVersion = getInstalledServiceVersion(rootDir, packageName);
 
     // Fetch latest version from npm
-    spinner.start(`Checking ${service.name}...`);
+    spinner.start(`Checking ${service.name} (${currentItem}/${totalItems})...`);
     const latestVersion = await fetchLatestServiceVersion(packageName);
     spinner.stop(`${service.name} checked`);
 
@@ -351,7 +366,7 @@ export async function updateServices(
     }
 
     // Install the latest version
-    spinner.start(`Updating ${service.name}...`);
+    spinner.start(`Updating ${service.name} (${currentItem}/${totalItems})...`);
     const serviceInstallDir = getServiceInstallDir(rootDir);
     const installResult = spawnSync('npm', ['install', `${packageName}@latest`], {
       cwd: serviceInstallDir,
@@ -400,17 +415,26 @@ export async function updateServices(
   }
 
   // Update library packages (shared)
-  const sharedResult = await updateLibraryPackage(
-    rootDir,
-    'shared',
-    LIBRARY_PACKAGES.shared,
-    options,
-    spinner
-  );
-  results.push(sharedResult);
+  if (sharedInstalled) {
+    currentItem++;
+    const sharedResult = await updateLibraryPackage(
+      rootDir,
+      'shared',
+      LIBRARY_PACKAGES.shared,
+      options,
+      spinner,
+      { current: currentItem, total: totalItems }
+    );
+    results.push(sharedResult);
+  }
 
   // Print results summary
   printServiceResults(results, options.check);
+
+  // Print elapsed time
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(colors.dim(`  Completed in ${elapsed}s`));
+  console.log('');
 
   const hasErrors = results.some((r) => r.error);
   return hasErrors ? 1 : 0;
@@ -512,7 +536,7 @@ export async function updateCommand(options: UpdateCommandOptions): Promise<numb
   }
 
   // Run npm install
-  const success = runNpmInstall();
+  const success = runNpmInstall(spinner);
 
   if (success) {
     console.log('');
