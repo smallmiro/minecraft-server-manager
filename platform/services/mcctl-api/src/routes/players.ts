@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { containerExists, getContainerStatus } from '@minecraft-docker/shared';
+import { containerExists, getContainerStatus, OpLevel } from '@minecraft-docker/shared';
 import {
   PlayerInfoSchema,
   OnlinePlayersResponseSchema,
@@ -16,10 +16,19 @@ import {
   type PlayerParams,
   type UsernameParams,
 } from '../schemas/player.js';
+import {
+  OperatorsListResponseSchema,
+  AddOperatorRequestSchema,
+  UpdateOperatorLevelRequestSchema,
+  OperatorActionResponseSchema,
+  type AddOperatorRequest,
+  type UpdateOperatorLevelRequest,
+} from '../schemas/op.js';
 import { ServerNameParamsSchema, type ServerNameParams } from '../schemas/server.js';
 import { execRconCommand, parsePlayerList } from '../lib/rcon.js';
 import { config } from '../config/index.js';
 import { PlayerFileService } from '../services/PlayerFileService.js';
+import { OpsJsonService } from '../services/OpsJsonService.js';
 
 // Route interfaces
 interface ServerRoute {
@@ -44,6 +53,16 @@ interface KickPlayerRoute {
   Body: KickPlayerRequest;
 }
 
+interface AddOperatorRoute {
+  Params: ServerNameParams;
+  Body: AddOperatorRequest;
+}
+
+interface UpdateOperatorLevelRoute {
+  Params: PlayerParams;
+  Body: UpdateOperatorLevelRequest;
+}
+
 /**
  * Look up UUID from Mojang API. Returns empty string on failure.
  */
@@ -63,6 +82,7 @@ async function lookupUuid(playerName: string): Promise<string> {
  */
 const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const playerFileService = new PlayerFileService(config.platformPath);
+  const opsJsonService = new OpsJsonService(config.platformPath);
 
   // Helper to check server exists (container created)
   const checkServerExists = (name: string, reply: FastifyReply): boolean => {
@@ -437,34 +457,34 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
   /**
    * GET /api/servers/:name/ops
+   * Returns operators with level and role information
    */
   fastify.get<ServerRoute>('/api/servers/:name/ops', {
     schema: {
-      description: 'Get server operators list',
+      description: 'Get server operators list with level and role information',
       tags: ['players'],
       params: ServerNameParamsSchema,
-      response: { 200: PlayerListResponseSchema, 400: ErrorResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
+      response: { 200: OperatorsListResponseSchema, 400: ErrorResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
   }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
     if (!checkServerExists(name, reply)) return;
 
-    const running = isServerRunning(name);
-
-    if (running) {
-      try {
-        const result = await execRconCommand(name, 'op list');
-        const match = result.match(/:\s*(.*)$/);
-        const players = match && match[1] ? match[1].split(',').map(p => p.trim()).filter(Boolean) : [];
-        return reply.send({ players, total: players.length, source: 'rcon' });
-      } catch (error) {
-        fastify.log.warn(error, 'RCON failed for ops list, falling back to file');
-      }
-    }
-
     try {
-      const result = playerFileService.readOps(name);
-      return reply.send(result);
+      // Read from ops.json file
+      const operators = opsJsonService.readOps(name);
+
+      return reply.send({
+        operators: operators.map(op => ({
+          name: op.name,
+          uuid: op.uuid,
+          level: op.level.value,
+          role: op.level.label,
+          bypassesPlayerLimit: op.bypassesPlayerLimit,
+        })),
+        count: operators.length,
+        source: 'file',
+      });
     } catch (error) {
       fastify.log.error(error, 'Failed to get ops list');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get ops list' });
@@ -473,42 +493,88 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
   /**
    * POST /api/servers/:name/ops
+   * Add operator with optional level (default: 4)
    */
-  fastify.post<AddPlayerRoute>('/api/servers/:name/ops', {
+  fastify.post<AddOperatorRoute>('/api/servers/:name/ops', {
     schema: {
-      description: 'Add player as operator',
+      description: 'Add player as operator with specified level (default: 4)',
       tags: ['players'],
       params: ServerNameParamsSchema,
-      body: AddPlayerRequestSchema,
-      response: { 200: PlayerActionResponseSchema, 400: ErrorResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
+      body: AddOperatorRequestSchema,
+      response: { 200: OperatorActionResponseSchema, 400: ErrorResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
-  }, async (request: FastifyRequest<AddPlayerRoute>, reply: FastifyReply) => {
+  }, async (request: FastifyRequest<AddOperatorRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    const { player } = request.body;
+    const { player, level = 4 } = request.body;
     if (!checkServerExists(name, reply)) return;
 
-    const running = isServerRunning(name);
-
-    if (running) {
-      try {
-        const result = await execRconCommand(name, `op ${player}`);
-        return reply.send({ success: true, message: result || `Made ${player} an operator`, source: 'rcon' });
-      } catch (error) {
-        fastify.log.warn(error, 'RCON failed for op add, falling back to file');
-      }
-    }
-
     try {
+      // Lookup UUID
       const uuid = await lookupUuid(player);
-      playerFileService.addToOps(name, player, uuid);
+      if (!uuid) {
+        return reply.code(404).send({ error: 'NotFound', message: `Player '${player}' not found` });
+      }
+
+      // Add operator with level using OpsJsonService
+      const opLevel = OpLevel.from(level);
+      const operator = opsJsonService.addOperator(name, player, uuid, opLevel);
+
       return reply.send({
         success: true,
-        message: `Made ${player} an operator (will apply on next server start)`,
+        operator: {
+          name: operator.name,
+          uuid: operator.uuid,
+          level: operator.level.value,
+          role: operator.level.label,
+          bypassesPlayerLimit: operator.bypassesPlayerLimit,
+        },
         source: 'file',
       });
     } catch (error) {
       fastify.log.error(error, 'Failed to add operator');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to add operator' });
+    }
+  });
+
+  /**
+   * PATCH /api/servers/:name/ops/:player
+   * Update operator level
+   */
+  fastify.patch<UpdateOperatorLevelRoute>('/api/servers/:name/ops/:player', {
+    schema: {
+      description: 'Update operator level',
+      tags: ['players'],
+      params: PlayerParamsSchema,
+      body: UpdateOperatorLevelRequestSchema,
+      response: { 200: OperatorActionResponseSchema, 400: ErrorResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
+    },
+  }, async (request: FastifyRequest<UpdateOperatorLevelRoute>, reply: FastifyReply) => {
+    const { name, player } = request.params;
+    const { level } = request.body;
+    if (!checkServerExists(name, reply)) return;
+
+    try {
+      const opLevel = OpLevel.from(level);
+      const operator = opsJsonService.updateOperatorLevel(name, player, opLevel);
+
+      if (!operator) {
+        return reply.code(404).send({ error: 'NotFound', message: `Operator '${player}' not found` });
+      }
+
+      return reply.send({
+        success: true,
+        operator: {
+          name: operator.name,
+          uuid: operator.uuid,
+          level: operator.level.value,
+          role: operator.level.label,
+          bypassesPlayerLimit: operator.bypassesPlayerLimit,
+        },
+        source: 'file',
+      });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to update operator level');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to update operator level' });
     }
   });
 
@@ -526,22 +592,16 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { name, player } = request.params;
     if (!checkServerExists(name, reply)) return;
 
-    const running = isServerRunning(name);
-
-    if (running) {
-      try {
-        const result = await execRconCommand(name, `deop ${player}`);
-        return reply.send({ success: true, message: result || `Removed operator status from ${player}`, source: 'rcon' });
-      } catch (error) {
-        fastify.log.warn(error, 'RCON failed for deop, falling back to file');
-      }
-    }
-
     try {
-      playerFileService.removeFromOps(name, player);
+      const removed = opsJsonService.removeOperator(name, player);
+
+      if (!removed) {
+        return reply.code(404).send({ error: 'NotFound', message: `Operator '${player}' not found` });
+      }
+
       return reply.send({
         success: true,
-        message: `Removed operator status from ${player} (will apply on next server start)`,
+        message: `Removed operator status from ${player}`,
         source: 'file',
       });
     } catch (error) {

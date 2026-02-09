@@ -62,9 +62,13 @@ export class OpsJsonService {
 
     if (existingIndex >= 0) {
       // Update existing operator
-      operators[existingIndex].updateLevel(level);
+      const existing = operators[existingIndex];
+      if (!existing) {
+        throw new Error(`Operator at index ${existingIndex} not found`);
+      }
+      existing.updateLevel(level);
       this.writeOps(serverName, operators);
-      return operators[existingIndex];
+      return existing;
     }
 
     // Add new operator
