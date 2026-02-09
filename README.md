@@ -853,116 +853,48 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
-### [1.15.4] - 2026-02-08
+### [2.1.0] - 2026-02-09 (Console Feature Completion)
+
+**Added:**
+- **Modrinth Modpack CLI/API Support** - Full modpack server creation and management (#244, #245)
+- **Admin User Management Console UI** - Web-based admin user management with list, detail, and role management (#189)
+- **OP Level Support** - OP level management across domain model, CLI, API, and Console (#284, #285, #286, #287)
+  - OP levels 1-4 with semantic descriptions
+  - Interactive CLI, REST API endpoints, and Console Web UI
+- **Offline Player Management** - Support for managing players who are not currently online (#288, #289)
+- **User Profile Settings** - Password change functionality in user profile page (#265, #266)
 
 **Fixed:**
-- **Console Better Auth Config** - Explicitly pass `baseURL` and `secret` to Better Auth configuration
-- **Console HTTP Session Persistence** - Disable Secure cookies on HTTP environments to fix login redirect loop
-- **Console trustedOrigins Dedup** - Remove duplicate localhost:5000 entry from trustedOrigins
+- **Console Sign-out 403 LAN IP Bug** - Fix sign-out failure on private network IPs (#300, #301)
+- **Service Isolation** - Isolate service node_modules into `.services/` directory (#262, #267)
+- **Template Path Resolution** - Fix MCCTL_TEMPLATES path and console modLoader validation (#263, #264)
 
-### [1.15.3] - 2026-02-08
-
-**Fixed:**
-- **CLI BETTER_AUTH env var** - Correct `BETTER_AUTH_URL` to `BETTER_AUTH_BASE_URL` in ecosystem.config.cjs
-- **Console DB path** - Use `MCCTL_ROOT` env var for DB path resolution
-- **Console user_servers table** - Add missing table to auto-creation DDL
-- **Audit DB path** - Move to `MCCTL_ROOT/data/audit.db`
-
-### [1.15.2] - 2026-02-08
+### [1.15.5] - 2026-02-08
 
 **Fixed:**
-- **CLI ecosystem.config.cjs** - Replace `NEXTAUTH_SECRET`/`NEXTAUTH_URL` with `BETTER_AUTH_SECRET`/`BETTER_AUTH_URL` in ecosystem config generation
-- **Console SQLite Auto-Creation** - Auto-create Better Auth core tables (users, accounts, sessions, verifications) on startup
-
-### [1.15.1] - 2026-02-08
-
-**Fixed:**
-- **Console Auth BaseURL** - Change Better Auth client baseURL default to empty string for production deployment
-- **Console Trusted Origins** - Add `NEXT_PUBLIC_APP_URL` env var support to trustedOrigins
+- Fix Better Auth password hashing - use hex string salt for compatibility
+- Add `MCCTL_API_KEY` env var to mcctl-console PM2 config (#261)
 
 ### [1.15.0] - 2026-02-08
 
 **Added:**
-- **Console Auto-Install** - `mcctl console init` auto-installs mcctl-console package if missing
-
-**Fixed:**
-- Service script paths resolved independently for each service
-- Modpack version prompt trim error on undefined values
+- Console Auto-Install - `mcctl console init` auto-installs mcctl-console package if missing
 
 ### [1.14.0] - 2026-02-08
 
 **Added:**
-- **MODRINTH Modpack Server Creation** - Create servers from Modrinth modpacks via CLI and Web Console (#244, #246)
-  - `mcctl create --modpack` enables interactive modpack search and selection
-  - Modrinth API integration for modpack search, version listing, and loader detection
-  - Dynamic mod loader filtering: only show loaders the modpack actually supports
-- **NeoForge Mod Loader Option** - NeoForge added to mod loader selection in CLI, API, and Web Console
-- **Extended CreateServerRequest** - Add modpack fields (modpackSlug, modpackVersion, modpackLoader) to server creation API
+- MODRINTH Modpack Server Creation - CLI and Web Console (#244, #246)
+- NeoForge mod loader option for modpack servers
 
 ### [1.13.0] - 2026-02-07
 
 **Added:**
-- **Interactive Service Selection** - `mcctl console service start/stop/restart` now shows interactive prompt
-  - Start: choose "API only" or "API + Console"
-  - Stop: choose "All services" or "Console only"
-  - Console always requires API; stopping API also stops Console
-- **Unified Prerequisite Checker** - Consolidated dependency validation for `mcctl init` and `mcctl console init`
-- **Console npm Publishing** - `@minecraft-docker/mcctl-console` now available on npm
-- **Console --force Option** - Force PM2 process termination for stop/restart
-- **Routing Page** - Avahi mDNS monitoring in Web Console
-
-**Fixed:**
-- `force-dynamic` export added to all 22 API routes to prevent SQLITE_BUSY at build time
-- `isConsoleAvailable()` now returns `true` (console is GA)
-
-### [1.12.1] - 2026-02-07
-
-**Fixed:**
-- Add `not_created` status to all SSE and API interface type definitions (useServerStatus, useServersSSE, IMcctlApiClient, events.ts)
+- Unified Prerequisite Checker, Console npm Publishing, Console --force Option, Routing Page
 
 ### [1.12.0] - 2026-02-06
 
 **Added:**
-- **All-Servers SSE Status Endpoint** - `GET /api/servers-status` for streaming all server statuses
-- **Server Detail Delete Menu** - MoreVert button with delete option and confirmation dialog
-- **API Audit Logging** - Automatic audit log recording for server CRUD and actions via REST API
-
-**Fixed:**
-- SSE URL path updated to `/api/sse/servers-status`
-- Handle `not_created` server status in card, list, and detail page views
-- Show all non-running servers in assign world dialog
-
-### [1.11.0] - 2026-02-06
-
-**Added:**
-- **World Management UI** - Full world management interface in Web Console (#175)
-- **Server Options Tab** - Config management UI with real-time updates (#229)
-- **SSE Real-time Server Status** - Replace polling with Server-Sent Events (#223)
-- **Server Config & World Reset API** - New REST endpoints (#229)
-
-**Fixed:**
-- Path traversal prevention and container status checks in world reset
-- Force update check bypass for `mcctl update`
-
-### [1.10.0] - 2026-02-05
-
-**Added:**
-- **Audit Log System** - Comprehensive activity tracking across CLI, API, and Web Console (#234, #235)
-  - CLI: `mcctl audit list/purge/stats` commands with filtering
-  - API: 5 REST endpoints (list, stats, purge, SSE streaming)
-  - Web UI: Audit log page with filtering, dashboard widget, server activity tab
-  - SQLite storage with WAL mode, auto-cleanup (90-day retention)
-
-### [1.9.0] - 2026-02-05
-
-**Added:**
-- **`mcctl update --all` flag** - Update CLI and all installed services with npm update + PM2 restart
-
-### [1.8.0] - 2026-02-05
-
-**Added:**
-- **Web Console sudo password support** - Pass sudo password from CreateServerDialog (#230)
-- **Dashboard ChangelogFeed** - Real changelog from GitHub replaces placeholder ActivityFeed
+- All-Servers SSE Status, Server Detail Delete Menu, API Audit Logging
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
