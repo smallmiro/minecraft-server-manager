@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-02-09
+
+### Fixed
+- **Console GNB Admin Menu Cleanup** - Remove admin menu from GNB, rename UserMenu "Admin Panel" to "Users" (#302, #304)
+  - Admin menu in GNB was redundant with UserMenu admin link
+  - Simplified navigation by consolidating admin access to UserMenu
+- **API Whitelist/Banned-Players UUID Display** - Return UUID in whitelist and ban API responses (#303, #305)
+  - UUID was missing from player list API responses for whitelist and banned-players
+  - PlayerFileService now returns full player objects including UUID
+- **API PlayerFileService Test Assertions** - Update test assertions for object return types (#303)
+
 ## [2.1.0] - 2026-02-09
 
 ### Added

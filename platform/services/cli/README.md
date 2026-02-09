@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.1.1 (2026-02-09)
+- **fix(console)**: Remove GNB admin menu, rename UserMenu "Admin Panel" to "Users" (#302, #304)
+- **fix(api)**: Return UUID in whitelist/ban API responses (#303, #305)
+- **fix(api)**: Update PlayerFileService test assertions for object return types
+
 ### v2.1.0 (2026-02-09) - Console Feature Completion
 - **feat**: Modrinth modpack CLI/API support - search, create, manage modpack servers (#244, #245)
 - **feat**: Admin user management Console UI - list, detail, role management (#189)
@@ -101,9 +106,6 @@ mcctl logs myserver
 - **feat**: Unified prerequisite checker for `init` and `console init` (#241)
 - **feat**: Console npm publishing as standalone package
 - **feat**: Console `--force` option for PM2 process termination (#238)
-
-### v1.12.0 (2026-02-06)
-- **feat**: All-servers SSE status endpoint, server detail delete menu, API audit logging
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
