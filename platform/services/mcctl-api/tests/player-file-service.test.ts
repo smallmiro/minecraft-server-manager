@@ -55,7 +55,10 @@ describe('PlayerFileService', () => {
       });
 
       const result = service.readWhitelist('myserver');
-      expect(result.players).toEqual(['Player1', 'Player2']);
+      expect(result.players).toEqual([
+        { name: 'Player1', uuid: '550e8400-e29b-41d4-a716-446655440000' },
+        { name: 'Player2', uuid: '550e8400-e29b-41d4-a716-446655440001' },
+      ]);
       expect(result.total).toBe(2);
       expect(result.source).toBe('file');
     });
@@ -134,7 +137,10 @@ describe('PlayerFileService', () => {
       });
 
       const result = service.readBannedPlayers('myserver');
-      expect(result.players).toEqual(['Griefer1', 'Griefer2']);
+      expect(result.players).toEqual([
+        { name: 'Griefer1', uuid: 'uuid1', reason: 'Griefing', created: '2025-01-01', source: 'Server', expires: 'forever' },
+        { name: 'Griefer2', uuid: 'uuid2', reason: 'Spam', created: '2025-01-02', source: 'Server', expires: 'forever' },
+      ]);
       expect(result.total).toBe(2);
       expect(result.source).toBe('file');
     });
@@ -161,7 +167,9 @@ describe('PlayerFileService', () => {
       service.addToWhitelist('myserver', 'Player2', 'uuid2');
 
       const result = service.readWhitelist('myserver');
-      expect(result.players).toContain('Player2');
+      expect(result.players).toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: 'Player2', uuid: 'uuid2' })])
+      );
       expect(result.total).toBe(2);
     });
 
@@ -189,7 +197,7 @@ describe('PlayerFileService', () => {
       service.removeFromWhitelist('myserver', 'Player1');
 
       const result = service.readWhitelist('myserver');
-      expect(result.players).toEqual(['Player2']);
+      expect(result.players).toEqual([{ name: 'Player2', uuid: 'uuid2' }]);
       expect(result.total).toBe(1);
     });
 
@@ -199,7 +207,7 @@ describe('PlayerFileService', () => {
       service.addToWhitelist('myserver', 'NewPlayer', 'uuid-new');
 
       const result = service.readWhitelist('myserver');
-      expect(result.players).toEqual(['NewPlayer']);
+      expect(result.players).toEqual([{ name: 'NewPlayer', uuid: 'uuid-new' }]);
     });
   });
 
@@ -246,7 +254,9 @@ describe('PlayerFileService', () => {
       service.addToBannedPlayers('myserver', 'Griefer', 'uuid-griefer', 'Griefing');
 
       const result = service.readBannedPlayers('myserver');
-      expect(result.players).toContain('Griefer');
+      expect(result.players).toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: 'Griefer', uuid: 'uuid-griefer' })])
+      );
       expect(result.total).toBe(1);
     });
 
@@ -286,7 +296,11 @@ describe('PlayerFileService', () => {
       // No data directory
 
       const result = service.readWhitelist('configserver');
-      expect(result.players).toEqual(['Player1', 'Player2', 'Player3']);
+      expect(result.players).toEqual([
+        { name: 'Player1', uuid: '' },
+        { name: 'Player2', uuid: '' },
+        { name: 'Player3', uuid: '' },
+      ]);
       expect(result.source).toBe('config');
     });
 
@@ -299,7 +313,7 @@ describe('PlayerFileService', () => {
       });
 
       const result = service.readWhitelist('bothserver');
-      expect(result.players).toEqual(['JsonPlayer']);
+      expect(result.players).toEqual([{ name: 'JsonPlayer', uuid: 'uuid1' }]);
       expect(result.source).toBe('file');
     });
   });
