@@ -168,7 +168,7 @@ describe('UserMenu', () => {
     expect(adminChip).toBeInTheDocument();
   });
 
-  it('should show Admin Panel menu item for admin users', () => {
+  it('should show Users menu item for admin users', () => {
     vi.mocked(useSession).mockReturnValue({
       data: {
         user: {
@@ -186,10 +186,10 @@ describe('UserMenu', () => {
     const avatarButton = screen.getByLabelText(/user menu/i);
     fireEvent.click(avatarButton);
 
-    expect(screen.getByText(/admin panel/i)).toBeInTheDocument();
+    expect(screen.getByText(/users/i)).toBeInTheDocument();
   });
 
-  it('should not show Admin Panel menu item for regular users', () => {
+  it('should not show Users menu item for regular users', () => {
     vi.mocked(useSession).mockReturnValue({
       data: {
         user: {
@@ -207,6 +207,6 @@ describe('UserMenu', () => {
     const avatarButton = screen.getByLabelText(/user menu/i);
     fireEvent.click(avatarButton);
 
-    expect(screen.queryByText(/admin panel/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/users/i)).not.toBeInTheDocument();
   });
 });
