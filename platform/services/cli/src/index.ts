@@ -141,9 +141,10 @@ ${colors.cyan('Player Management:')}
   ${colors.bold('kick')} <server> <player> [reason]    Kick player
 
 ${colors.cyan('Operator Actions:')}
-  list                    List current operators
-  add <player>            Add operator (RCON + config)
-  remove <player>         Remove operator
+  list                      List current operators with levels
+  add <player> [--level N]  Add operator (level 1-4, default: 4)
+  remove <player>           Remove operator
+  set-level <player> <1-4>  Change operator level (server must be running)
 
 ${colors.cyan('Whitelist Actions:')}
   list                    Show whitelisted players
@@ -726,14 +727,16 @@ async function main(): Promise<void> {
       }
 
       case 'op': {
-        // op command: op <server> <action> [player]
+        // op command: op <server> <action> [player] [level]
         // parseArgs treats second arg as subCommand, so:
-        // subCommand = server name, positional[0] = action, positional[1] = player
+        // subCommand = server name, positional[0] = action, positional[1] = player, positional[2] = level
+        const level = positional[2] !== undefined ? parseInt(positional[2], 10) : flags['level'] as number | undefined;
         exitCode = await opCommand({
           root: rootDir,
           serverName: subCommand,
-          subCommand: positional[0] as 'add' | 'remove' | 'list' | undefined,
+          subCommand: positional[0] as 'add' | 'remove' | 'list' | 'set-level' | undefined,
           playerName: positional[1],
+          level,
           json: flags['json'] === true,
         });
         break;
