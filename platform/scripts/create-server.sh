@@ -21,6 +21,8 @@
 #   --modpack SLUG       Modpack slug (required for MODRINTH/AUTO_CURSEFORGE)
 #   --modpack-version VER  Modpack version (optional)
 #   --mod-loader LOADER  Mod loader: fabric, forge, neoforge, quilt (optional)
+#   --no-whitelist       Disable whitelist (whitelist is enabled by default)
+#   --whitelist PLAYERS  Initial whitelist players (comma-separated)
 #   --no-start           Don't start the server after creation
 #   --start              Start the server after creation (default)
 #
@@ -229,6 +231,8 @@ WORLD_NAME=""
 MODPACK_SLUG=""
 MODPACK_VERSION=""
 MOD_LOADER=""
+ENABLE_WHITELIST="true"
+WHITELIST_PLAYERS=""
 START_SERVER="true"
 
 # Show usage
@@ -247,6 +251,8 @@ show_usage() {
     echo "  --modpack SLUG       Modpack slug (required for MODRINTH/AUTO_CURSEFORGE)"
     echo "  --modpack-version VER  Modpack version (optional)"
     echo "  --mod-loader LOADER  Mod loader: fabric, forge, neoforge, quilt (optional)"
+    echo "  --no-whitelist       Disable whitelist (whitelist is enabled by default)"
+    echo "  --whitelist PLAYERS  Initial whitelist players (comma-separated)"
     echo "  --no-start           Don't start the server after creation"
     echo "  --start              Start the server after creation (default)"
     echo ""
@@ -307,6 +313,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --mod-loader)
             MOD_LOADER="$2"
+            shift 2
+            ;;
+        --no-whitelist)
+            ENABLE_WHITELIST="false"
+            shift
+            ;;
+        --whitelist)
+            WHITELIST_PLAYERS="$2"
             shift 2
             ;;
         --no-start)
@@ -501,6 +515,19 @@ if [ -f "$CONFIG_FILE" ]; then
             fi
         fi
     fi
+
+    # Apply whitelist settings (enabled by default for security)
+    if [ "$ENABLE_WHITELIST" = "true" ]; then
+        echo "" >> "$CONFIG_FILE"
+        echo "# Whitelist (Secure by Default)" >> "$CONFIG_FILE"
+        echo "ENABLE_WHITELIST=TRUE" >> "$CONFIG_FILE"
+        if [ -n "$WHITELIST_PLAYERS" ]; then
+            echo "WHITELIST=$WHITELIST_PLAYERS" >> "$CONFIG_FILE"
+            echo "   Whitelist: enabled (players: $WHITELIST_PLAYERS)"
+        else
+            echo "   Whitelist: enabled (no initial players)"
+        fi
+    fi
 fi
 
 # Create data and logs directories
@@ -595,6 +622,17 @@ else
 fi
 if [ -n "$WORLD_SEED" ]; then
     echo "  - Seed: $WORLD_SEED"
+fi
+echo ""
+
+echo -e "${GREEN}Security:${NC}"
+if [ "$ENABLE_WHITELIST" = "true" ]; then
+    echo "  - Whitelist: enabled"
+    if [ -n "$WHITELIST_PLAYERS" ]; then
+        echo "  - Players: $WHITELIST_PLAYERS"
+    fi
+else
+    echo "  - Whitelist: disabled"
 fi
 echo ""
 
