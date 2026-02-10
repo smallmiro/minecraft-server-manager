@@ -37,8 +37,8 @@ describe('LoginForm', () => {
   it('should show validation error for empty email', async () => {
     renderWithTheme(<LoginForm onSuccess={mockOnSuccess} />);
 
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
-    fireEvent.click(submitButton);
+    const form = screen.getByRole('button', { name: /sign in/i }).closest('form')!;
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText(/email is required/i)).toBeInTheDocument();
@@ -51,8 +51,8 @@ describe('LoginForm', () => {
     const emailInput = screen.getByLabelText(/^email \*$/i);
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
 
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
-    fireEvent.click(submitButton);
+    const form = screen.getByRole('button', { name: /sign in/i }).closest('form')!;
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText(/invalid email address/i)).toBeInTheDocument();
@@ -65,8 +65,8 @@ describe('LoginForm', () => {
     const emailInput = screen.getByLabelText(/^email \*$/i);
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
 
-    const submitButton = screen.getByRole('button', { name: /sign in/i });
-    fireEvent.click(submitButton);
+    const form = screen.getByRole('button', { name: /sign in/i }).closest('form')!;
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText(/password is required/i)).toBeInTheDocument();

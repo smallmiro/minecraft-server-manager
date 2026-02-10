@@ -435,8 +435,6 @@ describe('CreateServerDialog', () => {
           name: 'cobblemon-server',
           type: 'MODRINTH',
           modpack: 'cobblemon',
-          modpackVersion: '',
-          modLoader: '',
           memory: '6G',
           autoStart: false,
           sudoPassword: '',

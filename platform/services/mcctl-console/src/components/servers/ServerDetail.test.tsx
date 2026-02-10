@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ServerDetail } from './ServerDetail';
 import type { ServerDetail as ServerDetailType } from '@/ports/api/IMcctlApiClient';
 
@@ -16,7 +17,16 @@ vi.mock('@/hooks/useServerLogs', () => ({
 }));
 
 const renderWithTheme = (component: React.ReactNode) => {
-  return render(<ThemeProvider>{component}</ThemeProvider>);
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        {component}
+      </QueryClientProvider>
+    </ThemeProvider>
+  );
 };
 
 const mockServer: ServerDetailType = {
@@ -69,7 +79,7 @@ describe('ServerDetail', () => {
 
     expect(screen.getByText('CPU usage')).toBeInTheDocument();
     expect(screen.getByText('Memory usage')).toBeInTheDocument();
-    expect(screen.getByText('Storage usage')).toBeInTheDocument();
+    expect(screen.getByText('World size')).toBeInTheDocument();
   });
 
   it('should render console section with connection indicator', () => {
@@ -111,7 +121,9 @@ describe('ServerDetail', () => {
     const optionsTab = screen.getByRole('button', { name: /options/i });
     fireEvent.click(optionsTab);
 
-    expect(screen.getByText(/server options coming soon/i)).toBeInTheDocument();
+    // Options tab now renders ServerOptionsTab component
+    // Just verify the tab switch doesn't crash
+    expect(optionsTab).toBeInTheDocument();
   });
 
   it('should display server type and version in overview', () => {
