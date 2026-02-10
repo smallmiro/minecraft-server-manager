@@ -145,6 +145,8 @@ export interface CreateServerOptions {
   modpackSlug?: string;
   modpackVersion?: string;
   modLoader?: string;
+  enableWhitelist?: boolean;
+  whitelistPlayers?: string[];
 }
 
 /**

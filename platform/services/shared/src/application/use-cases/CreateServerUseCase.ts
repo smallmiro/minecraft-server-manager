@@ -114,6 +114,9 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       // Prompt for memory (6G default for modpacks)
       const memory = await this.prompt.promptMemory(type.isModpack ? '6G' : '4G');
 
+      // Prompt for whitelist players (whitelist enabled by default)
+      const whitelistPlayers = await this.prompt.promptWhitelistPlayers();
+
       // Build modpack options if this is a modpack server
       const modpackOptions =
         type.isModpack && modpackSlug
@@ -147,6 +150,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         modpackSlug,
         modpackVersion,
         modLoader,
+        enableWhitelist: true,
+        whitelistPlayers,
       });
 
       if (!result.success) {
@@ -175,13 +180,19 @@ export class CreateServerUseCase implements ICreateServerUseCase {
           type: type.value,
           version: version.value,
           memory: memory.value,
+          enableWhitelist: true,
+          whitelistPlayers: whitelistPlayers.length > 0 ? whitelistPlayers : undefined,
         },
         errorMessage: null,
       });
 
       this.prompt.success(`Server '${name.value}' created!`);
+
+      const whitelistInfo = whitelistPlayers.length > 0
+        ? `Whitelist: enabled (${whitelistPlayers.join(', ')})`
+        : 'Whitelist: enabled';
       this.prompt.note(
-        `Connect via: ${name.hostname}:25565`,
+        `Connect via: ${name.hostname}:25565\n${whitelistInfo}`,
         'Connection Info'
       );
 
@@ -267,6 +278,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       modpackSlug: config.modpackSlug,
       modpackVersion: config.modpackVersion,
       modLoader: config.modLoader,
+      enableWhitelist: config.enableWhitelist !== false,
+      whitelistPlayers: config.whitelistPlayers,
     });
 
     if (!result.success) {
@@ -294,6 +307,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         type: type.value,
         version: version.value,
         memory: memory.value,
+        enableWhitelist: config.enableWhitelist !== false,
+        whitelistPlayers: config.whitelistPlayers,
       },
       errorMessage: null,
     });

@@ -285,6 +285,12 @@ export class ApiPromptAdapter implements IPromptPort {
     return worldEntry.world;
   }
 
+  async promptWhitelistPlayers(): Promise<string[]> {
+    // In API mode, whitelist is always enabled by default
+    // Return empty array (whitelist on, no initial players)
+    return [];
+  }
+
   async promptModpackSlug(): Promise<string> {
     if (!this.options.modpackSlug) {
       throw new ApiModeError('modpackSlug is required in API mode for modpack server types');

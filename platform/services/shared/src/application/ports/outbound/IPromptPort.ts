@@ -98,6 +98,13 @@ export interface IPromptPort {
   ): Promise<World | null>;
 
   /**
+   * Prompt for initial whitelist players
+   * Whitelist is enabled by default for security (secure by default)
+   * @returns Array of player names to whitelist (empty array = whitelist enabled, no players)
+   */
+  promptWhitelistPlayers(): Promise<string[]>;
+
+  /**
    * Prompt for modpack slug (project identifier)
    */
   promptModpackSlug(): Promise<string>;

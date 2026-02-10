@@ -266,6 +266,8 @@ ${colors.cyan('Create Options:')}
   -u, --world-url URL        Download world from ZIP URL
   -w, --world NAME           Use existing world (symlink)
   --no-start                 Create without starting
+  --no-whitelist             Disable whitelist (enabled by default)
+  --whitelist PLAYERS        Initial whitelist players (comma-separated)
   --modpack SLUG             Modrinth modpack slug (required for MODRINTH type)
   --modpack-version VERSION  Modpack version (optional, default: latest)
   --mod-loader LOADER        Mod loader (auto/fabric/forge/quilt, default: auto)
@@ -343,7 +345,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -495,6 +497,8 @@ async function main(): Promise<void> {
           worldUrl: flags['world-url'] as string | undefined,
           worldName: flags['world'] as string | undefined,
           noStart: flags['no-start'] === true,
+          noWhitelist: flags['no-whitelist'] === true,
+          whitelist: flags['whitelist'] as string | undefined,
           sudoPassword,
           modpack: flags['modpack'] as string | undefined,
           modpackVersion: flags['modpack-version'] as string | undefined,

@@ -86,6 +86,8 @@ describe('create command - MODRINTH modpack support', () => {
         modpackSlug: 'cobblemon',
         modpackVersion: '1.3.2',
         modLoader: 'fabric',
+        enableWhitelist: true,
+        whitelistPlayers: undefined,
       });
     });
 
@@ -127,6 +129,8 @@ describe('create command - MODRINTH modpack support', () => {
         modpackSlug: 'cobblemon',
         modpackVersion: undefined,
         modLoader: undefined,
+        enableWhitelist: true,
+        whitelistPlayers: undefined,
       });
     });
 
@@ -259,6 +263,133 @@ describe('create command - MODRINTH modpack support', () => {
       const loggedOutput = consoleLogSpy.mock.calls.map((call) => call.join(' ')).join('\n');
       expect(loggedOutput).toContain('Version: 1.21.1');
       expect(loggedOutput).not.toContain('Modpack:');
+
+      consoleLogSpy.mockRestore();
+    });
+  });
+
+  describe('Whitelist default behavior (#282)', () => {
+    it('should enable whitelist by default in CLI mode', async () => {
+      // ARRANGE
+      const options: CreateCommandOptions = {
+        name: 'myserver',
+        type: 'PAPER',
+        noStart: false,
+      };
+
+      const mockServer = {
+        name: { value: 'myserver', hostname: 'myserver.local' },
+        containerName: 'mc-myserver',
+        type: { label: 'Paper', isModpack: false },
+        version: { value: '1.21.1' },
+        memory: { value: '4G' },
+      };
+
+      mockCreateServerUseCase.executeWithConfig.mockResolvedValue(mockServer);
+
+      // ACT
+      const exitCode = await createCommand(options);
+
+      // ASSERT
+      expect(exitCode).toBe(0);
+      expect(mockCreateServerUseCase.executeWithConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enableWhitelist: true,
+          whitelistPlayers: undefined,
+        })
+      );
+    });
+
+    it('should disable whitelist when --no-whitelist is provided', async () => {
+      // ARRANGE
+      const options: CreateCommandOptions = {
+        name: 'myserver',
+        type: 'PAPER',
+        noWhitelist: true,
+        noStart: false,
+      };
+
+      const mockServer = {
+        name: { value: 'myserver', hostname: 'myserver.local' },
+        containerName: 'mc-myserver',
+        type: { label: 'Paper', isModpack: false },
+        version: { value: '1.21.1' },
+        memory: { value: '4G' },
+      };
+
+      mockCreateServerUseCase.executeWithConfig.mockResolvedValue(mockServer);
+
+      // ACT
+      const exitCode = await createCommand(options);
+
+      // ASSERT
+      expect(exitCode).toBe(0);
+      expect(mockCreateServerUseCase.executeWithConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enableWhitelist: false,
+          whitelistPlayers: undefined,
+        })
+      );
+    });
+
+    it('should pass whitelist players when --whitelist is provided', async () => {
+      // ARRANGE
+      const options: CreateCommandOptions = {
+        name: 'myserver',
+        type: 'PAPER',
+        whitelist: 'player1,player2',
+        noStart: false,
+      };
+
+      const mockServer = {
+        name: { value: 'myserver', hostname: 'myserver.local' },
+        containerName: 'mc-myserver',
+        type: { label: 'Paper', isModpack: false },
+        version: { value: '1.21.1' },
+        memory: { value: '4G' },
+      };
+
+      mockCreateServerUseCase.executeWithConfig.mockResolvedValue(mockServer);
+
+      // ACT
+      const exitCode = await createCommand(options);
+
+      // ASSERT
+      expect(exitCode).toBe(0);
+      expect(mockCreateServerUseCase.executeWithConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enableWhitelist: true,
+          whitelistPlayers: ['player1', 'player2'],
+        })
+      );
+    });
+
+    it('should display whitelist enabled in success output', async () => {
+      // ARRANGE
+      const options: CreateCommandOptions = {
+        name: 'myserver',
+        type: 'PAPER',
+        noStart: false,
+      };
+
+      const mockServer = {
+        name: { value: 'myserver', hostname: 'myserver.local' },
+        containerName: 'mc-myserver',
+        type: { label: 'Paper', isModpack: false },
+        version: { value: '1.21.1' },
+        memory: { value: '4G' },
+      };
+
+      mockCreateServerUseCase.executeWithConfig.mockResolvedValue(mockServer);
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      // ACT
+      await createCommand(options);
+
+      // ASSERT
+      const loggedOutput = consoleLogSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      expect(loggedOutput).toContain('Whitelist:');
+      expect(loggedOutput).toContain('enabled');
 
       consoleLogSpy.mockRestore();
     });

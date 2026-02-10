@@ -231,6 +231,68 @@ describe('CreateServerUseCase Integration', () => {
     });
   });
 
+  describe('whitelist default behavior (#282)', () => {
+    it('should call promptWhitelistPlayers in interactive mode', async () => {
+      await useCase.execute();
+
+      const log = shellAdapter.lastCommand;
+      const options = log?.args[1] as any;
+      assert.strictEqual(options.enableWhitelist, true);
+    });
+
+    it('should pass whitelist players from interactive prompt', async () => {
+      promptAdapter = new MockPromptAdapter({
+        serverName: 'testserver',
+        serverType: 'PAPER',
+        version: '1.21.1',
+        memory: '4G',
+        worldSetup: 'new',
+        whitelistPlayers: ['player1', 'player2'],
+      });
+      useCase = new CreateServerUseCase(promptAdapter, shellAdapter, serverRepo);
+
+      await useCase.execute();
+
+      const log = shellAdapter.lastCommand;
+      const options = log?.args[1] as any;
+      assert.strictEqual(options.enableWhitelist, true);
+      assert.deepStrictEqual(options.whitelistPlayers, ['player1', 'player2']);
+    });
+
+    it('should enable whitelist by default in CLI mode', async () => {
+      await useCase.executeWithConfig({
+        name: 'wlserver',
+      });
+
+      const log = shellAdapter.lastCommand;
+      const options = log?.args[1] as any;
+      assert.strictEqual(options.enableWhitelist, true);
+    });
+
+    it('should disable whitelist when enableWhitelist is false', async () => {
+      await useCase.executeWithConfig({
+        name: 'nowlserver',
+        enableWhitelist: false,
+      });
+
+      const log = shellAdapter.lastCommand;
+      const options = log?.args[1] as any;
+      assert.strictEqual(options.enableWhitelist, false);
+    });
+
+    it('should pass whitelist players in CLI mode', async () => {
+      await useCase.executeWithConfig({
+        name: 'wlplayers',
+        whitelistPlayers: ['steve', 'alex'],
+      });
+
+      const log = shellAdapter.lastCommand;
+      const options = log?.args[1] as any;
+      assert.strictEqual(options.enableWhitelist, true);
+      assert.deepStrictEqual(options.whitelistPlayers, ['steve', 'alex']);
+    });
+  });
+
   describe('cancellation handling', () => {
     it('should handle user cancellation gracefully', async () => {
       promptAdapter.setCancelled(true);
