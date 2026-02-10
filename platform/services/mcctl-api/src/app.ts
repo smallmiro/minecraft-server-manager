@@ -7,6 +7,7 @@ import swaggerPlugin from './plugins/swagger.js';
 import serversRoutes from './routes/servers.js';
 import serverActionsRoutes from './routes/servers/actions.js';
 import serverConfigRoutes from './routes/servers/config.js';
+import serverHostnameRoutes from './routes/servers/hostnames.js';
 import consoleRoutes from './routes/console.js';
 import worldsRoutes from './routes/worlds.js';
 import authRoutes from './routes/auth.js';
@@ -57,6 +58,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(serversRoutes);
   await app.register(serverActionsRoutes);
   await app.register(serverConfigRoutes);
+  await app.register(serverHostnameRoutes);
 
   // Register router routes
   await app.register(routerRoutes);
