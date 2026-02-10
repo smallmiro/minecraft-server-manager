@@ -180,13 +180,19 @@ export class CreateServerUseCase implements ICreateServerUseCase {
           type: type.value,
           version: version.value,
           memory: memory.value,
+          enableWhitelist: true,
+          whitelistPlayers: whitelistPlayers.length > 0 ? whitelistPlayers : undefined,
         },
         errorMessage: null,
       });
 
       this.prompt.success(`Server '${name.value}' created!`);
+
+      const whitelistInfo = whitelistPlayers.length > 0
+        ? `Whitelist: enabled (${whitelistPlayers.join(', ')})`
+        : 'Whitelist: enabled';
       this.prompt.note(
-        `Connect via: ${name.hostname}:25565`,
+        `Connect via: ${name.hostname}:25565\n${whitelistInfo}`,
         'Connection Info'
       );
 
@@ -301,6 +307,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         type: type.value,
         version: version.value,
         memory: memory.value,
+        enableWhitelist: config.enableWhitelist !== false,
+        whitelistPlayers: config.whitelistPlayers,
       },
       errorMessage: null,
     });

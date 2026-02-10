@@ -77,6 +77,11 @@ async function createWithArguments(
       return validationError;
     }
 
+    // Warn if conflicting whitelist flags are provided
+    if (options.noWhitelist && options.whitelist) {
+      log.warn('--whitelist is ignored when --no-whitelist is specified');
+    }
+
     const server = await useCase.executeWithConfig({
       name: options.name!,
       type: options.type,
