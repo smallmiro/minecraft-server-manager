@@ -6,6 +6,8 @@ import {
   OnlinePlayersResponseSchema,
   PlayerListResponseSchema,
   WhitelistResponseSchema,
+  WhitelistStatusResponseSchema,
+  WhitelistStatusRequestSchema,
   BannedPlayersResponseSchema,
   AddPlayerRequestSchema,
   KickPlayerRequestSchema,
@@ -15,6 +17,7 @@ import {
   ErrorResponseSchema,
   type AddPlayerRequest,
   type KickPlayerRequest,
+  type WhitelistStatusRequest,
   type PlayerParams,
   type UsernameParams,
 } from '../schemas/player.js';
@@ -206,6 +209,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (!checkServerExists(name, reply)) return;
 
     const running = isServerRunning(name);
+    const enabled = playerFileService.readWhitelistEnabled(name);
 
     if (running) {
       try {
@@ -221,7 +225,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           name: pName,
           uuid: uuidMap.get(pName.toLowerCase()) || '',
         }));
-        return reply.send({ players, total: players.length, source: 'rcon' });
+        return reply.send({ players, total: players.length, source: 'rcon', enabled });
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for whitelist, falling back to file');
       }
@@ -230,10 +234,72 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // Fallback: read from file
     try {
       const result = playerFileService.readWhitelist(name);
-      return reply.send(result);
+      return reply.send({ ...result, enabled });
     } catch (error) {
       fastify.log.error(error, 'Failed to get whitelist');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get whitelist' });
+    }
+  });
+
+  /**
+   * GET /api/servers/:name/whitelist/status
+   */
+  fastify.get<ServerRoute>('/api/servers/:name/whitelist/status', {
+    schema: {
+      description: 'Get whitelist enabled status',
+      tags: ['players'],
+      params: ServerNameParamsSchema,
+      response: { 200: WhitelistStatusResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
+    },
+  }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+    if (!checkServerExists(name, reply)) return;
+
+    try {
+      const enabled = playerFileService.readWhitelistEnabled(name);
+      return reply.send({ enabled, source: 'config' });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to get whitelist status');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get whitelist status' });
+    }
+  });
+
+  /**
+   * PUT /api/servers/:name/whitelist/status
+   */
+  interface WhitelistStatusRoute {
+    Params: ServerNameParams;
+    Body: WhitelistStatusRequest;
+  }
+
+  fastify.put<WhitelistStatusRoute>('/api/servers/:name/whitelist/status', {
+    schema: {
+      description: 'Enable or disable whitelist',
+      tags: ['players'],
+      params: ServerNameParamsSchema,
+      body: WhitelistStatusRequestSchema,
+      response: { 200: WhitelistStatusResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
+    },
+  }, async (request: FastifyRequest<WhitelistStatusRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+    const { enabled } = request.body;
+    if (!checkServerExists(name, reply)) return;
+
+    try {
+      // If server is running, also send RCON command
+      if (isServerRunning(name)) {
+        try {
+          await execRconCommand(name, `whitelist ${enabled ? 'on' : 'off'}`);
+        } catch (error) {
+          fastify.log.warn(error, 'RCON failed for whitelist status, updating config only');
+        }
+      }
+
+      playerFileService.setWhitelistEnabled(name, enabled);
+      return reply.send({ enabled, source: 'config' });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to set whitelist status');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to set whitelist status' });
     }
   });
 

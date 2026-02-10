@@ -52,6 +52,20 @@ export const WhitelistResponseSchema = Type.Object({
     Type.Literal('file'),
     Type.Literal('config'),
   ])),
+  enabled: Type.Optional(Type.Boolean()),
+});
+
+// Whitelist status response
+export const WhitelistStatusResponseSchema = Type.Object({
+  enabled: Type.Boolean(),
+  source: Type.Union([
+    Type.Literal('config'),
+  ]),
+});
+
+// Whitelist status request
+export const WhitelistStatusRequestSchema = Type.Object({
+  enabled: Type.Boolean(),
 });
 
 // Banned players response
@@ -104,6 +118,8 @@ export type PlayerListResponse = Static<typeof PlayerListResponseSchema>;
 export type WhitelistEntry = Static<typeof WhitelistEntrySchema>;
 export type BannedPlayerEntry = Static<typeof BannedPlayerEntrySchema>;
 export type WhitelistResponse = Static<typeof WhitelistResponseSchema>;
+export type WhitelistStatusResponse = Static<typeof WhitelistStatusResponseSchema>;
+export type WhitelistStatusRequest = Static<typeof WhitelistStatusRequestSchema>;
 export type BannedPlayersResponse = Static<typeof BannedPlayersResponseSchema>;
 export type AddPlayerRequest = Static<typeof AddPlayerRequestSchema>;
 export type KickPlayerRequest = Static<typeof KickPlayerRequestSchema>;
