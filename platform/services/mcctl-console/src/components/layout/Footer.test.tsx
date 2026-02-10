@@ -30,23 +30,21 @@ describe('Footer', () => {
 
     expect(screen.getByText('CLI Commands')).toBeInTheDocument();
     expect(screen.getByText('API Reference')).toBeInTheDocument();
-    expect(screen.getByText('Environment Variables')).toBeInTheDocument();
+    expect(screen.getByText('itzg Reference')).toBeInTheDocument();
   });
 
   it('should render community links', () => {
     renderWithTheme(<Footer />);
 
     expect(screen.getByText('GitHub')).toBeInTheDocument();
-    expect(screen.getByText('Contribute')).toBeInTheDocument();
+    expect(screen.getByText('Issues')).toBeInTheDocument();
   });
 
   it('should render about links', () => {
     renderWithTheme(<Footer />);
 
     expect(screen.getByText('License')).toBeInTheDocument();
-    // Multiple itzg/minecraft-server links exist (footer link + copyright)
-    const itzgLinks = screen.getAllByText('itzg/minecraft-server');
-    expect(itzgLinks.length).toBeGreaterThan(0);
+    expect(screen.getByText('Docker Hub')).toBeInTheDocument();
   });
 
   it('should render copyright with current year', () => {

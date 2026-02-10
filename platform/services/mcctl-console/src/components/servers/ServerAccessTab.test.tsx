@@ -17,6 +17,14 @@ vi.mock('@/hooks/useUserServers', () => ({
     mutate: mockRevokeMutate,
     isPending: false,
   })),
+  useSearchUsers: vi.fn(() => ({
+    data: undefined,
+    isLoading: false,
+  })),
+  useGrantAccess: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
 }));
 
 import { useServerUsers } from '@/hooks/useUserServers';

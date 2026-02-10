@@ -17,6 +17,15 @@ vi.mock('@/hooks/useMcctl', () => ({
   useWorlds: vi.fn(),
 }));
 
+// Mock useServersSSE to avoid EventSource dependency
+vi.mock('@/hooks/useServersSSE', () => ({
+  useServersSSE: vi.fn(() => ({
+    statusMap: {},
+    isConnected: false,
+    error: null,
+  })),
+}));
+
 // Import the mocked hooks
 import { useServers, useWorlds } from '@/hooks/useMcctl';
 
@@ -56,7 +65,11 @@ describe('DashboardPage', () => {
 
     renderWithProviders(<DashboardPage />);
 
-    expect(screen.getAllByRole('progressbar').length).toBeGreaterThan(0);
+    // Loading state renders Dashboard header and skeleton cards
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    // Skeleton elements should be present (MUI Skeleton renders as spans, not progressbar)
+    const skeletons = document.querySelectorAll('.MuiSkeleton-root');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('should render statistics cards when data is loaded', async () => {
@@ -170,7 +183,7 @@ describe('DashboardPage', () => {
     renderWithProviders(<DashboardPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Activity Feed')).toBeInTheDocument();
+      expect(screen.getByText('Recent Activity')).toBeInTheDocument();
     });
   });
 });

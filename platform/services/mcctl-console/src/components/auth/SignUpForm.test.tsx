@@ -39,8 +39,8 @@ describe('SignUpForm', () => {
   it('should show validation error for empty name', async () => {
     renderWithTheme(<SignUpForm onSuccess={mockOnSuccess} />);
 
-    const submitButton = screen.getByRole('button', { name: /sign up/i });
-    fireEvent.click(submitButton);
+    const form = screen.getByRole('button', { name: /sign up/i }).closest('form')!;
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText(/name is required/i)).toBeInTheDocument();
@@ -53,8 +53,8 @@ describe('SignUpForm', () => {
     const nameInput = screen.getByLabelText(/^name \*$/i);
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
 
-    const submitButton = screen.getByRole('button', { name: /sign up/i });
-    fireEvent.click(submitButton);
+    const form = screen.getByRole('button', { name: /sign up/i }).closest('form')!;
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText(/email is required/i)).toBeInTheDocument();
@@ -70,8 +70,8 @@ describe('SignUpForm', () => {
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
 
-    const submitButton = screen.getByRole('button', { name: /sign up/i });
-    fireEvent.click(submitButton);
+    const form = screen.getByRole('button', { name: /sign up/i }).closest('form')!;
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText(/invalid email address/i)).toBeInTheDocument();
@@ -89,8 +89,8 @@ describe('SignUpForm', () => {
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: '12345' } });
 
-    const submitButton = screen.getByRole('button', { name: /sign up/i });
-    fireEvent.click(submitButton);
+    const form = screen.getByRole('button', { name: /sign up/i }).closest('form')!;
+    fireEvent.submit(form);
 
     await waitFor(() => {
       expect(screen.getByText(/password must be at least 8 characters/i)).toBeInTheDocument();
