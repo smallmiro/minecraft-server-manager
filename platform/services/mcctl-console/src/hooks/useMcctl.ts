@@ -25,6 +25,8 @@ import type {
   BackupPushResponse,
   BackupHistoryResponse,
   BackupRestoreResponse,
+  HostnameResponse,
+  UpdateHostnamesResponse,
 } from '@/ports/api/IMcctlApiClient';
 
 // ============================================================
@@ -338,6 +340,48 @@ export function useResetWorld() {
     onSuccess: (_, serverName) => {
       queryClient.invalidateQueries({ queryKey: ['servers', serverName] });
       queryClient.invalidateQueries({ queryKey: ['worlds'] });
+    },
+  });
+}
+
+// ============================================================
+// Hostname Hooks
+// ============================================================
+
+/**
+ * Hook to fetch server hostnames
+ */
+export function useServerHostnames(serverName: string, options?: { enabled?: boolean }) {
+  return useQuery<HostnameResponse, Error>({
+    queryKey: ['servers', serverName, 'hostnames'],
+    queryFn: () =>
+      apiFetch<HostnameResponse>(`/api/servers/${encodeURIComponent(serverName)}/hostnames`),
+    enabled: options?.enabled !== false && !!serverName,
+  });
+}
+
+/**
+ * Hook to update custom hostnames
+ */
+export function useUpdateHostnames() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    UpdateHostnamesResponse,
+    Error,
+    { serverName: string; customHostnames: string[] }
+  >({
+    mutationFn: ({ serverName, customHostnames }) =>
+      apiFetch<UpdateHostnamesResponse>(
+        `/api/servers/${encodeURIComponent(serverName)}/hostnames`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({ customHostnames }),
+        }
+      ),
+    onSuccess: (_, { serverName }) => {
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName, 'hostnames'] });
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName] });
     },
   });
 }

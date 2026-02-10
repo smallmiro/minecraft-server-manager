@@ -30,6 +30,8 @@ import {
   PlayerActionResponse,
   OperatorsListResponse,
   OperatorActionResponse,
+  HostnameResponse,
+  UpdateHostnamesResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -399,6 +401,26 @@ export class McctlApiAdapter implements IMcctlApiClient {
       message: response.message || `Added ${player} as operator`,
       source: response.source,
     }));
+  }
+
+  // ============================================================
+  // Hostname Management Operations
+  // ============================================================
+
+  async getHostnames(serverName: string): Promise<HostnameResponse> {
+    return this.fetch<HostnameResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/hostnames`
+    );
+  }
+
+  async updateHostnames(serverName: string, customHostnames: string[]): Promise<UpdateHostnamesResponse> {
+    return this.fetch<UpdateHostnamesResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/hostnames`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ customHostnames }),
+      }
+    );
   }
 }
 

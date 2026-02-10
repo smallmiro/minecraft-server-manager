@@ -204,6 +204,32 @@ export interface WorldResetResponse {
 }
 
 // ============================================================
+// Hostname Management Types
+// ============================================================
+
+export interface HostnameInfo {
+  hostname: string;
+  type: 'system' | 'custom';
+  description?: string;
+}
+
+export interface HostnameResponse {
+  serverName: string;
+  hostnames: string[];
+  systemHostnames: HostnameInfo[];
+  customHostnames: string[];
+}
+
+export interface UpdateHostnamesResponse {
+  success: boolean;
+  serverName: string;
+  hostnames: string[];
+  systemHostnames: HostnameInfo[];
+  customHostnames: string[];
+  recreateRequired: boolean;
+}
+
+// ============================================================
 // Router Status Types
 // ============================================================
 
@@ -421,4 +447,8 @@ export interface IMcctlApiClient {
   // Legacy OP operations (backwards compatibility)
   getOps(serverName: string): Promise<PlayerListResponse>;
   addOp(serverName: string, player: string): Promise<PlayerActionResponse>;
+
+  // Hostname management operations
+  getHostnames(serverName: string): Promise<HostnameResponse>;
+  updateHostnames(serverName: string, customHostnames: string[]): Promise<UpdateHostnamesResponse>;
 }

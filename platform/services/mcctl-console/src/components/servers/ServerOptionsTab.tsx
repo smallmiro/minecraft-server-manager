@@ -27,6 +27,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useServerConfig, useUpdateServerConfig, useResetWorld } from '@/hooks/useMcctl';
+import { HostnameSection } from './HostnameSection';
 import type { Difficulty, GameMode, ServerConfig, UpdateServerConfigRequest } from '@/ports/api/IMcctlApiClient';
 
 interface ServerOptionsTabProps {
@@ -145,6 +146,9 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
 
   return (
     <Box>
+      {/* Hostname / Domain Section */}
+      <HostnameSection serverName={serverName} />
+
       {/* Performance Warning Alert */}
       {performanceChanged && (
         <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 3 }}>
