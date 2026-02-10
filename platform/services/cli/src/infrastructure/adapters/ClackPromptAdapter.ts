@@ -537,6 +537,27 @@ export class ClackPromptAdapter implements IPromptPort {
     return worldEntry.world;
   }
 
+  async promptWhitelistPlayers(): Promise<string[]> {
+    p.log.info(pc.cyan('Whitelist is enabled by default for security.'));
+
+    const result = await p.text({
+      message: 'Initial whitelist players (comma-separated, Enter to skip):',
+      placeholder: 'player1,player2',
+      defaultValue: '',
+    });
+
+    if (this.isCancel(result)) {
+      this.handleCancel();
+    }
+
+    const value = (result as string).trim();
+    if (!value) {
+      return [];
+    }
+
+    return value.split(',').map((p) => p.trim()).filter(Boolean);
+  }
+
   async promptModpackSlug(): Promise<string> {
     const result = await p.text({
       message: 'Modrinth modpack slug or URL:',

@@ -35,6 +35,7 @@ export interface MockPromptValues {
   modpackSlug?: string;
   modpackVersion?: string;
   modpackLoader?: string;
+  whitelistPlayers?: string[];
 }
 
 /**
@@ -220,6 +221,13 @@ export class MockPromptAdapter implements IPromptPort {
       throw new MockCancelError();
     }
     return null;
+  }
+
+  async promptWhitelistPlayers(): Promise<string[]> {
+    if (this._cancelled) {
+      throw new MockCancelError();
+    }
+    return this.values.whitelistPlayers ?? [];
   }
 
   async promptModpackSlug(): Promise<string> {
