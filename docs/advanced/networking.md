@@ -210,8 +210,11 @@ Then restart the router:
 mcctl router restart
 ```
 
-!!! warning "AUTO_SCALE_DOWN"
-    Auto scale down is currently disabled by default due to a bug that can disconnect players after the timeout. Enable with caution.
+!!! info "AUTO_SCALE_DOWN"
+    Auto scale down is fully enabled and supported since mc-router v1.39.1.
+    Servers will automatically stop after the configured idle timeout (default: 10 minutes).
+    The race condition that previously caused player disconnections has been fixed.
+    See [mc-router #507](https://github.com/itzg/mc-router/issues/507) for details.
 
 ### Multiple Hostnames
 

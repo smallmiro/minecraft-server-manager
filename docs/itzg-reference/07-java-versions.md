@@ -120,6 +120,10 @@ image: itzg/minecraft-server:java17-graalvm
 
 ## GraalVM Variants
 
+!!! warning "Auto-Pause Not Supported"
+    Auto-pause (`ENABLE_AUTOPAUSE`) is currently incompatible with GraalVM images.
+    If you need auto-pause functionality, use standard OpenJDK images instead.
+
 GraalVM images for performance improvement:
 
 ```yaml
