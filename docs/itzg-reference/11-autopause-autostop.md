@@ -4,6 +4,11 @@ Features to save server resources when no players are online.
 
 ## Autopause
 
+!!! warning "GraalVM Incompatibility"
+    As of 2026.2.0, auto-pause is **temporarily disabled** when using GraalVM images
+    (`java21-graalvm`, `java17-graalvm`). Use standard OpenJDK/HotSpot Java images
+    for auto-pause functionality.
+
 Pauses the server process when no players are online.
 
 ### Enable

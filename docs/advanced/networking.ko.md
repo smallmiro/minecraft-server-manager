@@ -210,8 +210,11 @@ DOCKER_TIMEOUT=120       # 서버 시작 대기 시간 (초)
 mcctl router restart
 ```
 
-!!! warning "AUTO_SCALE_DOWN"
-    Auto scale down은 타임아웃 후 플레이어 연결을 끊을 수 있는 버그로 인해 현재 기본적으로 비활성화되어 있습니다. 주의하여 활성화하세요.
+!!! info "AUTO_SCALE_DOWN"
+    mc-router v1.39.1 이후 자동 스케일 다운이 완전히 지원됩니다.
+    서버는 설정된 유휴 시간 초과 후 자동으로 중지됩니다 (기본값: 10분).
+    이전에 플레이어 연결 끊김을 유발했던 경쟁 조건이 수정되었습니다.
+    자세한 내용은 [mc-router #507](https://github.com/itzg/mc-router/issues/507)을 참조하세요.
 
 ### 다중 호스트네임
 

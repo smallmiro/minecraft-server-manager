@@ -40,7 +40,7 @@ const navItems: NavItem[] = [
   { label: 'Servers', href: '/servers', icon: <DnsIcon /> },
   { label: 'Worlds', href: '/worlds', icon: <PublicIcon /> },
   { label: 'Players', href: '/players', icon: <PeopleIcon /> },
-  { label: 'Audit Log', href: '/audit-logs', icon: <HistoryIcon /> },
+  { label: 'Audit', href: '/audit-logs', icon: <HistoryIcon /> },
   { label: 'Backups', href: '/backups', icon: <BackupIcon /> },
   { label: 'Routing', href: '/routing', icon: <RouterIcon /> },
 ];
