@@ -114,6 +114,13 @@ export class ShellAdapter implements IShellPort {
       args.push('--mod-loader', options.modLoader);
     }
 
+    if (options.enableWhitelist === false) {
+      args.push('--no-whitelist');
+    }
+    if (options.whitelistPlayers && options.whitelistPlayers.length > 0) {
+      args.push('--whitelist', options.whitelistPlayers.join(','));
+    }
+
     if (options.autoStart === false) {
       args.push('--no-start');
     }

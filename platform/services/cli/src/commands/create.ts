@@ -19,6 +19,8 @@ export interface CreateCommandOptions {
   worldUrl?: string;
   worldName?: string;
   noStart?: boolean;
+  noWhitelist?: boolean;
+  whitelist?: string;
   sudoPassword?: string;
   modpack?: string;
   modpackVersion?: string;
@@ -86,6 +88,10 @@ async function createWithArguments(
       modpackSlug: options.modpack,
       modpackVersion: options.modpackVersion,
       modLoader: options.modLoader,
+      enableWhitelist: !options.noWhitelist,
+      whitelistPlayers: options.whitelist
+        ? options.whitelist.split(',').map((p) => p.trim()).filter(Boolean)
+        : undefined,
     });
 
     console.log('');
@@ -107,6 +113,10 @@ async function createWithArguments(
     }
 
     console.log(`  Memory: ${server.memory.value}`);
+    console.log(`  Whitelist: ${options.noWhitelist ? 'disabled' : colors.green('enabled')}`);
+    if (options.whitelist && !options.noWhitelist) {
+      console.log(`  Whitelisted: ${options.whitelist}`);
+    }
     console.log('');
     console.log(`  Connect via: ${colors.cyan(server.name.hostname + ':25565')}`);
     console.log('');
