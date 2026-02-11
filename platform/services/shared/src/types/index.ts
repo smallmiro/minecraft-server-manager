@@ -170,3 +170,21 @@ export interface RouteInfo {
   serverType?: string;
   serverVersion?: string;
 }
+
+/**
+ * playit.gg types
+ */
+export interface PlayitAgentStatus {
+  enabled: boolean;
+  agentRunning: boolean;
+  secretKeyConfigured: boolean;
+  containerStatus: ContainerStatus;
+  uptime?: string;
+  uptimeSeconds?: number;
+}
+
+export interface PlayitServerInfo {
+  serverName: string;
+  playitDomain: string | null;
+  lanHostname: string;
+}
