@@ -54,18 +54,27 @@ vi.mock('node:child_process', async (importOriginal) => {
   };
 });
 
-// Mock @minecraft-docker/shared module
-vi.mock('@minecraft-docker/shared', () => ({
-  getAllServers: vi.fn(),
-  getServerInfoFromConfig: vi.fn(),
-  getServerDetailedInfo: vi.fn(),
-  getContainerLogs: vi.fn(),
-  containerExists: vi.fn(),
-  serverExists: vi.fn(),
-  getContainerStatus: vi.fn(),
-  getContainerHealth: vi.fn(),
-  stopContainer: vi.fn(),
+// Mock audit-log-service
+vi.mock('../src/services/audit-log-service.js', () => ({
+  writeAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
+
+// Mock @minecraft-docker/shared module
+vi.mock('@minecraft-docker/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@minecraft-docker/shared')>();
+  return {
+    ...actual,
+    getAllServers: vi.fn(),
+    getServerInfoFromConfig: vi.fn(),
+    getServerDetailedInfo: vi.fn(),
+    getContainerLogs: vi.fn(),
+    containerExists: vi.fn(),
+    serverExists: vi.fn(),
+    getContainerStatus: vi.fn(),
+    getContainerHealth: vi.fn(),
+    stopContainer: vi.fn(),
+  };
+});
 
 // Mock fs module with path-aware logic
 vi.mock('fs', async (importOriginal) => {

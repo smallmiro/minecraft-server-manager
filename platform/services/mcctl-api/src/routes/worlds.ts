@@ -7,7 +7,9 @@ import {
   WorldRepository,
   ServerRepository,
   Paths,
+  AuditActionEnum,
 } from '@minecraft-docker/shared';
+import { writeAuditLog } from '../services/audit-log-service.js';
 import {
   WorldListResponseSchema,
   WorldDetailResponseSchema,
@@ -203,11 +205,29 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
 
       if (!result.success) {
+        await writeAuditLog({
+          action: AuditActionEnum.WORLD_CREATE,
+          actor: 'api:console',
+          targetType: 'world',
+          targetName: name,
+          details: { seed, serverName },
+          status: 'failure',
+          errorMessage: result.error || 'Failed to create world',
+        });
         return reply.code(400).send({
           error: 'BadRequest',
           message: result.error || 'Failed to create world',
         });
       }
+
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_CREATE,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: result.worldName!,
+        details: { seed: result.seed, serverName: result.serverName, started: result.started },
+        status: 'success',
+      });
 
       return reply.code(201).send({
         success: true,
@@ -217,6 +237,15 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         started: result.started,
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_CREATE,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: name,
+        details: { seed, serverName },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to create world');
       return reply.code(500).send({
         error: 'InternalServerError',
@@ -257,6 +286,15 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const result = await useCase.assignWorldByName(name, serverName);
 
       if (!result.success) {
+        await writeAuditLog({
+          action: AuditActionEnum.WORLD_ASSIGN,
+          actor: 'api:console',
+          targetType: 'world',
+          targetName: name,
+          details: { serverName },
+          status: 'failure',
+          errorMessage: result.error || 'Failed to assign world',
+        });
         // Determine appropriate error code
         if (result.error?.includes('not found')) {
           return reply.code(404).send({
@@ -276,12 +314,30 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_ASSIGN,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: result.worldName!,
+        details: { serverName: result.serverName },
+        status: 'success',
+      });
+
       return reply.send({
         success: true,
         worldName: result.worldName,
         serverName: result.serverName,
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_ASSIGN,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: name,
+        details: { serverName },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to assign world');
       return reply.code(500).send({
         error: 'InternalServerError',
@@ -320,6 +376,15 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const result = await useCase.releaseWorldByName(name, force);
 
       if (!result.success) {
+        await writeAuditLog({
+          action: AuditActionEnum.WORLD_RELEASE,
+          actor: 'api:console',
+          targetType: 'world',
+          targetName: name,
+          details: { force },
+          status: 'failure',
+          errorMessage: result.error || 'Failed to release world',
+        });
         if (result.error?.includes('not found')) {
           return reply.code(404).send({
             error: 'NotFound',
@@ -332,12 +397,30 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_RELEASE,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: result.worldName!,
+        details: { previousServer: result.previousServer, force },
+        status: 'success',
+      });
+
       return reply.send({
         success: true,
         worldName: result.worldName,
         previousServer: result.previousServer,
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_RELEASE,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: name,
+        details: { force },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to release world');
       return reply.code(500).send({
         error: 'InternalServerError',
@@ -378,6 +461,15 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const result = await useCase.deleteWorldByName(name, force);
 
       if (!result.success) {
+        await writeAuditLog({
+          action: AuditActionEnum.WORLD_DELETE,
+          actor: 'api:console',
+          targetType: 'world',
+          targetName: name,
+          details: { force },
+          status: 'failure',
+          errorMessage: result.error || 'Failed to delete world',
+        });
         if (result.error?.includes('not found')) {
           return reply.code(404).send({
             error: 'NotFound',
@@ -396,12 +488,30 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_DELETE,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: result.worldName!,
+        details: { size: result.size, force },
+        status: 'success',
+      });
+
       return reply.send({
         success: true,
         worldName: result.worldName,
         size: result.size,
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_DELETE,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: name,
+        details: { force },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to delete world');
       return reply.code(500).send({
         error: 'InternalServerError',

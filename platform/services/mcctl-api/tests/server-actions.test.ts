@@ -2,6 +2,11 @@ import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vites
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 
+// Mock audit-log-service
+vi.mock('../src/services/audit-log-service.js', () => ({
+  writeAuditLog: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock child_process module with both spawn and exec
 vi.mock('child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('child_process')>();
