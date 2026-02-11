@@ -15,6 +15,8 @@ export async function initCommand(options: {
   skipValidation?: boolean;
   skipDocker?: boolean;
   reconfigure?: boolean;
+  playitKey?: string;
+  noPlayit?: boolean;
 }): Promise<number> {
   const paths = new Paths(options.root);
   const config = new Config(paths);
@@ -184,6 +186,99 @@ export async function initCommand(options: {
   }
   console.log('');
 
+  // Step 4.5: Configure playit.gg (optional)
+  console.log(colors.cyan('[4.5/6] Configuring playit.gg (optional)...'));
+
+  let playitEnabled = false;
+  let playitSecretKey: string | undefined;
+
+  // Determine playit setup from options or prompt
+  if (options.playitKey) {
+    // Non-interactive: --playit-key provided
+    playitEnabled = true;
+    playitSecretKey = options.playitKey;
+    console.log('  ✓ playit.gg enabled (via --playit-key)');
+  } else if (options.noPlayit) {
+    // Non-interactive: --no-playit provided
+    playitEnabled = false;
+    console.log('  ✓ playit.gg disabled (via --no-playit)');
+  } else {
+    // Interactive mode: prompt user
+    console.log('');
+    console.log('  playit.gg enables external access without port forwarding.');
+    console.log('  Setup: https://playit.gg/account/agents/new-docker');
+    console.log('');
+
+    const enablePlayit = await confirm({
+      message: 'Enable playit.gg tunneling?',
+      initialValue: false,
+    });
+
+    if (isCancel(enablePlayit)) {
+      log.warn('Playit setup cancelled. Continuing without playit.gg.');
+      playitEnabled = false;
+    } else if (enablePlayit) {
+      playitEnabled = true;
+
+      // Prompt for SECRET_KEY
+      const secretKey = await password({
+        message: 'playit.gg SECRET_KEY?',
+        validate: (value) => {
+          if (!value || value.trim().length === 0) {
+            return 'SECRET_KEY is required';
+          }
+          return undefined;
+        },
+      });
+
+      if (isCancel(secretKey)) {
+        log.warn('SECRET_KEY input cancelled. Disabling playit.gg.');
+        playitEnabled = false;
+      } else {
+        playitSecretKey = secretKey as string;
+        console.log('  ✓ playit.gg SECRET_KEY configured');
+      }
+    } else {
+      playitEnabled = false;
+      console.log('  ✓ playit.gg disabled');
+    }
+  }
+
+  // Update .env file with PLAYIT_SECRET_KEY if enabled
+  if (playitEnabled && playitSecretKey) {
+    const envPath = join(paths.root, '.env');
+    if (existsSync(envPath)) {
+      let envContent = readFileSync(envPath, 'utf-8');
+
+      // Check if PLAYIT_SECRET_KEY line already exists (commented or not)
+      if (envContent.includes('PLAYIT_SECRET_KEY=')) {
+        // Replace existing line
+        envContent = envContent.replace(
+          /^#?\s*PLAYIT_SECRET_KEY=.*$/m,
+          `PLAYIT_SECRET_KEY=${playitSecretKey}`
+        );
+      } else {
+        // Add new line in the playit.gg section
+        const playitSectionRegex = /# External Access \(playit\.gg\)[\s\S]*?(?=\n#|$)/;
+        const match = envContent.match(playitSectionRegex);
+        if (match) {
+          const insertPos = match.index! + match[0].length;
+          envContent =
+            envContent.slice(0, insertPos) +
+            `\nPLAYIT_SECRET_KEY=${playitSecretKey}` +
+            envContent.slice(insertPos);
+        } else {
+          // Fallback: append at the end
+          envContent += `\n# playit.gg\nPLAYIT_SECRET_KEY=${playitSecretKey}\n`;
+        }
+      }
+
+      writeFileSync(envPath, envContent, 'utf-8');
+      console.log(`  ✓ Saved PLAYIT_SECRET_KEY to .env`);
+    }
+  }
+  console.log('');
+
   // Step 5: Create mcctl config
   console.log(colors.cyan('[5/6] Creating configuration...'));
 
@@ -195,6 +290,7 @@ export async function initCommand(options: {
     defaultVersion: '1.21.1',
     autoStart: true,
     avahiEnabled: true,
+    playitEnabled,
   };
 
   config.save(mcctlConfig);

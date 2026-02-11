@@ -113,7 +113,10 @@ ${colors.cyan('Usage:')}
   mcctl <command> [options]
 
 ${colors.cyan('Commands:')}
-  ${colors.bold('init')} [--reconfigure]        Initialize platform (~/.minecraft-servers)
+  ${colors.bold('init')} [options]              Initialize platform (~/.minecraft-servers)
+    --reconfigure             Reconfigure existing platform
+    --playit-key <key>        Enable playit.gg with SECRET_KEY
+    --no-playit               Explicitly disable playit.gg
   ${colors.bold('up')}                         Start all infrastructure (router + servers)
   ${colors.bold('down')}                       Stop all infrastructure
   ${colors.bold('router')} <start|stop|restart>  Manage mc-router only
@@ -345,7 +348,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -451,6 +454,8 @@ async function main(): Promise<void> {
           skipValidation: flags['skip-validation'] === true,
           skipDocker: flags['skip-docker'] === true,
           reconfigure: flags['reconfigure'] === true,
+          playitKey: flags['playit-key'] as string | undefined,
+          noPlayit: flags['no-playit'] === true,
         });
         break;
 

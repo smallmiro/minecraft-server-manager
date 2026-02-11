@@ -42,6 +42,7 @@ export interface McctlConfig {
   defaultVersion: string;
   autoStart: boolean;
   avahiEnabled: boolean;
+  playitEnabled?: boolean;
 }
 
 export type ServerType = 'PAPER' | 'VANILLA' | 'FORGE' | 'FABRIC' | 'SPIGOT' | 'BUKKIT';
