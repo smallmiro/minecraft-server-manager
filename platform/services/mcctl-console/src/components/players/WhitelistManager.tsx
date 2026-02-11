@@ -233,10 +233,9 @@ export function WhitelistManager({ serverName }: WhitelistManagerProps) {
               setBulkMode(!bulkMode);
               setBulkResult(null);
             }}
-            size="small"
             aria-label="Toggle bulk mode"
             data-testid="bulk-toggle"
-            sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
+            sx={{ whiteSpace: 'nowrap' }}
           >
             Bulk
           </Button>
