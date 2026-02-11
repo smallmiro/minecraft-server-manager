@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-02-11
+
+### Added
+- **Whitelist Console UI** - Full whitelist management in Web Console (#283, #321)
+  - Whitelist ON/OFF toggle switch for enabling/disabling whitelist per server
+  - Bulk player add functionality for adding multiple players at once
+  - Search and filter for quick player lookup in whitelist
+  - Whitelist status API endpoint (`GET /api/servers/:name/whitelist/status`)
+  - WhitelistStatusAdapter, BFF route, and React Query hooks
+  - Comprehensive test coverage for whitelist status endpoints
+- **Whitelist Default on Create** - Enable whitelist by default when creating servers via `mcctl create` (#282, #320)
+- **Hostname/Domain Management** - Server hostname and domain management in Options tab (#314, #315)
+  - HostnameSection component for viewing and managing server hostnames
+  - API endpoints for hostname configuration
+  - HostnameService for hostname operations
+
+### Fixed
+- **Console Unit Tests** - Fix 23 pre-existing failing unit tests (#296, #316)
+- **Console Navigation** - Rename "Audit Log" to "Audit" in navigation menu
+
+### Documentation
+- **Upstream Docs Update** - Update itzg reference docs for itzg 2026.2.0 and mc-router v1.39.1 (#317, #318)
+
+### Chore
+- Restore workspace:* dependencies after release merge
+
 ## [2.1.3] - 2026-02-09
 
 ### Fixed

@@ -853,21 +853,34 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.2.0] - 2026-02-11
+
+**Added:**
+- **Whitelist Console UI** - Full whitelist management in Web Console: toggle ON/OFF, bulk add, search/filter (#283, #321)
+- **Whitelist Default on Create** - Enable whitelist by default on `mcctl create` (#282, #320)
+- **Hostname/Domain Management** - Server hostname management in Options tab (#314, #315)
+
+**Fixed:**
+- Fix 23 pre-existing failing unit tests (#296, #316)
+- Rename "Audit Log" to "Audit" in navigation menu
+
+### [2.1.3] - 2026-02-09
+
+**Fixed:**
+- Enrich whitelist RCON response with UUIDs from whitelist.json (#312, #313)
+
 ### [2.1.0] - 2026-02-09 (Console Feature Completion)
 
 **Added:**
 - **Modrinth Modpack CLI/API Support** - Full modpack server creation and management (#244, #245)
 - **Admin User Management Console UI** - Web-based admin user management with list, detail, and role management (#189)
 - **OP Level Support** - OP level management across domain model, CLI, API, and Console (#284, #285, #286, #287)
-  - OP levels 1-4 with semantic descriptions
-  - Interactive CLI, REST API endpoints, and Console Web UI
 - **Offline Player Management** - Support for managing players who are not currently online (#288, #289)
 - **User Profile Settings** - Password change functionality in user profile page (#265, #266)
 
 **Fixed:**
 - **Console Sign-out 403 LAN IP Bug** - Fix sign-out failure on private network IPs (#300, #301)
 - **Service Isolation** - Isolate service node_modules into `.services/` directory (#262, #267)
-- **Template Path Resolution** - Fix MCCTL_TEMPLATES path and console modLoader validation (#263, #264)
 
 ### [1.15.5] - 2026-02-08
 
@@ -879,22 +892,6 @@ cat /etc/avahi/hosts
 
 **Added:**
 - Console Auto-Install - `mcctl console init` auto-installs mcctl-console package if missing
-
-### [1.14.0] - 2026-02-08
-
-**Added:**
-- MODRINTH Modpack Server Creation - CLI and Web Console (#244, #246)
-- NeoForge mod loader option for modpack servers
-
-### [1.13.0] - 2026-02-07
-
-**Added:**
-- Unified Prerequisite Checker, Console npm Publishing, Console --force Option, Routing Page
-
-### [1.12.0] - 2026-02-06
-
-**Added:**
-- All-Servers SSE Status, Server Detail Delete Menu, API Audit Logging
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

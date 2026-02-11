@@ -77,6 +77,14 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.2.0 (2026-02-11)
+- **feat(console)**: Whitelist Console UI - toggle ON/OFF, bulk player add, search/filter (#283, #321)
+- **feat**: Enable whitelist by default on `mcctl create` (#282, #320)
+- **feat(console)**: Hostname/domain management in server Options tab (#314, #315)
+- **fix(console)**: Fix 23 pre-existing failing unit tests (#296, #316)
+- **fix(console)**: Rename "Audit Log" to "Audit" in navigation menu
+- **docs**: Update upstream docs for itzg 2026.2.0 and mc-router v1.39.1 (#317, #318)
+
 ### v2.1.3 (2026-02-09)
 - **fix(api)**: Enrich whitelist RCON response with UUIDs from whitelist.json (#312, #313)
 
@@ -101,10 +109,6 @@ mcctl logs myserver
 ### v1.15.5 (2026-02-08)
 - **fix(cli)**: Fix Better Auth password hashing - use hex string salt for compatibility
 - **fix(cli)**: Add `MCCTL_API_KEY` env var to mcctl-console PM2 config (#261)
-
-### v1.15.0 (2026-02-08)
-- **feat(cli)**: Auto-install mcctl-console package in `console init`
-- **fix(cli)**: Resolve service script paths independently for each service
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
