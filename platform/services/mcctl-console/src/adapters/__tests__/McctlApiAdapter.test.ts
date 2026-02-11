@@ -413,6 +413,62 @@ describe('McctlApiAdapter', () => {
     });
   });
 
+  describe('Whitelist status operations', () => {
+    it('getWhitelistStatus should GET whitelist status', async () => {
+      const mockResponse = { enabled: true, source: 'config' };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await adapter.getWhitelistStatus('test');
+
+      expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers/test/whitelist/status',
+        expect.any(Object)
+      );
+    });
+
+    it('setWhitelistStatus should PUT whitelist status', async () => {
+      const mockResponse = { enabled: false, source: 'config' };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await adapter.setWhitelistStatus('test', false);
+
+      expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers/test/whitelist/status',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ enabled: false }),
+        })
+      );
+    });
+
+    it('setWhitelistStatus should encode server name', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ enabled: true, source: 'config' }),
+      });
+
+      await adapter.setWhitelistStatus('my server', true);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers/my%20server/whitelist/status',
+        expect.objectContaining({
+          method: 'PUT',
+          body: JSON.stringify({ enabled: true }),
+        })
+      );
+    });
+  });
+
   describe('URL encoding', () => {
     it('should properly encode server names with special characters', async () => {
       mockFetch.mockResolvedValueOnce({
