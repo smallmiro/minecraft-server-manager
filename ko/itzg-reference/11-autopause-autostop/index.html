@@ -2152,6 +2152,12 @@
 <h1 id="autopause--autostop">Autopause / Autostop<a class="headerlink" href="#autopause--autostop" title="Permanent link">&para;</a></h1>
 <p>Features to save server resources when no players are online.</p>
 <h2 id="autopause">Autopause<a class="headerlink" href="#autopause" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">GraalVM Incompatibility</p>
+<p>As of 2026.2.0, auto-pause is <strong>temporarily disabled</strong> when using GraalVM images
+(<code>java21-graalvm</code>, <code>java17-graalvm</code>). Use standard OpenJDK/HotSpot Java images
+for auto-pause functionality.</p>
+</div>
 <p>Pauses the server process when no players are online.</p>
 <h3 id="enable">Enable<a class="headerlink" href="#enable" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">environment</span><span class="p">:</span>

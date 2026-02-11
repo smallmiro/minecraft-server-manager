@@ -3455,9 +3455,12 @@
 <p>Then restart the router:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>router<span class="w"> </span>restart
 </code></pre></div>
-<div class="admonition warning">
+<div class="admonition info">
 <p class="admonition-title">AUTO_SCALE_DOWN</p>
-<p>Auto scale down is currently disabled by default due to a bug that can disconnect players after the timeout. Enable with caution.</p>
+<p>Auto scale down is fully enabled and supported since mc-router v1.39.1.
+Servers will automatically stop after the configured idle timeout (default: 10 minutes).
+The race condition that previously caused player disconnections has been fixed.
+See <a href="https://github.com/itzg/mc-router/issues/507">mc-router #507</a> for details.</p>
 </div>
 <h3 id="multiple-hostnames">Multiple Hostnames<a class="headerlink" href="#multiple-hostnames" title="Permanent link">&para;</a></h3>
 <p>To allow connections from multiple networks (LAN + VPN), configure multiple IPs:</p>
