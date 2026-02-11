@@ -1,11 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RoutingPage from './page';
 import { useRouterStatus } from '@/hooks/useMcctl';
 
 // Mock the hooks
 vi.mock('@/hooks/useMcctl', () => ({
   useRouterStatus: vi.fn(),
+}));
+
+vi.mock('@/hooks/usePlayit', () => ({
+  usePlayitStatus: vi.fn(() => ({
+    data: { enabled: false, agentRunning: false, secretKeyConfigured: false, containerStatus: 'not_created', servers: [] },
+    isLoading: false,
+    error: null,
+  })),
+  useStartPlayit: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false, error: null })),
+  useStopPlayit: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false, error: null })),
 }));
 
 const mockRouterStatusData = {
@@ -42,9 +53,24 @@ const mockRouterStatusData = {
 };
 
 describe('RoutingPage', () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
     vi.clearAllMocks();
   });
+
+  const renderComponent = () =>
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RoutingPage />
+      </QueryClientProvider>
+    );
 
   it('should render loading state with skeleton', () => {
     vi.mocked(useRouterStatus).mockReturnValue({
@@ -53,7 +79,7 @@ describe('RoutingPage', () => {
       error: null,
     } as any);
 
-    render(<RoutingPage />);
+    renderComponent();
 
     // Loading state shows skeletons, not progress bar
     expect(screen.getByText('Routing')).toBeInTheDocument();
@@ -67,7 +93,7 @@ describe('RoutingPage', () => {
       error: new Error(errorMessage),
     } as any);
 
-    render(<RoutingPage />);
+    renderComponent();
     expect(screen.getByText(new RegExp(errorMessage, 'i'))).toBeInTheDocument();
   });
 
@@ -78,7 +104,7 @@ describe('RoutingPage', () => {
       error: null,
     } as any);
 
-    render(<RoutingPage />);
+    renderComponent();
 
     await waitFor(() => {
       // Check page title
@@ -101,7 +127,7 @@ describe('RoutingPage', () => {
       error: null,
     } as any);
 
-    render(<RoutingPage />);
+    renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText('Platform Information')).toBeInTheDocument();
@@ -115,7 +141,7 @@ describe('RoutingPage', () => {
       error: null,
     } as any);
 
-    render(<RoutingPage />);
+    renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText('Network Settings')).toBeInTheDocument();
@@ -129,7 +155,7 @@ describe('RoutingPage', () => {
       error: null,
     } as any);
 
-    render(<RoutingPage />);
+    renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText('mDNS (Avahi)')).toBeInTheDocument();

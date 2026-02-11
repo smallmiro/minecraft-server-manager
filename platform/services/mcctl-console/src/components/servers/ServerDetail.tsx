@@ -29,6 +29,7 @@ import { ServerConsole } from './ServerConsole';
 import { ServerActivityTab } from './ServerActivityTab';
 import { ServerOptionsTab } from './ServerOptionsTab';
 import { ServerAccessTab } from './ServerAccessTab';
+import { ConnectionInfoCard } from './ConnectionInfoCard';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -525,6 +526,11 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
                 )}
               </CardContent>
             </Card>
+          </Grid>
+
+          {/* Connection Information */}
+          <Grid item xs={12} md={6}>
+            <ConnectionInfoCard serverName={server.name} hostname={server.hostname} />
           </Grid>
         </Grid>
       )}
