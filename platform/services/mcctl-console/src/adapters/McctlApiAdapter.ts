@@ -33,6 +33,8 @@ import {
   OperatorActionResponse,
   HostnameResponse,
   UpdateHostnamesResponse,
+  PlayitAgentStatus,
+  PlayitActionResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -435,6 +437,26 @@ export class McctlApiAdapter implements IMcctlApiClient {
         body: JSON.stringify({ customHostnames }),
       }
     );
+  }
+
+  // ============================================================
+  // Playit.gg Operations
+  // ============================================================
+
+  async getPlayitStatus(): Promise<PlayitAgentStatus> {
+    return this.fetch<PlayitAgentStatus>('/api/playit/status');
+  }
+
+  async startPlayit(): Promise<PlayitActionResponse> {
+    return this.fetch<PlayitActionResponse>('/api/playit/start', {
+      method: 'POST',
+    });
+  }
+
+  async stopPlayit(): Promise<PlayitActionResponse> {
+    return this.fetch<PlayitActionResponse>('/api/playit/stop', {
+      method: 'POST',
+    });
   }
 }
 

@@ -286,6 +286,31 @@ export interface ApiError {
 }
 
 // ============================================================
+// Playit.gg Types
+// ============================================================
+
+export interface PlayitServerInfo {
+  serverName: string;
+  playitDomain: string | null;
+  lanHostname: string;
+}
+
+export interface PlayitAgentStatus {
+  enabled: boolean;
+  agentRunning: boolean;
+  secretKeyConfigured: boolean;
+  containerStatus: ContainerStatus;
+  uptime?: string;
+  uptimeSeconds?: number;
+  servers: PlayitServerInfo[];
+}
+
+export interface PlayitActionResponse {
+  success: boolean;
+  message: string;
+}
+
+// ============================================================
 // Backup Types
 // ============================================================
 
@@ -459,4 +484,9 @@ export interface IMcctlApiClient {
   // Hostname management operations
   getHostnames(serverName: string): Promise<HostnameResponse>;
   updateHostnames(serverName: string, customHostnames: string[]): Promise<UpdateHostnamesResponse>;
+
+  // Playit.gg operations
+  getPlayitStatus(): Promise<PlayitAgentStatus>;
+  startPlayit(): Promise<PlayitActionResponse>;
+  stopPlayit(): Promise<PlayitActionResponse>;
 }
