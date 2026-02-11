@@ -95,6 +95,7 @@ vi.mock('@minecraft-docker/shared', () => ({
   getContainerStatus: vi.fn(),
   getContainerHealth: vi.fn(),
   stopContainer: vi.fn(),
+  getServerPlayitDomain: vi.fn(),
   AuditActionEnum: {
     SERVER_CREATE: 'SERVER_CREATE',
     SERVER_DELETE: 'SERVER_DELETE',
@@ -125,12 +126,14 @@ import {
   getContainerLogs,
   containerExists,
   serverExists,
+  getServerPlayitDomain,
 } from '@minecraft-docker/shared';
 import { spawn } from 'node:child_process';
 
 const mockedGetAllServers = vi.mocked(getAllServers);
 const mockedGetServerInfoFromConfig = vi.mocked(getServerInfoFromConfig);
 const mockedGetServerDetailedInfo = vi.mocked(getServerDetailedInfo);
+const mockedGetServerPlayitDomain = vi.mocked(getServerPlayitDomain);
 const mockedGetContainerLogs = vi.mocked(getContainerLogs);
 const mockedContainerExists = vi.mocked(containerExists);
 const mockedServerExists = vi.mocked(serverExists);
@@ -234,6 +237,7 @@ describe('Server Routes', () => {
         worldName: 'world',
         worldSize: '500MB',
       });
+      mockedGetServerPlayitDomain.mockReturnValue(null);
 
       const response = await app.inject({
         method: 'GET',

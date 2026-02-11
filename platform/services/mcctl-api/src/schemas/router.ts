@@ -1,5 +1,6 @@
 import { Type, Static } from '@sinclair/typebox';
 import { ContainerStatusSchema, HealthStatusSchema, ErrorResponseSchema } from './server.js';
+import { PlayitSummarySchema } from './playit.js';
 
 // Route info schema
 export const RouteInfoSchema = Type.Object({
@@ -33,6 +34,7 @@ export const AvahiInfoSchema = Type.Object({
 export const RouterStatusResponseSchema = Type.Object({
   router: RouterDetailSchema,
   avahi: Type.Optional(AvahiInfoSchema),
+  playit: Type.Optional(PlayitSummarySchema),
 });
 
 // Re-export error schema

@@ -10,6 +10,7 @@ import {
   getContainerStatus,
   getContainerHealth,
   stopContainer,
+  getServerPlayitDomain,
 } from '@minecraft-docker/shared';
 import {
   ServerListResponseSchema,
@@ -285,6 +286,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       const info = await getServerDetailedInfo(name);
 
+      // Get playit domain for this server
+      const playitDomain = getServerPlayitDomain(name);
+
       const server: ServerDetail = {
         name: info.name,
         container: info.container,
@@ -300,6 +304,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         stats: info.stats,
         worldName: info.worldName,
         worldSize: info.worldSize,
+        playitDomain,
       };
 
       return reply.send({ server });
