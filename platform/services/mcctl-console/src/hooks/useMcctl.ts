@@ -30,6 +30,9 @@ import type {
   WhitelistResponse,
   WhitelistStatusResponse,
   PlayerActionResponse,
+  PlayitAgentStatus,
+  PlayitActionResponse,
+  PlayitServerInfo,
 } from '@/ports/api/IMcctlApiClient';
 
 // ============================================================

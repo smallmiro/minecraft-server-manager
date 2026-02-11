@@ -10,7 +10,7 @@ import {
 } from '@mui/icons-material';
 import { useServers, useWorlds } from '@/hooks/useMcctl';
 import { useServersSSE } from '@/hooks/useServersSSE';
-import { StatCard, ServerOverview, ChangelogFeed, RecentActivityFeed } from '@/components/dashboard';
+import { StatCard, ServerOverview, ChangelogFeed, RecentActivityFeed, PlayitSummaryCard } from '@/components/dashboard';
 
 export default function DashboardPage() {
   const { data: serversData, isLoading: serversLoading } = useServers();
@@ -238,6 +238,7 @@ export default function DashboardPage() {
         </Grid>
         <Grid item xs={12} lg={5}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <PlayitSummaryCard />
             <RecentActivityFeed maxItems={5} />
             <ChangelogFeed maxVersions={2} />
           </Box>

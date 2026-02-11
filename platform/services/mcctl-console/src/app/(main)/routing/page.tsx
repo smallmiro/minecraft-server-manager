@@ -11,7 +11,7 @@ import Paper from '@mui/material/Paper';
 import { alpha } from '@mui/material/styles';
 import RouterIcon from '@mui/icons-material/Router';
 import { useRouterStatus } from '@/hooks/useMcctl';
-import { PlatformInfo, RouterStatus, NetworkSettings, AvahiStatus } from '@/components/settings';
+import { PlatformInfo, RouterStatus, NetworkSettings, AvahiStatus, PlayitSection } from '@/components/settings';
 
 function SkeletonCard({ rows }: { rows: number }) {
   return (
@@ -132,6 +132,7 @@ export default function RoutingPage() {
               <PlatformInfo router={data.router} />
               <NetworkSettings router={data.router} />
               <AvahiStatus avahi={data.avahi} />
+              <PlayitSection />
             </Box>
           </Grid>
           <Grid item xs={12} md={8}>
