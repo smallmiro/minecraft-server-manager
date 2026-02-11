@@ -121,6 +121,14 @@ export class ShellAdapter implements IShellPort {
       args.push('--whitelist', options.whitelistPlayers.join(','));
     }
 
+    // Add playit domain options
+    if (options.playitDomain) {
+      args.push('--playit-domain', options.playitDomain);
+    }
+    if (options.noPlayitDomain) {
+      args.push('--no-playit-domain');
+    }
+
     if (options.autoStart === false) {
       args.push('--no-start');
     }

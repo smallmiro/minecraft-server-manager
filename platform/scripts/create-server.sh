@@ -25,6 +25,8 @@
 #   --whitelist PLAYERS  Initial whitelist players (comma-separated)
 #   --no-start           Don't start the server after creation
 #   --start              Start the server after creation (default)
+#   --playit-domain DOMAIN  Register playit.gg external domain (e.g., aa.example.com)
+#   --no-playit-domain   Skip playit domain registration (explicit)
 #
 # World options are mutually exclusive (only one can be specified).
 #
@@ -35,6 +37,7 @@
 #   ./scripts/create-server.sh myserver --seed 12345 --no-start
 #   ./scripts/create-server.sh myserver --world-url https://example.com/world.zip
 #   ./scripts/create-server.sh myserver --world existing-world --version 1.21.1
+#   ./scripts/create-server.sh myserver --playit-domain aa.example.com
 # =============================================================================
 
 set -e
@@ -156,6 +159,11 @@ build_hostnames() {
         done
     fi
 
+    # Add playit domain if set
+    if [ -n "${PLAYIT_DOMAIN:-}" ]; then
+        hostnames="$hostnames,$PLAYIT_DOMAIN"
+    fi
+
     echo "$hostnames"
 }
 
@@ -234,6 +242,8 @@ MOD_LOADER=""
 ENABLE_WHITELIST="true"
 WHITELIST_PLAYERS=""
 START_SERVER="true"
+PLAYIT_DOMAIN=""
+NO_PLAYIT_DOMAIN="false"
 
 # Show usage
 show_usage() {
@@ -255,6 +265,8 @@ show_usage() {
     echo "  --whitelist PLAYERS  Initial whitelist players (comma-separated)"
     echo "  --no-start           Don't start the server after creation"
     echo "  --start              Start the server after creation (default)"
+    echo "  --playit-domain DOMAIN  Register playit.gg external domain (e.g., aa.example.com)"
+    echo "  --no-playit-domain   Skip playit domain registration (explicit)"
     echo ""
     echo "World options (--seed, --world-url, --world) are mutually exclusive."
     echo ""
@@ -266,6 +278,7 @@ show_usage() {
     echo "  $0 myserver --world-url https://example.com/world.zip"
     echo "  $0 myserver --world existing-world -v 1.21.1 --no-start"
     echo "  $0 myserver -t MODRINTH --modpack fabric-example --modpack-version 1.0.0"
+    echo "  $0 myserver --playit-domain aa.example.com"
 }
 
 # Check if first argument exists
@@ -329,6 +342,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --start)
             START_SERVER="true"
+            shift
+            ;;
+        --playit-domain)
+            PLAYIT_DOMAIN="$2"
+            shift 2
+            ;;
+        --no-playit-domain)
+            NO_PLAYIT_DOMAIN="true"
             shift
             ;;
         -h|--help)
@@ -527,6 +548,14 @@ if [ -f "$CONFIG_FILE" ]; then
         else
             echo "   Whitelist: enabled (no initial players)"
         fi
+    fi
+
+    # Apply playit.gg domain if provided
+    if [ -n "$PLAYIT_DOMAIN" ]; then
+        echo "" >> "$CONFIG_FILE"
+        echo "# playit.gg External Domain" >> "$CONFIG_FILE"
+        echo "PLAYIT_DOMAIN=$PLAYIT_DOMAIN" >> "$CONFIG_FILE"
+        echo "   playit.gg domain: $PLAYIT_DOMAIN"
     fi
 fi
 

@@ -25,6 +25,8 @@ export interface CreateCommandOptions {
   modpack?: string;
   modpackVersion?: string;
   modLoader?: string;
+  playitDomain?: string;
+  noPlayitDomain?: boolean;
 }
 
 /**
@@ -97,6 +99,8 @@ async function createWithArguments(
       whitelistPlayers: options.whitelist
         ? options.whitelist.split(',').map((p) => p.trim()).filter(Boolean)
         : undefined,
+      playitDomain: options.playitDomain,
+      noPlayitDomain: options.noPlayitDomain,
     });
 
     console.log('');

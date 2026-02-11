@@ -135,6 +135,7 @@ export class Container {
       this.promptPort,
       this.shellPort,
       this.serverRepository,
+      this.paths,
       this.worldRepository,
       this.auditLogPort,
       this.modSourcePort

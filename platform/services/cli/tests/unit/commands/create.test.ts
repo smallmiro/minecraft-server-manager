@@ -437,4 +437,102 @@ describe('create command - MODRINTH modpack support', () => {
       expect(mockCreateServerUseCase.execute).toHaveBeenCalled();
     });
   });
+
+  describe('playit.gg domain registration (#272)', () => {
+    it('should pass playit domain to executeWithConfig when --playit-domain is provided', async () => {
+      // ARRANGE
+      const options: CreateCommandOptions = {
+        name: 'myserver',
+        type: 'PAPER',
+        playitDomain: 'aa.example.com',
+        noStart: false,
+      };
+
+      const mockServer = {
+        name: { value: 'myserver', hostname: 'myserver.local' },
+        containerName: 'mc-myserver',
+        type: { label: 'Paper', isModpack: false },
+        version: { value: '1.21.1' },
+        memory: { value: '4G' },
+      };
+
+      mockCreateServerUseCase.executeWithConfig.mockResolvedValue(mockServer);
+
+      // ACT
+      const exitCode = await createCommand(options);
+
+      // ASSERT
+      expect(exitCode).toBe(0);
+      expect(mockCreateServerUseCase.executeWithConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'myserver',
+          type: 'PAPER',
+          playitDomain: 'aa.example.com',
+        })
+      );
+    });
+
+    it('should pass noPlayitDomain when --no-playit-domain is provided', async () => {
+      // ARRANGE
+      const options: CreateCommandOptions = {
+        name: 'myserver',
+        type: 'PAPER',
+        noPlayitDomain: true,
+        noStart: false,
+      };
+
+      const mockServer = {
+        name: { value: 'myserver', hostname: 'myserver.local' },
+        containerName: 'mc-myserver',
+        type: { label: 'Paper', isModpack: false },
+        version: { value: '1.21.1' },
+        memory: { value: '4G' },
+      };
+
+      mockCreateServerUseCase.executeWithConfig.mockResolvedValue(mockServer);
+
+      // ACT
+      const exitCode = await createCommand(options);
+
+      // ASSERT
+      expect(exitCode).toBe(0);
+      expect(mockCreateServerUseCase.executeWithConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'myserver',
+          noPlayitDomain: true,
+        })
+      );
+    });
+
+    it('should not pass playit options when neither flag is provided', async () => {
+      // ARRANGE
+      const options: CreateCommandOptions = {
+        name: 'myserver',
+        type: 'PAPER',
+        noStart: false,
+      };
+
+      const mockServer = {
+        name: { value: 'myserver', hostname: 'myserver.local' },
+        containerName: 'mc-myserver',
+        type: { label: 'Paper', isModpack: false },
+        version: { value: '1.21.1' },
+        memory: { value: '4G' },
+      };
+
+      mockCreateServerUseCase.executeWithConfig.mockResolvedValue(mockServer);
+
+      // ACT
+      const exitCode = await createCommand(options);
+
+      // ASSERT
+      expect(exitCode).toBe(0);
+      expect(mockCreateServerUseCase.executeWithConfig).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          playitDomain: expect.anything(),
+          noPlayitDomain: expect.anything(),
+        })
+      );
+    });
+  });
 });

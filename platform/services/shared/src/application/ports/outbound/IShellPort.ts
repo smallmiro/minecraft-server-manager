@@ -147,6 +147,8 @@ export interface CreateServerOptions {
   modLoader?: string;
   enableWhitelist?: boolean;
   whitelistPlayers?: string[];
+  playitDomain?: string;
+  noPlayitDomain?: boolean;
 }
 
 /**
