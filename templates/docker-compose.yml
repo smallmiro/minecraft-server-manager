@@ -76,11 +76,12 @@ services:
   # Start: docker compose --profile playit up -d
   # ===========================================================================
   playit:
+    # Pinned to 0.16 for stability. Check https://github.com/playit-cloud/playit-agent/releases
     image: ghcr.io/playit-cloud/playit-agent:0.16
     container_name: playit-agent
     network_mode: host
     environment:
-      - SECRET_KEY=${PLAYIT_SECRET_KEY}
+      - SECRET_KEY=${PLAYIT_SECRET_KEY:?PLAYIT_SECRET_KEY must be set in .env}
     restart: unless-stopped
     profiles:
       - playit
