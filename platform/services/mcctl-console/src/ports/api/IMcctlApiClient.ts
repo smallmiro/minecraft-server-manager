@@ -348,6 +348,12 @@ export interface WhitelistResponse {
   players: WhitelistEntry[];
   total: number;
   source?: PlayerDataSource;
+  enabled?: boolean;
+}
+
+export interface WhitelistStatusResponse {
+  enabled: boolean;
+  source: 'config';
 }
 
 export interface BannedPlayersResponse {
@@ -432,6 +438,8 @@ export interface IMcctlApiClient {
 
   // Player management operations
   getWhitelist(serverName: string): Promise<WhitelistResponse>;
+  getWhitelistStatus(serverName: string): Promise<WhitelistStatusResponse>;
+  setWhitelistStatus(serverName: string, enabled: boolean): Promise<WhitelistStatusResponse>;
   addToWhitelist(serverName: string, player: string): Promise<PlayerActionResponse>;
   removeFromWhitelist(serverName: string, player: string): Promise<PlayerActionResponse>;
   getBans(serverName: string): Promise<BannedPlayersResponse>;

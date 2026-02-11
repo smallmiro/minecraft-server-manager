@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { PlayerFileService } from '../src/services/PlayerFileService.js';
 
@@ -325,6 +325,88 @@ describe('PlayerFileService', () => {
       const result = service.readOps('configserver');
       expect(result.players).toEqual(['Admin1', 'Admin2']);
       expect(result.source).toBe('config');
+    });
+  });
+
+  // ==================== readWhitelistEnabled ====================
+
+  describe('readWhitelistEnabled', () => {
+    it('should return true when ENABLE_WHITELIST=true in config.env', () => {
+      setupConfigEnv('myserver', 'ENABLE_WHITELIST=true\n');
+
+      expect(service.readWhitelistEnabled('myserver')).toBe(true);
+    });
+
+    it('should return true when ENABLE_WHITELIST=TRUE (case-insensitive)', () => {
+      setupConfigEnv('myserver', 'ENABLE_WHITELIST=TRUE\n');
+
+      expect(service.readWhitelistEnabled('myserver')).toBe(true);
+    });
+
+    it('should return false when ENABLE_WHITELIST=false', () => {
+      setupConfigEnv('myserver', 'ENABLE_WHITELIST=false\n');
+
+      expect(service.readWhitelistEnabled('myserver')).toBe(false);
+    });
+
+    it('should return false when ENABLE_WHITELIST is not set', () => {
+      setupConfigEnv('myserver', 'TYPE=PAPER\n');
+
+      expect(service.readWhitelistEnabled('myserver')).toBe(false);
+    });
+
+    it('should return false when config.env does not exist', () => {
+      expect(service.readWhitelistEnabled('noserver')).toBe(false);
+    });
+  });
+
+  // ==================== setWhitelistEnabled ====================
+
+  describe('setWhitelistEnabled', () => {
+    it('should set ENABLE_WHITELIST=TRUE when enabling', () => {
+      setupConfigEnv('myserver', 'TYPE=PAPER\n');
+
+      service.setWhitelistEnabled('myserver', true);
+
+      expect(service.readWhitelistEnabled('myserver')).toBe(true);
+    });
+
+    it('should set ENABLE_WHITELIST=FALSE when disabling', () => {
+      setupConfigEnv('myserver', 'ENABLE_WHITELIST=TRUE\nTYPE=PAPER\n');
+
+      service.setWhitelistEnabled('myserver', false);
+
+      expect(service.readWhitelistEnabled('myserver')).toBe(false);
+    });
+
+    it('should update existing ENABLE_WHITELIST value', () => {
+      setupConfigEnv('myserver', 'ENABLE_WHITELIST=FALSE\nTYPE=PAPER\n');
+
+      service.setWhitelistEnabled('myserver', true);
+
+      expect(service.readWhitelistEnabled('myserver')).toBe(true);
+    });
+
+    it('should create config.env if it does not exist', () => {
+      const serverDir = join(TEST_PLATFORM_PATH, 'servers', 'newserver');
+      mkdirSync(serverDir, { recursive: true });
+
+      service.setWhitelistEnabled('newserver', true);
+
+      expect(service.readWhitelistEnabled('newserver')).toBe(true);
+    });
+
+    it('should preserve other config values', () => {
+      setupConfigEnv('myserver', 'TYPE=PAPER\nVERSION=1.21.1\n');
+
+      service.setWhitelistEnabled('myserver', true);
+
+      // readConfigEnv is private, so we check via readWhitelistEnabled + readOps config fallback
+      const configPath = join(TEST_PLATFORM_PATH, 'servers', 'myserver', 'config.env');
+      const content = readFileSync(configPath, 'utf-8');
+      expect(content).toContain('TYPE=PAPER');
+      expect(content).toContain('VERSION=1.21.1');
+      expect(content).toContain('ENABLE_WHITELIST=TRUE');
     });
   });
 });

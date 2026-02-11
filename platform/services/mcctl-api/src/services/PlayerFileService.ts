@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 interface WhitelistPlayer {
@@ -105,12 +105,55 @@ export class PlayerFileService {
     return result;
   }
 
+  private writeConfigEnv(serverName: string, key: string, value: string): void {
+    const configPath = this.getConfigEnvPath(serverName);
+    const serverDir = join(this.platformPath, 'servers', serverName);
+    if (!existsSync(serverDir)) {
+      mkdirSync(serverDir, { recursive: true });
+    }
+
+    if (!existsSync(configPath)) {
+      writeFileSync(configPath, `${key}=${value}\n`, 'utf-8');
+      return;
+    }
+
+    const content = readFileSync(configPath, 'utf-8');
+    const lines = content.split('\n');
+    let found = false;
+
+    const updated = lines.map(line => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith(`${key}=`)) {
+        found = true;
+        return `${key}=${value}`;
+      }
+      return line;
+    });
+
+    if (!found) {
+      updated.push(`${key}=${value}`);
+    }
+
+    writeFileSync(configPath, updated.join('\n'), 'utf-8');
+  }
+
   private parseCommaSeparated(value: string | undefined): string[] {
     if (!value) return [];
     return value.split(',').map(s => s.trim()).filter(Boolean);
   }
 
   // ==================== READ ====================
+
+  readWhitelistEnabled(serverName: string): boolean {
+    const env = this.readConfigEnv(serverName);
+    const value = env.get('ENABLE_WHITELIST');
+    if (!value) return false;
+    return value.toLowerCase() === 'true';
+  }
+
+  setWhitelistEnabled(serverName: string, enabled: boolean): void {
+    this.writeConfigEnv(serverName, 'ENABLE_WHITELIST', enabled ? 'TRUE' : 'FALSE');
+  }
 
   readWhitelist(serverName: string): WhitelistResult {
     const jsonPath = join(this.getServerDataPath(serverName), 'whitelist.json');

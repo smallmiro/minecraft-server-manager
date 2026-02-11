@@ -27,6 +27,9 @@ import type {
   BackupRestoreResponse,
   HostnameResponse,
   UpdateHostnamesResponse,
+  WhitelistResponse,
+  WhitelistStatusResponse,
+  PlayerActionResponse,
 } from '@/ports/api/IMcctlApiClient';
 
 // ============================================================
@@ -461,6 +464,89 @@ export function useRestoreBackup() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['worlds'] });
       queryClient.invalidateQueries({ queryKey: ['servers'] });
+    },
+  });
+}
+
+// ============================================================
+// Whitelist Hooks
+// ============================================================
+
+/**
+ * Hook to fetch whitelist for a server
+ */
+export function useWhitelist(serverName: string) {
+  return useQuery<WhitelistResponse, Error>({
+    queryKey: ['servers', serverName, 'whitelist'],
+    queryFn: () =>
+      apiFetch<WhitelistResponse>(`/api/players/whitelist?server=${encodeURIComponent(serverName)}`),
+    enabled: !!serverName,
+  });
+}
+
+/**
+ * Hook to fetch whitelist enabled status
+ */
+export function useWhitelistStatus(serverName: string) {
+  return useQuery<WhitelistStatusResponse, Error>({
+    queryKey: ['servers', serverName, 'whitelist-status'],
+    queryFn: () =>
+      apiFetch<WhitelistStatusResponse>(`/api/players/whitelist/status?server=${encodeURIComponent(serverName)}`),
+    enabled: !!serverName,
+  });
+}
+
+/**
+ * Hook to toggle whitelist enabled status
+ */
+export function useSetWhitelistStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation<WhitelistStatusResponse, Error, { serverName: string; enabled: boolean }>({
+    mutationFn: ({ serverName, enabled }) =>
+      apiFetch<WhitelistStatusResponse>('/api/players/whitelist/status', {
+        method: 'PUT',
+        body: JSON.stringify({ server: serverName, enabled }),
+      }),
+    onSuccess: (_, { serverName }) => {
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName, 'whitelist-status'] });
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName, 'whitelist'] });
+    },
+  });
+}
+
+/**
+ * Hook to add player to whitelist
+ */
+export function useAddToWhitelist() {
+  const queryClient = useQueryClient();
+
+  return useMutation<PlayerActionResponse, Error, { serverName: string; player: string }>({
+    mutationFn: ({ serverName, player }) =>
+      apiFetch<PlayerActionResponse>('/api/players/whitelist', {
+        method: 'POST',
+        body: JSON.stringify({ server: serverName, player }),
+      }),
+    onSuccess: (_, { serverName }) => {
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName, 'whitelist'] });
+    },
+  });
+}
+
+/**
+ * Hook to remove player from whitelist
+ */
+export function useRemoveFromWhitelist() {
+  const queryClient = useQueryClient();
+
+  return useMutation<PlayerActionResponse, Error, { serverName: string; player: string }>({
+    mutationFn: ({ serverName, player }) =>
+      apiFetch<PlayerActionResponse>(
+        `/api/players/whitelist?player=${encodeURIComponent(player)}&server=${encodeURIComponent(serverName)}`,
+        { method: 'DELETE' }
+      ),
+    onSuccess: (_, { serverName }) => {
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName, 'whitelist'] });
     },
   });
 }
