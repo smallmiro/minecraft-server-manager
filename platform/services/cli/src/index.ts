@@ -28,6 +28,7 @@ import {
   consoleApiCommand,
   consoleRemoveCommand,
   auditCommand,
+  playitCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 import { checkForUpdates } from './lib/update-checker.js';
@@ -241,6 +242,12 @@ ${colors.cyan('Self Update:')}
   ${colors.bold('update')} --yes               Auto-confirm update
   ${colors.bold('update')} --all               Update CLI and all installed services
 
+${colors.cyan('playit.gg Management:')}
+  ${colors.bold('playit start')}                Start playit-agent container
+  ${colors.bold('playit stop')}                 Stop playit-agent container
+  ${colors.bold('playit status')} [--json]      Show agent status and tunnel info
+  ${colors.bold('playit setup')}                Configure PLAYIT_SECRET_KEY
+
 ${colors.cyan('Console Management:')}
   ${colors.bold('console init')} [options]       Initialize console service (create admin user)
     --force                      Reinitialize (delete existing config)
@@ -401,7 +408,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'console', 'admin'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'console', 'admin', 'playit'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -933,6 +940,17 @@ async function main(): Promise<void> {
           dryRun: flags['dry-run'] === true,
           force: flags['force'] === true,
           sudoPassword,
+        });
+        break;
+      }
+
+      case 'playit': {
+        // playit command: playit <start|stop|status|setup>
+        // subCommand = action
+        exitCode = await playitCommand({
+          root: rootDir,
+          subCommand: subCommand as 'start' | 'stop' | 'status' | 'setup' | undefined,
+          json: flags['json'] === true,
         });
         break;
       }
