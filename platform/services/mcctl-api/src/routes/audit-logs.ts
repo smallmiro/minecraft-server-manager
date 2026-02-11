@@ -18,9 +18,11 @@ import {
   getAuditLogStats,
   getAuditLogById,
   purgeAuditLogs,
+  writeAuditLog,
   subscribeAuditLogs,
   getAuditLogRepository,
 } from '../services/audit-log-service.js';
+import { AuditActionEnum } from '@minecraft-docker/shared';
 
 // Route generic interfaces
 interface ListRoute {
@@ -215,8 +217,29 @@ const auditLogsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
       }
 
       const data = await purgeAuditLogs(before, dryRun);
+
+      if (!dryRun && data.deleted > 0) {
+        await writeAuditLog({
+          action: AuditActionEnum.AUDIT_PURGE,
+          actor: 'api:console',
+          targetType: 'system',
+          targetName: 'audit-logs',
+          details: { before, deleted: data.deleted },
+          status: 'success',
+        });
+      }
+
       return reply.send(data);
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.AUDIT_PURGE,
+        actor: 'api:console',
+        targetType: 'system',
+        targetName: 'audit-logs',
+        details: { before, dryRun },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to purge audit logs');
       return reply.code(500).send({
         error: 'InternalServerError',
