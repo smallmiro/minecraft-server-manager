@@ -68,6 +68,23 @@ services:
     networks:
       - minecraft-net
 
+  # ===========================================================================
+  # External Access - playit.gg Tunnel Agent
+  # ===========================================================================
+  # Enables external access without port forwarding via playit.gg
+  # Setup: https://playit.gg/account/agents/new-docker
+  # Start: docker compose --profile playit up -d
+  # ===========================================================================
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.16
+    container_name: playit-agent
+    network_mode: host
+    environment:
+      - SECRET_KEY=${PLAYIT_SECRET_KEY}
+    restart: unless-stopped
+    profiles:
+      - playit
+
 # -----------------------------------------------------------------------------
 # Networks
 # -----------------------------------------------------------------------------
