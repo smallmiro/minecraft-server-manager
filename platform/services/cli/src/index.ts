@@ -274,6 +274,8 @@ ${colors.cyan('Create Options:')}
   --modpack SLUG             Modrinth modpack slug (required for MODRINTH type)
   --modpack-version VERSION  Modpack version (optional, default: latest)
   --mod-loader LOADER        Mod loader (auto/fabric/forge/quilt, default: auto)
+  --playit-domain DOMAIN     Register playit.gg external domain (e.g., aa.example.com)
+  --no-playit-domain         Skip playit domain registration (explicit)
 
 ${colors.cyan('Status Options:')}
   --detail, -d               Show detailed info (memory, CPU, players)
@@ -348,7 +350,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -508,6 +510,8 @@ async function main(): Promise<void> {
           modpack: flags['modpack'] as string | undefined,
           modpackVersion: flags['modpack-version'] as string | undefined,
           modLoader: flags['mod-loader'] as string | undefined,
+          playitDomain: flags['playit-domain'] as string | undefined,
+          noPlayitDomain: flags['no-playit-domain'] === true,
         });
         break;
       }

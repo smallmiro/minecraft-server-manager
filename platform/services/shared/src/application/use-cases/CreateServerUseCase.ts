@@ -9,6 +9,7 @@ import {
   ModpackOptions,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
+import { Config, Paths } from '../../utils/index.js';
 import type {
   ICreateServerUseCase,
   CreateServerConfig,
@@ -25,14 +26,21 @@ import type {
  * Orchestrates interactive server creation flow
  */
 export class CreateServerUseCase implements ICreateServerUseCase {
+  private readonly paths: Paths;
+  private readonly config: Config;
+
   constructor(
     private readonly prompt: IPromptPort,
     private readonly shell: IShellPort,
     private readonly serverRepo: IServerRepository,
+    paths?: Paths,
     private readonly worldRepo?: IWorldRepository,
     private readonly auditLog?: IAuditLogPort,
     private readonly modSource?: IModSourcePort
-  ) {}
+  ) {
+    this.paths = paths ?? new Paths();
+    this.config = new Config(this.paths);
+  }
 
   /**
    * Execute interactive server creation
@@ -117,6 +125,35 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       // Prompt for whitelist players (whitelist enabled by default)
       const whitelistPlayers = await this.prompt.promptWhitelistPlayers();
 
+      // Prompt for playit.gg external domain if playit is enabled
+      let playitDomain: string | undefined;
+      const mcctlConfig = this.config.load();
+      if (mcctlConfig?.playitEnabled) {
+        const shouldRegisterDomain = await this.prompt.confirm({
+          message: 'Register external domain for playit.gg?',
+          initialValue: false,
+        });
+
+        if (shouldRegisterDomain) {
+          playitDomain = await this.prompt.text({
+            message: 'External domain:',
+            placeholder: 'aa.example.com',
+            validate: (value) => {
+              if (!value) return 'Domain is required';
+              // Basic domain validation
+              if (!/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i.test(value)) {
+                return 'Invalid domain format';
+              }
+              return undefined;
+            },
+          });
+
+          if (playitDomain) {
+            this.prompt.success(`External domain registered: ${playitDomain}`);
+          }
+        }
+      }
+
       // Build modpack options if this is a modpack server
       const modpackOptions =
         type.isModpack && modpackSlug
@@ -152,6 +189,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         modLoader,
         enableWhitelist: true,
         whitelistPlayers,
+        playitDomain,
       });
 
       if (!result.success) {
@@ -280,6 +318,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       modLoader: config.modLoader,
       enableWhitelist: config.enableWhitelist !== false,
       whitelistPlayers: config.whitelistPlayers,
+      playitDomain: config.playitDomain,
+      noPlayitDomain: config.noPlayitDomain,
     });
 
     if (!result.success) {
