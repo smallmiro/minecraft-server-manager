@@ -22,6 +22,9 @@ export {
   type DetailedServerInfo,
   type RouterDetailInfo,
   type RouteInfo,
+  // playit.gg types
+  type PlayitAgentStatus,
+  type PlayitServerInfo,
 } from './types/index.js';
 
 // Re-export utilities
@@ -65,6 +68,11 @@ export {
   getServerDetailedInfo,
   getDockerVersion,
   getDockerComposeVersion,
+  // playit.gg Docker helpers
+  getPlayitAgentStatus,
+  startPlayitAgent,
+  stopPlayitAgent,
+  getServerPlayitDomain,
 } from './docker/index.js';
 
 // Re-export domain layer (Value Objects and Entities)

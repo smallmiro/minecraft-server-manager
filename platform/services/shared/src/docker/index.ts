@@ -953,3 +953,109 @@ export async function getServerDetailedInfo(
   // Otherwise, get info from config only
   return getDetailedServerInfoFromConfig(serverName, serversDir, worldsDir);
 }
+
+/**
+ * Get playit-agent container status
+ * Returns status information about the playit.gg agent container
+ */
+export async function getPlayitAgentStatus(): Promise<import('../types/index.js').PlayitAgentStatus> {
+  const containerName = 'playit';
+
+  // Check if container exists
+  const status = getContainerStatus(containerName);
+  const agentRunning = status === 'running';
+
+  // Check if PLAYIT_SECRET_KEY is configured in platform .env
+  const platformRoot = process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
+  const envPath = join(platformRoot, '.env');
+  let secretKeyConfigured = false;
+
+  if (existsSync(envPath)) {
+    try {
+      const envContent = readFileSync(envPath, 'utf-8');
+      // Check if PLAYIT_SECRET_KEY is set and not empty
+      const secretMatch = envContent.match(/^PLAYIT_SECRET_KEY=(.+)$/m);
+      secretKeyConfigured = !!(secretMatch && secretMatch[1] && secretMatch[1].trim());
+    } catch {
+      // Ignore read errors
+    }
+  }
+
+  // Get uptime if running
+  let uptime: string | undefined;
+  let uptimeSeconds: number | undefined;
+
+  if (agentRunning) {
+    const uptimeInfo = getContainerUptime(containerName);
+    if (uptimeInfo) {
+      uptime = uptimeInfo.uptime;
+      uptimeSeconds = uptimeInfo.seconds;
+    }
+  }
+
+  return {
+    enabled: containerExists(containerName) && secretKeyConfigured,
+    agentRunning,
+    secretKeyConfigured,
+    containerStatus: status,
+    uptime,
+    uptimeSeconds,
+  };
+}
+
+/**
+ * Start playit-agent container
+ * Uses docker compose with playit profile
+ */
+export async function startPlayitAgent(): Promise<boolean> {
+  const platformRoot = process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
+
+  try {
+    const result = await execCommandAsync('docker', [
+      'compose',
+      '--profile',
+      'playit',
+      'up',
+      '-d',
+      'playit',
+    ]);
+
+    return result.code === 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Stop playit-agent container
+ * Uses docker compose with playit profile
+ */
+export async function stopPlayitAgent(): Promise<boolean> {
+  const platformRoot = process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
+
+  try {
+    const result = await execCommandAsync('docker', [
+      'compose',
+      '--profile',
+      'playit',
+      'stop',
+      'playit',
+    ]);
+
+    return result.code === 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get server's playit.gg domain from config.env
+ * Returns the PLAYIT_DOMAIN value if set, otherwise null
+ */
+export function getServerPlayitDomain(serverName: string, serversDir?: string): string | null {
+  const configEnv = readServerConfigEnv(serverName, serversDir);
+  const domain = configEnv['PLAYIT_DOMAIN'];
+
+  // Return null if not set or empty
+  return domain && domain.trim() ? domain.trim() : null;
+}
