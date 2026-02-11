@@ -33,4 +33,8 @@ export enum AuditActionEnum {
 
   // System
   AUDIT_PURGE = 'audit.purge',
+
+  // Playit.gg agent
+  PLAYIT_START = 'playit.start',
+  PLAYIT_STOP = 'playit.stop',
 }

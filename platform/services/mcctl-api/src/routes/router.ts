@@ -1,11 +1,12 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
-import { getRouterDetailInfo, getAvahiStatus } from '@minecraft-docker/shared';
+import { getRouterDetailInfo, getAvahiStatus, getPlayitAgentStatus } from '@minecraft-docker/shared';
 import {
   RouterStatusResponseSchema,
   ErrorResponseSchema,
   type RouterDetail,
 } from '../schemas/router.js';
+import { type PlayitSummary } from '../schemas/playit.js';
 
 /**
  * Router routes plugin
@@ -52,7 +53,21 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         type: 'system',
       };
 
-      return reply.send({ router, avahi });
+      // Get playit status summary
+      let playit: PlayitSummary | undefined;
+      try {
+        const playitStatus = await getPlayitAgentStatus();
+        playit = {
+          enabled: playitStatus.enabled,
+          agentRunning: playitStatus.agentRunning,
+          secretKeyConfigured: playitStatus.secretKeyConfigured,
+        };
+      } catch (error) {
+        // If playit status fails, omit it from response
+        fastify.log.warn(error, 'Failed to get playit status for router endpoint');
+      }
+
+      return reply.send({ router, avahi, playit });
     } catch (error) {
       fastify.log.error(error, 'Failed to get router status');
       return reply.code(500).send({

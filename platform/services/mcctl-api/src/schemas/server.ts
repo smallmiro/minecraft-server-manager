@@ -58,6 +58,7 @@ export const ServerDetailSchema = Type.Object({
   stats: Type.Optional(ContainerStatsSchema),
   worldName: Type.Optional(Type.String()),
   worldSize: Type.Optional(Type.String()),
+  playitDomain: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 });
 
 // Request Schemas
