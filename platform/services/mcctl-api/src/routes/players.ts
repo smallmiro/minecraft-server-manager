@@ -34,6 +34,8 @@ import { execRconCommand, parsePlayerList } from '../lib/rcon.js';
 import { config } from '../config/index.js';
 import { PlayerFileService } from '../services/PlayerFileService.js';
 import { OpsJsonService } from '../services/OpsJsonService.js';
+import { writeAuditLog } from '../services/audit-log-service.js';
+import { AuditActionEnum } from '@minecraft-docker/shared';
 
 // Route interfaces
 interface ServerRoute {
@@ -296,8 +298,27 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
 
       playerFileService.setWhitelistEnabled(name, enabled);
+
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_WHITELIST_TOGGLE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { enabled },
+        status: 'success',
+      });
+
       return reply.send({ enabled, source: 'config' });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_WHITELIST_TOGGLE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { enabled },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to set whitelist status');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to set whitelist status' });
     }
@@ -324,6 +345,14 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (running) {
       try {
         const result = await execRconCommand(name, `whitelist add ${player}`);
+        await writeAuditLog({
+          action: AuditActionEnum.PLAYER_WHITELIST_ADD,
+          actor: 'api:console',
+          targetType: 'server',
+          targetName: name,
+          details: { player, source: 'rcon' },
+          status: 'success',
+        });
         return reply.send({ success: true, message: result || `Added ${player} to whitelist`, source: 'rcon' });
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for whitelist add, falling back to file');
@@ -334,12 +363,29 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     try {
       const uuid = await lookupUuid(player);
       playerFileService.addToWhitelist(name, player, uuid);
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_WHITELIST_ADD,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, uuid, source: 'file' },
+        status: 'success',
+      });
       return reply.send({
         success: true,
         message: `Added ${player} to whitelist (will apply on next server start)`,
         source: 'file',
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_WHITELIST_ADD,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to add to whitelist');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to add to whitelist' });
     }
@@ -364,6 +410,14 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (running) {
       try {
         const result = await execRconCommand(name, `whitelist remove ${player}`);
+        await writeAuditLog({
+          action: AuditActionEnum.PLAYER_WHITELIST_REMOVE,
+          actor: 'api:console',
+          targetType: 'server',
+          targetName: name,
+          details: { player, source: 'rcon' },
+          status: 'success',
+        });
         return reply.send({ success: true, message: result || `Removed ${player} from whitelist`, source: 'rcon' });
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for whitelist remove, falling back to file');
@@ -372,12 +426,29 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       playerFileService.removeFromWhitelist(name, player);
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_WHITELIST_REMOVE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, source: 'file' },
+        status: 'success',
+      });
       return reply.send({
         success: true,
         message: `Removed ${player} from whitelist (will apply on next server start)`,
         source: 'file',
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_WHITELIST_REMOVE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to remove from whitelist');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to remove from whitelist' });
     }
@@ -453,6 +524,14 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       try {
         const cmd = reason ? `ban ${player} ${reason}` : `ban ${player}`;
         const result = await execRconCommand(name, cmd);
+        await writeAuditLog({
+          action: AuditActionEnum.PLAYER_BAN,
+          actor: 'api:console',
+          targetType: 'server',
+          targetName: name,
+          details: { player, reason: reason || null, source: 'rcon' },
+          status: 'success',
+        });
         return reply.send({ success: true, message: result || `Banned ${player}`, source: 'rcon' });
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for ban, falling back to file');
@@ -462,12 +541,29 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     try {
       const uuid = await lookupUuid(player);
       playerFileService.addToBannedPlayers(name, player, uuid, reason);
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_BAN,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, uuid, reason: reason || null, source: 'file' },
+        status: 'success',
+      });
       return reply.send({
         success: true,
         message: `Banned ${player} (will apply on next server start)`,
         source: 'file',
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_BAN,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, reason: reason || null },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to ban player');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to ban player' });
     }
@@ -492,6 +588,14 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (running) {
       try {
         const result = await execRconCommand(name, `pardon ${player}`);
+        await writeAuditLog({
+          action: AuditActionEnum.PLAYER_UNBAN,
+          actor: 'api:console',
+          targetType: 'server',
+          targetName: name,
+          details: { player, source: 'rcon' },
+          status: 'success',
+        });
         return reply.send({ success: true, message: result || `Unbanned ${player}`, source: 'rcon' });
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for unban, falling back to file');
@@ -500,12 +604,29 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       playerFileService.removeFromBannedPlayers(name, player);
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_UNBAN,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, source: 'file' },
+        status: 'success',
+      });
       return reply.send({
         success: true,
         message: `Unbanned ${player} (will apply on next server start)`,
         source: 'file',
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_UNBAN,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to unban player');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to unban player' });
     }
@@ -533,8 +654,25 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     try {
       const cmd = reason ? `kick ${player} ${reason}` : `kick ${player}`;
       const result = await execRconCommand(name, cmd);
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_KICK,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, reason: reason || null },
+        status: 'success',
+      });
       return reply.send({ success: true, message: result || `Kicked ${player}` });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_KICK,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, reason: reason || null },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to kick player');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to kick player' });
     }
@@ -606,6 +744,15 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const opLevel = OpLevel.from(level);
       const operator = opsJsonService.addOperator(name, player, uuid, opLevel);
 
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_OP,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, uuid, level: operator.level.value, role: operator.level.label },
+        status: 'success',
+      });
+
       return reply.send({
         success: true,
         operator: {
@@ -618,6 +765,15 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         source: 'file',
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_OP,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, level },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to add operator');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to add operator' });
     }
@@ -641,12 +797,26 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (!checkServerExists(name, reply)) return;
 
     try {
+      // Read current level before update for audit trail
+      const currentOps = opsJsonService.readOps(name);
+      const currentOp = currentOps.find(op => op.name.toLowerCase() === player.toLowerCase());
+      const previousLevel = currentOp?.level.value;
+
       const opLevel = OpLevel.from(level);
       const operator = opsJsonService.updateOperatorLevel(name, player, opLevel);
 
       if (!operator) {
         return reply.code(404).send({ error: 'NotFound', message: `Operator '${player}' not found` });
       }
+
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_OP_LEVEL_UPDATE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, previousLevel, newLevel: operator.level.value, role: operator.level.label },
+        status: 'success',
+      });
 
       return reply.send({
         success: true,
@@ -660,6 +830,15 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         source: 'file',
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_OP_LEVEL_UPDATE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player, level },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to update operator level');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to update operator level' });
     }
@@ -686,12 +865,30 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         return reply.code(404).send({ error: 'NotFound', message: `Operator '${player}' not found` });
       }
 
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_DEOP,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player },
+        status: 'success',
+      });
+
       return reply.send({
         success: true,
         message: `Removed operator status from ${player}`,
         source: 'file',
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.PLAYER_DEOP,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { player },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to remove operator');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to remove operator' });
     }

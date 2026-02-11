@@ -3,17 +3,34 @@
  * Represents actions that are audited in the system
  */
 export enum AuditActionEnum {
+  // Server lifecycle
   SERVER_CREATE = 'server.create',
   SERVER_DELETE = 'server.delete',
   SERVER_START = 'server.start',
   SERVER_STOP = 'server.stop',
   SERVER_RESTART = 'server.restart',
+
+  // Server configuration
+  SERVER_CONFIG_UPDATE = 'server.config',
+  SERVER_HOSTNAME_UPDATE = 'server.hostname',
+
+  // Player management
   PLAYER_WHITELIST_ADD = 'player.whitelist.add',
   PLAYER_WHITELIST_REMOVE = 'player.whitelist.remove',
+  PLAYER_WHITELIST_TOGGLE = 'player.whitelist.toggle',
   PLAYER_BAN = 'player.ban',
   PLAYER_UNBAN = 'player.unban',
   PLAYER_OP = 'player.op',
+  PLAYER_OP_LEVEL_UPDATE = 'player.op.level',
   PLAYER_DEOP = 'player.deop',
   PLAYER_KICK = 'player.kick',
+
+  // World management
+  WORLD_CREATE = 'world.create',
+  WORLD_DELETE = 'world.delete',
+  WORLD_ASSIGN = 'world.assign',
+  WORLD_RELEASE = 'world.release',
+
+  // System
   AUDIT_PURGE = 'audit.purge',
 }

@@ -11,6 +11,11 @@ process.env.AUTH_ACCESS_MODE = 'open';
 process.env.AUTH_MODE = 'disabled';
 process.env.NODE_ENV = 'test';
 
+// Mock audit-log-service
+vi.mock('../src/services/audit-log-service.js', () => ({
+  writeAuditLog: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock Docker functions
 vi.mock('@minecraft-docker/shared', async () => {
   const actual = await vi.importActual('@minecraft-docker/shared');

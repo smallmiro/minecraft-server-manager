@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { serverExists } from '@minecraft-docker/shared';
+import { serverExists, AuditActionEnum } from '@minecraft-docker/shared';
+import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
   HostnameResponseSchema,
   UpdateCustomHostnamesRequestSchema,
@@ -121,7 +122,23 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         });
       }
 
+      // Read previous hostnames for audit trail
+      const previousData = hostnameService.getHostnames(name);
+      const previousCustom = previousData.customHostnames;
+
       const data = hostnameService.updateCustomHostnames(name, customHostnames);
+
+      await writeAuditLog({
+        action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: {
+          previous: previousCustom,
+          updated: data.customHostnames,
+        },
+        status: 'success',
+      });
 
       fastify.log.info({
         server: name,
@@ -143,12 +160,30 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         error.message.includes('Cannot use') ||
         error.message.includes('must be between')
       )) {
+        await writeAuditLog({
+          action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,
+          actor: 'api:console',
+          targetType: 'server',
+          targetName: name,
+          details: { customHostnames },
+          status: 'failure',
+          errorMessage: error.message,
+        });
         return reply.code(400).send({
           error: 'BadRequest',
           message: error.message,
         });
       }
 
+      await writeAuditLog({
+        action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { customHostnames },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to update server hostnames');
       return reply.code(500).send({
         error: 'InternalServerError',

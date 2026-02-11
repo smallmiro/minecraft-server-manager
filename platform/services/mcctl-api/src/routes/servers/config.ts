@@ -2,7 +2,8 @@ import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } fro
 import fp from 'fastify-plugin';
 import { join, resolve } from 'path';
 import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
-import { serverExists, getContainerStatus } from '@minecraft-docker/shared';
+import { serverExists, getContainerStatus, AuditActionEnum } from '@minecraft-docker/shared';
+import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
   ServerConfigResponseSchema,
   UpdateServerConfigRequestSchema,
@@ -128,7 +129,27 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
+      // Read previous config for audit trail (before/after)
+      const previousConfig = configService.getConfig(name);
       const result = configService.updateConfig(name, updates);
+
+      // Build before/after diff for changed fields
+      const changes: Record<string, { before: unknown; after: unknown }> = {};
+      for (const field of result.changedFields) {
+        changes[field] = {
+          before: previousConfig[field as keyof typeof previousConfig],
+          after: result.config[field as keyof typeof result.config],
+        };
+      }
+
+      await writeAuditLog({
+        action: AuditActionEnum.SERVER_CONFIG_UPDATE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { changedFields: result.changedFields, changes, restartRequired: result.restartRequired },
+        status: 'success',
+      });
 
       fastify.log.info({
         server: name,
@@ -143,6 +164,15 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         changedFields: result.changedFields,
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.SERVER_CONFIG_UPDATE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { updates },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to update server configuration');
       return reply.code(500).send({
         error: 'InternalServerError',
@@ -222,6 +252,15 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         rmSync(entryPath, { recursive: true, force: true });
       }
 
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_DELETE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { worldName, type: 'reset' },
+        status: 'success',
+      });
+
       fastify.log.info({
         server: name,
         worldName,
@@ -234,6 +273,15 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         worldName,
       });
     } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_DELETE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { type: 'reset' },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to reset world');
       return reply.code(500).send({
         error: 'InternalServerError',
