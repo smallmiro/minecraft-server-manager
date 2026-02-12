@@ -961,7 +961,7 @@ export async function getServerDetailedInfo(
  * Returns status information about the playit.gg agent container
  */
 export async function getPlayitAgentStatus(): Promise<import('../types/index.js').PlayitAgentStatus> {
-  const containerName = 'playit';
+  const containerName = 'playit-agent';
 
   // Check if container exists
   const status = getContainerStatus(containerName);
