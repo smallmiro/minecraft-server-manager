@@ -88,9 +88,11 @@ describe('Docker helper functions for playit.gg', () => {
 
   describe('startPlayitAgent', () => {
     test('should execute docker compose command to start playit-agent', async () => {
-      // This test validates the function exists and returns a boolean
+      // This test validates the function exists and returns { success, error? }
       const result = await dockerHelpers.startPlayitAgent();
-      assert.strictEqual(typeof result, 'boolean');
+      assert.strictEqual(typeof result, 'object');
+      assert.ok('success' in result);
+      assert.strictEqual(typeof result.success, 'boolean');
     });
   });
 
