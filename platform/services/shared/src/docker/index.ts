@@ -344,11 +344,13 @@ export function getContainerLogs(container: string, lines: number = 50): string 
  */
 export function execCommandAsync(
   command: string,
-  args: string[]
+  args: string[],
+  options?: { cwd?: string }
 ): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
     const child = spawn(command, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: options?.cwd,
     });
 
     let stdout = '';
@@ -1030,7 +1032,7 @@ export async function startPlayitAgent(): Promise<boolean> {
       'up',
       '-d',
       'playit',
-    ]);
+    ], { cwd: platformRoot });
 
     return result.code === 0;
   } catch {
@@ -1052,7 +1054,7 @@ export async function stopPlayitAgent(): Promise<boolean> {
       'playit',
       'stop',
       'playit',
-    ]);
+    ], { cwd: platformRoot });
 
     return result.code === 0;
   } catch {
