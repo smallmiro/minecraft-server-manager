@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.3.1 (2026-02-12)
+- **fix(api)**: Resolve TypeScript build error in audit-logs purge catch block
+- **fix(cli)**: Handle missing `.mcctl.json` in `mcctl init --reconfigure` (#335, #336)
+- **docs**: Update documentation for v2.3.0 release
+
 ### v2.3.0 (2026-02-12) - External Play (playit.gg)
 - **feat(shared)**: Add playit.gg domain model and Docker helpers (#291, #328)
 - **feat**: Add playit.gg tunnel agent to docker-compose templates (#270, #327)
@@ -104,10 +109,6 @@ mcctl logs myserver
 
 ### v2.0.0 (2026-02-09)
 - Major version bump - Management Console (Web UI + REST API) feature complete
-
-### v1.15.5 (2026-02-08)
-- **fix(cli)**: Fix Better Auth password hashing - use hex string salt for compatibility
-- **fix(cli)**: Add `MCCTL_API_KEY` env var to mcctl-console PM2 config (#261)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2026-02-12
+
+### Fixed
+- **API TypeScript Build Error** - Resolve TypeScript build error in audit-logs purge catch block
+- **CLI Init Reconfigure** - Handle missing `.mcctl.json` in `mcctl init --reconfigure` (#335, #336)
+  - Previously crashed when `.mcctl.json` file was not present
+  - Now gracefully handles missing config file during reconfiguration
+
+### Documentation
+- Update documentation for v2.3.0 release
+
 ## [2.3.0] - 2026-02-12
 
 ### Added
