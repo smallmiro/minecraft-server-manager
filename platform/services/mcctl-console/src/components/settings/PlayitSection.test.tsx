@@ -116,11 +116,12 @@ describe('PlayitSection', () => {
     expect(screen.getByText('Running')).toBeInTheDocument();
     expect(screen.getByText('2h 15m')).toBeInTheDocument();
 
-    // Server table
+    // Configured server in table
     expect(screen.getByText('survival')).toBeInTheDocument();
     expect(screen.getByText('survival.example.playit.gg')).toBeInTheDocument();
-    expect(screen.getByText('creative')).toBeInTheDocument();
-    expect(screen.getByText('Not configured')).toBeInTheDocument();
+    // Unconfigured server shown as summary text
+    expect(screen.getByText(/creative/)).toBeInTheDocument();
+    expect(screen.getByText(/without external domain/)).toBeInTheDocument();
   });
 
   it('shows stop button when agent is running', () => {
