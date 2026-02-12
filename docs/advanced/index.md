@@ -7,6 +7,7 @@ This section covers advanced configuration and features for the Docker Minecraft
 The platform provides several advanced features for production deployments and complex setups:
 
 - **Networking** - nip.io magic DNS, mDNS, mc-router configuration
+- **External Access** - playit.gg tunneling for internet-wide access without port forwarding
 - **Backup** - Automatic GitHub backup for world data
 - **RCON** - Remote console protocol for server administration
 - **World Management** - Multi-server world sharing with locking
@@ -23,6 +24,14 @@ The platform provides several advanced features for production deployments and c
     Configure hostname routing with nip.io, mDNS, and mc-router
 
     [:octicons-arrow-right-24: Networking Guide](networking.md)
+
+-   :material-earth:{ .lg .middle } **External Access (playit.gg)**
+
+    ---
+
+    Allow external players to join without port forwarding via playit.gg tunneling
+
+    [:octicons-arrow-right-24: External Access Guide](external-access.md)
 
 -   :material-backup-restore:{ .lg .middle } **Backup**
 

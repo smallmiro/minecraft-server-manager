@@ -228,6 +228,14 @@ Each server gets its own hostname:
 
     [:octicons-arrow-right-24: Networking Guide](../advanced/networking.md)
 
+-   :material-earth:{ .lg .middle } **External Access (playit.gg)**
+
+    ---
+
+    Let friends join from the internet without port forwarding
+
+    [:octicons-arrow-right-24: External Access Guide](../advanced/external-access.md)
+
 </div>
 
 ## Quick Reference

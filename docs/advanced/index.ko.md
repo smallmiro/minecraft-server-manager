@@ -7,6 +7,7 @@
 플랫폼은 프로덕션 배포 및 복잡한 설정을 위한 여러 고급 기능을 제공합니다:
 
 - **네트워킹** - nip.io magic DNS, mDNS, mc-router 설정
+- **외부 접속** - 포트 포워딩 없이 playit.gg 터널링으로 인터넷 접속 가능
 - **백업** - 월드 데이터 자동 GitHub 백업
 - **RCON** - 서버 관리를 위한 원격 콘솔 프로토콜
 - **월드 관리** - 잠금 기능이 있는 멀티 서버 월드 공유
@@ -23,6 +24,14 @@
     nip.io, mDNS, mc-router로 호스트네임 라우팅 설정
 
     [:octicons-arrow-right-24: 네트워킹 가이드](networking.ko.md)
+
+-   :material-earth:{ .lg .middle } **외부 접속 (playit.gg)**
+
+    ---
+
+    포트 포워딩 없이 playit.gg 터널링으로 외부 플레이어 접속 허용
+
+    [:octicons-arrow-right-24: 외부 접속 가이드](external-access.ko.md)
 
 -   :material-backup-restore:{ .lg .middle } **백업**
 
