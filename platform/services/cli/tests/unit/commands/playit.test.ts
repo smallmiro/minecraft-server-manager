@@ -136,6 +136,29 @@ describe('mcctl playit subcommand', () => {
       expect(exitCode).toBe(1);
       expect(shared.startPlayitAgent).not.toHaveBeenCalled();
     });
+
+    it('should start when key is configured but container never created (first start)', async () => {
+      // This is the chicken-and-egg scenario: container doesn't exist yet
+      // because it has never been started, but start should still work
+      createInitializedPlatform(true, 'test-key-123');
+
+      vi.mocked(shared.getPlayitAgentStatus).mockResolvedValueOnce({
+        enabled: true, // Should be true based on config, not container existence
+        agentRunning: false,
+        secretKeyConfigured: true,
+        containerStatus: 'not_found', // Container never created
+      });
+
+      vi.mocked(shared.startPlayitAgent).mockResolvedValueOnce(true);
+
+      const exitCode = await playitCommand({
+        root: testRoot,
+        subCommand: 'start',
+      });
+
+      expect(exitCode).toBe(0);
+      expect(shared.startPlayitAgent).toHaveBeenCalled();
+    });
   });
 
   describe('playit stop', () => {
