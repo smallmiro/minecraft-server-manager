@@ -73,6 +73,7 @@ export {
   startPlayitAgent,
   stopPlayitAgent,
   getServerPlayitDomain,
+  setServerPlayitDomain,
 } from './docker/index.js';
 
 // Re-export domain layer (Value Objects and Entities)
