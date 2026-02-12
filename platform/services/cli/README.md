@@ -77,6 +77,9 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.3.2 (2026-02-12)
+- **fix(shared)**: Check `.mcctl.json` for playit enabled state instead of container existence (#337, #338)
+
 ### v2.3.1 (2026-02-12)
 - **fix(api)**: Resolve TypeScript build error in audit-logs purge catch block
 - **fix(cli)**: Handle missing `.mcctl.json` in `mcctl init --reconfigure` (#335, #336)

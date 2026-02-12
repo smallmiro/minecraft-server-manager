@@ -1,6 +1,6 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.3.0
+> **Version**: 2.3.2
 > **Last Updated**: 2026-02-12
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
@@ -2596,6 +2596,18 @@ A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix kno
 ---
 
 ## 16. Version History
+
+### Version 2.3.2 (2026-02-12)
+
+**Fixed:**
+- Playit.gg status detection now checks `.mcctl.json` for `playit.enabled` flag instead of Docker container existence (#337, #338)
+  - More reliable detection that works even when containers are not running
+
+### Version 2.3.1 (2026-02-12)
+
+**Fixed:**
+- TypeScript build error in audit-logs purge catch block
+- Handle missing `.mcctl.json` in `mcctl init --reconfigure` (#335, #336)
 
 ### Version 2.3.0 (2026-02-12) - External Play (playit.gg)
 
