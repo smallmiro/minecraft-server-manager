@@ -236,7 +236,7 @@ const auditLogsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         actor: 'api:console',
         targetType: 'system',
         targetName: 'audit-logs',
-        details: { before, dryRun },
+        details: { before: request.body?.before, dryRun: request.body?.dryRun },
         status: 'failure',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
