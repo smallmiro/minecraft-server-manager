@@ -135,6 +135,7 @@ export function PlayitSection() {
 
   const isRunning = data.agentRunning && data.containerStatus === 'running';
   const isActionPending = startPlayit.isPending || stopPlayit.isPending;
+  const actionError = startPlayit.error || stopPlayit.error;
 
   return (
     <Card>
@@ -145,6 +146,11 @@ export function PlayitSection() {
             External Access (playit.gg)
           </Typography>
         </Box>
+        {actionError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {actionError.message || 'Action failed'}
+          </Alert>
+        )}
         <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
           {isRunning ? (
             <Button
