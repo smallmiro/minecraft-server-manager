@@ -52,6 +52,7 @@
 | **World Management** | Shared world storage with locking, cross-server world sharing |
 | **GitHub Backup** | Automatic world backup to private GitHub repositories |
 | **Audit Logs** | Comprehensive activity tracking with SQLite storage and web UI |
+| **External Access** | playit.gg tunneling for internet access without port forwarding |
 | **Self Update** | `mcctl update` to update CLI and all services |
 
 ### npm Packages (5 packages)
@@ -133,8 +134,10 @@ mcctl status
 | **nip.io** (Recommended) | `myserver.192.168.1.100.nip.io:25565` | Internet access |
 | **mDNS** | `myserver.local:25565` | avahi-daemon/Bonjour |
 | **Direct IP** | `192.168.1.100:25565` | None (single-server fallback) |
+| **playit.gg** (External) | `xx-xx.craft.playit.gg` | playit.gg account + SECRET_KEY |
 
 Replace `192.168.1.100` with your HOST_IP from `.env`.
+For external access via playit.gg, see `mcctl playit setup`.
 
 ### Platform Directory Structure
 
@@ -210,6 +213,7 @@ Replace `192.168.1.100` with your HOST_IP from `.env`.
 | **mcctl-api** | REST API service (Fastify, port 5001) |
 | **mcctl-console** | Web Management Console (Next.js, port 5000) |
 | **PM2** | Process manager for Management Console services |
+| **playit-agent** | Optional tunneling agent for external access via playit.gg |
 
 ### Platform Directory Structure
 
@@ -260,7 +264,7 @@ After running `mcctl init`, the following directory structure is created:
         └── shared/                   # Shared domain package
 ```
 
-### Connection Flow
+### Connection Flow (LAN)
 
 ```
 1. Player opens Minecraft → Add Server → survival.192.168.1.100.nip.io:25565
@@ -273,6 +277,70 @@ After running `mcctl init`, the following directory structure is created:
 8. Player connects to the Minecraft server
 9. When all players leave + AUTO_SCALE_DOWN_AFTER timeout: mc-router stops container
 ```
+
+### Connection Flow (External via playit.gg)
+
+```
+1. External player connects to xx-xx.craft.playit.gg
+2. playit.gg cloud relays TCP connection to playit-agent on host
+3. playit-agent forwards to localhost:25565 (network_mode: host)
+4. mc-router receives connection, reads hostname from Minecraft handshake
+5. mc-router routes to the correct server container
+6. Same auto-scale behavior as LAN connections
+```
+
+### playit.gg External Access (Optional)
+
+playit.gg enables external players to connect without port forwarding. The playit-agent runs as a Docker container with `network_mode: host` and forwards tunneled traffic to mc-router.
+
+**Architecture:**
+
+```
+External Players → playit.gg cloud → playit-agent (host) → localhost:25565 → mc-router → server
+```
+
+**CLI Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `mcctl playit start` | Start the playit-agent container |
+| `mcctl playit stop` | Stop the playit-agent container |
+| `mcctl playit status` | Show agent status and registered servers |
+| `mcctl playit setup` | Configure or reconfigure SECRET_KEY |
+
+**Setup:**
+
+1. Create agent at https://playit.gg/account/agents/new-docker → get SECRET_KEY
+2. `mcctl playit setup` → enter SECRET_KEY
+3. `mcctl playit start` → start agent
+4. Create tunnel at https://playit.gg/account/tunnels → Minecraft Java → localhost:25565
+5. `mcctl create myserver --playit-domain xx-xx.craft.playit.gg`
+
+**Docker Configuration:**
+
+```yaml
+services:
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.16
+    container_name: playit-agent
+    network_mode: host
+    environment:
+      - SECRET_KEY=${PLAYIT_SECRET_KEY}
+    restart: unless-stopped
+    profiles:
+      - playit
+```
+
+**Environment Variable:** `PLAYIT_SECRET_KEY` in `.env`
+
+**Connection Methods Summary:**
+
+| Method | Address | Scope |
+|--------|---------|-------|
+| nip.io | `server.<ip>.nip.io:25565` | LAN / same network |
+| mDNS | `server.local:25565` | LAN only |
+| playit.gg | `xx-xx.craft.playit.gg` | Internet (external) |
+| VPN mesh | `server.<vpn-ip>.nip.io:25565` | VPN network |
 
 ---
 

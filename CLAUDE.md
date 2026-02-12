@@ -237,14 +237,14 @@ For full CLI reference, see [docs/cli/commands.md](docs/cli/commands.md).
 ### Multi-Server with mc-router
 
 ```
-┌──────────────────────┐  ┌────────────────────┐
-│  mc-router (:25565)  │  │  avahi-daemon      │
-│  hostname routing    │  │  (system service)  │
-│  auto-scale up/down  │  │  mDNS broadcast    │
-├──────────────────────┤  ├────────────────────┤
-│ <server>.local ─→    │  │ /etc/avahi/hosts:  │
-│  mc-<server>         │  │  <server>.local    │
-└──────────────────────┘  └────────────────────┘
+┌──────────────────────┐  ┌────────────────────┐  ┌─────────────────────┐
+│  mc-router (:25565)  │  │  avahi-daemon      │  │  playit-agent       │
+│  hostname routing    │  │  (system service)  │  │  (optional)         │
+│  auto-scale up/down  │  │  mDNS broadcast    │  │  external access    │
+├──────────────────────┤  ├────────────────────┤  ├─────────────────────┤
+│ <server>.local ─→    │  │ /etc/avahi/hosts:  │  │ playit.gg cloud ─→  │
+│  mc-<server>         │  │  <server>.local    │  │  localhost:25565    │
+└──────────────────────┘  └────────────────────┘  └─────────────────────┘
 ```
 
 **Key Features**:
@@ -252,6 +252,7 @@ For full CLI reference, see [docs/cli/commands.md](docs/cli/commands.md).
 - Auto-scale: servers start on client connect, stop after idle timeout
 - **nip.io** (Recommended): `<server>.<HOST_IP>.nip.io:25565`
 - **mDNS**: `<server>.local:25565` (requires avahi/Bonjour)
+- **playit.gg** (External): `xx-xx.craft.playit.gg` (no port forwarding needed)
 
 ## Required Environment Variables
 

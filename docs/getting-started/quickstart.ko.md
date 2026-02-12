@@ -228,6 +228,14 @@ mcctl status
 
     [:octicons-arrow-right-24: 네트워킹 가이드](../advanced/networking.ko.md)
 
+-   :material-earth:{ .lg .middle } **외부 접속 (playit.gg)**
+
+    ---
+
+    포트 포워딩 없이 친구들이 인터넷에서 접속 가능
+
+    [:octicons-arrow-right-24: 외부 접속 가이드](../advanced/external-access.ko.md)
+
 </div>
 
 ## 빠른 참조

@@ -106,6 +106,7 @@ nav:
   - Advanced:
       - Overview: advanced/index.md
       - Networking: advanced/networking.md
+      - External Access (playit.gg): advanced/external-access.md
       - Backup: advanced/backup.md
   - Troubleshooting: troubleshooting/index.md
   - Development:
