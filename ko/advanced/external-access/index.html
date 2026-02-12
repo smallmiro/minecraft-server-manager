@@ -1,0 +1,3806 @@
+
+<!doctype html>
+<html lang="ko" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/ko/advanced/external-access/">
+      
+      
+        <link rel="prev" href="../networking/">
+      
+      
+        <link rel="next" href="../backup/">
+      
+      
+        
+          <link rel="alternate" href="../../../advanced/external-access/" hreflang="en">
+        
+          <link rel="alternate" href="./" hreflang="ko">
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>External Access (playit.gg) - Minecraft Docker Server Manager</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#playitgg를-이용한-외부-접속" class="md-skip">
+          콘텐츠로 이동
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="상단/헤더">
+    <a href="../../" title="Minecraft Docker Server Manager" class="md-header__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Minecraft Docker Server Manager
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              External Access (playit.gg)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="언어설정">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="../../../advanced/external-access/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="ko" class="md-select__link">
+              한국어
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="검색" placeholder="검색" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="검색">
+        
+        <button type="reset" class="md-search__icon md-icon" title="지우기" aria-label="지우기" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            검색 초기화
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/smallmiro/minecraft-server-manager" title="저장소로 이동" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    smallmiro/minecraft-server-manager
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="탭" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  CLI Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  REST API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../mods-and-plugins/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Mods & Plugins
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../console/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Management Console
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../troubleshooting/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962" class="md-tabs__link">
+        
+  
+  
+    
+  
+  AI Assistant
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="네비게이션" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../" title="Minecraft Docker Server Manager" class="md-nav__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Minecraft Docker Server Manager
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/smallmiro/minecraft-server-manager" title="저장소로 이동" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    smallmiro/minecraft-server-manager
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../cli/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../configuration/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../mods-and-plugins/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mods & Plugins
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Mods & Plugins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mods-and-plugins/modrinth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modrinth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mods-and-plugins/curseforge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CurseForge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mods-and-plugins/spiget/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spiget (SpigotMC)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mods-and-plugins/direct-download/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Direct Download
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mods-and-plugins/modpacks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modpacks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../console/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Management Console
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Management Console
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../console/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../console/cli-commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../console/web-console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web Console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../console/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../console/audit-log-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logs (API)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../console/audit-log-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logs (UI)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    External Access (playit.gg)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    External Access (playit.gg)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#개요" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        개요
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="개요">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#동작-원리" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        동작 원리
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#playitgg-제공-기능" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        playit.gg 제공 기능
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#사전-요구사항" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        사전 요구사항
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#빠른-시작" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        빠른 시작
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#상세-설정-가이드" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        상세 설정 가이드
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="상세 설정 가이드">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1단계-playitgg-에이전트-생성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1단계: playit.gg 에이전트 생성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2단계-mcctl에서-playitgg-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2단계: mcctl에서 playit.gg 설정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3단계-playit-agent-시작" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3단계: playit-agent 시작
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4단계-minecraft-java-터널-생성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4단계: Minecraft Java 터널 생성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5단계-서버에-도메인-등록" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5단계: 서버에 도메인 등록
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6단계-접속-및-공유" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6단계: 접속 및 공유
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#커스텀-도메인-설정-프리미엄" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        커스텀 도메인 설정 (프리미엄)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="커스텀 도메인 설정 (프리미엄)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dns-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DNS 설정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acname-vs-srv-비교" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A/CNAME vs SRV 비교
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mc-router-라벨-업데이트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mc-router 라벨 업데이트
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#playit-agent-관리" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        playit-agent 관리
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="playit-agent 관리">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cli-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI 명령어
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#상태-확인" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        상태 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-출력" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON 출력
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-console-관리" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Console 관리
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web Console 관리">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#대시보드" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        대시보드
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#서버-상세-페이지" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서버 상세 페이지
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#라우팅-페이지" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        라우팅 페이지
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-엔드포인트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API 엔드포인트
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#문제-해결" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        문제 해결
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="문제 해결">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#에이전트가-시작되지-않음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        에이전트가 시작되지 않음
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#외부-플레이어가-접속할-수-없음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        외부 플레이어가 접속할 수 없음
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#접속-시간-초과" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        접속 시간 초과
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#도메인이-해석되지-않음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        도메인이 해석되지 않음
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#보안-모범-사례" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        보안 모범 사례
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="보안 모범 사례">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#화이트리스트-활성화" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        화이트리스트 활성화
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#온라인-모드-유지" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        온라인 모드 유지
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#기본-rcon-비밀번호-변경" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        기본 RCON 비밀번호 변경
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#서버-활동-모니터링" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서버 활동 모니터링
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secret_key-보호" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SECRET_KEY 보호
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#제한-사항" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        제한 사항
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="제한 사항">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#무료-티어-제한" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        무료 티어 제한
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#기술적-제한" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        기술적 제한
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#다른-솔루션과-비교" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        다른 솔루션과 비교
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker-설정-참조" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker 설정 참조
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Docker 설정 참조">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#환경-변수" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        환경 변수
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#참고-문서" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        참고 문서
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../development/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_10" id="__nav_10_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/cli-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/agent-collaboration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Collaboration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#개요" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        개요
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="개요">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#동작-원리" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        동작 원리
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#playitgg-제공-기능" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        playit.gg 제공 기능
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#사전-요구사항" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        사전 요구사항
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#빠른-시작" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        빠른 시작
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#상세-설정-가이드" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        상세 설정 가이드
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="상세 설정 가이드">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1단계-playitgg-에이전트-생성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1단계: playit.gg 에이전트 생성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2단계-mcctl에서-playitgg-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2단계: mcctl에서 playit.gg 설정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3단계-playit-agent-시작" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3단계: playit-agent 시작
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4단계-minecraft-java-터널-생성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4단계: Minecraft Java 터널 생성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5단계-서버에-도메인-등록" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5단계: 서버에 도메인 등록
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6단계-접속-및-공유" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6단계: 접속 및 공유
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#커스텀-도메인-설정-프리미엄" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        커스텀 도메인 설정 (프리미엄)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="커스텀 도메인 설정 (프리미엄)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dns-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DNS 설정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acname-vs-srv-비교" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A/CNAME vs SRV 비교
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mc-router-라벨-업데이트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mc-router 라벨 업데이트
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#playit-agent-관리" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        playit-agent 관리
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="playit-agent 관리">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cli-명령어" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI 명령어
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#상태-확인" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        상태 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-출력" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON 출력
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-console-관리" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Console 관리
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web Console 관리">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#대시보드" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        대시보드
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#서버-상세-페이지" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서버 상세 페이지
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#라우팅-페이지" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        라우팅 페이지
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-엔드포인트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API 엔드포인트
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#문제-해결" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        문제 해결
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="문제 해결">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#에이전트가-시작되지-않음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        에이전트가 시작되지 않음
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#외부-플레이어가-접속할-수-없음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        외부 플레이어가 접속할 수 없음
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#접속-시간-초과" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        접속 시간 초과
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#도메인이-해석되지-않음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        도메인이 해석되지 않음
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#보안-모범-사례" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        보안 모범 사례
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="보안 모범 사례">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#화이트리스트-활성화" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        화이트리스트 활성화
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#온라인-모드-유지" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        온라인 모드 유지
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#기본-rcon-비밀번호-변경" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        기본 RCON 비밀번호 변경
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#서버-활동-모니터링" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서버 활동 모니터링
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secret_key-보호" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SECRET_KEY 보호
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#제한-사항" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        제한 사항
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="제한 사항">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#무료-티어-제한" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        무료 티어 제한
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#기술적-제한" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        기술적 제한
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#다른-솔루션과-비교" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        다른 솔루션과 비교
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker-설정-참조" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker 설정 참조
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Docker 설정 참조">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#환경-변수" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        환경 변수
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#참고-문서" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        참고 문서
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="playitgg를-이용한-외부-접속">playit.gg를 이용한 외부 접속<a class="headerlink" href="#playitgg를-이용한-외부-접속" title="Permanent link">&para;</a></h1>
+<p>포트 포워딩, 방화벽 설정 변경, 고정 IP 없이도 외부 플레이어가 Minecraft 서버에 접속할 수 있도록 <a href="https://playit.gg">playit.gg</a> 터널링을 설정합니다.</p>
+<h2 id="개요">개요<a class="headerlink" href="#개요" title="Permanent link">&para;</a></h2>
+<p>기본적으로 mcctl로 생성한 서버는 로컬 네트워크에서만 접속 가능합니다 (nip.io 또는 mDNS 사용). <strong>playit.gg</strong>는 무료 터널링 서비스로, 서버에 공개 도메인 이름을 부여하여 인터넷 어디에서나 접속할 수 있게 합니다.</p>
+<h3 id="동작-원리">동작 원리<a class="headerlink" href="#동작-원리" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>외부 플레이어 (인터넷)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>        |
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  playit.gg 클라우드
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  (TCP 터널 릴레이)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  playit-agent 컨테이너
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  (network_mode: host)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        |
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  localhost:25565로 포워딩
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        |
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>  mc-router (:25565)
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>  Minecraft 핸드셰이크에서 호스트네임 확인
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>        |
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>   +----+----+
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>   |         |
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a> mc-aa    mc-bb
+</code></pre></div>
+<ol>
+<li>외부 플레이어가 playit.gg 도메인(예: <code>xx-xx.craft.playit.gg</code>)에 접속합니다</li>
+<li>playit.gg 클라우드가 TCP 연결을 호스트의 playit-agent로 릴레이합니다</li>
+<li>playit-agent가 mc-router가 수신 대기하는 <code>localhost:25565</code>로 트래픽을 전달합니다</li>
+<li>mc-router가 Minecraft 핸드셰이크 패킷에서 호스트네임을 읽어 올바른 서버로 라우팅합니다</li>
+</ol>
+<h3 id="playitgg-제공-기능">playit.gg 제공 기능<a class="headerlink" href="#playitgg-제공-기능" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>기능</th>
+<th>무료</th>
+<th>프리미엄</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TCP 터널</td>
+<td>무제한</td>
+<td>무제한</td>
+</tr>
+<tr>
+<td>도메인</td>
+<td><code>xx-xx.craft.playit.gg</code></td>
+<td>커스텀 도메인 지원</td>
+</tr>
+<tr>
+<td>대역폭</td>
+<td>무제한</td>
+<td>무제한</td>
+</tr>
+<tr>
+<td>플레이어</td>
+<td>제한 없음</td>
+<td>제한 없음</td>
+</tr>
+<tr>
+<td>리전</td>
+<td>자동 선택</td>
+<td>선택 가능</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">playit.gg vs 다른 터널링 솔루션</p>
+<p>playit.gg는 게임 서버 터널링에 특화되어 있으며, Minecraft 프로토콜에 필요한 raw TCP passthrough를 지원합니다. 일반 HTTP 터널(ngrok, Cloudflare Tunnels)은 Minecraft에서 작동하지 않습니다.</p>
+</div>
+<h2 id="사전-요구사항">사전 요구사항<a class="headerlink" href="#사전-요구사항" title="Permanent link">&para;</a></h2>
+<p>외부 접속을 설정하기 전에 다음을 확인합니다:</p>
+<ul>
+<li>[x] mcctl 설치 및 플랫폼 초기화 완료 (<code>mcctl init</code>)</li>
+<li>[x] Minecraft 서버 1개 이상 생성 (<code>mcctl create</code>)</li>
+<li>[x] Docker 실행 중</li>
+<li>[x] <a href="https://playit.gg">playit.gg 계정</a> (무료)</li>
+</ul>
+<h2 id="빠른-시작">빠른 시작<a class="headerlink" href="#빠른-시작" title="Permanent link">&para;</a></h2>
+<p>6단계로 외부 접속을 설정합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 1. playit.gg 에이전트를 생성하고 SECRET_KEY를 받습니다</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1">#    방문: https://playit.gg/account/agents/new-docker</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># 2. 플랫폼에 playit.gg를 설정합니다</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>setup
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># 프롬프트에서 SECRET_KEY를 입력합니다</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1"># 3. playit-agent를 시작합니다</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>start
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># 4. playit.gg 대시보드에서 Minecraft Java 터널을 생성합니다</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1">#    방문: https://playit.gg/account/tunnels</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1">#    - &quot;Add Tunnel&quot; 클릭</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1">#    - &quot;Minecraft Java&quot; 선택</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1">#    - Local Address: localhost:25565</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="c1">#    - 저장하고 할당된 도메인을 기록합니다 (예: xx-xx.craft.playit.gg)</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="c1"># 5. playit 도메인을 서버에 등록합니다</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1<span class="w"> </span>--playit-domain<span class="w"> </span>xx-xx.craft.playit.gg
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="c1"># 기존 서버는 docker-compose.yml 라벨을 수정합니다</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="c1"># 6. 도메인을 친구들에게 공유합니다!</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="c1">#    접속 주소: xx-xx.craft.playit.gg</span>
+</code></pre></div>
+<h2 id="상세-설정-가이드">상세 설정 가이드<a class="headerlink" href="#상세-설정-가이드" title="Permanent link">&para;</a></h2>
+<h3 id="1단계-playitgg-에이전트-생성">1단계: playit.gg 에이전트 생성<a class="headerlink" href="#1단계-playitgg-에이전트-생성" title="Permanent link">&para;</a></h3>
+<ol>
+<li><a href="https://playit.gg">playit.gg</a>에 접속하여 무료 계정을 생성합니다</li>
+<li><strong>Account</strong> &gt; <strong>Agents</strong> &gt; <strong><a href="https://playit.gg/account/agents/new-docker">New Docker Agent</a></strong>로 이동합니다</li>
+<li>에이전트 이름을 지정합니다 (예: "minecraft-host")</li>
+<li>페이지에 표시된 <strong>SECRET_KEY</strong>를 복사합니다</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">SECRET_KEY를 안전하게 보관하세요</p>
+<p>SECRET_KEY는 한 번만 표시됩니다. 안전한 곳에 저장하세요. 분실 시 새 에이전트를 생성해야 합니다.</p>
+</div>
+<h3 id="2단계-mcctl에서-playitgg-설정">2단계: mcctl에서 playit.gg 설정<a class="headerlink" href="#2단계-mcctl에서-playitgg-설정" title="Permanent link">&para;</a></h3>
+<p>초기 플랫폼 설정 시 또는 이후에 playit.gg를 설정할 수 있습니다.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">mcctl init 시</label><label for="__tabbed_1_2">플랫폼 설정 후</label><label for="__tabbed_1_3">playit.gg 건너뛰기</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># --playit-key 플래그 사용</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>init<span class="w"> </span>--playit-key<span class="w"> </span>YOUR_SECRET_KEY
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># 또는 대화형으로 (프롬프트가 표시됩니다)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>init
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># &quot;Enable playit.gg tunneling?&quot; 질문에 Yes를 선택합니다</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># 프롬프트에서 SECRET_KEY를 입력합니다</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># playit setup 명령을 실행합니다</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>setup
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># 프롬프트에서 SECRET_KEY를 입력합니다</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># init 시 명시적으로 비활성화</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>mcctl<span class="w"> </span>init<span class="w"> </span>--no-playit
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>이 명령은 <code>PLAYIT_SECRET_KEY</code>를 <code>.env</code> 파일에 저장하고 playit 프로필을 활성화합니다.</p>
+<h3 id="3단계-playit-agent-시작">3단계: playit-agent 시작<a class="headerlink" href="#3단계-playit-agent-시작" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>start
+</code></pre></div>
+<p>에이전트가 실행 중인지 확인합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>status
+</code></pre></div>
+<p>예상 출력:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>=== playit.gg Agent Status ===
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  Agent:      running
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  SECRET_KEY: configured
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>REGISTERED SERVERS
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  No servers with playit.gg domains configured
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>  Dashboard: https://playit.gg/account/tunnels
+</code></pre></div>
+<h3 id="4단계-minecraft-java-터널-생성">4단계: Minecraft Java 터널 생성<a class="headerlink" href="#4단계-minecraft-java-터널-생성" title="Permanent link">&para;</a></h3>
+<ol>
+<li><a href="https://playit.gg/account/tunnels">playit.gg 대시보드</a>에 접속합니다</li>
+<li><strong>Add Tunnel</strong>을 클릭합니다</li>
+<li>터널 타입으로 <strong>Minecraft Java</strong>를 선택합니다</li>
+<li><strong>Local Address</strong>를 <code>localhost:25565</code>로 설정합니다</li>
+<li><strong>Create</strong>를 클릭합니다</li>
+<li>할당된 도메인을 기록합니다 (예: <code>xx-xx.craft.playit.gg</code>)</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">모든 서버에 하나의 터널</p>
+<p><code>localhost:25565</code>를 가리키는 playit.gg 터널은 <strong>하나</strong>만 필요합니다. mc-router가 Minecraft 핸드셰이크의 호스트네임을 기반으로 올바른 서버로 라우팅합니다.</p>
+<p>단, 여러 서버가 외부에서 독립적으로 접근 가능하려면 각 서버마다 별도의 playit.gg 터널과 도메인이 필요합니다.</p>
+</div>
+<h3 id="5단계-서버에-도메인-등록">5단계: 서버에 도메인 등록<a class="headerlink" href="#5단계-서버에-도메인-등록" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">새 서버</label><label for="__tabbed_2_2">기존 서버</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># playit 도메인과 함께 서버 생성</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1<span class="w"> </span>--playit-domain<span class="w"> </span>xx-xx.craft.playit.gg
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>서버의 <code>docker-compose.yml</code>에서 mc-router.host 라벨에 playit 도메인을 추가합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># ~/minecraft-servers/servers/myserver/docker-compose.yml</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="nt">mc-myserver</span><span class="p">:</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">      </span><span class="nt">mc-router.host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;myserver.192.168.1.100.nip.io,xx-xx.craft.playit.gg&quot;</span>
+</code></pre></div>
+<p>서버를 재시작합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="6단계-접속-및-공유">6단계: 접속 및 공유<a class="headerlink" href="#6단계-접속-및-공유" title="Permanent link">&para;</a></h3>
+<p>외부 플레이어는 이제 playit.gg 도메인으로 서버에 접속할 수 있습니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>서버 주소: xx-xx.craft.playit.gg
+</code></pre></div>
+<p>playit.gg가 표준 Minecraft 포트(25565)로 매핑하므로 포트 번호는 필요하지 않습니다.</p>
+<p>LAN 플레이어는 기존 주소를 계속 사용할 수 있습니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>LAN: myserver.192.168.1.100.nip.io:25565
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>외부: xx-xx.craft.playit.gg
+</code></pre></div>
+<h2 id="커스텀-도메인-설정-프리미엄">커스텀 도메인 설정 (프리미엄)<a class="headerlink" href="#커스텀-도메인-설정-프리미엄" title="Permanent link">&para;</a></h2>
+<p>playit.gg 프리미엄 플랜 또는 보유한 도메인이 있으면, 서버에 커스텀 도메인을 설정할 수 있습니다.</p>
+<h3 id="dns-설정">DNS 설정<a class="headerlink" href="#dns-설정" title="Permanent link">&para;</a></h3>
+<p>DNS 레코드에 두 가지 옵션이 있습니다:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">A/CNAME 레코드</label><label for="__tabbed_3_2">SRV 레코드</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>도메인을 playit.gg 터널로 직접 지정합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a># A 레코드 (playit이 IP를 제공하는 경우)
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>minecraft.example.com    A      &lt;playit-tunnel-ip&gt;
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a># CNAME 레코드 (playit이 도메인을 제공하는 경우)
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>minecraft.example.com    CNAME  xx-xx.craft.playit.gg
+</code></pre></div>
+<p>플레이어 접속 주소: <code>minecraft.example.com</code></p>
+</div>
+<div class="tabbed-block">
+<p>비표준 포트를 지정하거나 서브도메인을 추가할 때 SRV 레코드를 사용합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>_minecraft._tcp.mc.example.com    SRV    0 5 &lt;port&gt; xx-xx.craft.playit.gg
+</code></pre></div>
+<p>플레이어 접속 주소: <code>mc.example.com</code></p>
+<div class="admonition info">
+<p class="admonition-title">SRV 레코드 필드</p>
+<table>
+<thead>
+<tr>
+<th>필드</th>
+<th>값</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Service</td>
+<td><code>_minecraft</code></td>
+<td>서비스 식별자</td>
+</tr>
+<tr>
+<td>Protocol</td>
+<td><code>_tcp</code></td>
+<td>Minecraft는 TCP 사용</td>
+</tr>
+<tr>
+<td>Priority</td>
+<td><code>0</code></td>
+<td>낮은 값이 우선</td>
+</tr>
+<tr>
+<td>Weight</td>
+<td><code>5</code></td>
+<td>로드 밸런싱 가중치</td>
+</tr>
+<tr>
+<td>Port</td>
+<td><code>&lt;port&gt;</code></td>
+<td>playit.gg가 할당한 포트</td>
+</tr>
+<tr>
+<td>Target</td>
+<td><code>xx-xx.craft.playit.gg</code></td>
+<td>playit.gg 터널 도메인</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<h3 id="acname-vs-srv-비교">A/CNAME vs SRV 비교<a class="headerlink" href="#acname-vs-srv-비교" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>기능</th>
+<th>A/CNAME</th>
+<th>SRV</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>설정 난이도</td>
+<td>간단</td>
+<td>보통</td>
+</tr>
+<tr>
+<td>커스텀 포트</td>
+<td>불가 (25565 고정)</td>
+<td>가능</td>
+</tr>
+<tr>
+<td>서브도메인 지원</td>
+<td>직접 지정</td>
+<td>서비스 레코드 경유</td>
+</tr>
+<tr>
+<td>클라이언트 호환성</td>
+<td>모든 클라이언트</td>
+<td>대부분 (일부 구형 런처 미지원)</td>
+</tr>
+<tr>
+<td>TTL 전파</td>
+<td>빠름</td>
+<td>느릴 수 있음</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mc-router-라벨-업데이트">mc-router 라벨 업데이트<a class="headerlink" href="#mc-router-라벨-업데이트" title="Permanent link">&para;</a></h3>
+<p>커스텀 도메인을 설정한 후, 서버의 mc-router.host 라벨을 업데이트합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nt">labels</span><span class="p">:</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">mc-router.host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;myserver.192.168.1.100.nip.io,minecraft.example.com&quot;</span>
+</code></pre></div>
+<h2 id="playit-agent-관리">playit-agent 관리<a class="headerlink" href="#playit-agent-관리" title="Permanent link">&para;</a></h2>
+<h3 id="cli-명령어">CLI 명령어<a class="headerlink" href="#cli-명령어" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>명령어</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mcctl playit start</code></td>
+<td>playit-agent 컨테이너 시작</td>
+</tr>
+<tr>
+<td><code>mcctl playit stop</code></td>
+<td>playit-agent 컨테이너 중지</td>
+</tr>
+<tr>
+<td><code>mcctl playit status</code></td>
+<td>에이전트 상태 및 등록된 서버 확인</td>
+</tr>
+<tr>
+<td><code>mcctl playit setup</code></td>
+<td>SECRET_KEY 설정 또는 재설정</td>
+</tr>
+</tbody>
+</table>
+<h3 id="상태-확인">상태 확인<a class="headerlink" href="#상태-확인" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>status
+</code></pre></div>
+<p>등록된 서버가 있는 경우의 출력:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>=== playit.gg Agent Status ===
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>  Agent:      running
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>  SECRET_KEY: configured
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>  Uptime:     2d 5h 30m
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>REGISTERED SERVERS
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>  SERVER              EXTERNAL DOMAIN
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>  ------              ---------------
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>  myserver            xx-xx.craft.playit.gg
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>  creative            yy-yy.craft.playit.gg
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>  Dashboard: https://playit.gg/account/tunnels
+</code></pre></div>
+<h3 id="json-출력">JSON 출력<a class="headerlink" href="#json-출력" title="Permanent link">&para;</a></h3>
+<p>스크립팅 및 자동화용:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>status<span class="w"> </span>--json
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">{</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="nt">&quot;agentStatus&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;running&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span><span class="nt">&quot;agentRunning&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span><span class="nt">&quot;secretKeyConfigured&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">  </span><span class="nt">&quot;uptime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2d 5h 30m&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="w">  </span><span class="nt">&quot;servers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">      </span><span class="nt">&quot;serverName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;myserver&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="w">      </span><span class="nt">&quot;playitDomain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;xx-xx.craft.playit.gg&quot;</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="p">}</span>
+</code></pre></div>
+<h2 id="web-console-관리">Web Console 관리<a class="headerlink" href="#web-console-관리" title="Permanent link">&para;</a></h2>
+<p>Management Console을 설정한 경우, 웹 인터페이스에서 playit.gg를 모니터링하고 제어할 수 있습니다.</p>
+<h3 id="대시보드">대시보드<a class="headerlink" href="#대시보드" title="Permanent link">&para;</a></h3>
+<p>메인 대시보드에 다른 플랫폼 정보와 함께 playit.gg 상태가 표시됩니다. <strong>PlayitSummaryCard</strong>에서 다음을 확인할 수 있습니다:</p>
+<ul>
+<li>에이전트 실행/중지 상태</li>
+<li>playit.gg 도메인이 설정된 서버 수</li>
+<li>playit.gg 대시보드 바로가기 링크</li>
+</ul>
+<h3 id="서버-상세-페이지">서버 상세 페이지<a class="headerlink" href="#서버-상세-페이지" title="Permanent link">&para;</a></h3>
+<p>각 서버의 상세 페이지에 <strong>ConnectionInfoCard</strong>가 포함되어 있어 다음을 확인할 수 있습니다:</p>
+<ul>
+<li>LAN 접속 주소 (nip.io/mDNS)</li>
+<li>외부 접속 주소 (playit.gg 도메인, 설정된 경우)</li>
+<li>접속 상태 표시</li>
+</ul>
+<h3 id="라우팅-페이지">라우팅 페이지<a class="headerlink" href="#라우팅-페이지" title="Permanent link">&para;</a></h3>
+<p>라우팅 페이지에서 <strong>PlayitSection</strong>으로 다음을 확인할 수 있습니다:</p>
+<ul>
+<li>에이전트 상태 및 가동 시간</li>
+<li>모든 등록된 서버와 외부 도메인</li>
+<li>playit-agent 시작/중지 제어</li>
+</ul>
+<h3 id="api-엔드포인트">API 엔드포인트<a class="headerlink" href="#api-엔드포인트" title="Permanent link">&para;</a></h3>
+<p>Management Console API에서 제공하는 playit.gg 엔드포인트:</p>
+<table>
+<thead>
+<tr>
+<th>메서드</th>
+<th>엔드포인트</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/playit/status</code></td>
+<td>에이전트 상태 및 서버 도메인 조회</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/playit/start</code></td>
+<td>playit-agent 시작</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/playit/stop</code></td>
+<td>playit-agent 중지</td>
+</tr>
+</tbody>
+</table>
+<h2 id="문제-해결">문제 해결<a class="headerlink" href="#문제-해결" title="Permanent link">&para;</a></h2>
+<h3 id="에이전트가-시작되지-않음">에이전트가 시작되지 않음<a class="headerlink" href="#에이전트가-시작되지-않음" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>SECRET_KEY 설정 확인:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>status
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># SECRET_KEY가 &quot;configured&quot;로 표시되어야 합니다</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Docker 실행 확인:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>docker<span class="w"> </span>ps
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>에이전트 로그 확인:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>playit-agent
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>필요시 재설정:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>setup
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="외부-플레이어가-접속할-수-없음">외부 플레이어가 접속할 수 없음<a class="headerlink" href="#외부-플레이어가-접속할-수-없음" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>에이전트 실행 확인:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>status
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="c1"># Agent가 &quot;running&quot;으로 표시되어야 합니다</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>playit.gg 대시보드에서 터널 확인:</strong></p>
+</li>
+<li><a href="https://playit.gg/account/tunnels">https://playit.gg/account/tunnels</a> 방문</li>
+<li>
+<p><code>localhost:25565</code>를 가리키는 Minecraft Java 터널이 있는지 확인</p>
+</li>
+<li>
+<p><strong>mc-router.host 라벨에 playit 도메인이 포함되어 있는지 확인:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>docker<span class="w"> </span>inspect<span class="w"> </span>mc-myserver<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>mc-router.host
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="c1"># playit.gg 도메인이 포함되어 있어야 합니다</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>LAN 접속을 먼저 테스트:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># LAN 접속은 되는데 외부 접속이 안 되면 터널 문제입니다</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>mcctl<span class="w"> </span>status<span class="w"> </span>myserver
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>mc-router 로그 확인:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>router<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>playit
+</code></pre></div></p>
+</li>
+</ol>
+<h3 id="접속-시간-초과">접속 시간 초과<a class="headerlink" href="#접속-시간-초과" title="Permanent link">&para;</a></h3>
+<ul>
+<li>playit.gg 에이전트는 시작 후 터널을 설정하는 데 몇 초가 필요합니다</li>
+<li><code>mcctl playit start</code> 후 10-15초 정도 기다린 후 테스트합니다</li>
+<li>호스트 머신의 인터넷 연결을 확인합니다</li>
+</ul>
+<h3 id="도메인이-해석되지-않음">도메인이 해석되지 않음<a class="headerlink" href="#도메인이-해석되지-않음" title="Permanent link">&para;</a></h3>
+<ul>
+<li>playit.gg 대시보드에서 터널이 활성 상태인지 확인합니다</li>
+<li>커스텀 도메인의 경우 DNS 레코드가 전파되었는지 확인합니다:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>nslookup<span class="w"> </span>minecraft.example.com
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="c1"># 또는</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>dig<span class="w"> </span>minecraft.example.com
+</code></pre></div></li>
+<li>새 레코드의 DNS 전파에는 최대 48시간이 소요될 수 있습니다</li>
+</ul>
+<h2 id="보안-모범-사례">보안 모범 사례<a class="headerlink" href="#보안-모범-사례" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">보안 고려사항</p>
+<p>서버를 인터넷에 공개하면 잠재적인 악용에 노출됩니다. 안전을 위해 다음 사항을 준수하세요.</p>
+</div>
+<h3 id="화이트리스트-활성화">화이트리스트 활성화<a class="headerlink" href="#화이트리스트-활성화" title="Permanent link">&para;</a></h3>
+<p>서버에 접속할 수 있는 사람을 제한합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>on
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>TrustedPlayer1
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>TrustedPlayer2
+</code></pre></div>
+<h3 id="온라인-모드-유지">온라인 모드 유지<a class="headerlink" href="#온라인-모드-유지" title="Permanent link">&para;</a></h3>
+<p>온라인 모드는 Mojang 서버를 통해 플레이어 신원을 확인합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>ONLINE_MODE<span class="w"> </span><span class="nb">true</span>
+</code></pre></div>
+<div class="admonition danger">
+<p class="admonition-title">공개 서버에서 온라인 모드를 비활성화하지 마세요</p>
+<p>온라인 모드를 비활성화하면(<code>ONLINE_MODE=false</code>) 누구든지 아무 사용자 이름으로 접속할 수 있으며, 관리자를 사칭할 수 있습니다.</p>
+</div>
+<h3 id="기본-rcon-비밀번호-변경">기본 RCON 비밀번호 변경<a class="headerlink" href="#기본-rcon-비밀번호-변경" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># ~/minecraft-servers/.env에서</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="nv">RCON_PASSWORD</span><span class="o">=</span>매우-안전한-랜덤-비밀번호
+</code></pre></div>
+<h3 id="서버-활동-모니터링">서버 활동 모니터링<a class="headerlink" href="#서버-활동-모니터링" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="c1"># 온라인 플레이어 확인</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>online<span class="w"> </span>myserver
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># 의심스러운 활동을 위한 서버 로그 확인</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver<span class="w"> </span>-f
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="c1"># 감사 로그 확인</span>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>mcctl<span class="w"> </span>audit<span class="w"> </span>list<span class="w"> </span>--recent
+</code></pre></div>
+<h3 id="secret_key-보호">SECRET_KEY 보호<a class="headerlink" href="#secret_key-보호" title="Permanent link">&para;</a></h3>
+<ul>
+<li>playit.gg SECRET_KEY를 공개적으로 공유하지 마세요</li>
+<li>키는 기본적으로 gitignore되는 <code>~/minecraft-servers/.env</code>에 저장됩니다</li>
+<li>노출된 경우, playit.gg 대시보드에서 에이전트를 취소하고 새로 생성하세요</li>
+</ul>
+<h2 id="제한-사항">제한 사항<a class="headerlink" href="#제한-사항" title="Permanent link">&para;</a></h2>
+<h3 id="무료-티어-제한">무료 티어 제한<a class="headerlink" href="#무료-티어-제한" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>제한 사항</th>
+<th>세부 내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>도메인 이름</td>
+<td>자동 할당 (예: <code>xx-xx.craft.playit.gg</code>)</td>
+</tr>
+<tr>
+<td>리전 선택</td>
+<td>자동 (가장 가까운 리전)</td>
+</tr>
+<tr>
+<td>커스텀 도메인</td>
+<td>미지원</td>
+</tr>
+<tr>
+<td>우선 라우팅</td>
+<td>표준</td>
+</tr>
+</tbody>
+</table>
+<h3 id="기술적-제한">기술적 제한<a class="headerlink" href="#기술적-제한" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>제한 사항</th>
+<th>세부 내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>지연 시간</td>
+<td>리전 및 거리에 따라 ~10-50ms 추가</td>
+</tr>
+<tr>
+<td>프로토콜</td>
+<td>TCP만 지원 (Minecraft에 충분)</td>
+</tr>
+<tr>
+<td>Bedrock Edition</td>
+<td>이 설정에서는 미지원 (Java Edition 전용)</td>
+</tr>
+<tr>
+<td>network_mode</td>
+<td>playit-agent는 <code>host</code> 모드 사용 (localhost 포워딩에 필요)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="다른-솔루션과-비교">다른 솔루션과 비교<a class="headerlink" href="#다른-솔루션과-비교" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>솔루션</th>
+<th>포트 포워딩</th>
+<th>설정 난이도</th>
+<th>지연 시간</th>
+<th>비용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>playit.gg</strong></td>
+<td>불필요</td>
+<td>쉬움</td>
+<td>낮음-보통</td>
+<td>무료</td>
+</tr>
+<tr>
+<td><strong>Tailscale/ZeroTier</strong></td>
+<td>불필요</td>
+<td>보통</td>
+<td>낮음</td>
+<td>무료 (제한적)</td>
+</tr>
+<tr>
+<td><strong>포트 포워딩</strong></td>
+<td>필요</td>
+<td>보통</td>
+<td>없음</td>
+<td>무료</td>
+</tr>
+<tr>
+<td><strong>클라우드 호스팅</strong></td>
+<td>불필요</td>
+<td>복잡</td>
+<td>다양</td>
+<td>유료</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">playit.gg vs VPN Mesh 사용 시기</p>
+<ul>
+<li><strong>playit.gg</strong>: 도메인을 가진 누구나 접속할 수 있는 공개 또는 반공개 서버에 적합</li>
+<li><strong>Tailscale/ZeroTier</strong>: 고정된 신뢰할 수 있는 친구 그룹의 비공개 서버에 적합 (<a href="../networking/#vpn-mesh-네트워크">네트워킹 가이드</a> 참조)</li>
+</ul>
+</div>
+<h2 id="docker-설정-참조">Docker 설정 참조<a class="headerlink" href="#docker-설정-참조" title="Permanent link">&para;</a></h2>
+<p>playit-agent는 플랫폼의 <code>docker-compose.yml</code>에 Docker Compose 프로필로 정의되어 있습니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">  </span><span class="nt">playit</span><span class="p">:</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/playit-cloud/playit-agent:0.16</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">playit-agent</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="w">    </span><span class="nt">network_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">host</span>
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SECRET_KEY=${PLAYIT_SECRET_KEY:?PLAYIT_SECRET_KEY must be set in .env}</span>
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
+<a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a><span class="w">    </span><span class="nt">profiles</span><span class="p">:</span>
+<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">playit</span>
+</code></pre></div>
+<p>주요 사항:</p>
+<ul>
+<li><strong><code>network_mode: host</code></strong>: mc-router가 수신 대기하는 <code>localhost:25565</code>로 에이전트가 포워딩하기 위해 필요합니다</li>
+<li><strong><code>profiles: [playit]</code></strong>: 에이전트는 명시적으로 활성화할 때만 시작됩니다 (<code>mcctl playit start</code> 또는 <code>docker compose --profile playit up -d</code>)</li>
+<li><strong><code>image: ghcr.io/playit-cloud/playit-agent:0.16</code></strong>: 안정성을 위해 버전 0.16으로 고정되어 있습니다</li>
+</ul>
+<h3 id="환경-변수">환경 변수<a class="headerlink" href="#환경-변수" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>변수</th>
+<th>필수</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PLAYIT_SECRET_KEY</code></td>
+<td>예 (활성화 시)</td>
+<td>playit.gg의 에이전트 인증 키</td>
+</tr>
+</tbody>
+</table>
+<h2 id="참고-문서">참고 문서<a class="headerlink" href="#참고-문서" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../networking/">네트워킹 가이드</a></strong> - nip.io, mDNS, VPN mesh를 이용한 LAN 네트워킹</li>
+<li><strong><a href="../../getting-started/quickstart/">빠른 시작</a></strong> - 기본 서버 설정</li>
+<li><strong><a href="../../cli/commands/">CLI 명령어</a></strong> - 전체 명령어 참조</li>
+<li><strong><a href="../../console/">Management Console</a></strong> - 웹 기반 서버 관리</li>
+<li><strong><a href="https://playit.gg/docs">playit.gg 문서</a></strong> - playit.gg 공식 문서</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  맨위로
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 smallmiro
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/smallmiro/minecraft-server-manager" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
