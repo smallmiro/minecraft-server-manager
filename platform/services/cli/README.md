@@ -77,6 +77,9 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.3.3 (2026-02-12)
+- **fix(shared)**: Pass `cwd` to docker compose in playit start/stop (#339, #340)
+
 ### v2.3.2 (2026-02-12)
 - **fix(shared)**: Check `.mcctl.json` for playit enabled state instead of container existence (#337, #338)
 
