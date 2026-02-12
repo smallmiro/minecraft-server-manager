@@ -77,6 +77,9 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.3.4 (2026-02-12)
+- **fix(cli)**: Add playit service to docker-compose.yml during setup (#341, #342)
+
 ### v2.3.3 (2026-02-12)
 - **fix(shared)**: Pass `cwd` to docker compose in playit start/stop (#339, #340)
 
