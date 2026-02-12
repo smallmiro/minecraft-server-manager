@@ -981,6 +981,18 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
     }
   }
 
+  // Check if playit is enabled in .mcctl.json config
+  const configPath = join(platformRoot, '.mcctl.json');
+  let playitEnabled = false;
+  if (existsSync(configPath)) {
+    try {
+      const config = JSON.parse(readFileSync(configPath, 'utf-8'));
+      playitEnabled = config.playitEnabled === true;
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
   // Get uptime if running
   let uptime: string | undefined;
   let uptimeSeconds: number | undefined;
@@ -994,7 +1006,7 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
   }
 
   return {
-    enabled: containerExists(containerName) && secretKeyConfigured,
+    enabled: playitEnabled || secretKeyConfigured,
     agentRunning,
     secretKeyConfigured,
     containerStatus: status,
