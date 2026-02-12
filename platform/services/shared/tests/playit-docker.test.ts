@@ -1,5 +1,7 @@
 import { test, describe, mock, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
+import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import type {
   PlayitAgentStatus,
   PlayitServerInfo,
@@ -114,6 +116,78 @@ describe('Docker helper functions for playit.gg', () => {
     test('should return null if PLAYIT_DOMAIN is not set', () => {
       const domain = dockerHelpers.getServerPlayitDomain('nonexistent-server');
       assert.strictEqual(domain, null);
+    });
+  });
+
+  describe('setServerPlayitDomain', () => {
+    const testServersDir = join(process.cwd(), 'tests', '.tmp-playit-domain');
+
+    beforeEach(() => {
+      if (existsSync(testServersDir)) {
+        rmSync(testServersDir, { recursive: true, force: true });
+      }
+      mkdirSync(join(testServersDir, 'survival'), { recursive: true });
+    });
+
+    afterEach(() => {
+      if (existsSync(testServersDir)) {
+        rmSync(testServersDir, { recursive: true, force: true });
+      }
+    });
+
+    test('should add PLAYIT_DOMAIN to config.env when not present', () => {
+      const configPath = join(testServersDir, 'survival', 'config.env');
+      writeFileSync(configPath, 'TYPE=PAPER\nVERSION=1.21.1\nMEMORY=4G\n', 'utf-8');
+
+      dockerHelpers.setServerPlayitDomain('survival', 'test.example.playit.gg', testServersDir);
+
+      const content = readFileSync(configPath, 'utf-8');
+      assert.ok(content.includes('PLAYIT_DOMAIN=test.example.playit.gg'));
+      // Original content preserved
+      assert.ok(content.includes('TYPE=PAPER'));
+      assert.ok(content.includes('VERSION=1.21.1'));
+    });
+
+    test('should update existing PLAYIT_DOMAIN in config.env', () => {
+      const configPath = join(testServersDir, 'survival', 'config.env');
+      writeFileSync(configPath, 'TYPE=PAPER\nPLAYIT_DOMAIN=old.domain.com\nMEMORY=4G\n', 'utf-8');
+
+      dockerHelpers.setServerPlayitDomain('survival', 'new.domain.com', testServersDir);
+
+      const content = readFileSync(configPath, 'utf-8');
+      assert.ok(content.includes('PLAYIT_DOMAIN=new.domain.com'));
+      assert.ok(!content.includes('old.domain.com'));
+      // Only one PLAYIT_DOMAIN line
+      const matches = content.match(/PLAYIT_DOMAIN/g);
+      assert.strictEqual(matches?.length, 1);
+    });
+
+    test('should remove PLAYIT_DOMAIN when domain is null', () => {
+      const configPath = join(testServersDir, 'survival', 'config.env');
+      writeFileSync(configPath, 'TYPE=PAPER\n\n# playit.gg External Domain\nPLAYIT_DOMAIN=test.domain.com\nMEMORY=4G\n', 'utf-8');
+
+      dockerHelpers.setServerPlayitDomain('survival', null, testServersDir);
+
+      const content = readFileSync(configPath, 'utf-8');
+      assert.ok(!content.includes('PLAYIT_DOMAIN'));
+      assert.ok(content.includes('TYPE=PAPER'));
+      assert.ok(content.includes('MEMORY=4G'));
+    });
+
+    test('should throw when server config.env does not exist', () => {
+      assert.throws(() => {
+        dockerHelpers.setServerPlayitDomain('nonexistent', 'test.domain.com', testServersDir);
+      });
+    });
+
+    test('should be readable by getServerPlayitDomain after setting', () => {
+      const configPath = join(testServersDir, 'survival', 'config.env');
+      writeFileSync(configPath, 'TYPE=PAPER\n', 'utf-8');
+
+      dockerHelpers.setServerPlayitDomain('survival', 'roundtrip.example.com', testServersDir);
+
+      const domain = dockerHelpers.getServerPlayitDomain('survival', testServersDir);
+      assert.strictEqual(domain, 'roundtrip.example.com');
     });
   });
 });

@@ -1,5 +1,5 @@
 import { spawn, execSync, spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, statSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, statSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import type {
@@ -1075,4 +1075,35 @@ export function getServerPlayitDomain(serverName: string, serversDir?: string): 
 
   // Return null if not set or empty
   return domain && domain.trim() ? domain.trim() : null;
+}
+
+/**
+ * Set or remove a server's playit.gg domain in config.env
+ * @param domain - Domain string to set, or null to remove
+ * @throws Error if config.env does not exist
+ */
+export function setServerPlayitDomain(serverName: string, domain: string | null, serversDir?: string): void {
+  const dir = serversDir ?? getServersDir();
+  const configPath = join(dir, serverName, 'config.env');
+
+  if (!existsSync(configPath)) {
+    throw new Error(`config.env not found for server '${serverName}': ${configPath}`);
+  }
+
+  let content = readFileSync(configPath, 'utf-8');
+
+  if (domain === null) {
+    // Remove PLAYIT_DOMAIN line and its comment header
+    content = content.replace(/\n?# playit\.gg External Domain\n/g, '\n');
+    content = content.replace(/^PLAYIT_DOMAIN=.*\n?/m, '');
+  } else if (content.match(/^PLAYIT_DOMAIN=/m)) {
+    // Update existing
+    content = content.replace(/^PLAYIT_DOMAIN=.*$/m, `PLAYIT_DOMAIN=${domain}`);
+  } else {
+    // Append new
+    const suffix = content.endsWith('\n') ? '' : '\n';
+    content += `${suffix}\n# playit.gg External Domain\nPLAYIT_DOMAIN=${domain}\n`;
+  }
+
+  writeFileSync(configPath, content, 'utf-8');
 }

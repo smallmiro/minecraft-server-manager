@@ -357,7 +357,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -945,12 +945,14 @@ async function main(): Promise<void> {
       }
 
       case 'playit': {
-        // playit command: playit <start|stop|status|setup>
+        // playit command: playit <start|stop|status|setup|domain>
         // subCommand = action
         exitCode = await playitCommand({
           root: rootDir,
-          subCommand: subCommand as 'start' | 'stop' | 'status' | 'setup' | undefined,
+          subCommand: subCommand as 'start' | 'stop' | 'status' | 'setup' | 'domain' | undefined,
           json: flags['json'] === true,
+          domainArgs: positional,
+          remove: flags['remove'] === true,
         });
         break;
       }
