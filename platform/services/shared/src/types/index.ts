@@ -71,6 +71,7 @@ export interface EnvConfig {
   BACKUP_GITHUB_REPO?: string;
   BACKUP_GITHUB_BRANCH?: string;
   BACKUP_AUTO_ON_STOP?: boolean;
+  PLAYIT_SECRET_KEY?: string;
 }
 
 /**

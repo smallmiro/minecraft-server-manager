@@ -256,6 +256,45 @@ describe('init command - playit.gg setup', () => {
     });
   });
 
+  describe('reconfigure with missing .mcctl.json', () => {
+    it('should create default config from .env when .mcctl.json is missing', async () => {
+      const paths = new Paths(testRoot);
+
+      // Simulate initialized platform (docker-compose.yml exists) but NO .mcctl.json
+      mkdirSync(paths.root, { recursive: true });
+      const { writeFileSync } = await import('node:fs');
+      writeFileSync(join(paths.root, 'docker-compose.yml'), 'services: {}');
+      writeFileSync(join(paths.root, '.env'), [
+        'HOST_IP=192.168.1.100',
+        'DEFAULT_MEMORY=4G',
+        'TZ=Asia/Seoul',
+        'RCON_PASSWORD=changeme',
+        'DEFAULT_VERSION=1.20.4',
+      ].join('\n'));
+
+      // Mock multiselect to select nothing (just verify reconfigure loads)
+      vi.mocked(promptsModule.multiselect).mockResolvedValueOnce([]);
+      vi.mocked(promptsModule.isCancel).mockReturnValue(false);
+
+      const exitCode = await initCommand({
+        root: testRoot,
+        reconfigure: true,
+        skipValidation: true,
+        skipDocker: true,
+      });
+
+      expect(exitCode).toBe(0);
+
+      // Verify .mcctl.json was created with defaults
+      const configPath = join(paths.root, '.mcctl.json');
+      expect(existsSync(configPath)).toBe(true);
+
+      const config = JSON.parse(readFileSync(configPath, 'utf-8'));
+      expect(config.defaultType).toBe('PAPER');
+      expect(config.autoStart).toBe(true);
+    });
+  });
+
   describe('validation', () => {
     it('should validate SECRET_KEY is not empty', async () => {
       vi.mocked(promptsModule.multiselect).mockResolvedValueOnce(['192.168.1.100']);

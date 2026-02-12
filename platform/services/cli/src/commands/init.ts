@@ -367,11 +367,22 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
 
   // Load current settings
   const envConfig = config.loadEnv();
-  const mcctlConfig = config.load();
+  let mcctlConfig = config.load();
 
   if (!mcctlConfig) {
-    log.error('Configuration file not found');
-    return 1;
+    // Create default config from .env values for platforms initialized before v2.3.0
+    log.warn('Configuration file (.mcctl.json) not found, creating with defaults...');
+    mcctlConfig = {
+      version: '2.3.0',
+      initialized: new Date().toISOString(),
+      dataDir: paths.root,
+      defaultType: 'PAPER' as const,
+      defaultVersion: envConfig.DEFAULT_VERSION || '1.21.1',
+      autoStart: true,
+      avahiEnabled: false,
+      playitEnabled: !!envConfig.PLAYIT_SECRET_KEY,
+    };
+    config.save(mcctlConfig);
   }
 
   // Display current settings
