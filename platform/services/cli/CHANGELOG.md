@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-02-12
+
+### Added
+- **playit.gg External Access** - Allow external players to join without port forwarding using [playit.gg](https://playit.gg) tunneling (Milestone 9)
+  - **Domain Model & Docker Helpers** - `PlayitConfig` type and Docker Compose profile support in shared package (#291, #328)
+  - **Docker Compose Templates** - playit-agent service with `network_mode: host` and `profiles: [playit]` (#270, #327)
+  - **CLI `mcctl init --playit-key`** - Interactive playit.gg setup during platform initialization (#271, #329)
+  - **CLI `mcctl create --playit-domain`** - Register playit.gg domain when creating servers (#272, #330)
+  - **CLI `mcctl playit` subcommand** - start/stop/status/setup commands for playit-agent management (#273, #331)
+  - **API Endpoints** - `GET /api/playit/status`, `POST /api/playit/start`, `POST /api/playit/stop` (#292, #332)
+  - **Console UI** - PlayitSummaryCard on dashboard, ConnectionInfoCard with external domain, PlayitSection on routing page (#274, #333)
+  - **Documentation** - Comprehensive playit.gg integration guide in English and Korean (#275, #334)
+- **Comprehensive API Audit Logging** - Add audit logging to all mutating API routes (#324, #325)
+  - Player management routes (whitelist, ban, op, kick)
+  - Server config and hostname routes
+  - World management routes
+  - New audit action types for config and hostname changes
+
+### Fixed
+- **Console Whitelist Button Sizes** - Unify Add and Bulk button sizes in WhitelistManager (#322, #323)
+
 ## [2.2.0] - 2026-02-11
 
 ### Added

@@ -77,26 +77,23 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.3.0 (2026-02-12) - External Play (playit.gg)
+- **feat(shared)**: Add playit.gg domain model and Docker helpers (#291, #328)
+- **feat**: Add playit.gg tunnel agent to docker-compose templates (#270, #327)
+- **feat(cli)**: Add playit.gg setup option to `mcctl init` (#271, #329)
+- **feat(cli)**: Add playit.gg domain registration to `mcctl create --playit-domain` (#272, #330)
+- **feat(cli)**: Add `mcctl playit` subcommand - start/stop/status/setup (#273, #331)
+- **feat(api)**: Add playit.gg status and control API endpoints (#292, #332)
+- **feat(console)**: Add playit.gg external access UI - PlayitSummaryCard, ConnectionInfoCard, PlayitSection (#274, #333)
+- **docs**: Add playit.gg integration guide in English and Korean (#275, #334)
+- **feat(api)**: Add comprehensive audit logging to all mutating routes (#324, #325)
+- **fix(console)**: Unify Add and Bulk button sizes in WhitelistManager (#322, #323)
+
 ### v2.2.0 (2026-02-11)
 - **feat(console)**: Whitelist Console UI - toggle ON/OFF, bulk player add, search/filter (#283, #321)
 - **feat**: Enable whitelist by default on `mcctl create` (#282, #320)
 - **feat(console)**: Hostname/domain management in server Options tab (#314, #315)
 - **fix(console)**: Fix 23 pre-existing failing unit tests (#296, #316)
-- **fix(console)**: Rename "Audit Log" to "Audit" in navigation menu
-- **docs**: Update upstream docs for itzg 2026.2.0 and mc-router v1.39.1 (#317, #318)
-
-### v2.1.3 (2026-02-09)
-- **fix(api)**: Enrich whitelist RCON response with UUIDs from whitelist.json (#312, #313)
-
-### v2.1.2 (2026-02-09)
-- **feat(cli)**: Add loading indicator to mcctl update command (#306, #307)
-- **fix(console)**: Move admin/users page to (main) route group for GNB/Footer layout (#308, #309)
-- **feat(console)**: Apply responsive grid layout to Settings page (#310, #311)
-
-### v2.1.1 (2026-02-09)
-- **fix(console)**: Remove GNB admin menu, rename UserMenu "Admin Panel" to "Users" (#302, #304)
-- **fix(api)**: Return UUID in whitelist/ban API responses (#303, #305)
-- **fix(api)**: Update PlayerFileService test assertions for object return types
 
 ### v2.1.0 (2026-02-09) - Console Feature Completion
 - **feat**: Modrinth modpack CLI/API support - search, create, manage modpack servers (#244, #245)
@@ -104,7 +101,9 @@ mcctl logs myserver
 - **feat**: OP Level support across all layers - domain model, CLI, API, Console (#284, #285, #286, #287)
 - **fix**: Console sign-out 403 bug with LAN IP addresses (#300, #301)
 - **feat**: Offline player management support (#288, #289)
-- **feat**: User profile settings page with password change (#265, #266)
+
+### v2.0.0 (2026-02-09)
+- Major version bump - Management Console (Web UI + REST API) feature complete
 
 ### v1.15.5 (2026-02-08)
 - **fix(cli)**: Fix Better Auth password hashing - use hex string salt for compatibility

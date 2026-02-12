@@ -34,6 +34,7 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **GitHub Backup**: Automatic world backup to private GitHub repositories
 - **Audit Logs**: Comprehensive activity tracking with SQLite storage, auto-cleanup, and web UI
 - **World Management UI**: Web-based world management with reset, assignment, and real-time status
+- **External Access (playit.gg)**: Allow external players to join without port forwarding via playit.gg tunneling
 
 ## Quick Start
 
@@ -79,7 +80,27 @@ With avahi/Bonjour, connect directly:
 
 See [mDNS Setup Guide](#mdns-setup-guide) for detailed installation instructions.
 
-**Option C: VPN Mesh (Remote Access)**
+**Option C: playit.gg (External Access - Recommended for Public)**
+
+Allow anyone on the internet to join without port forwarding:
+
+```bash
+# Set up playit.gg tunneling
+mcctl playit setup
+# Enter your SECRET_KEY from https://playit.gg/account/agents/new-docker
+
+# Start the tunnel agent
+mcctl playit start
+
+# Create server with playit domain
+mcctl create myserver -t PAPER -v 1.21.1 --playit-domain xx-xx.craft.playit.gg
+```
+
+Friends connect via: `xx-xx.craft.playit.gg`
+
+See [External Access Guide](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/external-access/) for detailed setup instructions.
+
+**Option D: VPN Mesh (Remote Access)**
 
 For remote access without port forwarding, use [Tailscale](https://tailscale.com/) or [ZeroTier](https://zerotier.com/):
 
@@ -208,6 +229,7 @@ See [CLI Commands Reference](docs/cli/commands.md) for complete documentation.
 | Document | Description |
 |----------|-------------|
 | [Networking](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/networking/) | nip.io, mDNS, VPN mesh |
+| [External Access (playit.gg)](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/external-access/) | Allow external players without port forwarding |
 | [Backup](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/backup/) | GitHub backup setup |
 | [Management Console](https://minecraft-server-manager.readthedocs.io/en/latest/console/) | Web Console & REST API |
 
@@ -853,6 +875,20 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.3.0] - 2026-02-12 (External Play - playit.gg)
+
+**Added:**
+- **playit.gg External Access** - Allow external players to join without port forwarding (#270-#275, #291-#292)
+  - Domain model, Docker Compose templates, CLI commands (`mcctl playit start/stop/status/setup`)
+  - `mcctl init --playit-key` and `mcctl create --playit-domain` options
+  - REST API endpoints for playit.gg management
+  - Web Console UI: PlayitSummaryCard, ConnectionInfoCard, PlayitSection
+  - Comprehensive documentation (English/Korean)
+- **Comprehensive API Audit Logging** - Add audit logging to all mutating API routes (#324, #325)
+
+**Fixed:**
+- Unify Add and Bulk button sizes in WhitelistManager (#322, #323)
+
 ### [2.2.0] - 2026-02-11
 
 **Added:**
@@ -860,38 +896,14 @@ cat /etc/avahi/hosts
 - **Whitelist Default on Create** - Enable whitelist by default on `mcctl create` (#282, #320)
 - **Hostname/Domain Management** - Server hostname management in Options tab (#314, #315)
 
-**Fixed:**
-- Fix 23 pre-existing failing unit tests (#296, #316)
-- Rename "Audit Log" to "Audit" in navigation menu
-
-### [2.1.3] - 2026-02-09
-
-**Fixed:**
-- Enrich whitelist RCON response with UUIDs from whitelist.json (#312, #313)
-
 ### [2.1.0] - 2026-02-09 (Console Feature Completion)
 
 **Added:**
 - **Modrinth Modpack CLI/API Support** - Full modpack server creation and management (#244, #245)
-- **Admin User Management Console UI** - Web-based admin user management with list, detail, and role management (#189)
-- **OP Level Support** - OP level management across domain model, CLI, API, and Console (#284, #285, #286, #287)
-- **Offline Player Management** - Support for managing players who are not currently online (#288, #289)
-- **User Profile Settings** - Password change functionality in user profile page (#265, #266)
+- **Admin User Management Console UI** - Web-based admin user management (#189)
+- **OP Level Support** - OP level management across domain model, CLI, API, and Console (#284-#287)
 
-**Fixed:**
-- **Console Sign-out 403 LAN IP Bug** - Fix sign-out failure on private network IPs (#300, #301)
-- **Service Isolation** - Isolate service node_modules into `.services/` directory (#262, #267)
-
-### [1.15.5] - 2026-02-08
-
-**Fixed:**
-- Fix Better Auth password hashing - use hex string salt for compatibility
-- Add `MCCTL_API_KEY` env var to mcctl-console PM2 config (#261)
-
-### [1.15.0] - 2026-02-08
-
-**Added:**
-- Console Auto-Install - `mcctl console init` auto-installs mcctl-console package if missing
+### [2.0.0] - 2026-02-09
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

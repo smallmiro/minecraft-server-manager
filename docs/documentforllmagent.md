@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.1.0
-> **Last Updated**: 2026-02-09
+> **Version**: 2.3.0
+> **Last Updated**: 2026-02-12
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -2596,6 +2596,33 @@ A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix kno
 ---
 
 ## 16. Version History
+
+### Version 2.3.0 (2026-02-12) - External Play (playit.gg)
+
+**Added:**
+- playit.gg external access integration - allow external players to join without port forwarding
+- `PlayitConfig` type and Docker Compose profile support in shared package (#291, #328)
+- playit-agent service in docker-compose templates with `network_mode: host` and `profiles: [playit]` (#270, #327)
+- `mcctl init --playit-key` for interactive playit.gg setup during platform initialization (#271, #329)
+- `mcctl create --playit-domain` for registering playit.gg domains when creating servers (#272, #330)
+- `mcctl playit` subcommand: start/stop/status/setup for playit-agent management (#273, #331)
+- REST API endpoints: `GET /api/playit/status`, `POST /api/playit/start`, `POST /api/playit/stop` (#292, #332)
+- Web Console UI: PlayitSummaryCard (dashboard), ConnectionInfoCard (server detail), PlayitSection (routing page) (#274, #333)
+- Comprehensive playit.gg integration guide in English and Korean (#275, #334)
+- Comprehensive audit logging for all mutating API routes (player, config, hostname, world routes) (#324, #325)
+
+**Fixed:**
+- Whitelist Add/Bulk button size inconsistency in WhitelistManager (#322, #323)
+
+### Version 2.2.0 (2026-02-11) - Whitelist Console UI
+
+**Added:**
+- Whitelist Console UI: toggle ON/OFF, bulk player add, search/filter (#283, #321)
+- Enable whitelist by default on `mcctl create` (#282, #320)
+- Hostname/Domain management in server Options tab (#314, #315)
+
+**Fixed:**
+- 23 pre-existing failing unit tests (#296, #316)
 
 ### Version 2.1.0 (2026-02-09) - Console Feature Completion
 
