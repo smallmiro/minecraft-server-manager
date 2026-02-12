@@ -875,6 +875,13 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.3.5] - 2026-02-12
+
+**Fixed:**
+- **Playit.gg Container Name** - Use correct container name `playit-agent` in status check (#345, #346)
+- **Console Playit Error Feedback** - Add error feedback for playit start/stop actions (#343)
+- **Console Playit Layout** - Improve playit section header and server domains display (#343, #344)
+
 ### [2.3.0] - 2026-02-12 (External Play - playit.gg)
 
 **Added:**

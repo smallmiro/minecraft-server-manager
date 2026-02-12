@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.5] - 2026-02-12
+
+### Fixed
+- **Playit.gg Container Name** - Use correct container name `playit-agent` in `getPlayitAgentStatus()` (#345, #346)
+  - Previously used incorrect container name when checking playit agent status
+  - Now correctly references the `playit-agent` container for status checks
+- **Console Playit Error Feedback** - Add error feedback for playit start/stop actions (#343)
+  - Previously, playit start/stop failures were silent in the web console
+  - Now displays error messages when playit operations fail
+- **Console Playit Layout** - Improve playit section header layout and server domains display (#343, #344)
+  - Better visual alignment of playit section headers
+  - Improved server domains display in playit configuration
+
 ## [2.3.4] - 2026-02-12
 
 ### Fixed

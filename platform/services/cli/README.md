@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.3.5 (2026-02-12)
+- **fix(shared)**: Use correct container name `playit-agent` in `getPlayitAgentStatus()` (#345, #346)
+- **fix(console)**: Add error feedback for playit start/stop actions (#343)
+- **fix(console)**: Improve playit section header layout and server domains display (#343, #344)
+
 ### v2.3.4 (2026-02-12)
 - **fix(cli)**: Add playit service to docker-compose.yml during setup (#341, #342)
 
