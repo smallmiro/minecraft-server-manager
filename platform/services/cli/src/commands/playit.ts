@@ -60,6 +60,42 @@ function updateSecretKey(paths: Paths, secretKey: string): void {
 }
 
 /**
+ * Ensure playit service exists in docker-compose.yml
+ */
+function ensurePlayitService(paths: Paths): void {
+  const composePath = join(paths.root, 'docker-compose.yml');
+  if (!existsSync(composePath)) return;
+
+  const content = readFileSync(composePath, 'utf-8');
+
+  // Check if playit service already defined
+  if (content.includes('playit-cloud/playit-agent')) return;
+
+  const playitService = `
+  # ===========================================================================
+  # External Access - playit.gg Tunnel Agent
+  # ===========================================================================
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.16
+    container_name: playit-agent
+    network_mode: host
+    environment:
+      - SECRET_KEY=\${PLAYIT_SECRET_KEY:?PLAYIT_SECRET_KEY must be set in .env}
+    restart: unless-stopped
+    profiles:
+      - playit
+`;
+
+  // Insert before 'networks:' section if it exists, otherwise append before end
+  if (content.includes('\nnetworks:')) {
+    const updated = content.replace('\nnetworks:', playitService + '\nnetworks:');
+    writeFileSync(composePath, updated, 'utf-8');
+  } else {
+    writeFileSync(composePath, content + playitService, 'utf-8');
+  }
+}
+
+/**
  * Update playitEnabled flag in .mcctl.json
  */
 function updatePlayitEnabled(paths: Paths, enabled: boolean): void {
@@ -103,9 +139,12 @@ async function handleStart(paths: Paths): Promise<number> {
   }
 
   // Start the agent
-  const success = await startPlayitAgent();
-  if (!success) {
+  const result = await startPlayitAgent();
+  if (!result.success) {
     log.error('Failed to start playit-agent');
+    if (result.error) {
+      console.log(`  ${colors.dim(result.error)}`);
+    }
     return 1;
   }
 
@@ -222,6 +261,9 @@ async function handleSetup(paths: Paths): Promise<number> {
 
   // Update .mcctl.json to enable playit
   updatePlayitEnabled(paths, true);
+
+  // Ensure playit service exists in docker-compose.yml
+  ensurePlayitService(paths);
 
   p.outro(colors.green('playit.gg configuration updated successfully'));
 

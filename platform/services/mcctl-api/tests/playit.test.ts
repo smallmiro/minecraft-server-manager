@@ -184,7 +184,7 @@ describe('Playit Routes', () => {
     it('should start playit agent successfully', async () => {
       const { startPlayitAgent } = await import('@minecraft-docker/shared');
 
-      vi.mocked(startPlayitAgent).mockResolvedValue(true);
+      vi.mocked(startPlayitAgent).mockResolvedValue({ success: true });
 
       const response = await app.inject({
         method: 'POST',
@@ -204,7 +204,7 @@ describe('Playit Routes', () => {
     it('should handle start failure', async () => {
       const { startPlayitAgent } = await import('@minecraft-docker/shared');
 
-      vi.mocked(startPlayitAgent).mockResolvedValue(false);
+      vi.mocked(startPlayitAgent).mockResolvedValue({ success: false, error: 'compose failed' });
 
       const response = await app.inject({
         method: 'POST',
@@ -215,7 +215,7 @@ describe('Playit Routes', () => {
       const body = JSON.parse(response.body);
 
       expect(body.error).toBe('InternalServerError');
-      expect(body.message).toContain('Failed to start');
+      expect(body.message).toBe('compose failed');
     });
 
     it('should handle errors gracefully', async () => {
