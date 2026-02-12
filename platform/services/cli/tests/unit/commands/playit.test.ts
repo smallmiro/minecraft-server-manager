@@ -88,7 +88,7 @@ describe('mcctl playit subcommand', () => {
         containerStatus: 'exited',
       });
 
-      vi.mocked(shared.startPlayitAgent).mockResolvedValueOnce(true);
+      vi.mocked(shared.startPlayitAgent).mockResolvedValueOnce({ success: true });
 
       const exitCode = await playitCommand({
         root: testRoot,
@@ -149,7 +149,7 @@ describe('mcctl playit subcommand', () => {
         containerStatus: 'not_found', // Container never created
       });
 
-      vi.mocked(shared.startPlayitAgent).mockResolvedValueOnce(true);
+      vi.mocked(shared.startPlayitAgent).mockResolvedValueOnce({ success: true });
 
       const exitCode = await playitCommand({
         root: testRoot,
@@ -343,6 +343,64 @@ describe('mcctl playit subcommand', () => {
 
       const envContent = readFileSync(envPath, 'utf-8');
       expect(envContent).toContain('PLAYIT_SECRET_KEY=brand-new-key-789');
+    });
+
+    it('should add playit service to docker-compose.yml if missing', async () => {
+      createInitializedPlatform(false);
+
+      vi.mocked(shared.getPlayitAgentStatus).mockResolvedValueOnce({
+        enabled: false,
+        agentRunning: false,
+        secretKeyConfigured: false,
+        containerStatus: 'not_found',
+      });
+
+      vi.mocked(promptsModule.password).mockResolvedValueOnce('new-key-for-compose');
+
+      const exitCode = await playitCommand({
+        root: testRoot,
+        subCommand: 'setup',
+      });
+
+      expect(exitCode).toBe(0);
+
+      // Verify playit service was added to docker-compose.yml
+      const composePath = join(testRoot, 'docker-compose.yml');
+      const composeContent = readFileSync(composePath, 'utf-8');
+      expect(composeContent).toContain('playit-agent');
+      expect(composeContent).toContain('playit-cloud/playit-agent');
+      expect(composeContent).toContain('PLAYIT_SECRET_KEY');
+      expect(composeContent).toContain('profiles:');
+    });
+
+    it('should not duplicate playit service if already exists in docker-compose.yml', async () => {
+      createInitializedPlatform(true, 'existing-key');
+
+      // Add playit service to docker-compose.yml manually
+      const composePath = join(testRoot, 'docker-compose.yml');
+      const existingContent = readFileSync(composePath, 'utf-8');
+      writeFileSync(composePath, existingContent + '\n  playit:\n    image: ghcr.io/playit-cloud/playit-agent:0.16\n', 'utf-8');
+
+      vi.mocked(shared.getPlayitAgentStatus).mockResolvedValueOnce({
+        enabled: true,
+        agentRunning: false,
+        secretKeyConfigured: true,
+        containerStatus: 'exited',
+      });
+
+      vi.mocked(promptsModule.password).mockResolvedValueOnce('updated-key');
+
+      const exitCode = await playitCommand({
+        root: testRoot,
+        subCommand: 'setup',
+      });
+
+      expect(exitCode).toBe(0);
+
+      // Verify playit service appears only once
+      const composeContent = readFileSync(composePath, 'utf-8');
+      const matches = composeContent.match(/playit-cloud\/playit-agent/g);
+      expect(matches?.length).toBe(1);
     });
 
     it('should handle user cancellation gracefully', async () => {

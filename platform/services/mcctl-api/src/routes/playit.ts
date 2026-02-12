@@ -84,9 +84,10 @@ const playitPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (_request, reply) => {
     try {
-      const success = await startAgent();
+      const result = await startAgent();
 
-      if (!success) {
+      if (!result.success) {
+        const errorMsg = result.error || 'Failed to start playit-agent';
         await writeAuditLog({
           action: AuditActionEnum.PLAYIT_START,
           actor: 'api:console',
@@ -94,12 +95,12 @@ const playitPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           targetName: 'playit',
           status: 'failure',
           details: null,
-          errorMessage: 'Failed to start playit-agent',
+          errorMessage: errorMsg,
         });
 
         return reply.code(500).send({
           error: 'InternalServerError',
-          message: 'Failed to start playit-agent',
+          message: errorMsg,
         });
       }
 

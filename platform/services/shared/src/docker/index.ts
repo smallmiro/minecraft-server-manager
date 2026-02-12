@@ -1021,7 +1021,7 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
  * Start playit-agent container
  * Uses docker compose with playit profile
  */
-export async function startPlayitAgent(): Promise<boolean> {
+export async function startPlayitAgent(): Promise<{ success: boolean; error?: string }> {
   const platformRoot = process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
 
   try {
@@ -1034,9 +1034,12 @@ export async function startPlayitAgent(): Promise<boolean> {
       'playit',
     ], { cwd: platformRoot });
 
-    return result.code === 0;
-  } catch {
-    return false;
+    if (result.code === 0) {
+      return { success: true };
+    }
+    return { success: false, error: result.stderr || result.stdout };
+  } catch (e) {
+    return { success: false, error: String(e) };
   }
 }
 
