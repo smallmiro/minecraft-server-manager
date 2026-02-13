@@ -37,7 +37,7 @@ interface ServerDetailProps {
 }
 
 // Tab configuration
-const TABS = ['Overview', 'Activity', 'Content', 'Files', 'Backups', 'Access', 'Options'] as const;
+const TABS = ['Overview', 'Activity', 'Mods', 'Files', 'Backups', 'Access', 'Options'] as const;
 type TabType = (typeof TABS)[number];
 
 // Icon size for stat cards
@@ -549,10 +549,10 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
         </Box>
       )}
 
-      {activeTab === 'Content' && (
+      {activeTab === 'Mods' && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="body1" color="text.secondary">
-            Content management coming soon
+            Mod management coming soon
           </Typography>
         </Box>
       )}
