@@ -60,7 +60,7 @@ describe('ServerDetail', () => {
     renderWithTheme(<ServerDetail server={mockServer} />);
 
     expect(screen.getByRole('button', { name: /overview/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /content/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /mods/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /files/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /backups/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /options/i })).toBeInTheDocument();
@@ -88,13 +88,13 @@ describe('ServerDetail', () => {
     expect(screen.getByText('Console')).toBeInTheDocument();
   });
 
-  it('should switch to content tab', () => {
+  it('should switch to mods tab', () => {
     renderWithTheme(<ServerDetail server={mockServer} />);
 
-    const contentTab = screen.getByRole('button', { name: /content/i });
-    fireEvent.click(contentTab);
+    const modsTab = screen.getByRole('button', { name: /mods/i });
+    fireEvent.click(modsTab);
 
-    expect(screen.getByText(/content management coming soon/i)).toBeInTheDocument();
+    expect(screen.getByText(/mod management coming soon/i)).toBeInTheDocument();
   });
 
   it('should switch to files tab', () => {
