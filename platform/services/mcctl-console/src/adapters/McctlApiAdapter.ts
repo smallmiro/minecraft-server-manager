@@ -35,6 +35,10 @@ import {
   UpdateHostnamesResponse,
   PlayitAgentStatus,
   PlayitActionResponse,
+  ModListResponse,
+  AddModsResponse,
+  RemoveModResponse,
+  ModSearchResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -437,6 +441,38 @@ export class McctlApiAdapter implements IMcctlApiClient {
         body: JSON.stringify({ customHostnames }),
       }
     );
+  }
+
+  // ============================================================
+  // Mod Management Operations
+  // ============================================================
+
+  async getServerMods(serverName: string): Promise<ModListResponse> {
+    return this.fetch<ModListResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/mods`
+    );
+  }
+
+  async addServerMods(serverName: string, slugs: string[], source?: string): Promise<AddModsResponse> {
+    return this.fetch<AddModsResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/mods`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ slugs, source }),
+      }
+    );
+  }
+
+  async removeServerMod(serverName: string, slug: string): Promise<RemoveModResponse> {
+    return this.fetch<RemoveModResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/mods/${encodeURIComponent(slug)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async searchMods(query: string, limit: number = 10, offset: number = 0): Promise<ModSearchResponse> {
+    const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset) });
+    return this.fetch<ModSearchResponse>(`/api/mods/search?${params}`);
   }
 
   // ============================================================
