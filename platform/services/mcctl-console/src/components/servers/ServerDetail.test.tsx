@@ -16,6 +16,14 @@ vi.mock('@/hooks/useServerLogs', () => ({
   }),
 }));
 
+// Mock useMods hooks
+vi.mock('@/hooks/useMods', () => ({
+  useServerMods: () => ({ data: { mods: {} }, isLoading: false, error: null }),
+  useModSearch: () => ({ data: null, isLoading: false }),
+  useAddMod: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useRemoveMod: () => ({ mutateAsync: vi.fn() }),
+}));
+
 const renderWithTheme = (component: React.ReactNode) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -94,7 +102,7 @@ describe('ServerDetail', () => {
     const modsTab = screen.getByRole('button', { name: /mods/i });
     fireEvent.click(modsTab);
 
-    expect(screen.getByText(/mod management coming soon/i)).toBeInTheDocument();
+    expect(screen.getByText(/installed mods/i)).toBeInTheDocument();
   });
 
   it('should switch to files tab', () => {

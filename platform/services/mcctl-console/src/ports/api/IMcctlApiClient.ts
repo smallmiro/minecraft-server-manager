@@ -311,6 +311,47 @@ export interface PlayitActionResponse {
 }
 
 // ============================================================
+// Mod Management Types
+// ============================================================
+
+export interface ModListResponse {
+  mods: Record<string, string[]>;
+}
+
+export interface AddModsRequest {
+  slugs: string[];
+  source?: string;
+}
+
+export interface AddModsResponse {
+  success: boolean;
+  added: string[];
+  mods: string[];
+}
+
+export interface RemoveModResponse {
+  success: boolean;
+  removed: string;
+}
+
+export interface ModSearchHit {
+  slug: string;
+  title: string;
+  description: string;
+  downloads: number;
+  iconUrl: string | null;
+  author: string;
+  categories: string[];
+}
+
+export interface ModSearchResponse {
+  hits: ModSearchHit[];
+  totalHits: number;
+  offset: number;
+  limit: number;
+}
+
+// ============================================================
 // Backup Types
 // ============================================================
 
@@ -484,6 +525,12 @@ export interface IMcctlApiClient {
   // Hostname management operations
   getHostnames(serverName: string): Promise<HostnameResponse>;
   updateHostnames(serverName: string, customHostnames: string[]): Promise<UpdateHostnamesResponse>;
+
+  // Mod management operations
+  getServerMods(serverName: string): Promise<ModListResponse>;
+  addServerMods(serverName: string, slugs: string[], source?: string): Promise<AddModsResponse>;
+  removeServerMod(serverName: string, slug: string): Promise<RemoveModResponse>;
+  searchMods(query: string, limit?: number, offset?: number): Promise<ModSearchResponse>;
 
   // Playit.gg operations
   getPlayitStatus(): Promise<PlayitAgentStatus>;

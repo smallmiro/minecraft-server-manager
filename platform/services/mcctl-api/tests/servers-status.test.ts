@@ -14,7 +14,20 @@ vi.mock('@minecraft-docker/shared', () => ({
   getContainerStatus: vi.fn(),
   getContainerHealth: vi.fn(),
   stopContainer: vi.fn(),
+  ModSourceFactory: {
+    get: vi.fn(),
+    getOrNull: vi.fn(),
+    isSupported: vi.fn(),
+    getSupportedSources: vi.fn().mockReturnValue([]),
+    getAllAdapters: vi.fn().mockReturnValue([]),
+    getDefaultSource: vi.fn().mockReturnValue('modrinth'),
+    register: vi.fn(),
+    clear: vi.fn(),
+  },
 }));
+
+// Mock @minecraft-docker/mod-source-modrinth (auto-register)
+vi.mock('@minecraft-docker/mod-source-modrinth', () => ({}));
 
 import {
   serverExists,

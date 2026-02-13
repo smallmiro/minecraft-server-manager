@@ -13,7 +13,20 @@ vi.mock('@minecraft-docker/shared', () => ({
   getServerDetailedInfo: vi.fn(),
   getServerPlayitDomain: vi.fn(),
   AuditActionEnum: {},
+  ModSourceFactory: {
+    get: vi.fn(),
+    getOrNull: vi.fn(),
+    isSupported: vi.fn(),
+    getSupportedSources: vi.fn().mockReturnValue([]),
+    getAllAdapters: vi.fn().mockReturnValue([]),
+    getDefaultSource: vi.fn().mockReturnValue('modrinth'),
+    register: vi.fn(),
+    clear: vi.fn(),
+  },
 }));
+
+// Mock @minecraft-docker/mod-source-modrinth (auto-register)
+vi.mock('@minecraft-docker/mod-source-modrinth', () => ({}));
 
 // Mock audit log service
 vi.mock('../src/services/audit-log-service.js', () => ({

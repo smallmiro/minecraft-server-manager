@@ -30,6 +30,7 @@ import { ServerActivityTab } from './ServerActivityTab';
 import { ServerOptionsTab } from './ServerOptionsTab';
 import { ServerAccessTab } from './ServerAccessTab';
 import { ConnectionInfoCard } from './ConnectionInfoCard';
+import { ServerModsTab } from './ServerModsTab';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -551,9 +552,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
 
       {activeTab === 'Mods' && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="body1" color="text.secondary">
-            Mod management coming soon
-          </Typography>
+          <ServerModsTab serverName={server.name} />
         </Box>
       )}
 

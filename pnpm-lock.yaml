@@ -86,6 +86,9 @@ importers:
       '@fastify/swagger-ui':
         specifier: ^5.2.4
         version: 5.2.4
+      '@minecraft-docker/mod-source-modrinth':
+        specifier: workspace:*
+        version: link:../mod-source-modrinth
       '@minecraft-docker/shared':
         specifier: workspace:*
         version: link:../shared
