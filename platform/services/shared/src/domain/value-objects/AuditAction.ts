@@ -34,6 +34,10 @@ export enum AuditActionEnum {
   // System
   AUDIT_PURGE = 'audit.purge',
 
+  // Mod management
+  MOD_ADD = 'mod.add',
+  MOD_REMOVE = 'mod.remove',
+
   // Playit.gg agent
   PLAYIT_START = 'playit.start',
   PLAYIT_STOP = 'playit.stop',
