@@ -1,10 +1,9 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { join } from 'path';
 import { serverExists, AuditActionEnum, ModSourceFactory } from '@minecraft-docker/shared';
 import '@minecraft-docker/mod-source-modrinth';
 import { writeAuditLog } from '../../services/audit-log-service.js';
+import { createModConfigService } from '../../services/ModConfigService.js';
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
 import { config } from '../../config/index.js';
 
@@ -30,56 +29,12 @@ interface SearchModsRoute {
 }
 
 // ============================================================
-// Helpers
-// ============================================================
-
-function getConfigPath(serverName: string): string {
-  return join(config.platformPath, 'servers', serverName, 'config.env');
-}
-
-function parseEnvFile(content: string): Map<string, string> {
-  const result = new Map<string, string>();
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eqIndex = line.indexOf('=');
-    if (eqIndex > 0) {
-      result.set(line.substring(0, eqIndex).trim(), line.substring(eqIndex + 1).trim());
-    }
-  }
-  return result;
-}
-
-function updateEnvFile(content: string, key: string, value: string): string {
-  const lines = content.split('\n');
-  let found = false;
-  const result = lines.map((line) => {
-    const eqIndex = line.indexOf('=');
-    if (eqIndex > 0) {
-      const lineKey = line.substring(0, eqIndex).trim();
-      if (lineKey === key) {
-        found = true;
-        return `${key}=${value}`;
-      }
-    }
-    return line;
-  });
-  if (!found) {
-    result.push(`${key}=${value}`);
-  }
-  return result.join('\n');
-}
-
-function parseModList(value: string | undefined): string[] {
-  if (!value || !value.trim()) return [];
-  return value.split(',').map((s) => s.trim()).filter(Boolean);
-}
-
-// ============================================================
 // Plugin Definition
 // ============================================================
 
 const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  const modConfigService = createModConfigService(config.platformPath);
+
   /**
    * GET /api/servers/:name/mods
    * List installed mods from config.env
@@ -102,25 +57,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
-      const configPath = getConfigPath(name);
-      if (!existsSync(configPath)) {
-        return reply.send({ mods: {} });
-      }
-
-      const content = readFileSync(configPath, 'utf-8');
-      const envMap = parseEnvFile(content);
-
-      const mods: Record<string, string[]> = {};
-
-      // Check all registered sources for their env keys
-      for (const adapter of ModSourceFactory.getAllAdapters()) {
-        const envKey = adapter.getEnvKey();
-        const value = envMap.get(envKey);
-        if (value) {
-          mods[adapter.sourceName] = parseModList(value);
-        }
-      }
-
+      const mods = modConfigService.getInstalledMods(name);
       return reply.send({ mods });
     } catch (error) {
       fastify.log.error(error, 'Failed to list mods');
@@ -155,30 +92,12 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         return reply.code(400).send({ error: 'BadRequest', message: 'slugs array is required and must not be empty' });
       }
 
-      const sourceName = source || ModSourceFactory.getDefaultSource();
-      const adapter = ModSourceFactory.get(sourceName);
-      const envKey = adapter.getEnvKey();
-
-      const configPath = getConfigPath(name);
-      if (!existsSync(configPath)) {
+      if (!modConfigService.configExists(name)) {
         return reply.code(404).send({ error: 'NotFound', message: `Configuration for server '${name}' not found` });
       }
 
-      const content = readFileSync(configPath, 'utf-8');
-      const envMap = parseEnvFile(content);
-      const existing = parseModList(envMap.get(envKey));
-
-      // Add new slugs (deduplicate)
-      const added: string[] = [];
-      for (const slug of slugs) {
-        if (!existing.includes(slug)) {
-          existing.push(slug);
-          added.push(slug);
-        }
-      }
-
-      const updatedContent = updateEnvFile(content, envKey, existing.join(','));
-      writeFileSync(configPath, updatedContent, 'utf-8');
+      const sourceName = source || ModSourceFactory.getDefaultSource();
+      const { added, mods } = modConfigService.addMods(name, slugs, sourceName);
 
       await writeAuditLog({
         action: AuditActionEnum.MOD_ADD,
@@ -191,7 +110,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       fastify.log.info({ server: name, added, source: sourceName }, 'Mods added');
 
-      return reply.send({ success: true, added, mods: existing });
+      return reply.send({ success: true, added, mods });
     } catch (error) {
       await writeAuditLog({
         action: AuditActionEnum.MOD_ADD,
@@ -228,40 +147,15 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
-      const configPath = getConfigPath(name);
-      if (!existsSync(configPath)) {
+      if (!modConfigService.configExists(name)) {
         return reply.code(404).send({ error: 'NotFound', message: `Configuration for server '${name}' not found` });
       }
 
-      const content = readFileSync(configPath, 'utf-8');
-      const envMap = parseEnvFile(content);
-
-      let removed = false;
-      let updatedContent = content;
-      let sourceName = 'unknown';
-
-      // Search across all registered sources
-      for (const adapter of ModSourceFactory.getAllAdapters()) {
-        const envKey = adapter.getEnvKey();
-        const value = envMap.get(envKey);
-        if (!value) continue;
-
-        const mods = parseModList(value);
-        const index = mods.indexOf(slug);
-        if (index !== -1) {
-          mods.splice(index, 1);
-          updatedContent = updateEnvFile(updatedContent, envKey, mods.join(','));
-          removed = true;
-          sourceName = adapter.sourceName;
-          break;
-        }
-      }
+      const { removed, sourceName } = modConfigService.removeMod(name, slug);
 
       if (!removed) {
         return reply.code(404).send({ error: 'NotFound', message: `Mod '${slug}' not found in server configuration` });
       }
-
-      writeFileSync(configPath, updatedContent, 'utf-8');
 
       await writeAuditLog({
         action: AuditActionEnum.MOD_REMOVE,
