@@ -77,52 +77,35 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.4.0 (2026-02-14)
+- **feat(cli)**: Add `mcctl upgrade` command for upgrading mcctl and all services (#326, #355)
+- **feat(cli)**: Add creeper ASCII banner with version check on `mcctl init` (#353, #354)
+- **feat(console)**: Implement Mods tab functionality (#351, #352)
+- **refactor(console)**: Rename 'Content' tab to 'Mods' in server detail page (#349, #350)
+- **feat(cli)**: Add `mcctl playit domain` subcommand (#347, #348)
+- **docs**: Update documentation for v2.4.0 with upgrade command and playit.gg guides
+
 ### v2.3.5 (2026-02-12)
 - **fix(shared)**: Use correct container name `playit-agent` in `getPlayitAgentStatus()` (#345, #346)
 - **fix(console)**: Add error feedback for playit start/stop actions (#343)
 - **fix(console)**: Improve playit section header layout and server domains display (#343, #344)
 
-### v2.3.4 (2026-02-12)
-- **fix(cli)**: Add playit service to docker-compose.yml during setup (#341, #342)
-
-### v2.3.3 (2026-02-12)
-- **fix(shared)**: Pass `cwd` to docker compose in playit start/stop (#339, #340)
-
-### v2.3.2 (2026-02-12)
-- **fix(shared)**: Check `.mcctl.json` for playit enabled state instead of container existence (#337, #338)
-
-### v2.3.1 (2026-02-12)
-- **fix(api)**: Resolve TypeScript build error in audit-logs purge catch block
-- **fix(cli)**: Handle missing `.mcctl.json` in `mcctl init --reconfigure` (#335, #336)
-- **docs**: Update documentation for v2.3.0 release
-
 ### v2.3.0 (2026-02-12) - External Play (playit.gg)
-- **feat(shared)**: Add playit.gg domain model and Docker helpers (#291, #328)
-- **feat**: Add playit.gg tunnel agent to docker-compose templates (#270, #327)
-- **feat(cli)**: Add playit.gg setup option to `mcctl init` (#271, #329)
-- **feat(cli)**: Add playit.gg domain registration to `mcctl create --playit-domain` (#272, #330)
 - **feat(cli)**: Add `mcctl playit` subcommand - start/stop/status/setup (#273, #331)
+- **feat(cli)**: Add playit.gg setup option to `mcctl init` (#271, #329)
 - **feat(api)**: Add playit.gg status and control API endpoints (#292, #332)
-- **feat(console)**: Add playit.gg external access UI - PlayitSummaryCard, ConnectionInfoCard, PlayitSection (#274, #333)
-- **docs**: Add playit.gg integration guide in English and Korean (#275, #334)
+- **feat(console)**: Add playit.gg external access UI (#274, #333)
 - **feat(api)**: Add comprehensive audit logging to all mutating routes (#324, #325)
-- **fix(console)**: Unify Add and Bulk button sizes in WhitelistManager (#322, #323)
 
 ### v2.2.0 (2026-02-11)
 - **feat(console)**: Whitelist Console UI - toggle ON/OFF, bulk player add, search/filter (#283, #321)
 - **feat**: Enable whitelist by default on `mcctl create` (#282, #320)
 - **feat(console)**: Hostname/domain management in server Options tab (#314, #315)
-- **fix(console)**: Fix 23 pre-existing failing unit tests (#296, #316)
 
 ### v2.1.0 (2026-02-09) - Console Feature Completion
-- **feat**: Modrinth modpack CLI/API support - search, create, manage modpack servers (#244, #245)
-- **feat**: Admin user management Console UI - list, detail, role management (#189)
-- **feat**: OP Level support across all layers - domain model, CLI, API, Console (#284, #285, #286, #287)
-- **fix**: Console sign-out 403 bug with LAN IP addresses (#300, #301)
-- **feat**: Offline player management support (#288, #289)
-
-### v2.0.0 (2026-02-09)
-- Major version bump - Management Console (Web UI + REST API) feature complete
+- **feat**: Modrinth modpack CLI/API support (#244, #245)
+- **feat**: Admin user management Console UI (#189)
+- **feat**: OP Level support across all layers (#284, #285, #286, #287)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

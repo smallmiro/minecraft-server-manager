@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-02-14
+
+### Added
+- **CLI `mcctl upgrade` Command** - Upgrade mcctl and all services to latest version with automatic restart (#326, #355)
+  - Replaces manual npm update workflow with single command
+  - Automatically restarts PM2 services after upgrade
+  - Supports `--check` flag to preview available updates without installing
+- **CLI Creeper ASCII Banner** - Display creeper ASCII art with version check on `mcctl init` (#353, #354)
+  - Visual branding during platform initialization
+  - Automatic latest version check with update notification
+- **CLI `mcctl playit domain` Subcommand** - Manage playit.gg domain assignments per server (#347, #348)
+  - Add, remove, and list playit.gg domain mappings for servers
+  - Interactive server and domain selection
+
+### Changed
+- **Console Mods Tab** - Rename 'Content' tab to 'Mods' in server detail page (#349, #350)
+  - Clearer tab naming that directly reflects functionality
+- **Console Mods Tab Functionality** - Implement full Mods tab with mod listing and management (#351, #352)
+  - View installed mods per server
+  - Mod search and installation from Modrinth
+
+### Documentation
+- Update documentation for v2.4.0 with upgrade command and playit.gg guides
+
 ## [2.3.5] - 2026-02-12
 
 ### Fixed
