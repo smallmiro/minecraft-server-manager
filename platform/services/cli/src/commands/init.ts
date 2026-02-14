@@ -6,6 +6,12 @@ import type { McctlConfig } from '@minecraft-docker/shared';
 import { selectHostIPs, getNetworkInterfaces } from '../lib/prompts/ip-select.js';
 import { multiselect, text, select, confirm, password, isCancel } from '@clack/prompts';
 import { displayPrerequisiteReport } from '../lib/prerequisite-display.js';
+import { printBanner, getGitHash, type UpdateCheckResult } from '../lib/banner.js';
+import {
+  getInstalledVersion,
+  fetchLatestVersionForced,
+  isUpdateAvailable,
+} from '../lib/update-checker.js';
 
 /**
  * Initialize the platform
@@ -21,11 +27,28 @@ export async function initCommand(options: {
   const paths = new Paths(options.root);
   const config = new Config(paths);
 
-  console.log('');
-  console.log(colors.bold('='.repeat(60)));
-  console.log(colors.bold('  Minecraft Server Platform - Initialization'));
-  console.log(colors.bold('='.repeat(60)));
-  console.log('');
+  // Get version info for banner
+  const version = getInstalledVersion();
+  const gitHash = getGitHash();
+
+  // Check for updates (non-blocking, with timeout)
+  let updateInfo: UpdateCheckResult | null = null;
+  try {
+    const latestVersion = await fetchLatestVersionForced();
+    if (latestVersion && isUpdateAvailable(version, latestVersion)) {
+      updateInfo = {
+        currentVersion: version,
+        latestVersion,
+        updateCommand: 'npm install -g @minecraft-docker/mcctl',
+      };
+    }
+  } catch {
+    // Silently ignore update check failures
+  }
+
+  // Print creeper banner
+  printBanner({ version, gitHash, updateInfo });
+
   console.log(`  Data directory: ${colors.cyan(paths.root)}`);
   console.log('');
 
