@@ -15,9 +15,16 @@ export async function initCommand(options: {
   skipValidation?: boolean;
   skipDocker?: boolean;
   reconfigure?: boolean;
+  upgrade?: boolean;
   playitKey?: string;
   noPlayit?: boolean;
 }): Promise<number> {
+  // Route to upgrade command if --upgrade flag is set
+  if (options.upgrade) {
+    const { upgradeCommand } = await import('./upgrade.js');
+    return upgradeCommand({ root: options.root });
+  }
+
   const paths = new Paths(options.root);
   const config = new Config(paths);
 

@@ -20,6 +20,7 @@ export { modCommand, type ModCommandOptions } from './mod.js';
 export { updateCommand, type UpdateCommandOptions } from './update.js';
 export { auditCommand, type AuditCommandOptions } from './audit.js';
 export { playitCommand, type PlayitCommandOptions } from './playit.js';
+export { upgradeCommand, type UpgradeCommandOptions } from './upgrade.js';
 
 // Console commands (new names)
 export {
