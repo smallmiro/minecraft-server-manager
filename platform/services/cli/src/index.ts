@@ -29,6 +29,7 @@ import {
   consoleRemoveCommand,
   auditCommand,
   playitCommand,
+  upgradeCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 import { checkForUpdates } from './lib/update-checker.js';
@@ -242,6 +243,11 @@ ${colors.cyan('Self Update:')}
   ${colors.bold('update')} --yes               Auto-confirm update
   ${colors.bold('update')} --all               Update CLI and all installed services
 
+${colors.cyan('Platform Upgrade:')}
+  ${colors.bold('upgrade')}                    Sync .env and templates with latest CLI version
+  ${colors.bold('upgrade')} --dry-run          Preview changes without applying
+  ${colors.bold('upgrade')} --non-interactive  Apply defaults without prompting
+
 ${colors.cyan('playit.gg Management:')}
   ${colors.bold('playit start')}                Start playit-agent container
   ${colors.bold('playit stop')}                 Stop playit-agent container
@@ -357,7 +363,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -463,6 +469,7 @@ async function main(): Promise<void> {
           skipValidation: flags['skip-validation'] === true,
           skipDocker: flags['skip-docker'] === true,
           reconfigure: flags['reconfigure'] === true,
+          upgrade: flags['upgrade'] === true,
           playitKey: flags['playit-key'] as string | undefined,
           noPlayit: flags['no-playit'] === true,
         });
@@ -940,6 +947,15 @@ async function main(): Promise<void> {
           dryRun: flags['dry-run'] === true,
           force: flags['force'] === true,
           sudoPassword,
+        });
+        break;
+      }
+
+      case 'upgrade': {
+        exitCode = await upgradeCommand({
+          root: rootDir,
+          dryRun: flags['dry-run'] === true,
+          nonInteractive: flags['non-interactive'] === true,
         });
         break;
       }
