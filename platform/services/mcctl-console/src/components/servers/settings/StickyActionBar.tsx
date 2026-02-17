@@ -12,6 +12,7 @@ interface StickyActionBarProps {
   hasChanges: boolean;
   changedCount: number;
   hasRestartChanges: boolean;
+  restartFields?: string[];
   isSaving: boolean;
   onSave: () => void;
   onDiscard: () => void;
@@ -21,6 +22,7 @@ export function StickyActionBar({
   hasChanges,
   changedCount,
   hasRestartChanges,
+  restartFields = [],
   isSaving,
   onSave,
   onDiscard,
@@ -56,7 +58,7 @@ export function StickyActionBar({
           </Typography>
           {hasRestartChanges && (
             <Typography variant="caption" color="warning.main">
-              (some require restart)
+              ({restartFields.length > 0 ? restartFields.join(', ') : 'some fields'} require restart)
             </Typography>
           )}
         </Box>

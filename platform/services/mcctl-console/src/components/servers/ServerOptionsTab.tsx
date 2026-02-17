@@ -244,6 +244,7 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
         hasChanges={hasChanges}
         changedCount={changedFields.length}
         hasRestartChanges={hasRestartChanges}
+        restartFields={restartChangedFields}
         isSaving={updateConfig.isPending}
         onSave={handleSave}
         onDiscard={handleDiscard}
