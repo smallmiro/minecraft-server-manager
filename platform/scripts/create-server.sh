@@ -21,6 +21,7 @@
 #   --modpack SLUG       Modpack slug (required for MODRINTH/AUTO_CURSEFORGE)
 #   --modpack-version VER  Modpack version (optional)
 #   --mod-loader LOADER  Mod loader: fabric, forge, neoforge, quilt (optional)
+#   -m, --memory SIZE    Memory allocation (e.g., 1G, 2G, 4G)
 #   --no-whitelist       Disable whitelist (whitelist is enabled by default)
 #   --whitelist PLAYERS  Initial whitelist players (comma-separated)
 #   --no-start           Don't start the server after creation
@@ -261,6 +262,7 @@ show_usage() {
     echo "  --modpack SLUG       Modpack slug (required for MODRINTH/AUTO_CURSEFORGE)"
     echo "  --modpack-version VER  Modpack version (optional)"
     echo "  --mod-loader LOADER  Mod loader: fabric, forge, neoforge, quilt (optional)"
+    echo "  -m, --memory SIZE    Memory allocation (e.g., 1G, 2G, 4G)"
     echo "  --no-whitelist       Disable whitelist (whitelist is enabled by default)"
     echo "  --whitelist PLAYERS  Initial whitelist players (comma-separated)"
     echo "  --no-start           Don't start the server after creation"
@@ -326,6 +328,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --mod-loader)
             MOD_LOADER="$2"
+            shift 2
+            ;;
+        -m|--memory)
+            MEMORY_SIZE="$2"
             shift 2
             ;;
         --no-whitelist)
@@ -473,6 +479,12 @@ if [ -f "$CONFIG_FILE" ]; then
     # This can be overridden by --world option
     sed -i "s/^LEVEL=.*/LEVEL=$SERVER_NAME/" "$CONFIG_FILE"
     echo "   World directory: worlds/$SERVER_NAME"
+
+    # Apply memory if specified
+    if [ -n "$MEMORY_SIZE" ]; then
+        sed -i "s/^MEMORY=.*/MEMORY=$MEMORY_SIZE/" "$CONFIG_FILE"
+        echo "   Memory: $MEMORY_SIZE"
+    fi
 
     # Apply version if specified
     if [ -n "$MC_VERSION" ]; then
