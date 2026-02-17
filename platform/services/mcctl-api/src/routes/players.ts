@@ -365,22 +365,34 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
     }
 
-    // Offline: write to file with UUID lookup
+    // File-based fallback: add with UUID lookup
     try {
       const uuid = await lookupUuid(player);
       playerFileService.addToWhitelist(name, player, uuid);
+
+      // If server is running, also reload the whitelist via RCON
+      if (running) {
+        try {
+          await execRconCommand(name, 'whitelist reload');
+        } catch {
+          // Non-critical: file is already updated
+        }
+      }
+
       await writeAuditLog({
         action: AuditActionEnum.PLAYER_WHITELIST_ADD,
         actor: 'api:console',
         targetType: 'server',
         targetName: name,
-        details: { player, uuid, source: 'file' },
+        details: { player, uuid, source: running ? 'file+reload' : 'file' },
         status: 'success',
       });
       return reply.send({
         success: true,
-        message: `Added ${player} to whitelist (will apply on next server start)`,
-        source: 'file',
+        message: running
+          ? `Added ${player} to whitelist`
+          : `Added ${player} to whitelist (will apply on next server start)`,
+        source: running ? 'file+reload' : 'file',
       });
     } catch (error) {
       await writeAuditLog({

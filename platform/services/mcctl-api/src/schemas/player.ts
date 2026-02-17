@@ -39,6 +39,7 @@ export const PlayerListResponseSchema = Type.Object({
   source: Type.Optional(Type.Union([
     Type.Literal('rcon'),
     Type.Literal('file'),
+    Type.Literal('file+reload'),
     Type.Literal('config'),
   ])),
 });
@@ -50,6 +51,7 @@ export const WhitelistResponseSchema = Type.Object({
   source: Type.Optional(Type.Union([
     Type.Literal('rcon'),
     Type.Literal('file'),
+    Type.Literal('file+reload'),
     Type.Literal('config'),
   ])),
   enabled: Type.Optional(Type.Boolean()),
@@ -94,6 +96,7 @@ export const PlayerActionResponseSchema = Type.Object({
   source: Type.Optional(Type.Union([
     Type.Literal('rcon'),
     Type.Literal('file'),
+    Type.Literal('file+reload'),
     Type.Literal('config'),
   ])),
 });
