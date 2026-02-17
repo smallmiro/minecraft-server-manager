@@ -345,36 +345,54 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (running) {
       try {
         const result = await execRconCommand(name, `whitelist add ${player}`);
-        await writeAuditLog({
-          action: AuditActionEnum.PLAYER_WHITELIST_ADD,
-          actor: 'api:console',
-          targetType: 'server',
-          targetName: name,
-          details: { player, source: 'rcon' },
-          status: 'success',
-        });
-        return reply.send({ success: true, message: result || `Added ${player} to whitelist`, source: 'rcon' });
+
+        // Detect RCON error responses (e.g., "Player already whitelisted" or other errors)
+        const isRconError = /already\s+whitelisted|could\s+not\s+/i.test(result);
+        if (!isRconError) {
+          await writeAuditLog({
+            action: AuditActionEnum.PLAYER_WHITELIST_ADD,
+            actor: 'api:console',
+            targetType: 'server',
+            targetName: name,
+            details: { player, source: 'rcon' },
+            status: 'success',
+          });
+          return reply.send({ success: true, message: result || `Added ${player} to whitelist`, source: 'rcon' });
+        }
+        fastify.log.warn(`RCON whitelist add returned: "${result}", falling back to file`);
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for whitelist add, falling back to file');
       }
     }
 
-    // Offline: write to file with UUID lookup
+    // File-based fallback: add with UUID lookup
     try {
       const uuid = await lookupUuid(player);
       playerFileService.addToWhitelist(name, player, uuid);
+
+      // If server is running, also reload the whitelist via RCON
+      if (running) {
+        try {
+          await execRconCommand(name, 'whitelist reload');
+        } catch {
+          // Non-critical: file is already updated
+        }
+      }
+
       await writeAuditLog({
         action: AuditActionEnum.PLAYER_WHITELIST_ADD,
         actor: 'api:console',
         targetType: 'server',
         targetName: name,
-        details: { player, uuid, source: 'file' },
+        details: { player, uuid, source: running ? 'file+reload' : 'file' },
         status: 'success',
       });
       return reply.send({
         success: true,
-        message: `Added ${player} to whitelist (will apply on next server start)`,
-        source: 'file',
+        message: running
+          ? `Added ${player} to whitelist`
+          : `Added ${player} to whitelist (will apply on next server start)`,
+        source: running ? 'file+reload' : 'file',
       });
     } catch (error) {
       await writeAuditLog({
@@ -410,34 +428,54 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (running) {
       try {
         const result = await execRconCommand(name, `whitelist remove ${player}`);
-        await writeAuditLog({
-          action: AuditActionEnum.PLAYER_WHITELIST_REMOVE,
-          actor: 'api:console',
-          targetType: 'server',
-          targetName: name,
-          details: { player, source: 'rcon' },
-          status: 'success',
-        });
-        return reply.send({ success: true, message: result || `Removed ${player} from whitelist`, source: 'rcon' });
+
+        // Detect RCON error responses (e.g., "Player is not whitelisted" due to case mismatch)
+        const isRconError = /not\s+whitelisted/i.test(result);
+        if (isRconError) {
+          fastify.log.warn(`RCON whitelist remove returned error: "${result}", falling back to file`);
+        } else {
+          await writeAuditLog({
+            action: AuditActionEnum.PLAYER_WHITELIST_REMOVE,
+            actor: 'api:console',
+            targetType: 'server',
+            targetName: name,
+            details: { player, source: 'rcon' },
+            status: 'success',
+          });
+          return reply.send({ success: true, message: result || `Removed ${player} from whitelist`, source: 'rcon' });
+        }
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for whitelist remove, falling back to file');
       }
     }
 
+    // File-based fallback: remove by case-insensitive name match
     try {
       playerFileService.removeFromWhitelist(name, player);
+
+      // If server is running, also reload the whitelist via RCON
+      if (running) {
+        try {
+          await execRconCommand(name, 'whitelist reload');
+        } catch {
+          // Non-critical: file is already updated
+        }
+      }
+
       await writeAuditLog({
         action: AuditActionEnum.PLAYER_WHITELIST_REMOVE,
         actor: 'api:console',
         targetType: 'server',
         targetName: name,
-        details: { player, source: 'file' },
+        details: { player, source: running ? 'file+reload' : 'file' },
         status: 'success',
       });
       return reply.send({
         success: true,
-        message: `Removed ${player} from whitelist (will apply on next server start)`,
-        source: 'file',
+        message: running
+          ? `Removed ${player} from whitelist`
+          : `Removed ${player} from whitelist (will apply on next server start)`,
+        source: running ? 'file+reload' : 'file',
       });
     } catch (error) {
       await writeAuditLog({
