@@ -158,43 +158,76 @@ export interface DeleteWorldResponse {
 
 export type Difficulty = 'peaceful' | 'easy' | 'normal' | 'hard';
 export type GameMode = 'survival' | 'creative' | 'adventure' | 'spectator';
+export type LevelType = 'default' | 'flat' | 'largeBiomes' | 'amplified' | 'buffet';
 
 export interface ServerConfig {
-  // Server Properties (hot-reload capable)
-  motd?: string;
-  maxPlayers?: number;
+  // ── Gameplay ──
   difficulty?: Difficulty;
   gameMode?: GameMode;
+  maxPlayers?: number;
   pvp?: boolean;
-  viewDistance?: number;
+  forceGamemode?: boolean;
+  hardcore?: boolean;
+  allowFlight?: boolean;
+  allowNether?: boolean;
+  enableCommandBlock?: boolean;
   spawnProtection?: number;
+  spawnAnimals?: boolean;
+  spawnMonsters?: boolean;
+  spawnNpcs?: boolean;
 
-  // Security Settings (restart required)
+  // ── World ──
+  motd?: string;
+  level?: string;
+  levelType?: LevelType;
+  seed?: string;
+  generateStructures?: boolean;
+  maxWorldSize?: number;
+  icon?: string;
+
+  // ── Security ──
   onlineMode?: boolean;
   enableWhitelist?: boolean;
+  enforceWhitelist?: boolean;
+  enforceSecureProfile?: boolean;
 
-  // Performance Settings (restart required)
+  // ── Performance & JVM ──
   memory?: string;
   useAikarFlags?: boolean;
+  viewDistance?: number;
+  simulationDistance?: number;
+  maxTickTime?: number;
+  initMemory?: string;
+  maxMemory?: string;
+  jvmXxOpts?: string;
+
+  // ── Auto-pause / Auto-stop ──
+  enableAutopause?: boolean;
+  autopauseTimeoutEst?: number;
+  autopauseTimeoutInit?: number;
+  autopausePeriod?: number;
+  enableAutostop?: boolean;
+  autostopTimeoutEst?: number;
+
+  // ── System ──
+  tz?: string;
+  resourcePack?: string;
+  enableRcon?: boolean;
+  resourcePackSha1?: string;
+  resourcePackEnforce?: boolean;
+  resourcePackPrompt?: string;
+  rconPassword?: string;
+  rconPort?: number;
+  stopDuration?: number;
+  uid?: number;
+  gid?: number;
 }
 
 export interface ServerConfigResponse {
   config: ServerConfig;
 }
 
-export interface UpdateServerConfigRequest {
-  motd?: string;
-  maxPlayers?: number;
-  difficulty?: Difficulty;
-  gameMode?: GameMode;
-  pvp?: boolean;
-  viewDistance?: number;
-  spawnProtection?: number;
-  onlineMode?: boolean;
-  enableWhitelist?: boolean;
-  memory?: string;
-  useAikarFlags?: boolean;
-}
+export type UpdateServerConfigRequest = Partial<ServerConfig>;
 
 export interface UpdateServerConfigResponse {
   success: boolean;
