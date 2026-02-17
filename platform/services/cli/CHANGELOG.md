@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-02-17
+
+### Added
+- **Console Server Properties Full UI** - Complete server configuration management with 6 sections and ~40 fields using Progressive Disclosure pattern (#365, #366)
+  - General section: server name, MOTD, max players, difficulty, game mode, hardcore
+  - World section: level name, seed, level type, world generation settings
+  - Performance section: view distance, simulation distance, max tick time, network compression
+  - Network section: server port, enable query, enable RCON, connection settings
+  - Advanced section: spawn protection, max world size, entity limits, function permission level
+  - Operators section: enforce whitelist, enforce secure profile, OP permission level
+  - Collapsible sections with Progressive Disclosure for reduced cognitive load
+  - Real-time config updates via ConfigService REST API
+
+### Tests
+- **ConfigService Field Tests** - Add 22 unit tests for new ConfigService fields and 6 API integration tests (#367, #368)
+  - Full coverage for all ~40 config fields across 6 sections
+  - GET/PUT API endpoint tests for server configuration
+
 ## [2.5.0] - 2026-02-17
 
 ### Added

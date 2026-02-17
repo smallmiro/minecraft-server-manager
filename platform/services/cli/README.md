@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.6.0 (2026-02-17)
+- **feat(console)**: Server Properties Full UI - 6 sections, ~40 fields with Progressive Disclosure (#365, #366)
+- **test(api)**: Add 22 ConfigService tests + 6 API integration tests (#367, #368)
+
 ### v2.5.0 (2026-02-17)
 - **feat(console)**: Add Online Mode and Whitelist security settings UI (#357, #358, #362)
 - **fix(api)**: Pass memory parameter to create-server.sh (#356, #360)
