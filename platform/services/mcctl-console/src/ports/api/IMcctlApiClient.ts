@@ -169,6 +169,10 @@ export interface ServerConfig {
   viewDistance?: number;
   spawnProtection?: number;
 
+  // Security Settings (restart required)
+  onlineMode?: boolean;
+  enableWhitelist?: boolean;
+
   // Performance Settings (restart required)
   memory?: string;
   useAikarFlags?: boolean;
@@ -186,6 +190,8 @@ export interface UpdateServerConfigRequest {
   pvp?: boolean;
   viewDistance?: number;
   spawnProtection?: number;
+  onlineMode?: boolean;
+  enableWhitelist?: boolean;
   memory?: string;
   useAikarFlags?: boolean;
 }

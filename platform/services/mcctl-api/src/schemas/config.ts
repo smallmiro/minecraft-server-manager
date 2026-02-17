@@ -37,6 +37,10 @@ export const ServerConfigSchema = Type.Object({
   viewDistance: Type.Optional(Type.Number({ minimum: 2, maximum: 32, description: 'View distance in chunks' })),
   spawnProtection: Type.Optional(Type.Number({ minimum: 0, maximum: 100, description: 'Spawn protection radius' })),
 
+  // Security Settings (restart required)
+  onlineMode: Type.Optional(Type.Boolean({ description: 'Require Mojang authentication (online-mode)' })),
+  enableWhitelist: Type.Optional(Type.Boolean({ description: 'Enable whitelist to restrict player access' })),
+
   // Performance Settings (restart required)
   memory: Type.Optional(Type.String({ pattern: '^\\d+[MG]$', description: 'JVM memory allocation (e.g., 4G)' })),
   useAikarFlags: Type.Optional(Type.Boolean({ description: 'Use Aikar JVM flags for optimization' })),
@@ -54,6 +58,10 @@ export const UpdateServerConfigRequestSchema = Type.Object({
   pvp: Type.Optional(Type.Boolean()),
   viewDistance: Type.Optional(Type.Number({ minimum: 2, maximum: 32 })),
   spawnProtection: Type.Optional(Type.Number({ minimum: 0, maximum: 100 })),
+
+  // Security Settings (restart required)
+  onlineMode: Type.Optional(Type.Boolean()),
+  enableWhitelist: Type.Optional(Type.Boolean()),
 
   // Performance Settings (restart required)
   memory: Type.Optional(Type.String({ pattern: '^\\d+[MG]$' })),
