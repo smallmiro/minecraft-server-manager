@@ -106,7 +106,7 @@ const mockRmSync = vi.mocked(rmSync);
 describe('Server Config Routes', () => {
   let app: FastifyInstance;
 
-  // Sample config.env content
+  // Sample config.env content (comprehensive with new fields)
   const sampleConfigContent = `# Server Configuration
 MOTD=A Minecraft Server
 MAX_PLAYERS=20
@@ -118,6 +118,19 @@ SPAWN_PROTECTION=16
 MEMORY=4G
 USE_AIKAR_FLAGS=true
 LEVEL=world
+LEVEL_TYPE=DEFAULT
+ONLINE_MODE=TRUE
+ENABLE_WHITELIST=FALSE
+ENFORCE_WHITELIST=FALSE
+ENFORCE_SECURE_PROFILE=FALSE
+SIMULATION_DISTANCE=10
+MAX_TICK_TIME=60000
+ENABLE_AUTOPAUSE=false
+ENABLE_RCON=true
+RCON_PORT=25575
+TZ=Asia/Seoul
+UID=1000
+GID=1000
 `;
 
   beforeAll(async () => {
@@ -207,6 +220,20 @@ LEVEL=world
       expect(body.config.spawnProtection).toBe(16);
       expect(body.config.memory).toBe('4G');
       expect(body.config.useAikarFlags).toBe(true);
+      // New fields from #365
+      expect(body.config.levelType).toBe('default');
+      expect(body.config.onlineMode).toBe(true);
+      expect(body.config.enableWhitelist).toBe(false);
+      expect(body.config.enforceWhitelist).toBe(false);
+      expect(body.config.enforceSecureProfile).toBe(false);
+      expect(body.config.simulationDistance).toBe(10);
+      expect(body.config.maxTickTime).toBe(60000);
+      expect(body.config.enableAutopause).toBe(false);
+      expect(body.config.enableRcon).toBe(true);
+      expect(body.config.rconPort).toBe(25575);
+      expect(body.config.tz).toBe('Asia/Seoul');
+      expect(body.config.uid).toBe(1000);
+      expect(body.config.gid).toBe(1000);
     });
 
     it('should return 500 on internal error', async () => {
@@ -325,6 +352,130 @@ LEVEL=world
       expect(body.success).toBe(true);
       expect(body.changedFields).toContain('useAikarFlags');
       expect(body.restartRequired).toBe(true);
+    });
+
+    it('should set restartRequired=true when security fields are changed', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(sampleConfigContent);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/testserver/config',
+        payload: {
+          onlineMode: false,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      expect(body.success).toBe(true);
+      expect(body.changedFields).toContain('onlineMode');
+      expect(body.restartRequired).toBe(true);
+    });
+
+    it('should update world and auto-pause fields', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(sampleConfigContent);
+
+      let writtenContent = '';
+      mockWriteFileSync.mockImplementation((path: any, content: any) => {
+        writtenContent = String(content);
+      });
+      mockReadFileSync.mockImplementation(() => {
+        return writtenContent || sampleConfigContent;
+      });
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/testserver/config',
+        payload: {
+          enableAutopause: true,
+          simulationDistance: 16,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      expect(body.success).toBe(true);
+      expect(body.changedFields).toContain('enableAutopause');
+      expect(body.changedFields).toContain('simulationDistance');
+      expect(body.restartRequired).toBe(true); // enableAutopause requires restart
+    });
+
+    it('should reject invalid memory format', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(sampleConfigContent);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/testserver/config',
+        payload: {
+          memory: 'invalid',
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should accept valid memory format (digits + M or G)', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(sampleConfigContent);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/testserver/config',
+        payload: {
+          memory: '8G',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should reject motd exceeding 500 characters', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(sampleConfigContent);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/testserver/config',
+        payload: {
+          motd: 'x'.repeat(501),
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should accept motd within 500 characters', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(sampleConfigContent);
+
+      let writtenContent = '';
+      mockWriteFileSync.mockImplementation((path: any, content: any) => {
+        writtenContent = String(content);
+      });
+      mockReadFileSync.mockImplementation(() => {
+        return writtenContent || sampleConfigContent;
+      });
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/testserver/config',
+        payload: {
+          motd: 'x'.repeat(500),
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
     });
 
     it('should handle no actual changes (empty changedFields)', async () => {
