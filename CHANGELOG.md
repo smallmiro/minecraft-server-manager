@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-02-17
+
+### Added
+- **Console Security Settings UI** - Online Mode and Whitelist settings in server detail page (#357, #358, #362)
+  - Toggle Online Mode on/off with safety confirmation dialog
+  - Toggle Whitelist on/off directly from server settings
+  - Real-time config updates via REST API
+
+### Fixed
+- **API Memory Parameter** - Pass `--memory` parameter to `create-server.sh` when creating servers via REST API (#356, #360)
+- **Console Player List Field** - Align player list field name (`players` to `list`) with backend API response format (#359, #361)
+- **API Whitelist Remove RCON Fallback** - Detect RCON error in whitelist remove and fall back to direct file editing (#363, #364)
+  - RCON `whitelist remove` sometimes fails silently; now detects error response and edits whitelist.json directly
+
+### Infrastructure
+- **Scripts**: Add `--memory` option support to `create-server.sh`
+- **Template**: Add `ONLINE_MODE` section to server `config.env` template
+
 ## [2.4.1] - 2026-02-14
 
 ### Fixed

@@ -77,22 +77,23 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.5.0 (2026-02-17)
+- **feat(console)**: Add Online Mode and Whitelist security settings UI (#357, #358, #362)
+- **fix(api)**: Pass memory parameter to create-server.sh (#356, #360)
+- **fix(console)**: Align player list field name with backend (#359, #361)
+- **fix(api)**: Detect RCON error in whitelist remove and fall back to file (#363, #364)
+
+### v2.4.1 (2026-02-14)
+- **fix(ci)**: Fix mcctl-api npm publish missing workspace replacement for mod-source-modrinth
+
 ### v2.4.0 (2026-02-14)
 - **feat(cli)**: Add `mcctl upgrade` command for upgrading mcctl and all services (#326, #355)
 - **feat(cli)**: Add creeper ASCII banner with version check on `mcctl init` (#353, #354)
 - **feat(console)**: Implement Mods tab functionality (#351, #352)
-- **refactor(console)**: Rename 'Content' tab to 'Mods' in server detail page (#349, #350)
 - **feat(cli)**: Add `mcctl playit domain` subcommand (#347, #348)
-- **docs**: Update documentation for v2.4.0 with upgrade command and playit.gg guides
-
-### v2.3.5 (2026-02-12)
-- **fix(shared)**: Use correct container name `playit-agent` in `getPlayitAgentStatus()` (#345, #346)
-- **fix(console)**: Add error feedback for playit start/stop actions (#343)
-- **fix(console)**: Improve playit section header layout and server domains display (#343, #344)
 
 ### v2.3.0 (2026-02-12) - External Play (playit.gg)
 - **feat(cli)**: Add `mcctl playit` subcommand - start/stop/status/setup (#273, #331)
-- **feat(cli)**: Add playit.gg setup option to `mcctl init` (#271, #329)
 - **feat(api)**: Add playit.gg status and control API endpoints (#292, #332)
 - **feat(console)**: Add playit.gg external access UI (#274, #333)
 - **feat(api)**: Add comprehensive audit logging to all mutating routes (#324, #325)

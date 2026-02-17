@@ -875,32 +875,34 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
-### [2.3.5] - 2026-02-12
+### [2.5.0] - 2026-02-17
+
+**Added:**
+- **Console Security Settings** - Online Mode and Whitelist toggle in server detail page (#357, #358, #362)
 
 **Fixed:**
-- **Playit.gg Container Name** - Use correct container name `playit-agent` in status check (#345, #346)
-- **Console Playit Error Feedback** - Add error feedback for playit start/stop actions (#343)
-- **Console Playit Layout** - Improve playit section header and server domains display (#343, #344)
+- **API Memory Parameter** - Pass `--memory` to `create-server.sh` (#356, #360)
+- **Console Player List Field** - Align field name with backend response (#359, #361)
+- **API Whitelist Remove Fallback** - Detect RCON error and fall back to file editing (#363, #364)
+
+### [2.4.0] - 2026-02-14
+
+**Added:**
+- **CLI `mcctl upgrade`** - Upgrade mcctl and services with auto-restart (#326, #355)
+- **CLI Creeper Banner** - ASCII art with version check on `mcctl init` (#353, #354)
+- **Console Mods Tab** - Full mod listing and management (#351, #352)
+- **CLI `mcctl playit domain`** - Manage playit.gg domain assignments (#347, #348)
 
 ### [2.3.0] - 2026-02-12 (External Play - playit.gg)
 
 **Added:**
 - **playit.gg External Access** - Allow external players to join without port forwarding (#270-#275, #291-#292)
-  - Domain model, Docker Compose templates, CLI commands (`mcctl playit start/stop/status/setup`)
-  - `mcctl init --playit-key` and `mcctl create --playit-domain` options
-  - REST API endpoints for playit.gg management
-  - Web Console UI: PlayitSummaryCard, ConnectionInfoCard, PlayitSection
-  - Comprehensive documentation (English/Korean)
 - **Comprehensive API Audit Logging** - Add audit logging to all mutating API routes (#324, #325)
-
-**Fixed:**
-- Unify Add and Bulk button sizes in WhitelistManager (#322, #323)
 
 ### [2.2.0] - 2026-02-11
 
 **Added:**
-- **Whitelist Console UI** - Full whitelist management in Web Console: toggle ON/OFF, bulk add, search/filter (#283, #321)
-- **Whitelist Default on Create** - Enable whitelist by default on `mcctl create` (#282, #320)
+- **Whitelist Console UI** - Full whitelist management in Web Console (#283, #321)
 - **Hostname/Domain Management** - Server hostname management in Options tab (#314, #315)
 
 ### [2.1.0] - 2026-02-09 (Console Feature Completion)
@@ -908,9 +910,7 @@ cat /etc/avahi/hosts
 **Added:**
 - **Modrinth Modpack CLI/API Support** - Full modpack server creation and management (#244, #245)
 - **Admin User Management Console UI** - Web-based admin user management (#189)
-- **OP Level Support** - OP level management across domain model, CLI, API, and Console (#284-#287)
-
-### [2.0.0] - 2026-02-09
+- **OP Level Support** - OP level management across all layers (#284-#287)
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
