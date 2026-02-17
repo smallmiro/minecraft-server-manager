@@ -1,34 +1,37 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Divider from '@mui/material/Divider';
-import Grid from '@mui/material/Grid';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
-import SaveIcon from '@mui/icons-material/Save';
 import WarningIcon from '@mui/icons-material/Warning';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { useServerConfig, useUpdateServerConfig, useResetWorld } from '@/hooks/useMcctl';
+import { useServerConfig, useUpdateServerConfig, useResetWorld, useRestartServer } from '@/hooks/useMcctl';
 import { HostnameSection } from './HostnameSection';
-import type { Difficulty, GameMode, ServerConfig, UpdateServerConfigRequest } from '@/ports/api/IMcctlApiClient';
+import { SettingsSection, StickyActionBar, RestartConfirmDialog, sectionConfigs } from './settings';
+import type { ServerConfig, UpdateServerConfigRequest } from '@/ports/api/IMcctlApiClient';
+
+// Fields that require restart (must match backend RESTART_REQUIRED_FIELDS)
+const RESTART_REQUIRED_FIELDS: (keyof ServerConfig)[] = [
+  'memory', 'initMemory', 'maxMemory', 'useAikarFlags', 'jvmXxOpts',
+  'onlineMode', 'enableWhitelist', 'enforceWhitelist', 'enforceSecureProfile',
+  'level', 'seed', 'levelType',
+  'enableAutopause', 'enableAutostop',
+  'enableRcon', 'rconPassword', 'rconPort',
+  'tz', 'uid', 'gid', 'stopDuration',
+];
 
 interface ServerOptionsTabProps {
   serverName: string;
@@ -45,15 +48,16 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
   const { data: configData, isLoading } = useServerConfig(serverName);
   const updateConfig = useUpdateServerConfig();
   const resetWorldMutation = useResetWorld();
+  const restartServer = useRestartServer();
 
   // Form state
   const [formData, setFormData] = useState<ServerConfig>({});
-  const [hasChanges, setHasChanges] = useState(false);
-  const [performanceChanged, setPerformanceChanged] = useState(false);
+  const [originalData, setOriginalData] = useState<ServerConfig>({});
 
   // Dialog states
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetConfirmation, setResetConfirmation] = useState('');
+  const [restartDialogOpen, setRestartDialogOpen] = useState(false);
 
   // Snackbar state
   const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -66,65 +70,100 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
   useEffect(() => {
     if (configData?.config) {
       setFormData(configData.config);
+      setOriginalData(configData.config);
     }
   }, [configData]);
 
-  // Handle form field changes
-  const handleChange = (field: keyof ServerConfig, value: string | number | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setHasChanges(true);
-
-    // Track if restart-required settings changed
-    if (field === 'memory' || field === 'useAikarFlags' || field === 'onlineMode' || field === 'enableWhitelist') {
-      setPerformanceChanged(true);
+  // Compute changed fields
+  const changedFields = useMemo(() => {
+    const changed: string[] = [];
+    for (const key of Object.keys(formData) as (keyof ServerConfig)[]) {
+      if (formData[key] !== originalData[key]) {
+        changed.push(key);
+      }
     }
-  };
+    // Also check keys that exist in original but not in form
+    for (const key of Object.keys(originalData) as (keyof ServerConfig)[]) {
+      if (formData[key] !== originalData[key] && !changed.includes(key)) {
+        changed.push(key);
+      }
+    }
+    return changed;
+  }, [formData, originalData]);
 
-  // Handle save
-  const handleSave = async () => {
+  const hasChanges = changedFields.length > 0;
+  const restartChangedFields = changedFields.filter((f) =>
+    RESTART_REQUIRED_FIELDS.includes(f as keyof ServerConfig)
+  );
+  const hasRestartChanges = restartChangedFields.length > 0;
+
+  // Handle form field change
+  const handleChange = useCallback((key: string, value: unknown) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  // Handle discard
+  const handleDiscard = useCallback(() => {
+    setFormData(originalData);
+  }, [originalData]);
+
+  // Handle save (called after optional restart dialog)
+  const doSave = useCallback(async (shouldRestart: boolean) => {
     try {
       const result = await updateConfig.mutateAsync({
         serverName,
         config: formData as UpdateServerConfigRequest,
       });
 
-      setSnackbar({
-        open: true,
-        message: result.restartRequired
-          ? 'Settings saved. Restart required for some changes to take effect.'
-          : 'Settings saved successfully.',
-        severity: result.restartRequired ? 'warning' : 'success',
-      });
+      setOriginalData(result.config);
+      setFormData(result.config);
 
-      setHasChanges(false);
-      setPerformanceChanged(false);
+      if (shouldRestart && isRunning) {
+        await restartServer.mutateAsync(serverName);
+        setSnackbar({
+          open: true,
+          message: 'Settings saved. Server is restarting...',
+          severity: 'warning',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: result.restartRequired
+            ? 'Settings saved. Restart required for some changes to take effect.'
+            : 'Settings saved successfully.',
+          severity: result.restartRequired ? 'warning' : 'success',
+        });
+      }
     } catch (error) {
       setSnackbar({
         open: true,
         message: error instanceof Error ? error.message : 'Failed to save settings',
         severity: 'error',
       });
+    } finally {
+      setRestartDialogOpen(false);
     }
-  };
+  }, [formData, serverName, isRunning, updateConfig, restartServer]);
+
+  // Handle save button click
+  const handleSave = useCallback(() => {
+    if (hasRestartChanges && isRunning) {
+      setRestartDialogOpen(true);
+    } else {
+      doSave(false);
+    }
+  }, [hasRestartChanges, isRunning, doSave]);
 
   // Handle reset world
   const handleResetWorld = async () => {
     if (resetConfirmation !== 'RESET') {
-      setSnackbar({
-        open: true,
-        message: 'Please type RESET to confirm',
-        severity: 'warning',
-      });
+      setSnackbar({ open: true, message: 'Please type RESET to confirm', severity: 'warning' });
       return;
     }
 
     try {
       await resetWorldMutation.mutateAsync(serverName);
-      setSnackbar({
-        open: true,
-        message: 'World reset successfully',
-        severity: 'success',
-      });
+      setSnackbar({ open: true, message: 'World reset successfully', severity: 'success' });
       setResetDialogOpen(false);
       setResetConfirmation('');
     } catch (error) {
@@ -149,221 +188,15 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
       {/* Hostname / Domain Section */}
       <HostnameSection serverName={serverName} />
 
-      {/* Performance Warning Alert */}
-      {performanceChanged && (
-        <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 3 }}>
-          Performance settings require a server restart to take effect.
-        </Alert>
-      )}
-
-      {/* Server Properties Section */}
-      <Card sx={{ mb: 3, borderRadius: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom fontWeight={600}>
-            Server Properties
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            These settings can be changed without restarting the server.
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-
-          <Grid container spacing={3}>
-            {/* MOTD */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="MOTD (Message of the Day)"
-                value={formData.motd || ''}
-                onChange={(e) => handleChange('motd', e.target.value)}
-                helperText="The message displayed in the server list"
-              />
-            </Grid>
-
-            {/* Max Players */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Max Players"
-                value={formData.maxPlayers || 20}
-                onChange={(e) => handleChange('maxPlayers', parseInt(e.target.value, 10))}
-                inputProps={{ min: 1, max: 100 }}
-              />
-            </Grid>
-
-            {/* Difficulty */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Difficulty</InputLabel>
-                <Select
-                  value={formData.difficulty || 'normal'}
-                  label="Difficulty"
-                  onChange={(e) => handleChange('difficulty', e.target.value as Difficulty)}
-                >
-                  <MenuItem value="peaceful">Peaceful</MenuItem>
-                  <MenuItem value="easy">Easy</MenuItem>
-                  <MenuItem value="normal">Normal</MenuItem>
-                  <MenuItem value="hard">Hard</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Game Mode */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Game Mode</InputLabel>
-                <Select
-                  value={formData.gameMode || 'survival'}
-                  label="Game Mode"
-                  onChange={(e) => handleChange('gameMode', e.target.value as GameMode)}
-                >
-                  <MenuItem value="survival">Survival</MenuItem>
-                  <MenuItem value="creative">Creative</MenuItem>
-                  <MenuItem value="adventure">Adventure</MenuItem>
-                  <MenuItem value="spectator">Spectator</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* PvP */}
-            <Grid item xs={12} sm={6}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.pvp ?? true}
-                    onChange={(e) => handleChange('pvp', e.target.checked)}
-                  />
-                }
-                label="Enable PvP"
-              />
-            </Grid>
-
-            {/* View Distance */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="View Distance (chunks)"
-                value={formData.viewDistance || 10}
-                onChange={(e) => handleChange('viewDistance', parseInt(e.target.value, 10))}
-                inputProps={{ min: 3, max: 32 }}
-              />
-            </Grid>
-
-            {/* Spawn Protection */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Spawn Protection (blocks)"
-                value={formData.spawnProtection || 16}
-                onChange={(e) => handleChange('spawnProtection', parseInt(e.target.value, 10))}
-                inputProps={{ min: 0, max: 128 }}
-              />
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      {/* Security Settings Section */}
-      <Card sx={{ mb: 3, borderRadius: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom fontWeight={600}>
-            Security Settings
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            These settings require a server restart to take effect.
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-
-          <Grid container spacing={3}>
-            {/* Online Mode */}
-            <Grid item xs={12} sm={6}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.onlineMode ?? true}
-                    onChange={(e) => handleChange('onlineMode', e.target.checked)}
-                  />
-                }
-                label="Online Mode (Mojang Auth)"
-              />
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4 }}>
-                Disable to allow cracked clients (not recommended)
-              </Typography>
-            </Grid>
-
-            {/* Whitelist */}
-            <Grid item xs={12} sm={6}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.enableWhitelist ?? true}
-                    onChange={(e) => handleChange('enableWhitelist', e.target.checked)}
-                  />
-                }
-                label="Enable Whitelist"
-              />
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4 }}>
-                Only whitelisted players can join
-              </Typography>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      {/* Performance Section */}
-      <Card sx={{ mb: 3, borderRadius: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom fontWeight={600}>
-            Performance Settings
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            These settings require a server restart to take effect.
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-
-          <Grid container spacing={3}>
-            {/* Memory */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Memory Allocation"
-                value={formData.memory || '4G'}
-                onChange={(e) => handleChange('memory', e.target.value)}
-                helperText="Format: 4G, 8G, etc."
-              />
-            </Grid>
-
-            {/* Aikar Flags */}
-            <Grid item xs={12} sm={6}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.useAikarFlags ?? false}
-                    onChange={(e) => handleChange('useAikarFlags', e.target.checked)}
-                  />
-                }
-                label="Use Aikar's Flags (Optimized GC)"
-              />
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      {/* Save Button */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<SaveIcon />}
-          onClick={handleSave}
-          disabled={!hasChanges || updateConfig.isPending}
-          sx={{ px: 4 }}
-        >
-          {updateConfig.isPending ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </Box>
+      {/* Settings Sections (6 cards) */}
+      {sectionConfigs.map((section) => (
+        <SettingsSection
+          key={section.id}
+          section={section}
+          values={formData}
+          onChange={handleChange}
+        />
+      ))}
 
       {/* Danger Zone */}
       <Card sx={{ borderRadius: 3, borderColor: 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
@@ -373,7 +206,6 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
           </Typography>
           <Divider sx={{ mb: 3 }} />
 
-          {/* Reset World */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>
               Reset World
@@ -399,13 +231,27 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
         </CardContent>
       </Card>
 
+      {/* Sticky Save Bar */}
+      <StickyActionBar
+        hasChanges={hasChanges}
+        changedCount={changedFields.length}
+        hasRestartChanges={hasRestartChanges}
+        isSaving={updateConfig.isPending}
+        onSave={handleSave}
+        onDiscard={handleDiscard}
+      />
+
+      {/* Restart Confirm Dialog */}
+      <RestartConfirmDialog
+        open={restartDialogOpen}
+        changedFields={restartChangedFields}
+        onSaveOnly={() => doSave(false)}
+        onSaveAndRestart={() => doSave(true)}
+        onCancel={() => setRestartDialogOpen(false)}
+      />
+
       {/* Reset World Confirmation Dialog */}
-      <Dialog
-        open={resetDialogOpen}
-        onClose={() => setResetDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <WarningIcon color="error" />
@@ -431,9 +277,7 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setResetDialogOpen(false)}>
-            Cancel
-          </Button>
+          <Button onClick={() => setResetDialogOpen(false)}>Cancel</Button>
           <Button
             variant="contained"
             color="error"
