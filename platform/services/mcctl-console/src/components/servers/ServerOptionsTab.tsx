@@ -74,8 +74,8 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
     setFormData((prev) => ({ ...prev, [field]: value }));
     setHasChanges(true);
 
-    // Track if performance settings changed
-    if (field === 'memory' || field === 'useAikarFlags') {
+    // Track if restart-required settings changed
+    if (field === 'memory' || field === 'useAikarFlags' || field === 'onlineMode' || field === 'enableWhitelist') {
       setPerformanceChanged(true);
     }
   };
@@ -260,6 +260,53 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
                 onChange={(e) => handleChange('spawnProtection', parseInt(e.target.value, 10))}
                 inputProps={{ min: 0, max: 128 }}
               />
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Security Settings Section */}
+      <Card sx={{ mb: 3, borderRadius: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom fontWeight={600}>
+            Security Settings
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            These settings require a server restart to take effect.
+          </Typography>
+          <Divider sx={{ mb: 3 }} />
+
+          <Grid container spacing={3}>
+            {/* Online Mode */}
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.onlineMode ?? true}
+                    onChange={(e) => handleChange('onlineMode', e.target.checked)}
+                  />
+                }
+                label="Online Mode (Mojang Auth)"
+              />
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4 }}>
+                Disable to allow cracked clients (not recommended)
+              </Typography>
+            </Grid>
+
+            {/* Whitelist */}
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.enableWhitelist ?? true}
+                    onChange={(e) => handleChange('enableWhitelist', e.target.checked)}
+                  />
+                }
+                label="Enable Whitelist"
+              />
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4 }}>
+                Only whitelisted players can join
+              </Typography>
             </Grid>
           </Grid>
         </CardContent>

@@ -13,6 +13,8 @@ const CONFIG_FIELD_MAP: Record<keyof ServerConfig, string> = {
   pvp: 'PVP',
   viewDistance: 'VIEW_DISTANCE',
   spawnProtection: 'SPAWN_PROTECTION',
+  onlineMode: 'ONLINE_MODE',
+  enableWhitelist: 'ENABLE_WHITELIST',
   memory: 'MEMORY',
   useAikarFlags: 'USE_AIKAR_FLAGS',
 };
@@ -23,6 +25,8 @@ const CONFIG_FIELD_MAP: Record<keyof ServerConfig, string> = {
 const RESTART_REQUIRED_FIELDS: (keyof ServerConfig)[] = [
   'memory',
   'useAikarFlags',
+  'onlineMode',
+  'enableWhitelist',
 ];
 
 /**
@@ -68,6 +72,8 @@ function parseEnvValue(key: keyof ServerConfig, value: string | undefined): Serv
 
     case 'pvp':
     case 'useAikarFlags':
+    case 'onlineMode':
+    case 'enableWhitelist':
       return value.toLowerCase() === 'true';
 
     case 'difficulty':
@@ -105,6 +111,10 @@ function formatEnvValue(key: keyof ServerConfig, value: ServerConfig[keyof Serve
     case 'pvp':
     case 'useAikarFlags':
       return value ? 'true' : 'false';
+
+    case 'onlineMode':
+    case 'enableWhitelist':
+      return value ? 'TRUE' : 'FALSE';
 
     case 'difficulty':
     case 'gameMode':
