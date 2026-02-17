@@ -77,6 +77,9 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.6.1 (2026-02-17)
+- **fix(console)**: Remove individual Restart badges, show specific field names in StickyActionBar
+
 ### v2.6.0 (2026-02-17)
 - **feat(console)**: Server Properties Full UI - 6 sections, ~40 fields with Progressive Disclosure (#365, #366)
 - **test(api)**: Add 22 ConfigService tests + 6 API integration tests (#367, #368)

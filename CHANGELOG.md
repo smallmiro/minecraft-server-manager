@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-02-17
+
+### Fixed
+- **Console Restart Badge UX** - Remove individual Restart badges from each settings field and consolidate restart information in StickyActionBar
+  - Reduces visual clutter in Server Properties tab
+  - StickyActionBar now shows specific field names requiring restart (e.g., "difficulty, pvp require restart")
+
 ## [2.6.0] - 2026-02-17
 
 ### Added
