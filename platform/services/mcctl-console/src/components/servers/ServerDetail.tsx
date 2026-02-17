@@ -507,13 +507,13 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
                       value={`${server.players.online} / ${server.players.max}`}
                     />
 
-                    {server.players.list && server.players.list.length > 0 && (
+                    {server.players.players && server.players.players.length > 0 && (
                       <>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 2, mb: 1 }}>
                           Online Players
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                          {server.players.list.map((player) => (
+                          {server.players.players.map((player) => (
                             <Chip key={player} label={player} size="small" />
                           ))}
                         </Box>
