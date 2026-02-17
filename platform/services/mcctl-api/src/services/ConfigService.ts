@@ -252,6 +252,18 @@ function formatEnvValue(key: keyof ServerConfig, value: ServerConfig[keyof Serve
     return String(value).toLowerCase();
   }
 
+  // levelType: camelCase → env format
+  if (key === 'levelType') {
+    const map: Record<string, string> = {
+      default: 'DEFAULT',
+      flat: 'FLAT',
+      largeBiomes: 'LARGEBIOMES',
+      amplified: 'AMPLIFIED',
+      buffet: 'BUFFET',
+    };
+    return map[String(value)] ?? String(value);
+  }
+
   return String(value);
 }
 

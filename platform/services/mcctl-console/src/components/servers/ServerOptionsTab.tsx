@@ -119,12 +119,20 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
       setFormData(result.config);
 
       if (shouldRestart && isRunning) {
-        await restartServer.mutateAsync(serverName);
-        setSnackbar({
-          open: true,
-          message: 'Settings saved. Server is restarting...',
-          severity: 'warning',
-        });
+        try {
+          await restartServer.mutateAsync(serverName);
+          setSnackbar({
+            open: true,
+            message: 'Settings saved. Server is restarting...',
+            severity: 'warning',
+          });
+        } catch {
+          setSnackbar({
+            open: true,
+            message: 'Settings saved, but server restart failed. Please restart manually.',
+            severity: 'error',
+          });
+        }
       } else {
         setSnackbar({
           open: true,

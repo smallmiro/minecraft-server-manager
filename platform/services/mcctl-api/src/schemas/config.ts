@@ -57,7 +57,7 @@ export const ServerConfigSchema = Type.Object({
   spawnNpcs: Type.Optional(Type.Boolean({ description: 'Spawn villagers and NPCs' })),
 
   // ── World (Essential) ──
-  motd: Type.Optional(Type.String({ description: 'Message of the day' })),
+  motd: Type.Optional(Type.String({ maxLength: 500, description: 'Message of the day' })),
   level: Type.Optional(Type.String({ description: 'World save folder name' })),
   levelType: Type.Optional(LevelTypeSchema),
   seed: Type.Optional(Type.String({ description: 'World generation seed' })),
@@ -76,7 +76,7 @@ export const ServerConfigSchema = Type.Object({
   enforceSecureProfile: Type.Optional(Type.Boolean({ description: 'Require signed chat messages' })),
 
   // ── Performance & JVM (Essential) ──
-  memory: Type.Optional(Type.String({ description: 'JVM heap memory (e.g., 4G)' })),
+  memory: Type.Optional(Type.String({ pattern: '^\\d+[MG]$', description: 'JVM heap memory (e.g., 4G)' })),
   useAikarFlags: Type.Optional(Type.Boolean({ description: 'Use Aikar JVM flags for optimization' })),
   viewDistance: Type.Optional(Type.Number({ minimum: 2, maximum: 32, description: 'View distance in chunks' })),
 
