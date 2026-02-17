@@ -27,7 +27,7 @@ export interface ServerDetail extends ServerSummary {
   players?: {
     online: number;
     max: number;
-    list: string[];
+    players: string[];
   };
   stats?: ServerStats;
   worldName?: string;
