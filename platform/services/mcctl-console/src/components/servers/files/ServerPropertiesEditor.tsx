@@ -23,7 +23,6 @@ import {
   serverPropertiesSchema,
   categoryConfig,
   categoryOrder,
-  getPropertySchema,
   parseServerProperties,
   serializeServerProperties,
 } from './serverPropertiesSchema';

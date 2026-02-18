@@ -62,6 +62,9 @@ export function PropertyField({ schema, value, onChange, isChanged }: PropertyFi
           helperText={schema.description}
           value={value}
           onChange={(e) => onChange(schema.key, e.target.value)}
+          InputProps={{
+            endAdornment,
+          }}
           sx={fieldSx}
         >
           {schema.options?.map((opt) => (
