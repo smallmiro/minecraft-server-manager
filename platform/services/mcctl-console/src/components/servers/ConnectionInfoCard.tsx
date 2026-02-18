@@ -11,6 +11,7 @@ import Skeleton from '@mui/material/Skeleton';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import { usePlayitStatus } from '@/hooks/usePlayit';
+import { HostnameDisplay } from '@/components/common';
 
 interface ConnectionInfoCardProps {
   serverName: string;
@@ -103,7 +104,6 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
     );
   }
 
-  const lanAddress = hostname ? `${hostname}:25565` : 'Not configured';
   const showExternalAddress = playitStatus?.enabled && playitStatus.servers.length > 0;
 
   // Find external domain for this server
@@ -119,11 +119,25 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
         </Typography>
         <Divider sx={{ mb: 2 }} />
 
-        <InfoRow
-          label="LAN Address"
-          value={lanAddress}
-          copyText={hostname ? lanAddress : undefined}
-        />
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            py: 1,
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            LAN Address
+          </Typography>
+          {hostname ? (
+            <HostnameDisplay hostname={hostname} portSuffix={25565} color="text.primary" showCopyButton />
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Not configured
+            </Typography>
+          )}
+        </Box>
 
         {showExternalAddress && (
           <InfoRow
