@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.7.0 (2026-02-18)
+- **feat(console)**: Replace Ubuntu font with Roboto Mono across all console components
+  - Unified typography: layout, MUI theme, and 11 components updated
+  - Minecraft font preserved for game branding
+
 ### v2.6.1 (2026-02-17)
 - **fix(console)**: Remove individual Restart badges, show specific field names in StickyActionBar
 
@@ -98,22 +103,6 @@ mcctl logs myserver
 - **feat(cli)**: Add creeper ASCII banner with version check on `mcctl init` (#353, #354)
 - **feat(console)**: Implement Mods tab functionality (#351, #352)
 - **feat(cli)**: Add `mcctl playit domain` subcommand (#347, #348)
-
-### v2.3.0 (2026-02-12) - External Play (playit.gg)
-- **feat(cli)**: Add `mcctl playit` subcommand - start/stop/status/setup (#273, #331)
-- **feat(api)**: Add playit.gg status and control API endpoints (#292, #332)
-- **feat(console)**: Add playit.gg external access UI (#274, #333)
-- **feat(api)**: Add comprehensive audit logging to all mutating routes (#324, #325)
-
-### v2.2.0 (2026-02-11)
-- **feat(console)**: Whitelist Console UI - toggle ON/OFF, bulk player add, search/filter (#283, #321)
-- **feat**: Enable whitelist by default on `mcctl create` (#282, #320)
-- **feat(console)**: Hostname/domain management in server Options tab (#314, #315)
-
-### v2.1.0 (2026-02-09) - Console Feature Completion
-- **feat**: Modrinth modpack CLI/API support (#244, #245)
-- **feat**: Admin user management Console UI (#189)
-- **feat**: OP Level support across all layers (#284, #285, #286, #287)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
