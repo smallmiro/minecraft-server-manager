@@ -25,6 +25,8 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Collapse from '@mui/material/Collapse';
 import Alert from '@mui/material/Alert';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 import type { CreateServerStatus } from '@/hooks/useCreateServerSSE';
 
@@ -225,7 +227,7 @@ export function CreateServerDialog({
   return (
     <Dialog open={open} onClose={isCreating ? undefined : onClose} maxWidth="sm" fullWidth fullScreen={isSmallScreen}>
       <form onSubmit={handleSubmit}>
-        <DialogTitle>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {status === 'completed' ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <CheckCircleIcon color="success" />
@@ -238,6 +240,15 @@ export function CreateServerDialog({
             </Box>
           ) : (
             'Create New Server'
+          )}
+          {isSmallScreen && !isCreating && (
+            <IconButton
+              onClick={onClose}
+              aria-label="Close dialog"
+              edge="end"
+            >
+              <CloseIcon />
+            </IconButton>
           )}
         </DialogTitle>
         <DialogContent>

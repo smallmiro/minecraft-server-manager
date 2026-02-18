@@ -123,7 +123,6 @@ export default function ServersPage() {
           startIcon={<AddIcon />}
           onClick={() => setCreateDialogOpen(true)}
           size="large"
-          fullWidth
           sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           Create Server

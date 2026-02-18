@@ -613,7 +613,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
           >
             Console - {server.name}
           </Typography>
-          <IconButton onClick={() => setConsoleOpen(false)}>
+          <IconButton onClick={() => setConsoleOpen(false)} aria-label="Close console">
             <CloseIcon />
           </IconButton>
         </Box>
