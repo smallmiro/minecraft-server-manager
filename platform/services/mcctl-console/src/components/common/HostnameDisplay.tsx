@@ -5,9 +5,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Popover from '@mui/material/Popover';
-import IconButton from '@mui/material/IconButton';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CheckIcon from '@mui/icons-material/Check';
+import { CopyButton } from './CopyButton';
 import { parseHostnames, getPrimaryHostname } from '@/utils/hostname';
 
 interface HostnameDisplayProps {
@@ -16,37 +14,6 @@ interface HostnameDisplayProps {
   color?: string;
   fontSize?: string | number;
   showCopyButton?: boolean;
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard API may fail in insecure contexts
-    }
-  };
-
-  return (
-    <IconButton
-      size="small"
-      onClick={handleCopy}
-      sx={{
-        ml: 0.5,
-        p: 0.25,
-        color: copied ? 'success.main' : 'text.secondary',
-        '&:hover': { bgcolor: 'action.hover' },
-      }}
-      aria-label={copied ? 'Copied' : 'Copy to clipboard'}
-    >
-      {copied ? <CheckIcon sx={{ fontSize: 14 }} /> : <ContentCopyIcon sx={{ fontSize: 14 }} />}
-    </IconButton>
-  );
 }
 
 export function HostnameDisplay({

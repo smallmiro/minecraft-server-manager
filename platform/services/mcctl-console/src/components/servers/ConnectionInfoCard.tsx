@@ -1,56 +1,17 @@
 'use client';
 
-import { useState } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
 import Divider from '@mui/material/Divider';
 import Skeleton from '@mui/material/Skeleton';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CheckIcon from '@mui/icons-material/Check';
 import { usePlayitStatus } from '@/hooks/usePlayit';
-import { HostnameDisplay } from '@/components/common';
+import { CopyButton, HostnameDisplay } from '@/components/common';
 
 interface ConnectionInfoCardProps {
   serverName: string;
   hostname?: string;
-}
-
-interface CopyButtonProps {
-  text: string;
-}
-
-function CopyButton({ text }: CopyButtonProps) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
-  return (
-    <IconButton
-      size="small"
-      onClick={handleCopy}
-      sx={{
-        ml: 1,
-        color: copied ? 'success.main' : 'text.secondary',
-        '&:hover': {
-          bgcolor: 'action.hover',
-        },
-      }}
-      aria-label={copied ? 'Copied' : 'Copy to clipboard'}
-    >
-      {copied ? <CheckIcon sx={{ fontSize: 16 }} /> : <ContentCopyIcon sx={{ fontSize: 16 }} />}
-    </IconButton>
-  );
 }
 
 function InfoRow({ label, value, copyText }: { label: string; value: string; copyText?: string }) {
@@ -76,7 +37,7 @@ function InfoRow({ label, value, copyText }: { label: string; value: string; cop
         >
           {value}
         </Typography>
-        {copyText && <CopyButton text={copyText} />}
+        {copyText && <CopyButton text={copyText} size={16} />}
       </Box>
     </Box>
   );
