@@ -1,15 +1,15 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { Ubuntu } from 'next/font/google';
+import { Roboto_Mono } from 'next/font/google';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import { ThemeProvider } from '@/theme';
 import { QueryProvider } from '@/lib';
 import { LoadingProvider } from '@/components/providers';
 import './globals.css';
 
-const ubuntu = Ubuntu({
-  weight: ['300', '400', '500', '700'],
+const robotoMono = Roboto_Mono({
   subsets: ['latin'],
+  variable: '--font-roboto-mono',
 });
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={ubuntu.className}>
+      <body className={`${robotoMono.variable} ${robotoMono.className}`}>
         <div id="__next">
           <AppRouterCacheProvider>
             <ThemeProvider>

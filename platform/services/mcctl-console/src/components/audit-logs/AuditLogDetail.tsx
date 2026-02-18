@@ -159,7 +159,7 @@ export function AuditLogDetail({ log, open, onClose }: AuditLogDetailProps) {
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
                 ID
               </Typography>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all' }}>
+              <Typography variant="body2" sx={{ fontFamily: '"Roboto Mono", monospace', fontSize: '0.8rem', wordBreak: 'break-all' }}>
                 {log.id}
               </Typography>
             </Box>

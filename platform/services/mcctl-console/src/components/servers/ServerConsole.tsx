@@ -381,7 +381,7 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
           overflow: 'auto',
           bgcolor: '#1a1a1a',
           p: 1,
-          fontFamily: 'monospace',
+          fontFamily: '"Roboto Mono", monospace',
           fontSize: '0.85rem',
         }}
       >
@@ -434,7 +434,7 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
           onKeyDown={handleKeyDown}
           disabled={!isConnected || isExecuting}
           InputProps={{
-            sx: { fontFamily: 'monospace' },
+            sx: { fontFamily: '"Roboto Mono", monospace' },
           }}
         />
         <Button

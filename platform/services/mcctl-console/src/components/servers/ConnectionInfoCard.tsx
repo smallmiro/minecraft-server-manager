@@ -69,7 +69,7 @@ function InfoRow({ label, value, copyText }: { label: string; value: string; cop
         <Typography
           variant="body2"
           sx={{
-            fontFamily: copyText ? 'monospace' : 'inherit',
+            fontFamily: copyText ? '"Roboto Mono", monospace' : 'inherit',
             color: copyText ? 'text.primary' : 'text.secondary',
           }}
         >

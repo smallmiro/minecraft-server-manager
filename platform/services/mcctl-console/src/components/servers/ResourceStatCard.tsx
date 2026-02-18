@@ -50,7 +50,7 @@ export function ResourceStatCard({
             sx={{
               fontWeight: 700,
               color: 'text.primary',
-              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              fontFamily: '"Roboto Mono", monospace',
               letterSpacing: '-0.5px',
             }}
           >

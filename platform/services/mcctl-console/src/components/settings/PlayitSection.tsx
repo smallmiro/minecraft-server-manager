@@ -243,7 +243,7 @@ export function PlayitSection() {
                         </TableCell>
                         <TableCell sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                            <Typography variant="body2" sx={{ fontFamily: '"Roboto Mono", monospace' }}>
                               {server.playitDomain}
                             </Typography>
                             <CopyButton text={server.playitDomain!} />
