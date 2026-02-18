@@ -39,6 +39,7 @@ export function NetworkSettings({ router }: NetworkSettingsProps) {
             Network Settings
           </Typography>
         </Box>
+        <Box sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableBody>
             <TableRow>
@@ -70,6 +71,7 @@ export function NetworkSettings({ router }: NetworkSettingsProps) {
             </TableRow>
           </TableBody>
         </Table>
+        </Box>
       </CardContent>
     </Card>
   );

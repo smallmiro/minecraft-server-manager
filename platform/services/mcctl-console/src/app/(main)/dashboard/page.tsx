@@ -54,7 +54,7 @@ export default function DashboardPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
               sx={{
-                display: 'flex',
+                display: { xs: 'none', sm: 'flex' },
                 alignItems: 'center',
                 justifyContent: 'center',
                 width: 56,
@@ -67,7 +67,7 @@ export default function DashboardPage() {
               <DashboardIcon sx={{ fontSize: 32 }} />
             </Box>
             <Box>
-              <Typography variant="h4" component="h1" fontWeight="bold">
+              <Typography variant="h4" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
                 Dashboard
               </Typography>
               <Typography variant="body1" color="text.secondary">
@@ -97,7 +97,7 @@ export default function DashboardPage() {
 
         {/* Skeleton Server Overview & Activity */}
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={7}>
+          <Grid item xs={12} md={7}>
             <Card>
               <CardContent>
                 <Skeleton variant="text" width="30%" height={32} sx={{ mb: 2 }} />
@@ -111,7 +111,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} lg={5}>
+          <Grid item xs={12} md={5}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Card>
                 <CardContent>
@@ -162,7 +162,7 @@ export default function DashboardPage() {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
             sx={{
-              display: 'flex',
+              display: { xs: 'none', sm: 'flex' },
               alignItems: 'center',
               justifyContent: 'center',
               width: 56,
@@ -175,7 +175,7 @@ export default function DashboardPage() {
             <DashboardIcon sx={{ fontSize: 32 }} />
           </Box>
           <Box>
-            <Typography variant="h4" component="h1" fontWeight="bold">
+            <Typography variant="h4" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
               Dashboard
             </Typography>
             <Typography variant="body1" color="text.secondary">
@@ -227,7 +227,7 @@ export default function DashboardPage() {
 
       {/* Server Overview & Activity Feed */}
       <Grid container spacing={3}>
-        <Grid item xs={12} lg={7}>
+        <Grid item xs={12} md={7}>
           <ServerOverview
             servers={serversData?.servers || []}
             statusMap={statusMap}
@@ -236,7 +236,7 @@ export default function DashboardPage() {
             showViewAll={true}
           />
         </Grid>
-        <Grid item xs={12} lg={5}>
+        <Grid item xs={12} md={5}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <PlayitSummaryCard />
             <RecentActivityFeed maxItems={5} />

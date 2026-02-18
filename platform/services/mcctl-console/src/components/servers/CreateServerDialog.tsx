@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -78,6 +80,9 @@ export function CreateServerDialog({
   progress = 0,
   message = '',
 }: CreateServerDialogProps) {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [category, setCategory] = useState<ServerCategory>('standard');
   const [formData, setFormData] = useState<CreateServerRequest>(DEFAULT_FORM_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -218,7 +223,7 @@ export function CreateServerDialog({
   };
 
   return (
-    <Dialog open={open} onClose={isCreating ? undefined : onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={isCreating ? undefined : onClose} maxWidth="sm" fullWidth fullScreen={isSmallScreen}>
       <form onSubmit={handleSubmit}>
         <DialogTitle>
           {status === 'completed' ? (

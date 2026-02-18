@@ -33,6 +33,7 @@ function InfoRow({ label, value, copyText }: { label: string; value: string; cop
           sx={{
             fontFamily: copyText ? '"Roboto Mono", monospace' : 'inherit',
             color: copyText ? 'text.primary' : 'text.secondary',
+            wordBreak: 'break-all',
           }}
         >
           {value}

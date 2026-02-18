@@ -12,7 +12,8 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Grid from '@mui/material/Grid';
 import Divider from '@mui/material/Divider';
-import { alpha } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import CloseIcon from '@mui/icons-material/Close';
@@ -136,6 +137,8 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const consoleRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Connect to server logs
   const { logs: rawLogs, isConnected } = useServerLogs({ serverName: server.name });
@@ -188,7 +191,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
   return (
     <Box>
       {/* Tabs - Pill Style */}
-      <Box sx={{ display: 'flex', gap: 0.5, mb: 3 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 3 }}>
         {TABS.map((tab) => (
           <Button
             key={tab}
@@ -294,7 +297,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
             ref={consoleRef}
             onScroll={handleScroll}
             sx={{
-              height: 360,
+              height: { xs: 240, sm: 360 },
               overflowY: 'auto',
               px: 2.5,
               py: 2,
@@ -591,9 +594,10 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
         onClose={() => setConsoleOpen(false)}
         maxWidth="xl"
         fullWidth
+        fullScreen={isSmallScreen}
         PaperProps={{
           sx: {
-            height: '90vh',
+            height: isSmallScreen ? '100vh' : '90vh',
             bgcolor: 'background.paper',
           },
         }}

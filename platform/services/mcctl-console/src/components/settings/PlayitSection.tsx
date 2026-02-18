@@ -224,6 +224,7 @@ export function PlayitSection() {
                 Server Domains
               </Typography>
               {configured.length > 0 ? (
+                <Box sx={{ overflowX: 'auto' }}>
                 <Table size="small" sx={{ mb: unconfigured.length > 0 ? 2 : 0 }}>
                   <TableHead>
                     <TableRow>
@@ -243,7 +244,7 @@ export function PlayitSection() {
                         </TableCell>
                         <TableCell sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="body2" sx={{ fontFamily: '"Roboto Mono", monospace' }}>
+                            <Typography variant="body2" sx={{ fontFamily: '"Roboto Mono", monospace', wordBreak: 'break-all' }}>
                               {server.playitDomain}
                             </Typography>
                             <CopyButton text={server.playitDomain!} />
@@ -253,6 +254,7 @@ export function PlayitSection() {
                     ))}
                   </TableBody>
                 </Table>
+                </Box>
               ) : (
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   No servers with external domains configured.
