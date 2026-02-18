@@ -875,6 +875,18 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.9.0] - 2026-02-18
+
+**Added:**
+- **Console Server Files Management** - Complete 4-phase implementation for server file management
+  - Phase 1: File Browser with directory navigation and file listing (#375, #381)
+  - Phase 2: Text Editor for reading/writing server config files (#376, #382)
+  - Phase 3: Player Editor smart routing for whitelist/ops/bans (#377, #383)
+  - Phase 4: server.properties Form Editor with visual form-based editing (#378, #384)
+
+**Changed:**
+- **Console Font Cleanup** - Remove Roboto Mono font, use MUI default (#373, #374)
+
 ### [2.8.1] - 2026-02-18
 
 **Changed:**
@@ -899,11 +911,6 @@ cat /etc/avahi/hosts
 
 **Added:**
 - **Console Server Properties Full UI** - 6 sections, ~40 fields with Progressive Disclosure (#365, #366)
-
-### [2.5.0] - 2026-02-17
-
-**Added:**
-- **Console Security Settings** - Online Mode and Whitelist toggle in server detail page (#357, #358, #362)
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

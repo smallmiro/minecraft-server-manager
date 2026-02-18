@@ -77,35 +77,28 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.9.0 (2026-02-18)
+- **feat(console)**: Server Files Management - complete 4-phase implementation
+  - Phase 1: File Browser with directory navigation and file listing (#375, #381)
+  - Phase 2: Text Editor for reading/writing server config files (#376, #382)
+  - Phase 3: Player Editor smart routing for whitelist/ops/bans (#377, #383)
+  - Phase 4: server.properties Form Editor with visual form-based editing (#378, #384)
+- **refactor(console)**: Remove Roboto Mono font, use MUI default (#373, #374)
+
 ### v2.8.1 (2026-02-18)
 - **refactor(console)**: Improve responsive design across 14 components for mobile/tablet/desktop (#371, #372)
-  - ServerCard, WorldCard, Dashboard, ServerDetail, CreateServerDialog, ServerConsole, and more
-  - FullScreen dialogs on mobile, responsive tables, accessible close buttons
 
 ### v2.8.0 (2026-02-18)
 - **feat(console)**: HostnameDisplay common component with popover for multiple hostnames (#369, #370)
-  - Applied to ServerCard, ServerOverview, ServerDetailPage, InfoRow, ConnectionInfoCard
-  - Extracted CopyButton and hostname utilities as shared components
-- **fix(console)**: Resolve DOM nesting warning and preserve InfoRow null behavior
-- **test(console)**: Add HostnameDisplay component tests
 
 ### v2.7.0 (2026-02-18)
 - **feat(console)**: Replace Ubuntu font with Roboto Mono across all console components
-  - Unified typography: layout, MUI theme, and 11 components updated
-  - Minecraft font preserved for game branding
 
 ### v2.6.1 (2026-02-17)
 - **fix(console)**: Remove individual Restart badges, show specific field names in StickyActionBar
 
 ### v2.6.0 (2026-02-17)
 - **feat(console)**: Server Properties Full UI - 6 sections, ~40 fields with Progressive Disclosure (#365, #366)
-- **test(api)**: Add 22 ConfigService tests + 6 API integration tests (#367, #368)
-
-### v2.5.0 (2026-02-17)
-- **feat(console)**: Add Online Mode and Whitelist security settings UI (#357, #358, #362)
-- **fix(api)**: Pass memory parameter to create-server.sh (#356, #360)
-- **fix(console)**: Align player list field name with backend (#359, #361)
-- **fix(api)**: Detect RCON error in whitelist remove and fall back to file (#363, #364)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

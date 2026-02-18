@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-02-18
+
+### Added
+- **Console File Browser** - Phase 1: Directory navigation and file listing for server files management (#375, #381)
+  - Browse server file system with directory tree navigation
+  - File listing with name, size, and modification date
+  - Breadcrumb navigation for directory path
+- **Console Text Editor** - Phase 2: Read and write text files directly from the web console (#376, #382)
+  - View and edit server configuration files (server.properties, config files, etc.)
+  - Syntax-aware text editing with save functionality
+- **Console Player Editor Smart Routing** - Phase 3: Smart routing for player management files (#377, #383)
+  - Automatic detection and routing for whitelist.json, ops.json, banned-players.json
+  - Dedicated player editor UI for player management files
+  - Smart file type detection with specialized editing interfaces
+- **Console server.properties Form Editor** - Phase 4: Visual form-based editor for server.properties (#378, #384)
+  - Form-based editing with field descriptions and validation
+  - Grouped settings by category (gameplay, world, network, etc.)
+  - Type-safe inputs (boolean toggles, number fields, dropdowns)
+
+### Changed
+- **Console Font Cleanup** - Remove Roboto Mono font, use MUI default font stack (#373, #374)
+  - Cleaner typography using Material UI default fonts
+  - Reduced bundle size by removing custom font dependency
+
 ## [2.8.1] - 2026-02-18
 
 ### Changed
