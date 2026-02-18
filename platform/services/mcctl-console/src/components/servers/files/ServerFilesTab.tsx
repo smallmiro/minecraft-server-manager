@@ -22,6 +22,7 @@ import { FileList } from './FileList';
 import { TextEditor } from './TextEditor';
 import { PlayerEditorDialog, getPlayerEditorType } from './PlayerEditorDialog';
 import type { PlayerEditorType } from './PlayerEditorDialog';
+import { ServerPropertiesDialog, isServerPropertiesFile } from './ServerPropertiesDialog';
 import type { FileEntry } from '@/ports/api/IMcctlApiClient';
 
 interface ServerFilesTabProps {
@@ -52,6 +53,10 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
   // Player editor (Smart Routing)
   const [playerEditorType, setPlayerEditorType] = useState<PlayerEditorType | null>(null);
   const [playerEditorPath, setPlayerEditorPath] = useState<string | null>(null);
+
+  // Server properties editor
+  const [propertiesEditorOpen, setPropertiesEditorOpen] = useState(false);
+  const [propertiesFilePath, setPropertiesFilePath] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch } = useServerFiles(serverName, currentPath);
   const deleteFile = useDeleteFile(serverName);
@@ -86,12 +91,17 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         break;
       case 'open': {
         const path = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
-        const specialEditor = getPlayerEditorType(file.name);
-        if (specialEditor) {
-          setPlayerEditorType(specialEditor);
-          setPlayerEditorPath(path);
+        if (currentPath === '/' && isServerPropertiesFile(file.name)) {
+          setPropertiesFilePath(path);
+          setPropertiesEditorOpen(true);
         } else {
-          setEditorFilePath(path);
+          const specialEditor = currentPath === '/' ? getPlayerEditorType(file.name) : null;
+          if (specialEditor) {
+            setPlayerEditorType(specialEditor);
+            setPlayerEditorPath(path);
+          } else {
+            setEditorFilePath(path);
+          }
         }
         break;
       }
@@ -229,6 +239,17 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         serverName={serverName}
         filePath={editorFilePath}
         onClose={() => setEditorFilePath(null)}
+      />
+
+      {/* Server Properties Editor */}
+      <ServerPropertiesDialog
+        serverName={serverName}
+        open={propertiesEditorOpen}
+        filePath={propertiesFilePath}
+        onClose={() => {
+          setPropertiesEditorOpen(false);
+          setPropertiesFilePath(null);
+        }}
       />
 
       {/* Player Editor (Smart Routing) */}
