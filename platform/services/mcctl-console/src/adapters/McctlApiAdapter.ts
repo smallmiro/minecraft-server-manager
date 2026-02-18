@@ -39,6 +39,11 @@ import {
   AddModsResponse,
   RemoveModResponse,
   ModSearchResponse,
+  FileListResponse,
+  FileContentResponse,
+  FileWriteResponse,
+  FileActionResponse,
+  FileRenameResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -493,6 +498,55 @@ export class McctlApiAdapter implements IMcctlApiClient {
     return this.fetch<PlayitActionResponse>('/api/playit/stop', {
       method: 'POST',
     });
+  }
+
+  // ============================================================
+  // File Management Operations
+  // ============================================================
+
+  async listFiles(serverName: string, path: string): Promise<FileListResponse> {
+    const params = new URLSearchParams({ path });
+    return this.fetch<FileListResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files?${params}`
+    );
+  }
+
+  async readFile(serverName: string, path: string): Promise<FileContentResponse> {
+    const params = new URLSearchParams({ path });
+    return this.fetch<FileContentResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files/read?${params}`
+    );
+  }
+
+  async writeFile(serverName: string, path: string, content: string): Promise<FileWriteResponse> {
+    const params = new URLSearchParams({ path });
+    return this.fetch<FileWriteResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files/write?${params}`,
+      { method: 'PUT', body: JSON.stringify({ content }) }
+    );
+  }
+
+  async deleteFile(serverName: string, path: string): Promise<FileActionResponse> {
+    const params = new URLSearchParams({ path });
+    return this.fetch<FileActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files?${params}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async createDirectory(serverName: string, path: string): Promise<FileActionResponse> {
+    const params = new URLSearchParams({ path });
+    return this.fetch<FileActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files/mkdir?${params}`,
+      { method: 'POST' }
+    );
+  }
+
+  async renameFile(serverName: string, oldPath: string, newPath: string): Promise<FileRenameResponse> {
+    return this.fetch<FileRenameResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files/rename`,
+      { method: 'POST', body: JSON.stringify({ oldPath, newPath }) }
+    );
   }
 }
 

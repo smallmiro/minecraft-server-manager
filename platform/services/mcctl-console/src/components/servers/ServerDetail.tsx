@@ -33,6 +33,7 @@ import { ServerAccessTab } from './ServerAccessTab';
 import { ConnectionInfoCard } from './ConnectionInfoCard';
 import { HostnameDisplay } from '@/components/common';
 import { ServerModsTab } from './ServerModsTab';
+import { ServerFilesTab } from './files/ServerFilesTab';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -560,9 +561,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
 
       {activeTab === 'Files' && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="body1" color="text.secondary">
-            File browser coming soon
-          </Typography>
+          <ServerFilesTab serverName={server.name} />
         </Box>
       )}
 

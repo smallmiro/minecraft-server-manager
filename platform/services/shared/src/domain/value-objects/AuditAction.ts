@@ -41,4 +41,11 @@ export enum AuditActionEnum {
   // Playit.gg agent
   PLAYIT_START = 'playit.start',
   PLAYIT_STOP = 'playit.stop',
+
+  // File management
+  FILE_READ = 'file.read',
+  FILE_WRITE = 'file.write',
+  FILE_DELETE = 'file.delete',
+  FILE_MKDIR = 'file.mkdir',
+  FILE_RENAME = 'file.rename',
 }
