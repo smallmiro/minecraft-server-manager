@@ -121,6 +121,14 @@ export function TextEditor({ serverName, filePath, onClose }: TextEditorProps) {
     onClose();
   }, [onClose]);
 
+  // Reset state when file changes
+  useEffect(() => {
+    setDirty(false);
+    setCursorPos({ line: 1, col: 1 });
+    writeFile.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filePath]);
+
   // Initialize CodeMirror
   useEffect(() => {
     if (!editorRef.current || !data) return;
