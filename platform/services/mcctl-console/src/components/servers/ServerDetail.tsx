@@ -480,7 +480,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
 
                 <InfoRow label="Name" value={server.name} />
                 <InfoRow label="Container" value={server.container} />
-                <InfoRow label="Hostname" value={<HostnameDisplay hostname={server.hostname} />} />
+                <InfoRow label="Hostname" value={<HostnameDisplay hostname={server.hostname} color="text.primary" />} />
                 <InfoRow label="Type" value={server.type} />
                 <InfoRow label="Version" value={server.version} />
                 <InfoRow label="Memory" value={server.memory} />
@@ -630,7 +630,7 @@ function InfoRow({ label, value }: { label: string; value?: string | React.React
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+      <Typography variant="body2" component="div" sx={{ fontWeight: 500 }}>
         {value}
       </Typography>
     </Box>
