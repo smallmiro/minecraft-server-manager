@@ -391,6 +391,47 @@ export interface ModSearchResponse {
 }
 
 // ============================================================
+// File Management Types
+// ============================================================
+
+export interface FileEntry {
+  name: string;
+  type: 'file' | 'directory';
+  size: number;
+  modifiedAt: string;
+}
+
+export interface FileListResponse {
+  path: string;
+  files: FileEntry[];
+}
+
+export interface FileContentResponse {
+  path: string;
+  content: string;
+  size: number;
+  modifiedAt: string;
+}
+
+export interface FileWriteResponse {
+  success: boolean;
+  path: string;
+  size: number;
+  modifiedAt: string;
+}
+
+export interface FileActionResponse {
+  success: boolean;
+  path: string;
+}
+
+export interface FileRenameResponse {
+  success: boolean;
+  oldPath: string;
+  newPath: string;
+}
+
+// ============================================================
 // Backup Types
 // ============================================================
 
@@ -575,4 +616,12 @@ export interface IMcctlApiClient {
   getPlayitStatus(): Promise<PlayitAgentStatus>;
   startPlayit(): Promise<PlayitActionResponse>;
   stopPlayit(): Promise<PlayitActionResponse>;
+
+  // File management operations
+  listFiles(serverName: string, path: string): Promise<FileListResponse>;
+  readFile(serverName: string, path: string): Promise<FileContentResponse>;
+  writeFile(serverName: string, path: string, content: string): Promise<FileWriteResponse>;
+  deleteFile(serverName: string, path: string): Promise<FileActionResponse>;
+  createDirectory(serverName: string, path: string): Promise<FileActionResponse>;
+  renameFile(serverName: string, oldPath: string, newPath: string): Promise<FileRenameResponse>;
 }
