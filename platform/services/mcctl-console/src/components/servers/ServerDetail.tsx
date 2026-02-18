@@ -480,7 +480,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
 
                 <InfoRow label="Name" value={server.name} />
                 <InfoRow label="Container" value={server.container} />
-                <InfoRow label="Hostname" value={<HostnameDisplay hostname={server.hostname} color="text.primary" />} />
+                <InfoRow label="Hostname" value={server.hostname ? <HostnameDisplay hostname={server.hostname} color="text.primary" /> : undefined} />
                 <InfoRow label="Type" value={server.type} />
                 <InfoRow label="Version" value={server.version} />
                 <InfoRow label="Memory" value={server.memory} />
