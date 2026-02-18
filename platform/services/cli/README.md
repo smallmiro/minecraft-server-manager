@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.8.1 (2026-02-18)
+- **refactor(console)**: Improve responsive design across 14 components for mobile/tablet/desktop (#371, #372)
+  - ServerCard, WorldCard, Dashboard, ServerDetail, CreateServerDialog, ServerConsole, and more
+  - FullScreen dialogs on mobile, responsive tables, accessible close buttons
+
 ### v2.8.0 (2026-02-18)
 - **feat(console)**: HostnameDisplay common component with popover for multiple hostnames (#369, #370)
   - Applied to ServerCard, ServerOverview, ServerDetailPage, InfoRow, ConnectionInfoCard
@@ -101,9 +106,6 @@ mcctl logs myserver
 - **fix(api)**: Pass memory parameter to create-server.sh (#356, #360)
 - **fix(console)**: Align player list field name with backend (#359, #361)
 - **fix(api)**: Detect RCON error in whitelist remove and fall back to file (#363, #364)
-
-### v2.4.1 (2026-02-14)
-- **fix(ci)**: Fix mcctl-api npm publish missing workspace replacement for mod-source-modrinth
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

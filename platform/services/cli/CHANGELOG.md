@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - 2026-02-18
+
+### Changed
+- **Console Responsive Design Overhaul** - Improve responsive design across 14 components for mobile, tablet, and desktop (#371, #372)
+  - **P0 Critical**: ServerCard/WorldCard responsive height, page headers responsive flexDirection, NetworkSettings/PlayitSection table mobile scroll
+  - **P1 Important**: ServerDetail responsive tabs and console height, CreateServerDialog fullScreen on mobile, ServerConsole responsive header, StickyActionBar responsive padding
+  - **P2 Nice to have**: Dashboard responsive breakpoints, ServerOverview chip flex-wrap, ConnectionInfoCard word-break, UserList table overflow
+  - Accessibility: Add aria-label to console close button, fullScreen close button for dialogs
+
 ## [2.8.0] - 2026-02-18
 
 ### Added

@@ -875,42 +875,35 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.8.1] - 2026-02-18
+
+**Changed:**
+- **Console Responsive Design** - Improve responsive design across 14 components for mobile/tablet/desktop (#371, #372)
+
+### [2.8.0] - 2026-02-18
+
+**Added:**
+- **Console HostnameDisplay** - Reusable hostname display with popover for multiple hostnames (#369, #370)
+
+### [2.7.0] - 2026-02-18
+
+**Changed:**
+- **Console Font Overhaul** - Replace Ubuntu font with Roboto Mono across all components
+
+### [2.6.1] - 2026-02-17
+
+**Fixed:**
+- **Console Restart Badge UX** - Consolidate restart info in StickyActionBar
+
+### [2.6.0] - 2026-02-17
+
+**Added:**
+- **Console Server Properties Full UI** - 6 sections, ~40 fields with Progressive Disclosure (#365, #366)
+
 ### [2.5.0] - 2026-02-17
 
 **Added:**
 - **Console Security Settings** - Online Mode and Whitelist toggle in server detail page (#357, #358, #362)
-
-**Fixed:**
-- **API Memory Parameter** - Pass `--memory` to `create-server.sh` (#356, #360)
-- **Console Player List Field** - Align field name with backend response (#359, #361)
-- **API Whitelist Remove Fallback** - Detect RCON error and fall back to file editing (#363, #364)
-
-### [2.4.0] - 2026-02-14
-
-**Added:**
-- **CLI `mcctl upgrade`** - Upgrade mcctl and services with auto-restart (#326, #355)
-- **CLI Creeper Banner** - ASCII art with version check on `mcctl init` (#353, #354)
-- **Console Mods Tab** - Full mod listing and management (#351, #352)
-- **CLI `mcctl playit domain`** - Manage playit.gg domain assignments (#347, #348)
-
-### [2.3.0] - 2026-02-12 (External Play - playit.gg)
-
-**Added:**
-- **playit.gg External Access** - Allow external players to join without port forwarding (#270-#275, #291-#292)
-- **Comprehensive API Audit Logging** - Add audit logging to all mutating API routes (#324, #325)
-
-### [2.2.0] - 2026-02-11
-
-**Added:**
-- **Whitelist Console UI** - Full whitelist management in Web Console (#283, #321)
-- **Hostname/Domain Management** - Server hostname management in Options tab (#314, #315)
-
-### [2.1.0] - 2026-02-09 (Console Feature Completion)
-
-**Added:**
-- **Modrinth Modpack CLI/API Support** - Full modpack server creation and management (#244, #245)
-- **Admin User Management Console UI** - Web-based admin user management (#189)
-- **OP Level Support** - OP level management across all layers (#284-#287)
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
