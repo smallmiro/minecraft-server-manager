@@ -94,7 +94,7 @@ export function UserDetailDialog({ user, open, onClose }: UserDetailDialogProps)
             <Typography variant="caption" color="text.secondary">
               User ID
             </Typography>
-            <Typography variant="body2" sx={{ fontFamily: '"Roboto Mono", monospace', fontSize: '0.875rem' }}>
+            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
               {user.id}
             </Typography>
           </Box>

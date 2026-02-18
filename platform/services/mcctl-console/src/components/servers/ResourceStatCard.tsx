@@ -50,7 +50,6 @@ export function ResourceStatCard({
             sx={{
               fontWeight: 700,
               color: 'text.primary',
-              fontFamily: '"Roboto Mono", monospace',
               letterSpacing: '-0.5px',
             }}
           >

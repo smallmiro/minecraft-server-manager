@@ -301,7 +301,6 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
               overflowY: 'auto',
               px: 2.5,
               py: 2,
-              fontFamily: '"Roboto Mono", monospace',
               fontSize: 13,
               lineHeight: 1.85,
               color: '#b4b6c4',
@@ -452,7 +451,6 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
               sx: {
                 bgcolor: '#13141c',
                 borderRadius: 2,
-                fontFamily: '"Roboto Mono", monospace',
                 fontSize: 14,
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: '#2a2d3e',

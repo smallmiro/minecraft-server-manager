@@ -193,7 +193,7 @@ export function HostnameSection({ serverName }: HostnameSectionProps) {
                     bgcolor: 'action.hover',
                   }}
                 >
-                  <Typography variant="body2" fontFamily='"Roboto Mono", monospace'>
+                  <Typography variant="body2">
                     {domain}
                   </Typography>
                   <IconButton
