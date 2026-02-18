@@ -383,7 +383,6 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
           overflow: 'auto',
           bgcolor: '#1a1a1a',
           p: 1,
-          fontFamily: '"Roboto Mono", monospace',
           fontSize: '0.85rem',
         }}
       >
@@ -435,9 +434,8 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
           onChange={(e) => setCommand(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={!isConnected || isExecuting}
-          InputProps={{
-            sx: { fontFamily: '"Roboto Mono", monospace' },
-          }}
+          InputProps={{}}
+
         />
         <Button
           variant="contained"

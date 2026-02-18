@@ -119,7 +119,6 @@ export function HostnameDisplay({
               <Typography
                 variant="body2"
                 sx={{
-                  fontFamily: '"Roboto Mono", monospace',
                   fontSize: 12,
                 }}
               >

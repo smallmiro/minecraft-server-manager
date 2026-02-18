@@ -60,9 +60,7 @@ export const darkTheme = createTheme({
       selected: colors.bgSurface,
     },
   },
-  typography: {
-    fontFamily: 'var(--font-roboto-mono), "Roboto Mono", monospace',
-  },
+  typography: {},
   components: {
     MuiCard: {
       styleOverrides: {

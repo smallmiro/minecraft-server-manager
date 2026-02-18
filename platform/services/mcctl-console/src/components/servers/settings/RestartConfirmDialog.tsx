@@ -46,7 +46,7 @@ export function RestartConfirmDialog({
             <ListItem key={field} sx={{ py: 0 }}>
               <ListItemText
                 primary={field}
-                primaryTypographyProps={{ variant: 'body2', fontFamily: '"Roboto Mono", monospace' }}
+                primaryTypographyProps={{ variant: 'body2' }}
               />
             </ListItem>
           ))}
