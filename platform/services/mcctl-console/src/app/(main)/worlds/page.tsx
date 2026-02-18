@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
@@ -28,6 +30,9 @@ import {
 import type { CreateWorldRequest } from '@/ports/api/IMcctlApiClient';
 
 export default function WorldsPage() {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [assignDialogWorld, setAssignDialogWorld] = useState<string | null>(null);
   const [deleteConfirmWorld, setDeleteConfirmWorld] = useState<string | null>(null);
@@ -115,14 +120,16 @@ export default function WorldsPage() {
           borderRadius: 2,
           border: (theme) => `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
           display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
             sx={{
-              display: 'flex',
+              display: { xs: 'none', sm: 'flex' },
               alignItems: 'center',
               justifyContent: 'center',
               width: 56,
@@ -135,7 +142,7 @@ export default function WorldsPage() {
             <PublicIcon sx={{ fontSize: 32 }} />
           </Box>
           <Box>
-            <Typography variant="h4" component="h1" fontWeight="bold">
+            <Typography variant="h4" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
               Worlds
             </Typography>
             <Typography variant="body1" color="text.secondary">
@@ -148,6 +155,7 @@ export default function WorldsPage() {
           startIcon={<AddIcon />}
           onClick={() => setCreateDialogOpen(true)}
           size="large"
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           Create World
         </Button>
@@ -225,6 +233,7 @@ export default function WorldsPage() {
         }}
         maxWidth="sm"
         fullWidth
+        fullScreen={isSmallScreen}
       >
         <DialogTitle>Delete World</DialogTitle>
         <DialogContent>

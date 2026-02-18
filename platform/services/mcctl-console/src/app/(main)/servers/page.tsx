@@ -88,14 +88,16 @@ export default function ServersPage() {
           borderRadius: 2,
           border: (theme) => `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
           display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
             sx={{
-              display: 'flex',
+              display: { xs: 'none', sm: 'flex' },
               alignItems: 'center',
               justifyContent: 'center',
               width: 56,
@@ -108,7 +110,7 @@ export default function ServersPage() {
             <StorageIcon sx={{ fontSize: 32 }} />
           </Box>
           <Box>
-            <Typography variant="h4" component="h1" fontWeight="bold">
+            <Typography variant="h4" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
               Servers
             </Typography>
             <Typography variant="body1" color="text.secondary">
@@ -121,6 +123,7 @@ export default function ServersPage() {
           startIcon={<AddIcon />}
           onClick={() => setCreateDialogOpen(true)}
           size="large"
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           Create Server
         </Button>

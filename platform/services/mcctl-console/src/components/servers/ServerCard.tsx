@@ -84,7 +84,8 @@ export function ServerCard({ server, statusOverride, onClick, onStart, onStop, l
       sx={{
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s',
-        height: 180,
+        height: { xs: 'auto', sm: 180 },
+        minHeight: { xs: 140, sm: 180 },
         display: 'flex',
         flexDirection: 'column',
         '&:hover': onClick

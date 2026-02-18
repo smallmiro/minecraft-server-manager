@@ -50,7 +50,8 @@ export function WorldCard({ world, onAssign, onRelease, onDelete, loading = fals
       role="article"
       sx={{
         transition: 'all 0.2s',
-        height: 200,
+        height: { xs: 'auto', sm: 200 },
+        minHeight: { xs: 160, sm: 200 },
         display: 'flex',
         flexDirection: 'column',
         '&:hover': {

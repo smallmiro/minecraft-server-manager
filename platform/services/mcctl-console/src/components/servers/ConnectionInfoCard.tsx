@@ -33,6 +33,7 @@ function InfoRow({ label, value, copyText }: { label: string; value: string; cop
           sx={{
             fontFamily: copyText ? '"Roboto Mono", monospace' : 'inherit',
             color: copyText ? 'text.primary' : 'text.secondary',
+            wordBreak: 'break-all',
           }}
         >
           {value}
@@ -86,13 +87,16 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
             justifyContent: 'space-between',
             alignItems: 'center',
             py: 1,
+            gap: 1,
           }}
         >
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
             LAN Address
           </Typography>
           {hostname ? (
-            <HostnameDisplay hostname={hostname} portSuffix={25565} color="text.primary" showCopyButton />
+            <Box sx={{ minWidth: 0 }}>
+              <HostnameDisplay hostname={hostname} portSuffix={25565} color="text.primary" showCopyButton />
+            </Box>
           ) : (
             <Typography variant="body2" color="text.secondary">
               Not configured

@@ -191,27 +191,29 @@ export function PlayitSection() {
         </Box>
 
         {/* Agent Status */}
-        <Table size="small" sx={{ mb: 3 }}>
-          <TableBody>
-            <TableRow>
-              <TableCell sx={cellLabelSx}>Agent Status</TableCell>
-              <TableCell sx={cellValueSx}>
-                <Chip
-                  label={isRunning ? 'Running' : 'Stopped'}
-                  size="small"
-                  color={isRunning ? 'success' : 'default'}
-                  variant="outlined"
-                />
-              </TableCell>
-            </TableRow>
-            {data.uptime && (
+        <Box sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ mb: 3 }}>
+            <TableBody>
               <TableRow>
-                <TableCell sx={cellLabelSx}>Uptime</TableCell>
-                <TableCell sx={cellValueSx}>{data.uptime}</TableCell>
+                <TableCell sx={cellLabelSx}>Agent Status</TableCell>
+                <TableCell sx={cellValueSx}>
+                  <Chip
+                    label={isRunning ? 'Running' : 'Stopped'}
+                    size="small"
+                    color={isRunning ? 'success' : 'default'}
+                    variant="outlined"
+                  />
+                </TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              {data.uptime && (
+                <TableRow>
+                  <TableCell sx={cellLabelSx}>Uptime</TableCell>
+                  <TableCell sx={cellValueSx}>{data.uptime}</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Box>
 
         {/* Server Domains Table */}
         {data.servers && data.servers.length > 0 && (() => {
@@ -224,35 +226,37 @@ export function PlayitSection() {
                 Server Domains
               </Typography>
               {configured.length > 0 ? (
-                <Table size="small" sx={{ mb: unconfigured.length > 0 ? 2 : 0 }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 600, borderBottom: 2, borderColor: 'divider' }}>
-                        Server
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600, borderBottom: 2, borderColor: 'divider' }}>
-                        External Domain
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {configured.map((server) => (
-                      <TableRow key={server.serverName}>
-                        <TableCell sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-                          {server.serverName}
+                <Box sx={{ overflowX: 'auto' }}>
+                  <Table size="small" sx={{ mb: unconfigured.length > 0 ? 2 : 0 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600, borderBottom: 2, borderColor: 'divider' }}>
+                          Server
                         </TableCell>
-                        <TableCell sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="body2" sx={{ fontFamily: '"Roboto Mono", monospace' }}>
-                              {server.playitDomain}
-                            </Typography>
-                            <CopyButton text={server.playitDomain!} />
-                          </Box>
+                        <TableCell sx={{ fontWeight: 600, borderBottom: 2, borderColor: 'divider' }}>
+                          External Domain
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHead>
+                    <TableBody>
+                      {configured.map((server) => (
+                        <TableRow key={server.serverName}>
+                          <TableCell sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+                            {server.serverName}
+                          </TableCell>
+                          <TableCell sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Typography variant="body2" sx={{ fontFamily: '"Roboto Mono", monospace', wordBreak: 'break-all' }}>
+                                {server.playitDomain}
+                              </Typography>
+                              <CopyButton text={server.playitDomain!} />
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Box>
               ) : (
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   No servers with external domains configured.
