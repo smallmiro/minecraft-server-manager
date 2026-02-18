@@ -30,6 +30,7 @@ import { ServerActivityTab } from './ServerActivityTab';
 import { ServerOptionsTab } from './ServerOptionsTab';
 import { ServerAccessTab } from './ServerAccessTab';
 import { ConnectionInfoCard } from './ConnectionInfoCard';
+import { HostnameDisplay } from '@/components/common';
 import { ServerModsTab } from './ServerModsTab';
 
 interface ServerDetailProps {
@@ -479,7 +480,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
 
                 <InfoRow label="Name" value={server.name} />
                 <InfoRow label="Container" value={server.container} />
-                <InfoRow label="Hostname" value={server.hostname} />
+                <InfoRow label="Hostname" value={server.hostname ? <HostnameDisplay hostname={server.hostname} color="text.primary" /> : undefined} />
                 <InfoRow label="Type" value={server.type} />
                 <InfoRow label="Version" value={server.version} />
                 <InfoRow label="Memory" value={server.memory} />
@@ -629,7 +630,7 @@ function InfoRow({ label, value }: { label: string; value?: string | React.React
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+      <Typography variant="body2" component="div" sx={{ fontWeight: 500 }}>
         {value}
       </Typography>
     </Box>

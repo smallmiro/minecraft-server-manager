@@ -32,6 +32,7 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import LinkIcon from '@mui/icons-material/Link';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { ServerDetail } from '@/components/servers/ServerDetail';
+import { HostnameDisplay } from '@/components/common';
 import {
   useServer,
   useStartServer,
@@ -411,7 +412,7 @@ export default function ServerDetailPage() {
                   <>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <LinkIcon sx={{ fontSize: 14 }} />
-                      {server.hostname}
+                      <HostnameDisplay hostname={server.hostname} fontSize={13} />
                     </Box>
                     <Box component="span" sx={{ mx: 1.25, color: '#3a3d4e' }}>
                       |

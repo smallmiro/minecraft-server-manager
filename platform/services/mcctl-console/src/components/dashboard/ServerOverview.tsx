@@ -14,6 +14,7 @@ import { startLoading } from '@/components/providers';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
 import type { ServerStatusMap } from '@/hooks/useServersSSE';
+import { HostnameDisplay } from '@/components/common';
 
 export interface ServerOverviewProps {
   servers: ServerSummary[];
@@ -144,9 +145,7 @@ export function ServerOverview({
                     <Typography variant="subtitle1" fontWeight={600}>
                       {server.name}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {server.hostname}
-                    </Typography>
+                    <HostnameDisplay hostname={server.hostname} fontSize={12} />
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Chip
