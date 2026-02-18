@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import { resolve, join, basename } from 'path';
-import { existsSync, statSync, readdirSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync } from 'fs';
+import { existsSync, statSync, readdirSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync, realpathSync } from 'fs';
 import { serverExists, AuditActionEnum } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
@@ -63,13 +63,25 @@ function getServerDataDir(serverName: string): string {
 }
 
 /**
- * Validate path to prevent path traversal attacks.
+ * Validate path to prevent path traversal attacks (including symlink escape).
  * Returns the resolved absolute path or null if invalid.
  */
 function validatePath(baseDir: string, userPath: string): string | null {
   const resolved = resolve(baseDir, userPath.replace(/^\/+/, ''));
   if (!resolved.startsWith(baseDir + '/') && resolved !== baseDir) {
     return null;
+  }
+  // If path exists, resolve symlinks and re-check
+  if (existsSync(resolved)) {
+    try {
+      const realResolved = realpathSync(resolved);
+      const realBase = realpathSync(baseDir);
+      if (!realResolved.startsWith(realBase + '/') && realResolved !== realBase) {
+        return null;
+      }
+    } catch {
+      return null;
+    }
   }
   return resolved;
 }
@@ -263,6 +275,10 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       if (Buffer.byteLength(content, 'utf-8') > MAX_FILE_SIZE) {
         return reply.code(413).send({ error: 'PayloadTooLarge', message: `Content exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit` });
+      }
+
+      if (existsSync(targetPath) && statSync(targetPath).isDirectory()) {
+        return reply.code(400).send({ error: 'BadRequest', message: 'Cannot write to a directory' });
       }
 
       writeFileSync(targetPath, content, 'utf-8');
@@ -469,6 +485,10 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       if (!oldPath || !newPath) {
         return reply.code(400).send({ error: 'BadRequest', message: 'oldPath and newPath are required' });
+      }
+
+      if (oldPath === '/' || newPath === '/') {
+        return reply.code(400).send({ error: 'BadRequest', message: 'Cannot rename root directory' });
       }
 
       const baseDir = getServerDataDir(name);

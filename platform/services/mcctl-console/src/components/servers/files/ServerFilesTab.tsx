@@ -66,8 +66,6 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
   }, [currentPath, createDirectory, showSnackbar]);
 
   const handleFileAction = useCallback((action: string, file: FileEntry) => {
-    const filePath = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
-
     switch (action) {
       case 'delete':
         setDeleteTarget(file);
@@ -81,7 +79,7 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         showSnackbar('File editor will be available in the next update', 'info');
         break;
     }
-  }, [currentPath, showSnackbar]);
+  }, [showSnackbar]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!deleteTarget) return;
