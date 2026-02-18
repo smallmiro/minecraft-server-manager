@@ -14,6 +14,7 @@ import DnsIcon from '@mui/icons-material/Dns';
 import LinkIcon from '@mui/icons-material/Link';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
 import type { ServerStatusMap } from '@/hooks/useServersSSE';
+import { getPrimaryHostname } from '@/utils/hostname';
 
 interface ServerCardProps {
   server: ServerSummary;
@@ -55,13 +56,6 @@ const getStatusLabel = (status: ServerSummary['status']): string => {
   }
 };
 
-// Get primary hostname (first one, preferring .local)
-const getPrimaryHostname = (hostname: string | undefined): string => {
-  if (!hostname) return '-';
-  const hosts = hostname.split(',').map(h => h.trim());
-  const localHost = hosts.find(h => h.endsWith('.local'));
-  return localHost || hosts[0] || '-';
-};
 
 export function ServerCard({ server, statusOverride, onClick, onStart, onStop, loading = false }: ServerCardProps) {
   // Use SSE status if available, otherwise fall back to server data
