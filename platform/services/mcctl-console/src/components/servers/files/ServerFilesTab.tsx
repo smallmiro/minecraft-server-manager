@@ -19,6 +19,7 @@ import { useServerFiles, useDeleteFile, useCreateDirectory, useRenameFile } from
 import { FileBreadcrumb } from './FileBreadcrumb';
 import { FileToolbar } from './FileToolbar';
 import { FileList } from './FileList';
+import { TextEditor } from './TextEditor';
 import type { FileEntry } from '@/ports/api/IMcctlApiClient';
 
 interface ServerFilesTabProps {
@@ -42,6 +43,9 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
   // Rename dialog
   const [renameTarget, setRenameTarget] = useState<FileEntry | null>(null);
   const [newName, setNewName] = useState('');
+
+  // Text editor
+  const [editorFilePath, setEditorFilePath] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch } = useServerFiles(serverName, currentPath);
   const deleteFile = useDeleteFile(serverName);
@@ -74,12 +78,13 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         setRenameTarget(file);
         setNewName(file.name);
         break;
-      case 'open':
-        // Will be implemented in Phase 2 (Text Editor)
-        showSnackbar('File editor will be available in the next update', 'info');
+      case 'open': {
+        const path = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
+        setEditorFilePath(path);
         break;
+      }
     }
-  }, [showSnackbar]);
+  }, [currentPath]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!deleteTarget) return;
@@ -206,6 +211,13 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Text Editor */}
+      <TextEditor
+        serverName={serverName}
+        filePath={editorFilePath}
+        onClose={() => setEditorFilePath(null)}
+      />
 
       <Snackbar
         open={snackbar.open}
