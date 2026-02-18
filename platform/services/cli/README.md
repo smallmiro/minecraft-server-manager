@@ -77,6 +77,13 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.8.0 (2026-02-18)
+- **feat(console)**: HostnameDisplay common component with popover for multiple hostnames (#369, #370)
+  - Applied to ServerCard, ServerOverview, ServerDetailPage, InfoRow, ConnectionInfoCard
+  - Extracted CopyButton and hostname utilities as shared components
+- **fix(console)**: Resolve DOM nesting warning and preserve InfoRow null behavior
+- **test(console)**: Add HostnameDisplay component tests
+
 ### v2.7.0 (2026-02-18)
 - **feat(console)**: Replace Ubuntu font with Roboto Mono across all console components
   - Unified typography: layout, MUI theme, and 11 components updated
@@ -97,12 +104,6 @@ mcctl logs myserver
 
 ### v2.4.1 (2026-02-14)
 - **fix(ci)**: Fix mcctl-api npm publish missing workspace replacement for mod-source-modrinth
-
-### v2.4.0 (2026-02-14)
-- **feat(cli)**: Add `mcctl upgrade` command for upgrading mcctl and all services (#326, #355)
-- **feat(cli)**: Add creeper ASCII banner with version check on `mcctl init` (#353, #354)
-- **feat(console)**: Implement Mods tab functionality (#351, #352)
-- **feat(cli)**: Add `mcctl playit domain` subcommand (#347, #348)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

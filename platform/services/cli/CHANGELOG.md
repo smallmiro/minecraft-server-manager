@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-02-18
+
+### Added
+- **Console HostnameDisplay Common Component** - Reusable hostname display with popover for multiple hostnames (#369, #370)
+  - Shows primary hostname with (+N) Chip for servers with multiple hostnames
+  - Clicking Chip opens Popover with all hostnames and copy buttons
+  - Applied to 5 locations: ServerCard, ServerOverview, ServerDetailPage header, ServerDetail InfoRow, ConnectionInfoCard LAN Address
+  - Extracted `parseHostnames` and `getPrimaryHostname` utilities into `src/utils/hostname.ts`
+  - Extracted `CopyButton` into shared common component with configurable icon size
+
+### Fixed
+- **Console DOM Nesting Warning** - Change InfoRow value wrapper to `component="div"` to prevent invalid DOM nesting with HostnameDisplay
+- **Console InfoRow Null Behavior** - Preserve undefined hostname handling for hidden InfoRow display
+
+### Tests
+- **HostnameDisplay Component Tests** - Cover all render paths, Popover interaction, copy-to-clipboard, port suffix formatting, and event propagation prevention
+
 ## [2.7.0] - 2026-02-18
 
 ### Changed
