@@ -15,7 +15,7 @@ import { DeleteConfirmDialog } from './DeleteConfirmDialog';
 import { RenameDialog } from './RenameDialog';
 import { PlayerEditorDialog, getPlayerEditorType } from './PlayerEditorDialog';
 import type { PlayerEditorType } from './PlayerEditorDialog';
-import { ServerPropertiesDialog, isServerPropertiesFile } from './ServerPropertiesDialog';
+import { ServerPropertiesView, isServerPropertiesFile } from './ServerPropertiesView';
 import { FileUploadDialog } from './FileUploadDialog';
 import type { FileEntry } from '@/ports/api/IMcctlApiClient';
 
@@ -48,7 +48,6 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
   const [playerEditorPath, setPlayerEditorPath] = useState<string | null>(null);
 
   // Server properties editor
-  const [propertiesEditorOpen, setPropertiesEditorOpen] = useState(false);
   const [propertiesFilePath, setPropertiesFilePath] = useState<string | null>(null);
 
   // Upload dialog
@@ -94,7 +93,6 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         const path = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
         if (currentPath === '/' && isServerPropertiesFile(file.name)) {
           setPropertiesFilePath(path);
-          setPropertiesEditorOpen(true);
         } else {
           const specialEditor = currentPath === '/' ? getPlayerEditorType(file.name) : null;
           if (specialEditor) {
@@ -181,6 +179,16 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
     );
   }
 
+  // Inline server.properties view (replaces file browser)
+  if (propertiesFilePath) {
+    return (
+      <ServerPropertiesView
+        serverName={serverName}
+        onBack={() => setPropertiesFilePath(null)}
+      />
+    );
+  }
+
   return (
     <>
       <Card sx={{ borderRadius: 3 }}>
@@ -235,17 +243,6 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         serverName={serverName}
         filePath={editorFilePath}
         onClose={() => setEditorFilePath(null)}
-      />
-
-      {/* Server Properties Editor */}
-      <ServerPropertiesDialog
-        serverName={serverName}
-        open={propertiesEditorOpen}
-        filePath={propertiesFilePath}
-        onClose={() => {
-          setPropertiesEditorOpen(false);
-          setPropertiesFilePath(null);
-        }}
       />
 
       {/* Player Editor (Smart Routing) */}
