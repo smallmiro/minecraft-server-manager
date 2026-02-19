@@ -254,7 +254,8 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
         />
       </Box>
 
-      {/* Console */}
+      {/* Console - Overview tab only */}
+      {activeTab === 'Overview' && (
       <Card
         sx={{
           bgcolor: 'background.paper',
@@ -467,6 +468,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
           />
         </Box>
       </Card>
+      )}
 
       {/* Additional content based on tab */}
       {activeTab === 'Overview' && (
@@ -585,39 +587,41 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
         </Box>
       )}
 
-      {/* Full-screen Console Dialog */}
-      <Dialog
-        open={consoleOpen}
-        onClose={() => setConsoleOpen(false)}
-        maxWidth="xl"
-        fullWidth
-        fullScreen={isSmallScreen}
-        PaperProps={{
-          sx: {
-            height: isSmallScreen ? '100vh' : '90vh',
-            bgcolor: 'background.paper',
-          },
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: 1, borderColor: 'divider' }}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontFamily: '"Minecraft", sans-serif',
-              fontWeight: 400,
-              letterSpacing: '0.05em',
-            }}
-          >
-            Console - {server.name}
-          </Typography>
-          <IconButton onClick={() => setConsoleOpen(false)} aria-label="Close console">
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
-          <ServerConsole serverName={server.name} />
-        </DialogContent>
-      </Dialog>
+      {/* Full-screen Console Dialog - Overview tab only */}
+      {activeTab === 'Overview' && (
+        <Dialog
+          open={consoleOpen}
+          onClose={() => setConsoleOpen(false)}
+          maxWidth="xl"
+          fullWidth
+          fullScreen={isSmallScreen}
+          PaperProps={{
+            sx: {
+              height: isSmallScreen ? '100vh' : '90vh',
+              bgcolor: 'background.paper',
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontFamily: '"Minecraft", sans-serif',
+                fontWeight: 400,
+                letterSpacing: '0.05em',
+              }}
+            >
+              Console - {server.name}
+            </Typography>
+            <IconButton onClick={() => setConsoleOpen(false)} aria-label="Close console">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
+            <ServerConsole serverName={server.name} />
+          </DialogContent>
+        </Dialog>
+      )}
     </Box>
   );
 }
