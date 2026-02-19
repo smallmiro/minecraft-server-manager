@@ -46,7 +46,7 @@ export function RenameDialog({ target, existingNames, isPending, onConfirm, onCl
   const validationError = useMemo(() => validateName(newName), [newName]);
 
   const isDuplicate = useMemo(
-    () => newName.trim() !== target?.name && existingNames.some((n) => n.toLowerCase() === newName.trim().toLowerCase()),
+    () => existingNames.some((n) => n !== target?.name && n.toLowerCase() === newName.trim().toLowerCase()),
     [newName, target?.name, existingNames],
   );
 
