@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -39,6 +39,14 @@ export function FileUploadDialog({ open, isPending, onUpload, onClose }: FileUpl
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Reset state when dialog opens
+  useEffect(() => {
+    if (open) {
+      setSelectedFiles([]);
+      setDragActive(false);
+    }
+  }, [open]);
 
   const oversizedFiles = selectedFiles.filter((f) => f.size > MAX_FILE_SIZE);
 

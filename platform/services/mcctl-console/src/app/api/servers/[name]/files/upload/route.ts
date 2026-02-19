@@ -11,6 +11,9 @@ import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
+// 100MB + multipart overhead margin
+const MAX_REQUEST_SIZE = 110 * 1024 * 1024;
+
 interface RouteParams {
   params: Promise<{ name: string }>;
 }
@@ -19,6 +22,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { name } = await params;
     const session = await requireServerPermission(await headers(), name, 'manage');
+
+    // Early rejection for oversized requests at the BFF layer
+    const contentLength = request.headers.get('content-length');
+    if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_SIZE) {
+      return NextResponse.json(
+        { error: 'PayloadTooLarge', message: 'Request body exceeds the maximum allowed size' },
+        { status: 413 }
+      );
+    }
 
     const path = request.nextUrl.searchParams.get('path');
     if (!path) {

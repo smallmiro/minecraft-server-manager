@@ -601,7 +601,6 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           const fileName = basename(part.filename);
           if (!fileName) continue;
 
-          const filePath = join(targetPath, fileName);
           // Validate the resolved file path stays within base directory
           const resolvedFilePath = validatePath(baseDir, join(userPath.replace(/^\/+/, ''), fileName));
           if (!resolvedFilePath) {
@@ -611,8 +610,12 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           await pipeline(part.file, createWriteStream(resolvedFilePath));
 
           if (part.file.truncated) {
-            // File exceeded size limit — remove the partial file
+            // File exceeded size limit — remove the partial file and any previously uploaded files
             rmSync(resolvedFilePath, { force: true });
+            for (const prev of uploaded) {
+              const prevPath = validatePath(baseDir, join(userPath.replace(/^\/+/, ''), prev));
+              if (prevPath) rmSync(prevPath, { force: true });
+            }
             return reply.code(413).send({ error: 'PayloadTooLarge', message: `File "${fileName}" exceeds ${MAX_UPLOAD_SIZE / 1024 / 1024}MB limit` });
           }
 
@@ -711,6 +714,16 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         .header('Content-Length', stat.size)
         .send(stream);
     } catch (error) {
+      const actor = getActor(request);
+      await writeAuditLog({
+        action: AuditActionEnum.FILE_DOWNLOAD,
+        actor,
+        targetType: 'server',
+        targetName: name,
+        details: { path: userPath },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
       fastify.log.error(error, 'Failed to download file');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to download file' });
     }
