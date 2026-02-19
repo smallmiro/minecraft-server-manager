@@ -1,25 +1,18 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import Box from '@mui/material/Box';
+import { useState, useCallback, useMemo } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Alert from '@mui/material/Alert';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 import { useServerFiles, useDeleteFile, useCreateDirectory, useRenameFile } from '@/hooks/use-server-files';
 import { FileBreadcrumb } from './FileBreadcrumb';
 import { FileToolbar } from './FileToolbar';
 import { FileList } from './FileList';
 import { TextEditor } from './TextEditor';
+import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { RenameDialog } from './RenameDialog';
 import { PlayerEditorDialog, getPlayerEditorType } from './PlayerEditorDialog';
 import type { PlayerEditorType } from './PlayerEditorDialog';
 import { ServerPropertiesDialog, isServerPropertiesFile } from './ServerPropertiesDialog';
@@ -45,7 +38,6 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
 
   // Rename dialog
   const [renameTarget, setRenameTarget] = useState<FileEntry | null>(null);
-  const [newName, setNewName] = useState('');
 
   // Text editor
   const [editorFilePath, setEditorFilePath] = useState<string | null>(null);
@@ -87,7 +79,6 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         break;
       case 'rename':
         setRenameTarget(file);
-        setNewName(file.name);
         break;
       case 'open': {
         const path = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
@@ -124,14 +115,14 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
     });
   }, [deleteTarget, currentPath, deleteFile, showSnackbar]);
 
-  const handleConfirmRename = useCallback(() => {
-    if (!renameTarget || !newName.trim()) return;
+  const handleConfirmRename = useCallback((newName: string) => {
+    if (!renameTarget) return;
     const oldPath = currentPath === '/' ? `/${renameTarget.name}` : `${currentPath}/${renameTarget.name}`;
-    const renamePath = currentPath === '/' ? `/${newName.trim()}` : `${currentPath}/${newName.trim()}`;
+    const renamePath = currentPath === '/' ? `/${newName}` : `${currentPath}/${newName}`;
 
     renameFile.mutate({ oldPath, newPath: renamePath }, {
       onSuccess: () => {
-        showSnackbar(`Renamed to "${newName.trim()}"`);
+        showSnackbar(`Renamed to "${newName}"`);
         setRenameTarget(null);
       },
       onError: (err) => {
@@ -139,7 +130,12 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         setRenameTarget(null);
       },
     });
-  }, [renameTarget, newName, currentPath, renameFile, showSnackbar]);
+  }, [renameTarget, currentPath, renameFile, showSnackbar]);
+
+  const existingNames = useMemo(
+    () => (data?.files || []).map((f) => f.name),
+    [data?.files],
+  );
 
   if (isLoading) {
     return (
@@ -173,6 +169,7 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
             onSearchChange={setSearchQuery}
             onCreateFolder={handleCreateFolder}
             onRefresh={() => refetch()}
+            existingNames={existingNames}
             disabled={createDirectory.isPending}
           />
           <FileList
@@ -185,54 +182,22 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Delete {deleteTarget?.type === 'directory' ? 'Folder' : 'File'}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
-            {deleteTarget?.type === 'directory' && ' This will delete all contents inside.'}
-            {' '}This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button
-            onClick={handleConfirmDelete}
-            color="error"
-            variant="contained"
-            disabled={deleteFile.isPending}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Delete Confirmation Dialog (with type-to-confirm for dangerous files) */}
+      <DeleteConfirmDialog
+        target={deleteTarget}
+        isPending={deleteFile.isPending}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeleteTarget(null)}
+      />
 
-      {/* Rename Dialog */}
-      <Dialog open={!!renameTarget} onClose={() => setRenameTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Rename</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            label="New name"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleConfirmRename()}
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRenameTarget(null)}>Cancel</Button>
-          <Button
-            onClick={handleConfirmRename}
-            variant="contained"
-            disabled={!newName.trim() || newName === renameTarget?.name || renameFile.isPending}
-          >
-            Rename
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Rename Dialog (with extension change warning + validation) */}
+      <RenameDialog
+        target={renameTarget}
+        existingNames={existingNames}
+        isPending={renameFile.isPending}
+        onConfirm={handleConfirmRename}
+        onClose={() => setRenameTarget(null)}
+      />
 
       {/* Text Editor */}
       <TextEditor
