@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.11.0 (2026-02-19)
+- **feat(console)**: Show Console section only on Overview tab (#387, #388)
+- **refactor(console)**: Redesign server.properties editor as inline view (replace dialog with full-page view)
+
 ### v2.10.0 (2026-02-19)
 - **feat(console)**: Phase 5 - File Upload/Download with streaming proxy, drag-and-drop (#379, #386)
 - **feat(console)**: Phase 6 - File Operations: delete, rename, new folder dialogs (#380, #385)
@@ -97,9 +101,6 @@ mcctl logs myserver
 
 ### v2.7.0 (2026-02-18)
 - **feat(console)**: Replace Ubuntu font with Roboto Mono across all console components
-
-### v2.6.1 (2026-02-17)
-- **fix(console)**: Remove individual Restart badges, show specific field names in StickyActionBar
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

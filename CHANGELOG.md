@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.0] - 2026-02-19
+
+### Added
+- **Console Tab-Specific Console Section** - Show Console section only on Overview tab (#387, #388)
+  - Console section now appears exclusively in the Overview tab for cleaner UX
+  - Console open state resets automatically when leaving Overview tab
+  - Unit tests added for console visibility on tab switch
+
+### Changed
+- **Console server.properties Editor Redesign** - Replace modal dialog with inline view
+  - `ServerPropertiesDialog` (modal overlay) replaced with `ServerPropertiesView` (inline full-page view)
+  - New `RawPropertiesEditor` component for raw properties editing
+  - Properties editor now renders within the Files tab instead of as a dialog overlay
+  - Improved UX with back navigation instead of dialog close
+
 ## [2.10.0] - 2026-02-19
 
 ### Added

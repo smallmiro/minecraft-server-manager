@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.4.0
-> **Last Updated**: 2026-02-14
+> **Version**: 2.11.0
+> **Last Updated**: 2026-02-19
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
