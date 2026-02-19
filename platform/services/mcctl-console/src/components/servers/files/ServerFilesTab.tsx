@@ -6,7 +6,7 @@ import CardContent from '@mui/material/CardContent';
 import Alert from '@mui/material/Alert';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
-import { useServerFiles, useDeleteFile, useCreateDirectory, useRenameFile } from '@/hooks/use-server-files';
+import { useServerFiles, useDeleteFile, useCreateDirectory, useRenameFile, useUploadFiles, downloadFile } from '@/hooks/use-server-files';
 import { FileBreadcrumb } from './FileBreadcrumb';
 import { FileToolbar } from './FileToolbar';
 import { FileList } from './FileList';
@@ -16,6 +16,7 @@ import { RenameDialog } from './RenameDialog';
 import { PlayerEditorDialog, getPlayerEditorType } from './PlayerEditorDialog';
 import type { PlayerEditorType } from './PlayerEditorDialog';
 import { ServerPropertiesDialog, isServerPropertiesFile } from './ServerPropertiesDialog';
+import { FileUploadDialog } from './FileUploadDialog';
 import type { FileEntry } from '@/ports/api/IMcctlApiClient';
 
 interface ServerFilesTabProps {
@@ -50,10 +51,14 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
   const [propertiesEditorOpen, setPropertiesEditorOpen] = useState(false);
   const [propertiesFilePath, setPropertiesFilePath] = useState<string | null>(null);
 
+  // Upload dialog
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+
   const { data, isLoading, error, refetch } = useServerFiles(serverName, currentPath);
   const deleteFile = useDeleteFile(serverName);
   const createDirectory = useCreateDirectory(serverName);
   const renameFile = useRenameFile(serverName);
+  const uploadFiles = useUploadFiles(serverName);
 
   const showSnackbar = useCallback((message: string, severity: SnackbarState['severity'] = 'success') => {
     setSnackbar({ open: true, message, severity });
@@ -80,6 +85,11 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
       case 'rename':
         setRenameTarget(file);
         break;
+      case 'download': {
+        const path = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
+        downloadFile(serverName, path);
+        break;
+      }
       case 'open': {
         const path = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
         if (currentPath === '/' && isServerPropertiesFile(file.name)) {
@@ -97,7 +107,19 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         break;
       }
     }
-  }, [currentPath]);
+  }, [currentPath, serverName]);
+
+  const handleUpload = useCallback((files: File[]) => {
+    uploadFiles.mutate({ path: currentPath, files }, {
+      onSuccess: (data) => {
+        showSnackbar(`${data.files.length} file(s) uploaded`);
+        setUploadDialogOpen(false);
+      },
+      onError: (err) => {
+        showSnackbar(err.message, 'error');
+      },
+    });
+  }, [currentPath, uploadFiles, showSnackbar]);
 
   const handleConfirmDelete = useCallback(() => {
     if (!deleteTarget) return;
@@ -168,6 +190,7 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             onCreateFolder={handleCreateFolder}
+            onUpload={() => setUploadDialogOpen(true)}
             onRefresh={() => refetch()}
             existingNames={existingNames}
             disabled={createDirectory.isPending}
@@ -197,6 +220,14 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         isPending={renameFile.isPending}
         onConfirm={handleConfirmRename}
         onClose={() => setRenameTarget(null)}
+      />
+
+      {/* File Upload Dialog */}
+      <FileUploadDialog
+        open={uploadDialogOpen}
+        isPending={uploadFiles.isPending}
+        onUpload={handleUpload}
+        onClose={() => setUploadDialogOpen(false)}
       />
 
       {/* Text Editor */}

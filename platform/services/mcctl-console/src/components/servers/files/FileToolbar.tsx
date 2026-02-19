@@ -8,18 +8,20 @@ import InputAdornment from '@mui/material/InputAdornment';
 import SearchIcon from '@mui/icons-material/Search';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { NewFolderDialog } from './NewFolderDialog';
 
 interface FileToolbarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onCreateFolder: (name: string) => void;
+  onUpload: () => void;
   onRefresh: () => void;
   existingNames: string[];
   disabled?: boolean;
 }
 
-export function FileToolbar({ searchQuery, onSearchChange, onCreateFolder, onRefresh, existingNames, disabled }: FileToolbarProps) {
+export function FileToolbar({ searchQuery, onSearchChange, onCreateFolder, onUpload, onRefresh, existingNames, disabled }: FileToolbarProps) {
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
 
   return (
@@ -40,6 +42,14 @@ export function FileToolbar({ searchQuery, onSearchChange, onCreateFolder, onRef
           sx={{ minWidth: 200, flex: { xs: '1 1 100%', sm: '0 1 auto' } }}
         />
         <Box sx={{ display: 'flex', gap: 1, ml: 'auto' }}>
+          <Button
+            size="small"
+            startIcon={<UploadFileIcon />}
+            onClick={onUpload}
+            disabled={disabled}
+          >
+            Upload
+          </Button>
           <Button
             size="small"
             startIcon={<CreateNewFolderIcon />}
