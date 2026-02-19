@@ -5,33 +5,22 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
 import SearchIcon from '@mui/icons-material/Search';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { NewFolderDialog } from './NewFolderDialog';
 
 interface FileToolbarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onCreateFolder: (name: string) => void;
   onRefresh: () => void;
+  existingNames: string[];
   disabled?: boolean;
 }
 
-export function FileToolbar({ searchQuery, onSearchChange, onCreateFolder, onRefresh, disabled }: FileToolbarProps) {
+export function FileToolbar({ searchQuery, onSearchChange, onCreateFolder, onRefresh, existingNames, disabled }: FileToolbarProps) {
   const [folderDialogOpen, setFolderDialogOpen] = useState(false);
-  const [folderName, setFolderName] = useState('');
-
-  const handleCreateFolder = () => {
-    if (folderName.trim()) {
-      onCreateFolder(folderName.trim());
-      setFolderName('');
-      setFolderDialogOpen(false);
-    }
-  };
 
   return (
     <>
@@ -70,26 +59,16 @@ export function FileToolbar({ searchQuery, onSearchChange, onCreateFolder, onRef
         </Box>
       </Box>
 
-      <Dialog open={folderDialogOpen} onClose={() => setFolderDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Create New Folder</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            label="Folder name"
-            value={folderName}
-            onChange={(e) => setFolderName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setFolderDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleCreateFolder} variant="contained" disabled={!folderName.trim()}>
-            Create
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <NewFolderDialog
+        open={folderDialogOpen}
+        existingNames={existingNames}
+        isPending={!!disabled}
+        onConfirm={(name) => {
+          onCreateFolder(name);
+          setFolderDialogOpen(false);
+        }}
+        onClose={() => setFolderDialogOpen(false)}
+      />
     </>
   );
 }
