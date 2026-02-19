@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.10.0 (2026-02-19)
+- **feat(console)**: Phase 5 - File Upload/Download with streaming proxy, drag-and-drop (#379, #386)
+- **feat(console)**: Phase 6 - File Operations: delete, rename, new folder dialogs (#380, #385)
+
 ### v2.9.0 (2026-02-18)
 - **feat(console)**: Server Files Management - complete 4-phase implementation
   - Phase 1: File Browser with directory navigation and file listing (#375, #381)
@@ -96,9 +100,6 @@ mcctl logs myserver
 
 ### v2.6.1 (2026-02-17)
 - **fix(console)**: Remove individual Restart badges, show specific field names in StickyActionBar
-
-### v2.6.0 (2026-02-17)
-- **feat(console)**: Server Properties Full UI - 6 sections, ~40 fields with Progressive Disclosure (#365, #366)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

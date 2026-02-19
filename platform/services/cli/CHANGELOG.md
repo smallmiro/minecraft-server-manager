@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.0] - 2026-02-19
+
+### Added
+- **Console File Upload/Download** - Phase 5: Streaming file transfers with drag-and-drop support (#379, #386)
+  - File upload with streaming proxy via `@fastify/multipart`
+  - Drag-and-drop file upload interface
+  - File download with streaming response
+  - Progress indicators for upload/download operations
+- **Console File Operations** - Phase 6: File management actions (delete, rename, new folder) (#380, #385)
+  - Delete confirmation dialog with safety checks
+  - Rename dialog for files and directories
+  - New folder creation dialog
+  - Contextual file operation menus
+
 ## [2.9.0] - 2026-02-18
 
 ### Added
