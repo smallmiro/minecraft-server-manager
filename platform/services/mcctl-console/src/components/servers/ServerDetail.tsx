@@ -141,6 +141,13 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // Reset consoleOpen when leaving Overview tab
+  useEffect(() => {
+    if (activeTab !== 'Overview') {
+      setConsoleOpen(false);
+    }
+  }, [activeTab]);
+
   // Connect to server logs
   const { logs: rawLogs, isConnected } = useServerLogs({ serverName: server.name });
 
