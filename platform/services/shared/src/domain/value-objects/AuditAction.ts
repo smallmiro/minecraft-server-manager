@@ -48,4 +48,6 @@ export enum AuditActionEnum {
   FILE_DELETE = 'file.delete',
   FILE_MKDIR = 'file.mkdir',
   FILE_RENAME = 'file.rename',
+  FILE_UPLOAD = 'file.upload',
+  FILE_DOWNLOAD = 'file.download',
 }

@@ -431,6 +431,12 @@ export interface FileRenameResponse {
   newPath: string;
 }
 
+export interface FileUploadResponse {
+  success: boolean;
+  path: string;
+  files: string[];
+}
+
 // ============================================================
 // Backup Types
 // ============================================================

@@ -8,6 +8,7 @@ import type {
   FileWriteResponse,
   FileActionResponse,
   FileRenameResponse,
+  FileUploadResponse,
 } from '@/ports/api/IMcctlApiClient';
 
 /**
@@ -118,4 +119,59 @@ export function useRenameFile(serverName: string) {
       queryClient.invalidateQueries({ queryKey: ['servers', serverName, 'files'] });
     },
   });
+}
+
+/**
+ * Hook to upload files to a server directory
+ */
+export function useUploadFiles(serverName: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<FileUploadResponse, Error, { path: string; files: File[] }>({
+    mutationFn: async ({ path, files }) => {
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('files', file);
+      }
+
+      const params = new URLSearchParams({ path });
+      const response = await fetch(
+        `/api/servers/${encodeURIComponent(serverName)}/files/upload?${params}`,
+        { method: 'POST', body: formData }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          error: 'UnknownError',
+          message: response.statusText,
+        }));
+        const error = new Error(errorData.message) as Error & { statusCode: number; code: string };
+        error.statusCode = response.status;
+        error.code = errorData.error;
+        throw error;
+      }
+
+      return response.json() as Promise<FileUploadResponse>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName, 'files'] });
+    },
+  });
+}
+
+/**
+ * Trigger a file download from the server
+ * This is not a hook — it's a utility function that opens a download in the browser.
+ */
+export function downloadFile(serverName: string, filePath: string) {
+  const params = new URLSearchParams({ path: filePath });
+  const url = `/api/servers/${encodeURIComponent(serverName)}/files/download?${params}`;
+
+  // Use a hidden anchor to trigger the browser download
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }

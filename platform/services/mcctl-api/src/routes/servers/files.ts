@@ -1,7 +1,9 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { resolve, join, basename } from 'path';
-import { existsSync, statSync, readdirSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync, realpathSync } from 'fs';
+import multipart from '@fastify/multipart';
+import { resolve, join, basename, dirname } from 'path';
+import { existsSync, statSync, readdirSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync, realpathSync, createReadStream, createWriteStream } from 'fs';
+import { pipeline } from 'stream/promises';
 import { serverExists, AuditActionEnum } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
@@ -49,11 +51,22 @@ interface FileRenameRoute {
   Body: { oldPath: string; newPath: string };
 }
 
+interface FileUploadRoute {
+  Params: ServerNameParams;
+  Querystring: { path: string };
+}
+
+interface FileDownloadRoute {
+  Params: ServerNameParams;
+  Querystring: { path: string };
+}
+
 // ============================================================
 // Helpers
 // ============================================================
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB for text editing
+const MAX_UPLOAD_SIZE = 100 * 1024 * 1024; // 100MB for file upload
 
 /**
  * Get the base data directory for a server
@@ -99,6 +112,11 @@ function getActor(request: FastifyRequest): string {
 // ============================================================
 
 const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  // Register multipart for file uploads
+  await fastify.register(multipart, {
+    limits: { fileSize: MAX_UPLOAD_SIZE },
+  });
+
   /**
    * GET /api/servers/:name/files
    * List directory contents
@@ -534,6 +552,180 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
       fastify.log.error(error, 'Failed to rename file');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to rename file' });
+    }
+  });
+  /**
+   * POST /api/servers/:name/files/upload
+   * Upload a file via multipart form data
+   */
+  fastify.post<FileUploadRoute>('/api/servers/:name/files/upload', {
+    schema: {
+      description: 'Upload a file to server data directory (multipart)',
+      tags: ['servers', 'files'],
+      params: ServerNameParamsSchema,
+      response: {
+        404: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        413: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<FileUploadRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+    const userPath = request.query.path;
+
+    try {
+      if (!serverExists(name)) {
+        return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
+      }
+
+      if (!userPath) {
+        return reply.code(400).send({ error: 'BadRequest', message: 'path query parameter is required' });
+      }
+
+      const baseDir = getServerDataDir(name);
+      const targetPath = validatePath(baseDir, userPath);
+      if (!targetPath) {
+        return reply.code(403).send({ error: 'Forbidden', message: 'Path traversal detected' });
+      }
+
+      if (!existsSync(targetPath) || !statSync(targetPath).isDirectory()) {
+        return reply.code(404).send({ error: 'NotFound', message: 'Upload directory not found' });
+      }
+
+      const parts = request.parts();
+      const uploaded: string[] = [];
+
+      for await (const part of parts) {
+        if (part.type === 'file') {
+          const fileName = basename(part.filename);
+          if (!fileName) continue;
+
+          // Validate the resolved file path stays within base directory
+          const resolvedFilePath = validatePath(baseDir, join(userPath.replace(/^\/+/, ''), fileName));
+          if (!resolvedFilePath) {
+            continue; // Skip files with traversal in filename
+          }
+
+          await pipeline(part.file, createWriteStream(resolvedFilePath));
+
+          if (part.file.truncated) {
+            // File exceeded size limit — remove the partial file and any previously uploaded files
+            rmSync(resolvedFilePath, { force: true });
+            for (const prev of uploaded) {
+              const prevPath = validatePath(baseDir, join(userPath.replace(/^\/+/, ''), prev));
+              if (prevPath) rmSync(prevPath, { force: true });
+            }
+            return reply.code(413).send({ error: 'PayloadTooLarge', message: `File "${fileName}" exceeds ${MAX_UPLOAD_SIZE / 1024 / 1024}MB limit` });
+          }
+
+          uploaded.push(fileName);
+        }
+      }
+
+      const actor = getActor(request);
+      await writeAuditLog({
+        action: AuditActionEnum.FILE_UPLOAD,
+        actor,
+        targetType: 'server',
+        targetName: name,
+        details: { path: userPath, files: uploaded },
+        status: 'success',
+      });
+
+      fastify.log.info({ server: name, path: userPath, files: uploaded, actor }, 'Files uploaded');
+
+      return reply.send({ success: true, path: userPath, files: uploaded });
+    } catch (error) {
+      const actor = getActor(request);
+      await writeAuditLog({
+        action: AuditActionEnum.FILE_UPLOAD,
+        actor,
+        targetType: 'server',
+        targetName: name,
+        details: { path: userPath },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
+      fastify.log.error(error, 'Failed to upload file');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to upload file' });
+    }
+  });
+
+  /**
+   * GET /api/servers/:name/files/download
+   * Download a file as streaming response
+   */
+  fastify.get<FileDownloadRoute>('/api/servers/:name/files/download', {
+    schema: {
+      description: 'Download a file from server data directory',
+      tags: ['servers', 'files'],
+      params: ServerNameParamsSchema,
+      response: {
+        404: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<FileDownloadRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+    const userPath = request.query.path;
+
+    try {
+      if (!serverExists(name)) {
+        return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
+      }
+
+      if (!userPath) {
+        return reply.code(400).send({ error: 'BadRequest', message: 'path query parameter is required' });
+      }
+
+      const baseDir = getServerDataDir(name);
+      const targetPath = validatePath(baseDir, userPath);
+      if (!targetPath) {
+        return reply.code(403).send({ error: 'Forbidden', message: 'Path traversal detected' });
+      }
+
+      if (!existsSync(targetPath)) {
+        return reply.code(404).send({ error: 'NotFound', message: `File '${userPath}' not found` });
+      }
+
+      const stat = statSync(targetPath);
+      if (stat.isDirectory()) {
+        return reply.code(400).send({ error: 'BadRequest', message: 'Cannot download a directory' });
+      }
+
+      const fileName = basename(targetPath);
+      const stream = createReadStream(targetPath);
+
+      const actor = getActor(request);
+      await writeAuditLog({
+        action: AuditActionEnum.FILE_DOWNLOAD,
+        actor,
+        targetType: 'server',
+        targetName: name,
+        details: { path: userPath },
+        status: 'success',
+      });
+
+      return reply
+        .header('Content-Type', 'application/octet-stream')
+        .header('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`)
+        .header('Content-Length', stat.size)
+        .send(stream);
+    } catch (error) {
+      const actor = getActor(request);
+      await writeAuditLog({
+        action: AuditActionEnum.FILE_DOWNLOAD,
+        actor,
+        targetType: 'server',
+        targetName: name,
+        details: { path: userPath },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
+      fastify.log.error(error, 'Failed to download file');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to download file' });
     }
   });
 };

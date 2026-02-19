@@ -21,6 +21,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import EditIcon from '@mui/icons-material/Edit';
 import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DownloadIcon from '@mui/icons-material/Download';
 import type { FileEntry } from '@/ports/api/IMcctlApiClient';
 
 interface FileListItemProps {
@@ -147,6 +148,12 @@ export function FileListItem({ file, currentPath, onNavigate, onAction }: FileLi
           <MenuItem onClick={() => { setAnchorEl(null); onAction('open'); }}>
             <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
             <ListItemText>Edit</ListItemText>
+          </MenuItem>
+        )}
+        {file.type === 'file' && (
+          <MenuItem onClick={() => { setAnchorEl(null); onAction('download'); }}>
+            <ListItemIcon><DownloadIcon fontSize="small" /></ListItemIcon>
+            <ListItemText>Download</ListItemText>
           </MenuItem>
         )}
         <MenuItem onClick={() => { setAnchorEl(null); onAction('rename'); }}>
