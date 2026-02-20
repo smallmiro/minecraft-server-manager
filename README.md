@@ -27,6 +27,8 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **Zero Resources**: Only infrastructure services run when servers are idle (~40MB RAM)
 - **Interactive CLI**: Guided prompts for server creation, player management, and more
 - **Management Console**: Web Console (port 5000) + REST API (port 5001) for remote management
+- **Server File Manager**: Browse, edit, upload/download server files with drag-and-drop support
+- **server.properties Editor**: Inline FORM/RAW toggle editor for server.properties configuration
 - **Player Management**: Unified `mcctl player` command with Mojang API integration
 - **Mod Management**: Search, add, and remove mods from Modrinth, CurseForge, Spiget
 - **Modpack Support**: Create servers from Modrinth modpacks with dynamic loader detection
@@ -875,6 +877,25 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.12.0] - 2026-02-20
+
+**Changed:**
+- **Console File Editors Inline Redesign** - Convert TextEditor and PlayerEditorDialog from Dialog to inline Card-based views (#389, #390)
+
+### [2.11.0] - 2026-02-19
+
+**Added:**
+- **Console Tab-Specific Console Section** - Show Console section only on Overview tab (#387, #388)
+
+**Changed:**
+- **Console server.properties Editor Redesign** - Replace `ServerPropertiesDialog` (modal) with `ServerPropertiesView` (inline view) + `RawPropertiesEditor` for FORM/RAW toggle editing
+
+### [2.10.0] - 2026-02-19
+
+**Added:**
+- **Console File Upload/Download** - Streaming file transfers with drag-and-drop support (#379, #386)
+- **Console File Operations** - Delete, rename, and new folder actions (#380, #385)
+
 ### [2.9.0] - 2026-02-18
 
 **Added:**
@@ -891,26 +912,6 @@ cat /etc/avahi/hosts
 
 **Changed:**
 - **Console Responsive Design** - Improve responsive design across 14 components for mobile/tablet/desktop (#371, #372)
-
-### [2.8.0] - 2026-02-18
-
-**Added:**
-- **Console HostnameDisplay** - Reusable hostname display with popover for multiple hostnames (#369, #370)
-
-### [2.7.0] - 2026-02-18
-
-**Changed:**
-- **Console Font Overhaul** - Replace Ubuntu font with Roboto Mono across all components
-
-### [2.6.1] - 2026-02-17
-
-**Fixed:**
-- **Console Restart Badge UX** - Consolidate restart info in StickyActionBar
-
-### [2.6.0] - 2026-02-17
-
-**Added:**
-- **Console Server Properties Full UI** - 6 sections, ~40 fields with Progressive Disclosure (#365, #366)
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

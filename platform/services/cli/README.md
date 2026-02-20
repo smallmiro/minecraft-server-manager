@@ -77,6 +77,9 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.12.0 (2026-02-20)
+- **refactor(console)**: Convert file editors from Dialog to inline Card-based views (#389, #390)
+
 ### v2.11.0 (2026-02-19)
 - **feat(console)**: Show Console section only on Overview tab (#387, #388)
 - **refactor(console)**: Redesign server.properties editor as inline view (replace dialog with full-page view)
@@ -98,9 +101,6 @@ mcctl logs myserver
 
 ### v2.8.0 (2026-02-18)
 - **feat(console)**: HostnameDisplay common component with popover for multiple hostnames (#369, #370)
-
-### v2.7.0 (2026-02-18)
-- **feat(console)**: Replace Ubuntu font with Roboto Mono across all console components
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

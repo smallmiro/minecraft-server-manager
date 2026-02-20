@@ -106,24 +106,81 @@ minecraft/
 │   │   │   │   ├── app.ts              # Fastify app setup
 │   │   │   │   ├── routes/             # API endpoints
 │   │   │   │   │   ├── servers.ts      # GET/POST /servers
-│   │   │   │   │   ├── servers/actions.ts  # start/stop/restart
+│   │   │   │   │   ├── servers/        # Server sub-routes
+│   │   │   │   │   │   ├── actions.ts  # start/stop/restart
+│   │   │   │   │   │   ├── config.ts   # Server configuration
+│   │   │   │   │   │   ├── files.ts    # File management (browse, read, write, upload, download)
+│   │   │   │   │   │   ├── hostnames.ts # Hostname management
+│   │   │   │   │   │   └── mods.ts     # Mod management
 │   │   │   │   │   ├── console.ts      # RCON exec endpoint
-│   │   │   │   │   └── audit-logs.ts   # Audit log API endpoints
+│   │   │   │   │   ├── audit-logs.ts   # Audit log API endpoints
+│   │   │   │   │   ├── auth.ts         # Authentication routes
+│   │   │   │   │   ├── backup.ts       # Backup management
+│   │   │   │   │   ├── players.ts      # Player management
+│   │   │   │   │   ├── playit.ts       # playit.gg tunneling
+│   │   │   │   │   ├── router.ts       # mc-router management
+│   │   │   │   │   └── worlds.ts       # World management
 │   │   │   │   └── plugins/            # Fastify plugins
 │   │   │   │       ├── auth.ts         # 5-mode authentication
 │   │   │   │       └── swagger.ts      # OpenAPI documentation
 │   │   │   ├── Dockerfile              # Multi-stage build (~156MB)
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
-│   │   ├── mcctl-console/       # @minecraft-docker/mcctl-console (Web UI) [UNDER DEVELOPMENT]
+│   │   ├── mcctl-console/       # @minecraft-docker/mcctl-console (Web UI)
 │   │   │   ├── src/
 │   │   │   │   ├── app/                # Next.js App Router
 │   │   │   │   │   ├── api/            # BFF proxy routes
-│   │   │   │   │   ├── servers/        # Server management pages
-│   │   │   │   │   ├── audit-logs/     # Audit log pages
+│   │   │   │   │   ├── login/          # Login page
+│   │   │   │   │   ├── signup/         # Signup page
+│   │   │   │   │   ├── (main)/         # Authenticated route group
+│   │   │   │   │   │   ├── dashboard/  # Dashboard page
+│   │   │   │   │   │   ├── servers/    # Server management pages
+│   │   │   │   │   │   ├── worlds/     # World management pages
+│   │   │   │   │   │   ├── players/    # Player management pages
+│   │   │   │   │   │   ├── backups/    # Backup management pages
+│   │   │   │   │   │   ├── audit-logs/ # Audit log pages
+│   │   │   │   │   │   ├── settings/   # Settings pages
+│   │   │   │   │   │   ├── routing/    # Routing configuration pages
+│   │   │   │   │   │   └── admin/      # Admin pages
 │   │   │   │   │   └── layout.tsx      # Root layout
 │   │   │   │   ├── components/         # React components
-│   │   │   │   └── hooks/              # Custom hooks (use-servers)
+│   │   │   │   │   ├── servers/        # Server components
+│   │   │   │   │   │   ├── files/      # File management components
+│   │   │   │   │   │   │   ├── ServerFilesTab.tsx          # Files tab container
+│   │   │   │   │   │   │   ├── ServerPropertiesView.tsx    # Inline properties editor (FORM/RAW toggle)
+│   │   │   │   │   │   │   ├── RawPropertiesEditor.tsx     # Raw text properties editor
+│   │   │   │   │   │   │   ├── ServerPropertiesEditor.tsx  # Form-based properties editor
+│   │   │   │   │   │   │   ├── TextEditor.tsx              # General text file editor
+│   │   │   │   │   │   │   ├── PlayerEditorDialog.tsx      # Player file editor
+│   │   │   │   │   │   │   ├── FileBreadcrumb.tsx          # Directory breadcrumb
+│   │   │   │   │   │   │   ├── FileList.tsx                # File listing
+│   │   │   │   │   │   │   ├── FileUploadDialog.tsx        # Upload dialog with drag-and-drop
+│   │   │   │   │   │   │   ├── DeleteConfirmDialog.tsx     # Delete confirmation
+│   │   │   │   │   │   │   ├── RenameDialog.tsx            # File/folder rename
+│   │   │   │   │   │   │   └── NewFolderDialog.tsx         # New folder creation
+│   │   │   │   │   │   ├── settings/   # Server settings components
+│   │   │   │   │   │   │   ├── SettingsSection.tsx         # Settings group
+│   │   │   │   │   │   │   ├── SettingsField.tsx           # Individual setting field
+│   │   │   │   │   │   │   ├── StickyActionBar.tsx         # Save/reset action bar
+│   │   │   │   │   │   │   └── RestartConfirmDialog.tsx    # Restart confirmation
+│   │   │   │   │   │   ├── ServerDetail.tsx   # Server detail view with tabs
+│   │   │   │   │   │   ├── ServerList.tsx     # Server list
+│   │   │   │   │   │   ├── ServerCard.tsx     # Server card
+│   │   │   │   │   │   └── ServerConsole.tsx  # RCON console
+│   │   │   │   │   ├── dashboard/      # Dashboard components
+│   │   │   │   │   ├── common/         # Shared UI components
+│   │   │   │   │   ├── worlds/         # World management components
+│   │   │   │   │   ├── players/        # Player management components
+│   │   │   │   │   ├── audit-logs/     # Audit log components
+│   │   │   │   │   ├── backups/        # Backup components
+│   │   │   │   │   ├── settings/       # App settings components
+│   │   │   │   │   ├── admin/          # Admin components
+│   │   │   │   │   ├── users/          # User management components
+│   │   │   │   │   ├── auth/           # Auth components
+│   │   │   │   │   ├── layout/         # Layout components
+│   │   │   │   │   ├── providers/      # React context providers
+│   │   │   │   │   └── icons/          # Custom icons
+│   │   │   │   └── hooks/              # Custom React hooks
 │   │   │   ├── Dockerfile              # Standalone build (~158MB)
 │   │   │   ├── package.json
 │   │   │   └── tsconfig.json
@@ -141,12 +198,17 @@ minecraft/
 │   ├── index.md                 # English homepage
 │   ├── index.ko.md              # Korean homepage
 │   ├── console/                 # Management Console documentation
+│   ├── api/                     # REST API documentation
 │   ├── itzg-reference/          # itzg/docker-minecraft-server official docs
 │   ├── cli/                     # CLI command reference
 │   ├── getting-started/         # Getting started guides
 │   ├── configuration/           # Configuration guides
+│   ├── mods-and-plugins/        # Mod management guides
+│   ├── usage/                   # Usage guides
 │   ├── advanced/                # Advanced usage guides
-│   └── development/             # Development guides
+│   ├── development/             # Development guides
+│   ├── troubleshooting/         # Troubleshooting guides
+│   └── documentforllmagent.md   # LLM Knowledge Base
 │
 ├── e2e/                         # End-to-end tests (Playwright)
 │   ├── playwright.config.ts
@@ -156,12 +218,19 @@ minecraft/
 │
 └── .claude/
     ├── agents/
-    │   ├── release-manager.md
-    │   └── technical-writer.md
+    │   ├── orchestrator-agent.md # Multi-agent orchestrator
+    │   ├── core-agent.md        # Shared package specialist
+    │   ├── cli-agent.md         # CLI specialist
+    │   ├── backend-agent.md     # API specialist
+    │   ├── frontend-agent.md    # Console specialist
+    │   ├── devops-agent.md      # DevOps specialist
+    │   ├── release-manager.md   # Release management
+    │   └── technical-writer.md  # Documentation writer
     └── commands/
         ├── update-docs.md
         ├── sync-docs.md
         ├── write-docs.md
+        ├── build-kb.md
         └── work.md
 ```
 
