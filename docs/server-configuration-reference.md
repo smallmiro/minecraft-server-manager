@@ -2096,36 +2096,6 @@ mcctl status
 - World data corruption
 - Incompatible mods or plugins
 
-### World Data in Wrong Location
-
-Servers created with mcctl versions 1.6.8 through 1.6.11 may store worlds in the wrong directory.
-
-**Symptoms:**
-- World data in `servers/<name>/data/` instead of `worlds/`
-- Server creates a new world on every restart
-- World sharing between servers does not work
-
-**Detection:**
-```bash
-# Check for affected servers
-ls ~/minecraft-servers/servers/*/data/*/level.dat 2>/dev/null
-
-# Or use mcctl migrate
-mcctl migrate status
-```
-
-**Fix:**
-```bash
-# Automated migration (recommended)
-mcctl migrate worlds --all
-
-# Manual fix
-mcctl stop <server>
-echo 'EXTRA_ARGS=--universe /worlds/' >> ~/minecraft-servers/servers/<name>/config.env
-mv ~/minecraft-servers/servers/<name>/data/<world> ~/minecraft-servers/worlds/<world>
-mcctl start <server>
-```
-
 ### RCON Connection Issues
 
 **Symptoms:**

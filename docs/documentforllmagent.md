@@ -2811,7 +2811,7 @@ A: `mcctl update --all --yes`. This updates mcctl, mcctl-api, mcctl-console, and
 A: No. Minecraft server containers are independent of mcctl. Only Management Console services are restarted during `--all` update.
 
 **Q: How do I migrate from an old version?**
-A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix known issues (v1.6.8-1.6.11 world storage bug).
+A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix known issues.
 
 **Q: What is `mcctl upgrade`?**
 A: A command that detects new environment variables added in newer mcctl versions and appends them to your `.env` file. It never modifies existing values.
@@ -3015,37 +3015,7 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 - Backup API
 - `mcctl init --reconfigure` option
 
-### Version 1.6.8 ~ 1.6.11 (Critical Bug: World Storage Location)
-
-!!! warning "Critical Bug - Affects v1.6.8 ~ v1.6.11"
-    Servers created with these versions store worlds in wrong directory.
-
-**Issue:** Missing `EXTRA_ARGS=--universe /worlds/` in npm package template
-
-**Symptoms:**
-- World data stored in `servers/<name>/data/` instead of `worlds/`
-- Server creates new world on every restart
-- World sharing doesn't work
-
-**Detection:**
-```bash
-ls ~/minecraft-servers/servers/*/data/*/level.dat 2>/dev/null
-```
-
-**Solution:**
-```bash
-# Option 1: Automated migration (recommended)
-mcctl migrate status
-mcctl migrate worlds --all
-
-# Option 2: Manual fix
-echo 'EXTRA_ARGS=--universe /worlds/' >> ~/minecraft-servers/servers/<name>/config.env
-mcctl stop <name>
-mv ~/minecraft-servers/servers/<name>/data/<world> ~/minecraft-servers/worlds/<world>
-mcctl start <name>
-```
-
-### Version 1.6.0 ~ 1.6.7
+### Version 1.6.0 ~ 1.6.11
 
 - Management Console (REST API + Web Console)
 - `mcctl console` commands
