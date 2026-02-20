@@ -1,21 +1,18 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import Dialog from '@mui/material/Dialog';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
-import Slide from '@mui/material/Slide';
-import CloseIcon from '@mui/icons-material/Close';
+import Dialog from '@mui/material/Dialog';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
 import DescriptionIcon from '@mui/icons-material/Description';
-import type { TransitionProps } from '@mui/material/transitions';
-import { forwardRef } from 'react';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightSpecialChars, drawSelection, rectangularSelection } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
@@ -30,17 +27,10 @@ import { EditorStatusBar } from './EditorStatusBar';
 
 const MAX_EDITABLE_SIZE = 5 * 1024 * 1024; // 5MB
 
-const SlideTransition = forwardRef(function SlideTransition(
-  props: TransitionProps & { children: React.ReactElement },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
-
 interface TextEditorProps {
   serverName: string;
-  filePath: string | null;
-  onClose: () => void;
+  filePath: string;
+  onBack: () => void;
 }
 
 function getLanguageName(filename: string): string {
@@ -82,15 +72,15 @@ function getLanguageExtension(filename: string) {
   }
 }
 
-export function TextEditor({ serverName, filePath, onClose }: TextEditorProps) {
+export function TextEditor({ serverName, filePath, onBack }: TextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
 
   const [dirty, setDirty] = useState(false);
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
-  const [closeRequested, setCloseRequested] = useState(false);
+  const [backRequested, setBackRequested] = useState(false);
 
-  const fileName = filePath?.split('/').pop() || '';
+  const fileName = filePath.split('/').pop() || '';
   const { data, isLoading, error } = useFileContent(serverName, filePath);
   const writeFile = useWriteFile(serverName);
 
@@ -106,28 +96,20 @@ export function TextEditor({ serverName, filePath, onClose }: TextEditorProps) {
     );
   }, [filePath, writeFile]);
 
-  // Close with unsaved check
-  const handleClose = useCallback(() => {
+  // Back with unsaved check
+  const handleBack = useCallback(() => {
     if (dirty) {
-      setCloseRequested(true);
+      setBackRequested(true);
     } else {
-      onClose();
+      onBack();
     }
-  }, [dirty, onClose]);
+  }, [dirty, onBack]);
 
-  const handleDiscardAndClose = useCallback(() => {
-    setCloseRequested(false);
+  const handleDiscardAndBack = useCallback(() => {
+    setBackRequested(false);
     setDirty(false);
-    onClose();
-  }, [onClose]);
-
-  // Reset state when file changes
-  useEffect(() => {
-    setDirty(false);
-    setCursorPos({ line: 1, col: 1 });
-    writeFile.reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filePath]);
+    onBack();
+  }, [onBack]);
 
   // Initialize CodeMirror
   useEffect(() => {
@@ -143,7 +125,6 @@ export function TextEditor({ serverName, filePath, onClose }: TextEditorProps) {
       {
         key: 'Mod-s',
         run: () => {
-          // Defer to next tick so handleSave can access latest viewRef
           setTimeout(() => {
             if (!viewRef.current || !filePath) return;
             const content = viewRef.current.state.doc.toString();
@@ -212,41 +193,44 @@ export function TextEditor({ serverName, filePath, onClose }: TextEditorProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, fileName, filePath]);
 
-  const isOpen = filePath !== null;
   const isTooLarge = data && data.size > MAX_EDITABLE_SIZE;
 
   return (
     <>
-      <Dialog
-        fullScreen
-        open={isOpen}
-        onClose={handleClose}
-        TransitionComponent={SlideTransition}
-      >
-        <AppBar sx={{ position: 'relative' }} color="default" elevation={1}>
-          <Toolbar variant="dense">
-            <IconButton edge="start" color="inherit" onClick={handleClose} aria-label="close">
-              <CloseIcon />
-            </IconButton>
-            <DescriptionIcon sx={{ mx: 1, color: 'primary.main' }} />
-            <Typography sx={{ flex: 1 }} variant="subtitle1" noWrap>
-              {fileName}
-              {dirty && ' *'}
-            </Typography>
-            <Button
-              color="primary"
-              variant="contained"
-              size="small"
-              startIcon={writeFile.isPending ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
-              onClick={handleSave}
-              disabled={!dirty || writeFile.isPending}
-            >
-              Save
-            </Button>
-          </Toolbar>
-        </AppBar>
+      <Card sx={{ borderRadius: 3, display: 'flex', flexDirection: 'column', minHeight: 600 }}>
+        {/* Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            px: 2,
+            py: 1,
+            borderBottom: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <IconButton size="small" onClick={handleBack} aria-label="back">
+            <ArrowBackIcon />
+          </IconButton>
+          <DescriptionIcon sx={{ color: 'primary.main' }} />
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }} noWrap>
+            {fileName}
+            {dirty && ' *'}
+          </Typography>
+          <Button
+            size="small"
+            variant="contained"
+            startIcon={writeFile.isPending ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+            onClick={handleSave}
+            disabled={!dirty || writeFile.isPending}
+          >
+            Save
+          </Button>
+        </Box>
 
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Content */}
+        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: 0, '&:last-child': { pb: 0 } }}>
           {isLoading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
               <CircularProgress />
@@ -291,11 +275,11 @@ export function TextEditor({ serverName, filePath, onClose }: TextEditorProps) {
               dirty={dirty}
             />
           )}
-        </Box>
-      </Dialog>
+        </CardContent>
+      </Card>
 
       {/* Unsaved Changes Confirmation */}
-      <Dialog open={closeRequested} onClose={() => setCloseRequested(false)} maxWidth="xs" fullWidth>
+      <Dialog open={backRequested} onClose={() => setBackRequested(false)} maxWidth="xs" fullWidth>
         <Box sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
             Unsaved Changes
@@ -304,8 +288,8 @@ export function TextEditor({ serverName, filePath, onClose }: TextEditorProps) {
             You have unsaved changes in <strong>{fileName}</strong>. Do you want to discard them?
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-            <Button onClick={() => setCloseRequested(false)}>Cancel</Button>
-            <Button onClick={handleDiscardAndClose} color="error" variant="contained">
+            <Button onClick={() => setBackRequested(false)}>Cancel</Button>
+            <Button onClick={handleDiscardAndBack} color="error" variant="contained">
               Discard
             </Button>
           </Box>

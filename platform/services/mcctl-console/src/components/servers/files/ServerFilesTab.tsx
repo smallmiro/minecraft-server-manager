@@ -189,6 +189,37 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
     );
   }
 
+  // Inline text editor view (replaces file browser)
+  if (editorFilePath) {
+    return (
+      <TextEditor
+        serverName={serverName}
+        filePath={editorFilePath}
+        onBack={() => setEditorFilePath(null)}
+      />
+    );
+  }
+
+  // Inline player editor view (replaces file browser)
+  if (playerEditorType) {
+    return (
+      <PlayerEditorDialog
+        serverName={serverName}
+        editorType={playerEditorType}
+        filePath={playerEditorPath}
+        onBack={() => {
+          setPlayerEditorType(null);
+          setPlayerEditorPath(null);
+        }}
+        onSwitchToRaw={(path) => {
+          setPlayerEditorType(null);
+          setPlayerEditorPath(null);
+          setEditorFilePath(path);
+        }}
+      />
+    );
+  }
+
   return (
     <>
       <Card sx={{ borderRadius: 3 }}>
@@ -236,29 +267,6 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
         isPending={uploadFiles.isPending}
         onUpload={handleUpload}
         onClose={() => setUploadDialogOpen(false)}
-      />
-
-      {/* Text Editor */}
-      <TextEditor
-        serverName={serverName}
-        filePath={editorFilePath}
-        onClose={() => setEditorFilePath(null)}
-      />
-
-      {/* Player Editor (Smart Routing) */}
-      <PlayerEditorDialog
-        serverName={serverName}
-        editorType={playerEditorType}
-        filePath={playerEditorPath}
-        onClose={() => {
-          setPlayerEditorType(null);
-          setPlayerEditorPath(null);
-        }}
-        onSwitchToRaw={(path) => {
-          setPlayerEditorType(null);
-          setPlayerEditorPath(null);
-          setEditorFilePath(path);
-        }}
       />
 
       <Snackbar
