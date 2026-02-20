@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.1] - 2026-02-20
+
+### Added
+- **Server Management Guide** - New bilingual (EN/KO) documentation for server start/stop operations
+  - Comprehensive guide covering `mcctl start`, `mcctl stop`, `mcctl up`, `mcctl down` commands
+  - Server lifecycle management with auto-scaling behavior
+  - Added to MkDocs navigation under Usage section
+
+### Removed
+- **World Storage Bug Warning** - Remove obsolete v1.6.8~v1.6.11 bug warning from documentation
+  - Issue was fully resolved in v1.6.12; warning no longer relevant
+
 ## [2.12.0] - 2026-02-20
 
 ### Changed

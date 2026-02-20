@@ -877,6 +877,14 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.12.1] - 2026-02-20
+
+**Added:**
+- **Server Management Guide** - New bilingual (EN/KO) documentation for server start/stop operations
+
+**Removed:**
+- **World Storage Bug Warning** - Remove obsolete v1.6.8~v1.6.11 bug warning
+
 ### [2.12.0] - 2026-02-20
 
 **Changed:**
@@ -907,11 +915,6 @@ cat /etc/avahi/hosts
 
 **Changed:**
 - **Console Font Cleanup** - Remove Roboto Mono font, use MUI default (#373, #374)
-
-### [2.8.1] - 2026-02-18
-
-**Changed:**
-- **Console Responsive Design** - Improve responsive design across 14 components for mobile/tablet/desktop (#371, #372)
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

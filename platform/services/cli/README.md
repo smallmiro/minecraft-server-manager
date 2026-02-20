@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.12.1 (2026-02-20)
+- **docs**: Add server management guide (EN/KO) for start/stop operations
+- **docs**: Remove obsolete v1.6.8~v1.6.11 World Storage Bug warning
+
 ### v2.12.0 (2026-02-20)
 - **refactor(console)**: Convert file editors from Dialog to inline Card-based views (#389, #390)
 
@@ -98,9 +102,6 @@ mcctl logs myserver
 
 ### v2.8.1 (2026-02-18)
 - **refactor(console)**: Improve responsive design across 14 components for mobile/tablet/desktop (#371, #372)
-
-### v2.8.0 (2026-02-18)
-- **feat(console)**: HostnameDisplay common component with popover for multiple hostnames (#369, #370)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
