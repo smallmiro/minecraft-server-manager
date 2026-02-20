@@ -8,15 +8,19 @@
       
       
       
-        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/itzg-reference/14-world-data/">
+        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/usage/server-management/">
       
       
+        <link rel="prev" href="../../getting-started/quickstart/">
+      
+      
+        <link rel="next" href="../../cli/">
       
       
         
           <link rel="alternate" href="./" hreflang="en">
         
-          <link rel="alternate" href="../../ko/itzg-reference/14-world-data/" hreflang="ko">
+          <link rel="alternate" href="../../ko/usage/server-management/" hreflang="ko">
         
       
       
@@ -25,7 +29,7 @@
     
     
       
-        <title>World Data - Minecraft Docker Server Manager</title>
+        <title>Server Start & Stop - Minecraft Docker Server Manager</title>
       
     
     
@@ -76,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#world-data" class="md-skip">
+        <a href="#server-start--stop-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              World Data
+              Server Start & Stop
             
           </span>
         </div>
@@ -165,7 +169,7 @@
           </li>
         
           <li class="md-select__item">
-            <a href="../../ko/itzg-reference/14-world-data/" hreflang="ko" class="md-select__link">
+            <a href="../../ko/usage/server-management/" hreflang="ko" class="md-select__link">
               한국어
             </a>
           </li>
@@ -284,11 +288,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../usage/server-management/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -712,8 +718,10 @@
       
   
   
+    
   
   
+  
     
     
       
@@ -723,21 +731,22 @@
     
     
       
+        
+        
+      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -755,7 +764,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -770,10 +779,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../usage/server-management/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Start & Stop
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -789,6 +825,392 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcctl-cli-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl CLI Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mcctl CLI Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#start-all-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start All Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-all-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop All Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-individual-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start Individual Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-individual-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop Individual Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restart-a-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restart a Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manage-mc-router-independently" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manage mc-router Independently
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker-compose-direct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Compose (Direct)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Docker Compose (Direct)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#start-everything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start Everything
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-everything" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop Everything
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#startstop-individual-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start/Stop Individual Containers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#view-container-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        View Container Status
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web Console
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web Console">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-controls-via-web-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Controls via Web UI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-detail-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Detail Page
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pm2-service-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PM2 Service Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PM2 Service Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#console-service-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Console Service Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#direct-pm2-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct PM2 Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auto-scale-mc-router" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Scale (mc-router)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Auto-Scale (mc-router)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#player-experience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Experience
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#command-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructure-vs-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure vs Servers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2014,22 +2436,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#importing-worlds" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Importing Worlds
+        Overview
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Importing Worlds">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcctl-cli-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl CLI Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mcctl CLI Commands">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#download-world-from-url" class="md-nav__link">
+  <a href="#start-all-infrastructure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Download World from URL
+        Start All Infrastructure
       
     </span>
   </a>
@@ -2037,10 +2470,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#supported-formats" class="md-nav__link">
+  <a href="#stop-all-infrastructure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported Formats
+        Stop All Infrastructure
       
     </span>
   </a>
@@ -2048,10 +2481,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#using-local-world" class="md-nav__link">
+  <a href="#start-individual-server" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using Local World
+        Start Individual Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stop-individual-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop Individual Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restart-a-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restart a Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manage-mc-router-independently" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manage mc-router Independently
       
     </span>
   </a>
@@ -2064,44 +2530,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
+  <a href="#docker-compose-direct" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Environment Variables
+        Docker Compose (Direct)
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#changing-world-directory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Changing World Directory
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#datapacks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Datapacks
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Datapacks">
+    <nav class="md-nav" aria-label="Docker Compose (Direct)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#single-datapack" class="md-nav__link">
+  <a href="#start-everything" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Single Datapack
+        Start Everything
       
     </span>
   </a>
@@ -2109,10 +2553,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#multiple-datapacks" class="md-nav__link">
+  <a href="#stop-everything" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Multiple Datapacks
+        Stop Everything
       
     </span>
   </a>
@@ -2120,10 +2564,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#datapack-list-file" class="md-nav__link">
+  <a href="#startstop-individual-containers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Datapack List File
+        Start/Stop Individual Containers
       
     </span>
   </a>
@@ -2131,10 +2575,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#removing-old-datapacks" class="md-nav__link">
+  <a href="#view-container-status" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Removing Old Datapacks
+        View Container Status
       
     </span>
   </a>
@@ -2147,22 +2591,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#vanillatweaks" class="md-nav__link">
+  <a href="#web-console" class="md-nav__link">
     <span class="md-ellipsis">
       
-        VanillaTweaks
+        Web Console
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="VanillaTweaks">
+    <nav class="md-nav" aria-label="Web Console">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#using-share-code" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using Share Code
+        Prerequisites
       
     </span>
   </a>
@@ -2170,10 +2614,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#json-configuration-file" class="md-nav__link">
+  <a href="#server-controls-via-web-ui" class="md-nav__link">
     <span class="md-ellipsis">
       
-        JSON Configuration File
+        Server Controls via Web UI
       
     </span>
   </a>
@@ -2181,10 +2625,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#supported-types" class="md-nav__link">
+  <a href="#server-detail-page" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported Types
+        Server Detail Page
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API
       
     </span>
   </a>
@@ -2197,22 +2652,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#world-generation-settings" class="md-nav__link">
+  <a href="#pm2-service-management" class="md-nav__link">
     <span class="md-ellipsis">
       
-        World Generation Settings
+        PM2 Service Management
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="World Generation Settings">
+    <nav class="md-nav" aria-label="PM2 Service Management">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#basic-settings" class="md-nav__link">
+  <a href="#console-service-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Basic Settings
+        Console Service Commands
       
     </span>
   </a>
@@ -2220,21 +2675,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#superflat-world" class="md-nav__link">
+  <a href="#direct-pm2-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Superflat World
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#initial-datapack-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Initial Datapack Settings
+        Direct PM2 Commands
       
     </span>
   </a>
@@ -2247,22 +2691,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#world-backup" class="md-nav__link">
+  <a href="#auto-scale-mc-router" class="md-nav__link">
     <span class="md-ellipsis">
       
-        World Backup
+        Auto-Scale (mc-router)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="World Backup">
+    <nav class="md-nav" aria-label="Auto-Scale (mc-router)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#manual-backup" class="md-nav__link">
+  <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Manual Backup
+        How It Works
       
     </span>
   </a>
@@ -2270,10 +2714,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#automatic-backup-script" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Automatic Backup Script
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#player-experience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Experience
       
     </span>
   </a>
@@ -2286,22 +2741,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#example-configurations" class="md-nav__link">
+  <a href="#quick-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example Configurations
+        Quick Reference
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Example Configurations">
+    <nav class="md-nav" aria-label="Quick Reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#custom-world--datapacks" class="md-nav__link">
+  <a href="#common-scenarios" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Custom World + Datapacks
+        Common Scenarios
       
     </span>
   </a>
@@ -2309,10 +2764,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#new-world-generation" class="md-nav__link">
+  <a href="#command-summary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        New World Generation
+        Command Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructure-vs-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infrastructure vs Servers
       
     </span>
   </a>
@@ -2321,6 +2787,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2344,217 +2821,417 @@
   
 
 
-<h1 id="world-data">World Data<a class="headerlink" href="#world-data" title="Permanent link">&para;</a></h1>
-<p>World management, datapacks, and VanillaTweaks configuration.</p>
-<h2 id="importing-worlds">Importing Worlds<a class="headerlink" href="#importing-worlds" title="Permanent link">&para;</a></h2>
-<h3 id="download-world-from-url">Download World from URL<a class="headerlink" href="#download-world-from-url" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">WORLD</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/world.zip&quot;</span>
-</code></pre></div>
-<h3 id="supported-formats">Supported Formats<a class="headerlink" href="#supported-formats" title="Permanent link">&para;</a></h3>
-<ul>
-<li>ZIP files (<code>.zip</code>)</li>
-<li>Compressed TAR files (<code>.tar.gz</code>, <code>.tgz</code>)</li>
-<li>Local directories</li>
-</ul>
-<h3 id="using-local-world">Using Local World<a class="headerlink" href="#using-local-world" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">volumes</span><span class="p">:</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./my-world:/data/world</span>
-</code></pre></div>
-<p>Or:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">WORLD</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/worlds/my-world&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nt">volumes</span><span class="p">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./worlds:/worlds:ro</span>
-</code></pre></div>
-<h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
+<h1 id="server-start--stop-guide">Server Start &amp; Stop Guide<a class="headerlink" href="#server-start--stop-guide" title="Permanent link">&para;</a></h1>
+<p>This guide consolidates all methods for starting, stopping, and restarting Minecraft servers managed by mcctl.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>There are several ways to manage server lifecycle:</p>
 <table>
 <thead>
 <tr>
-<th>Variable</th>
+<th>Method</th>
+<th>Scope</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#mcctl-cli-commands">mcctl CLI</a></td>
+<td>Individual server or all servers</td>
+<td>Day-to-day management</td>
+</tr>
+<tr>
+<td><a href="#docker-compose-direct">Docker Compose</a></td>
+<td>Full infrastructure or individual containers</td>
+<td>Advanced users</td>
+</tr>
+<tr>
+<td><a href="#web-console">Web Console</a></td>
+<td>Individual servers via browser</td>
+<td>Visual management</td>
+</tr>
+<tr>
+<td><a href="#pm2-service-management">PM2</a></td>
+<td>Management Console services</td>
+<td>Console lifecycle</td>
+</tr>
+<tr>
+<td><a href="#auto-scale-mc-router">Auto-Scale</a></td>
+<td>Automatic start/stop based on player activity</td>
+<td>Hands-off operation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="mcctl-cli-commands">mcctl CLI Commands<a class="headerlink" href="#mcctl-cli-commands" title="Permanent link">&para;</a></h2>
+<h3 id="start-all-infrastructure">Start All Infrastructure<a class="headerlink" href="#start-all-infrastructure" title="Permanent link">&para;</a></h3>
+<p>Start mc-router and all Minecraft servers:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mcctl<span class="w"> </span>up
+</code></pre></div>
+<p>This is equivalent to <code>docker compose up -d</code>. It starts the entire platform including mc-router and all registered servers.</p>
+<h3 id="stop-all-infrastructure">Stop All Infrastructure<a class="headerlink" href="#stop-all-infrastructure" title="Permanent link">&para;</a></h3>
+<p>Stop all servers, mc-router, and remove the Docker network:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mcctl<span class="w"> </span>down
+</code></pre></div>
+<p>This runs <code>docker compose down</code>, stopping all mc-* containers.</p>
+<h3 id="start-individual-server">Start Individual Server<a class="headerlink" href="#start-individual-server" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Start a specific server</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Start all Minecraft servers (not mc-router)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>start<span class="w"> </span>--all
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Short</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>WORLD</code></td>
-<td>World archive URL or path</td>
-</tr>
-<tr>
-<td><code>WORLD_INDEX</code></td>
-<td>Select when archive has multiple <code>level.dat</code> files (default: 1)</td>
-</tr>
-<tr>
-<td><code>FORCE_WORLD_COPY</code></td>
-<td><code>TRUE</code> - Overwrite world on each server start</td>
-</tr>
-<tr>
-<td><code>LEVEL</code></td>
-<td>World save folder name (default: <code>world</code>)</td>
+<td><code>--all</code></td>
+<td><code>-a</code></td>
+<td>Start all Minecraft servers (not router)</td>
 </tr>
 </tbody>
 </table>
-<h2 id="changing-world-directory">Changing World Directory<a class="headerlink" href="#changing-world-directory" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">EXTRA_ARGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;--world-dir</span><span class="nv"> </span><span class="s">./worlds/&quot;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="c1"># or</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">EXTRA_ARGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;--universe</span><span class="nv"> </span><span class="s">./worlds/&quot;</span>
+<h3 id="stop-individual-server">Stop Individual Server<a class="headerlink" href="#stop-individual-server" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Stop a specific server</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Stop all Minecraft servers (not mc-router)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>--all
 </code></pre></div>
-<hr />
-<h2 id="datapacks">Datapacks<a class="headerlink" href="#datapacks" title="Permanent link">&para;</a></h2>
-<h3 id="single-datapack">Single Datapack<a class="headerlink" href="#single-datapack" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">DATAPACKS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/datapack.zip&quot;</span>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Short</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--all</code></td>
+<td><code>-a</code></td>
+<td>Stop all Minecraft servers (not router)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="restart-a-server">Restart a Server<a class="headerlink" href="#restart-a-server" title="Permanent link">&para;</a></h3>
+<p>To restart a server (e.g., after configuration changes):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
 </code></pre></div>
-<h3 id="multiple-datapacks">Multiple Datapacks<a class="headerlink" href="#multiple-datapacks" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">DATAPACKS</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="no">https://example.com/datapack1.zip</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="no">https://example.com/datapack2.zip</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="no">/data/local-datapack.zip</span>
-</code></pre></div>
-<h3 id="datapack-list-file">Datapack List File<a class="headerlink" href="#datapack-list-file" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">DATAPACKS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/datapacks.txt&quot;</span>
-</code></pre></div>
-<p><code>datapacks.txt</code>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>https://example.com/datapack1.zip
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>https://example.com/datapack2.zip
-</code></pre></div></p>
-<h3 id="removing-old-datapacks">Removing Old Datapacks<a class="headerlink" href="#removing-old-datapacks" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">REMOVE_OLD_DATAPACKS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">REMOVE_OLD_DATAPACKS_DEPTH</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;16&quot;</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">REMOVE_OLD_DATAPACKS_INCLUDE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;*.zip&quot;</span>
-</code></pre></div>
-<hr />
-<h2 id="vanillatweaks">VanillaTweaks<a class="headerlink" href="#vanillatweaks" title="Permanent link">&para;</a></h2>
-<p>Auto-install datapacks and resource packs from <a href="https://vanillatweaks.net/">VanillaTweaks</a></p>
-<h3 id="using-share-code">Using Share Code<a class="headerlink" href="#using-share-code" title="Permanent link">&para;</a></h3>
-<p>Share code generated from VanillaTweaks website:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">VANILLATWEAKS_SHARECODE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MGr52E,q2Ec6z&quot;</span>
-</code></pre></div>
-<h3 id="json-configuration-file">JSON Configuration File<a class="headerlink" href="#json-configuration-file" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">VANILLATWEAKS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/vanillatweaks.json&quot;</span>
-</code></pre></div>
-<p><code>vanillatweaks.json</code>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;datapacks&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.20&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">&quot;packs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="nt">&quot;survival&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;multiplayer sleep&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;afk display&quot;</span><span class="p">],</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;player head drops&quot;</span><span class="p">]</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="p">}</span>
-</code></pre></div></p>
-<h3 id="supported-types">Supported Types<a class="headerlink" href="#supported-types" title="Permanent link">&para;</a></h3>
+<div class="admonition tip">
+<p class="admonition-title">When to Restart</p>
+<p>You need to restart a server after:</p>
 <ul>
-<li><code>datapacks</code> - Datapacks</li>
-<li><code>resourcepacks</code> - Resource packs</li>
-<li><code>craftingtweaks</code> - Crafting recipes</li>
+<li>Changing <code>config.env</code> settings</li>
+<li>Modifying <code>server.properties</code></li>
+<li>Adding or removing mods/plugins</li>
+<li>Changing memory allocation</li>
 </ul>
+</div>
+<h3 id="manage-mc-router-independently">Manage mc-router Independently<a class="headerlink" href="#manage-mc-router-independently" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>mcctl<span class="w"> </span>router<span class="w"> </span>start<span class="w">     </span><span class="c1"># Start mc-router only</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>mcctl<span class="w"> </span>router<span class="w"> </span>stop<span class="w">      </span><span class="c1"># Stop mc-router only</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>mcctl<span class="w"> </span>router<span class="w"> </span>restart<span class="w">   </span><span class="c1"># Restart mc-router</span>
+</code></pre></div>
+<p>mc-router must be running for players to connect to any server via hostname routing.</p>
 <hr />
-<h2 id="world-generation-settings">World Generation Settings<a class="headerlink" href="#world-generation-settings" title="Permanent link">&para;</a></h2>
-<h3 id="basic-settings">Basic Settings<a class="headerlink" href="#basic-settings" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">LEVEL_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;default&quot;</span><span class="w">    </span><span class="c1"># default, flat, largeBiomes, amplified</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">SEED</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12345&quot;</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">GENERATE_STRUCTURES</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<h2 id="docker-compose-direct">Docker Compose (Direct)<a class="headerlink" href="#docker-compose-direct" title="Permanent link">&para;</a></h2>
+<p>For advanced users who prefer direct Docker Compose commands. All commands should be run from the platform root directory (default: <code>~/minecraft-servers</code>).</p>
+<h3 id="start-everything">Start Everything<a class="headerlink" href="#start-everything" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div>
-<h3 id="superflat-world">Superflat World<a class="headerlink" href="#superflat-world" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">LEVEL_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;flat&quot;</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">GENERATOR_SETTINGS</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;{&quot;layers&quot;:[{&quot;block&quot;:&quot;bedrock&quot;,&quot;height&quot;:1},{&quot;block&quot;:&quot;dirt&quot;,&quot;height&quot;:2},{&quot;block&quot;:&quot;grass_block&quot;,&quot;height&quot;:1}]}&#39;</span>
+<h3 id="stop-everything">Stop Everything<a class="headerlink" href="#stop-everything" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>down
 </code></pre></div>
-<h3 id="initial-datapack-settings">Initial Datapack Settings<a class="headerlink" href="#initial-datapack-settings" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">INITIAL_ENABLED_PACKS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;vanilla,file/my_datapack&quot;</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nt">INITIAL_DISABLED_PACKS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;file/disabled_pack&quot;</span>
+<h3 id="startstop-individual-containers">Start/Stop Individual Containers<a class="headerlink" href="#startstop-individual-containers" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Start a specific server container</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>mc-myserver
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Stop a specific server container</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>docker<span class="w"> </span>compose<span class="w"> </span>stop<span class="w"> </span>mc-myserver
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Restart a specific container</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>docker<span class="w"> </span>compose<span class="w"> </span>restart<span class="w"> </span>mc-myserver
 </code></pre></div>
+<h3 id="view-container-status">View Container Status<a class="headerlink" href="#view-container-status" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>ps
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Prefer mcctl CLI</p>
+<p>While direct Docker Compose commands work, <code>mcctl</code> commands handle additional tasks like mDNS registration and compose file management. Use Docker Compose directly only when needed for troubleshooting or advanced scenarios.</p>
+</div>
 <hr />
-<h2 id="world-backup">World Backup<a class="headerlink" href="#world-backup" title="Permanent link">&para;</a></h2>
-<h3 id="manual-backup">Manual Backup<a class="headerlink" href="#manual-backup" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Save command to server</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>mc<span class="w"> </span>rcon-cli<span class="w"> </span>save-all
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>mc<span class="w"> </span>rcon-cli<span class="w"> </span>save-off
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># Create backup</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>tar<span class="w"> </span>-czf<span class="w"> </span>world_backup_<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d<span class="k">)</span>.tar.gz<span class="w"> </span>./data/world
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1"># Re-enable saving</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>mc<span class="w"> </span>rcon-cli<span class="w"> </span>save-on
+<h2 id="web-console">Web Console<a class="headerlink" href="#web-console" title="Permanent link">&para;</a></h2>
+<p>The Management Console provides a browser-based interface for server management at <code>http://localhost:5000</code>.</p>
+<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
+<p>Management Console must be installed and running:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w">       </span><span class="c1"># First-time setup</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w">   </span><span class="c1"># Start the console</span>
 </code></pre></div>
-<h3 id="automatic-backup-script">Automatic Backup Script<a class="headerlink" href="#automatic-backup-script" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="ch">#!/bin/bash</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nv">CONTAINER</span><span class="o">=</span><span class="s2">&quot;mc&quot;</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="nv">BACKUP_DIR</span><span class="o">=</span><span class="s2">&quot;./backups&quot;</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="nv">DATE</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d_%H%M%S<span class="k">)</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BACKUP_DIR</span><span class="s2">&quot;</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="c1"># Save world</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span><span class="nv">$CONTAINER</span><span class="w"> </span>rcon-cli<span class="w"> </span>save-all
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>sleep<span class="w"> </span><span class="m">5</span>
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span><span class="nv">$CONTAINER</span><span class="w"> </span>rcon-cli<span class="w"> </span>save-off
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="c1"># Backup</span>
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>tar<span class="w"> </span>-czf<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BACKUP_DIR</span><span class="s2">/world_</span><span class="nv">$DATE</span><span class="s2">.tar.gz&quot;</span><span class="w"> </span>./data/world
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>
-<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="c1"># Re-enable saving</span>
-<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span><span class="nv">$CONTAINER</span><span class="w"> </span>rcon-cli<span class="w"> </span>save-on
-<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>
-<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="c1"># Delete old backups (7 days)</span>
-<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a>find<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BACKUP_DIR</span><span class="s2">&quot;</span><span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;*.tar.gz&quot;</span><span class="w"> </span>-mtime<span class="w"> </span>+7<span class="w"> </span>-delete
+<h3 id="server-controls-via-web-ui">Server Controls via Web UI<a class="headerlink" href="#server-controls-via-web-ui" title="Permanent link">&para;</a></h3>
+<p>From the <strong>Dashboard</strong>, each server card shows quick action buttons:</p>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Action</th>
+<th>Available When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Play (Start)</td>
+<td>Start the server</td>
+<td>Server is stopped</td>
+</tr>
+<tr>
+<td>Stop</td>
+<td>Graceful shutdown</td>
+<td>Server is running</td>
+</tr>
+<tr>
+<td>Restart</td>
+<td>Stop then start</td>
+<td>Server is running</td>
+</tr>
+</tbody>
+</table>
+<h3 id="server-detail-page">Server Detail Page<a class="headerlink" href="#server-detail-page" title="Permanent link">&para;</a></h3>
+<p>Click on a server card to access detailed controls:</p>
+<ol>
+<li><strong>Start/Stop/Restart</strong> buttons in the server controls section</li>
+<li><strong>Console Panel</strong> - Execute RCON commands including <code>stop</code> to stop the server</li>
+<li><strong>Real-time Status</strong> - SSE-based live status updates (no polling)</li>
+</ol>
+<h3 id="rest-api">REST API<a class="headerlink" href="#rest-api" title="Permanent link">&para;</a></h3>
+<p>For programmatic control, use the API endpoints:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Start a server</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:5001/servers/myserver/start
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Stop a server</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:5001/servers/myserver/stop
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Restart a server</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:5001/servers/myserver/restart
 </code></pre></div>
+<p>See the <a href="../../api/">API Reference</a> for authentication details.</p>
 <hr />
-<h2 id="example-configurations">Example Configurations<a class="headerlink" href="#example-configurations" title="Permanent link">&para;</a></h2>
-<h3 id="custom-world--datapacks">Custom World + Datapacks<a class="headerlink" href="#custom-world--datapacks" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PAPER&quot;</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">      </span><span class="c1"># World settings</span>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">      </span><span class="nt">WORLD</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/custom-world.zip&quot;</span>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="w">      </span><span class="nt">LEVEL</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;custom-world&quot;</span>
-<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">      </span><span class="c1"># Datapacks</span>
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="w">      </span><span class="nt">DATAPACKS</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="w">        </span><span class="no">https://example.com/datapack1.zip</span>
-<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="w">        </span><span class="no">https://example.com/datapack2.zip</span>
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>
-<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="w">      </span><span class="c1"># VanillaTweaks</span>
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="w">      </span><span class="nt">VANILLATWEAKS_SHARECODE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MGr52E&quot;</span>
-<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
-<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./data:/data</span>
-<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
+<h2 id="pm2-service-management">PM2 Service Management<a class="headerlink" href="#pm2-service-management" title="Permanent link">&para;</a></h2>
+<p>PM2 manages the Management Console services (mcctl-api and mcctl-console), not the Minecraft servers themselves.</p>
+<h3 id="console-service-commands">Console Service Commands<a class="headerlink" href="#console-service-commands" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Start Management Console services</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Stop Management Console services</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Restart Management Console services</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="c1"># Check service status</span>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status
 </code></pre></div>
-<h3 id="new-world-generation">New World Generation<a class="headerlink" href="#new-world-generation" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PAPER&quot;</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">      </span><span class="c1"># World generation settings</span>
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">      </span><span class="nt">LEVEL</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;survival-world&quot;</span>
-<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">      </span><span class="nt">SEED</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;minecraft-seed-123&quot;</span>
-<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">      </span><span class="nt">LEVEL_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;default&quot;</span>
-<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">      </span><span class="nt">GENERATE_STRUCTURES</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="w">      </span><span class="nt">DIFFICULTY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;normal&quot;</span>
-<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
-<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./data:/data</span>
-<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
+<h3 id="direct-pm2-commands">Direct PM2 Commands<a class="headerlink" href="#direct-pm2-commands" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># View all managed processes</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>pm2<span class="w"> </span>list
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># View logs</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="c1"># Restart services</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>pm2<span class="w"> </span>restart<span class="w"> </span>mcctl-api
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>pm2<span class="w"> </span>restart<span class="w"> </span>mcctl-console
 </code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">PM2 vs Minecraft Servers</p>
+<p>PM2 manages the <strong>Management Console</strong> (API + Web UI), not the Minecraft servers. Minecraft servers are managed by Docker containers.</p>
+</div>
+<hr />
+<h2 id="auto-scale-mc-router">Auto-Scale (mc-router)<a class="headerlink" href="#auto-scale-mc-router" title="Permanent link">&para;</a></h2>
+<p>mc-router supports automatic server start/stop based on player activity. This is the recommended approach for resource optimization.</p>
+<h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Auto-Scale Up</strong>: When a player connects to a sleeping server's hostname, mc-router automatically starts the Docker container</li>
+<li><strong>Auto-Scale Down</strong>: When a server has no players for the configured idle timeout, mc-router stops the container</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Player connects → mc-router detects → Docker container starts → Player joins
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>                                                                    ↓
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>                                                          No players for 10m
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>                                                                    ↓
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>                                                    mc-router stops container
+</code></pre></div>
+<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h3>
+<p>Configure auto-scaling in <code>.env</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Enable auto-start on player connect</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nv">AUTO_SCALE_UP</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Enable auto-stop when idle</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="nv">AUTO_SCALE_DOWN</span><span class="o">=</span><span class="nb">true</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Idle timeout before stopping (1m, 5m, 10m, 30m, 1h)</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="nv">AUTO_SCALE_DOWN_AFTER</span><span class="o">=</span>10m
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="c1"># Container start timeout in seconds</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="nv">DOCKER_TIMEOUT</span><span class="o">=</span><span class="m">120</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="c1"># Custom MOTD shown while server is starting</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="nv">AUTO_SCALE_ASLEEP_MOTD</span><span class="o">=</span>§e§lServer<span class="w"> </span>is<span class="w"> </span>sleeping§r<span class="se">\n</span>§7Connect<span class="w"> </span>to<span class="w"> </span>wake<span class="w"> </span>up!
+</code></pre></div>
+<p>After changing settings, restart mc-router:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mcctl<span class="w"> </span>router<span class="w"> </span>restart
+</code></pre></div>
+<h3 id="player-experience">Player Experience<a class="headerlink" href="#player-experience" title="Permanent link">&para;</a></h3>
+<p>When auto-scale is enabled:</p>
+<ul>
+<li><strong>Sleeping server</strong>: Player sees the custom MOTD and is asked to retry</li>
+<li><strong>Starting server</strong>: Player waits briefly while the container starts (typically 30-120 seconds)</li>
+<li><strong>Running server</strong>: Normal gameplay, no difference from a manually started server</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Auto-Start on Connect</p>
+<p>With auto-scale enabled, you don't need to manually start servers. Just let players connect and the server starts automatically.</p>
+</div>
+<hr />
+<h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
+<h3 id="common-scenarios">Common Scenarios<a class="headerlink" href="#common-scenarios" title="Permanent link">&para;</a></h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:5"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Start Everything</label><label for="__tabbed_1_2">Stop Everything</label><label for="__tabbed_1_3">Restart One Server</label><label for="__tabbed_1_4">Start All Servers Only</label><label for="__tabbed_1_5">Stop All Servers Only</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>up
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>mcctl<span class="w"> </span>down
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>start<span class="w"> </span>--all
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>--all
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="command-summary">Command Summary<a class="headerlink" href="#command-summary" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start all (router + servers)</td>
+<td><code>mcctl up</code></td>
+</tr>
+<tr>
+<td>Stop all</td>
+<td><code>mcctl down</code></td>
+</tr>
+<tr>
+<td>Start one server</td>
+<td><code>mcctl start &lt;name&gt;</code></td>
+</tr>
+<tr>
+<td>Stop one server</td>
+<td><code>mcctl stop &lt;name&gt;</code></td>
+</tr>
+<tr>
+<td>Start all servers (not router)</td>
+<td><code>mcctl start --all</code></td>
+</tr>
+<tr>
+<td>Stop all servers (not router)</td>
+<td><code>mcctl stop --all</code></td>
+</tr>
+<tr>
+<td>Start mc-router only</td>
+<td><code>mcctl router start</code></td>
+</tr>
+<tr>
+<td>Stop mc-router only</td>
+<td><code>mcctl router stop</code></td>
+</tr>
+<tr>
+<td>Restart mc-router</td>
+<td><code>mcctl router restart</code></td>
+</tr>
+<tr>
+<td>Start console services</td>
+<td><code>mcctl console service start</code></td>
+</tr>
+<tr>
+<td>Stop console services</td>
+<td><code>mcctl console service stop</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="infrastructure-vs-servers">Infrastructure vs Servers<a class="headerlink" href="#infrastructure-vs-servers" title="Permanent link">&para;</a></h3>
+<p>Understanding the difference between infrastructure and server commands:</p>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>Start</th>
+<th>Stop</th>
+<th>What It Affects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Full Infrastructure</strong></td>
+<td><code>mcctl up</code></td>
+<td><code>mcctl down</code></td>
+<td>mc-router + all servers + network</td>
+</tr>
+<tr>
+<td><strong>All Servers</strong></td>
+<td><code>mcctl start --all</code></td>
+<td><code>mcctl stop --all</code></td>
+<td>All Minecraft servers (not router)</td>
+</tr>
+<tr>
+<td><strong>Single Server</strong></td>
+<td><code>mcctl start &lt;name&gt;</code></td>
+<td><code>mcctl stop &lt;name&gt;</code></td>
+<td>One Minecraft server</td>
+</tr>
+<tr>
+<td><strong>Router Only</strong></td>
+<td><code>mcctl router start</code></td>
+<td><code>mcctl router stop</code></td>
+<td>mc-router only</td>
+</tr>
+<tr>
+<td><strong>Console Services</strong></td>
+<td><code>mcctl console service start</code></td>
+<td><code>mcctl console service stop</code></td>
+<td>API + Web UI (PM2)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../cli/commands/">CLI Commands Reference</a> - Full command reference</li>
+<li><a href="../../advanced/networking/">Networking Guide</a> - Hostname routing and DNS</li>
+<li><a href="../../console/web-console/">Web Console Guide</a> - Web UI details</li>
+<li><a href="../../api/">API Reference</a> - REST API endpoints</li>
+</ul>
 
 
 
