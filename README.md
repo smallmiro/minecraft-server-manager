@@ -692,6 +692,48 @@ The migration:
 - Updates `config.env` with `EXTRA_ARGS=--universe /worlds/` and `LEVEL=<server-name>`
 - Detects existing worlds with case-insensitive matching
 
+### Update & Upgrade
+
+Keep mcctl and all services up to date:
+
+```bash
+# Check for updates (no install)
+mcctl update --check
+
+# Update mcctl CLI to latest version
+mcctl update
+
+# Update CLI + all services (mcctl-api, mcctl-console, shared)
+mcctl update --all
+
+# Auto-confirm without prompt (for CI/CD)
+mcctl update --yes
+
+# Force check (ignore cache)
+mcctl update --force
+
+# Combine flags for fully automated updates
+mcctl update --all --yes
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--check` | Check only, don't install (exit code 1 = update available) |
+| `--force` | Force fresh version check (ignore 24h cache) |
+| `--yes` | Auto-confirm update without prompt |
+| `--all` | Update CLI and all installed services |
+
+**`update` vs `upgrade`:**
+
+| Command | Purpose |
+|---------|---------|
+| `mcctl update` | Update npm packages (CLI, API, Console) to latest version |
+| `mcctl upgrade` | Migrate platform config files (.env, templates) after CLI update |
+
+After updating, run `mcctl upgrade` to sync platform configuration with the new version.
+
 ### Automation (sudo Password Handling)
 
 For CI/CD or scripting, you can provide sudo password for mDNS registration:

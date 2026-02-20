@@ -192,6 +192,40 @@ mcctl status
 - `creative.192.168.1.100.nip.io:25565`
 - `modded.192.168.1.100.nip.io:25565`
 
+## mcctl 업데이트 유지
+
+mcctl은 npm에서 자기 자신과 설치된 모든 서비스를 업데이트할 수 있습니다.
+
+### 업데이트 확인
+
+```bash
+mcctl update --check
+```
+
+### mcctl 업데이트
+
+```bash
+# 대화형 (확인 프롬프트 표시)
+mcctl update
+
+# 자동 확인 (CI/CD에 유용)
+mcctl update --yes
+```
+
+### CLI 및 모든 서비스 업데이트
+
+mcctl과 함께 mcctl-api, mcctl-console, shared 라이브러리를 업데이트합니다:
+
+```bash
+mcctl update --all
+```
+
+!!! tip "자동 업데이트 확인"
+    mcctl은 24시간마다 백그라운드에서 자동으로 업데이트를 확인합니다.
+    새 버전이 있으면 알림이 표시됩니다.
+
+전체 update 명령어 레퍼런스는 [mcctl update](../cli/commands.ko.md#mcctl-update)를 참조하세요.
+
 ## 다음 단계
 
 <div class="grid cards" markdown>
@@ -285,6 +319,15 @@ mcctl status
 | 서버 설정 복원 | `mcctl server-restore <server>` |
 | 월드 GitHub 백업 | `mcctl backup push -m "message"` |
 | GitHub에서 복원 | `mcctl backup restore <commit>` |
+
+### 유지보수
+
+| 작업 | 명령어 |
+|------|--------|
+| 업데이트 확인 | `mcctl update --check` |
+| mcctl 업데이트 | `mcctl update` |
+| 모든 서비스 업데이트 | `mcctl update --all` |
+| 자동 확인 업데이트 | `mcctl update --yes` |
 
 ---
 

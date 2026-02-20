@@ -300,6 +300,118 @@ mcctl status router
 
 ---
 
+### mcctl update
+
+mcctl CLI 및 서비스의 업데이트를 확인하고 최신 버전으로 업데이트합니다.
+
+```bash
+mcctl update [options]
+```
+
+**옵션:**
+
+| 옵션 | 설명 |
+|--------|-------------|
+| `--check` | 업데이트만 확인 (설치하지 않음) |
+| `--yes` | 확인 프롬프트 없이 자동 업데이트 |
+| `--force` | 캐시를 무시하고 강제 버전 확인 |
+| `--all` | CLI 및 설치된 모든 서비스 업데이트 |
+
+**예제:**
+
+=== "업데이트 확인"
+    ```bash
+    mcctl update --check
+    ```
+
+    **출력 (업데이트 가능):**
+    ```
+    mcctl update check:
+      Installed: 2.11.0
+      Latest:    2.12.1
+
+    Update available! Run: mcctl update
+    ```
+
+    **출력 (최신 버전):**
+    ```
+    mcctl update check:
+      Installed: 2.12.1
+      Latest:    2.12.1
+
+    You are up to date.
+    ```
+
+=== "CLI 업데이트"
+    ```bash
+    mcctl update
+    ```
+
+    **출력:**
+    ```
+    mcctl update check:
+      Installed: 2.11.0
+      Latest:    2.12.1
+
+    Update available!
+    ? Do you want to update mcctl to 2.12.1? (Y/n) Y
+
+    Updating mcctl...
+    ✓ mcctl updated to 2.12.1
+    ```
+
+=== "모든 서비스 업데이트"
+    ```bash
+    mcctl update --all
+    ```
+
+    **출력:**
+    ```
+    mcctl update check:
+      Installed: 2.11.0
+      Latest:    2.12.1
+
+    ? Do you want to update mcctl to 2.12.1? (Y/n) Y
+
+    Updating mcctl...
+    ✓ mcctl updated to 2.12.1
+
+    Updating services...
+      ✓ @minecraft-docker/mcctl-api: 2.11.0 → 2.12.1 (restarted)
+      ✓ @minecraft-docker/mcctl-console: 2.11.0 → 2.12.1 (restarted)
+      ✓ @minecraft-docker/shared: 2.11.0 → 2.12.1
+
+    All services updated successfully.
+    ```
+
+=== "자동 확인 (CI/CD)"
+    ```bash
+    mcctl update --yes
+    ```
+
+**동작 상세:**
+
+- **업데이트 확인 캐시**: 버전 확인은 `~/.mcctl-update-check.json`에 24시간 동안 캐시됩니다. 일반 CLI 사용 중에는 백그라운드에서 비차단 업데이트 확인이 자동으로 실행됩니다.
+- **`--check` 종료 코드**: 업데이트가 가능하면 종료 코드 `1`, 최신 버전이면 `0`을 반환합니다. 스크립팅에 유용합니다.
+- **`--all` 플래그**: CLI 업데이트 후 설치된 서비스도 업데이트합니다:
+    - `mcctl-api` 및 `mcctl-console`: 최신 버전 설치 후 PM2 서비스 재시작
+    - `shared` 라이브러리: 최신 버전 설치 (재시작 불필요)
+
+!!! tip "스크립트에서 --check 활용"
+    `--check`를 스크립트에서 사용하여 조건부 업데이트를 실행할 수 있습니다:
+
+    ```bash
+    if ! mcctl update --check > /dev/null 2>&1; then
+      mcctl update --yes
+    fi
+    ```
+
+!!! note "update vs upgrade"
+    `mcctl update`는 npm에서 CLI 및 서비스 **패키지**를 업데이트합니다.
+    `mcctl upgrade`는 플랫폼 **설정 파일** 및 템플릿을 새 버전으로 마이그레이션합니다.
+
+---
+
 ## 서버 명령어
 
 ### mcctl create
