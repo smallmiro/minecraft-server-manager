@@ -60,3 +60,10 @@ pids/
 
 .venv/
 site/
+
+# DevContainer auth (secrets)
+.devcontainer/.claude-auth/
+.gh-config/
+
+# Claude Code plugins (bind mount for devcontainer)
+.claude-plugins/
