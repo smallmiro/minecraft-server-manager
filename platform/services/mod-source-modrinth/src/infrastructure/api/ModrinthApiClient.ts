@@ -135,6 +135,26 @@ export class ModrinthApiClient {
   }
 
   /**
+   * Get multiple projects by slugs or IDs (batch)
+   * @see https://docs.modrinth.com/#tag/projects/operation/getProjects
+   */
+  async getProjects(slugsOrIds: string[]): Promise<ModrinthProjectRaw[]> {
+    if (slugsOrIds.length === 0) return [];
+
+    const params = new URLSearchParams({
+      ids: JSON.stringify(slugsOrIds),
+    });
+
+    const response = await fetch(`${this.baseUrl}/projects?${params}`);
+
+    if (!response.ok) {
+      throw new Error(`Modrinth API error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json() as Promise<ModrinthProjectRaw[]>;
+  }
+
+  /**
    * Check if API is available
    */
   async isAvailable(): Promise<boolean> {

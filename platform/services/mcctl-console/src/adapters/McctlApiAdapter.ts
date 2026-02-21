@@ -39,6 +39,7 @@ import {
   AddModsResponse,
   RemoveModResponse,
   ModSearchResponse,
+  ModProjectsResponse,
   FileListResponse,
   FileContentResponse,
   FileWriteResponse,
@@ -478,6 +479,12 @@ export class McctlApiAdapter implements IMcctlApiClient {
   async searchMods(query: string, limit: number = 10, offset: number = 0): Promise<ModSearchResponse> {
     const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset) });
     return this.fetch<ModSearchResponse>(`/api/mods/search?${params}`);
+  }
+
+  async getModProjects(slugs: string[], source?: string): Promise<ModProjectsResponse> {
+    const params = new URLSearchParams({ slugs: slugs.join(',') });
+    if (source) params.set('source', source);
+    return this.fetch<ModProjectsResponse>(`/api/mods/projects?${params}`);
   }
 
   // ============================================================

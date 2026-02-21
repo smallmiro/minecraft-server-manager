@@ -95,6 +95,38 @@ export class ModrinthAdapter implements IModSourcePort {
   }
 
   /**
+   * Get multiple projects by slugs or IDs (batch)
+   */
+  async getProjects(slugsOrIds: string[]): Promise<Map<string, ModProject>> {
+    if (slugsOrIds.length === 0) return new Map();
+
+    const rawProjects = await this.apiClient.getProjects(slugsOrIds);
+
+    // Collect unique team IDs and fetch members in parallel
+    const uniqueTeamIds = [...new Set(rawProjects.map(p => p.team))];
+    const teamMembersMap = new Map<string, string>();
+
+    const teamResults = await Promise.all(
+      uniqueTeamIds.map(async (teamId) => {
+        const members = await this.apiClient.getTeamMembers(teamId);
+        return { teamId, author: this.mapper.extractAuthor(members) };
+      })
+    );
+
+    for (const { teamId, author } of teamResults) {
+      teamMembersMap.set(teamId, author);
+    }
+
+    const result = new Map<string, ModProject>();
+    for (const raw of rawProjects) {
+      const author = teamMembersMap.get(raw.team) ?? 'Unknown';
+      result.set(raw.slug, this.mapper.toProject(raw, author));
+    }
+
+    return result;
+  }
+
+  /**
    * Get versions for a project
    */
   async getVersions(slugOrId: string, options?: ModVersionOptions): Promise<ModVersion[]> {

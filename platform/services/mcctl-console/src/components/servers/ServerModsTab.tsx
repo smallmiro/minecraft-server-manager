@@ -8,7 +8,6 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
-import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -18,13 +17,17 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import Avatar from '@mui/material/Avatar';
 import InputAdornment from '@mui/material/InputAdornment';
+import Skeleton from '@mui/material/Skeleton';
+import Tooltip from '@mui/material/Tooltip';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import ExtensionIcon from '@mui/icons-material/Extension';
 import DownloadIcon from '@mui/icons-material/Download';
-import { useServerMods, useModSearch, useAddMod, useRemoveMod } from '@/hooks/useMods';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { useServerMods, useModSearch, useModProjects, useAddMod, useRemoveMod } from '@/hooks/useMods';
+import type { ModProjectDetail } from '@/ports/api/IMcctlApiClient';
 
 interface ServerModsTabProps {
   serverName: string;
@@ -40,6 +43,153 @@ function formatDownloads(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
+}
+
+function InstalledModCard({
+  slug,
+  detail,
+  isLoading,
+  onRemove,
+  isRemoving,
+}: {
+  slug: string;
+  detail: ModProjectDetail | null | undefined;
+  isLoading: boolean;
+  onRemove: (slug: string) => void;
+  isRemoving: boolean;
+}) {
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <Card variant="outlined" sx={{ borderRadius: 2 }}>
+        <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+            <Skeleton variant="rounded" width={40} height={40} />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Skeleton variant="text" width="40%" height={24} />
+              <Skeleton variant="text" width="80%" height={20} />
+              <Skeleton variant="text" width="30%" height={16} />
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Fallback card (API failed or project not found)
+  if (!detail) {
+    return (
+      <Card variant="outlined" sx={{ borderRadius: 2 }}>
+        <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+            <Avatar variant="rounded" sx={{ width: 40, height: 40, bgcolor: 'action.hover' }}>
+              <ExtensionIcon />
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="subtitle2" noWrap>
+                {slug}
+              </Typography>
+            </Box>
+            <Tooltip title="View on Modrinth">
+              <IconButton
+                size="small"
+                href={`https://modrinth.com/mod/${slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                component="a"
+              >
+                <OpenInNewIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Remove">
+              <IconButton
+                size="small"
+                onClick={() => onRemove(slug)}
+                disabled={isRemoving}
+                color="error"
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Full detail card
+  return (
+    <Card variant="outlined" sx={{ borderRadius: 2 }}>
+      <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+          <Avatar
+            src={detail.iconUrl || undefined}
+            variant="rounded"
+            sx={{ width: 40, height: 40, bgcolor: 'action.hover' }}
+          >
+            <ExtensionIcon />
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="subtitle2" noWrap>
+                {detail.title}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', ml: 1, flexShrink: 0 }}>
+                <Tooltip title="View on Modrinth">
+                  <IconButton
+                    size="small"
+                    href={detail.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    component="a"
+                  >
+                    <OpenInNewIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Remove">
+                  <IconButton
+                    size="small"
+                    onClick={() => onRemove(slug)}
+                    disabled={isRemoving}
+                    color="error"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                mt: 0.25,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+              }}
+            >
+              {detail.description}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                <DownloadIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                <Typography variant="caption" color="text.disabled">
+                  {formatDownloads(detail.downloads)}
+                </Typography>
+              </Box>
+              {detail.author && (
+                <Typography variant="caption" color="text.disabled">
+                  by {detail.author}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
 }
 
 export function ServerModsTab({ serverName }: ServerModsTabProps) {
@@ -60,6 +210,23 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
   const { data: searchData, isLoading: isSearching } = useModSearch(debouncedQuery, {
     limit: 10,
     enabled: searchOpen && debouncedQuery.length > 0,
+  });
+
+  // Collect all installed mod slugs for lookup and "already installed" check
+  const installedSlugs = new Set<string>();
+  if (modsData?.mods) {
+    for (const slugs of Object.values(modsData.mods)) {
+      for (const s of slugs) {
+        installedSlugs.add(s);
+      }
+    }
+  }
+
+  const allSlugs = Array.from(installedSlugs);
+
+  // Fetch detailed project info for installed mods
+  const { data: projectsData, isLoading: isProjectsLoading } = useModProjects(allSlugs, {
+    enabled: allSlugs.length > 0,
   });
 
   // Debounce search query
@@ -97,16 +264,6 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
       });
     }
   }, [addMod, serverName]);
-
-  // Collect all installed mod slugs for "already installed" check
-  const installedSlugs = new Set<string>();
-  if (modsData?.mods) {
-    for (const slugs of Object.values(modsData.mods)) {
-      for (const s of slugs) {
-        installedSlugs.add(s);
-      }
-    }
-  }
 
   // Loading state
   if (isLoading) {
@@ -175,15 +332,15 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, textTransform: 'capitalize' }}>
                   {source}
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {slugs.map((slug) => (
-                    <Chip
+                    <InstalledModCard
                       key={slug}
-                      label={slug}
-                      icon={<ExtensionIcon />}
-                      onDelete={() => handleRemoveMod(slug)}
-                      deleteIcon={<DeleteIcon />}
-                      variant="outlined"
+                      slug={slug}
+                      detail={projectsData?.projects?.[slug]}
+                      isLoading={isProjectsLoading}
+                      onRemove={handleRemoveMod}
+                      isRemoving={removeMod.isPending}
                     />
                   ))}
                 </Box>

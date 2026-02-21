@@ -5,6 +5,7 @@ import type {
   AddModsResponse,
   RemoveModResponse,
   ModSearchResponse,
+  ModProjectsResponse,
 } from '@/ports/api/IMcctlApiClient';
 
 // ============================================================
@@ -39,6 +40,27 @@ export function useModSearch(
     queryKey: ['mods', 'search', query, options?.limit, options?.offset],
     queryFn: () => apiFetch<ModSearchResponse>(`/api/mods/search?${params}`),
     enabled: options?.enabled !== false && !!query.trim(),
+  });
+}
+
+/**
+ * Hook to fetch project details for installed mods (batch)
+ */
+export function useModProjects(
+  slugs: string[],
+  options?: { source?: string; enabled?: boolean }
+) {
+  const slugsKey = slugs.slice().sort().join(',');
+  const params = new URLSearchParams();
+  if (slugsKey) params.set('slugs', slugsKey);
+  if (options?.source) params.set('source', options.source);
+
+  return useQuery<ModProjectsResponse, Error>({
+    queryKey: ['mods', 'projects', slugsKey, options?.source],
+    queryFn: () => apiFetch<ModProjectsResponse>(`/api/mods/projects?${params}`),
+    enabled: options?.enabled !== false && slugs.length > 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 }
 

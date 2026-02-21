@@ -373,6 +373,21 @@ export interface RemoveModResponse {
   removed: string;
 }
 
+export interface ModProjectDetail {
+  slug: string;
+  title: string;
+  description: string;
+  downloads: number;
+  iconUrl: string | null;
+  author: string;
+  categories: string[];
+  sourceUrl: string;
+}
+
+export interface ModProjectsResponse {
+  projects: Record<string, ModProjectDetail | null>;
+}
+
 export interface ModSearchHit {
   slug: string;
   title: string;
@@ -617,6 +632,7 @@ export interface IMcctlApiClient {
   addServerMods(serverName: string, slugs: string[], source?: string): Promise<AddModsResponse>;
   removeServerMod(serverName: string, slug: string): Promise<RemoveModResponse>;
   searchMods(query: string, limit?: number, offset?: number): Promise<ModSearchResponse>;
+  getModProjects(slugs: string[], source?: string): Promise<ModProjectsResponse>;
 
   // Playit.gg operations
   getPlayitStatus(): Promise<PlayitAgentStatus>;

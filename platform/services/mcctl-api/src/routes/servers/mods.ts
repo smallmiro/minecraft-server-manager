@@ -28,6 +28,10 @@ interface SearchModsRoute {
   Querystring: { q: string; limit?: number; offset?: number };
 }
 
+interface GetProjectsRoute {
+  Querystring: { slugs: string; source?: string };
+}
+
 // ============================================================
 // Plugin Definition
 // ============================================================
@@ -181,6 +185,88 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
       fastify.log.error(error, 'Failed to remove mod');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to remove mod' });
+    }
+  });
+
+  /**
+   * GET /api/mods/projects
+   * Get project details for multiple slugs (batch)
+   */
+  fastify.get<GetProjectsRoute>('/api/mods/projects', {
+    schema: {
+      description: 'Get project details for multiple mod slugs',
+      tags: ['mods'],
+      response: {
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<GetProjectsRoute>, reply: FastifyReply) => {
+    const { slugs: slugsParam, source: sourceName } = request.query;
+
+    try {
+      if (!slugsParam || !slugsParam.trim()) {
+        return reply.code(400).send({ error: 'BadRequest', message: 'Query parameter "slugs" is required' });
+      }
+
+      const slugs = slugsParam.split(',').map(s => s.trim()).filter(Boolean);
+      if (slugs.length === 0) {
+        return reply.code(400).send({ error: 'BadRequest', message: 'At least one slug is required' });
+      }
+
+      const source = ModSourceFactory.get(sourceName || 'modrinth');
+
+      // Use batch getProjects if available, otherwise fallback to individual getProject
+      const projects: Record<string, {
+        slug: string;
+        title: string;
+        description: string;
+        downloads: number;
+        iconUrl: string | null;
+        author: string;
+        categories: string[];
+        sourceUrl: string;
+      } | null> = {};
+
+      if (typeof source.getProjects === 'function') {
+        const projectMap = await source.getProjects(slugs);
+        for (const slug of slugs) {
+          const p = projectMap.get(slug);
+          projects[slug] = p ? {
+            slug: p.slug,
+            title: p.title,
+            description: p.description,
+            downloads: p.downloads,
+            iconUrl: p.iconUrl,
+            author: p.author,
+            categories: p.categories,
+            sourceUrl: `https://modrinth.com/mod/${p.slug}`,
+          } : null;
+        }
+      } else {
+        const results = await Promise.all(
+          slugs.map(async (slug) => {
+            const p = await source.getProject(slug);
+            return { slug, project: p };
+          })
+        );
+        for (const { slug, project: p } of results) {
+          projects[slug] = p ? {
+            slug: p.slug,
+            title: p.title,
+            description: p.description,
+            downloads: p.downloads,
+            iconUrl: p.iconUrl,
+            author: p.author,
+            categories: p.categories,
+            sourceUrl: `https://modrinth.com/mod/${p.slug}`,
+          } : null;
+        }
+      }
+
+      return reply.send({ projects });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to get mod projects');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get mod projects' });
     }
   });
 
