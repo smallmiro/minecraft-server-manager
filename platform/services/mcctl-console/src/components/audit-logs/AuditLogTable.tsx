@@ -37,6 +37,10 @@ export interface AuditLogTableProps {
   onFiltersChange: (filters: AuditLogQueryParams) => void;
   onRowClick?: (log: AuditLogEntry) => void;
   onRetry?: () => void;
+  /** Hide the Target column (useful when context already implies the target) */
+  hideTargetColumn?: boolean;
+  /** Override rows per page options (default: [25, 50, 100]) */
+  rowsPerPageOptions?: number[];
 }
 
 /**
@@ -106,9 +110,11 @@ function getTargetHref(targetType: string, targetName: string): string | null {
 function AuditLogRow({
   log,
   onClick,
+  hideTargetColumn,
 }: {
   log: AuditLogEntry;
   onClick?: (log: AuditLogEntry) => void;
+  hideTargetColumn?: boolean;
 }) {
   const [open, setOpen] = useState(log.status === 'failure');
   const hasDetails = log.details && Object.keys(log.details).length > 0;
@@ -182,30 +188,32 @@ function AuditLogRow({
         </TableCell>
 
         {/* Target */}
-        <TableCell>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {getTargetIcon(log.targetType)}
-            {targetHref ? (
-              <Link
-                href={targetHref}
-                style={{ textDecoration: 'none' }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: 'primary.main',
-                    '&:hover': { textDecoration: 'underline' },
-                  }}
+        {!hideTargetColumn && (
+          <TableCell>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {getTargetIcon(log.targetType)}
+              {targetHref ? (
+                <Link
+                  href={targetHref}
+                  style={{ textDecoration: 'none' }}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  {log.targetName}
-                </Typography>
-              </Link>
-            ) : (
-              <Typography variant="body2">{log.targetName}</Typography>
-            )}
-          </Box>
-        </TableCell>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'primary.main',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    {log.targetName}
+                  </Typography>
+                </Link>
+              ) : (
+                <Typography variant="body2">{log.targetName}</Typography>
+              )}
+            </Box>
+          </TableCell>
+        )}
 
         {/* Status */}
         <TableCell>
@@ -216,7 +224,7 @@ function AuditLogRow({
       {/* Expandable details row */}
       {isExpandable && (
         <TableRow>
-          <TableCell sx={{ py: 0 }} colSpan={6}>
+          <TableCell sx={{ py: 0 }} colSpan={hideTargetColumn ? 5 : 6}>
             <Collapse in={open} timeout="auto" unmountOnExit>
               <Box sx={{ py: 2, px: 2 }}>
                 {hasError && (
@@ -275,6 +283,8 @@ export function AuditLogTable({
   onFiltersChange,
   onRowClick,
   onRetry,
+  hideTargetColumn,
+  rowsPerPageOptions = [25, 50, 100],
 }: AuditLogTableProps) {
   const page = Math.floor((filters.offset || 0) / (filters.limit || 50));
   const rowsPerPage = filters.limit || 50;
@@ -307,7 +317,7 @@ export function AuditLogTable({
                 <TableCell>Timestamp</TableCell>
                 <TableCell>Action</TableCell>
                 <TableCell>Actor</TableCell>
-                <TableCell>Target</TableCell>
+                {!hideTargetColumn && <TableCell>Target</TableCell>}
                 <TableCell>Status</TableCell>
               </TableRow>
             </TableHead>
@@ -318,7 +328,7 @@ export function AuditLogTable({
                   <TableCell><Skeleton variant="text" width={80} /></TableCell>
                   <TableCell><Skeleton variant="rounded" width={70} height={24} /></TableCell>
                   <TableCell><Skeleton variant="text" width={60} /></TableCell>
-                  <TableCell><Skeleton variant="text" width={100} /></TableCell>
+                  {!hideTargetColumn && <TableCell><Skeleton variant="text" width={100} /></TableCell>}
                   <TableCell><Skeleton variant="rounded" width={50} height={24} /></TableCell>
                 </TableRow>
               ))}
@@ -379,13 +389,13 @@ export function AuditLogTable({
               <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Timestamp</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Action</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Actor</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Target</TableCell>
+              {!hideTargetColumn && <TableCell sx={{ fontWeight: 600 }}>Target</TableCell>}
               <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {logs.map((log) => (
-              <AuditLogRow key={log.id} log={log} onClick={onRowClick} />
+              <AuditLogRow key={log.id} log={log} onClick={onRowClick} hideTargetColumn={hideTargetColumn} />
             ))}
           </TableBody>
         </Table>
@@ -397,7 +407,7 @@ export function AuditLogTable({
         onPageChange={handlePageChange}
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleRowsPerPageChange}
-        rowsPerPageOptions={[25, 50, 100]}
+        rowsPerPageOptions={rowsPerPageOptions}
         aria-label="Audit log pagination"
       />
     </Paper>
