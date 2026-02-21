@@ -932,6 +932,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mcctl-업데이트-유지" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl 업데이트 유지
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mcctl 업데이트 유지">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#업데이트-확인" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        업데이트 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-업데이트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl 업데이트
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-및-모든-서비스-업데이트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI 및 모든 서비스 업데이트
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#다음-단계" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -992,6 +1042,17 @@
     <span class="md-ellipsis">
       
         백업
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#유지보수" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        유지보수
       
     </span>
   </a>
@@ -2569,6 +2630,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mcctl-업데이트-유지" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl 업데이트 유지
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mcctl 업데이트 유지">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#업데이트-확인" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        업데이트 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-업데이트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl 업데이트
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-및-모든-서비스-업데이트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI 및 모든 서비스 업데이트
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#다음-단계" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2629,6 +2740,17 @@
     <span class="md-ellipsis">
       
         백업
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#유지보수" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        유지보수
       
     </span>
   </a>
@@ -2889,6 +3011,28 @@
 <li><code>creative.192.168.1.100.nip.io:25565</code></li>
 <li><code>modded.192.168.1.100.nip.io:25565</code></li>
 </ul>
+<h2 id="mcctl-업데이트-유지">mcctl 업데이트 유지<a class="headerlink" href="#mcctl-업데이트-유지" title="Permanent link">&para;</a></h2>
+<p>mcctl은 npm에서 자기 자신과 설치된 모든 서비스를 업데이트할 수 있습니다.</p>
+<h3 id="업데이트-확인">업데이트 확인<a class="headerlink" href="#업데이트-확인" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check
+</code></pre></div>
+<h3 id="mcctl-업데이트">mcctl 업데이트<a class="headerlink" href="#mcctl-업데이트" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># 대화형 (확인 프롬프트 표시)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>mcctl<span class="w"> </span>update
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># 자동 확인 (CI/CD에 유용)</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--yes
+</code></pre></div>
+<h3 id="cli-및-모든-서비스-업데이트">CLI 및 모든 서비스 업데이트<a class="headerlink" href="#cli-및-모든-서비스-업데이트" title="Permanent link">&para;</a></h3>
+<p>mcctl과 함께 mcctl-api, mcctl-console, shared 라이브러리를 업데이트합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--all
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">자동 업데이트 확인</p>
+<p>mcctl은 24시간마다 백그라운드에서 자동으로 업데이트를 확인합니다.
+새 버전이 있으면 알림이 표시됩니다.</p>
+</div>
+<p>전체 update 명령어 레퍼런스는 <a href="../../cli/commands/#mcctl-update">mcctl update</a>를 참조하세요.</p>
 <h2 id="다음-단계">다음 단계<a class="headerlink" href="#다음-단계" title="Permanent link">&para;</a></h2>
 <div class="grid cards">
 <ul>
@@ -3073,19 +3217,46 @@
 </tr>
 </tbody>
 </table>
+<h3 id="유지보수">유지보수<a class="headerlink" href="#유지보수" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>작업</th>
+<th>명령어</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>업데이트 확인</td>
+<td><code>mcctl update --check</code></td>
+</tr>
+<tr>
+<td>mcctl 업데이트</td>
+<td><code>mcctl update</code></td>
+</tr>
+<tr>
+<td>모든 서비스 업데이트</td>
+<td><code>mcctl update --all</code></td>
+</tr>
+<tr>
+<td>자동 확인 업데이트</td>
+<td><code>mcctl update --yes</code></td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="문제-해결">문제 해결<a class="headerlink" href="#문제-해결" title="Permanent link">&para;</a></h2>
 <h3 id="서버가-시작되지-않음">서버가 시작되지 않음<a class="headerlink" href="#서버가-시작되지-않음" title="Permanent link">&para;</a></h3>
 <ol>
 <li>
 <p><strong>로그에서 오류 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>EULA 동의 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>EULA
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="c1"># EULA=TRUE 여야 함</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>EULA
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="c1"># EULA=TRUE 여야 함</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -3099,19 +3270,19 @@
 <ol>
 <li>
 <p><strong>mc-router 실행 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>status
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="c1"># mc-router가 &quot;running&quot;과 &quot;healthy&quot; 상태여야 함</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>mcctl<span class="w"> </span>status
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1"># mc-router가 &quot;running&quot;과 &quot;healthy&quot; 상태여야 함</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>서버 호스트명 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>&lt;server&gt;
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># 호스트명 확인 (예: myserver.192.168.1.100.nip.io)</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>&lt;server&gt;
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="c1"># 호스트명 확인 (예: myserver.192.168.1.100.nip.io)</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>서버 실행 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;server&gt;
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;server&gt;
 </code></pre></div></p>
 </li>
 </ol>
@@ -3119,19 +3290,19 @@
 <ol>
 <li>
 <p><strong>메모리 할당 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>MEMORY
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1"># 필요시 증가: mcctl config &lt;server&gt; MEMORY 6G</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>MEMORY
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="c1"># 필요시 증가: mcctl config &lt;server&gt; MEMORY 6G</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>모드 충돌 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error\|exception&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error\|exception&quot;</span>
 </code></pre></div></p>
 </li>
 </ol>
 <h3 id="권한-거부-오류">권한 거부 오류<a class="headerlink" href="#권한-거부-오류" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># 파일 소유권 수정 (필요시)</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span><span class="nv">$USER</span>:<span class="nv">$USER</span><span class="w"> </span>~/minecraft-servers/
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># 파일 소유권 수정 (필요시)</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span><span class="nv">$USER</span>:<span class="nv">$USER</span><span class="w"> </span>~/minecraft-servers/
 </code></pre></div>
 <p>더 자세한 문제 해결은 <a href="https://docker-minecraft-server.readthedocs.io/">itzg/minecraft-server 문서</a>를 참조하세요.</p>
 

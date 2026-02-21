@@ -932,6 +932,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keeping-mcctl-updated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping mcctl Updated
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keeping mcctl Updated">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-for-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check for Updates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-mcctl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update mcctl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-cli-and-all-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update CLI and All Services
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-next" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -992,6 +1042,17 @@
     <span class="md-ellipsis">
       
         Backup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maintenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
       
     </span>
   </a>
@@ -2569,6 +2630,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keeping-mcctl-updated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping mcctl Updated
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keeping mcctl Updated">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-for-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check for Updates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-mcctl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update mcctl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-cli-and-all-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update CLI and All Services
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-next" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2629,6 +2740,17 @@
     <span class="md-ellipsis">
       
         Backup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maintenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Maintenance
       
     </span>
   </a>
@@ -2889,6 +3011,28 @@ Subsequent starts are much faster.</p>
 <li><code>creative.192.168.1.100.nip.io:25565</code></li>
 <li><code>modded.192.168.1.100.nip.io:25565</code></li>
 </ul>
+<h2 id="keeping-mcctl-updated">Keeping mcctl Updated<a class="headerlink" href="#keeping-mcctl-updated" title="Permanent link">&para;</a></h2>
+<p>mcctl can update itself and all installed services from npm.</p>
+<h3 id="check-for-updates">Check for Updates<a class="headerlink" href="#check-for-updates" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check
+</code></pre></div>
+<h3 id="update-mcctl">Update mcctl<a class="headerlink" href="#update-mcctl" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Interactive (prompts for confirmation)</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>mcctl<span class="w"> </span>update
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Auto-confirm (useful for CI/CD)</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--yes
+</code></pre></div>
+<h3 id="update-cli-and-all-services">Update CLI and All Services<a class="headerlink" href="#update-cli-and-all-services" title="Permanent link">&para;</a></h3>
+<p>Update mcctl along with mcctl-api, mcctl-console, and shared library:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--all
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Automatic Update Checks</p>
+<p>mcctl automatically checks for updates in the background every 24 hours.
+You will see a notification when a new version is available.</p>
+</div>
+<p>For the full update command reference, see <a href="../../cli/commands/#mcctl-update">mcctl update</a>.</p>
 <h2 id="whats-next">What's Next?<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <div class="grid cards">
 <ul>
@@ -3073,19 +3217,46 @@ Subsequent starts are much faster.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="maintenance">Maintenance<a class="headerlink" href="#maintenance" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Check for updates</td>
+<td><code>mcctl update --check</code></td>
+</tr>
+<tr>
+<td>Update mcctl</td>
+<td><code>mcctl update</code></td>
+</tr>
+<tr>
+<td>Update all services</td>
+<td><code>mcctl update --all</code></td>
+</tr>
+<tr>
+<td>Auto-confirm update</td>
+<td><code>mcctl update --yes</code></td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="server-wont-start">Server Won't Start<a class="headerlink" href="#server-wont-start" title="Permanent link">&para;</a></h3>
 <ol>
 <li>
 <p><strong>Check logs for errors:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Verify EULA is accepted:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>EULA
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="c1"># Should show: EULA=TRUE</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>EULA
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="c1"># Should show: EULA=TRUE</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -3099,19 +3270,19 @@ Subsequent starts are much faster.</p>
 <ol>
 <li>
 <p><strong>Verify mc-router is running:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>status
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="c1"># mc-router should show &quot;running&quot; and &quot;healthy&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>mcctl<span class="w"> </span>status
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1"># mc-router should show &quot;running&quot; and &quot;healthy&quot;</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Check server hostname:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>&lt;server&gt;
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># Note the hostname (e.g., myserver.192.168.1.100.nip.io)</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>status<span class="w"> </span>&lt;server&gt;
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="c1"># Note the hostname (e.g., myserver.192.168.1.100.nip.io)</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Ensure server is running:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;server&gt;
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>mcctl<span class="w"> </span>start<span class="w"> </span>&lt;server&gt;
 </code></pre></div></p>
 </li>
 </ol>
@@ -3119,19 +3290,19 @@ Subsequent starts are much faster.</p>
 <ol>
 <li>
 <p><strong>Check memory allocation:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>MEMORY
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="c1"># Increase if needed: mcctl config &lt;server&gt; MEMORY 6G</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>MEMORY
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="c1"># Increase if needed: mcctl config &lt;server&gt; MEMORY 6G</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Check for mod conflicts:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error\|exception&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;error\|exception&quot;</span>
 </code></pre></div></p>
 </li>
 </ol>
 <h3 id="permission-denied-errors">Permission Denied Errors<a class="headerlink" href="#permission-denied-errors" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Fix file ownership (if needed)</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span><span class="nv">$USER</span>:<span class="nv">$USER</span><span class="w"> </span>~/minecraft-servers/
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Fix file ownership (if needed)</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span><span class="nv">$USER</span>:<span class="nv">$USER</span><span class="w"> </span>~/minecraft-servers/
 </code></pre></div>
 <p>For more detailed troubleshooting, see the <a href="https://docker-minecraft-server.readthedocs.io/">itzg/minecraft-server documentation</a>.</p>
 
