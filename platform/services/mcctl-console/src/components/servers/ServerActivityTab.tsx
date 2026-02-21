@@ -1,133 +1,121 @@
 'use client';
 
+import { useState } from 'react';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
 import Button from '@mui/material/Button';
-import Skeleton from '@mui/material/Skeleton';
-import Alert from '@mui/material/Alert';
-import Tooltip from '@mui/material/Tooltip';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Link from 'next/link';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { AuditLogActionChip } from '@/components/audit-logs/AuditLogActionChip';
-import { AuditLogStatusChip } from '@/components/audit-logs/AuditLogStatusChip';
+import { AuditLogTable } from '@/components/audit-logs/AuditLogTable';
 import { useServerAuditLogs } from '@/hooks/useAuditLogs';
+import type { AuditLogQueryParams } from '@/types/audit-log';
+import { SERVER_ACTIONS, AUDIT_ACTION_LABELS } from '@/types/audit-log';
 
 export interface ServerActivityTabProps {
   serverName: string;
 }
 
 /**
- * Format relative time
- */
-function formatRelativeTime(timestamp: string): string {
-  const now = new Date();
-  const time = new Date(timestamp);
-  const diffMs = now.getTime() - time.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMinutes < 1) return 'just now';
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return `${diffDays}d ago`;
-}
-
-/**
- * Format absolute time for tooltip
- */
-function formatAbsoluteTime(timestamp: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'short',
-  }).format(new Date(timestamp));
-}
-
-/**
  * Server Activity Tab component
- * Shows recent audit logs for a specific server
+ * Shows audit logs for a specific server in a table format
+ * matching the main Audit Logs page UI
  */
 export function ServerActivityTab({ serverName }: ServerActivityTabProps) {
-  const { data, isLoading, error } = useServerAuditLogs(serverName, { limit: 20 });
+  const [filters, setFilters] = useState<AuditLogQueryParams>({
+    limit: 25,
+    offset: 0,
+  });
 
-  if (isLoading) {
-    return (
-      <Box>
-        {[...Array(5)].map((_, i) => (
-          <Box key={i} sx={{ display: 'flex', gap: 2, py: 1.5 }}>
-            <Skeleton variant="rounded" width={60} height={24} />
-            <Skeleton variant="text" width="60%" />
-            <Skeleton variant="text" width={50} />
-          </Box>
-        ))}
-      </Box>
-    );
-  }
+  const { data, isLoading, error, refetch } = useServerAuditLogs(serverName, {
+    limit: filters.limit,
+    extraParams: {
+      offset: filters.offset,
+      action: filters.action,
+      status: filters.status,
+    },
+  });
 
-  if (error) {
-    return (
-      <Alert severity="error">
-        Failed to load activity: {error.message}
-      </Alert>
-    );
-  }
+  const handleFiltersChange = (newFilters: AuditLogQueryParams) => {
+    setFilters(newFilters);
+  };
 
-  const logs = data?.logs ?? [];
+  const handleActionChange = (value: string | undefined) => {
+    setFilters((prev) => ({
+      ...prev,
+      action: value || undefined,
+      offset: 0,
+    }));
+  };
 
-  if (logs.length === 0) {
-    return (
-      <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-        No activity recorded for this server yet.
-      </Typography>
-    );
-  }
+  const handleStatusChange = (_: unknown, value: string | null) => {
+    setFilters((prev) => ({
+      ...prev,
+      status: value || undefined,
+      offset: 0,
+    }));
+  };
 
   const viewAllHref = `/audit-logs?targetType=server&targetName=${encodeURIComponent(serverName)}`;
 
   return (
     <Box>
-      <List sx={{ py: 0 }}>
-        {logs.map((log) => (
-          <ListItem
-            key={log.id}
-            sx={{
-              px: 0,
-              py: 1.5,
-              '&:not(:last-child)': {
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-              },
-            }}
+      {/* Inline filters */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: 2,
+          mb: 2,
+          alignItems: { sm: 'center' },
+        }}
+      >
+        {/* Action filter */}
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>Action</InputLabel>
+          <Select
+            value={filters.action || ''}
+            label="Action"
+            onChange={(e) => handleActionChange(e.target.value || undefined)}
           >
-            <ListItemText
-              primary={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AuditLogActionChip action={log.action} size="small" />
-                  <Typography variant="body2" color="text.secondary">
-                    by {log.actor.replace('api:', '').replace('cli:', '')}
-                  </Typography>
-                  <AuditLogStatusChip status={log.status} size="small" />
-                </Box>
-              }
-              secondary={
-                <Tooltip title={formatAbsoluteTime(log.timestamp)} arrow>
-                  <Typography variant="caption" component="span" color="text.disabled">
-                    {formatRelativeTime(log.timestamp)}
-                  </Typography>
-                </Tooltip>
-              }
-            />
-          </ListItem>
-        ))}
-      </List>
+            <MenuItem value="">All Actions</MenuItem>
+            {SERVER_ACTIONS.map((action) => (
+              <MenuItem key={action} value={action}>
+                {AUDIT_ACTION_LABELS[action] || action}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Status filter */}
+        <ToggleButtonGroup
+          value={filters.status || ''}
+          exclusive
+          onChange={handleStatusChange}
+          size="small"
+        >
+          <ToggleButton value="" aria-label="All statuses">All</ToggleButton>
+          <ToggleButton value="success" aria-label="Success only">Success</ToggleButton>
+          <ToggleButton value="failure" aria-label="Failure only">Failure</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
+      {/* Audit log table (reused from audit-logs page, hiding Target column) */}
+      <AuditLogTable
+        logs={data?.logs ?? []}
+        total={data?.total ?? 0}
+        isLoading={isLoading}
+        error={error}
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onRetry={() => refetch()}
+        hideTargetColumn
+        rowsPerPageOptions={[25, 50]}
+      />
 
       {/* View full history link */}
       <Box sx={{ mt: 2, textAlign: 'center' }}>
