@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.0] - 2026-02-21
+
+### Added
+- **Console Mod Detail Cards** - Enhanced installed mods display with rich card UI in Server Detail Mods tab
+  - Replace simple slug Chip display with card UI showing mod icon, title, description, download count, author, and Modrinth link
+  - Batch API endpoint using Modrinth `GET /v2/projects?ids=[]` for efficient metadata retrieval
+  - 3-state rendering: Skeleton (loading), Detail Card (full info), Fallback Card (slug only on API failure)
+  - React Query caching with staleTime 5min, gcTime 30min for mod metadata
+  - BFF proxy route for mod projects API
+
+### Changed
+- **Modrinth Adapter** - Add `getProjects()` batch method with parallel team member resolution
+- **IModSourcePort** - Add optional `getProjects?()` method to mod source port interface
+
 ## [2.13.0] - 2026-02-21
 
 ### Added

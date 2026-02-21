@@ -919,6 +919,19 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.14.0] - 2026-02-21
+
+**Added:**
+- **Console Mod Detail Cards** - Enhanced installed mods display with rich card UI
+  - Card UI with mod icon, title, description, download count, author, Modrinth link
+  - Batch API using Modrinth `GET /v2/projects?ids=[]` for efficient metadata retrieval
+  - 3-state rendering: Skeleton (loading), Detail Card (full info), Fallback Card (slug only)
+
+### [2.13.0] - 2026-02-21
+
+**Added:**
+- **Console Server Activity Tab Redesign** - Improve Server Activity tab to match Audit Logs page UI (#391, #392)
+
 ### [2.12.1] - 2026-02-20
 
 **Added:**
@@ -939,24 +952,6 @@ cat /etc/avahi/hosts
 
 **Changed:**
 - **Console server.properties Editor Redesign** - Replace `ServerPropertiesDialog` (modal) with `ServerPropertiesView` (inline view) + `RawPropertiesEditor` for FORM/RAW toggle editing
-
-### [2.10.0] - 2026-02-19
-
-**Added:**
-- **Console File Upload/Download** - Streaming file transfers with drag-and-drop support (#379, #386)
-- **Console File Operations** - Delete, rename, and new folder actions (#380, #385)
-
-### [2.9.0] - 2026-02-18
-
-**Added:**
-- **Console Server Files Management** - Complete 4-phase implementation for server file management
-  - Phase 1: File Browser with directory navigation and file listing (#375, #381)
-  - Phase 2: Text Editor for reading/writing server config files (#376, #382)
-  - Phase 3: Player Editor smart routing for whitelist/ops/bans (#377, #383)
-  - Phase 4: server.properties Form Editor with visual form-based editing (#378, #384)
-
-**Changed:**
-- **Console Font Cleanup** - Remove Roboto Mono font, use MUI default (#373, #374)
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

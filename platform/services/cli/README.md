@@ -77,6 +77,13 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.14.0 (2026-02-21)
+- **feat(console)**: Enhanced installed mods display with rich card UI and batch API
+  - Replace slug Chips with card UI showing icon, title, description, downloads, author, Modrinth link
+  - Batch API using Modrinth `GET /v2/projects?ids=[]` for efficient metadata retrieval
+  - 3-state rendering: Skeleton / Detail Card / Fallback Card
+  - React Query caching (staleTime 5min, gcTime 30min)
+
 ### v2.13.0 (2026-02-21)
 - **feat(console)**: Improve Server Activity tab to match Audit Logs page UI (#391, #392)
   - Convert to reusable `AuditLogTable` with Action/Status inline filters and pagination (25/50)
@@ -97,14 +104,6 @@ mcctl logs myserver
 ### v2.10.0 (2026-02-19)
 - **feat(console)**: Phase 5 - File Upload/Download with streaming proxy, drag-and-drop (#379, #386)
 - **feat(console)**: Phase 6 - File Operations: delete, rename, new folder dialogs (#380, #385)
-
-### v2.9.0 (2026-02-18)
-- **feat(console)**: Server Files Management - complete 4-phase implementation
-  - Phase 1: File Browser with directory navigation and file listing (#375, #381)
-  - Phase 2: Text Editor for reading/writing server config files (#376, #382)
-  - Phase 3: Player Editor smart routing for whitelist/ops/bans (#377, #383)
-  - Phase 4: server.properties Form Editor with visual form-based editing (#378, #384)
-- **refactor(console)**: Remove Roboto Mono font, use MUI default (#373, #374)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
