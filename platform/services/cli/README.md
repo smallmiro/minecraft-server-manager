@@ -77,6 +77,12 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.13.0 (2026-02-21)
+- **feat(console)**: Improve Server Activity tab to match Audit Logs page UI (#391, #392)
+  - Convert to reusable `AuditLogTable` with Action/Status inline filters and pagination (25/50)
+  - Add `hideTargetColumn` and `rowsPerPageOptions` props for reusability
+- **docs**: Add mcctl update command documentation
+
 ### v2.12.1 (2026-02-20)
 - **docs**: Add server management guide (EN/KO) for start/stop operations
 - **docs**: Remove obsolete v1.6.8~v1.6.11 World Storage Bug warning
@@ -99,9 +105,6 @@ mcctl logs myserver
   - Phase 3: Player Editor smart routing for whitelist/ops/bans (#377, #383)
   - Phase 4: server.properties Form Editor with visual form-based editing (#378, #384)
 - **refactor(console)**: Remove Roboto Mono font, use MUI default (#373, #374)
-
-### v2.8.1 (2026-02-18)
-- **refactor(console)**: Improve responsive design across 14 components for mobile/tablet/desktop (#371, #372)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

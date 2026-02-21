@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.13.0] - 2026-02-21
+
+### Added
+- **Console Server Activity Tab Redesign** - Improve Server Activity tab to match Audit Logs page UI (#391, #392)
+  - Convert Server Activity tab from simple List to reusable `AuditLogTable` component
+  - Add Action/Status inline filters for activity filtering
+  - Add pagination support with configurable rows per page (25/50)
+  - Add `hideTargetColumn` and `rowsPerPageOptions` props to `AuditLogTable` for reusability
+
+### Documentation
+- **mcctl update Command** - Add documentation for `mcctl update` command usage
+
 ## [2.12.1] - 2026-02-20
 
 ### Added
