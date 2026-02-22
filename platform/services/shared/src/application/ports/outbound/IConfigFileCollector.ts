@@ -15,4 +15,14 @@ export interface IConfigFileCollector {
    * Read the content of a specific config file
    */
   readFileContent(serverName: string, filePath: string): Promise<string>;
+
+  /**
+   * Write content to a specific config file in the server directory
+   * Creates parent directories if they don't exist
+   */
+  writeFileContent(
+    serverName: string,
+    filePath: string,
+    content: string
+  ): Promise<void>;
 }
