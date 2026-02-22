@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.2] - 2026-02-22
+
+### Changed
+- **Web Console Documentation** - Added server Overview/Mods tab screenshots with detailed descriptions (#409)
+  - Server Overview tab screenshot and feature walkthrough
+  - Server Mods tab screenshot with mod management UI description
+- **Integrated Setup Guide** - New comprehensive guide for mcctl init to console init flow (#410)
+  - Step-by-step installation guide covering mcctl CLI setup through console initialization
+  - Bilingual documentation (English/Korean)
+
 ## [2.15.1] - 2026-02-22
 
 ### Changed
