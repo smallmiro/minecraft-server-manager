@@ -24,3 +24,8 @@ export { SqliteConfigSnapshotRepository } from './SqliteConfigSnapshotRepository
 export { SqliteConfigSnapshotScheduleRepository } from './SqliteConfigSnapshotScheduleRepository.js';
 export { FileSystemConfigSnapshotStorage } from './FileSystemConfigSnapshotStorage.js';
 export { FileSystemConfigFileCollector } from './FileSystemConfigFileCollector.js';
+export {
+  ConfigSnapshotSchedulerService,
+  type CronJobInfo,
+  type ISchedulerLogger,
+} from './ConfigSnapshotSchedulerService.js';
