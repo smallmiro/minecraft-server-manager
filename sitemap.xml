@@ -162,6 +162,13 @@
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/console/installation/"/>
     </url>
     <url>
+        <loc>https://minecraft-server-manager.readthedocs.io/console/setup-guide/</loc>
+        <lastmod>2026-02-22</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/console/setup-guide/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/console/setup-guide/"/>
+    </url>
+    <url>
         <loc>https://minecraft-server-manager.readthedocs.io/console/web-console/</loc>
         <lastmod>2026-02-22</lastmod>
         <changefreq>daily</changefreq>
@@ -559,6 +566,13 @@
         <changefreq>daily</changefreq>
         <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/console/installation/"/>
         <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/console/installation/"/>
+    </url>
+    <url>
+        <loc>https://minecraft-server-manager.readthedocs.io/ko/console/setup-guide/</loc>
+        <lastmod>2026-02-22</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://minecraft-server-manager.readthedocs.io/ko/console/setup-guide/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://minecraft-server-manager.readthedocs.io/console/setup-guide/"/>
     </url>
     <url>
         <loc>https://minecraft-server-manager.readthedocs.io/ko/console/web-console/</loc>

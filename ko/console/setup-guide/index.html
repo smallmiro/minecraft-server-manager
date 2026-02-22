@@ -1,0 +1,4046 @@
+
+<!doctype html>
+<html lang="ko" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/ko/console/setup-guide/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../installation/">
+      
+      
+        
+          <link rel="alternate" href="../../../console/setup-guide/" hreflang="en">
+        
+          <link rel="alternate" href="./" hreflang="ko">
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+    
+    
+      
+        <title>Setup Guide - Minecraft Docker Server Manager</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#통합-설치-가이드-init에서-console까지" class="md-skip">
+          콘텐츠로 이동
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="상단/헤더">
+    <a href="../../" title="Minecraft Docker Server Manager" class="md-header__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Minecraft Docker Server Manager
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Setup Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="언어설정">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="../../../console/setup-guide/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="ko" class="md-select__link">
+              한국어
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="검색" placeholder="검색" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="검색">
+        
+        <button type="reset" class="md-search__icon md-icon" title="지우기" aria-label="지우기" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            검색 초기화
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/smallmiro/minecraft-server-manager" title="저장소로 이동" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    smallmiro/minecraft-server-manager
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="탭" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../usage/server-management/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Usage Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  CLI Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  REST API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../mods-and-plugins/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Mods & Plugins
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Management Console
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../advanced/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../troubleshooting/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../development/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962" class="md-tabs__link">
+        
+  
+  
+    
+  
+  AI Assistant
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="네비게이션" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../" title="Minecraft Docker Server Manager" class="md-nav__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Minecraft Docker Server Manager
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/smallmiro/minecraft-server-manager" title="저장소로 이동" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    smallmiro/minecraft-server-manager
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Usage Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/server-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Start & Stop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../cli/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../configuration/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../mods-and-plugins/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mods & Plugins
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Mods & Plugins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mods-and-plugins/modrinth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modrinth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mods-and-plugins/curseforge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CurseForge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mods-and-plugins/spiget/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spiget (SpigotMC)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mods-and-plugins/direct-download/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Direct Download
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mods-and-plugins/modpacks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modpacks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Management Console
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Management Console
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#전체-흐름-개요" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        전체 흐름 개요
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#사전-요구-사항" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        사전 요구 사항
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1단계-플랫폼-초기화-mcctl-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1단계: 플랫폼 초기화 (mcctl init)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1단계: 플랫폼 초기화 (mcctl init)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#명령-실행" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        명령 실행
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-1-사전-요구-사항-확인" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: 사전 요구 사항 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-디렉토리-구조-생성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: 디렉토리 구조 생성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-템플릿-파일-복사" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: 템플릿 파일 복사
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-호스트-ip-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: 호스트 IP 설정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-45-playitgg-설정-선택-사항" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4.5: playit.gg 설정 (선택 사항)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-구성-파일-생성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: 구성 파일 생성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-docker-네트워크-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Docker 네트워크 설정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#초기화-완료" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        초기화 완료
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2단계-콘솔-초기화-mcctl-console-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2단계: 콘솔 초기화 (mcctl console init)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2단계: 콘솔 초기화 (mcctl console init)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#명령-실행_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        명령 실행
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-1-사전-요구-사항-확인_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: 사전 요구 사항 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-서비스-선택" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: 서비스 선택
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-관리자-계정-설정-console-선택-시에만" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: 관리자 계정 설정 (Console 선택 시에만)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-api-접근-모드-선택" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: API 접근 모드 선택
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-api-키-생성-조건부" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: API 키 생성 (조건부)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-ip-화이트리스트-설정-조건부" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: IP 화이트리스트 설정 (조건부)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-서비스-패키지-설치" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: 서비스 패키지 설치
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-8-pm2-ecosystem-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: PM2 Ecosystem 설정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-9-구성-저장" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 9: 구성 저장
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#콘솔-초기화-완료" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        콘솔 초기화 완료
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3단계-서비스-시작-mcctl-console-service-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3단계: 서비스 시작 (mcctl console service start)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3단계: 서비스 시작 (mcctl console service start)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#서비스-시작" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서비스 시작
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#상태-확인" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        상태 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-상태-확인" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API 상태 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#웹-콘솔-접속" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        웹 콘솔 접속
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#전체-설치-예시" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        전체 설치 예시
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#구성-파일-참조" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        구성 파일 참조
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#부팅-시-자동-시작-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        부팅 시 자동 시작 설정
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#커스텀-포트-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        커스텀 포트 설정
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#재초기화" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        재초기화
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="재초기화">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#플랫폼-설정-재구성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        플랫폼 설정 재구성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#콘솔-재초기화" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        콘솔 재초기화
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#문제-해결" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        문제 해결
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="문제 해결">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#플랫폼-초기화-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        플랫폼 초기화 문제
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="플랫폼 초기화 문제">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-init이-이미-초기화됨으로-표시" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl init이 "이미 초기화됨"으로 표시
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-네트워크-생성-실패" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker 네트워크 생성 실패
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#콘솔-초기화-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        콘솔 초기화 문제
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="콘솔 초기화 문제">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#platform-not-initialized-오류" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Platform not initialized" 오류
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pm2-미설치" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PM2 미설치
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#패키지-설치-실패" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        패키지 설치 실패
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#서비스-시작-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서비스 시작 문제
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="서비스 시작 문제">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ecosystem-설정-파일-없음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ecosystem 설정 파일 없음
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#포트-사용-중" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        포트 사용 중
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#서비스가-계속-재시작됨" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서비스가 계속 재시작됨
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#로그인-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        로그인 문제
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="로그인 문제">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#웹-콘솔에-로그인할-수-없음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        웹 콘솔에 로그인할 수 없음
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#다음-단계" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        다음 단계
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web Console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../audit-log-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logs (API)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../audit-log-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logs (UI)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../advanced/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/external-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    External Access (playit.gg)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../development/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_11" id="__nav_11_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/cli-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/agent-collaboration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Collaboration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#전체-흐름-개요" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        전체 흐름 개요
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#사전-요구-사항" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        사전 요구 사항
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1단계-플랫폼-초기화-mcctl-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1단계: 플랫폼 초기화 (mcctl init)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1단계: 플랫폼 초기화 (mcctl init)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#명령-실행" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        명령 실행
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-1-사전-요구-사항-확인" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: 사전 요구 사항 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-디렉토리-구조-생성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: 디렉토리 구조 생성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-템플릿-파일-복사" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: 템플릿 파일 복사
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-호스트-ip-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: 호스트 IP 설정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-45-playitgg-설정-선택-사항" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4.5: playit.gg 설정 (선택 사항)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-구성-파일-생성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: 구성 파일 생성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-docker-네트워크-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Docker 네트워크 설정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#초기화-완료" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        초기화 완료
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2단계-콘솔-초기화-mcctl-console-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2단계: 콘솔 초기화 (mcctl console init)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2단계: 콘솔 초기화 (mcctl console init)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#명령-실행_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        명령 실행
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-1-사전-요구-사항-확인_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: 사전 요구 사항 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-서비스-선택" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: 서비스 선택
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-관리자-계정-설정-console-선택-시에만" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: 관리자 계정 설정 (Console 선택 시에만)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-api-접근-모드-선택" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: API 접근 모드 선택
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-api-키-생성-조건부" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: API 키 생성 (조건부)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-ip-화이트리스트-설정-조건부" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: IP 화이트리스트 설정 (조건부)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-서비스-패키지-설치" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: 서비스 패키지 설치
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-8-pm2-ecosystem-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: PM2 Ecosystem 설정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-9-구성-저장" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 9: 구성 저장
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#콘솔-초기화-완료" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        콘솔 초기화 완료
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3단계-서비스-시작-mcctl-console-service-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3단계: 서비스 시작 (mcctl console service start)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3단계: 서비스 시작 (mcctl console service start)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#서비스-시작" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서비스 시작
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#상태-확인" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        상태 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-상태-확인" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API 상태 확인
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#웹-콘솔-접속" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        웹 콘솔 접속
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#전체-설치-예시" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        전체 설치 예시
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#구성-파일-참조" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        구성 파일 참조
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#부팅-시-자동-시작-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        부팅 시 자동 시작 설정
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#커스텀-포트-설정" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        커스텀 포트 설정
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#재초기화" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        재초기화
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="재초기화">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#플랫폼-설정-재구성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        플랫폼 설정 재구성
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#콘솔-재초기화" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        콘솔 재초기화
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#문제-해결" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        문제 해결
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="문제 해결">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#플랫폼-초기화-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        플랫폼 초기화 문제
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="플랫폼 초기화 문제">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-init이-이미-초기화됨으로-표시" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl init이 "이미 초기화됨"으로 표시
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-네트워크-생성-실패" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker 네트워크 생성 실패
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#콘솔-초기화-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        콘솔 초기화 문제
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="콘솔 초기화 문제">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#platform-not-initialized-오류" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Platform not initialized" 오류
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pm2-미설치" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PM2 미설치
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#패키지-설치-실패" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        패키지 설치 실패
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#서비스-시작-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서비스 시작 문제
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="서비스 시작 문제">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ecosystem-설정-파일-없음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ecosystem 설정 파일 없음
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#포트-사용-중" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        포트 사용 중
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#서비스가-계속-재시작됨" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        서비스가 계속 재시작됨
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#로그인-문제" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        로그인 문제
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="로그인 문제">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#웹-콘솔에-로그인할-수-없음" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        웹 콘솔에 로그인할 수 없음
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#다음-단계" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        다음 단계
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="통합-설치-가이드-init에서-console까지">통합 설치 가이드: Init에서 Console까지<a class="headerlink" href="#통합-설치-가이드-init에서-console까지" title="Permanent link">&para;</a></h1>
+<p>이 가이드에서는 mcctl 플랫폼 초기화부터 웹 기반 관리 콘솔 실행까지 <strong>원스톱 설치 과정</strong> 전체를 안내합니다. 이 가이드를 따라하면 CLI와 웹 기반 관리 기능을 모두 갖춘 마인크래프트 서버 관리 플랫폼이 완성됩니다.</p>
+<h2 id="전체-흐름-개요">전체 흐름 개요<a class="headerlink" href="#전체-흐름-개요" title="Permanent link">&para;</a></h2>
+<p>설치 과정은 세 가지 주요 단계로 구성됩니다:</p>
+<pre class="mermaid"><code>flowchart LR
+    A["mcctl init"] --&gt; B["mcctl console init"]
+    B --&gt; C["mcctl console service start"]
+
+    A --- A1["플랫폼 설정"]
+    B --- B1["API + Console 설정"]
+    C --- C1["서비스 시작"]</code></pre>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>명령어</th>
+<th>수행 내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. 플랫폼 초기화</strong></td>
+<td><code>mcctl init</code></td>
+<td>디렉토리 구조 생성, Docker 네트워크 설정, 호스트 IP 구성</td>
+</tr>
+<tr>
+<td><strong>2. 콘솔 초기화</strong></td>
+<td><code>mcctl console init</code></td>
+<td>API/Console 서비스 설치, 관리자 계정 생성, 인증 설정</td>
+</tr>
+<tr>
+<td><strong>3. 서비스 시작</strong></td>
+<td><code>mcctl console service start</code></td>
+<td>PM2로 관리되는 API 및 Console 프로세스 시작</td>
+</tr>
+</tbody>
+</table>
+<h2 id="사전-요구-사항">사전 요구 사항<a class="headerlink" href="#사전-요구-사항" title="Permanent link">&para;</a></h2>
+<p>시작하기 전에 다음이 설치되어 있는지 확인하세요:</p>
+<ul>
+<li>
+<p>[x] <strong>Node.js 18 이상</strong>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>node<span class="w"> </span>--version<span class="w">  </span><span class="c1"># v18.0.0 이상이어야 합니다</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>[x] <strong>Docker Engine 24.0.0 이상</strong>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>--version
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>version<span class="w">  </span><span class="c1"># v2.20.0 이상 필요</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>[x] <strong>mcctl CLI 전역 설치</strong>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>--version
+</code></pre></div></p>
+</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">처음 설치하시나요?</p>
+<p>아직 mcctl을 설치하지 않았다면 <a href="../../getting-started/installation/">설치 가이드</a>에서 Node.js, Docker, mcctl 설치 방법을 확인하세요.</p>
+</div>
+<h2 id="1단계-플랫폼-초기화-mcctl-init">1단계: 플랫폼 초기화 (<code>mcctl init</code>)<a class="headerlink" href="#1단계-플랫폼-초기화-mcctl-init" title="Permanent link">&para;</a></h2>
+<p><code>mcctl init</code> 명령은 마인크래프트 서버 운영을 위한 기본 플랫폼을 설정합니다.</p>
+<h3 id="명령-실행">명령 실행<a class="headerlink" href="#명령-실행" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mcctl<span class="w"> </span>init
+</code></pre></div>
+<p>초기화 과정은 6개 단계로 진행됩니다:</p>
+<h3 id="step-1-사전-요구-사항-확인">Step 1: 사전 요구 사항 확인<a class="headerlink" href="#step-1-사전-요구-사항-확인" title="Permanent link">&para;</a></h3>
+<p>mcctl이 필요한 소프트웨어의 설치 여부와 버전 요구 사항을 자동으로 확인합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>[1/6] Checking prerequisites...
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  Prerequisite Check Results:
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  ✓ Docker Engine    24.0.7
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  ✓ Docker Compose   2.24.5
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  ✓ Node.js          20.10.0
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">요구 사항 미충족 시</p>
+<p>확인이 실패하면 초기화가 중단되고, 누락된 구성 요소의 설치 방법이 안내됩니다. 문제를 해결한 후 <code>mcctl init</code>를 다시 실행하세요.</p>
+</div>
+<h3 id="step-2-디렉토리-구조-생성">Step 2: 디렉토리 구조 생성<a class="headerlink" href="#step-2-디렉토리-구조-생성" title="Permanent link">&para;</a></h3>
+<p><code>~/minecraft-servers/</code> (기본 위치)에 플랫폼 디렉토리 구조를 생성합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>[2/6] Creating directory structure...
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  Created: ~/.minecraft-servers/servers
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  Created: ~/.minecraft-servers/servers/_template
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  Created: ~/.minecraft-servers/worlds
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>  Created: ~/.minecraft-servers/worlds/.locks
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  Created: ~/.minecraft-servers/shared/plugins
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>  Created: ~/.minecraft-servers/shared/mods
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>  Created: ~/.minecraft-servers/backups
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">커스텀 데이터 디렉토리</p>
+<p>다른 위치를 사용하려면 <code>--root</code> 옵션을 지정하세요:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mcctl<span class="w"> </span>--root<span class="w"> </span>/path/to/data<span class="w"> </span>init
+</code></pre></div></p>
+</div>
+<h3 id="step-3-템플릿-파일-복사">Step 3: 템플릿 파일 복사<a class="headerlink" href="#step-3-템플릿-파일-복사" title="Permanent link">&para;</a></h3>
+<p>구성 템플릿이 데이터 디렉토리로 복사됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>[3/6] Copying template files...
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  Copied: docker-compose.yml
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  Copied: .env
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  Copied: .gitignore
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  Copied: servers/compose.yml
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  Copied: servers/_template/docker-compose.yml
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  Copied: servers/_template/config.env
+</code></pre></div>
+<h3 id="step-4-호스트-ip-설정">Step 4: 호스트 IP 설정<a class="headerlink" href="#step-4-호스트-ip-설정" title="Permanent link">&para;</a></h3>
+<p>서버 호스트명 라우팅(nip.io)에 사용할 호스트 IP 주소를 선택합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>[4/6] Configuring host IP address(es)...
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  Detected network interfaces:
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    192.168.1.100 (eth0)
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    172.17.0.1 (docker0)
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>? Select host IP address(es):
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>  ✓ 192.168.1.100 (eth0)
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>  ✓ Set HOST_IP=192.168.1.100
+</code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">다중 IP 지원</p>
+<p>여러 네트워크 인터페이스가 있는 경우(예: LAN + VPN) 여러 IP를 선택할 수 있습니다. 첫 번째가 기본 <code>HOST_IP</code>가 되고, 모든 IP가 <code>HOST_IPS</code>에 저장되어 다중 호스트명 라우팅에 사용됩니다.</p>
+</div>
+<h3 id="step-45-playitgg-설정-선택-사항">Step 4.5: playit.gg 설정 (선택 사항)<a class="headerlink" href="#step-45-playitgg-설정-선택-사항" title="Permanent link">&para;</a></h3>
+<p>포트 포워딩 없이 외부에서 접속할 수 있는 <a href="https://playit.gg">playit.gg</a> 터널링을 선택적으로 활성화할 수 있습니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>[4.5/6] Configuring playit.gg (optional)...
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>  playit.gg enables external access without port forwarding.
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>  Setup: https://playit.gg/account/agents/new-docker
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>? Enable playit.gg tunneling? No
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>  ✓ playit.gg disabled
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">나중에 설정 가능</p>
+<p>playit.gg는 나중에 <code>mcctl init --reconfigure</code>로 설정할 수 있습니다. 초기 설정 시에는 건너뛰어도 괜찮습니다.</p>
+</div>
+<h3 id="step-5-구성-파일-생성">Step 5: 구성 파일 생성<a class="headerlink" href="#step-5-구성-파일-생성" title="Permanent link">&para;</a></h3>
+<p>플랫폼 구성 파일 <code>.mcctl.json</code>이 생성됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>[5/6] Creating configuration...
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  Created: .mcctl.json
+</code></pre></div>
+<h3 id="step-6-docker-네트워크-설정">Step 6: Docker 네트워크 설정<a class="headerlink" href="#step-6-docker-네트워크-설정" title="Permanent link">&para;</a></h3>
+<p>마인크래프트 서버 전용 Docker 브리지 네트워크를 생성합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>[6/6] Setting up Docker network...
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  ✓ Created network: minecraft-net
+</code></pre></div>
+<h3 id="초기화-완료">초기화 완료<a class="headerlink" href="#초기화-완료" title="Permanent link">&para;</a></h3>
+<p>모든 단계가 성공적으로 완료되면 다음과 같이 표시됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>════════════════════════════════════════════════════════
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  ✓ Platform initialized successfully!
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>════════════════════════════════════════════════════════
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>  Next steps:
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>  1. Edit configuration (optional):
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>     nano ~/minecraft-servers/.env
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>  2. Create your first server:
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>     mcctl create myserver
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>  3. Connect via Minecraft:
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>     myserver.local:25565
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>  For help:
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>     mcctl --help
+</code></pre></div>
+<p>이 시점에서 플랫폼은 CLI를 통해 마인크래프트 서버를 생성하고 관리할 준비가 되었습니다. 웹 기반 관리 인터페이스를 추가하려면 2단계로 계속 진행하세요.</p>
+<hr />
+<h2 id="2단계-콘솔-초기화-mcctl-console-init">2단계: 콘솔 초기화 (<code>mcctl console init</code>)<a class="headerlink" href="#2단계-콘솔-초기화-mcctl-console-init" title="Permanent link">&para;</a></h2>
+<p><code>mcctl console init</code> 명령은 REST API(<code>mcctl-api</code>)와 선택적 웹 관리 UI(<code>mcctl-console</code>)로 구성된 Management Console을 설치하고 구성합니다.</p>
+<h3 id="명령-실행_1">명령 실행<a class="headerlink" href="#명령-실행_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
+</code></pre></div>
+<h3 id="step-1-사전-요구-사항-확인_1">Step 1: 사전 요구 사항 확인<a class="headerlink" href="#step-1-사전-요구-사항-확인_1" title="Permanent link">&para;</a></h3>
+<p>콘솔 초기화는 플랫폼 초기화 이상의 추가 사전 요구 사항을 확인합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Checking prerequisites...
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  Prerequisite Check Results:
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>  ✓ Node.js          20.10.0
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>  ✓ Docker Engine    24.0.7
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>  ✓ Docker Compose   2.24.5
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>  ✓ PM2              5.3.0
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">PM2 필수</p>
+<p>PM2는 API와 Console 프로세스를 관리하는 데 필요합니다. PM2가 설치되어 있지 않다면 전역으로 설치하세요:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>pm2
+</code></pre></div>
+PM2는 <code>mcctl</code>의 의존성으로 함께 설치되기도 하지만, PM2 명령어를 직접 사용하려면 전역 설치를 권장합니다.</p>
+</div>
+<h3 id="step-2-서비스-선택">Step 2: 서비스 선택<a class="headerlink" href="#step-2-서비스-선택" title="Permanent link">&para;</a></h3>
+<p>설치할 서비스를 선택하는 프롬프트가 표시됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Initialize Console Service
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>  Node.js: v20.10.0
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>  PM2: 5.3.0
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>? Select services to install:
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>  ✓ mcctl-api       - REST API server for managing Minecraft servers
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>  ○ mcctl-console   - Web UI for server management
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>서비스</th>
+<th>설명</th>
+<th>기본 포트</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>mcctl-api</strong></td>
+<td>Docker와 RCON을 통해 마인크래프트 서버를 관리하는 Fastify REST API 서버</td>
+<td>5001</td>
+</tr>
+<tr>
+<td><strong>mcctl-console</strong></td>
+<td>대시보드, 서버 관리, 관리자 기능이 포함된 Next.js 웹 애플리케이션</td>
+<td>5000</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">API 전용 모드</p>
+<p>REST API만 필요한 경우(자동화, 스크립트, 자체 UI 개발 등) <code>mcctl-api</code>만 선택하세요. 나중에 <code>mcctl console init</code>을 다시 실행하여 <code>mcctl-console</code>을 추가할 수 있습니다.</p>
+</div>
+<h3 id="step-3-관리자-계정-설정-console-선택-시에만">Step 3: 관리자 계정 설정 (Console 선택 시에만)<a class="headerlink" href="#step-3-관리자-계정-설정-console-선택-시에만" title="Permanent link">&para;</a></h3>
+<p><code>mcctl-console</code>을 선택한 경우, 관리자 계정을 생성하는 프롬프트가 표시됩니다:</p>
+<p><strong>관리자 이메일:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>? Admin email? admin@example.com
+</code></pre></div>
+<p>Better Auth를 통한 인증에 사용되는 이메일입니다.</p>
+<p><strong>관리자 이름:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>? Admin name? Administrator
+</code></pre></div>
+<p>관리자 계정의 표시 이름입니다.</p>
+<p><strong>관리자 비밀번호:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>? Admin password? ********
+</code></pre></div>
+<p>비밀번호 요구 사항:</p>
+<ul>
+<li>최소 8자 이상</li>
+<li>대문자(A-Z) 1개 이상</li>
+<li>소문자(a-z) 1개 이상</li>
+<li>숫자(0-9) 1개 이상</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">API 전용 모드</p>
+<p><code>mcctl-console</code> 없이 <code>mcctl-api</code>만 선택한 경우, 관리자 계정 설정은 완전히 건너뜁니다. 인증은 API 접근 모드를 통해 처리됩니다.</p>
+</div>
+<h3 id="step-4-api-접근-모드-선택">Step 4: API 접근 모드 선택<a class="headerlink" href="#step-4-api-접근-모드-선택" title="Permanent link">&para;</a></h3>
+<p>REST API의 인증 모드를 선택합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>? API access mode?
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>  ● internal       - Local network only (default, most secure)
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>  ○ api-key        - External access with API key
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>  ○ ip-whitelist   - IP-based access control
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>  ○ api-key-ip     - Both API key and IP required
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>  ○ open           - No authentication (development only)
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>모드</th>
+<th>보안 수준</th>
+<th>적합한 용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>internal</code></td>
+<td>최고</td>
+<td>가정/로컬 네트워크 배포</td>
+</tr>
+<tr>
+<td><code>api-key</code></td>
+<td>높음</td>
+<td>원격 접근, 자동화 스크립트</td>
+</tr>
+<tr>
+<td><code>ip-whitelist</code></td>
+<td>높음</td>
+<td>알려진 클라이언트 IP, 기업 네트워크</td>
+</tr>
+<tr>
+<td><code>api-key-ip</code></td>
+<td>최대</td>
+<td>API 키와 IP 모두 필요한 고보안 환경</td>
+</tr>
+<tr>
+<td><code>open</code></td>
+<td>없음</td>
+<td>로컬 개발/테스트 전용</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition danger">
+<p class="admonition-title">open 모드 경고</p>
+<p><code>open</code> 모드는 모든 인증을 비활성화합니다. 선택하면 확인 프롬프트가 표시됩니다:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>WARNING: Open mode has no authentication. Use only for local development!
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>? Are you sure you want to use open mode? No
+</code></pre></div>
+프로덕션 환경이나 인터넷에서 접근 가능한 네트워크에서는 절대 <code>open</code> 모드를 사용하지 마세요.</p>
+</div>
+<h3 id="step-5-api-키-생성-조건부">Step 5: API 키 생성 (조건부)<a class="headerlink" href="#step-5-api-키-생성-조건부" title="Permanent link">&para;</a></h3>
+<p><code>api-key</code> 또는 <code>api-key-ip</code> 모드를 선택한 경우, API 키가 자동으로 생성됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>Generating API key...  done
+</code></pre></div>
+<p>API 키는 초기화 완료 시 표시됩니다. <strong>안전한 곳에 저장하세요</strong> -- 한 번만 표시됩니다.</p>
+<h3 id="step-6-ip-화이트리스트-설정-조건부">Step 6: IP 화이트리스트 설정 (조건부)<a class="headerlink" href="#step-6-ip-화이트리스트-설정-조건부" title="Permanent link">&para;</a></h3>
+<p><code>ip-whitelist</code> 또는 <code>api-key-ip</code> 모드를 선택한 경우, 허용할 IP를 입력합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>? Allowed IPs (comma-separated)? 127.0.0.1, 192.168.1.0/24
+</code></pre></div>
+<p>개별 IP 주소 또는 CIDR 범위를 쉼표로 구분하여 입력할 수 있습니다.</p>
+<h3 id="step-7-서비스-패키지-설치">Step 7: 서비스 패키지 설치<a class="headerlink" href="#step-7-서비스-패키지-설치" title="Permanent link">&para;</a></h3>
+<p>mcctl-api와 mcctl-console 패키지가 npm에서 자동으로 설치됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Checking mcctl-api installation...  mcctl-api ready
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>Checking mcctl-console installation...  mcctl-console ready
+</code></pre></div>
+<p>패키지는 데이터 루트 아래의 <code>.services/</code> 디렉토리에 설치됩니다.</p>
+<h3 id="step-8-pm2-ecosystem-설정">Step 8: PM2 Ecosystem 설정<a class="headerlink" href="#step-8-pm2-ecosystem-설정" title="Permanent link">&para;</a></h3>
+<p>PM2 ecosystem 구성 파일이 생성됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>Resolving service script paths...  Using production node_modules paths
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>Generating PM2 ecosystem config...  PM2 ecosystem config generated
+</code></pre></div>
+<p>이 과정에서 platform 디렉토리에 <code>ecosystem.config.cjs</code>가 생성되며, PM2가 API와 Console 프로세스를 실행하는 방법을 정의합니다.</p>
+<h3 id="step-9-구성-저장">Step 9: 구성 저장<a class="headerlink" href="#step-9-구성-저장" title="Permanent link">&para;</a></h3>
+<p>관리자 구성이 저장됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Saving configuration...  Configuration saved
+</code></pre></div>
+<h3 id="콘솔-초기화-완료">콘솔 초기화 완료<a class="headerlink" href="#콘솔-초기화-완료" title="Permanent link">&para;</a></h3>
+<p>모든 단계가 완료되면 요약 정보가 표시됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>Console Service initialized!
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>  Configuration:
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>    Config file: /home/user/minecraft-servers/.mcctl-admin.yml
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>    Console DB:  /home/user/minecraft-servers/data/mcctl.db
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>    PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>    Access mode: internal
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>  Endpoints:
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>    API:     http://localhost:5001
+<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>    Console: http://localhost:5000
+<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a>
+<a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>  Next steps:
+<a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>    1. Start the service: mcctl console service start
+<a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>    2. Access the console in your browser
+</code></pre></div>
+<p><code>api-key</code> 또는 <code>api-key-ip</code> 모드를 선택한 경우 API 키도 함께 표시됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>  API Key (save this, shown only once):
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>    mck_a1b2c3d4e5f6g7h8i9j0...
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">API 키를 안전하게 보관하세요</p>
+<p>API 키는 초기화 시 한 번만 표시됩니다. 복사하여 안전한 곳에 저장하세요. 분실한 경우 다음 명령으로 재생성할 수 있습니다:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>key<span class="w"> </span>regenerate
+</code></pre></div></p>
+</div>
+<hr />
+<h2 id="3단계-서비스-시작-mcctl-console-service-start">3단계: 서비스 시작 (<code>mcctl console service start</code>)<a class="headerlink" href="#3단계-서비스-시작-mcctl-console-service-start" title="Permanent link">&para;</a></h2>
+<p>모든 설정이 완료되었으니 서비스를 시작합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+</code></pre></div>
+<h3 id="서비스-시작">서비스 시작<a class="headerlink" href="#서비스-시작" title="Permanent link">&para;</a></h3>
+<p>PM2가 구성된 서비스를 시작합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>Starting console services via PM2...
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>  Started mcctl-api
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>  Started mcctl-console
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>Console services started successfully
+</code></pre></div>
+<h3 id="상태-확인">상태 확인<a class="headerlink" href="#상태-확인" title="Permanent link">&para;</a></h3>
+<p>시작 후 상태 보고서가 자동으로 표시됩니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>  Console Service Status (PM2)
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>  mcctl-api
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    Status: online
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>    PID: 12345
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>    CPU: 0%
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>    Memory: 50.2 MB
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>    Uptime: 5s
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a>    Restarts: 0
+<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>
+<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>  mcctl-console
+<a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a>    Status: online
+<a id="__codelineno-32-13" name="__codelineno-32-13" href="#__codelineno-32-13"></a>    PID: 12346
+<a id="__codelineno-32-14" name="__codelineno-32-14" href="#__codelineno-32-14"></a>    URL: http://localhost:5000
+<a id="__codelineno-32-15" name="__codelineno-32-15" href="#__codelineno-32-15"></a>    CPU: 0%
+<a id="__codelineno-32-16" name="__codelineno-32-16" href="#__codelineno-32-16"></a>    Memory: 80.5 MB
+<a id="__codelineno-32-17" name="__codelineno-32-17" href="#__codelineno-32-17"></a>    Uptime: 3s
+<a id="__codelineno-32-18" name="__codelineno-32-18" href="#__codelineno-32-18"></a>    Restarts: 0
+<a id="__codelineno-32-19" name="__codelineno-32-19" href="#__codelineno-32-19"></a>
+<a id="__codelineno-32-20" name="__codelineno-32-20" href="#__codelineno-32-20"></a>  All services healthy
+</code></pre></div>
+<h3 id="api-상태-확인">API 상태 확인<a class="headerlink" href="#api-상태-확인" title="Permanent link">&para;</a></h3>
+<p>API 엔드포인트를 테스트합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>curl<span class="w"> </span>http://localhost:5001/health
+</code></pre></div>
+<p>예상 응답:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="p">{</span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="s2">&quot;healthy&quot;</span><span class="p">}</span>
+</code></pre></div>
+<h3 id="웹-콘솔-접속">웹 콘솔 접속<a class="headerlink" href="#웹-콘솔-접속" title="Permanent link">&para;</a></h3>
+<ol>
+<li>브라우저에서 <code>http://localhost:5000</code>으로 이동합니다</li>
+<li><code>mcctl console init</code>에서 생성한 관리자 이메일과 비밀번호로 로그인합니다</li>
+<li>마인크래프트 서버 목록이 포함된 대시보드가 표시됩니다</li>
+</ol>
+<hr />
+<h2 id="전체-설치-예시">전체 설치 예시<a class="headerlink" href="#전체-설치-예시" title="Permanent link">&para;</a></h2>
+<p>처음부터 끝까지의 전체 설치 흐름입니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># 1단계: mcctl 설치</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="c1"># 2단계: 플랫폼 초기화</span>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>mcctl<span class="w"> </span>init
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a><span class="c1"># 대화형 프롬프트 따라하기 (IP 선택, playit.gg)</span>
+<a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a>
+<a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a><span class="c1"># 3단계: 첫 번째 마인크래프트 서버 생성</span>
+<a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a>
+<a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a><span class="c1"># 4단계: Management Console 초기화</span>
+<a id="__codelineno-35-12" name="__codelineno-35-12" href="#__codelineno-35-12"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
+<a id="__codelineno-35-13" name="__codelineno-35-13" href="#__codelineno-35-13"></a><span class="c1"># 서비스 선택 -&gt; 관리자 계정 생성 -&gt; 접근 모드 선택</span>
+<a id="__codelineno-35-14" name="__codelineno-35-14" href="#__codelineno-35-14"></a>
+<a id="__codelineno-35-15" name="__codelineno-35-15" href="#__codelineno-35-15"></a><span class="c1"># 5단계: Console 서비스 시작</span>
+<a id="__codelineno-35-16" name="__codelineno-35-16" href="#__codelineno-35-16"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<a id="__codelineno-35-17" name="__codelineno-35-17" href="#__codelineno-35-17"></a>
+<a id="__codelineno-35-18" name="__codelineno-35-18" href="#__codelineno-35-18"></a><span class="c1"># 6단계: 모든 것이 실행 중인지 확인</span>
+<a id="__codelineno-35-19" name="__codelineno-35-19" href="#__codelineno-35-19"></a>mcctl<span class="w"> </span>status<span class="w">                    </span><span class="c1"># 마인크래프트 서버 확인</span>
+<a id="__codelineno-35-20" name="__codelineno-35-20" href="#__codelineno-35-20"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status<span class="w">    </span><span class="c1"># Console 서비스 확인</span>
+<a id="__codelineno-35-21" name="__codelineno-35-21" href="#__codelineno-35-21"></a>curl<span class="w"> </span>http://localhost:5001/health<span class="w">  </span><span class="c1"># API 상태 확인</span>
+<a id="__codelineno-35-22" name="__codelineno-35-22" href="#__codelineno-35-22"></a>
+<a id="__codelineno-35-23" name="__codelineno-35-23" href="#__codelineno-35-23"></a><span class="c1"># 7단계: 웹 콘솔 열기</span>
+<a id="__codelineno-35-24" name="__codelineno-35-24" href="#__codelineno-35-24"></a><span class="c1"># 브라우저에서 http://localhost:5000 으로 이동</span>
+</code></pre></div>
+<hr />
+<h2 id="구성-파일-참조">구성 파일 참조<a class="headerlink" href="#구성-파일-참조" title="Permanent link">&para;</a></h2>
+<p>전체 설치 완료 후 데이터 디렉토리에 다음 파일들이 존재합니다:</p>
+<table>
+<thead>
+<tr>
+<th>파일</th>
+<th>생성 주체</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.mcctl.json</code></td>
+<td><code>mcctl init</code></td>
+<td>플랫폼 구성 (버전, 기본값, 기능)</td>
+</tr>
+<tr>
+<td><code>.env</code></td>
+<td><code>mcctl init</code></td>
+<td>환경 변수 (HOST_IP, 메모리, 시간대)</td>
+</tr>
+<tr>
+<td><code>docker-compose.yml</code></td>
+<td><code>mcctl init</code></td>
+<td>mc-router용 메인 Docker 오케스트레이션</td>
+</tr>
+<tr>
+<td><code>.mcctl-admin.yml</code></td>
+<td><code>mcctl console init</code></td>
+<td>Console 서비스 구성 (접근 모드, 포트)</td>
+</tr>
+<tr>
+<td><code>data/mcctl.db</code></td>
+<td><code>mcctl console init</code></td>
+<td>사용자 계정용 SQLite 데이터베이스 (Better Auth)</td>
+</tr>
+<tr>
+<td><code>platform/ecosystem.config.cjs</code></td>
+<td><code>mcctl console init</code></td>
+<td>API와 Console용 PM2 프로세스 구성</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="부팅-시-자동-시작-설정">부팅 시 자동 시작 설정<a class="headerlink" href="#부팅-시-자동-시작-설정" title="Permanent link">&para;</a></h2>
+<p>시스템 부팅 시 서비스가 자동으로 시작되도록 설정하려면:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># PM2 시작 스크립트 생성</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>pm2<span class="w"> </span>startup
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="c1"># PM2가 표시하는 명령을 실행합니다 (예시):</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a>sudo<span class="w"> </span>env<span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/bin<span class="w"> </span>pm2<span class="w"> </span>startup<span class="w"> </span>systemd<span class="w"> </span>-u<span class="w"> </span><span class="nv">$USER</span><span class="w"> </span>--hp<span class="w"> </span><span class="nv">$HOME</span>
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="c1"># 현재 프로세스 목록 저장</span>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a>pm2<span class="w"> </span>save
+</code></pre></div>
+<hr />
+<h2 id="커스텀-포트-설정">커스텀 포트 설정<a class="headerlink" href="#커스텀-포트-설정" title="Permanent link">&para;</a></h2>
+<p>기본 포트(5000, 5001)가 다른 서비스와 충돌하는 경우 커스텀 포트를 지정하세요:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--api-port<span class="w"> </span><span class="m">8001</span><span class="w"> </span>--console-port<span class="w"> </span><span class="m">8000</span>
+</code></pre></div>
+<p>서비스 시작 시에도 커스텀 포트를 지정할 수 있습니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w"> </span>--api-port<span class="w"> </span><span class="m">8001</span><span class="w"> </span>--console-port<span class="w"> </span><span class="m">8000</span>
+</code></pre></div>
+<hr />
+<h2 id="재초기화">재초기화<a class="headerlink" href="#재초기화" title="Permanent link">&para;</a></h2>
+<h3 id="플랫폼-설정-재구성">플랫폼 설정 재구성<a class="headerlink" href="#플랫폼-설정-재구성" title="Permanent link">&para;</a></h3>
+<p>완전한 재초기화 없이 플랫폼 설정(IP, 메모리, 시간대)을 변경하려면:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>mcctl<span class="w"> </span>init<span class="w"> </span>--reconfigure
+</code></pre></div>
+<h3 id="콘솔-재초기화">콘솔 재초기화<a class="headerlink" href="#콘솔-재초기화" title="Permanent link">&para;</a></h3>
+<p>Console 구성을 초기화하려면 (주요 업데이트 후 유용):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--force
+</code></pre></div>
+<p><code>--force</code> 플래그는 확인 프롬프트를 건너뛰고 기존 구성을 정리한 후 재초기화합니다.</p>
+<hr />
+<h2 id="문제-해결">문제 해결<a class="headerlink" href="#문제-해결" title="Permanent link">&para;</a></h2>
+<h3 id="플랫폼-초기화-문제">플랫폼 초기화 문제<a class="headerlink" href="#플랫폼-초기화-문제" title="Permanent link">&para;</a></h3>
+<h4 id="mcctl-init이-이미-초기화됨으로-표시"><code>mcctl init</code>이 "이미 초기화됨"으로 표시<a class="headerlink" href="#mcctl-init이-이미-초기화됨으로-표시" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>Platform is already initialized
+</code></pre></div>
+<p><strong>해결 방법</strong>: <code>--reconfigure</code>를 사용하여 설정을 변경하거나, 데이터 디렉토리를 삭제하여 새로 시작하세요:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1"># 방법 1: 기존 설정 재구성</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>mcctl<span class="w"> </span>init<span class="w"> </span>--reconfigure
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>
+<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="c1"># 방법 2: 전체 초기화 (주의: 모든 서버 데이터가 삭제됩니다)</span>
+<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>rm<span class="w"> </span>-rf<span class="w"> </span>~/minecraft-servers
+<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a>mcctl<span class="w"> </span>init
+</code></pre></div>
+<h4 id="docker-네트워크-생성-실패">Docker 네트워크 생성 실패<a class="headerlink" href="#docker-네트워크-생성-실패" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>Failed to create Docker network
+</code></pre></div>
+<p><strong>해결 방법</strong>: 네트워크가 이미 존재할 수 있습니다. 다음으로 확인하세요:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>docker<span class="w"> </span>network<span class="w"> </span>ls<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>minecraft-net
+</code></pre></div>
+<h3 id="콘솔-초기화-문제">콘솔 초기화 문제<a class="headerlink" href="#콘솔-초기화-문제" title="Permanent link">&para;</a></h3>
+<h4 id="platform-not-initialized-오류">"Platform not initialized" 오류<a class="headerlink" href="#platform-not-initialized-오류" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>Platform not initialized. Run: mcctl init
+</code></pre></div>
+<p><strong>해결 방법</strong>: <code>mcctl console init</code> 전에 먼저 <code>mcctl init</code>을 실행하세요.</p>
+<h4 id="pm2-미설치">PM2 미설치<a class="headerlink" href="#pm2-미설치" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>PM2 is not installed.
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>Install PM2 globally with: npm install -g pm2
+</code></pre></div>
+<p><strong>해결 방법</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>pm2
+</code></pre></div>
+<h4 id="패키지-설치-실패">패키지 설치 실패<a class="headerlink" href="#패키지-설치-실패" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>Failed to install mcctl-api: ...
+</code></pre></div>
+<p><strong>해결 방법</strong>: 수동으로 설치해 보세요:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers/.services
+<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a>npm<span class="w"> </span>install<span class="w"> </span>@minecraft-docker/mcctl-api@latest
+<a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a>npm<span class="w"> </span>install<span class="w"> </span>@minecraft-docker/mcctl-console@latest
+</code></pre></div>
+<h3 id="서비스-시작-문제">서비스 시작 문제<a class="headerlink" href="#서비스-시작-문제" title="Permanent link">&para;</a></h3>
+<h4 id="ecosystem-설정-파일-없음">Ecosystem 설정 파일 없음<a class="headerlink" href="#ecosystem-설정-파일-없음" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>Ecosystem config not found.
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>Please run &#39;mcctl console init&#39; to initialize console services
+</code></pre></div>
+<p><strong>해결 방법</strong>: <code>mcctl console init</code>을 실행하여 ecosystem 구성을 생성하세요.</p>
+<h4 id="포트-사용-중">포트 사용 중<a class="headerlink" href="#포트-사용-중" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a><span class="c1"># 어떤 프로세스가 포트를 사용하고 있는지 확인</span>
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5000
+<a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5001
+<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a>
+<a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a><span class="c1"># 또는 netstat 사용</span>
+<a id="__codelineno-51-6" name="__codelineno-51-6" href="#__codelineno-51-6"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;5000|5001&quot;</span>
+</code></pre></div>
+<p><strong>해결 방법</strong>: 충돌하는 프로세스를 중지하거나 <code>--api-port</code>와 <code>--console-port</code>로 커스텀 포트를 사용하세요.</p>
+<h4 id="서비스가-계속-재시작됨">서비스가 계속 재시작됨<a class="headerlink" href="#서비스가-계속-재시작됨" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a><span class="c1"># 오류 로그 확인</span>
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>-f
+<a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>
+<a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="c1"># 또는 PM2 로그 직접 확인</span>
+<a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
+<a id="__codelineno-52-6" name="__codelineno-52-6" href="#__codelineno-52-6"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
+</code></pre></div>
+<p>일반적인 원인:</p>
+<ul>
+<li>의존성 누락: <code>mcctl console init</code>을 다시 실행하세요</li>
+<li>포트 충돌: 커스텀 포트를 사용하세요</li>
+<li>메모리 부족: 시스템 메모리를 늘리거나 ecosystem 설정에서 <code>max_memory_restart</code>를 줄이세요</li>
+</ul>
+<h3 id="로그인-문제">로그인 문제<a class="headerlink" href="#로그인-문제" title="Permanent link">&para;</a></h3>
+<h4 id="웹-콘솔에-로그인할-수-없음">웹 콘솔에 로그인할 수 없음<a class="headerlink" href="#웹-콘솔에-로그인할-수-없음" title="Permanent link">&para;</a></h4>
+<ol>
+<li>
+<p>관리자 계정이 생성되었는지 확인:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
+</code></pre></div></p>
+</li>
+<li>
+<p>관리자 비밀번호 재설정:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>admin@example.com
+</code></pre></div></p>
+</li>
+<li>
+<p><code>mcctl-console</code>이 실행 중인지 확인:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status
+</code></pre></div></p>
+</li>
+</ol>
+<hr />
+<h2 id="다음-단계">다음 단계<a class="headerlink" href="#다음-단계" title="Permanent link">&para;</a></h2>
+<p>설치가 완료되면:</p>
+<ul>
+<li><strong><a href="../web-console/">웹 콘솔 가이드</a></strong> - 웹 관리 인터페이스 사용법</li>
+<li><strong><a href="../cli-commands/">CLI 명령어 참조</a></strong> - Console CLI 전체 참조</li>
+<li><strong><a href="../api-reference/">API 참조</a></strong> - REST API 문서</li>
+<li><strong><a href="../../getting-started/quickstart/">빠른 시작 가이드</a></strong> - 마인크래프트 서버 생성 및 관리</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  맨위로
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 smallmiro
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/smallmiro/minecraft-server-manager" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

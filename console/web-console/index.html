@@ -1408,6 +1408,8 @@
       
         
       
+        
+      
     
     
     
@@ -1463,6 +1465,34 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../setup-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -1810,6 +1840,95 @@
     <span class="md-ellipsis">
       
         Navigation Tabs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#overview-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Console
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Information
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#players" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Players
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mods-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mods Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mods Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installed-mods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installed Mods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-new-mods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding New Mods
       
     </span>
   </a>
@@ -3163,6 +3282,95 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#overview-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Console
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Information
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#players" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Players
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mods-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mods Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mods Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installed-mods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installed Mods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-new-mods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding New Mods
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4004,6 +4212,93 @@
 </tr>
 </tbody>
 </table>
+<h3 id="overview-tab">Overview Tab<a class="headerlink" href="#overview-tab" title="Permanent link">&para;</a></h3>
+<p>The Overview tab is the default view when you open a server's detail page. It serves as a real-time command center for monitoring and interacting with your server.</p>
+<p><img alt="Server Overview" src="../../images/server-overview.png" /></p>
+<h4 id="console">Console<a class="headerlink" href="#console" title="Permanent link">&para;</a></h4>
+<p>The centerpiece of the Overview tab is the <strong>Console</strong> panel, which provides direct access to the server's live log output and command interface:</p>
+<ul>
+<li><strong>Live Log Stream</strong> -- The console displays server log messages in real time, including timestamped entries for server events such as world loading, player connections, RCON initialization, and game state changes. Each log line includes the timestamp and log level (e.g., <code>INFO</code>) for easy troubleshooting.</li>
+<li><strong>Command Input</strong> -- At the bottom of the console, the <strong>"Send a command"</strong> input field lets you execute any Minecraft server command directly via RCON. Type a command (e.g., <code>say Hello!</code>, <code>gamemode creative Player1</code>, <code>time set day</code>) and press Enter to send it to the server. The command output appears in the log stream above.</li>
+<li><strong>Auto-Scroll</strong> -- The console automatically scrolls to show the latest log entries as they arrive, so you always see the most recent server activity.</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Console Commands</p>
+<p>The console supports all standard Minecraft server commands. You do not need to prefix commands with <code>/</code> -- simply type the command name and its arguments directly (e.g., <code>whitelist add Player1</code>).</p>
+</div>
+<h4 id="server-information">Server Information<a class="headerlink" href="#server-information" title="Permanent link">&para;</a></h4>
+<p>The <strong>Server Information</strong> panel on the bottom-left displays essential details about the server configuration and runtime status:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Name</strong></td>
+<td>The server's display name (e.g., <code>botagent</code>)</td>
+</tr>
+<tr>
+<td><strong>Container</strong></td>
+<td>The Docker container name (e.g., <code>mc-botagent</code>)</td>
+</tr>
+<tr>
+<td><strong>Hostname</strong></td>
+<td>The primary hostname for client connections (e.g., <code>botagent.local</code>)</td>
+</tr>
+<tr>
+<td><strong>Type</strong></td>
+<td>The server platform type (VANILLA, PAPER, FORGE, NEOFORGE, FABRIC, etc.)</td>
+</tr>
+<tr>
+<td><strong>Version</strong></td>
+<td>The Minecraft game version (e.g., <code>1.21.11</code>)</td>
+</tr>
+<tr>
+<td><strong>Memory</strong></td>
+<td>The allocated JVM memory (e.g., <code>2G</code>)</td>
+</tr>
+<tr>
+<td><strong>Uptime</strong></td>
+<td>How long the server has been running since its last start</td>
+</tr>
+</tbody>
+</table>
+<h4 id="players">Players<a class="headerlink" href="#players" title="Permanent link">&para;</a></h4>
+<p>The <strong>Players</strong> panel on the bottom-right shows the list of players currently connected to the server. When no players are online, it displays "Player information unavailable" or an empty state. When players are connected, their Minecraft usernames and avatars are shown here for quick reference.</p>
+<h3 id="mods-tab">Mods Tab<a class="headerlink" href="#mods-tab" title="Permanent link">&para;</a></h3>
+<p>The Mods tab provides a complete mod management interface for servers running modded platforms (FORGE, NEOFORGE, FABRIC). This tab allows you to browse, install, and remove mods directly from the <a href="https://modrinth.com/">Modrinth</a> repository without manual file management.</p>
+<p><img alt="Server Mods" src="../../images/server-mods.png" /></p>
+<div class="admonition note">
+<p class="admonition-title">Modded Servers Only</p>
+<p>The Mods tab is most useful for modded server types (FORGE, NEOFORGE, FABRIC). While the tab is visible for all servers, mod installation requires a compatible server platform.</p>
+</div>
+<h4 id="installed-mods">Installed Mods<a class="headerlink" href="#installed-mods" title="Permanent link">&para;</a></h4>
+<p>The <strong>Installed Mods</strong> section lists all mods currently installed on the server:</p>
+<ul>
+<li><strong>Source badge</strong> -- Indicates the mod source (e.g., <code>Modrinth</code>)</li>
+<li><strong>Mod icon</strong> -- The mod's thumbnail image from Modrinth</li>
+<li><strong>Mod name</strong> -- The display name of the mod (e.g., <code>Create</code>)</li>
+<li><strong>Description</strong> -- A brief summary of what the mod does (e.g., "Aesthetic Technology that empowers the Player")</li>
+<li><strong>Download count</strong> -- The total number of downloads on Modrinth (e.g., <code>12.6M</code>), indicating the mod's popularity</li>
+<li><strong>Author</strong> -- The mod creator's username (e.g., <code>simibubi</code>)</li>
+<li><strong>Edit button</strong> (external link icon) -- Opens the mod's page on Modrinth in a new tab for detailed information, changelogs, and documentation</li>
+<li><strong>Delete button</strong> (red trash icon) -- Removes the mod from the server after a confirmation prompt</li>
+</ul>
+<h4 id="adding-new-mods">Adding New Mods<a class="headerlink" href="#adding-new-mods" title="Permanent link">&para;</a></h4>
+<p>Click the <strong>+ Add Mods</strong> button in the top-right corner of the Installed Mods section to open the mod search dialog. The search interface lets you:</p>
+<ol>
+<li><strong>Search</strong> for mods by name or keyword on Modrinth</li>
+<li><strong>Filter</strong> results by compatibility with your server's Minecraft version and mod loader</li>
+<li><strong>Preview</strong> mod details including description, version history, and dependencies</li>
+<li><strong>Install</strong> selected mods with a single click -- the system automatically downloads the correct version for your server</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Server Restart Required</p>
+<p>After installing or removing mods, you need to restart the server for the changes to take effect. The UI will prompt you to restart when mod changes are detected.</p>
+</div>
 <hr />
 <h2 id="server-files">Server Files<a class="headerlink" href="#server-files" title="Permanent link">&para;</a></h2>
 <p>The Files tab provides a full-featured file manager for your server's file system.</p>
