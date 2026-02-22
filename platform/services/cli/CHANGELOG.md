@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.0] - 2026-02-22
+
+### Added
+- **Automated Backup Scheduling** - Cron-based backup scheduler with full-stack implementation (#394, #395)
+  - **Domain Layer**: `CronExpression` and `BackupRetentionPolicy` value objects, `BackupSchedule` entity with validation
+  - **Use Cases**: `BackupScheduleUseCase` with CRUD operations and `IBackupScheduleRepository` port
+  - **Infrastructure**: `SqliteBackupScheduleRepository` adapter with SQLite persistence
+  - **CLI**: `mcctl backup schedule` subcommand with `list`, `add`, `remove`, `enable`, `disable` operations
+    - Cron preset support (hourly, daily, weekly, monthly) and custom expressions
+    - Optional retention policy configuration (maxCount, maxAgeDays)
+  - **API**: RESTful backup schedule endpoints (GET/POST/PUT/PATCH/DELETE `/api/backup/schedules`)
+    - `BackupSchedulerService` with `node-cron` integration for automated backup execution
+    - Typebox validation schemas for request/response
+    - Audit logging for all schedule mutations
+  - **Console**: Backup Schedule management UI with CRUD and toggle
+    - `BackupScheduleList` component with enable/disable toggle
+    - `BackupScheduleDialog` for creating and editing schedules
+    - BFF proxy routes and React Query hooks
+  - **Security**: Shell injection prevention using `execFile()` instead of `exec()`
+  - **Tests**: 54+ tests across CLI (24), API routes (14), and scheduler service (16)
+
+### Note
+- Retention policy pruning deferred to separate implementation (#396)
+- Domain layer (`BackupRetentionPolicy`, `shouldPrune`) remains intact for future use
+
 ## [2.14.0] - 2026-02-21
 
 ### Added

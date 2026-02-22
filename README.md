@@ -34,6 +34,7 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **Modpack Support**: Create servers from Modrinth modpacks with dynamic loader detection
 - **NeoForge Support**: Full support for NeoForge modded servers (Minecraft 1.20.1+)
 - **GitHub Backup**: Automatic world backup to private GitHub repositories
+- **Backup Scheduling**: Cron-based automated backup scheduling with retention policies
 - **Audit Logs**: Comprehensive activity tracking with SQLite storage, auto-cleanup, and web UI
 - **World Management UI**: Web-based world management with reset, assignment, and real-time status
 - **External Access (playit.gg)**: Allow external players to join without port forwarding via playit.gg tunneling
@@ -919,13 +920,19 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.15.0] - 2026-02-22
+
+**Added:**
+- **Automated Backup Scheduling** - Cron-based backup scheduler with full-stack implementation (#394, #395)
+  - CLI `mcctl backup schedule` with list/add/remove/enable/disable operations
+  - REST API endpoints for schedule CRUD with node-cron integration
+  - Web Console UI with schedule management dialog and toggle
+  - Shell injection prevention, 54+ tests across all layers
+
 ### [2.14.0] - 2026-02-21
 
 **Added:**
 - **Console Mod Detail Cards** - Enhanced installed mods display with rich card UI
-  - Card UI with mod icon, title, description, download count, author, Modrinth link
-  - Batch API using Modrinth `GET /v2/projects?ids=[]` for efficient metadata retrieval
-  - 3-state rendering: Skeleton (loading), Detail Card (full info), Fallback Card (slug only)
 
 ### [2.13.0] - 2026-02-21
 
@@ -936,9 +943,6 @@ cat /etc/avahi/hosts
 
 **Added:**
 - **Server Management Guide** - New bilingual (EN/KO) documentation for server start/stop operations
-
-**Removed:**
-- **World Storage Bug Warning** - Remove obsolete v1.6.8~v1.6.11 bug warning
 
 ### [2.12.0] - 2026-02-20
 
