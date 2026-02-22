@@ -1,6 +1,6 @@
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readFile, readdir, stat, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { IConfigFileCollector } from '../../application/ports/outbound/IConfigFileCollector.js';
 import { ConfigSnapshotFile } from '../../domain/value-objects/ConfigSnapshotFile.js';
@@ -96,6 +96,21 @@ export class FileSystemConfigFileCollector implements IConfigFileCollector {
   async readFileContent(serverName: string, filePath: string): Promise<string> {
     const fullPath = join(this.serversDir, serverName, filePath);
     return readFile(fullPath, 'utf-8');
+  }
+
+  /**
+   * Write content to a specific config file in the server directory
+   * Creates parent directories if they don't exist
+   */
+  async writeFileContent(
+    serverName: string,
+    filePath: string,
+    content: string
+  ): Promise<void> {
+    const fullPath = join(this.serversDir, serverName, filePath);
+    const fileDir = dirname(fullPath);
+    await mkdir(fileDir, { recursive: true });
+    await writeFile(fullPath, content, 'utf-8');
   }
 
   /**

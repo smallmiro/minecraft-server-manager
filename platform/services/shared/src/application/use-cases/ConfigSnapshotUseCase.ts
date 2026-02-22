@@ -57,6 +57,7 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
 
   /**
    * List config snapshots, optionally filtered by server
+   * When no serverName is provided, returns all snapshots across all servers
    */
   async list(
     serverName?: string,
@@ -67,10 +68,7 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
       return this.repository.findByServer(serverName, limit, offset);
     }
 
-    // When no server specified, we need a different approach
-    // Since the port doesn't have a findAll, delegate to findByServer
-    // This is a limitation that could be addressed in a future iteration
-    return this.repository.findByServer(serverName ?? '', limit, offset);
+    return this.repository.findAll(limit, offset);
   }
 
   /**
@@ -168,6 +166,7 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
 
   /**
    * Restore server configuration from a snapshot
+   * Retrieves file contents from storage and writes them to the server directory
    */
   async restore(snapshotId: string, _force?: boolean): Promise<void> {
     const snapshot = await this.repository.findById(snapshotId);
@@ -184,11 +183,14 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
       throw new Error(`No files found for snapshot: ${snapshotId}`);
     }
 
-    // Write files back to server directory
-    // This is delegated to storage.store with a special pattern
-    // In a real implementation, this would write directly to the server directory
-    // For now, we store the files and the caller is responsible for the actual restore
-    // The restore logic will be fully implemented when integrated with the server filesystem
+    // Write each file back to the server directory
+    for (const [filePath, content] of files) {
+      await this.collector.writeFileContent(
+        snapshot.serverName.value,
+        filePath,
+        content
+      );
+    }
   }
 
   /**

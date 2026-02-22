@@ -95,6 +95,30 @@ export class SqliteConfigSnapshotRepository implements IConfigSnapshotRepository
   }
 
   /**
+   * Find all config snapshots with pagination (across all servers)
+   * Ordered by created_at DESC (newest first)
+   */
+  async findAll(limit?: number, offset?: number): Promise<ConfigSnapshot[]> {
+    let query = 'SELECT * FROM config_snapshots ORDER BY created_at DESC';
+    const params: unknown[] = [];
+
+    if (limit !== undefined) {
+      query += ' LIMIT ?';
+      params.push(limit);
+    }
+
+    if (offset !== undefined) {
+      query += ' OFFSET ?';
+      params.push(offset);
+    }
+
+    const stmt = this.db.prepare<unknown[], ConfigSnapshotDbRow>(query);
+    const rows = stmt.all(...params);
+
+    return Promise.all(rows.map((row) => this.loadFiles(row)));
+  }
+
+  /**
    * Find config snapshots by server name with pagination
    * Ordered by created_at DESC (newest first)
    */

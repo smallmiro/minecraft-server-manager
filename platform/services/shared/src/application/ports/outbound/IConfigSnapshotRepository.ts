@@ -16,6 +16,11 @@ export interface IConfigSnapshotRepository {
   findById(id: string): Promise<ConfigSnapshot | null>;
 
   /**
+   * Find all config snapshots with pagination (across all servers)
+   */
+  findAll(limit?: number, offset?: number): Promise<ConfigSnapshot[]>;
+
+  /**
    * Find config snapshots by server name with pagination
    */
   findByServer(

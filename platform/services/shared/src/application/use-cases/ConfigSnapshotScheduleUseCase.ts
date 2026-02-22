@@ -105,24 +105,10 @@ export class ConfigSnapshotScheduleUseCaseImpl
   }
 
   /**
-   * Find all config snapshot schedules
-   * Aggregates schedules from all servers via enabled + disabled
+   * Find all config snapshot schedules (both enabled and disabled)
    */
   async findAll(): Promise<ConfigSnapshotSchedule[]> {
-    // The repository doesn't have a findAll, so we use findAllEnabled
-    // plus find disabled ones. Since the port doesn't expose findAll directly,
-    // we need to get both enabled and disabled separately.
-    // However, the use case port requires findAll - so we use the repository methods available.
-    // A pragmatic approach: findAllEnabled returns only enabled.
-    // For a complete findAll, we'd need to extend the repository.
-    // For now, let's return all enabled schedules and rely on findByServer for filtered views.
-
-    // Since findAllEnabled only returns enabled ones, and we need all,
-    // we need to query differently. The simplest approach is to delegate
-    // to the repository which has access to the database.
-    // NOTE: This is a known limitation. A findAll method on the repository
-    // would be more appropriate. For now, findAllEnabled is used as a proxy.
-    return this.repository.findAllEnabled();
+    return this.repository.findAll();
   }
 
   /**

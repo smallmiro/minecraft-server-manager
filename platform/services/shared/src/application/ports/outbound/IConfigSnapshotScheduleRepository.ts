@@ -21,6 +21,11 @@ export interface IConfigSnapshotScheduleRepository {
   findByServer(serverName: string): Promise<ConfigSnapshotSchedule[]>;
 
   /**
+   * Find all config snapshot schedules (both enabled and disabled)
+   */
+  findAll(): Promise<ConfigSnapshotSchedule[]>;
+
+  /**
    * Find all enabled config snapshot schedules
    */
   findAllEnabled(): Promise<ConfigSnapshotSchedule[]>;

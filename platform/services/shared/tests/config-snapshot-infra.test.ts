@@ -318,6 +318,40 @@ describe('SqliteConfigSnapshotRepository', () => {
     assert.strictEqual(await repo.countByServer('delallserver'), 0);
   });
 
+  test('should find all snapshots across servers', async () => {
+    const serverA = ServerName.create('servera');
+    const serverB = ServerName.create('serverb');
+
+    const snap1 = ConfigSnapshot.create(serverA, [], 'A1');
+    const snap2 = ConfigSnapshot.create(serverA, [], 'A2');
+    const snap3 = ConfigSnapshot.create(serverB, [], 'B1');
+
+    await repo.save(snap1);
+    await repo.save(snap2);
+    await repo.save(snap3);
+
+    const all = await repo.findAll();
+    assert.strictEqual(all.length, 3);
+  });
+
+  test('should support pagination in findAll', async () => {
+    const serverA = ServerName.create('servera');
+    const serverB = ServerName.create('serverb');
+
+    for (let i = 0; i < 3; i++) {
+      await repo.save(ConfigSnapshot.create(serverA, [], `A${i}`));
+    }
+    for (let i = 0; i < 2; i++) {
+      await repo.save(ConfigSnapshot.create(serverB, [], `B${i}`));
+    }
+
+    const page1 = await repo.findAll(3, 0);
+    assert.strictEqual(page1.length, 3);
+
+    const page2 = await repo.findAll(3, 3);
+    assert.strictEqual(page2.length, 2);
+  });
+
   test('should order findByServer by createdAt DESC', async () => {
     const serverName = ServerName.create('orderserver');
 
@@ -409,6 +443,31 @@ describe('SqliteConfigSnapshotScheduleRepository', () => {
     const serverASchedules = await repo.findByServer('servera');
     assert.strictEqual(serverASchedules.length, 1);
     assert.strictEqual(serverASchedules[0]!.name, 'Schedule A');
+  });
+
+  test('should find all schedules including disabled', async () => {
+    const enabled = ConfigSnapshotSchedule.create({
+      serverName: ServerName.create('myserver'),
+      name: 'Enabled',
+      cronExpression: '0 * * * *',
+      enabled: true,
+    });
+    const disabled = ConfigSnapshotSchedule.create({
+      serverName: ServerName.create('myserver'),
+      name: 'Disabled',
+      cronExpression: '0 3 * * *',
+      enabled: false,
+    });
+
+    await repo.save(enabled);
+    await repo.save(disabled);
+
+    const allSchedules = await repo.findAll();
+    assert.strictEqual(allSchedules.length, 2);
+
+    const names = allSchedules.map((s) => s.name);
+    assert.ok(names.includes('Enabled'));
+    assert.ok(names.includes('Disabled'));
   });
 
   test('should find all enabled schedules', async () => {
@@ -743,6 +802,37 @@ describe('FileSystemConfigFileCollector', () => {
     assert.ok(!paths.includes('world.dat'));
     assert.ok(!paths.includes('notes.txt'));
   });
+
+  test('should write file content to server directory', async () => {
+    const serverDir = join(serversDir, 'writeserver');
+    await mkdir(serverDir, { recursive: true });
+
+    const collector = new FileSystemConfigFileCollector(serversDir);
+    await collector.writeFileContent('writeserver', 'server.properties', 'server-port=25566');
+
+    const content = await readFile(join(serverDir, 'server.properties'), 'utf-8');
+    assert.strictEqual(content, 'server-port=25566');
+  });
+
+  test('should create parent directories when writing file content', async () => {
+    const collector = new FileSystemConfigFileCollector(serversDir);
+    await collector.writeFileContent('newserver', 'plugins/config.yml', 'key: value');
+
+    const content = await readFile(join(serversDir, 'newserver', 'plugins', 'config.yml'), 'utf-8');
+    assert.strictEqual(content, 'key: value');
+  });
+
+  test('should overwrite existing file when writing file content', async () => {
+    const serverDir = join(serversDir, 'overwriteserver');
+    await mkdir(serverDir, { recursive: true });
+    await writeFile(join(serverDir, 'server.properties'), 'old-content');
+
+    const collector = new FileSystemConfigFileCollector(serversDir);
+    await collector.writeFileContent('overwriteserver', 'server.properties', 'new-content');
+
+    const content = await readFile(join(serverDir, 'server.properties'), 'utf-8');
+    assert.strictEqual(content, 'new-content');
+  });
 });
 
 // ==========================================
@@ -759,6 +849,15 @@ describe('ConfigSnapshotUseCaseImpl', () => {
 
     async findById(id: string): Promise<ConfigSnapshot | null> {
       return this.snapshots.get(id) ?? null;
+    }
+
+    async findAll(limit?: number, offset?: number): Promise<ConfigSnapshot[]> {
+      const results = Array.from(this.snapshots.values())
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+      const start = offset ?? 0;
+      const end = limit ? start + limit : undefined;
+      return results.slice(start, end);
     }
 
     async findByServer(serverName: string, limit?: number, offset?: number): Promise<ConfigSnapshot[]> {
@@ -808,6 +907,7 @@ describe('ConfigSnapshotUseCaseImpl', () => {
 
   class MockConfigFileCollector implements IConfigFileCollector {
     private files: Map<string, { hash: string; content: string; size: number }> = new Map();
+    readonly writtenFiles: Map<string, { serverName: string; content: string }> = new Map();
 
     addFile(path: string, content: string): void {
       const hash = createHash('sha256').update(content).digest('hex');
@@ -824,6 +924,10 @@ describe('ConfigSnapshotUseCaseImpl', () => {
       const file = this.files.get(filePath);
       if (!file) throw new Error(`File not found: ${filePath}`);
       return file.content;
+    }
+
+    async writeFileContent(serverName: string, filePath: string, content: string): Promise<void> {
+      this.writtenFiles.set(filePath, { serverName, content });
     }
   }
 
@@ -848,7 +952,7 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     assert.ok(found);
   });
 
-  test('should list snapshots', async () => {
+  test('should list snapshots by server name', async () => {
     const repo = new MockConfigSnapshotRepository();
     const storageAdapter = new MockConfigSnapshotStorage();
     const collector = new MockConfigFileCollector();
@@ -861,6 +965,41 @@ describe('ConfigSnapshotUseCaseImpl', () => {
 
     const list = await useCase.list('myserver');
     assert.strictEqual(list.length, 2);
+  });
+
+  test('should list all snapshots across servers when no serverName provided', async () => {
+    const repo = new MockConfigSnapshotRepository();
+    const storageAdapter = new MockConfigSnapshotStorage();
+    const collector = new MockConfigFileCollector();
+    collector.addFile('test.txt', 'content');
+
+    const useCase = new ConfigSnapshotUseCaseImpl(repo, storageAdapter, collector);
+
+    await useCase.create('servera', 'Snap A');
+    await useCase.create('serverb', 'Snap B');
+    await useCase.create('serverc', 'Snap C');
+
+    const list = await useCase.list();
+    assert.strictEqual(list.length, 3);
+  });
+
+  test('should list all snapshots with pagination when no serverName provided', async () => {
+    const repo = new MockConfigSnapshotRepository();
+    const storageAdapter = new MockConfigSnapshotStorage();
+    const collector = new MockConfigFileCollector();
+    collector.addFile('test.txt', 'content');
+
+    const useCase = new ConfigSnapshotUseCaseImpl(repo, storageAdapter, collector);
+
+    await useCase.create('servera', 'Snap A');
+    await useCase.create('serverb', 'Snap B');
+    await useCase.create('serverc', 'Snap C');
+
+    const page1 = await useCase.list(undefined, 2, 0);
+    assert.strictEqual(page1.length, 2);
+
+    const page2 = await useCase.list(undefined, 2, 2);
+    assert.strictEqual(page2.length, 1);
   });
 
   test('should find snapshot by ID', async () => {
@@ -918,6 +1057,56 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     const found = await repo.findById(snapshot.id);
     assert.strictEqual(found, null);
   });
+
+  test('should restore files from a snapshot to the server directory', async () => {
+    const repo = new MockConfigSnapshotRepository();
+    const storageAdapter = new MockConfigSnapshotStorage();
+    const collector = new MockConfigFileCollector();
+
+    collector.addFile('server.properties', 'server-port=25565');
+    collector.addFile('config.env', 'TYPE=PAPER');
+
+    const useCase = new ConfigSnapshotUseCaseImpl(repo, storageAdapter, collector);
+    const snapshot = await useCase.create('myserver', 'Restore test');
+
+    // Restore the snapshot
+    await useCase.restore(snapshot.id);
+
+    // Verify files were written via collector.writeFileContent
+    assert.strictEqual(collector.writtenFiles.size, 2);
+    assert.strictEqual(collector.writtenFiles.get('server.properties')?.content, 'server-port=25565');
+    assert.strictEqual(collector.writtenFiles.get('server.properties')?.serverName, 'myserver');
+    assert.strictEqual(collector.writtenFiles.get('config.env')?.content, 'TYPE=PAPER');
+    assert.strictEqual(collector.writtenFiles.get('config.env')?.serverName, 'myserver');
+  });
+
+  test('should throw when restoring non-existent snapshot', async () => {
+    const repo = new MockConfigSnapshotRepository();
+    const storageAdapter = new MockConfigSnapshotStorage();
+    const collector = new MockConfigFileCollector();
+
+    const useCase = new ConfigSnapshotUseCaseImpl(repo, storageAdapter, collector);
+
+    await assert.rejects(
+      () => useCase.restore('non-existent-id'),
+      /Snapshot not found/
+    );
+  });
+
+  test('should throw when snapshot has no files to restore', async () => {
+    const repo = new MockConfigSnapshotRepository();
+    const storageAdapter = new MockConfigSnapshotStorage();
+    const collector = new MockConfigFileCollector();
+
+    // Create a snapshot with no files
+    const useCase = new ConfigSnapshotUseCaseImpl(repo, storageAdapter, collector);
+    const snapshot = await useCase.create('myserver', 'Empty snapshot');
+
+    await assert.rejects(
+      () => useCase.restore(snapshot.id),
+      /No files found/
+    );
+  });
 });
 
 // ==========================================
@@ -939,6 +1128,10 @@ describe('ConfigSnapshotScheduleUseCaseImpl', () => {
       return Array.from(this.schedules.values()).filter(
         (s) => s.serverName.value === serverName
       );
+    }
+
+    async findAll(): Promise<ConfigSnapshotSchedule[]> {
+      return Array.from(this.schedules.values());
     }
 
     async findAllEnabled(): Promise<ConfigSnapshotSchedule[]> {
@@ -1034,6 +1227,30 @@ describe('ConfigSnapshotScheduleUseCaseImpl', () => {
 
     const all = await useCase.findAll();
     assert.strictEqual(all.length, 2);
+  });
+
+  test('should find all schedules including disabled ones', async () => {
+    const repo = new MockScheduleRepository();
+    const useCase = new ConfigSnapshotScheduleUseCaseImpl(repo);
+
+    const enabled = await useCase.create('servera', 'Enabled Schedule', '0 * * * *');
+    const toDisable = await useCase.create('serverb', 'To Disable', '0 3 * * *');
+
+    // Disable one schedule
+    await useCase.disable(toDisable.id);
+
+    const all = await useCase.findAll();
+    assert.strictEqual(all.length, 2);
+
+    // Verify both enabled and disabled are included
+    const names = all.map((s) => s.name);
+    assert.ok(names.includes('Enabled Schedule'));
+    assert.ok(names.includes('To Disable'));
+
+    // Verify the disabled one is actually disabled
+    const disabledSchedule = all.find((s) => s.name === 'To Disable');
+    assert.ok(disabledSchedule);
+    assert.strictEqual(disabledSchedule.enabled, false);
   });
 
   test('should find schedules by server', async () => {

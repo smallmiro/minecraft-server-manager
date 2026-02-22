@@ -70,6 +70,17 @@ export class SqliteConfigSnapshotScheduleRepository
   }
 
   /**
+   * Find all config snapshot schedules (both enabled and disabled)
+   */
+  async findAll(): Promise<ConfigSnapshotSchedule[]> {
+    const stmt = this.db.prepare<[], ConfigSnapshotScheduleRow>(
+      'SELECT * FROM config_snapshot_schedules ORDER BY created_at ASC'
+    );
+    const rows = stmt.all();
+    return rows.map((row) => ConfigSnapshotSchedule.fromRaw(row));
+  }
+
+  /**
    * Find all enabled config snapshot schedules
    */
   async findAllEnabled(): Promise<ConfigSnapshotSchedule[]> {
