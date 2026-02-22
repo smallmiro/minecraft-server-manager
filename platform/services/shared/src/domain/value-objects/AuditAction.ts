@@ -58,4 +58,9 @@ export enum AuditActionEnum {
   BACKUP_SCHEDULE_ENABLE = 'backup.schedule.enable',
   BACKUP_SCHEDULE_DISABLE = 'backup.schedule.disable',
   BACKUP_SCHEDULE_RUN = 'backup.schedule.run',
+
+  // Config snapshot management
+  CONFIG_SNAPSHOT_CREATE = 'config.snapshot.create',
+  CONFIG_SNAPSHOT_DELETE = 'config.snapshot.delete',
+  CONFIG_SNAPSHOT_RESTORE = 'config.snapshot.restore',
 }
