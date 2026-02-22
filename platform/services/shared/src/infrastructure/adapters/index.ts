@@ -19,3 +19,8 @@ export {
   type CollectedMessage,
 } from './ApiPromptAdapter.js';
 export { SqliteBackupScheduleRepository } from './SqliteBackupScheduleRepository.js';
+export { ConfigSnapshotDatabase } from './ConfigSnapshotDatabase.js';
+export { SqliteConfigSnapshotRepository } from './SqliteConfigSnapshotRepository.js';
+export { SqliteConfigSnapshotScheduleRepository } from './SqliteConfigSnapshotScheduleRepository.js';
+export { FileSystemConfigSnapshotStorage } from './FileSystemConfigSnapshotStorage.js';
+export { FileSystemConfigFileCollector } from './FileSystemConfigFileCollector.js';
