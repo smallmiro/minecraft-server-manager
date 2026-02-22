@@ -674,6 +674,44 @@ export interface RestoreConfigSnapshotResponse {
   safetySnapshot?: ConfigSnapshotItem;
 }
 
+// ============================================================
+// Config Snapshot Schedule Types
+// ============================================================
+
+export interface ConfigSnapshotScheduleItem {
+  id: string;
+  serverName: string;
+  name: string;
+  cronExpression: string;
+  enabled: boolean;
+  retentionCount: number;
+  lastRunAt: string | null;
+  lastRunStatus: 'success' | 'failure' | null;
+  createdAt: string;
+}
+
+export interface ConfigSnapshotScheduleListResponse {
+  schedules: ConfigSnapshotScheduleItem[];
+}
+
+export interface CreateConfigSnapshotScheduleRequest {
+  serverName: string;
+  name: string;
+  cronExpression: string;
+  retentionCount?: number;
+  enabled?: boolean;
+}
+
+export interface UpdateConfigSnapshotScheduleRequest {
+  name?: string;
+  cronExpression?: string;
+  retentionCount?: number;
+}
+
+export interface ToggleConfigSnapshotScheduleRequest {
+  enabled: boolean;
+}
+
 /**
  * mcctl-api Client Interface
  * Defines the contract for API communication
@@ -771,4 +809,11 @@ export interface IMcctlApiClient {
   deleteConfigSnapshot(serverName: string, snapshotId: string): Promise<void>;
   getConfigSnapshotDiff(snapshotId1: string, snapshotId2: string): Promise<ConfigSnapshotDiffResponse>;
   restoreConfigSnapshot(serverName: string, snapshotId: string, options?: RestoreSnapshotOptions): Promise<RestoreConfigSnapshotResponse>;
+
+  // Config snapshot schedule operations
+  getConfigSnapshotSchedules(serverName?: string): Promise<ConfigSnapshotScheduleListResponse>;
+  createConfigSnapshotSchedule(request: CreateConfigSnapshotScheduleRequest): Promise<ConfigSnapshotScheduleItem>;
+  updateConfigSnapshotSchedule(id: string, request: UpdateConfigSnapshotScheduleRequest): Promise<ConfigSnapshotScheduleItem>;
+  toggleConfigSnapshotSchedule(id: string, enabled: boolean): Promise<ConfigSnapshotScheduleItem>;
+  deleteConfigSnapshotSchedule(id: string): Promise<void>;
 }
