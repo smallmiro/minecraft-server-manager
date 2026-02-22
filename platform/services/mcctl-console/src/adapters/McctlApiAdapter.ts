@@ -55,6 +55,10 @@ import {
   ConfigSnapshotDiffResponse,
   RestoreSnapshotOptions,
   RestoreConfigSnapshotResponse,
+  ConfigSnapshotScheduleListResponse,
+  ConfigSnapshotScheduleItem,
+  CreateConfigSnapshotScheduleRequest,
+  UpdateConfigSnapshotScheduleRequest,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -663,6 +667,54 @@ export class McctlApiAdapter implements IMcctlApiClient {
           force: options?.force ?? false,
         }),
       }
+    );
+  }
+
+  // ============================================================
+  // Config Snapshot Schedule Operations
+  // ============================================================
+
+  async getConfigSnapshotSchedules(serverName?: string): Promise<ConfigSnapshotScheduleListResponse> {
+    const params = serverName ? `?serverName=${encodeURIComponent(serverName)}` : '';
+    return this.fetch<ConfigSnapshotScheduleListResponse>(
+      `/api/config-snapshot-schedules${params}`
+    );
+  }
+
+  async createConfigSnapshotSchedule(request: CreateConfigSnapshotScheduleRequest): Promise<ConfigSnapshotScheduleItem> {
+    return this.fetch<ConfigSnapshotScheduleItem>(
+      '/api/config-snapshot-schedules',
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      }
+    );
+  }
+
+  async updateConfigSnapshotSchedule(id: string, request: UpdateConfigSnapshotScheduleRequest): Promise<ConfigSnapshotScheduleItem> {
+    return this.fetch<ConfigSnapshotScheduleItem>(
+      `/api/config-snapshot-schedules/${encodeURIComponent(id)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(request),
+      }
+    );
+  }
+
+  async toggleConfigSnapshotSchedule(id: string, enabled: boolean): Promise<ConfigSnapshotScheduleItem> {
+    return this.fetch<ConfigSnapshotScheduleItem>(
+      `/api/config-snapshot-schedules/${encodeURIComponent(id)}/toggle`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled }),
+      }
+    );
+  }
+
+  async deleteConfigSnapshotSchedule(id: string): Promise<void> {
+    await this.fetch<void>(
+      `/api/config-snapshot-schedules/${encodeURIComponent(id)}`,
+      { method: 'DELETE' }
     );
   }
 }
