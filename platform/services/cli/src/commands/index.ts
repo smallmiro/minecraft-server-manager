@@ -52,3 +52,27 @@ export {
   type AdminUserCommandOptions,
   type AdminApiCommandOptions,
 } from './console/index.js';
+
+// Config snapshot commands
+export {
+  configSnapshotListCommand,
+  type ConfigSnapshotListOptions,
+  configSnapshotCreateCommand,
+  type ConfigSnapshotCreateOptions,
+  configSnapshotShowCommand,
+  type ConfigSnapshotShowOptions,
+  configSnapshotDeleteCommand,
+  type ConfigSnapshotDeleteOptions,
+  configSnapshotDiffCommand,
+  type ConfigSnapshotDiffOptions,
+  configSnapshotRestoreCommand,
+  type ConfigSnapshotRestoreOptions,
+  configSnapshotScheduleListCommand,
+  type ConfigSnapshotScheduleListOptions,
+  configSnapshotScheduleAddCommand,
+  type ConfigSnapshotScheduleAddOptions,
+  configSnapshotScheduleRemoveCommand,
+  type ConfigSnapshotScheduleRemoveOptions,
+  configSnapshotScheduleToggleCommand,
+  type ConfigSnapshotScheduleToggleOptions,
+} from './config-snapshot/index.js';

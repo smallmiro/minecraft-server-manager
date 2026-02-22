@@ -8,6 +8,11 @@ import {
   DocsAdapter,
   SqliteAuditLogRepository,
   SqliteBackupScheduleRepository,
+  ConfigSnapshotDatabase,
+  SqliteConfigSnapshotRepository,
+  SqliteConfigSnapshotScheduleRepository,
+  FileSystemConfigSnapshotStorage,
+  FileSystemConfigFileCollector,
   // Use cases from shared
   CreateServerUseCase,
   DeleteServerUseCase,
@@ -16,6 +21,8 @@ import {
   BackupUseCase,
   PlayerLookupUseCase,
   BackupScheduleUseCase,
+  ConfigSnapshotUseCaseImpl,
+  ConfigSnapshotScheduleUseCaseImpl,
   // Port types from shared
   type IPromptPort,
   type IShellPort,
@@ -32,6 +39,8 @@ import {
   type IPlayerLookupUseCase,
   type IBackupScheduleUseCase,
   type IBackupScheduleRepository,
+  type IConfigSnapshotUseCase,
+  type IConfigSnapshotScheduleUseCase,
 } from '@minecraft-docker/shared';
 import { ModrinthAdapter } from '@minecraft-docker/mod-source-modrinth';
 // CLI-specific adapter
@@ -59,6 +68,9 @@ export class Container {
   private _auditLogPort?: IAuditLogPort;
   private _modSourcePort?: IModSourcePort;
   private _backupScheduleRepo?: IBackupScheduleRepository;
+  private _configSnapshotDatabase?: ConfigSnapshotDatabase;
+  private _configSnapshotUseCase?: IConfigSnapshotUseCase;
+  private _configSnapshotScheduleUseCase?: IConfigSnapshotScheduleUseCase;
 
   constructor(options?: ContainerOptions | string) {
     if (typeof options === 'string') {
@@ -137,6 +149,46 @@ export class Container {
       this._backupScheduleRepo = new SqliteBackupScheduleRepository(dbPath);
     }
     return this._backupScheduleRepo;
+  }
+
+  get configSnapshotDatabase(): ConfigSnapshotDatabase {
+    if (!this._configSnapshotDatabase) {
+      const dbPath = join(this.paths.root, 'data', 'config-snapshots.db');
+      this._configSnapshotDatabase = new ConfigSnapshotDatabase(dbPath);
+    }
+    return this._configSnapshotDatabase;
+  }
+
+  get configSnapshotUseCase(): IConfigSnapshotUseCase {
+    if (!this._configSnapshotUseCase) {
+      const repository = new SqliteConfigSnapshotRepository(
+        this.configSnapshotDatabase
+      );
+      const storageBasePath = join(
+        this.paths.root,
+        'data',
+        'config-snapshots'
+      );
+      const storage = new FileSystemConfigSnapshotStorage(storageBasePath);
+      const collector = new FileSystemConfigFileCollector(this.paths.servers);
+      this._configSnapshotUseCase = new ConfigSnapshotUseCaseImpl(
+        repository,
+        storage,
+        collector
+      );
+    }
+    return this._configSnapshotUseCase;
+  }
+
+  get configSnapshotScheduleUseCase(): IConfigSnapshotScheduleUseCase {
+    if (!this._configSnapshotScheduleUseCase) {
+      const repository = new SqliteConfigSnapshotScheduleRepository(
+        this.configSnapshotDatabase
+      );
+      this._configSnapshotScheduleUseCase =
+        new ConfigSnapshotScheduleUseCaseImpl(repository);
+    }
+    return this._configSnapshotScheduleUseCase;
   }
 
   // ========================================
