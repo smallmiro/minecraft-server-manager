@@ -26,6 +26,10 @@ export {
   AuditActionEnum,
   // Operator value objects
   OpLevel,
+  // Backup schedule value objects
+  CronExpression,
+  BackupRetentionPolicy,
+  type BackupRetentionPolicyData,
 } from './value-objects/index.js';
 
 // Entities
@@ -44,4 +48,7 @@ export {
   Operator,
   type OperatorData,
   type MinecraftOpsJson,
+  BackupSchedule,
+  type BackupScheduleData,
+  type BackupScheduleRow,
 } from './entities/index.js';

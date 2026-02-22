@@ -23,6 +23,9 @@ export type {
   PlayerLookupResult,
   PlayerNameHistory,
   PlayerUuidResult,
+  IBackupScheduleUseCase,
+  CreateBackupScheduleParams,
+  UpdateBackupScheduleParams,
 } from './inbound/index.js';
 
 // Outbound Ports (Infrastructure)
@@ -59,4 +62,5 @@ export type {
   ServiceLogsOptions,
   IAuditLogPort,
   AuditLogQueryOptions,
+  IBackupScheduleRepository,
 } from './outbound/index.js';

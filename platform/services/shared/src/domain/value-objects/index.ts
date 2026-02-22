@@ -19,3 +19,10 @@ export { AuditActionEnum } from './AuditAction.js';
 
 // Operator value objects
 export { OpLevel } from './OpLevel.js';
+
+// Backup schedule value objects
+export { CronExpression } from './CronExpression.js';
+export {
+  BackupRetentionPolicy,
+  type BackupRetentionPolicyData,
+} from './BackupRetentionPolicy.js';

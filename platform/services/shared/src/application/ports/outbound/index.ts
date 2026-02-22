@@ -51,3 +51,5 @@ export type {
 export type { IAuditLogPort, AuditLogQueryOptions } from './IAuditLogPort.js';
 
 export type { IOperatorPort } from './IOperatorPort.js';
+
+export type { IBackupScheduleRepository } from './IBackupScheduleRepository.js';

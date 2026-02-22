@@ -4,3 +4,4 @@ export { ServerStatusUseCase } from './ServerStatusUseCase.js';
 export { WorldManagementUseCase } from './WorldManagementUseCase.js';
 export { BackupUseCase } from './BackupUseCase.js';
 export { PlayerLookupUseCase } from './PlayerLookupUseCase.js';
+export { BackupScheduleUseCase } from './BackupScheduleUseCase.js';
