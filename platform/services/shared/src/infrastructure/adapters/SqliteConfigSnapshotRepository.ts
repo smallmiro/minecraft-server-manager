@@ -178,6 +178,28 @@ export class SqliteConfigSnapshotRepository implements IConfigSnapshotRepository
   }
 
   /**
+   * Find config snapshots by schedule ID, ordered by created_at DESC
+   */
+  async findByScheduleId(scheduleId: string): Promise<ConfigSnapshot[]> {
+    const stmt = this.db.prepare<[string], ConfigSnapshotDbRow>(
+      'SELECT * FROM config_snapshots WHERE schedule_id = ? ORDER BY created_at DESC'
+    );
+    const rows = stmt.all(scheduleId);
+    return Promise.all(rows.map((row) => this.loadFiles(row)));
+  }
+
+  /**
+   * Count config snapshots for a schedule
+   */
+  async countByScheduleId(scheduleId: string): Promise<number> {
+    const stmt = this.db.prepare<[string], { count: number }>(
+      'SELECT COUNT(*) as count FROM config_snapshots WHERE schedule_id = ?'
+    );
+    const result = stmt.get(scheduleId);
+    return result?.count ?? 0;
+  }
+
+  /**
    * Load files for a snapshot row and convert to entity
    */
   private async loadFiles(row: ConfigSnapshotDbRow): Promise<ConfigSnapshot> {

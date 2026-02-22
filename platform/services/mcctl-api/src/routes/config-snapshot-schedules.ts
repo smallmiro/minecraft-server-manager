@@ -4,12 +4,15 @@ import { join } from 'path';
 import {
   ConfigSnapshotScheduleUseCaseImpl,
   SqliteConfigSnapshotScheduleRepository,
+  SqliteConfigSnapshotRepository,
   ConfigSnapshotDatabase,
+  ConfigSnapshotSchedulerService,
   type IConfigSnapshotScheduleUseCase,
 } from '@minecraft-docker/shared';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 import { config } from '../config/index.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
+import { getConfigSnapshotUseCase } from '../services/config-snapshot-service.js';
 import {
   ConfigSnapshotScheduleSchema,
   ConfigSnapshotScheduleListResponseSchema,
@@ -62,11 +65,23 @@ const configSnapshotSchedulesPlugin: FastifyPluginAsync = async (
   // Initialize repository and use case via shared ConfigSnapshotDatabase
   const dbPath = join(config.mcctlRoot, 'data', 'config-snapshots.db');
   const database = new ConfigSnapshotDatabase(dbPath);
-  const repository = new SqliteConfigSnapshotScheduleRepository(database);
+  const scheduleRepository = new SqliteConfigSnapshotScheduleRepository(database);
+  const snapshotRepository = new SqliteConfigSnapshotRepository(database);
   const useCase: IConfigSnapshotScheduleUseCase =
-    new ConfigSnapshotScheduleUseCaseImpl(repository);
+    new ConfigSnapshotScheduleUseCaseImpl(scheduleRepository);
+
+  // Initialize config snapshot scheduler service
+  const snapshotUseCase = getConfigSnapshotUseCase();
+  const scheduler = new ConfigSnapshotSchedulerService(
+    snapshotUseCase,
+    useCase,
+    snapshotRepository,
+    fastify.log
+  );
+  await scheduler.initialize();
 
   fastify.addHook('onClose', async () => {
+    scheduler.shutdown();
     database.close();
   });
 
@@ -155,6 +170,9 @@ const configSnapshotSchedulesPlugin: FastifyPluginAsync = async (
             finalSchedule = updated;
           }
         }
+
+        // Register schedule with scheduler
+        scheduler.addSchedule(finalSchedule);
 
         await writeAuditLog({
           action: AuditActionEnum.CONFIG_SNAPSHOT_SCHEDULE_CREATE,
@@ -278,6 +296,9 @@ const configSnapshotSchedulesPlugin: FastifyPluginAsync = async (
           retentionCount: request.body.retentionCount,
         });
 
+        // Update scheduler with modified schedule
+        scheduler.updateSchedule(schedule);
+
         await writeAuditLog({
           action: AuditActionEnum.CONFIG_SNAPSHOT_SCHEDULE_UPDATE,
           actor: 'api:console',
@@ -375,6 +396,11 @@ const configSnapshotSchedulesPlugin: FastifyPluginAsync = async (
         const updatedSchedules = await useCase.findAll();
         const updated = updatedSchedules.find((s) => s.id === request.params.id);
 
+        // Update scheduler: add or remove cron job based on toggle
+        if (updated) {
+          scheduler.updateSchedule(updated);
+        }
+
         await writeAuditLog({
           action: enabled
             ? AuditActionEnum.CONFIG_SNAPSHOT_SCHEDULE_ENABLE
@@ -455,6 +481,9 @@ const configSnapshotSchedulesPlugin: FastifyPluginAsync = async (
         }
 
         const scheduleName = existing.name;
+
+        // Remove schedule from scheduler before deleting
+        scheduler.removeSchedule(request.params.id);
 
         await useCase.delete(request.params.id);
 

@@ -8,8 +8,11 @@ import type { SnapshotDiff } from '../../../domain/value-objects/SnapshotDiff.js
 export interface IConfigSnapshotUseCase {
   /**
    * Create a new config snapshot for a server
+   * @param serverName - Name of the server to snapshot
+   * @param description - Optional description for the snapshot
+   * @param scheduleId - Optional schedule ID if triggered by a schedule
    */
-  create(serverName: string, description?: string): Promise<ConfigSnapshot>;
+  create(serverName: string, description?: string, scheduleId?: string): Promise<ConfigSnapshot>;
 
   /**
    * List config snapshots, optionally filtered by server

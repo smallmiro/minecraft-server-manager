@@ -49,4 +49,9 @@ export interface IConfigSnapshotScheduleUseCase {
    * Find config snapshot schedules by server name
    */
   findByServer(serverName: string): Promise<ConfigSnapshotSchedule[]>;
+
+  /**
+   * Record a schedule run result (update lastRunAt and lastRunStatus)
+   */
+  recordRun(id: string, status: 'success' | 'failure'): Promise<void>;
 }

@@ -119,4 +119,17 @@ export class ConfigSnapshotScheduleUseCaseImpl
   ): Promise<ConfigSnapshotSchedule[]> {
     return this.repository.findByServer(serverName);
   }
+
+  /**
+   * Record a schedule run result (update lastRunAt and lastRunStatus)
+   */
+  async recordRun(id: string, status: 'success' | 'failure'): Promise<void> {
+    const existing = await this.repository.findById(id);
+    if (!existing) {
+      throw new Error(`Schedule not found: ${id}`);
+    }
+
+    const updated = existing.recordRun(status);
+    await this.repository.update(updated);
+  }
 }
