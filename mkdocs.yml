@@ -99,6 +99,7 @@ nav:
       - Modpacks: mods-and-plugins/modpacks.md
   - Management Console:
       - Overview: console/index.md
+      - Setup Guide: console/setup-guide.md
       - Installation: console/installation.md
       - CLI Commands: console/cli-commands.md
       - Web Console: console/web-console.md
