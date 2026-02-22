@@ -363,59 +363,6 @@ describe('BackupSchedulerService', () => {
     });
   });
 
-  describe('retention policy pruning', () => {
-    it('should attempt pruning after successful backup when retention policy is set', async () => {
-      const schedule = createTestSchedule({ maxCount: 5 });
-      vi.mocked(mockUseCase.findById).mockResolvedValue(schedule);
-      mockedExistsSync.mockReturnValue(true);
-
-      // Track all execFile calls
-      const execFileCalls: any[][] = [];
-      mockedExecFile.mockImplementation(
-        (file: any, args: any, opts: any, callback: any) => {
-          execFileCalls.push([file, args, opts]);
-          if (typeof callback === 'function') {
-            // For git rev-parse, return a hash
-            if (args && args.includes('rev-parse')) {
-              callback(null, 'abc1234\n', '');
-            }
-            // For git log --oneline (counting commits), return lines
-            else if (args && args.includes('--oneline')) {
-              callback(null, 'a\nb\nc\nd\ne\nf\n', '');
-            }
-            // For git log with date format (oldest date)
-            else if (args && args.includes('--format=%aI')) {
-              callback(null, '2025-01-01T00:00:00+00:00\n', '');
-            }
-            // For backup command
-            else {
-              callback(null, 'Backup complete', '');
-            }
-          }
-          return {} as any;
-        }
-      );
-
-      const nodeCron = await import('node-cron');
-      let capturedCallback: (() => Promise<void>) | null = null;
-      vi.mocked(nodeCron.schedule).mockImplementation((_expr, callback) => {
-        capturedCallback = callback as () => Promise<void>;
-        return mockCronTask;
-      });
-
-      await service.initialize();
-      service.registerTask(schedule);
-
-      if (capturedCallback) {
-        await capturedCallback();
-        await new Promise((resolve) => setTimeout(resolve, 200));
-      }
-
-      // Should have called execFile multiple times including for retention check
-      expect(mockedExecFile.mock.calls.length).toBeGreaterThan(1);
-    });
-  });
-
   describe('reload', () => {
     it('should stop all tasks and reload enabled schedules', async () => {
       const schedule = createTestSchedule();

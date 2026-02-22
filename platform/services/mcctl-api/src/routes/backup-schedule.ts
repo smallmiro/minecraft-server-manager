@@ -8,6 +8,8 @@ import {
 } from '@minecraft-docker/shared';
 import { config } from '../config/index.js';
 import { BackupSchedulerService } from '../services/backup-scheduler.js';
+import { writeAuditLog } from '../services/audit-log-service.js';
+import { AuditActionEnum } from '@minecraft-docker/shared';
 import {
   BackupScheduleListResponseSchema,
   BackupScheduleSchema,
@@ -151,10 +153,29 @@ const backupSchedulePlugin: FastifyPluginAsync = async (fastify: FastifyInstance
         scheduler.registerTask(schedule);
       }
 
+      await writeAuditLog({
+        action: AuditActionEnum.BACKUP_SCHEDULE_CREATE,
+        actor: 'api:console',
+        targetType: 'backup-schedule',
+        targetName: schedule.name,
+        status: 'success',
+        details: { cronExpression: schedule.cronExpression.expression },
+      });
+
       return reply.code(201).send(schedule.toJSON());
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       fastify.log.error(error, 'Failed to create backup schedule');
+
+      await writeAuditLog({
+        action: AuditActionEnum.BACKUP_SCHEDULE_CREATE,
+        actor: 'api:console',
+        targetType: 'backup-schedule',
+        targetName: request.body.name ?? 'unknown',
+        status: 'failure',
+        details: null,
+        errorMessage: message,
+      });
 
       if (message.includes('Invalid') || message.includes('cannot be empty')) {
         return reply.code(400).send({
@@ -193,9 +214,28 @@ const backupSchedulePlugin: FastifyPluginAsync = async (fastify: FastifyInstance
       // Reload scheduler to pick up changes
       await scheduler.reload();
 
+      await writeAuditLog({
+        action: AuditActionEnum.BACKUP_SCHEDULE_UPDATE,
+        actor: 'api:console',
+        targetType: 'backup-schedule',
+        targetName: schedule.name,
+        status: 'success',
+        details: { scheduleId: request.params.id },
+      });
+
       return reply.send(schedule.toJSON());
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+
+      await writeAuditLog({
+        action: AuditActionEnum.BACKUP_SCHEDULE_UPDATE,
+        actor: 'api:console',
+        targetType: 'backup-schedule',
+        targetName: request.params.id,
+        status: 'failure',
+        details: null,
+        errorMessage: message,
+      });
 
       if (message.includes('not found')) {
         return reply.code(404).send({
@@ -242,9 +282,32 @@ const backupSchedulePlugin: FastifyPluginAsync = async (fastify: FastifyInstance
         scheduler.unregisterTask(schedule.id);
       }
 
+      await writeAuditLog({
+        action: enabled
+          ? AuditActionEnum.BACKUP_SCHEDULE_ENABLE
+          : AuditActionEnum.BACKUP_SCHEDULE_DISABLE,
+        actor: 'api:console',
+        targetType: 'backup-schedule',
+        targetName: schedule.name,
+        status: 'success',
+        details: { enabled },
+      });
+
       return reply.send(schedule.toJSON());
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+
+      await writeAuditLog({
+        action: request.body.enabled
+          ? AuditActionEnum.BACKUP_SCHEDULE_ENABLE
+          : AuditActionEnum.BACKUP_SCHEDULE_DISABLE,
+        actor: 'api:console',
+        targetType: 'backup-schedule',
+        targetName: request.params.id,
+        status: 'failure',
+        details: null,
+        errorMessage: message,
+      });
 
       if (message.includes('not found')) {
         return reply.code(404).send({
@@ -278,10 +341,23 @@ const backupSchedulePlugin: FastifyPluginAsync = async (fastify: FastifyInstance
     },
   }, async (request: FastifyRequest<ScheduleIdRoute>, reply: FastifyReply) => {
     try {
+      // Get schedule name before deletion for audit log
+      const existing = await useCase.findById(request.params.id);
+      const scheduleName = existing?.name ?? request.params.id;
+
       // Unregister cron task
       scheduler.unregisterTask(request.params.id);
 
       await useCase.remove(request.params.id);
+
+      await writeAuditLog({
+        action: AuditActionEnum.BACKUP_SCHEDULE_DELETE,
+        actor: 'api:console',
+        targetType: 'backup-schedule',
+        targetName: scheduleName,
+        status: 'success',
+        details: { scheduleId: request.params.id },
+      });
 
       return reply.send({
         success: true,
@@ -289,6 +365,16 @@ const backupSchedulePlugin: FastifyPluginAsync = async (fastify: FastifyInstance
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+
+      await writeAuditLog({
+        action: AuditActionEnum.BACKUP_SCHEDULE_DELETE,
+        actor: 'api:console',
+        targetType: 'backup-schedule',
+        targetName: request.params.id,
+        status: 'failure',
+        details: null,
+        errorMessage: message,
+      });
 
       if (message.includes('not found')) {
         return reply.code(404).send({
