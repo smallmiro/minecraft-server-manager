@@ -176,6 +176,75 @@ The server detail page is organized into seven tabs:
 | **Access** | User permission management -- grant, modify, or revoke access per user |
 | **Options** | Server configuration editor with hostname management and game settings |
 
+### Overview Tab
+
+The Overview tab is the default view when you open a server's detail page. It serves as a real-time command center for monitoring and interacting with your server.
+
+![Server Overview](../images/server-overview.png)
+
+#### Console
+
+The centerpiece of the Overview tab is the **Console** panel, which provides direct access to the server's live log output and command interface:
+
+- **Live Log Stream** -- The console displays server log messages in real time, including timestamped entries for server events such as world loading, player connections, RCON initialization, and game state changes. Each log line includes the timestamp and log level (e.g., `INFO`) for easy troubleshooting.
+- **Command Input** -- At the bottom of the console, the **"Send a command"** input field lets you execute any Minecraft server command directly via RCON. Type a command (e.g., `say Hello!`, `gamemode creative Player1`, `time set day`) and press Enter to send it to the server. The command output appears in the log stream above.
+- **Auto-Scroll** -- The console automatically scrolls to show the latest log entries as they arrive, so you always see the most recent server activity.
+
+!!! tip "Console Commands"
+    The console supports all standard Minecraft server commands. You do not need to prefix commands with `/` -- simply type the command name and its arguments directly (e.g., `whitelist add Player1`).
+
+#### Server Information
+
+The **Server Information** panel on the bottom-left displays essential details about the server configuration and runtime status:
+
+| Field | Description |
+|-------|-------------|
+| **Name** | The server's display name (e.g., `botagent`) |
+| **Container** | The Docker container name (e.g., `mc-botagent`) |
+| **Hostname** | The primary hostname for client connections (e.g., `botagent.local`) |
+| **Type** | The server platform type (VANILLA, PAPER, FORGE, NEOFORGE, FABRIC, etc.) |
+| **Version** | The Minecraft game version (e.g., `1.21.11`) |
+| **Memory** | The allocated JVM memory (e.g., `2G`) |
+| **Uptime** | How long the server has been running since its last start |
+
+#### Players
+
+The **Players** panel on the bottom-right shows the list of players currently connected to the server. When no players are online, it displays "Player information unavailable" or an empty state. When players are connected, their Minecraft usernames and avatars are shown here for quick reference.
+
+### Mods Tab
+
+The Mods tab provides a complete mod management interface for servers running modded platforms (FORGE, NEOFORGE, FABRIC). This tab allows you to browse, install, and remove mods directly from the [Modrinth](https://modrinth.com/) repository without manual file management.
+
+![Server Mods](../images/server-mods.png)
+
+!!! note "Modded Servers Only"
+    The Mods tab is most useful for modded server types (FORGE, NEOFORGE, FABRIC). While the tab is visible for all servers, mod installation requires a compatible server platform.
+
+#### Installed Mods
+
+The **Installed Mods** section lists all mods currently installed on the server:
+
+- **Source badge** -- Indicates the mod source (e.g., `Modrinth`)
+- **Mod icon** -- The mod's thumbnail image from Modrinth
+- **Mod name** -- The display name of the mod (e.g., `Create`)
+- **Description** -- A brief summary of what the mod does (e.g., "Aesthetic Technology that empowers the Player")
+- **Download count** -- The total number of downloads on Modrinth (e.g., `12.6M`), indicating the mod's popularity
+- **Author** -- The mod creator's username (e.g., `simibubi`)
+- **Edit button** (external link icon) -- Opens the mod's page on Modrinth in a new tab for detailed information, changelogs, and documentation
+- **Delete button** (red trash icon) -- Removes the mod from the server after a confirmation prompt
+
+#### Adding New Mods
+
+Click the **+ Add Mods** button in the top-right corner of the Installed Mods section to open the mod search dialog. The search interface lets you:
+
+1. **Search** for mods by name or keyword on Modrinth
+2. **Filter** results by compatibility with your server's Minecraft version and mod loader
+3. **Preview** mod details including description, version history, and dependencies
+4. **Install** selected mods with a single click -- the system automatically downloads the correct version for your server
+
+!!! warning "Server Restart Required"
+    After installing or removing mods, you need to restart the server for the changes to take effect. The UI will prompt you to restart when mod changes are detected.
+
 ---
 
 ## Server Files

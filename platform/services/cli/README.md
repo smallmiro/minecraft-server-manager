@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.15.2 (2026-02-22)
+- **docs**: Server Overview/Mods tab screenshots with detailed descriptions (#409)
+- **docs**: Integrated setup guide for mcctl init to console init flow (#410)
+
 ### v2.15.1 (2026-02-22)
 - **docs**: Comprehensive web console documentation update with screenshots (#407, #408)
 - **fix**: Sync pnpm-lock.yaml with mcctl-api package.json (node-cron)
