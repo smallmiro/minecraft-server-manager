@@ -145,6 +145,8 @@ vi.mock('../src/services/config-snapshot-service.js', () => ({
   isServerRunning: vi.fn().mockImplementation(async (serverName: string) => {
     return serverName === 'running-server';
   }),
+
+  closeConfigSnapshotDatabase: vi.fn(),
 }));
 
 import { buildApp } from '../src/app.js';

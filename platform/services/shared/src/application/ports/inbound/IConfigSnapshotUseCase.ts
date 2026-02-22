@@ -36,6 +36,11 @@ export interface IConfigSnapshotUseCase {
   restore(snapshotId: string, force?: boolean): Promise<void>;
 
   /**
+   * Count config snapshots, optionally filtered by server
+   */
+  count(serverName?: string): Promise<number>;
+
+  /**
    * Delete a config snapshot
    */
   delete(id: string): Promise<void>;

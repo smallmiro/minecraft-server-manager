@@ -67,10 +67,8 @@ export async function listSnapshots(
 ): Promise<{ snapshots: ConfigSnapshot[]; total: number }> {
   const uc = getConfigSnapshotUseCase();
   const snapshots = await uc.list(serverName, limit, offset);
-
-  // Get total count by listing without limit/offset
-  const allSnapshots = await uc.list(serverName);
-  return { snapshots, total: allSnapshots.length };
+  const total = await uc.count(serverName);
+  return { snapshots, total };
 }
 
 /**
