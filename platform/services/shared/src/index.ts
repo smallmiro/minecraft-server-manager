@@ -124,6 +124,21 @@ export {
   BackupSchedule,
   type BackupScheduleData,
   type BackupScheduleRow,
+  // Config snapshot
+  ConfigSnapshot,
+  type ConfigSnapshotData,
+  type ConfigSnapshotRow,
+  ConfigSnapshotSchedule,
+  type ConfigSnapshotScheduleData,
+  type ConfigSnapshotScheduleRow,
+  ConfigSnapshotFile,
+  type ConfigSnapshotFileData,
+  FileDiff,
+  type FileDiffStatus,
+  type FileDiffData,
+  SnapshotDiff,
+  type SnapshotDiffData,
+  type SnapshotDiffSummary,
 } from './domain/index.js';
 
 // Re-export mod domain models
