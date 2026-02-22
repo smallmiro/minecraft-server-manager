@@ -281,19 +281,7 @@ export class BackupSchedulerService {
         );
 
         try {
-          // Use git rebase to squash old commits (non-interactive)
-          // Safer approach: truncate history by resetting to keep only maxCount commits
-          const keepFromHash = commitLines[policy.maxCount - 1];
-          if (keepFromHash) {
-            const hash = keepFromHash.split(' ')[0];
-            if (hash) {
-              await execFilePromise(
-                'git',
-                ['rebase', '--onto', hash + '~1', hash + '~1', 'HEAD'],
-                { cwd: worldsPath }
-              );
-            }
-          }
+          await this.truncateHistory(worldsPath, policy.maxCount);
         } catch (pruneError) {
           this.logger.warn(
             `Failed to prune old backups by count: ${pruneError instanceof Error ? pruneError.message : String(pruneError)}`
@@ -312,21 +300,16 @@ export class BackupSchedulerService {
         );
 
         try {
-          // Find the newest commit that is within the retention window
+          // Count commits within the retention window
           const { stdout: recentOutput } = await execFilePromise(
             'git',
-            ['log', '--format=%H', '--after', cutoffISO, '-1'],
+            ['log', '--format=%H', '--after', cutoffISO],
             { cwd: worldsPath }
           );
-          const newestRetainedHash = recentOutput.trim();
+          const retainedCommits = recentOutput.trim().split('\n').filter((line) => line.length > 0);
 
-          if (newestRetainedHash) {
-            // Create a new root from the retained point using filter-branch alternative
-            await execFilePromise(
-              'git',
-              ['rebase', '--onto', newestRetainedHash, newestRetainedHash + '~1', 'HEAD'],
-              { cwd: worldsPath }
-            );
+          if (retainedCommits.length > 0 && retainedCommits.length < backupCount) {
+            await this.truncateHistory(worldsPath, retainedCommits.length);
           }
         } catch (pruneError) {
           this.logger.warn(
@@ -339,6 +322,101 @@ export class BackupSchedulerService {
       this.logger.warn(
         `Retention policy check failed: ${error instanceof Error ? error.message : String(error)}`
       );
+    }
+  }
+
+  /**
+   * Truncate git history to keep only the most recent N commits.
+   * Uses orphan branch approach: creates a new orphan branch from the
+   * oldest commit to keep, then cherry-picks the remaining commits.
+   * After truncation, force-pushes to sync with remote.
+   */
+  private async truncateHistory(
+    worldsPath: string,
+    keepCount: number
+  ): Promise<void> {
+    // Get the current branch name
+    const { stdout: branchOutput } = await execFilePromise(
+      'git',
+      ['rev-parse', '--abbrev-ref', 'HEAD'],
+      { cwd: worldsPath }
+    );
+    const currentBranch = branchOutput.trim();
+
+    // Get the list of commit hashes to keep (most recent N commits, oldest first)
+    const { stdout: keepOutput } = await execFilePromise(
+      'git',
+      ['log', '--format=%H', `-${keepCount}`],
+      { cwd: worldsPath }
+    );
+    const commitsToKeep = keepOutput.trim().split('\n').filter((h) => h.length > 0).reverse();
+
+    if (commitsToKeep.length === 0) {
+      return;
+    }
+
+    const oldestToKeep = commitsToKeep[0]!;
+    const tempBranch = `_retention_temp_${Date.now()}`;
+
+    try {
+      // Create orphan branch starting from the oldest commit to keep
+      await execFilePromise(
+        'git',
+        ['checkout', '--orphan', tempBranch, oldestToKeep],
+        { cwd: worldsPath }
+      );
+
+      // Commit the tree of the oldest retained commit as the new root
+      await execFilePromise(
+        'git',
+        ['commit', '-C', oldestToKeep],
+        { cwd: worldsPath }
+      );
+
+      // Cherry-pick the remaining commits on top (if any)
+      if (commitsToKeep.length > 1) {
+        const remainingCommits = commitsToKeep.slice(1);
+        await execFilePromise(
+          'git',
+          ['cherry-pick', ...remainingCommits],
+          { cwd: worldsPath }
+        );
+      }
+
+      // Replace the original branch with the truncated one
+      await execFilePromise(
+        'git',
+        ['branch', '-M', tempBranch, currentBranch],
+        { cwd: worldsPath }
+      );
+
+      // Force-push to sync remote with truncated history
+      await execFilePromise(
+        'git',
+        ['push', '--force-with-lease'],
+        { cwd: worldsPath }
+      );
+
+      this.logger.info(
+        `History truncated to ${keepCount} commit(s) on branch ${currentBranch}`
+      );
+    } catch (error) {
+      // Attempt to recover: go back to original branch
+      try {
+        await execFilePromise(
+          'git',
+          ['checkout', currentBranch],
+          { cwd: worldsPath }
+        );
+        await execFilePromise(
+          'git',
+          ['branch', '-D', tempBranch],
+          { cwd: worldsPath }
+        );
+      } catch {
+        // Recovery failed, log but don't mask original error
+      }
+      throw error;
     }
   }
 

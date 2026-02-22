@@ -103,10 +103,9 @@ describe('BackupSchedulerService', () => {
     it('should warn when node-cron is not available', async () => {
       // This test verifies graceful degradation.
       // When node-cron import fails, initialize should warn and return.
-      // The actual behavior requires dynamic import mocking which is complex,
-      // so we verify the service handles missing cron gracefully.
+      // With node-cron mocked and no enabled schedules, no tasks should be registered.
       await service.initialize();
-      expect(service.activeTaskCount).toBeGreaterThanOrEqual(0);
+      expect(service.activeTaskCount).toBe(0);
     });
   });
 
