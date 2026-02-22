@@ -77,33 +77,28 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.15.1 (2026-02-22)
+- **docs**: Comprehensive web console documentation update with screenshots (#407, #408)
+- **fix**: Sync pnpm-lock.yaml with mcctl-api package.json (node-cron)
+
+### v2.15.0 (2026-02-22)
+- **feat**: Automated backup scheduling with cron-based scheduler (#394, #395)
+  - CLI `mcctl backup schedule` with list/add/remove/enable/disable operations
+  - REST API endpoints for schedule CRUD with node-cron integration
+  - Web Console UI with schedule management dialog and toggle
+  - Shell injection prevention, 54+ tests across all layers
+
 ### v2.14.0 (2026-02-21)
 - **feat(console)**: Enhanced installed mods display with rich card UI and batch API
-  - Replace slug Chips with card UI showing icon, title, description, downloads, author, Modrinth link
-  - Batch API using Modrinth `GET /v2/projects?ids=[]` for efficient metadata retrieval
-  - 3-state rendering: Skeleton / Detail Card / Fallback Card
-  - React Query caching (staleTime 5min, gcTime 30min)
 
 ### v2.13.0 (2026-02-21)
 - **feat(console)**: Improve Server Activity tab to match Audit Logs page UI (#391, #392)
-  - Convert to reusable `AuditLogTable` with Action/Status inline filters and pagination (25/50)
-  - Add `hideTargetColumn` and `rowsPerPageOptions` props for reusability
-- **docs**: Add mcctl update command documentation
 
 ### v2.12.1 (2026-02-20)
 - **docs**: Add server management guide (EN/KO) for start/stop operations
-- **docs**: Remove obsolete v1.6.8~v1.6.11 World Storage Bug warning
 
 ### v2.12.0 (2026-02-20)
 - **refactor(console)**: Convert file editors from Dialog to inline Card-based views (#389, #390)
-
-### v2.11.0 (2026-02-19)
-- **feat(console)**: Show Console section only on Overview tab (#387, #388)
-- **refactor(console)**: Redesign server.properties editor as inline view (replace dialog with full-page view)
-
-### v2.10.0 (2026-02-19)
-- **feat(console)**: Phase 5 - File Upload/Download with streaming proxy, drag-and-drop (#379, #386)
-- **feat(console)**: Phase 6 - File Operations: delete, rename, new folder dialogs (#380, #385)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

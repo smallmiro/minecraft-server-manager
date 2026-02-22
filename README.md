@@ -920,6 +920,14 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.15.1] - 2026-02-22
+
+**Changed:**
+- **Web Console Documentation** - Comprehensive update with screenshots and detailed feature descriptions (#407, #408)
+
+**Fixed:**
+- **pnpm-lock.yaml** - Sync lockfile with mcctl-api package.json for node-cron dependency
+
 ### [2.15.0] - 2026-02-22
 
 **Added:**
