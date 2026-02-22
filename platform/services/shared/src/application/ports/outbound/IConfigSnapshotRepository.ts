@@ -43,4 +43,14 @@ export interface IConfigSnapshotRepository {
    * Delete all config snapshots for a server
    */
   deleteByServer(serverName: string): Promise<void>;
+
+  /**
+   * Find config snapshots by schedule ID, ordered by created_at DESC
+   */
+  findByScheduleId(scheduleId: string): Promise<ConfigSnapshot[]>;
+
+  /**
+   * Count config snapshots for a schedule
+   */
+  countByScheduleId(scheduleId: string): Promise<number>;
 }

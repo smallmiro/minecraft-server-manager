@@ -23,10 +23,14 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
   /**
    * Create a new config snapshot for a server
    * Collects files, stores file contents, and saves metadata
+   * @param serverName - Name of the server to snapshot
+   * @param description - Optional description for the snapshot
+   * @param scheduleId - Optional schedule ID if triggered by a schedule
    */
   async create(
     serverName: string,
-    description?: string
+    description?: string,
+    scheduleId?: string
   ): Promise<ConfigSnapshot> {
     const server = ServerName.create(serverName);
 
@@ -44,7 +48,7 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
     }
 
     // Create snapshot entity
-    const snapshot = ConfigSnapshot.create(server, files, description);
+    const snapshot = ConfigSnapshot.create(server, files, description, scheduleId);
 
     // Store file contents
     await this.storage.store(snapshot.id, serverName, fileContents);
