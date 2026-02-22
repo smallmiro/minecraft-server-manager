@@ -17,6 +17,7 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
     startPlayitAgent: vi.fn(),
     stopPlayitAgent: vi.fn(),
     getServerPlayitDomain: vi.fn(),
+    setServerPlayitDomain: vi.fn(),
     getConfiguredServers: vi.fn(() => []),
   };
 });
@@ -424,6 +425,93 @@ describe('mcctl playit subcommand', () => {
       });
 
       expect(exitCode).toBe(1);
+    });
+  });
+
+  describe('playit domain', () => {
+    it('should set playit domain for a server', async () => {
+      createInitializedPlatform(true, 'test-key');
+
+      // Create server config.env
+      mkdirSync(join(testRoot, 'servers', 'factory'), { recursive: true });
+      writeFileSync(join(testRoot, 'servers', 'factory', 'config.env'), 'TYPE=PAPER\n', 'utf-8');
+
+      vi.mocked(shared.getConfiguredServers).mockReturnValueOnce(['factory']);
+
+      const exitCode = await playitCommand({
+        root: testRoot,
+        subCommand: 'domain',
+        domainArgs: ['factory', 'possible-tracks.gl.joinmc.link'],
+      });
+
+      expect(exitCode).toBe(0);
+      expect(shared.setServerPlayitDomain).toHaveBeenCalledWith(
+        'factory',
+        'possible-tracks.gl.joinmc.link',
+        expect.any(String),
+      );
+    });
+
+    it('should remove playit domain with --remove flag', async () => {
+      createInitializedPlatform(true, 'test-key');
+
+      mkdirSync(join(testRoot, 'servers', 'factory'), { recursive: true });
+      writeFileSync(join(testRoot, 'servers', 'factory', 'config.env'), 'TYPE=PAPER\nPLAYIT_DOMAIN=old.domain\n', 'utf-8');
+
+      vi.mocked(shared.getConfiguredServers).mockReturnValueOnce(['factory']);
+
+      const exitCode = await playitCommand({
+        root: testRoot,
+        subCommand: 'domain',
+        domainArgs: ['factory'],
+        remove: true,
+      });
+
+      expect(exitCode).toBe(0);
+      expect(shared.setServerPlayitDomain).toHaveBeenCalledWith(
+        'factory',
+        null,
+        expect.any(String),
+      );
+    });
+
+    it('should fail when server does not exist', async () => {
+      createInitializedPlatform(true, 'test-key');
+
+      vi.mocked(shared.getConfiguredServers).mockReturnValueOnce(['survival']);
+
+      const exitCode = await playitCommand({
+        root: testRoot,
+        subCommand: 'domain',
+        domainArgs: ['nonexistent', 'test.domain.com'],
+      });
+
+      expect(exitCode).toBe(1);
+      expect(shared.setServerPlayitDomain).not.toHaveBeenCalled();
+    });
+
+    it('should prompt interactively when no args given', async () => {
+      createInitializedPlatform(true, 'test-key');
+
+      mkdirSync(join(testRoot, 'servers', 'factory'), { recursive: true });
+      writeFileSync(join(testRoot, 'servers', 'factory', 'config.env'), 'TYPE=PAPER\n', 'utf-8');
+
+      vi.mocked(shared.getConfiguredServers).mockReturnValueOnce(['factory']);
+      vi.mocked(promptsModule.select).mockResolvedValueOnce('factory');
+      vi.mocked(promptsModule.text).mockResolvedValueOnce('interactive.domain.com');
+
+      const exitCode = await playitCommand({
+        root: testRoot,
+        subCommand: 'domain',
+        domainArgs: [],
+      });
+
+      expect(exitCode).toBe(0);
+      expect(shared.setServerPlayitDomain).toHaveBeenCalledWith(
+        'factory',
+        'interactive.domain.com',
+        expect.any(String),
+      );
     });
   });
 

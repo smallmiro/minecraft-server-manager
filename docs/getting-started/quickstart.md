@@ -192,6 +192,40 @@ Each server gets its own hostname:
 - `creative.192.168.1.100.nip.io:25565`
 - `modded.192.168.1.100.nip.io:25565`
 
+## Keeping mcctl Updated
+
+mcctl can update itself and all installed services from npm.
+
+### Check for Updates
+
+```bash
+mcctl update --check
+```
+
+### Update mcctl
+
+```bash
+# Interactive (prompts for confirmation)
+mcctl update
+
+# Auto-confirm (useful for CI/CD)
+mcctl update --yes
+```
+
+### Update CLI and All Services
+
+Update mcctl along with mcctl-api, mcctl-console, and shared library:
+
+```bash
+mcctl update --all
+```
+
+!!! tip "Automatic Update Checks"
+    mcctl automatically checks for updates in the background every 24 hours.
+    You will see a notification when a new version is available.
+
+For the full update command reference, see [mcctl update](../cli/commands.md#mcctl-update).
+
 ## What's Next?
 
 <div class="grid cards" markdown>
@@ -285,6 +319,15 @@ Each server gets its own hostname:
 | Restore server config | `mcctl server-restore <server>` |
 | Backup worlds to GitHub | `mcctl backup push -m "message"` |
 | Restore from GitHub | `mcctl backup restore <commit>` |
+
+### Maintenance
+
+| Task | Command |
+|------|---------|
+| Check for updates | `mcctl update --check` |
+| Update mcctl | `mcctl update` |
+| Update all services | `mcctl update --all` |
+| Auto-confirm update | `mcctl update --yes` |
 
 ---
 

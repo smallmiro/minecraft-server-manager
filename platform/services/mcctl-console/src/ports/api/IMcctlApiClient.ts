@@ -27,7 +27,7 @@ export interface ServerDetail extends ServerSummary {
   players?: {
     online: number;
     max: number;
-    list: string[];
+    players: string[];
   };
   stats?: ServerStats;
   worldName?: string;
@@ -158,37 +158,76 @@ export interface DeleteWorldResponse {
 
 export type Difficulty = 'peaceful' | 'easy' | 'normal' | 'hard';
 export type GameMode = 'survival' | 'creative' | 'adventure' | 'spectator';
+export type LevelType = 'default' | 'flat' | 'largeBiomes' | 'amplified' | 'buffet';
 
 export interface ServerConfig {
-  // Server Properties (hot-reload capable)
-  motd?: string;
-  maxPlayers?: number;
+  // ── Gameplay ──
   difficulty?: Difficulty;
   gameMode?: GameMode;
+  maxPlayers?: number;
   pvp?: boolean;
-  viewDistance?: number;
+  forceGamemode?: boolean;
+  hardcore?: boolean;
+  allowFlight?: boolean;
+  allowNether?: boolean;
+  enableCommandBlock?: boolean;
   spawnProtection?: number;
+  spawnAnimals?: boolean;
+  spawnMonsters?: boolean;
+  spawnNpcs?: boolean;
 
-  // Performance Settings (restart required)
+  // ── World ──
+  motd?: string;
+  level?: string;
+  levelType?: LevelType;
+  seed?: string;
+  generateStructures?: boolean;
+  maxWorldSize?: number;
+  icon?: string;
+
+  // ── Security ──
+  onlineMode?: boolean;
+  enableWhitelist?: boolean;
+  enforceWhitelist?: boolean;
+  enforceSecureProfile?: boolean;
+
+  // ── Performance & JVM ──
   memory?: string;
   useAikarFlags?: boolean;
+  viewDistance?: number;
+  simulationDistance?: number;
+  maxTickTime?: number;
+  initMemory?: string;
+  maxMemory?: string;
+  jvmXxOpts?: string;
+
+  // ── Auto-pause / Auto-stop ──
+  enableAutopause?: boolean;
+  autopauseTimeoutEst?: number;
+  autopauseTimeoutInit?: number;
+  autopausePeriod?: number;
+  enableAutostop?: boolean;
+  autostopTimeoutEst?: number;
+
+  // ── System ──
+  tz?: string;
+  resourcePack?: string;
+  enableRcon?: boolean;
+  resourcePackSha1?: string;
+  resourcePackEnforce?: boolean;
+  resourcePackPrompt?: string;
+  rconPassword?: string;
+  rconPort?: number;
+  stopDuration?: number;
+  uid?: number;
+  gid?: number;
 }
 
 export interface ServerConfigResponse {
   config: ServerConfig;
 }
 
-export interface UpdateServerConfigRequest {
-  motd?: string;
-  maxPlayers?: number;
-  difficulty?: Difficulty;
-  gameMode?: GameMode;
-  pvp?: boolean;
-  viewDistance?: number;
-  spawnProtection?: number;
-  memory?: string;
-  useAikarFlags?: boolean;
-}
+export type UpdateServerConfigRequest = Partial<ServerConfig>;
 
 export interface UpdateServerConfigResponse {
   success: boolean;
@@ -311,6 +350,109 @@ export interface PlayitActionResponse {
 }
 
 // ============================================================
+// Mod Management Types
+// ============================================================
+
+export interface ModListResponse {
+  mods: Record<string, string[]>;
+}
+
+export interface AddModsRequest {
+  slugs: string[];
+  source?: string;
+}
+
+export interface AddModsResponse {
+  success: boolean;
+  added: string[];
+  mods: string[];
+}
+
+export interface RemoveModResponse {
+  success: boolean;
+  removed: string;
+}
+
+export interface ModProjectDetail {
+  slug: string;
+  title: string;
+  description: string;
+  downloads: number;
+  iconUrl: string | null;
+  author: string;
+  categories: string[];
+  sourceUrl: string;
+}
+
+export interface ModProjectsResponse {
+  projects: Record<string, ModProjectDetail | null>;
+}
+
+export interface ModSearchHit {
+  slug: string;
+  title: string;
+  description: string;
+  downloads: number;
+  iconUrl: string | null;
+  author: string;
+  categories: string[];
+}
+
+export interface ModSearchResponse {
+  hits: ModSearchHit[];
+  totalHits: number;
+  offset: number;
+  limit: number;
+}
+
+// ============================================================
+// File Management Types
+// ============================================================
+
+export interface FileEntry {
+  name: string;
+  type: 'file' | 'directory';
+  size: number;
+  modifiedAt: string;
+}
+
+export interface FileListResponse {
+  path: string;
+  files: FileEntry[];
+}
+
+export interface FileContentResponse {
+  path: string;
+  content: string;
+  size: number;
+  modifiedAt: string;
+}
+
+export interface FileWriteResponse {
+  success: boolean;
+  path: string;
+  size: number;
+  modifiedAt: string;
+}
+
+export interface FileActionResponse {
+  success: boolean;
+  path: string;
+}
+
+export interface FileRenameResponse {
+  success: boolean;
+  oldPath: string;
+  newPath: string;
+}
+
+export interface FileUploadResponse {
+  success: boolean;
+  path: string;
+  files: string[];
+}
+
+// ============================================================
 // Backup Types
 // ============================================================
 
@@ -341,6 +483,56 @@ export interface BackupHistoryResponse {
 export interface BackupRestoreResponse {
   success: boolean;
   message?: string;
+}
+
+// ============================================================
+// Backup Schedule Types
+// ============================================================
+
+export interface BackupScheduleItem {
+  id: string;
+  name: string;
+  cronExpression: string;
+  cronHumanReadable: string;
+  retentionPolicy: {
+    maxCount?: number;
+    maxAgeDays?: number;
+  };
+  enabled: boolean;
+  lastRunAt: string | null;
+  lastRunStatus: 'success' | 'failure' | null;
+  lastRunMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackupScheduleListResponse {
+  schedules: BackupScheduleItem[];
+  total: number;
+}
+
+export interface CreateBackupScheduleRequest {
+  name: string;
+  cron: string;
+  maxCount?: number;
+  maxAgeDays?: number;
+  enabled?: boolean;
+}
+
+export interface UpdateBackupScheduleRequest {
+  name?: string;
+  cron?: string;
+  maxCount?: number;
+  maxAgeDays?: number;
+}
+
+export interface ToggleBackupScheduleRequest {
+  enabled: boolean;
+}
+
+export interface BackupScheduleActionResponse {
+  success: boolean;
+  message: string;
 }
 
 // ============================================================
@@ -461,6 +653,14 @@ export interface IMcctlApiClient {
   getBackupHistory(limit?: number): Promise<BackupHistoryResponse>;
   restoreBackup(commitHash: string): Promise<BackupRestoreResponse>;
 
+  // Backup schedule operations
+  getBackupSchedules(): Promise<BackupScheduleListResponse>;
+  getBackupSchedule(id: string): Promise<BackupScheduleItem>;
+  createBackupSchedule(request: CreateBackupScheduleRequest): Promise<BackupScheduleItem>;
+  updateBackupSchedule(id: string, request: UpdateBackupScheduleRequest): Promise<BackupScheduleItem>;
+  toggleBackupSchedule(id: string, enabled: boolean): Promise<BackupScheduleItem>;
+  deleteBackupSchedule(id: string): Promise<BackupScheduleActionResponse>;
+
   // Player management operations
   getWhitelist(serverName: string): Promise<WhitelistResponse>;
   getWhitelistStatus(serverName: string): Promise<WhitelistStatusResponse>;
@@ -485,8 +685,23 @@ export interface IMcctlApiClient {
   getHostnames(serverName: string): Promise<HostnameResponse>;
   updateHostnames(serverName: string, customHostnames: string[]): Promise<UpdateHostnamesResponse>;
 
+  // Mod management operations
+  getServerMods(serverName: string): Promise<ModListResponse>;
+  addServerMods(serverName: string, slugs: string[], source?: string): Promise<AddModsResponse>;
+  removeServerMod(serverName: string, slug: string): Promise<RemoveModResponse>;
+  searchMods(query: string, limit?: number, offset?: number): Promise<ModSearchResponse>;
+  getModProjects(slugs: string[], source?: string): Promise<ModProjectsResponse>;
+
   // Playit.gg operations
   getPlayitStatus(): Promise<PlayitAgentStatus>;
   startPlayit(): Promise<PlayitActionResponse>;
   stopPlayit(): Promise<PlayitActionResponse>;
+
+  // File management operations
+  listFiles(serverName: string, path: string): Promise<FileListResponse>;
+  readFile(serverName: string, path: string): Promise<FileContentResponse>;
+  writeFile(serverName: string, path: string, content: string): Promise<FileWriteResponse>;
+  deleteFile(serverName: string, path: string): Promise<FileActionResponse>;
+  createDirectory(serverName: string, path: string): Promise<FileActionResponse>;
+  renameFile(serverName: string, oldPath: string, newPath: string): Promise<FileRenameResponse>;
 }

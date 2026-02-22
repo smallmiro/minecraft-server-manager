@@ -6,6 +6,7 @@ import {
   startPlayitAgent,
   stopPlayitAgent,
   getServerPlayitDomain,
+  setServerPlayitDomain,
   getConfiguredServers,
 } from '@minecraft-docker/shared';
 import * as p from '@clack/prompts';
@@ -14,8 +15,10 @@ import { join } from 'node:path';
 
 export interface PlayitCommandOptions {
   root?: string;
-  subCommand?: 'start' | 'stop' | 'status' | 'setup';
+  subCommand?: 'start' | 'stop' | 'status' | 'setup' | 'domain';
   json?: boolean;
+  domainArgs?: string[];
+  remove?: boolean;
 }
 
 /**
@@ -279,6 +282,70 @@ async function handleSetup(paths: Paths): Promise<number> {
 }
 
 /**
+ * Handle 'mcctl playit domain <server> <domain>' subcommand
+ */
+async function handleDomain(paths: Paths, args: string[], remove: boolean): Promise<number> {
+  const serversDir = join(paths.root, 'servers');
+  const servers = getConfiguredServers(serversDir);
+
+  if (servers.length === 0) {
+    log.error('No servers configured');
+    return 1;
+  }
+
+  let serverName = args[0];
+  let domain: string | null = args[1] || null;
+
+  // Interactive mode when no args
+  if (!serverName) {
+    const selected = await p.select({
+      message: 'Select a server:',
+      options: servers.map((s) => ({ value: s, label: s })),
+    });
+
+    if (p.isCancel(selected)) {
+      p.cancel('Cancelled');
+      return 1;
+    }
+
+    serverName = selected as string;
+
+    const domainInput = await p.text({
+      message: 'Enter playit.gg domain (or leave empty to remove):',
+      placeholder: 'example.gl.joinmc.link',
+    });
+
+    if (p.isCancel(domainInput)) {
+      p.cancel('Cancelled');
+      return 1;
+    }
+
+    domain = (domainInput as string).trim() || null;
+    remove = domain === null;
+  }
+
+  // Validate server exists
+  if (!servers.includes(serverName)) {
+    log.error(`Server '${serverName}' not found`);
+    return 1;
+  }
+
+  if (remove) {
+    setServerPlayitDomain(serverName, null, serversDir);
+    log.info(`Removed playit domain from '${serverName}'`);
+  } else {
+    if (!domain) {
+      log.error('Usage: mcctl playit domain <server> <domain>');
+      return 1;
+    }
+    setServerPlayitDomain(serverName, domain, serversDir);
+    log.info(`Set playit domain for '${serverName}': ${colors.cyan(domain)}`);
+  }
+
+  return 0;
+}
+
+/**
  * Main playit command handler
  */
 export async function playitCommand(options: PlayitCommandOptions): Promise<number> {
@@ -305,8 +372,11 @@ export async function playitCommand(options: PlayitCommandOptions): Promise<numb
     case 'setup':
       return handleSetup(paths);
 
+    case 'domain':
+      return handleDomain(paths, options.domainArgs || [], options.remove || false);
+
     default:
-      log.error('Usage: mcctl playit <start|stop|status|setup>');
+      log.error('Usage: mcctl playit <start|stop|status|setup|domain>');
       return 1;
   }
 }

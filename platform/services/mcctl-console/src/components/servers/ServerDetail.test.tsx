@@ -16,6 +16,14 @@ vi.mock('@/hooks/useServerLogs', () => ({
   }),
 }));
 
+// Mock useMods hooks
+vi.mock('@/hooks/useMods', () => ({
+  useServerMods: () => ({ data: { mods: {} }, isLoading: false, error: null }),
+  useModSearch: () => ({ data: null, isLoading: false }),
+  useAddMod: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useRemoveMod: () => ({ mutateAsync: vi.fn() }),
+}));
+
 const renderWithTheme = (component: React.ReactNode) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -43,7 +51,7 @@ const mockServer: ServerDetailType = {
   players: {
     online: 3,
     max: 20,
-    list: ['player1', 'player2', 'player3'],
+    players: ['player1', 'player2', 'player3'],
   },
   stats: {
     cpuPercent: 25,
@@ -60,7 +68,7 @@ describe('ServerDetail', () => {
     renderWithTheme(<ServerDetail server={mockServer} />);
 
     expect(screen.getByRole('button', { name: /overview/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /content/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /mods/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /files/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /backups/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /options/i })).toBeInTheDocument();
@@ -88,13 +96,13 @@ describe('ServerDetail', () => {
     expect(screen.getByText('Console')).toBeInTheDocument();
   });
 
-  it('should switch to content tab', () => {
+  it('should switch to mods tab', () => {
     renderWithTheme(<ServerDetail server={mockServer} />);
 
-    const contentTab = screen.getByRole('button', { name: /content/i });
-    fireEvent.click(contentTab);
+    const modsTab = screen.getByRole('button', { name: /mods/i });
+    fireEvent.click(modsTab);
 
-    expect(screen.getByText(/content management coming soon/i)).toBeInTheDocument();
+    expect(screen.getByText(/installed mods/i)).toBeInTheDocument();
   });
 
   it('should switch to files tab', () => {
@@ -183,6 +191,33 @@ describe('ServerDetail', () => {
   it('should render command input field', () => {
     renderWithTheme(<ServerDetail server={mockServer} />);
 
+    expect(screen.getByPlaceholderText('Send a command')).toBeInTheDocument();
+  });
+
+  it('should hide console when switching to non-Overview tab', () => {
+    renderWithTheme(<ServerDetail server={mockServer} />);
+
+    // Console visible on Overview (default tab)
+    expect(screen.getByText('Console')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Send a command')).toBeInTheDocument();
+
+    // Switch to Activity tab
+    fireEvent.click(screen.getByRole('button', { name: /activity/i }));
+
+    // Console should not be visible
+    expect(screen.queryByText('Console')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Send a command')).not.toBeInTheDocument();
+  });
+
+  it('should show console again when returning to Overview tab', () => {
+    renderWithTheme(<ServerDetail server={mockServer} />);
+
+    // Switch away and back
+    fireEvent.click(screen.getByRole('button', { name: /activity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /overview/i }));
+
+    // Console should be visible again
+    expect(screen.getByText('Console')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Send a command')).toBeInTheDocument();
   });
 

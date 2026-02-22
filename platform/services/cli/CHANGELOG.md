@@ -5,6 +5,262 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.1] - 2026-02-22
+
+### Changed
+- **Web Console Documentation** - Comprehensive update with screenshots and detailed feature descriptions (#407, #408)
+  - Added screenshots for all major console features (Dashboard, Server Management, World Management, etc.)
+  - Updated feature descriptions with step-by-step usage guides
+  - Enhanced documentation structure for better readability
+
+### Fixed
+- **pnpm-lock.yaml** - Sync lockfile with mcctl-api package.json for node-cron dependency
+
+## [2.15.0] - 2026-02-22
+
+### Added
+- **Automated Backup Scheduling** - Cron-based backup scheduler with full-stack implementation (#394, #395)
+  - **Domain Layer**: `CronExpression` and `BackupRetentionPolicy` value objects, `BackupSchedule` entity with validation
+  - **Use Cases**: `BackupScheduleUseCase` with CRUD operations and `IBackupScheduleRepository` port
+  - **Infrastructure**: `SqliteBackupScheduleRepository` adapter with SQLite persistence
+  - **CLI**: `mcctl backup schedule` subcommand with `list`, `add`, `remove`, `enable`, `disable` operations
+    - Cron preset support (hourly, daily, weekly, monthly) and custom expressions
+    - Optional retention policy configuration (maxCount, maxAgeDays)
+  - **API**: RESTful backup schedule endpoints (GET/POST/PUT/PATCH/DELETE `/api/backup/schedules`)
+    - `BackupSchedulerService` with `node-cron` integration for automated backup execution
+    - Typebox validation schemas for request/response
+    - Audit logging for all schedule mutations
+  - **Console**: Backup Schedule management UI with CRUD and toggle
+    - `BackupScheduleList` component with enable/disable toggle
+    - `BackupScheduleDialog` for creating and editing schedules
+    - BFF proxy routes and React Query hooks
+  - **Security**: Shell injection prevention using `execFile()` instead of `exec()`
+  - **Tests**: 54+ tests across CLI (24), API routes (14), and scheduler service (16)
+
+### Note
+- Retention policy pruning deferred to separate implementation (#396)
+- Domain layer (`BackupRetentionPolicy`, `shouldPrune`) remains intact for future use
+
+## [2.14.0] - 2026-02-21
+
+### Added
+- **Console Mod Detail Cards** - Enhanced installed mods display with rich card UI in Server Detail Mods tab
+  - Replace simple slug Chip display with card UI showing mod icon, title, description, download count, author, and Modrinth link
+  - Batch API endpoint using Modrinth `GET /v2/projects?ids=[]` for efficient metadata retrieval
+  - 3-state rendering: Skeleton (loading), Detail Card (full info), Fallback Card (slug only on API failure)
+  - React Query caching with staleTime 5min, gcTime 30min for mod metadata
+  - BFF proxy route for mod projects API
+
+### Changed
+- **Modrinth Adapter** - Add `getProjects()` batch method with parallel team member resolution
+- **IModSourcePort** - Add optional `getProjects?()` method to mod source port interface
+
+## [2.13.0] - 2026-02-21
+
+### Added
+- **Console Server Activity Tab Redesign** - Improve Server Activity tab to match Audit Logs page UI (#391, #392)
+  - Convert Server Activity tab from simple List to reusable `AuditLogTable` component
+  - Add Action/Status inline filters for activity filtering
+  - Add pagination support with configurable rows per page (25/50)
+  - Add `hideTargetColumn` and `rowsPerPageOptions` props to `AuditLogTable` for reusability
+
+### Documentation
+- **mcctl update Command** - Add documentation for `mcctl update` command usage
+
+## [2.12.1] - 2026-02-20
+
+### Added
+- **Server Management Guide** - New bilingual (EN/KO) documentation for server start/stop operations
+  - Comprehensive guide covering `mcctl start`, `mcctl stop`, `mcctl up`, `mcctl down` commands
+  - Server lifecycle management with auto-scaling behavior
+  - Added to MkDocs navigation under Usage section
+
+### Removed
+- **World Storage Bug Warning** - Remove obsolete v1.6.8~v1.6.11 bug warning from documentation
+  - Issue was fully resolved in v1.6.12; warning no longer relevant
+
+## [2.12.0] - 2026-02-20
+
+### Changed
+- **Console File Editors Inline Redesign** - Convert TextEditor and PlayerEditorDialog from fullScreen Dialog overlays to inline Card-based views (#389, #390)
+  - All file editors now use consistent inline replacement rendering pattern
+  - Shared header pattern with back button, icon, title, and actions
+  - Matches ServerPropertiesView inline design for unified UX
+  - Eliminates modal overlays in favor of in-page navigation
+
+## [2.11.0] - 2026-02-19
+
+### Added
+- **Console Tab-Specific Console Section** - Show Console section only on Overview tab (#387, #388)
+  - Console section now appears exclusively in the Overview tab for cleaner UX
+  - Console open state resets automatically when leaving Overview tab
+  - Unit tests added for console visibility on tab switch
+
+### Changed
+- **Console server.properties Editor Redesign** - Replace modal dialog with inline view
+  - `ServerPropertiesDialog` (modal overlay) replaced with `ServerPropertiesView` (inline full-page view)
+  - New `RawPropertiesEditor` component for raw properties editing
+  - Properties editor now renders within the Files tab instead of as a dialog overlay
+  - Improved UX with back navigation instead of dialog close
+
+## [2.10.0] - 2026-02-19
+
+### Added
+- **Console File Upload/Download** - Phase 5: Streaming file transfers with drag-and-drop support (#379, #386)
+  - File upload with streaming proxy via `@fastify/multipart`
+  - Drag-and-drop file upload interface
+  - File download with streaming response
+  - Progress indicators for upload/download operations
+- **Console File Operations** - Phase 6: File management actions (delete, rename, new folder) (#380, #385)
+  - Delete confirmation dialog with safety checks
+  - Rename dialog for files and directories
+  - New folder creation dialog
+  - Contextual file operation menus
+
+## [2.9.0] - 2026-02-18
+
+### Added
+- **Console File Browser** - Phase 1: Directory navigation and file listing for server files management (#375, #381)
+  - Browse server file system with directory tree navigation
+  - File listing with name, size, and modification date
+  - Breadcrumb navigation for directory path
+- **Console Text Editor** - Phase 2: Read and write text files directly from the web console (#376, #382)
+  - View and edit server configuration files (server.properties, config files, etc.)
+  - Syntax-aware text editing with save functionality
+- **Console Player Editor Smart Routing** - Phase 3: Smart routing for player management files (#377, #383)
+  - Automatic detection and routing for whitelist.json, ops.json, banned-players.json
+  - Dedicated player editor UI for player management files
+  - Smart file type detection with specialized editing interfaces
+- **Console server.properties Form Editor** - Phase 4: Visual form-based editor for server.properties (#378, #384)
+  - Form-based editing with field descriptions and validation
+  - Grouped settings by category (gameplay, world, network, etc.)
+  - Type-safe inputs (boolean toggles, number fields, dropdowns)
+
+### Changed
+- **Console Font Cleanup** - Remove Roboto Mono font, use MUI default font stack (#373, #374)
+  - Cleaner typography using Material UI default fonts
+  - Reduced bundle size by removing custom font dependency
+
+## [2.8.1] - 2026-02-18
+
+### Changed
+- **Console Responsive Design Overhaul** - Improve responsive design across 14 components for mobile, tablet, and desktop (#371, #372)
+  - **P0 Critical**: ServerCard/WorldCard responsive height, page headers responsive flexDirection, NetworkSettings/PlayitSection table mobile scroll
+  - **P1 Important**: ServerDetail responsive tabs and console height, CreateServerDialog fullScreen on mobile, ServerConsole responsive header, StickyActionBar responsive padding
+  - **P2 Nice to have**: Dashboard responsive breakpoints, ServerOverview chip flex-wrap, ConnectionInfoCard word-break, UserList table overflow
+  - Accessibility: Add aria-label to console close button, fullScreen close button for dialogs
+
+## [2.8.0] - 2026-02-18
+
+### Added
+- **Console HostnameDisplay Common Component** - Reusable hostname display with popover for multiple hostnames (#369, #370)
+  - Shows primary hostname with (+N) Chip for servers with multiple hostnames
+  - Clicking Chip opens Popover with all hostnames and copy buttons
+  - Applied to 5 locations: ServerCard, ServerOverview, ServerDetailPage header, ServerDetail InfoRow, ConnectionInfoCard LAN Address
+  - Extracted `parseHostnames` and `getPrimaryHostname` utilities into `src/utils/hostname.ts`
+  - Extracted `CopyButton` into shared common component with configurable icon size
+
+### Fixed
+- **Console DOM Nesting Warning** - Change InfoRow value wrapper to `component="div"` to prevent invalid DOM nesting with HostnameDisplay
+- **Console InfoRow Null Behavior** - Preserve undefined hostname handling for hidden InfoRow display
+
+### Tests
+- **HostnameDisplay Component Tests** - Cover all render paths, Popover interaction, copy-to-clipboard, port suffix formatting, and event propagation prevention
+
+## [2.7.0] - 2026-02-18
+
+### Changed
+- **Console Font Overhaul** - Replace Ubuntu font with Roboto Mono (Google Fonts) across all console components
+  - Layout: Switch from `Ubuntu` to `Roboto_Mono` with CSS variable support
+  - MUI Theme: Update global fontFamily to Roboto Mono
+  - 11 components: Unify monospace/code font references from mixed (JetBrains Mono, Fira Code, generic monospace) to Roboto Mono
+  - Minecraft font preserved for game-related branding elements
+
+## [2.6.1] - 2026-02-17
+
+### Fixed
+- **Console Restart Badge UX** - Remove individual Restart badges from each settings field and consolidate restart information in StickyActionBar
+  - Reduces visual clutter in Server Properties tab
+  - StickyActionBar now shows specific field names requiring restart (e.g., "difficulty, pvp require restart")
+
+## [2.6.0] - 2026-02-17
+
+### Added
+- **Console Server Properties Full UI** - Complete server configuration management with 6 sections and ~40 fields using Progressive Disclosure pattern (#365, #366)
+  - General section: server name, MOTD, max players, difficulty, game mode, hardcore
+  - World section: level name, seed, level type, world generation settings
+  - Performance section: view distance, simulation distance, max tick time, network compression
+  - Network section: server port, enable query, enable RCON, connection settings
+  - Advanced section: spawn protection, max world size, entity limits, function permission level
+  - Operators section: enforce whitelist, enforce secure profile, OP permission level
+  - Collapsible sections with Progressive Disclosure for reduced cognitive load
+  - Real-time config updates via ConfigService REST API
+
+### Tests
+- **ConfigService Field Tests** - Add 22 unit tests for new ConfigService fields and 6 API integration tests (#367, #368)
+  - Full coverage for all ~40 config fields across 6 sections
+  - GET/PUT API endpoint tests for server configuration
+
+## [2.5.0] - 2026-02-17
+
+### Added
+- **Console Security Settings UI** - Online Mode and Whitelist settings in server detail page (#357, #358, #362)
+  - Toggle Online Mode on/off with safety confirmation dialog
+  - Toggle Whitelist on/off directly from server settings
+  - Real-time config updates via REST API
+
+### Fixed
+- **API Memory Parameter** - Pass `--memory` parameter to `create-server.sh` when creating servers via REST API (#356, #360)
+- **Console Player List Field** - Align player list field name (`players` to `list`) with backend API response format (#359, #361)
+- **API Whitelist Remove RCON Fallback** - Detect RCON error in whitelist remove and fall back to direct file editing (#363, #364)
+  - RCON `whitelist remove` sometimes fails silently; now detects error response and edits whitelist.json directly
+
+### Infrastructure
+- **Scripts**: Add `--memory` option support to `create-server.sh`
+- **Template**: Add `ONLINE_MODE` section to server `config.env` template
+
+## [2.4.1] - 2026-02-14
+
+### Fixed
+- **CI/CD**: Fix `mcctl-api` npm publish missing `workspace:*` replacement for `@minecraft-docker/mod-source-modrinth` dependency
+
+## [2.4.0] - 2026-02-14
+
+### Added
+- **CLI `mcctl upgrade` Command** - Upgrade mcctl and all services to latest version with automatic restart (#326, #355)
+  - Replaces manual npm update workflow with single command
+  - Automatically restarts PM2 services after upgrade
+  - Supports `--check` flag to preview available updates without installing
+- **CLI Creeper ASCII Banner** - Display creeper ASCII art with version check on `mcctl init` (#353, #354)
+  - Visual branding during platform initialization
+  - Automatic latest version check with update notification
+- **CLI `mcctl playit domain` Subcommand** - Manage playit.gg domain assignments per server (#347, #348)
+  - Add, remove, and list playit.gg domain mappings for servers
+  - Interactive server and domain selection
+
+### Changed
+- **Console Mods Tab** - Rename 'Content' tab to 'Mods' in server detail page (#349, #350)
+  - Clearer tab naming that directly reflects functionality
+- **Console Mods Tab Functionality** - Implement full Mods tab with mod listing and management (#351, #352)
+  - View installed mods per server
+  - Mod search and installation from Modrinth
+
+### Documentation
+- Update documentation for v2.4.0 with upgrade command and playit.gg guides
+
+## [2.3.5] - 2026-02-12
+
+### Fixed
+- **Playit.gg Container Name** - Use correct container name `playit-agent` in `getPlayitAgentStatus()` (#345, #346)
+  - Previously used incorrect container name when checking playit agent status
+  - Now correctly references the `playit-agent` container for status checks
+- **Console Playit Error Feedback** - Add error feedback for playit start/stop actions (#343)
+  - Previously, playit start/stop failures were silent in the web console
+  - Now displays error messages when playit operations fail
+- **Console Playit Layout** - Improve playit section header layout and server domains display (#343, #344)
+  - Better visual alignment of playit section headers
+  - Improved server domains display in playit configuration
+
 ## [2.3.4] - 2026-02-12
 
 ### Fixed

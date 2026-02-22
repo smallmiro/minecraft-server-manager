@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.3.2
-> **Last Updated**: 2026-02-12
+> **Version**: 2.11.0
+> **Last Updated**: 2026-02-19
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -307,6 +307,7 @@ External Players → playit.gg cloud → playit-agent (host) → localhost:25565
 | `mcctl playit stop` | Stop the playit-agent container |
 | `mcctl playit status` | Show agent status and registered servers |
 | `mcctl playit setup` | Configure or reconfigure SECRET_KEY |
+| `mcctl playit domain <server> <domain>` | Register playit.gg domain for a server |
 
 **Setup:**
 
@@ -332,6 +333,126 @@ services:
 ```
 
 **Environment Variable:** `PLAYIT_SECRET_KEY` in `.env`
+
+#### mcctl playit domain
+
+Register a playit.gg tunnel domain for an existing server. This adds the playit domain to the server's mc-router labels so external players can connect via that hostname.
+
+```bash
+mcctl playit domain <server> <domain>
+```
+
+**Example:**
+```bash
+mcctl playit domain survival xx-xx.craft.playit.gg
+```
+
+This updates the server's docker-compose.yml to include the playit.gg domain in mc-router routing labels.
+
+### playit.gg External Access - Complete Setup Guide
+
+playit.gg enables external players to connect to your Minecraft servers without port forwarding, static IP, or router configuration.
+
+#### Prerequisites
+- A free playit.gg account (https://playit.gg)
+- mcctl platform initialized (`mcctl init`)
+
+#### Step-by-Step Setup
+
+**Step 1: Create a playit.gg agent**
+1. Go to https://playit.gg/account/agents/new-docker
+2. Create a new Docker agent
+3. Copy the SECRET_KEY (a long string like `agt_xxxxxxxx...`)
+
+**Step 2: Configure mcctl with playit.gg**
+```bash
+mcctl playit setup
+# Enter your SECRET_KEY when prompted
+
+# Or during initial setup:
+mcctl init
+# Select "Yes" when asked about playit.gg
+```
+
+**Step 3: Start the playit agent**
+```bash
+mcctl playit start
+
+# Verify it's running:
+mcctl playit status
+```
+
+**Step 4: Create a tunnel on playit.gg**
+1. Go to https://playit.gg/account/tunnels
+2. Click "Add Tunnel"
+3. Select: Game -> Minecraft Java
+4. Set local address: localhost:25565
+5. Save - you'll get an address like `xx-xx.craft.playit.gg`
+
+**Step 5: Register the domain with your server**
+```bash
+# For a new server:
+mcctl create survival --playit-domain xx-xx.craft.playit.gg
+
+# For an existing server:
+mcctl playit domain survival xx-xx.craft.playit.gg
+```
+
+**Step 6: Share with friends**
+
+External players connect with: `xx-xx.craft.playit.gg` (no port needed, default 25565)
+
+#### Multiple Servers with playit.gg
+
+Each server needs its own tunnel on playit.gg:
+
+```bash
+# Server 1: survival
+mcctl playit domain survival ab-cd.craft.playit.gg
+
+# Server 2: creative
+mcctl playit domain creative ef-gh.craft.playit.gg
+```
+
+mc-router routes based on the hostname in the Minecraft handshake packet, so each tunnel domain maps to the correct server.
+
+#### Troubleshooting playit.gg
+
+| Problem | Cause | Solution |
+|---------|-------|----------|
+| Agent won't start | Invalid SECRET_KEY | Run `mcctl playit setup` again |
+| Can't connect externally | Tunnel not created | Create tunnel at playit.gg/account/tunnels |
+| Wrong server reached | Domain not registered | Run `mcctl playit domain <server> <domain>` |
+| Agent status "stopped" | Container crashed | Check logs with `docker logs playit-agent` |
+| "Connection refused" | mc-router not running | Run `mcctl up` or `mcctl router start` |
+
+#### playit.gg Environment Variables
+
+| Variable | Location | Description |
+|----------|----------|-------------|
+| `PLAYIT_SECRET_KEY` | `.env` | Agent authentication key from playit.gg |
+
+#### playit.gg Docker Configuration
+
+The playit-agent runs as a Docker container with `network_mode: host`:
+
+```yaml
+services:
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.16
+    container_name: playit-agent
+    network_mode: host
+    environment:
+      - SECRET_KEY=${PLAYIT_SECRET_KEY}
+    restart: unless-stopped
+    profiles:
+      - playit
+```
+
+Key points:
+- `network_mode: host` allows the agent to forward traffic to localhost:25565
+- `profiles: [playit]` means it only starts when explicitly requested
+- The agent connects to playit.gg cloud and establishes a tunnel
 
 **Connection Methods Summary:**
 
@@ -365,9 +486,55 @@ services:
 ```bash
 mcctl init                       # Initialize platform
 mcctl init --reconfigure         # Reconfigure existing installation
+mcctl init --upgrade             # Run platform upgrade via init command
 mcctl up                         # Start all (router + servers)
 mcctl down                       # Stop all
 mcctl router start|stop|restart  # Manage mc-router only
+```
+
+### Platform Upgrade
+
+```bash
+mcctl upgrade                       # Upgrade platform config (.env, templates)
+mcctl upgrade --dry-run             # Preview changes without applying
+mcctl upgrade --non-interactive     # Apply defaults without prompting
+mcctl init --upgrade                # Run upgrade via init command
+```
+
+#### mcctl upgrade
+
+Upgrade platform configuration files when updating mcctl to a new version. Compares the bundled `.env.example` template with your existing `.env` file and adds any new environment variables.
+
+**Key principle**: Existing user values are NEVER modified (append-only).
+
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Preview changes without modifying files |
+| `--non-interactive` | Use default values without prompting |
+| `--root <path>` | Custom data directory |
+
+**What happens during upgrade:**
+1. Compares bundled `.env.example` with your `.env` file
+2. Identifies new variables added in the latest version
+3. In interactive mode, prompts for values for each new variable
+4. Appends new variables to your `.env` file (grouped by section)
+5. Updates `servers/_template/` files (docker-compose.yml, config.env)
+6. Records `templateVersion` in `.mcctl.json`
+
+**Examples:**
+
+```bash
+# See what would change before applying
+mcctl upgrade --dry-run
+
+# Upgrade with prompts for each new variable
+mcctl upgrade
+
+# Upgrade in CI/CD or scripts (uses defaults)
+mcctl upgrade --non-interactive
+
+# Upgrade via init command
+mcctl init --upgrade
 ```
 
 ---
@@ -1510,6 +1677,7 @@ mcctl-console is a Next.js web application providing a modern UI for managing Mi
 - **Players Tab**: Online player list with Mojang skins
 - **Console Tab**: RCON command execution with output display
 - **Logs Tab**: Real-time server logs viewer
+- **Mods Tab** (v2.4.0+): View configured mods (Modrinth, CurseForge, Spiget, URL)
 - **Options Tab** (v1.11+): Server configuration editing via web UI
 - **Activity Tab** (v1.10+): Per-server audit log history
 - **Delete**: MoreVert menu with delete confirmation dialog
@@ -2108,6 +2276,41 @@ npm update -g @minecraft-docker/mcctl
 mcctl console service start
 ```
 
+### 14. Set Up External Access with playit.gg
+
+```bash
+# One-time setup
+mcctl playit setup
+mcctl playit start
+
+# Create tunnel at https://playit.gg/account/tunnels
+# Get your address: xx-xx.craft.playit.gg
+
+# Register with server
+mcctl playit domain survival xx-xx.craft.playit.gg
+
+# Share with friends: xx-xx.craft.playit.gg (no port forwarding needed!)
+
+# Check status
+mcctl playit status
+```
+
+### 15. Upgrade Platform After CLI Update
+
+```bash
+# After updating mcctl:
+npm update -g @minecraft-docker/mcctl
+
+# Check what changed:
+mcctl upgrade --dry-run
+
+# Apply changes (interactive):
+mcctl upgrade
+
+# Or apply with defaults (scripts/CI):
+mcctl upgrade --non-interactive
+```
+
 ---
 
 ## 14. Troubleshooting
@@ -2579,6 +2782,23 @@ A: nip.io works everywhere without client setup. mDNS requires avahi-daemon (Lin
 **Q: Can I have a default server (no hostname needed)?**
 A: Configure mc-router with `--default-server` flag or set the `DEFAULT_SERVER` environment variable pointing to a backend server.
 
+### External Access (playit.gg)
+
+**Q: What is playit.gg?**
+A: A free tunneling service that lets external players connect to your server without port forwarding or a static IP.
+
+**Q: How do I set up playit.gg?**
+A: Run `mcctl playit setup` with your SECRET_KEY, then `mcctl playit start`, create a tunnel at playit.gg, and register it with `mcctl playit domain <server> <domain>`.
+
+**Q: Can multiple servers use playit.gg?**
+A: Yes. Each server needs its own tunnel domain. mc-router routes connections to the correct server based on hostname.
+
+**Q: Is playit.gg free?**
+A: Yes, the basic plan is free and supports Minecraft Java tunneling. Premium plans offer custom domains and more tunnels.
+
+**Q: How do I add a playit domain to an existing server?**
+A: `mcctl playit domain <server-name> <your-playit-domain>`. This updates the server's mc-router labels.
+
 ### Migration and Updates
 
 **Q: How do I update mcctl?**
@@ -2591,11 +2811,56 @@ A: `mcctl update --all --yes`. This updates mcctl, mcctl-api, mcctl-console, and
 A: No. Minecraft server containers are independent of mcctl. Only Management Console services are restarted during `--all` update.
 
 **Q: How do I migrate from an old version?**
-A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix known issues (v1.6.8-1.6.11 world storage bug).
+A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix known issues.
+
+**Q: What is `mcctl upgrade`?**
+A: A command that detects new environment variables added in newer mcctl versions and appends them to your `.env` file. It never modifies existing values.
+
+**Q: When should I run `mcctl upgrade`?**
+A: After updating mcctl to a new version via `mcctl update` or `npm update -g @minecraft-docker/mcctl`.
+
+**Q: Is `mcctl upgrade` safe?**
+A: Yes. It only appends new variables and never modifies existing ones. Use `--dry-run` to preview changes first.
+
+**Q: What is the difference between `mcctl update` and `mcctl upgrade`?**
+A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl upgrade` updates your platform configuration files (.env, templates) to match the new version's template.
 
 ---
 
 ## 16. Version History
+
+### Version 2.4.0 (2026-02-14)
+
+**Added:**
+- **mcctl upgrade command** - Template-diffing based platform upgrade that detects new environment variables in `.env.example` and appends them to user's `.env` file (#326, #355)
+  - `--dry-run` flag to preview changes without applying
+  - `--non-interactive` flag for CI/CD usage (uses defaults)
+  - `mcctl init --upgrade` shortcut
+  - Append-only: existing user values are never modified
+  - Variables grouped by section with clear markers
+  - `templateVersion` tracking in `.mcctl.json`
+- **mcctl playit domain subcommand** - Register playit.gg tunnel domains for existing servers (#347, #348)
+- **Creeper ASCII banner** - Shows creeper art with version check on `mcctl init` (#353, #354)
+- **Console Mods tab** - Full mod management functionality in Web Console server detail page (#351, #352)
+  - View configured mods (Modrinth, CurseForge, Spiget, URL)
+  - Renamed from 'Content' to 'Mods' for clarity (#349, #350)
+
+### Version 2.3.5 (2026-02-12)
+
+**Fixed:**
+- Playit.gg container name fix - use correct `playit-agent` name in status checks (#345, #346)
+- Console playit error feedback for start/stop actions (#343)
+- Console playit section header layout improvement (#343, #344)
+
+### Version 2.3.4 (2026-02-12)
+
+**Fixed:**
+- Playit.gg Docker Compose setup - properly adds playit service during `mcctl init` and `mcctl playit setup` (#341, #342)
+
+### Version 2.3.3 (2026-02-12)
+
+**Fixed:**
+- Playit.gg Docker Compose CWD - pass correct working directory to docker compose commands (#339, #340)
 
 ### Version 2.3.2 (2026-02-12)
 
@@ -2750,37 +3015,7 @@ A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix kno
 - Backup API
 - `mcctl init --reconfigure` option
 
-### Version 1.6.8 ~ 1.6.11 (Critical Bug: World Storage Location)
-
-!!! warning "Critical Bug - Affects v1.6.8 ~ v1.6.11"
-    Servers created with these versions store worlds in wrong directory.
-
-**Issue:** Missing `EXTRA_ARGS=--universe /worlds/` in npm package template
-
-**Symptoms:**
-- World data stored in `servers/<name>/data/` instead of `worlds/`
-- Server creates new world on every restart
-- World sharing doesn't work
-
-**Detection:**
-```bash
-ls ~/minecraft-servers/servers/*/data/*/level.dat 2>/dev/null
-```
-
-**Solution:**
-```bash
-# Option 1: Automated migration (recommended)
-mcctl migrate status
-mcctl migrate worlds --all
-
-# Option 2: Manual fix
-echo 'EXTRA_ARGS=--universe /worlds/' >> ~/minecraft-servers/servers/<name>/config.env
-mcctl stop <name>
-mv ~/minecraft-servers/servers/<name>/data/<world> ~/minecraft-servers/worlds/<world>
-mcctl start <name>
-```
-
-### Version 1.6.0 ~ 1.6.7
+### Version 1.6.0 ~ 1.6.11
 
 - Management Console (REST API + Web Console)
 - `mcctl console` commands
@@ -2834,6 +3069,9 @@ mcctl start <name>
 | **BFF** | Backend-for-Frontend pattern used by mcctl-console to proxy mcctl-api |
 | **SSE** | Server-Sent Events for real-time streaming (server status, audit logs) |
 | **Better Auth** | Authentication library used by mcctl-console for session management |
+| **playit.gg** | Free tunneling service for external access without port forwarding |
+| **mcctl upgrade** | Platform configuration migration command (append-only .env updates) |
+| **templateVersion** | Version tracking field in `.mcctl.json` to track which template version was last applied |
 
 ---
 
@@ -2858,4 +3096,4 @@ mcctl start <name>
 
 ---
 
-*This document was generated as a comprehensive knowledge base for LLM agent consumption. Version 1.13.0, last updated 2026-02-07.*
+*This document was generated as a comprehensive knowledge base for LLM agent consumption. Version 2.4.0, last updated 2026-02-14.*

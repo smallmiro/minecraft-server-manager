@@ -1,10 +1,10 @@
 # Web Console Guide
 
-User guide for the mcctl-console web management interface.
+Complete user guide for the **mcctl-console** web management interface -- a modern, full-featured dashboard for managing Docker Minecraft servers from your browser.
 
 ## Overview
 
-The mcctl-console provides a modern web interface for managing your Docker Minecraft servers. Built with Next.js and featuring real-time updates, it offers a user-friendly alternative to CLI commands.
+The mcctl-console is a Next.js web application that provides a graphical interface to every aspect of your Minecraft server infrastructure. Instead of running CLI commands, you can manage servers, worlds, players, backups, audit logs, and routing through an intuitive dark-themed UI with real-time updates powered by Server-Sent Events (SSE).
 
 **Default URL:** `http://localhost:5000`
 
@@ -27,63 +27,16 @@ mcctl-console uses a Backend-for-Frontend (BFF) proxy pattern for secure API com
 
 ### Why BFF Proxy?
 
-1. **Security**: API keys stay server-side, never exposed to browser
-2. **Session Management**: Better Auth handles user authentication
+1. **Security**: API keys stay server-side, never exposed to the browser
+2. **Session Management**: Better Auth handles user authentication with JWT tokens
 3. **Type Safety**: Shared TypeScript interfaces between frontend and backend
-4. **Caching**: React Query provides optimistic updates and caching
-
-### API Routes (BFF Layer)
-
-The console proxies requests through Next.js API routes:
-
-| Console Route | Method | Description |
-|---------------|--------|-------------|
-| `/api/servers` | GET | List all servers |
-| `/api/servers` | POST | Create new server |
-| `/api/servers/:name` | GET | Get server details |
-| `/api/servers/:name` | DELETE | Delete server |
-| `/api/servers/:name/start` | POST | Start server |
-| `/api/servers/:name/stop` | POST | Stop server |
-| `/api/servers/:name/restart` | POST | Restart server |
-| `/api/servers/:name/exec` | POST | Execute RCON command |
-| `/api/servers/:name/logs` | GET | Get server logs |
-| `/api/worlds` | GET | List all worlds |
-| `/api/worlds` | POST | Create new world |
-| `/api/worlds/:name` | GET | Get world details |
-| `/api/worlds/:name` | DELETE | Delete world |
-| `/api/worlds/:name/assign` | POST | Assign world to server |
-| `/api/worlds/:name/release` | POST | Release world lock |
-
-### React Query Hooks
-
-The console provides type-safe React Query hooks for data fetching:
-
-```typescript
-// Server operations
-const { data: servers } = useServers();           // Auto-refresh every 10s
-const { data: server } = useServer('myserver');   // Auto-refresh every 5s
-const startMutation = useStartServer();
-const stopMutation = useStopServer();
-const execMutation = useExecCommand();
-
-// World operations
-const { data: worlds } = useWorlds();             // Auto-refresh every 30s
-const assignMutation = useAssignWorld();
-const releaseMutation = useReleaseWorld();
-```
-
-All hooks automatically handle:
-
-- Loading states
-- Error handling
-- Cache invalidation on mutations
-- Optimistic updates
+4. **Caching**: React Query provides optimistic updates and intelligent caching
 
 ## Accessing the Console
 
 ### First Time Login
 
-1. Start Management Console:
+1. Start the Management Console services:
    ```bash
    mcctl console service start
    ```
@@ -96,201 +49,533 @@ All hooks automatically handle:
 
 4. Click **Sign In**
 
-!!! tip "Remember Me"
-    Your session will persist for 24 hours by default. For longer sessions, modify `MCCTL_JWT_EXPIRY` in your configuration.
+!!! tip "Session Persistence"
+    Your session will persist for 24 hours by default. Refresh tokens are used to extend active sessions automatically. Click **Sign Out** in the user avatar menu (top-right corner) to end your session manually.
 
-### Session Management
-
-- Sessions expire after the configured JWT expiry time
-- Refresh tokens are used to extend active sessions
-- Click **Sign Out** in the user menu to end your session
+---
 
 ## Dashboard
 
-The dashboard provides an overview of all your Minecraft servers.
+The Dashboard is your command center -- it gives you an at-a-glance overview of your entire Minecraft server infrastructure.
+
+![Dashboard](../images/dashboard.png)
+
+### Statistics Cards
+
+At the top of the Dashboard, four statistics cards provide key metrics:
+
+| Card | Description |
+|------|-------------|
+| **Total Servers** | The total number of configured Minecraft servers across your platform |
+| **Online Servers** | How many servers are currently in a `running` state (updated in real-time via SSE) |
+| **Total Players** | The aggregate player count across all running servers |
+| **Total Worlds** | The total number of available worlds in your world storage |
+
+### Servers Panel
+
+The left side of the Dashboard displays a **Servers** panel listing each server with:
+
+- **Server name** and hostname (e.g., `botagent.local`)
+- **Player count** badge showing how many players are connected
+- **Status badges** -- color-coded tags such as `running`, `starting`, `exited`, `unhealthy`, or `stopped`
+
+Click on any server name to navigate directly to its detail page.
+
+### External Access Card
+
+On the right side, the **External Access** card shows your playit.gg tunnel status:
+
+- How many servers have external domains configured (e.g., "1 / 3 servers")
+- Current agent status (`Running` or `Stopped`)
+- A **Manage** link to navigate to the Routing page for detailed configuration
+
+### Recent Activity Feed
+
+The **Recent Activity** feed displays the latest management actions performed on your servers, such as:
+
+- Server start/stop events
+- Backup schedule changes
+- Configuration modifications
+- Player management actions
+
+Each entry shows the action type (with a color-coded badge), the target server or resource, who performed the action, and how long ago it occurred. Click **View All** to navigate to the full Audit Log page.
+
+### Recent Updates Feed
+
+The **Recent Updates** section shows the latest version changelog entries for the mcctl platform itself, so you can quickly see what features have been added or bugs have been fixed in recent releases.
+
+---
+
+## Servers
+
+The Servers page is where you manage all your Minecraft servers.
+
+![Servers](../images/servers.png)
 
 ### Server List
 
-Each server card displays:
+The page displays all configured servers as cards in a grid layout. Each server card shows:
 
-- **Server Name** - The unique identifier
-- **Status Indicator**
-  - Green: Running and healthy
-  - Yellow: Starting or health check in progress
-  - Red: Stopped or unhealthy
-- **Server Type** - PAPER, VANILLA, FORGE, FABRIC, etc.
-- **Version** - Minecraft version
-- **Players** - Current/Maximum player count
-- **Hostname** - Connection address for Minecraft clients
+- **Server name** (e.g., `botagent`, `factory`, `wild-deity`)
+- **Status badge** -- `Running` (green) or `Stopped` (red)
+- **Hostname** with the number of configured hostnames (e.g., `botagent.local +2`)
+- **Container name** (e.g., `mc-botagent`)
+- **Quick action button** -- Play (start) or Stop button in the bottom-right corner
 
-### Quick Actions
+### Filtering and Search
 
-From the dashboard, you can:
+At the top of the page, you can filter servers by status:
 
-- **Start** stopped servers (play button)
-- **Stop** running servers (stop button)
-- **Restart** servers (refresh button)
-- **View Details** - Click on server card
+- **ALL** -- Show all servers
+- **RUNNING** -- Show only running servers
+- **STOPPED** -- Show only stopped servers
 
-### Real-time Status (SSE)
+A **Search** box on the right allows you to filter servers by name in real time.
 
-Since v1.11, the dashboard uses Server-Sent Events (SSE) for real-time server status updates:
+### Creating a New Server
 
-- **No polling**: Status updates are pushed instantly via SSE
-- **Automatic reconnection**: Reconnects on connection loss
-- **Manual refresh**: Click the refresh button in the header
+Click the **+ Create Server** button in the page header to open the server creation dialog. The dialog guides you through:
 
-## Server Detail Page
+1. **Server name** -- A unique identifier for your server
+2. **Server type** -- PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, etc.
+3. **Minecraft version** -- Select the desired game version
+4. **Memory allocation** -- How much RAM to assign
+5. **Additional options** -- World name, seed, and other configuration
 
-Click on any server to view detailed information.
+The creation process uses Server-Sent Events to show real-time progress as the server container is being set up.
 
-### Server Information
+### Server Detail Page
 
-- **Container Name** - Docker container identifier
-- **Status** - Running state and health
-- **Uptime** - Time since last start
-- **Memory** - Allocated memory
-- **World** - Current world name and size
+Click on any server card to open the detailed server management view. The detail page features:
 
-### Players Section
+#### Header Section
 
-- **Online Players** - List of currently connected players
-- **Player Count** - Current / Maximum
+- Server name, type, version, and hostname information
+- **Stop** and **Restart** buttons for server lifecycle control
+- Status badge showing the current server state
 
-### Statistics
+#### Resource Monitoring
 
-- **CPU Usage** - Current CPU utilization
-- **Memory Usage** - RAM consumption
+Three stat cards display real-time resource usage:
 
-### Server Controls
+- **CPU Usage** -- Current CPU utilization percentage (with a circular progress indicator)
+- **Memory Usage** -- Current RAM consumption as a percentage of allocated memory
+- **World Size** -- The disk space used by the current world
 
-| Button | Action | Description |
-|--------|--------|-------------|
-| Start | Start server | Available when stopped |
-| Stop | Stop server | Graceful shutdown |
-| Restart | Restart server | Stop then start |
-| View Logs | Open logs panel | View console output |
+#### Navigation Tabs
 
-### Console Panel
+The server detail page is organized into seven tabs:
 
-The console panel allows you to:
+| Tab | Description |
+|-----|-------------|
+| **Overview** | Server console with live log output and RCON command input |
+| **Activity** | Per-server audit history showing all actions performed on this server |
+| **Mods** | Mod management -- search, install, and remove mods from Modrinth |
+| **Files** | Full file manager for browsing, editing, uploading, and downloading server files |
+| **Backups** | Server-specific backup information |
+| **Access** | User permission management -- grant, modify, or revoke access per user |
+| **Options** | Server configuration editor with hostname management and game settings |
 
-1. **View Logs** - See recent server output
-2. **Execute Commands** - Run RCON commands
+---
 
-#### Executing Commands
+## Server Files
 
-1. Click **View Logs** or the console icon
-2. Type a command in the input field
-3. Press **Enter** or click **Send**
-4. View the command output
+The Files tab provides a full-featured file manager for your server's file system.
 
-**Common Commands:**
+![Server Files](../images/server-files.png)
 
-| Command | Description |
+### File Browser
+
+The file browser displays the contents of the server's data directory in a familiar list layout:
+
+- **Breadcrumb navigation** at the top shows your current path (e.g., `root /`) and lets you click to jump to parent directories
+- **Search box** to filter files by name within the current directory
+- Each file entry shows the file name, size, and last modified date
+- **Folders** are listed first, followed by files
+
+### File Operations
+
+The toolbar provides several actions:
+
+| Action | Description |
+|--------|-------------|
+| **Upload** | Upload files to the current directory via a drag-and-drop dialog |
+| **New Folder** | Create a new directory in the current path |
+| **Refresh** | Reload the file listing |
+
+Right-clicking or using the context menu on a file provides:
+
+- **Rename** -- Change the file or folder name
+- **Delete** -- Remove the file with a confirmation dialog
+- **Download** -- Download the file to your local machine
+
+### Smart File Editors
+
+The file manager includes intelligent editors that adapt to the file type:
+
+- **server.properties** -- Opens a specialized form-based editor with categorized settings (see Server Options section)
+- **Player data files** (whitelist.json, ops.json, banned-players.json) -- Opens a dedicated player editor with Mojang API integration for username lookup
+- **Text files** (.txt, .json, .yml, .yaml, .properties, .cfg, .conf, .log, .toml) -- Opens a code editor with syntax awareness
+- **Other files** -- Available for download only
+
+!!! tip "Editing server.properties"
+    When you click on `server.properties` in the file browser, the system automatically opens the specialized properties editor with both a **FORM** mode (structured fields) and a **RAW** mode (plain text editing). This is the same editor available in the Options tab.
+
+---
+
+## Server Options
+
+The Options tab provides a comprehensive configuration editor for your server.
+
+![Server Options](../images/server-options.png)
+
+### Hostnames / Domains
+
+At the top of the Options tab, the **Hostnames / Domains** section shows all the hostnames configured for routing connections to this server:
+
+- **System Hostnames** -- Automatically generated hostnames (e.g., `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
+- **Custom Domains** -- User-defined custom domain names
+- **+ Add Domain** button to configure additional custom hostnames
+- A **Sync Hostnames** button to synchronize hostname configuration with the mc-router
+
+### Gameplay Settings
+
+The **Gameplay** section lets you configure core game rules and player experience:
+
+| Setting | Description |
 |---------|-------------|
-| `list` | Show online players |
-| `say <message>` | Broadcast message to all players |
-| `give <player> <item> [amount]` | Give item to player |
-| `time set day` | Set time to day |
-| `weather clear` | Clear weather |
-| `save-all` | Save world data |
-| `stop` | Stop the server |
+| **Difficulty** | Normal, Easy, Hard, or Peaceful |
+| **Game Mode** | Survival, Creative, Adventure, or Spectator |
+| **Max Players** | Maximum number of concurrent players |
+| **Enable PvP** | Whether players can damage each other |
 
-## World Management (v1.11+)
+A **Show Advanced Settings** toggle reveals additional options like spawn protection radius, entity broadcasting range, and more.
 
-The Worlds page (`/worlds`) provides full world management:
+### World Settings
 
-- **World List**: Shows name, size, lock status, and assigned server
-- **Create World**: Create new world with optional seed
-- **Assign World**: Assign to server (only non-running servers shown)
-- **Release Lock**: Release world lock from server
-- **Delete World**: Delete with confirmation dialog
-- **Reset World**: Reset world data with safety checks (server must be stopped)
+The **World** section controls world generation and server identity:
 
-## Server Options Tab (v1.11+)
+| Setting | Description |
+|---------|-------------|
+| **MOTD (Message of the Day)** | The welcome message shown in the Minecraft server browser |
+| **World Seed** | The seed used for world generation |
+| **World Name** | The name of the world directory |
+| **Level Type** | World generation type (Default, Flat, etc.) |
 
-The Options tab on Server Detail page allows:
+### Additional Setting Categories
 
-- View server configuration (config.env values)
-- Edit configuration through web UI
-- Real-time config updates via REST API
+Expanding the advanced settings reveals more configuration sections:
 
-## Audit Logs (v1.10+)
+- **JVM / Performance** -- Memory allocation, Aikar's flags, JVM options
+- **Network** -- Online mode, RCON settings, port configuration
+- **Advanced** -- Auto-pause, auto-stop, timezone, UID/GID settings
 
-The Audit Logs page (`/audit-logs`) provides activity tracking:
+### Save and Restart
 
-- **Filterable Table**: Filter by action, actor, target, status, date range
-- **Statistics Overview**: Total events, action breakdown, success/failure rates
-- **Detail View**: Click any entry for full details
-- **Export**: Export audit data
-- **Real-time Streaming**: SSE stream for new audit events
-- **Dashboard Widget**: Recent Activity Feed on dashboard
-- **Server Activity**: Per-server audit history in Server Detail Activity tab
+When you modify settings:
 
-## Routing Page (v1.13+)
+1. A **sticky action bar** appears at the bottom of the page showing how many fields have changed
+2. Click **Save** to apply the changes
+3. If any changed setting requires a server restart (e.g., memory, online mode, world settings), a **Restart Confirmation Dialog** appears asking whether to restart now or later
+4. Click **Reset** to discard unsaved changes
 
-The Routing page (`/routing`) provides:
+!!! warning "Restart Required"
+    Some settings (like memory allocation, online mode, and world seed) require a server restart to take effect. The UI clearly indicates which settings need a restart after being changed.
 
-- Avahi mDNS hostname monitoring
-- Hostname routing configuration and status
+---
 
-## User Interface Elements
+## Player Management
 
-### Navigation Bar
+The Players page provides comprehensive management of players across all your servers.
 
-- **Logo/Home** - Return to dashboard
-- **User Menu** - Account options and sign out
-- **Theme Toggle** - Switch between light and dark mode
+![Player Management](../images/players.png)
 
-### Server Cards
+### Server Selector
 
-```
-+---------------------------+
-|  Server Name        [>]   |
-|  PAPER 1.21.1             |
-|                           |
-|  Status: Running          |
-|  Players: 3/20            |
-|  survival.nip.io:25565    |
-|                           |
-|  [Start] [Stop] [Restart] |
-+---------------------------+
-```
+At the top of the page, a **Server** dropdown lets you select which server to manage. The selected server determines which player data is displayed in all tabs below.
 
-### Status Indicators
+### Tabs
 
-| Color | Meaning |
-|-------|---------|
-| Green | Running, healthy |
-| Yellow | Starting, transitioning |
-| Red | Stopped, unhealthy |
-| Gray | Unknown, not configured |
+The Player Management page is organized into four tabs:
+
+#### Online Players
+
+Shows players currently connected to the selected server. When the server is running, this displays real-time player information.
+
+#### Whitelist
+
+Manage which players are allowed to join your server:
+
+- **Whitelist toggle** -- Enable or disable the whitelist (shown as an ON/OFF switch)
+- **Player input field** -- Enter a Minecraft username to add to the whitelist
+- **Add button** -- Add a single player
+- **Bulk button** -- Add multiple players at once
+- **Player list** -- Shows all whitelisted players with their Minecraft avatar and a remove button
+
+!!! info "Offline Server Data"
+    When a server is offline, the Players page reads data directly from the server's JSON files (whitelist.json, ops.json, banned-players.json). An informational banner indicates: "Server is offline. Showing data from whitelist.json. Changes will apply on next server start."
+
+#### Operators
+
+Manage players with operator (admin) privileges:
+
+- Add players as operators with configurable permission levels (1-4)
+- **Level 1**: Can bypass spawn protection
+- **Level 2**: Can use /clear, /gamemode, etc.
+- **Level 3**: Can use /ban, /kick, /op, etc.
+- **Level 4**: Can use /stop, full access
+
+An information panel on the right explains each OP level in detail.
+
+#### Ban List
+
+Manage banned players:
+
+- Ban players by username with an optional reason
+- View all currently banned players
+- Pardon (unban) players with a single click
+- An information panel explains how bans work
+
+---
+
+## Worlds
+
+The Worlds page lets you manage all Minecraft worlds stored in your platform.
+
+![Worlds](../images/worlds.png)
+
+### World List
+
+Worlds are displayed as cards in a grid layout. Each world card shows:
+
+- **World name** (e.g., `Wild-Deity`, `botagent`, `factory`)
+- **Status badge** -- `Available` (green) for unlocked worlds, `Locked` for worlds currently assigned to a server
+- **Size** -- Disk space used by the world (e.g., `610.2MB`, `20.5MB`)
+- **Date** -- When the world was created or last modified
+- **Action buttons**:
+    - **Link icon** -- Assign the world to a server
+    - **Delete icon** (red trash can) -- Delete the world
+
+### Filtering and Search
+
+At the top of the page:
+
+- **ALL** -- Show all worlds
+- **AVAILABLE** -- Show only available (unlocked) worlds
+- **LOCKED** -- Show only worlds currently assigned to a server
+
+A **Search** box lets you filter worlds by name.
+
+### Creating a New World
+
+Click **+ Create World** in the page header to open the creation dialog:
+
+1. Enter a **World name**
+2. Optionally specify a **Seed** for world generation
+3. Click **Create**
+
+### Assigning a World to a Server
+
+Click the **link icon** on a world card to open the assignment dialog. Select a server from the list of available (non-running) servers and confirm the assignment. The world will be linked to that server and marked as `Locked`.
+
+### Deleting a World
+
+Click the **red trash can icon** on a world card. A confirmation dialog appears requiring you to type the exact world name to prevent accidental deletion. This action is irreversible.
+
+!!! warning "Data Loss"
+    Deleting a world permanently removes all world data including terrain, player builds, and entities. Always create a backup before deleting a world.
+
+---
+
+## Backups
+
+The Backups page manages world backups and automated backup schedules.
+
+![Backups](../images/backup.png)
+
+### Backup Status
+
+The top section shows the current backup configuration:
+
+- **Repository** -- The configured Git repository for backup storage (e.g., `smallmiro/minecraft-worlds-backup`)
+- **Status** -- Whether the backup system is `Configured` (green checkmark) or not
+- **Backup count** -- Number of existing backups
+
+### Push Backup
+
+The **Push Backup** button in the page header triggers an immediate manual backup of all worlds to the configured Git repository.
+
+### Backup Schedules
+
+The **Backup Schedules** section manages automated cron-based backup scheduling:
+
+- Each schedule shows the **world name**, **frequency** (e.g., "Every hour"), and the cron expression
+- **Retention** badge -- indicates whether backup retention policies are configured
+- **Toggle switch** -- Enable or disable individual schedules
+- **Edit button** (pencil icon) -- Modify the schedule
+- **Delete button** (trash icon) -- Remove the schedule
+- **+ Add Schedule** button to create new automated backup schedules
+
+### Backup History
+
+The **Backup History** section (visible when the backup system is configured) shows a log of past backup operations, including timestamps, status, and any errors.
+
+---
+
+## Audit Log
+
+The Audit Log page provides a comprehensive activity log for all management operations performed across your servers.
+
+![Audit Log](../images/audit-log.png)
+
+### Live Monitoring
+
+The Audit Log features a **Live** indicator in the page header showing the real-time SSE connection status:
+
+- **Green dot with "Live"** -- Connected and receiving real-time events
+- **Gray dot with "Offline"** -- SSE connection lost (auto-reconnects)
+
+When new audit events arrive while you are viewing the page, a notification banner appears: "X new logs available - Click to refresh."
+
+### Statistics Overview
+
+Four statistics cards at the top provide summary metrics:
+
+| Card | Description |
+|------|-------------|
+| **Total Logs** | Total number of audit log entries |
+| **Success Rate** | Percentage of successful operations |
+| **Failures** | Count of failed operations |
+| **Active Users** | Number of unique actors who performed actions |
+
+### Filters
+
+The Audit Log provides powerful filtering capabilities:
+
+- **Date range picker** -- Filter by start and end dates
+- **Action filter** -- Filter by specific action types (e.g., `server.start`, `server.stop`, `backup.schedule.create`)
+- **Target type filter** -- Filter by target category: ALL, SERVER, PLAYER
+- **Status filter** -- ALL, SUCCESS, FAILURE
+- **Actor filter** -- Search by the name of the user who performed the action
+- **Export** button -- Export filtered audit data
+
+### Log Table
+
+The main table displays audit entries with the following columns:
+
+| Column | Description |
+|--------|-------------|
+| **Timestamp** | When the action was performed (relative time like "21m ago") |
+| **Action** | The action type with a color-coded badge |
+| **Actor** | Who performed the action (username) |
+| **Target** | The server, world, or resource affected |
+| **Status** | Success (green) or Failure (red) indicator |
+
+Click on any row to open a **Detail Drawer** with full information about the audit entry, including request metadata, IP address, and the complete action payload.
+
+### Export
+
+Click the **Export** button to open the export dialog, which allows you to download audit data in various formats based on your current filter selection.
+
+---
+
+## Routing
+
+The Routing page gives you full visibility and control over your network routing configuration.
+
+![Routing](../images/routing.png)
+
+### Platform Information
+
+The left panel shows **Platform Information** about your mc-router setup:
+
+| Field | Description |
+|-------|-------------|
+| **Router Name** | The mc-router container name |
+| **Port** | The listening port (default: 25565) |
+| **Mode** | Routing mode (e.g., `Auto Discovery`) |
+| **Uptime** | How long the router has been running |
+
+### Network Settings
+
+The **Network Settings** card displays:
+
+- **Listening Port** -- The port mc-router listens on
+- **Routing Mode** -- How hostnames are resolved (e.g., `Auto Discovery`)
+- **Active Routes** -- Number of active routing entries
+
+### MC Router Status
+
+The right panel shows the **MC Router Status** with a live routing table:
+
+- **Healthy** / **Unhealthy** status indicators
+- For each server, the routing table displays:
+    - Server name with its Minecraft version
+    - Number of configured routes
+    - All hostname mappings (e.g., `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
+
+### mDNS (Avahi) Status
+
+The **mDNS (Avahi)** card shows whether the Avahi mDNS daemon is active, enabling `.local` hostname resolution for Minecraft clients on the local network.
+
+### External Access (playit.gg)
+
+The **External Access** section manages playit.gg tunnel configuration for making your servers accessible from the internet without port forwarding:
+
+- **Start Agent** / **Auto Dashboard** buttons for managing the playit agent
+- **Agent Status** -- Running or Stopped
+- **Server Domains** table showing which servers have external domains configured (e.g., `possible-tracks.gl.joinmc.link`)
+- Status information for servers without external domains
+
+---
+
+## Navigation
+
+The top navigation bar is consistent across all pages and includes:
+
+| Item | Description |
+|------|-------------|
+| **MINECRAFT CONSOLE** logo | Click to return to the Dashboard |
+| **Dashboard** | Infrastructure overview |
+| **Servers** | Server management |
+| **Worlds** | World management |
+| **Players** | Player management |
+| **Audit** | Activity audit logs |
+| **Backups** | Backup management |
+| **Routing** | Network routing configuration |
+| **User avatar** (top-right) | Account settings, theme toggle, and sign out |
+
+The currently active page is highlighted in the navigation bar.
+
+---
 
 ## Best Practices
 
 ### Security
 
-1. **Use Strong Passwords** - Follow the password requirements during setup
-2. **Limit Access** - Use `ip-whitelist` mode to restrict access
-3. **Use HTTPS** - Configure a reverse proxy with SSL for production
-4. **Regular Updates** - Keep the Management Console updated
+1. **Use Strong Passwords** -- Follow the password requirements during `mcctl console init`
+2. **Limit Access** -- Use the Access tab to grant minimal permissions to each user
+3. **Use HTTPS** -- Configure a reverse proxy with SSL for production deployments
+4. **Review Audit Logs** -- Regularly check the Audit Log for unexpected activity
 
-### Monitoring
+### Server Management
 
-1. **Check Dashboard Regularly** - Monitor server health and player counts
-2. **Review Logs** - Check for errors or unusual activity
-3. **Set Up Alerts** - Consider external monitoring for critical servers
+1. **Monitor the Dashboard** -- Check server health, player counts, and recent activity regularly
+2. **Graceful Shutdowns** -- Always use the Stop button instead of force-killing containers
+3. **Backup Before Changes** -- Push a backup before modifying server configuration or world data
+4. **Use Scheduled Backups** -- Configure automated backup schedules for peace of mind
 
 ### Performance
 
-1. **Don't Overload** - Don't run too many commands simultaneously
-2. **Graceful Shutdowns** - Use stop instead of force-killing containers
-3. **Regular Backups** - Use `mcctl backup` before major changes
+1. **Avoid Simultaneous Operations** -- Don't start/stop multiple servers at once
+2. **Monitor Resource Usage** -- Use the resource stat cards on the server detail page to track CPU and memory
+3. **Clean Up Unused Worlds** -- Delete worlds that are no longer needed to free disk space
+
+---
 
 ## Troubleshooting
 
-### Can't Access Console
+### Can't Access the Console
 
 1. **Check Service Status:**
    ```bash
@@ -319,9 +604,6 @@ The Routing page (`/routing`) provides:
    mcctl console user reset-password admin
    ```
 
-3. **Check NextAuth Configuration:**
-   Ensure `NEXTAUTH_SECRET` and `NEXTAUTH_URL` are set correctly
-
 ### Server Status Not Updating
 
 1. **Check API Health:**
@@ -330,59 +612,31 @@ The Routing page (`/routing`) provides:
    ```
 
 2. **Verify Docker Socket:**
-   Ensure Docker socket is mounted correctly in `docker-compose.admin.yml`
+   Ensure Docker is running and the mcctl-api process has access to the Docker socket.
 
 3. **Check Network:**
-   Ensure mcctl-console can reach mcctl-api
+   Ensure mcctl-console can reach mcctl-api on port 5001.
 
 ### Commands Not Working
 
-1. **Verify Server is Running:**
-   Server must be in `running` state
-
-2. **Check RCON:**
-   RCON must be enabled on the server
-
-3. **View API Logs:**
+1. **Server Must Be Running** -- RCON commands only work when the server is in a `running` state
+2. **RCON Must Be Enabled** -- Ensure RCON is enabled in the server configuration
+3. **Check API Logs:**
    ```bash
-   mcctl console service logs --api-only
+   pm2 logs mcctl-api --lines 100
    ```
+
+---
 
 ## Mobile Access
 
-The web console is responsive and works on mobile devices:
+The web console uses a responsive Material UI layout that adapts to different screen sizes:
 
-- **Phone** - Simplified card layout, collapsible menus
-- **Tablet** - Full dashboard with optimized controls
-- **Desktop** - Full feature set
+- **Phone** -- Simplified card layout with collapsible navigation
+- **Tablet** -- Full dashboard with optimized touch controls
+- **Desktop** -- Full feature set with side-by-side panels
 
-!!! tip "Mobile Considerations"
-    - Use landscape mode for better command input
-    - Enable 2FA if accessing from mobile
-    - Consider VPN for secure mobile access
-
-## Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+/` | Focus command input |
-| `Enter` | Send command |
-| `Escape` | Close modal/panel |
-| `r` | Refresh dashboard (when not in input) |
-
-## Screenshots
-
-!!! note "Screenshots Placeholder"
-    Screenshots will be added in a future update. The actual interface may vary slightly from the descriptions above.
-
-### Dashboard View
-_[Screenshot: Dashboard showing multiple server cards with status indicators]_
-
-### Server Detail View
-_[Screenshot: Server detail page with player list and controls]_
-
-### Console Panel
-_[Screenshot: Console panel with command input and log output]_
-
-### Login Page
-_[Screenshot: Login page with username and password fields]_
+!!! tip "Mobile Tips"
+    - Use landscape mode for better command input in the console
+    - The navigation collapses into a hamburger menu on small screens
+    - All dialogs are full-screen on mobile for easier interaction

@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 import Box from '@mui/material/Box';
-import Tooltip from '@mui/material/Tooltip';
+import { HostnameDisplay } from '@/components/common';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import DnsIcon from '@mui/icons-material/Dns';
@@ -55,13 +55,6 @@ const getStatusLabel = (status: ServerSummary['status']): string => {
   }
 };
 
-// Get primary hostname (first one, preferring .local)
-const getPrimaryHostname = (hostname: string | undefined): string => {
-  if (!hostname) return '-';
-  const hosts = hostname.split(',').map(h => h.trim());
-  const localHost = hosts.find(h => h.endsWith('.local'));
-  return localHost || hosts[0] || '-';
-};
 
 export function ServerCard({ server, statusOverride, onClick, onStart, onStop, loading = false }: ServerCardProps) {
   // Use SSE status if available, otherwise fall back to server data
@@ -83,8 +76,6 @@ export function ServerCard({ server, statusOverride, onClick, onStart, onStop, l
 
   const isRunning = currentStatus === 'running';
   const isStopped = currentStatus === 'stopped' || currentStatus === 'exited' || currentStatus === 'not_created';
-  const primaryHostname = getPrimaryHostname(server.hostname);
-  const allHostnames = server.hostname?.split(',').map(h => h.trim()) || [];
 
   return (
     <Card
@@ -93,7 +84,8 @@ export function ServerCard({ server, statusOverride, onClick, onStart, onStop, l
       sx={{
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s',
-        height: 180,
+        height: { xs: 'auto', sm: 180 },
+        minHeight: { xs: 140, sm: 180 },
         display: 'flex',
         flexDirection: 'column',
         '&:hover': onClick
@@ -135,20 +127,7 @@ export function ServerCard({ server, statusOverride, onClick, onStart, onStop, l
         {/* Hostname */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
           <LinkIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-          <Tooltip title={allHostnames.length > 1 ? allHostnames.join('\n') : ''} arrow>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {primaryHostname}
-              {allHostnames.length > 1 && ` (+${allHostnames.length - 1})`}
-            </Typography>
-          </Tooltip>
+          <HostnameDisplay hostname={server.hostname} />
         </Box>
 
         {/* Container */}

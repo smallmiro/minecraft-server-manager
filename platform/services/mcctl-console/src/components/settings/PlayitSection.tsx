@@ -135,121 +135,142 @@ export function PlayitSection() {
 
   const isRunning = data.agentRunning && data.containerStatus === 'running';
   const isActionPending = startPlayit.isPending || stopPlayit.isPending;
+  const actionError = startPlayit.error || stopPlayit.error;
 
   return (
     <Card>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <PublicIcon color="primary" />
           <Typography variant="h6" component="h2">
             External Access (playit.gg)
           </Typography>
-          <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+        </Box>
+        {actionError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {actionError.message || 'Action failed'}
+          </Alert>
+        )}
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+          {isRunning ? (
             <Button
-              component="a"
-              href="https://playit.gg/account/tunnels"
-              target="_blank"
-              rel="noopener noreferrer"
+              variant="outlined"
               size="small"
-              startIcon={<OpenInNewIcon />}
+              color="error"
+              startIcon={isActionPending ? <CircularProgress size={16} /> : <StopIcon />}
+              onClick={handleStop}
+              disabled={isActionPending}
               sx={{ fontSize: 12 }}
             >
-              View Dashboard
+              {isActionPending ? 'Stopping...' : 'Stop Agent'}
             </Button>
-            {isRunning ? (
-              <Button
-                variant="outlined"
-                size="small"
-                color="error"
-                startIcon={isActionPending ? <CircularProgress size={16} /> : <StopIcon />}
-                onClick={handleStop}
-                disabled={isActionPending}
-                sx={{ fontSize: 12 }}
-              >
-                {isActionPending ? 'Stopping...' : 'Stop Agent'}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                size="small"
-                color="success"
-                startIcon={isActionPending ? <CircularProgress size={16} color="inherit" /> : <PlayArrowIcon />}
-                onClick={handleStart}
-                disabled={isActionPending}
-                sx={{ fontSize: 12 }}
-              >
-                {isActionPending ? 'Starting...' : 'Start Agent'}
-              </Button>
-            )}
-          </Box>
+          ) : (
+            <Button
+              variant="contained"
+              size="small"
+              color="success"
+              startIcon={isActionPending ? <CircularProgress size={16} color="inherit" /> : <PlayArrowIcon />}
+              onClick={handleStart}
+              disabled={isActionPending}
+              sx={{ fontSize: 12 }}
+            >
+              {isActionPending ? 'Starting...' : 'Start Agent'}
+            </Button>
+          )}
+          <Button
+            component="a"
+            href="https://playit.gg/account/tunnels"
+            target="_blank"
+            rel="noopener noreferrer"
+            size="small"
+            startIcon={<OpenInNewIcon />}
+            sx={{ fontSize: 12 }}
+          >
+            View Dashboard
+          </Button>
         </Box>
 
         {/* Agent Status */}
-        <Table size="small" sx={{ mb: 3 }}>
-          <TableBody>
-            <TableRow>
-              <TableCell sx={cellLabelSx}>Agent Status</TableCell>
-              <TableCell sx={cellValueSx}>
-                <Chip
-                  label={isRunning ? 'Running' : 'Stopped'}
-                  size="small"
-                  color={isRunning ? 'success' : 'default'}
-                  variant="outlined"
-                />
-              </TableCell>
-            </TableRow>
-            {data.uptime && (
+        <Box sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ mb: 3 }}>
+            <TableBody>
               <TableRow>
-                <TableCell sx={cellLabelSx}>Uptime</TableCell>
-                <TableCell sx={cellValueSx}>{data.uptime}</TableCell>
+                <TableCell sx={cellLabelSx}>Agent Status</TableCell>
+                <TableCell sx={cellValueSx}>
+                  <Chip
+                    label={isRunning ? 'Running' : 'Stopped'}
+                    size="small"
+                    color={isRunning ? 'success' : 'default'}
+                    variant="outlined"
+                  />
+                </TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              {data.uptime && (
+                <TableRow>
+                  <TableCell sx={cellLabelSx}>Uptime</TableCell>
+                  <TableCell sx={cellValueSx}>{data.uptime}</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Box>
 
         {/* Server Domains Table */}
-        {data.servers && data.servers.length > 0 && (
-          <>
-            <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
-              Server Domains
-            </Typography>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600, borderBottom: 2, borderColor: 'divider' }}>
-                    Server
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600, borderBottom: 2, borderColor: 'divider' }}>
-                    External Domain
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data.servers.map((server) => (
-                  <TableRow key={server.serverName}>
-                    <TableCell sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-                      {server.serverName}
-                    </TableCell>
-                    <TableCell sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-                      {server.playitDomain ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                            {server.playitDomain}
-                          </Typography>
-                          <CopyButton text={server.playitDomain} />
-                        </Box>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          Not configured
-                        </Typography>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </>
-        )}
+        {data.servers && data.servers.length > 0 && (() => {
+          const configured = data.servers.filter((s) => s.playitDomain);
+          const unconfigured = data.servers.filter((s) => !s.playitDomain);
+
+          return (
+            <>
+              <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
+                Server Domains
+              </Typography>
+              {configured.length > 0 ? (
+                <Box sx={{ overflowX: 'auto' }}>
+                  <Table size="small" sx={{ mb: unconfigured.length > 0 ? 2 : 0 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600, borderBottom: 2, borderColor: 'divider' }}>
+                          Server
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, borderBottom: 2, borderColor: 'divider' }}>
+                          External Domain
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {configured.map((server) => (
+                        <TableRow key={server.serverName}>
+                          <TableCell sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+                            {server.serverName}
+                          </TableCell>
+                          <TableCell sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
+                                {server.playitDomain}
+                              </Typography>
+                              <CopyButton text={server.playitDomain!} />
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  No servers with external domains configured.
+                  Use <code>mcctl create --playit-domain</code> to register a domain.
+                </Typography>
+              )}
+              {unconfigured.length > 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  {unconfigured.length} server{unconfigured.length > 1 ? 's' : ''} without external domain: {unconfigured.map((s) => s.serverName).join(', ')}
+                </Typography>
+              )}
+            </>
+          );
+        })()}
       </CardContent>
     </Card>
   );

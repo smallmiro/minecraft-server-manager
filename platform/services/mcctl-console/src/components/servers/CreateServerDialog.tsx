@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -23,6 +25,8 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Collapse from '@mui/material/Collapse';
 import Alert from '@mui/material/Alert';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 import type { CreateServerStatus } from '@/hooks/useCreateServerSSE';
 
@@ -78,6 +82,9 @@ export function CreateServerDialog({
   progress = 0,
   message = '',
 }: CreateServerDialogProps) {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [category, setCategory] = useState<ServerCategory>('standard');
   const [formData, setFormData] = useState<CreateServerRequest>(DEFAULT_FORM_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -218,9 +225,9 @@ export function CreateServerDialog({
   };
 
   return (
-    <Dialog open={open} onClose={isCreating ? undefined : onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={isCreating ? undefined : onClose} maxWidth="sm" fullWidth fullScreen={isSmallScreen}>
       <form onSubmit={handleSubmit}>
-        <DialogTitle>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {status === 'completed' ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <CheckCircleIcon color="success" />
@@ -233,6 +240,15 @@ export function CreateServerDialog({
             </Box>
           ) : (
             'Create New Server'
+          )}
+          {isSmallScreen && !isCreating && (
+            <IconButton
+              onClick={onClose}
+              aria-label="Close dialog"
+              edge="end"
+            >
+              <CloseIcon />
+            </IconButton>
           )}
         </DialogTitle>
         <DialogContent>

@@ -182,7 +182,7 @@ export function RouterStatus({ router }: RouterStatusProps) {
                       <Typography
                         key={hostname}
                         variant="body2"
-                        sx={{ fontFamily: 'monospace', fontSize: '0.85rem', color: 'text.secondary' }}
+                        sx={{ fontSize: '0.85rem', color: 'text.secondary' }}
                       >
                         {hostname}
                       </Typography>

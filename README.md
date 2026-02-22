@@ -27,11 +27,14 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **Zero Resources**: Only infrastructure services run when servers are idle (~40MB RAM)
 - **Interactive CLI**: Guided prompts for server creation, player management, and more
 - **Management Console**: Web Console (port 5000) + REST API (port 5001) for remote management
+- **Server File Manager**: Browse, edit, upload/download server files with drag-and-drop support
+- **server.properties Editor**: Inline FORM/RAW toggle editor for server.properties configuration
 - **Player Management**: Unified `mcctl player` command with Mojang API integration
 - **Mod Management**: Search, add, and remove mods from Modrinth, CurseForge, Spiget
 - **Modpack Support**: Create servers from Modrinth modpacks with dynamic loader detection
 - **NeoForge Support**: Full support for NeoForge modded servers (Minecraft 1.20.1+)
 - **GitHub Backup**: Automatic world backup to private GitHub repositories
+- **Backup Scheduling**: Cron-based automated backup scheduling with retention policies
 - **Audit Logs**: Comprehensive activity tracking with SQLite storage, auto-cleanup, and web UI
 - **World Management UI**: Web-based world management with reset, assignment, and real-time status
 - **External Access (playit.gg)**: Allow external players to join without port forwarding via playit.gg tunneling
@@ -690,6 +693,48 @@ The migration:
 - Updates `config.env` with `EXTRA_ARGS=--universe /worlds/` and `LEVEL=<server-name>`
 - Detects existing worlds with case-insensitive matching
 
+### Update & Upgrade
+
+Keep mcctl and all services up to date:
+
+```bash
+# Check for updates (no install)
+mcctl update --check
+
+# Update mcctl CLI to latest version
+mcctl update
+
+# Update CLI + all services (mcctl-api, mcctl-console, shared)
+mcctl update --all
+
+# Auto-confirm without prompt (for CI/CD)
+mcctl update --yes
+
+# Force check (ignore cache)
+mcctl update --force
+
+# Combine flags for fully automated updates
+mcctl update --all --yes
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--check` | Check only, don't install (exit code 1 = update available) |
+| `--force` | Force fresh version check (ignore 24h cache) |
+| `--yes` | Auto-confirm update without prompt |
+| `--all` | Update CLI and all installed services |
+
+**`update` vs `upgrade`:**
+
+| Command | Purpose |
+|---------|---------|
+| `mcctl update` | Update npm packages (CLI, API, Console) to latest version |
+| `mcctl upgrade` | Migrate platform config files (.env, templates) after CLI update |
+
+After updating, run `mcctl upgrade` to sync platform configuration with the new version.
+
 ### Automation (sudo Password Handling)
 
 For CI/CD or scripting, you can provide sudo password for mDNS registration:
@@ -875,35 +920,50 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
-### [2.3.0] - 2026-02-12 (External Play - playit.gg)
+### [2.15.1] - 2026-02-22
 
-**Added:**
-- **playit.gg External Access** - Allow external players to join without port forwarding (#270-#275, #291-#292)
-  - Domain model, Docker Compose templates, CLI commands (`mcctl playit start/stop/status/setup`)
-  - `mcctl init --playit-key` and `mcctl create --playit-domain` options
-  - REST API endpoints for playit.gg management
-  - Web Console UI: PlayitSummaryCard, ConnectionInfoCard, PlayitSection
-  - Comprehensive documentation (English/Korean)
-- **Comprehensive API Audit Logging** - Add audit logging to all mutating API routes (#324, #325)
+**Changed:**
+- **Web Console Documentation** - Comprehensive update with screenshots and detailed feature descriptions (#407, #408)
 
 **Fixed:**
-- Unify Add and Bulk button sizes in WhitelistManager (#322, #323)
+- **pnpm-lock.yaml** - Sync lockfile with mcctl-api package.json for node-cron dependency
 
-### [2.2.0] - 2026-02-11
-
-**Added:**
-- **Whitelist Console UI** - Full whitelist management in Web Console: toggle ON/OFF, bulk add, search/filter (#283, #321)
-- **Whitelist Default on Create** - Enable whitelist by default on `mcctl create` (#282, #320)
-- **Hostname/Domain Management** - Server hostname management in Options tab (#314, #315)
-
-### [2.1.0] - 2026-02-09 (Console Feature Completion)
+### [2.15.0] - 2026-02-22
 
 **Added:**
-- **Modrinth Modpack CLI/API Support** - Full modpack server creation and management (#244, #245)
-- **Admin User Management Console UI** - Web-based admin user management (#189)
-- **OP Level Support** - OP level management across domain model, CLI, API, and Console (#284-#287)
+- **Automated Backup Scheduling** - Cron-based backup scheduler with full-stack implementation (#394, #395)
+  - CLI `mcctl backup schedule` with list/add/remove/enable/disable operations
+  - REST API endpoints for schedule CRUD with node-cron integration
+  - Web Console UI with schedule management dialog and toggle
+  - Shell injection prevention, 54+ tests across all layers
 
-### [2.0.0] - 2026-02-09
+### [2.14.0] - 2026-02-21
+
+**Added:**
+- **Console Mod Detail Cards** - Enhanced installed mods display with rich card UI
+
+### [2.13.0] - 2026-02-21
+
+**Added:**
+- **Console Server Activity Tab Redesign** - Improve Server Activity tab to match Audit Logs page UI (#391, #392)
+
+### [2.12.1] - 2026-02-20
+
+**Added:**
+- **Server Management Guide** - New bilingual (EN/KO) documentation for server start/stop operations
+
+### [2.12.0] - 2026-02-20
+
+**Changed:**
+- **Console File Editors Inline Redesign** - Convert TextEditor and PlayerEditorDialog from Dialog to inline Card-based views (#389, #390)
+
+### [2.11.0] - 2026-02-19
+
+**Added:**
+- **Console Tab-Specific Console Section** - Show Console section only on Overview tab (#387, #388)
+
+**Changed:**
+- **Console server.properties Editor Redesign** - Replace `ServerPropertiesDialog` (modal) with `ServerPropertiesView` (inline view) + `RawPropertiesEditor` for FORM/RAW toggle editing
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

@@ -8,12 +8,15 @@ import serversRoutes from './routes/servers.js';
 import serverActionsRoutes from './routes/servers/actions.js';
 import serverConfigRoutes from './routes/servers/config.js';
 import serverHostnameRoutes from './routes/servers/hostnames.js';
+import serverModsRoutes from './routes/servers/mods.js';
+import serverFilesRoutes from './routes/servers/files.js';
 import consoleRoutes from './routes/console.js';
 import worldsRoutes from './routes/worlds.js';
 import authRoutes from './routes/auth.js';
 import routerRoutes from './routes/router.js';
 import playersRoutes from './routes/players.js';
 import backupRoutes from './routes/backup.js';
+import backupScheduleRoutes from './routes/backup-schedule.js';
 import auditLogsRoutes from './routes/audit-logs.js';
 import playitRoutes from './routes/playit.js';
 
@@ -60,6 +63,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(serverActionsRoutes);
   await app.register(serverConfigRoutes);
   await app.register(serverHostnameRoutes);
+  await app.register(serverModsRoutes);
+  await app.register(serverFilesRoutes);
 
   // Register router routes
   await app.register(routerRoutes);
@@ -69,6 +74,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   // Register backup routes
   await app.register(backupRoutes);
+  await app.register(backupScheduleRoutes);
 
   // Register world routes
   await app.register(worldsRoutes);

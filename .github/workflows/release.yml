@@ -136,8 +136,9 @@ jobs:
           cd platform/services/mcctl-api
           # Update package.json version to match tag version
           npm version ${VERSION} --no-git-tag-version --allow-same-version
-          # Update workspace dependency to npm version
+          # Update workspace dependencies to npm versions
           sed -i "s|\"@minecraft-docker/shared\": \"workspace:\\*\"|\"@minecraft-docker/shared\": \"^${VERSION}\"|" package.json
+          sed -i "s|\"@minecraft-docker/mod-source-modrinth\": \"workspace:\\*\"|\"@minecraft-docker/mod-source-modrinth\": \"^${VERSION}\"|" package.json
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           if npm view "${PACKAGE_NAME}@${VERSION}" version 2>/dev/null; then
             echo "Package ${PACKAGE_NAME}@${VERSION} already exists, skipping..."

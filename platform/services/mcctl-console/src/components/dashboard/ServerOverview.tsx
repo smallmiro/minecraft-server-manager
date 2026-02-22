@@ -14,6 +14,7 @@ import { startLoading } from '@/components/providers';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
 import type { ServerStatusMap } from '@/hooks/useServersSSE';
+import { HostnameDisplay } from '@/components/common';
 
 export interface ServerOverviewProps {
   servers: ServerSummary[];
@@ -139,16 +140,14 @@ export function ServerOverview({
                   },
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight={600}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography variant="subtitle1" fontWeight={600} noWrap>
                       {server.name}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {server.hostname}
-                    </Typography>
+                    <HostnameDisplay hostname={server.hostname} fontSize={12} />
                   </Box>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
                     <Chip
                       label={currentStatus}
                       color={getStatusColor(currentStatus)}

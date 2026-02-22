@@ -19,8 +19,15 @@ ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 ENV TERM=xterm-256color
 
-RUN mkdir -p /home/vscode/.claude /home/vscode/.local/bin \
+RUN mkdir -p /home/vscode/.claude/plugins /home/vscode/.local/bin \
     && chown -R vscode:vscode /home/vscode/.claude /home/vscode/.local
+
+# 인증 파일 복사
+COPY .claude-auth/settings.json /home/vscode/.claude/settings.json
+COPY .claude-auth/.credentials.json /home/vscode/.claude/.credentials.json
+COPY .claude-auth/claude.json /home/vscode/.claude.json
+
+RUN chown -R vscode:vscode /home/vscode/.claude /home/vscode/.claude.json
 
 USER vscode
 

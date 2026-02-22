@@ -47,7 +47,7 @@ export function AccountInfoSection() {
             <TableRow>
               <TableCell sx={cellLabelSx}>Account ID</TableCell>
               <TableCell sx={cellValueSx}>
-                <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
                   {user.id}
                 </Typography>
               </TableCell>

@@ -43,7 +43,7 @@ export async function GET(_request: NextRequest) {
             const serverDetail = await client.getServer(server.name);
             return {
               name: server.name,
-              players: serverDetail.server.players?.list.map((name) => ({
+              players: serverDetail.server.players?.players.map((name) => ({
                 name,
                 uuid: '', // UUID not available from basic list
               })) || [],

@@ -88,12 +88,21 @@ export function usePurgeAuditLogs() {
 
 /**
  * Hook to fetch recent audit logs for a specific server
+ * Supports optional filtering and pagination via extraParams
  */
-export function useServerAuditLogs(serverName: string, options?: { enabled?: boolean; limit?: number }) {
+export function useServerAuditLogs(
+  serverName: string,
+  options?: {
+    enabled?: boolean;
+    limit?: number;
+    extraParams?: Partial<AuditLogQueryParams>;
+  },
+) {
   const params: AuditLogQueryParams = {
     targetType: 'server',
     targetName: serverName,
     limit: options?.limit ?? 20,
+    ...options?.extraParams,
   };
 
   return useAuditLogs(params, { enabled: options?.enabled !== false && !!serverName });

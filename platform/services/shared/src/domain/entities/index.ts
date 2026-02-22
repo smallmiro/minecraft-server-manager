@@ -7,3 +7,8 @@ export {
   type OperatorData,
   type MinecraftOpsJson,
 } from './Operator.js';
+export {
+  BackupSchedule,
+  type BackupScheduleData,
+  type BackupScheduleRow,
+} from './BackupSchedule.js';

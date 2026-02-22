@@ -614,6 +614,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (version) {
       args.push('-v', version);
     }
+    if (memory) {
+      args.push('--memory', memory);
+    }
     if (seed) {
       args.push('-s', seed);
     }

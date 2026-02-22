@@ -291,10 +291,12 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
       <Box
         sx={{
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
           justifyContent: 'space-between',
           px: 2,
           py: 1,
+          gap: 1,
           borderBottom: 1,
           borderColor: 'divider',
         }}
@@ -309,7 +311,7 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
           />
         </Stack>
 
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
           {/* Log Level Filter */}
           <ButtonGroup size="small" variant="outlined">
             {(['ALL', 'INFO', 'WARN', 'ERROR'] as LogLevel[]).map((level) => (
@@ -381,7 +383,6 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
           overflow: 'auto',
           bgcolor: '#1a1a1a',
           p: 1,
-          fontFamily: 'monospace',
           fontSize: '0.85rem',
         }}
       >
@@ -433,9 +434,8 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
           onChange={(e) => setCommand(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={!isConnected || isExecuting}
-          InputProps={{
-            sx: { fontFamily: 'monospace' },
-          }}
+          InputProps={{}}
+
         />
         <Button
           variant="contained"

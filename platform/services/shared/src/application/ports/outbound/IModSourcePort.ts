@@ -70,6 +70,14 @@ export interface IModSourcePort {
   isAvailable(): Promise<boolean>;
 
   /**
+   * Get multiple projects by slugs or IDs (batch)
+   * Optional: not all sources support batch retrieval
+   * @param slugsOrIds - Array of project slugs or IDs
+   * @returns Map of slug → ModProject
+   */
+  getProjects?(slugsOrIds: string[]): Promise<Map<string, ModProject>>;
+
+  /**
    * Get the environment variable key for this source
    * Used for config.env configuration
    * @example 'MODRINTH_PROJECTS', 'CURSEFORGE_FILES', 'SPIGET_RESOURCES'

@@ -7,12 +7,10 @@
     "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   },
   "workspaceFolder": "/workspaces/minecraft-server-manager",
-  "initializeCommand": "touch ${localEnv:HOME}/.gitconfig && touch ${localEnv:HOME}/.claude.json && mkdir -p ${localEnv:HOME}/.config/gh",
+  "initializeCommand": "mkdir -p .devcontainer/.claude-auth .claude-plugins .gh-config && cp ~/.claude/settings.json ~/.claude/.credentials.json .devcontainer/.claude-auth/ 2>/dev/null || true && cp ~/.claude.json .devcontainer/.claude-auth/claude.json 2>/dev/null || true && cp -n ~/.claude/plugins/known_marketplaces.json ~/.claude/plugins/installed_plugins.json .claude-plugins/ 2>/dev/null || true && cp -r ~/.config/gh/* .gh-config/ 2>/dev/null || true",
   "mounts": [
-    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
-    "source=${localEnv:HOME}/.claude.json,target=/home/vscode/.claude.json,type=bind",
-    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly",
-    "source=${localEnv:HOME}/.config/gh,target=/home/vscode/.config/gh,type=bind"
+    "source=${localWorkspaceFolder}/.gh-config,target=/home/vscode/.config/gh,type=bind",
+    "source=${localWorkspaceFolder}/.claude-plugins,target=/home/vscode/.claude/plugins,type=bind"
   ],
   "appPort": ["5002:5000"],
   "portsAttributes": {

@@ -1,16 +1,10 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { Ubuntu } from 'next/font/google';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import { ThemeProvider } from '@/theme';
 import { QueryProvider } from '@/lib';
 import { LoadingProvider } from '@/components/providers';
 import './globals.css';
-
-const ubuntu = Ubuntu({
-  weight: ['300', '400', '500', '700'],
-  subsets: ['latin'],
-});
 
 export const metadata: Metadata = {
   title: 'Minecraft Server Manager',
@@ -24,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={ubuntu.className}>
+      <body>
         <div id="__next">
           <AppRouterCacheProvider>
             <ThemeProvider>

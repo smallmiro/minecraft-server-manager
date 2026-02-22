@@ -39,37 +39,39 @@ export function NetworkSettings({ router }: NetworkSettingsProps) {
             Network Settings
           </Typography>
         </Box>
-        <Table size="small">
-          <TableBody>
-            <TableRow>
-              <TableCell sx={cellLabelSx}>Listening Port</TableCell>
-              <TableCell sx={cellValueSx}>
-                <Chip label={router.port} size="small" variant="outlined" />
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell sx={cellLabelSx}>Routing Mode</TableCell>
-              <TableCell sx={cellValueSx}>
-                <Chip label={getModeLabel(router.mode)} size="small" color="info" variant="outlined" />
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell sx={cellLabelSx}>Total Routes</TableCell>
-              <TableCell sx={cellValueSx}>{totalRoutes}</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell sx={cellLabelSx}>Active Routes</TableCell>
-              <TableCell sx={cellValueSx}>
-                <Chip
-                  label={`${activeRoutes} / ${totalRoutes}`}
-                  size="small"
-                  color={activeRoutes > 0 ? 'success' : 'default'}
-                  variant="outlined"
-                />
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+        <Box sx={{ overflowX: 'auto' }}>
+          <Table size="small">
+            <TableBody>
+              <TableRow>
+                <TableCell sx={cellLabelSx}>Listening Port</TableCell>
+                <TableCell sx={cellValueSx}>
+                  <Chip label={router.port} size="small" variant="outlined" />
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={cellLabelSx}>Routing Mode</TableCell>
+                <TableCell sx={cellValueSx}>
+                  <Chip label={getModeLabel(router.mode)} size="small" color="info" variant="outlined" />
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={cellLabelSx}>Total Routes</TableCell>
+                <TableCell sx={cellValueSx}>{totalRoutes}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={cellLabelSx}>Active Routes</TableCell>
+                <TableCell sx={cellValueSx}>
+                  <Chip
+                    label={`${activeRoutes} / ${totalRoutes}`}
+                    size="small"
+                    color={activeRoutes > 0 ? 'success' : 'default'}
+                    variant="outlined"
+                  />
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Box>
       </CardContent>
     </Card>
   );

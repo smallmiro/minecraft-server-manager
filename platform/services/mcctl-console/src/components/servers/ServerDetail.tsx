@@ -12,7 +12,8 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Grid from '@mui/material/Grid';
 import Divider from '@mui/material/Divider';
-import { alpha } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import CloseIcon from '@mui/icons-material/Close';
@@ -30,6 +31,9 @@ import { ServerActivityTab } from './ServerActivityTab';
 import { ServerOptionsTab } from './ServerOptionsTab';
 import { ServerAccessTab } from './ServerAccessTab';
 import { ConnectionInfoCard } from './ConnectionInfoCard';
+import { HostnameDisplay } from '@/components/common';
+import { ServerModsTab } from './ServerModsTab';
+import { ServerFilesTab } from './files/ServerFilesTab';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -37,7 +41,7 @@ interface ServerDetailProps {
 }
 
 // Tab configuration
-const TABS = ['Overview', 'Activity', 'Content', 'Files', 'Backups', 'Access', 'Options'] as const;
+const TABS = ['Overview', 'Activity', 'Mods', 'Files', 'Backups', 'Access', 'Options'] as const;
 type TabType = (typeof TABS)[number];
 
 // Icon size for stat cards
@@ -134,6 +138,15 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [consoleOpen, setConsoleOpen] = useState(false);
   const consoleRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Reset consoleOpen when leaving Overview tab
+  useEffect(() => {
+    if (activeTab !== 'Overview') {
+      setConsoleOpen(false);
+    }
+  }, [activeTab]);
 
   // Connect to server logs
   const { logs: rawLogs, isConnected } = useServerLogs({ serverName: server.name });
@@ -186,7 +199,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
   return (
     <Box>
       {/* Tabs - Pill Style */}
-      <Box sx={{ display: 'flex', gap: 0.5, mb: 3 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 3 }}>
         {TABS.map((tab) => (
           <Button
             key={tab}
@@ -248,7 +261,8 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
         />
       </Box>
 
-      {/* Console */}
+      {/* Console - Overview tab only */}
+      {activeTab === 'Overview' && (
       <Card
         sx={{
           bgcolor: 'background.paper',
@@ -292,11 +306,10 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
             ref={consoleRef}
             onScroll={handleScroll}
             sx={{
-              height: 360,
+              height: { xs: 240, sm: 360 },
               overflowY: 'auto',
               px: 2.5,
               py: 2,
-              fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
               fontSize: 13,
               lineHeight: 1.85,
               color: '#b4b6c4',
@@ -447,7 +460,6 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
               sx: {
                 bgcolor: '#13141c',
                 borderRadius: 2,
-                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
                 fontSize: 14,
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: '#2a2d3e',
@@ -463,6 +475,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
           />
         </Box>
       </Card>
+      )}
 
       {/* Additional content based on tab */}
       {activeTab === 'Overview' && (
@@ -478,7 +491,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
 
                 <InfoRow label="Name" value={server.name} />
                 <InfoRow label="Container" value={server.container} />
-                <InfoRow label="Hostname" value={server.hostname} />
+                <InfoRow label="Hostname" value={server.hostname ? <HostnameDisplay hostname={server.hostname} color="text.primary" /> : undefined} />
                 <InfoRow label="Type" value={server.type} />
                 <InfoRow label="Version" value={server.version} />
                 <InfoRow label="Memory" value={server.memory} />
@@ -506,13 +519,13 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
                       value={`${server.players.online} / ${server.players.max}`}
                     />
 
-                    {server.players.list && server.players.list.length > 0 && (
+                    {server.players.players && server.players.players.length > 0 && (
                       <>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 2, mb: 1 }}>
                           Online Players
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                          {server.players.list.map((player) => (
+                          {server.players.players.map((player) => (
                             <Chip key={player} label={player} size="small" />
                           ))}
                         </Box>
@@ -549,19 +562,15 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
         </Box>
       )}
 
-      {activeTab === 'Content' && (
+      {activeTab === 'Mods' && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="body1" color="text.secondary">
-            Content management coming soon
-          </Typography>
+          <ServerModsTab serverName={server.name} />
         </Box>
       )}
 
       {activeTab === 'Files' && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="body1" color="text.secondary">
-            File browser coming soon
-          </Typography>
+          <ServerFilesTab serverName={server.name} />
         </Box>
       )}
 
@@ -585,38 +594,41 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
         </Box>
       )}
 
-      {/* Full-screen Console Dialog */}
-      <Dialog
-        open={consoleOpen}
-        onClose={() => setConsoleOpen(false)}
-        maxWidth="xl"
-        fullWidth
-        PaperProps={{
-          sx: {
-            height: '90vh',
-            bgcolor: 'background.paper',
-          },
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: 1, borderColor: 'divider' }}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontFamily: '"Minecraft", sans-serif',
-              fontWeight: 400,
-              letterSpacing: '0.05em',
-            }}
-          >
-            Console - {server.name}
-          </Typography>
-          <IconButton onClick={() => setConsoleOpen(false)}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
-          <ServerConsole serverName={server.name} />
-        </DialogContent>
-      </Dialog>
+      {/* Full-screen Console Dialog - Overview tab only */}
+      {activeTab === 'Overview' && (
+        <Dialog
+          open={consoleOpen}
+          onClose={() => setConsoleOpen(false)}
+          maxWidth="xl"
+          fullWidth
+          fullScreen={isSmallScreen}
+          PaperProps={{
+            sx: {
+              height: isSmallScreen ? '100vh' : '90vh',
+              bgcolor: 'background.paper',
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontFamily: '"Minecraft", sans-serif',
+                fontWeight: 400,
+                letterSpacing: '0.05em',
+              }}
+            >
+              Console - {server.name}
+            </Typography>
+            <IconButton onClick={() => setConsoleOpen(false)} aria-label="Close console">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
+            <ServerConsole serverName={server.name} />
+          </DialogContent>
+        </Dialog>
+      )}
     </Box>
   );
 }
@@ -630,7 +642,7 @@ function InfoRow({ label, value }: { label: string; value?: string | React.React
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+      <Typography variant="body2" component="div" sx={{ fontWeight: 500 }}>
         {value}
       </Typography>
     </Box>

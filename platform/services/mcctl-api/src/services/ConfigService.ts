@@ -6,23 +6,147 @@ import type { ServerConfig, UpdateServerConfigRequest } from '../schemas/config.
  * Mapping between API field names and config.env variable names
  */
 const CONFIG_FIELD_MAP: Record<keyof ServerConfig, string> = {
-  motd: 'MOTD',
-  maxPlayers: 'MAX_PLAYERS',
+  // Gameplay
   difficulty: 'DIFFICULTY',
   gameMode: 'GAMEMODE',
+  maxPlayers: 'MAX_PLAYERS',
   pvp: 'PVP',
-  viewDistance: 'VIEW_DISTANCE',
+  forceGamemode: 'FORCE_GAMEMODE',
+  hardcore: 'HARDCORE',
+  allowFlight: 'ALLOW_FLIGHT',
+  allowNether: 'ALLOW_NETHER',
+  enableCommandBlock: 'ENABLE_COMMAND_BLOCK',
   spawnProtection: 'SPAWN_PROTECTION',
+  spawnAnimals: 'SPAWN_ANIMALS',
+  spawnMonsters: 'SPAWN_MONSTERS',
+  spawnNpcs: 'SPAWN_NPCS',
+
+  // World
+  motd: 'MOTD',
+  level: 'LEVEL',
+  levelType: 'LEVEL_TYPE',
+  seed: 'SEED',
+  generateStructures: 'GENERATE_STRUCTURES',
+  maxWorldSize: 'MAX_WORLD_SIZE',
+  icon: 'ICON',
+
+  // Security
+  onlineMode: 'ONLINE_MODE',
+  enableWhitelist: 'ENABLE_WHITELIST',
+  enforceWhitelist: 'ENFORCE_WHITELIST',
+  enforceSecureProfile: 'ENFORCE_SECURE_PROFILE',
+
+  // Performance & JVM
   memory: 'MEMORY',
   useAikarFlags: 'USE_AIKAR_FLAGS',
+  viewDistance: 'VIEW_DISTANCE',
+  simulationDistance: 'SIMULATION_DISTANCE',
+  maxTickTime: 'MAX_TICK_TIME',
+  initMemory: 'INIT_MEMORY',
+  maxMemory: 'MAX_MEMORY',
+  jvmXxOpts: 'JVM_XX_OPTS',
+
+  // Auto-pause / Auto-stop
+  enableAutopause: 'ENABLE_AUTOPAUSE',
+  autopauseTimeoutEst: 'AUTOPAUSE_TIMEOUT_EST',
+  autopauseTimeoutInit: 'AUTOPAUSE_TIMEOUT_INIT',
+  autopausePeriod: 'AUTOPAUSE_PERIOD',
+  enableAutostop: 'ENABLE_AUTOSTOP',
+  autostopTimeoutEst: 'AUTOSTOP_TIMEOUT_EST',
+
+  // System
+  tz: 'TZ',
+  resourcePack: 'RESOURCE_PACK',
+  enableRcon: 'ENABLE_RCON',
+  resourcePackSha1: 'RESOURCE_PACK_SHA1',
+  resourcePackEnforce: 'RESOURCE_PACK_ENFORCE',
+  resourcePackPrompt: 'RESOURCE_PACK_PROMPT',
+  rconPassword: 'RCON_PASSWORD',
+  rconPort: 'RCON_PORT',
+  stopDuration: 'STOP_DURATION',
+  uid: 'UID',
+  gid: 'GID',
 };
 
 /**
  * Fields that require a server restart to take effect
  */
 const RESTART_REQUIRED_FIELDS: (keyof ServerConfig)[] = [
+  // JVM / Docker-level
   'memory',
+  'initMemory',
+  'maxMemory',
   'useAikarFlags',
+  'jvmXxOpts',
+  // Security
+  'onlineMode',
+  'enableWhitelist',
+  'enforceWhitelist',
+  'enforceSecureProfile',
+  // World generation (only on new world)
+  'level',
+  'seed',
+  'levelType',
+  // Auto-pause / Auto-stop
+  'enableAutopause',
+  'enableAutostop',
+  // RCON
+  'enableRcon',
+  'rconPassword',
+  'rconPort',
+  // System
+  'tz',
+  'uid',
+  'gid',
+  'stopDuration',
+];
+
+/**
+ * Boolean fields and their env file format (lowercase or UPPERCASE)
+ */
+const BOOLEAN_FIELDS_UPPERCASE: (keyof ServerConfig)[] = [
+  'onlineMode',
+  'enableWhitelist',
+  'enforceWhitelist',
+  'enforceSecureProfile',
+];
+
+const BOOLEAN_FIELDS: (keyof ServerConfig)[] = [
+  'pvp',
+  'useAikarFlags',
+  'forceGamemode',
+  'hardcore',
+  'allowFlight',
+  'allowNether',
+  'enableCommandBlock',
+  'spawnAnimals',
+  'spawnMonsters',
+  'spawnNpcs',
+  'generateStructures',
+  'enableAutopause',
+  'enableAutostop',
+  'enableRcon',
+  'resourcePackEnforce',
+];
+
+/**
+ * Number fields
+ */
+const NUMBER_FIELDS: (keyof ServerConfig)[] = [
+  'maxPlayers',
+  'viewDistance',
+  'spawnProtection',
+  'simulationDistance',
+  'maxTickTime',
+  'maxWorldSize',
+  'autopauseTimeoutEst',
+  'autopauseTimeoutInit',
+  'autopausePeriod',
+  'autostopTimeoutEst',
+  'rconPort',
+  'stopDuration',
+  'uid',
+  'gid',
 ];
 
 /**
@@ -59,38 +183,50 @@ function parseEnvValue(key: keyof ServerConfig, value: string | undefined): Serv
     return undefined;
   }
 
-  switch (key) {
-    case 'maxPlayers':
-    case 'viewDistance':
-    case 'spawnProtection':
-      const num = parseInt(value, 10);
-      return isNaN(num) ? undefined : num;
-
-    case 'pvp':
-    case 'useAikarFlags':
-      return value.toLowerCase() === 'true';
-
-    case 'difficulty':
-      const lowerDiff = value.toLowerCase();
-      if (['peaceful', 'easy', 'normal', 'hard'].includes(lowerDiff)) {
-        return lowerDiff as ServerConfig['difficulty'];
-      }
-      return undefined;
-
-    case 'gameMode':
-      const lowerMode = value.toLowerCase();
-      if (['survival', 'creative', 'adventure', 'spectator'].includes(lowerMode)) {
-        return lowerMode as ServerConfig['gameMode'];
-      }
-      return undefined;
-
-    case 'motd':
-    case 'memory':
-      return value;
-
-    default:
-      return value;
+  // Number fields
+  if (NUMBER_FIELDS.includes(key)) {
+    const num = parseInt(value, 10);
+    return isNaN(num) ? undefined : num;
   }
+
+  // Boolean fields (both uppercase and lowercase)
+  if (BOOLEAN_FIELDS.includes(key) || BOOLEAN_FIELDS_UPPERCASE.includes(key)) {
+    return value.toLowerCase() === 'true';
+  }
+
+  // Enum: difficulty
+  if (key === 'difficulty') {
+    const lower = value.toLowerCase();
+    if (['peaceful', 'easy', 'normal', 'hard'].includes(lower)) {
+      return lower as ServerConfig['difficulty'];
+    }
+    return undefined;
+  }
+
+  // Enum: gameMode
+  if (key === 'gameMode') {
+    const lower = value.toLowerCase();
+    if (['survival', 'creative', 'adventure', 'spectator'].includes(lower)) {
+      return lower as ServerConfig['gameMode'];
+    }
+    return undefined;
+  }
+
+  // Enum: levelType
+  if (key === 'levelType') {
+    const lower = value.toLowerCase();
+    const map: Record<string, string> = {
+      default: 'default',
+      flat: 'flat',
+      largebiomes: 'largeBiomes',
+      amplified: 'amplified',
+      buffet: 'buffet',
+    };
+    return (map[lower] as ServerConfig['levelType']) ?? undefined;
+  }
+
+  // String fields
+  return value;
 }
 
 /**
@@ -101,18 +237,34 @@ function formatEnvValue(key: keyof ServerConfig, value: ServerConfig[keyof Serve
     return '';
   }
 
-  switch (key) {
-    case 'pvp':
-    case 'useAikarFlags':
-      return value ? 'true' : 'false';
-
-    case 'difficulty':
-    case 'gameMode':
-      return String(value).toLowerCase();
-
-    default:
-      return String(value);
+  // Boolean uppercase (TRUE/FALSE)
+  if (BOOLEAN_FIELDS_UPPERCASE.includes(key)) {
+    return value ? 'TRUE' : 'FALSE';
   }
+
+  // Boolean lowercase (true/false)
+  if (BOOLEAN_FIELDS.includes(key)) {
+    return value ? 'true' : 'false';
+  }
+
+  // Enums lowercase
+  if (key === 'difficulty' || key === 'gameMode') {
+    return String(value).toLowerCase();
+  }
+
+  // levelType: camelCase → env format
+  if (key === 'levelType') {
+    const map: Record<string, string> = {
+      default: 'DEFAULT',
+      flat: 'FLAT',
+      largeBiomes: 'LARGEBIOMES',
+      amplified: 'AMPLIFIED',
+      buffet: 'BUFFET',
+    };
+    return map[String(value)] ?? String(value);
+  }
+
+  return String(value);
 }
 
 /**
@@ -152,7 +304,6 @@ function updateEnvFile(content: string, updates: Map<string, string>): string {
   // Add any new keys that weren't in the original file
   for (const [key, value] of updates) {
     if (!updatedKeys.has(key)) {
-      // Find appropriate section or add at end
       result.push(`${key}=${value}`);
     }
   }

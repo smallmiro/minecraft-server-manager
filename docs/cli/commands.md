@@ -300,6 +300,118 @@ mcctl status router
 
 ---
 
+### mcctl update
+
+Check for updates and update mcctl CLI and services to the latest version.
+
+```bash
+mcctl update [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--check` | Check for updates only (does not install) |
+| `--yes` | Auto-confirm update without prompt |
+| `--force` | Force fresh version check (ignore cache) |
+| `--all` | Update CLI and all installed services |
+
+**Examples:**
+
+=== "Check for Updates"
+    ```bash
+    mcctl update --check
+    ```
+
+    **Output (update available):**
+    ```
+    mcctl update check:
+      Installed: 2.11.0
+      Latest:    2.12.1
+
+    Update available! Run: mcctl update
+    ```
+
+    **Output (up to date):**
+    ```
+    mcctl update check:
+      Installed: 2.12.1
+      Latest:    2.12.1
+
+    You are up to date.
+    ```
+
+=== "Update CLI"
+    ```bash
+    mcctl update
+    ```
+
+    **Output:**
+    ```
+    mcctl update check:
+      Installed: 2.11.0
+      Latest:    2.12.1
+
+    Update available!
+    ? Do you want to update mcctl to 2.12.1? (Y/n) Y
+
+    Updating mcctl...
+    ✓ mcctl updated to 2.12.1
+    ```
+
+=== "Update All Services"
+    ```bash
+    mcctl update --all
+    ```
+
+    **Output:**
+    ```
+    mcctl update check:
+      Installed: 2.11.0
+      Latest:    2.12.1
+
+    ? Do you want to update mcctl to 2.12.1? (Y/n) Y
+
+    Updating mcctl...
+    ✓ mcctl updated to 2.12.1
+
+    Updating services...
+      ✓ @minecraft-docker/mcctl-api: 2.11.0 → 2.12.1 (restarted)
+      ✓ @minecraft-docker/mcctl-console: 2.11.0 → 2.12.1 (restarted)
+      ✓ @minecraft-docker/shared: 2.11.0 → 2.12.1
+
+    All services updated successfully.
+    ```
+
+=== "Auto-confirm (CI/CD)"
+    ```bash
+    mcctl update --yes
+    ```
+
+**Behavior Details:**
+
+- **Update check cache**: Version checks are cached for 24 hours at `~/.mcctl-update-check.json`. During normal CLI usage, a non-blocking update check runs automatically in the background.
+- **`--check` exit codes**: Returns exit code `1` if an update is available, `0` if up to date. Useful for scripting.
+- **`--all` flag**: After updating the CLI, also updates installed services:
+    - `mcctl-api` and `mcctl-console`: Installs latest version and restarts the PM2 service
+    - `shared` library: Installs latest version (no restart needed)
+
+!!! tip "Scripting with --check"
+    Use `--check` in scripts to conditionally trigger updates:
+
+    ```bash
+    if ! mcctl update --check > /dev/null 2>&1; then
+      mcctl update --yes
+    fi
+    ```
+
+!!! note "update vs upgrade"
+    `mcctl update` updates the CLI and service **packages** from npm.
+    `mcctl upgrade` migrates platform **configuration files** and templates to a new version.
+
+---
+
 ## Server Commands
 
 ### mcctl create

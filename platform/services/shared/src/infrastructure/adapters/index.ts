@@ -18,3 +18,4 @@ export {
   type MessageType,
   type CollectedMessage,
 } from './ApiPromptAdapter.js';
+export { SqliteBackupScheduleRepository } from './SqliteBackupScheduleRepository.js';

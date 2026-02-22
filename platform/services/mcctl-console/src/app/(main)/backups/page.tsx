@@ -6,7 +6,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { BackupStatus, BackupHistory, BackupPushButton } from '@/components/backups';
+import { BackupStatus, BackupHistory, BackupPushButton, BackupScheduleList } from '@/components/backups';
 import { useBackupStatus } from '@/hooks/useMcctl';
 
 export default function BackupsPage() {
@@ -61,6 +61,9 @@ export default function BackupsPage() {
       <Stack spacing={3}>
         {/* Backup Status */}
         <BackupStatus />
+
+        {/* Backup Schedules */}
+        <BackupScheduleList />
 
         {/* Backup History */}
         {configured && <BackupHistory />}

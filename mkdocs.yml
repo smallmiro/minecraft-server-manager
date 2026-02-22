@@ -78,6 +78,8 @@ nav:
       - Overview: getting-started/index.md
       - Installation: getting-started/installation.md
       - Quick Start: getting-started/quickstart.md
+  - Usage Guides:
+      - Server Start & Stop: usage/server-management.md
   - CLI Reference:
       - Overview: cli/index.md
       - Commands: cli/commands.md

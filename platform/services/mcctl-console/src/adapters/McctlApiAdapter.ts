@@ -24,6 +24,11 @@ import {
   BackupPushResponse,
   BackupHistoryResponse,
   BackupRestoreResponse,
+  BackupScheduleListResponse,
+  BackupScheduleItem,
+  CreateBackupScheduleRequest,
+  UpdateBackupScheduleRequest,
+  BackupScheduleActionResponse,
   PlayerListResponse,
   WhitelistResponse,
   WhitelistStatusResponse,
@@ -35,6 +40,16 @@ import {
   UpdateHostnamesResponse,
   PlayitAgentStatus,
   PlayitActionResponse,
+  ModListResponse,
+  AddModsResponse,
+  RemoveModResponse,
+  ModSearchResponse,
+  ModProjectsResponse,
+  FileListResponse,
+  FileContentResponse,
+  FileWriteResponse,
+  FileActionResponse,
+  FileRenameResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -310,6 +325,49 @@ export class McctlApiAdapter implements IMcctlApiClient {
   }
 
   // ============================================================
+  // Backup Schedule Operations
+  // ============================================================
+
+  async getBackupSchedules(): Promise<BackupScheduleListResponse> {
+    return this.fetch<BackupScheduleListResponse>('/api/backup/schedules');
+  }
+
+  async getBackupSchedule(id: string): Promise<BackupScheduleItem> {
+    return this.fetch<BackupScheduleItem>(`/api/backup/schedules/${encodeURIComponent(id)}`);
+  }
+
+  async createBackupSchedule(request: CreateBackupScheduleRequest): Promise<BackupScheduleItem> {
+    return this.fetch<BackupScheduleItem>('/api/backup/schedules', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async updateBackupSchedule(id: string, request: UpdateBackupScheduleRequest): Promise<BackupScheduleItem> {
+    return this.fetch<BackupScheduleItem>(`/api/backup/schedules/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async toggleBackupSchedule(id: string, enabled: boolean): Promise<BackupScheduleItem> {
+    return this.fetch<BackupScheduleItem>(
+      `/api/backup/schedules/${encodeURIComponent(id)}/toggle`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled }),
+      }
+    );
+  }
+
+  async deleteBackupSchedule(id: string): Promise<BackupScheduleActionResponse> {
+    return this.fetch<BackupScheduleActionResponse>(
+      `/api/backup/schedules/${encodeURIComponent(id)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  // ============================================================
   // Player Management Operations
   // ============================================================
 
@@ -440,6 +498,44 @@ export class McctlApiAdapter implements IMcctlApiClient {
   }
 
   // ============================================================
+  // Mod Management Operations
+  // ============================================================
+
+  async getServerMods(serverName: string): Promise<ModListResponse> {
+    return this.fetch<ModListResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/mods`
+    );
+  }
+
+  async addServerMods(serverName: string, slugs: string[], source?: string): Promise<AddModsResponse> {
+    return this.fetch<AddModsResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/mods`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ slugs, source }),
+      }
+    );
+  }
+
+  async removeServerMod(serverName: string, slug: string): Promise<RemoveModResponse> {
+    return this.fetch<RemoveModResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/mods/${encodeURIComponent(slug)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async searchMods(query: string, limit: number = 10, offset: number = 0): Promise<ModSearchResponse> {
+    const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset) });
+    return this.fetch<ModSearchResponse>(`/api/mods/search?${params}`);
+  }
+
+  async getModProjects(slugs: string[], source?: string): Promise<ModProjectsResponse> {
+    const params = new URLSearchParams({ slugs: slugs.join(',') });
+    if (source) params.set('source', source);
+    return this.fetch<ModProjectsResponse>(`/api/mods/projects?${params}`);
+  }
+
+  // ============================================================
   // Playit.gg Operations
   // ============================================================
 
@@ -457,6 +553,55 @@ export class McctlApiAdapter implements IMcctlApiClient {
     return this.fetch<PlayitActionResponse>('/api/playit/stop', {
       method: 'POST',
     });
+  }
+
+  // ============================================================
+  // File Management Operations
+  // ============================================================
+
+  async listFiles(serverName: string, path: string): Promise<FileListResponse> {
+    const params = new URLSearchParams({ path });
+    return this.fetch<FileListResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files?${params}`
+    );
+  }
+
+  async readFile(serverName: string, path: string): Promise<FileContentResponse> {
+    const params = new URLSearchParams({ path });
+    return this.fetch<FileContentResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files/read?${params}`
+    );
+  }
+
+  async writeFile(serverName: string, path: string, content: string): Promise<FileWriteResponse> {
+    const params = new URLSearchParams({ path });
+    return this.fetch<FileWriteResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files/write?${params}`,
+      { method: 'PUT', body: JSON.stringify({ content }) }
+    );
+  }
+
+  async deleteFile(serverName: string, path: string): Promise<FileActionResponse> {
+    const params = new URLSearchParams({ path });
+    return this.fetch<FileActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files?${params}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async createDirectory(serverName: string, path: string): Promise<FileActionResponse> {
+    const params = new URLSearchParams({ path });
+    return this.fetch<FileActionResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files/mkdir?${params}`,
+      { method: 'POST' }
+    );
+  }
+
+  async renameFile(serverName: string, oldPath: string, newPath: string): Promise<FileRenameResponse> {
+    return this.fetch<FileRenameResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/files/rename`,
+      { method: 'POST', body: JSON.stringify({ oldPath, newPath }) }
+    );
   }
 }
 

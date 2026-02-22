@@ -60,9 +60,7 @@ export const darkTheme = createTheme({
       selected: colors.bgSurface,
     },
   },
-  typography: {
-    fontFamily: '"Ubuntu", "Roboto", "Helvetica", "Arial", sans-serif',
-  },
+  typography: {},
   components: {
     MuiCard: {
       styleOverrides: {

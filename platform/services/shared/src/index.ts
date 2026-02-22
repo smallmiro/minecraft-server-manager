@@ -73,6 +73,7 @@ export {
   startPlayitAgent,
   stopPlayitAgent,
   getServerPlayitDomain,
+  setServerPlayitDomain,
 } from './docker/index.js';
 
 // Re-export domain layer (Value Objects and Entities)
@@ -116,6 +117,13 @@ export {
   type OperatorData,
   type MinecraftOpsJson,
   OpLevel,
+  // Backup schedule
+  CronExpression,
+  BackupRetentionPolicy,
+  type BackupRetentionPolicyData,
+  BackupSchedule,
+  type BackupScheduleData,
+  type BackupScheduleRow,
 } from './domain/index.js';
 
 // Re-export mod domain models

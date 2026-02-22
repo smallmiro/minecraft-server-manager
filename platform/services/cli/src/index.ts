@@ -29,6 +29,8 @@ import {
   consoleRemoveCommand,
   auditCommand,
   playitCommand,
+  upgradeCommand,
+  backupScheduleCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 import { checkForUpdates } from './lib/update-checker.js';
@@ -229,6 +231,17 @@ ${colors.cyan('World Backup:')}
   ${colors.bold('backup history')} [--json]    Show backup history
   ${colors.bold('backup restore')} <commit>    Restore from commit
 
+${colors.cyan('Backup Scheduling:')}
+  ${colors.bold('backup schedule list')}        List all backup schedules
+  ${colors.bold('backup schedule add')} [opts]  Create a new schedule
+    --cron <expr|preset>        Cron expression or preset (daily, every-6h, etc.)
+    --name <name>               Schedule name
+    --max-count <n>             Maximum backups to retain
+    --max-age-days <n>          Maximum backup age in days
+  ${colors.bold('backup schedule remove')} <id> Remove a schedule
+  ${colors.bold('backup schedule enable')} <id> Enable a schedule
+  ${colors.bold('backup schedule disable')} <id> Disable a schedule
+
 ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')}             Migrate worlds to shared directory
   ${colors.bold('migrate status')}             Check migration status
@@ -241,6 +254,11 @@ ${colors.cyan('Self Update:')}
   ${colors.bold('update')} --force             Force check (ignore cache)
   ${colors.bold('update')} --yes               Auto-confirm update
   ${colors.bold('update')} --all               Update CLI and all installed services
+
+${colors.cyan('Platform Upgrade:')}
+  ${colors.bold('upgrade')}                    Sync .env and templates with latest CLI version
+  ${colors.bold('upgrade')} --dry-run          Preview changes without applying
+  ${colors.bold('upgrade')} --non-interactive  Apply defaults without prompting
 
 ${colors.cyan('playit.gg Management:')}
   ${colors.bold('playit start')}                Start playit-agent container
@@ -357,7 +375,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -463,6 +481,7 @@ async function main(): Promise<void> {
           skipValidation: flags['skip-validation'] === true,
           skipDocker: flags['skip-docker'] === true,
           reconfigure: flags['reconfigure'] === true,
+          upgrade: flags['upgrade'] === true,
           playitKey: flags['playit-key'] as string | undefined,
           noPlayit: flags['no-playit'] === true,
         });
@@ -733,6 +752,21 @@ async function main(): Promise<void> {
       }
 
       case 'backup': {
+        // Handle 'backup schedule' as a special sub-sub-command
+        if (subCommand === 'schedule') {
+          exitCode = await backupScheduleCommand({
+            root: rootDir,
+            subCommand: positional[0],
+            scheduleId: positional[1],
+            cron: flags['cron'] as string | undefined,
+            name: flags['name'] as string | undefined,
+            maxCount: flags['max-count'] ? parseInt(flags['max-count'] as string, 10) : undefined,
+            maxAgeDays: flags['max-age-days'] ? parseInt(flags['max-age-days'] as string, 10) : undefined,
+            json: flags['json'] === true,
+          });
+          break;
+        }
+
         // Use new interactive backup command
         exitCode = await backupCommand({
           root: rootDir,
@@ -944,13 +978,24 @@ async function main(): Promise<void> {
         break;
       }
 
+      case 'upgrade': {
+        exitCode = await upgradeCommand({
+          root: rootDir,
+          dryRun: flags['dry-run'] === true,
+          nonInteractive: flags['non-interactive'] === true,
+        });
+        break;
+      }
+
       case 'playit': {
-        // playit command: playit <start|stop|status|setup>
+        // playit command: playit <start|stop|status|setup|domain>
         // subCommand = action
         exitCode = await playitCommand({
           root: rootDir,
-          subCommand: subCommand as 'start' | 'stop' | 'status' | 'setup' | undefined,
+          subCommand: subCommand as 'start' | 'stop' | 'status' | 'setup' | 'domain' | undefined,
           json: flags['json'] === true,
+          domainArgs: positional,
+          remove: flags['remove'] === true,
         });
         break;
       }
