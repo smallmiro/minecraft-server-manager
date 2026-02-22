@@ -31,6 +31,16 @@ import {
   playitCommand,
   upgradeCommand,
   backupScheduleCommand,
+  configSnapshotListCommand,
+  configSnapshotCreateCommand,
+  configSnapshotShowCommand,
+  configSnapshotDeleteCommand,
+  configSnapshotDiffCommand,
+  configSnapshotRestoreCommand,
+  configSnapshotScheduleListCommand,
+  configSnapshotScheduleAddCommand,
+  configSnapshotScheduleRemoveCommand,
+  configSnapshotScheduleToggleCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 import { checkForUpdates } from './lib/update-checker.js';
@@ -242,6 +252,38 @@ ${colors.cyan('Backup Scheduling:')}
   ${colors.bold('backup schedule enable')} <id> Enable a schedule
   ${colors.bold('backup schedule disable')} <id> Disable a schedule
 
+${colors.cyan('Config Snapshot Management:')}
+  ${colors.bold('config-snapshot list')} [server]         List snapshots (all or per-server)
+    --limit <n>                              Max results (default 20)
+    --json                                   JSON output
+  ${colors.bold('config-snapshot create')} <server>       Create a snapshot
+    --description "..."                      Optional description
+    --json                                   JSON output
+  ${colors.bold('config-snapshot show')} <id>             Show snapshot details
+    --files                                  Include file list
+    --json                                   JSON output
+  ${colors.bold('config-snapshot diff')} <id1> <id2>      Diff two snapshots
+    --files-only                             Show only changed file names
+    --json                                   JSON output
+  ${colors.bold('config-snapshot restore')} <id>          Restore from snapshot
+    --force                                  Skip confirmation
+  ${colors.bold('config-snapshot delete')} <id>           Delete a snapshot
+    --force                                  Skip confirmation
+
+${colors.cyan('Config Snapshot Schedules:')}
+  ${colors.bold('config-snapshot schedule list')}         List schedules
+    --server <name>                          Filter by server
+    --json                                   JSON output
+  ${colors.bold('config-snapshot schedule add')} [opts]   Add a schedule
+    --server <name>                          Server name (required)
+    --cron "..."                             Cron expression (required)
+    --name "..."                             Schedule name (required)
+    --retention <n>                          Max snapshots to keep (default 10)
+  ${colors.bold('config-snapshot schedule remove')} <id>  Remove a schedule
+    --force                                  Skip confirmation
+  ${colors.bold('config-snapshot schedule enable')} <id>  Enable a schedule
+  ${colors.bold('config-snapshot schedule disable')} <id> Disable a schedule
+
 ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')}             Migrate worlds to shared directory
   ${colors.bold('migrate status')}             Check migration status
@@ -426,7 +468,7 @@ function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'console', 'admin', 'playit'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'console', 'admin', 'playit', 'config-snapshot'].includes(result.command)) {
         result.subCommand = arg;
       } else {
         result.positional.push(arg);
@@ -997,6 +1039,136 @@ async function main(): Promise<void> {
           domainArgs: positional,
           remove: flags['remove'] === true,
         });
+        break;
+      }
+
+      case 'config-snapshot': {
+        // config-snapshot command: config-snapshot <list|create|show|diff|restore|delete|schedule>
+        const csAction = subCommand;
+
+        if (csAction === 'schedule') {
+          // config-snapshot schedule <list|add|remove|enable|disable>
+          const scheduleAction = positional[0];
+
+          switch (scheduleAction) {
+            case 'list':
+              exitCode = await configSnapshotScheduleListCommand({
+                root: rootDir,
+                serverName: flags['server'] as string | undefined,
+                json: flags['json'] === true,
+              });
+              break;
+
+            case 'add':
+              exitCode = await configSnapshotScheduleAddCommand({
+                root: rootDir,
+                serverName: flags['server'] as string | undefined,
+                cron: flags['cron'] as string | undefined,
+                name: flags['name'] as string | undefined,
+                retention: flags['retention']
+                  ? parseInt(flags['retention'] as string, 10)
+                  : undefined,
+                json: flags['json'] === true,
+              });
+              break;
+
+            case 'remove':
+              exitCode = await configSnapshotScheduleRemoveCommand({
+                root: rootDir,
+                id: positional[1] ?? '',
+                force: flags['force'] === true,
+              });
+              break;
+
+            case 'enable':
+              exitCode = await configSnapshotScheduleToggleCommand({
+                root: rootDir,
+                id: positional[1] ?? '',
+                action: 'enable',
+              });
+              break;
+
+            case 'disable':
+              exitCode = await configSnapshotScheduleToggleCommand({
+                root: rootDir,
+                id: positional[1] ?? '',
+                action: 'disable',
+              });
+              break;
+
+            default:
+              log.error(
+                'Usage: mcctl config-snapshot schedule <list|add|remove|enable|disable>'
+              );
+              exitCode = 1;
+          }
+          break;
+        }
+
+        // Snapshot commands
+        switch (csAction) {
+          case 'list':
+            exitCode = await configSnapshotListCommand({
+              root: rootDir,
+              serverName: positional[0],
+              limit: flags['limit']
+                ? parseInt(flags['limit'] as string, 10)
+                : undefined,
+              json: flags['json'] === true,
+            });
+            break;
+
+          case 'create':
+            exitCode = await configSnapshotCreateCommand({
+              root: rootDir,
+              serverName: positional[0],
+              description: flags['description'] as string | undefined,
+              json: flags['json'] === true,
+            });
+            break;
+
+          case 'show':
+            exitCode = await configSnapshotShowCommand({
+              root: rootDir,
+              id: positional[0] ?? '',
+              files: flags['files'] === true,
+              json: flags['json'] === true,
+            });
+            break;
+
+          case 'diff':
+            exitCode = await configSnapshotDiffCommand({
+              root: rootDir,
+              id1: positional[0] ?? '',
+              id2: positional[1] ?? '',
+              filesOnly: flags['files-only'] === true,
+              json: flags['json'] === true,
+            });
+            break;
+
+          case 'restore':
+            exitCode = await configSnapshotRestoreCommand({
+              root: rootDir,
+              id: positional[0] ?? '',
+              force: flags['force'] === true,
+              noSafety: flags['no-safety'] === true,
+            });
+            break;
+
+          case 'delete':
+            exitCode = await configSnapshotDeleteCommand({
+              root: rootDir,
+              id: positional[0] ?? '',
+              force: flags['force'] === true,
+            });
+            break;
+
+          default:
+            log.error(
+              'Usage: mcctl config-snapshot <list|create|show|diff|restore|delete|schedule>'
+            );
+            exitCode = 1;
+        }
         break;
       }
 
