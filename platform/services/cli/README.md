@@ -77,6 +77,9 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.15.3 (2026-02-22)
+- **docs**: Update README.md with Management Console features and architecture (#412, #413)
+
 ### v2.15.2 (2026-02-22)
 - **docs**: Server Overview/Mods tab screenshots with detailed descriptions (#409)
 - **docs**: Integrated setup guide for mcctl init to console init flow (#410)

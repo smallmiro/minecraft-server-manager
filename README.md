@@ -58,6 +58,24 @@ mcctl create myserver -t VANILLA -v 1.21.1
 mcctl status
 ```
 
+### Set Up Management Console (Optional)
+
+After creating your first server, add the web-based management console:
+
+```bash
+# Initialize Console (API + Web UI)
+mcctl console init
+# Follow prompts: select services → create admin user → choose access mode
+
+# Start Console services
+mcctl console service start
+
+# Open in browser
+# http://localhost:5000
+```
+
+See the [Setup Guide](https://minecraft-server-manager.readthedocs.io/en/latest/console/setup-guide/) for the complete walkthrough.
+
 ### Connect via Minecraft
 
 **Option A: nip.io Magic DNS (Recommended)**
@@ -122,13 +140,32 @@ Add more servers using `create-server.sh` - they're automatically discoverable!
 ## Architecture
 
 ```
-┌──────────────────────┐  ┌────────────────────┐
-│  mc-router (:25565)  │  │  avahi-daemon      │
-│  hostname routing    │  │  (system mDNS)     │
-├──────────────────────┤  ├────────────────────┤
-│ <server>.local ─→    │  │ /etc/avahi/hosts:  │
-│  mc-<server>         │  │  <server>.local    │
-└──────────────────────┘  └────────────────────┘
+                    Minecraft Clients
+                          │
+              ┌───────────┴───────────┐
+              │   mc-router (:25565)  │
+              │   hostname routing    │
+              │   auto-scale up/down  │
+              └───────────┬───────────┘
+                          │
+        ┌─────────────────┼─────────────────┐
+        ▼                 ▼                 ▼
+  ┌──────────┐     ┌──────────┐     ┌──────────┐
+  │mc-server1│     │mc-server2│     │mc-serverN│
+  └──────────┘     └──────────┘     └──────────┘
+        ▲                 ▲                 ▲
+        │     Docker Socket (read-only)     │
+        └─────────────────┼─────────────────┘
+                          │
+              ┌───────────┴───────────┐
+              │   mcctl-api (:5001)   │
+              │   Fastify REST API    │
+              └───────────┬───────────┘
+                          │
+              ┌───────────┴───────────┐
+              │ mcctl-console (:5000) │
+              │ Next.js Web UI + Auth │
+              └───────────────────────┘
 ```
 
 ## Adding a New Server
@@ -169,6 +206,34 @@ The script automatically:
 New servers are automatically discoverable via mDNS - just connect!
 
 See [CLAUDE.md](CLAUDE.md) for detailed instructions.
+
+## Management Console
+
+The Management Console provides a full-featured web interface and REST API for managing your Minecraft servers remotely. Install with `mcctl console init` -- see the [Setup Guide](https://minecraft-server-manager.readthedocs.io/en/latest/console/setup-guide/) for details.
+
+| Feature | Description |
+|---------|-------------|
+| **Dashboard** | Real-time overview with server status, player counts, and recent activity (SSE-powered) |
+| **Server Management** | Start/stop/restart servers, RCON console, resource monitoring (CPU/RAM/disk) |
+| **Server Files** | Browse, edit, upload, and download files with smart editors for server.properties and player data |
+| **Server Options** | Hostname management, gameplay settings, JVM/performance tuning with FORM/RAW toggle |
+| **Mod Management** | Search, install, and remove mods from Modrinth with rich detail cards |
+| **World Management** | Create, assign, release, delete, and reset worlds with lock status tracking |
+| **Player Management** | Whitelist, operator, and ban management across all servers |
+| **Backup & Scheduling** | Manual push + cron-based automated backup schedules with retention policies |
+| **Audit Logs** | Activity tracking with filtering, statistics, export, and real-time updates |
+| **Routing** | mc-router status, mDNS (Avahi) monitoring, and playit.gg external access management |
+
+**Endpoints:**
+
+| Service | Default Port | Description |
+|---------|-------------|-------------|
+| mcctl-console | 5000 | Next.js Web UI with Better Auth |
+| mcctl-api | 5001 | Fastify REST API with Swagger docs at `/docs` |
+
+See the [Web Console Guide](https://minecraft-server-manager.readthedocs.io/en/latest/console/web-console/) for the complete feature walkthrough.
+
+---
 
 ## Mod Management
 
@@ -227,6 +292,15 @@ See [CLI Commands Reference](docs/cli/commands.md) for complete documentation.
 | [Environment Variables](https://minecraft-server-manager.readthedocs.io/en/latest/configuration/environment/) | All configuration options |
 | [Mods & Plugins](https://minecraft-server-manager.readthedocs.io/en/latest/mods-and-plugins/) | Modrinth, CurseForge, Spiget |
 
+### Management Console
+
+| Document | Description |
+|----------|-------------|
+| [Setup Guide](https://minecraft-server-manager.readthedocs.io/en/latest/console/setup-guide/) | Complete setup from `mcctl init` to Console |
+| [Web Console Guide](https://minecraft-server-manager.readthedocs.io/en/latest/console/web-console/) | Full feature walkthrough with screenshots |
+| [Console CLI](https://minecraft-server-manager.readthedocs.io/en/latest/console/cli-commands/) | Console CLI command reference |
+| [API Reference](https://minecraft-server-manager.readthedocs.io/en/latest/console/api-reference/) | REST API endpoints and authentication |
+
 ### Advanced
 
 | Document | Description |
@@ -234,7 +308,6 @@ See [CLI Commands Reference](docs/cli/commands.md) for complete documentation.
 | [Networking](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/networking/) | nip.io, mDNS, VPN mesh |
 | [External Access (playit.gg)](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/external-access/) | Allow external players without port forwarding |
 | [Backup](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/backup/) | GitHub backup setup |
-| [Management Console](https://minecraft-server-manager.readthedocs.io/en/latest/console/) | Web Console & REST API |
 
 ### Development
 
@@ -320,6 +393,8 @@ pnpm automatically builds packages in dependency order:
 1. @minecraft-docker/shared              (no dependencies)
 2. @minecraft-docker/mod-source-modrinth (depends on shared)
 3. @minecraft-docker/mcctl               (depends on shared, mod-source-modrinth)
+4. @minecraft-docker/mcctl-api           (depends on shared)
+5. @minecraft-docker/mcctl-console       (depends on shared)
 ```
 
 ---
@@ -919,6 +994,11 @@ cat /etc/avahi/hosts
 ---
 
 ## Changelog
+
+### [2.15.3] - 2026-02-22
+
+**Changed:**
+- **README.md** - Major update with Management Console section, Architecture diagram, and Quick Start guide (#412, #413)
 
 ### [2.15.2] - 2026-02-22
 
