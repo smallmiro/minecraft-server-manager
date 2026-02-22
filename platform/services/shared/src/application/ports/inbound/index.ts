@@ -29,3 +29,5 @@ export type {
   CreateBackupScheduleParams,
   UpdateBackupScheduleParams,
 } from './IBackupScheduleUseCase.js';
+export type { IConfigSnapshotUseCase } from './IConfigSnapshotUseCase.js';
+export type { IConfigSnapshotScheduleUseCase } from './IConfigSnapshotScheduleUseCase.js';

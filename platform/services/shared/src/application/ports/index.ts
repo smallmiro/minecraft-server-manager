@@ -26,6 +26,8 @@ export type {
   IBackupScheduleUseCase,
   CreateBackupScheduleParams,
   UpdateBackupScheduleParams,
+  IConfigSnapshotUseCase,
+  IConfigSnapshotScheduleUseCase,
 } from './inbound/index.js';
 
 // Outbound Ports (Infrastructure)
@@ -63,4 +65,8 @@ export type {
   IAuditLogPort,
   AuditLogQueryOptions,
   IBackupScheduleRepository,
+  IConfigSnapshotRepository,
+  IConfigSnapshotScheduleRepository,
+  IConfigFileCollector,
+  IConfigSnapshotStorage,
 } from './outbound/index.js';

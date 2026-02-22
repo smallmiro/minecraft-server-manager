@@ -30,6 +30,15 @@ export {
   CronExpression,
   BackupRetentionPolicy,
   type BackupRetentionPolicyData,
+  // Config snapshot value objects
+  ConfigSnapshotFile,
+  type ConfigSnapshotFileData,
+  FileDiff,
+  type FileDiffStatus,
+  type FileDiffData,
+  SnapshotDiff,
+  type SnapshotDiffData,
+  type SnapshotDiffSummary,
 } from './value-objects/index.js';
 
 // Entities
@@ -51,4 +60,10 @@ export {
   BackupSchedule,
   type BackupScheduleData,
   type BackupScheduleRow,
+  ConfigSnapshot,
+  type ConfigSnapshotData,
+  type ConfigSnapshotRow,
+  ConfigSnapshotSchedule,
+  type ConfigSnapshotScheduleData,
+  type ConfigSnapshotScheduleRow,
 } from './entities/index.js';
