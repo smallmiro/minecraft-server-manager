@@ -7,6 +7,7 @@ import {
   WorldRepository,
   DocsAdapter,
   SqliteAuditLogRepository,
+  SqliteBackupScheduleRepository,
   // Use cases from shared
   CreateServerUseCase,
   DeleteServerUseCase,
@@ -14,6 +15,7 @@ import {
   WorldManagementUseCase,
   BackupUseCase,
   PlayerLookupUseCase,
+  BackupScheduleUseCase,
   // Port types from shared
   type IPromptPort,
   type IShellPort,
@@ -28,6 +30,8 @@ import {
   type IWorldManagementUseCase,
   type IBackupUseCase,
   type IPlayerLookupUseCase,
+  type IBackupScheduleUseCase,
+  type IBackupScheduleRepository,
 } from '@minecraft-docker/shared';
 import { ModrinthAdapter } from '@minecraft-docker/mod-source-modrinth';
 // CLI-specific adapter
@@ -54,6 +58,7 @@ export class Container {
   private _docProvider?: IDocProvider;
   private _auditLogPort?: IAuditLogPort;
   private _modSourcePort?: IModSourcePort;
+  private _backupScheduleRepo?: IBackupScheduleRepository;
 
   constructor(options?: ContainerOptions | string) {
     if (typeof options === 'string') {
@@ -126,6 +131,14 @@ export class Container {
     return this._modSourcePort;
   }
 
+  get backupScheduleRepository(): IBackupScheduleRepository {
+    if (!this._backupScheduleRepo) {
+      const dbPath = join(this.paths.root, 'data', 'backup-schedules.db');
+      this._backupScheduleRepo = new SqliteBackupScheduleRepository(dbPath);
+    }
+    return this._backupScheduleRepo;
+  }
+
   // ========================================
   // Use Cases
   // ========================================
@@ -174,6 +187,10 @@ export class Container {
 
   get playerLookupUseCase(): IPlayerLookupUseCase {
     return new PlayerLookupUseCase(this.promptPort, this.shellPort);
+  }
+
+  get backupScheduleUseCase(): IBackupScheduleUseCase {
+    return new BackupScheduleUseCase(this.backupScheduleRepository);
   }
 
   // ========================================
