@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.3] - 2026-02-22
+
+### Changed
+- **README.md** - Major update with Management Console section, Architecture diagram, and Quick Start guide (#412, #413)
+  - Added Management Console section with setup instructions and feature overview
+  - Updated Architecture diagram with Console components (mcctl-api, mcctl-console)
+  - Added Console Setup to Quick Start guide
+  - Updated Documentation table with Console and API docs links
+
 ## [2.15.2] - 2026-02-22
 
 ### Changed

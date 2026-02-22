@@ -995,6 +995,11 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.15.3] - 2026-02-22
+
+**Changed:**
+- **README.md** - Major update with Management Console section, Architecture diagram, and Quick Start guide (#412, #413)
+
 ### [2.15.2] - 2026-02-22
 
 **Changed:**
