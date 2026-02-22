@@ -30,6 +30,7 @@ import {
   auditCommand,
   playitCommand,
   upgradeCommand,
+  backupScheduleCommand,
 } from './commands/index.js';
 import { ShellExecutor } from './lib/shell.js';
 import { checkForUpdates } from './lib/update-checker.js';
@@ -229,6 +230,17 @@ ${colors.cyan('World Backup:')}
   ${colors.bold('backup status')}              Show backup configuration
   ${colors.bold('backup history')} [--json]    Show backup history
   ${colors.bold('backup restore')} <commit>    Restore from commit
+
+${colors.cyan('Backup Scheduling:')}
+  ${colors.bold('backup schedule list')}        List all backup schedules
+  ${colors.bold('backup schedule add')} [opts]  Create a new schedule
+    --cron <expr|preset>        Cron expression or preset (daily, every-6h, etc.)
+    --name <name>               Schedule name
+    --max-count <n>             Maximum backups to retain
+    --max-age-days <n>          Maximum backup age in days
+  ${colors.bold('backup schedule remove')} <id> Remove a schedule
+  ${colors.bold('backup schedule enable')} <id> Enable a schedule
+  ${colors.bold('backup schedule disable')} <id> Disable a schedule
 
 ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')}             Migrate worlds to shared directory
@@ -740,6 +752,21 @@ async function main(): Promise<void> {
       }
 
       case 'backup': {
+        // Handle 'backup schedule' as a special sub-sub-command
+        if (subCommand === 'schedule') {
+          exitCode = await backupScheduleCommand({
+            root: rootDir,
+            subCommand: positional[0],
+            scheduleId: positional[1],
+            cron: flags['cron'] as string | undefined,
+            name: flags['name'] as string | undefined,
+            maxCount: flags['max-count'] ? parseInt(flags['max-count'] as string, 10) : undefined,
+            maxAgeDays: flags['max-age-days'] ? parseInt(flags['max-age-days'] as string, 10) : undefined,
+            json: flags['json'] === true,
+          });
+          break;
+        }
+
         // Use new interactive backup command
         exitCode = await backupCommand({
           root: rootDir,

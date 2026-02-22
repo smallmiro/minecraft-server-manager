@@ -16,6 +16,7 @@ import authRoutes from './routes/auth.js';
 import routerRoutes from './routes/router.js';
 import playersRoutes from './routes/players.js';
 import backupRoutes from './routes/backup.js';
+import backupScheduleRoutes from './routes/backup-schedule.js';
 import auditLogsRoutes from './routes/audit-logs.js';
 import playitRoutes from './routes/playit.js';
 
@@ -73,6 +74,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   // Register backup routes
   await app.register(backupRoutes);
+  await app.register(backupScheduleRoutes);
 
   // Register world routes
   await app.register(worldsRoutes);

@@ -24,6 +24,11 @@ import {
   BackupPushResponse,
   BackupHistoryResponse,
   BackupRestoreResponse,
+  BackupScheduleListResponse,
+  BackupScheduleItem,
+  CreateBackupScheduleRequest,
+  UpdateBackupScheduleRequest,
+  BackupScheduleActionResponse,
   PlayerListResponse,
   WhitelistResponse,
   WhitelistStatusResponse,
@@ -317,6 +322,49 @@ export class McctlApiAdapter implements IMcctlApiClient {
       method: 'POST',
       body: JSON.stringify({ commitHash }),
     });
+  }
+
+  // ============================================================
+  // Backup Schedule Operations
+  // ============================================================
+
+  async getBackupSchedules(): Promise<BackupScheduleListResponse> {
+    return this.fetch<BackupScheduleListResponse>('/api/backup/schedules');
+  }
+
+  async getBackupSchedule(id: string): Promise<BackupScheduleItem> {
+    return this.fetch<BackupScheduleItem>(`/api/backup/schedules/${encodeURIComponent(id)}`);
+  }
+
+  async createBackupSchedule(request: CreateBackupScheduleRequest): Promise<BackupScheduleItem> {
+    return this.fetch<BackupScheduleItem>('/api/backup/schedules', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async updateBackupSchedule(id: string, request: UpdateBackupScheduleRequest): Promise<BackupScheduleItem> {
+    return this.fetch<BackupScheduleItem>(`/api/backup/schedules/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async toggleBackupSchedule(id: string, enabled: boolean): Promise<BackupScheduleItem> {
+    return this.fetch<BackupScheduleItem>(
+      `/api/backup/schedules/${encodeURIComponent(id)}/toggle`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled }),
+      }
+    );
+  }
+
+  async deleteBackupSchedule(id: string): Promise<BackupScheduleActionResponse> {
+    return this.fetch<BackupScheduleActionResponse>(
+      `/api/backup/schedules/${encodeURIComponent(id)}`,
+      { method: 'DELETE' }
+    );
   }
 
   // ============================================================

@@ -24,3 +24,8 @@ export type {
   PlayerNameHistory,
   PlayerUuidResult,
 } from './IPlayerLookupUseCase.js';
+export type {
+  IBackupScheduleUseCase,
+  CreateBackupScheduleParams,
+  UpdateBackupScheduleParams,
+} from './IBackupScheduleUseCase.js';

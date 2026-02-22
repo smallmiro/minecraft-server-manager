@@ -50,4 +50,12 @@ export enum AuditActionEnum {
   FILE_RENAME = 'file.rename',
   FILE_UPLOAD = 'file.upload',
   FILE_DOWNLOAD = 'file.download',
+
+  // Backup schedule management
+  BACKUP_SCHEDULE_CREATE = 'backup.schedule.create',
+  BACKUP_SCHEDULE_UPDATE = 'backup.schedule.update',
+  BACKUP_SCHEDULE_DELETE = 'backup.schedule.delete',
+  BACKUP_SCHEDULE_ENABLE = 'backup.schedule.enable',
+  BACKUP_SCHEDULE_DISABLE = 'backup.schedule.disable',
+  BACKUP_SCHEDULE_RUN = 'backup.schedule.run',
 }
