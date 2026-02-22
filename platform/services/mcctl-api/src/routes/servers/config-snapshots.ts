@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
+import { Type } from '@sinclair/typebox';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 import {
   ServerNameParamsSchema,
@@ -369,9 +370,6 @@ const configSnapshotsPlugin: FastifyPluginAsync = async (fastify: FastifyInstanc
     }
   });
 };
-
-// Import Type for 204 response
-import { Type } from '@sinclair/typebox';
 
 export default fp(configSnapshotsPlugin, {
   name: 'config-snapshots-routes',
