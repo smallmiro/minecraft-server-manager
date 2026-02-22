@@ -920,6 +920,12 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.15.2] - 2026-02-22
+
+**Changed:**
+- **Web Console Documentation** - Added server Overview/Mods tab screenshots with detailed descriptions (#409)
+- **Integrated Setup Guide** - New guide for mcctl init to console init flow (#410)
+
 ### [2.15.1] - 2026-02-22
 
 **Changed:**
