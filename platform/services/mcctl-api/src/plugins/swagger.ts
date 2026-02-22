@@ -70,6 +70,8 @@ const swaggerPlugin: FastifyPluginAsync<SwaggerPluginOptions> = async (
         { name: 'console', description: 'RCON console access' },
         { name: 'worlds', description: 'World management' },
         { name: 'players', description: 'Player management' },
+        { name: 'config-snapshots', description: 'Config snapshot management' },
+        { name: 'config-snapshot-schedules', description: 'Config snapshot schedule management' },
       ],
       components: {
         securitySchemes: {

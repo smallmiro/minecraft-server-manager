@@ -21,6 +21,7 @@ import auditLogsRoutes from './routes/audit-logs.js';
 import playitRoutes from './routes/playit.js';
 import configSnapshotsRoutes from './routes/servers/config-snapshots.js';
 import configSnapshotDiffRoutes from './routes/config-snapshot-diff.js';
+import configSnapshotSchedulesRoutes from './routes/config-snapshot-schedules.js';
 import { closeConfigSnapshotDatabase } from './services/config-snapshot-service.js';
 
 export interface BuildAppOptions {
@@ -91,6 +92,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   // Register config snapshot routes
   await app.register(configSnapshotsRoutes);
   await app.register(configSnapshotDiffRoutes);
+  await app.register(configSnapshotSchedulesRoutes);
 
   // Register onClose hook for config snapshot database cleanup
   app.addHook('onClose', async () => {
