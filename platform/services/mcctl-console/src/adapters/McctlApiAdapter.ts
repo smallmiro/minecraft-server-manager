@@ -50,6 +50,11 @@ import {
   FileWriteResponse,
   FileActionResponse,
   FileRenameResponse,
+  ConfigSnapshotListResponse,
+  ConfigSnapshotItem,
+  ConfigSnapshotDiffResponse,
+  RestoreSnapshotOptions,
+  RestoreConfigSnapshotResponse,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
 
@@ -601,6 +606,63 @@ export class McctlApiAdapter implements IMcctlApiClient {
     return this.fetch<FileRenameResponse>(
       `/api/servers/${encodeURIComponent(serverName)}/files/rename`,
       { method: 'POST', body: JSON.stringify({ oldPath, newPath }) }
+    );
+  }
+
+  // ============================================================
+  // Config Snapshot Operations
+  // ============================================================
+
+  async listConfigSnapshots(serverName: string, limit: number = 20, offset: number = 0): Promise<ConfigSnapshotListResponse> {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    return this.fetch<ConfigSnapshotListResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/config-snapshots?${params}`
+    );
+  }
+
+  async getConfigSnapshot(serverName: string, snapshotId: string): Promise<ConfigSnapshotItem> {
+    return this.fetch<ConfigSnapshotItem>(
+      `/api/servers/${encodeURIComponent(serverName)}/config-snapshots/${encodeURIComponent(snapshotId)}`
+    );
+  }
+
+  async createConfigSnapshot(serverName: string, description?: string): Promise<ConfigSnapshotItem> {
+    return this.fetch<ConfigSnapshotItem>(
+      `/api/servers/${encodeURIComponent(serverName)}/config-snapshots`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ description }),
+      }
+    );
+  }
+
+  async deleteConfigSnapshot(serverName: string, snapshotId: string): Promise<void> {
+    await this.fetch<void>(
+      `/api/servers/${encodeURIComponent(serverName)}/config-snapshots/${encodeURIComponent(snapshotId)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  async getConfigSnapshotDiff(snapshotId1: string, snapshotId2: string): Promise<ConfigSnapshotDiffResponse> {
+    return this.fetch<ConfigSnapshotDiffResponse>(
+      `/api/config-snapshots/${encodeURIComponent(snapshotId1)}/diff/${encodeURIComponent(snapshotId2)}`
+    );
+  }
+
+  async restoreConfigSnapshot(
+    serverName: string,
+    snapshotId: string,
+    options?: RestoreSnapshotOptions
+  ): Promise<RestoreConfigSnapshotResponse> {
+    return this.fetch<RestoreConfigSnapshotResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/config-snapshots/${encodeURIComponent(snapshotId)}/restore`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          createSnapshotBeforeRestore: options?.createSnapshotBeforeRestore ?? true,
+          force: options?.force ?? false,
+        }),
+      }
     );
   }
 }
