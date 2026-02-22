@@ -486,6 +486,56 @@ export interface BackupRestoreResponse {
 }
 
 // ============================================================
+// Backup Schedule Types
+// ============================================================
+
+export interface BackupScheduleItem {
+  id: string;
+  name: string;
+  cronExpression: string;
+  cronHumanReadable: string;
+  retentionPolicy: {
+    maxCount?: number;
+    maxAgeDays?: number;
+  };
+  enabled: boolean;
+  lastRunAt: string | null;
+  lastRunStatus: 'success' | 'failure' | null;
+  lastRunMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackupScheduleListResponse {
+  schedules: BackupScheduleItem[];
+  total: number;
+}
+
+export interface CreateBackupScheduleRequest {
+  name: string;
+  cron: string;
+  maxCount?: number;
+  maxAgeDays?: number;
+  enabled?: boolean;
+}
+
+export interface UpdateBackupScheduleRequest {
+  name?: string;
+  cron?: string;
+  maxCount?: number;
+  maxAgeDays?: number;
+}
+
+export interface ToggleBackupScheduleRequest {
+  enabled: boolean;
+}
+
+export interface BackupScheduleActionResponse {
+  success: boolean;
+  message: string;
+}
+
+// ============================================================
 // Player Management Types
 // ============================================================
 
@@ -602,6 +652,14 @@ export interface IMcctlApiClient {
   pushBackup(message?: string): Promise<BackupPushResponse>;
   getBackupHistory(limit?: number): Promise<BackupHistoryResponse>;
   restoreBackup(commitHash: string): Promise<BackupRestoreResponse>;
+
+  // Backup schedule operations
+  getBackupSchedules(): Promise<BackupScheduleListResponse>;
+  getBackupSchedule(id: string): Promise<BackupScheduleItem>;
+  createBackupSchedule(request: CreateBackupScheduleRequest): Promise<BackupScheduleItem>;
+  updateBackupSchedule(id: string, request: UpdateBackupScheduleRequest): Promise<BackupScheduleItem>;
+  toggleBackupSchedule(id: string, enabled: boolean): Promise<BackupScheduleItem>;
+  deleteBackupSchedule(id: string): Promise<BackupScheduleActionResponse>;
 
   // Player management operations
   getWhitelist(serverName: string): Promise<WhitelistResponse>;

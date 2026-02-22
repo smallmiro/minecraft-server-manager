@@ -25,6 +25,11 @@ import type {
   BackupPushResponse,
   BackupHistoryResponse,
   BackupRestoreResponse,
+  BackupScheduleListResponse,
+  BackupScheduleItem,
+  CreateBackupScheduleRequest,
+  UpdateBackupScheduleRequest,
+  BackupScheduleActionResponse,
   HostnameResponse,
   UpdateHostnamesResponse,
   WhitelistResponse,
@@ -467,6 +472,104 @@ export function useRestoreBackup() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['worlds'] });
       queryClient.invalidateQueries({ queryKey: ['servers'] });
+    },
+  });
+}
+
+// ============================================================
+// Backup Schedule Hooks
+// ============================================================
+
+/**
+ * Hook to fetch all backup schedules
+ */
+export function useBackupSchedules() {
+  return useQuery<BackupScheduleListResponse, Error>({
+    queryKey: ['backup-schedules'],
+    queryFn: () => apiFetch<BackupScheduleListResponse>('/api/backup/schedules'),
+    refetchInterval: 60000,
+  });
+}
+
+/**
+ * Hook to create a backup schedule
+ */
+export function useCreateBackupSchedule() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BackupScheduleItem, Error, CreateBackupScheduleRequest>({
+    mutationFn: (data) =>
+      apiFetch<BackupScheduleItem>('/api/backup/schedules', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backup-schedules'] });
+    },
+  });
+}
+
+/**
+ * Hook to update a backup schedule
+ */
+export function useUpdateBackupSchedule() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    BackupScheduleItem,
+    Error,
+    { id: string; data: UpdateBackupScheduleRequest }
+  >({
+    mutationFn: ({ id, data }) =>
+      apiFetch<BackupScheduleItem>(`/api/backup/schedules/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backup-schedules'] });
+    },
+  });
+}
+
+/**
+ * Hook to toggle a backup schedule
+ */
+export function useToggleBackupSchedule() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    BackupScheduleItem,
+    Error,
+    { id: string; enabled: boolean }
+  >({
+    mutationFn: ({ id, enabled }) =>
+      apiFetch<BackupScheduleItem>(
+        `/api/backup/schedules/${encodeURIComponent(id)}/toggle`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ enabled }),
+        }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backup-schedules'] });
+    },
+  });
+}
+
+/**
+ * Hook to delete a backup schedule
+ */
+export function useDeleteBackupSchedule() {
+  const queryClient = useQueryClient();
+
+  return useMutation<BackupScheduleActionResponse, Error, string>({
+    mutationFn: (id) =>
+      apiFetch<BackupScheduleActionResponse>(
+        `/api/backup/schedules/${encodeURIComponent(id)}`,
+        { method: 'DELETE' }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['backup-schedules'] });
     },
   });
 }
