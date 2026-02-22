@@ -72,6 +72,19 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
   }
 
   /**
+   * Count config snapshots, optionally filtered by server
+   */
+  async count(serverName?: string): Promise<number> {
+    if (serverName) {
+      return this.repository.countByServer(serverName);
+    }
+
+    // When no server specified, count all snapshots
+    const all = await this.repository.findAll();
+    return all.length;
+  }
+
+  /**
    * Find a config snapshot by ID
    */
   async findById(id: string): Promise<ConfigSnapshot | null> {
