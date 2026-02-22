@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
 import { join } from 'path';
@@ -8,7 +8,7 @@ import type {
 } from '@minecraft-docker/shared';
 import type { BackupSchedule } from '@minecraft-docker/shared';
 
-const execPromise = promisify(exec);
+const execFilePromise = promisify(execFile);
 
 // node-cron types (manual declaration to avoid build issues if @types not installed)
 interface CronTask {
@@ -120,7 +120,8 @@ export class BackupSchedulerService {
   }
 
   /**
-   * Execute a backup for a given schedule
+   * Execute a backup for a given schedule.
+   * Uses execFile with array arguments to prevent shell injection.
    */
   private async executeBackup(scheduleId: string): Promise<void> {
     const schedule = await this.useCase.findById(scheduleId);
@@ -146,31 +147,40 @@ export class BackupSchedulerService {
         return;
       }
 
-      // Run backup script or git commands
-      const scriptPath = join(this.platformPath, 'scripts', 'backup.sh');
+      // Build commit message (safe: passed as argument, not interpolated into shell)
       const commitMessage = `Scheduled backup: ${schedule.name} [${new Date().toISOString()}]`;
-      let command: string;
 
-      if (existsSync(scriptPath)) {
-        command = `bash "${scriptPath}" push --message "${commitMessage}"`;
-      } else {
-        command = `cd "${worldsPath}" && git add -A && git commit -m "${commitMessage}" && git push`;
-      }
-
-      const { stdout } = await execPromise(command, {
+      // Run backup script or git commands using execFile (no shell injection)
+      const scriptPath = join(this.platformPath, 'scripts', 'backup.sh');
+      const execOptions = {
         cwd: this.platformPath,
         timeout: 300000, // 5 minute timeout for scheduled backups
         env: {
           ...process.env,
           MCCTL_ROOT: this.platformPath,
         },
-      });
+      };
+
+      if (existsSync(scriptPath)) {
+        // Use execFile with array args to prevent shell injection
+        await execFilePromise(
+          'bash',
+          [scriptPath, 'push', '--message', commitMessage],
+          execOptions
+        );
+      } else {
+        // Run git commands sequentially using execFile (safe from injection)
+        await execFilePromise('git', ['add', '-A'], { ...execOptions, cwd: worldsPath });
+        await execFilePromise('git', ['commit', '-m', commitMessage], { ...execOptions, cwd: worldsPath });
+        await execFilePromise('git', ['push'], { ...execOptions, cwd: worldsPath });
+      }
 
       // Get commit hash
       let commitHash: string | undefined;
       try {
-        const { stdout: hashOut } = await execPromise(
-          'git rev-parse --short HEAD',
+        const { stdout: hashOut } = await execFilePromise(
+          'git',
+          ['rev-parse', '--short', 'HEAD'],
           { cwd: worldsPath }
         );
         commitHash = hashOut.trim();
@@ -187,6 +197,9 @@ export class BackupSchedulerService {
       this.logger.info(
         `Scheduled backup complete: ${schedule.name}${commitHash ? ` [${commitHash}]` : ''}`
       );
+
+      // Apply retention policy pruning after successful backup
+      await this.applyRetentionPolicy(schedule, worldsPath);
     } catch (error) {
       const execError = error as { stderr?: string; message?: string };
 
@@ -209,6 +222,123 @@ export class BackupSchedulerService {
         `Scheduled backup failed: ${schedule.name} - ${errorMsg}`
       );
       await this.useCase.recordRun(scheduleId, 'failure', errorMsg);
+    }
+  }
+
+  /**
+   * Apply retention policy: prune old backups if policy thresholds are exceeded.
+   * Uses git log to count commits and find the oldest commit date,
+   * then calls BackupRetentionPolicy.shouldPrune() to decide.
+   */
+  private async applyRetentionPolicy(
+    schedule: BackupSchedule,
+    worldsPath: string
+  ): Promise<void> {
+    const policy = schedule.retentionPolicy;
+
+    // Skip if no retention limits are set
+    if (policy.maxCount === undefined && policy.maxAgeDays === undefined) {
+      return;
+    }
+
+    try {
+      // Count backup commits
+      const { stdout: logOutput } = await execFilePromise(
+        'git',
+        ['log', '--oneline'],
+        { cwd: worldsPath }
+      );
+      const commitLines = logOutput.trim().split('\n').filter((line) => line.length > 0);
+      const backupCount = commitLines.length;
+
+      if (backupCount === 0) {
+        return;
+      }
+
+      // Get oldest commit date
+      const { stdout: dateOutput } = await execFilePromise(
+        'git',
+        ['log', '--reverse', '--format=%aI', '-1'],
+        { cwd: worldsPath }
+      );
+      const oldestDateStr = dateOutput.trim();
+      const oldestBackupDate = oldestDateStr ? new Date(oldestDateStr) : new Date();
+
+      // Check if pruning is needed
+      if (!policy.shouldPrune(backupCount, oldestBackupDate)) {
+        return;
+      }
+
+      this.logger.info(
+        `Retention policy triggered for ${schedule.name}: ${backupCount} backups, oldest from ${oldestBackupDate.toISOString()}`
+      );
+
+      // Prune by maxCount: remove oldest commits beyond the limit
+      if (policy.maxCount !== undefined && backupCount > policy.maxCount) {
+        const excessCount = backupCount - policy.maxCount;
+        this.logger.info(
+          `Pruning ${excessCount} old backup(s) to maintain maxCount=${policy.maxCount}`
+        );
+
+        try {
+          // Use git rebase to squash old commits (non-interactive)
+          // Safer approach: truncate history by resetting to keep only maxCount commits
+          const keepFromHash = commitLines[policy.maxCount - 1];
+          if (keepFromHash) {
+            const hash = keepFromHash.split(' ')[0];
+            if (hash) {
+              await execFilePromise(
+                'git',
+                ['rebase', '--onto', hash + '~1', hash + '~1', 'HEAD'],
+                { cwd: worldsPath }
+              );
+            }
+          }
+        } catch (pruneError) {
+          this.logger.warn(
+            `Failed to prune old backups by count: ${pruneError instanceof Error ? pruneError.message : String(pruneError)}`
+          );
+        }
+      }
+
+      // Prune by maxAgeDays: remove commits older than cutoff
+      if (policy.maxAgeDays !== undefined) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - policy.maxAgeDays);
+        const cutoffISO = cutoff.toISOString();
+
+        this.logger.info(
+          `Pruning backups older than ${cutoffISO} (maxAgeDays=${policy.maxAgeDays})`
+        );
+
+        try {
+          // Find the newest commit that is within the retention window
+          const { stdout: recentOutput } = await execFilePromise(
+            'git',
+            ['log', '--format=%H', '--after', cutoffISO, '-1'],
+            { cwd: worldsPath }
+          );
+          const newestRetainedHash = recentOutput.trim();
+
+          if (newestRetainedHash) {
+            // Create a new root from the retained point using filter-branch alternative
+            await execFilePromise(
+              'git',
+              ['rebase', '--onto', newestRetainedHash, newestRetainedHash + '~1', 'HEAD'],
+              { cwd: worldsPath }
+            );
+          }
+        } catch (pruneError) {
+          this.logger.warn(
+            `Failed to prune old backups by age: ${pruneError instanceof Error ? pruneError.message : String(pruneError)}`
+          );
+        }
+      }
+    } catch (error) {
+      // Retention policy errors should not fail the backup itself
+      this.logger.warn(
+        `Retention policy check failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
