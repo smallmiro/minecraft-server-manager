@@ -56,7 +56,8 @@ const backupSchedulePlugin: FastifyPluginAsync = async (fastify: FastifyInstance
   const scheduler = new BackupSchedulerService(
     useCase,
     config.platformPath,
-    fastify.log
+    fastify.log,
+    writeAuditLog
   );
   await scheduler.initialize();
 
