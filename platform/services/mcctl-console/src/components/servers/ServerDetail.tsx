@@ -35,6 +35,7 @@ import { HostnameDisplay } from '@/components/common';
 import { ServerModsTab } from './ServerModsTab';
 import { ServerFilesTab } from './files/ServerFilesTab';
 import { ServerConfigHistoryTab } from './config-history';
+import { ServerBackupTab } from './ServerBackupTab';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -586,9 +587,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
 
       {activeTab === 'Backups' && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="body1" color="text.secondary">
-            Backup management coming soon
-          </Typography>
+          <ServerBackupTab serverName={server.name} />
         </Box>
       )}
 
