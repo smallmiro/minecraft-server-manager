@@ -4269,6 +4269,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-2160-2026-02-23---config-snapshots--backup-retention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.16.0 (2026-02-23) - Config Snapshots &amp; Backup Retention
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-240-2026-02-14" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4581,8 +4592,8 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.11.0
-<strong>Last Updated</strong>: 2026-02-19
+<p><strong>Version</strong>: 2.16.0
+<strong>Last Updated</strong>: 2026-02-23
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
 <hr />
@@ -9111,6 +9122,23 @@ A: Yes. It only appends new variables and never modifies existing ones. Use <cod
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-2160-2026-02-23---config-snapshots--backup-retention">Version 2.16.0 (2026-02-23) - Config Snapshots &amp; Backup Retention<a class="headerlink" href="#version-2160-2026-02-23---config-snapshots--backup-retention" title="Permanent link">&para;</a></h3>
+<p><strong>Added:</strong>
+- <strong>Config Snapshot System</strong> - Full-stack server configuration versioning (#397~#406, #414~#424)
+  - Domain layer: <code>ConfigSnapshot</code>, <code>ConfigSnapshotSchedule</code> entities with value objects
+  - Infrastructure: <code>SqliteConfigSnapshotRepository</code> with SQLite persistence
+  - API: RESTful Config Snapshot endpoints (CRUD, diff, restore, schedule management)
+  - <code>ConfigSnapshotSchedulerService</code> with <code>node-cron</code> for automated snapshots
+  - CLI: <code>mcctl config-snapshot</code> commands for snapshot management
+  - Console: Config Snapshots tab on Backup page, Config History tab on Server Detail page
+  - ConfigDiff viewer and ConfigRestore dialog components
+  - E2E test fixtures and test files
+- <strong>Backup Retention Policy Pruning</strong> - <code>applyRetentionPolicy()</code> implementation (#396, #426)
+  - Git history truncation logic for automated backup cleanup</p>
+<p><strong>Fixed:</strong>
+- <strong>Backup Git Path</strong> - Correct git repository path resolution (#423, #425)
+  - Replace <code>exec()</code> with <code>execFile()</code> to prevent shell injection
+  - Added test coverage for backup routes</p>
 <h3 id="version-240-2026-02-14">Version 2.4.0 (2026-02-14)<a class="headerlink" href="#version-240-2026-02-14" title="Permanent link">&para;</a></h3>
 <p><strong>Added:</strong>
 - <strong>mcctl upgrade command</strong> - Template-diffing based platform upgrade that detects new environment variables in <code>.env.example</code> and appends them to user's <code>.env</code> file (#326, #355)
