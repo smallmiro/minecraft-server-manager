@@ -126,7 +126,7 @@ function ConfigSnapshotsContent({ serverName }: { serverName: string }) {
         totalCount={totalCount}
         schedule={schedule}
         onViewHistory={() => {
-          if (snapshots.length > 0) {
+          if (snapshots.length >= 2) {
             setDiffDialogOpen(true);
           }
         }}
@@ -145,6 +145,7 @@ function ConfigSnapshotsContent({ serverName }: { serverName: string }) {
         open={schedulePanelOpen}
         onClose={() => setSchedulePanelOpen(false)}
         serverNames={[serverName]}
+        filterServerName={serverName}
       />
 
       {diffDialogOpen && diffSnapshots.snapshotA && diffSnapshots.snapshotB && (

@@ -30,6 +30,8 @@ interface ConfigSnapshotSchedulePanelProps {
   open: boolean;
   onClose: () => void;
   serverNames: string[];
+  /** When provided, only show schedules for this server */
+  filterServerName?: string;
 }
 
 /**
@@ -40,8 +42,9 @@ export function ConfigSnapshotSchedulePanel({
   open,
   onClose,
   serverNames,
+  filterServerName,
 }: ConfigSnapshotSchedulePanelProps) {
-  const { data, isLoading, error } = useConfigSnapshotSchedules();
+  const { data, isLoading, error } = useConfigSnapshotSchedules(filterServerName);
   const createMutation = useCreateConfigSnapshotSchedule();
   const updateMutation = useUpdateConfigSnapshotSchedule();
   const toggleMutation = useToggleConfigSnapshotSchedule();
