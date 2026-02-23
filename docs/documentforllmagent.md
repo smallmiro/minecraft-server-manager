@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.11.0
-> **Last Updated**: 2026-02-19
+> **Version**: 2.16.0
+> **Last Updated**: 2026-02-23
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -2828,6 +2828,26 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.16.0 (2026-02-23) - Config Snapshots & Backup Retention
+
+**Added:**
+- **Config Snapshot System** - Full-stack server configuration versioning (#397~#406, #414~#424)
+  - Domain layer: `ConfigSnapshot`, `ConfigSnapshotSchedule` entities with value objects
+  - Infrastructure: `SqliteConfigSnapshotRepository` with SQLite persistence
+  - API: RESTful Config Snapshot endpoints (CRUD, diff, restore, schedule management)
+  - `ConfigSnapshotSchedulerService` with `node-cron` for automated snapshots
+  - CLI: `mcctl config-snapshot` commands for snapshot management
+  - Console: Config Snapshots tab on Backup page, Config History tab on Server Detail page
+  - ConfigDiff viewer and ConfigRestore dialog components
+  - E2E test fixtures and test files
+- **Backup Retention Policy Pruning** - `applyRetentionPolicy()` implementation (#396, #426)
+  - Git history truncation logic for automated backup cleanup
+
+**Fixed:**
+- **Backup Git Path** - Correct git repository path resolution (#423, #425)
+  - Replace `exec()` with `execFile()` to prevent shell injection
+  - Added test coverage for backup routes
 
 ### Version 2.4.0 (2026-02-14)
 

@@ -995,6 +995,18 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.16.0] - 2026-02-23
+
+**Added:**
+- **Config Snapshot System** - Full-stack server configuration versioning (#397~#406)
+  - Domain layer, infrastructure, API, CLI, Console UI, and E2E tests
+  - Automated snapshot scheduling with node-cron
+  - Config diff viewer and restore functionality
+- **Backup Retention Policy Pruning** - `applyRetentionPolicy()` implementation (#396, #426)
+
+**Fixed:**
+- **Backup Git Path** - Fix git repository path and shell injection prevention (#423, #425)
+
 ### [2.15.3] - 2026-02-22
 
 **Changed:**
@@ -1027,29 +1039,6 @@ cat /etc/avahi/hosts
 
 **Added:**
 - **Console Mod Detail Cards** - Enhanced installed mods display with rich card UI
-
-### [2.13.0] - 2026-02-21
-
-**Added:**
-- **Console Server Activity Tab Redesign** - Improve Server Activity tab to match Audit Logs page UI (#391, #392)
-
-### [2.12.1] - 2026-02-20
-
-**Added:**
-- **Server Management Guide** - New bilingual (EN/KO) documentation for server start/stop operations
-
-### [2.12.0] - 2026-02-20
-
-**Changed:**
-- **Console File Editors Inline Redesign** - Convert TextEditor and PlayerEditorDialog from Dialog to inline Card-based views (#389, #390)
-
-### [2.11.0] - 2026-02-19
-
-**Added:**
-- **Console Tab-Specific Console Section** - Show Console section only on Overview tab (#387, #388)
-
-**Changed:**
-- **Console server.properties Editor Redesign** - Replace `ServerPropertiesDialog` (modal) with `ServerPropertiesView` (inline view) + `RawPropertiesEditor` for FORM/RAW toggle editing
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

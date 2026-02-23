@@ -77,6 +77,14 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.16.0 (2026-02-23)
+- **feat**: Config Snapshot system - full-stack server configuration versioning (#397~#406)
+  - Domain layer, infrastructure, API, CLI, Console UI, and E2E tests
+  - Automated snapshot scheduling with node-cron
+  - Config diff viewer and restore functionality
+- **feat**: Backup retention policy pruning implementation (#396, #426)
+- **fix**: Backup git path and shell injection prevention (#423, #425)
+
 ### v2.15.3 (2026-02-22)
 - **docs**: Update README.md with Management Console features and architecture (#412, #413)
 
@@ -97,15 +105,6 @@ mcctl logs myserver
 
 ### v2.14.0 (2026-02-21)
 - **feat(console)**: Enhanced installed mods display with rich card UI and batch API
-
-### v2.13.0 (2026-02-21)
-- **feat(console)**: Improve Server Activity tab to match Audit Logs page UI (#391, #392)
-
-### v2.12.1 (2026-02-20)
-- **docs**: Add server management guide (EN/KO) for start/stop operations
-
-### v2.12.0 (2026-02-20)
-- **refactor(console)**: Convert file editors from Dialog to inline Card-based views (#389, #390)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
