@@ -187,6 +187,33 @@ export class BackupSchedulerService {
     repoDir: string,
     keepCount: number
   ): Promise<void> {
+    const currentBranch = await this.getCurrentBranch(repoDir);
+    const tempBranch = `_prune-temp-${Date.now()}`;
+
+    if (keepCount === 1) {
+      // Special case: keep only HEAD commit.
+      // Cherry-picking is not needed - just create an orphan root from HEAD's tree directly.
+      // This preserves HEAD's tree content without losing the commit message.
+      await execFilePromise(
+        'git',
+        ['checkout', '--orphan', tempBranch, 'HEAD'],
+        { cwd: repoDir }
+      );
+      await execFilePromise(
+        'git',
+        ['commit', '--allow-empty', '-m', 'Retention prune root'],
+        { cwd: repoDir }
+      );
+      await execFilePromise(
+        'git',
+        ['checkout', '-B', currentBranch, tempBranch],
+        { cwd: repoDir }
+      );
+      await execFilePromise('git', ['branch', '-D', tempBranch], { cwd: repoDir }).catch(() => {});
+      await execFilePromise('git', ['push', '--force', 'origin', currentBranch], { cwd: repoDir });
+      return;
+    }
+
     // Find the SHA of the commit at position keepCount from HEAD (1-indexed from tip)
     const revListResult = await execFilePromise(
       'git',
@@ -204,10 +231,6 @@ export class BackupSchedulerService {
 
     // The root commit to start orphan from is the oldest kept commit
     const oldestKeptSha = keptCommits[keptCommits.length - 1]!;
-
-    // Create orphan branch from the oldest kept commit's tree
-    const tempBranch = `_prune-temp-${Date.now()}`;
-    const currentBranch = await this.getCurrentBranch(repoDir);
 
     // Create orphan branch with the same tree as oldestKeptSha
     await execFilePromise(
@@ -283,11 +306,6 @@ export class BackupSchedulerService {
     const policy = schedule.retentionPolicy;
     const maxCount = policy.maxCount;
     const maxAgeDays = policy.maxAgeDays;
-
-    // Nothing to do if no policy configured
-    if (maxCount === undefined && maxAgeDays === undefined) {
-      return;
-    }
 
     // Check if repository exists
     let commitCount: number;

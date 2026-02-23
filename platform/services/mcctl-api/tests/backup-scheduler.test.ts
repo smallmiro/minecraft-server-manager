@@ -393,17 +393,26 @@ describe('BackupSchedulerService', () => {
   });
 
   describe('applyRetentionPolicy', () => {
-    it('should not prune when no retention policy is set', async () => {
+    it('should not prune when backup count and age are within default policy limits', async () => {
+      // BackupSchedule.create() applies BackupRetentionPolicy.default() (maxCount=10, maxAgeDays=30)
+      // when retentionPolicy is not specified. This test verifies that no pruning occurs
+      // when both limits are satisfied: 5 commits < 10, and newest commit is within 30 days.
       const schedule = createTestSchedule({ maxCount: undefined, maxAgeDays: undefined });
       vi.mocked(mockUseCase.findById).mockResolvedValue(schedule);
       mockedExistsSync.mockReturnValue(true);
 
-      // Mock: 5 commits exist
+      // Most recent date (within 30-day window) for oldest commit
+      const recentDate = new Date();
+      recentDate.setDate(recentDate.getDate() - 1); // 1 day ago
+
+      // Mock: 5 commits exist, oldest is 1 day ago (within 30-day limit)
       mockedExecFile.mockImplementation(
         (_file: any, args: any, _opts: any, callback: any) => {
           if (typeof callback === 'function') {
             if (Array.isArray(args) && args.includes('rev-list') && args.includes('--count')) {
               callback(null, '5\n', '');
+            } else if (Array.isArray(args) && args.includes('log') && args.includes('--format=%aI')) {
+              callback(null, `${recentDate.toISOString()}\n`, '');
             } else if (Array.isArray(args) && args.includes('rev-parse') && args.includes('--short')) {
               callback(null, 'abc1234\n', '');
             } else {
@@ -709,6 +718,82 @@ describe('BackupSchedulerService', () => {
       // A warning should be logged about pruning failure
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.stringContaining('prune')
+      );
+    });
+
+    it('should handle keepCount=1 without cherry-pick (HEAD orphan root)', async () => {
+      // When maxAgeDays pruning results in keepCount=1, truncateHistory should create
+      // an orphan root directly from HEAD without cherry-picking (which would produce
+      // an empty commitsToReplay array, losing all content).
+      const schedule = createTestSchedule({ maxAgeDays: 7 });
+      vi.mocked(mockUseCase.findById).mockResolvedValue(schedule);
+      mockedExistsSync.mockReturnValue(true);
+
+      // oldest commit is 30 days ago - well outside 7-day window
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      mockedExecFile.mockImplementation(
+        (_file: any, args: any, _opts: any, callback: any) => {
+          if (typeof callback === 'function') {
+            if (Array.isArray(args) && args.includes('rev-list') && args.includes('--count') && !args.includes('--after')) {
+              // Total commit count
+              callback(null, '5\n', '');
+            } else if (Array.isArray(args) && args.includes('log') && args.includes('--format=%aI')) {
+              // Oldest commit date is 30 days ago
+              callback(null, `${thirtyDaysAgo.toISOString()}\n`, '');
+            } else if (Array.isArray(args) && args.includes('rev-list') && args.includes('--count') && args.includes('--after')) {
+              // Only 1 commit is newer than cutoff (7 days ago)
+              callback(null, '1\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-parse') && !args.includes('--short')) {
+              callback(null, 'main\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-parse') && args.includes('--abbrev-ref')) {
+              callback(null, 'main\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-parse') && args.includes('--short')) {
+              callback(null, 'abc1234\n', '');
+            } else {
+              callback(null, 'ok\n', '');
+            }
+          }
+          return {} as any;
+        }
+      );
+
+      const nodeCron = await import('node-cron');
+      let capturedCallback: (() => Promise<void>) | null = null;
+      vi.mocked(nodeCron.schedule).mockImplementation((_expr, callback) => {
+        capturedCallback = callback as () => Promise<void>;
+        return mockCronTask;
+      });
+
+      await service.initialize();
+      service.registerTask(schedule);
+
+      if (capturedCallback) {
+        await capturedCallback();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      // Should have used orphan branch creation (not via rev-list ancestry-path)
+      const calls = mockedExecFile.mock.calls;
+      const orphanCalls = calls.filter(
+        (call) => Array.isArray(call[1]) && call[1].includes('--orphan')
+      );
+      expect(orphanCalls.length).toBeGreaterThan(0);
+
+      // The orphan checkout should reference 'HEAD' directly (keepCount=1 path),
+      // NOT `HEAD~1..HEAD` (which would be the normal path)
+      const revListAncestryPath = calls.filter(
+        (call) => Array.isArray(call[1]) && call[1].includes('--ancestry-path')
+      );
+      // keepCount=1 path bypasses rev-list ancestry-path entirely
+      expect(revListAncestryPath).toHaveLength(0);
+
+      // Backup should still succeed
+      expect(mockUseCase.recordRun).toHaveBeenCalledWith(
+        schedule.id,
+        'success',
+        expect.any(String)
       );
     });
 
