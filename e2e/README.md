@@ -87,12 +87,25 @@ pm2 stop all
 ```
 e2e/
 ├── fixtures/
-│   └── auth.ts          # Authentication fixtures and helpers
+│   ├── auth.ts                         # Authentication fixtures and helpers
+│   └── config-snapshot-helpers.ts      # Config Snapshot test utilities
 ├── tests/
-│   ├── auth.spec.ts     # Authentication tests
-│   ├── api.spec.ts      # API endpoint tests
-│   ├── dashboard.spec.ts # Dashboard tests
-│   └── servers.spec.ts  # Server management tests
+│   ├── auth.spec.ts                    # Authentication tests
+│   ├── api.spec.ts                     # API endpoint tests
+│   ├── api-backup.spec.ts              # Backup API tests
+│   ├── api-health.spec.ts              # Health & system API tests
+│   ├── api-integration.spec.ts         # Cross-resource integration tests
+│   ├── api-players.spec.ts             # Player management API tests
+│   ├── api-router.spec.ts              # mc-router API tests
+│   ├── api-servers.spec.ts             # Server management API tests
+│   ├── api-worlds.spec.ts              # World management API tests
+│   ├── dashboard.spec.ts               # Dashboard tests
+│   ├── servers.spec.ts                 # Server management UI tests
+│   ├── sse.spec.ts                     # Server-Sent Events tests
+│   └── config-snapshot/                # Config Snapshot feature tests
+│       ├── config-snapshot-api.spec.ts # API integration tests (CRUD, diff, restore, schedules)
+│       ├── config-snapshot-web.spec.ts # Web Console UI tests (Playwright)
+│       └── config-snapshot-cli.spec.ts # CLI scenario tests
 ├── global-setup.ts      # Starts PM2 services before tests
 ├── global-teardown.ts   # Optional cleanup after tests
 ├── playwright.config.ts # Playwright configuration
@@ -123,6 +136,33 @@ const API_URL = process.env.E2E_API_URL || 'http://localhost:5001';
 test('health check', async ({ request }) => {
   const response = await request.get(`${API_URL}/health`);
   expect(response.status()).toBe(200);
+});
+```
+
+### Using Config Snapshot Helpers
+
+```typescript
+import { test, expect } from '@playwright/test';
+import {
+  createConfigSnapshotViaApi,
+  cleanupSnapshots,
+  getFirstServerName,
+} from '../fixtures/config-snapshot-helpers';
+
+test('snapshot lifecycle', async () => {
+  const serverName = await getFirstServerName();
+  if (!serverName) { test.skip(); return; }
+
+  const createdIds: string[] = [];
+  try {
+    const snap = await createConfigSnapshotViaApi(serverName, 'my snapshot');
+    if (snap) {
+      createdIds.push(snap.id);
+      expect(snap.serverName).toBe(serverName);
+    }
+  } finally {
+    await cleanupSnapshots(serverName, createdIds);
+  }
 });
 ```
 
