@@ -538,7 +538,7 @@ export class BackupSchedulerService {
    */
   async reload(): Promise<void> {
     // Stop all existing tasks
-    for (const [id, task] of this.tasks) {
+    for (const task of this.tasks.values()) {
       task.stop();
     }
     this.tasks.clear();
@@ -551,7 +551,7 @@ export class BackupSchedulerService {
    * Stop all scheduled tasks
    */
   shutdown(): void {
-    for (const [id, task] of this.tasks) {
+    for (const task of this.tasks.values()) {
       task.stop();
     }
     this.tasks.clear();
