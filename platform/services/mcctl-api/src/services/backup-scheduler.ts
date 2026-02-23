@@ -2,6 +2,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import os from 'os';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   IBackupScheduleUseCase,
@@ -122,6 +123,8 @@ export class BackupSchedulerService {
   /**
    * Execute a backup for a given schedule.
    * Uses execFile with array arguments to prevent shell injection.
+   * Runs git commands against $HOME/.minecraft-backup (the actual git repo),
+   * NOT platform/worlds/ which is only the source data directory.
    */
   private async executeBackup(scheduleId: string): Promise<void> {
     const schedule = await this.useCase.findById(scheduleId);
@@ -147,6 +150,9 @@ export class BackupSchedulerService {
         return;
       }
 
+      // The backup cache directory used by backup.sh as the git repository
+      const backupCacheDir = join(os.homedir(), '.minecraft-backup');
+
       // Build commit message (safe: passed as argument, not interpolated into shell)
       const commitMessage = `Scheduled backup: ${schedule.name} [${new Date().toISOString()}]`;
 
@@ -169,19 +175,21 @@ export class BackupSchedulerService {
           execOptions
         );
       } else {
-        // Run git commands sequentially using execFile (safe from injection)
-        await execFilePromise('git', ['add', '-A'], { ...execOptions, cwd: worldsPath });
-        await execFilePromise('git', ['commit', '-m', commitMessage], { ...execOptions, cwd: worldsPath });
-        await execFilePromise('git', ['push'], { ...execOptions, cwd: worldsPath });
+        // Fallback: run git commands against the backup cache directory
+        // (not worlds/ which is not a git repository)
+        const gitOptions = { ...execOptions, cwd: backupCacheDir };
+        await execFilePromise('git', ['add', '-A'], gitOptions);
+        await execFilePromise('git', ['commit', '-m', commitMessage], gitOptions);
+        await execFilePromise('git', ['push'], gitOptions);
       }
 
-      // Get commit hash
+      // Get commit hash from the backup cache directory
       let commitHash: string | undefined;
       try {
         const { stdout: hashOut } = await execFilePromise(
           'git',
           ['rev-parse', '--short', 'HEAD'],
-          { cwd: worldsPath }
+          { cwd: backupCacheDir }
         );
         commitHash = hashOut.trim();
       } catch {
