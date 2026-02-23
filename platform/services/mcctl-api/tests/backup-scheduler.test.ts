@@ -392,6 +392,373 @@ describe('BackupSchedulerService', () => {
     });
   });
 
+  describe('applyRetentionPolicy', () => {
+    it('should not prune when no retention policy is set', async () => {
+      const schedule = createTestSchedule({ maxCount: undefined, maxAgeDays: undefined });
+      vi.mocked(mockUseCase.findById).mockResolvedValue(schedule);
+      mockedExistsSync.mockReturnValue(true);
+
+      // Mock: 5 commits exist
+      mockedExecFile.mockImplementation(
+        (_file: any, args: any, _opts: any, callback: any) => {
+          if (typeof callback === 'function') {
+            if (Array.isArray(args) && args.includes('rev-list') && args.includes('--count')) {
+              callback(null, '5\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-parse') && args.includes('--short')) {
+              callback(null, 'abc1234\n', '');
+            } else {
+              callback(null, 'ok\n', '');
+            }
+          }
+          return {} as any;
+        }
+      );
+
+      const nodeCron = await import('node-cron');
+      let capturedCallback: (() => Promise<void>) | null = null;
+      vi.mocked(nodeCron.schedule).mockImplementation((_expr, callback) => {
+        capturedCallback = callback as () => Promise<void>;
+        return mockCronTask;
+      });
+
+      await service.initialize();
+      service.registerTask(schedule);
+
+      if (capturedCallback) {
+        await capturedCallback();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      // No orphan/truncation commands should have been called
+      const calls = mockedExecFile.mock.calls;
+      const orphanCalls = calls.filter(
+        (call) => Array.isArray(call[1]) && call[1].includes('--orphan')
+      );
+      expect(orphanCalls).toHaveLength(0);
+    });
+
+    it('should prune by maxCount when backup count exceeds limit', async () => {
+      const schedule = createTestSchedule({ maxCount: 3 });
+      vi.mocked(mockUseCase.findById).mockResolvedValue(schedule);
+      mockedExistsSync.mockReturnValue(true);
+
+      let revListCountCallCount = 0;
+
+      mockedExecFile.mockImplementation(
+        (_file: any, args: any, _opts: any, callback: any) => {
+          if (typeof callback === 'function') {
+            if (Array.isArray(args) && args.includes('rev-list') && args.includes('--count')) {
+              // First call: 5 commits; second call (after prune): 3 commits
+              revListCountCallCount++;
+              callback(null, revListCountCallCount === 1 ? '5\n' : '3\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-list') && !args.includes('--count')) {
+              // Return the Nth commit SHA
+              callback(null, 'deadbeef1234567890abcdef\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-parse') && args.includes('--short')) {
+              callback(null, 'abc1234\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-parse') && !args.includes('--short')) {
+              // HEAD SHA for orphan
+              callback(null, 'deadbeef1234567890abcdef\n', '');
+            } else {
+              callback(null, 'ok\n', '');
+            }
+          }
+          return {} as any;
+        }
+      );
+
+      const nodeCron = await import('node-cron');
+      let capturedCallback: (() => Promise<void>) | null = null;
+      vi.mocked(nodeCron.schedule).mockImplementation((_expr, callback) => {
+        capturedCallback = callback as () => Promise<void>;
+        return mockCronTask;
+      });
+
+      await service.initialize();
+      service.registerTask(schedule);
+
+      if (capturedCallback) {
+        await capturedCallback();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      // Should have attempted orphan branch creation for truncation
+      const calls = mockedExecFile.mock.calls;
+      const orphanCalls = calls.filter(
+        (call) => Array.isArray(call[1]) && call[1].includes('--orphan')
+      );
+      expect(orphanCalls.length).toBeGreaterThan(0);
+
+      // Should have logged pruning
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('prune')
+      );
+    });
+
+    it('should prune by maxAgeDays when oldest backup is too old', async () => {
+      const schedule = createTestSchedule({ maxAgeDays: 7 });
+      vi.mocked(mockUseCase.findById).mockResolvedValue(schedule);
+      mockedExistsSync.mockReturnValue(true);
+
+      // oldest commit is 10 days ago
+      const tenDaysAgo = new Date();
+      tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+      const oldTimestamp = tenDaysAgo.toISOString();
+
+      let revListCountCallCount = 0;
+
+      mockedExecFile.mockImplementation(
+        (_file: any, args: any, _opts: any, callback: any) => {
+          if (typeof callback === 'function') {
+            if (Array.isArray(args) && args.includes('rev-list') && args.includes('--count')) {
+              revListCountCallCount++;
+              // 5 commits before/after pruning
+              callback(null, '5\n', '');
+            } else if (Array.isArray(args) && args.includes('log') && args.includes('--format=%aI')) {
+              // Return old timestamp as oldest commit date
+              callback(null, `${oldTimestamp}\n`, '');
+            } else if (Array.isArray(args) && args.includes('rev-list') && !args.includes('--count')) {
+              callback(null, 'deadbeef1234567890abcdef\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-parse')) {
+              callback(null, 'deadbeef1234567890abcdef\n', '');
+            } else {
+              callback(null, 'ok\n', '');
+            }
+          }
+          return {} as any;
+        }
+      );
+
+      const nodeCron = await import('node-cron');
+      let capturedCallback: (() => Promise<void>) | null = null;
+      vi.mocked(nodeCron.schedule).mockImplementation((_expr, callback) => {
+        capturedCallback = callback as () => Promise<void>;
+        return mockCronTask;
+      });
+
+      await service.initialize();
+      service.registerTask(schedule);
+
+      if (capturedCallback) {
+        await capturedCallback();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      // Should have called git log to get oldest commit date
+      const calls = mockedExecFile.mock.calls;
+      const logCalls = calls.filter(
+        (call) => Array.isArray(call[1]) && call[1].includes('log') && call[1].includes('--format=%aI')
+      );
+      expect(logCalls.length).toBeGreaterThan(0);
+    });
+
+    it('should not prune when maxCount is satisfied', async () => {
+      const schedule = createTestSchedule({ maxCount: 10 });
+      vi.mocked(mockUseCase.findById).mockResolvedValue(schedule);
+      mockedExistsSync.mockReturnValue(true);
+
+      mockedExecFile.mockImplementation(
+        (_file: any, args: any, _opts: any, callback: any) => {
+          if (typeof callback === 'function') {
+            if (Array.isArray(args) && args.includes('rev-list') && args.includes('--count')) {
+              // Only 5 commits, under maxCount of 10
+              callback(null, '5\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-parse') && args.includes('--short')) {
+              callback(null, 'abc1234\n', '');
+            } else if (Array.isArray(args) && args.includes('log') && args.includes('--format=%aI')) {
+              // Timestamp from 2 days ago (within 10-day default)
+              const twoDaysAgo = new Date();
+              twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+              callback(null, `${twoDaysAgo.toISOString()}\n`, '');
+            } else {
+              callback(null, 'ok\n', '');
+            }
+          }
+          return {} as any;
+        }
+      );
+
+      const nodeCron = await import('node-cron');
+      let capturedCallback: (() => Promise<void>) | null = null;
+      vi.mocked(nodeCron.schedule).mockImplementation((_expr, callback) => {
+        capturedCallback = callback as () => Promise<void>;
+        return mockCronTask;
+      });
+
+      await service.initialize();
+      service.registerTask(schedule);
+
+      if (capturedCallback) {
+        await capturedCallback();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      // Should not have called orphan branch creation
+      const calls = mockedExecFile.mock.calls;
+      const orphanCalls = calls.filter(
+        (call) => Array.isArray(call[1]) && call[1].includes('--orphan')
+      );
+      expect(orphanCalls).toHaveLength(0);
+    });
+
+    it('should re-count after maxCount prune before applying maxAgeDays', async () => {
+      const schedule = createTestSchedule({ maxCount: 3, maxAgeDays: 7 });
+      vi.mocked(mockUseCase.findById).mockResolvedValue(schedule);
+      mockedExistsSync.mockReturnValue(true);
+
+      let revListCountCallCount = 0;
+      const recentTimestamp = new Date().toISOString(); // fresh commit, within 7 days
+
+      mockedExecFile.mockImplementation(
+        (_file: any, args: any, _opts: any, callback: any) => {
+          if (typeof callback === 'function') {
+            if (Array.isArray(args) && args.includes('rev-list') && args.includes('--count')) {
+              revListCountCallCount++;
+              if (revListCountCallCount === 1) {
+                // Initial: 5 commits (exceeds maxCount=3)
+                callback(null, '5\n', '');
+              } else {
+                // After maxCount prune: 3 commits (at maxCount limit)
+                callback(null, '3\n', '');
+              }
+            } else if (Array.isArray(args) && args.includes('log') && args.includes('--format=%aI')) {
+              // Recent timestamp - should NOT trigger maxAgeDays prune
+              callback(null, `${recentTimestamp}\n`, '');
+            } else if (Array.isArray(args) && args.includes('rev-list') && !args.includes('--count')) {
+              callback(null, 'deadbeef1234567890abcdef\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-parse')) {
+              callback(null, 'deadbeef1234567890abcdef\n', '');
+            } else {
+              callback(null, 'ok\n', '');
+            }
+          }
+          return {} as any;
+        }
+      );
+
+      const nodeCron = await import('node-cron');
+      let capturedCallback: (() => Promise<void>) | null = null;
+      vi.mocked(nodeCron.schedule).mockImplementation((_expr, callback) => {
+        capturedCallback = callback as () => Promise<void>;
+        return mockCronTask;
+      });
+
+      await service.initialize();
+      service.registerTask(schedule);
+
+      if (capturedCallback) {
+        await capturedCallback();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      // Should have called rev-list --count at least twice (initial + after maxCount prune)
+      expect(revListCountCallCount).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should not fail the backup if pruning throws an error', async () => {
+      const schedule = createTestSchedule({ maxCount: 3 });
+      vi.mocked(mockUseCase.findById).mockResolvedValue(schedule);
+      mockedExistsSync.mockReturnValue(true);
+
+      let callCount = 0;
+
+      mockedExecFile.mockImplementation(
+        (_file: any, args: any, _opts: any, callback: any) => {
+          if (typeof callback === 'function') {
+            callCount++;
+            if (Array.isArray(args) && args.includes('rev-list') && args.includes('--count')) {
+              // Exceeds maxCount
+              callback(null, '10\n', '');
+            } else if (Array.isArray(args) && args.includes('--orphan')) {
+              // Pruning fails
+              const error = new Error('orphan branch failed') as any;
+              error.stderr = 'fatal: error creating orphan branch';
+              callback(error, '', error.stderr);
+            } else if (Array.isArray(args) && args.includes('rev-parse') && args.includes('--short')) {
+              callback(null, 'abc1234\n', '');
+            } else {
+              callback(null, 'ok\n', '');
+            }
+          }
+          return {} as any;
+        }
+      );
+
+      const nodeCron = await import('node-cron');
+      let capturedCallback: (() => Promise<void>) | null = null;
+      vi.mocked(nodeCron.schedule).mockImplementation((_expr, callback) => {
+        capturedCallback = callback as () => Promise<void>;
+        return mockCronTask;
+      });
+
+      await service.initialize();
+      service.registerTask(schedule);
+
+      if (capturedCallback) {
+        await capturedCallback();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      // Backup should still succeed despite pruning failure
+      expect(mockUseCase.recordRun).toHaveBeenCalledWith(
+        schedule.id,
+        'success',
+        expect.any(String)
+      );
+
+      // A warning should be logged about pruning failure
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('prune')
+      );
+    });
+
+    it('should write audit log after successful pruning', async () => {
+      const schedule = createTestSchedule({ maxCount: 3 });
+      vi.mocked(mockUseCase.findById).mockResolvedValue(schedule);
+      mockedExistsSync.mockReturnValue(true);
+
+      let revListCountCallCount = 0;
+
+      mockedExecFile.mockImplementation(
+        (_file: any, args: any, _opts: any, callback: any) => {
+          if (typeof callback === 'function') {
+            if (Array.isArray(args) && args.includes('rev-list') && args.includes('--count')) {
+              revListCountCallCount++;
+              callback(null, revListCountCallCount === 1 ? '5\n' : '3\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-list') && !args.includes('--count')) {
+              callback(null, 'deadbeef1234567890abcdef\n', '');
+            } else if (Array.isArray(args) && args.includes('rev-parse')) {
+              callback(null, 'deadbeef1234567890abcdef\n', '');
+            } else {
+              callback(null, 'ok\n', '');
+            }
+          }
+          return {} as any;
+        }
+      );
+
+      const nodeCron = await import('node-cron');
+      let capturedCallback: (() => Promise<void>) | null = null;
+      vi.mocked(nodeCron.schedule).mockImplementation((_expr, callback) => {
+        capturedCallback = callback as () => Promise<void>;
+        return mockCronTask;
+      });
+
+      await service.initialize();
+      service.registerTask(schedule);
+
+      if (capturedCallback) {
+        await capturedCallback();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      // Should have logged pruning info
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('prune')
+      );
+    });
+  });
+
   describe('shell injection prevention', () => {
     it('should not pass schedule.name through shell interpreter', async () => {
       // Verify that names with shell metacharacters are safe
