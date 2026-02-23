@@ -53,3 +53,8 @@ export type { IAuditLogPort, AuditLogQueryOptions } from './IAuditLogPort.js';
 export type { IOperatorPort } from './IOperatorPort.js';
 
 export type { IBackupScheduleRepository } from './IBackupScheduleRepository.js';
+
+export type { IConfigSnapshotRepository } from './IConfigSnapshotRepository.js';
+export type { IConfigSnapshotScheduleRepository } from './IConfigSnapshotScheduleRepository.js';
+export type { IConfigFileCollector } from './IConfigFileCollector.js';
+export type { IConfigSnapshotStorage } from './IConfigSnapshotStorage.js';

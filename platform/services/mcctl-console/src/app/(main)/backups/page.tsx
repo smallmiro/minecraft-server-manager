@@ -1,17 +1,47 @@
 'use client';
 
+import { useCallback } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { BackupStatus, BackupHistory, BackupPushButton, BackupScheduleList } from '@/components/backups';
+import {
+  BackupStatus,
+  BackupHistory,
+  BackupPushButton,
+  BackupScheduleList,
+  BackupPageTabs,
+  ConfigSnapshotTab,
+  type BackupTabValue,
+} from '@/components/backups';
 import { useBackupStatus } from '@/hooks/useMcctl';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 export default function BackupsPage() {
   const { data: statusData } = useBackupStatus();
   const configured = statusData?.configured ?? false;
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Read tab from URL query parameter, default to 'world-backups'
+  const currentTab = (searchParams.get('tab') as BackupTabValue) || 'world-backups';
+
+  const handleTabChange = useCallback(
+    (newTab: BackupTabValue) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (newTab === 'world-backups') {
+        params.delete('tab');
+      } else {
+        params.set('tab', newTab);
+      }
+      const query = params.toString();
+      router.push(query ? `/backups?${query}` : '/backups');
+    },
+    [searchParams, router]
+  );
 
   return (
     <>
@@ -50,24 +80,35 @@ export default function BackupsPage() {
               Backups
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Manage world backups and restore points
+              Manage world backups and config snapshots
             </Typography>
           </Box>
         </Box>
-        <BackupPushButton disabled={!configured} />
+        {currentTab === 'world-backups' && (
+          <BackupPushButton disabled={!configured} />
+        )}
       </Paper>
 
-      {/* Content */}
-      <Stack spacing={3}>
-        {/* Backup Status */}
-        <BackupStatus />
+      {/* Tab Switcher */}
+      <BackupPageTabs value={currentTab} onChange={handleTabChange} />
 
-        {/* Backup Schedules */}
-        <BackupScheduleList />
+      {/* Tab Content */}
+      {currentTab === 'world-backups' && (
+        <Stack spacing={3}>
+          {/* Backup Status */}
+          <BackupStatus />
 
-        {/* Backup History */}
-        {configured && <BackupHistory />}
-      </Stack>
+          {/* Backup Schedules */}
+          <BackupScheduleList />
+
+          {/* Backup History */}
+          {configured && <BackupHistory />}
+        </Stack>
+      )}
+
+      {currentTab === 'config-snapshots' && (
+        <ConfigSnapshotTab />
+      )}
     </>
   );
 }

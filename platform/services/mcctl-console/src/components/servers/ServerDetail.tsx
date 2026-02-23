@@ -34,6 +34,7 @@ import { ConnectionInfoCard } from './ConnectionInfoCard';
 import { HostnameDisplay } from '@/components/common';
 import { ServerModsTab } from './ServerModsTab';
 import { ServerFilesTab } from './files/ServerFilesTab';
+import { ServerConfigHistoryTab } from './config-history';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -41,7 +42,7 @@ interface ServerDetailProps {
 }
 
 // Tab configuration
-const TABS = ['Overview', 'Activity', 'Mods', 'Files', 'Backups', 'Access', 'Options'] as const;
+const TABS = ['Overview', 'Activity', 'Mods', 'Files', 'Config History', 'Backups', 'Access', 'Options'] as const;
 type TabType = (typeof TABS)[number];
 
 // Icon size for stat cards
@@ -571,6 +572,15 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
       {activeTab === 'Files' && (
         <Box sx={{ mt: 3 }}>
           <ServerFilesTab serverName={server.name} />
+        </Box>
+      )}
+
+      {activeTab === 'Config History' && (
+        <Box sx={{ mt: 3 }}>
+          <ServerConfigHistoryTab
+            serverName={server.name}
+            isServerRunning={server.status === 'running'}
+          />
         </Box>
       )}
 

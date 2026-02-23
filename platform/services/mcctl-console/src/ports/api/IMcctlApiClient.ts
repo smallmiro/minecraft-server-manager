@@ -615,6 +615,103 @@ export interface OperatorActionResponse {
   source?: PlayerDataSource;
 }
 
+// ============================================================
+// Config Snapshot Types
+// ============================================================
+
+export interface ConfigSnapshotFile {
+  path: string;
+  hash: string;
+  size: number;
+}
+
+export interface ConfigSnapshotItem {
+  id: string;
+  serverName: string;
+  createdAt: string;
+  description: string;
+  files: ConfigSnapshotFile[];
+  scheduleId?: string;
+}
+
+export interface ConfigSnapshotListResponse {
+  snapshots: ConfigSnapshotItem[];
+  total: number;
+}
+
+export type FileDiffStatus = 'added' | 'modified' | 'deleted';
+
+export interface FileDiff {
+  path: string;
+  status: FileDiffStatus;
+  oldContent?: string;
+  newContent?: string;
+  oldHash?: string;
+  newHash?: string;
+}
+
+export interface ConfigSnapshotDiffSummary {
+  added: number;
+  modified: number;
+  deleted: number;
+}
+
+export interface ConfigSnapshotDiffResponse {
+  baseSnapshotId: string;
+  compareSnapshotId: string;
+  changes: FileDiff[];
+  summary: ConfigSnapshotDiffSummary;
+  hasChanges: boolean;
+}
+
+export interface RestoreSnapshotOptions {
+  createSnapshotBeforeRestore?: boolean;
+  force?: boolean;
+}
+
+export interface RestoreConfigSnapshotResponse {
+  restored: ConfigSnapshotItem;
+  safetySnapshot?: ConfigSnapshotItem;
+}
+
+// ============================================================
+// Config Snapshot Schedule Types
+// ============================================================
+
+export interface ConfigSnapshotScheduleItem {
+  id: string;
+  serverName: string;
+  name: string;
+  cronExpression: string;
+  enabled: boolean;
+  retentionCount: number;
+  lastRunAt: string | null;
+  lastRunStatus: 'success' | 'failure' | null;
+  createdAt: string;
+}
+
+export interface ConfigSnapshotScheduleListResponse {
+  schedules: ConfigSnapshotScheduleItem[];
+}
+
+export interface CreateConfigSnapshotScheduleRequest {
+  serverName: string;
+  name: string;
+  cronExpression: string;
+  retentionCount?: number;
+  enabled?: boolean;
+}
+
+export interface UpdateConfigSnapshotScheduleRequest {
+  name?: string;
+  cronExpression?: string;
+  retentionCount?: number;
+}
+
+export interface ToggleConfigSnapshotScheduleRequest {
+  enabled: boolean;
+}
+
 /**
  * mcctl-api Client Interface
  * Defines the contract for API communication
@@ -704,4 +801,19 @@ export interface IMcctlApiClient {
   deleteFile(serverName: string, path: string): Promise<FileActionResponse>;
   createDirectory(serverName: string, path: string): Promise<FileActionResponse>;
   renameFile(serverName: string, oldPath: string, newPath: string): Promise<FileRenameResponse>;
+
+  // Config snapshot operations
+  listConfigSnapshots(serverName: string, limit?: number, offset?: number): Promise<ConfigSnapshotListResponse>;
+  getConfigSnapshot(serverName: string, snapshotId: string): Promise<ConfigSnapshotItem>;
+  createConfigSnapshot(serverName: string, description?: string): Promise<ConfigSnapshotItem>;
+  deleteConfigSnapshot(serverName: string, snapshotId: string): Promise<void>;
+  getConfigSnapshotDiff(snapshotId1: string, snapshotId2: string): Promise<ConfigSnapshotDiffResponse>;
+  restoreConfigSnapshot(serverName: string, snapshotId: string, options?: RestoreSnapshotOptions): Promise<RestoreConfigSnapshotResponse>;
+
+  // Config snapshot schedule operations
+  getConfigSnapshotSchedules(serverName?: string): Promise<ConfigSnapshotScheduleListResponse>;
+  createConfigSnapshotSchedule(request: CreateConfigSnapshotScheduleRequest): Promise<ConfigSnapshotScheduleItem>;
+  updateConfigSnapshotSchedule(id: string, request: UpdateConfigSnapshotScheduleRequest): Promise<ConfigSnapshotScheduleItem>;
+  toggleConfigSnapshotSchedule(id: string, enabled: boolean): Promise<ConfigSnapshotScheduleItem>;
+  deleteConfigSnapshotSchedule(id: string): Promise<void>;
 }

@@ -12,3 +12,13 @@ export {
   type BackupScheduleData,
   type BackupScheduleRow,
 } from './BackupSchedule.js';
+export {
+  ConfigSnapshot,
+  type ConfigSnapshotData,
+  type ConfigSnapshotRow,
+} from './ConfigSnapshot.js';
+export {
+  ConfigSnapshotSchedule,
+  type ConfigSnapshotScheduleData,
+  type ConfigSnapshotScheduleRow,
+} from './ConfigSnapshotSchedule.js';

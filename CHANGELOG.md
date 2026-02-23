@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.16.0] - 2026-02-23
+
+### Added
+- **Config Snapshot** - Full-stack configuration snapshot system for server config versioning (#397~#406, #414~#424)
+  - **Domain Layer**: `ConfigSnapshot`, `ConfigSnapshotSchedule` entities with `SnapshotId`, `SnapshotType`, `SnapshotStatus` value objects (#397, #414)
+  - **Infrastructure**: `SqliteConfigSnapshotRepository` adapter with SQLite persistence (#398)
+  - **API**: RESTful Config Snapshot endpoints - CRUD, diff, restore, schedule management (#399, #400, #416)
+    - `ConfigSnapshotSchedulerService` with `node-cron` integration for automated snapshots (#405)
+    - Audit logging for all snapshot mutations
+  - **CLI**: `mcctl config-snapshot` commands for snapshot management (#401)
+  - **Console**: Config Snapshots tab on Backup page with full UI (#402)
+    - Config History tab on Server Detail page (#403)
+    - ConfigDiff viewer and ConfigRestore dialog components (#404)
+    - BFF proxy routes, React Query hooks, and TypeScript types
+  - **E2E Tests**: Config Snapshot E2E test fixtures and test files (#406)
+
+- **Backup Retention Policy Pruning** - Implement `applyRetentionPolicy()` for automated backup cleanup (#396, #426)
+  - Git history truncation logic for old backups
+  - Integration with backup scheduler for automatic pruning
+
+### Fixed
+- **Backup Git Path** - Fix git repository path and prevent shell injection (#423, #425)
+  - Replace `exec()` with `execFile()` to prevent shell injection vulnerabilities
+  - Correct git repository path resolution in backup routes
+  - Added test coverage for backup routes
+
 ## [2.15.3] - 2026-02-22
 
 ### Changed

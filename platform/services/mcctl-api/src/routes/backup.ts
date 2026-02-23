@@ -1,9 +1,10 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import os from 'os';
 import { config } from '../config/index.js';
 import {
   BackupStatusResponseSchema,
@@ -18,7 +19,14 @@ import {
   type BackupCommit,
 } from '../schemas/backup.js';
 
-const execPromise = promisify(exec);
+const execFilePromise = promisify(execFile);
+
+/**
+ * The git backup cache directory used by backup.sh.
+ * backup.sh uses $HOME/.minecraft-backup as the git repository,
+ * NOT platform/worlds/ which is only the source data directory.
+ */
+const BACKUP_CACHE_DIR = join(os.homedir(), '.minecraft-backup');
 
 // Route interfaces
 interface BackupPushRoute {
@@ -69,14 +77,16 @@ const backupPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     try {
       const status = isBackupConfigured();
 
-      // Get last backup date if configured
+      // Get last backup date from the backup cache directory (not from worlds/)
+      // backup.sh uses $HOME/.minecraft-backup as the git repository
       let lastBackup: string | undefined;
-      if (status.configured && existsSync(worldsPath)) {
+      if (status.configured && existsSync(join(BACKUP_CACHE_DIR, '.git'))) {
         try {
-          const { stdout } = await execPromise('git log -1 --format=%cI', {
-            cwd: worldsPath,
-            timeout: 5000,
-          });
+          const { stdout } = await execFilePromise(
+            'git',
+            ['log', '-1', '--format=%cI'],
+            { cwd: BACKUP_CACHE_DIR, timeout: 5000 }
+          );
           lastBackup = stdout.trim() || undefined;
         } catch {
           // Git not initialized or no commits
@@ -129,31 +139,42 @@ const backupPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      // Run backup script or git commands
-      const scriptPath = join(platformPath, 'scripts', 'backup.sh');
-      let command: string;
-
-      if (existsSync(scriptPath)) {
-        command = `bash "${scriptPath}" push ${message ? `--message "${message}"` : ''}`;
-      } else {
-        // Direct git commands
-        const commitMessage = message || `Backup ${new Date().toISOString()}`;
-        command = `cd "${worldsPath}" && git add -A && git commit -m "${commitMessage}" && git push`;
-      }
-
-      const { stdout } = await execPromise(command, {
+      const execOptions = {
         cwd: platformPath,
         timeout: 120000, // 2 minute timeout
         env: {
           ...process.env,
           MCCTL_ROOT: platformPath,
         },
-      });
+      };
 
-      // Get commit hash
+      // Run backup script (safe from injection: args passed as array)
+      const scriptPath = join(platformPath, 'scripts', 'backup.sh');
+
+      if (existsSync(scriptPath)) {
+        // Use execFile with array args to prevent shell injection
+        const args = message
+          ? [scriptPath, 'push', '--message', message]
+          : [scriptPath, 'push', '--auto'];
+        await execFilePromise('bash', args, execOptions);
+      } else {
+        // Fallback: run git commands directly against the backup cache directory
+        // (not worlds/ which is not a git repository)
+        const commitMessage = message || `Backup ${new Date().toISOString()}`;
+        const gitOptions = { ...execOptions, cwd: BACKUP_CACHE_DIR };
+        await execFilePromise('git', ['add', '-A'], gitOptions);
+        await execFilePromise('git', ['commit', '-m', commitMessage], gitOptions);
+        await execFilePromise('git', ['push'], gitOptions);
+      }
+
+      // Get commit hash from the backup cache directory
       let commitHash: string | undefined;
       try {
-        const { stdout: hashOut } = await execPromise('git rev-parse --short HEAD', { cwd: worldsPath });
+        const { stdout: hashOut } = await execFilePromise(
+          'git',
+          ['rev-parse', '--short', 'HEAD'],
+          { cwd: BACKUP_CACHE_DIR }
+        );
         commitHash = hashOut.trim();
       } catch {
         // Ignore
@@ -185,7 +206,7 @@ const backupPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
   /**
    * GET /api/backup/history
-   * Get backup history (git commits)
+   * Get backup history (git commits) from $HOME/.minecraft-backup
    */
   fastify.get('/api/backup/history', {
     schema: {
@@ -207,14 +228,16 @@ const backupPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      if (!existsSync(worldsPath)) {
+      // Check the backup cache directory, not worlds/
+      if (!existsSync(BACKUP_CACHE_DIR)) {
         return reply.send({ commits: [], total: 0 });
       }
 
-      // Get git log
-      const { stdout } = await execPromise(
-        'git log --format="%H|%s|%cI|%an" -n 20',
-        { cwd: worldsPath, timeout: 10000 }
+      // Get git log from the backup cache directory
+      const { stdout } = await execFilePromise(
+        'git',
+        ['log', '--format=%H|%s|%cI|%an', '-n', '20'],
+        { cwd: BACKUP_CACHE_DIR, timeout: 10000 }
       );
 
       const commits: BackupCommit[] = stdout.trim().split('\n')
@@ -277,25 +300,29 @@ const backupPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      // Run backup restore script or git commands
-      const scriptPath = join(platformPath, 'scripts', 'backup.sh');
-      let command: string;
-
-      if (existsSync(scriptPath)) {
-        command = `bash "${scriptPath}" restore "${commitHash}"`;
-      } else {
-        // Direct git command
-        command = `cd "${worldsPath}" && git checkout ${commitHash} .`;
-      }
-
-      await execPromise(command, {
+      const execOptions = {
         cwd: platformPath,
         timeout: 120000,
         env: {
           ...process.env,
           MCCTL_ROOT: platformPath,
         },
-      });
+      };
+
+      // Run backup restore script (safe from injection: args passed as array)
+      const scriptPath = join(platformPath, 'scripts', 'backup.sh');
+
+      if (existsSync(scriptPath)) {
+        // Use execFile with array args to prevent shell injection
+        await execFilePromise('bash', [scriptPath, 'restore', commitHash], execOptions);
+      } else {
+        // Fallback: git checkout from backup cache directory
+        await execFilePromise(
+          'git',
+          ['checkout', commitHash, '--', 'worlds/'],
+          { ...execOptions, cwd: BACKUP_CACHE_DIR }
+        );
+      }
 
       return reply.send({
         success: true,

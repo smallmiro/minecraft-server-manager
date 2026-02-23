@@ -26,3 +26,19 @@ export {
   BackupRetentionPolicy,
   type BackupRetentionPolicyData,
 } from './BackupRetentionPolicy.js';
+
+// Config snapshot value objects
+export {
+  ConfigSnapshotFile,
+  type ConfigSnapshotFileData,
+} from './ConfigSnapshotFile.js';
+export {
+  FileDiff,
+  type FileDiffStatus,
+  type FileDiffData,
+} from './FileDiff.js';
+export {
+  SnapshotDiff,
+  type SnapshotDiffData,
+  type SnapshotDiffSummary,
+} from './SnapshotDiff.js';
