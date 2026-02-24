@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
     
     
       
@@ -4269,6 +4269,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-2170-2026-02-24---server-detail-backups-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.17.0 (2026-02-24) - Server Detail Backups Tab
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-2160-2026-02-23---config-snapshots--backup-retention" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4592,8 +4603,8 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.16.0
-<strong>Last Updated</strong>: 2026-02-23
+<p><strong>Version</strong>: 2.17.0
+<strong>Last Updated</strong>: 2026-02-24
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
 <hr />
@@ -9122,6 +9133,16 @@ A: Yes. It only appends new variables and never modifies existing ones. Use <cod
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-2170-2026-02-24---server-detail-backups-tab">Version 2.17.0 (2026-02-24) - Server Detail Backups Tab<a class="headerlink" href="#version-2170-2026-02-24---server-detail-backups-tab" title="Permanent link">&para;</a></h3>
+<p><strong>Added:</strong>
+- <strong>Server Detail Backups Tab</strong> - Implement Backups tab in Server Detail page (#427, #428)
+  - World Backups sub-tab: Reuses existing backup components scoped to selected server
+  - Config Snapshots sub-tab: Server-scoped config snapshot management with schedule filtering
+  - Fix ConfigSnapshotSchedulePanel to filter schedules by server name
+  - Fix onViewHistory to require &gt;= 2 snapshots for diff dialog</p>
+<p><strong>Fixed:</strong>
+- <strong>Console Dependencies</strong> - Add missing <code>react-diff-viewer-continued</code> dependency
+- <strong>Lock file sync</strong> - Sync pnpm-lock.yaml</p>
 <h3 id="version-2160-2026-02-23---config-snapshots--backup-retention">Version 2.16.0 (2026-02-23) - Config Snapshots &amp; Backup Retention<a class="headerlink" href="#version-2160-2026-02-23---config-snapshots--backup-retention" title="Permanent link">&para;</a></h3>
 <p><strong>Added:</strong>
 - <strong>Config Snapshot System</strong> - Full-stack server configuration versioning (#397~#406, #414~#424)
