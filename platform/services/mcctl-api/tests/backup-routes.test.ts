@@ -2,14 +2,13 @@
  * Backup Routes Tests (#423)
  *
  * Tests for:
- * 1. Correct git repository path: $HOME/.minecraft-backup (not platform/worlds/)
+ * 1. Correct git repository path: <MCCTL_ROOT>/backups/worlds/ (not platform/worlds/)
  * 2. Shell command injection prevention: execFile instead of exec
  * 3. status, history, push, restore endpoints
  */
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { join } from 'path';
-import os from 'os';
 
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-backup-routes-test');
 
@@ -91,6 +90,25 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
   return {
     ...actual,
     SqliteBackupScheduleRepository: vi.fn().mockImplementation(() => new InMemoryBackupScheduleRepository()),
+    ConfigSnapshotDatabase: vi.fn().mockImplementation(() => ({
+      getDb: () => ({ prepare: vi.fn().mockReturnValue({ run: vi.fn(), all: vi.fn().mockReturnValue([]), get: vi.fn() }), exec: vi.fn() }),
+      close: vi.fn(),
+    })),
+    SqliteConfigSnapshotRepository: vi.fn().mockImplementation(() => ({
+      findAll: vi.fn().mockResolvedValue([]),
+      findById: vi.fn().mockResolvedValue(null),
+      save: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    })),
+    SqliteConfigSnapshotScheduleRepository: vi.fn().mockImplementation(() => ({
+      findAll: vi.fn().mockResolvedValue([]),
+      findById: vi.fn().mockResolvedValue(null),
+      findByServer: vi.fn().mockResolvedValue([]),
+      findEnabled: vi.fn().mockResolvedValue([]),
+      save: vi.fn(),
+      delete: vi.fn(),
+    })),
   };
 });
 
@@ -98,12 +116,15 @@ import { execFile, exec } from 'child_process';
 import { existsSync } from 'fs';
 import { promisify } from 'util';
 import { buildApp } from '../src/app.js';
+import { config } from '../src/config/index.js';
 
 const mockedExecFile = vi.mocked(execFile);
 const mockedExec = vi.mocked(exec);
 const mockedExistsSync = vi.mocked(existsSync);
 
-const BACKUP_CACHE_DIR = join(os.homedir(), '.minecraft-backup');
+// Use config.mcctlRoot to match the route's BACKUP_CACHE_DIR computation
+// (config is resolved at module-load time, before process.env is set)
+const BACKUP_CACHE_DIR = join(config.mcctlRoot, 'backups', 'worlds');
 
 /**
  * Helper: set execFile mock to succeed with given stdout/stderr.
@@ -230,7 +251,7 @@ describe('Backup Routes (#423)', () => {
       expect(body.branch).toBe('main');
     });
 
-    it('should check $HOME/.minecraft-backup/.git for lastBackup (not worlds/)', async () => {
+    it('should check <MCCTL_ROOT>/backups/worlds/.git for lastBackup (not platform/worlds/)', async () => {
       process.env['BACKUP_GITHUB_REPO'] = 'user/test-backup';
       process.env['BACKUP_GITHUB_TOKEN'] = 'ghp_test';
 
@@ -255,12 +276,11 @@ describe('Backup Routes (#423)', () => {
       // lastBackup should be populated
       expect(body.lastBackup).toBe('2024-01-15T10:00:00Z');
 
-      // Verify git was called with backup cache dir, NOT worlds/
+      // Verify git was called with backup cache dir, NOT platform/worlds/
       const worldsPath = join(TEST_PLATFORM_PATH, 'worlds');
       expect(capturedCwdValues.length).toBeGreaterThan(0);
       for (const cwd of capturedCwdValues) {
         expect(cwd).not.toBe(worldsPath);
-        expect(cwd).not.toContain('/worlds');
       }
       expect(capturedCwdValues[0]).toBe(BACKUP_CACHE_DIR);
     });
@@ -331,7 +351,7 @@ describe('Backup Routes (#423)', () => {
       expect(body.total).toBe(0);
     });
 
-    it('should use $HOME/.minecraft-backup for git log (not worlds/)', async () => {
+    it('should use <MCCTL_ROOT>/backups/worlds for git log (not platform/worlds/)', async () => {
       process.env['BACKUP_GITHUB_REPO'] = 'user/test-backup';
       process.env['BACKUP_GITHUB_TOKEN'] = 'ghp_test';
 
@@ -353,12 +373,11 @@ describe('Backup Routes (#423)', () => {
 
       expect(response.statusCode).toBe(200);
 
-      // Verify git was NOT called against worlds path
+      // Verify git was NOT called against platform/worlds/ path
       const worldsPath = join(TEST_PLATFORM_PATH, 'worlds');
       expect(capturedCwdValues.length).toBeGreaterThan(0);
       for (const cwd of capturedCwdValues) {
         expect(cwd).not.toBe(worldsPath);
-        expect(cwd).not.toContain('/worlds');
       }
       // Should have called git against backup cache dir
       expect(capturedCwdValues.some(cwd => cwd === BACKUP_CACHE_DIR)).toBe(true);
@@ -492,7 +511,7 @@ describe('Backup Routes (#423)', () => {
       expect(cmd).not.toContain(maliciousMessage);
     });
 
-    it('should use $HOME/.minecraft-backup as cwd for fallback git commands', async () => {
+    it('should use <MCCTL_ROOT>/backups/worlds as cwd for fallback git commands', async () => {
       process.env['BACKUP_GITHUB_REPO'] = 'user/test-backup';
       process.env['BACKUP_GITHUB_TOKEN'] = 'ghp_test';
 
@@ -518,7 +537,6 @@ describe('Backup Routes (#423)', () => {
       expect(capturedCwdValues.length).toBeGreaterThan(0);
       for (const cwd of capturedCwdValues) {
         expect(cwd).not.toBe(worldsPath);
-        expect(cwd).not.toContain('/worlds');
       }
 
       // At least one call should use the backup cache dir

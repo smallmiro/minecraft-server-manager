@@ -2,7 +2,6 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import os from 'os';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   IBackupScheduleUseCase,
@@ -466,7 +465,7 @@ export class BackupSchedulerService {
       }
 
       // The backup cache directory used by backup.sh as the git repository
-      const backupCacheDir = join(os.homedir(), '.minecraft-backup');
+      const backupCacheDir = join(this.platformPath, 'backups', 'worlds');
 
       // Build commit message (safe: passed as argument, not interpolated into shell)
       const commitMessage = `Scheduled backup: ${schedule.name} [${new Date().toISOString()}]`;

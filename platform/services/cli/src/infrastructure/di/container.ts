@@ -145,7 +145,7 @@ export class Container {
 
   get backupScheduleRepository(): IBackupScheduleRepository {
     if (!this._backupScheduleRepo) {
-      const dbPath = join(this.paths.root, 'data', 'backup-schedules.db');
+      const dbPath = join(this.paths.root, 'backups', 'meta', 'backup-schedules.db');
       this._backupScheduleRepo = new SqliteBackupScheduleRepository(dbPath);
     }
     return this._backupScheduleRepo;
@@ -153,7 +153,7 @@ export class Container {
 
   get configSnapshotDatabase(): ConfigSnapshotDatabase {
     if (!this._configSnapshotDatabase) {
-      const dbPath = join(this.paths.root, 'data', 'config-snapshots.db');
+      const dbPath = join(this.paths.root, 'backups', 'meta', 'config-snapshots.db');
       this._configSnapshotDatabase = new ConfigSnapshotDatabase(dbPath);
     }
     return this._configSnapshotDatabase;
@@ -166,8 +166,9 @@ export class Container {
       );
       const storageBasePath = join(
         this.paths.root,
-        'data',
-        'config-snapshots'
+        'backups',
+        'meta',
+        'config-snapshot-storage'
       );
       const storage = new FileSystemConfigSnapshotStorage(storageBasePath);
       const collector = new FileSystemConfigFileCollector(this.paths.servers);
