@@ -77,6 +77,9 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.17.1 (2026-02-24)
+- **fix(console)**: Reorder server backup sub-tabs to show Config Snapshots first, World Backups second
+
 ### v2.17.0 (2026-02-24)
 - **feat(console)**: Implement Backups tab in Server Detail page (#427, #428)
   - World Backups sub-tab with server-scoped backup components

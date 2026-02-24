@@ -1,6 +1,6 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.17.0
+> **Version**: 2.17.1
 > **Last Updated**: 2026-02-24
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
@@ -2828,6 +2828,11 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.17.1 (2026-02-24) - Backup Sub-tab Reorder
+
+**Changed:**
+- **Console Backup Sub-tabs** - Reorder server backup sub-tabs to show Config Snapshots first, World Backups second
 
 ### Version 2.17.0 (2026-02-24) - Server Detail Backups Tab
 

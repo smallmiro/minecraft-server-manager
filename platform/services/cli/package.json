@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/mcctl",
-  "version": "2.17.0",
+  "version": "2.17.1",
   "description": "CLI tool for managing Docker Minecraft servers with mc-router",
   "type": "module",
   "bin": {
