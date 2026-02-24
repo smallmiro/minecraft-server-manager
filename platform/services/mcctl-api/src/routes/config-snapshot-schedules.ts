@@ -63,7 +63,7 @@ const configSnapshotSchedulesPlugin: FastifyPluginAsync = async (
   fastify: FastifyInstance
 ) => {
   // Initialize repository and use case via shared ConfigSnapshotDatabase
-  const dbPath = join(config.mcctlRoot, 'data', 'config-snapshots.db');
+  const dbPath = join(config.mcctlRoot, 'backups', 'meta', 'config-snapshots.db');
   const database = new ConfigSnapshotDatabase(dbPath);
   const scheduleRepository = new SqliteConfigSnapshotScheduleRepository(database);
   const snapshotRepository = new SqliteConfigSnapshotRepository(database);

@@ -24,7 +24,7 @@ let useCase: IConfigSnapshotUseCase | null = null;
  */
 function getDatabase(): ConfigSnapshotDatabase {
   if (!database) {
-    const dbPath = join(config.mcctlRoot, 'data', 'config-snapshots.db');
+    const dbPath = join(config.mcctlRoot, 'backups', 'meta', 'config-snapshots.db');
     database = new ConfigSnapshotDatabase(dbPath);
   }
   return database;
@@ -37,7 +37,7 @@ export function getConfigSnapshotUseCase(): IConfigSnapshotUseCase {
   if (!useCase) {
     const db = getDatabase();
     const repository = new SqliteConfigSnapshotRepository(db);
-    const storagePath = join(config.mcctlRoot, 'data', 'config-snapshot-storage');
+    const storagePath = join(config.mcctlRoot, 'backups', 'meta', 'config-snapshot-storage');
     const storage = new FileSystemConfigSnapshotStorage(storagePath);
     const serversDir = join(config.platformPath, 'servers');
     const collector = new FileSystemConfigFileCollector(serversDir);

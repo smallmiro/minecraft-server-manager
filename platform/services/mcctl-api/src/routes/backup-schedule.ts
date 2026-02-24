@@ -48,7 +48,7 @@ interface ScheduleIdRoute {
  */
 const backupSchedulePlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // Initialize repository and use case
-  const dbPath = join(config.mcctlRoot, 'data', 'backup-schedules.db');
+  const dbPath = join(config.mcctlRoot, 'backups', 'meta', 'backup-schedules.db');
   const repository = new SqliteBackupScheduleRepository(dbPath);
   const useCase: IBackupScheduleUseCase = new BackupScheduleUseCase(repository);
 

@@ -4,235 +4,23 @@ This project is a DevOps project for building and operating multiple Minecraft J
 
 ## Project Structure
 
-```
-minecraft/
-├── CLAUDE.md                    # This file (project guide)
-├── README.md                    # Project overview
-├── prd.md                       # Product Requirements Document
-├── plan.md                      # Implementation roadmap
-│
-├── package.json                 # Root workspace package (pnpm)
-├── pnpm-workspace.yaml          # pnpm workspace configuration
-├── tsconfig.base.json           # Shared TypeScript configuration
-│
-├── platform/                    # Docker platform (all runtime files)
-│   ├── docker-compose.yml       # Main orchestration (mc-router + server includes)
-│   ├── .env                     # Global environment variables
-│   ├── .env.example             # Environment template
-│   ├── .gitignore               # Git ignore rules for servers, worlds, etc.
-│   │
-│   ├── servers/                 # Server configurations (gitignored except _template)
-│   │   ├── compose.yml          # Server include list (auto-generated, gitignored)
-│   │   └── _template/           # Template for new servers
-│   │       ├── docker-compose.yml
-│   │       └── config.env
-│   │   # Servers created by create-server.sh go here (gitignored)
-│   │
-│   ├── worlds/                  # Shared world storage (gitignored except .locks)
-│   │   ├── .locks/              # Lock files for world-server assignment
-│   │   └── <world-name>/        # World directories
-│   │       └── .meta            # World metadata (seed, createdAt)
-│   │
-│   ├── shared/                  # Shared resources
-│   │   ├── plugins/             # Shared plugins (read-only mount)
-│   │   └── mods/                # Shared mods (read-only mount)
-│   │
-│   ├── scripts/                 # Management scripts (Bash)
-│   │   ├── lib/
-│   │   │   └── common.sh        # Shared functions library
-│   │   ├── mcctl.sh             # Main management CLI (Bash version)
-│   │   ├── create-server.sh     # Server creation script
-│   │   ├── delete-server.sh     # Server deletion script (preserves world data)
-│   │   ├── init.sh              # Platform initialization script
-│   │   ├── lock.sh              # World locking system
-│   │   ├── logs.sh              # Log viewer
-│   │   ├── player.sh            # Player UUID lookup
-│   │   ├── backup.sh            # GitHub worlds backup
-│   │   └── migrate-nip-io.sh    # Migration script for nip.io hostnames
-│   │
-│   ├── services/                # TypeScript microservices (Monorepo)
-│   │   ├── cli/                 # @minecraft-docker/mcctl (npm CLI)
-│   │   │   ├── src/
-│   │   │   │   ├── index.ts     # CLI entry point
-│   │   │   │   ├── commands/    # Command implementations
-│   │   │   │   │   ├── player.ts       # Unified player management
-│   │   │   │   │   ├── whitelist.ts    # Whitelist management
-│   │   │   │   │   ├── ban.ts          # Ban management
-│   │   │   │   │   ├── op.ts           # Operator management
-│   │   │   │   │   ├── kick.ts         # Kick player
-│   │   │   │   │   ├── migrate.ts      # World storage migration
-│   │   │   │   │   ├── mod.ts          # Mod management (search, add, remove)
-│   │   │   │   │   ├── audit.ts        # Audit log management (list, purge, stats)
-│   │   │   │   │   ├── console/        # Console Management (Web Admin)
-│   │   │   │   │   │   ├── init.ts     # Initialize console service
-│   │   │   │   │   │   ├── user.ts     # User management
-│   │   │   │   │   │   ├── api.ts      # API key management
-│   │   │   │   │   │   └── service.ts  # Service lifecycle
-│   │   │   │   │   └── ...
-│   │   │   │   ├── lib/         # Libraries
-│   │   │   │   │   ├── mojang-api.ts   # Mojang API client
-│   │   │   │   │   ├── player-cache.ts # Encrypted player cache
-│   │   │   │   │   ├── rcon.ts         # RCON helpers
-│   │   │   │   │   ├── sudo-utils.ts   # Sudo password handling
-│   │   │   │   │   └── prompts/        # Reusable prompt components
-│   │   │   │   │       ├── server-select.ts
-│   │   │   │   │       ├── player-select.ts
-│   │   │   │   │       └── action-select.ts
-│   │   │   │   └── infrastructure/     # DI and adapters
-│   │   │   ├── package.json
-│   │   │   └── tsconfig.json
-│   │   ├── shared/              # @minecraft-docker/shared (common utilities)
-│   │   │   ├── src/
-│   │   │   │   ├── domain/      # Domain entities and value objects
-│   │   │   │   │   ├── entities/       # Server, World, AuditLog entities
-│   │   │   │   │   ├── value-objects/  # ServerName, ServerType, AuditAction, etc.
-│   │   │   │   │   └── mod/            # ModProject, ModVersion, ModSearchResult
-│   │   │   │   ├── application/ # Use cases and ports
-│   │   │   │   │   ├── ports/          # IModSourcePort, IPromptPort, IAuditLogPort, etc.
-│   │   │   │   │   └── use-cases/      # CreateServer, DeleteServer, etc.
-│   │   │   │   └── infrastructure/     # Adapters and factories
-│   │   │   │       ├── adapters/       # ShellAdapter, DocsAdapter, SqliteAuditLogRepository, etc.
-│   │   │   │       └── factories/      # ModSourceFactory
-│   │   │   ├── package.json
-│   │   │   └── tsconfig.json
-│   │   ├── mod-source-modrinth/ # @minecraft-docker/mod-source-modrinth
-│   │   │   ├── src/
-│   │   │   │   ├── ModrinthAdapter.ts  # IModSourcePort implementation
-│   │   │   │   └── infrastructure/     # API client, mappers
-│   │   │   ├── package.json
-│   │   │   └── tsconfig.json
-│   │   ├── mcctl-api/           # @minecraft-docker/mcctl-api (REST API)
-│   │   │   ├── src/
-│   │   │   │   ├── app.ts              # Fastify app setup
-│   │   │   │   ├── routes/             # API endpoints
-│   │   │   │   │   ├── servers.ts      # GET/POST /servers
-│   │   │   │   │   ├── servers/        # Server sub-routes
-│   │   │   │   │   │   ├── actions.ts  # start/stop/restart
-│   │   │   │   │   │   ├── config.ts   # Server configuration
-│   │   │   │   │   │   ├── files.ts    # File management (browse, read, write, upload, download)
-│   │   │   │   │   │   ├── hostnames.ts # Hostname management
-│   │   │   │   │   │   └── mods.ts     # Mod management
-│   │   │   │   │   ├── console.ts      # RCON exec endpoint
-│   │   │   │   │   ├── audit-logs.ts   # Audit log API endpoints
-│   │   │   │   │   ├── auth.ts         # Authentication routes
-│   │   │   │   │   ├── backup.ts       # Backup management
-│   │   │   │   │   ├── players.ts      # Player management
-│   │   │   │   │   ├── playit.ts       # playit.gg tunneling
-│   │   │   │   │   ├── router.ts       # mc-router management
-│   │   │   │   │   └── worlds.ts       # World management
-│   │   │   │   └── plugins/            # Fastify plugins
-│   │   │   │       ├── auth.ts         # 5-mode authentication
-│   │   │   │       └── swagger.ts      # OpenAPI documentation
-│   │   │   ├── Dockerfile              # Multi-stage build (~156MB)
-│   │   │   ├── package.json
-│   │   │   └── tsconfig.json
-│   │   ├── mcctl-console/       # @minecraft-docker/mcctl-console (Web UI)
-│   │   │   ├── src/
-│   │   │   │   ├── app/                # Next.js App Router
-│   │   │   │   │   ├── api/            # BFF proxy routes
-│   │   │   │   │   ├── login/          # Login page
-│   │   │   │   │   ├── signup/         # Signup page
-│   │   │   │   │   ├── (main)/         # Authenticated route group
-│   │   │   │   │   │   ├── dashboard/  # Dashboard page
-│   │   │   │   │   │   ├── servers/    # Server management pages
-│   │   │   │   │   │   ├── worlds/     # World management pages
-│   │   │   │   │   │   ├── players/    # Player management pages
-│   │   │   │   │   │   ├── backups/    # Backup management pages
-│   │   │   │   │   │   ├── audit-logs/ # Audit log pages
-│   │   │   │   │   │   ├── settings/   # Settings pages
-│   │   │   │   │   │   ├── routing/    # Routing configuration pages
-│   │   │   │   │   │   └── admin/      # Admin pages
-│   │   │   │   │   └── layout.tsx      # Root layout
-│   │   │   │   ├── components/         # React components
-│   │   │   │   │   ├── servers/        # Server components
-│   │   │   │   │   │   ├── files/      # File management components
-│   │   │   │   │   │   │   ├── ServerFilesTab.tsx          # Files tab container
-│   │   │   │   │   │   │   ├── ServerPropertiesView.tsx    # Inline properties editor (FORM/RAW toggle)
-│   │   │   │   │   │   │   ├── RawPropertiesEditor.tsx     # Raw text properties editor
-│   │   │   │   │   │   │   ├── ServerPropertiesEditor.tsx  # Form-based properties editor
-│   │   │   │   │   │   │   ├── TextEditor.tsx              # General text file editor
-│   │   │   │   │   │   │   ├── PlayerEditorDialog.tsx      # Player file editor
-│   │   │   │   │   │   │   ├── FileBreadcrumb.tsx          # Directory breadcrumb
-│   │   │   │   │   │   │   ├── FileList.tsx                # File listing
-│   │   │   │   │   │   │   ├── FileUploadDialog.tsx        # Upload dialog with drag-and-drop
-│   │   │   │   │   │   │   ├── DeleteConfirmDialog.tsx     # Delete confirmation
-│   │   │   │   │   │   │   ├── RenameDialog.tsx            # File/folder rename
-│   │   │   │   │   │   │   └── NewFolderDialog.tsx         # New folder creation
-│   │   │   │   │   │   ├── settings/   # Server settings components
-│   │   │   │   │   │   │   ├── SettingsSection.tsx         # Settings group
-│   │   │   │   │   │   │   ├── SettingsField.tsx           # Individual setting field
-│   │   │   │   │   │   │   ├── StickyActionBar.tsx         # Save/reset action bar
-│   │   │   │   │   │   │   └── RestartConfirmDialog.tsx    # Restart confirmation
-│   │   │   │   │   │   ├── ServerDetail.tsx   # Server detail view with tabs
-│   │   │   │   │   │   ├── ServerList.tsx     # Server list
-│   │   │   │   │   │   ├── ServerCard.tsx     # Server card
-│   │   │   │   │   │   └── ServerConsole.tsx  # RCON console
-│   │   │   │   │   ├── dashboard/      # Dashboard components
-│   │   │   │   │   ├── common/         # Shared UI components
-│   │   │   │   │   ├── worlds/         # World management components
-│   │   │   │   │   ├── players/        # Player management components
-│   │   │   │   │   ├── audit-logs/     # Audit log components
-│   │   │   │   │   ├── backups/        # Backup components
-│   │   │   │   │   ├── settings/       # App settings components
-│   │   │   │   │   ├── admin/          # Admin components
-│   │   │   │   │   ├── users/          # User management components
-│   │   │   │   │   ├── auth/           # Auth components
-│   │   │   │   │   ├── layout/         # Layout components
-│   │   │   │   │   ├── providers/      # React context providers
-│   │   │   │   │   └── icons/          # Custom icons
-│   │   │   │   └── hooks/              # Custom React hooks
-│   │   │   ├── Dockerfile              # Standalone build (~158MB)
-│   │   │   ├── package.json
-│   │   │   └── tsconfig.json
-│   │   └── web-admin/           # Deprecated: Use mcctl-console
-│   │
-│   └── backups/                 # Backup storage
-│
-├── templates/                   # npm package templates
-│   ├── docker-compose.yml       # Template for mcctl init
-│   ├── .env.example
-│   ├── .gitignore
-│   └── servers/_template/
-│
-├── docs/                        # Documentation (MkDocs + Read the Docs)
-│   ├── index.md                 # English homepage
-│   ├── index.ko.md              # Korean homepage
-│   ├── console/                 # Management Console documentation
-│   ├── api/                     # REST API documentation
-│   ├── itzg-reference/          # itzg/docker-minecraft-server official docs
-│   ├── cli/                     # CLI command reference
-│   ├── getting-started/         # Getting started guides
-│   ├── configuration/           # Configuration guides
-│   ├── mods-and-plugins/        # Mod management guides
-│   ├── usage/                   # Usage guides
-│   ├── advanced/                # Advanced usage guides
-│   ├── development/             # Development guides
-│   ├── troubleshooting/         # Troubleshooting guides
-│   └── documentforllmagent.md   # LLM Knowledge Base
-│
-├── e2e/                         # End-to-end tests (Playwright)
-│   ├── playwright.config.ts
-│   ├── global-setup.ts
-│   ├── fixtures/
-│   └── tests/
-│
-└── .claude/
-    ├── agents/
-    │   ├── orchestrator-agent.md # Multi-agent orchestrator
-    │   ├── core-agent.md        # Shared package specialist
-    │   ├── cli-agent.md         # CLI specialist
-    │   ├── backend-agent.md     # API specialist
-    │   ├── frontend-agent.md    # Console specialist
-    │   ├── devops-agent.md      # DevOps specialist
-    │   ├── release-manager.md   # Release management
-    │   └── technical-writer.md  # Documentation writer
-    └── commands/
-        ├── update-docs.md
-        ├── sync-docs.md
-        ├── write-docs.md
-        ├── build-kb.md
-        └── work.md
-```
+> pnpm monorepo. 상세 구조는 파일시스템 탐색 또는 `docs/documentforllmagent.md` 참조.
+
+| Directory | Description |
+|-----------|-------------|
+| `platform/` | Docker platform runtime (docker-compose, .env, servers/, worlds/, shared/) |
+| `platform/scripts/` | Bash management scripts (backup.sh, create-server.sh, lock.sh 등) |
+| `platform/services/shared/` | `@minecraft-docker/shared` - Domain entities, value objects, use cases, ports/adapters |
+| `platform/services/cli/` | `@minecraft-docker/mcctl` - npm CLI (Hexagonal Architecture) |
+| `platform/services/mcctl-api/` | `@minecraft-docker/mcctl-api` - Fastify REST API (:5001) |
+| `platform/services/mcctl-console/` | `@minecraft-docker/mcctl-console` - Next.js Web UI (:5000) |
+| `platform/services/mod-source-modrinth/` | `@minecraft-docker/mod-source-modrinth` - Modrinth adapter |
+| `platform/backups/` | Backup storage (worlds/, meta/) |
+| `templates/` | npm package templates for `mcctl init` |
+| `docs/` | MkDocs documentation (EN/KO), LLM Knowledge Base |
+| `e2e/` | Playwright E2E tests |
+| `.claude/agents/` | Multi-agent definitions (orchestrator, core, cli, backend, frontend, devops, etc.) |
+| `.claude/commands/` | Custom slash commands (work, update-docs, sync-docs, write-docs, build-kb) |
 
 ## Custom Commands
 
@@ -426,17 +214,34 @@ See [docs/development/cli-architecture.md](docs/development/cli-architecture.md)
 
 This project uses a **Multi-Agent Collaboration** system where specialized agents are responsible for different modules.
 
-| Agent | Module |
-|-------|--------|
-| 🔧 **Core** | `platform/services/shared/` |
-| 💻 **CLI** | `platform/services/cli/`, `scripts/` |
-| 🖥️ **Backend** | `platform/services/mcctl-api/` |
-| 🎨 **Frontend** | `platform/services/mcctl-console/` |
-| 🐳 **DevOps** | `platform/`, `e2e/` |
-| 📝 **Technical Writer** | `docs/` |
-| 🚀 **Release Manager** | Git tags, Docker |
+> **MANDATORY**: 모든 작업은 반드시 **Orchestrator Agent**를 통해 시작해야 합니다. 사용자의 요청을 직접 처리하지 말고, 먼저 `orchestrator-agent`로 작업을 접수하여 적절한 전문 에이전트에게 분석/구현을 위임하세요.
 
-See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) for the complete collaboration guide.
+| Agent | Module | Role |
+|-------|--------|------|
+| 🎯 **Orchestrator** | All modules | **Entry point for ALL tasks**. 작업 분배, 의존성 추적, 에이전트 간 동기화 조율 |
+| 🔧 **Core** | `platform/services/shared/` | Domain entities, value objects, use cases, ports/adapters |
+| 💻 **CLI** | `platform/services/cli/`, `scripts/` | CLI commands, interactive prompts, bash scripts |
+| 🖥️ **Backend** | `platform/services/mcctl-api/` | Fastify REST API, authentication, OpenAPI/Swagger |
+| 🎨 **Frontend** | `platform/services/mcctl-console/` | Next.js Web UI, React components, hooks |
+| 🐳 **DevOps** | `platform/`, `e2e/` | Docker, docker-compose, Playwright E2E tests |
+| 📝 **Technical Writer** | `docs/` | MkDocs documentation, bilingual (EN/KO) |
+| 🚀 **Release Manager** | Git tags, Docker | Version tagging, CHANGELOG, deployment |
+
+#### Orchestrator-First Workflow
+
+```
+❌ WRONG: 사용자 요청 → 바로 코드 수정
+✅ RIGHT: 사용자 요청 → Orchestrator 접수 → 분석 에이전트 위임 → 결과 종합 → 실행
+```
+
+**Orchestrator Agent의 역할**:
+1. **작업 접수**: 사용자의 요청/문제를 분석하여 관련 모듈 식별
+2. **에이전트 위임**: 적절한 전문 에이전트에게 분석/구현 작업 할당
+3. **의존성 관리**: 에이전트 간 작업 순서와 의존성 추적
+4. **병렬 실행**: 독립적인 작업을 병렬로 처리하여 효율 극대화
+5. **동기화 조율**: 에이전트 간 핸드오프와 통합 관리
+
+See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) and [`.claude/agents/orchestrator-agent.md`](.claude/agents/orchestrator-agent.md) for the complete collaboration guide.
 
 ### Git-Flow Workflow
 

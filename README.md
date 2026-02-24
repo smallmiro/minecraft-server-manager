@@ -995,56 +995,40 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.18.0] - 2026-02-24
+
+**Changed:**
+- **Backup Storage Paths** - Relocate all backup storage to `<MCCTL_ROOT>/backups/` (#429, #430)
+  - World backup cache, schedule DB, config snapshot DB consolidated under `backups/`
+
+**Documentation:**
+- **CLAUDE.md** - Simplify Project Structure (35% reduction)
+
+### [2.17.1] - 2026-02-24
+
+**Changed:**
+- **Console Backup Sub-tabs** - Reorder to show Config Snapshots first, World Backups second
+
 ### [2.17.0] - 2026-02-24
 
 **Added:**
 - **Server Detail Backups Tab** - Implement Backups tab in Server Detail page (#427, #428)
-  - World Backups sub-tab with server-scoped backup components
-  - Config Snapshots sub-tab with server-filtered schedule management
-
-**Fixed:**
-- **Console Dependencies** - Add missing react-diff-viewer-continued dependency
-- **Lock file sync** - Sync pnpm-lock.yaml with react-diff-viewer-continued
 
 ### [2.16.0] - 2026-02-23
 
 **Added:**
 - **Config Snapshot System** - Full-stack server configuration versioning (#397~#406)
-  - Domain layer, infrastructure, API, CLI, Console UI, and E2E tests
-  - Automated snapshot scheduling with node-cron
-  - Config diff viewer and restore functionality
 - **Backup Retention Policy Pruning** - `applyRetentionPolicy()` implementation (#396, #426)
-
-**Fixed:**
-- **Backup Git Path** - Fix git repository path and shell injection prevention (#423, #425)
 
 ### [2.15.3] - 2026-02-22
 
 **Changed:**
-- **README.md** - Major update with Management Console section, Architecture diagram, and Quick Start guide (#412, #413)
-
-### [2.15.2] - 2026-02-22
-
-**Changed:**
-- **Web Console Documentation** - Added server Overview/Mods tab screenshots with detailed descriptions (#409)
-- **Integrated Setup Guide** - New guide for mcctl init to console init flow (#410)
-
-### [2.15.1] - 2026-02-22
-
-**Changed:**
-- **Web Console Documentation** - Comprehensive update with screenshots and detailed feature descriptions (#407, #408)
-
-**Fixed:**
-- **pnpm-lock.yaml** - Sync lockfile with mcctl-api package.json for node-cron dependency
+- **README.md** - Major update with Management Console section and Architecture diagram
 
 ### [2.15.0] - 2026-02-22
 
 **Added:**
 - **Automated Backup Scheduling** - Cron-based backup scheduler with full-stack implementation (#394, #395)
-  - CLI `mcctl backup schedule` with list/add/remove/enable/disable operations
-  - REST API endpoints for schedule CRUD with node-cron integration
-  - Web Console UI with schedule management dialog and toggle
-  - Shell injection prevention, 54+ tests across all layers
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
