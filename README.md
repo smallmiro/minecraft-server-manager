@@ -995,6 +995,17 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.17.0] - 2026-02-24
+
+**Added:**
+- **Server Detail Backups Tab** - Implement Backups tab in Server Detail page (#427, #428)
+  - World Backups sub-tab with server-scoped backup components
+  - Config Snapshots sub-tab with server-filtered schedule management
+
+**Fixed:**
+- **Console Dependencies** - Add missing react-diff-viewer-continued dependency
+- **Lock file sync** - Sync pnpm-lock.yaml with react-diff-viewer-continued
+
 ### [2.16.0] - 2026-02-23
 
 **Added:**
@@ -1034,11 +1045,6 @@ cat /etc/avahi/hosts
   - REST API endpoints for schedule CRUD with node-cron integration
   - Web Console UI with schedule management dialog and toggle
   - Shell injection prevention, 54+ tests across all layers
-
-### [2.14.0] - 2026-02-21
-
-**Added:**
-- **Console Mod Detail Cards** - Enhanced installed mods display with rich card UI
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 

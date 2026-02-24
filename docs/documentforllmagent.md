@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.16.0
-> **Last Updated**: 2026-02-23
+> **Version**: 2.17.0
+> **Last Updated**: 2026-02-24
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -2828,6 +2828,19 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.17.0 (2026-02-24) - Server Detail Backups Tab
+
+**Added:**
+- **Server Detail Backups Tab** - Implement Backups tab in Server Detail page (#427, #428)
+  - World Backups sub-tab: Reuses existing backup components scoped to selected server
+  - Config Snapshots sub-tab: Server-scoped config snapshot management with schedule filtering
+  - Fix ConfigSnapshotSchedulePanel to filter schedules by server name
+  - Fix onViewHistory to require >= 2 snapshots for diff dialog
+
+**Fixed:**
+- **Console Dependencies** - Add missing `react-diff-viewer-continued` dependency
+- **Lock file sync** - Sync pnpm-lock.yaml
 
 ### Version 2.16.0 (2026-02-23) - Config Snapshots & Backup Retention
 
