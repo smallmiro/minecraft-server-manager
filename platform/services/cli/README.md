@@ -77,6 +77,13 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.17.0 (2026-02-24)
+- **feat(console)**: Implement Backups tab in Server Detail page (#427, #428)
+  - World Backups sub-tab with server-scoped backup components
+  - Config Snapshots sub-tab with server-filtered schedule management
+- **fix(console)**: Add missing react-diff-viewer-continued dependency
+- **fix(deps)**: Sync pnpm-lock.yaml with react-diff-viewer-continued
+
 ### v2.16.0 (2026-02-23)
 - **feat**: Config Snapshot system - full-stack server configuration versioning (#397~#406)
   - Domain layer, infrastructure, API, CLI, Console UI, and E2E tests
@@ -102,9 +109,6 @@ mcctl logs myserver
   - REST API endpoints for schedule CRUD with node-cron integration
   - Web Console UI with schedule management dialog and toggle
   - Shell injection prevention, 54+ tests across all layers
-
-### v2.14.0 (2026-02-21)
-- **feat(console)**: Enhanced installed mods display with rich card UI and batch API
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
