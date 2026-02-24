@@ -35,7 +35,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 # =============================================================================
 
 WORLDS_DIR="$PLATFORM_DIR/worlds"
-BACKUP_CACHE_DIR="$HOME/.minecraft-backup"
+BACKUP_CACHE_DIR="$PLATFORM_DIR/backups/worlds"
 ENV_FILE="$PLATFORM_DIR/.env"
 
 # =============================================================================

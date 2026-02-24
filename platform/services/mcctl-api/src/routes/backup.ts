@@ -4,7 +4,6 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import os from 'os';
 import { config } from '../config/index.js';
 import {
   BackupStatusResponseSchema,
@@ -23,10 +22,10 @@ const execFilePromise = promisify(execFile);
 
 /**
  * The git backup cache directory used by backup.sh.
- * backup.sh uses $HOME/.minecraft-backup as the git repository,
+ * Located under <MCCTL_ROOT>/backups/worlds/ as the git repository,
  * NOT platform/worlds/ which is only the source data directory.
  */
-const BACKUP_CACHE_DIR = join(os.homedir(), '.minecraft-backup');
+const BACKUP_CACHE_DIR = join(config.mcctlRoot, 'backups', 'worlds');
 
 // Route interfaces
 interface BackupPushRoute {
