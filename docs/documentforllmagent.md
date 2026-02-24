@@ -1,6 +1,6 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.17.1
+> **Version**: 2.18.0
 > **Last Updated**: 2026-02-24
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
@@ -2828,6 +2828,19 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.18.0 (2026-02-24) - Backup Storage Path Consolidation
+
+**Changed:**
+- **Backup Storage Paths** - Relocate all backup storage paths to `<MCCTL_ROOT>/backups/` (#429, #430)
+  - World backup cache: `$HOME/.minecraft-backup` -> `<MCCTL_ROOT>/backups/worlds/`
+  - Backup schedule DB: `data/` -> `backups/meta/`
+  - Config snapshot DB/storage: `data/` -> `backups/meta/`
+  - Consolidates all backup-related data under a single `backups/` directory for easier management
+
+**Documentation:**
+- **CLAUDE.md** - Simplify Project Structure to high-level table (606 -> 393 lines, 35% reduction)
+- **Orchestrator Agent** - Add Orchestrator Agent to Multi-Agent Collaboration and enforce orchestrator-first workflow
 
 ### Version 2.17.1 (2026-02-24) - Backup Sub-tab Reorder
 

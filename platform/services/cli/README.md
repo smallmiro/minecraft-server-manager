@@ -77,6 +77,13 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.18.0 (2026-02-24)
+- **refactor**: Relocate backup storage paths to `<MCCTL_ROOT>/backups/` (#429, #430)
+  - World backup cache: `$HOME/.minecraft-backup` -> `<MCCTL_ROOT>/backups/worlds/`
+  - Backup schedule DB: `data/` -> `backups/meta/`
+  - Config snapshot DB/storage: `data/` -> `backups/meta/`
+- **docs**: Simplify CLAUDE.md Project Structure (35% reduction)
+
 ### v2.17.1 (2026-02-24)
 - **fix(console)**: Reorder server backup sub-tabs to show Config Snapshots first, World Backups second
 
