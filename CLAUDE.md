@@ -426,17 +426,34 @@ See [docs/development/cli-architecture.md](docs/development/cli-architecture.md)
 
 This project uses a **Multi-Agent Collaboration** system where specialized agents are responsible for different modules.
 
-| Agent | Module |
-|-------|--------|
-| 🔧 **Core** | `platform/services/shared/` |
-| 💻 **CLI** | `platform/services/cli/`, `scripts/` |
-| 🖥️ **Backend** | `platform/services/mcctl-api/` |
-| 🎨 **Frontend** | `platform/services/mcctl-console/` |
-| 🐳 **DevOps** | `platform/`, `e2e/` |
-| 📝 **Technical Writer** | `docs/` |
-| 🚀 **Release Manager** | Git tags, Docker |
+> **MANDATORY**: 모든 작업은 반드시 **Orchestrator Agent**를 통해 시작해야 합니다. 사용자의 요청을 직접 처리하지 말고, 먼저 `orchestrator-agent`로 작업을 접수하여 적절한 전문 에이전트에게 분석/구현을 위임하세요.
 
-See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) for the complete collaboration guide.
+| Agent | Module | Role |
+|-------|--------|------|
+| 🎯 **Orchestrator** | All modules | **Entry point for ALL tasks**. 작업 분배, 의존성 추적, 에이전트 간 동기화 조율 |
+| 🔧 **Core** | `platform/services/shared/` | Domain entities, value objects, use cases, ports/adapters |
+| 💻 **CLI** | `platform/services/cli/`, `scripts/` | CLI commands, interactive prompts, bash scripts |
+| 🖥️ **Backend** | `platform/services/mcctl-api/` | Fastify REST API, authentication, OpenAPI/Swagger |
+| 🎨 **Frontend** | `platform/services/mcctl-console/` | Next.js Web UI, React components, hooks |
+| 🐳 **DevOps** | `platform/`, `e2e/` | Docker, docker-compose, Playwright E2E tests |
+| 📝 **Technical Writer** | `docs/` | MkDocs documentation, bilingual (EN/KO) |
+| 🚀 **Release Manager** | Git tags, Docker | Version tagging, CHANGELOG, deployment |
+
+#### Orchestrator-First Workflow
+
+```
+❌ WRONG: 사용자 요청 → 바로 코드 수정
+✅ RIGHT: 사용자 요청 → Orchestrator 접수 → 분석 에이전트 위임 → 결과 종합 → 실행
+```
+
+**Orchestrator Agent의 역할**:
+1. **작업 접수**: 사용자의 요청/문제를 분석하여 관련 모듈 식별
+2. **에이전트 위임**: 적절한 전문 에이전트에게 분석/구현 작업 할당
+3. **의존성 관리**: 에이전트 간 작업 순서와 의존성 추적
+4. **병렬 실행**: 독립적인 작업을 병렬로 처리하여 효율 극대화
+5. **동기화 조율**: 에이전트 간 핸드오프와 통합 관리
+
+See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) and [`.claude/agents/orchestrator-agent.md`](.claude/agents/orchestrator-agent.md) for the complete collaboration guide.
 
 ### Git-Flow Workflow
 
