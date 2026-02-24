@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.17.0] - 2026-02-24
+
+### Added
+- **Server Detail Backups Tab** - Implement Backups tab in Server Detail page (#427, #428)
+  - **World Backups sub-tab**: Reuses existing backup components (BackupStatus, BackupHistory, BackupPushButton, BackupScheduleList) scoped to the selected server
+  - **Config Snapshots sub-tab**: Server-scoped config snapshot management with schedule filtering
+  - Fix ConfigSnapshotSchedulePanel to filter schedules by server when `filterServerName` prop is provided
+  - Fix onViewHistory condition to require >= 2 snapshots for diff dialog
+
+### Fixed
+- **Console Dependencies** - Add missing `react-diff-viewer-continued` dependency (#4c453f5)
+- **Lock file sync** - Sync pnpm-lock.yaml with react-diff-viewer-continued dependency (#75515f2)
+
 ## [2.16.0] - 2026-02-23
 
 ### Added
