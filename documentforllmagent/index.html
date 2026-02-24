@@ -4269,6 +4269,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-2180-2026-02-24---backup-storage-path-consolidation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.18.0 (2026-02-24) - Backup Storage Path Consolidation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-2171-2026-02-24---backup-sub-tab-reorder" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4614,7 +4625,7 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.17.1
+<p><strong>Version</strong>: 2.18.0
 <strong>Last Updated</strong>: 2026-02-24
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
@@ -9144,6 +9155,16 @@ A: Yes. It only appends new variables and never modifies existing ones. Use <cod
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-2180-2026-02-24---backup-storage-path-consolidation">Version 2.18.0 (2026-02-24) - Backup Storage Path Consolidation<a class="headerlink" href="#version-2180-2026-02-24---backup-storage-path-consolidation" title="Permanent link">&para;</a></h3>
+<p><strong>Changed:</strong>
+- <strong>Backup Storage Paths</strong> - Relocate all backup storage paths to <code>&lt;MCCTL_ROOT&gt;/backups/</code> (#429, #430)
+  - World backup cache: <code>$HOME/.minecraft-backup</code> -&gt; <code>&lt;MCCTL_ROOT&gt;/backups/worlds/</code>
+  - Backup schedule DB: <code>data/</code> -&gt; <code>backups/meta/</code>
+  - Config snapshot DB/storage: <code>data/</code> -&gt; <code>backups/meta/</code>
+  - Consolidates all backup-related data under a single <code>backups/</code> directory for easier management</p>
+<p><strong>Documentation:</strong>
+- <strong>CLAUDE.md</strong> - Simplify Project Structure to high-level table (606 -&gt; 393 lines, 35% reduction)
+- <strong>Orchestrator Agent</strong> - Add Orchestrator Agent to Multi-Agent Collaboration and enforce orchestrator-first workflow</p>
 <h3 id="version-2171-2026-02-24---backup-sub-tab-reorder">Version 2.17.1 (2026-02-24) - Backup Sub-tab Reorder<a class="headerlink" href="#version-2171-2026-02-24---backup-sub-tab-reorder" title="Permanent link">&para;</a></h3>
 <p><strong>Changed:</strong>
 - <strong>Console Backup Sub-tabs</strong> - Reorder server backup sub-tabs to show Config Snapshots first, World Backups second</p>
