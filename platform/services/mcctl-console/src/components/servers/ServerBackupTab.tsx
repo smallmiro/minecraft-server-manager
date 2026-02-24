@@ -7,12 +7,15 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import SettingsIcon from '@mui/icons-material/Settings';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
   BackupStatus,
   BackupHistory,
   BackupPushButton,
   BackupScheduleList,
-  BackupPageTabs,
   ConfigSnapshotServerCard,
   CreateSnapshotDialog,
   ConfigSnapshotSchedulePanel,
@@ -29,20 +32,41 @@ interface ServerBackupTabProps {
 }
 
 export function ServerBackupTab({ serverName }: ServerBackupTabProps) {
-  const [activeSubTab, setActiveSubTab] = useState<BackupTabValue>('world-backups');
+  const [activeSubTab, setActiveSubTab] = useState<BackupTabValue>('config-snapshots');
   const { data: statusData } = useBackupStatus();
   const configured = statusData?.configured ?? false;
 
   return (
     <Box>
-      <BackupPageTabs value={activeSubTab} onChange={setActiveSubTab} />
-
-      {activeSubTab === 'world-backups' && (
-        <WorldBackupsContent configured={configured} />
-      )}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs
+          value={activeSubTab}
+          onChange={(_, newValue: BackupTabValue) => setActiveSubTab(newValue)}
+          aria-label="Server backup tabs"
+        >
+          <Tab
+            value="config-snapshots"
+            label="Config Snapshots"
+            icon={<SettingsBackupRestoreIcon />}
+            iconPosition="start"
+            sx={{ textTransform: 'none', fontWeight: 'medium' }}
+          />
+          <Tab
+            value="world-backups"
+            label="World Backups"
+            icon={<CloudUploadIcon />}
+            iconPosition="start"
+            sx={{ textTransform: 'none', fontWeight: 'medium' }}
+          />
+        </Tabs>
+      </Box>
 
       {activeSubTab === 'config-snapshots' && (
         <ConfigSnapshotsContent serverName={serverName} />
+      )}
+
+      {activeSubTab === 'world-backups' && (
+        <WorldBackupsContent configured={configured} />
       )}
     </Box>
   );
