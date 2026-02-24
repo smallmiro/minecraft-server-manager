@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.18.0] - 2026-02-24
+
+### Changed
+- **Backup Storage Paths** - Relocate backup storage paths to `<MCCTL_ROOT>/backups/` (#429, #430)
+  - World backup cache: `$HOME/.minecraft-backup` -> `<MCCTL_ROOT>/backups/worlds/`
+  - Backup schedule DB: `data/` -> `backups/meta/`
+  - Config snapshot DB/storage: `data/` -> `backups/meta/`
+  - Consolidates all backup-related data under a single `backups/` directory
+
+### Documentation
+- **CLAUDE.md** - Simplify Project Structure to high-level table (606 -> 393 lines, 35% reduction)
+- **Orchestrator Agent** - Add Orchestrator Agent to Multi-Agent Collaboration and enforce orchestrator-first workflow
+
 ## [2.17.1] - 2026-02-24
 
 ### Changed
