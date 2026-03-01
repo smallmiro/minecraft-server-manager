@@ -24,8 +24,11 @@ export function useServerConfigSnapshots(
       ),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      const fetched = allPages.reduce((acc, page) => acc + page.snapshots.length, 0);
-      if (fetched >= lastPage.total) return undefined;
+      const fetched = allPages.reduce(
+        (acc, page) => acc + (page?.snapshots?.length ?? 0),
+        0
+      );
+      if (fetched >= (lastPage?.total ?? 0)) return undefined;
       return fetched;
     },
     enabled: options?.enabled !== false && !!serverName,

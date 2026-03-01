@@ -267,4 +267,49 @@ describe('ServerConfigHistoryTab', () => {
       expect(screen.queryByText('Compare mode')).not.toBeInTheDocument();
     });
   });
+
+  it('renders without crash when page.snapshots is undefined', () => {
+    mockUseServerConfigSnapshots.mockReturnValue({
+      data: {
+        pages: [{ total: 0 } as never],
+        pageParams: [0],
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
+      isSuccess: true,
+    } as never);
+
+    // Should not throw TypeError
+    renderComponent();
+
+    expect(screen.getByText('No config snapshots yet')).toBeInTheDocument();
+  });
+
+  it('renders empty state when pages contain mixed undefined snapshots', () => {
+    mockUseServerConfigSnapshots.mockReturnValue({
+      data: {
+        pages: [
+          { snapshots: undefined, total: 0 } as never,
+          { total: 0 } as never,
+        ],
+        pageParams: [0, 10],
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
+      isSuccess: true,
+    } as never);
+
+    // Should not throw TypeError from flatMap
+    renderComponent();
+
+    expect(screen.getByText('No config snapshots yet')).toBeInTheDocument();
+  });
 });

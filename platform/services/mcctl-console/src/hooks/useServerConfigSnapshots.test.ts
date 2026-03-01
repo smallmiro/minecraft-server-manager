@@ -146,4 +146,31 @@ describe('useServerConfigSnapshots', () => {
 
     expect(result.current.error?.message).toBe('Network error');
   });
+
+  it('handles page with undefined snapshots in getNextPageParam without TypeError', async () => {
+    // Simulate a response where snapshots is undefined (malformed API response)
+    const malformedResponse = { total: 0 } as ConfigSnapshotListResponse;
+    mockApiFetch.mockResolvedValue(malformedResponse);
+
+    const { result } = renderHook(() => useServerConfigSnapshots('test-server'), {
+      wrapper: createWrapper(),
+    });
+
+    // Should not throw TypeError, should resolve gracefully
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.hasNextPage).toBe(false);
+  });
+
+  it('handles lastPage with undefined total in getNextPageParam without TypeError', async () => {
+    // Simulate a response where total is undefined
+    const malformedResponse = { snapshots: [] } as unknown as ConfigSnapshotListResponse;
+    mockApiFetch.mockResolvedValue(malformedResponse);
+
+    const { result } = renderHook(() => useServerConfigSnapshots('test-server'), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.hasNextPage).toBe(false);
+  });
 });

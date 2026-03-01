@@ -54,7 +54,7 @@ export function ServerConfigHistoryTab({
 
   // Flatten pages into a single list (newest first — API returns in reverse chronological order)
   const snapshots: ConfigSnapshotItem[] = useMemo(
-    () => data?.pages.flatMap((p) => p.snapshots) ?? [],
+    () => data?.pages.flatMap((p) => p?.snapshots ?? []) ?? [],
     [data]
   );
   const total = data?.pages[0]?.total ?? 0;
