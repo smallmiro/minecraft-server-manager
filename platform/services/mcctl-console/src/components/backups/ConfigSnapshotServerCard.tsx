@@ -130,15 +130,22 @@ export function ConfigSnapshotServerCard({
 
         {/* Action buttons */}
         <Stack direction="row" spacing={1}>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<HistoryIcon />}
-            onClick={() => onViewHistory(serverName)}
-            disabled={totalCount === 0}
+          <Tooltip
+            title={totalCount < 2 ? 'Need at least 2 snapshots to compare history' : ''}
+            arrow
           >
-            View History
-          </Button>
+            <span aria-label={totalCount < 2 ? 'Need at least 2 snapshots to compare history' : undefined}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<HistoryIcon />}
+                onClick={() => onViewHistory(serverName)}
+                disabled={totalCount < 2}
+              >
+                View History
+              </Button>
+            </span>
+          </Tooltip>
           <Button
             size="small"
             variant="outlined"
