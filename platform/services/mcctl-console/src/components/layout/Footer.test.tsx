@@ -40,6 +40,32 @@ describe('Footer', () => {
     expect(screen.getByText('Issues')).toBeInTheDocument();
   });
 
+  it('should render Q&A support link in community section', () => {
+    renderWithTheme(<Footer />);
+
+    const qaLink = screen.getByText('Q&A / Support');
+    expect(qaLink).toBeInTheDocument();
+    expect(qaLink.closest('a')).toHaveAttribute(
+      'href',
+      'https://github.com/smallmiro/minecraft-server-manager/discussions/categories/q-a'
+    );
+    expect(qaLink.closest('a')).toHaveAttribute('target', '_blank');
+    expect(qaLink.closest('a')).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('should render Ideas link in community section', () => {
+    renderWithTheme(<Footer />);
+
+    const ideasLink = screen.getByText('Ideas / Feature Requests');
+    expect(ideasLink).toBeInTheDocument();
+    expect(ideasLink.closest('a')).toHaveAttribute(
+      'href',
+      'https://github.com/smallmiro/minecraft-server-manager/discussions/categories/ideas'
+    );
+    expect(ideasLink.closest('a')).toHaveAttribute('target', '_blank');
+    expect(ideasLink.closest('a')).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
   it('should render about links', () => {
     renderWithTheme(<Footer />);
 

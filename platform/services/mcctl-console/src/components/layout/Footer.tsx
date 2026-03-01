@@ -59,6 +59,16 @@ const footerSections: FooterSection[] = [
         href: 'https://github.com/smallmiro/minecraft-server-manager/issues',
         external: true,
       },
+      {
+        label: 'Q&A / Support',
+        href: 'https://github.com/smallmiro/minecraft-server-manager/discussions/categories/q-a',
+        external: true,
+      },
+      {
+        label: 'Ideas / Feature Requests',
+        href: 'https://github.com/smallmiro/minecraft-server-manager/discussions/categories/ideas',
+        external: true,
+      },
     ],
   },
   {
