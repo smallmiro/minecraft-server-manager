@@ -38,32 +38,28 @@ describe('Footer', () => {
 
     expect(screen.getByText('GitHub')).toBeInTheDocument();
     expect(screen.getByText('Issues')).toBeInTheDocument();
+    expect(screen.getByText('Q&A / Support')).toBeInTheDocument();
+    expect(screen.getByText('Ideas / Feature Requests')).toBeInTheDocument();
   });
 
-  it('should render Q&A support link in community section', () => {
+  it('should render community discussion links with correct attributes', () => {
     renderWithTheme(<Footer />);
 
-    const qaLink = screen.getByText('Q&A / Support');
-    expect(qaLink).toBeInTheDocument();
-    expect(qaLink.closest('a')).toHaveAttribute(
+    const qaLink = screen.getByText('Q&A / Support').closest('a');
+    expect(qaLink).toHaveAttribute(
       'href',
       'https://github.com/smallmiro/minecraft-server-manager/discussions/categories/q-a'
     );
-    expect(qaLink.closest('a')).toHaveAttribute('target', '_blank');
-    expect(qaLink.closest('a')).toHaveAttribute('rel', 'noopener noreferrer');
-  });
+    expect(qaLink).toHaveAttribute('target', '_blank');
+    expect(qaLink).toHaveAttribute('rel', 'noopener noreferrer');
 
-  it('should render Ideas link in community section', () => {
-    renderWithTheme(<Footer />);
-
-    const ideasLink = screen.getByText('Ideas / Feature Requests');
-    expect(ideasLink).toBeInTheDocument();
-    expect(ideasLink.closest('a')).toHaveAttribute(
+    const ideasLink = screen.getByText('Ideas / Feature Requests').closest('a');
+    expect(ideasLink).toHaveAttribute(
       'href',
       'https://github.com/smallmiro/minecraft-server-manager/discussions/categories/ideas'
     );
-    expect(ideasLink.closest('a')).toHaveAttribute('target', '_blank');
-    expect(ideasLink.closest('a')).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(ideasLink).toHaveAttribute('target', '_blank');
+    expect(ideasLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('should render about links', () => {
