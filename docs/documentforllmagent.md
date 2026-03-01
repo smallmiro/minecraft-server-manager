@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.18.0
-> **Last Updated**: 2026-02-24
+> **Version**: 2.19.0
+> **Last Updated**: 2026-03-01
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -2828,6 +2828,18 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.19.0 (2026-03-01) - Console Bug Fixes & Community Links
+
+**Added:**
+- **Console Community Links** - Add Q&A and Ideas community links to Footer component (#434, #438)
+
+**Fixed:**
+- **Console Snapshot Null Guard** - Add null guards to `getNextPageParam` and `flatMap` in `useServerConfigSnapshots` to prevent TypeError (#431, #435)
+- **Console View History Button** - Disable View History button when less than 2 snapshots available (#432, #437)
+
+**Documentation:**
+- **npm README** - Add Q&A and Ideas discussion links to README for community engagement (#433, #436)
 
 ### Version 2.18.0 (2026-02-24) - Backup Storage Path Consolidation
 

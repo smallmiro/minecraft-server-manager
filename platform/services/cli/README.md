@@ -77,11 +77,14 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.19.0 (2026-03-01)
+- **feat(console)**: Add Q&A and Ideas community links to Footer (#434, #438)
+- **fix(console)**: Add null guards to `useServerConfigSnapshots` to prevent TypeError (#431, #435)
+- **fix(console)**: Disable View History button when less than 2 snapshots (#432, #437)
+- **docs(npm)**: Add Q&A and Ideas discussion links to README (#433, #436)
+
 ### v2.18.0 (2026-02-24)
 - **refactor**: Relocate backup storage paths to `<MCCTL_ROOT>/backups/` (#429, #430)
-  - World backup cache: `$HOME/.minecraft-backup` -> `<MCCTL_ROOT>/backups/worlds/`
-  - Backup schedule DB: `data/` -> `backups/meta/`
-  - Config snapshot DB/storage: `data/` -> `backups/meta/`
 - **docs**: Simplify CLAUDE.md Project Structure (35% reduction)
 
 ### v2.17.1 (2026-02-24)
@@ -89,36 +92,15 @@ mcctl logs myserver
 
 ### v2.17.0 (2026-02-24)
 - **feat(console)**: Implement Backups tab in Server Detail page (#427, #428)
-  - World Backups sub-tab with server-scoped backup components
-  - Config Snapshots sub-tab with server-filtered schedule management
 - **fix(console)**: Add missing react-diff-viewer-continued dependency
-- **fix(deps)**: Sync pnpm-lock.yaml with react-diff-viewer-continued
 
 ### v2.16.0 (2026-02-23)
 - **feat**: Config Snapshot system - full-stack server configuration versioning (#397~#406)
-  - Domain layer, infrastructure, API, CLI, Console UI, and E2E tests
-  - Automated snapshot scheduling with node-cron
-  - Config diff viewer and restore functionality
 - **feat**: Backup retention policy pruning implementation (#396, #426)
 - **fix**: Backup git path and shell injection prevention (#423, #425)
 
 ### v2.15.3 (2026-02-22)
 - **docs**: Update README.md with Management Console features and architecture (#412, #413)
-
-### v2.15.2 (2026-02-22)
-- **docs**: Server Overview/Mods tab screenshots with detailed descriptions (#409)
-- **docs**: Integrated setup guide for mcctl init to console init flow (#410)
-
-### v2.15.1 (2026-02-22)
-- **docs**: Comprehensive web console documentation update with screenshots (#407, #408)
-- **fix**: Sync pnpm-lock.yaml with mcctl-api package.json (node-cron)
-
-### v2.15.0 (2026-02-22)
-- **feat**: Automated backup scheduling with cron-based scheduler (#394, #395)
-  - CLI `mcctl backup schedule` with list/add/remove/enable/disable operations
-  - REST API endpoints for schedule CRUD with node-cron integration
-  - Web Console UI with schedule management dialog and toggle
-  - Shell injection prevention, 54+ tests across all layers
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

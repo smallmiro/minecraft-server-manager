@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.19.0] - 2026-03-01
+
+### Added
+- **Console Community Links** - Add Q&A and Ideas community links to Footer component (#434, #438)
+
+### Fixed
+- **Console Snapshot Null Guard** - Add null guards to `getNextPageParam` and `flatMap` in `useServerConfigSnapshots` to prevent TypeError (#431, #435)
+- **Console View History Button** - Disable View History button when less than 2 snapshots available (#432, #437)
+
+### Documentation
+- **npm README** - Add Q&A and Ideas discussion links to README for community engagement (#433, #436)
+
 ## [2.18.0] - 2026-02-24
 
 ### Changed
