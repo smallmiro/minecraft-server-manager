@@ -150,7 +150,8 @@ function ConfigSnapshotsContent({ serverName }: { serverName: string }) {
         totalCount={totalCount}
         schedule={schedule}
         onViewHistory={() => {
-          if (snapshots.length >= 2) {
+          // Guard aligned with ConfigSnapshotServerCard disabled={totalCount < 2}
+          if (totalCount >= 2 && snapshots.length >= 2) {
             setDiffDialogOpen(true);
           }
         }}
