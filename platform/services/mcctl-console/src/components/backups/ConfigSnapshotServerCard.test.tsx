@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import { ConfigSnapshotServerCard } from './ConfigSnapshotServerCard';
 import type { ConfigSnapshotItem } from '@/ports/api/IMcctlApiClient';
@@ -81,7 +81,7 @@ describe('ConfigSnapshotServerCard', () => {
       expect(button).not.toBeDisabled();
     });
 
-    it('should show tooltip on disabled View History button explaining minimum requirement', () => {
+    it('should show tooltip on disabled View History button explaining minimum requirement', async () => {
       const oneSnapshot = [createMockSnapshot('snap-1', new Date().toISOString())];
       renderWithTheme(
         <ConfigSnapshotServerCard
@@ -90,8 +90,12 @@ describe('ConfigSnapshotServerCard', () => {
           totalCount={1}
         />
       );
-      // The tooltip text should indicate need for at least 2 snapshots
-      expect(screen.getByLabelText(/at least 2 snapshots/i)).toBeInTheDocument();
+      // Hover over the disabled button's wrapper span to trigger MUI Tooltip
+      const button = screen.getByRole('button', { name: /View History/i });
+      fireEvent.mouseOver(button.parentElement!);
+      await waitFor(() => {
+        expect(screen.getByRole('tooltip')).toHaveTextContent(/at least 2 snapshots/i);
+      });
     });
 
     it('should call onViewHistory when View History button is clicked with sufficient snapshots', () => {

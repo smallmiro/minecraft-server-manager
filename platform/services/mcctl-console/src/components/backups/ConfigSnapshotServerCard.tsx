@@ -134,7 +134,7 @@ export function ConfigSnapshotServerCard({
             title={totalCount < 2 ? 'Need at least 2 snapshots to compare history' : ''}
             arrow
           >
-            <span aria-label={totalCount < 2 ? 'Need at least 2 snapshots to compare history' : undefined}>
+            <span>
               <Button
                 size="small"
                 variant="outlined"
