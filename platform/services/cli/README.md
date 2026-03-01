@@ -122,6 +122,11 @@ mcctl logs myserver
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
+## Community
+
+- **[Q&A / Support](https://github.com/smallmiro/minecraft-server-manager/discussions/categories/q-a)** - Ask questions and get help from the community
+- **[Ideas / Feature Requests](https://github.com/smallmiro/minecraft-server-manager/discussions/categories/ideas)** - Share your ideas and vote on feature requests
+
 ## AI Assistant
 
 Get help using mcctl with our AI-powered assistant:
