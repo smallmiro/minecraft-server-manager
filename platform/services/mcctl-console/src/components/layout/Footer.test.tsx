@@ -38,6 +38,28 @@ describe('Footer', () => {
 
     expect(screen.getByText('GitHub')).toBeInTheDocument();
     expect(screen.getByText('Issues')).toBeInTheDocument();
+    expect(screen.getByText('Q&A / Support')).toBeInTheDocument();
+    expect(screen.getByText('Ideas / Feature Requests')).toBeInTheDocument();
+  });
+
+  it('should render community discussion links with correct attributes', () => {
+    renderWithTheme(<Footer />);
+
+    const qaLink = screen.getByText('Q&A / Support').closest('a');
+    expect(qaLink).toHaveAttribute(
+      'href',
+      'https://github.com/smallmiro/minecraft-server-manager/discussions/categories/q-a'
+    );
+    expect(qaLink).toHaveAttribute('target', '_blank');
+    expect(qaLink).toHaveAttribute('rel', 'noopener noreferrer');
+
+    const ideasLink = screen.getByText('Ideas / Feature Requests').closest('a');
+    expect(ideasLink).toHaveAttribute(
+      'href',
+      'https://github.com/smallmiro/minecraft-server-manager/discussions/categories/ideas'
+    );
+    expect(ideasLink).toHaveAttribute('target', '_blank');
+    expect(ideasLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('should render about links', () => {
