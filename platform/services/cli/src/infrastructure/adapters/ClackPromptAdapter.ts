@@ -190,7 +190,7 @@ export class ClackPromptAdapter implements IPromptPort {
   }
 
   async promptMcVersion(serverType: ServerType): Promise<McVersion> {
-    const commonVersions = ['LATEST', '1.21.1', '1.21', '1.20.4', '1.20.1', '1.19.4'];
+    const commonVersions = ['LATEST', '26.1.1', '1.21.4', '1.21.1', '1.20.4', '1.20.1', '1.19.4'];
 
     const result = await p.select({
       message: 'Minecraft version:',
@@ -212,7 +212,7 @@ export class ClackPromptAdapter implements IPromptPort {
     if (result === 'other') {
       const customVersion = await p.text({
         message: 'Enter Minecraft version:',
-        placeholder: '1.21.1',
+        placeholder: '26.1.1',
         validate: (value) => {
           try {
             McVersion.create(value);

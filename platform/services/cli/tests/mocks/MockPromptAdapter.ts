@@ -60,7 +60,7 @@ export class MockPromptAdapter implements IPromptPort {
     this.values = {
       serverName: 'testserver',
       serverType: 'PAPER',
-      version: '1.21.1',
+      version: '26.1.1',
       memory: '4G',
       worldSetup: 'new',
       confirm: true,

@@ -86,7 +86,7 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
           initialized: new Date().toISOString(),
           dataDir: paths.root,
           defaultType: 'PAPER',
-          defaultVersion: '1.21.1',
+          defaultVersion: '26.1.1',
           autoStart: true,
           avahiEnabled: true,
           templateVersion: cliVersion,

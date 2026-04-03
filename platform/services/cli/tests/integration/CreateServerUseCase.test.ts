@@ -17,7 +17,7 @@ describe('CreateServerUseCase Integration', () => {
     promptAdapter = new MockPromptAdapter({
       serverName: 'testserver',
       serverType: 'PAPER',
-      version: '1.21.1',
+      version: '26.1.1',
       memory: '4G',
       worldSetup: 'new',
     });
@@ -32,7 +32,7 @@ describe('CreateServerUseCase Integration', () => {
 
       assert.strictEqual(server.name.value, 'testserver');
       assert.strictEqual(server.type.value, 'PAPER');
-      assert.strictEqual(server.version.value, '1.21.1');
+      assert.strictEqual(server.version.value, '26.1.1');
       assert.strictEqual(server.memory.value, '4G');
     });
 

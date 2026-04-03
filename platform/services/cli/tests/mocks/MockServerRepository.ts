@@ -44,7 +44,7 @@ export class MockServerRepository implements IServerRepository {
     const server = Server.create({
       name: ServerName.create(data.name),
       type: ServerType.create(data.type ?? 'PAPER'),
-      version: McVersion.create(data.version ?? '1.21.1'),
+      version: McVersion.create(data.version ?? '26.1.1'),
       memory: Memory.create(data.memory ?? '4G'),
       worldOptions: WorldOptions.newWorld(),
     });

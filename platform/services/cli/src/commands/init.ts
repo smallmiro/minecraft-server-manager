@@ -317,7 +317,7 @@ export async function initCommand(options: {
     initialized: new Date().toISOString(),
     dataDir: paths.root,
     defaultType: 'PAPER',
-    defaultVersion: '1.21.1',
+    defaultVersion: '26.1.1',
     autoStart: true,
     avahiEnabled: true,
     playitEnabled,
@@ -407,7 +407,7 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
       initialized: new Date().toISOString(),
       dataDir: paths.root,
       defaultType: 'PAPER' as const,
-      defaultVersion: envConfig.DEFAULT_VERSION || '1.21.1',
+      defaultVersion: envConfig.DEFAULT_VERSION || '26.1.1',
       autoStart: true,
       avahiEnabled: false,
       playitEnabled: !!envConfig.PLAYIT_SECRET_KEY,
@@ -488,7 +488,7 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
       type: 'text',
       validate: (value) => {
         if (!/^\d+\.\d+(\.\d+)?$/.test(value)) {
-          return 'Invalid version format. Use format like 1.21.1';
+          return 'Invalid version format. Use format like 26.1.1';
         }
         return undefined;
       },

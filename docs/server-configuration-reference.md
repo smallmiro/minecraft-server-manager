@@ -781,7 +781,7 @@ MEMORY=75%
 |----------|-------------|
 | `USE_AIKAR_FLAGS` | Aikar's recommended GC tuning flags for Paper/Spigot (G1GC, pause time optimization) |
 | `USE_MEOWICE_FLAGS` | Updated version of Aikar flags |
-| `USE_MEOWICE_GRAALVM_FLAGS` | GraalVM-specific optimization flags (use with `java21-graalvm` image) |
+| `USE_MEOWICE_GRAALVM_FLAGS` | GraalVM-specific optimization flags (use with `java21-graalvm` image). Note: GraalVM images are not yet available for Java 25; use `java21-graalvm` for GraalVM support. |
 | `USE_FLARE_FLAGS` | Flare performance profiling support |
 | `USE_SIMD_FLAGS` | SIMD (vector operation) optimization |
 
@@ -1219,7 +1219,7 @@ Each server has its own `docker-compose.yml`:
 ```yaml
 services:
   mc-<name>:
-    image: itzg/minecraft-server:java21
+    image: itzg/minecraft-server:java25  # Use java21 for MC 1.21.x, java25 or latest for MC 26+
     container_name: mc-<name>
     restart: "no"
     tty: true
@@ -1312,7 +1312,8 @@ mcctl config myserver --command-block # Sets ENABLE_COMMAND_BLOCK=true
 | Image Tag | Java Version | Notes |
 |-----------|-------------|-------|
 | `latest`, `stable` | Java 25 | Latest Minecraft (default) |
-| `java21` | Java 21 | Minecraft 1.20.5+ |
+| `java25` | Java 25 | Minecraft 26+ |
+| `java21` | Java 21 | Minecraft 1.20.5 - 1.21.x |
 | `java17` | Java 17 | Minecraft 1.18 - 1.20.4 |
 | `java11` | Java 11 | Legacy versions |
 | `java8` | Java 8 | Forge 1.17 and below |
@@ -1323,7 +1324,8 @@ mcctl config myserver --command-block # Sets ENABLE_COMMAND_BLOCK=true
 
 | Minecraft Version | Minimum Java | Recommended Image Tag |
 |-------------------|-------------|----------------------|
-| 1.21+ | Java 21 | `java21` or `latest` |
+| 26+ | Java 25 | `java25` or `latest` |
+| 1.21 - 1.21.x | Java 21 | `java21` |
 | 1.20.5 - 1.20.6 | Java 21 | `java21` |
 | 1.18 - 1.20.4 | Java 17 | `java17` or `java21` |
 | 1.17 | Java 16 | `java17` |
@@ -1336,7 +1338,8 @@ Forge has stricter Java version requirements:
 
 | Forge / Minecraft Version | Required Java | Image Tag |
 |---------------------------|---------------|-----------|
-| Forge 1.20.5+ | Java 21 | `java21` |
+| Forge 26+ | Java 25 | `java25` |
+| Forge 1.20.5 - 1.21.x | Java 21 | `java21` |
 | Forge 1.18 - 1.20.4 | Java 17 | `java17` |
 | Forge 1.17.x | Java 16/17 | `java17` |
 | Forge 1.16.5 and below | Java 8 | `java8` (required, higher versions fail) |
@@ -1345,6 +1348,7 @@ Forge has stricter Java version requirements:
 
 | Tag | amd64 | arm64 | armv7 |
 |-----|-------|-------|-------|
+| `java25` | Yes | Yes | No |
 | `java21` | Yes | Yes | No |
 | `java17` | Yes | Yes | Yes |
 | `java8` | Yes | Yes | No |
@@ -1372,6 +1376,7 @@ The Java version is determined by the Docker image tag in the server's `docker-c
 
 | Error | Cause | Fix |
 |-------|-------|-----|
+| `class file version 69.0` | Java 25 required | Use `java25` or `latest` image tag (MC 26+) |
 | `class file version 65.0` | Java 21 required | Use `java21` image tag |
 | `Unsupported class file major version` | Java version too high | Use `java8` for Forge 1.16.5 and below |
 | Mods fail to load | Java version mismatch | Check mod documentation for Java requirements |

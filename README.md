@@ -460,7 +460,7 @@ pnpm automatically builds packages in dependency order:
 Plugin server → TYPE=PAPER
 Forge mods    → TYPE=FORGE + java17/java8
 NeoForge mods → TYPE=NEOFORGE (1.20.1+)
-Fabric mods   → TYPE=FABRIC + java21
+Fabric mods   → TYPE=FABRIC + java25 (MC 26+) or java21 (MC 1.21.x)
 Modpacks      → TYPE=MODRINTH (mcctl create --modpack)
 Vanilla       → TYPE=VANILLA (default)
 ```
@@ -470,7 +470,8 @@ Vanilla       → TYPE=VANILLA (default)
 ## Java Version Selection Guide
 
 ```
-Minecraft 1.21+ → java21 or latest
+Minecraft 26+       → java25 or latest
+Minecraft 1.21-1.21.x → java21
 Minecraft 1.18-1.20.4 → java17 or java21
 Forge 1.16.5 and below → java8 (required)
 ```

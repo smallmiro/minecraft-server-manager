@@ -1854,7 +1854,8 @@ MODS_FILE=/data/mods.txt
 
 | Minecraft Version | Minimum Java | Recommended Image Tag |
 |-------------------|-------------|----------------------|
-| 1.21+ | Java 21 | `java21` or `latest` |
+| 26+ | Java 25 | `java25` or `latest` |
+| 1.21 - 1.21.x | Java 21 | `java21` |
 | 1.20.5 - 1.20.6 | Java 21 | `java21` |
 | 1.18 - 1.20.4 | Java 17 | `java17` or `java21` |
 | 1.17 | Java 16 | `java17` |
@@ -2070,11 +2071,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   mc-survival:
-    image: itzg/minecraft-server:java21
+    image: itzg/minecraft-server:java25  # Use java25 or latest for MC 26+, java21 for MC 1.21.x
     environment:
       EULA: "TRUE"
       TYPE: "PAPER"
-      VERSION: "1.21.1"
+      VERSION: "LATEST"
       MEMORY: "4G"
       USE_AIKAR_FLAGS: "true"
     labels:
@@ -2088,11 +2089,11 @@ services:
 ```yaml
 services:
   mc-modded:
-    image: itzg/minecraft-server:java21
+    image: itzg/minecraft-server:java25  # Use java25 or latest for MC 26+, java21 for MC 1.21.x
     environment:
       EULA: "TRUE"
       TYPE: "FABRIC"
-      VERSION: "1.21.1"
+      VERSION: "LATEST"
       MEMORY: "8G"
       MODRINTH_PROJECTS: |
         fabric-api
@@ -2468,6 +2469,7 @@ For Fabric servers, always include `fabric-api` in MODRINTH_PROJECTS.
 
 | Error | Cause | Fix |
 |-------|-------|-----|
+| `class file version 69.0` | Java 25 required | Use `java25` or `latest` image tag (MC 26+) |
 | `class file version 65.0` | Java 21 required | Use `java21` image tag |
 | `Unsupported class file major version` | Java too high for Forge | Use `java8` for Forge 1.16.5 and below |
 | Mods fail to load | Version mismatch | Check mod docs for Java requirements |

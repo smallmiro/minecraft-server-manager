@@ -106,6 +106,43 @@ describe('McVersion Value Object', () => {
     });
   });
 
+  describe('26.x versioning (Year-based releases)', () => {
+    it('should parse 26.1.1 successfully', () => {
+      const version = McVersion.create('26.1.1');
+      assert.strictEqual(version.value, '26.1.1');
+      assert.strictEqual(version.major, 26);
+      assert.strictEqual(version.minor, 1);
+      assert.strictEqual(version.patch, 1);
+    });
+
+    it('should parse 26.1 (X.Y format) successfully', () => {
+      const version = McVersion.create('26.1');
+      assert.strictEqual(version.value, '26.1');
+      assert.strictEqual(version.major, 26);
+      assert.strictEqual(version.minor, 1);
+      assert.strictEqual(version.patch, 0);
+    });
+
+    it('should recommend Java 25 for 26.x versions', () => {
+      const version = McVersion.create('26.1.1');
+      assert.strictEqual(version.recommendedJavaVersion, 25);
+    });
+
+    it('should consider 26.x newer than 1.21.x', () => {
+      const v26 = McVersion.create('26.1.1');
+      const v1 = McVersion.create('1.21.4');
+      assert.ok(v26.isNewerThan(v1));
+      assert.ok(v1.isOlderThan(v26));
+    });
+
+    it('should consider LATEST newer than 26.1.1', () => {
+      const latest = McVersion.create('LATEST');
+      const v26 = McVersion.create('26.1.1');
+      assert.ok(latest.isNewerThan(v26));
+      assert.ok(v26.isOlderThan(latest));
+    });
+  });
+
   describe('equality', () => {
     it('should be equal for same version', () => {
       const v1 = McVersion.create('1.21.1');
