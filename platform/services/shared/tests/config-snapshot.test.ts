@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 
 // Value Objects
@@ -28,9 +27,9 @@ describe('ConfigSnapshotFile', () => {
       size: 1024,
     });
 
-    assert.strictEqual(file.path, 'server.properties');
-    assert.strictEqual(file.hash, validHash);
-    assert.strictEqual(file.size, 1024);
+    expect(file.path).toBe('server.properties');
+    expect(file.hash).toBe(validHash);
+    expect(file.size).toBe(1024);
   });
 
   test('should create with zero size', () => {
@@ -40,68 +39,53 @@ describe('ConfigSnapshotFile', () => {
       size: 0,
     });
 
-    assert.strictEqual(file.size, 0);
+    expect(file.size).toBe(0);
   });
 
   test('should throw on empty path', () => {
-    assert.throws(
-      () => ConfigSnapshotFile.create({ path: '', hash: validHash, size: 100 }),
-      /path cannot be empty/
-    );
+    expect(() => ConfigSnapshotFile.create({ path: '', hash: validHash, size: 100 })).toThrow(/path cannot be empty/);
   });
 
   test('should throw on whitespace-only path', () => {
-    assert.throws(
-      () => ConfigSnapshotFile.create({ path: '  ', hash: validHash, size: 100 }),
-      /path cannot be empty/
-    );
+    expect(() => ConfigSnapshotFile.create({ path: '  ', hash: validHash, size: 100 })).toThrow(/path cannot be empty/);
   });
 
   test('should throw on empty hash', () => {
-    assert.throws(
-      () => ConfigSnapshotFile.create({ path: 'test.txt', hash: '', size: 100 }),
-      /hash cannot be empty/
-    );
+    expect(() => ConfigSnapshotFile.create({ path: 'test.txt', hash: '', size: 100 })).toThrow(/hash cannot be empty/);
   });
 
   test('should throw on negative size', () => {
-    assert.throws(
-      () => ConfigSnapshotFile.create({ path: 'test.txt', hash: validHash, size: -1 }),
-      /size must be non-negative/
-    );
+    expect(() => ConfigSnapshotFile.create({ path: 'test.txt', hash: validHash, size: -1 })).toThrow(/size must be non-negative/);
   });
 
   test('should throw on non-integer size', () => {
-    assert.throws(
-      () => ConfigSnapshotFile.create({ path: 'test.txt', hash: validHash, size: 1.5 }),
-      /size must be.*integer/
-    );
+    expect(() => ConfigSnapshotFile.create({ path: 'test.txt', hash: validHash, size: 1.5 })).toThrow(/size must be.*integer/);
   });
 
   test('equals should return true for same path and hash', () => {
     const a = ConfigSnapshotFile.create({ path: 'server.properties', hash: validHash, size: 100 });
     const b = ConfigSnapshotFile.create({ path: 'server.properties', hash: validHash, size: 200 });
-    assert.ok(a.equals(b));
+    expect(a.equals(b)).toBeTruthy();
   });
 
   test('equals should return false for different path', () => {
     const a = ConfigSnapshotFile.create({ path: 'server.properties', hash: validHash, size: 100 });
     const b = ConfigSnapshotFile.create({ path: 'config.env', hash: validHash, size: 100 });
-    assert.ok(!a.equals(b));
+    expect(!a.equals(b)).toBeTruthy();
   });
 
   test('equals should return false for different hash', () => {
     const hashB = 'b'.repeat(64);
     const a = ConfigSnapshotFile.create({ path: 'server.properties', hash: validHash, size: 100 });
     const b = ConfigSnapshotFile.create({ path: 'server.properties', hash: hashB, size: 100 });
-    assert.ok(!a.equals(b));
+    expect(!a.equals(b)).toBeTruthy();
   });
 
   test('toJSON should return correct data', () => {
     const file = ConfigSnapshotFile.create({ path: 'server.properties', hash: validHash, size: 512 });
     const json = file.toJSON();
 
-    assert.deepStrictEqual(json, {
+    expect(json).toEqual({
       path: 'server.properties',
       hash: validHash,
       size: 512,
@@ -121,10 +105,10 @@ describe('FileDiff', () => {
       newHash: 'a'.repeat(64),
     });
 
-    assert.strictEqual(diff.path, 'new-file.txt');
-    assert.strictEqual(diff.status, 'added');
-    assert.strictEqual(diff.newContent, 'new content');
-    assert.strictEqual(diff.oldContent, undefined);
+    expect(diff.path).toBe('new-file.txt');
+    expect(diff.status).toBe('added');
+    expect(diff.newContent).toBe('new content');
+    expect(diff.oldContent).toBe(undefined);
   });
 
   test('should create a modified FileDiff', () => {
@@ -137,9 +121,9 @@ describe('FileDiff', () => {
       newHash: 'b'.repeat(64),
     });
 
-    assert.strictEqual(diff.status, 'modified');
-    assert.strictEqual(diff.oldContent, 'old');
-    assert.strictEqual(diff.newContent, 'new');
+    expect(diff.status).toBe('modified');
+    expect(diff.oldContent).toBe('old');
+    expect(diff.newContent).toBe('new');
   });
 
   test('should create a deleted FileDiff', () => {
@@ -150,23 +134,17 @@ describe('FileDiff', () => {
       oldHash: 'a'.repeat(64),
     });
 
-    assert.strictEqual(diff.status, 'deleted');
-    assert.strictEqual(diff.oldContent, 'old content');
-    assert.strictEqual(diff.newContent, undefined);
+    expect(diff.status).toBe('deleted');
+    expect(diff.oldContent).toBe('old content');
+    expect(diff.newContent).toBe(undefined);
   });
 
   test('should throw on empty path', () => {
-    assert.throws(
-      () => FileDiff.create({ path: '', status: 'added' }),
-      /path cannot be empty/
-    );
+    expect(() => FileDiff.create({ path: '', status: 'added' })).toThrow(/path cannot be empty/);
   });
 
   test('should throw on invalid status', () => {
-    assert.throws(
-      () => FileDiff.create({ path: 'test.txt', status: 'unknown' as any }),
-      /invalid status/i
-    );
+    expect(() => FileDiff.create({ path: 'test.txt', status: 'unknown' as any })).toThrow(/invalid status/i);
   });
 
   test('toJSON should return correct data', () => {
@@ -180,10 +158,10 @@ describe('FileDiff', () => {
     });
 
     const json = diff.toJSON();
-    assert.strictEqual(json.path, 'test.txt');
-    assert.strictEqual(json.status, 'modified');
-    assert.strictEqual(json.oldContent, 'old');
-    assert.strictEqual(json.newContent, 'new');
+    expect(json.path).toBe('test.txt');
+    expect(json.status).toBe('modified');
+    expect(json.oldContent).toBe('old');
+    expect(json.newContent).toBe('new');
   });
 });
 
@@ -207,9 +185,9 @@ describe('SnapshotDiff', () => {
       changes,
     });
 
-    assert.strictEqual(diff.baseSnapshotId, baseId);
-    assert.strictEqual(diff.compareSnapshotId, compareId);
-    assert.strictEqual(diff.changes.length, 3);
+    expect(diff.baseSnapshotId).toBe(baseId);
+    expect(diff.compareSnapshotId).toBe(compareId);
+    expect(diff.changes.length).toBe(3);
   });
 
   test('summary should compute correctly', () => {
@@ -226,7 +204,7 @@ describe('SnapshotDiff', () => {
       changes,
     });
 
-    assert.deepStrictEqual(diff.summary, {
+    expect(diff.summary).toEqual({
       added: 2,
       modified: 1,
       deleted: 1,
@@ -244,7 +222,7 @@ describe('SnapshotDiff', () => {
       changes,
     });
 
-    assert.strictEqual(diff.hasChanges, true);
+    expect(diff.hasChanges).toBe(true);
   });
 
   test('hasChanges should return false when no changes', () => {
@@ -254,7 +232,7 @@ describe('SnapshotDiff', () => {
       changes: [],
     });
 
-    assert.strictEqual(diff.hasChanges, false);
+    expect(diff.hasChanges).toBe(false);
   });
 
   test('summary should be all zeros for empty changes', () => {
@@ -264,7 +242,7 @@ describe('SnapshotDiff', () => {
       changes: [],
     });
 
-    assert.deepStrictEqual(diff.summary, {
+    expect(diff.summary).toEqual({
       added: 0,
       modified: 0,
       deleted: 0,
@@ -272,17 +250,11 @@ describe('SnapshotDiff', () => {
   });
 
   test('should throw on empty baseSnapshotId', () => {
-    assert.throws(
-      () => SnapshotDiff.create({ baseSnapshotId: '', compareSnapshotId: compareId, changes: [] }),
-      /baseSnapshotId cannot be empty/
-    );
+    expect(() => SnapshotDiff.create({ baseSnapshotId: '', compareSnapshotId: compareId, changes: [] })).toThrow(/baseSnapshotId cannot be empty/);
   });
 
   test('should throw on empty compareSnapshotId', () => {
-    assert.throws(
-      () => SnapshotDiff.create({ baseSnapshotId: baseId, compareSnapshotId: '', changes: [] }),
-      /compareSnapshotId cannot be empty/
-    );
+    expect(() => SnapshotDiff.create({ baseSnapshotId: baseId, compareSnapshotId: '', changes: [] })).toThrow(/compareSnapshotId cannot be empty/);
   });
 
   test('toJSON should return correct data', () => {
@@ -297,11 +269,11 @@ describe('SnapshotDiff', () => {
     });
 
     const json = diff.toJSON();
-    assert.strictEqual(json.baseSnapshotId, baseId);
-    assert.strictEqual(json.compareSnapshotId, compareId);
-    assert.strictEqual(json.changes.length, 1);
-    assert.deepStrictEqual(json.summary, { added: 1, modified: 0, deleted: 0 });
-    assert.strictEqual(json.hasChanges, true);
+    expect(json.baseSnapshotId).toBe(baseId);
+    expect(json.compareSnapshotId).toBe(compareId);
+    expect(json.changes.length).toBe(1);
+    expect(json.summary).toEqual({ added: 1, modified: 0, deleted: 0 });
+    expect(json.hasChanges).toBe(true);
   });
 });
 
@@ -319,12 +291,12 @@ describe('ConfigSnapshot', () => {
 
     const snapshot = ConfigSnapshot.create(serverName, files);
 
-    assert.ok(snapshot.id);
-    assert.strictEqual(snapshot.serverName.value, 'myserver');
-    assert.ok(snapshot.createdAt instanceof Date);
-    assert.strictEqual(snapshot.description, '');
-    assert.strictEqual(snapshot.files.length, 1);
-    assert.strictEqual(snapshot.scheduleId, undefined);
+    expect(snapshot.id).toBeTruthy();
+    expect(snapshot.serverName.value).toBe('myserver');
+    expect(snapshot.createdAt instanceof Date).toBeTruthy();
+    expect(snapshot.description).toBe('');
+    expect(snapshot.files.length).toBe(1);
+    expect(snapshot.scheduleId).toBe(undefined);
   });
 
   test('should create with description', () => {
@@ -335,7 +307,7 @@ describe('ConfigSnapshot', () => {
 
     const snapshot = ConfigSnapshot.create(serverName, files, 'Before mod update');
 
-    assert.strictEqual(snapshot.description, 'Before mod update');
+    expect(snapshot.description).toBe('Before mod update');
   });
 
   test('should create with scheduleId', () => {
@@ -347,7 +319,7 @@ describe('ConfigSnapshot', () => {
 
     const snapshot = ConfigSnapshot.create(serverName, files, 'Auto snapshot', scheduleId);
 
-    assert.strictEqual(snapshot.scheduleId, scheduleId);
+    expect(snapshot.scheduleId).toBe(scheduleId);
   });
 
   test('should create with provided id and date', () => {
@@ -364,15 +336,15 @@ describe('ConfigSnapshot', () => {
       files,
     });
 
-    assert.strictEqual(snapshot.id, id);
-    assert.strictEqual(snapshot.createdAt.toISOString(), '2025-01-01T00:00:00.000Z');
+    expect(snapshot.id).toBe(id);
+    expect(snapshot.createdAt.toISOString()).toBe('2025-01-01T00:00:00.000Z');
   });
 
   test('should create with empty files', () => {
     const serverName = ServerName.create('emptyserver');
     const snapshot = ConfigSnapshot.create(serverName, []);
 
-    assert.strictEqual(snapshot.files.length, 0);
+    expect(snapshot.files.length).toBe(0);
   });
 
   test('should create with multiple files', () => {
@@ -386,7 +358,7 @@ describe('ConfigSnapshot', () => {
 
     const snapshot = ConfigSnapshot.create(serverName, files, 'Full config');
 
-    assert.strictEqual(snapshot.files.length, 3);
+    expect(snapshot.files.length).toBe(3);
   });
 
   test('toJSON should return correct serialization', () => {
@@ -398,12 +370,12 @@ describe('ConfigSnapshot', () => {
     const snapshot = ConfigSnapshot.create(serverName, files, 'test snapshot');
     const json = snapshot.toJSON();
 
-    assert.strictEqual(json.serverName, 'jsonserver');
-    assert.strictEqual(json.description, 'test snapshot');
-    assert.strictEqual(json.files.length, 1);
-    assert.strictEqual(json.files[0]!.path, 'server.properties');
-    assert.ok(json.id);
-    assert.ok(json.createdAt);
+    expect(json.serverName).toBe('jsonserver');
+    expect(json.description).toBe('test snapshot');
+    expect(json.files.length).toBe(1);
+    expect(json.files[0]!.path).toBe('server.properties');
+    expect(json.id).toBeTruthy();
+    expect(json.createdAt).toBeTruthy();
   });
 });
 
@@ -419,16 +391,16 @@ describe('ConfigSnapshotSchedule', () => {
       cronExpression: '0 * * * *',
     });
 
-    assert.ok(schedule.id);
-    assert.strictEqual(schedule.serverName.value, 'myserver');
-    assert.strictEqual(schedule.name, 'Hourly Config Backup');
-    assert.strictEqual(schedule.cronExpression.expression, '0 * * * *');
-    assert.strictEqual(schedule.enabled, true);
-    assert.strictEqual(schedule.retentionCount, 10);
-    assert.strictEqual(schedule.lastRunAt, null);
-    assert.strictEqual(schedule.lastRunStatus, null);
-    assert.ok(schedule.createdAt instanceof Date);
-    assert.ok(schedule.updatedAt instanceof Date);
+    expect(schedule.id).toBeTruthy();
+    expect(schedule.serverName.value).toBe('myserver');
+    expect(schedule.name).toBe('Hourly Config Backup');
+    expect(schedule.cronExpression.expression).toBe('0 * * * *');
+    expect(schedule.enabled).toBe(true);
+    expect(schedule.retentionCount).toBe(10);
+    expect(schedule.lastRunAt).toBe(null);
+    expect(schedule.lastRunStatus).toBe(null);
+    expect(schedule.createdAt instanceof Date).toBeTruthy();
+    expect(schedule.updatedAt instanceof Date).toBeTruthy();
   });
 
   test('should create with custom retentionCount', () => {
@@ -440,7 +412,7 @@ describe('ConfigSnapshotSchedule', () => {
       retentionCount: 5,
     });
 
-    assert.strictEqual(schedule.retentionCount, 5);
+    expect(schedule.retentionCount).toBe(5);
   });
 
   test('should create disabled', () => {
@@ -452,7 +424,7 @@ describe('ConfigSnapshotSchedule', () => {
       enabled: false,
     });
 
-    assert.strictEqual(schedule.enabled, false);
+    expect(schedule.enabled).toBe(false);
   });
 
   test('should create with provided id', () => {
@@ -465,56 +437,46 @@ describe('ConfigSnapshotSchedule', () => {
       cronExpression: '0 0 * * *',
     });
 
-    assert.strictEqual(schedule.id, id);
+    expect(schedule.id).toBe(id);
   });
 
   test('should throw on invalid cron expression', () => {
     const serverName = ServerName.create('myserver');
-    assert.throws(() =>
+    expect(() =>
       ConfigSnapshotSchedule.create({
         serverName,
         name: 'Bad Cron',
         cronExpression: 'invalid',
-      })
-    );
+      })).toThrow();
   });
 
   test('should throw on retentionCount < 1', () => {
     const serverName = ServerName.create('myserver');
-    assert.throws(
-      () => ConfigSnapshotSchedule.create({
+    expect(() => ConfigSnapshotSchedule.create({
         serverName,
         name: 'Bad Retention',
         cronExpression: '0 0 * * *',
         retentionCount: 0,
-      }),
-      /retentionCount must be a positive integer/
-    );
+      })).toThrow(/retentionCount must be a positive integer/);
   });
 
   test('should throw on non-integer retentionCount', () => {
     const serverName = ServerName.create('myserver');
-    assert.throws(
-      () => ConfigSnapshotSchedule.create({
+    expect(() => ConfigSnapshotSchedule.create({
         serverName,
         name: 'Bad Retention',
         cronExpression: '0 0 * * *',
         retentionCount: 1.5,
-      }),
-      /retentionCount must be a positive integer/
-    );
+      })).toThrow(/retentionCount must be a positive integer/);
   });
 
   test('should throw on empty name', () => {
     const serverName = ServerName.create('myserver');
-    assert.throws(
-      () => ConfigSnapshotSchedule.create({
+    expect(() => ConfigSnapshotSchedule.create({
         serverName,
         name: '',
         cronExpression: '0 0 * * *',
-      }),
-      /name cannot be empty/
-    );
+      })).toThrow(/name cannot be empty/);
   });
 
   // enable / disable (immutable)
@@ -529,11 +491,11 @@ describe('ConfigSnapshotSchedule', () => {
 
     const enabled = original.enable();
 
-    assert.strictEqual(enabled.enabled, true);
-    assert.strictEqual(original.enabled, false); // original unchanged
-    assert.strictEqual(enabled.id, original.id);
-    assert.strictEqual(enabled.name, original.name);
-    assert.strictEqual(enabled.serverName.value, original.serverName.value);
+    expect(enabled.enabled).toBe(true);
+    expect(original.enabled).toBe(false); // original unchanged
+    expect(enabled.id).toBe(original.id);
+    expect(enabled.name).toBe(original.name);
+    expect(enabled.serverName.value).toBe(original.serverName.value);
   });
 
   test('disable should return new instance with enabled=false', () => {
@@ -547,8 +509,8 @@ describe('ConfigSnapshotSchedule', () => {
 
     const disabled = original.disable();
 
-    assert.strictEqual(disabled.enabled, false);
-    assert.strictEqual(original.enabled, true); // original unchanged
+    expect(disabled.enabled).toBe(false);
+    expect(original.enabled).toBe(true); // original unchanged
   });
 
   // recordRun (immutable)
@@ -562,10 +524,10 @@ describe('ConfigSnapshotSchedule', () => {
 
     const updated = original.recordRun('success');
 
-    assert.strictEqual(updated.lastRunStatus, 'success');
-    assert.ok(updated.lastRunAt instanceof Date);
-    assert.strictEqual(original.lastRunAt, null); // original unchanged
-    assert.strictEqual(original.lastRunStatus, null);
+    expect(updated.lastRunStatus).toBe('success');
+    expect(updated.lastRunAt instanceof Date).toBeTruthy();
+    expect(original.lastRunAt).toBe(null); // original unchanged
+    expect(original.lastRunStatus).toBe(null);
   });
 
   test('recordRun with failure', () => {
@@ -578,7 +540,7 @@ describe('ConfigSnapshotSchedule', () => {
 
     const updated = original.recordRun('failure');
 
-    assert.strictEqual(updated.lastRunStatus, 'failure');
+    expect(updated.lastRunStatus).toBe('failure');
   });
 
   // fromRaw
@@ -598,14 +560,14 @@ describe('ConfigSnapshotSchedule', () => {
 
     const schedule = ConfigSnapshotSchedule.fromRaw(row);
 
-    assert.strictEqual(schedule.id, 'test-id');
-    assert.strictEqual(schedule.serverName.value, 'myserver');
-    assert.strictEqual(schedule.name, 'DB Schedule');
-    assert.strictEqual(schedule.cronExpression.expression, '0 3 * * *');
-    assert.strictEqual(schedule.retentionCount, 5);
-    assert.strictEqual(schedule.enabled, true);
-    assert.ok(schedule.lastRunAt instanceof Date);
-    assert.strictEqual(schedule.lastRunStatus, 'success');
+    expect(schedule.id).toBe('test-id');
+    expect(schedule.serverName.value).toBe('myserver');
+    expect(schedule.name).toBe('DB Schedule');
+    expect(schedule.cronExpression.expression).toBe('0 3 * * *');
+    expect(schedule.retentionCount).toBe(5);
+    expect(schedule.enabled).toBe(true);
+    expect(schedule.lastRunAt instanceof Date).toBeTruthy();
+    expect(schedule.lastRunStatus).toBe('success');
   });
 
   test('should create from row with null optionals', () => {
@@ -624,9 +586,9 @@ describe('ConfigSnapshotSchedule', () => {
 
     const schedule = ConfigSnapshotSchedule.fromRaw(row);
 
-    assert.strictEqual(schedule.enabled, false);
-    assert.strictEqual(schedule.lastRunAt, null);
-    assert.strictEqual(schedule.lastRunStatus, null);
+    expect(schedule.enabled).toBe(false);
+    expect(schedule.lastRunAt).toBe(null);
+    expect(schedule.lastRunStatus).toBe(null);
   });
 
   // toJSON
@@ -641,12 +603,12 @@ describe('ConfigSnapshotSchedule', () => {
 
     const json = schedule.toJSON();
 
-    assert.strictEqual(json.serverName, 'myserver');
-    assert.strictEqual(json.name, 'Daily Config');
-    assert.strictEqual(json.cronExpression, '0 3 * * *');
-    assert.strictEqual(json.retentionCount, 5);
-    assert.strictEqual(json.enabled, true);
-    assert.ok(json.createdAt);
-    assert.ok(json.updatedAt);
+    expect(json.serverName).toBe('myserver');
+    expect(json.name).toBe('Daily Config');
+    expect(json.cronExpression).toBe('0 3 * * *');
+    expect(json.retentionCount).toBe(5);
+    expect(json.enabled).toBe(true);
+    expect(json.createdAt).toBeTruthy();
+    expect(json.updatedAt).toBeTruthy();
   });
 });

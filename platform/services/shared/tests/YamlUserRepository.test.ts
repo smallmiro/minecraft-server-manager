@@ -1,5 +1,4 @@
-import { test, describe, before, after } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { rm, mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -14,25 +13,25 @@ describe('YamlUserRepository', () => {
   let testFilePath: string;
   let repository: YamlUserRepository;
 
-  before(async () => {
+  beforeAll(async () => {
     testDir = join(tmpdir(), `yaml-user-repo-test-${Date.now()}`);
     await mkdir(testDir, { recursive: true });
     testFilePath = join(testDir, 'users.yaml');
     repository = new YamlUserRepository(testFilePath);
   });
 
-  after(async () => {
+  afterAll(async () => {
     await rm(testDir, { recursive: true, force: true });
   });
 
   test('should return empty array when file does not exist', async () => {
     const users = await repository.findAll();
-    assert.deepStrictEqual(users, []);
+    expect(users).toEqual([]);
   });
 
   test('should return 0 count when no users exist', async () => {
     const count = await repository.count();
-    assert.strictEqual(count, 0);
+    expect(count).toBe(0);
   });
 
   test('should save and retrieve a user by ID', async () => {
@@ -46,10 +45,10 @@ describe('YamlUserRepository', () => {
     await repository.save(user);
 
     const retrieved = await repository.findById(user.id);
-    assert.ok(retrieved);
-    assert.strictEqual(retrieved.id.value, user.id.value);
-    assert.strictEqual(retrieved.username.value, 'testuser');
-    assert.strictEqual(retrieved.role.value, 'admin');
+    expect(retrieved).toBeTruthy();
+    expect(retrieved.id.value).toBe(user.id.value);
+    expect(retrieved.username.value).toBe('testuser');
+    expect(retrieved.role.value).toBe('admin');
   });
 
   test('should save and retrieve a user by username', async () => {
@@ -63,67 +62,67 @@ describe('YamlUserRepository', () => {
     await repository.save(user);
 
     const retrieved = await repository.findByUsername(Username.create('anotheruser'));
-    assert.ok(retrieved);
-    assert.strictEqual(retrieved.username.value, 'anotheruser');
-    assert.strictEqual(retrieved.role.value, 'viewer');
+    expect(retrieved).toBeTruthy();
+    expect(retrieved.username.value).toBe('anotheruser');
+    expect(retrieved.role.value).toBe('viewer');
   });
 
   test('should find user by username case-insensitively', async () => {
     const retrieved = await repository.findByUsername(Username.create('ANOTHERUSER'));
-    assert.ok(retrieved);
-    assert.strictEqual(retrieved.username.value, 'anotheruser');
+    expect(retrieved).toBeTruthy();
+    expect(retrieved.username.value).toBe('anotheruser');
   });
 
   test('should return null when user not found by ID', async () => {
     const nonExistentId = UserId.generate();
     const result = await repository.findById(nonExistentId);
-    assert.strictEqual(result, null);
+    expect(result).toBe(null);
   });
 
   test('should return null when user not found by username', async () => {
     const result = await repository.findByUsername(Username.create('nonexistent'));
-    assert.strictEqual(result, null);
+    expect(result).toBe(null);
   });
 
   test('should update existing user', async () => {
     const users = await repository.findAll();
     const user = users.find((u) => u.username.value === 'testuser');
-    assert.ok(user);
+    expect(user).toBeTruthy();
 
     user.updateRole(Role.viewer());
     await repository.save(user);
 
     const updated = await repository.findById(user.id);
-    assert.ok(updated);
-    assert.strictEqual(updated.role.value, 'viewer');
+    expect(updated).toBeTruthy();
+    expect(updated.role.value).toBe('viewer');
   });
 
   test('should get correct user count', async () => {
     const count = await repository.count();
-    assert.strictEqual(count, 2); // testuser and anotheruser
+    expect(count).toBe(2); // testuser and anotheruser
   });
 
   test('should delete a user', async () => {
     const users = await repository.findAll();
     const user = users.find((u) => u.username.value === 'anotheruser');
-    assert.ok(user);
+    expect(user).toBeTruthy();
 
     await repository.delete(user.id);
 
     const deleted = await repository.findById(user.id);
-    assert.strictEqual(deleted, null);
+    expect(deleted).toBe(null);
 
     const newCount = await repository.count();
-    assert.strictEqual(newCount, 1);
+    expect(newCount).toBe(1);
   });
 
   test('should hash password correctly', async () => {
     const password = 'mySecurePassword123';
     const hash = await repository.hashPassword(password);
 
-    assert.ok(hash);
-    assert.ok(hash.startsWith('$2'));
-    assert.notStrictEqual(hash, password);
+    expect(hash).toBeTruthy();
+    expect(hash.startsWith('$2')).toBeTruthy();
+    expect(hash).not.toBe(password);
   });
 
   test('should verify correct password', async () => {
@@ -131,7 +130,7 @@ describe('YamlUserRepository', () => {
     const hash = await repository.hashPassword(password);
 
     const isValid = await repository.verifyPassword(password, hash);
-    assert.strictEqual(isValid, true);
+    expect(isValid).toBe(true);
   });
 
   test('should reject incorrect password', async () => {
@@ -139,19 +138,19 @@ describe('YamlUserRepository', () => {
     const hash = await repository.hashPassword(password);
 
     const isValid = await repository.verifyPassword('wrongPassword', hash);
-    assert.strictEqual(isValid, false);
+    expect(isValid).toBe(false);
   });
 
   test('should create valid YAML file structure', async () => {
     const content = await readFile(testFilePath, 'utf-8');
 
-    assert.ok(content.includes('users:'));
-    assert.ok(content.includes('id:'));
-    assert.ok(content.includes('username:'));
-    assert.ok(content.includes('passwordHash:'));
-    assert.ok(content.includes('role:'));
-    assert.ok(content.includes('createdAt:'));
-    assert.ok(content.includes('updatedAt:'));
+    expect(content.includes('users:')).toBeTruthy();
+    expect(content.includes('id:')).toBeTruthy();
+    expect(content.includes('username:')).toBeTruthy();
+    expect(content.includes('passwordHash:')).toBeTruthy();
+    expect(content.includes('role:')).toBeTruthy();
+    expect(content.includes('createdAt:')).toBeTruthy();
+    expect(content.includes('updatedAt:')).toBeTruthy();
   });
 
   test('should handle deleting non-existent user gracefully', async () => {
@@ -161,7 +160,7 @@ describe('YamlUserRepository', () => {
     await repository.delete(nonExistentId);
 
     const countAfter = await repository.count();
-    assert.strictEqual(countBefore, countAfter);
+    expect(countBefore).toBe(countAfter);
   });
 
   test('should create directory if it does not exist', async () => {
@@ -179,7 +178,7 @@ describe('YamlUserRepository', () => {
     await newRepo.save(user);
 
     const retrieved = await newRepo.findById(user.id);
-    assert.ok(retrieved);
-    assert.strictEqual(retrieved.username.value, 'nesteduser');
+    expect(retrieved).toBeTruthy();
+    expect(retrieved.username.value).toBe('nesteduser');
   });
 });

@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect } from 'vitest';
 import { ServerName, ServerType, ServerTypeEnum, McVersion, WorldOptions } from '../src/domain/index.js';
 import type { CreateServerOptions } from '../src/application/ports/outbound/IShellPort.js';
 
@@ -20,8 +19,8 @@ describe('ShellAdapter - Modpack Support', () => {
         autoStart: false,
       };
 
-      assert.strictEqual(options.modpackSlug, 'fabric-example');
-      assert.strictEqual(options.type.value, ServerTypeEnum.MODRINTH);
+      expect(options.modpackSlug).toBe('fabric-example');
+      expect(options.type.value).toBe(ServerTypeEnum.MODRINTH);
     });
 
     test('should accept modpack version option', () => {
@@ -34,8 +33,8 @@ describe('ShellAdapter - Modpack Support', () => {
         autoStart: false,
       };
 
-      assert.strictEqual(options.modpackSlug, 'fabric-example');
-      assert.strictEqual(options.modpackVersion, '1.0.0');
+      expect(options.modpackSlug).toBe('fabric-example');
+      expect(options.modpackVersion).toBe('1.0.0');
     });
 
     test('should accept mod loader option', () => {
@@ -48,8 +47,8 @@ describe('ShellAdapter - Modpack Support', () => {
         autoStart: false,
       };
 
-      assert.strictEqual(options.modpackSlug, 'fabric-example');
-      assert.strictEqual(options.modLoader, 'fabric');
+      expect(options.modpackSlug).toBe('fabric-example');
+      expect(options.modLoader).toBe('fabric');
     });
 
     test('should accept all modpack options together', () => {
@@ -63,9 +62,9 @@ describe('ShellAdapter - Modpack Support', () => {
         autoStart: false,
       };
 
-      assert.strictEqual(options.modpackSlug, 'fabric-example');
-      assert.strictEqual(options.modpackVersion, '1.0.0');
-      assert.strictEqual(options.modLoader, 'fabric');
+      expect(options.modpackSlug).toBe('fabric-example');
+      expect(options.modpackVersion).toBe('1.0.0');
+      expect(options.modLoader).toBe('fabric');
     });
 
     test('should work for AUTO_CURSEFORGE type', () => {
@@ -78,9 +77,9 @@ describe('ShellAdapter - Modpack Support', () => {
         autoStart: false,
       };
 
-      assert.strictEqual(options.type.value, ServerTypeEnum.AUTO_CURSEFORGE);
-      assert.strictEqual(options.modpackSlug, 'forge-example');
-      assert.strictEqual(options.modpackVersion, '2.0.0');
+      expect(options.type.value).toBe(ServerTypeEnum.AUTO_CURSEFORGE);
+      expect(options.modpackSlug).toBe('forge-example');
+      expect(options.modpackVersion).toBe('2.0.0');
     });
 
     test('should work without modpack options for non-modpack server types', () => {
@@ -91,10 +90,10 @@ describe('ShellAdapter - Modpack Support', () => {
         autoStart: false,
       };
 
-      assert.strictEqual(options.type.value, ServerTypeEnum.PAPER);
-      assert.strictEqual(options.modpackSlug, undefined);
-      assert.strictEqual(options.modpackVersion, undefined);
-      assert.strictEqual(options.modLoader, undefined);
+      expect(options.type.value).toBe(ServerTypeEnum.PAPER);
+      expect(options.modpackSlug).toBe(undefined);
+      expect(options.modpackVersion).toBe(undefined);
+      expect(options.modLoader).toBe(undefined);
     });
   });
 });

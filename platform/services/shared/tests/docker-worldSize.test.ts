@@ -1,5 +1,4 @@
-import { test, describe, before, after } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { rm, mkdir, writeFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -12,20 +11,20 @@ describe('getWorldDirectorySize', () => {
   let testDir: string;
   let worldsDir: string;
 
-  before(async () => {
+  beforeAll(async () => {
     // Create temporary test directory structure
     testDir = join(tmpdir(), `world-size-test-${Date.now()}`);
     worldsDir = join(testDir, 'worlds');
     await mkdir(worldsDir, { recursive: true });
   });
 
-  after(async () => {
+  afterAll(async () => {
     await rm(testDir, { recursive: true, force: true });
   });
 
   test('should return 0 for non-existent world', async () => {
     const size = await getWorldDirectorySize('nonexistent', worldsDir);
-    assert.strictEqual(size, 0);
+    expect(size).toBe(0);
   });
 
   test('should calculate size of world directory', async () => {
@@ -43,7 +42,7 @@ describe('getWorldDirectorySize', () => {
     const size = await getWorldDirectorySize('testworld', worldsDir);
 
     // Should be approximately 3KB (1024 + 2048 bytes)
-    assert.ok(size >= 3072, `Expected size >= 3072 bytes, got ${size}`);
+    expect(size >= 3072, `Expected size >= 3072 bytes, got ${size}`).toBeTruthy();
   });
 
   test('should calculate size recursively including subdirectories', async () => {
@@ -62,35 +61,35 @@ describe('getWorldDirectorySize', () => {
     const size = await getWorldDirectorySize('worldwithregions', worldsDir);
 
     // Should be at least 3000 bytes (1000 + 2000)
-    assert.ok(size >= 3000, `Expected size >= 3000 bytes, got ${size}`);
+    expect(size >= 3000, `Expected size >= 3000 bytes, got ${size}`).toBeTruthy();
   });
 });
 
 describe('formatBytes', () => {
   test('should format 0 bytes', () => {
-    assert.strictEqual(formatBytes(0), '0 B');
+    expect(formatBytes(0)).toBe('0 B');
   });
 
   test('should format bytes', () => {
-    assert.strictEqual(formatBytes(500), '500.0 B');
+    expect(formatBytes(500)).toBe('500.0 B');
   });
 
   test('should format kilobytes', () => {
-    assert.strictEqual(formatBytes(1024), '1.0 KB');
-    assert.strictEqual(formatBytes(1536), '1.5 KB');
+    expect(formatBytes(1024)).toBe('1.0 KB');
+    expect(formatBytes(1536)).toBe('1.5 KB');
   });
 
   test('should format megabytes', () => {
-    assert.strictEqual(formatBytes(1048576), '1.0 MB');
-    assert.strictEqual(formatBytes(1572864), '1.5 MB');
+    expect(formatBytes(1048576)).toBe('1.0 MB');
+    expect(formatBytes(1572864)).toBe('1.5 MB');
   });
 
   test('should format gigabytes', () => {
-    assert.strictEqual(formatBytes(1073741824), '1.0 GB');
-    assert.strictEqual(formatBytes(1610612736), '1.5 GB');
+    expect(formatBytes(1073741824)).toBe('1.0 GB');
+    expect(formatBytes(1610612736)).toBe('1.5 GB');
   });
 
   test('should format terabytes', () => {
-    assert.strictEqual(formatBytes(1099511627776), '1.0 TB');
+    expect(formatBytes(1099511627776)).toBe('1.0 TB');
   });
 });
