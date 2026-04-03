@@ -114,6 +114,12 @@ export const ServerConfigSchema = Type.Object({
   stopDuration: Type.Optional(Type.Number({ minimum: 0, description: 'Graceful stop timeout in seconds' })),
   uid: Type.Optional(Type.Number({ minimum: 0, description: 'Container user ID' })),
   gid: Type.Optional(Type.Number({ minimum: 0, description: 'Container group ID' })),
+
+  // ── Configuration Repositories ──
+  paperConfigRepo: Type.Optional(Type.String({ description: 'Paper optimized config repository URL' })),
+  pufferfishConfigRepo: Type.Optional(Type.String({ description: 'Pufferfish config repository URL' })),
+  purpurConfigRepo: Type.Optional(Type.String({ description: 'Purpur config repository URL' })),
+  serverPropertiesRepoUrl: Type.Optional(Type.String({ description: 'Base server.properties repository URL' })),
 });
 
 /**

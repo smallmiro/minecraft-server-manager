@@ -373,6 +373,42 @@ export const systemEssentialFields: FieldConfig[] = [
   },
 ];
 
+// ── Configuration Repositories ──
+export const configRepoFields: FieldConfig[] = [
+  {
+    key: 'serverPropertiesRepoUrl',
+    label: 'server.properties Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for base server.properties template',
+    restartRequired: true,
+    columns: 12,
+  },
+  {
+    key: 'paperConfigRepo',
+    label: 'Paper Config Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for Paper optimized configuration',
+    restartRequired: true,
+    columns: 12,
+  },
+  {
+    key: 'pufferfishConfigRepo',
+    label: 'Pufferfish Config Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for Pufferfish configuration',
+    restartRequired: true,
+    columns: 12,
+  },
+  {
+    key: 'purpurConfigRepo',
+    label: 'Purpur Config Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for Purpur configuration',
+    restartRequired: true,
+    columns: 12,
+  },
+];
+
 // ── System: Advanced ──
 export const systemAdvancedFields: FieldConfig[] = [
   {
