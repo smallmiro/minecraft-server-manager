@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.20.2 (2026-04-03)
+- **feat**: Add mc-router loading MOTD label (`auto-scale-loading-motd`) to server templates (#471)
+- **feat(cli)**: Auto-add loading MOTD label to existing servers during `mcctl update` (#471)
+- **fix**: Update CLI defaults and docs for MC 26.x / Java 25 (defaultVersion → 26.1.1)
+
 ### v2.20.1 (2026-04-03)
 - **feat(cli)**: Add Docker image auto-pull to `mcctl update` (#465)
 - **feat(cli)**: Auto-upgrade server Docker image tags during `mcctl update` (#468)

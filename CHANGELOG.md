@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.20.2] - 2026-04-03
+
+### Added
+- **Loading MOTD Label** - Add `mc-router` loading MOTD label (`auto-scale-loading-motd`) to server templates (#471)
+- **Auto Loading MOTD** - Auto-add loading MOTD label to existing servers during `mcctl update` (#471)
+
+### Fixed
+- **MC 26.x Defaults** - Update CLI defaults and docs for MC 26.x / Java 25 (`init`/`upgrade` defaultVersion → 26.1.1, common versions list)
+
 ## [2.20.1] - 2026-04-03
 
 ### Added

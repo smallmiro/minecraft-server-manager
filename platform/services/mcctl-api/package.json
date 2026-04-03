@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/mcctl-api",
-  "version": "2.20.1",
+  "version": "2.20.2",
   "description": "REST API server for managing Docker Minecraft servers",
   "type": "module",
   "main": "dist/index.js",
