@@ -337,6 +337,15 @@ export const autopauseAdvancedFields: FieldConfig[] = [
     helperText: 'Wait time before stopping container',
     validation: { min: 0 },
   },
+  {
+    key: 'pauseWhenEmptySeconds',
+    label: 'Native Pause Delay (MC 1.21.2+)',
+    type: 'number',
+    unit: 'seconds',
+    helperText: 'Seconds to wait before native pause when empty (0 = disable). Requires MC 1.21.2+.',
+    restartRequired: true,
+    validation: { min: 0 },
+  },
 ];
 
 // ── System: Essential ──
@@ -416,6 +425,39 @@ export const remoteAccessAdvancedFields: FieldConfig[] = [
     type: 'number',
     helperText: 'Number of log lines kept in history',
     validation: { min: 1 },
+// ── Configuration Repositories ──
+export const configRepoFields: FieldConfig[] = [
+  {
+    key: 'serverPropertiesRepoUrl',
+    label: 'server.properties Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for base server.properties template',
+    restartRequired: true,
+    columns: 12,
+  },
+  {
+    key: 'paperConfigRepo',
+    label: 'Paper Config Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for Paper optimized configuration',
+    restartRequired: true,
+    columns: 12,
+  },
+  {
+    key: 'pufferfishConfigRepo',
+    label: 'Pufferfish Config Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for Pufferfish configuration',
+    restartRequired: true,
+    columns: 12,
+  },
+  {
+    key: 'purpurConfigRepo',
+    label: 'Purpur Config Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for Purpur configuration',
+    restartRequired: true,
+    columns: 12,
   },
 ];
 

@@ -54,6 +54,9 @@ const CONFIG_FIELD_MAP: Record<keyof ServerConfig, string> = {
   enableAutostop: 'ENABLE_AUTOSTOP',
   autostopTimeoutEst: 'AUTOSTOP_TIMEOUT_EST',
 
+  // Native Auto-pause (MC 1.21.2+)
+  pauseWhenEmptySeconds: 'PAUSE_WHEN_EMPTY_SECONDS',
+
   // System
   tz: 'TZ',
   resourcePack: 'RESOURCE_PACK',
@@ -75,6 +78,11 @@ const CONFIG_FIELD_MAP: Record<keyof ServerConfig, string> = {
   websocketAllowedOrigins: 'WEBSOCKET_ALLOWED_ORIGINS',
   websocketLogBufferSize: 'WEBSOCKET_LOG_BUFFER_SIZE',
   enableSsh: 'ENABLE_SSH',
+  // Configuration Repositories
+  paperConfigRepo: 'PAPER_CONFIG_REPO',
+  pufferfishConfigRepo: 'PUFFERFISH_CONFIG_REPO',
+  purpurConfigRepo: 'PURPUR_CONFIG_REPO',
+  serverPropertiesRepoUrl: 'SERVER_PROPERTIES_REPO_URL',
 };
 
 /**
@@ -99,6 +107,8 @@ const RESTART_REQUIRED_FIELDS: (keyof ServerConfig)[] = [
   // Auto-pause / Auto-stop
   'enableAutopause',
   'enableAutostop',
+  // Native Auto-pause (MC 1.21.2+)
+  'pauseWhenEmptySeconds',
   // RCON
   'enableRcon',
   'rconPassword',
@@ -111,6 +121,11 @@ const RESTART_REQUIRED_FIELDS: (keyof ServerConfig)[] = [
   // Remote Access
   'websocketConsole',
   'enableSsh',
+  // Configuration Repositories (applied at container startup)
+  'paperConfigRepo',
+  'pufferfishConfigRepo',
+  'purpurConfigRepo',
+  'serverPropertiesRepoUrl',
 ];
 
 /**
@@ -158,6 +173,7 @@ const NUMBER_FIELDS: (keyof ServerConfig)[] = [
   'autopauseTimeoutInit',
   'autopausePeriod',
   'autostopTimeoutEst',
+  'pauseWhenEmptySeconds',
   'rconPort',
   'stopDuration',
   'uid',

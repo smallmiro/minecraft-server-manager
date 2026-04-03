@@ -65,6 +65,9 @@
 - https://docker-minecraft-server.readthedocs.io/en/latest/misc/autopause-autostop/autopause/
 - https://docker-minecraft-server.readthedocs.io/en/latest/misc/autopause-autostop/autostop/
 
+### Autoscale
+- https://docker-minecraft-server.readthedocs.io/en/latest/misc/autoscale/autoscale/
+
 ### Contributing
 - https://docker-minecraft-server.readthedocs.io/en/latest/misc/contributing/development/
 - https://docker-minecraft-server.readthedocs.io/en/latest/misc/contributing/docs/

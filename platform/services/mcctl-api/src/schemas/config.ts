@@ -97,6 +97,9 @@ export const ServerConfigSchema = Type.Object({
   enableAutostop: Type.Optional(Type.Boolean({ description: 'Stop container when no players connected' })),
   autostopTimeoutEst: Type.Optional(Type.Number({ minimum: 0, description: 'Seconds to wait before autostop' })),
 
+  // ── Native Auto-pause (MC 1.21.2+) ──
+  pauseWhenEmptySeconds: Type.Optional(Type.Number({ minimum: 0, description: 'Native pause: seconds to wait before pausing when empty (MC 1.21.2+)' })),
+
   // ── System (Essential) ──
   tz: Type.Optional(Type.String({ description: 'Timezone (e.g., Asia/Seoul)' })),
   resourcePack: Type.Optional(Type.String({ description: 'Resource pack download URL' })),
@@ -120,6 +123,11 @@ export const ServerConfigSchema = Type.Object({
   websocketAllowedOrigins: Type.Optional(Type.String({ description: 'Allowed origins for WebSocket (comma-separated)' })),
   websocketLogBufferSize: Type.Optional(Type.Number({ minimum: 1, description: 'WebSocket log history buffer size' })),
   enableSsh: Type.Optional(Type.Boolean({ description: 'Enable SSH console (port 2222)' })),
+  // ── Configuration Repositories ──
+  paperConfigRepo: Type.Optional(Type.String({ description: 'Paper optimized config repository URL' })),
+  pufferfishConfigRepo: Type.Optional(Type.String({ description: 'Pufferfish config repository URL' })),
+  purpurConfigRepo: Type.Optional(Type.String({ description: 'Purpur config repository URL' })),
+  serverPropertiesRepoUrl: Type.Optional(Type.String({ description: 'Base server.properties repository URL' })),
 });
 
 /**

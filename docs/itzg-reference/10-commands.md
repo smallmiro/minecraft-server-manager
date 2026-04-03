@@ -86,86 +86,75 @@ services:
 
 ---
 
-## SSH Access
+## SSH Console
 
-Remote SSH console:
+Access server console via SSH connection.
 
-### Configuration
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_SSH` | `false` | Enable SSH console |
 
-```yaml
-environment:
-  ENABLE_SSH: "true"
-  RCON_PASSWORD: "secure_password"  # Used as SSH password
-```
+- Port: 2222 (inside container)
+- Password: Same as RCON password
+- Password-based authentication only
 
-### Port Mapping
-
-```yaml
-ports:
-  - "25565:25565"
-  - "2222:2222"
-```
-
-### Connection
-
-```bash
-ssh anyuser@server-ip -p 2222
-# Password: RCON_PASSWORD value
-```
-
-### Security Recommendations
+### Docker Compose Example
 
 ```yaml
-ports:
-  - "25565:25565"
-  - "127.0.0.1:2222:2222"  # Allow local access only
+services:
+  mc:
+    image: itzg/minecraft-server
+    ports:
+      - "25565:25565"
+      - "2222:2222"   # SSH console
+    environment:
+      EULA: "TRUE"
+      ENABLE_SSH: "true"
+      RCON_PASSWORD: "your_password"
 ```
 
 ---
 
 ## WebSocket Console
 
-Web-based console access:
+Stream server logs and send commands via WebSocket connection.
 
-### Configuration
+### Enable
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `WEBSOCKET_CONSOLE` | `false` | Enable WebSocket |
+| `WEBSOCKET_CONSOLE` | `false` | Enable WebSocket console |
 | `WEBSOCKET_ADDRESS` | `0.0.0.0:80` | Bind address |
-| `WEBSOCKET_PASSWORD` | - | Access password |
-| `WEBSOCKET_LOG_BUFFER_SIZE` | `50` | Log buffer size |
+| `WEBSOCKET_DISABLE_ORIGIN_CHECK` | `false` | Disable origin check |
+| `WEBSOCKET_ALLOWED_ORIGINS` | - | Allowed origins (comma-separated) |
+| `WEBSOCKET_PASSWORD` | - | WebSocket password (uses RCON_PASSWORD if unset) |
+| `WEBSOCKET_DISABLE_AUTHENTICATION` | `false` | Disable authentication |
+| `WEBSOCKET_LOG_BUFFER_SIZE` | `50` | Number of log history lines |
+
+### Docker Compose Example
 
 ```yaml
-environment:
-  WEBSOCKET_CONSOLE: "true"
-  WEBSOCKET_ADDRESS: "0.0.0.0:8080"
-  WEBSOCKET_PASSWORD: "secure_password"
+services:
+  mc:
+    image: itzg/minecraft-server
+    ports:
+      - "25565:25565"
+      - "8080:80"     # WebSocket console
+    environment:
+      EULA: "TRUE"
+      WEBSOCKET_CONSOLE: "true"
+      WEBSOCKET_PASSWORD: "your_password"
 ```
 
-### Port Mapping
+### Message Types
 
-```yaml
-ports:
-  - "25565:25565"
-  - "8080:8080"
-```
-
-### Authentication
-
-Use `Sec-WebSocket-Protocol` header when connecting via WebSocket:
-- First: `mc-server-runner-ws-v1`
-- Second: password
-
-### Security Settings
-
-```yaml
-environment:
-  WEBSOCKET_CONSOLE: "true"
-  WEBSOCKET_PASSWORD: "secure_password"
-  WEBSOCKET_ALLOWED_ORIGINS: "https://admin.example.com"
-  WEBSOCKET_DISABLE_ORIGIN_CHECK: "false"
-```
+| Type | Direction | Description |
+|------|-----------|-------------|
+| `StdinMessage` | Client → Server | Send command |
+| `StdoutMessage` | Server → Client | Standard output |
+| `StderrMessage` | Server → Client | Error output |
+| `LogHistoryMessage` | Server → Client | Log history on connect |
+| `AuthFailureMessage` | Server → Client | Authentication failed |
 
 ---
 
