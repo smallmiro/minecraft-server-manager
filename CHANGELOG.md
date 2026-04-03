@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.20.1] - 2026-04-03
+
+### Added
+- **Docker Image Auto-Pull** - `mcctl update` now automatically pulls the latest Docker image (#465)
+- **Auto Image Tag Upgrade** - `mcctl update` checks VERSION vs image tag compatibility and auto-upgrades server Docker image tags (#468)
+
+### Fixed
+- **Java 25 Default Image** - MC 26.1.1+ requires Java 25; update default image tag to `java25`, McVersion supports 26.x versioning (#467)
+- **CLI Defaults Update** - Update `init`/`upgrade` defaultVersion from 1.21.1 to 26.1.1 and docs for MC 26.x / Java 25
+- **Merge Artifacts** - Resolve merge artifacts from parallel PR merges (vitest conversion, fieldConfigs syntax, sectionConfigs, IMcctlApiClient)
+
 ## [2.20.0] - 2026-04-03
 
 ### Added

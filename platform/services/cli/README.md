@@ -77,6 +77,13 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.20.1 (2026-04-03)
+- **feat(cli)**: Add Docker image auto-pull to `mcctl update` (#465)
+- **feat(cli)**: Auto-upgrade server Docker image tags during `mcctl update` (#468)
+- **fix(shared,cli)**: MC 26.1.1+ requires Java 25 - update default image tag to `java25` (#467)
+- **fix**: Update CLI defaults (defaultVersion 1.21.1 -> 26.1.1) and docs for MC 26.x / Java 25
+- **fix**: Resolve merge artifacts from parallel PR merges
+
 ### v2.20.0 (2026-04-03)
 - **feat(shared)**: Java 25 support - McVersion.recommendedImageTag, DocsAdapter java25 (#444)
 - **feat(shared)**: New server types - LEAF, FOLIA, PUFFERFISH (#445)
@@ -85,24 +92,20 @@ mcctl logs myserver
 - **feat(api,console)**: Configuration Repository settings support (#448)
 - **fix(shared)**: DocsAdapter file path bug fix (#449)
 - **chore**: Migrate shared tests to vitest (#450), unify @types/node ^22.x (#451)
-- **docs**: itzg reference updates - Java 25, AutoPause, server types, mods, consoles (#439-#443)
 
 ### v2.19.0 (2026-03-01)
 - **feat(console)**: Add Q&A and Ideas community links to Footer (#434, #438)
 - **fix(console)**: Add null guards to `useServerConfigSnapshots` to prevent TypeError (#431, #435)
 - **fix(console)**: Disable View History button when less than 2 snapshots (#432, #437)
-- **docs(npm)**: Add Q&A and Ideas discussion links to README (#433, #436)
 
 ### v2.18.0 (2026-02-24)
 - **refactor**: Relocate backup storage paths to `<MCCTL_ROOT>/backups/` (#429, #430)
-- **docs**: Simplify CLAUDE.md Project Structure (35% reduction)
 
 ### v2.17.1 (2026-02-24)
 - **fix(console)**: Reorder server backup sub-tabs to show Config Snapshots first, World Backups second
 
 ### v2.17.0 (2026-02-24)
 - **feat(console)**: Implement Backups tab in Server Detail page (#427, #428)
-- **fix(console)**: Add missing react-diff-viewer-continued dependency
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
