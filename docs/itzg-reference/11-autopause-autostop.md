@@ -2,7 +2,55 @@
 
 Features to save server resources when no players are online.
 
-## Autopause
+## Native Auto-Pause (Minecraft 1.21.2+)
+
+!!! tip "Recommended for Minecraft 1.21.2+"
+    Starting from Minecraft 1.21.2, the server natively supports auto-pause functionality.
+    This is simpler and more reliable than the container-level AutoPause feature below.
+
+Minecraft 1.21.2 introduced the `pause-when-empty-seconds` server property, which pauses
+the game tick loop when no players are connected. The `itzg/minecraft-server` image exposes
+this as the `PAUSE_WHEN_EMPTY_SECONDS` environment variable.
+
+### Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PAUSE_WHEN_EMPTY_SECONDS` | - | Seconds to wait before pausing when no players are connected |
+
+### Example
+
+```yaml
+services:
+  mc:
+    image: itzg/minecraft-server
+    environment:
+      EULA: "TRUE"
+      PAUSE_WHEN_EMPTY_SECONDS: "300"  # Pause after 5 minutes
+    ports:
+      - "25565:25565"
+    volumes:
+      - ./data:/data
+```
+
+### Native vs Container-Level Comparison
+
+| Feature | Native Auto-Pause | Container AutoPause |
+|---------|-------------------|---------------------|
+| Minecraft Version | 1.21.2+ only | Any version |
+| Configuration | Single env var | Multiple env vars |
+| Mechanism | Game tick pause | Process suspension |
+| Network Handling | Built-in | Requires knock detection |
+| Rootless Support | No extra config | Requires `CAP_NET_RAW` |
+| Complexity | Low | Medium |
+
+---
+
+## Autopause (Container-Level)
+
+!!! warning "Legacy Feature for Minecraft < 1.21.2"
+    For Minecraft 1.21.2+, use the native `PAUSE_WHEN_EMPTY_SECONDS` above.
+    The container-level AutoPause below is recommended only for older Minecraft versions.
 
 !!! warning "GraalVM Incompatibility"
     As of 2026.2.0, auto-pause is **temporarily disabled** when using GraalVM images
@@ -28,6 +76,8 @@ environment:
 | `AUTOPAUSE_TIMEOUT_KN` | `120` | Wait time (seconds) after port connection attempt before pausing |
 | `AUTOPAUSE_PERIOD` | `10` | Status check interval (seconds) |
 | `AUTOPAUSE_KNOCK_INTERFACE` | `eth0` | Network interface |
+| `AUTOPAUSE_STATUS_RETRY_LIMIT` | `10` | Number of retries for server status check |
+| `AUTOPAUSE_STATUS_RETRY_INTERVAL` | `2` | Interval (seconds) between status check retries |
 
 ### Additional Options
 
@@ -35,6 +85,26 @@ environment:
 |----------|-------------|
 | `MAX_TICK_TIME` | Set to `-1` to disable watchdog (recommended) |
 | `DEBUG_AUTOPAUSE` | `true` - Enable debugging output |
+
+### State Files
+
+The autopause feature uses files in `/data` to manage state:
+
+| File | Description |
+|------|-------------|
+| `.paused` | Created when the server is paused, deleted when resumed. Can be used to check pause status. |
+| `.skip-pause` | Create this file to temporarily skip auto-pause. Remove to re-enable. |
+
+```bash
+# Check if server is currently paused
+docker exec mc test -f /data/.paused && echo "Paused" || echo "Running"
+
+# Temporarily disable auto-pause
+docker exec mc touch /data/.skip-pause
+
+# Re-enable auto-pause
+docker exec mc rm /data/.skip-pause
+```
 
 ### Basic Example
 
@@ -58,6 +128,11 @@ services:
 
 Additional configuration required for rootless containers:
 
+!!! note "Requirements for Rootless"
+    - `CAP_NET_RAW` capability is required for knock detection
+    - Set `SKIP_SUDO=true` to avoid sudo-related issues
+    - Consider using `slirp4netns` port forwarder for better compatibility
+
 ```yaml
 services:
   mc:
@@ -78,6 +153,19 @@ docker run -d \
   -e EULA=TRUE \
   -e ENABLE_AUTOPAUSE=true \
   -e SKIP_SUDO=true \
+  itzg/minecraft-server
+```
+
+Podman with slirp4netns:
+
+```bash
+podman run -d \
+  --cap-add=CAP_NET_RAW \
+  --network slirp4netns:port_handler=slirp4netns \
+  -e EULA=TRUE \
+  -e ENABLE_AUTOPAUSE=true \
+  -e SKIP_SUDO=true \
+  -p 25565:25565 \
   itzg/minecraft-server
 ```
 
@@ -108,7 +196,7 @@ environment:
 | Variable | Description |
 |----------|-------------|
 | `DEBUG_AUTOSTOP` | `true` - Enable debugging output |
-| `USES_PROXY_PROTOCOL` | `true` - When using HAProxy/Fly.io |
+| `USES_PROXY_PROTOCOL` | `true` - Enable PROXY Protocol support (for HAProxy, Fly.io, etc.) |
 
 ### Basic Example
 
@@ -145,12 +233,14 @@ docker exec mc rm /data/.skip-stop
 
 ## Autopause vs Autostop Comparison
 
-| Feature | Autopause | Autostop |
-|---------|-----------|----------|
-| Behavior | Pause process | Stop container |
-| Recovery Speed | Instant | Requires server restart |
-| Resource Savings | Medium | High |
-| Use Case | Quick recovery needed | Maximum resource savings |
+| Feature | Native Auto-Pause | Autopause (Container) | Autostop |
+|---------|-------------------|-----------------------|----------|
+| Minecraft Version | 1.21.2+ | Any | Any |
+| Behavior | Game tick pause | Process suspension | Stop container |
+| Recovery Speed | Instant | Instant | Requires server restart |
+| Resource Savings | Low-Medium | Medium | High |
+| Configuration | Simple (1 var) | Complex (multiple vars) | Moderate |
+| Use Case | Modern servers | Older servers, quick recovery | Maximum resource savings |
 
 ---
 
@@ -199,11 +289,40 @@ environment:
      SKIP_SUDO: "true"
    ```
 
+4. **Status Check Failures**
+   ```yaml
+   environment:
+     AUTOPAUSE_STATUS_RETRY_LIMIT: "20"      # Increase retry limit
+     AUTOPAUSE_STATUS_RETRY_INTERVAL: "5"     # Increase retry interval
+   ```
+
 ---
 
 ## Complete Examples
 
-### Autopause Configuration
+### Native Auto-Pause (Recommended for 1.21.2+)
+
+```yaml
+services:
+  mc:
+    image: itzg/minecraft-server
+    environment:
+      EULA: "TRUE"
+      TYPE: "PAPER"
+      VERSION: "1.21.4"
+
+      # Native auto-pause
+      PAUSE_WHEN_EMPTY_SECONDS: "300"  # Pause after 5 minutes
+
+      # Memory
+      MEMORY: "4G"
+    ports:
+      - "25565:25565"
+    volumes:
+      - ./data:/data
+```
+
+### Autopause Configuration (Legacy)
 
 ```yaml
 services:
