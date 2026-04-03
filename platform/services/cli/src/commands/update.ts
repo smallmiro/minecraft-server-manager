@@ -144,20 +144,35 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
       continue;
     }
 
-    if (currentTag === recommendedTag) {
+    let fileContent = composeContent;
+    let changed = false;
+
+    // Check image tag compatibility
+    if (currentTag !== recommendedTag) {
+      fileContent = fileContent.replace(
+        `image: itzg/minecraft-server:${currentTag}`,
+        `image: itzg/minecraft-server:${recommendedTag}`
+      );
+      changed = true;
+      console.log(`  ${colors.yellow('⚠')} ${entry}: ${currentTag} → ${recommendedTag} (VERSION=${version})`);
+    } else {
       console.log(`  ${colors.green('✓')} ${entry}: ${currentTag} (VERSION=${version} - compatible)`);
-      continue;
     }
 
-    // Update the docker-compose.yml
-    const updatedContent = composeContent.replace(
-      `image: itzg/minecraft-server:${currentTag}`,
-      `image: itzg/minecraft-server:${recommendedTag}`
-    );
-    writeFileSync(composePath, updatedContent);
-    updatedCount++;
+    // Add loading MOTD label if missing (mc-router v1.40.2+)
+    if (!fileContent.includes('auto-scale-loading-motd') && fileContent.includes('auto-scale-asleep-motd')) {
+      fileContent = fileContent.replace(
+        /^(\s*mc-router\.auto-scale-asleep-motd:.*)$/m,
+        '$1\n      mc-router.auto-scale-loading-motd: "§a§lServer is starting...§r\\n§7Please wait!"'
+      );
+      changed = true;
+      console.log(`  ${colors.green('+')} ${entry}: added loading MOTD label`);
+    }
 
-    console.log(`  ${colors.yellow('⚠')} ${entry}: ${currentTag} → ${recommendedTag} (VERSION=${version} requires ${recommendedTag})`);
+    if (changed) {
+      writeFileSync(composePath, fileContent);
+      updatedCount++;
+    }
   }
 
   if (updatedCount > 0) {
