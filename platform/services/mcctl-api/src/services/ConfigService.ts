@@ -66,6 +66,15 @@ const CONFIG_FIELD_MAP: Record<keyof ServerConfig, string> = {
   stopDuration: 'STOP_DURATION',
   uid: 'UID',
   gid: 'GID',
+
+  // Remote Access
+  websocketConsole: 'WEBSOCKET_CONSOLE',
+  websocketAddress: 'WEBSOCKET_ADDRESS',
+  websocketPassword: 'WEBSOCKET_PASSWORD',
+  websocketDisableAuthentication: 'WEBSOCKET_DISABLE_AUTHENTICATION',
+  websocketAllowedOrigins: 'WEBSOCKET_ALLOWED_ORIGINS',
+  websocketLogBufferSize: 'WEBSOCKET_LOG_BUFFER_SIZE',
+  enableSsh: 'ENABLE_SSH',
 };
 
 /**
@@ -99,6 +108,9 @@ const RESTART_REQUIRED_FIELDS: (keyof ServerConfig)[] = [
   'uid',
   'gid',
   'stopDuration',
+  // Remote Access
+  'websocketConsole',
+  'enableSsh',
 ];
 
 /**
@@ -127,6 +139,9 @@ const BOOLEAN_FIELDS: (keyof ServerConfig)[] = [
   'enableAutostop',
   'enableRcon',
   'resourcePackEnforce',
+  'websocketConsole',
+  'websocketDisableAuthentication',
+  'enableSsh',
 ];
 
 /**
@@ -147,6 +162,7 @@ const NUMBER_FIELDS: (keyof ServerConfig)[] = [
   'stopDuration',
   'uid',
   'gid',
+  'websocketLogBufferSize',
 ];
 
 /**

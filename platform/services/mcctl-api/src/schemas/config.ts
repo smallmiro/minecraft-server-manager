@@ -111,6 +111,15 @@ export const ServerConfigSchema = Type.Object({
   stopDuration: Type.Optional(Type.Number({ minimum: 0, description: 'Graceful stop timeout in seconds' })),
   uid: Type.Optional(Type.Number({ minimum: 0, description: 'Container user ID' })),
   gid: Type.Optional(Type.Number({ minimum: 0, description: 'Container group ID' })),
+
+  // ── Remote Access ──
+  websocketConsole: Type.Optional(Type.Boolean({ description: 'Enable WebSocket console' })),
+  websocketAddress: Type.Optional(Type.String({ description: 'WebSocket bind address (e.g., 0.0.0.0:80)' })),
+  websocketPassword: Type.Optional(Type.String({ description: 'WebSocket password (uses RCON password if unset)' })),
+  websocketDisableAuthentication: Type.Optional(Type.Boolean({ description: 'Disable WebSocket authentication' })),
+  websocketAllowedOrigins: Type.Optional(Type.String({ description: 'Allowed origins for WebSocket (comma-separated)' })),
+  websocketLogBufferSize: Type.Optional(Type.Number({ minimum: 1, description: 'WebSocket log history buffer size' })),
+  enableSsh: Type.Optional(Type.Boolean({ description: 'Enable SSH console (port 2222)' })),
 });
 
 /**

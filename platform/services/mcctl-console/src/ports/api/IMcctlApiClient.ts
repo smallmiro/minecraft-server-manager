@@ -221,6 +221,15 @@ export interface ServerConfig {
   stopDuration?: number;
   uid?: number;
   gid?: number;
+
+  // ── Remote Access ──
+  websocketConsole?: boolean;
+  websocketAddress?: string;
+  websocketPassword?: string;
+  websocketDisableAuthentication?: boolean;
+  websocketAllowedOrigins?: string;
+  websocketLogBufferSize?: number;
+  enableSsh?: boolean;
 }
 
 export interface ServerConfigResponse {
