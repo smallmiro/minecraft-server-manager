@@ -298,6 +298,9 @@ export class DocsAdapter implements IDocProvider {
       BUKKIT: 'Bukkit',
       PURPUR: 'Purpur',
       MOHIST: 'Mohist',
+      LEAF: 'Leaf',
+      FOLIA: 'Folia',
+      PUFFERFISH: 'Pufferfish',
       AUTO_CURSEFORGE: 'CurseForge Modpack',
       MODRINTH: 'Modrinth Modpack',
     };
@@ -345,7 +348,7 @@ export class DocsAdapter implements IDocProvider {
 
     if (major === 1) {
       if (minor >= 20) {
-        return ['VANILLA', 'PAPER', 'FABRIC', 'FORGE', 'QUILT', 'PURPUR'];
+        return ['VANILLA', 'PAPER', 'FABRIC', 'FORGE', 'QUILT', 'PURPUR', 'LEAF', 'FOLIA', 'PUFFERFISH'];
       }
       if (minor >= 17) {
         return ['VANILLA', 'PAPER', 'FABRIC', 'FORGE', 'SPIGOT'];
@@ -460,6 +463,36 @@ export class DocsAdapter implements IDocProvider {
         isModpack: false,
         recommended: false,
         javaVersions: ['java17', 'java21'],
+      },
+      {
+        value: ServerTypeEnum.LEAF,
+        label: 'Leaf',
+        description: 'Performance optimized lightweight Paper fork',
+        supportsPlugins: true,
+        supportsMods: false,
+        isModpack: false,
+        recommended: false,
+        javaVersions: ['java21', 'java17'],
+      },
+      {
+        value: ServerTypeEnum.FOLIA,
+        label: 'Folia',
+        description: 'PaperMC multi-threaded server',
+        supportsPlugins: true,
+        supportsMods: false,
+        isModpack: false,
+        recommended: false,
+        javaVersions: ['java21', 'java17'],
+      },
+      {
+        value: ServerTypeEnum.PUFFERFISH,
+        label: 'Pufferfish',
+        description: 'Performance optimized Paper fork for large servers',
+        supportsPlugins: true,
+        supportsMods: false,
+        isModpack: false,
+        recommended: false,
+        javaVersions: ['java21', 'java17'],
       },
       {
         value: ServerTypeEnum.MODRINTH,
