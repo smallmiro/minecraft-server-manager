@@ -1,4 +1,4 @@
-import { log, colors, Paths } from '@minecraft-docker/shared';
+import { log, colors, Paths, McVersion } from '@minecraft-docker/shared';
 import {
   getInstalledVersion,
   fetchLatestVersionForced,
@@ -10,7 +10,7 @@ import { checkServiceAvailability, PM2_SERVICE_NAMES } from '../lib/pm2-utils.js
 import { Pm2ServiceManagerAdapter } from '../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import { ShellExecutor } from '../lib/shell.js';
 import { spawnSync } from 'child_process';
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import * as prompts from '@clack/prompts';
 
@@ -51,6 +51,122 @@ export function scanDockerImages(serversDir: string): string[] {
   }
 
   return Array.from(images);
+}
+
+/**
+ * Docker image tag to use when VERSION=LATEST (requires Java 25).
+ */
+const LATEST_VERSION_IMAGE_TAG = 'java25';
+
+/**
+ * Parse VERSION value from config.env content.
+ * Returns null if VERSION is not found.
+ */
+function parseVersionFromConfig(configContent: string): string | null {
+  for (const line of configContent.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('#') || !trimmed) continue;
+    const match = trimmed.match(/^VERSION=(.*)$/);
+    if (match) {
+      // Strip surrounding quotes
+      return match[1]!.replace(/^["']|["']$/g, '').trim();
+    }
+  }
+  return null;
+}
+
+/**
+ * Extract the image tag from a docker-compose.yml content.
+ * Returns null if no itzg/minecraft-server: image line found.
+ */
+function extractImageTag(composeContent: string): string | null {
+  const match = composeContent.match(/image:\s+itzg\/minecraft-server:(\S+)/);
+  return match ? match[1]! : null;
+}
+
+/**
+ * Determine the recommended image tag for a given VERSION string.
+ * Returns null if the version cannot be parsed (caller should skip the server).
+ */
+function getRecommendedImageTag(version: string): string | null {
+  if (version.toUpperCase() === 'LATEST') {
+    return LATEST_VERSION_IMAGE_TAG;
+  }
+  try {
+    const mcVersion = McVersion.create(version);
+    return mcVersion.recommendedImageTag;
+  } catch {
+    // Version format not yet supported (e.g. 26.x) - skip gracefully
+    return null;
+  }
+}
+
+/**
+ * Upgrade image tags in each server's docker-compose.yml to match the
+ * recommended tag for the configured Minecraft VERSION.
+ *
+ * Returns the number of servers whose docker-compose.yml was updated.
+ */
+export async function upgradeServerImageTags(serversDir: string): Promise<number> {
+  if (!existsSync(serversDir)) {
+    return 0;
+  }
+
+  const entries = readdirSync(serversDir);
+  let updatedCount = 0;
+
+  console.log(colors.bold('Checking server image compatibility...'));
+
+  for (const entry of entries) {
+    if (entry === '_template') continue;
+
+    const configPath = join(serversDir, entry, 'config.env');
+    const composePath = join(serversDir, entry, 'docker-compose.yml');
+
+    if (!existsSync(configPath)) continue;
+    if (!existsSync(composePath)) continue;
+
+    const configContent = readFileSync(configPath, 'utf-8');
+    const version = parseVersionFromConfig(configContent);
+
+    if (!version) continue;
+
+    const composeContent = readFileSync(composePath, 'utf-8');
+    const currentTag = extractImageTag(composeContent);
+
+    if (!currentTag) continue;
+
+    const recommendedTag = getRecommendedImageTag(version);
+
+    if (!recommendedTag) {
+      // Cannot determine recommended tag - skip silently
+      console.log(`  ${colors.dim(`- ${entry}: VERSION=${version} - cannot determine tag, skipping`)}`);
+      continue;
+    }
+
+    if (currentTag === recommendedTag) {
+      console.log(`  ${colors.green('✓')} ${entry}: ${currentTag} (VERSION=${version} - compatible)`);
+      continue;
+    }
+
+    // Update the docker-compose.yml
+    const updatedContent = composeContent.replace(
+      `image: itzg/minecraft-server:${currentTag}`,
+      `image: itzg/minecraft-server:${recommendedTag}`
+    );
+    writeFileSync(composePath, updatedContent);
+    updatedCount++;
+
+    console.log(`  ${colors.yellow('⚠')} ${entry}: ${currentTag} → ${recommendedTag} (VERSION=${version} requires ${recommendedTag})`);
+  }
+
+  if (updatedCount > 0) {
+    console.log('');
+    console.log(`  ${colors.green('✓')} Updated ${updatedCount} server(s).`);
+  }
+  console.log('');
+
+  return updatedCount;
 }
 
 /**
@@ -510,6 +626,8 @@ export async function updateServices(
   // Update Docker images (skip in check-only mode)
   if (!options.check) {
     const paths = new Paths(rootDir);
+    // Upgrade image tags first so the pull fetches the correct (updated) image
+    await upgradeServerImageTags(paths.servers);
     const dockerResult = await updateDockerImages(paths.servers, rootDir);
     if (dockerResult !== 0) {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
