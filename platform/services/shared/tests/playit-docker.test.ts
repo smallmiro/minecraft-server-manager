@@ -1,5 +1,4 @@
-import { test, describe, mock, beforeEach, afterEach } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type {
@@ -9,7 +8,7 @@ import type {
 import * as dockerHelpers from '../src/docker/index.js';
 
 // Mock data for spawnSync responses
-const mockSpawnSync = mock.fn();
+const mockSpawnSync = vi.fn();
 
 describe('PlayitAgentStatus interface', () => {
   test('should define PlayitAgentStatus with all required properties', () => {
@@ -23,12 +22,12 @@ describe('PlayitAgentStatus interface', () => {
       uptimeSeconds: 9000,
     };
 
-    assert.strictEqual(status.enabled, true);
-    assert.strictEqual(status.agentRunning, true);
-    assert.strictEqual(status.secretKeyConfigured, true);
-    assert.strictEqual(status.containerStatus, 'running');
-    assert.strictEqual(status.uptime, '2h 30m');
-    assert.strictEqual(status.uptimeSeconds, 9000);
+    expect(status.enabled).toBe(true);
+    expect(status.agentRunning).toBe(true);
+    expect(status.secretKeyConfigured).toBe(true);
+    expect(status.containerStatus).toBe('running');
+    expect(status.uptime).toBe('2h 30m');
+    expect(status.uptimeSeconds).toBe(9000);
   });
 
   test('should allow optional uptime fields', () => {
@@ -39,8 +38,8 @@ describe('PlayitAgentStatus interface', () => {
       containerStatus: 'exited',
     };
 
-    assert.strictEqual(status.uptime, undefined);
-    assert.strictEqual(status.uptimeSeconds, undefined);
+    expect(status.uptime).toBe(undefined);
+    expect(status.uptimeSeconds).toBe(undefined);
   });
 });
 
@@ -52,9 +51,9 @@ describe('PlayitServerInfo interface', () => {
       lanHostname: 'survival.192.168.1.10.nip.io',
     };
 
-    assert.strictEqual(serverInfo.serverName, 'survival');
-    assert.strictEqual(serverInfo.playitDomain, 'survival-abc123.playit.gg');
-    assert.strictEqual(serverInfo.lanHostname, 'survival.192.168.1.10.nip.io');
+    expect(serverInfo.serverName).toBe('survival');
+    expect(serverInfo.playitDomain).toBe('survival-abc123.playit.gg');
+    expect(serverInfo.lanHostname).toBe('survival.192.168.1.10.nip.io');
   });
 
   test('should allow null playitDomain', () => {
@@ -64,9 +63,9 @@ describe('PlayitServerInfo interface', () => {
       lanHostname: 'creative.local',
     };
 
-    assert.strictEqual(serverInfo.serverName, 'creative');
-    assert.strictEqual(serverInfo.playitDomain, null);
-    assert.strictEqual(serverInfo.lanHostname, 'creative.local');
+    expect(serverInfo.serverName).toBe('creative');
+    expect(serverInfo.playitDomain).toBe(null);
+    expect(serverInfo.lanHostname).toBe('creative.local');
   });
 });
 
@@ -77,14 +76,14 @@ describe('Docker helper functions for playit.gg', () => {
       // Implementation will use docker inspect to check container status
       const status = await dockerHelpers.getPlayitAgentStatus();
 
-      assert.ok('enabled' in status);
-      assert.ok('agentRunning' in status);
-      assert.ok('secretKeyConfigured' in status);
-      assert.ok('containerStatus' in status);
-      assert.strictEqual(typeof status.enabled, 'boolean');
-      assert.strictEqual(typeof status.agentRunning, 'boolean');
-      assert.strictEqual(typeof status.secretKeyConfigured, 'boolean');
-      assert.strictEqual(typeof status.containerStatus, 'string');
+      expect('enabled' in status).toBeTruthy();
+      expect('agentRunning' in status).toBeTruthy();
+      expect('secretKeyConfigured' in status).toBeTruthy();
+      expect('containerStatus' in status).toBeTruthy();
+      expect(typeof status.enabled).toBe('boolean');
+      expect(typeof status.agentRunning).toBe('boolean');
+      expect(typeof status.secretKeyConfigured).toBe('boolean');
+      expect(typeof status.containerStatus).toBe('string');
     });
   });
 
@@ -92,9 +91,9 @@ describe('Docker helper functions for playit.gg', () => {
     test('should execute docker compose command to start playit-agent', async () => {
       // This test validates the function exists and returns { success, error? }
       const result = await dockerHelpers.startPlayitAgent();
-      assert.strictEqual(typeof result, 'object');
-      assert.ok('success' in result);
-      assert.strictEqual(typeof result.success, 'boolean');
+      expect(typeof result).toBe('object');
+      expect('success' in result).toBeTruthy();
+      expect(typeof result.success).toBe('boolean');
     });
   });
 
@@ -102,7 +101,7 @@ describe('Docker helper functions for playit.gg', () => {
     test('should execute docker compose command to stop playit-agent', async () => {
       // This test validates the function exists and returns a boolean
       const result = await dockerHelpers.stopPlayitAgent();
-      assert.strictEqual(typeof result, 'boolean');
+      expect(typeof result).toBe('boolean');
     });
   });
 
@@ -110,12 +109,12 @@ describe('Docker helper functions for playit.gg', () => {
     test('should read playit domain from server config.env', () => {
       // This test validates the function exists and returns correct type
       const domain = dockerHelpers.getServerPlayitDomain('test-server');
-      assert.ok(domain === null || typeof domain === 'string');
+      expect(domain === null || typeof domain === 'string').toBeTruthy();
     });
 
     test('should return null if PLAYIT_DOMAIN is not set', () => {
       const domain = dockerHelpers.getServerPlayitDomain('nonexistent-server');
-      assert.strictEqual(domain, null);
+      expect(domain).toBe(null);
     });
   });
 
@@ -142,10 +141,10 @@ describe('Docker helper functions for playit.gg', () => {
       dockerHelpers.setServerPlayitDomain('survival', 'test.example.playit.gg', testServersDir);
 
       const content = readFileSync(configPath, 'utf-8');
-      assert.ok(content.includes('PLAYIT_DOMAIN=test.example.playit.gg'));
+      expect(content.includes('PLAYIT_DOMAIN=test.example.playit.gg')).toBeTruthy();
       // Original content preserved
-      assert.ok(content.includes('TYPE=PAPER'));
-      assert.ok(content.includes('VERSION=1.21.1'));
+      expect(content.includes('TYPE=PAPER')).toBeTruthy();
+      expect(content.includes('VERSION=1.21.1')).toBeTruthy();
     });
 
     test('should update existing PLAYIT_DOMAIN in config.env', () => {
@@ -155,11 +154,11 @@ describe('Docker helper functions for playit.gg', () => {
       dockerHelpers.setServerPlayitDomain('survival', 'new.domain.com', testServersDir);
 
       const content = readFileSync(configPath, 'utf-8');
-      assert.ok(content.includes('PLAYIT_DOMAIN=new.domain.com'));
-      assert.ok(!content.includes('old.domain.com'));
+      expect(content.includes('PLAYIT_DOMAIN=new.domain.com')).toBeTruthy();
+      expect(!content.includes('old.domain.com')).toBeTruthy();
       // Only one PLAYIT_DOMAIN line
       const matches = content.match(/PLAYIT_DOMAIN/g);
-      assert.strictEqual(matches?.length, 1);
+      expect(matches?.length).toBe(1);
     });
 
     test('should remove PLAYIT_DOMAIN when domain is null', () => {
@@ -169,15 +168,15 @@ describe('Docker helper functions for playit.gg', () => {
       dockerHelpers.setServerPlayitDomain('survival', null, testServersDir);
 
       const content = readFileSync(configPath, 'utf-8');
-      assert.ok(!content.includes('PLAYIT_DOMAIN'));
-      assert.ok(content.includes('TYPE=PAPER'));
-      assert.ok(content.includes('MEMORY=4G'));
+      expect(!content.includes('PLAYIT_DOMAIN')).toBeTruthy();
+      expect(content.includes('TYPE=PAPER')).toBeTruthy();
+      expect(content.includes('MEMORY=4G')).toBeTruthy();
     });
 
     test('should throw when server config.env does not exist', () => {
-      assert.throws(() => {
+      expect(() => {
         dockerHelpers.setServerPlayitDomain('nonexistent', 'test.domain.com', testServersDir);
-      });
+      }).toThrow();
     });
 
     test('should be readable by getServerPlayitDomain after setting', () => {
@@ -187,7 +186,7 @@ describe('Docker helper functions for playit.gg', () => {
       dockerHelpers.setServerPlayitDomain('survival', 'roundtrip.example.com', testServersDir);
 
       const domain = dockerHelpers.getServerPlayitDomain('survival', testServersDir);
-      assert.strictEqual(domain, 'roundtrip.example.com');
+      expect(domain).toBe('roundtrip.example.com');
     });
   });
 });

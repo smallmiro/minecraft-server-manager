@@ -1,5 +1,4 @@
-import { test, describe, beforeEach, afterEach, mock } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ConfigSnapshotSchedulerService } from '../src/infrastructure/adapters/ConfigSnapshotSchedulerService.js';
 import { ConfigSnapshotSchedule } from '../src/domain/entities/ConfigSnapshotSchedule.js';
 import { ConfigSnapshot } from '../src/domain/entities/ConfigSnapshot.js';
@@ -12,9 +11,9 @@ import type { IConfigSnapshotRepository } from '../src/application/ports/outboun
 // Helper: create mock logger
 function createMockLogger() {
   return {
-    info: mock.fn(),
-    warn: mock.fn(),
-    error: mock.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   } as any;
 }
 
@@ -55,42 +54,42 @@ function createTestSnapshot(serverName = 'test-server', scheduleId?: string): Co
 // Helper: create mock snapshot use case
 function createMockSnapshotUseCase(): IConfigSnapshotUseCase {
   return {
-    create: mock.fn(async () => createTestSnapshot()),
-    list: mock.fn(async () => []),
-    findById: mock.fn(async () => null),
-    diff: mock.fn(),
-    restore: mock.fn(),
-    count: mock.fn(async () => 0),
-    delete: mock.fn(),
+    create: vi.fn(async () => createTestSnapshot()),
+    list: vi.fn(async () => []),
+    findById: vi.fn(async () => null),
+    diff: vi.fn(),
+    restore: vi.fn(),
+    count: vi.fn(async () => 0),
+    delete: vi.fn(),
   } as any;
 }
 
 // Helper: create mock schedule use case
 function createMockScheduleUseCase(): IConfigSnapshotScheduleUseCase {
   return {
-    create: mock.fn(),
-    update: mock.fn(),
-    enable: mock.fn(),
-    disable: mock.fn(),
-    delete: mock.fn(),
-    findAll: mock.fn(async () => []),
-    findByServer: mock.fn(async () => []),
-    recordRun: mock.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    enable: vi.fn(),
+    disable: vi.fn(),
+    delete: vi.fn(),
+    findAll: vi.fn(async () => []),
+    findByServer: vi.fn(async () => []),
+    recordRun: vi.fn(),
   } as any;
 }
 
 // Helper: create mock snapshot repository
 function createMockSnapshotRepository(): IConfigSnapshotRepository {
   return {
-    save: mock.fn(),
-    findById: mock.fn(),
-    findAll: mock.fn(async () => []),
-    findByServer: mock.fn(async () => []),
-    countByServer: mock.fn(async () => 0),
-    delete: mock.fn(),
-    deleteByServer: mock.fn(),
-    findByScheduleId: mock.fn(async () => []),
-    countByScheduleId: mock.fn(async () => 0),
+    save: vi.fn(),
+    findById: vi.fn(),
+    findAll: vi.fn(async () => []),
+    findByServer: vi.fn(async () => []),
+    countByServer: vi.fn(async () => 0),
+    delete: vi.fn(),
+    deleteByServer: vi.fn(),
+    findByScheduleId: vi.fn(async () => []),
+    countByScheduleId: vi.fn(async () => 0),
   } as any;
 }
 
@@ -120,7 +119,7 @@ describe('ConfigSnapshotSchedulerService', () => {
 
   describe('constructor', () => {
     test('should create service with zero active tasks', () => {
-      assert.strictEqual(service.activeTaskCount, 0);
+      expect(service.activeTaskCount).toBe(0);
     });
   });
 
@@ -131,7 +130,7 @@ describe('ConfigSnapshotSchedulerService', () => {
 
       service.addSchedule(schedule);
 
-      assert.strictEqual(service.activeTaskCount, 0);
+      expect(service.activeTaskCount).toBe(0);
     });
   });
 
@@ -140,14 +139,14 @@ describe('ConfigSnapshotSchedulerService', () => {
       await service.initialize();
       // Should not throw
       service.removeSchedule('non-existent-id');
-      assert.strictEqual(service.activeTaskCount, 0);
+      expect(service.activeTaskCount).toBe(0);
     });
   });
 
   describe('getRunningJobs', () => {
     test('should return empty map initially', () => {
       const jobs = service.getRunningJobs();
-      assert.strictEqual(jobs.size, 0);
+      expect(jobs.size).toBe(0);
     });
   });
 
@@ -155,13 +154,11 @@ describe('ConfigSnapshotSchedulerService', () => {
     test('should clear all tasks and log shutdown', () => {
       service.shutdown();
 
-      assert.strictEqual(service.activeTaskCount, 0);
-      assert.strictEqual(mockLogger.info.mock.callCount(), 1);
-      assert.ok(
-        (mockLogger.info.mock.calls[0]?.arguments[0] as string).includes(
+      expect(service.activeTaskCount).toBe(0);
+      expect(mockLogger.info.mock.calls.length).toBe(1);
+      expect((mockLogger.info.mock.calls[0]?.[0] as string).includes(
           'Config snapshot scheduler stopped'
-        )
-      );
+        )).toBeTruthy();
     });
   });
 
@@ -169,13 +166,13 @@ describe('ConfigSnapshotSchedulerService', () => {
     test('should support ConfigSnapshotSchedule.recordRun', () => {
       const schedule = createTestSchedule();
       const recorded = schedule.recordRun('success');
-      assert.strictEqual(recorded.lastRunStatus, 'success');
-      assert.ok(recorded.lastRunAt instanceof Date);
+      expect(recorded.lastRunStatus).toBe('success');
+      expect(recorded.lastRunAt instanceof Date).toBeTruthy();
     });
 
     test('should support ConfigSnapshot with scheduleId', () => {
       const snapshot = createTestSnapshot('test-server', 'schedule-123');
-      assert.strictEqual(snapshot.scheduleId, 'schedule-123');
+      expect(snapshot.scheduleId).toBe('schedule-123');
     });
   });
 });

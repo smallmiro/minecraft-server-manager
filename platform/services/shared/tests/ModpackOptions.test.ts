@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect } from 'vitest';
 import { ModpackOptions } from '../src/domain/value-objects/ModpackOptions.js';
 
 describe('ModpackOptions', () => {
@@ -7,31 +6,31 @@ describe('ModpackOptions', () => {
     test('should create Modrinth modpack options with slug only', () => {
       const options = ModpackOptions.modrinth('fabric-example');
 
-      assert.strictEqual(options.source, 'MODRINTH');
-      assert.strictEqual(options.slug, 'fabric-example');
-      assert.strictEqual(options.version, undefined);
-      assert.strictEqual(options.loader, undefined);
+      expect(options.source).toBe('MODRINTH');
+      expect(options.slug).toBe('fabric-example');
+      expect(options.version).toBe(undefined);
+      expect(options.loader).toBe(undefined);
     });
 
     test('should create Modrinth modpack options with version', () => {
       const options = ModpackOptions.modrinth('fabric-example', { version: '1.0.0' });
 
-      assert.strictEqual(options.source, 'MODRINTH');
-      assert.strictEqual(options.slug, 'fabric-example');
-      assert.strictEqual(options.version, '1.0.0');
+      expect(options.source).toBe('MODRINTH');
+      expect(options.slug).toBe('fabric-example');
+      expect(options.version).toBe('1.0.0');
     });
 
     test('should create Modrinth modpack options with loader', () => {
       const options = ModpackOptions.modrinth('fabric-example', { loader: 'fabric' });
 
-      assert.strictEqual(options.source, 'MODRINTH');
-      assert.strictEqual(options.slug, 'fabric-example');
-      assert.strictEqual(options.loader, 'fabric');
+      expect(options.source).toBe('MODRINTH');
+      expect(options.slug).toBe('fabric-example');
+      expect(options.loader).toBe('fabric');
     });
 
     test('should throw error for empty slug', () => {
-      assert.throws(() => ModpackOptions.modrinth(''), /Modpack slug cannot be empty/);
-      assert.throws(() => ModpackOptions.modrinth('  '), /Modpack slug cannot be empty/);
+      expect(() => ModpackOptions.modrinth('')).toThrow(/Modpack slug cannot be empty/);
+      expect(() => ModpackOptions.modrinth('  ')).toThrow(/Modpack slug cannot be empty/);
     });
   });
 
@@ -39,22 +38,22 @@ describe('ModpackOptions', () => {
     test('should create CurseForge modpack options with slug only', () => {
       const options = ModpackOptions.curseforge('forge-example');
 
-      assert.strictEqual(options.source, 'CURSEFORGE');
-      assert.strictEqual(options.slug, 'forge-example');
-      assert.strictEqual(options.version, undefined);
-      assert.strictEqual(options.loader, undefined);
+      expect(options.source).toBe('CURSEFORGE');
+      expect(options.slug).toBe('forge-example');
+      expect(options.version).toBe(undefined);
+      expect(options.loader).toBe(undefined);
     });
 
     test('should create CurseForge modpack options with version', () => {
       const options = ModpackOptions.curseforge('forge-example', { version: '2.0.0' });
 
-      assert.strictEqual(options.source, 'CURSEFORGE');
-      assert.strictEqual(options.slug, 'forge-example');
-      assert.strictEqual(options.version, '2.0.0');
+      expect(options.source).toBe('CURSEFORGE');
+      expect(options.slug).toBe('forge-example');
+      expect(options.version).toBe('2.0.0');
     });
 
     test('should throw error for empty slug', () => {
-      assert.throws(() => ModpackOptions.curseforge(''), /Modpack slug cannot be empty/);
+      expect(() => ModpackOptions.curseforge('')).toThrow(/Modpack slug cannot be empty/);
     });
   });
 
@@ -63,7 +62,7 @@ describe('ModpackOptions', () => {
       const options = ModpackOptions.modrinth('fabric-example');
       const envVars = options.toEnvVars();
 
-      assert.deepStrictEqual(envVars, {
+      expect(envVars).toEqual({
         TYPE: 'MODRINTH',
         MODRINTH_MODPACK: 'fabric-example',
       });
@@ -73,7 +72,7 @@ describe('ModpackOptions', () => {
       const options = ModpackOptions.modrinth('fabric-example', { version: '1.0.0' });
       const envVars = options.toEnvVars();
 
-      assert.deepStrictEqual(envVars, {
+      expect(envVars).toEqual({
         TYPE: 'MODRINTH',
         MODRINTH_MODPACK: 'fabric-example',
         MODRINTH_VERSION: '1.0.0',
@@ -84,7 +83,7 @@ describe('ModpackOptions', () => {
       const options = ModpackOptions.modrinth('fabric-example', { loader: 'fabric' });
       const envVars = options.toEnvVars();
 
-      assert.deepStrictEqual(envVars, {
+      expect(envVars).toEqual({
         TYPE: 'MODRINTH',
         MODRINTH_MODPACK: 'fabric-example',
         MODRINTH_LOADER: 'fabric',
@@ -95,7 +94,7 @@ describe('ModpackOptions', () => {
       const options = ModpackOptions.curseforge('forge-example', { version: '2.0.0' });
       const envVars = options.toEnvVars();
 
-      assert.deepStrictEqual(envVars, {
+      expect(envVars).toEqual({
         TYPE: 'AUTO_CURSEFORGE',
         CF_SLUG: 'forge-example',
         CF_VERSION: '2.0.0',
@@ -108,7 +107,7 @@ describe('ModpackOptions', () => {
       const options = ModpackOptions.modrinth('fabric-example');
       const args = options.toCliArgs();
 
-      assert.deepStrictEqual(args, [
+      expect(args).toEqual([
         '--type', 'MODRINTH',
         '--modpack-slug', 'fabric-example',
       ]);
@@ -121,7 +120,7 @@ describe('ModpackOptions', () => {
       });
       const args = options.toCliArgs();
 
-      assert.deepStrictEqual(args, [
+      expect(args).toEqual([
         '--type', 'MODRINTH',
         '--modpack-slug', 'fabric-example',
         '--modpack-version', '1.0.0',
@@ -133,7 +132,7 @@ describe('ModpackOptions', () => {
       const options = ModpackOptions.curseforge('forge-example', { version: '2.0.0' });
       const args = options.toCliArgs();
 
-      assert.deepStrictEqual(args, [
+      expect(args).toEqual([
         '--type', 'AUTO_CURSEFORGE',
         '--modpack-slug', 'forge-example',
         '--modpack-version', '2.0.0',

@@ -1,5 +1,4 @@
-import { test, describe, before, after, beforeEach, afterEach } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { rm, mkdir, writeFile, readFile, readdir, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -37,12 +36,12 @@ import type { IConfigFileCollector } from '../src/application/ports/outbound/ICo
 describe('ConfigSnapshotDatabase', () => {
   let testDir: string;
 
-  before(async () => {
+  beforeAll(async () => {
     testDir = join(tmpdir(), `config-snapshot-db-test-${randomUUID()}`);
     await mkdir(testDir, { recursive: true });
   });
 
-  after(async () => {
+  afterAll(async () => {
     await rm(testDir, { recursive: true, force: true });
   });
 
@@ -56,19 +55,19 @@ describe('ConfigSnapshotDatabase', () => {
     const snapshotsTable = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='config_snapshots'")
       .get() as { name: string } | undefined;
-    assert.strictEqual(snapshotsTable?.name, 'config_snapshots');
+    expect(snapshotsTable?.name).toBe('config_snapshots');
 
     // Check config_snapshot_files table
     const filesTable = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='config_snapshot_files'")
       .get() as { name: string } | undefined;
-    assert.strictEqual(filesTable?.name, 'config_snapshot_files');
+    expect(filesTable?.name).toBe('config_snapshot_files');
 
     // Check config_snapshot_schedules table
     const schedulesTable = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='config_snapshot_schedules'")
       .get() as { name: string } | undefined;
-    assert.strictEqual(schedulesTable?.name, 'config_snapshot_schedules');
+    expect(schedulesTable?.name).toBe('config_snapshot_schedules');
 
     database.close();
   });
@@ -84,11 +83,11 @@ describe('ConfigSnapshotDatabase', () => {
       .all() as { name: string }[];
 
     const indexNames = indexes.map((i) => i.name);
-    assert.ok(indexNames.includes('idx_config_snapshots_server'));
-    assert.ok(indexNames.includes('idx_config_snapshots_created'));
-    assert.ok(indexNames.includes('idx_snapshot_files_snapshot'));
-    assert.ok(indexNames.includes('idx_schedules_server'));
-    assert.ok(indexNames.includes('idx_schedules_enabled'));
+    expect(indexNames.includes('idx_config_snapshots_server')).toBeTruthy();
+    expect(indexNames.includes('idx_config_snapshots_created')).toBeTruthy();
+    expect(indexNames.includes('idx_snapshot_files_snapshot')).toBeTruthy();
+    expect(indexNames.includes('idx_schedules_server')).toBeTruthy();
+    expect(indexNames.includes('idx_schedules_enabled')).toBeTruthy();
 
     database.close();
   });
@@ -99,7 +98,7 @@ describe('ConfigSnapshotDatabase', () => {
 
     const db = database.getDatabase();
     const result = db.pragma('journal_mode') as { journal_mode: string }[];
-    assert.strictEqual(result[0]?.journal_mode, 'wal');
+    expect(result[0]?.journal_mode).toBe('wal');
 
     database.close();
   });
@@ -110,7 +109,7 @@ describe('ConfigSnapshotDatabase', () => {
 
     const db = database.getDatabase();
     const result = db.pragma('foreign_keys') as { foreign_keys: number }[];
-    assert.strictEqual(result[0]?.foreign_keys, 1);
+    expect(result[0]?.foreign_keys).toBe(1);
 
     database.close();
   });
@@ -120,7 +119,7 @@ describe('ConfigSnapshotDatabase', () => {
     const dbPath = join(nestedDir, 'test.db');
     const database = new ConfigSnapshotDatabase(dbPath);
 
-    assert.ok(existsSync(nestedDir));
+    expect(existsSync(nestedDir)).toBeTruthy();
 
     database.close();
   });
@@ -142,7 +141,7 @@ describe('ConfigSnapshotDatabase', () => {
     const snapshotsTable = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='config_snapshots'")
       .get() as { name: string } | undefined;
-    assert.strictEqual(snapshotsTable?.name, 'config_snapshots');
+    expect(snapshotsTable?.name).toBe('config_snapshots');
 
     database.close();
   });
@@ -177,20 +176,20 @@ describe('SqliteConfigSnapshotRepository', () => {
     await repo.save(snapshot);
     const found = await repo.findById(snapshot.id);
 
-    assert.ok(found);
-    assert.strictEqual(found.id, snapshot.id);
-    assert.strictEqual(found.serverName.value, 'myserver');
-    assert.strictEqual(found.description, 'Test snapshot');
-    assert.strictEqual(found.files.length, 2);
-    assert.strictEqual(found.files[0]!.path, 'server.properties');
-    assert.strictEqual(found.files[0]!.hash, validHash);
-    assert.strictEqual(found.files[0]!.size, 1024);
-    assert.strictEqual(found.files[1]!.path, 'config.env');
+    expect(found).toBeTruthy();
+    expect(found.id).toBe(snapshot.id);
+    expect(found.serverName.value).toBe('myserver');
+    expect(found.description).toBe('Test snapshot');
+    expect(found.files.length).toBe(2);
+    expect(found.files[0]!.path).toBe('server.properties');
+    expect(found.files[0]!.hash).toBe(validHash);
+    expect(found.files[0]!.size).toBe(1024);
+    expect(found.files[1]!.path).toBe('config.env');
   });
 
   test('should return null for non-existent snapshot', async () => {
     const found = await repo.findById('non-existent-id');
-    assert.strictEqual(found, null);
+    expect(found).toBe(null);
   });
 
   test('should save snapshot with no files', async () => {
@@ -200,8 +199,8 @@ describe('SqliteConfigSnapshotRepository', () => {
     await repo.save(snapshot);
     const found = await repo.findById(snapshot.id);
 
-    assert.ok(found);
-    assert.strictEqual(found.files.length, 0);
+    expect(found).toBeTruthy();
+    expect(found.files.length).toBe(0);
   });
 
   test('should save snapshot with scheduleId', async () => {
@@ -221,8 +220,8 @@ describe('SqliteConfigSnapshotRepository', () => {
     await repo.save(snapshot);
     const found = await repo.findById(snapshot.id);
 
-    assert.ok(found);
-    assert.strictEqual(found.scheduleId, schedule.id);
+    expect(found).toBeTruthy();
+    expect(found.scheduleId).toBe(schedule.id);
   });
 
   test('should find snapshots by server name', async () => {
@@ -238,10 +237,10 @@ describe('SqliteConfigSnapshotRepository', () => {
     await repo.save(snap3);
 
     const serverASnapshots = await repo.findByServer('servera');
-    assert.strictEqual(serverASnapshots.length, 2);
+    expect(serverASnapshots.length).toBe(2);
 
     const serverBSnapshots = await repo.findByServer('serverb');
-    assert.strictEqual(serverBSnapshots.length, 1);
+    expect(serverBSnapshots.length).toBe(1);
   });
 
   test('should support pagination in findByServer', async () => {
@@ -253,26 +252,26 @@ describe('SqliteConfigSnapshotRepository', () => {
     }
 
     const page1 = await repo.findByServer('pagserver', 2, 0);
-    assert.strictEqual(page1.length, 2);
+    expect(page1.length).toBe(2);
 
     const page2 = await repo.findByServer('pagserver', 2, 2);
-    assert.strictEqual(page2.length, 2);
+    expect(page2.length).toBe(2);
 
     const page3 = await repo.findByServer('pagserver', 2, 4);
-    assert.strictEqual(page3.length, 1);
+    expect(page3.length).toBe(1);
   });
 
   test('should count snapshots by server', async () => {
     const serverName = ServerName.create('countserver');
 
-    assert.strictEqual(await repo.countByServer('countserver'), 0);
+    expect(await repo.countByServer('countserver')).toBe(0);
 
     const snap1 = ConfigSnapshot.create(serverName, [], 'C1');
     const snap2 = ConfigSnapshot.create(serverName, [], 'C2');
     await repo.save(snap1);
     await repo.save(snap2);
 
-    assert.strictEqual(await repo.countByServer('countserver'), 2);
+    expect(await repo.countByServer('countserver')).toBe(2);
   });
 
   test('should delete a snapshot by ID', async () => {
@@ -281,10 +280,10 @@ describe('SqliteConfigSnapshotRepository', () => {
     const snapshot = ConfigSnapshot.create(serverName, files, 'To delete');
 
     await repo.save(snapshot);
-    assert.ok(await repo.findById(snapshot.id));
+    expect(await repo.findById(snapshot.id)).toBeTruthy();
 
     await repo.delete(snapshot.id);
-    assert.strictEqual(await repo.findById(snapshot.id), null);
+    expect(await repo.findById(snapshot.id)).toBe(null);
   });
 
   test('should cascade delete files when snapshot is deleted', async () => {
@@ -301,7 +300,7 @@ describe('SqliteConfigSnapshotRepository', () => {
     // Files should be gone too (CASCADE)
     const db = database.getDatabase();
     const fileCount = db.prepare('SELECT COUNT(*) as count FROM config_snapshot_files WHERE snapshot_id = ?').get(snapshot.id) as { count: number };
-    assert.strictEqual(fileCount.count, 0);
+    expect(fileCount.count).toBe(0);
   });
 
   test('should delete all snapshots by server', async () => {
@@ -312,10 +311,10 @@ describe('SqliteConfigSnapshotRepository', () => {
     await repo.save(snap1);
     await repo.save(snap2);
 
-    assert.strictEqual(await repo.countByServer('delallserver'), 2);
+    expect(await repo.countByServer('delallserver')).toBe(2);
 
     await repo.deleteByServer('delallserver');
-    assert.strictEqual(await repo.countByServer('delallserver'), 0);
+    expect(await repo.countByServer('delallserver')).toBe(0);
   });
 
   test('should find all snapshots across servers', async () => {
@@ -331,7 +330,7 @@ describe('SqliteConfigSnapshotRepository', () => {
     await repo.save(snap3);
 
     const all = await repo.findAll();
-    assert.strictEqual(all.length, 3);
+    expect(all.length).toBe(3);
   });
 
   test('should support pagination in findAll', async () => {
@@ -346,10 +345,10 @@ describe('SqliteConfigSnapshotRepository', () => {
     }
 
     const page1 = await repo.findAll(3, 0);
-    assert.strictEqual(page1.length, 3);
+    expect(page1.length).toBe(3);
 
     const page2 = await repo.findAll(3, 3);
-    assert.strictEqual(page2.length, 2);
+    expect(page2.length).toBe(2);
   });
 
   test('should order findByServer by createdAt DESC', async () => {
@@ -379,8 +378,8 @@ describe('SqliteConfigSnapshotRepository', () => {
     await repo.save(newSnap);
 
     const results = await repo.findByServer('orderserver');
-    assert.strictEqual(results[0]!.description, 'New');
-    assert.strictEqual(results[1]!.description, 'Old');
+    expect(results[0]!.description).toBe('New');
+    expect(results[1]!.description).toBe('Old');
   });
 });
 
@@ -411,18 +410,18 @@ describe('SqliteConfigSnapshotScheduleRepository', () => {
     await repo.save(schedule);
     const found = await repo.findById(schedule.id);
 
-    assert.ok(found);
-    assert.strictEqual(found.id, schedule.id);
-    assert.strictEqual(found.serverName.value, 'myserver');
-    assert.strictEqual(found.name, 'Hourly Backup');
-    assert.strictEqual(found.cronExpression.expression, '0 * * * *');
-    assert.strictEqual(found.retentionCount, 24);
-    assert.strictEqual(found.enabled, true);
+    expect(found).toBeTruthy();
+    expect(found.id).toBe(schedule.id);
+    expect(found.serverName.value).toBe('myserver');
+    expect(found.name).toBe('Hourly Backup');
+    expect(found.cronExpression.expression).toBe('0 * * * *');
+    expect(found.retentionCount).toBe(24);
+    expect(found.enabled).toBe(true);
   });
 
   test('should return null for non-existent schedule', async () => {
     const found = await repo.findById('non-existent-id');
-    assert.strictEqual(found, null);
+    expect(found).toBe(null);
   });
 
   test('should find schedules by server name', async () => {
@@ -441,8 +440,8 @@ describe('SqliteConfigSnapshotScheduleRepository', () => {
     await repo.save(scheduleB);
 
     const serverASchedules = await repo.findByServer('servera');
-    assert.strictEqual(serverASchedules.length, 1);
-    assert.strictEqual(serverASchedules[0]!.name, 'Schedule A');
+    expect(serverASchedules.length).toBe(1);
+    expect(serverASchedules[0]!.name).toBe('Schedule A');
   });
 
   test('should find all schedules including disabled', async () => {
@@ -463,11 +462,11 @@ describe('SqliteConfigSnapshotScheduleRepository', () => {
     await repo.save(disabled);
 
     const allSchedules = await repo.findAll();
-    assert.strictEqual(allSchedules.length, 2);
+    expect(allSchedules.length).toBe(2);
 
     const names = allSchedules.map((s) => s.name);
-    assert.ok(names.includes('Enabled'));
-    assert.ok(names.includes('Disabled'));
+    expect(names.includes('Enabled')).toBeTruthy();
+    expect(names.includes('Disabled')).toBeTruthy();
   });
 
   test('should find all enabled schedules', async () => {
@@ -488,8 +487,8 @@ describe('SqliteConfigSnapshotScheduleRepository', () => {
     await repo.save(disabled);
 
     const enabledSchedules = await repo.findAllEnabled();
-    assert.strictEqual(enabledSchedules.length, 1);
-    assert.strictEqual(enabledSchedules[0]!.name, 'Enabled');
+    expect(enabledSchedules.length).toBe(1);
+    expect(enabledSchedules[0]!.name).toBe('Enabled');
   });
 
   test('should update a schedule', async () => {
@@ -505,8 +504,8 @@ describe('SqliteConfigSnapshotScheduleRepository', () => {
     await repo.update(disabled);
 
     const found = await repo.findById(schedule.id);
-    assert.ok(found);
-    assert.strictEqual(found.enabled, false);
+    expect(found).toBeTruthy();
+    expect(found.enabled).toBe(false);
   });
 
   test('should update schedule with recordRun', async () => {
@@ -522,9 +521,9 @@ describe('SqliteConfigSnapshotScheduleRepository', () => {
     await repo.update(updated);
 
     const found = await repo.findById(schedule.id);
-    assert.ok(found);
-    assert.strictEqual(found.lastRunStatus, 'success');
-    assert.ok(found.lastRunAt instanceof Date);
+    expect(found).toBeTruthy();
+    expect(found.lastRunStatus).toBe('success');
+    expect(found.lastRunAt instanceof Date).toBeTruthy();
   });
 
   test('should delete a schedule', async () => {
@@ -535,10 +534,10 @@ describe('SqliteConfigSnapshotScheduleRepository', () => {
     });
 
     await repo.save(schedule);
-    assert.ok(await repo.findById(schedule.id));
+    expect(await repo.findById(schedule.id)).toBeTruthy();
 
     await repo.delete(schedule.id);
-    assert.strictEqual(await repo.findById(schedule.id), null);
+    expect(await repo.findById(schedule.id)).toBe(null);
   });
 
   test('should SET NULL on snapshot.schedule_id when schedule is deleted', async () => {
@@ -564,8 +563,8 @@ describe('SqliteConfigSnapshotScheduleRepository', () => {
 
     // Snapshot should still exist but with null schedule_id
     const found = await snapshotRepo.findById(snapshot.id);
-    assert.ok(found);
-    assert.strictEqual(found.scheduleId, undefined);
+    expect(found).toBeTruthy();
+    expect(found.scheduleId).toBe(undefined);
   });
 });
 
@@ -594,9 +593,9 @@ describe('FileSystemConfigSnapshotStorage', () => {
     await storage.store('snap-1', 'myserver', files);
 
     const retrieved = await storage.retrieve('snap-1', 'myserver');
-    assert.strictEqual(retrieved.size, 2);
-    assert.strictEqual(retrieved.get('server.properties'), 'server-port=25565\ndifficulty=hard');
-    assert.strictEqual(retrieved.get('config.env'), 'TYPE=PAPER\nVERSION=1.21.1');
+    expect(retrieved.size).toBe(2);
+    expect(retrieved.get('server.properties')).toBe('server-port=25565\ndifficulty=hard');
+    expect(retrieved.get('config.env')).toBe('TYPE=PAPER\nVERSION=1.21.1');
   });
 
   test('should store files in correct directory structure', async () => {
@@ -606,9 +605,9 @@ describe('FileSystemConfigSnapshotStorage', () => {
     await storage.store('snap-1', 'myserver', files);
 
     const filePath = join(testDir, 'myserver', 'snap-1', 'test.txt');
-    assert.ok(existsSync(filePath));
+    expect(existsSync(filePath)).toBeTruthy();
     const content = await readFile(filePath, 'utf-8');
-    assert.strictEqual(content, 'hello');
+    expect(content).toBe('hello');
   });
 
   test('should delete stored files', async () => {
@@ -616,10 +615,10 @@ describe('FileSystemConfigSnapshotStorage', () => {
     files.set('test.txt', 'hello');
 
     await storage.store('snap-1', 'myserver', files);
-    assert.ok(existsSync(join(testDir, 'myserver', 'snap-1')));
+    expect(existsSync(join(testDir, 'myserver', 'snap-1'))).toBeTruthy();
 
     await storage.delete('snap-1', 'myserver');
-    assert.ok(!existsSync(join(testDir, 'myserver', 'snap-1')));
+    expect(!existsSync(join(testDir, 'myserver', 'snap-1'))).toBeTruthy();
   });
 
   test('should handle empty file map', async () => {
@@ -627,12 +626,12 @@ describe('FileSystemConfigSnapshotStorage', () => {
 
     await storage.store('snap-empty', 'myserver', files);
     const retrieved = await storage.retrieve('snap-empty', 'myserver');
-    assert.strictEqual(retrieved.size, 0);
+    expect(retrieved.size).toBe(0);
   });
 
   test('should return empty map for non-existent snapshot', async () => {
     const retrieved = await storage.retrieve('non-existent', 'myserver');
-    assert.strictEqual(retrieved.size, 0);
+    expect(retrieved.size).toBe(0);
   });
 
   test('should not throw when deleting non-existent snapshot', async () => {
@@ -647,7 +646,7 @@ describe('FileSystemConfigSnapshotStorage', () => {
     await storage.store('snap-nested', 'myserver', files);
 
     const retrieved = await storage.retrieve('snap-nested', 'myserver');
-    assert.strictEqual(retrieved.get('plugins/config.yml'), 'key: value');
+    expect(retrieved.get('plugins/config.yml')).toBe('key: value');
   });
 });
 
@@ -679,11 +678,11 @@ describe('FileSystemConfigFileCollector', () => {
     const collector = new FileSystemConfigFileCollector(serversDir);
     const files = await collector.collectFiles('myserver');
 
-    assert.strictEqual(files.length, 3);
+    expect(files.length).toBe(3);
     const paths = files.map((f) => f.path);
-    assert.ok(paths.includes('server.properties'));
-    assert.ok(paths.includes('config.env'));
-    assert.ok(paths.includes('docker-compose.yml'));
+    expect(paths.includes('server.properties')).toBeTruthy();
+    expect(paths.includes('config.env')).toBeTruthy();
+    expect(paths.includes('docker-compose.yml')).toBeTruthy();
   });
 
   test('should compute SHA-256 hashes', async () => {
@@ -698,8 +697,8 @@ describe('FileSystemConfigFileCollector', () => {
     const collector = new FileSystemConfigFileCollector(serversDir);
     const files = await collector.collectFiles('hashserver');
 
-    assert.strictEqual(files.length, 1);
-    assert.strictEqual(files[0]!.hash, expectedHash);
+    expect(files.length).toBe(1);
+    expect(files[0]!.hash).toBe(expectedHash);
   });
 
   test('should report correct file sizes', async () => {
@@ -712,7 +711,7 @@ describe('FileSystemConfigFileCollector', () => {
     const collector = new FileSystemConfigFileCollector(serversDir);
     const files = await collector.collectFiles('sizeserver');
 
-    assert.strictEqual(files[0]!.size, Buffer.byteLength(content));
+    expect(files[0]!.size).toBe(Buffer.byteLength(content));
   });
 
   test('should skip files larger than 1MB', async () => {
@@ -728,8 +727,8 @@ describe('FileSystemConfigFileCollector', () => {
     const files = await collector.collectFiles('largeserver');
 
     const paths = files.map((f) => f.path);
-    assert.ok(paths.includes('server.properties'));
-    assert.ok(!paths.includes('ops.json'));
+    expect(paths.includes('server.properties')).toBeTruthy();
+    expect(!paths.includes('ops.json')).toBeTruthy();
   });
 
   test('should skip non-existent optional files', async () => {
@@ -742,8 +741,8 @@ describe('FileSystemConfigFileCollector', () => {
     const collector = new FileSystemConfigFileCollector(serversDir);
     const files = await collector.collectFiles('sparseserver');
 
-    assert.strictEqual(files.length, 1);
-    assert.strictEqual(files[0]!.path, 'server.properties');
+    expect(files.length).toBe(1);
+    expect(files[0]!.path).toBe('server.properties');
   });
 
   test('should read file content', async () => {
@@ -755,7 +754,7 @@ describe('FileSystemConfigFileCollector', () => {
     const collector = new FileSystemConfigFileCollector(serversDir);
     const content = await collector.readFileContent('readserver', 'server.properties');
 
-    assert.strictEqual(content, 'server-port=25565');
+    expect(content).toBe('server-port=25565');
   });
 
   test('should throw on non-existent file for readFileContent', async () => {
@@ -764,10 +763,7 @@ describe('FileSystemConfigFileCollector', () => {
 
     const collector = new FileSystemConfigFileCollector(serversDir);
 
-    await assert.rejects(
-      () => collector.readFileContent('nofileserver', 'missing.txt'),
-      /ENOENT/
-    );
+    await expect(collector.readFileContent('nofileserver', 'missing.txt')).rejects.toThrow(/ENOENT/);
   });
 
   test('should collect additional yml and json files', async () => {
@@ -782,8 +778,8 @@ describe('FileSystemConfigFileCollector', () => {
     const files = await collector.collectFiles('extraserver');
 
     const paths = files.map((f) => f.path);
-    assert.ok(paths.includes('custom.yml'));
-    assert.ok(paths.includes('data.json'));
+    expect(paths.includes('custom.yml')).toBeTruthy();
+    expect(paths.includes('data.json')).toBeTruthy();
   });
 
   test('should not collect non-config files', async () => {
@@ -798,9 +794,9 @@ describe('FileSystemConfigFileCollector', () => {
     const files = await collector.collectFiles('filterserver');
 
     const paths = files.map((f) => f.path);
-    assert.ok(paths.includes('server.properties'));
-    assert.ok(!paths.includes('world.dat'));
-    assert.ok(!paths.includes('notes.txt'));
+    expect(paths.includes('server.properties')).toBeTruthy();
+    expect(!paths.includes('world.dat')).toBeTruthy();
+    expect(!paths.includes('notes.txt')).toBeTruthy();
   });
 
   test('should write file content to server directory', async () => {
@@ -811,7 +807,7 @@ describe('FileSystemConfigFileCollector', () => {
     await collector.writeFileContent('writeserver', 'server.properties', 'server-port=25566');
 
     const content = await readFile(join(serverDir, 'server.properties'), 'utf-8');
-    assert.strictEqual(content, 'server-port=25566');
+    expect(content).toBe('server-port=25566');
   });
 
   test('should create parent directories when writing file content', async () => {
@@ -819,7 +815,7 @@ describe('FileSystemConfigFileCollector', () => {
     await collector.writeFileContent('newserver', 'plugins/config.yml', 'key: value');
 
     const content = await readFile(join(serversDir, 'newserver', 'plugins', 'config.yml'), 'utf-8');
-    assert.strictEqual(content, 'key: value');
+    expect(content).toBe('key: value');
   });
 
   test('should overwrite existing file when writing file content', async () => {
@@ -831,7 +827,7 @@ describe('FileSystemConfigFileCollector', () => {
     await collector.writeFileContent('overwriteserver', 'server.properties', 'new-content');
 
     const content = await readFile(join(serverDir, 'server.properties'), 'utf-8');
-    assert.strictEqual(content, 'new-content');
+    expect(content).toBe('new-content');
   });
 });
 
@@ -942,14 +938,14 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     const useCase = new ConfigSnapshotUseCaseImpl(repo, storageAdapter, collector);
     const snapshot = await useCase.create('myserver', 'Test snapshot');
 
-    assert.ok(snapshot.id);
-    assert.strictEqual(snapshot.serverName.value, 'myserver');
-    assert.strictEqual(snapshot.description, 'Test snapshot');
-    assert.strictEqual(snapshot.files.length, 2);
+    expect(snapshot.id).toBeTruthy();
+    expect(snapshot.serverName.value).toBe('myserver');
+    expect(snapshot.description).toBe('Test snapshot');
+    expect(snapshot.files.length).toBe(2);
 
     // Verify stored in repo
     const found = await repo.findById(snapshot.id);
-    assert.ok(found);
+    expect(found).toBeTruthy();
   });
 
   test('should list snapshots by server name', async () => {
@@ -964,7 +960,7 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     await useCase.create('myserver', 'Snap 2');
 
     const list = await useCase.list('myserver');
-    assert.strictEqual(list.length, 2);
+    expect(list.length).toBe(2);
   });
 
   test('should list all snapshots across servers when no serverName provided', async () => {
@@ -980,7 +976,7 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     await useCase.create('serverc', 'Snap C');
 
     const list = await useCase.list();
-    assert.strictEqual(list.length, 3);
+    expect(list.length).toBe(3);
   });
 
   test('should list all snapshots with pagination when no serverName provided', async () => {
@@ -996,10 +992,10 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     await useCase.create('serverc', 'Snap C');
 
     const page1 = await useCase.list(undefined, 2, 0);
-    assert.strictEqual(page1.length, 2);
+    expect(page1.length).toBe(2);
 
     const page2 = await useCase.list(undefined, 2, 2);
-    assert.strictEqual(page2.length, 1);
+    expect(page2.length).toBe(1);
   });
 
   test('should find snapshot by ID', async () => {
@@ -1012,8 +1008,8 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     const created = await useCase.create('myserver');
 
     const found = await useCase.findById(created.id);
-    assert.ok(found);
-    assert.strictEqual(found.id, created.id);
+    expect(found).toBeTruthy();
+    expect(found.id).toBe(created.id);
   });
 
   test('should compute diff between two snapshots', async () => {
@@ -1036,11 +1032,11 @@ describe('ConfigSnapshotUseCaseImpl', () => {
 
     const diff = await useCase1.diff(snap1.id, snap2.id);
 
-    assert.ok(diff.hasChanges);
+    expect(diff.hasChanges).toBeTruthy();
     const summary = diff.summary;
-    assert.ok(summary.added >= 1); // new-file.yml
-    assert.ok(summary.modified >= 1); // server.properties
-    assert.ok(summary.deleted >= 1); // config.env
+    expect(summary.added >= 1).toBeTruthy(); // new-file.yml
+    expect(summary.modified >= 1).toBeTruthy(); // server.properties
+    expect(summary.deleted >= 1).toBeTruthy(); // config.env
   });
 
   test('should delete a snapshot', async () => {
@@ -1055,7 +1051,7 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     await useCase.delete(snapshot.id);
 
     const found = await repo.findById(snapshot.id);
-    assert.strictEqual(found, null);
+    expect(found).toBe(null);
   });
 
   test('should restore files from a snapshot to the server directory', async () => {
@@ -1073,11 +1069,11 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     await useCase.restore(snapshot.id);
 
     // Verify files were written via collector.writeFileContent
-    assert.strictEqual(collector.writtenFiles.size, 2);
-    assert.strictEqual(collector.writtenFiles.get('server.properties')?.content, 'server-port=25565');
-    assert.strictEqual(collector.writtenFiles.get('server.properties')?.serverName, 'myserver');
-    assert.strictEqual(collector.writtenFiles.get('config.env')?.content, 'TYPE=PAPER');
-    assert.strictEqual(collector.writtenFiles.get('config.env')?.serverName, 'myserver');
+    expect(collector.writtenFiles.size).toBe(2);
+    expect(collector.writtenFiles.get('server.properties')?.content).toBe('server-port=25565');
+    expect(collector.writtenFiles.get('server.properties')?.serverName).toBe('myserver');
+    expect(collector.writtenFiles.get('config.env')?.content).toBe('TYPE=PAPER');
+    expect(collector.writtenFiles.get('config.env')?.serverName).toBe('myserver');
   });
 
   test('should throw when restoring non-existent snapshot', async () => {
@@ -1087,10 +1083,7 @@ describe('ConfigSnapshotUseCaseImpl', () => {
 
     const useCase = new ConfigSnapshotUseCaseImpl(repo, storageAdapter, collector);
 
-    await assert.rejects(
-      () => useCase.restore('non-existent-id'),
-      /Snapshot not found/
-    );
+    await expect(useCase.restore('non-existent-id')).rejects.toThrow(/Snapshot not found/);
   });
 
   test('should throw when snapshot has no files to restore', async () => {
@@ -1102,10 +1095,7 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     const useCase = new ConfigSnapshotUseCaseImpl(repo, storageAdapter, collector);
     const snapshot = await useCase.create('myserver', 'Empty snapshot');
 
-    await assert.rejects(
-      () => useCase.restore(snapshot.id),
-      /No files found/
-    );
+    await expect(useCase.restore(snapshot.id)).rejects.toThrow(/No files found/);
   });
 });
 
@@ -1153,12 +1143,12 @@ describe('ConfigSnapshotScheduleUseCaseImpl', () => {
 
     const schedule = await useCase.create('myserver', 'Hourly', '0 * * * *', 24);
 
-    assert.ok(schedule.id);
-    assert.strictEqual(schedule.serverName.value, 'myserver');
-    assert.strictEqual(schedule.name, 'Hourly');
-    assert.strictEqual(schedule.cronExpression.expression, '0 * * * *');
-    assert.strictEqual(schedule.retentionCount, 24);
-    assert.strictEqual(schedule.enabled, true);
+    expect(schedule.id).toBeTruthy();
+    expect(schedule.serverName.value).toBe('myserver');
+    expect(schedule.name).toBe('Hourly');
+    expect(schedule.cronExpression.expression).toBe('0 * * * *');
+    expect(schedule.retentionCount).toBe(24);
+    expect(schedule.enabled).toBe(true);
   });
 
   test('should update a schedule', async () => {
@@ -1168,18 +1158,15 @@ describe('ConfigSnapshotScheduleUseCaseImpl', () => {
     const schedule = await useCase.create('myserver', 'Original', '0 * * * *');
     const updated = await useCase.update(schedule.id, { name: 'Updated Name' });
 
-    assert.strictEqual(updated.name, 'Updated Name');
-    assert.strictEqual(updated.id, schedule.id);
+    expect(updated.name).toBe('Updated Name');
+    expect(updated.id).toBe(schedule.id);
   });
 
   test('should throw when updating non-existent schedule', async () => {
     const repo = new MockScheduleRepository();
     const useCase = new ConfigSnapshotScheduleUseCaseImpl(repo);
 
-    await assert.rejects(
-      () => useCase.update('non-existent', { name: 'New Name' }),
-      /not found/i
-    );
+    await expect(useCase.update('non-existent', { name: 'New Name' })).rejects.toThrow(/not found/i);
   });
 
   test('should enable a schedule', async () => {
@@ -1191,8 +1178,8 @@ describe('ConfigSnapshotScheduleUseCaseImpl', () => {
     await useCase.enable(schedule.id);
 
     const found = await repo.findById(schedule.id);
-    assert.ok(found);
-    assert.strictEqual(found.enabled, true);
+    expect(found).toBeTruthy();
+    expect(found.enabled).toBe(true);
   });
 
   test('should disable a schedule', async () => {
@@ -1203,8 +1190,8 @@ describe('ConfigSnapshotScheduleUseCaseImpl', () => {
     await useCase.disable(schedule.id);
 
     const found = await repo.findById(schedule.id);
-    assert.ok(found);
-    assert.strictEqual(found.enabled, false);
+    expect(found).toBeTruthy();
+    expect(found.enabled).toBe(false);
   });
 
   test('should delete a schedule', async () => {
@@ -1215,7 +1202,7 @@ describe('ConfigSnapshotScheduleUseCaseImpl', () => {
     await useCase.delete(schedule.id);
 
     const found = await repo.findById(schedule.id);
-    assert.strictEqual(found, null);
+    expect(found).toBe(null);
   });
 
   test('should find all schedules', async () => {
@@ -1226,7 +1213,7 @@ describe('ConfigSnapshotScheduleUseCaseImpl', () => {
     await useCase.create('serverb', 'Schedule B', '0 3 * * *');
 
     const all = await useCase.findAll();
-    assert.strictEqual(all.length, 2);
+    expect(all.length).toBe(2);
   });
 
   test('should find all schedules including disabled ones', async () => {
@@ -1240,17 +1227,17 @@ describe('ConfigSnapshotScheduleUseCaseImpl', () => {
     await useCase.disable(toDisable.id);
 
     const all = await useCase.findAll();
-    assert.strictEqual(all.length, 2);
+    expect(all.length).toBe(2);
 
     // Verify both enabled and disabled are included
     const names = all.map((s) => s.name);
-    assert.ok(names.includes('Enabled Schedule'));
-    assert.ok(names.includes('To Disable'));
+    expect(names.includes('Enabled Schedule')).toBeTruthy();
+    expect(names.includes('To Disable')).toBeTruthy();
 
     // Verify the disabled one is actually disabled
     const disabledSchedule = all.find((s) => s.name === 'To Disable');
-    assert.ok(disabledSchedule);
-    assert.strictEqual(disabledSchedule.enabled, false);
+    expect(disabledSchedule).toBeTruthy();
+    expect(disabledSchedule.enabled).toBe(false);
   });
 
   test('should find schedules by server', async () => {
@@ -1261,7 +1248,7 @@ describe('ConfigSnapshotScheduleUseCaseImpl', () => {
     await useCase.create('serverb', 'Schedule B', '0 3 * * *');
 
     const serverA = await useCase.findByServer('servera');
-    assert.strictEqual(serverA.length, 1);
-    assert.strictEqual(serverA[0]!.name, 'Schedule A');
+    expect(serverA.length).toBe(1);
+    expect(serverA[0]!.name).toBe('Schedule A');
   });
 });
