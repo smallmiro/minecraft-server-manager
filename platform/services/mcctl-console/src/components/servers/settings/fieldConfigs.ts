@@ -373,6 +373,58 @@ export const systemEssentialFields: FieldConfig[] = [
   },
 ];
 
+// ── Remote Access: Essential ──
+export const remoteAccessEssentialFields: FieldConfig[] = [
+  {
+    key: 'websocketConsole',
+    label: 'Enable WebSocket Console',
+    type: 'boolean',
+    helperText: 'Expose a browser-accessible console via WebSocket',
+    restartRequired: true,
+  },
+  {
+    key: 'enableSsh',
+    label: 'Enable SSH Console',
+    type: 'boolean',
+    helperText: 'SSH console access on port 2222',
+    restartRequired: true,
+  },
+];
+
+// ── Remote Access: Advanced ──
+export const remoteAccessAdvancedFields: FieldConfig[] = [
+  {
+    key: 'websocketAddress',
+    label: 'WebSocket Bind Address',
+    type: 'string',
+    helperText: 'e.g., 0.0.0.0:80',
+    columns: 12,
+  },
+  {
+    key: 'websocketPassword',
+    label: 'WebSocket Password',
+    type: 'password',
+    helperText: 'Leave blank to use RCON password',
+  },
+  {
+    key: 'websocketDisableAuthentication',
+    label: 'Disable WebSocket Auth',
+    type: 'boolean',
+    helperText: 'Allow unauthenticated WebSocket connections (not recommended)',
+  },
+  {
+    key: 'websocketAllowedOrigins',
+    label: 'Allowed Origins',
+    type: 'string',
+    helperText: 'Comma-separated allowed origins (e.g., https://example.com)',
+    columns: 12,
+  },
+  {
+    key: 'websocketLogBufferSize',
+    label: 'Log Buffer Size',
+    type: 'number',
+    helperText: 'Number of log lines kept in history',
+    validation: { min: 1 },
 // ── Configuration Repositories ──
 export const configRepoFields: FieldConfig[] = [
   {

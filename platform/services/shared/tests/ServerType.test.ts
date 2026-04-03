@@ -93,11 +93,9 @@ describe('ServerType', () => {
 
     test('should have 14 total server types', () => {
       const allTypes = ServerType.getAll();
-<<<<<<< HEAD
-      assert.strictEqual(allTypes.length, 14);
-=======
       expect(allTypes.length).toBe(11);
->>>>>>> origin/develop
+      assert.strictEqual(allTypes.length, 14);
+      expect(allTypes.length).toBe(11);
     });
 
     test('all types should have isModpack property', () => {
