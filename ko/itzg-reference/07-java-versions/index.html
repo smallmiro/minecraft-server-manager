@@ -21,11 +21,11 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Java Versions - Minecraft Docker Server Manager</title>
+        <title>Java 버전 - Minecraft Docker Server Manager</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#java-versions" class="md-skip">
+        <a href="#java-버전" class="md-skip">
           콘텐츠로 이동
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Java Versions
+              Java 버전
             
           </span>
         </div>
@@ -2044,10 +2044,49 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#supported-java-versions" class="md-nav__link">
+  <a href="#지원하는-java-버전" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported Java Versions
+        지원하는 Java 버전
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="지원하는 Java 버전">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#지원-중단된-태그" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        지원 중단된 태그
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#프로그래밍-방식-접근" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        프로그래밍 방식 접근
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#버전별-java-요구사항" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        버전별 Java 요구사항
       
     </span>
   </a>
@@ -2055,26 +2094,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#java-requirements-by-version" class="md-nav__link">
+  <a href="#java-버전-선택-방법" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Java Requirements by Version
+        Java 버전 선택 방법
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-to-select-java-version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How to Select Java Version
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How to Select Java Version">
+    <nav class="md-nav" aria-label="Java 버전 선택 방법">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2105,22 +2133,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#forge-server-java-versions" class="md-nav__link">
+  <a href="#forge-서버-java-버전" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Forge Server Java Versions
+        Forge 서버 Java 버전
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Forge Server Java Versions">
+    <nav class="md-nav" aria-label="Forge 서버 Java 버전">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#forge-1165-example" class="md-nav__link">
+  <a href="#forge-1165-예제" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Forge 1.16.5 Example
+        Forge 1.16.5 예제
       
     </span>
   </a>
@@ -2128,10 +2156,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#forge-1201-example" class="md-nav__link">
+  <a href="#forge-1201-예제" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Forge 1.20.1 Example
+        Forge 1.20.1 예제
       
     </span>
   </a>
@@ -2144,22 +2172,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-errors-and-solutions" class="md-nav__link">
+  <a href="#흔한-오류와-해결법" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common Errors and Solutions
+        흔한 오류와 해결법
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Common Errors and Solutions">
+    <nav class="md-nav" aria-label="흔한 오류와 해결법">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#class-file-version-650-error" class="md-nav__link">
+  <a href="#class-file-version-650-오류" class="md-nav__link">
     <span class="md-ellipsis">
       
-        "class file version 65.0" Error
+        "class file version 65.0" 오류
       
     </span>
   </a>
@@ -2167,10 +2195,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#unsupported-class-file-major-version-error" class="md-nav__link">
+  <a href="#unsupported-class-file-major-version-오류" class="md-nav__link">
     <span class="md-ellipsis">
       
-        "Unsupported class file major version" Error
+        "Unsupported class file major version" 오류
       
     </span>
   </a>
@@ -2178,10 +2206,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#mod-compatibility-issues" class="md-nav__link">
+  <a href="#모드-호환성-문제" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Mod Compatibility Issues
+        모드 호환성 문제
       
     </span>
   </a>
@@ -2194,22 +2222,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architecture-specific-tags" class="md-nav__link">
+  <a href="#아키텍처별-태그" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture-Specific Tags
+        아키텍처별 태그
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Architecture-Specific Tags">
+    <nav class="md-nav" aria-label="아키텍처별 태그">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#arm-devices-raspberry-pi-etc" class="md-nav__link">
+  <a href="#arm-장치-raspberry-pi-등" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ARM Devices (Raspberry Pi, etc.)
+        ARM 장치 (Raspberry Pi 등)
       
     </span>
   </a>
@@ -2222,10 +2250,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#graalvm-variants" class="md-nav__link">
+  <a href="#graalvm-변형-지원-중단" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GraalVM Variants
+        GraalVM 변형 (지원 중단)
       
     </span>
   </a>
@@ -2233,10 +2261,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#version-selection-guide" class="md-nav__link">
+  <a href="#버전-선택-가이드" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Version Selection Guide
+        버전 선택 가이드
       
     </span>
   </a>
@@ -2244,22 +2272,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#examples-version-specific-configurations" class="md-nav__link">
+  <a href="#예제-버전별-구성" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Examples: Version-Specific Configurations
+        예제: 버전별 구성
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Examples: Version-Specific Configurations">
+    <nav class="md-nav" aria-label="예제: 버전별 구성">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#latest-paper-server" class="md-nav__link">
+  <a href="#최신-paper-서버" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Latest Paper Server
+        최신 Paper 서버
       
     </span>
   </a>
@@ -2267,10 +2295,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#legacy-forge-modpack" class="md-nav__link">
+  <a href="#레거시-forge-모드팩" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Legacy Forge Modpack
+        레거시 Forge 모드팩
       
     </span>
   </a>
@@ -2313,59 +2341,134 @@
   
 
 
-<h1 id="java-versions">Java Versions<a class="headerlink" href="#java-versions" title="Permanent link">&para;</a></h1>
-<p>A guide to Java requirements by Minecraft version and image tag selection.</p>
-<h2 id="supported-java-versions">Supported Java Versions<a class="headerlink" href="#supported-java-versions" title="Permanent link">&para;</a></h2>
+<h1 id="java-버전">Java 버전<a class="headerlink" href="#java-버전" title="Permanent link">&para;</a></h1>
+<p>마인크래프트 버전별 Java 요구사항과 이미지 태그 선택 가이드입니다.</p>
+<h2 id="지원하는-java-버전">지원하는 Java 버전<a class="headerlink" href="#지원하는-java-버전" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Image Tag</th>
-<th>Java Version</th>
-<th>Usage</th>
+<th>이미지 태그</th>
+<th>Java 버전</th>
+<th>기반 OS</th>
+<th>아키텍처</th>
+<th>비고</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>latest</code>, <code>stable</code></td>
 <td>Java 25</td>
-<td>Latest Minecraft (default)</td>
+<td>Ubuntu</td>
+<td>amd64, arm64</td>
+<td>기본값; <code>stable</code>은 최신 릴리즈 버전</td>
+</tr>
+<tr>
+<td><code>java25</code></td>
+<td>Java 25</td>
+<td>Ubuntu</td>
+<td>amd64, arm64</td>
+<td></td>
+</tr>
+<tr>
+<td><code>java25-alpine</code></td>
+<td>Java 25</td>
+<td>Alpine</td>
+<td>amd64, arm64</td>
+<td></td>
+</tr>
+<tr>
+<td><code>java25-jdk</code></td>
+<td>Java 25</td>
+<td>Ubuntu+JDK</td>
+<td>amd64, arm64</td>
+<td>전체 JDK 포함</td>
 </tr>
 <tr>
 <td><code>java21</code></td>
 <td>Java 21</td>
-<td>Minecraft 1.20.5+</td>
+<td>Ubuntu</td>
+<td>amd64, arm64</td>
+<td></td>
+</tr>
+<tr>
+<td><code>java21-jdk</code></td>
+<td>Java 21</td>
+<td>Ubuntu+JDK</td>
+<td>amd64, arm64</td>
+<td>전체 JDK 포함</td>
+</tr>
+<tr>
+<td><code>java21-alpine</code></td>
+<td>Java 21</td>
+<td>Alpine</td>
+<td>amd64, arm64</td>
+<td></td>
 </tr>
 <tr>
 <td><code>java17</code></td>
 <td>Java 17</td>
-<td>Minecraft 1.18+</td>
+<td>Ubuntu</td>
+<td>amd64, arm64, armv7</td>
+<td></td>
+</tr>
+<tr>
+<td><code>java16</code></td>
+<td>Java 16</td>
+<td>Ubuntu</td>
+<td>amd64, arm64, armv7</td>
+<td></td>
 </tr>
 <tr>
 <td><code>java11</code></td>
 <td>Java 11</td>
-<td>Legacy</td>
+<td>Ubuntu</td>
+<td>amd64, arm64, armv7</td>
+<td>레거시</td>
 </tr>
 <tr>
 <td><code>java8</code></td>
 <td>Java 8</td>
-<td>Forge 1.17 and below</td>
+<td>Ubuntu</td>
+<td>amd64, arm64, armv7</td>
+<td>Forge 1.17 이하</td>
 </tr>
 </tbody>
 </table>
-<h2 id="java-requirements-by-version">Java Requirements by Version<a class="headerlink" href="#java-requirements-by-version" title="Permanent link">&para;</a></h2>
+<div class="admonition info">
+<p class="admonition-title"><code>stable</code> 태그</p>
+<p><code>stable</code> 태그는 항상 가장 최신 <strong>릴리즈</strong> 버전의 이미지를 가리킵니다.
+사전 릴리즈 빌드를 포함할 수 있는 <code>latest</code>와 달리, <code>stable</code>은 안정적인
+프로덕션용 이미지를 제공합니다.</p>
+</div>
+<h3 id="지원-중단된-태그">지원 중단된 태그<a class="headerlink" href="#지원-중단된-태그" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">지원 중단된 태그</p>
+<p>다음 태그들은 <strong>지원 중단(deprecated)</strong> 되었으며 새로운 배포에서 사용하지 마십시오:</p>
+<ul>
+<li><code>java23</code>, <code>java23-alpine</code>, <code>java23-jdk</code> -- 대신 <code>java25</code>를 사용하세요</li>
+<li><code>java24</code>, <code>java24-graalvm</code> -- 대신 <code>java25</code>를 사용하세요</li>
+<li><code>java17-alpine</code> -- 대신 <code>java17</code> 또는 <code>java21-alpine</code>을 사용하세요</li>
+<li><code>java25-graalvm</code>, <code>java21-graalvm</code>, <code>java17-graalvm</code> -- <strong>모든 GraalVM 태그가 지원 중단됨</strong> (아래 참조)</li>
+</ul>
+</div>
+<h3 id="프로그래밍-방식-접근">프로그래밍 방식 접근<a class="headerlink" href="#프로그래밍-방식-접근" title="Permanent link">&para;</a></h3>
+<p>지원되는 이미지 태그의 전체 목록과 메타데이터를 JSON으로 확인할 수 있습니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>https://raw.githubusercontent.com/itzg/docker-minecraft-server/refs/heads/master/images.json
+</code></pre></div>
+<h2 id="버전별-java-요구사항">버전별 Java 요구사항<a class="headerlink" href="#버전별-java-요구사항" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Minecraft Version</th>
-<th>Minimum Java</th>
-<th>Recommended Java</th>
+<th>마인크래프트 버전</th>
+<th>최소 Java</th>
+<th>권장 Java</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>1.21+</td>
 <td>Java 21</td>
-<td>Java 21</td>
+<td>Java 21 또는 25</td>
 </tr>
 <tr>
 <td>1.20.5 - 1.20.6</td>
@@ -2388,31 +2491,31 @@
 <td>Java 8/11</td>
 </tr>
 <tr>
-<td>1.11 and below</td>
+<td>1.11 이하</td>
 <td>Java 8</td>
 <td>Java 8</td>
 </tr>
 </tbody>
 </table>
-<h2 id="how-to-select-java-version">How to Select Java Version<a class="headerlink" href="#how-to-select-java-version" title="Permanent link">&para;</a></h2>
+<h2 id="java-버전-선택-방법">Java 버전 선택 방법<a class="headerlink" href="#java-버전-선택-방법" title="Permanent link">&para;</a></h2>
 <h3 id="docker-cli">Docker CLI<a class="headerlink" href="#docker-cli" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>-e<span class="w"> </span><span class="nv">EULA</span><span class="o">=</span>TRUE<span class="w"> </span>itzg/minecraft-server:java21
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>-e<span class="w"> </span><span class="nv">EULA</span><span class="o">=</span>TRUE<span class="w"> </span>itzg/minecraft-server:java21
 </code></pre></div>
 <h3 id="docker-compose">Docker Compose<a class="headerlink" href="#docker-compose" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
 </code></pre></div>
-<h2 id="forge-server-java-versions">Forge Server Java Versions<a class="headerlink" href="#forge-server-java-versions" title="Permanent link">&para;</a></h2>
-<p>Forge requires specific Java versions:</p>
+<h2 id="forge-서버-java-버전">Forge 서버 Java 버전<a class="headerlink" href="#forge-서버-java-버전" title="Permanent link">&para;</a></h2>
+<p>Forge는 특정 Java 버전이 필요합니다:</p>
 <table>
 <thead>
 <tr>
-<th>Forge/Minecraft Version</th>
-<th>Required Java</th>
+<th>Forge/마인크래프트 버전</th>
+<th>필요 Java</th>
 </tr>
 </thead>
 <tbody>
@@ -2429,122 +2532,173 @@
 <td>Java 16/17</td>
 </tr>
 <tr>
-<td><strong>Forge 1.16.5 and below</strong></td>
-<td><strong>Java 8 required</strong></td>
+<td><strong>Forge 1.16.5 이하</strong></td>
+<td><strong>Java 8 필수</strong></td>
 </tr>
 </tbody>
 </table>
-<h3 id="forge-1165-example">Forge 1.16.5 Example<a class="headerlink" href="#forge-1165-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java8</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.16.5&quot;</span>
-</code></pre></div>
-<h3 id="forge-1201-example">Forge 1.20.1 Example<a class="headerlink" href="#forge-1201-example" title="Permanent link">&para;</a></h3>
+<h3 id="forge-1165-예제">Forge 1.16.5 예제<a class="headerlink" href="#forge-1165-예제" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java8</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.16.5&quot;</span>
 </code></pre></div>
-<h2 id="common-errors-and-solutions">Common Errors and Solutions<a class="headerlink" href="#common-errors-and-solutions" title="Permanent link">&para;</a></h2>
-<h3 id="class-file-version-650-error">"class file version 65.0" Error<a class="headerlink" href="#class-file-version-650-error" title="Permanent link">&para;</a></h3>
-<p>Java 21 or higher is required:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21</span>
+<h3 id="forge-1201-예제">Forge 1.20.1 예제<a class="headerlink" href="#forge-1201-예제" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
 </code></pre></div>
-<h3 id="unsupported-class-file-major-version-error">"Unsupported class file major version" Error<a class="headerlink" href="#unsupported-class-file-major-version-error" title="Permanent link">&para;</a></h3>
-<p>Java version is too high. Use a lower version:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># For Forge 1.16.5</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java8</span>
+<h2 id="흔한-오류와-해결법">흔한 오류와 해결법<a class="headerlink" href="#흔한-오류와-해결법" title="Permanent link">&para;</a></h2>
+<h3 id="class-file-version-650-오류">"class file version 65.0" 오류<a class="headerlink" href="#class-file-version-650-오류" title="Permanent link">&para;</a></h3>
+<p>Java 21 이상이 필요합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21</span>
 </code></pre></div>
-<h3 id="mod-compatibility-issues">Mod Compatibility Issues<a class="headerlink" href="#mod-compatibility-issues" title="Permanent link">&para;</a></h3>
-<p>Some mods require specific Java versions. Check the mod documentation.</p>
-<h2 id="architecture-specific-tags">Architecture-Specific Tags<a class="headerlink" href="#architecture-specific-tags" title="Permanent link">&para;</a></h2>
-<p>Support for various CPU architectures:</p>
+<h3 id="unsupported-class-file-major-version-오류">"Unsupported class file major version" 오류<a class="headerlink" href="#unsupported-class-file-major-version-오류" title="Permanent link">&para;</a></h3>
+<p>Java 버전이 너무 높습니다. 낮은 버전을 사용하세요:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Forge 1.16.5의 경우</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java8</span>
+</code></pre></div>
+<h3 id="모드-호환성-문제">모드 호환성 문제<a class="headerlink" href="#모드-호환성-문제" title="Permanent link">&para;</a></h3>
+<p>일부 모드는 특정 Java 버전이 필요합니다. 모드 문서를 확인하세요.</p>
+<h2 id="아키텍처별-태그">아키텍처별 태그<a class="headerlink" href="#아키텍처별-태그" title="Permanent link">&para;</a></h2>
+<p>다양한 CPU 아키텍처를 지원합니다:</p>
 <table>
 <thead>
 <tr>
-<th>Tag</th>
-<th>Architecture</th>
+<th>태그</th>
+<th>Java</th>
+<th>Linux</th>
+<th>아키텍처</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td><code>latest</code>, <code>stable</code></td>
+<td>25</td>
+<td>Ubuntu</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>java25</code></td>
+<td>25</td>
+<td>Ubuntu</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>java25-alpine</code></td>
+<td>25</td>
+<td>Alpine</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>java25-jdk</code></td>
+<td>25</td>
+<td>Ubuntu+JDK</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
 <td><code>java21</code></td>
+<td>21</td>
+<td>Ubuntu</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>java21-jdk</code></td>
+<td>21</td>
+<td>Ubuntu+JDK</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>java21-alpine</code></td>
+<td>21</td>
+<td>Alpine</td>
 <td>amd64, arm64</td>
 </tr>
 <tr>
 <td><code>java17</code></td>
+<td>17</td>
+<td>Ubuntu</td>
+<td>amd64, arm64, armv7</td>
+</tr>
+<tr>
+<td><code>java16</code></td>
+<td>16</td>
+<td>Ubuntu</td>
+<td>amd64, arm64, armv7</td>
+</tr>
+<tr>
+<td><code>java11</code></td>
+<td>11</td>
+<td>Ubuntu</td>
 <td>amd64, arm64, armv7</td>
 </tr>
 <tr>
 <td><code>java8</code></td>
-<td>amd64, arm64</td>
+<td>8</td>
+<td>Ubuntu</td>
+<td>amd64, arm64, armv7</td>
 </tr>
 </tbody>
 </table>
-<h3 id="arm-devices-raspberry-pi-etc">ARM Devices (Raspberry Pi, etc.)<a class="headerlink" href="#arm-devices-raspberry-pi-etc" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># or arm64 only</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17-graalvm</span>
+<h3 id="arm-장치-raspberry-pi-등">ARM 장치 (Raspberry Pi 등)<a class="headerlink" href="#arm-장치-raspberry-pi-등" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># java17은 armv7 지원 (Raspberry Pi 3/4 32비트)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># java21+는 arm64만 지원 (Raspberry Pi 4/5 64비트)</span>
 </code></pre></div>
-<h2 id="graalvm-variants">GraalVM Variants<a class="headerlink" href="#graalvm-variants" title="Permanent link">&para;</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">Auto-Pause Not Supported</p>
-<p>Auto-pause (<code>ENABLE_AUTOPAUSE</code>) is currently incompatible with GraalVM images.
-If you need auto-pause functionality, use standard OpenJDK images instead.</p>
+<h2 id="graalvm-변형-지원-중단">GraalVM 변형 (지원 중단)<a class="headerlink" href="#graalvm-변형-지원-중단" title="Permanent link">&para;</a></h2>
+<div class="admonition danger">
+<p class="admonition-title">모든 GraalVM 태그 지원 중단</p>
+<p>GraalVM 이미지 변형(<code>java25-graalvm</code>, <code>java21-graalvm</code>, <code>java17-graalvm</code>)은
+<strong>모두 지원 중단(deprecated)</strong> 되었으며 향후 릴리즈에서 제거될 예정입니다.</p>
+<p><strong>마이그레이션</strong>: 표준 OpenJDK 기반 태그(<code>java25</code>, <code>java21</code>, <code>java17</code>)로 전환하세요.</p>
+<p>이전에 GraalVM 이미지는 Auto-Pause(<code>ENABLE_AUTOPAUSE</code>) 기능과도 호환되지 않았습니다.</p>
 </div>
-<p>GraalVM images for performance improvement:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21-graalvm</span>
+<h2 id="버전-선택-가이드">버전 선택 가이드<a class="headerlink" href="#버전-선택-가이드" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Minecraft 1.21+ --&gt; java21 또는 latest (Java 25)
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>Minecraft 1.18-1.20.4 --&gt; java17 또는 java21
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>Forge 1.16.5 이하 --&gt; java8 (필수)
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>모드팩 --&gt; 모드팩 요구사항 확인
 </code></pre></div>
-<p>Use with GraalVM optimization flags:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21-graalvm</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">      </span><span class="nt">USE_MEOWICE_GRAALVM_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<div class="admonition tip">
+<p class="admonition-title">잘 모르겠다면</p>
+<p>Minecraft 1.20.5 이상에는 <code>java21</code>을 사용하세요. <code>latest</code>/<code>stable</code> 태그는 이제
+Java 25를 사용하며, 모든 최신 마인크래프트 버전에서 동작합니다.</p>
+</div>
+<h2 id="예제-버전별-구성">예제: 버전별 구성<a class="headerlink" href="#예제-버전별-구성" title="Permanent link">&para;</a></h2>
+<h3 id="최신-paper-서버">최신 Paper 서버<a class="headerlink" href="#최신-paper-서버" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PAPER&quot;</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;LATEST&quot;</span>
 </code></pre></div>
-<h2 id="version-selection-guide">Version Selection Guide<a class="headerlink" href="#version-selection-guide" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>Minecraft 1.21+ → java21 or latest
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Minecraft 1.18-1.20.4 → java17 or java21
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Forge 1.16.5 and below → java8 (required)
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>Modpacks → Check modpack requirements
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>Latest features → java21-graalvm
-</code></pre></div>
-<h2 id="examples-version-specific-configurations">Examples: Version-Specific Configurations<a class="headerlink" href="#examples-version-specific-configurations" title="Permanent link">&para;</a></h2>
-<h3 id="latest-paper-server">Latest Paper Server<a class="headerlink" href="#latest-paper-server" title="Permanent link">&para;</a></h3>
+<h3 id="레거시-forge-모드팩">레거시 Forge 모드팩<a class="headerlink" href="#레거시-forge-모드팩" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java8</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PAPER&quot;</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;LATEST&quot;</span>
-</code></pre></div>
-<h3 id="legacy-forge-modpack">Legacy Forge Modpack<a class="headerlink" href="#legacy-forge-modpack" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java8</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.12.2&quot;</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">      </span><span class="nt">FORGE_VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;14.23.5.2860&quot;</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.12.2&quot;</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">      </span><span class="nt">FORGE_VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;14.23.5.2860&quot;</span>
 </code></pre></div>
 <h3 id="fabric-1204">Fabric 1.20.4<a class="headerlink" href="#fabric-1204" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FABRIC&quot;</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">services</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FABRIC&quot;</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
 </code></pre></div>
 
 

@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -2086,6 +2086,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Paper-based Alternative Servers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#leaf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Leaf
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#folia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Folia
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-repositories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Repositories
+      
+    </span>
+  </a>
+  
 </li>
         
       </ul>
@@ -2395,10 +2434,103 @@
 </tr>
 <tr>
 <td><code>LEAF</code></td>
-<td>Lightweight fork</td>
+<td>Performance optimized lightweight fork</td>
 </tr>
 </tbody>
 </table>
+<h4 id="leaf">Leaf<a class="headerlink" href="#leaf" title="Permanent link">&para;</a></h4>
+<p>Performance-optimized Paper fork focused on lightweight server operation:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TYPE</code></td>
+<td><code>LEAF</code></td>
+</tr>
+<tr>
+<td><code>LEAF_BUILD</code></td>
+<td>Specific build number</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;LEAF&quot;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.21.1&quot;</span>
+</code></pre></div>
+<h4 id="folia">Folia<a class="headerlink" href="#folia" title="Permanent link">&para;</a></h4>
+<p>Multi-threaded Paper fork for large-scale servers:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TYPE</code></td>
+<td><code>FOLIA</code></td>
+</tr>
+<tr>
+<td><code>FOLIA_CHANNEL</code></td>
+<td><code>experimental</code> or <code>default</code></td>
+</tr>
+<tr>
+<td><code>FOLIA_DOWNLOAD_URL</code></td>
+<td>Custom download URL</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FOLIA&quot;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nt">FOLIA_CHANNEL</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;experimental&quot;</span>
+</code></pre></div>
+<h3 id="configuration-repositories">Configuration Repositories<a class="headerlink" href="#configuration-repositories" title="Permanent link">&para;</a></h3>
+<p>Automatically download optimized configuration files from Git repositories:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Server Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PAPER_CONFIG_REPO</code></td>
+<td>PAPER</td>
+<td>Paper optimized config repository URL</td>
+</tr>
+<tr>
+<td><code>PUFFERFISH_CONFIG_REPO</code></td>
+<td>PUFFERFISH</td>
+<td>Pufferfish config repository URL</td>
+</tr>
+<tr>
+<td><code>PURPUR_CONFIG_REPO</code></td>
+<td>PURPUR</td>
+<td>Purpur config repository URL</td>
+</tr>
+<tr>
+<td><code>SERVER_PROPERTIES_REPO_URL</code></td>
+<td>ALL</td>
+<td>Base server.properties repository (Smart Mode / Direct Mode)</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PAPER&quot;</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">PAPER_CONFIG_REPO</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://github.com/example/paper-configs.git&quot;</span>
+</code></pre></div>
 <hr />
 <h2 id="forge">Forge<a class="headerlink" href="#forge" title="Permanent link">&para;</a></h2>
 <p>Mod support server:</p>
@@ -2424,7 +2556,7 @@
 </tr>
 <tr>
 <td><code>FORGE_INSTALLER_URL</code></td>
-<td>Installer download URL</td>
+<td>Installer download URL (also used for Cleanroom server)</td>
 </tr>
 <tr>
 <td><code>FORGE_FORCE_REINSTALL</code></td>
@@ -2432,19 +2564,40 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">FORGE_VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;latest&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="nt">FORGE_VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;latest&quot;</span>
 </code></pre></div>
+<blockquote>
+<p><strong>Tip</strong>: <a href="https://github.com/CleanroomMC/Cleanroom">Cleanroom</a> is an alternative Forge-compatible server that can be installed by providing a custom installer URL via <code>FORGE_INSTALLER_URL</code>.</p>
+</blockquote>
 <h3 id="neoforge">NeoForge<a class="headerlink" href="#neoforge" title="Permanent link">&para;</a></h3>
 <p>Community fork of Forge:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;NEOFORGE&quot;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nt">NEOFORGE_VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;latest&quot;</span>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TYPE</code></td>
+<td><code>NEOFORGE</code></td>
+</tr>
+<tr>
+<td><code>NEOFORGE_VERSION</code></td>
+<td><code>latest</code>, <code>beta</code>, or specific version number</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;NEOFORGE&quot;</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="nt">NEOFORGE_VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;latest&quot;</span><span class="w">  </span><span class="c1"># also supports &quot;beta&quot;</span>
 </code></pre></div>
 <hr />
 <h2 id="fabric">Fabric<a class="headerlink" href="#fabric" title="Permanent link">&para;</a></h2>
@@ -2478,20 +2631,24 @@
 <td>Custom launcher URL</td>
 </tr>
 <tr>
+<td><code>FABRIC_META_BASE_URL</code></td>
+<td>Custom Fabric meta API base URL (for mirrors)</td>
+</tr>
+<tr>
 <td><code>FABRIC_FORCE_REINSTALL</code></td>
 <td>Force reinstall</td>
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FABRIC&quot;</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FABRIC&quot;</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
 </code></pre></div>
 <h3 id="installing-fabric-api">Installing Fabric API<a class="headerlink" href="#installing-fabric-api" title="Permanent link">&para;</a></h3>
 <p>Most mods require Fabric API:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fabric-api&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fabric-api&quot;</span>
 </code></pre></div>
 <hr />
 <h2 id="quilt">Quilt<a class="headerlink" href="#quilt" title="Permanent link">&para;</a></h2>
@@ -2518,18 +2675,18 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;QUILT&quot;</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;QUILT&quot;</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
 </code></pre></div>
 <hr />
 <h2 id="bukkit--spigot">Bukkit / Spigot<a class="headerlink" href="#bukkit--spigot" title="Permanent link">&para;</a></h2>
 <p>Plugin support servers (Paper recommended):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SPIGOT&quot;</span><span class="w">  </span><span class="c1"># or BUKKIT</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SPIGOT&quot;</span><span class="w">  </span><span class="c1"># or BUKKIT</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
 </code></pre></div>
 <blockquote>
 <p><strong>Note</strong>: Bukkit/Spigot auto-download can be unstable. Paper is recommended.</p>
@@ -2538,30 +2695,30 @@
 <h2 id="hybrid-servers">Hybrid Servers<a class="headerlink" href="#hybrid-servers" title="Permanent link">&para;</a></h2>
 <p>Support both mods and plugins:</p>
 <h3 id="mohist">Mohist<a class="headerlink" href="#mohist" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MOHIST&quot;</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
-</code></pre></div>
-<h3 id="magma-maintained">Magma Maintained<a class="headerlink" href="#magma-maintained" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MAGMA_MAINTAINED&quot;</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="nt">FORGE_VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;47.2.0&quot;</span>
-</code></pre></div>
-<h3 id="arclight">Arclight<a class="headerlink" href="#arclight" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ARCLIGHT&quot;</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">ARCLIGHT_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span><span class="w">  </span><span class="c1"># FORGE, NEOFORGE, FABRIC</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
-</code></pre></div>
-<h3 id="ketting">Ketting<a class="headerlink" href="#ketting" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">environment</span><span class="p">:</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;KETTING&quot;</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MOHIST&quot;</span>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
+</code></pre></div>
+<h3 id="magma-maintained">Magma Maintained<a class="headerlink" href="#magma-maintained" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MAGMA_MAINTAINED&quot;</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span><span class="nt">FORGE_VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;47.2.0&quot;</span>
+</code></pre></div>
+<h3 id="arclight">Arclight<a class="headerlink" href="#arclight" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ARCLIGHT&quot;</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="nt">ARCLIGHT_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span><span class="w">  </span><span class="c1"># FORGE, NEOFORGE, FABRIC</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
+</code></pre></div>
+<h3 id="ketting">Ketting<a class="headerlink" href="#ketting" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;KETTING&quot;</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
 </code></pre></div>
 <hr />
 <h2 id="modpack-platforms">Modpack Platforms<a class="headerlink" href="#modpack-platforms" title="Permanent link">&para;</a></h2>
@@ -2605,11 +2762,11 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;AUTO_CURSEFORGE&quot;</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${CF_API_KEY}&quot;</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span><span class="nt">CF_SLUG</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;all-the-mods-9&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;AUTO_CURSEFORGE&quot;</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${CF_API_KEY}&quot;</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">  </span><span class="nt">CF_SLUG</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;all-the-mods-9&quot;</span>
 </code></pre></div>
 <h3 id="modrinth-modpacks">Modrinth Modpacks<a class="headerlink" href="#modrinth-modpacks" title="Permanent link">&para;</a></h3>
 <table>
@@ -2638,26 +2795,26 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MODRINTH&quot;</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="nt">MODRINTH_MODPACK</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;cobblemon-modpack&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MODRINTH&quot;</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">  </span><span class="nt">MODRINTH_MODPACK</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;cobblemon-modpack&quot;</span>
 </code></pre></div>
 <h3 id="ftb-feed-the-beast">FTB (Feed The Beast)<a class="headerlink" href="#ftb-feed-the-beast" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FTBA&quot;</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span><span class="nt">FTB_MODPACK_ID</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;123&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FTBA&quot;</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span><span class="nt">FTB_MODPACK_ID</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;123&quot;</span>
 </code></pre></div>
 <hr />
 <h2 id="custom-server">Custom Server<a class="headerlink" href="#custom-server" title="Permanent link">&para;</a></h2>
 <p>Custom server JAR:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;CUSTOM&quot;</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span><span class="nt">CUSTOM_SERVER</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/custom-server.jar&quot;</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">  </span><span class="c1"># or</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">  </span><span class="nt">CUSTOM_SERVER</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/server.jar&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;CUSTOM&quot;</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span><span class="nt">CUSTOM_SERVER</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/custom-server.jar&quot;</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">  </span><span class="c1"># or</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">  </span><span class="nt">CUSTOM_SERVER</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/server.jar&quot;</span>
 </code></pre></div>
 <hr />
 <h2 id="server-type-summary">Server Type Summary<a class="headerlink" href="#server-type-summary" title="Permanent link">&para;</a></h2>
