@@ -49,6 +49,25 @@ export class McVersion {
   }
 
   /**
+   * Returns the recommended Docker image tag for this Minecraft version.
+   * The itzg/minecraft-server latest/stable tag now defaults to Java 25,
+   * but MC gameplay requirements differ from available image tags.
+   * Use this to pick the safest/correct image tag for a given MC version.
+   */
+  get recommendedImageTag(): string {
+    if (this._major >= 1 && this._minor >= 21) {
+      return 'java21'; // MC 1.21+ requires Java 21, java21 tag is safest
+    }
+    if (this._major >= 1 && this._minor >= 18) {
+      return 'java17';
+    }
+    if (this._major >= 1 && this._minor === 17) {
+      return 'java17'; // java16 tag exists but java17 is more common
+    }
+    return 'java8';
+  }
+
+  /**
    * Check if this version is compatible with Java version
    */
   isCompatibleWithJava(javaVersion: number): boolean {
