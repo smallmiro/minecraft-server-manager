@@ -8,12 +8,88 @@ import {
 } from '../lib/update-checker.js';
 import { checkServiceAvailability, PM2_SERVICE_NAMES } from '../lib/pm2-utils.js';
 import { Pm2ServiceManagerAdapter } from '../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
+import { ShellExecutor } from '../lib/shell.js';
 import { spawnSync } from 'child_process';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import * as prompts from '@clack/prompts';
 
 const PACKAGE_NAME = '@minecraft-docker/mcctl';
+
+/**
+ * Scan platform/servers docker-compose.yml files and return unique Docker image names.
+ * Skips the _template directory.
+ */
+export function scanDockerImages(serversDir: string): string[] {
+  if (!existsSync(serversDir)) {
+    return [];
+  }
+
+  const entries = readdirSync(serversDir);
+  const images = new Set<string>();
+
+  for (const entry of entries) {
+    if (entry === '_template') {
+      continue;
+    }
+
+    const composePath = join(serversDir, entry, 'docker-compose.yml');
+    if (!existsSync(composePath)) {
+      continue;
+    }
+
+    const content = readFileSync(composePath, 'utf-8');
+    const imageRegex = /^\s+image:\s+(.+)$/gm;
+    let match: RegExpExecArray | null;
+
+    while ((match = imageRegex.exec(content)) !== null) {
+      const imageName = match[1]!.trim();
+      if (imageName) {
+        images.add(imageName);
+      }
+    }
+  }
+
+  return Array.from(images);
+}
+
+/**
+ * Pull all unique Docker images found in server docker-compose files.
+ */
+export async function updateDockerImages(serversDir: string, rootDir: string): Promise<number> {
+  const images = scanDockerImages(serversDir);
+
+  if (images.length === 0) {
+    console.log(colors.dim('  No Docker images found in server configurations.'));
+    console.log('');
+    return 0;
+  }
+
+  console.log(colors.bold('Updating Docker images...'));
+  console.log('');
+
+  const shell = new ShellExecutor(new Paths(rootDir));
+  const spinner = prompts.spinner();
+  let hasErrors = false;
+
+  for (const image of images) {
+    spinner.start(`Pulling ${image}...`);
+    // Stop spinner before pull so the docker progress output is visible
+    spinner.stop(`Pulling ${image}`);
+
+    const code = await shell.dockerPull(image);
+
+    if (code === 0) {
+      console.log(`  ${colors.green('✓')} ${image}`);
+    } else {
+      console.log(`  ${colors.red('✗')} ${image} ${colors.dim('(pull failed)')}`);
+      hasErrors = true;
+    }
+  }
+
+  console.log('');
+  return hasErrors ? 1 : 0;
+}
 
 const SERVICE_PACKAGES = {
   [PM2_SERVICE_NAMES.API]: '@minecraft-docker/mcctl-api',
@@ -430,6 +506,18 @@ export async function updateServices(
 
   // Print results summary
   printServiceResults(results, options.check);
+
+  // Update Docker images (skip in check-only mode)
+  if (!options.check) {
+    const paths = new Paths(rootDir);
+    const dockerResult = await updateDockerImages(paths.servers, rootDir);
+    if (dockerResult !== 0) {
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(colors.dim(`  Completed in ${elapsed}s`));
+      console.log('');
+      return 1;
+    }
+  }
 
   // Print elapsed time
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
