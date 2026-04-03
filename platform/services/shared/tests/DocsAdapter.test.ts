@@ -1,5 +1,4 @@
-import { test, describe, beforeEach, afterEach } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -66,14 +65,14 @@ describe('DocsAdapter', () => {
       // So if we pass join(tmpRoot, 'platform') as rootDir, docs = join(tmpRoot, 'platform', '..', 'docs') = tmpRoot/docs
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const available = await adapter.isAvailable();
-      assert.strictEqual(available, true);
+      expect(available).toBe(true);
     });
 
     test('should return false when itzg-reference directory does not exist', async () => {
       // No files written - itzg-reference dir is empty (no md files)
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const available = await adapter.isAvailable();
-      assert.strictEqual(available, false);
+      expect(available).toBe(false);
     });
 
     test('should return false when docs directory does not exist at all', async () => {
@@ -82,7 +81,7 @@ describe('DocsAdapter', () => {
       try {
         const adapter = new DocsAdapter(join(isolatedTmp, 'platform'));
         const available = await adapter.isAvailable();
-        assert.strictEqual(available, false);
+        expect(available).toBe(false);
       } finally {
         rmSync(isolatedTmp, { recursive: true, force: true });
       }
@@ -95,7 +94,7 @@ describe('DocsAdapter', () => {
       // Should return false because the file is not in itzg-reference/
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const available = await adapter.isAvailable();
-      assert.strictEqual(available, false);
+      expect(available).toBe(false);
     });
   });
 
@@ -104,20 +103,20 @@ describe('DocsAdapter', () => {
       writeFileSync(join(docsDir, '06-types-and-platforms.md'), TYPES_FILE_CONTENT);
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const types = await adapter.getServerTypes();
-      assert.ok(types.length > 0, 'should return at least one server type');
+      expect(types.length > 0).toBeTruthy();
       const paper = types.find((t) => t.value === 'PAPER');
-      assert.ok(paper, 'should include PAPER type');
-      assert.strictEqual(paper?.supportsPlugins, true);
-      assert.strictEqual(paper?.supportsMods, false);
+      expect(paper).toBeTruthy();
+      expect(paper?.supportsPlugins).toBe(true);
+      expect(paper?.supportsMods).toBe(false);
     });
 
     test('should fall back to defaults when itzg-reference/06-types-and-platforms.md is missing', async () => {
       // No file written
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const types = await adapter.getServerTypes();
-      assert.ok(types.length > 0, 'should return default types');
+      expect(types.length > 0).toBeTruthy();
       const paper = types.find((t) => t.value === 'PAPER');
-      assert.ok(paper, 'defaults should include PAPER');
+      expect(paper).toBeTruthy();
     });
 
     test('should NOT read from docs root when itzg-reference file is missing', async () => {
@@ -128,11 +127,11 @@ describe('DocsAdapter', () => {
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       // isAvailable returns false (file not in itzg-reference/)
       const available = await adapter.isAvailable();
-      assert.strictEqual(available, false);
+      expect(available).toBe(false);
       // getServerTypes returns defaults (not parsing the wrong-location file)
       const types = await adapter.getServerTypes();
       // Defaults still include PAPER, so just check it returns something
-      assert.ok(types.length > 0);
+      expect(types.length > 0).toBeTruthy();
     });
   });
 
@@ -141,29 +140,28 @@ describe('DocsAdapter', () => {
       writeFileSync(join(docsDir, '03-variables.md'), VARIABLES_FILE_CONTENT);
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const vars = await adapter.getEnvVars();
-      assert.ok(vars.length > 0, 'should return at least one env var');
+      expect(vars.length > 0).toBeTruthy();
       const eula = vars.find((v) => v.name === 'EULA');
-      assert.ok(eula, 'should include EULA variable');
+      expect(eula).toBeTruthy();
     });
 
     test('should filter env vars by category', async () => {
       writeFileSync(join(docsDir, '03-variables.md'), VARIABLES_FILE_CONTENT);
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const memoryVars = await adapter.getEnvVars('Memory Settings');
-      assert.ok(memoryVars.length > 0, 'should return memory settings');
-      assert.ok(
-        memoryVars.every((v) => v.category.toLowerCase() === 'memory settings'),
-        'all returned vars should be in Memory Settings category'
-      );
+      expect(memoryVars.length > 0).toBeTruthy();
+      expect(
+        memoryVars.every((v) => v.category.toLowerCase() === 'memory settings')
+      ).toBeTruthy();
     });
 
     test('should fall back to defaults when itzg-reference/03-variables.md is missing', async () => {
       // No file written
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const vars = await adapter.getEnvVars();
-      assert.ok(vars.length > 0, 'should return default env vars');
+      expect(vars.length > 0).toBeTruthy();
       const eula = vars.find((v) => v.name === 'EULA');
-      assert.ok(eula, 'defaults should include EULA');
+      expect(eula).toBeTruthy();
     });
 
     test('should NOT read from docs root when itzg-reference file is missing', async () => {
@@ -173,7 +171,7 @@ describe('DocsAdapter', () => {
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       // Should use defaults (not parsing the wrong-location file)
       const vars = await adapter.getEnvVars();
-      assert.ok(vars.length > 0, 'should return defaults');
+      expect(vars.length > 0).toBeTruthy();
     });
   });
 
@@ -181,9 +179,9 @@ describe('DocsAdapter', () => {
     test('should return version compatibility info for PAPER', async () => {
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const versions = await adapter.getVersionCompatibility('PAPER');
-      assert.ok(versions.length > 0);
+      expect(versions.length > 0).toBeTruthy();
       const latest = versions.find((v) => v.mcVersion === 'LATEST');
-      assert.ok(latest, 'should include LATEST version');
+      expect(latest).toBeTruthy();
     });
   });
 
@@ -191,9 +189,9 @@ describe('DocsAdapter', () => {
     test('should return memory recommendations', async () => {
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const recommendations = await adapter.getMemoryRecommendations();
-      assert.ok(recommendations.length > 0);
+      expect(recommendations.length > 0).toBeTruthy();
       const recommended = recommendations.find((r) => r.recommended);
-      assert.ok(recommended, 'should include at least one recommended option');
+      expect(recommended).toBeTruthy();
     });
   });
 
@@ -201,8 +199,8 @@ describe('DocsAdapter', () => {
     test('should return list of common Minecraft versions', async () => {
       const adapter = new DocsAdapter(join(tmpRoot, 'platform'));
       const versions = await adapter.getCommonVersions();
-      assert.ok(versions.length > 0);
-      assert.ok(versions.includes('LATEST'), 'should include LATEST');
+      expect(versions.length > 0).toBeTruthy();
+      expect(versions.includes('LATEST')).toBeTruthy();
     });
   });
 });

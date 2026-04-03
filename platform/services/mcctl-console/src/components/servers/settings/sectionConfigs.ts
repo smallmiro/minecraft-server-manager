@@ -90,6 +90,8 @@ export const sectionConfigs: SectionConfig[] = [
     description: 'WebSocket console and SSH access configuration.',
     essentialFields: remoteAccessEssentialFields,
     advancedFields: remoteAccessAdvancedFields,
+  },
+  {
     id: 'config-repos',
     icon: FolderSpecialIcon,
     title: 'Configuration Repositories',

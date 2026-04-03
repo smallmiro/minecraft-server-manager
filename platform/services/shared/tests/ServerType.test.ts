@@ -93,9 +93,7 @@ describe('ServerType', () => {
 
     test('should have 14 total server types', () => {
       const allTypes = ServerType.getAll();
-      expect(allTypes.length).toBe(11);
-      assert.strictEqual(allTypes.length, 14);
-      expect(allTypes.length).toBe(11);
+      expect(allTypes.length).toBe(14);
     });
 
     test('all types should have isModpack property', () => {
@@ -110,47 +108,47 @@ describe('ServerType', () => {
       const allTypes = ServerType.getAll();
       const typeValues = allTypes.map((t) => t.value);
 
-      assert.ok(typeValues.includes(ServerTypeEnum.LEAF), 'LEAF should be included');
-      assert.ok(typeValues.includes(ServerTypeEnum.FOLIA), 'FOLIA should be included');
-      assert.ok(typeValues.includes(ServerTypeEnum.PUFFERFISH), 'PUFFERFISH should be included');
+      expect(typeValues.includes(ServerTypeEnum.LEAF)).toBeTruthy();
+      expect(typeValues.includes(ServerTypeEnum.FOLIA)).toBeTruthy();
+      expect(typeValues.includes(ServerTypeEnum.PUFFERFISH)).toBeTruthy();
     });
   });
 
   describe('new server types: LEAF, FOLIA, PUFFERFISH', () => {
     describe('enum values', () => {
       test('should have LEAF type', () => {
-        assert.strictEqual(ServerTypeEnum.LEAF, 'LEAF');
+        expect(ServerTypeEnum.LEAF).toBe('LEAF');
       });
 
       test('should have FOLIA type', () => {
-        assert.strictEqual(ServerTypeEnum.FOLIA, 'FOLIA');
+        expect(ServerTypeEnum.FOLIA).toBe('FOLIA');
       });
 
       test('should have PUFFERFISH type', () => {
-        assert.strictEqual(ServerTypeEnum.PUFFERFISH, 'PUFFERFISH');
+        expect(ServerTypeEnum.PUFFERFISH).toBe('PUFFERFISH');
       });
     });
 
     describe('create', () => {
       test('should create LEAF server type', () => {
         const serverType = ServerType.create('LEAF');
-        assert.strictEqual(serverType.value, ServerTypeEnum.LEAF);
+        expect(serverType.value).toBe(ServerTypeEnum.LEAF);
       });
 
       test('should create FOLIA server type', () => {
         const serverType = ServerType.create('FOLIA');
-        assert.strictEqual(serverType.value, ServerTypeEnum.FOLIA);
+        expect(serverType.value).toBe(ServerTypeEnum.FOLIA);
       });
 
       test('should create PUFFERFISH server type', () => {
         const serverType = ServerType.create('PUFFERFISH');
-        assert.strictEqual(serverType.value, ServerTypeEnum.PUFFERFISH);
+        expect(serverType.value).toBe(ServerTypeEnum.PUFFERFISH);
       });
 
       test('should create server types case-insensitively', () => {
-        assert.strictEqual(ServerType.create('leaf').value, ServerTypeEnum.LEAF);
-        assert.strictEqual(ServerType.create('folia').value, ServerTypeEnum.FOLIA);
-        assert.strictEqual(ServerType.create('pufferfish').value, ServerTypeEnum.PUFFERFISH);
+        expect(ServerType.create('leaf').value).toBe(ServerTypeEnum.LEAF);
+        expect(ServerType.create('folia').value).toBe(ServerTypeEnum.FOLIA);
+        expect(ServerType.create('pufferfish').value).toBe(ServerTypeEnum.PUFFERFISH);
       });
     });
 
@@ -159,59 +157,59 @@ describe('ServerType', () => {
         const serverType = ServerType.create('LEAF');
         const info = serverType.info;
 
-        assert.strictEqual(info.supportsPlugins, true);
-        assert.strictEqual(info.supportsMods, false);
-        assert.strictEqual(info.isModpack, false);
-        assert.strictEqual(info.recommended, false);
+        expect(info.supportsPlugins).toBe(true);
+        expect(info.supportsMods).toBe(false);
+        expect(info.isModpack).toBe(false);
+        expect(info.recommended).toBe(false);
       });
 
       test('FOLIA should support plugins but not mods', () => {
         const serverType = ServerType.create('FOLIA');
         const info = serverType.info;
 
-        assert.strictEqual(info.supportsPlugins, true);
-        assert.strictEqual(info.supportsMods, false);
-        assert.strictEqual(info.isModpack, false);
-        assert.strictEqual(info.recommended, false);
+        expect(info.supportsPlugins).toBe(true);
+        expect(info.supportsMods).toBe(false);
+        expect(info.isModpack).toBe(false);
+        expect(info.recommended).toBe(false);
       });
 
       test('PUFFERFISH should support plugins but not mods', () => {
         const serverType = ServerType.create('PUFFERFISH');
         const info = serverType.info;
 
-        assert.strictEqual(info.supportsPlugins, true);
-        assert.strictEqual(info.supportsMods, false);
-        assert.strictEqual(info.isModpack, false);
-        assert.strictEqual(info.recommended, false);
+        expect(info.supportsPlugins).toBe(true);
+        expect(info.supportsMods).toBe(false);
+        expect(info.isModpack).toBe(false);
+        expect(info.recommended).toBe(false);
       });
 
       test('LEAF should have correct label', () => {
         const serverType = ServerType.create('LEAF');
-        assert.strictEqual(serverType.label, 'Leaf');
+        expect(serverType.label).toBe('Leaf');
       });
 
       test('FOLIA should have correct label', () => {
         const serverType = ServerType.create('FOLIA');
-        assert.strictEqual(serverType.label, 'Folia');
+        expect(serverType.label).toBe('Folia');
       });
 
       test('PUFFERFISH should have correct label', () => {
         const serverType = ServerType.create('PUFFERFISH');
-        assert.strictEqual(serverType.label, 'Pufferfish');
+        expect(serverType.label).toBe('Pufferfish');
       });
     });
 
     describe('isModpack getter', () => {
       test('LEAF should return false for isModpack', () => {
-        assert.strictEqual(ServerType.create('LEAF').isModpack, false);
+        expect(ServerType.create('LEAF').isModpack).toBe(false);
       });
 
       test('FOLIA should return false for isModpack', () => {
-        assert.strictEqual(ServerType.create('FOLIA').isModpack, false);
+        expect(ServerType.create('FOLIA').isModpack).toBe(false);
       });
 
       test('PUFFERFISH should return false for isModpack', () => {
-        assert.strictEqual(ServerType.create('PUFFERFISH').isModpack, false);
+        expect(ServerType.create('PUFFERFISH').isModpack).toBe(false);
       });
     });
   });

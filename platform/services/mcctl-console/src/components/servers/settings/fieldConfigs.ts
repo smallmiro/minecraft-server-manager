@@ -425,6 +425,9 @@ export const remoteAccessAdvancedFields: FieldConfig[] = [
     type: 'number',
     helperText: 'Number of log lines kept in history',
     validation: { min: 1 },
+  },
+];
+
 // ── Configuration Repositories ──
 export const configRepoFields: FieldConfig[] = [
   {

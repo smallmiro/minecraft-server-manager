@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect } from 'vitest';
 import { DocsAdapter } from '../src/infrastructure/adapters/DocsAdapter.js';
 import { ServerTypeEnum } from '../src/domain/value-objects/ServerType.js';
 
@@ -9,21 +8,21 @@ describe('DocsAdapter - new server types (LEAF, FOLIA, PUFFERFISH)', () => {
       const adapter = new DocsAdapter();
       const types = (adapter as unknown as { getDefaultServerTypes(): Array<{ value: ServerTypeEnum }> }).getDefaultServerTypes();
       const values = types.map((t) => t.value);
-      assert.ok(values.includes(ServerTypeEnum.LEAF), 'LEAF should be in default server types');
+      expect(values.includes(ServerTypeEnum.LEAF)).toBeTruthy();
     });
 
     test('should include FOLIA in default server types', () => {
       const adapter = new DocsAdapter();
       const types = (adapter as unknown as { getDefaultServerTypes(): Array<{ value: ServerTypeEnum }> }).getDefaultServerTypes();
       const values = types.map((t) => t.value);
-      assert.ok(values.includes(ServerTypeEnum.FOLIA), 'FOLIA should be in default server types');
+      expect(values.includes(ServerTypeEnum.FOLIA)).toBeTruthy();
     });
 
     test('should include PUFFERFISH in default server types', () => {
       const adapter = new DocsAdapter();
       const types = (adapter as unknown as { getDefaultServerTypes(): Array<{ value: ServerTypeEnum }> }).getDefaultServerTypes();
       const values = types.map((t) => t.value);
-      assert.ok(values.includes(ServerTypeEnum.PUFFERFISH), 'PUFFERFISH should be in default server types');
+      expect(values.includes(ServerTypeEnum.PUFFERFISH)).toBeTruthy();
     });
 
     test('LEAF should have correct properties', () => {
@@ -37,12 +36,12 @@ describe('DocsAdapter - new server types (LEAF, FOLIA, PUFFERFISH)', () => {
         javaVersions: string[];
       }> }).getDefaultServerTypes();
       const leaf = types.find((t) => t.value === ServerTypeEnum.LEAF);
-      assert.ok(leaf, 'LEAF entry should exist');
-      assert.strictEqual(leaf.label, 'Leaf');
-      assert.strictEqual(leaf.supportsPlugins, true);
-      assert.strictEqual(leaf.supportsMods, false);
-      assert.strictEqual(leaf.isModpack, false);
-      assert.ok(leaf.javaVersions.length > 0, 'javaVersions should not be empty');
+      expect(leaf).toBeTruthy();
+      expect(leaf!.label).toBe('Leaf');
+      expect(leaf!.supportsPlugins).toBe(true);
+      expect(leaf!.supportsMods).toBe(false);
+      expect(leaf!.isModpack).toBe(false);
+      expect(leaf!.javaVersions.length > 0).toBeTruthy();
     });
 
     test('FOLIA should have correct properties', () => {
@@ -55,11 +54,11 @@ describe('DocsAdapter - new server types (LEAF, FOLIA, PUFFERFISH)', () => {
         isModpack: boolean;
       }> }).getDefaultServerTypes();
       const folia = types.find((t) => t.value === ServerTypeEnum.FOLIA);
-      assert.ok(folia, 'FOLIA entry should exist');
-      assert.strictEqual(folia.label, 'Folia');
-      assert.strictEqual(folia.supportsPlugins, true);
-      assert.strictEqual(folia.supportsMods, false);
-      assert.strictEqual(folia.isModpack, false);
+      expect(folia).toBeTruthy();
+      expect(folia!.label).toBe('Folia');
+      expect(folia!.supportsPlugins).toBe(true);
+      expect(folia!.supportsMods).toBe(false);
+      expect(folia!.isModpack).toBe(false);
     });
 
     test('PUFFERFISH should have correct properties', () => {
@@ -72,11 +71,11 @@ describe('DocsAdapter - new server types (LEAF, FOLIA, PUFFERFISH)', () => {
         isModpack: boolean;
       }> }).getDefaultServerTypes();
       const pufferfish = types.find((t) => t.value === ServerTypeEnum.PUFFERFISH);
-      assert.ok(pufferfish, 'PUFFERFISH entry should exist');
-      assert.strictEqual(pufferfish.label, 'Pufferfish');
-      assert.strictEqual(pufferfish.supportsPlugins, true);
-      assert.strictEqual(pufferfish.supportsMods, false);
-      assert.strictEqual(pufferfish.isModpack, false);
+      expect(pufferfish).toBeTruthy();
+      expect(pufferfish!.label).toBe('Pufferfish');
+      expect(pufferfish!.supportsPlugins).toBe(true);
+      expect(pufferfish!.supportsMods).toBe(false);
+      expect(pufferfish!.isModpack).toBe(false);
     });
   });
 
@@ -84,19 +83,19 @@ describe('DocsAdapter - new server types (LEAF, FOLIA, PUFFERFISH)', () => {
     test('should format LEAF as Leaf', () => {
       const adapter = new DocsAdapter();
       const label = (adapter as unknown as { formatLabel(type: string): string }).formatLabel('LEAF');
-      assert.strictEqual(label, 'Leaf');
+      expect(label).toBe('Leaf');
     });
 
     test('should format FOLIA as Folia', () => {
       const adapter = new DocsAdapter();
       const label = (adapter as unknown as { formatLabel(type: string): string }).formatLabel('FOLIA');
-      assert.strictEqual(label, 'Folia');
+      expect(label).toBe('Folia');
     });
 
     test('should format PUFFERFISH as Pufferfish', () => {
       const adapter = new DocsAdapter();
       const label = (adapter as unknown as { formatLabel(type: string): string }).formatLabel('PUFFERFISH');
-      assert.strictEqual(label, 'Pufferfish');
+      expect(label).toBe('Pufferfish');
     });
   });
 
@@ -104,37 +103,37 @@ describe('DocsAdapter - new server types (LEAF, FOLIA, PUFFERFISH)', () => {
     test('should include LEAF for MC 1.20+', () => {
       const adapter = new DocsAdapter();
       const types = (adapter as unknown as { getSupportedTypesForVersion(version: string): string[] }).getSupportedTypesForVersion('1.20.1');
-      assert.ok(types.includes('LEAF'), 'LEAF should be supported for 1.20+');
+      expect(types.includes('LEAF')).toBeTruthy();
     });
 
     test('should include FOLIA for MC 1.21+', () => {
       const adapter = new DocsAdapter();
       const types = (adapter as unknown as { getSupportedTypesForVersion(version: string): string[] }).getSupportedTypesForVersion('1.21.1');
-      assert.ok(types.includes('FOLIA'), 'FOLIA should be supported for 1.21+');
+      expect(types.includes('FOLIA')).toBeTruthy();
     });
 
     test('should include PUFFERFISH for MC 1.20+', () => {
       const adapter = new DocsAdapter();
       const types = (adapter as unknown as { getSupportedTypesForVersion(version: string): string[] }).getSupportedTypesForVersion('1.20.4');
-      assert.ok(types.includes('PUFFERFISH'), 'PUFFERFISH should be supported for 1.20+');
+      expect(types.includes('PUFFERFISH')).toBeTruthy();
     });
 
     test('should not include LEAF for MC 1.17', () => {
       const adapter = new DocsAdapter();
       const types = (adapter as unknown as { getSupportedTypesForVersion(version: string): string[] }).getSupportedTypesForVersion('1.17.1');
-      assert.ok(!types.includes('LEAF'), 'LEAF should not be supported for 1.17');
+      expect(types.includes('LEAF')).toBe(false);
     });
 
     test('should not include FOLIA for MC 1.17', () => {
       const adapter = new DocsAdapter();
       const types = (adapter as unknown as { getSupportedTypesForVersion(version: string): string[] }).getSupportedTypesForVersion('1.17.1');
-      assert.ok(!types.includes('FOLIA'), 'FOLIA should not be supported for 1.17');
+      expect(types.includes('FOLIA')).toBe(false);
     });
 
     test('should not include PUFFERFISH for MC 1.17', () => {
       const adapter = new DocsAdapter();
       const types = (adapter as unknown as { getSupportedTypesForVersion(version: string): string[] }).getSupportedTypesForVersion('1.17.1');
-      assert.ok(!types.includes('PUFFERFISH'), 'PUFFERFISH should not be supported for 1.17');
+      expect(types.includes('PUFFERFISH')).toBe(false);
     });
   });
 });

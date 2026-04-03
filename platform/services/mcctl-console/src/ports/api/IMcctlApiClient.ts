@@ -209,6 +209,9 @@ export interface ServerConfig {
   enableAutostop?: boolean;
   autostopTimeoutEst?: number;
 
+  // ── Native Auto-pause (MC 1.21.2+) ──
+  pauseWhenEmptySeconds?: number;
+
   // ── System ──
   tz?: string;
   resourcePack?: string;
@@ -230,6 +233,12 @@ export interface ServerConfig {
   websocketAllowedOrigins?: string;
   websocketLogBufferSize?: number;
   enableSsh?: boolean;
+
+  // ── Configuration Repositories ──
+  paperConfigRepo?: string;
+  pufferfishConfigRepo?: string;
+  purpurConfigRepo?: string;
+  serverPropertiesRepoUrl?: string;
 }
 
 export interface ServerConfigResponse {
