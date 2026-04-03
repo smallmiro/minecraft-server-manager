@@ -253,3 +253,20 @@ services:
     volumes:
       - ./data:/data
 ```
+
+---
+
+## Autoscale (Scale to Zero)
+
+Stop servers when idle and automatically start them when players connect.
+
+### mc-router
+Hostname-based routing with automatic container start/stop. Used by this project for multi-server management.
+
+### Lazymc (via lazymc-docker-proxy)
+Proxy that manages server container lifecycle. Requires custom network with fixed IPs.
+
+### Lazytainer
+Network traffic-based container start/stop. Not Minecraft-aware (no hostname routing).
+
+For details, see: https://docker-minecraft-server.readthedocs.io/en/latest/misc/autoscale/autoscale/
