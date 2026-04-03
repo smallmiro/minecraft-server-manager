@@ -1,5 +1,4 @@
-import { test, describe, beforeEach, afterEach, mock } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect, beforeEach } from 'vitest';
 
 // We test satisfiesMinVersion as a pure function
 // and checkPlatformPrerequisites / checkConsolePrerequisites via mocking
@@ -14,36 +13,36 @@ describe('satisfiesMinVersion', () => {
   });
 
   test('should return true when major version is higher', () => {
-    assert.strictEqual(satisfiesMinVersion('29.1.4', '24.0.0'), true);
+    expect(satisfiesMinVersion('29.1.4', '24.0.0')).toBe(true);
   });
 
   test('should return true when minor version is higher', () => {
-    assert.strictEqual(satisfiesMinVersion('2.40.3', '2.20.0'), true);
+    expect(satisfiesMinVersion('2.40.3', '2.20.0')).toBe(true);
   });
 
   test('should return false when major version is lower', () => {
-    assert.strictEqual(satisfiesMinVersion('23.0.0', '24.0.0'), false);
+    expect(satisfiesMinVersion('23.0.0', '24.0.0')).toBe(false);
   });
 
   test('should return true when versions are exactly equal', () => {
-    assert.strictEqual(satisfiesMinVersion('18.0.0', '18.0.0'), true);
+    expect(satisfiesMinVersion('18.0.0', '18.0.0')).toBe(true);
   });
 
   test('should return false when minor version is lower', () => {
-    assert.strictEqual(satisfiesMinVersion('2.19.9', '2.20.0'), false);
+    expect(satisfiesMinVersion('2.19.9', '2.20.0')).toBe(false);
   });
 
   test('should return true when patch version is higher', () => {
-    assert.strictEqual(satisfiesMinVersion('24.0.1', '24.0.0'), true);
+    expect(satisfiesMinVersion('24.0.1', '24.0.0')).toBe(true);
   });
 
   test('should return false when patch version is lower', () => {
-    assert.strictEqual(satisfiesMinVersion('24.0.0', '24.0.1'), false);
+    expect(satisfiesMinVersion('24.0.0', '24.0.1')).toBe(false);
   });
 
   test('should handle two-part versions', () => {
-    assert.strictEqual(satisfiesMinVersion('24.0', '24.0.0'), true);
-    assert.strictEqual(satisfiesMinVersion('24.0.0', '24.0'), true);
+    expect(satisfiesMinVersion('24.0', '24.0.0')).toBe(true);
+    expect(satisfiesMinVersion('24.0.0', '24.0')).toBe(true);
   });
 });
 
@@ -52,13 +51,13 @@ describe('checkPlatformPrerequisites', () => {
     const mod = await import('../src/prerequisite/PrerequisiteChecker.js');
     const report = mod.checkPlatformPrerequisites();
 
-    assert.strictEqual(report.results.length, 4);
+    expect(report.results.length).toBe(4);
 
     const names = report.results.map(r => r.name);
-    assert.ok(names.includes('Node.js'), 'Should include Node.js');
-    assert.ok(names.includes('Docker Engine'), 'Should include Docker Engine');
-    assert.ok(names.includes('Docker Compose'), 'Should include Docker Compose');
-    assert.ok(names.includes('avahi-daemon'), 'Should include avahi-daemon');
+    expect(names.includes('Node.js')).toBeTruthy();
+    expect(names.includes('Docker Engine')).toBeTruthy();
+    expect(names.includes('Docker Compose')).toBeTruthy();
+    expect(names.includes('avahi-daemon')).toBeTruthy();
   });
 
   test('avahi should be optional', async () => {
@@ -66,8 +65,8 @@ describe('checkPlatformPrerequisites', () => {
     const report = mod.checkPlatformPrerequisites();
 
     const avahi = report.results.find(r => r.name === 'avahi-daemon');
-    assert.ok(avahi, 'avahi-daemon should be in results');
-    assert.strictEqual(avahi.optional, true);
+    expect(avahi).toBeTruthy();
+    expect(avahi!.optional).toBe(true);
   });
 
   test('Node.js, Docker, Docker Compose should not be optional', async () => {
@@ -76,8 +75,8 @@ describe('checkPlatformPrerequisites', () => {
 
     for (const name of ['Node.js', 'Docker Engine', 'Docker Compose']) {
       const result = report.results.find(r => r.name === name);
-      assert.ok(result, `${name} should be in results`);
-      assert.strictEqual(result.optional, false, `${name} should not be optional`);
+      expect(result).toBeTruthy();
+      expect(result!.optional).toBe(false);
     }
   });
 
@@ -86,10 +85,10 @@ describe('checkPlatformPrerequisites', () => {
     const report = mod.checkPlatformPrerequisites();
 
     const node = report.results.find(r => r.name === 'Node.js');
-    assert.ok(node);
-    assert.strictEqual(node.installed, true);
-    assert.strictEqual(node.satisfied, true);
-    assert.ok(node.version);
+    expect(node).toBeTruthy();
+    expect(node!.installed).toBe(true);
+    expect(node!.satisfied).toBe(true);
+    expect(node!.version).toBeTruthy();
   });
 
   test('allSatisfied should reflect mandatory items only', async () => {
@@ -98,7 +97,7 @@ describe('checkPlatformPrerequisites', () => {
 
     // allSatisfied = all non-optional items satisfied
     const mandatoryUnsatisfied = report.results.filter(r => !r.optional && !r.satisfied);
-    assert.strictEqual(report.allSatisfied, mandatoryUnsatisfied.length === 0);
+    expect(report.allSatisfied).toBe(mandatoryUnsatisfied.length === 0);
   });
 
   test('warnings should contain only unsatisfied optional items', async () => {
@@ -106,8 +105,8 @@ describe('checkPlatformPrerequisites', () => {
     const report = mod.checkPlatformPrerequisites();
 
     for (const w of report.warnings) {
-      assert.strictEqual(w.optional, true, 'Warnings should only contain optional items');
-      assert.strictEqual(w.satisfied, false, 'Warnings should only contain unsatisfied items');
+      expect(w.optional).toBe(true);
+      expect(w.satisfied).toBe(false);
     }
   });
 });
@@ -117,13 +116,13 @@ describe('checkConsolePrerequisites', () => {
     const mod = await import('../src/prerequisite/PrerequisiteChecker.js');
     const report = mod.checkConsolePrerequisites();
 
-    assert.strictEqual(report.results.length, 4);
+    expect(report.results.length).toBe(4);
 
     const names = report.results.map(r => r.name);
-    assert.ok(names.includes('Node.js'), 'Should include Node.js');
-    assert.ok(names.includes('Docker Engine'), 'Should include Docker Engine');
-    assert.ok(names.includes('Docker Compose'), 'Should include Docker Compose');
-    assert.ok(names.includes('PM2'), 'Should include PM2');
+    expect(names.includes('Node.js')).toBeTruthy();
+    expect(names.includes('Docker Engine')).toBeTruthy();
+    expect(names.includes('Docker Compose')).toBeTruthy();
+    expect(names.includes('PM2')).toBeTruthy();
   });
 
   test('all items should be mandatory (optional=false)', async () => {
@@ -131,7 +130,7 @@ describe('checkConsolePrerequisites', () => {
     const report = mod.checkConsolePrerequisites();
 
     for (const result of report.results) {
-      assert.strictEqual(result.optional, false, `${result.name} should not be optional`);
+      expect(result.optional).toBe(false);
     }
   });
 
@@ -140,8 +139,8 @@ describe('checkConsolePrerequisites', () => {
     const report = mod.checkConsolePrerequisites();
 
     for (const result of report.results) {
-      assert.ok(result.required, `${result.name} should have required version`);
-      assert.ok(result.required.startsWith('>= '), `${result.name} required should start with ">= "`);
+      expect(result.required).toBeTruthy();
+      expect(result.required.startsWith('>= ')).toBeTruthy();
     }
   });
 
@@ -150,7 +149,7 @@ describe('checkConsolePrerequisites', () => {
     const report = mod.checkConsolePrerequisites();
 
     for (const result of report.results) {
-      assert.ok(result.hint, `${result.name} should have a hint`);
+      expect(result.hint).toBeTruthy();
     }
   });
 });
@@ -160,10 +159,10 @@ describe('getDockerVersion', () => {
     const mod = await import('../src/docker/index.js');
     const result = mod.getDockerVersion();
 
-    assert.ok(typeof result.installed === 'boolean');
+    expect(typeof result.installed === 'boolean').toBeTruthy();
     if (result.installed) {
-      assert.ok(typeof result.version === 'string');
-      assert.ok(result.version.length > 0);
+      expect(typeof result.version === 'string').toBeTruthy();
+      expect(result.version!.length > 0).toBeTruthy();
     }
   });
 });
@@ -173,10 +172,10 @@ describe('getDockerComposeVersion', () => {
     const mod = await import('../src/docker/index.js');
     const result = mod.getDockerComposeVersion();
 
-    assert.ok(typeof result.installed === 'boolean');
+    expect(typeof result.installed === 'boolean').toBeTruthy();
     if (result.installed) {
-      assert.ok(typeof result.version === 'string');
-      assert.ok(result.version.length > 0);
+      expect(typeof result.version === 'string').toBeTruthy();
+      expect(result.version!.length > 0).toBeTruthy();
     }
   });
 });

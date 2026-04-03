@@ -1,5 +1,4 @@
-import { test, describe, before, after } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect, beforeAll, afterAll } from 'vitest';
 import { rm, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -21,15 +20,15 @@ describe('AuditLog Entity', () => {
 
     const log = AuditLog.create(data);
 
-    assert.ok(log.id);
-    assert.ok(log.timestamp instanceof Date);
-    assert.strictEqual(log.action, AuditActionEnum.SERVER_CREATE);
-    assert.strictEqual(log.actor, 'admin');
-    assert.strictEqual(log.targetType, 'server');
-    assert.strictEqual(log.targetName, 'myserver');
-    assert.deepStrictEqual(log.details, { type: 'PAPER', version: '1.21.1' });
-    assert.strictEqual(log.status, 'success');
-    assert.strictEqual(log.errorMessage, undefined);
+    expect(log.id).toBeTruthy();
+    expect(log.timestamp instanceof Date).toBeTruthy();
+    expect(log.action).toBe(AuditActionEnum.SERVER_CREATE);
+    expect(log.actor).toBe('admin');
+    expect(log.targetType).toBe('server');
+    expect(log.targetName).toBe('myserver');
+    expect(log.details).toEqual({ type: 'PAPER', version: '1.21.1' });
+    expect(log.status).toBe('success');
+    expect(log.errorMessage).toBe(undefined);
   });
 
   test('should create AuditLog with provided id and timestamp', () => {
@@ -48,8 +47,8 @@ describe('AuditLog Entity', () => {
 
     const log = AuditLog.create(data);
 
-    assert.strictEqual(log.id, id);
-    assert.strictEqual(log.timestamp.toISOString(), timestamp.toISOString());
+    expect(log.id).toBe(id);
+    expect(log.timestamp.toISOString()).toBe(timestamp.toISOString());
   });
 
   test('should create AuditLog with failure status and error message', () => {
@@ -65,8 +64,8 @@ describe('AuditLog Entity', () => {
 
     const log = AuditLog.create(data);
 
-    assert.strictEqual(log.status, 'failure');
-    assert.strictEqual(log.errorMessage, 'Container not found');
+    expect(log.status).toBe('failure');
+    expect(log.errorMessage).toBe('Container not found');
   });
 
   test('should hydrate AuditLog from raw database row', () => {
@@ -84,15 +83,15 @@ describe('AuditLog Entity', () => {
 
     const log = AuditLog.fromRaw(row);
 
-    assert.strictEqual(log.id, row.id);
-    assert.strictEqual(log.action, AuditActionEnum.PLAYER_BAN);
-    assert.strictEqual(log.actor, 'admin');
-    assert.strictEqual(log.targetType, 'player');
-    assert.strictEqual(log.targetName, 'Notch');
-    assert.deepStrictEqual(log.details, { reason: 'Griefing' });
-    assert.strictEqual(log.status, 'success');
-    assert.strictEqual(log.errorMessage, null);
-    assert.strictEqual(log.timestamp.toISOString(), '2025-01-26T12:00:00.000Z');
+    expect(log.id).toBe(row.id);
+    expect(log.action).toBe(AuditActionEnum.PLAYER_BAN);
+    expect(log.actor).toBe('admin');
+    expect(log.targetType).toBe('player');
+    expect(log.targetName).toBe('Notch');
+    expect(log.details).toEqual({ reason: 'Griefing' });
+    expect(log.status).toBe('success');
+    expect(log.errorMessage).toBe(null);
+    expect(log.timestamp.toISOString()).toBe('2025-01-26T12:00:00.000Z');
   });
 });
 
@@ -101,14 +100,14 @@ describe('SqliteAuditLogRepository', () => {
   let testDbPath: string;
   let repository: SqliteAuditLogRepository;
 
-  before(async () => {
+  beforeAll(async () => {
     testDir = join(tmpdir(), `sqlite-audit-log-test-${randomUUID()}`);
     await mkdir(testDir, { recursive: true });
     testDbPath = join(testDir, 'audit.db');
     repository = new SqliteAuditLogRepository(testDbPath);
   });
 
-  after(async () => {
+  afterAll(async () => {
     if (repository) {
       repository.close();
     }
@@ -128,15 +127,15 @@ describe('SqliteAuditLogRepository', () => {
     await repository.log(data);
 
     const logs = await repository.findAll();
-    assert.ok(logs.length > 0);
+    expect(logs.length > 0).toBeTruthy();
 
     const log = logs[0];
-    assert.strictEqual(log.action, AuditActionEnum.SERVER_CREATE);
-    assert.strictEqual(log.actor, 'admin');
-    assert.strictEqual(log.targetType, 'server');
-    assert.strictEqual(log.targetName, 'testserver');
-    assert.deepStrictEqual(log.details, { type: 'PAPER', version: '1.21.1' });
-    assert.strictEqual(log.status, 'success');
+    expect(log.action).toBe(AuditActionEnum.SERVER_CREATE);
+    expect(log.actor).toBe('admin');
+    expect(log.targetType).toBe('server');
+    expect(log.targetName).toBe('testserver');
+    expect(log.details).toEqual({ type: 'PAPER', version: '1.21.1' });
+    expect(log.status).toBe('success');
   });
 
   test('should find logs by action', async () => {
@@ -159,8 +158,8 @@ describe('SqliteAuditLogRepository', () => {
     });
 
     const startLogs = await repository.findByAction(AuditActionEnum.SERVER_START);
-    assert.ok(startLogs.length > 0);
-    assert.ok(startLogs.every(log => log.action === AuditActionEnum.SERVER_START));
+    expect(startLogs.length > 0).toBeTruthy();
+    expect(startLogs.every(log => log.action === AuditActionEnum.SERVER_START)).toBeTruthy();
   });
 
   test('should find logs by actor', async () => {
@@ -183,8 +182,8 @@ describe('SqliteAuditLogRepository', () => {
     });
 
     const operator1Logs = await repository.findByActor('operator1');
-    assert.ok(operator1Logs.length > 0);
-    assert.ok(operator1Logs.every(log => log.actor === 'operator1'));
+    expect(operator1Logs.length > 0).toBeTruthy();
+    expect(operator1Logs.every(log => log.actor === 'operator1')).toBeTruthy();
   });
 
   test('should find logs by target', async () => {
@@ -198,26 +197,26 @@ describe('SqliteAuditLogRepository', () => {
     });
 
     const playerLogs = await repository.findByTarget('player', 'Steve');
-    assert.ok(playerLogs.length > 0);
-    assert.ok(playerLogs.every(log => log.targetType === 'player' && log.targetName === 'Steve'));
+    expect(playerLogs.length > 0).toBeTruthy();
+    expect(playerLogs.every(log => log.targetType === 'player' && log.targetName === 'Steve')).toBeTruthy();
   });
 
   test('should count logs', async () => {
     const count = await repository.count();
-    assert.ok(count > 0);
+    expect(count > 0).toBeTruthy();
   });
 
   test('should count logs with filters', async () => {
     const successCount = await repository.count({ status: 'success' });
-    assert.ok(successCount > 0);
+    expect(successCount > 0).toBeTruthy();
 
     const adminCount = await repository.count({ actor: 'admin' });
-    assert.ok(adminCount > 0);
+    expect(adminCount > 0).toBeTruthy();
 
     const serverCreateCount = await repository.count({
       action: AuditActionEnum.SERVER_CREATE
     });
-    assert.ok(serverCreateCount > 0);
+    expect(serverCreateCount > 0).toBeTruthy();
   });
 
   test('should findAll with limit and offset', async () => {
@@ -225,13 +224,13 @@ describe('SqliteAuditLogRepository', () => {
     const totalCount = allLogs.length;
 
     const firstPage = await repository.findAll({ limit: 2, offset: 0 });
-    assert.strictEqual(firstPage.length, Math.min(2, totalCount));
+    expect(firstPage.length).toBe(Math.min(2, totalCount));
 
     const secondPage = await repository.findAll({ limit: 2, offset: 2 });
-    assert.ok(secondPage.length <= 2);
+    expect(secondPage.length <= 2).toBeTruthy();
 
     if (firstPage.length > 0 && secondPage.length > 0) {
-      assert.notStrictEqual(firstPage[0].id, secondPage[0].id);
+      expect(firstPage[0].id).not.toBe(secondPage[0].id);
     }
   });
 
@@ -250,16 +249,16 @@ describe('SqliteAuditLogRepository', () => {
     });
 
     const logsFromYesterday = await repository.findAll({ from: yesterday });
-    assert.ok(logsFromYesterday.length > 0);
+    expect(logsFromYesterday.length > 0).toBeTruthy();
 
     const logsUntilTomorrow = await repository.findAll({ to: tomorrow });
-    assert.ok(logsUntilTomorrow.length > 0);
+    expect(logsUntilTomorrow.length > 0).toBeTruthy();
 
     const logsInRange = await repository.findAll({
       from: yesterday,
       to: tomorrow
     });
-    assert.ok(logsInRange.length > 0);
+    expect(logsInRange.length > 0).toBeTruthy();
   });
 
   test('should findAll with multiple filters', async () => {
@@ -278,12 +277,12 @@ describe('SqliteAuditLogRepository', () => {
       status: 'success',
     });
 
-    assert.ok(filtered.length > 0);
-    assert.ok(filtered.every(log =>
+    expect(filtered.length > 0).toBeTruthy();
+    expect(filtered.every(log =>
       log.action === AuditActionEnum.PLAYER_BAN &&
       log.actor === 'moderator' &&
       log.status === 'success'
-    ));
+    )).toBeTruthy();
   });
 
   test('should delete logs older than specified date', async () => {
@@ -304,22 +303,22 @@ describe('SqliteAuditLogRepository', () => {
     const cutoffDate = new Date('2024-01-01T00:00:00Z');
     const deletedCount = await repository.deleteOlderThan(cutoffDate);
 
-    assert.ok(deletedCount > 0);
+    expect(deletedCount > 0).toBeTruthy();
 
     const countAfter = await repository.count();
-    assert.strictEqual(countAfter, countBefore - deletedCount);
+    expect(countAfter).toBe(countBefore - deletedCount);
   });
 
   test('should handle empty results gracefully', async () => {
     const nonExistent = await repository.findByAction(AuditActionEnum.PLAYER_KICK);
     // May or may not be empty depending on previous tests, just check it returns array
-    assert.ok(Array.isArray(nonExistent));
+    expect(Array.isArray(nonExistent)).toBeTruthy();
 
     const nonExistentActor = await repository.findByActor('nonexistent-user-' + randomUUID());
-    assert.deepStrictEqual(nonExistentActor, []);
+    expect(nonExistentActor).toEqual([]);
 
     const nonExistentTarget = await repository.findByTarget('unknown', 'unknown-' + randomUUID());
-    assert.deepStrictEqual(nonExistentTarget, []);
+    expect(nonExistentTarget).toEqual([]);
   });
 
   test('should handle null details correctly', async () => {
@@ -338,7 +337,7 @@ describe('SqliteAuditLogRepository', () => {
     });
 
     const log = logs.find(l => l.targetName === 'simpleserver');
-    assert.ok(log);
-    assert.strictEqual(log.details, null);
+    expect(log).toBeTruthy();
+    expect(log.details).toBe(null);
   });
 });

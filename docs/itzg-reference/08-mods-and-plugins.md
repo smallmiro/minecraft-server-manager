@@ -28,6 +28,13 @@ volumes:
 | `MODS_FILE` | File containing mod URL list |
 | `PLUGINS_FILE` | File containing plugin URL list |
 
+### Auto-removal
+
+When items are removed from `MODS`, `PLUGINS`, or `MODRINTH_PROJECTS` lists, the corresponding files are automatically deleted from the server. This ensures clean mod/plugin management without manual cleanup.
+
+!!! tip "No manual cleanup needed"
+    Simply remove an entry from the environment variable list, and on the next server start the previously downloaded file will be removed automatically.
+
 ---
 
 ## Download from Modrinth
@@ -45,7 +52,25 @@ environment:
     iris
 ```
 
-### Specify Version
+### Specify Version and Prefix
+
+Each project entry supports multiple formats:
+
+| Format | Description | Example |
+|--------|-------------|---------|
+| `project` | Latest release | `fabric-api` |
+| `project:version_id` | Specific version | `fabric-api:abcd1234` |
+| `project:release_type` | Release type | `lithium:beta` |
+| `prefix:project` | Loader/type prefix | `datapack:my-datapack` |
+
+**Available Prefixes**:
+
+| Prefix | Description |
+|--------|-------------|
+| `datapack` | Install as a datapack instead of mod |
+| `fabric` | Force Fabric loader type |
+| `forge` | Force Forge loader type |
+| `paper` | Force Paper plugin type |
 
 ```yaml
 environment:
@@ -53,6 +78,8 @@ environment:
     fabric-api:version_id
     lithium:beta
     sodium:release
+    datapack:terralith
+    forge:jei
 ```
 
 ### Additional Options
@@ -61,7 +88,19 @@ environment:
 |----------|---------|-------------|
 | `MODRINTH_DOWNLOAD_DEPENDENCIES` | `none` | `required`, `optional` |
 | `MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE` | `release` | `beta`, `alpha` |
-| `VERSION_FROM_MODRINTH_PROJECTS` | `false` | Auto-set version based on mod support |
+| `VERSION_FROM_MODRINTH_PROJECTS` | `false` | Automatically determines the latest Minecraft version that **all** listed mods support |
+| `MODRINTH_LOADER` | (auto) | Override loader type for Modrinth downloads (e.g., `fabric`, `forge`) |
+
+!!! info "`VERSION_FROM_MODRINTH_PROJECTS`"
+    When set to `true`, the server will automatically determine the latest Minecraft version that **all** listed Modrinth projects support. This is useful for keeping mod compatibility without manually tracking version support across mods.
+
+!!! tip "`MODRINTH_LOADER`"
+    Override the loader type sent to Modrinth API. Useful for custom server setups, for example when using **Sinytra Connector** with Forge to load Fabric mods:
+    ```yaml
+    environment:
+      TYPE: "FORGE"
+      MODRINTH_LOADER: "fabric"  # Download Fabric versions for use with Sinytra Connector
+    ```
 
 ```yaml
 environment:
@@ -72,6 +111,25 @@ environment:
     fabric-api
     lithium
 ```
+
+### Modrinth Modpacks
+
+Install modpacks from Modrinth using `MODRINTH_MODPACK`:
+
+```yaml
+environment:
+  MODRINTH_MODPACK: "adrenaline"
+```
+
+#### Modpack Options
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MODRINTH_MODPACK` | | Modpack project slug, ID, or URL |
+| `MODRINTH_FORCE_INCLUDE_FILES` | | Force include specific files that would otherwise be excluded |
+| `MODRINTH_DEFAULT_EXCLUDE_INCLUDES` | `false` | Disable the default exclude/include behavior |
+| `MODRINTH_OVERRIDES_EXCLUSIONS` | | Exclude files from overrides using ant-style patterns (e.g., `*.txt,config/unwanted/**`) |
+| `MODRINTH_FORCE_SYNCHRONIZE` | `false` | Force re-synchronization of modpack files on every start |
 
 ---
 
@@ -97,6 +155,16 @@ environment:
     jade
 ```
 
+### Additional CurseForge Options
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CF_API_KEY` | | **Required**. CurseForge API key |
+| `CF_MOD_LOADER_VERSION` | (auto) | Override the mod loader version for CurseForge modpacks |
+
+!!! tip "`CF_MOD_LOADER_VERSION`"
+    Use this to pin a specific mod loader version when installing CurseForge modpacks. By default, the version specified in the modpack manifest is used.
+
 ### Supported Formats
 
 - Project page URL: `https://www.curseforge.com/minecraft/mc-mods/jei`
@@ -118,6 +186,28 @@ environment:
 
 Find the resource ID from the SpigotMC page URL:
 `https://www.spigotmc.org/resources/example-plugin.12345/` → ID: `12345`
+
+---
+
+## Extra Files
+
+Download additional configuration or resource files using `APPLY_EXTRA_FILES`:
+
+| Variable | Description |
+|----------|-------------|
+| `APPLY_EXTRA_FILES` | Download extra files. Format: `destination<source_url` |
+
+The format uses `<` to separate the destination path from the source URL:
+
+```yaml
+environment:
+  APPLY_EXTRA_FILES: |
+    config/extra.yml<https://example.com/extra.yml
+    plugins/MyPlugin/config.yml<https://example.com/plugin-config.yml
+```
+
+!!! note
+    Destination paths are relative to the server's `/data` directory. Files are downloaded on each server start, so they will be updated if the source changes.
 
 ---
 

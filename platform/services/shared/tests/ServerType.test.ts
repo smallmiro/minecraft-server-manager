@@ -1,27 +1,26 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect } from 'vitest';
 import { ServerType, ServerTypeEnum } from '../src/domain/value-objects/ServerType.js';
 
 describe('ServerType', () => {
   describe('enum values', () => {
     test('should have MODRINTH type', () => {
-      assert.strictEqual(ServerTypeEnum.MODRINTH, 'MODRINTH');
+      expect(ServerTypeEnum.MODRINTH).toBe('MODRINTH');
     });
 
     test('should have AUTO_CURSEFORGE type', () => {
-      assert.strictEqual(ServerTypeEnum.AUTO_CURSEFORGE, 'AUTO_CURSEFORGE');
+      expect(ServerTypeEnum.AUTO_CURSEFORGE).toBe('AUTO_CURSEFORGE');
     });
   });
 
   describe('create', () => {
     test('should create MODRINTH server type', () => {
       const serverType = ServerType.create('MODRINTH');
-      assert.strictEqual(serverType.value, ServerTypeEnum.MODRINTH);
+      expect(serverType.value).toBe(ServerTypeEnum.MODRINTH);
     });
 
     test('should create AUTO_CURSEFORGE server type', () => {
       const serverType = ServerType.create('AUTO_CURSEFORGE');
-      assert.strictEqual(serverType.value, ServerTypeEnum.AUTO_CURSEFORGE);
+      expect(serverType.value).toBe(ServerTypeEnum.AUTO_CURSEFORGE);
     });
   });
 
@@ -30,20 +29,20 @@ describe('ServerType', () => {
       const serverType = ServerType.create('MODRINTH');
       const info = serverType.info;
 
-      assert.strictEqual(info.isModpack, true);
-      assert.strictEqual(info.supportsPlugins, false);
-      assert.strictEqual(info.supportsMods, true);
-      assert.strictEqual(info.recommended, false);
+      expect(info.isModpack).toBe(true);
+      expect(info.supportsPlugins).toBe(false);
+      expect(info.supportsMods).toBe(true);
+      expect(info.recommended).toBe(false);
     });
 
     test('AUTO_CURSEFORGE should have isModpack true', () => {
       const serverType = ServerType.create('AUTO_CURSEFORGE');
       const info = serverType.info;
 
-      assert.strictEqual(info.isModpack, true);
-      assert.strictEqual(info.supportsPlugins, false);
-      assert.strictEqual(info.supportsMods, true);
-      assert.strictEqual(info.recommended, false);
+      expect(info.isModpack).toBe(true);
+      expect(info.supportsPlugins).toBe(false);
+      expect(info.supportsMods).toBe(true);
+      expect(info.recommended).toBe(false);
     });
 
     test('existing types should have isModpack false', () => {
@@ -61,11 +60,7 @@ describe('ServerType', () => {
 
       for (const type of existingTypes) {
         const serverType = ServerType.fromEnum(type);
-        assert.strictEqual(
-          serverType.info.isModpack,
-          false,
-          `${type} should have isModpack: false`
-        );
+        expect(serverType.info.isModpack).toBe(false);
       }
     });
   });
@@ -73,17 +68,17 @@ describe('ServerType', () => {
   describe('isModpack getter', () => {
     test('should return true for MODRINTH', () => {
       const serverType = ServerType.create('MODRINTH');
-      assert.strictEqual(serverType.isModpack, true);
+      expect(serverType.isModpack).toBe(true);
     });
 
     test('should return true for AUTO_CURSEFORGE', () => {
       const serverType = ServerType.create('AUTO_CURSEFORGE');
-      assert.strictEqual(serverType.isModpack, true);
+      expect(serverType.isModpack).toBe(true);
     });
 
     test('should return false for PAPER', () => {
       const serverType = ServerType.create('PAPER');
-      assert.strictEqual(serverType.isModpack, false);
+      expect(serverType.isModpack).toBe(false);
     });
   });
 
@@ -92,27 +87,24 @@ describe('ServerType', () => {
       const allTypes = ServerType.getAll();
       const typeValues = allTypes.map((t) => t.value);
 
-      assert.ok(typeValues.includes(ServerTypeEnum.MODRINTH));
-      assert.ok(typeValues.includes(ServerTypeEnum.AUTO_CURSEFORGE));
+      expect(typeValues).toContain(ServerTypeEnum.MODRINTH);
+      expect(typeValues).toContain(ServerTypeEnum.AUTO_CURSEFORGE);
     });
 
     test('should have 14 total server types', () => {
       const allTypes = ServerType.getAll();
+<<<<<<< HEAD
       assert.strictEqual(allTypes.length, 14);
+=======
+      expect(allTypes.length).toBe(11);
+>>>>>>> origin/develop
     });
 
     test('all types should have isModpack property', () => {
       const allTypes = ServerType.getAll();
       for (const type of allTypes) {
-        assert.ok(
-          'isModpack' in type,
-          `${type.value} should have isModpack property`
-        );
-        assert.strictEqual(
-          typeof type.isModpack,
-          'boolean',
-          `${type.value} isModpack should be boolean`
-        );
+        expect('isModpack' in type).toBe(true);
+        expect(typeof type.isModpack).toBe('boolean');
       }
     });
 
