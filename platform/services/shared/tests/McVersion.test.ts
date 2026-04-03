@@ -71,6 +71,38 @@ describe('McVersion', () => {
     });
   });
 
+  describe('MC 26.x (new versioning)', () => {
+    test('should create version 26.1.1', () => {
+      const v = McVersion.create('26.1.1');
+      expect(v.value).toBe('26.1.1');
+      expect(v.major).toBe(26);
+      expect(v.minor).toBe(1);
+      expect(v.patch).toBe(1);
+    });
+
+    test('should return 25 for recommendedJavaVersion', () => {
+      const v = McVersion.create('26.1.1');
+      expect(v.recommendedJavaVersion).toBe(25);
+    });
+
+    test('should return java25 for recommendedImageTag', () => {
+      const v = McVersion.create('26.1.1');
+      expect(v.recommendedImageTag).toBe('java25');
+    });
+
+    test('should create version 26.0', () => {
+      const v = McVersion.create('26.0');
+      expect(v.major).toBe(26);
+      expect(v.recommendedImageTag).toBe('java25');
+    });
+
+    test('should handle hypothetical 27.x', () => {
+      const v = McVersion.create('27.0.1');
+      expect(v.recommendedJavaVersion).toBe(25);
+      expect(v.recommendedImageTag).toBe('java25');
+    });
+  });
+
   describe('LATEST version', () => {
     test('should create LATEST version', () => {
       const v = McVersion.create('LATEST');

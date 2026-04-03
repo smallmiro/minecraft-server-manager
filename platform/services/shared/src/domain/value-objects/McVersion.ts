@@ -32,6 +32,10 @@ export class McVersion {
    * Returns the recommended Java version for this Minecraft version
    */
   get recommendedJavaVersion(): number {
+    // Minecraft 26+ (new versioning scheme) requires Java 25
+    if (this._major >= 26) {
+      return 25;
+    }
     // Minecraft 1.21+ requires Java 21
     if (this._major >= 1 && this._minor >= 21) {
       return 21;
@@ -52,18 +56,21 @@ export class McVersion {
    * Returns the recommended Docker image tag for this Minecraft version.
    * The itzg/minecraft-server latest/stable tag now defaults to Java 25,
    * but MC gameplay requirements differ from available image tags.
-   * Use this to pick the safest/correct image tag for a given MC version.
    */
   get recommendedImageTag(): string {
-    if (this._major >= 1 && this._minor >= 21) {
-      return 'java21'; // MC 1.21+ requires Java 21, java21 tag is safest
+    // Minecraft 26+ (new versioning scheme) requires Java 25
+    if (this._major >= 26) {
+      return 'java25';
     }
-    if (this._major >= 1 && this._minor >= 18) {
+    // Minecraft 1.21+ requires Java 21
+    if (this._major >= 1 && this._minor >= 21) {
+      return 'java21';
+    }
+    // Minecraft 1.17-1.20.x requires Java 17
+    if (this._major >= 1 && this._minor >= 17) {
       return 'java17';
     }
-    if (this._major >= 1 && this._minor === 17) {
-      return 'java17'; // java16 tag exists but java17 is more common
-    }
+    // Older versions use Java 8
     return 'java8';
   }
 
@@ -100,7 +107,8 @@ export class McVersion {
       throw new Error('Minecraft major version must be at least 1');
     }
 
-    // Current versions are around 1.21, so limit to reasonable range
+    // For 1.x versions, validate minor range (0-99)
+    // Minecraft 26.x+ uses a new versioning scheme where major > 1 is valid
     if (major === 1 && (minor < 0 || minor > 99)) {
       throw new Error('Minecraft minor version must be between 0 and 99');
     }
