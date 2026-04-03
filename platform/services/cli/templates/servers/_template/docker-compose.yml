@@ -54,5 +54,6 @@ services:
       # §e = yellow, §a = green, §c = red, §b = aqua, §f = white
       # §l = bold, §o = italic, §n = underline
       mc-router.auto-scale-asleep-motd: "§e§lServer is sleeping§r\n§7Connect to wake up!"
+      mc-router.auto-scale-loading-motd: "§a§lServer is starting...§r\n§7Please wait!"
 
 # Network is defined in main docker-compose.yml
