@@ -66,6 +66,12 @@ const CONFIG_FIELD_MAP: Record<keyof ServerConfig, string> = {
   stopDuration: 'STOP_DURATION',
   uid: 'UID',
   gid: 'GID',
+
+  // Configuration Repositories
+  paperConfigRepo: 'PAPER_CONFIG_REPO',
+  pufferfishConfigRepo: 'PUFFERFISH_CONFIG_REPO',
+  purpurConfigRepo: 'PURPUR_CONFIG_REPO',
+  serverPropertiesRepoUrl: 'SERVER_PROPERTIES_REPO_URL',
 };
 
 /**
@@ -99,6 +105,11 @@ const RESTART_REQUIRED_FIELDS: (keyof ServerConfig)[] = [
   'uid',
   'gid',
   'stopDuration',
+  // Configuration Repositories (applied at container startup)
+  'paperConfigRepo',
+  'pufferfishConfigRepo',
+  'purpurConfigRepo',
+  'serverPropertiesRepoUrl',
 ];
 
 /**
