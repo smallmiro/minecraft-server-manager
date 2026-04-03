@@ -77,6 +77,16 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.20.0 (2026-04-03)
+- **feat(shared)**: Java 25 support - McVersion.recommendedImageTag, DocsAdapter java25 (#444)
+- **feat(shared)**: New server types - LEAF, FOLIA, PUFFERFISH (#445)
+- **feat(api,console)**: Native AutoPause (PAUSE_WHEN_EMPTY_SECONDS) config support (#446)
+- **feat(api,console)**: WebSocket Console and SSH Console config support (#447)
+- **feat(api,console)**: Configuration Repository settings support (#448)
+- **fix(shared)**: DocsAdapter file path bug fix (#449)
+- **chore**: Migrate shared tests to vitest (#450), unify @types/node ^22.x (#451)
+- **docs**: itzg reference updates - Java 25, AutoPause, server types, mods, consoles (#439-#443)
+
 ### v2.19.0 (2026-03-01)
 - **feat(console)**: Add Q&A and Ideas community links to Footer (#434, #438)
 - **fix(console)**: Add null guards to `useServerConfigSnapshots` to prevent TypeError (#431, #435)
@@ -93,14 +103,6 @@ mcctl logs myserver
 ### v2.17.0 (2026-02-24)
 - **feat(console)**: Implement Backups tab in Server Detail page (#427, #428)
 - **fix(console)**: Add missing react-diff-viewer-continued dependency
-
-### v2.16.0 (2026-02-23)
-- **feat**: Config Snapshot system - full-stack server configuration versioning (#397~#406)
-- **feat**: Backup retention policy pruning implementation (#396, #426)
-- **fix**: Backup git path and shell injection prevention (#423, #425)
-
-### v2.15.3 (2026-02-22)
-- **docs**: Update README.md with Management Console features and architecture (#412, #413)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
