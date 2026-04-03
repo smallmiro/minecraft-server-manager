@@ -308,24 +308,24 @@ export class DocsAdapter implements IDocProvider {
     // Based on server type, return recommended Java versions
     switch (type.toUpperCase()) {
       case 'FORGE':
-        return ['java8', 'java17', 'java21'];
+        return ['java8', 'java17', 'java21', 'java25'];
       case 'FABRIC':
       case 'QUILT':
-        return ['java17', 'java21'];
+        return ['java17', 'java21', 'java25'];
       default:
-        return ['java21', 'java17'];
+        return ['java25', 'java21', 'java17'];
     }
   }
 
   private getJavaVersionForMc(version: string): string {
-    if (version === 'LATEST') return 'java21';
+    if (version === 'LATEST') return 'java25';
 
     const parts = version.split('.').map(Number);
     const major = parts[0] ?? 0;
     const minor = parts[1] ?? 0;
 
     if (major === 1) {
-      if (minor >= 21) return 'java21';
+      if (minor >= 21) return 'java21'; // MC requires Java 21, but java25 also works
       if (minor >= 18) return 'java17';
       if (minor >= 17) return 'java16';
       return 'java8';
@@ -389,7 +389,7 @@ export class DocsAdapter implements IDocProvider {
         supportsMods: false,
         isModpack: false,
         recommended: true,
-        javaVersions: ['java21', 'java17'],
+        javaVersions: ['java25', 'java21', 'java17'],
       },
       {
         value: ServerTypeEnum.VANILLA,
@@ -399,7 +399,7 @@ export class DocsAdapter implements IDocProvider {
         supportsMods: false,
         isModpack: false,
         recommended: false,
-        javaVersions: ['java21', 'java17'],
+        javaVersions: ['java25', 'java21', 'java17'],
       },
       {
         value: ServerTypeEnum.FORGE,
@@ -409,7 +409,7 @@ export class DocsAdapter implements IDocProvider {
         supportsMods: true,
         isModpack: false,
         recommended: false,
-        javaVersions: ['java8', 'java17', 'java21'],
+        javaVersions: ['java8', 'java17', 'java21', 'java25'],
       },
       {
         value: ServerTypeEnum.FABRIC,
@@ -419,7 +419,7 @@ export class DocsAdapter implements IDocProvider {
         supportsMods: true,
         isModpack: false,
         recommended: false,
-        javaVersions: ['java17', 'java21'],
+        javaVersions: ['java17', 'java21', 'java25'],
       },
       {
         value: ServerTypeEnum.QUILT,
@@ -429,7 +429,7 @@ export class DocsAdapter implements IDocProvider {
         supportsMods: true,
         isModpack: false,
         recommended: false,
-        javaVersions: ['java17', 'java21'],
+        javaVersions: ['java17', 'java21', 'java25'],
       },
       {
         value: ServerTypeEnum.SPIGOT,
@@ -439,7 +439,7 @@ export class DocsAdapter implements IDocProvider {
         supportsMods: false,
         isModpack: false,
         recommended: false,
-        javaVersions: ['java17', 'java21'],
+        javaVersions: ['java25', 'java21', 'java17'],
       },
       {
         value: ServerTypeEnum.BUKKIT,
@@ -449,7 +449,7 @@ export class DocsAdapter implements IDocProvider {
         supportsMods: false,
         isModpack: false,
         recommended: false,
-        javaVersions: ['java17', 'java21'],
+        javaVersions: ['java25', 'java21', 'java17'],
       },
       {
         value: ServerTypeEnum.PURPUR,
@@ -459,7 +459,7 @@ export class DocsAdapter implements IDocProvider {
         supportsMods: false,
         isModpack: false,
         recommended: false,
-        javaVersions: ['java17', 'java21'],
+        javaVersions: ['java25', 'java21', 'java17'],
       },
       {
         value: ServerTypeEnum.MODRINTH,
@@ -469,7 +469,7 @@ export class DocsAdapter implements IDocProvider {
         supportsMods: true,
         isModpack: true,
         recommended: false,
-        javaVersions: ['java8', 'java17', 'java21'],
+        javaVersions: ['java8', 'java17', 'java21', 'java25'],
       },
       {
         value: ServerTypeEnum.AUTO_CURSEFORGE,
@@ -479,7 +479,7 @@ export class DocsAdapter implements IDocProvider {
         supportsMods: true,
         isModpack: true,
         recommended: false,
-        javaVersions: ['java8', 'java17', 'java21'],
+        javaVersions: ['java8', 'java17', 'java21', 'java25'],
       },
     ];
   }
