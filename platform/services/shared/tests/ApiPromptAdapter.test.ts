@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect } from 'vitest';
 import { ApiPromptAdapter, type ApiPromptOptions } from '../src/infrastructure/adapters/ApiPromptAdapter.js';
 import { ServerName } from '../src/domain/value-objects/ServerName.js';
 import { ServerType, ServerTypeEnum } from '../src/domain/value-objects/ServerType.js';
@@ -13,7 +12,7 @@ describe('ApiPromptAdapter', () => {
   describe('constructor and options', () => {
     test('should create adapter with empty options', () => {
       const adapter = new ApiPromptAdapter({});
-      assert.ok(adapter);
+      expect(adapter).toBeTruthy();
     });
 
     test('should create adapter with full options', () => {
@@ -25,33 +24,30 @@ describe('ApiPromptAdapter', () => {
         worldSetup: 'new',
       };
       const adapter = new ApiPromptAdapter(options);
-      assert.ok(adapter);
+      expect(adapter).toBeTruthy();
     });
   });
 
   describe('basic prompts', () => {
     test('intro should not throw', () => {
       const adapter = new ApiPromptAdapter({});
-      assert.doesNotThrow(() => adapter.intro('Test message'));
+      expect(() => adapter.intro('Test message')).not.toThrow();
     });
 
     test('outro should not throw', () => {
       const adapter = new ApiPromptAdapter({});
-      assert.doesNotThrow(() => adapter.outro('Test message'));
+      expect(() => adapter.outro('Test message')).not.toThrow();
     });
 
     test('text should return pre-configured value when matching key exists', async () => {
       const adapter = new ApiPromptAdapter({ serverName: 'myserver' });
       const result = await adapter.text({ message: 'Server name:' });
-      assert.strictEqual(result, 'myserver');
+      expect(result).toBe('myserver');
     });
 
     test('text should throw when no matching value', async () => {
       const adapter = new ApiPromptAdapter({});
-      await assert.rejects(
-        () => adapter.text({ message: 'Unknown prompt:' }),
-        { message: /required in API mode/ }
-      );
+      await expect(adapter.text({ message: 'Unknown prompt:' })).rejects.toThrow(/required in API mode/);
     });
 
     test('select should return pre-configured value', async () => {
@@ -63,33 +59,30 @@ describe('ApiPromptAdapter', () => {
           { value: 'FORGE', label: 'Forge' },
         ],
       });
-      assert.strictEqual(result, 'FORGE');
+      expect(result).toBe('FORGE');
     });
 
     test('confirm should return pre-configured value', async () => {
       const adapter = new ApiPromptAdapter({ confirmValue: true });
       const result = await adapter.confirm({ message: 'Continue?' });
-      assert.strictEqual(result, true);
+      expect(result).toBe(true);
     });
 
     test('confirm should default to true when not configured', async () => {
       const adapter = new ApiPromptAdapter({});
       const result = await adapter.confirm({ message: 'Continue?' });
-      assert.strictEqual(result, true);
+      expect(result).toBe(true);
     });
 
     test('password should return pre-configured value', async () => {
       const adapter = new ApiPromptAdapter({ password: 'secret123' });
       const result = await adapter.password({ message: 'Password:' });
-      assert.strictEqual(result, 'secret123');
+      expect(result).toBe('secret123');
     });
 
     test('password should throw when not configured', async () => {
       const adapter = new ApiPromptAdapter({});
-      await assert.rejects(
-        () => adapter.password({ message: 'Password:' }),
-        { message: /required in API mode/ }
-      );
+      await expect(adapter.password({ message: 'Password:' })).rejects.toThrow(/required in API mode/);
     });
   });
 
@@ -97,82 +90,70 @@ describe('ApiPromptAdapter', () => {
     test('promptServerName should return ServerName from options', async () => {
       const adapter = new ApiPromptAdapter({ serverName: 'myserver' });
       const result = await adapter.promptServerName();
-      assert.ok(result instanceof ServerName);
-      assert.strictEqual(result.value, 'myserver');
+      expect(result instanceof ServerName).toBeTruthy();
+      expect(result.value).toBe('myserver');
     });
 
     test('promptServerName should throw when not configured', async () => {
       const adapter = new ApiPromptAdapter({});
-      await assert.rejects(
-        () => adapter.promptServerName(),
-        { message: /serverName is required in API mode/ }
-      );
+      await expect(adapter.promptServerName()).rejects.toThrow(/serverName is required in API mode/);
     });
 
     test('promptServerType should return ServerType from options', async () => {
       const adapter = new ApiPromptAdapter({ serverType: 'FORGE' });
       const result = await adapter.promptServerType();
-      assert.ok(result instanceof ServerType);
-      assert.strictEqual(result.value, ServerTypeEnum.FORGE);
+      expect(result instanceof ServerType).toBeTruthy();
+      expect(result.value).toBe(ServerTypeEnum.FORGE);
     });
 
     test('promptServerType should throw when not configured', async () => {
       const adapter = new ApiPromptAdapter({});
-      await assert.rejects(
-        () => adapter.promptServerType(),
-        { message: /serverType is required in API mode/ }
-      );
+      await expect(adapter.promptServerType()).rejects.toThrow(/serverType is required in API mode/);
     });
 
     test('promptMcVersion should return McVersion from options', async () => {
       const adapter = new ApiPromptAdapter({ mcVersion: '1.21.1' });
       const result = await adapter.promptMcVersion(ServerType.create('PAPER'));
-      assert.ok(result instanceof McVersion);
-      assert.strictEqual(result.value, '1.21.1');
+      expect(result instanceof McVersion).toBeTruthy();
+      expect(result.value).toBe('1.21.1');
     });
 
     test('promptMcVersion should throw when not configured', async () => {
       const adapter = new ApiPromptAdapter({});
-      await assert.rejects(
-        () => adapter.promptMcVersion(ServerType.create('PAPER')),
-        { message: /mcVersion is required in API mode/ }
-      );
+      await expect(adapter.promptMcVersion(ServerType.create('PAPER'))).rejects.toThrow(/mcVersion is required in API mode/);
     });
 
     test('promptMemory should return Memory from options', async () => {
       const adapter = new ApiPromptAdapter({ memory: '8G' });
       const result = await adapter.promptMemory();
-      assert.ok(result instanceof Memory);
-      assert.strictEqual(result.value, '8G');
+      expect(result instanceof Memory).toBeTruthy();
+      expect(result.value).toBe('8G');
     });
 
     test('promptMemory should throw when not configured', async () => {
       const adapter = new ApiPromptAdapter({});
-      await assert.rejects(
-        () => adapter.promptMemory(),
-        { message: /memory is required in API mode/ }
-      );
+      await expect(adapter.promptMemory()).rejects.toThrow(/memory is required in API mode/);
     });
 
     test('promptWorldOptions should return new world options', async () => {
       const adapter = new ApiPromptAdapter({ worldSetup: 'new' });
       const result = await adapter.promptWorldOptions();
-      assert.ok(result instanceof WorldOptions);
-      assert.strictEqual(result.isNewWorld, true);
+      expect(result instanceof WorldOptions).toBeTruthy();
+      expect(result.isNewWorld).toBe(true);
     });
 
     test('promptWorldOptions should return new world with seed', async () => {
       const adapter = new ApiPromptAdapter({ worldSetup: 'new', worldSeed: '12345' });
       const result = await adapter.promptWorldOptions();
-      assert.strictEqual(result.isNewWorld, true);
-      assert.strictEqual(result.seed, '12345');
+      expect(result.isNewWorld).toBe(true);
+      expect(result.seed).toBe('12345');
     });
 
     test('promptWorldOptions should return existing world options', async () => {
       const adapter = new ApiPromptAdapter({ worldSetup: 'existing', worldName: 'survival' });
       const result = await adapter.promptWorldOptions();
-      assert.strictEqual(result.isExistingWorld, true);
-      assert.strictEqual(result.worldName, 'survival');
+      expect(result.isExistingWorld).toBe(true);
+      expect(result.worldName).toBe('survival');
     });
 
     test('promptWorldOptions should return download world options', async () => {
@@ -181,16 +162,13 @@ describe('ApiPromptAdapter', () => {
         worldDownloadUrl: 'https://example.com/world.zip',
       });
       const result = await adapter.promptWorldOptions();
-      assert.strictEqual(result.isDownloadWorld, true);
-      assert.strictEqual(result.downloadUrl, 'https://example.com/world.zip');
+      expect(result.isDownloadWorld).toBe(true);
+      expect(result.downloadUrl).toBe('https://example.com/world.zip');
     });
 
     test('promptWorldOptions should throw when not configured', async () => {
       const adapter = new ApiPromptAdapter({});
-      await assert.rejects(
-        () => adapter.promptWorldOptions(),
-        { message: /worldSetup is required in API mode/ }
-      );
+      await expect(adapter.promptWorldOptions()).rejects.toThrow(/worldSetup is required in API mode/);
     });
 
     test('promptServerSelection should return server by name', async () => {
@@ -200,7 +178,7 @@ describe('ApiPromptAdapter', () => {
         Server.fromStatus('other', 'FORGE', '1.20.4', ServerStatus.STOPPED, 0),
       ];
       const result = await adapter.promptServerSelection(servers);
-      assert.strictEqual(result.name.value, 'myserver');
+      expect(result.name.value).toBe('myserver');
     });
 
     test('promptServerSelection should throw when server not found', async () => {
@@ -208,10 +186,7 @@ describe('ApiPromptAdapter', () => {
       const servers = [
         Server.fromStatus('myserver', 'PAPER', '1.21.1', ServerStatus.RUNNING, 0),
       ];
-      await assert.rejects(
-        () => adapter.promptServerSelection(servers),
-        { message: /Server 'nonexistent' not found/ }
-      );
+      await expect(adapter.promptServerSelection(servers)).rejects.toThrow(/Server 'nonexistent' not found/);
     });
 
     test('promptServerSelection should throw when not configured', async () => {
@@ -219,10 +194,7 @@ describe('ApiPromptAdapter', () => {
       const servers = [
         Server.fromStatus('myserver', 'PAPER', '1.21.1', ServerStatus.RUNNING, 0),
       ];
-      await assert.rejects(
-        () => adapter.promptServerSelection(servers),
-        { message: /serverName is required in API mode/ }
-      );
+      await expect(adapter.promptServerSelection(servers)).rejects.toThrow(/serverName is required in API mode/);
     });
 
     test('promptWorldSelection should return world by name', async () => {
@@ -232,16 +204,13 @@ describe('ApiPromptAdapter', () => {
         World.fromDirectory('creative', '/worlds'),
       ];
       const result = await adapter.promptWorldSelection(worlds);
-      assert.strictEqual(result.name, 'survival');
+      expect(result.name).toBe('survival');
     });
 
     test('promptWorldSelection should throw when world not found', async () => {
       const adapter = new ApiPromptAdapter({ worldName: 'nonexistent' });
       const worlds = [World.fromDirectory('survival', '/worlds')];
-      await assert.rejects(
-        () => adapter.promptWorldSelection(worlds),
-        { message: /World 'nonexistent' not found/ }
-      );
+      await expect(adapter.promptWorldSelection(worlds)).rejects.toThrow(/World 'nonexistent' not found/);
     });
 
     test('promptExistingWorldSelection should return world by name', async () => {
@@ -251,8 +220,8 @@ describe('ApiPromptAdapter', () => {
         { world: World.fromDirectory('creative', '/worlds'), category: 'stopped' as const, assignedServer: 'mc-other' },
       ];
       const result = await adapter.promptExistingWorldSelection(worlds);
-      assert.ok(result);
-      assert.strictEqual(result.name, 'survival');
+      expect(result).toBeTruthy();
+      expect(result.name).toBe('survival');
     });
 
     test('promptExistingWorldSelection should return null when no worldName configured', async () => {
@@ -261,7 +230,7 @@ describe('ApiPromptAdapter', () => {
         { world: World.fromDirectory('survival', '/worlds'), category: 'available' as const, assignedServer: null },
       ];
       const result = await adapter.promptExistingWorldSelection(worlds);
-      assert.strictEqual(result, null);
+      expect(result).toBe(null);
     });
   });
 
@@ -269,53 +238,50 @@ describe('ApiPromptAdapter', () => {
     test('spinner should return no-op implementation', () => {
       const adapter = new ApiPromptAdapter({});
       const spinner = adapter.spinner();
-      assert.ok(spinner);
-      assert.doesNotThrow(() => spinner.start('Loading...'));
-      assert.doesNotThrow(() => spinner.message('Processing...'));
-      assert.doesNotThrow(() => spinner.stop('Done'));
+      expect(spinner).toBeTruthy();
+      expect(() => spinner.start('Loading...')).not.toThrow();
+      expect(() => spinner.message('Processing...')).not.toThrow();
+      expect(() => spinner.stop('Done')).not.toThrow();
     });
 
     test('success should not throw', () => {
       const adapter = new ApiPromptAdapter({});
-      assert.doesNotThrow(() => adapter.success('Operation completed'));
+      expect(() => adapter.success('Operation completed')).not.toThrow();
     });
 
     test('error should not throw', () => {
       const adapter = new ApiPromptAdapter({});
-      assert.doesNotThrow(() => adapter.error('Something went wrong'));
+      expect(() => adapter.error('Something went wrong')).not.toThrow();
     });
 
     test('warn should not throw', () => {
       const adapter = new ApiPromptAdapter({});
-      assert.doesNotThrow(() => adapter.warn('Warning message'));
+      expect(() => adapter.warn('Warning message')).not.toThrow();
     });
 
     test('info should not throw', () => {
       const adapter = new ApiPromptAdapter({});
-      assert.doesNotThrow(() => adapter.info('Info message'));
+      expect(() => adapter.info('Info message')).not.toThrow();
     });
 
     test('note should not throw', () => {
       const adapter = new ApiPromptAdapter({});
-      assert.doesNotThrow(() => adapter.note('Note message', 'Title'));
+      expect(() => adapter.note('Note message', 'Title')).not.toThrow();
     });
   });
 
   describe('utility methods', () => {
     test('isCancel should always return false in API mode', () => {
       const adapter = new ApiPromptAdapter({});
-      assert.strictEqual(adapter.isCancel(undefined), false);
-      assert.strictEqual(adapter.isCancel(null), false);
-      assert.strictEqual(adapter.isCancel('value'), false);
-      assert.strictEqual(adapter.isCancel(Symbol.for('cancel')), false);
+      expect(adapter.isCancel(undefined)).toBe(false);
+      expect(adapter.isCancel(null)).toBe(false);
+      expect(adapter.isCancel('value')).toBe(false);
+      expect(adapter.isCancel(Symbol.for('cancel'))).toBe(false);
     });
 
     test('handleCancel should throw ApiModeError', () => {
       const adapter = new ApiPromptAdapter({});
-      assert.throws(
-        () => adapter.handleCancel(),
-        { name: 'ApiModeError', message: /Cancel not supported in API mode/ }
-      );
+      expect(() => adapter.handleCancel()).toThrow(/Cancel not supported in API mode/);
     });
   });
 
@@ -330,23 +296,23 @@ describe('ApiPromptAdapter', () => {
       adapter.outro('Outro');
 
       const messages = adapter.getMessages();
-      assert.strictEqual(messages.length, 6);
-      assert.deepStrictEqual(messages[0], { type: 'intro', message: 'Intro' });
-      assert.deepStrictEqual(messages[1], { type: 'success', message: 'Success' });
-      assert.deepStrictEqual(messages[2], { type: 'error', message: 'Error' });
-      assert.deepStrictEqual(messages[3], { type: 'warn', message: 'Warning' });
-      assert.deepStrictEqual(messages[4], { type: 'info', message: 'Info' });
-      assert.deepStrictEqual(messages[5], { type: 'outro', message: 'Outro' });
+      expect(messages.length).toBe(6);
+      expect(messages[0]).toEqual({ type: 'intro', message: 'Intro' });
+      expect(messages[1]).toEqual({ type: 'success', message: 'Success' });
+      expect(messages[2]).toEqual({ type: 'error', message: 'Error' });
+      expect(messages[3]).toEqual({ type: 'warn', message: 'Warning' });
+      expect(messages[4]).toEqual({ type: 'info', message: 'Info' });
+      expect(messages[5]).toEqual({ type: 'outro', message: 'Outro' });
     });
 
     test('clearMessages should reset collected messages', () => {
       const adapter = new ApiPromptAdapter({});
       adapter.success('Message 1');
       adapter.success('Message 2');
-      assert.strictEqual(adapter.getMessages().length, 2);
+      expect(adapter.getMessages().length).toBe(2);
 
       adapter.clearMessages();
-      assert.strictEqual(adapter.getMessages().length, 0);
+      expect(adapter.getMessages().length).toBe(0);
     });
   });
 });

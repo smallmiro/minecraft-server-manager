@@ -138,6 +138,28 @@ export class ShellExecutor {
   }
 
   /**
+   * Pull a Docker image
+   */
+  async dockerPull(image: string): Promise<number> {
+    return new Promise((resolve) => {
+      const child = spawn('docker', ['pull', image], {
+        cwd: this.paths.root,
+        stdio: 'inherit',
+        env: { ...process.env, ...this.env },
+      });
+
+      child.on('close', (code) => {
+        resolve(code ?? 0);
+      });
+
+      child.on('error', (err) => {
+        log.error(`Failed to pull Docker image ${image}: ${err.message}`);
+        resolve(1);
+      });
+    });
+  }
+
+  /**
    * Execute docker compose command
    */
   async dockerCompose(args: string[]): Promise<number> {

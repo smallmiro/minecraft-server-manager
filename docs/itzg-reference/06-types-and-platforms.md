@@ -49,7 +49,59 @@ environment:
 | `PURPUR` | Paper fork with additional features |
 | `PUFFERFISH` | Performance optimized fork |
 | `FOLIA` | Multi-threaded support |
-| `LEAF` | Lightweight fork |
+| `LEAF` | Performance optimized lightweight fork |
+
+#### Leaf
+
+Performance-optimized Paper fork focused on lightweight server operation:
+
+| Variable | Description |
+|----------|-------------|
+| `TYPE` | `LEAF` |
+| `LEAF_BUILD` | Specific build number |
+
+```yaml
+environment:
+  EULA: "TRUE"
+  TYPE: "LEAF"
+  VERSION: "1.21.1"
+```
+
+#### Folia
+
+Multi-threaded Paper fork for large-scale servers:
+
+| Variable | Description |
+|----------|-------------|
+| `TYPE` | `FOLIA` |
+| `FOLIA_CHANNEL` | `experimental` or `default` |
+| `FOLIA_DOWNLOAD_URL` | Custom download URL |
+
+```yaml
+environment:
+  EULA: "TRUE"
+  TYPE: "FOLIA"
+  VERSION: "1.20.4"
+  FOLIA_CHANNEL: "experimental"
+```
+
+### Configuration Repositories
+
+Automatically download optimized configuration files from Git repositories:
+
+| Variable | Server Type | Description |
+|----------|-------------|-------------|
+| `PAPER_CONFIG_REPO` | PAPER | Paper optimized config repository URL |
+| `PUFFERFISH_CONFIG_REPO` | PUFFERFISH | Pufferfish config repository URL |
+| `PURPUR_CONFIG_REPO` | PURPUR | Purpur config repository URL |
+| `SERVER_PROPERTIES_REPO_URL` | ALL | Base server.properties repository (Smart Mode / Direct Mode) |
+
+```yaml
+environment:
+  EULA: "TRUE"
+  TYPE: "PAPER"
+  PAPER_CONFIG_REPO: "https://github.com/example/paper-configs.git"
+```
 
 ---
 
@@ -62,7 +114,7 @@ Mod support server:
 | `TYPE` | `FORGE` |
 | `FORGE_VERSION` | Forge version (`latest` or version number) |
 | `FORGE_INSTALLER` | Local installer path |
-| `FORGE_INSTALLER_URL` | Installer download URL |
+| `FORGE_INSTALLER_URL` | Installer download URL (also used for Cleanroom server) |
 | `FORGE_FORCE_REINSTALL` | Force reinstall (`true`) |
 
 ```yaml
@@ -73,16 +125,23 @@ environment:
   FORGE_VERSION: "latest"
 ```
 
+> **Tip**: [Cleanroom](https://github.com/CleanroomMC/Cleanroom) is an alternative Forge-compatible server that can be installed by providing a custom installer URL via `FORGE_INSTALLER_URL`.
+
 ### NeoForge
 
 Community fork of Forge:
+
+| Variable | Description |
+|----------|-------------|
+| `TYPE` | `NEOFORGE` |
+| `NEOFORGE_VERSION` | `latest`, `beta`, or specific version number |
 
 ```yaml
 environment:
   EULA: "TRUE"
   TYPE: "NEOFORGE"
   VERSION: "1.20.4"
-  NEOFORGE_VERSION: "latest"
+  NEOFORGE_VERSION: "latest"  # also supports "beta"
 ```
 
 ---
@@ -98,6 +157,7 @@ Lightweight mod loader:
 | `FABRIC_LOADER_VERSION` | Loader version |
 | `FABRIC_LAUNCHER` | Custom launcher path |
 | `FABRIC_LAUNCHER_URL` | Custom launcher URL |
+| `FABRIC_META_BASE_URL` | Custom Fabric meta API base URL (for mirrors) |
 | `FABRIC_FORCE_REINSTALL` | Force reinstall |
 
 ```yaml

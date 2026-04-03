@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert';
+import { describe, test, expect } from 'vitest';
 import { Operator } from '../src/domain/entities/Operator.js';
 import { OpLevel } from '../src/domain/value-objects/OpLevel.js';
 
@@ -12,10 +11,10 @@ describe('Operator', () => {
         level: OpLevel.ADMIN,
       });
 
-      assert.strictEqual(operator.uuid, '12345678-1234-5678-1234-567812345678');
-      assert.strictEqual(operator.name, 'TestPlayer');
-      assert.strictEqual(operator.level, OpLevel.ADMIN);
-      assert.strictEqual(operator.bypassesPlayerLimit, false); // 기본값
+      expect(operator.uuid).toBe('12345678-1234-5678-1234-567812345678');
+      expect(operator.name).toBe('TestPlayer');
+      expect(operator.level).toBe(OpLevel.ADMIN);
+      expect(operator.bypassesPlayerLimit).toBe(false); // 기본값
     });
 
     test('bypassesPlayerLimit 옵션을 포함하여 생성한다', () => {
@@ -26,31 +25,25 @@ describe('Operator', () => {
         bypassesPlayerLimit: true,
       });
 
-      assert.strictEqual(operator.bypassesPlayerLimit, true);
+      expect(operator.bypassesPlayerLimit).toBe(true);
     });
 
     test('빈 UUID는 에러를 발생시킨다', () => {
-      assert.throws(
-        () =>
+      expect(() =>
           Operator.create({
             uuid: '',
             name: 'Player',
             level: OpLevel.MODERATOR,
-          }),
-        /UUID is required/
-      );
+          })).toThrow(/UUID is required/);
     });
 
     test('빈 이름은 에러를 발생시킨다', () => {
-      assert.throws(
-        () =>
+      expect(() =>
           Operator.create({
             uuid: '12345678-1234-5678-1234-567812345678',
             name: '',
             level: OpLevel.MODERATOR,
-          }),
-        /Name is required/
-      );
+          })).toThrow(/Name is required/);
     });
   });
 
@@ -63,10 +56,10 @@ describe('Operator', () => {
         bypassesPlayerLimit: false,
       });
 
-      assert.strictEqual(operator.uuid, '12345678-1234-5678-1234-567812345678');
-      assert.strictEqual(operator.name, 'Admin');
-      assert.strictEqual(operator.level, OpLevel.OWNER);
-      assert.strictEqual(operator.bypassesPlayerLimit, false);
+      expect(operator.uuid).toBe('12345678-1234-5678-1234-567812345678');
+      expect(operator.name).toBe('Admin');
+      expect(operator.level).toBe(OpLevel.OWNER);
+      expect(operator.bypassesPlayerLimit).toBe(false);
     });
 
     test('각 레벨(1-4)이 올바르게 변환된다', () => {
@@ -82,10 +75,10 @@ describe('Operator', () => {
       const op3 = Operator.fromMinecraftOpsJson(ops[2]);
       const op4 = Operator.fromMinecraftOpsJson(ops[3]);
 
-      assert.strictEqual(op1.level, OpLevel.MODERATOR);
-      assert.strictEqual(op2.level, OpLevel.GAMEMASTER);
-      assert.strictEqual(op3.level, OpLevel.ADMIN);
-      assert.strictEqual(op4.level, OpLevel.OWNER);
+      expect(op1.level).toBe(OpLevel.MODERATOR);
+      expect(op2.level).toBe(OpLevel.GAMEMASTER);
+      expect(op3.level).toBe(OpLevel.ADMIN);
+      expect(op4.level).toBe(OpLevel.OWNER);
     });
   });
 
@@ -100,7 +93,7 @@ describe('Operator', () => {
 
       const json = operator.toMinecraftOpsJson();
 
-      assert.deepStrictEqual(json, {
+      expect(json).toEqual({
         uuid: '12345678-1234-5678-1234-567812345678',
         name: 'Admin',
         level: 3,
@@ -119,7 +112,7 @@ describe('Operator', () => {
 
       operator.updateLevel(OpLevel.ADMIN);
 
-      assert.strictEqual(operator.level, OpLevel.ADMIN);
+      expect(operator.level).toBe(OpLevel.ADMIN);
     });
   });
 
@@ -131,11 +124,11 @@ describe('Operator', () => {
         level: OpLevel.OWNER,
       });
 
-      assert.strictEqual(operator.bypassesPlayerLimit, false);
+      expect(operator.bypassesPlayerLimit).toBe(false);
 
       operator.setBypassesPlayerLimit(true);
 
-      assert.strictEqual(operator.bypassesPlayerLimit, true);
+      expect(operator.bypassesPlayerLimit).toBe(true);
     });
   });
 
@@ -147,8 +140,8 @@ describe('Operator', () => {
         level: OpLevel.MODERATOR,
       });
 
-      assert.strictEqual(operator.hasPermission(OpLevel.MODERATOR), true);
-      assert.strictEqual(operator.hasPermission(OpLevel.GAMEMASTER), false);
+      expect(operator.hasPermission(OpLevel.MODERATOR)).toBe(true);
+      expect(operator.hasPermission(OpLevel.GAMEMASTER)).toBe(false);
     });
 
     test('OWNER는 모든 레벨의 권한을 가진다', () => {
@@ -158,10 +151,10 @@ describe('Operator', () => {
         level: OpLevel.OWNER,
       });
 
-      assert.strictEqual(operator.hasPermission(OpLevel.MODERATOR), true);
-      assert.strictEqual(operator.hasPermission(OpLevel.GAMEMASTER), true);
-      assert.strictEqual(operator.hasPermission(OpLevel.ADMIN), true);
-      assert.strictEqual(operator.hasPermission(OpLevel.OWNER), true);
+      expect(operator.hasPermission(OpLevel.MODERATOR)).toBe(true);
+      expect(operator.hasPermission(OpLevel.GAMEMASTER)).toBe(true);
+      expect(operator.hasPermission(OpLevel.ADMIN)).toBe(true);
+      expect(operator.hasPermission(OpLevel.OWNER)).toBe(true);
     });
 
     test('ADMIN은 OWNER 권한을 가지지 않는다', () => {
@@ -171,10 +164,10 @@ describe('Operator', () => {
         level: OpLevel.ADMIN,
       });
 
-      assert.strictEqual(operator.hasPermission(OpLevel.MODERATOR), true);
-      assert.strictEqual(operator.hasPermission(OpLevel.GAMEMASTER), true);
-      assert.strictEqual(operator.hasPermission(OpLevel.ADMIN), true);
-      assert.strictEqual(operator.hasPermission(OpLevel.OWNER), false);
+      expect(operator.hasPermission(OpLevel.MODERATOR)).toBe(true);
+      expect(operator.hasPermission(OpLevel.GAMEMASTER)).toBe(true);
+      expect(operator.hasPermission(OpLevel.ADMIN)).toBe(true);
+      expect(operator.hasPermission(OpLevel.OWNER)).toBe(false);
     });
   });
 });

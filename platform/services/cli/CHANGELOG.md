@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.20.0] - 2026-04-03
+
+### Added
+- **Java 25 Support** - McVersion.recommendedImageTag and DocsAdapter java25 support (#444)
+- **New Server Types** - Add LEAF, FOLIA, PUFFERFISH server types (#445)
+- **Native AutoPause** - PAUSE_WHEN_EMPTY_SECONDS config support for MC 1.21.2+ (#446)
+- **WebSocket & SSH Console** - WebSocket Console and SSH Console config support (#447)
+- **Config Repository** - Configuration Repository settings (PAPER_CONFIG_REPO etc.) (#448)
+
+### Fixed
+- **DocsAdapter Path** - Fix DocsAdapter file path to include itzg-reference subdirectory (#449)
+
+### Changed
+- **Test Runner Migration** - Migrate shared package test runner from node:test to vitest (#450)
+- **TypeScript Types** - Unify @types/node to ^22.x across all packages (#451)
+
+### Documentation
+- **Java Versions** - GraalVM deprecated, Java 25 tags added (#439)
+- **AutoPause** - Native AutoPause (PAUSE_WHEN_EMPTY_SECONDS) for MC 1.21.2+ (#440)
+- **Server Types** - Leaf, Config Repos, Fabric mirror (#441)
+- **Mods & Plugins** - Auto-removal, VERSION_FROM_MODRINTH, new env vars (#442)
+- **Console Features** - WebSocket Console, SSH Console, Autoscale documentation (#443)
+
 ## [2.19.0] - 2026-03-01
 
 ### Added

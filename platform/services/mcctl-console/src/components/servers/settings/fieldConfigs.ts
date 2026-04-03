@@ -337,6 +337,15 @@ export const autopauseAdvancedFields: FieldConfig[] = [
     helperText: 'Wait time before stopping container',
     validation: { min: 0 },
   },
+  {
+    key: 'pauseWhenEmptySeconds',
+    label: 'Native Pause Delay (MC 1.21.2+)',
+    type: 'number',
+    unit: 'seconds',
+    helperText: 'Seconds to wait before native pause when empty (0 = disable). Requires MC 1.21.2+.',
+    restartRequired: true,
+    validation: { min: 0 },
+  },
 ];
 
 // ── System: Essential ──
@@ -361,6 +370,97 @@ export const systemEssentialFields: FieldConfig[] = [
     type: 'boolean',
     helperText: 'Remote server console access',
     restartRequired: true,
+  },
+];
+
+// ── Remote Access: Essential ──
+export const remoteAccessEssentialFields: FieldConfig[] = [
+  {
+    key: 'websocketConsole',
+    label: 'Enable WebSocket Console',
+    type: 'boolean',
+    helperText: 'Expose a browser-accessible console via WebSocket',
+    restartRequired: true,
+  },
+  {
+    key: 'enableSsh',
+    label: 'Enable SSH Console',
+    type: 'boolean',
+    helperText: 'SSH console access on port 2222',
+    restartRequired: true,
+  },
+];
+
+// ── Remote Access: Advanced ──
+export const remoteAccessAdvancedFields: FieldConfig[] = [
+  {
+    key: 'websocketAddress',
+    label: 'WebSocket Bind Address',
+    type: 'string',
+    helperText: 'e.g., 0.0.0.0:80',
+    columns: 12,
+  },
+  {
+    key: 'websocketPassword',
+    label: 'WebSocket Password',
+    type: 'password',
+    helperText: 'Leave blank to use RCON password',
+  },
+  {
+    key: 'websocketDisableAuthentication',
+    label: 'Disable WebSocket Auth',
+    type: 'boolean',
+    helperText: 'Allow unauthenticated WebSocket connections (not recommended)',
+  },
+  {
+    key: 'websocketAllowedOrigins',
+    label: 'Allowed Origins',
+    type: 'string',
+    helperText: 'Comma-separated allowed origins (e.g., https://example.com)',
+    columns: 12,
+  },
+  {
+    key: 'websocketLogBufferSize',
+    label: 'Log Buffer Size',
+    type: 'number',
+    helperText: 'Number of log lines kept in history',
+    validation: { min: 1 },
+  },
+];
+
+// ── Configuration Repositories ──
+export const configRepoFields: FieldConfig[] = [
+  {
+    key: 'serverPropertiesRepoUrl',
+    label: 'server.properties Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for base server.properties template',
+    restartRequired: true,
+    columns: 12,
+  },
+  {
+    key: 'paperConfigRepo',
+    label: 'Paper Config Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for Paper optimized configuration',
+    restartRequired: true,
+    columns: 12,
+  },
+  {
+    key: 'pufferfishConfigRepo',
+    label: 'Pufferfish Config Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for Pufferfish configuration',
+    restartRequired: true,
+    columns: 12,
+  },
+  {
+    key: 'purpurConfigRepo',
+    label: 'Purpur Config Repository URL',
+    type: 'string',
+    helperText: 'Git repository URL for Purpur configuration',
+    restartRequired: true,
+    columns: 12,
   },
 ];
 

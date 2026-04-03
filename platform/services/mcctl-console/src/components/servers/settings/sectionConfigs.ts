@@ -4,6 +4,8 @@ import ShieldIcon from '@mui/icons-material/Shield';
 import SpeedIcon from '@mui/icons-material/Speed';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import SettingsIcon from '@mui/icons-material/Settings';
+import WifiIcon from '@mui/icons-material/Wifi';
+import FolderSpecialIcon from '@mui/icons-material/FolderSpecial';
 import type { FieldConfig } from './fieldConfigs';
 import {
   gameplayEssentialFields,
@@ -18,6 +20,9 @@ import {
   autopauseAdvancedFields,
   systemEssentialFields,
   systemAdvancedFields,
+  remoteAccessEssentialFields,
+  remoteAccessAdvancedFields,
+  configRepoFields,
 } from './fieldConfigs';
 
 export interface SectionConfig {
@@ -77,5 +82,21 @@ export const sectionConfigs: SectionConfig[] = [
     description: 'Timezone, resource pack, RCON, and container settings.',
     essentialFields: systemEssentialFields,
     advancedFields: systemAdvancedFields,
+  },
+  {
+    id: 'remoteAccess',
+    icon: WifiIcon,
+    title: 'Remote Access',
+    description: 'WebSocket console and SSH access configuration.',
+    essentialFields: remoteAccessEssentialFields,
+    advancedFields: remoteAccessAdvancedFields,
+  },
+  {
+    id: 'config-repos',
+    icon: FolderSpecialIcon,
+    title: 'Configuration Repositories',
+    description: 'Git repository URLs for server configuration templates (applied at startup).',
+    essentialFields: configRepoFields,
+    advancedFields: [],
   },
 ];
