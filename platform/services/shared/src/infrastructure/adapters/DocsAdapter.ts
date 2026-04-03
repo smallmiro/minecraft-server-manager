@@ -22,8 +22,8 @@ export class DocsAdapter implements IDocProvider {
 
   constructor(rootDir?: string) {
     const paths = new Paths(rootDir);
-    // docs/ is at project root, not platform root
-    this.docsDir = join(paths.root, '..', 'docs');
+    // docs/itzg-reference/ is at project root, not platform root
+    this.docsDir = join(paths.root, '..', 'docs', 'itzg-reference');
   }
 
   /**
