@@ -97,6 +97,9 @@ export const ServerConfigSchema = Type.Object({
   enableAutostop: Type.Optional(Type.Boolean({ description: 'Stop container when no players connected' })),
   autostopTimeoutEst: Type.Optional(Type.Number({ minimum: 0, description: 'Seconds to wait before autostop' })),
 
+  // ── Native Auto-pause (MC 1.21.2+) ──
+  pauseWhenEmptySeconds: Type.Optional(Type.Number({ minimum: 0, description: 'Native pause: seconds to wait before pausing when empty (MC 1.21.2+)' })),
+
   // ── System (Essential) ──
   tz: Type.Optional(Type.String({ description: 'Timezone (e.g., Asia/Seoul)' })),
   resourcePack: Type.Optional(Type.String({ description: 'Resource pack download URL' })),
