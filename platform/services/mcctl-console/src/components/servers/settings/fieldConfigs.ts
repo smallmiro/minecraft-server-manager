@@ -337,6 +337,15 @@ export const autopauseAdvancedFields: FieldConfig[] = [
     helperText: 'Wait time before stopping container',
     validation: { min: 0 },
   },
+  {
+    key: 'pauseWhenEmptySeconds',
+    label: 'Native Pause Delay (MC 1.21.2+)',
+    type: 'number',
+    unit: 'seconds',
+    helperText: 'Seconds to wait before native pause when empty (0 = disable). Requires MC 1.21.2+.',
+    restartRequired: true,
+    validation: { min: 0 },
+  },
 ];
 
 // ── System: Essential ──

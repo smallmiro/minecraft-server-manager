@@ -888,6 +888,69 @@ GID=1000
     });
   });
 
+  describe('Native Auto-pause (#446)', () => {
+    beforeEach(() => {
+      mockedExistsSync.mockReturnValue(true);
+    });
+
+    it('should parse PAUSE_WHEN_EMPTY_SECONDS as a number field', () => {
+      mockedReadFileSync.mockReturnValue(`PAUSE_WHEN_EMPTY_SECONDS=60\n`);
+
+      const config = configService.getConfig('testserver');
+
+      expect(config.pauseWhenEmptySeconds).toBe(60);
+    });
+
+    it('should parse PAUSE_WHEN_EMPTY_SECONDS=0 (disable native pause)', () => {
+      mockedReadFileSync.mockReturnValue(`PAUSE_WHEN_EMPTY_SECONDS=0\n`);
+
+      const config = configService.getConfig('testserver');
+
+      expect(config.pauseWhenEmptySeconds).toBe(0);
+    });
+
+    it('should return undefined when PAUSE_WHEN_EMPTY_SECONDS is not set', () => {
+      mockedReadFileSync.mockReturnValue(`MOTD=Test\n`);
+
+      const config = configService.getConfig('testserver');
+
+      expect(config.pauseWhenEmptySeconds).toBeUndefined();
+    });
+
+    it('should write PAUSE_WHEN_EMPTY_SECONDS to env file', () => {
+      let writtenContent = '';
+      let callCount = 0;
+      mockedReadFileSync.mockImplementation(() => {
+        callCount++;
+        return callCount <= 2 ? 'MOTD=Test\n' : writtenContent;
+      });
+      mockedWriteFileSync.mockImplementation((_path, content) => {
+        writtenContent = content as string;
+      });
+
+      configService.updateConfig('testserver', { pauseWhenEmptySeconds: 120 });
+
+      expect(writtenContent).toContain('PAUSE_WHEN_EMPTY_SECONDS=120');
+    });
+
+    it('should require restart when pauseWhenEmptySeconds changes', () => {
+      let writtenContent = '';
+      let callCount = 0;
+      mockedReadFileSync.mockImplementation(() => {
+        callCount++;
+        return callCount <= 2 ? 'PAUSE_WHEN_EMPTY_SECONDS=60\n' : writtenContent;
+      });
+      mockedWriteFileSync.mockImplementation((_path, content) => {
+        writtenContent = content as string;
+      });
+
+      const result = configService.updateConfig('testserver', { pauseWhenEmptySeconds: 120 });
+
+      expect(result.restartRequired).toBe(true);
+      expect(result.changedFields).toContain('pauseWhenEmptySeconds');
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle config file with no equals signs', () => {
       mockedExistsSync.mockReturnValue(true);
