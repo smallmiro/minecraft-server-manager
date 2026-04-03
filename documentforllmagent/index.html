@@ -8016,9 +8016,14 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </thead>
 <tbody>
 <tr>
-<td>1.21+</td>
+<td>26+</td>
+<td>Java 25</td>
+<td><code>java25</code> or <code>latest</code></td>
+</tr>
+<tr>
+<td>1.21 - 1.21.x</td>
 <td>Java 21</td>
-<td><code>java21</code> or <code>latest</code></td>
+<td><code>java21</code></td>
 </tr>
 <tr>
 <td>1.20.5 - 1.20.6</td>
@@ -8504,11 +8509,11 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-69-8" name="__codelineno-69-8" href="#__codelineno-69-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run/docker.sock:/var/run/docker.sock</span>
 <a id="__codelineno-69-9" name="__codelineno-69-9" href="#__codelineno-69-9"></a>
 <a id="__codelineno-69-10" name="__codelineno-69-10" href="#__codelineno-69-10"></a><span class="w">  </span><span class="nt">mc-survival</span><span class="p">:</span>
-<a id="__codelineno-69-11" name="__codelineno-69-11" href="#__codelineno-69-11"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21</span>
+<a id="__codelineno-69-11" name="__codelineno-69-11" href="#__codelineno-69-11"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java25</span><span class="w">  </span><span class="c1"># Use java25 or latest for MC 26+, java21 for MC 1.21.x</span>
 <a id="__codelineno-69-12" name="__codelineno-69-12" href="#__codelineno-69-12"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
 <a id="__codelineno-69-13" name="__codelineno-69-13" href="#__codelineno-69-13"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
 <a id="__codelineno-69-14" name="__codelineno-69-14" href="#__codelineno-69-14"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PAPER&quot;</span>
-<a id="__codelineno-69-15" name="__codelineno-69-15" href="#__codelineno-69-15"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.21.1&quot;</span>
+<a id="__codelineno-69-15" name="__codelineno-69-15" href="#__codelineno-69-15"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;LATEST&quot;</span>
 <a id="__codelineno-69-16" name="__codelineno-69-16" href="#__codelineno-69-16"></a><span class="w">      </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4G&quot;</span>
 <a id="__codelineno-69-17" name="__codelineno-69-17" href="#__codelineno-69-17"></a><span class="w">      </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
 <a id="__codelineno-69-18" name="__codelineno-69-18" href="#__codelineno-69-18"></a><span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
@@ -8519,11 +8524,11 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h3 id="fabric-server-with-modrinth-mods">Fabric Server with Modrinth Mods<a class="headerlink" href="#fabric-server-with-modrinth-mods" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-70-1" name="__codelineno-70-1" href="#__codelineno-70-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-70-2" name="__codelineno-70-2" href="#__codelineno-70-2"></a><span class="w">  </span><span class="nt">mc-modded</span><span class="p">:</span>
-<a id="__codelineno-70-3" name="__codelineno-70-3" href="#__codelineno-70-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21</span>
+<a id="__codelineno-70-3" name="__codelineno-70-3" href="#__codelineno-70-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java25</span><span class="w">  </span><span class="c1"># Use java25 or latest for MC 26+, java21 for MC 1.21.x</span>
 <a id="__codelineno-70-4" name="__codelineno-70-4" href="#__codelineno-70-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
 <a id="__codelineno-70-5" name="__codelineno-70-5" href="#__codelineno-70-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
 <a id="__codelineno-70-6" name="__codelineno-70-6" href="#__codelineno-70-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FABRIC&quot;</span>
-<a id="__codelineno-70-7" name="__codelineno-70-7" href="#__codelineno-70-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.21.1&quot;</span>
+<a id="__codelineno-70-7" name="__codelineno-70-7" href="#__codelineno-70-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;LATEST&quot;</span>
 <a id="__codelineno-70-8" name="__codelineno-70-8" href="#__codelineno-70-8"></a><span class="w">      </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;8G&quot;</span>
 <a id="__codelineno-70-9" name="__codelineno-70-9" href="#__codelineno-70-9"></a><span class="w">      </span><span class="nt">MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <a id="__codelineno-70-10" name="__codelineno-70-10" href="#__codelineno-70-10"></a><span class="w">        </span><span class="no">fabric-api</span>
@@ -8868,6 +8873,11 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>class file version 69.0</code></td>
+<td>Java 25 required</td>
+<td>Use <code>java25</code> or <code>latest</code> image tag (MC 26+)</td>
+</tr>
 <tr>
 <td><code>class file version 65.0</code></td>
 <td>Java 21 required</td>

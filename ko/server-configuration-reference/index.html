@@ -4656,7 +4656,7 @@
 </tr>
 <tr>
 <td><code>USE_MEOWICE_GRAALVM_FLAGS</code></td>
-<td>GraalVM-specific optimization flags (use with <code>java21-graalvm</code> image)</td>
+<td>GraalVM-specific optimization flags (use with <code>java21-graalvm</code> image). Note: GraalVM images are not yet available for Java 25; use <code>java21-graalvm</code> for GraalVM support.</td>
 </tr>
 <tr>
 <td><code>USE_FLARE_FLAGS</code></td>
@@ -5726,7 +5726,7 @@
 <p>Each server has its own <code>docker-compose.yml</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a><span class="w">  </span><span class="nt">mc-&lt;name&gt;</span><span class="p">:</span>
-<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21</span>
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java25</span><span class="w">  </span><span class="c1"># Use java21 for MC 1.21.x, java25 or latest for MC 26+</span>
 <a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mc-&lt;name&gt;</span>
 <a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;no&quot;</span>
 <a id="__codelineno-50-6" name="__codelineno-50-6" href="#__codelineno-50-6"></a><span class="w">    </span><span class="nt">tty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
@@ -5820,9 +5820,14 @@
 <td>Latest Minecraft (default)</td>
 </tr>
 <tr>
+<td><code>java25</code></td>
+<td>Java 25</td>
+<td>Minecraft 26+</td>
+</tr>
+<tr>
 <td><code>java21</code></td>
 <td>Java 21</td>
-<td>Minecraft 1.20.5+</td>
+<td>Minecraft 1.20.5 - 1.21.x</td>
 </tr>
 <tr>
 <td><code>java17</code></td>
@@ -5862,9 +5867,14 @@
 </thead>
 <tbody>
 <tr>
-<td>1.21+</td>
+<td>26+</td>
+<td>Java 25</td>
+<td><code>java25</code> or <code>latest</code></td>
+</tr>
+<tr>
+<td>1.21 - 1.21.x</td>
 <td>Java 21</td>
-<td><code>java21</code> or <code>latest</code></td>
+<td><code>java21</code></td>
 </tr>
 <tr>
 <td>1.20.5 - 1.20.6</td>
@@ -5905,7 +5915,12 @@
 </thead>
 <tbody>
 <tr>
-<td>Forge 1.20.5+</td>
+<td>Forge 26+</td>
+<td>Java 25</td>
+<td><code>java25</code></td>
+</tr>
+<tr>
+<td>Forge 1.20.5 - 1.21.x</td>
 <td>Java 21</td>
 <td><code>java21</code></td>
 </tr>
@@ -5937,6 +5952,12 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>java25</code></td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
 <tr>
 <td><code>java21</code></td>
 <td>Yes</td>
@@ -5981,6 +6002,11 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>class file version 69.0</code></td>
+<td>Java 25 required</td>
+<td>Use <code>java25</code> or <code>latest</code> image tag (MC 26+)</td>
+</tr>
 <tr>
 <td><code>class file version 65.0</code></td>
 <td>Java 21 required</td>
