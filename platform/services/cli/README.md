@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.20.3 (2026-05-03)
+- **fix(platform)**: Correct mc-router `DOCKER_TIMEOUT` format to Go time.Duration (`120` → `120s`)
+- **chore(platform)**: Pin `itzg/mc-router` image to explicit version `1.42.0` (#472, #473)
+
 ### v2.20.2 (2026-04-03)
 - **feat**: Add mc-router loading MOTD label (`auto-scale-loading-motd`) to server templates (#471)
 - **feat(cli)**: Auto-add loading MOTD label to existing servers during `mcctl update` (#471)
