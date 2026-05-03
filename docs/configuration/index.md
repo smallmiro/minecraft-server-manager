@@ -106,7 +106,7 @@ Auto-scaling settings in `~/minecraft-servers/.env`:
 AUTO_SCALE_UP=true              # Auto-start servers on player connect
 AUTO_SCALE_DOWN=true            # Auto-stop idle servers
 AUTO_SCALE_DOWN_AFTER=10m       # Idle timeout
-DOCKER_TIMEOUT=120              # Server startup timeout (seconds)
+DOCKER_TIMEOUT=120s             # Server startup timeout (Go time.Duration: 120s, 2m)
 ```
 
 ### Change Server Properties

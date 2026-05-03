@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.20.2
-> **Last Updated**: 2026-04-03
+> **Version**: 2.20.3
+> **Last Updated**: 2026-05-03
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -1052,7 +1052,7 @@ RCON_PASSWORD=changeme
 AUTO_SCALE_UP=true                   # Auto-start on connect
 AUTO_SCALE_DOWN=true                 # Auto-stop idle
 AUTO_SCALE_DOWN_AFTER=10m            # Idle timeout
-DOCKER_TIMEOUT=120                   # Start timeout (seconds)
+DOCKER_TIMEOUT=120s                  # Start timeout (Go time.Duration: e.g., 120s, 2m)
 AUTO_SCALE_ASLEEP_MOTD=Server is sleeping. Connect to wake up!
 
 # Backup (GitHub)
@@ -1971,7 +1971,7 @@ mc-router is a connection multiplexer enabling multiple Minecraft servers to sha
 ```yaml
 services:
   mc-router:
-    image: itzg/mc-router
+    image: itzg/mc-router:1.42.0  # Pin to explicit version for reproducible deployments
     command: --in-docker --auto-scale-up --auto-scale-down
     ports:
       - "25565:25565"
@@ -2063,7 +2063,7 @@ Uses annotations on services.
 ```yaml
 services:
   router:
-    image: itzg/mc-router
+    image: itzg/mc-router:1.42.0  # Pin to explicit version for reproducible deployments
     command: --in-docker --auto-scale-up --auto-scale-down
     ports:
       - "25565:25565"
@@ -2830,6 +2830,34 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.20.3 (2026-05-03) - mc-router Stability
+
+**Fixed:**
+- **mc-router DOCKER_TIMEOUT Format** - Correct DOCKER_TIMEOUT to Go time.Duration format (`120` → `120s`) so mc-router can parse it properly
+
+**Changed:**
+- **mc-router Image Pin** - Pin `itzg/mc-router` image to explicit version `1.42.0` for reproducible deployments (#472, #473)
+
+### Version 2.20.2 (2026-04-03) - Loading MOTD Label
+
+**Added:**
+- **Loading MOTD Label** - Add `mc-router` loading MOTD label (`auto-scale-loading-motd`) to server templates (#471)
+- **Auto Loading MOTD** - Auto-add loading MOTD label to existing servers during `mcctl update` (#471)
+
+**Fixed:**
+- **MC 26.x Defaults** - Update CLI defaults and docs for MC 26.x / Java 25 (`init`/`upgrade` defaultVersion → 26.1.1, common versions list)
+
+### Version 2.20.1 (2026-04-03) - Docker Image Auto-Upgrade
+
+**Added:**
+- **Docker Image Auto-Pull** - `mcctl update` now automatically pulls the latest Docker image (#465)
+- **Auto Image Tag Upgrade** - `mcctl update` checks VERSION vs image tag compatibility and auto-upgrades server Docker image tags (#468)
+
+**Fixed:**
+- **Java 25 Default Image** - MC 26.1.1+ requires Java 25; update default image tag to `java25`, McVersion supports 26.x versioning (#467)
+- **CLI Defaults Update** - Update `init`/`upgrade` defaultVersion from 1.21.1 to 26.1.1 and docs for MC 26.x / Java 25
+- **Merge Artifacts** - Resolve merge artifacts from parallel PR merges (vitest conversion, fieldConfigs syntax, sectionConfigs, IMcctlApiClient)
 
 ### Version 2.20.0 (2026-04-03) - itzg Docs Sync & Platform Update
 

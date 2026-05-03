@@ -201,7 +201,7 @@ Configure in `~/minecraft-servers/.env`:
 # Auto-scaling configuration
 AUTO_SCALE_UP=true       # Start servers on connect
 AUTO_SCALE_DOWN=false    # Stop idle servers (see note)
-DOCKER_TIMEOUT=120       # Wait time for server startup (seconds)
+DOCKER_TIMEOUT=120s      # Wait time (Go time.Duration: 120s, 2m)
 ```
 
 Then restart the router:

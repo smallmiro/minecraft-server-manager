@@ -1253,7 +1253,9 @@ include:
 
 services:
   router:
-    image: itzg/mc-router
+    # Pinned to v1.42.0 for production stability.
+    # Check releases: https://github.com/itzg/mc-router/releases
+    image: itzg/mc-router:1.42.0
     container_name: mc-router
     restart: unless-stopped
     environment:
@@ -1261,7 +1263,8 @@ services:
       AUTO_SCALE_UP: "true"
       AUTO_SCALE_DOWN: "true"
       AUTO_SCALE_DOWN_AFTER: "1m"
-      DOCKER_TIMEOUT: "120"
+      # Go time.Duration format required (e.g., "120s", "2m"). Bare integers fail to parse.
+      DOCKER_TIMEOUT: "120s"
       API_BINDING: ":8080"
     ports:
       - "25565:25565"

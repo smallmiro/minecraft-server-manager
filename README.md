@@ -562,7 +562,7 @@ mc-router settings are configured via environment variables in `.env` file:
 AUTO_SCALE_UP=true              # Auto-start servers on player connect
 AUTO_SCALE_DOWN=true            # Auto-stop idle servers
 AUTO_SCALE_DOWN_AFTER=10m       # Idle timeout (default: 10 minutes)
-DOCKER_TIMEOUT=120              # Container start timeout in seconds
+DOCKER_TIMEOUT=120s             # Container start timeout (Go time.Duration: e.g., 120s, 2m)
 
 # Custom MOTD for sleeping servers
 AUTO_SCALE_ASLEEP_MOTD=§e§lServer is sleeping§r\n§7Connect to wake up!
