@@ -64,7 +64,7 @@ services:
       AUTO_SCALE_DOWN: "true"
       AUTO_SCALE_DOWN_AFTER: "10m"
       # Bug fixed in v1.39.1: https://github.com/itzg/mc-router/issues/507
-      DOCKER_TIMEOUT: "120"
+      DOCKER_TIMEOUT: "120s"
       AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"
     ports:
       - "25565:25565"
