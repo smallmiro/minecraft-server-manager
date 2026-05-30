@@ -77,6 +77,9 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.22.0 (2026-05-30)
+- **feat(console)**: Make the web console an installable standalone PWA - iOS home-screen shortcuts open without Safari chrome (✕/URL bar); adds manifest, `appleWebApp` meta, viewport, Creeper apple-touch-icon (#478, #479)
+
 ### v2.21.0 (2026-05-30)
 - **feat(console)**: Apply compact, information-rich StatCard (progress bar + computed subline) to Dashboard (#474, #475)
 - **fix(console)**: Prevent mobile drawer backdrop from lingering after navigation (#476, #477)

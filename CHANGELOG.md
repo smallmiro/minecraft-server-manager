@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.22.0] - 2026-05-30
+
+### Added
+- **Installable Standalone PWA** - Make the web console an installable standalone PWA so iOS home-screen shortcuts open without the Safari chrome (✕/URL bar). Adds web app manifest, `appleWebApp` meta, viewport config, and a Creeper apple-touch-icon (generated via `ImageResponse`) (#478, #479)
+
 ## [2.21.0] - 2026-05-30
 
 ### Added
