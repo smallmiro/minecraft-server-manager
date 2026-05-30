@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="512" height="512">
+  <!-- Maskable PWA icon: full-bleed green background with the Creeper face
+       scaled into the central ~64% safe zone so adaptive masks don't clip it. -->
+  <rect width="32" height="32" fill="#5DA840"/>
+  <g transform="translate(6 6) scale(0.625)">
+    <!-- Eyes -->
+    <rect x="4" y="8" width="8" height="8" fill="#000"/>
+    <rect x="20" y="8" width="8" height="8" fill="#000"/>
+    <!-- Mouth -->
+    <rect x="12" y="16" width="8" height="4" fill="#000"/>
+    <rect x="8" y="20" width="16" height="8" fill="#000"/>
+    <rect x="8" y="28" width="4" height="4" fill="#000"/>
+    <rect x="20" y="28" width="4" height="4" fill="#000"/>
+  </g>
+</svg>
