@@ -92,6 +92,17 @@ describe('GNB', () => {
     expect(onMenuToggle).toHaveBeenCalledTimes(1);
   });
 
+  it('should not keep the mobile drawer mounted in the DOM when closed', () => {
+    // The mobile drawer is a temporary MUI Drawer (Modal + Backdrop). With
+    // `keepMounted`, the closed drawer and its full-screen backdrop stay in the
+    // DOM; on mobile an interrupted close transition leaves that layer over the
+    // page, intercepting taps (#476). The "close menu" button lives only inside
+    // the mobile drawer, so its absence proves the closed drawer unmounts.
+    renderWithTheme(<GNB mobileOpen={false} onMenuToggle={vi.fn()} />);
+
+    expect(screen.queryByLabelText('close menu')).not.toBeInTheDocument();
+  });
+
   it('should render navigation links with correct hrefs', () => {
     renderWithTheme(<GNB mobileOpen={false} onMenuToggle={vi.fn()} />);
 

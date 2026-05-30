@@ -195,9 +195,11 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
         anchor="left"
         open={mobileOpen}
         onClose={onMenuToggle}
-        ModalProps={{
-          keepMounted: true,
-        }}
+        // keepMounted is intentionally omitted: it kept the closed Drawer's
+        // Modal + Backdrop in the DOM, and on mobile an interrupted close
+        // transition (drawer closes while a route change re-renders) left that
+        // full-screen layer over the page, intercepting taps (#476). Letting the
+        // closed temporary Drawer unmount avoids the lingering overlay.
         sx={{
           display: { xs: 'block', md: 'none' },
           '& .MuiDrawer-paper': {
