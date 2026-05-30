@@ -3625,7 +3625,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Auto-scaling configuration</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nv">AUTO_SCALE_UP</span><span class="o">=</span><span class="nb">true</span><span class="w">       </span><span class="c1"># Start servers on connect</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="nv">AUTO_SCALE_DOWN</span><span class="o">=</span><span class="nb">false</span><span class="w">    </span><span class="c1"># Stop idle servers (see note)</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nv">DOCKER_TIMEOUT</span><span class="o">=</span><span class="m">120</span><span class="w">       </span><span class="c1"># Wait time for server startup (seconds)</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nv">DOCKER_TIMEOUT</span><span class="o">=</span>120s<span class="w">      </span><span class="c1"># Wait time (Go time.Duration: 120s, 2m)</span>
 </code></pre></div>
 <p>Then restart the router:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>router<span class="w"> </span>restart

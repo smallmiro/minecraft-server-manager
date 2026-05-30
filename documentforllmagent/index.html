@@ -4269,6 +4269,39 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-2203-2026-05-03---mc-router-stability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.20.3 (2026-05-03) - mc-router Stability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-2202-2026-04-03---loading-motd-label" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.20.2 (2026-04-03) - Loading MOTD Label
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-2201-2026-04-03---docker-image-auto-upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.20.1 (2026-04-03) - Docker Image Auto-Upgrade
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-2200-2026-04-03---itzg-docs-sync--platform-update" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4647,8 +4680,8 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.20.2
-<strong>Last Updated</strong>: 2026-04-03
+<p><strong>Version</strong>: 2.20.3
+<strong>Last Updated</strong>: 2026-05-03
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
 <hr />
@@ -6235,7 +6268,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-44-14" name="__codelineno-44-14" href="#__codelineno-44-14"></a><span class="nv">AUTO_SCALE_UP</span><span class="o">=</span><span class="nb">true</span><span class="w">                   </span><span class="c1"># Auto-start on connect</span>
 <a id="__codelineno-44-15" name="__codelineno-44-15" href="#__codelineno-44-15"></a><span class="nv">AUTO_SCALE_DOWN</span><span class="o">=</span><span class="nb">true</span><span class="w">                 </span><span class="c1"># Auto-stop idle</span>
 <a id="__codelineno-44-16" name="__codelineno-44-16" href="#__codelineno-44-16"></a><span class="nv">AUTO_SCALE_DOWN_AFTER</span><span class="o">=</span>10m<span class="w">            </span><span class="c1"># Idle timeout</span>
-<a id="__codelineno-44-17" name="__codelineno-44-17" href="#__codelineno-44-17"></a><span class="nv">DOCKER_TIMEOUT</span><span class="o">=</span><span class="m">120</span><span class="w">                   </span><span class="c1"># Start timeout (seconds)</span>
+<a id="__codelineno-44-17" name="__codelineno-44-17" href="#__codelineno-44-17"></a><span class="nv">DOCKER_TIMEOUT</span><span class="o">=</span>120s<span class="w">                  </span><span class="c1"># Start timeout (Go time.Duration: e.g., 120s, 2m)</span>
 <a id="__codelineno-44-18" name="__codelineno-44-18" href="#__codelineno-44-18"></a><span class="nv">AUTO_SCALE_ASLEEP_MOTD</span><span class="o">=</span>Server<span class="w"> </span>is<span class="w"> </span>sleeping.<span class="w"> </span>Connect<span class="w"> </span>to<span class="w"> </span>wake<span class="w"> </span>up!
 <a id="__codelineno-44-19" name="__codelineno-44-19" href="#__codelineno-44-19"></a>
 <a id="__codelineno-44-20" name="__codelineno-44-20" href="#__codelineno-44-20"></a><span class="c1"># Backup (GitHub)</span>
@@ -8307,7 +8340,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <p><strong>1. Docker Auto-Discovery (Recommended for Docker Compose):</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-66-2" name="__codelineno-66-2" href="#__codelineno-66-2"></a><span class="w">  </span><span class="nt">mc-router</span><span class="p">:</span>
-<a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router</span>
+<a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router:1.42.0</span><span class="w">  </span><span class="c1"># Pin to explicit version for reproducible deployments</span>
 <a id="__codelineno-66-4" name="__codelineno-66-4" href="#__codelineno-66-4"></a><span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--in-docker --auto-scale-up --auto-scale-down</span>
 <a id="__codelineno-66-5" name="__codelineno-66-5" href="#__codelineno-66-5"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
 <a id="__codelineno-66-6" name="__codelineno-66-6" href="#__codelineno-66-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
@@ -8501,7 +8534,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h3 id="basic-paper-server-with-mc-router">Basic Paper Server with mc-router<a class="headerlink" href="#basic-paper-server-with-mc-router" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-69-2" name="__codelineno-69-2" href="#__codelineno-69-2"></a><span class="w">  </span><span class="nt">router</span><span class="p">:</span>
-<a id="__codelineno-69-3" name="__codelineno-69-3" href="#__codelineno-69-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router</span>
+<a id="__codelineno-69-3" name="__codelineno-69-3" href="#__codelineno-69-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router:1.42.0</span><span class="w">  </span><span class="c1"># Pin to explicit version for reproducible deployments</span>
 <a id="__codelineno-69-4" name="__codelineno-69-4" href="#__codelineno-69-4"></a><span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--in-docker --auto-scale-up --auto-scale-down</span>
 <a id="__codelineno-69-5" name="__codelineno-69-5" href="#__codelineno-69-5"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
 <a id="__codelineno-69-6" name="__codelineno-69-6" href="#__codelineno-69-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
@@ -9187,6 +9220,25 @@ A: Yes. It only appends new variables and never modifies existing ones. Use <cod
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-2203-2026-05-03---mc-router-stability">Version 2.20.3 (2026-05-03) - mc-router Stability<a class="headerlink" href="#version-2203-2026-05-03---mc-router-stability" title="Permanent link">&para;</a></h3>
+<p><strong>Fixed:</strong>
+- <strong>mc-router DOCKER_TIMEOUT Format</strong> - Correct DOCKER_TIMEOUT to Go time.Duration format (<code>120</code> → <code>120s</code>) so mc-router can parse it properly</p>
+<p><strong>Changed:</strong>
+- <strong>mc-router Image Pin</strong> - Pin <code>itzg/mc-router</code> image to explicit version <code>1.42.0</code> for reproducible deployments (#472, #473)</p>
+<h3 id="version-2202-2026-04-03---loading-motd-label">Version 2.20.2 (2026-04-03) - Loading MOTD Label<a class="headerlink" href="#version-2202-2026-04-03---loading-motd-label" title="Permanent link">&para;</a></h3>
+<p><strong>Added:</strong>
+- <strong>Loading MOTD Label</strong> - Add <code>mc-router</code> loading MOTD label (<code>auto-scale-loading-motd</code>) to server templates (#471)
+- <strong>Auto Loading MOTD</strong> - Auto-add loading MOTD label to existing servers during <code>mcctl update</code> (#471)</p>
+<p><strong>Fixed:</strong>
+- <strong>MC 26.x Defaults</strong> - Update CLI defaults and docs for MC 26.x / Java 25 (<code>init</code>/<code>upgrade</code> defaultVersion → 26.1.1, common versions list)</p>
+<h3 id="version-2201-2026-04-03---docker-image-auto-upgrade">Version 2.20.1 (2026-04-03) - Docker Image Auto-Upgrade<a class="headerlink" href="#version-2201-2026-04-03---docker-image-auto-upgrade" title="Permanent link">&para;</a></h3>
+<p><strong>Added:</strong>
+- <strong>Docker Image Auto-Pull</strong> - <code>mcctl update</code> now automatically pulls the latest Docker image (#465)
+- <strong>Auto Image Tag Upgrade</strong> - <code>mcctl update</code> checks VERSION vs image tag compatibility and auto-upgrades server Docker image tags (#468)</p>
+<p><strong>Fixed:</strong>
+- <strong>Java 25 Default Image</strong> - MC 26.1.1+ requires Java 25; update default image tag to <code>java25</code>, McVersion supports 26.x versioning (#467)
+- <strong>CLI Defaults Update</strong> - Update <code>init</code>/<code>upgrade</code> defaultVersion from 1.21.1 to 26.1.1 and docs for MC 26.x / Java 25
+- <strong>Merge Artifacts</strong> - Resolve merge artifacts from parallel PR merges (vitest conversion, fieldConfigs syntax, sectionConfigs, IMcctlApiClient)</p>
 <h3 id="version-2200-2026-04-03---itzg-docs-sync--platform-update">Version 2.20.0 (2026-04-03) - itzg Docs Sync &amp; Platform Update<a class="headerlink" href="#version-2200-2026-04-03---itzg-docs-sync--platform-update" title="Permanent link">&para;</a></h3>
 <p><strong>Added:</strong>
 - <strong>Java 25 Support</strong> - McVersion.recommendedImageTag and DocsAdapter java25 support (#444)
