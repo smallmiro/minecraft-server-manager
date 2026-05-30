@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import { ThemeProvider } from '@/theme';
@@ -6,10 +5,7 @@ import { QueryProvider } from '@/lib';
 import { LoadingProvider } from '@/components/providers';
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: 'Minecraft Server Manager',
-  description: 'Web-based management console for Minecraft server infrastructure',
-};
+export { metadata, viewport } from './metadata';
 
 export default function RootLayout({
   children,
