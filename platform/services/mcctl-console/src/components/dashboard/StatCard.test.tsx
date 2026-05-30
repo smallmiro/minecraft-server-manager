@@ -85,4 +85,47 @@ describe('StatCard', () => {
 
     expect(screen.getByText('All configured servers')).toBeInTheDocument();
   });
+
+  it('should render a unit suffix next to the value when provided', () => {
+    renderWithTheme(
+      <StatCard title="Online Servers" value={3} unit="/ 8" />
+    );
+
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('/ 8')).toBeInTheDocument();
+  });
+
+  it('should render a progress bar when progress is provided', () => {
+    renderWithTheme(
+      <StatCard title="Online Servers" value={3} progress={40} color="success" />
+    );
+
+    const fill = screen.getByTestId('stat-card-progress-fill');
+    expect(fill).toBeInTheDocument();
+    expect(fill).toHaveStyle({ width: '40%' });
+  });
+
+  it('should not render a progress bar when progress is omitted', () => {
+    renderWithTheme(
+      <StatCard title="Total Players" value={0} />
+    );
+
+    expect(screen.queryByTestId('stat-card-progress-fill')).not.toBeInTheDocument();
+  });
+
+  it('should clamp progress above 100 to 100%', () => {
+    renderWithTheme(
+      <StatCard title="Online Servers" value={9} progress={150} />
+    );
+
+    expect(screen.getByTestId('stat-card-progress-fill')).toHaveStyle({ width: '100%' });
+  });
+
+  it('should clamp negative progress to 0%', () => {
+    renderWithTheme(
+      <StatCard title="Online Servers" value={0} progress={-20} />
+    );
+
+    expect(screen.getByTestId('stat-card-progress-fill')).toHaveStyle({ width: '0%' });
+  });
 });
