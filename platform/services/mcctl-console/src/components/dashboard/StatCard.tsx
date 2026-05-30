@@ -9,15 +9,31 @@ export interface StatCardProps {
   icon?: ReactNode;
   color?: 'primary' | 'success' | 'info' | 'secondary';
   description?: string;
+  /** Optional unit/suffix rendered next to the value (e.g. "/ 8"). */
+  unit?: string;
+  /** Optional 0-100 ratio; renders an accent progress bar. Omit when no data. */
+  progress?: number;
 }
 
-export function StatCard({ title, value, icon, color = 'primary', description }: StatCardProps) {
-  const colorMap = {
-    primary: '#1bd96a',
-    success: '#22c55e',
-    info: '#3b82f6',
-    secondary: '#7c3aed',
-  };
+const colorMap = {
+  primary: '#1bd96a',
+  success: '#22c55e',
+  info: '#3b82f6',
+  secondary: '#7c3aed',
+} as const;
+
+export function StatCard({
+  title,
+  value,
+  icon,
+  color = 'primary',
+  description,
+  unit,
+  progress,
+}: StatCardProps) {
+  const accent = colorMap[color];
+  const clampedProgress =
+    progress === undefined ? null : Math.max(0, Math.min(100, progress));
 
   return (
     <Card
@@ -33,36 +49,68 @@ export function StatCard({ title, value, icon, color = 'primary', description }:
           left: 0,
           right: 0,
           height: '4px',
-          background: colorMap[color],
+          background: accent,
         },
       }}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+      <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
+        {/* Title row */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontWeight: 600, fontSize: '0.75rem', letterSpacing: '0.02em' }}
+          >
             {title}
           </Typography>
           {icon && (
-            <Box sx={{ color: colorMap[color], opacity: 0.8 }}>
+            <Box sx={{ ml: 'auto', display: 'inline-flex', color: accent, opacity: 0.8 }}>
               {icon}
             </Box>
           )}
         </Box>
 
-        <Typography
-          variant="h3"
-          component="div"
-          sx={{
-            fontWeight: 700,
-            color: 'text.primary',
-            mb: description ? 1 : 0,
-          }}
-        >
-          {value}
-        </Typography>
+        {/* Figure row */}
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75 }}>
+          <Typography
+            component="div"
+            sx={{ fontWeight: 700, fontSize: '1.9rem', lineHeight: 1, color: 'text.primary' }}
+          >
+            {value}
+          </Typography>
+          {unit && (
+            <Typography component="span" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+              {unit}
+            </Typography>
+          )}
+        </Box>
 
+        {/* Progress bar (computed ratios only) */}
+        {clampedProgress !== null && (
+          <Box
+            sx={{
+              height: 4,
+              borderRadius: 2,
+              mt: 1,
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              overflow: 'hidden',
+            }}
+          >
+            <Box
+              data-testid="stat-card-progress-fill"
+              sx={{ height: '100%', borderRadius: 2, background: accent }}
+              style={{ width: `${clampedProgress}%` }}
+            />
+          </Box>
+        )}
+
+        {/* Subline */}
         {description && (
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', mt: 0.75, fontSize: '0.72rem' }}
+          >
             {description}
           </Typography>
         )}

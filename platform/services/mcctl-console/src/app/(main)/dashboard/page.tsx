@@ -36,6 +36,12 @@ export default function DashboardPage() {
   // TODO: Calculate total players from server details (requires player data)
   const totalPlayers = 0;
 
+  // Derived metrics for the compact stat cards (computed values only — no history)
+  const stoppedServers = totalServers - onlineServers;
+  const onlinePercent = totalServers > 0 ? Math.round((onlineServers / totalServers) * 100) : 0;
+  const assignedWorlds = worldsData?.worlds.filter((world) => world.isLocked).length || 0;
+  const freeWorlds = totalWorlds - assignedWorlds;
+
   if (isLoading) {
     return (
       <>
@@ -82,13 +88,14 @@ export default function DashboardPage() {
           {[0, 1, 2, 3].map((i) => (
             <Grid item xs={12} sm={6} md={3} key={i}>
               <Card sx={{ height: '100%', position: 'relative', overflow: 'hidden', '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'grey.300' } }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                    <Skeleton variant="text" width="60%" />
-                    <Skeleton variant="circular" width={32} height={32} />
+                <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                    <Skeleton variant="text" width="55%" />
+                    <Skeleton variant="circular" width={20} height={20} />
                   </Box>
-                  <Skeleton variant="text" width="40%" height={48} />
-                  <Skeleton variant="text" width="70%" />
+                  <Skeleton variant="text" width="35%" height={30} />
+                  <Skeleton variant="rounded" width="100%" height={4} sx={{ mt: 1 }} />
+                  <Skeleton variant="text" width="70%" sx={{ mt: 0.75 }} />
                 </CardContent>
               </Card>
             </Grid>
@@ -191,25 +198,28 @@ export default function DashboardPage() {
           <StatCard
             title="Total Servers"
             value={totalServers}
-            icon={<ServerIcon fontSize="large" />}
+            icon={<ServerIcon fontSize="small" />}
             color="primary"
-            description="All configured servers"
+            progress={totalServers > 0 ? (onlineServers / totalServers) * 100 : undefined}
+            description={`${onlineServers} running · ${stoppedServers} stopped`}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Online Servers"
             value={onlineServers}
-            icon={<OnlineIcon fontSize="large" />}
+            unit={totalServers > 0 ? `/ ${totalServers}` : undefined}
+            icon={<OnlineIcon fontSize="small" />}
             color="success"
-            description="Currently running"
+            progress={totalServers > 0 ? onlinePercent : undefined}
+            description={`${onlinePercent}% running`}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Players"
             value={totalPlayers}
-            icon={<PlayersIcon fontSize="large" />}
+            icon={<PlayersIcon fontSize="small" />}
             color="info"
             description="Across all servers"
           />
@@ -218,9 +228,10 @@ export default function DashboardPage() {
           <StatCard
             title="Total Worlds"
             value={totalWorlds}
-            icon={<WorldIcon fontSize="large" />}
+            icon={<WorldIcon fontSize="small" />}
             color="secondary"
-            description="Available worlds"
+            progress={totalWorlds > 0 ? (assignedWorlds / totalWorlds) * 100 : undefined}
+            description={`${assignedWorlds} assigned · ${freeWorlds} free`}
           />
         </Grid>
       </Grid>
