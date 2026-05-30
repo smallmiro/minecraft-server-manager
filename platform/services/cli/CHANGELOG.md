@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.21.0] - 2026-05-30
+
+### Added
+- **Compact Dashboard StatCards** - Replace dashboard StatCards with a compact, information-rich variant (progress bar + computed subline) for higher information density (#474, #475)
+
+### Fixed
+- **Mobile Drawer Backdrop** - Prevent the mobile hamburger drawer backdrop from lingering after navigation (removed `keepMounted`), which previously blocked tab interaction on iPhone/iPad (#476, #477)
+
 ## [2.20.3] - 2026-05-03
 
 ### Fixed

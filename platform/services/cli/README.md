@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.21.0 (2026-05-30)
+- **feat(console)**: Apply compact, information-rich StatCard (progress bar + computed subline) to Dashboard (#474, #475)
+- **fix(console)**: Prevent mobile drawer backdrop from lingering after navigation (#476, #477)
+
 ### v2.20.3 (2026-05-03)
 - **fix(platform)**: Correct mc-router `DOCKER_TIMEOUT` format to Go time.Duration (`120` → `120s`)
 - **chore(platform)**: Pin `itzg/mc-router` image to explicit version `1.42.0` (#472, #473)
