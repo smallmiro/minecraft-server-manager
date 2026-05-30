@@ -36,8 +36,9 @@ export default function AppleIcon() {
         {/* Mouth */}
         <div style={pixel(68, 90, 45, 23)} />
         <div style={pixel(45, 113, 90, 45)} />
-        <div style={pixel(45, 158, 23, 23)} />
-        <div style={pixel(113, 158, 23, 23)} />
+        {/* Bottom teeth: top 157 so top+height stays within the 180px canvas (no clip). */}
+        <div style={pixel(45, 157, 23, 23)} />
+        <div style={pixel(113, 157, 23, 23)} />
       </div>
     ),
     { ...size }

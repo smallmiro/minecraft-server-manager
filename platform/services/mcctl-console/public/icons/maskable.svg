@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="512" height="512">
   <!-- Maskable PWA icon: full-bleed green background with the Creeper face
-       scaled into the central ~64% safe zone so adaptive masks don't clip it. -->
+       scaled into the central ~62.5% safe zone so adaptive masks don't clip it. -->
   <rect width="32" height="32" fill="#5DA840"/>
   <g transform="translate(6 6) scale(0.625)">
     <!-- Eyes -->
