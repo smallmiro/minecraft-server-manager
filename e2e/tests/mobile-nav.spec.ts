@@ -35,7 +35,9 @@ test.describe('Mobile navigation drawer', () => {
     await expect(page.locator('.MuiBackdrop-root')).toBeVisible();
 
     // Tap a nav item: this closes the drawer and navigates simultaneously.
-    await page.locator('a[href="/servers"]').click();
+    // Scope to the drawer — the desktop nav also renders this href (CSS-hidden
+    // but present in the DOM), which would trip Playwright's strict mode.
+    await page.locator('.MuiDrawer-root a[href="/servers"]').click();
     await expect(page).toHaveURL(/\/servers/);
 
     // No modal backdrop must remain in the DOM after navigating.
