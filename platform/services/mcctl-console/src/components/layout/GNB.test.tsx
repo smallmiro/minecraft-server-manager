@@ -139,6 +139,22 @@ describe('GNB', () => {
     expect(emotionStylesFor(appBar as Element)).toContain('env(safe-area-inset-top)');
   });
 
+  it('should offset the open mobile drawer below the safe-area inset (close button stays tappable)', () => {
+    // The temporary Drawer renders full-height from top:0, so its header (with
+    // the close button and first nav item) overlaps the status bar / notch in
+    // PWA standalone mode just like the AppBar did (#480). The drawer paper must
+    // also reserve env(safe-area-inset-top).
+    renderWithTheme(<GNB mobileOpen={true} onMenuToggle={vi.fn()} />);
+
+    // The drawer paper styles are emitted as a nested rule on the Drawer root
+    // (`.css-root .MuiDrawer-paper { ... }`), so assert against the injected
+    // stylesheet rule that targets .MuiDrawer-paper directly.
+    const styleText = Array.from(document.querySelectorAll('style'))
+      .map((s) => s.textContent ?? '')
+      .join('\n');
+    expect(styleText).toMatch(/\.MuiDrawer-paper\s*\{[^}]*env\(safe-area-inset-top\)/);
+  });
+
   it('should render navigation links with correct hrefs', () => {
     renderWithTheme(<GNB mobileOpen={false} onMenuToggle={vi.fn()} />);
 

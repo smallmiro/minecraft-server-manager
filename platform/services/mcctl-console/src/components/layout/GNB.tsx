@@ -211,6 +211,10 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
             boxSizing: 'border-box',
             width: 280,
             backgroundColor: 'background.paper',
+            // Mirror the AppBar's safe-area offset (#480): the full-height
+            // drawer renders from top:0, so without this its header (close
+            // button and first nav item) overlaps the status bar / notch.
+            paddingTop: 'env(safe-area-inset-top)',
           },
         }}
       >
