@@ -20,6 +20,26 @@ const renderWithTheme = (component: React.ReactNode) => {
   return render(<ThemeProvider>{component}</ThemeProvider>);
 };
 
+// Collects the emotion CSS rule bodies that apply to the given element by
+// matching its `css-*` classes against the injected <style> tags.
+const emotionStylesFor = (el: Element): string => {
+  const styleText = Array.from(document.querySelectorAll('style'))
+    .map((s) => s.textContent ?? '')
+    .join('\n');
+  return Array.from(el.classList)
+    .filter((c) => c.startsWith('css-'))
+    .map((c) => {
+      const re = new RegExp(`\\.${c}\\s*\\{([^}]*)\\}`, 'g');
+      let match: RegExpExecArray | null;
+      let body = '';
+      while ((match = re.exec(styleText)) !== null) {
+        body += match[1];
+      }
+      return body;
+    })
+    .join('\n');
+};
+
 describe('MainLayout', () => {
   it('should render children content', () => {
     renderWithTheme(
@@ -73,6 +93,21 @@ describe('MainLayout', () => {
 
     const mainContent = screen.getByTestId('main-content');
     expect(mainContent).toBeInTheDocument();
+  });
+
+  it('should pad the main content below the safe-area inset so it is not clipped by the AppBar', () => {
+    // The AppBar grows by env(safe-area-inset-top) in PWA standalone mode, so
+    // the main content's top padding must add the same inset to avoid being
+    // hidden under the AppBar (#480).
+    const { container } = renderWithTheme(
+      <MainLayout>
+        <div>Content</div>
+      </MainLayout>
+    );
+
+    const main = container.querySelector('main');
+    expect(main).not.toBeNull();
+    expect(emotionStylesFor(main as Element)).toContain('env(safe-area-inset-top)');
   });
 
   it('should render navigation links in GNB', () => {
