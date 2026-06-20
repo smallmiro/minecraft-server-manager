@@ -30,6 +30,28 @@ const renderWithTheme = (component: React.ReactNode) => {
   return render(<ThemeProvider>{component}</ThemeProvider>);
 };
 
+// Collects the emotion CSS rule bodies that apply to the given element by
+// matching its `css-*` classes against the injected <style> tags. Used to
+// assert on generated styles (e.g. safe-area insets) that jsdom's
+// getComputedStyle cannot resolve from class-based stylesheets.
+const emotionStylesFor = (el: Element): string => {
+  const styleText = Array.from(document.querySelectorAll('style'))
+    .map((s) => s.textContent ?? '')
+    .join('\n');
+  return Array.from(el.classList)
+    .filter((c) => c.startsWith('css-'))
+    .map((c) => {
+      const re = new RegExp(`\\.${c}\\s*\\{([^}]*)\\}`, 'g');
+      let match: RegExpExecArray | null;
+      let body = '';
+      while ((match = re.exec(styleText)) !== null) {
+        body += match[1];
+      }
+      return body;
+    })
+    .join('\n');
+};
+
 describe('GNB', () => {
   beforeEach(() => {
     // Reset session before each test
@@ -101,6 +123,20 @@ describe('GNB', () => {
     renderWithTheme(<GNB mobileOpen={false} onMenuToggle={vi.fn()} />);
 
     expect(screen.queryByLabelText('close menu')).not.toBeInTheDocument();
+  });
+
+  it('should offset the AppBar below the device safe-area inset (PWA standalone notch)', () => {
+    // In PWA standalone mode the manifest uses viewport-fit=cover, so content
+    // extends under the status bar / notch. Without a safe-area top offset the
+    // fixed AppBar overlaps the status bar and the hamburger button becomes
+    // untappable (#480). The AppBar must reserve env(safe-area-inset-top).
+    const { container } = renderWithTheme(
+      <GNB mobileOpen={false} onMenuToggle={vi.fn()} />
+    );
+
+    const appBar = container.querySelector('.MuiAppBar-root');
+    expect(appBar).not.toBeNull();
+    expect(emotionStylesFor(appBar as Element)).toContain('env(safe-area-inset-top)');
   });
 
   it('should render navigation links with correct hrefs', () => {

@@ -71,6 +71,11 @@ export function GNB({ mobileOpen, onMenuToggle }: GNBProps) {
           borderBottom: '1px solid',
           borderColor: 'divider',
           zIndex: (theme) => theme.zIndex.drawer + 1,
+          // PWA standalone mode uses viewport-fit=cover, so the fixed AppBar
+          // would otherwise sit under the status bar / notch and the hamburger
+          // button becomes untappable (#480). Reserve the safe-area inset so the
+          // bar's background fills the notch and its Toolbar drops below it.
+          paddingTop: 'env(safe-area-inset-top)',
         }}
       >
         <Toolbar
