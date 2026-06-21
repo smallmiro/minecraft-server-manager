@@ -202,7 +202,7 @@ async function handleInteractiveMode(options: PlayerCommandOptions): Promise<num
     const containerName = getContainerName(serverName);
 
     // Main interaction loop
-    while (true) {
+    for (;;) {
       // Step 2: Select player
       const selectedPlayer = await selectPlayer({
         containerName,

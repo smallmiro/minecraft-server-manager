@@ -52,18 +52,13 @@ export function checkPm2Installation(): { installed: boolean; path?: string; ver
     };
   }
 
-  // Check if pm2 module can be imported (local installation via npm)
-  // The pm2 programmatic API works without global installation
-  try {
-    // We already have pm2 as a dependency, so it's always available
-    // Just return true - the actual PM2 operations will work via the API
-    return {
-      installed: true,
-      version: 'local',
-    };
-  } catch {
-    return { installed: false };
-  }
+  // Check if pm2 module can be imported (local installation via npm).
+  // The pm2 programmatic API works without global installation, and pm2 is a
+  // declared dependency, so it's always available via the API.
+  return {
+    installed: true,
+    version: 'local',
+  };
 }
 
 /**
