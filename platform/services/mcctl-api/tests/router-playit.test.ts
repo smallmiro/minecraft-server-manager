@@ -3,7 +3,8 @@ import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 
 // Mock @minecraft-docker/shared module
-vi.mock('@minecraft-docker/shared', () => ({
+vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
   getRouterDetailInfo: vi.fn(),
   getAvahiStatus: vi.fn(),
   getPlayitAgentStatus: vi.fn(),

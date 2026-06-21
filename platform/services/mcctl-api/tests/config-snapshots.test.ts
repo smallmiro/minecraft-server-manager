@@ -67,6 +67,7 @@ function createMockSnapshot(serverName: string, description?: string) {
 
 // Mock config-snapshot-service
 vi.mock('../src/services/config-snapshot-service.js', () => ({
+  getConfigSnapshotUseCase: vi.fn(() => ({})),
   createSnapshot: vi.fn().mockImplementation(async (serverName: string, description?: string) => {
     const s = createMockSnapshot(serverName, description);
     return {
