@@ -572,11 +572,12 @@ export async function consoleServiceCommand(options: ConsoleServiceOptions): Pro
       case 'logs':
         return await showLogs(paths, pm2Adapter, options);
 
-      default:
+      default: {
         // Default: show status
         const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort);
         formatStatus(status, options.json ?? false);
         return 0;
+      }
     }
   } finally {
     pm2Adapter.disconnect();
