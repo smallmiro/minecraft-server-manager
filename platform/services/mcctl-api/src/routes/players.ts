@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { containerExists, getContainerStatus, OpLevel } from '@minecraft-docker/shared';
+import { join } from 'node:path';
+import { containerExists, getContainerStatus, serverExists, OpLevel } from '@minecraft-docker/shared';
 import {
   PlayerInfoSchema,
   OnlinePlayersResponseSchema,
@@ -95,6 +96,17 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const checkServerExists = (name: string, reply: FastifyReply): boolean => {
     const containerName = `mc-${name}`;
     if (!containerExists(containerName)) {
+      reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
+      return false;
+    }
+    return true;
+  };
+
+  // Helper to check a server is defined (container OR config.env on disk).
+  // Use for read endpoints so a defined-but-not-running server can still be
+  // served from its files instead of 404ing when no container exists.
+  const checkServerDefined = (name: string, reply: FastifyReply): boolean => {
+    if (!serverExists(name, join(config.platformPath, 'servers'))) {
       reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       return false;
     }
@@ -208,7 +220,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    if (!checkServerExists(name, reply)) return;
+    if (!checkServerDefined(name, reply)) return;
 
     const running = isServerRunning(name);
     const enabled = playerFileService.readWhitelistEnabled(name);
@@ -219,15 +231,20 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         const match = result.match(/:\s*(.*)$/);
         const playerNames = match && match[1] ? match[1].split(',').map(p => p.trim()).filter(Boolean) : [];
 
-        // Enrich RCON names with UUIDs from whitelist.json
-        const fileData = playerFileService.readWhitelist(name);
-        const uuidMap = new Map(fileData.players.map(p => [p.name.toLowerCase(), p.uuid]));
+        // Only trust RCON when it actually returned players. execRconCommand never
+        // throws on connection/empty failures, so an empty parse must NOT mask a
+        // populated whitelist.json — fall through to the file in that case.
+        if (playerNames.length > 0) {
+          // Enrich RCON names with UUIDs from whitelist.json
+          const fileData = playerFileService.readWhitelist(name);
+          const uuidMap = new Map(fileData.players.map(p => [p.name.toLowerCase(), p.uuid]));
 
-        const players = playerNames.map(pName => ({
-          name: pName,
-          uuid: uuidMap.get(pName.toLowerCase()) || '',
-        }));
-        return reply.send({ players, total: players.length, source: 'rcon', enabled });
+          const players = playerNames.map(pName => ({
+            name: pName,
+            uuid: uuidMap.get(pName.toLowerCase()) || '',
+          }));
+          return reply.send({ players, total: players.length, source: 'rcon', enabled });
+        }
       } catch (error) {
         fastify.log.warn(error, 'RCON failed for whitelist, falling back to file');
       }
@@ -255,7 +272,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    if (!checkServerExists(name, reply)) return;
+    if (!checkServerDefined(name, reply)) return;
 
     try {
       const enabled = playerFileService.readWhitelistEnabled(name);

@@ -69,6 +69,19 @@ function setupServer(serverName: string, opts: { whitelist?: Array<{ uuid: strin
   writeFileSync(join(dataDir, 'whitelist.json'), JSON.stringify(whitelist, null, 2), 'utf-8');
 }
 
+// Server defined on disk (config.env) but WITHOUT a container.
+// Intentionally omits docker-compose.yml so the mocked containerExists() returns false.
+function setupServerConfigOnly(serverName: string, opts: { whitelist?: Array<{ uuid: string; name: string }> } = {}) {
+  const serverDir = join(TEST_PLATFORM_PATH, 'servers', serverName);
+  const dataDir = join(serverDir, 'data');
+  mkdirSync(dataDir, { recursive: true });
+
+  writeFileSync(join(serverDir, 'config.env'), 'TYPE=PAPER\nENABLE_WHITELIST=TRUE\n', 'utf-8');
+
+  const whitelist = opts.whitelist || [];
+  writeFileSync(join(dataDir, 'whitelist.json'), JSON.stringify(whitelist, null, 2), 'utf-8');
+}
+
 function readWhitelistFile(serverName: string): Array<{ uuid: string; name: string }> {
   const filePath = join(TEST_PLATFORM_PATH, 'servers', serverName, 'data', 'whitelist.json');
   if (!existsSync(filePath)) return [];
@@ -351,6 +364,79 @@ describe('Whitelist RCON Error Detection and File Fallback', () => {
       const whitelist = readWhitelistFile('test-server');
       expect(whitelist).toHaveLength(1);
       expect(whitelist[0].name).toBe('Alex');
+    });
+  });
+
+  // ==================== GET /api/servers/:name/whitelist (read path) ====================
+  describe('GET /api/servers/:name/whitelist - read fallback', () => {
+    it('returns file-based whitelist for a defined server that has no container (not 404)', async () => {
+      setupServerConfigOnly('stopped-server', {
+        whitelist: [{ uuid: 'uuid-1', name: 'Steve' }],
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/servers/stopped-server/whitelist',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json();
+      expect(json.players.map((p: { name: string }) => p.name)).toEqual(['Steve']);
+      expect(json.source).toBe('file');
+    });
+
+    it('falls back to whitelist.json when a running server returns an empty RCON list', async () => {
+      setupServer('test-server', {
+        whitelist: [
+          { uuid: 'uuid-1', name: 'Steve' },
+          { uuid: 'uuid-2', name: 'Alex' },
+        ],
+      });
+      // RCON reachable but reports no whitelisted players (e.g. not reloaded after a file write)
+      rconMockImpl = async () => 'There are no whitelisted players';
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/servers/test-server/whitelist',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json();
+      expect(json.players.map((p: { name: string }) => p.name).sort()).toEqual(['Alex', 'Steve']);
+      expect(json.source).toBe('file');
+    });
+
+    it('still uses RCON when it returns a populated list', async () => {
+      setupServer('test-server', {
+        whitelist: [{ uuid: 'uuid-1', name: 'Steve' }],
+      });
+      rconMockImpl = async () => 'There are 1 whitelisted player(s): Steve';
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/servers/test-server/whitelist',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json();
+      expect(json.players.map((p: { name: string }) => p.name)).toEqual(['Steve']);
+      expect(json.source).toBe('rcon');
+    });
+  });
+
+  describe('GET /api/servers/:name/whitelist/status - read guard', () => {
+    it('returns status for a defined server without a container (not 404)', async () => {
+      setupServerConfigOnly('stopped-server');
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/servers/stopped-server/whitelist/status',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json();
+      expect(json.enabled).toBe(true);
+      expect(json.source).toBe('config');
     });
   });
 });
