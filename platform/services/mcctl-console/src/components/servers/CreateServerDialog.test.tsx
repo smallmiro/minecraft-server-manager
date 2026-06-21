@@ -31,7 +31,9 @@ const mockUseModVersions = vi.fn(
 
 vi.mock('@/hooks/useMods', () => ({
   useModpackSearch: () => mockUseModpackSearch(),
-  useModVersions: () => mockUseModVersions(),
+  // Forward the slug so tests can assert which slug the matrix lookup uses
+  // (debounce behaviour). The return value still comes from the mock.
+  useModVersions: (slug: string) => mockUseModVersions(slug),
 }));
 
 // Compatibility matrix for cobblemon-like modpack: neoforge -> 1.21.1, forge -> 1.19.2
@@ -528,6 +530,34 @@ describe('CreateServerDialog', () => {
         const arg = onSubmit.mock.calls[0][0];
         expect(arg.excludeFiles).toEqual(['statuseffectbars', 'jei']);
       });
+    });
+
+    it('should debounce the compatibility lookup instead of querying every keystroke', async () => {
+      mockUseModVersions.mockReturnValue({ data: undefined, isLoading: false, isError: false });
+
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /modpack/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /modpack/i })).toBeInTheDocument();
+      });
+
+      mockUseModVersions.mockClear();
+      fireEvent.change(screen.getByRole('combobox', { name: /modpack/i }), {
+        target: { value: 'cobblemon' },
+      });
+
+      // Immediately after typing, the matrix lookup must NOT have been called with
+      // the freshly-typed slug — it stays on the debounced (empty) value.
+      expect(mockUseModVersions).not.toHaveBeenCalledWith('cobblemon');
+
+      // After the debounce window, the lookup switches to the typed slug.
+      await waitFor(
+        () => expect(mockUseModVersions).toHaveBeenCalledWith('cobblemon'),
+        { timeout: 2000 }
+      );
     });
 
     it('should disable Create while the compatibility matrix is loading', async () => {
