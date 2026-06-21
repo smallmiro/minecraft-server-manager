@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.25.1] - 2026-06-21
+
+### Fixed
+- **Server list now refreshes after creating a server** - The Create Server dialog used a creation flow that never refreshed the list, so a newly created server only appeared after a manual page reload. The list now updates automatically on completion (#521, #522)
+- **Modpack search no longer floods the console with errors** - Typing in the modpack search fired a compatibility lookup for every partial keystroke, each returning a 500 for the not-yet-complete slug. The lookup is now debounced, and unknown modpacks return a clean 404 instead of a 500 (#519, #520)
+
 ## [2.25.0] - 2026-06-21
 
 ### Added

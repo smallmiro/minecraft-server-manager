@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.25.1 (2026-06-21)
+- **fix(console)**: Server list now refreshes automatically after creating a server (#521, #522)
+- **fix(modpack)**: Debounce the modpack compatibility lookup and return a clean 404 for unknown slugs, fixing the 500 error flood while searching modpacks (#519, #520)
+
 ### v2.25.0 (2026-06-21)
 - **feat(modpack)**: Exclude client-only mods from modpacks via `--exclude-files` (CLI) or the Exclude mods field (console) — prevents `invalid dist DEDICATED_SERVER` crashes; maps to `MODRINTH_EXCLUDE_FILES` / `CF_EXCLUDE_MODS` (#515, #518)
 - **feat(console)**: Richer modpack search results showing icon, description, downloads, and author (#516, #517)
