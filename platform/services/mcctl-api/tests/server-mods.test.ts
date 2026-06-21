@@ -347,5 +347,149 @@ MEMORY=4G
 
       expect(adapter.search).toHaveBeenCalledWith('test', { limit: 5, offset: 5 });
     });
+
+    it('should pass modpack projectType filter to search when type=modpack', async () => {
+      const adapter = ModSourceFactory.get('modrinth');
+      (adapter.search as any).mockResolvedValue({ hits: [], totalHits: 0, offset: 0, limit: 10 });
+
+      await app.inject({
+        method: 'GET',
+        url: '/api/mods/search?q=cobblemon&type=modpack',
+      });
+
+      expect(adapter.search).toHaveBeenCalledWith(
+        'cobblemon',
+        expect.objectContaining({ projectType: 'modpack' })
+      );
+    });
+  });
+
+  // ============================================================
+  // GET /api/mods/:slug/versions
+  // ============================================================
+
+  describe('GET /api/mods/:slug/versions', () => {
+    const sampleVersions = [
+      {
+        id: 'v-neoforge',
+        projectId: 'proj-1',
+        name: 'NeoForge 2.0',
+        versionNumber: '2.0.0',
+        versionType: 'release',
+        gameVersions: ['1.21.1'],
+        loaders: ['neoforge'],
+        files: [],
+        dependencies: [],
+        downloads: 100,
+        datePublished: '2024-06-01T00:00:00Z',
+      },
+      {
+        id: 'v-forge',
+        projectId: 'proj-1',
+        name: 'Forge 1.0',
+        versionNumber: '1.0.0',
+        versionType: 'release',
+        gameVersions: ['1.19.2'],
+        loaders: ['forge'],
+        files: [],
+        dependencies: [],
+        downloads: 50,
+        datePublished: '2024-01-01T00:00:00Z',
+      },
+    ];
+
+    it('should return a compatibility matrix for a modpack slug', async () => {
+      const adapter = ModSourceFactory.get('modrinth');
+      (adapter.getVersions as any).mockResolvedValue(sampleVersions);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/mods/cobblemon/versions',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.slug).toBe('cobblemon');
+      expect(body.loaders.sort()).toEqual(['forge', 'neoforge']);
+      expect(body.byLoader.neoforge.gameVersions).toEqual(['1.21.1']);
+      expect(body.byLoader.neoforge.recommended['1.21.1']).toBe('2.0.0');
+      expect(body.byLoader.forge.gameVersions).toEqual(['1.19.2']);
+    });
+
+    it('should return 404 when project has no versions (unknown slug)', async () => {
+      const adapter = ModSourceFactory.get('modrinth');
+      (adapter.getVersions as any).mockResolvedValue([]);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/mods/does-not-exist/versions',
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  // ============================================================
+  // POST /api/servers - modpack compatibility validation
+  // ============================================================
+
+  describe('POST /api/servers modpack validation', () => {
+    const compatVersions = [
+      {
+        id: 'v-neoforge',
+        projectId: 'proj-1',
+        name: 'NeoForge 2.0',
+        versionNumber: '2.0.0',
+        versionType: 'release',
+        gameVersions: ['1.21.1'],
+        loaders: ['neoforge'],
+        files: [],
+        dependencies: [],
+        downloads: 100,
+        datePublished: '2024-06-01T00:00:00Z',
+      },
+    ];
+
+    it('should return 400 when modLoader+version combination is incompatible', async () => {
+      mockedServerExists.mockReturnValue(false);
+      const adapter = ModSourceFactory.get('modrinth');
+      (adapter.getVersions as any).mockResolvedValue(compatVersions);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers',
+        payload: {
+          name: 'mc-bad',
+          type: 'MODRINTH',
+          modpack: 'cobblemon',
+          modLoader: 'forge',
+          version: '1.21.1',
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.error).toBe('BadRequest');
+    });
+
+    it('should allow a compatible modLoader+version combination', async () => {
+      mockedServerExists.mockReturnValue(false);
+      const adapter = ModSourceFactory.get('modrinth');
+      (adapter.getVersions as any).mockResolvedValue(compatVersions);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers',
+        payload: {
+          name: 'mc-good',
+          type: 'MODRINTH',
+          modpack: 'cobblemon',
+          modLoader: 'neoforge',
+          version: '1.21.1',
+        },
+      });
+
+      expect(response.statusCode).not.toBe(400);
+    });
   });
 });

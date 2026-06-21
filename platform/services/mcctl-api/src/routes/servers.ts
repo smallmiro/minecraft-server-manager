@@ -17,7 +17,11 @@ import {
   WorldRepository,
   ServerRepository,
   Paths,
+  ModSourceFactory,
+  buildModpackCompatibilityMatrix,
+  isModpackCompatible,
 } from '@minecraft-docker/shared';
+import '@minecraft-docker/mod-source-modrinth';
 import {
   ServerListResponseSchema,
   ServerDetailResponseSchema,
@@ -608,6 +612,35 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         error: 'BadRequest',
         message: `Modpack slug is required for ${type} server type`,
       });
+    }
+
+    // Validate modpack loader/Minecraft-version compatibility for MODRINTH.
+    // An incompatible (loader, version) pair makes itzg fail with
+    // "No files available", so reject it up-front with a 400.
+    // Only enforced when both a loader and an explicit version are supplied;
+    // if the modpack metadata can't be fetched we fail open (do not block).
+    if (type === 'MODRINTH' && modpack && modLoader && version) {
+      try {
+        const source = ModSourceFactory.get('modrinth');
+        const versions = await source.getVersions(modpack);
+        if (versions && versions.length > 0) {
+          const matrix = buildModpackCompatibilityMatrix(versions);
+          if (!isModpackCompatible(matrix, modLoader, version)) {
+            const supported = matrix.byLoader[modLoader.toLowerCase()]?.gameVersions ?? [];
+            const hint = supported.length > 0
+              ? ` Loader '${modLoader}' supports: ${supported.join(', ')}.`
+              : ` Loader '${modLoader}' is not available for modpack '${modpack}'.`;
+            return reply.code(400).send({
+              error: 'BadRequest',
+              message:
+                `Modpack '${modpack}' has no '${modLoader}' release for Minecraft ${version}.${hint}`,
+            });
+          }
+        }
+      } catch (error) {
+        // Fail open: a transient metadata-fetch failure should not block creation.
+        fastify.log.warn(error, 'Modpack compatibility check skipped (metadata fetch failed)');
+      }
     }
 
     // World options are mutually exclusive (seed / worldUrl / worldName).
