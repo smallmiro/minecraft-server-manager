@@ -3876,6 +3876,10 @@
 </thead>
 <tbody>
 <tr>
+<td><code>--cli-only</code></td>
+<td>Update only the mcctl CLI binary (opt out of the full update)</td>
+</tr>
+<tr>
 <td><code>--check</code></td>
 <td>Check for updates only (does not install)</td>
 </tr>
@@ -3889,12 +3893,18 @@
 </tr>
 <tr>
 <td><code>--all</code></td>
-<td>Update CLI and all installed services</td>
+<td>Deprecated alias — same as the default (kept for backward compatibility)</td>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">Default behavior changed</p>
+<p><code>mcctl update</code> now updates the CLI <strong>and</strong> all installed services (API, Console, <code>shared</code>) plus
+server image tags / Docker images by default — the previous <code>--all</code> behavior. Use <code>--cli-only</code>
+to update just the CLI binary.</p>
+</div>
 <p><strong>Examples:</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:4"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><input id="__tabbed_2_4" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Check for Updates</label><label for="__tabbed_2_2">Update CLI</label><label for="__tabbed_2_3">Update All Services</label><label for="__tabbed_2_4">Auto-confirm (CI/CD)</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:4"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><input id="__tabbed_2_4" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Check for Updates</label><label for="__tabbed_2_2">Update CLI Only</label><label for="__tabbed_2_3">Update Everything (default)</label><label for="__tabbed_2_4">Auto-confirm (CI/CD)</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check
@@ -3915,7 +3925,7 @@
 </code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mcctl<span class="w"> </span>update
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--cli-only
 </code></pre></div>
 <p><strong>Output:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>mcctl update check:
@@ -3930,7 +3940,7 @@
 </code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>mcctl<span class="w"> </span>update
 </code></pre></div>
 <p><strong>Output:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>mcctl update check:
@@ -3960,11 +3970,14 @@
 <ul>
 <li><strong>Update check cache</strong>: Version checks are cached for 24 hours at <code>~/.mcctl-update-check.json</code>. During normal CLI usage, a non-blocking update check runs automatically in the background.</li>
 <li><strong><code>--check</code> exit codes</strong>: Returns exit code <code>1</code> if an update is available, <code>0</code> if up to date. Useful for scripting.</li>
-<li><strong><code>--all</code> flag</strong>: After updating the CLI, also updates installed services:<ul>
+<li><strong>Default (full update)</strong>: After updating the CLI, also updates installed services and refreshes images:<ul>
 <li><code>mcctl-api</code> and <code>mcctl-console</code>: Installs latest version and restarts the PM2 service</li>
 <li><code>shared</code> library: Installs latest version (no restart needed)</li>
+<li>Server <code>docker-compose.yml</code> image tags aligned to the recommended Java tag, then Docker images pulled</li>
+<li>Services are updated even when the CLI is already up to date</li>
 </ul>
 </li>
+<li><strong><code>--cli-only</code> flag</strong>: Updates only the mcctl CLI binary and skips services/images.</li>
 </ul>
 <div class="admonition tip">
 <p class="admonition-title">Scripting with --check</p>

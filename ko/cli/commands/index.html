@@ -3876,6 +3876,10 @@
 </thead>
 <tbody>
 <tr>
+<td><code>--cli-only</code></td>
+<td>mcctl CLI 바이너리만 업데이트 (전체 업데이트 opt-out)</td>
+</tr>
+<tr>
 <td><code>--check</code></td>
 <td>업데이트만 확인 (설치하지 않음)</td>
 </tr>
@@ -3889,12 +3893,18 @@
 </tr>
 <tr>
 <td><code>--all</code></td>
-<td>CLI 및 설치된 모든 서비스 업데이트</td>
+<td>Deprecated 별칭 — 기본 동작과 동일 (하위 호환용)</td>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">기본 동작 변경</p>
+<p><code>mcctl update</code>는 이제 기본적으로 CLI <strong>와 함께</strong> 설치된 모든 서비스(API, Console, <code>shared</code>) 및
+서버 이미지 태그/Docker 이미지까지 업데이트합니다(기존 <code>--all</code> 동작). CLI 바이너리만 업데이트하려면
+<code>--cli-only</code>를 사용하세요.</p>
+</div>
 <p><strong>예제:</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="2:4"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><input id="__tabbed_2_4" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">업데이트 확인</label><label for="__tabbed_2_2">CLI 업데이트</label><label for="__tabbed_2_3">모든 서비스 업데이트</label><label for="__tabbed_2_4">자동 확인 (CI/CD)</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:4"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><input id="__tabbed_2_4" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">업데이트 확인</label><label for="__tabbed_2_2">CLI만 업데이트</label><label for="__tabbed_2_3">전체 업데이트 (기본)</label><label for="__tabbed_2_4">자동 확인 (CI/CD)</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check
@@ -3915,7 +3925,7 @@
 </code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mcctl<span class="w"> </span>update
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--cli-only
 </code></pre></div>
 <p><strong>출력:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>mcctl update check:
@@ -3930,7 +3940,7 @@
 </code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>mcctl<span class="w"> </span>update
 </code></pre></div>
 <p><strong>출력:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>mcctl update check:
@@ -3960,11 +3970,14 @@
 <ul>
 <li><strong>업데이트 확인 캐시</strong>: 버전 확인은 <code>~/.mcctl-update-check.json</code>에 24시간 동안 캐시됩니다. 일반 CLI 사용 중에는 백그라운드에서 비차단 업데이트 확인이 자동으로 실행됩니다.</li>
 <li><strong><code>--check</code> 종료 코드</strong>: 업데이트가 가능하면 종료 코드 <code>1</code>, 최신 버전이면 <code>0</code>을 반환합니다. 스크립팅에 유용합니다.</li>
-<li><strong><code>--all</code> 플래그</strong>: CLI 업데이트 후 설치된 서비스도 업데이트합니다:<ul>
+<li><strong>기본 동작 (전체 업데이트)</strong>: CLI 업데이트 후 설치된 서비스와 이미지까지 갱신합니다:<ul>
 <li><code>mcctl-api</code> 및 <code>mcctl-console</code>: 최신 버전 설치 후 PM2 서비스 재시작</li>
 <li><code>shared</code> 라이브러리: 최신 버전 설치 (재시작 불필요)</li>
+<li>각 서버 <code>docker-compose.yml</code>의 이미지 태그를 권장 Java 태그로 정렬한 뒤 Docker 이미지 pull</li>
+<li>CLI가 이미 최신이어도 서비스는 갱신됩니다</li>
 </ul>
 </li>
+<li><strong><code>--cli-only</code> 플래그</strong>: mcctl CLI 바이너리만 업데이트하고 서비스/이미지는 건너뜁니다.</li>
 </ul>
 <div class="admonition tip">
 <p class="admonition-title">스크립트에서 --check 활용</p>
