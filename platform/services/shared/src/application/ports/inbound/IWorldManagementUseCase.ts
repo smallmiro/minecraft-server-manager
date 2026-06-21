@@ -76,6 +76,8 @@ export interface WorldListResult {
   lockedBy?: string;
   size: string;
   lastModified?: Date;
+  /** Names of servers configured to use this world (via their LEVEL config). */
+  servers: string[];
 }
 
 /**
