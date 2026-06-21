@@ -72,6 +72,29 @@ describe('WorldManagementUseCase.listWorlds - servers using each world', () => {
     expect(result.find((x) => x.name === 'other')?.servers).toEqual(['gamma']);
   });
 
+  test('falls back to WORLD_NAME when LEVEL is unset (matches docker world-name precedence)', async () => {
+    const serverRepo = makeServerRepo({
+      legacy: { WORLD_NAME: 'shared-world' }, // no LEVEL, uses WORLD_NAME alias
+    });
+    const useCase = makeUseCase(['shared-world'], serverRepo);
+
+    const result = await useCase.listWorlds();
+
+    expect(result.find((x) => x.name === 'shared-world')?.servers).toEqual(['legacy']);
+  });
+
+  test('prefers LEVEL over WORLD_NAME when both are set', async () => {
+    const serverRepo = makeServerRepo({
+      srv: { LEVEL: 'level-world', WORLD_NAME: 'name-world' },
+    });
+    const useCase = makeUseCase(['level-world', 'name-world'], serverRepo);
+
+    const result = await useCase.listWorlds();
+
+    expect(result.find((x) => x.name === 'level-world')?.servers).toEqual(['srv']);
+    expect(result.find((x) => x.name === 'name-world')?.servers).toEqual([]);
+  });
+
   test('defaults a server with no LEVEL to a world named after the server', async () => {
     const serverRepo = makeServerRepo({
       myserver: { TYPE: 'PAPER' }, // no LEVEL → owns worlds/myserver
