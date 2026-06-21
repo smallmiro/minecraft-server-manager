@@ -92,6 +92,14 @@ export interface IWorldRepository {
    * @returns Seed string or null if not found
    */
   getSeed(name: string): Promise<string | null>;
+
+  /**
+   * Import a world from a .zip archive at zipPath.
+   * Extracts, validates a level.dat exists, places the main world at worlds/<name>/
+   * and any split satellites at worlds/<name>_nether/ and worlds/<name>_the_end/.
+   * Writes .meta. Throws if name exists or no level.dat found.
+   */
+  importFromZip(name: string, zipPath: string): Promise<World>;
 }
 
 /**

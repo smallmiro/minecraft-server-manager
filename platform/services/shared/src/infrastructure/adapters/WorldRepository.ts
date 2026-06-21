@@ -1,6 +1,20 @@
-import { readdir, readFile, stat, rm, unlink, mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import {
+  readdir,
+  readFile,
+  stat,
+  rm,
+  unlink,
+  mkdir,
+  writeFile,
+  rename,
+  cp,
+} from 'node:fs/promises';
+import { join, basename, dirname } from 'node:path';
 import { existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { randomUUID } from 'node:crypto';
+import * as unzipper from 'unzipper';
+import { createReadStream } from 'node:fs';
 import { Paths } from '../../utils/index.js';
 import { World } from '../../domain/index.js';
 import { getContainerStatus } from '../../docker/index.js';
@@ -11,6 +25,93 @@ import type {
   ServerStatus,
   WorldAvailabilityCategory,
 } from '../../application/ports/outbound/IWorldRepository.js';
+
+// ---------------------------------------------------------------------------
+// Exported pure helper — testable without real zips
+// ---------------------------------------------------------------------------
+
+/**
+ * World layout descriptor returned by findWorldLayout
+ */
+export interface WorldLayout {
+  /** Absolute path to the directory that contains level.dat */
+  mainDir: string;
+  /** Absolute path to the nether satellite directory, if present */
+  nether?: string;
+  /** Absolute path to the_end satellite directory, if present */
+  theEnd?: string;
+}
+
+/**
+ * Recursively find all level.dat files under rootDir, pick the shallowest
+ * one, and detect split-dimension satellite sibling directories.
+ *
+ * Exported so that unit tests can exercise it with plain directory fixtures.
+ */
+export async function findWorldLayout(rootDir: string): Promise<WorldLayout> {
+  // Collect all level.dat paths
+  const levelDats: string[] = [];
+  await collectLevelDats(rootDir, levelDats);
+
+  if (levelDats.length === 0) {
+    throw new Error('No valid Minecraft world found (level.dat missing)');
+  }
+
+  // Pick the shallowest level.dat (fewest path separators relative to rootDir)
+  levelDats.sort((a, b) => {
+    const depthA = a.split('/').length;
+    const depthB = b.split('/').length;
+    return depthA - depthB;
+  });
+
+  const mainDir = dirname(levelDats[0]!);
+  const parentDir = dirname(mainDir);
+  const baseName = basename(mainDir);
+
+  // Look for split-dimension sibling dirs (case-insensitive suffix match)
+  let nether: string | undefined;
+  let theEnd: string | undefined;
+
+  const netherCandidate = join(parentDir, `${baseName}_nether`);
+  const endCandidate = join(parentDir, `${baseName}_the_end`);
+
+  // Only consider siblings if mainDir is not the rootDir itself
+  // (if mainDir === parentDir, there are no siblings to find)
+  if (parentDir !== mainDir) {
+    if (existsSync(netherCandidate)) {
+      const s = await stat(netherCandidate);
+      if (s.isDirectory()) nether = netherCandidate;
+    }
+    if (existsSync(endCandidate)) {
+      const s = await stat(endCandidate);
+      if (s.isDirectory()) theEnd = endCandidate;
+    }
+  }
+
+  return { mainDir, nether, theEnd };
+}
+
+async function collectLevelDats(dir: string, results: string[]): Promise<void> {
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+
+  for (const entry of entries) {
+    const entryPath = join(dir, entry.name);
+    if (entry.isFile() && entry.name === 'level.dat') {
+      results.push(entryPath);
+    } else if (entry.isDirectory()) {
+      await collectLevelDats(entryPath, results);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// WorldRepository
+// ---------------------------------------------------------------------------
 
 /**
  * WorldRepository
@@ -218,7 +319,9 @@ export class WorldRepository implements IWorldRepository {
   }
 
   /**
-   * Delete a world directory and its lock file
+   * Delete a world directory and its lock file.
+   * Also deletes split-dimension satellites (<name>_nether, <name>_the_end).
+   * Returns true if the main world was deleted.
    */
   async delete(name: string): Promise<boolean> {
     const worldPath = join(this.worldsDir, name);
@@ -236,36 +339,23 @@ export class WorldRepository implements IWorldRepository {
 
       // Delete world directory
       await rm(worldPath, { recursive: true, force: true });
+
+      // Cascade-delete split-dimension satellites
+      for (const suffix of ['_nether', '_the_end']) {
+        const satellitePath = join(this.worldsDir, `${name}${suffix}`);
+        const satelliteLock = join(this.locksDir, `${name}${suffix}.lock`);
+        if (existsSync(satellitePath)) {
+          if (existsSync(satelliteLock)) {
+            await unlink(satelliteLock).catch(() => {});
+          }
+          await rm(satellitePath, { recursive: true, force: true });
+        }
+      }
+
       return true;
     } catch {
       return false;
     }
-  }
-
-  /**
-   * Get directory size recursively
-   */
-  private async getDirectorySize(dirPath: string): Promise<number> {
-    let totalSize = 0;
-
-    try {
-      const entries = await readdir(dirPath, { withFileTypes: true });
-
-      for (const entry of entries) {
-        const entryPath = join(dirPath, entry.name);
-
-        if (entry.isFile()) {
-          const fileStat = await stat(entryPath);
-          totalSize += fileStat.size;
-        } else if (entry.isDirectory()) {
-          totalSize += await this.getDirectorySize(entryPath);
-        }
-      }
-    } catch {
-      // Ignore errors
-    }
-
-    return totalSize;
   }
 
   /**
@@ -322,5 +412,153 @@ export class WorldRepository implements IWorldRepository {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Import a world from a .zip archive at zipPath.
+   * 1. Throws if worlds/<name> already exists.
+   * 2. Extracts zip into a fresh temp dir.
+   * 3. Calls assembleWorld to move files to their final locations.
+   * 4. Cleans up the temp dir (even on error).
+   * 5. On error after creating target dirs, rolls back.
+   */
+  async importFromZip(name: string, zipPath: string): Promise<World> {
+    const targetPath = join(this.worldsDir, name);
+
+    if (existsSync(targetPath)) {
+      throw new Error(`World '${name}' already exists`);
+    }
+
+    // Ensure worlds dir exists
+    if (!existsSync(this.worldsDir)) {
+      await mkdir(this.worldsDir, { recursive: true });
+    }
+
+    const tempDir = join(tmpdir(), `mc-import-${randomUUID()}`);
+    await mkdir(tempDir, { recursive: true });
+
+    try {
+      // Extract zip into tempDir
+      await this.extractZip(zipPath, tempDir);
+
+      // Assemble the world (move files to worlds/ dir)
+      await this.assembleWorld(tempDir, name);
+    } catch (err) {
+      // Roll back any created target dirs
+      for (const suffix of ['', '_nether', '_the_end']) {
+        const p = join(this.worldsDir, `${name}${suffix}`);
+        if (existsSync(p)) {
+          await rm(p, { recursive: true, force: true }).catch(() => {});
+        }
+      }
+      throw err;
+    } finally {
+      // Always clean up temp dir
+      await rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    }
+
+    // Return the newly created World entity with metadata
+    const world = new World(name, targetPath);
+    try {
+      const worldStat = await stat(targetPath);
+      const size = await this.getDirectorySize(targetPath);
+      world.setMetadata(size, worldStat.mtime);
+    } catch {
+      // Non-fatal
+    }
+
+    return world;
+  }
+
+  /**
+   * Extract a zip file into destDir using unzipper streaming.
+   */
+  private async extractZip(zipPath: string, destDir: string): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      createReadStream(zipPath)
+        .pipe(unzipper.Extract({ path: destDir }))
+        .on('close', resolve)
+        .on('error', reject);
+    });
+  }
+
+  /**
+   * Assemble an extracted world tree into the worlds/ directory.
+   * Detects the world layout, moves the main dir and satellites.
+   * Writes a .meta file in the main world dir.
+   */
+  private async assembleWorld(extractedRoot: string, name: string): Promise<void> {
+    const layout = await findWorldLayout(extractedRoot);
+
+    const targetMain = join(this.worldsDir, name);
+
+    // Move main world dir
+    await this.moveDir(layout.mainDir, targetMain);
+
+    // Move satellites if present
+    if (layout.nether) {
+      await this.moveDir(layout.nether, join(this.worldsDir, `${name}_nether`));
+    }
+    if (layout.theEnd) {
+      await this.moveDir(layout.theEnd, join(this.worldsDir, `${name}_the_end`));
+    }
+
+    // Write .meta in main world dir
+    const metaContent = {
+      name,
+      seed: null,
+      createdAt: new Date().toISOString(),
+      importedFrom: 'zip',
+    };
+    await writeFile(
+      join(targetMain, '.meta'),
+      JSON.stringify(metaContent, null, 2),
+      'utf-8'
+    );
+  }
+
+  /**
+   * Move a directory from src to dest.
+   * Falls back to recursive copy + rm when rename fails (cross-device EXDEV).
+   */
+  private async moveDir(src: string, dest: string): Promise<void> {
+    try {
+      await rename(src, dest);
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === 'EXDEV') {
+        // Cross-device: copy then remove
+        await cp(src, dest, { recursive: true });
+        await rm(src, { recursive: true, force: true });
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  /**
+   * Get directory size recursively
+   */
+  private async getDirectorySize(dirPath: string): Promise<number> {
+    let totalSize = 0;
+
+    try {
+      const entries = await readdir(dirPath, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const entryPath = join(dirPath, entry.name);
+
+        if (entry.isFile()) {
+          const fileStat = await stat(entryPath);
+          totalSize += fileStat.size;
+        } else if (entry.isDirectory()) {
+          totalSize += await this.getDirectorySize(entryPath);
+        }
+      }
+    } catch {
+      // Ignore errors
+    }
+
+    return totalSize;
   }
 }

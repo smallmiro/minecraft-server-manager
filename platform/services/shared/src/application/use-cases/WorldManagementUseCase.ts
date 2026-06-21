@@ -6,11 +6,14 @@ import type {
   WorldDeleteResult,
   WorldCreateOptions,
   WorldCreateResult,
+  WorldImportOptions,
+  WorldImportResult,
   IPromptPort,
   IShellPort,
   IWorldRepository,
   IServerRepository,
 } from '../ports/index.js';
+import { formatWorldBytes } from '../../utils/index.js';
 
 /**
  * World Management Use Case
@@ -256,21 +259,70 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
   }
 
   /**
-   * List all worlds with lock status
+   * List all worlds with lock status.
+   * Excludes split-dimension satellites (<name>_nether, <name>_the_end)
+   * from the returned list. Each primary world gains a `dimensions` field
+   * and its size includes satellite sizes.
    */
   async listWorlds(): Promise<WorldListResult[]> {
-    const worlds = await this.worldRepo.findAll();
+    const allWorlds = await this.worldRepo.findAll();
     const serversByWorld = await this.getServersByWorld();
 
-    return worlds.map((world) => ({
-      name: world.name,
-      path: world.path,
-      isLocked: world.isLocked,
-      lockedBy: world.lockedBy,
-      size: world.sizeFormatted,
-      lastModified: world.lastModified,
-      servers: serversByWorld.get(world.name) ?? [],
-    }));
+    // Build a set of all world names for O(1) satellite detection
+    const allNames = new Set(allWorlds.map((w) => w.name));
+
+    // Identify satellites: name matches /<base>_(nether|the_end)/ AND base exists
+    const satelliteRegex = /^(.+)_(nether|the_end)$/;
+    const satelliteNames = new Set<string>();
+    const satellitesByBase = new Map<string, { nether?: (typeof allWorlds)[0]; theEnd?: (typeof allWorlds)[0] }>();
+
+    for (const world of allWorlds) {
+      const match = satelliteRegex.exec(world.name);
+      if (match) {
+        const base = match[1]!;
+        const kind = match[2]! as 'nether' | 'the_end';
+        if (allNames.has(base)) {
+          satelliteNames.add(world.name);
+          const entry = satellitesByBase.get(base) ?? {};
+          if (kind === 'nether') entry.nether = world;
+          else entry.theEnd = world;
+          satellitesByBase.set(base, entry);
+        }
+      }
+    }
+
+    // Build results from primary worlds only
+    return allWorlds
+      .filter((world) => !satelliteNames.has(world.name))
+      .map((world) => {
+        const satellites = satellitesByBase.get(world.name) ?? {};
+
+        // Aggregate size
+        let size: string;
+        if (world.sizeBytes !== undefined) {
+          const total =
+            world.sizeBytes +
+            (satellites.nether?.sizeBytes ?? 0) +
+            (satellites.theEnd?.sizeBytes ?? 0);
+          size = formatWorldBytes(total);
+        } else {
+          size = 'Unknown';
+        }
+
+        return {
+          name: world.name,
+          path: world.path,
+          isLocked: world.isLocked,
+          lockedBy: world.lockedBy,
+          size,
+          lastModified: world.lastModified,
+          servers: serversByWorld.get(world.name) ?? [],
+          dimensions: {
+            nether: !!satellites.nether,
+            end: !!satellites.theEnd,
+          },
+        } satisfies WorldListResult;
+      });
   }
 
   /**
@@ -643,6 +695,32 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
     }
 
     return await this.performWorldDeletion(worldName, world.sizeFormatted, force);
+  }
+
+  /**
+   * Import a world from a zip archive (non-interactive).
+   * Returns {success:false} if the world already exists or extraction fails.
+   */
+  async importWorldFromZip(options: WorldImportOptions): Promise<WorldImportResult> {
+    const { worldName, zipPath } = options;
+
+    // Check for duplicate before attempting extraction
+    const existing = await this.worldRepo.findByName(worldName);
+    if (existing) {
+      return {
+        success: false,
+        worldName,
+        error: `World '${worldName}' already exists`,
+      };
+    }
+
+    try {
+      await this.worldRepo.importFromZip(worldName, zipPath);
+      return { success: true, worldName };
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      return { success: false, worldName, error };
+    }
   }
 
   /**
