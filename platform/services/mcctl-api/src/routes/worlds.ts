@@ -109,6 +109,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           lockedBy: world.lockedBy,
           size: world.size,
           lastModified: world.lastModified?.toISOString(),
+          servers: world.servers,
         })),
         total: worlds.length,
       });
@@ -160,6 +161,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           lockedBy: world.lockedBy,
           size: world.size,
           lastModified: world.lastModified?.toISOString(),
+          servers: world.servers,
         },
       });
     } catch (error) {
