@@ -3599,6 +3599,13 @@
 <hr />
 <h2 id="mc-router-configuration">mc-router Configuration<a class="headerlink" href="#mc-router-configuration" title="Permanent link">&para;</a></h2>
 <p>mc-router handles hostname-based routing and auto-scaling.</p>
+<div class="admonition info">
+<p class="admonition-title">Pinned version</p>
+<p>The platform pins <code>itzg/mc-router</code> to <code>1.43.1</code> in <code>docker-compose.yml</code> for reproducible deployments.
+Compared to <code>1.42.0</code>, this release adds event-based Docker polling (faster auto-scale reactions),
+timezone (<code>TZ</code>) support, and a <code>--log-level</code> option. There are no breaking changes, and the
+label-based <code>--in-docker</code> auto-scale workflow used here needs no configuration changes.</p>
+</div>
 <h3 id="router-management-with-mcctl">Router Management with mcctl<a class="headerlink" href="#router-management-with-mcctl" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Check router status</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>mcctl<span class="w"> </span>status<span class="w"> </span>router
