@@ -490,6 +490,13 @@ if [ -f "$CONFIG_FILE" ]; then
     if [ -n "$MC_VERSION" ]; then
         sed -i "s/^VERSION=.*/VERSION=$MC_VERSION/" "$CONFIG_FILE"
         echo "   Version: $MC_VERSION"
+    elif [[ "$SERVER_TYPE" =~ ^(MODRINTH|AUTO_CURSEFORGE)$ ]]; then
+        # For modpack types, the template's default VERSION (e.g. 1.20.4) must
+        # NOT leak: an incompatible VERSION makes itzg fail with
+        # "No files available". When no version is supplied, let the modpack
+        # determine the Minecraft version by neutralizing the template VERSION.
+        sed -i "s/^VERSION=.*/# VERSION omitted: determined by modpack/" "$CONFIG_FILE"
+        echo "   Version: (determined by modpack)"
     fi
 
     # Apply world options
