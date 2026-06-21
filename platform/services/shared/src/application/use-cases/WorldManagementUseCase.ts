@@ -326,6 +326,15 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
   }
 
   /**
+   * List worlds not mapped to any server (no server's LEVEL points at them).
+   * Builds on listWorlds(), which already excludes split-dimension satellites.
+   */
+  async listUnmappedWorlds(): Promise<WorldListResult[]> {
+    const worlds = await this.listWorlds();
+    return worlds.filter((w) => w.servers.length === 0);
+  }
+
+  /**
    * Build a reverse map of world name -> server names that use it.
    *
    * A server's world directory is its LEVEL config value (or the WORLD_NAME
