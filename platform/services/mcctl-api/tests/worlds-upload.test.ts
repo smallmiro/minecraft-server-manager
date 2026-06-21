@@ -73,6 +73,18 @@ async function buildValidWorldZip(): Promise<Buffer> {
   return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
 
+/**
+ * Create a split-dimension (Bukkit/Paper) zip:
+ *   world/level.dat, world_nether/..., world_the_end/...
+ */
+async function buildSplitWorldZip(): Promise<Buffer> {
+  const zip = new JSZip();
+  zip.folder('world')!.file('level.dat', Buffer.from('NBTDATA'));
+  zip.folder('world_nether')!.file('region/r.0.0.mca', Buffer.from([0]));
+  zip.folder('world_the_end')!.file('region/r.0.0.mca', Buffer.from([0]));
+  return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+}
+
 // ---------------------------------------------------------------------------
 // Test suite
 // ---------------------------------------------------------------------------
@@ -257,5 +269,33 @@ describe('POST /api/worlds/upload', () => {
     // Verify the world was created on disk
     expect(existsSync(join(TEST_PLATFORM_PATH, 'worlds', 'my-world'))).toBe(true);
     expect(existsSync(join(TEST_PLATFORM_PATH, 'worlds', 'my-world', 'level.dat'))).toBe(true);
+  });
+
+  it('returns 201 and places split-dimension satellites as siblings', async () => {
+    const zipBuffer = await buildSplitWorldZip();
+    const boundary = 'boundarysplit';
+    const body = buildMultipartBody(boundary, [
+      {
+        fieldName: 'file',
+        filename: 'split.zip',
+        content: zipBuffer,
+        contentType: 'application/zip',
+      },
+    ]);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/worlds/upload?name=split-world',
+      headers: { 'content-type': `multipart/form-data; boundary=${boundary}` },
+      payload: body,
+    });
+
+    expect(response.statusCode).toBe(201);
+
+    // Main world + both satellites land as siblings under worlds/
+    const worldsDir = join(TEST_PLATFORM_PATH, 'worlds');
+    expect(existsSync(join(worldsDir, 'split-world', 'level.dat'))).toBe(true);
+    expect(existsSync(join(worldsDir, 'split-world_nether'))).toBe(true);
+    expect(existsSync(join(worldsDir, 'split-world_the_end'))).toBe(true);
   });
 });

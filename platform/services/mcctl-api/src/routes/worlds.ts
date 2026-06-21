@@ -576,7 +576,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // 1. Pre-check for duplicate world name
     try {
-      const checkUseCase = createWorldUseCase({ worldName: name });
+      const checkUseCase = createWorldUseCase(); // listWorlds doesn't use the prompt adapter
       const existing = (await checkUseCase.listWorlds()).find((w) => w.name === name);
       if (existing) {
         return reply.code(409).send({
@@ -626,6 +626,12 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
         if (part.file.truncated) {
           await rm(tempZip, { force: true });
+          // Drain remaining parts so the connection terminates cleanly.
+          try {
+            for await (const _remaining of parts) { /* consume */ }
+          } catch {
+            /* ignore */
+          }
           return reply.code(413).send({
             error: 'PayloadTooLarge',
             message: `Uploaded file exceeds the ${WORLD_UPLOAD_MAX_SIZE / 1024 / 1024}MB size limit`,
@@ -666,6 +672,14 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           status: 'failure',
           errorMessage: result.error ?? 'Import failed',
         });
+        // Keep the duplicate-world status consistent with the pre-check (409),
+        // even when the collision is only detected during import (TOCTOU).
+        if (result.error?.includes('already exists')) {
+          return reply.code(409).send({
+            error: 'Conflict',
+            message: result.error,
+          });
+        }
         return reply.code(400).send({
           error: 'BadRequest',
           message: result.error ?? 'Failed to import world from zip',
