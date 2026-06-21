@@ -12,9 +12,9 @@ const createMockSnapshot = (id: string, createdAt: string): ConfigSnapshotItem =
   id,
   serverName: 'test-server',
   createdAt,
-  trigger: 'manual' as const,
+  description: 'test snapshot',
   files: [
-    { path: 'server.properties', contentHash: 'abc123' },
+    { path: 'server.properties', hash: 'abc123', size: 0 },
   ],
 });
 

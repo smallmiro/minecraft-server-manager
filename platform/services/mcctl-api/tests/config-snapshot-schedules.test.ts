@@ -37,6 +37,7 @@ vi.mock('child_process', async (importOriginal) => {
 
 // Mock config-snapshot-service to avoid filesystem deps
 vi.mock('../src/services/config-snapshot-service.js', () => ({
+  getConfigSnapshotUseCase: vi.fn(() => ({})),
   createSnapshot: vi.fn(),
   listSnapshots: vi.fn(),
   getSnapshotById: vi.fn(),

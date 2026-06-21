@@ -4,7 +4,8 @@ import { buildApp } from '../src/app.js';
 import http from 'http';
 
 // Mock @minecraft-docker/shared module
-vi.mock('@minecraft-docker/shared', () => ({
+vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
   getAllServers: vi.fn(),
   getServerInfoFromConfig: vi.fn(),
   getServerDetailedInfo: vi.fn(),
