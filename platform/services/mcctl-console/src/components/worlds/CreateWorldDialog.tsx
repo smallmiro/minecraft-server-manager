@@ -111,8 +111,12 @@ export function CreateWorldDialog({
     };
 
   const handleZipSelect = useCallback((file: File) => {
-    if (file.name.endsWith('.zip')) {
+    if (file.name.toLowerCase().endsWith('.zip')) {
       setZipFile(file);
+      setErrors((prev) => ({ ...prev, zip: '' }));
+    } else {
+      setZipFile(null);
+      setErrors((prev) => ({ ...prev, zip: 'Only .zip files are accepted' }));
     }
   }, []);
 
@@ -260,6 +264,15 @@ export function CreateWorldDialog({
                 onChange={handleFileInputChange}
                 data-testid="zip-file-input"
               />
+              {errors.zip && (
+                <Typography
+                  variant="caption"
+                  color="error"
+                  sx={{ display: 'block', mt: 0.5 }}
+                >
+                  {errors.zip}
+                </Typography>
+              )}
               {zipFile && (
                 <Button
                   size="small"

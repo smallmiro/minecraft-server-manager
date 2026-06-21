@@ -11,8 +11,13 @@ import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-// 1 GB + multipart overhead margin (~100 MB)
-const MAX_REQUEST_SIZE = 1024 * 1024 * 1024 + 110 * 1024 * 1024;
+// Mirror the API's WORLD_UPLOAD_MAX_SIZE (default 1 GB) + multipart overhead margin,
+// so raising the env var lifts the limit at both layers.
+const WORLD_UPLOAD_MAX_SIZE =
+  Number(process.env.WORLD_UPLOAD_MAX_SIZE) || 1024 * 1024 * 1024;
+const MAX_REQUEST_SIZE = Math.floor(WORLD_UPLOAD_MAX_SIZE * 1.1) + 1024 * 1024;
+
+const WORLD_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +40,20 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    // Fail fast on invalid names before streaming the body upstream (mirrors API schema).
+    if (!WORLD_NAME_PATTERN.test(name)) {
+      return NextResponse.json(
+        { error: 'BadRequest', message: 'Invalid world name' },
+        { status: 400 }
+      );
+    }
     const seed = searchParams.get('seed');
+    if (seed && seed.length > 128) {
+      return NextResponse.json(
+        { error: 'BadRequest', message: 'seed is too long' },
+        { status: 400 }
+      );
+    }
 
     const apiUrl = process.env.MCCTL_API_URL || 'http://localhost:5001';
     const apiKey = process.env.MCCTL_API_KEY || '';
@@ -67,7 +85,15 @@ export async function POST(request: NextRequest) {
       duplex: 'half',
     });
 
-    const data = await response.json();
+    // Preserve the upstream status even if the body is not JSON (proxy error page,
+    // empty body, etc.) so the client sees the real status instead of a generic 500.
+    const text = await response.text();
+    let data: unknown;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { error: 'UpstreamError', message: text || response.statusText };
+    }
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     if (error instanceof AuthError) {
