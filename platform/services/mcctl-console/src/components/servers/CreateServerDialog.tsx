@@ -26,7 +26,10 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Collapse from '@mui/material/Collapse';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
+import Avatar from '@mui/material/Avatar';
 import CloseIcon from '@mui/icons-material/Close';
+import DownloadIcon from '@mui/icons-material/Download';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
 import Autocomplete from '@mui/material/Autocomplete';
 import { useWorlds } from '@/hooks/useMcctl';
 import { useModpackSearch, useModVersions } from '@/hooks/useMods';
@@ -44,6 +47,12 @@ interface CreateServerDialogProps {
 }
 
 const STANDARD_SERVER_TYPES = ['VANILLA', 'PAPER', 'FABRIC', 'FORGE', 'NEOFORGE'];
+
+function formatDownloads(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
 
 type ServerCategory = 'standard' | 'modpack';
 
@@ -514,11 +523,70 @@ export function CreateServerDialog({
                         setSelectedLoader('');
                         setSelectedGameVersion('');
                       }}
-                      renderOption={(props, option) => (
-                        <li {...props} key={typeof option === 'string' ? option : option.slug}>
-                          {typeof option === 'string' ? option : `${option.title} (${option.slug})`}
-                        </li>
-                      )}
+                      renderOption={(props, option) => {
+                        if (typeof option === 'string') {
+                          return (
+                            <li {...props} key={option}>
+                              {option}
+                            </li>
+                          );
+                        }
+                        return (
+                          <li {...props} key={option.slug}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                gap: 1.5,
+                                alignItems: 'flex-start',
+                                width: '100%',
+                                minWidth: 0,
+                              }}
+                            >
+                              <Avatar
+                                src={option.iconUrl || undefined}
+                                variant="rounded"
+                                sx={{ width: 40, height: 40, bgcolor: 'action.hover', flexShrink: 0 }}
+                              >
+                                <Inventory2Icon />
+                              </Avatar>
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography variant="subtitle2" noWrap>
+                                  {option.title}
+                                </Typography>
+                                {option.description && (
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{
+                                      mt: 0.25,
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      display: '-webkit-box',
+                                      WebkitLineClamp: 2,
+                                      WebkitBoxOrient: 'vertical',
+                                    }}
+                                  >
+                                    {option.description}
+                                  </Typography>
+                                )}
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                                    <DownloadIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                                    <Typography variant="caption" color="text.disabled">
+                                      {formatDownloads(option.downloads)}
+                                    </Typography>
+                                  </Box>
+                                  {option.author && (
+                                    <Typography variant="caption" color="text.disabled">
+                                      by {option.author}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+                            </Box>
+                          </li>
+                        );
+                      }}
                       disabled={isCreating}
                       renderInput={(params) => (
                         <TextField
