@@ -595,7 +595,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       },
     },
   }, async (request: FastifyRequest<CreateServerRoute>, reply: FastifyReply) => {
-    const { name, type, version, memory, seed, worldUrl, worldName, autoStart, sudoPassword, modpack, modpackVersion, modLoader } = request.body;
+    const { name, type, version, memory, seed, worldUrl, worldName, autoStart, sudoPassword, modpack, modpackVersion, modLoader, excludeFiles } = request.body;
     const { follow = false } = request.query;
 
     // Check if server already exists (before SSE mode check)
@@ -719,6 +719,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (modLoader) {
       args.push('--mod-loader', modLoader);
     }
+    if (excludeFiles && excludeFiles.length > 0) {
+      args.push('--exclude-files', excludeFiles.join(','));
+    }
     if (autoStart === false) {
       args.push('--no-start');
     }
@@ -839,6 +842,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
               modpack: modpack ?? null,
               modpackVersion: modpackVersion ?? null,
               modLoader: modLoader ?? null,
+              excludeFiles: excludeFiles && excludeFiles.length > 0 ? excludeFiles.join(',') : null,
             },
             errorMessage: null,
           });
@@ -923,6 +927,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           modpack: modpack ?? null,
           modpackVersion: modpackVersion ?? null,
           modLoader: modLoader ?? null,
+          excludeFiles: excludeFiles && excludeFiles.length > 0 ? excludeFiles.join(',') : null,
         },
         errorMessage: null,
       });

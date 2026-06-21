@@ -171,6 +171,20 @@ export const CreateServerRequestSchema = Type.Object({
     Type.Literal('neoforge'),
     Type.Literal('quilt'),
   ], { description: 'Mod loader override' })),
+  excludeFiles: Type.Optional(Type.Array(
+    Type.String({
+      // Partial file names (Modrinth) or project IDs/slugs (CurseForge).
+      // Restricted to safe characters to harden the non-SSE create path that
+      // interpolates args into a shell command. No commas (the join delimiter),
+      // quotes, spaces, or other shell metacharacters allowed.
+      pattern: '^[A-Za-z0-9_.-]+$',
+      minLength: 1,
+    }),
+    {
+      maxItems: 100,
+      description: 'Mods to exclude from the modpack (e.g. client-only mods that crash a dedicated server). Maps to MODRINTH_EXCLUDE_FILES / CF_EXCLUDE_MODS.',
+    }
+  )),
 });
 
 // Create Server Query Schema (for SSE streaming support)
