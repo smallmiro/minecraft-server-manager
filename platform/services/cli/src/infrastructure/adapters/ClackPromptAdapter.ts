@@ -620,6 +620,28 @@ export class ClackPromptAdapter implements IPromptPort {
     return result === 'auto' ? undefined : (result as string);
   }
 
+  async promptModpackExcludeFiles(): Promise<string[] | undefined> {
+    const result = await p.text({
+      message: 'Exclude mods (comma-separated, e.g. client-only mods):',
+      placeholder: 'leave empty to install all',
+      defaultValue: '',
+    });
+
+    if (this.isCancel(result)) {
+      this.handleCancel();
+    }
+
+    const value = (result as string).trim();
+    if (value === '') {
+      return undefined;
+    }
+    const files = value
+      .split(',')
+      .map((f) => f.trim())
+      .filter((f) => f.length > 0);
+    return files.length > 0 ? files : undefined;
+  }
+
   // ========================================
   // Status Display
   // ========================================

@@ -113,6 +113,9 @@ export class ShellAdapter implements IShellPort {
     if (options.modLoader) {
       args.push('--mod-loader', options.modLoader);
     }
+    if (options.modpackExcludeFiles && options.modpackExcludeFiles.length > 0) {
+      args.push('--exclude-files', options.modpackExcludeFiles.join(','));
+    }
 
     if (options.enableWhitelist === false) {
       args.push('--no-whitelist');

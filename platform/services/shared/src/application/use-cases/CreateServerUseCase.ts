@@ -65,6 +65,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       let modpackSlug: string | undefined;
       let modpackVersion: string | undefined;
       let modLoader: string | undefined;
+      let modpackExcludeFiles: string[] | undefined;
 
       if (type.isModpack) {
         modpackSlug = await this.prompt.promptModpackSlug();
@@ -90,6 +91,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
 
         modLoader = await this.prompt.promptModpackLoader(availableLoaders);
         modpackVersion = await this.prompt.promptModpackVersion();
+        modpackExcludeFiles = await this.prompt.promptModpackExcludeFiles();
       }
 
       // Prompt for Minecraft version (skip for modpack servers)
@@ -160,6 +162,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
           ? ModpackOptions.modrinth(modpackSlug, {
               version: modpackVersion,
               loader: modLoader,
+              excludeFiles: modpackExcludeFiles,
             })
           : undefined;
 
@@ -187,6 +190,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         modpackSlug,
         modpackVersion,
         modLoader,
+        modpackExcludeFiles: modpackOptions?.excludeFiles,
         enableWhitelist: true,
         whitelistPlayers,
         playitDomain,
@@ -293,6 +297,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         ? ModpackOptions.modrinth(config.modpackSlug, {
             version: config.modpackVersion,
             loader: config.modLoader,
+            excludeFiles: config.modpackExcludeFiles,
           })
         : undefined;
 
@@ -316,6 +321,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       modpackSlug: config.modpackSlug,
       modpackVersion: config.modpackVersion,
       modLoader: config.modLoader,
+      modpackExcludeFiles: modpackOptions?.excludeFiles,
       enableWhitelist: config.enableWhitelist !== false,
       whitelistPlayers: config.whitelistPlayers,
       playitDomain: config.playitDomain,

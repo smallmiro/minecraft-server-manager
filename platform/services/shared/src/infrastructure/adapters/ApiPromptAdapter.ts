@@ -53,6 +53,8 @@ export interface ApiPromptOptions {
   modpackVersion?: string;
   /** Mod loader (optional) */
   modLoader?: string;
+  /** Mods to exclude from modpack installation (optional) */
+  modpackExcludeFiles?: string[];
 }
 
 /**
@@ -304,6 +306,10 @@ export class ApiPromptAdapter implements IPromptPort {
 
   async promptModpackLoader(_availableLoaders?: string[]): Promise<string | undefined> {
     return this.options.modLoader;
+  }
+
+  async promptModpackExcludeFiles(): Promise<string[] | undefined> {
+    return this.options.modpackExcludeFiles;
   }
 
   // ========================================

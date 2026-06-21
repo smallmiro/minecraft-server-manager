@@ -120,6 +120,13 @@ export interface IPromptPort {
    */
   promptModpackLoader(availableLoaders?: string[]): Promise<string | undefined>;
 
+  /**
+   * Prompt for mods to exclude from the modpack (optional).
+   * Used to drop client-only mods that crash a dedicated server.
+   * Returns undefined when nothing is excluded.
+   */
+  promptModpackExcludeFiles(): Promise<string[] | undefined>;
+
   // ========================================
   // Status Display
   // ========================================
