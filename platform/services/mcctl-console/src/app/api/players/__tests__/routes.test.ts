@@ -153,7 +153,7 @@ describe('Players BFF Routes - Permission Wiring', () => {
         servers: [{ name: 'sv1', status: 'running', health: 'healthy' }],
       });
       mockGetServer.mockResolvedValue({
-        server: { players: { list: ['Steve'] } },
+        server: { players: { online: 1, max: 20, players: ['Steve'] } },
       });
       const { GET } = await import('../route');
       const req = makeGetRequest('http://localhost:5000/api/players');
