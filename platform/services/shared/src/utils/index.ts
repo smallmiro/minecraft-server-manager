@@ -356,21 +356,9 @@ export class Config {
   }
 }
 
-/**
- * Format a byte count into a human-readable string.
- * Matches the algorithm used in World.sizeFormatted (no space between number and unit).
- * e.g. 1024 → "1.0KB", 1536 → "1.5KB"
- */
-export function formatWorldBytes(bytes: number): string {
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let size = bytes;
-  let unitIndex = 0;
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-  return `${size.toFixed(1)}${units[unitIndex]}`;
-}
+// Re-export the pure formatter (kept in a dependency-free module so the domain
+// layer can use it without importing this I/O-bearing barrel).
+export { formatWorldBytes } from './format.js';
 
 /**
  * Console output utilities with colors

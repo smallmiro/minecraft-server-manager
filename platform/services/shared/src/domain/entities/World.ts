@@ -1,4 +1,4 @@
-import { formatWorldBytes } from '../../utils/index.js';
+import { formatWorldBytes } from '../../utils/format.js';
 
 /**
  * World lock status
