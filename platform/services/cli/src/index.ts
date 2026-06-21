@@ -342,6 +342,7 @@ ${colors.cyan('Create Options:')}
   --modpack SLUG             Modrinth modpack slug (required for MODRINTH type)
   --modpack-version VERSION  Modpack version (optional, default: latest)
   --mod-loader LOADER        Mod loader (auto/fabric/forge/quilt, default: auto)
+  --exclude-files LIST       Mods to exclude from modpack, comma-separated (e.g. client-only mods)
   --playit-domain DOMAIN     Register playit.gg external domain (e.g., aa.example.com)
   --no-playit-domain         Skip playit domain registration (explicit)
 
@@ -579,6 +580,7 @@ async function main(): Promise<void> {
           modpack: flags['modpack'] as string | undefined,
           modpackVersion: flags['modpack-version'] as string | undefined,
           modLoader: flags['mod-loader'] as string | undefined,
+          excludeFiles: flags['exclude-files'] as string | undefined,
           playitDomain: flags['playit-domain'] as string | undefined,
           noPlayitDomain: flags['no-playit-domain'] === true,
         });

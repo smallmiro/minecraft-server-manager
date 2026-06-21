@@ -25,6 +25,7 @@ export interface CreateCommandOptions {
   modpack?: string;
   modpackVersion?: string;
   modLoader?: string;
+  excludeFiles?: string;
   playitDomain?: string;
   noPlayitDomain?: boolean;
 }
@@ -95,6 +96,9 @@ async function createWithArguments(
       modpackSlug: options.modpack,
       modpackVersion: options.modpackVersion,
       modLoader: options.modLoader,
+      modpackExcludeFiles: options.excludeFiles
+        ? options.excludeFiles.split(',').map((f) => f.trim()).filter(Boolean)
+        : undefined,
       enableWhitelist: !options.noWhitelist,
       whitelistPlayers: options.whitelist
         ? options.whitelist.split(',').map((p) => p.trim()).filter(Boolean)
@@ -116,6 +120,9 @@ async function createWithArguments(
       }
       if (server.modpackOptions.loader) {
         console.log(`  Mod Loader: ${server.modpackOptions.loader}`);
+      }
+      if (server.modpackOptions.excludeFiles && server.modpackOptions.excludeFiles.length > 0) {
+        console.log(`  Excluded Mods: ${server.modpackOptions.excludeFiles.join(', ')}`);
       }
     } else {
       console.log(`  Version: ${server.version.value}`);
