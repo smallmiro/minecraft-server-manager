@@ -488,6 +488,36 @@ cmd_backup() {
 }
 
 # =============================================================================
+# Config
+# =============================================================================
+
+# Set a key=value in a server's config.env (used by world assign to keep LEVEL
+# in sync, and by other callers via ShellAdapter.setServerConfig).
+cmd_config() {
+    local server="$1"
+    local key="$2"
+    local value="$3"
+
+    if [[ -z "$server" || -z "$key" ]]; then
+        error "Usage: config <server> <key> <value>"
+        return 1
+    fi
+
+    local config_file="$PLATFORM_DIR/servers/$server/config.env"
+    if [[ ! -f "$config_file" ]]; then
+        error "Server '$server' config not found: $config_file"
+        return 1
+    fi
+
+    if grep -q "^${key}=" "$config_file"; then
+        sed -i "s|^${key}=.*|${key}=${value}|" "$config_file"
+    else
+        echo "${key}=${value}" >> "$config_file"
+    fi
+    info "Set ${key}=${value} in servers/${server}/config.env"
+}
+
+# =============================================================================
 # Main
 # =============================================================================
 
@@ -519,6 +549,9 @@ main() {
             ;;
         backup)
             cmd_backup "$@"
+            ;;
+        config)
+            cmd_config "$@"
             ;;
         -h|--help|help)
             usage
