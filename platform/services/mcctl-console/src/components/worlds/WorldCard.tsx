@@ -12,6 +12,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import DeleteIcon from '@mui/icons-material/Delete';
 import StorageIcon from '@mui/icons-material/Storage';
+import DnsIcon from '@mui/icons-material/Dns';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import type { World } from '@/ports/api/IMcctlApiClient';
 
@@ -50,7 +51,6 @@ export function WorldCard({ world, onAssign, onRelease, onDelete, loading = fals
       role="article"
       sx={{
         transition: 'all 0.2s',
-        height: { xs: 'auto', sm: 200 },
         minHeight: { xs: 160, sm: 200 },
         display: 'flex',
         flexDirection: 'column',
@@ -112,6 +112,20 @@ export function WorldCard({ world, onAssign, onRelease, onDelete, loading = fals
             </Tooltip>
           </Box>
         )}
+
+        {/* Servers using this world */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
+          <DnsIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+          {world.servers && world.servers.length > 0 ? (
+            world.servers.map((server) => (
+              <Chip key={server} label={server} size="small" variant="outlined" />
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              No servers
+            </Typography>
+          )}
+        </Box>
 
         {/* Last Modified */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

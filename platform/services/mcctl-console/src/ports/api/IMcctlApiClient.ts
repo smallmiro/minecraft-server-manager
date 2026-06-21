@@ -104,6 +104,8 @@ export interface World {
   lockedBy?: string;
   size?: string;
   lastModified?: string;
+  /** Names of servers configured to use this world. */
+  servers?: string[];
 }
 
 export interface WorldListResponse {

@@ -128,4 +128,17 @@ describe('WorldCard', () => {
     renderWithTheme(<WorldCard world={worldNoSize} />);
     expect(screen.getByText('Unknown size')).toBeInTheDocument();
   });
+
+  it('should render the names of servers using the world', () => {
+    const worldWithServers: World = { ...mockAvailableWorld, servers: ['alpha', 'beta'] };
+    renderWithTheme(<WorldCard world={worldWithServers} />);
+    expect(screen.getByText('alpha')).toBeInTheDocument();
+    expect(screen.getByText('beta')).toBeInTheDocument();
+  });
+
+  it('should indicate when no servers use the world', () => {
+    const worldNoServers: World = { ...mockAvailableWorld, servers: [] };
+    renderWithTheme(<WorldCard world={worldNoServers} />);
+    expect(screen.getByText('No servers')).toBeInTheDocument();
+  });
 });
