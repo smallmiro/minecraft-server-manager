@@ -85,12 +85,23 @@ export function WorldCard({ world, onAssign, onRelease, onDelete, loading = fals
           />
         </Box>
 
-        {/* Size */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+        {/* Size + dimension chips */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
           <StorageIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
           <Typography variant="body2" color="text.secondary">
             {world.size || 'Unknown size'}
           </Typography>
+          {(world.dimensions?.nether || world.dimensions?.end) && (
+            <>
+              <Chip label="Overworld" size="small" variant="outlined" />
+              {world.dimensions?.nether && (
+                <Chip label="Nether" size="small" variant="outlined" color="warning" />
+              )}
+              {world.dimensions?.end && (
+                <Chip label="End" size="small" variant="outlined" color="secondary" />
+              )}
+            </>
+          )}
         </Box>
 
         {/* Locked By */}

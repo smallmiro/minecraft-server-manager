@@ -16,6 +16,7 @@ vi.mock('@/hooks/useMcctl', () => ({
   useWorlds: vi.fn(),
   useServers: vi.fn(),
   useCreateWorld: vi.fn(),
+  useCreateWorldWithZip: vi.fn(),
   useAssignWorld: vi.fn(),
   useReleaseWorld: vi.fn(),
   useDeleteWorld: vi.fn(),
@@ -25,6 +26,7 @@ import {
   useWorlds,
   useServers,
   useCreateWorld,
+  useCreateWorldWithZip,
   useAssignWorld,
   useReleaseWorld,
   useDeleteWorld,
@@ -100,6 +102,7 @@ const setupMocks = (overrides: { worldsLoading?: boolean; worldsError?: Error } 
   } as any);
 
   vi.mocked(useCreateWorld).mockReturnValue(mockMutation() as any);
+  vi.mocked(useCreateWorldWithZip).mockReturnValue(mockMutation() as any);
   vi.mocked(useAssignWorld).mockReturnValue(mockMutation() as any);
   vi.mocked(useReleaseWorld).mockReturnValue(mockMutation() as any);
   vi.mocked(useDeleteWorld).mockReturnValue(mockMutation() as any);

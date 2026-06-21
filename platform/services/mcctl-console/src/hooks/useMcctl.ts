@@ -277,6 +277,46 @@ export function useReleaseWorld() {
 }
 
 /**
+ * Hook to upload (import) a world from a .zip file.
+ * Uses raw fetch instead of apiFetch because apiFetch forces Content-Type: application/json.
+ */
+export function useCreateWorldWithZip() {
+  const queryClient = useQueryClient();
+
+  return useMutation<CreateWorldResponse, Error & { statusCode?: number; code?: string }, { data: CreateWorldRequest; zipFile: File }>({
+    mutationFn: async ({ data, zipFile }) => {
+      const formData = new FormData();
+      formData.append('worldZip', zipFile);
+
+      const params = new URLSearchParams({ name: data.name });
+      if (data.seed) params.set('seed', data.seed);
+
+      const response = await fetch(`/api/worlds/upload?${params.toString()}`, {
+        method: 'POST',
+        body: formData,
+        // No Content-Type header — browser sets the correct multipart boundary automatically
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          error: 'UnknownError',
+          message: response.statusText,
+        }));
+        const error = new Error(errorData.message) as Error & { statusCode: number; code: string };
+        error.statusCode = response.status;
+        error.code = errorData.error;
+        throw error;
+      }
+
+      return response.json() as Promise<CreateWorldResponse>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['worlds'] });
+    },
+  });
+}
+
+/**
  * Hook to delete a world
  */
 export function useDeleteWorld() {
