@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.24.0 (2026-06-21)
+- **feat(servers)**: Modpack loader/version compatibility comboboxes + validation - resolve compatible `(loader, MC version)` combos via Modrinth and block incompatible ones, fixing the "No files available" error; new `GET /api/mods/:slug/versions` endpoint and `create-server.sh` VERSION-leak fix (#511, #514)
+- **fix(console)**: Localize the Create World dialog to English (#512, #513)
+
 ### v2.23.0 (2026-06-21)
 - **feat(worlds)**: Create World from a ZIP upload with loader-specific guidance and split-dimension grouping (#490, #492)
 - **feat(servers)**: Flexible world selection on Create Server - unmapped world / seed / URL / none with mutually-exclusive validation (#491, #493)

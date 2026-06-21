@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.24.0] - 2026-06-21
+
+### Added
+- **Modpack Loader/Version Compatibility** - The create-server modpack flow now resolves compatible `(loader, Minecraft version)` combinations via Modrinth and blocks incompatible ones, fixing the root cause of the "No files available" error. Adds a `buildModpackCompatibilityMatrix`/`isModpackCompatible` domain utility, a new `GET /api/mods/:slug/versions` endpoint, a `type=modpack` filter on mod search, server-creation compatibility validation (incompatible combos rejected with 400, fail-open on metadata lookup failure), and a `CreateServerDialog` search Autocomplete with loader/version comboboxes (#511, #514)
+
+### Fixed
+- **Create Server VERSION Leak** - `create-server.sh` no longer leaks the `_template` default `VERSION` into MODRINTH modpack servers, which previously produced incompatible combos (#511, #514)
+- **Create World Dialog Localization** - Replace the hardcoded Korean text in the Create World dialog with English (zip guidance, labels, helper text, dropzone, seed) (#512, #513)
+
 ## [2.23.0] - 2026-06-21
 
 > This release also ships features that were merged after v2.22.0 was tagged but had not yet been published (#480–#502), hence the minor version bump.
