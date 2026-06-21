@@ -39,12 +39,11 @@ import {
   type DeleteServerQuery,
 } from '../schemas/server.js';
 import { config } from '../config/index.js';
+import { resolveScriptPath } from '../lib/script-resolver.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { join } from 'path';
-import { existsSync } from 'fs';
 
 const execPromise = promisify(exec);
 
@@ -639,21 +638,24 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       args.push('--no-start');
     }
 
-    // Find create-server.sh script
+    // Resolve create-server.sh: prefer the version-matched script bundled with
+    // mcctl-api, fall back to the deployed platform copy, then the global mcctl CLI.
+    // The deployed copy under <platformPath>/scripts is not refreshed by
+    // 'mcctl update' and can be stale (missing newer options like --memory/--modpack).
     const platformPath = config.platformPath;
-    const scriptPath = join(platformPath, 'scripts', 'create-server.sh');
+    const resolvedScript = resolveScriptPath('create-server.sh', platformPath);
 
-    // Check if script exists, fallback to global mcctl
     let command: string;
     let commandArgs: string[];
-    if (existsSync(scriptPath)) {
+    if (resolvedScript) {
       command = 'bash';
-      commandArgs = [scriptPath, ...args];
+      commandArgs = [resolvedScript.scriptPath, ...args];
     } else {
       // Use mcctl CLI if script not found
       command = 'mcctl';
       commandArgs = ['create', ...args];
     }
+    const scriptsDir = resolvedScript?.scriptsDir;
 
     // SSE streaming mode
     if (follow) {
@@ -678,6 +680,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         env: {
           ...process.env,
           MCCTL_ROOT: platformPath,
+          ...(scriptsDir ? { MCCTL_SCRIPTS: scriptsDir } : {}),
           ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -815,6 +818,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         env: {
           ...process.env,
           MCCTL_ROOT: platformPath,
+          ...(scriptsDir ? { MCCTL_SCRIPTS: scriptsDir } : {}),
           ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
         },
       });
@@ -912,14 +916,15 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         }
       }
 
-      // Find delete-server.sh script
+      // Resolve delete-server.sh: prefer the bundled (version-matched) script,
+      // fall back to the deployed platform copy, then the global mcctl CLI.
       const platformPath = config.platformPath;
-      const scriptPath = join(platformPath, 'scripts', 'delete-server.sh');
+      const resolvedScript = resolveScriptPath('delete-server.sh', platformPath);
 
       // Build command
       let command: string;
-      if (existsSync(scriptPath)) {
-        command = `bash "${scriptPath}" "${name}" --force`;
+      if (resolvedScript) {
+        command = `bash "${resolvedScript.scriptPath}" "${name}" --force`;
       } else {
         // Use mcctl CLI if script not found
         command = `mcctl delete "${name}" --force`;
@@ -931,6 +936,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         env: {
           ...process.env,
           MCCTL_ROOT: platformPath,
+          ...(resolvedScript ? { MCCTL_SCRIPTS: resolvedScript.scriptsDir } : {}),
         },
       });
 
