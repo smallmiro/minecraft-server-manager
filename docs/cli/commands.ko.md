@@ -312,10 +312,16 @@ mcctl update [options]
 
 | 옵션 | 설명 |
 |--------|-------------|
+| `--cli-only` | mcctl CLI 바이너리만 업데이트 (전체 업데이트 opt-out) |
 | `--check` | 업데이트만 확인 (설치하지 않음) |
 | `--yes` | 확인 프롬프트 없이 자동 업데이트 |
 | `--force` | 캐시를 무시하고 강제 버전 확인 |
-| `--all` | CLI 및 설치된 모든 서비스 업데이트 |
+| `--all` | Deprecated 별칭 — 기본 동작과 동일 (하위 호환용) |
+
+!!! note "기본 동작 변경"
+    `mcctl update`는 이제 기본적으로 CLI **와 함께** 설치된 모든 서비스(API, Console, `shared`) 및
+    서버 이미지 태그/Docker 이미지까지 업데이트합니다(기존 `--all` 동작). CLI 바이너리만 업데이트하려면
+    `--cli-only`를 사용하세요.
 
 **예제:**
 
@@ -342,9 +348,9 @@ mcctl update [options]
     You are up to date.
     ```
 
-=== "CLI 업데이트"
+=== "CLI만 업데이트"
     ```bash
-    mcctl update
+    mcctl update --cli-only
     ```
 
     **출력:**
@@ -360,9 +366,9 @@ mcctl update [options]
     ✓ mcctl updated to 2.12.1
     ```
 
-=== "모든 서비스 업데이트"
+=== "전체 업데이트 (기본)"
     ```bash
-    mcctl update --all
+    mcctl update
     ```
 
     **출력:**
@@ -393,9 +399,12 @@ mcctl update [options]
 
 - **업데이트 확인 캐시**: 버전 확인은 `~/.mcctl-update-check.json`에 24시간 동안 캐시됩니다. 일반 CLI 사용 중에는 백그라운드에서 비차단 업데이트 확인이 자동으로 실행됩니다.
 - **`--check` 종료 코드**: 업데이트가 가능하면 종료 코드 `1`, 최신 버전이면 `0`을 반환합니다. 스크립팅에 유용합니다.
-- **`--all` 플래그**: CLI 업데이트 후 설치된 서비스도 업데이트합니다:
+- **기본 동작 (전체 업데이트)**: CLI 업데이트 후 설치된 서비스와 이미지까지 갱신합니다:
     - `mcctl-api` 및 `mcctl-console`: 최신 버전 설치 후 PM2 서비스 재시작
     - `shared` 라이브러리: 최신 버전 설치 (재시작 불필요)
+    - 각 서버 `docker-compose.yml`의 이미지 태그를 권장 Java 태그로 정렬한 뒤 Docker 이미지 pull
+    - CLI가 이미 최신이어도 서비스는 갱신됩니다
+- **`--cli-only` 플래그**: mcctl CLI 바이너리만 업데이트하고 서비스/이미지는 건너뜁니다.
 
 !!! tip "스크립트에서 --check 활용"
     `--check`를 스크립트에서 사용하여 조건부 업데이트를 실행할 수 있습니다:

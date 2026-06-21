@@ -312,10 +312,16 @@ mcctl update [options]
 
 | Option | Description |
 |--------|-------------|
+| `--cli-only` | Update only the mcctl CLI binary (opt out of the full update) |
 | `--check` | Check for updates only (does not install) |
 | `--yes` | Auto-confirm update without prompt |
 | `--force` | Force fresh version check (ignore cache) |
-| `--all` | Update CLI and all installed services |
+| `--all` | Deprecated alias — same as the default (kept for backward compatibility) |
+
+!!! note "Default behavior changed"
+    `mcctl update` now updates the CLI **and** all installed services (API, Console, `shared`) plus
+    server image tags / Docker images by default — the previous `--all` behavior. Use `--cli-only`
+    to update just the CLI binary.
 
 **Examples:**
 
@@ -342,9 +348,9 @@ mcctl update [options]
     You are up to date.
     ```
 
-=== "Update CLI"
+=== "Update CLI Only"
     ```bash
-    mcctl update
+    mcctl update --cli-only
     ```
 
     **Output:**
@@ -360,9 +366,9 @@ mcctl update [options]
     ✓ mcctl updated to 2.12.1
     ```
 
-=== "Update All Services"
+=== "Update Everything (default)"
     ```bash
-    mcctl update --all
+    mcctl update
     ```
 
     **Output:**
@@ -393,9 +399,12 @@ mcctl update [options]
 
 - **Update check cache**: Version checks are cached for 24 hours at `~/.mcctl-update-check.json`. During normal CLI usage, a non-blocking update check runs automatically in the background.
 - **`--check` exit codes**: Returns exit code `1` if an update is available, `0` if up to date. Useful for scripting.
-- **`--all` flag**: After updating the CLI, also updates installed services:
+- **Default (full update)**: After updating the CLI, also updates installed services and refreshes images:
     - `mcctl-api` and `mcctl-console`: Installs latest version and restarts the PM2 service
     - `shared` library: Installs latest version (no restart needed)
+    - Server `docker-compose.yml` image tags aligned to the recommended Java tag, then Docker images pulled
+    - Services are updated even when the CLI is already up to date
+- **`--cli-only` flag**: Updates only the mcctl CLI binary and skips services/images.
 
 !!! tip "Scripting with --check"
     Use `--check` in scripts to conditionally trigger updates:
