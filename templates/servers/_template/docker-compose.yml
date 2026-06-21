@@ -27,7 +27,7 @@ services:
   # Example: mc-template -> mc-ironwood
   # ---------------------------------------------------------------------------
   mc-template:
-    image: itzg/minecraft-server:java21
+    image: itzg/minecraft-server:java25
     container_name: mc-template
     restart: "no"
     tty: true
