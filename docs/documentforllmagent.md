@@ -1971,7 +1971,7 @@ mc-router is a connection multiplexer enabling multiple Minecraft servers to sha
 ```yaml
 services:
   mc-router:
-    image: itzg/mc-router:1.42.0  # Pin to explicit version for reproducible deployments
+    image: itzg/mc-router:1.43.1  # Pin to explicit version for reproducible deployments
     command: --in-docker --auto-scale-up --auto-scale-down
     ports:
       - "25565:25565"
@@ -2063,7 +2063,7 @@ Uses annotations on services.
 ```yaml
 services:
   router:
-    image: itzg/mc-router:1.42.0  # Pin to explicit version for reproducible deployments
+    image: itzg/mc-router:1.43.1  # Pin to explicit version for reproducible deployments
     command: --in-docker --auto-scale-up --auto-scale-down
     ports:
       - "25565:25565"
