@@ -58,7 +58,7 @@ describe('CreateWorldDialog', () => {
     ).toBeInTheDocument();
     // Should NOT show split-folder language by default
     expect(
-      screen.queryByText(/세 폴더를 모두 함께/)
+      screen.queryByText(/all three folders together/i)
     ).not.toBeInTheDocument();
   });
 
@@ -73,7 +73,7 @@ describe('CreateWorldDialog', () => {
     fireEvent.click(paperOption);
 
     await waitFor(() => {
-      expect(screen.getByText(/세 폴더를 모두 함께/i)).toBeInTheDocument();
+      expect(screen.getByText(/all three folders together/i)).toBeInTheDocument();
     });
   });
 
@@ -90,7 +90,7 @@ describe('CreateWorldDialog', () => {
       // Should show base single-folder text
       expect(screen.getByText(/level\.dat/i)).toBeInTheDocument();
       // AND mod split suffix
-      expect(screen.getByText(/모드팩\/설정에 따라/i)).toBeInTheDocument();
+      expect(screen.getByText(/depending on your modpack/i)).toBeInTheDocument();
     });
   });
 
@@ -104,7 +104,7 @@ describe('CreateWorldDialog', () => {
     fireEvent.click(spigotOption);
 
     await waitFor(() => {
-      expect(screen.getByText(/세 폴더를 모두 함께/i)).toBeInTheDocument();
+      expect(screen.getByText(/all three folders together/i)).toBeInTheDocument();
     });
   });
 

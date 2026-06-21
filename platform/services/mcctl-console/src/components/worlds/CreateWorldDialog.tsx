@@ -20,13 +20,13 @@ import type { CreateWorldRequest } from '@/ports/api/IMcctlApiClient';
 // ----------------------------------------------------------------
 
 const SINGLE_FOLDER_BASE =
-  "월드 폴더 하나(예: 'world')를 통째로 압축하세요. 폴더 안에 level.dat 가 있어야 하며, 네더/엔드는 DIM-1 · DIM1 · dimensions 하위 폴더로 자동 포함됩니다. (싱글플레이 월드는 .minecraft/saves/<월드명> 폴더)";
+  "Zip the entire world folder (e.g. 'world'). The folder must contain level.dat; the Nether and End are included automatically via the DIM-1, DIM1, and dimensions sub-folders. (For singleplayer worlds, use the .minecraft/saves/<world-name> folder.)";
 
 const SINGLE_FOLDER_MOD_SUFFIX =
-  "※ 모드팩/설정에 따라 '<월드명>_nether' · '<월드명>_the_end' 로 분할되어 있다면, 세 폴더를 모두 함께 압축하세요.";
+  "Note: Depending on your modpack or server config, the Nether and End may be stored as '<world-name>_nether' and '<world-name>_the_end'. If so, zip all three folders together.";
 
 const SPLIT_FOLDER_TEXT =
-  "월드가 '<월드명>', '<월드명>_nether', '<월드명>_the_end' 세 폴더로 나뉩니다. 세 폴더를 모두 함께 압축하세요. 하나라도 빠지면 해당 차원이 사라집니다.";
+  "The world is split into three folders: '<world-name>', '<world-name>_nether', and '<world-name>_the_end'. Zip all three folders together — omitting any one will cause that dimension to be lost.";
 
 const LOADER_GUIDANCE: Record<string, string> = {
   VANILLA: SINGLE_FOLDER_BASE,
@@ -193,12 +193,12 @@ export function CreateWorldDialog({
             {/* Server type selector (for guidance only) */}
             <TextField
               select
-              label="Server type (압축 안내용)"
+              label="Server type"
               value={loaderType}
               onChange={(e) => setLoaderType(e.target.value)}
               fullWidth
               disabled={loading}
-              helperText="월드 zip 압축 방식을 서버 유형에 맞게 안내합니다"
+              helperText="Shows how to zip your world based on server type"
             >
               {LOADER_OPTIONS.map((opt) => (
                 <MenuItem key={opt} value={opt}>
@@ -215,7 +215,7 @@ export function CreateWorldDialog({
             {/* Zip drop-zone */}
             <Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                월드 .zip 업로드 (선택)
+                Upload world .zip (optional)
               </Typography>
               <Box
                 onDragOver={(e) => {
@@ -247,10 +247,10 @@ export function CreateWorldDialog({
                 ) : (
                   <>
                     <Typography variant="body2" color="text.secondary">
-                      .zip 파일을 드래그하거나 클릭해서 선택하세요
+                      Drag a .zip file here or click to select
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      업로드하면 Seed 필드는 무시됩니다
+                      Uploading will ignore the Seed field
                     </Typography>
                   </>
                 )}
@@ -281,7 +281,7 @@ export function CreateWorldDialog({
                   disabled={loading}
                   onClick={() => setZipFile(null)}
                 >
-                  파일 제거
+                  Remove file
                 </Button>
               )}
             </Box>
