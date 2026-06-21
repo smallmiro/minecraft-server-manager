@@ -55,9 +55,9 @@ services:
   # No MAPPING environment variable needed with --in-docker mode
   # ===========================================================================
   router:
-    # Pinned to v1.42.0 for production stability.
+    # Pinned to v1.43.1 for production stability.
     # Check releases: https://github.com/itzg/mc-router/releases
-    image: itzg/mc-router:1.42.0
+    image: itzg/mc-router:1.43.1
     container_name: mc-router
     restart: unless-stopped
     environment:
