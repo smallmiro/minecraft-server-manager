@@ -491,5 +491,41 @@ MEMORY=4G
 
       expect(response.statusCode).not.toBe(400);
     });
+
+    it('should return 400 when modpack slug contains shell metacharacters', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers',
+        payload: {
+          name: 'mc-inject',
+          type: 'MODRINTH',
+          // Quotes/semicolons must be rejected by schema before reaching the shell.
+          modpack: 'cobblemon"; rm -rf / #',
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should accept a modpack URL form (slug/id/url pattern)', async () => {
+      mockedServerExists.mockReturnValue(false);
+      const adapter = ModSourceFactory.get('modrinth');
+      (adapter.getVersions as any).mockResolvedValue([]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers',
+        payload: {
+          name: 'mc-url',
+          type: 'MODRINTH',
+          modpack: 'https://modrinth.com/modpack/cobblemon',
+        },
+      });
+
+      // URL form passes schema validation; not a 400 from pattern rejection.
+      expect(response.statusCode).not.toBe(400);
+    });
   });
 });
