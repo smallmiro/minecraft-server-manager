@@ -403,6 +403,9 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       // Prompt for server selection
       const server = await this.prompt.promptServerSelection(servers);
 
+      // Remember the server's current world to release its superseded lock later.
+      const previousLevel = await this.getServerLevel(server.name.value);
+
       // Execute assignment
       const spinner = this.prompt.spinner();
       spinner.start('Assigning world...');
@@ -439,6 +442,13 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
           error: levelResult.stderr || 'Failed to update server LEVEL',
         };
       }
+
+      // Release the previous world's lock if this server held it (best-effort).
+      await this.releaseSupersededWorldLock(
+        previousLevel,
+        world.name,
+        server.name.value
+      );
 
       spinner.stop('World assigned');
       this.prompt.success(`World '${world.name}' assigned to '${server.name.value}'`);
@@ -501,6 +511,10 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       };
     }
 
+    // Remember the world this server currently points at, so we can release its
+    // (now-superseded) lock after switching (#489 follow-up).
+    const previousLevel = await this.getServerLevel(serverName);
+
     // Execute assignment (creates the lock)
     const result = await this.shell.worldAssign(worldName, serverName);
     if (!result.success) {
@@ -524,11 +538,51 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       };
     }
 
+    // Release the previous world's lock if this server held it (best-effort —
+    // the assignment itself already succeeded).
+    await this.releaseSupersededWorldLock(previousLevel, worldName, serverName);
+
     return {
       success: true,
       worldName,
       serverName,
     };
+  }
+
+  /**
+   * The world a server currently uses, from its LEVEL (or WORLD_NAME) config.
+   * Returns undefined when neither is set (default world named after the server).
+   */
+  private async getServerLevel(serverName: string): Promise<string | undefined> {
+    const config = await this.serverRepo.getConfig(serverName);
+    return (
+      config?.customEnv?.['LEVEL']?.trim() ||
+      config?.customEnv?.['WORLD_NAME']?.trim() ||
+      undefined
+    );
+  }
+
+  /**
+   * Release the lock on the world a server was previously using, but only if
+   * that world is actually locked by this server (avoids touching another
+   * server's lock). Best-effort: never throws.
+   */
+  private async releaseSupersededWorldLock(
+    previousLevel: string | undefined,
+    newWorldName: string,
+    serverName: string
+  ): Promise<void> {
+    if (!previousLevel || previousLevel === newWorldName) {
+      return;
+    }
+    try {
+      const lock = await this.worldRepo.getLockStatus(previousLevel);
+      if (lock?.serverName === serverName) {
+        await this.shell.worldRelease(previousLevel);
+      }
+    } catch {
+      // Best-effort cleanup; the assignment already succeeded.
+    }
   }
 
   /**
