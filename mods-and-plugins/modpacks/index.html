@@ -1638,6 +1638,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#excluding-client-only-mods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Excluding Client-Only Mods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#complete-example_1" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2776,6 +2787,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#excluding-client-only-mods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Excluding Client-Only Mods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#complete-example_1" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3359,38 +3381,55 @@
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Force synchronize (when iterating on mod compatibility)</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODRINTH_FORCE_SYNCHRONIZE<span class="w"> </span><span class="s2">&quot;true&quot;</span>
 </code></pre></div>
+<h3 id="excluding-client-only-mods">Excluding Client-Only Mods<a class="headerlink" href="#excluding-client-only-mods" title="Permanent link">&para;</a></h3>
+<p>Some modpacks bundle <strong>client-only mods</strong> (HUD/UI mods such as Status Effect Bars)
+that crash a dedicated server with an error like:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>java.lang.BootstrapMethodError: Attempted to load class
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>→ Failed to start the minecraft server
+</code></pre></div>
+<p>This happens when the modpack incorrectly marks a client mod as server-compatible,
+so the image's automatic client-mod filtering does not catch it. Exclude such mods
+by (partial) file name when creating the server:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Exclude one or more client-only mods (comma-separated)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>MODRINTH<span class="w"> </span>--modpack<span class="w"> </span>create-plus<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>--mod-loader<span class="w"> </span>neoforge<span class="w"> </span>--exclude-files<span class="w"> </span>statuseffectbars
+</code></pre></div>
+<p>In the Web Console, use the <strong>Exclude mods</strong> field in the Create Server dialog's
+modpack section. The values are written to <code>MODRINTH_EXCLUDE_FILES</code>
+(or <code>CF_EXCLUDE_MODS</code> for CurseForge) in the server's <code>config.env</code>.</p>
 <h3 id="complete-example_1">Complete Example<a class="headerlink" href="#complete-example_1" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Create and configure Modrinth modpack server</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>cobblemon
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Configure modpack</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>cobblemon<span class="w"> </span>TYPE<span class="w"> </span><span class="s2">&quot;MODRINTH&quot;</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>cobblemon<span class="w"> </span>MODRINTH_MODPACK<span class="w"> </span><span class="s2">&quot;cobblemon-modpack&quot;</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>cobblemon<span class="w"> </span>MODRINTH_MODPACK_VERSION_TYPE<span class="w"> </span><span class="s2">&quot;release&quot;</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>cobblemon<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">&quot;6G&quot;</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>cobblemon<span class="w"> </span>MODRINTH_EXCLUDE_FILES<span class="w"> </span><span class="s2">&quot;optifine,shaders&quot;</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># Start server</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>mcctl<span class="w"> </span>start<span class="w"> </span>cobblemon
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Create and configure Modrinth modpack server</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>cobblemon
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Configure modpack</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>cobblemon<span class="w"> </span>TYPE<span class="w"> </span><span class="s2">&quot;MODRINTH&quot;</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>cobblemon<span class="w"> </span>MODRINTH_MODPACK<span class="w"> </span><span class="s2">&quot;cobblemon-modpack&quot;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>cobblemon<span class="w"> </span>MODRINTH_MODPACK_VERSION_TYPE<span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>cobblemon<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">&quot;6G&quot;</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>cobblemon<span class="w"> </span>MODRINTH_EXCLUDE_FILES<span class="w"> </span><span class="s2">&quot;optifine,shaders&quot;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1"># Start server</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>mcctl<span class="w"> </span>start<span class="w"> </span>cobblemon
 </code></pre></div>
 <hr />
 <h2 id="ftb-modpacks">FTB Modpacks<a class="headerlink" href="#ftb-modpacks" title="Permanent link">&para;</a></h2>
 <p>Install modpacks from <a href="https://www.feed-the-beast.com/modpacks">Feed the Beast</a>.</p>
 <h3 id="quick-start-with-mcctl_3">Quick Start with mcctl<a class="headerlink" href="#quick-start-with-mcctl_3" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Create server</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>ftb
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Set server type (use FTBA, not FTB)</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>ftb<span class="w"> </span>TYPE<span class="w"> </span><span class="s2">&quot;FTBA&quot;</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Set modpack ID (from URL)</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>ftb<span class="w"> </span>FTB_MODPACK_ID<span class="w"> </span><span class="s2">&quot;23&quot;</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># Set memory (FTB packs are large)</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>ftb<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">&quot;8G&quot;</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="c1"># Restart to apply</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>ftb<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>ftb
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Create server</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>ftb
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Set server type (use FTBA, not FTB)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>ftb<span class="w"> </span>TYPE<span class="w"> </span><span class="s2">&quot;FTBA&quot;</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Set modpack ID (from URL)</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>ftb<span class="w"> </span>FTB_MODPACK_ID<span class="w"> </span><span class="s2">&quot;23&quot;</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># Set memory (FTB packs are large)</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>ftb<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">&quot;8G&quot;</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="c1"># Restart to apply</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>ftb<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>ftb
 </code></pre></div>
 <div class="admonition info">
 <p class="admonition-title">FTBA vs FTB</p>
@@ -3428,34 +3467,34 @@
 <li><strong>Manual upgrade</strong>: Update <code>FTB_MODPACK_VERSION_ID</code> and recreate container</li>
 </ul>
 <h3 id="complete-example_2">Complete Example<a class="headerlink" href="#complete-example_2" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Create and configure FTB modpack server</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>infinity
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Configure modpack</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>infinity<span class="w"> </span>TYPE<span class="w"> </span><span class="s2">&quot;FTBA&quot;</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>infinity<span class="w"> </span>FTB_MODPACK_ID<span class="w"> </span><span class="s2">&quot;23&quot;</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>infinity<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">&quot;8G&quot;</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="c1"># Start server</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>mcctl<span class="w"> </span>start<span class="w"> </span>infinity
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Create and configure FTB modpack server</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>infinity
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Configure modpack</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>infinity<span class="w"> </span>TYPE<span class="w"> </span><span class="s2">&quot;FTBA&quot;</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>infinity<span class="w"> </span>FTB_MODPACK_ID<span class="w"> </span><span class="s2">&quot;23&quot;</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>infinity<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">&quot;8G&quot;</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="c1"># Start server</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>mcctl<span class="w"> </span>start<span class="w"> </span>infinity
 </code></pre></div>
 <hr />
 <h2 id="zip-modpacks">ZIP Modpacks<a class="headerlink" href="#zip-modpacks" title="Permanent link">&para;</a></h2>
 <p>Install modpacks from ZIP archives.</p>
 <h3 id="quick-start-with-mcctl_4">Quick Start with mcctl<a class="headerlink" href="#quick-start-with-mcctl_4" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Create server with appropriate type</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>--type<span class="w"> </span>FORGE
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Set modpack URL</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODPACK<span class="w"> </span><span class="s2">&quot;https://example.com/modpack.zip&quot;</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Restart to apply</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Create server with appropriate type</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>--type<span class="w"> </span>FORGE
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Set modpack URL</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODPACK<span class="w"> </span><span class="s2">&quot;https://example.com/modpack.zip&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Restart to apply</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
 </code></pre></div>
 <h3 id="multiple-packs">Multiple Packs<a class="headerlink" href="#multiple-packs" title="Permanent link">&para;</a></h3>
 <p>For multiple packs or additional content:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Set multiple packs (comma-separated)</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>GENERIC_PACKS<span class="w"> </span><span class="s2">&quot;https://example.com/base-pack.zip,https://example.com/addon-pack.zip&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Set multiple packs (comma-separated)</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>GENERIC_PACKS<span class="w"> </span><span class="s2">&quot;https://example.com/base-pack.zip,https://example.com/addon-pack.zip&quot;</span>
 </code></pre></div>
 <h3 id="configuration-reference_4">Configuration Reference<a class="headerlink" href="#configuration-reference_4" title="Permanent link">&para;</a></h3>
 <table>
@@ -3574,43 +3613,43 @@
 </tbody>
 </table>
 <h3 id="check-current-configuration">Check Current Configuration<a class="headerlink" href="#check-current-configuration" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># View all configuration</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># View specific settings</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>TYPE
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>CF_PAGE_URL
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_MODPACK
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># View all configuration</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># View specific settings</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>TYPE
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>CF_PAGE_URL
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_MODPACK
 </code></pre></div>
 <h3 id="view-server-logs">View Server Logs<a class="headerlink" href="#view-server-logs" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Check for modpack loading errors</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Follow logs in real-time</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver<span class="w"> </span>-f
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Check for modpack loading errors</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Follow logs in real-time</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver<span class="w"> </span>-f
 </code></pre></div>
 <h3 id="debug-mode">Debug Mode<a class="headerlink" href="#debug-mode" title="Permanent link">&para;</a></h3>
 <p>Enable debug output to troubleshoot issues:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>DEBUG<span class="w"> </span><span class="s2">&quot;true&quot;</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>DEBUG<span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver
 </code></pre></div>
 <h2 id="advanced-configuration-manual">Advanced Configuration (Manual)<a class="headerlink" href="#advanced-configuration-manual" title="Permanent link">&para;</a></h2>
 <p>For complex configurations, edit <code>config.env</code> directly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>nano<span class="w"> </span>~/minecraft-servers/servers/myserver/config.env
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>nano<span class="w"> </span>~/minecraft-servers/servers/myserver/config.env
 </code></pre></div>
 <p>Example <code>config.env</code> for CurseForge modpack:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nv">TYPE</span><span class="o">=</span>AUTO_CURSEFORGE
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nv">CF_PAGE_URL</span><span class="o">=</span>https://www.curseforge.com/minecraft/modpacks/all-the-mods-8
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="nv">MEMORY</span><span class="o">=</span>8G
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="nv">CF_EXCLUDE_MODS</span><span class="o">=</span>optifine,journeymap
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="nv">CF_PARALLEL_DOWNLOADS</span><span class="o">=</span><span class="m">6</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nv">TYPE</span><span class="o">=</span>AUTO_CURSEFORGE
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nv">CF_PAGE_URL</span><span class="o">=</span>https://www.curseforge.com/minecraft/modpacks/all-the-mods-8
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="nv">MEMORY</span><span class="o">=</span>8G
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="nv">CF_EXCLUDE_MODS</span><span class="o">=</span>optifine,journeymap
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="nv">CF_PARALLEL_DOWNLOADS</span><span class="o">=</span><span class="m">6</span>
 </code></pre></div>
 <p>Example <code>config.env</code> for Modrinth modpack:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nv">TYPE</span><span class="o">=</span>MODRINTH
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nv">MODRINTH_MODPACK</span><span class="o">=</span>cobblemon-modpack
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="nv">MODRINTH_MODPACK_VERSION_TYPE</span><span class="o">=</span>release
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="nv">MEMORY</span><span class="o">=</span>6G
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nv">TYPE</span><span class="o">=</span>MODRINTH
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nv">MODRINTH_MODPACK</span><span class="o">=</span>cobblemon-modpack
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="nv">MODRINTH_MODPACK_VERSION_TYPE</span><span class="o">=</span>release
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="nv">MEMORY</span><span class="o">=</span>6G
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
