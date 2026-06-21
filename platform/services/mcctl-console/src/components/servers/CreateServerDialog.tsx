@@ -33,6 +33,7 @@ import Inventory2Icon from '@mui/icons-material/Inventory2';
 import Autocomplete from '@mui/material/Autocomplete';
 import { useWorlds } from '@/hooks/useMcctl';
 import { useModpackSearch, useModVersions } from '@/hooks/useMods';
+import { useDebounce } from '@/hooks/useDebounce';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 import type { CreateServerStatus } from '@/hooks/useCreateServerSSE';
 
@@ -120,13 +121,19 @@ export function CreateServerDialog({
   );
   const modpackOptions = modpackSearchData?.hits ?? [];
 
+  // Debounce the slug used for the compatibility lookup so we don't fire a
+  // request for every keystroke while the user types/pastes a slug. The lookup
+  // treats its input as an exact slug, so intermediate prefixes (e.g. "c",
+  // "cr", "cre") would otherwise hammer the API with not-found requests.
+  const debouncedModpackSlug = useDebounce(modpackSlug, 400);
+
   // Compatibility matrix for the chosen modpack slug
   const {
     data: matrix,
     isLoading: matrixLoading,
     isError: matrixError,
-  } = useModVersions(modpackSlug, {
-    enabled: category === 'modpack' && modpackSlug.trim().length > 0,
+  } = useModVersions(debouncedModpackSlug, {
+    enabled: category === 'modpack' && debouncedModpackSlug.trim().length > 0,
   });
   const availableLoaders = useMemo(() => matrix?.loaders ?? [], [matrix]);
   const availableGameVersions = useMemo(
@@ -136,6 +143,12 @@ export function CreateServerDialog({
         : [],
     [matrix, selectedLoader]
   );
+  // No resolved matrix yet for a chosen modpack and no error either — covers
+  // both the debounce gap (lookup not started) and the in-flight request.
+  // Treated like "loading" so the form can't be submitted with an unresolved
+  // compatibility matrix, while a failed lookup (404/error) still lets the
+  // backend's secondary validation respond.
+  const matrixUnresolved = !!modpackSlug && !matrix && !matrixError;
 
   // Auto-select the first loader once the matrix resolves.
   useEffect(() => {
@@ -270,8 +283,9 @@ export function CreateServerDialog({
         setErrors({ modpack: slugError });
         return;
       }
-      // Block submission while compatibility data is still loading.
-      if (matrixLoading) {
+      // Block submission while compatibility data is still loading (or a lookup
+      // for the just-typed slug hasn't started yet due to debounce).
+      if (matrixLoading || matrixUnresolved) {
         setErrors({ modpack: 'Loading modpack compatibility — please wait a moment' });
         return;
       }
@@ -348,6 +362,7 @@ export function CreateServerDialog({
     !!modpackSlug &&
     !matrixError &&
     (matrixLoading ||
+      matrixUnresolved ||
       (availableLoaders.length > 0 && (!selectedLoader || !selectedGameVersion)));
 
   return (
@@ -614,7 +629,7 @@ export function CreateServerDialog({
                     />
 
                     {/* Loader + Minecraft version selects (driven by compatibility matrix) */}
-                    {modpackSlug && matrixLoading && (
+                    {modpackSlug && (matrixLoading || matrixUnresolved) && (
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <CircularProgress size={18} />
                         <Typography variant="body2" color="text.secondary">
