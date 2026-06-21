@@ -20,6 +20,7 @@
 #   -w, --world NAME     Use existing world from worlds/ directory (creates symlink)
 #   --modpack SLUG       Modpack slug (required for MODRINTH/AUTO_CURSEFORGE)
 #   --modpack-version VER  Modpack version (optional)
+#   --exclude-files LIST Mods to exclude from modpack, comma-separated (optional)
 #   --mod-loader LOADER  Mod loader: fabric, forge, neoforge, quilt (optional)
 #   -m, --memory SIZE    Memory allocation (e.g., 1G, 2G, 4G)
 #   --no-whitelist       Disable whitelist (whitelist is enabled by default)
@@ -240,6 +241,7 @@ WORLD_NAME=""
 MODPACK_SLUG=""
 MODPACK_VERSION=""
 MOD_LOADER=""
+MODPACK_EXCLUDE_FILES=""
 ENABLE_WHITELIST="true"
 WHITELIST_PLAYERS=""
 START_SERVER="true"
@@ -262,6 +264,7 @@ show_usage() {
     echo "  --modpack SLUG       Modpack slug (required for MODRINTH/AUTO_CURSEFORGE)"
     echo "  --modpack-version VER  Modpack version (optional)"
     echo "  --mod-loader LOADER  Mod loader: fabric, forge, neoforge, quilt (optional)"
+    echo "  --exclude-files LIST Mods to exclude from modpack (comma-separated, e.g. client-only mods)"
     echo "  -m, --memory SIZE    Memory allocation (e.g., 1G, 2G, 4G)"
     echo "  --no-whitelist       Disable whitelist (whitelist is enabled by default)"
     echo "  --whitelist PLAYERS  Initial whitelist players (comma-separated)"
@@ -328,6 +331,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --mod-loader)
             MOD_LOADER="$2"
+            shift 2
+            ;;
+        --exclude-files)
+            MODPACK_EXCLUDE_FILES="$2"
             shift 2
             ;;
         -m|--memory)
@@ -542,6 +549,10 @@ if [ -f "$CONFIG_FILE" ]; then
                 echo "MODRINTH_LOADER=$MOD_LOADER" >> "$CONFIG_FILE"
                 echo "   Mod loader: $MOD_LOADER"
             fi
+            if [ -n "$MODPACK_EXCLUDE_FILES" ]; then
+                echo "MODRINTH_EXCLUDE_FILES=$MODPACK_EXCLUDE_FILES" >> "$CONFIG_FILE"
+                echo "   Excluded mods: $MODPACK_EXCLUDE_FILES"
+            fi
         elif [[ "$SERVER_TYPE" == "AUTO_CURSEFORGE" ]]; then
             echo "CF_SLUG=$MODPACK_SLUG" >> "$CONFIG_FILE"
             echo "   Modpack: $MODPACK_SLUG (CurseForge)"
@@ -552,6 +563,10 @@ if [ -f "$CONFIG_FILE" ]; then
             if [ -n "$MOD_LOADER" ]; then
                 echo "CF_LOADER=$MOD_LOADER" >> "$CONFIG_FILE"
                 echo "   Mod loader: $MOD_LOADER"
+            fi
+            if [ -n "$MODPACK_EXCLUDE_FILES" ]; then
+                echo "CF_EXCLUDE_MODS=$MODPACK_EXCLUDE_FILES" >> "$CONFIG_FILE"
+                echo "   Excluded mods: $MODPACK_EXCLUDE_FILES"
             fi
         fi
     fi
