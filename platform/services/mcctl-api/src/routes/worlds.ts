@@ -1,5 +1,11 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
+import { join, basename } from 'path';
+import { tmpdir } from 'os';
+import { randomUUID } from 'crypto';
+import { createWriteStream } from 'fs';
+import { rm } from 'fs/promises';
+import { pipeline } from 'stream/promises';
 import {
   WorldManagementUseCase,
   ApiPromptAdapter,
@@ -23,11 +29,13 @@ import {
   AssignWorldRequestSchema,
   DeleteWorldQuerySchema,
   ReleaseWorldQuerySchema,
+  UploadWorldQuerySchema,
   type WorldNameParams,
   type CreateWorldRequest,
   type AssignWorldRequest,
   type DeleteWorldQuery,
   type ReleaseWorldQuery,
+  type UploadWorldQuery,
 } from '../schemas/world.js';
 
 // Route generic interfaces for type-safe request handling
@@ -54,6 +62,10 @@ interface DeleteWorldRoute {
   Querystring: DeleteWorldQuery;
 }
 
+interface UploadWorldRoute {
+  Querystring: UploadWorldQuery;
+}
+
 /**
  * Create WorldManagementUseCase instance with API adapters
  */
@@ -78,8 +90,17 @@ function createWorldUseCase(options?: {
 }
 
 /**
+ * Default max upload size for world zip files: 1 GB
+ */
+const WORLD_UPLOAD_MAX_SIZE = Number(process.env['WORLD_UPLOAD_MAX_SIZE']) || 1024 * 1024 * 1024;
+
+/**
  * Worlds routes plugin
  * Provides REST API for Minecraft world management
+ *
+ * Note: @fastify/multipart is registered globally by server-files-routes (via fp()),
+ * so we do NOT re-register it here. The per-request file-size limit for the upload
+ * endpoint is passed directly to request.parts().
  */
 const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   /**
@@ -110,6 +131,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           size: world.size,
           lastModified: world.lastModified?.toISOString(),
           servers: world.servers,
+          dimensions: world.dimensions,
         })),
         total: worlds.length,
       });
@@ -162,6 +184,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           size: world.size,
           lastModified: world.lastModified?.toISOString(),
           servers: world.servers,
+          dimensions: world.dimensions,
         },
       });
     } catch (error) {
@@ -519,6 +542,167 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         error: 'InternalServerError',
         message: 'Failed to delete world',
       });
+    }
+  });
+  /**
+   * POST /api/worlds/upload
+   * Import a world from a zip file upload (multipart/form-data)
+   *
+   * Query parameters:
+   *   - name: world name (required, pattern: ^[a-zA-Z0-9_-]+$)
+   *   - seed: optional seed (ignored by import; stored for reference only)
+   *
+   * The request body must be multipart/form-data containing exactly one .zip file part.
+   */
+  fastify.post<UploadWorldRoute>('/api/worlds/upload', {
+    schema: {
+      tags: ['worlds'],
+      summary: 'Import world from zip',
+      description:
+        'Imports a Minecraft world by uploading a .zip archive (multipart/form-data). ' +
+        'The zip must contain a level.dat file. World name is provided as a query parameter.',
+      consumes: ['multipart/form-data'],
+      querystring: UploadWorldQuerySchema,
+      response: {
+        201: CreateWorldResponseSchema,
+        400: WorldErrorResponseSchema,
+        409: WorldErrorResponseSchema,
+        413: WorldErrorResponseSchema,
+        500: WorldErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<UploadWorldRoute>, reply: FastifyReply) => {
+    const { name } = request.query;
+
+    // 1. Pre-check for duplicate world name
+    try {
+      const checkUseCase = createWorldUseCase({ worldName: name });
+      const existing = (await checkUseCase.listWorlds()).find((w) => w.name === name);
+      if (existing) {
+        return reply.code(409).send({
+          error: 'Conflict',
+          message: `World '${name}' already exists`,
+        });
+      }
+    } catch (error) {
+      fastify.log.error(error, 'Failed to check for duplicate world');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'Failed to check world existence',
+      });
+    }
+
+    // 2. Stream the uploaded zip to a temp file
+    const tempZip = join(tmpdir(), `mcctl-world-upload-${randomUUID()}.zip`);
+    let uploadedFilename = '';
+
+    try {
+      // Pass per-request file-size limit (the global multipart registration uses a
+      // smaller limit for server file uploads; world zips can be up to 1 GB).
+      const parts = request.parts({ limits: { fileSize: WORLD_UPLOAD_MAX_SIZE } });
+      let foundFile = false;
+
+      for await (const part of parts) {
+        if (part.type !== 'file') continue;
+
+        // Check file extension
+        const originalName = part.filename ?? '';
+        if (!originalName.toLowerCase().endsWith('.zip')) {
+          // Drain the stream to avoid backpressure issues
+          part.file.resume();
+          // Drain remaining parts
+          for await (const _remaining of parts) { /* consume */ }
+          return reply.code(400).send({
+            error: 'BadRequest',
+            message: 'Only .zip files are accepted',
+          });
+        }
+
+        uploadedFilename = basename(originalName);
+        foundFile = true;
+
+        // Stream to temp file
+        await pipeline(part.file, createWriteStream(tempZip));
+
+        if (part.file.truncated) {
+          await rm(tempZip, { force: true });
+          return reply.code(413).send({
+            error: 'PayloadTooLarge',
+            message: `Uploaded file exceeds the ${WORLD_UPLOAD_MAX_SIZE / 1024 / 1024}MB size limit`,
+          });
+        }
+
+        // Only process the first file part
+        break;
+      }
+
+      if (!foundFile) {
+        return reply.code(400).send({
+          error: 'BadRequest',
+          message: 'A .zip file is required (no file part found in the request)',
+        });
+      }
+    } catch (error) {
+      await rm(tempZip, { force: true });
+      fastify.log.error(error, 'Failed to receive uploaded zip');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'Failed to receive uploaded file',
+      });
+    }
+
+    // 3. Import the world from the temp zip
+    try {
+      const useCase = createWorldUseCase({ worldName: name });
+      const result = await useCase.importWorldFromZip({ zipPath: tempZip, worldName: name });
+
+      if (!result.success) {
+        await writeAuditLog({
+          action: AuditActionEnum.WORLD_CREATE,
+          actor: 'api:console',
+          targetType: 'world',
+          targetName: name,
+          details: { source: 'upload', filename: uploadedFilename },
+          status: 'failure',
+          errorMessage: result.error ?? 'Import failed',
+        });
+        return reply.code(400).send({
+          error: 'BadRequest',
+          message: result.error ?? 'Failed to import world from zip',
+        });
+      }
+
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_CREATE,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: result.worldName,
+        details: { source: 'upload', filename: uploadedFilename },
+        status: 'success',
+      });
+
+      return reply.code(201).send({
+        success: true,
+        worldName: result.worldName,
+      });
+    } catch (error) {
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_CREATE,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: name,
+        details: { source: 'upload', filename: uploadedFilename },
+        status: 'failure',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
+      fastify.log.error(error, 'Failed to import world from zip');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'Failed to import world',
+      });
+    } finally {
+      // Always clean up temp zip
+      await rm(tempZip, { force: true });
     }
   });
 };
