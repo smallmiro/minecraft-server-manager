@@ -14,6 +14,7 @@ export const WorldSummarySchema = Type.Object({
   lockedBy: Type.Optional(Type.String()),
   size: Type.String(),
   lastModified: Type.Optional(Type.String({ format: 'date-time' })),
+  servers: Type.Array(Type.String()),
 });
 
 /**
@@ -26,6 +27,7 @@ export const WorldDetailSchema = Type.Object({
   lockedBy: Type.Optional(Type.String()),
   size: Type.String(),
   lastModified: Type.Optional(Type.String({ format: 'date-time' })),
+  servers: Type.Array(Type.String()),
 });
 
 // ========================================

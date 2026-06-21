@@ -260,6 +260,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
    */
   async listWorlds(): Promise<WorldListResult[]> {
     const worlds = await this.worldRepo.findAll();
+    const serversByWorld = await this.getServersByWorld();
 
     return worlds.map((world) => ({
       name: world.name,
@@ -268,7 +269,36 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       lockedBy: world.lockedBy,
       size: world.sizeFormatted,
       lastModified: world.lastModified,
+      servers: serversByWorld.get(world.name) ?? [],
     }));
+  }
+
+  /**
+   * Build a reverse map of world name -> server names that use it.
+   *
+   * A server's world directory is its LEVEL config value (or the WORLD_NAME
+   * alias); when neither is set the server owns worlds/<server-name>, so it
+   * defaults to the server name. This mirrors the world-name precedence used
+   * for detailed server info (LEVEL > WORLD_NAME > server name).
+   */
+  private async getServersByWorld(): Promise<Map<string, string[]>> {
+    const names = await this.serverRepo.listNames();
+    const map = new Map<string, string[]>();
+
+    for (const name of names) {
+      const config = await this.serverRepo.getConfig(name);
+      if (!config) continue;
+
+      const level =
+        config.customEnv?.['LEVEL']?.trim() ||
+        config.customEnv?.['WORLD_NAME']?.trim() ||
+        name;
+      const servers = map.get(level) ?? [];
+      servers.push(name);
+      map.set(level, servers);
+    }
+
+    return map;
   }
 
   /**
