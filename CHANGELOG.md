@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.23.0] - 2026-06-21
+
+> This release also ships features that were merged after v2.22.0 was tagged but had not yet been published (#480–#502), hence the minor version bump.
+
+### Added
+- **Create World from ZIP** - Import a world from a ZIP upload with loader-specific guidance; auto-detect flat/wrapper/split layouts and group split-dimension worlds (`_nether`/`_the_end`) under their parent for unified management (#490, #492)
+- **Flexible World Selection on Create Server** - Choose an unmapped existing world, a seed, a world URL, or no world when creating a server, with mutually-exclusive validation (400/409 instead of opaque 500s) (#491, #493)
+- **Per-World Server Usage** - Worlds now expose the list of servers using them (reverse LEVEL mapping) across shared, API, and console (#487, #488)
+
+### Fixed
+- **World Lock on Reassign** - Release a superseded world lock when a world is reassigned (#501, #502)
+- **World Assign LEVEL** - World assign now updates the server's LEVEL config (#489, #496)
+- **ServerDetail Tab & Players BFF** - Repair the stale ServerDetail tab and fix players BFF tests (#499, #500)
+- **Whitelist Fallback** - Serve the whitelist from file when the container is absent or RCON returns empty (#485, #486)
+- **Version-Matched Scripts** - Run version-matched create/delete scripts instead of a stale deployed copy (#483, #484)
+- **PWA Safe Area** - Apply `safe-area-inset-top` so the PWA AppBar clears the status bar (#480, #481)
+
+### Changed
+- **itzg Image Pins** - Update `itzg/mc-router` from `1.42.0` to `1.43.1`, pin two previously unpinned `mc-router` templates, and unify the server `_template` `itzg/minecraft-server` tag from `java21` to `java25` for consistency (#503, #504)
+
+### Maintenance
+- **CLI ESLint Config** - Restore the missing ESLint configuration in the `cli` package and clean up lint violations (#505, #506)
+- **shared/api ESLint** - Add ESLint configs to restore `pnpm lint` (#498)
+- **Test Suite** - Green the mcctl-api test suite and fix a ConfigSnapshot type error (#494, #482, #495)
+- **Agent Workflow** - Tidy `/plan-work` workflow docs and gitignore artifacts (#497)
+
+### Documentation
+- **itzg Version References** - Sync manuals and references for the itzg image changes above (#507, #508)
+
 ## [2.22.0] - 2026-05-30
 
 ### Added

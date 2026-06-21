@@ -77,6 +77,15 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.23.0 (2026-06-21)
+- **feat(worlds)**: Create World from a ZIP upload with loader-specific guidance and split-dimension grouping (#490, #492)
+- **feat(servers)**: Flexible world selection on Create Server - unmapped world / seed / URL / none with mutually-exclusive validation (#491, #493)
+- **feat(worlds)**: Show the list of servers using each world (#487, #488)
+- **fix(worlds)**: Release superseded world lock on reassign; world assign updates server LEVEL (#501, #502, #489, #496)
+- **chore(docker)**: Bump `itzg/mc-router` to `1.43.1`, pin previously unpinned mc-router templates, unify server `_template` image tag to `java25` (#503, #504)
+- **chore(cli)**: Restore missing ESLint config in the CLI package and clean up lint violations (#505, #506)
+- **docs**: Sync manuals/references for the itzg image changes (#507, #508)
+
 ### v2.22.0 (2026-05-30)
 - **feat(console)**: Make the web console an installable standalone PWA - iOS home-screen shortcuts open without Safari chrome (✕/URL bar); adds manifest, `appleWebApp` meta, viewport, Creeper apple-touch-icon (#478, #479)
 
