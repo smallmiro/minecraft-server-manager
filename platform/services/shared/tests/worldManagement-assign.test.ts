@@ -16,30 +16,45 @@ import type {
 function makeUseCase(overrides: {
   worldAssign?: ReturnType<typeof vi.fn>;
   setServerConfig?: ReturnType<typeof vi.fn>;
+  worldRelease?: ReturnType<typeof vi.fn>;
   isLocked?: boolean;
   worldExists?: boolean;
   serverExists?: boolean;
+  previousLevel?: string; // the server's current LEVEL before reassigning
+  previousLock?: { serverName: string } | null; // lock on the previous world
 }) {
   const worldAssign =
     overrides.worldAssign ?? vi.fn().mockResolvedValue({ success: true });
   const setServerConfig =
     overrides.setServerConfig ?? vi.fn().mockResolvedValue({ success: true });
+  const worldRelease =
+    overrides.worldRelease ?? vi.fn().mockResolvedValue({ success: true });
 
-  const shell = { worldAssign, setServerConfig } as unknown as IShellPort;
+  const shell = { worldAssign, setServerConfig, worldRelease } as unknown as IShellPort;
   const worldRepo = {
     findByName: vi.fn().mockResolvedValue(
       overrides.worldExists === false
         ? null
         : { name: 'new-world', isLocked: overrides.isLocked ?? false, lockedBy: undefined }
     ),
+    getLockStatus: vi
+      .fn()
+      .mockResolvedValue(overrides.previousLock === undefined ? null : overrides.previousLock),
   } as unknown as IWorldRepository;
   const serverRepo = {
     exists: vi.fn().mockResolvedValue(overrides.serverExists ?? true),
+    getConfig: vi
+      .fn()
+      .mockResolvedValue(
+        overrides.previousLevel
+          ? { customEnv: { LEVEL: overrides.previousLevel } }
+          : { customEnv: {} }
+      ),
   } as unknown as IServerRepository;
   const prompt = {} as IPromptPort;
 
   const useCase = new WorldManagementUseCase(prompt, shell, worldRepo, serverRepo);
-  return { useCase, worldAssign, setServerConfig };
+  return { useCase, worldAssign, setServerConfig, worldRelease };
 }
 
 describe('WorldManagementUseCase.assignWorldByName - LEVEL sync (#489)', () => {
@@ -84,5 +99,63 @@ describe('WorldManagementUseCase.assignWorldByName - LEVEL sync (#489)', () => {
     expect(result.success).toBe(false);
     expect(worldAssign).not.toHaveBeenCalled();
     expect(setServerConfig).not.toHaveBeenCalled();
+  });
+});
+
+describe('WorldManagementUseCase.assignWorldByName - superseded lock release (#489 follow-up)', () => {
+  test('releases the previous world lock when this server held it', async () => {
+    const { useCase, worldRelease } = makeUseCase({
+      previousLevel: 'old-world',
+      previousLock: { serverName: 'srv' },
+    });
+
+    const result = await useCase.assignWorldByName('new-world', 'srv');
+
+    expect(result.success).toBe(true);
+    expect(worldRelease).toHaveBeenCalledWith('old-world');
+  });
+
+  test('does not release a previous world locked by another server', async () => {
+    const { useCase, worldRelease } = makeUseCase({
+      previousLevel: 'old-world',
+      previousLock: { serverName: 'other-srv' },
+    });
+
+    const result = await useCase.assignWorldByName('new-world', 'srv');
+
+    expect(result.success).toBe(true);
+    expect(worldRelease).not.toHaveBeenCalled();
+  });
+
+  test('does not release when reassigning the same world', async () => {
+    const { useCase, worldRelease } = makeUseCase({
+      previousLevel: 'new-world',
+      previousLock: { serverName: 'srv' },
+    });
+
+    await useCase.assignWorldByName('new-world', 'srv');
+
+    expect(worldRelease).not.toHaveBeenCalled();
+  });
+
+  test('does not release when the server has no previous LEVEL', async () => {
+    const { useCase, worldRelease } = makeUseCase({});
+
+    await useCase.assignWorldByName('new-world', 'srv');
+
+    expect(worldRelease).not.toHaveBeenCalled();
+  });
+
+  test('assignment still succeeds even if releasing the old lock throws', async () => {
+    const worldRelease = vi.fn().mockRejectedValue(new Error('release boom'));
+    const { useCase } = makeUseCase({
+      worldRelease,
+      previousLevel: 'old-world',
+      previousLock: { serverName: 'srv' },
+    });
+
+    const result = await useCase.assignWorldByName('new-world', 'srv');
+
+    expect(result.success).toBe(true);
   });
 });
