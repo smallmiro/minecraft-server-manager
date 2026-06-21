@@ -20,8 +20,19 @@ vi.mock('@/hooks/useServerLogs', () => ({
 vi.mock('@/hooks/useMods', () => ({
   useServerMods: () => ({ data: { mods: {} }, isLoading: false, error: null }),
   useModSearch: () => ({ data: null, isLoading: false }),
+  useModProjects: () => ({ data: null, isLoading: false }),
   useAddMod: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useRemoveMod: () => ({ mutateAsync: vi.fn() }),
+}));
+
+// Files/Backups tabs are implemented components with their own data hooks;
+// stub them so this tab-navigation test stays focused on switching.
+vi.mock('./files/ServerFilesTab', () => ({
+  ServerFilesTab: () => <div>Files Tab Content</div>,
+}));
+
+vi.mock('./ServerBackupTab', () => ({
+  ServerBackupTab: () => <div>Backup Tab Content</div>,
 }));
 
 const renderWithTheme = (component: React.ReactNode) => {
@@ -111,7 +122,7 @@ describe('ServerDetail', () => {
     const filesTab = screen.getByRole('button', { name: /files/i });
     fireEvent.click(filesTab);
 
-    expect(screen.getByText(/file browser coming soon/i)).toBeInTheDocument();
+    expect(screen.getByText('Files Tab Content')).toBeInTheDocument();
   });
 
   it('should switch to backups tab', () => {
@@ -120,7 +131,7 @@ describe('ServerDetail', () => {
     const backupsTab = screen.getByRole('button', { name: /backups/i });
     fireEvent.click(backupsTab);
 
-    expect(screen.getByText(/backup management coming soon/i)).toBeInTheDocument();
+    expect(screen.getByText('Backup Tab Content')).toBeInTheDocument();
   });
 
   it('should switch to options tab', () => {
