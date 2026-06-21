@@ -20,13 +20,13 @@ import type { CreateWorldRequest } from '@/ports/api/IMcctlApiClient';
 // ----------------------------------------------------------------
 
 const SINGLE_FOLDER_BASE =
-  '월드 폴더 하나(예: `world/`)를 통째로 압축하세요. 폴더 안에 `level.dat`가 있어야 하며, 네더/엔드는 `DIM-1`·`DIM1`·`dimensions/` 하위 폴더로 자동 포함됩니다. (싱글플레이 월드는 `.minecraft/saves/<월드명>/` 폴더)';
+  "월드 폴더 하나(예: 'world')를 통째로 압축하세요. 폴더 안에 level.dat 가 있어야 하며, 네더/엔드는 DIM-1 · DIM1 · dimensions 하위 폴더로 자동 포함됩니다. (싱글플레이 월드는 .minecraft/saves/<월드명> 폴더)";
 
 const SINGLE_FOLDER_MOD_SUFFIX =
-  '※ 모드팩/설정에 따라 `<월드명>_nether`·`<월드명>_the_end`로 분할되어 있다면, 세 폴더를 모두 함께 압축하세요.';
+  "※ 모드팩/설정에 따라 '<월드명>_nether' · '<월드명>_the_end' 로 분할되어 있다면, 세 폴더를 모두 함께 압축하세요.";
 
 const SPLIT_FOLDER_TEXT =
-  '월드가 `<월드명>/`, `<월드명>_nether/`, `<월드명>_the_end/` 세 폴더로 나뉩니다. **세 폴더를 모두 함께** 압축하세요. 하나라도 빠지면 해당 차원이 사라집니다.';
+  "월드가 '<월드명>', '<월드명>_nether', '<월드명>_the_end' 세 폴더로 나뉩니다. 세 폴더를 모두 함께 압축하세요. 하나라도 빠지면 해당 차원이 사라집니다.";
 
 const LOADER_GUIDANCE: Record<string, string> = {
   VANILLA: SINGLE_FOLDER_BASE,
