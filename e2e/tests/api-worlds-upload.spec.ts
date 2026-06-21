@@ -140,12 +140,15 @@ test.describe('POST /api/worlds/upload - Import World from Zip', () => {
       },
     });
 
-    // 400 when stack is running, any non-2xx otherwise (e.g. 404/503 when offline)
     if (response.status() >= 200 && response.status() < 300) {
-      // Unexpected success — the server accepted a nameless upload; warn but don't fail
-      console.warn('[warn] server accepted upload without ?name — endpoint may have changed');
-    } else {
+      // The server accepted a nameless upload — that's a real bug; fail loudly.
       expect(response.status()).toBe(400);
+    } else if (response.status() === 400) {
+      const body = await response.json();
+      expect(body.error).toBe('BadRequest');
+    } else {
+      // Offline / auth-gated (e.g. 401/connection error) — skip gracefully
+      console.log(`[skip] missing-name validation: server returned ${response.status()}`);
     }
   });
 
@@ -166,12 +169,14 @@ test.describe('POST /api/worlds/upload - Import World from Zip', () => {
       }
     );
 
-    if (response.status() === 400) {
+    if (response.status() >= 200 && response.status() < 300) {
+      // The server accepted a non-zip upload — that's a real bug; fail loudly.
+      expect(response.status()).toBe(400);
+    } else if (response.status() === 400) {
       const body = await response.json();
-      // Should be an error response
-      expect(body.success ?? false).toBeFalsy();
+      expect(body.error).toBe('BadRequest');
     } else {
-      // Stack not running or endpoint not available — skip gracefully
+      // Offline / auth-gated — skip gracefully
       console.log(`[skip] non-zip validation: server returned ${response.status()}`);
     }
   });
