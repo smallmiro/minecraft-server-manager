@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.20.3
-> **Last Updated**: 2026-05-03
+> **Version**: 2.22.0
+> **Last Updated**: 2026-06-21
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -2830,6 +2830,16 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.22.0 (2026-06-21) - itzg Image Refresh
+
+**Changed:**
+- **mc-router Image Pin** - Bump `itzg/mc-router` pin from `1.42.0` to `1.43.1` in `platform/docker-compose.yml` and pin the two previously-unpinned mc-router compose templates to `1.43.1` (#503, #504)
+- **Server Template Java Tag** - Align the `_template` `itzg/minecraft-server` image tag from `java21` to `java25`, matching the McVersion LATEST default and the bundled CLI templates (#503, #504)
+
+**Notes:**
+- mc-router `1.43.1` introduces event-based Docker polling (faster auto-scale reactions), timezone (`TZ`) support, and a `--log-level` option. There are no breaking changes versus `1.42.0`, and the label-based `--in-docker` auto-scale workflow used here requires no configuration changes.
+- The platform maps a Minecraft version to a Java image tag rather than pinning to a date-based image tag (see `McVersion`): MC 26+/LATEST → `java25`, 1.21+ → `java21`, 1.18-1.20.x → `java17`.
 
 ### Version 2.20.3 (2026-05-03) - mc-router Stability
 
