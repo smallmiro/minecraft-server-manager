@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.25.0] - 2026-06-21
+
+### Added
+- **Exclude client-only mods from modpacks** - Some modpacks bundle client-only mods (HUD/UI mods such as Status Effect Bars) that crash a dedicated server with an `invalid dist DEDICATED_SERVER` error. You can now exclude such mods by (partial) file name when creating a modpack server — use the new `--exclude-files` flag on `mcctl create`, or the **Exclude mods** field in the Create Server dialog. The values map to `MODRINTH_EXCLUDE_FILES` / `CF_EXCLUDE_MODS` in the server config (#515, #518)
+- **Richer modpack search results** - The modpack search dropdown in the Create Server dialog now shows each modpack's icon, description, download count, and author, making it much easier to pick the right pack (#516, #517)
+
 ## [2.24.0] - 2026-06-21
 
 ### Added

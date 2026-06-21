@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.25.0 (2026-06-21)
+- **feat(modpack)**: Exclude client-only mods from modpacks via `--exclude-files` (CLI) or the Exclude mods field (console) — prevents `invalid dist DEDICATED_SERVER` crashes; maps to `MODRINTH_EXCLUDE_FILES` / `CF_EXCLUDE_MODS` (#515, #518)
+- **feat(console)**: Richer modpack search results showing icon, description, downloads, and author (#516, #517)
+
 ### v2.24.0 (2026-06-21)
 - **feat(servers)**: Modpack loader/version compatibility comboboxes + validation - resolve compatible `(loader, MC version)` combos via Modrinth and block incompatible ones, fixing the "No files available" error; new `GET /api/mods/:slug/versions` endpoint and `create-server.sh` VERSION-leak fix (#511, #514)
 - **fix(console)**: Localize the Create World dialog to English (#512, #513)
