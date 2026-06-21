@@ -20,3 +20,13 @@ export type { ModVersion } from './ModVersion.js';
 export type { ModFile, ModFileHashes } from './ModFile.js';
 export type { ModDependency } from './ModDependency.js';
 export type { ModSearchResult } from './ModSearchResult.js';
+
+// Compatibility matrix utilities
+export {
+  buildModpackCompatibilityMatrix,
+  isModpackCompatible,
+} from './modpackCompatibility.js';
+export type {
+  ModpackCompatibilityMatrix,
+  LoaderCompatibility,
+} from './modpackCompatibility.js';

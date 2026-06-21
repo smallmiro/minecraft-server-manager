@@ -1,6 +1,11 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { serverExists, AuditActionEnum, ModSourceFactory } from '@minecraft-docker/shared';
+import {
+  serverExists,
+  AuditActionEnum,
+  ModSourceFactory,
+  buildModpackCompatibilityMatrix,
+} from '@minecraft-docker/shared';
 import '@minecraft-docker/mod-source-modrinth';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import { createModConfigService } from '../../services/ModConfigService.js';
@@ -25,11 +30,16 @@ interface RemoveModRoute {
 }
 
 interface SearchModsRoute {
-  Querystring: { q: string; limit?: number; offset?: number };
+  Querystring: { q: string; limit?: number; offset?: number; type?: string };
 }
 
 interface GetProjectsRoute {
   Querystring: { slugs: string; source?: string };
+}
+
+interface ModVersionsRoute {
+  Params: { slug: string };
+  Querystring: { source?: string };
 }
 
 // ============================================================
@@ -283,7 +293,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       },
     },
   }, async (request: FastifyRequest<SearchModsRoute>, reply: FastifyReply) => {
-    const { q, limit, offset } = request.query;
+    const { q, limit, offset, type } = request.query;
 
     try {
       if (!q || !q.trim()) {
@@ -294,12 +304,57 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const result = await source.search(q, {
         limit: limit != null ? Number(limit) : 10,
         offset: offset != null ? Number(offset) : 0,
+        // Restrict to modpacks when requested (used by Create Server autocomplete)
+        ...(type === 'modpack' ? { projectType: 'modpack' as const } : {}),
       });
 
       return reply.send(result);
     } catch (error) {
       fastify.log.error(error, 'Failed to search mods');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to search mods' });
+    }
+  });
+
+  /**
+   * GET /api/mods/:slug/versions
+   * Return a loader -> game-version compatibility matrix for a modpack/mod.
+   * Used by the Create Server dialog to offer only valid (loader, MC version)
+   * combinations and prevent the "No files available" failure.
+   */
+  fastify.get<ModVersionsRoute>('/api/mods/:slug/versions', {
+    schema: {
+      description: 'Get loader/Minecraft-version compatibility matrix for a modpack',
+      tags: ['mods'],
+      response: {
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<ModVersionsRoute>, reply: FastifyReply) => {
+    const { slug } = request.params;
+    const { source: sourceName } = request.query;
+
+    try {
+      if (!slug || !slug.trim()) {
+        return reply.code(400).send({ error: 'BadRequest', message: 'Path parameter "slug" is required' });
+      }
+
+      const source = ModSourceFactory.get(sourceName || 'modrinth');
+      const versions = await source.getVersions(slug);
+
+      if (!versions || versions.length === 0) {
+        return reply.code(404).send({
+          error: 'NotFound',
+          message: `No versions found for modpack '${slug}'`,
+        });
+      }
+
+      const matrix = buildModpackCompatibilityMatrix(versions);
+
+      return reply.send({ slug, ...matrix });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to get mod versions');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get mod versions' });
     }
   });
 };

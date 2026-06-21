@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Dialog from '@mui/material/Dialog';
@@ -27,7 +27,9 @@ import Collapse from '@mui/material/Collapse';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import Autocomplete from '@mui/material/Autocomplete';
 import { useWorlds } from '@/hooks/useMcctl';
+import { useModpackSearch, useModVersions } from '@/hooks/useMods';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 import type { CreateServerStatus } from '@/hooks/useCreateServerSSE';
 
@@ -42,8 +44,6 @@ interface CreateServerDialogProps {
 }
 
 const STANDARD_SERVER_TYPES = ['VANILLA', 'PAPER', 'FABRIC', 'FORGE', 'NEOFORGE'];
-const MODPACK_PLATFORMS = ['MODRINTH'];
-const MOD_LOADERS = ['', 'forge', 'fabric', 'neoforge', 'quilt'];
 
 type ServerCategory = 'standard' | 'modpack';
 
@@ -54,17 +54,6 @@ const DEFAULT_FORM_VALUES: CreateServerRequest = {
   memory: '4G',
   autoStart: false,
   sudoPassword: '',
-};
-
-const DEFAULT_MODPACK_VALUES: CreateServerRequest = {
-  name: '',
-  type: 'MODRINTH',
-  memory: '6G',
-  autoStart: false,
-  sudoPassword: '',
-  modpack: '',
-  modpackVersion: '',
-  modLoader: '',
 };
 
 const PROGRESS_STEPS = [
@@ -93,6 +82,12 @@ export function CreateServerDialog({
   const [worldMode, setWorldMode] = useState<'none' | 'seed' | 'existingWorld'>('none');
   const [selectedWorldName, setSelectedWorldName] = useState('');
 
+  // Modpack selection state
+  const [modpackSlug, setModpackSlug] = useState('');
+  const [modpackSearchInput, setModpackSearchInput] = useState('');
+  const [selectedLoader, setSelectedLoader] = useState('');
+  const [selectedGameVersion, setSelectedGameVersion] = useState('');
+
   // Refs for accessibility
   const firstModpackFieldRef = useRef<HTMLInputElement>(null);
   const liveRegionRef = useRef<HTMLDivElement>(null);
@@ -107,6 +102,44 @@ export function CreateServerDialog({
     (w) => (!w.servers || w.servers.length === 0) && !w.isLocked
   );
 
+  // Modpack search autocomplete (only when in modpack mode)
+  const { data: modpackSearchData, isLoading: modpackSearchLoading } = useModpackSearch(
+    modpackSearchInput,
+    { enabled: category === 'modpack' && modpackSearchInput.trim().length >= 2 }
+  );
+  const modpackOptions = modpackSearchData?.hits ?? [];
+
+  // Compatibility matrix for the chosen modpack slug
+  const {
+    data: matrix,
+    isLoading: matrixLoading,
+    isError: matrixError,
+  } = useModVersions(modpackSlug, {
+    enabled: category === 'modpack' && modpackSlug.trim().length > 0,
+  });
+  const availableLoaders = useMemo(() => matrix?.loaders ?? [], [matrix]);
+  const availableGameVersions = useMemo(
+    () =>
+      selectedLoader && matrix?.byLoader[selectedLoader]
+        ? matrix.byLoader[selectedLoader].gameVersions
+        : [],
+    [matrix, selectedLoader]
+  );
+
+  // Auto-select the first loader once the matrix resolves.
+  useEffect(() => {
+    if (availableLoaders.length > 0 && !availableLoaders.includes(selectedLoader)) {
+      setSelectedLoader(availableLoaders[0]);
+    }
+  }, [availableLoaders, selectedLoader]);
+
+  // Auto-select the newest compatible Minecraft version when loader/matrix changes.
+  useEffect(() => {
+    if (availableGameVersions.length > 0 && !availableGameVersions.includes(selectedGameVersion)) {
+      setSelectedGameVersion(availableGameVersions[0]);
+    }
+  }, [availableGameVersions, selectedGameVersion]);
+
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
@@ -116,6 +149,10 @@ export function CreateServerDialog({
       setMemoryTouched(false);
       setWorldMode('none');
       setSelectedWorldName('');
+      setModpackSlug('');
+      setModpackSearchInput('');
+      setSelectedLoader('');
+      setSelectedGameVersion('');
     }
   }, [open]);
 
@@ -131,7 +168,7 @@ export function CreateServerDialog({
 
   const validateModpackSlug = (slug: string): string | null => {
     if (!slug) {
-      return 'Modpack slug is required';
+      return 'Modpack is required';
     }
     return null;
   };
@@ -214,12 +251,28 @@ export function CreateServerDialog({
       return;
     }
 
-    // Validate modpack slug if in modpack mode
+    // Validate modpack selection if in modpack mode
     if (category === 'modpack') {
-      const slugError = validateModpackSlug(formData.modpack || '');
+      const slugError = validateModpackSlug(modpackSlug);
       if (slugError) {
         setErrors({ modpack: slugError });
         return;
+      }
+      // Block submission while compatibility data is still loading.
+      if (matrixLoading) {
+        setErrors({ modpack: 'Loading modpack compatibility — please wait a moment' });
+        return;
+      }
+      // Once a matrix is available, require a compatible loader + version.
+      if (matrix && availableLoaders.length > 0) {
+        if (!selectedLoader) {
+          setErrors({ modpack: 'Please select a mod loader' });
+          return;
+        }
+        if (!selectedGameVersion) {
+          setErrors({ modpack: 'Please select a Minecraft version' });
+          return;
+        }
       }
     }
 
@@ -236,14 +289,19 @@ export function CreateServerDialog({
       submitData.type = formData.type;
       submitData.version = formData.version;
     } else {
-      // Modpack: include modpack fields
+      // Modpack: include modpack fields with a validated (loader, version) pair.
       submitData.type = 'MODRINTH';
-      submitData.modpack = formData.modpack;
-      if (formData.modpackVersion) {
-        submitData.modpackVersion = formData.modpackVersion;
+      submitData.modpack = modpackSlug;
+      if (selectedLoader) {
+        submitData.modLoader = selectedLoader;
       }
-      if (formData.modLoader) {
-        submitData.modLoader = formData.modLoader;
+      if (selectedGameVersion) {
+        submitData.version = selectedGameVersion;
+        // Use the modpack release recommended for this (loader, version) pair.
+        const recommended = matrix?.byLoader[selectedLoader]?.recommended[selectedGameVersion];
+        if (recommended) {
+          submitData.modpackVersion = recommended;
+        }
       }
     }
 
@@ -261,6 +319,16 @@ export function CreateServerDialog({
     // Submit
     onSubmit(submitData);
   };
+
+  // In modpack mode, Create stays disabled until a modpack is chosen and its
+  // compatible loader + Minecraft version are resolved (or the matrix failed,
+  // in which case we let the backend's secondary validation respond).
+  const modpackSelectionIncomplete =
+    category === 'modpack' &&
+    !!modpackSlug &&
+    !matrixError &&
+    (matrixLoading ||
+      (availableLoaders.length > 0 && (!selectedLoader || !selectedGameVersion)));
 
   return (
     <Dialog open={open} onClose={isCreating ? undefined : onClose} maxWidth="sm" fullWidth fullScreen={isSmallScreen}>
@@ -406,47 +474,120 @@ export function CreateServerDialog({
                 <Collapse in={category === 'modpack'} unmountOnExit>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
                     <Alert severity="info">
-                      Minecraft version is automatically determined by the modpack
+                      Select a modpack, then a loader and a compatible Minecraft version.
                     </Alert>
 
-                    <TextField
-                      label="Modpack Slug"
-                      value={formData.modpack || ''}
-                      onChange={handleChange('modpack')}
-                      error={!!errors.modpack}
-                      helperText={
-                        errors.modpack || 'e.g., cobblemon, adrenaserver (from modrinth.com/modpacks/SLUG)'
+                    {/* Modpack search autocomplete (freeSolo allows typing a slug directly) */}
+                    <Autocomplete
+                      freeSolo
+                      options={modpackOptions}
+                      loading={modpackSearchLoading}
+                      filterOptions={(x) => x}
+                      getOptionLabel={(option) =>
+                        typeof option === 'string' ? option : option.slug
                       }
-                      fullWidth
+                      isOptionEqualToValue={(option, value) =>
+                        (typeof option === 'string' ? option : option.slug) ===
+                        (typeof value === 'string' ? value : value.slug)
+                      }
+                      inputValue={modpackSearchInput}
+                      onInputChange={(_, newInput) => {
+                        setModpackSearchInput(newInput);
+                        // Typing also sets the slug (supports direct slug entry).
+                        setModpackSlug(newInput.trim());
+                        // Reset dependent selections so they re-populate from the
+                        // new modpack's matrix. Without this, a loader name shared
+                        // by the previous modpack would not trigger the auto-select
+                        // Effect, leaving a stale (loader, version) pair.
+                        setSelectedLoader('');
+                        setSelectedGameVersion('');
+                        if (errors.modpack) {
+                          setErrors((prev) => ({ ...prev, modpack: '' }));
+                        }
+                      }}
+                      onChange={(_, value) => {
+                        const slug =
+                          typeof value === 'string' ? value : value?.slug ?? '';
+                        setModpackSlug(slug.trim());
+                        setModpackSearchInput(slug);
+                        // Reset dependent selections; they re-populate from the matrix.
+                        setSelectedLoader('');
+                        setSelectedGameVersion('');
+                      }}
+                      renderOption={(props, option) => (
+                        <li {...props} key={typeof option === 'string' ? option : option.slug}>
+                          {typeof option === 'string' ? option : `${option.title} (${option.slug})`}
+                        </li>
+                      )}
                       disabled={isCreating}
-                      inputRef={firstModpackFieldRef}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Modpack"
+                          error={!!errors.modpack}
+                          helperText={
+                            errors.modpack ||
+                            'Search modrinth.com modpacks, or type a slug (e.g., cobblemon)'
+                          }
+                          inputRef={firstModpackFieldRef}
+                        />
+                      )}
                     />
 
-                    <TextField
-                      label="Mod Loader"
-                      select
-                      value={formData.modLoader || ''}
-                      onChange={handleChange('modLoader')}
-                      helperText="Leave empty to auto-detect from modpack"
-                      fullWidth
-                      disabled={isCreating}
-                    >
-                      <MenuItem value="">Auto-detect</MenuItem>
-                      {MOD_LOADERS.filter((l) => l).map((loader) => (
-                        <MenuItem key={loader} value={loader}>
-                          {loader}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                    {/* Loader + Minecraft version selects (driven by compatibility matrix) */}
+                    {modpackSlug && matrixLoading && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <CircularProgress size={18} />
+                        <Typography variant="body2" color="text.secondary">
+                          Loading compatible loaders and versions…
+                        </Typography>
+                      </Box>
+                    )}
 
-                    <TextField
-                      label="Modpack Version"
-                      value={formData.modpackVersion || ''}
-                      onChange={handleChange('modpackVersion')}
-                      helperText="Leave empty for latest"
-                      fullWidth
-                      disabled={isCreating}
-                    />
+                    {modpackSlug && matrixError && (
+                      <Alert severity="warning">
+                        Could not load modpack compatibility. Check the slug and try again.
+                      </Alert>
+                    )}
+
+                    {modpackSlug && !matrixLoading && !matrixError && availableLoaders.length > 0 && (
+                      <>
+                        <TextField
+                          label="Mod Loader"
+                          select
+                          value={selectedLoader}
+                          onChange={(e) => {
+                            setSelectedLoader(e.target.value);
+                            setSelectedGameVersion('');
+                          }}
+                          helperText="Only loaders supported by this modpack"
+                          fullWidth
+                          disabled={isCreating}
+                        >
+                          {availableLoaders.map((loader) => (
+                            <MenuItem key={loader} value={loader}>
+                              {loader}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+
+                        <TextField
+                          label="Minecraft Version"
+                          select
+                          value={selectedGameVersion}
+                          onChange={(e) => setSelectedGameVersion(e.target.value)}
+                          helperText="Only versions compatible with the selected loader"
+                          fullWidth
+                          disabled={isCreating || availableGameVersions.length === 0}
+                        >
+                          {availableGameVersions.map((gv) => (
+                            <MenuItem key={gv} value={gv}>
+                              {gv}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </>
+                    )}
                   </Box>
                 </Collapse>
               </Box>
@@ -575,7 +716,7 @@ export function CreateServerDialog({
               <Button
                 type="submit"
                 variant="contained"
-                disabled={isCreating}
+                disabled={isCreating || modpackSelectionIncomplete}
                 startIcon={isCreating ? <CircularProgress size={16} /> : null}
               >
                 {isCreating ? 'Creating...' : 'Create'}

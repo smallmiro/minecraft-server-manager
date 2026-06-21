@@ -156,6 +156,10 @@ export const CreateServerRequestSchema = Type.Object({
   autoStart: Type.Optional(Type.Boolean({ default: true })),
   sudoPassword: Type.Optional(Type.String({ writeOnly: true })),
   modpack: Type.Optional(Type.String({
+    // Restrict to Modrinth slug/ID/URL characters. Excludes shell
+    // metacharacters (quotes, ;, spaces, $, backticks, etc.) to harden the
+    // non-SSE create path that interpolates args into a shell command.
+    pattern: '^[A-Za-z0-9_./:-]+$',
     description: 'Modrinth modpack slug, ID, or URL (required for MODRINTH/AUTO_CURSEFORGE)',
   })),
   modpackVersion: Type.Optional(Type.String({

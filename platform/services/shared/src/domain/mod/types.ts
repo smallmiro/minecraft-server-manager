@@ -37,6 +37,8 @@ export interface ModSearchOptions {
   gameVersions?: string[];
   loaders?: string[];
   index?: ModSearchIndex;
+  /** Restrict results to a specific project type (e.g. 'modpack', 'mod'). */
+  projectType?: ModProjectType;
 }
 
 /**

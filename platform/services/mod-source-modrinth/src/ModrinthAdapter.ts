@@ -65,6 +65,9 @@ export class ModrinthAdapter implements IModSourcePort {
     if (options?.loaders?.length) {
       facets.push(options.loaders.map(l => `categories:${l}`));
     }
+    if (options?.projectType) {
+      facets.push([`project_type:${options.projectType}`]);
+    }
 
     const raw = await this.apiClient.search({
       query,
