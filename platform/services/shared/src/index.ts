@@ -158,6 +158,16 @@ export type {
   ModSearchResult,
 } from './domain/mod/index.js';
 
+// Re-export modpack compatibility matrix utilities (value + types)
+export {
+  buildModpackCompatibilityMatrix,
+  isModpackCompatible,
+} from './domain/mod/index.js';
+export type {
+  ModpackCompatibilityMatrix,
+  LoaderCompatibility,
+} from './domain/mod/index.js';
+
 // Re-export ModSourceFactory
 export { ModSourceFactory } from './infrastructure/factories/index.js';
 
