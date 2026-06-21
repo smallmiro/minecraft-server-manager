@@ -6,6 +6,7 @@ import type {
   RemoveModResponse,
   ModSearchResponse,
   ModProjectsResponse,
+  ModVersionsResponse,
 } from '@/ports/api/IMcctlApiClient';
 
 // ============================================================
@@ -40,6 +41,51 @@ export function useModSearch(
     queryKey: ['mods', 'search', query, options?.limit, options?.offset],
     queryFn: () => apiFetch<ModSearchResponse>(`/api/mods/search?${params}`),
     enabled: options?.enabled !== false && !!query.trim(),
+  });
+}
+
+/**
+ * Hook to search modpacks on Modrinth (project_type=modpack).
+ * Used by the Create Server dialog autocomplete.
+ */
+export function useModpackSearch(
+  query: string,
+  options?: { limit?: number; enabled?: boolean }
+) {
+  const params = new URLSearchParams();
+  if (query) params.set('q', query);
+  params.set('type', 'modpack');
+  if (options?.limit != null) params.set('limit', String(options.limit));
+
+  return useQuery<ModSearchResponse, Error>({
+    queryKey: ['mods', 'search', 'modpack', query, options?.limit],
+    queryFn: () => apiFetch<ModSearchResponse>(`/api/mods/search?${params}`),
+    enabled: options?.enabled !== false && !!query.trim(),
+    staleTime: 60 * 1000,
+  });
+}
+
+/**
+ * Hook to fetch the loader/Minecraft-version compatibility matrix for a modpack.
+ */
+export function useModVersions(
+  slug: string,
+  options?: { source?: string; enabled?: boolean }
+) {
+  const params = new URLSearchParams();
+  if (options?.source) params.set('source', options.source);
+  const qs = params.toString();
+
+  return useQuery<ModVersionsResponse, Error>({
+    queryKey: ['mods', slug, 'versions', options?.source],
+    queryFn: () =>
+      apiFetch<ModVersionsResponse>(
+        `/api/mods/${encodeURIComponent(slug)}/versions${qs ? `?${qs}` : ''}`
+      ),
+    enabled: options?.enabled !== false && !!slug.trim(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: false,
   });
 }
 

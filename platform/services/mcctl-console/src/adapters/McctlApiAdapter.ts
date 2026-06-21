@@ -45,6 +45,7 @@ import {
   RemoveModResponse,
   ModSearchResponse,
   ModProjectsResponse,
+  ModVersionsResponse,
   FileListResponse,
   FileContentResponse,
   FileWriteResponse,
@@ -533,8 +534,9 @@ export class McctlApiAdapter implements IMcctlApiClient {
     );
   }
 
-  async searchMods(query: string, limit: number = 10, offset: number = 0): Promise<ModSearchResponse> {
+  async searchMods(query: string, limit: number = 10, offset: number = 0, type?: string): Promise<ModSearchResponse> {
     const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset) });
+    if (type) params.set('type', type);
     return this.fetch<ModSearchResponse>(`/api/mods/search?${params}`);
   }
 
@@ -542,6 +544,15 @@ export class McctlApiAdapter implements IMcctlApiClient {
     const params = new URLSearchParams({ slugs: slugs.join(',') });
     if (source) params.set('source', source);
     return this.fetch<ModProjectsResponse>(`/api/mods/projects?${params}`);
+  }
+
+  async getModVersions(slug: string, source?: string): Promise<ModVersionsResponse> {
+    const params = new URLSearchParams();
+    if (source) params.set('source', source);
+    const qs = params.toString();
+    return this.fetch<ModVersionsResponse>(
+      `/api/mods/${encodeURIComponent(slug)}/versions${qs ? `?${qs}` : ''}`
+    );
   }
 
   // ============================================================

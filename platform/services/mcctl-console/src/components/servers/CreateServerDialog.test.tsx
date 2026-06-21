@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import { CreateServerDialog } from './CreateServerDialog';
@@ -18,11 +18,46 @@ vi.mock('@/hooks/useMcctl', () => ({
   })),
 }));
 
+// Mock modpack hooks (search autocomplete + compatibility matrix)
+interface SearchResult { data: unknown; isLoading: boolean }
+interface MatrixResult { data: unknown; isLoading: boolean; isError: boolean }
+
+const mockUseModpackSearch = vi.fn(
+  (): SearchResult => ({ data: undefined, isLoading: false })
+);
+const mockUseModVersions = vi.fn(
+  (): MatrixResult => ({ data: undefined, isLoading: false, isError: false })
+);
+
+vi.mock('@/hooks/useMods', () => ({
+  useModpackSearch: () => mockUseModpackSearch(),
+  useModVersions: () => mockUseModVersions(),
+}));
+
+// Compatibility matrix for cobblemon-like modpack: neoforge -> 1.21.1, forge -> 1.19.2
+const cobblemonMatrix = {
+  data: {
+    slug: 'cobblemon',
+    loaders: ['forge', 'neoforge'],
+    byLoader: {
+      neoforge: { gameVersions: ['1.21.1'], recommended: { '1.21.1': '2.0.0' } },
+      forge: { gameVersions: ['1.19.2'], recommended: { '1.19.2': '1.0.0' } },
+    },
+  },
+  isLoading: false,
+  isError: false,
+};
+
 const renderWithTheme = (component: React.ReactNode) => {
   return render(<ThemeProvider>{component}</ThemeProvider>);
 };
 
 describe('CreateServerDialog', () => {
+  beforeEach(() => {
+    mockUseModpackSearch.mockReturnValue({ data: undefined, isLoading: false });
+    mockUseModVersions.mockReturnValue({ data: undefined, isLoading: false, isError: false });
+  });
+
   it('should render when open is true', () => {
     renderWithTheme(
       <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
@@ -323,27 +358,11 @@ describe('CreateServerDialog', () => {
 
       // Wait for Collapse animation
       await waitFor(() => {
-        // Modpack fields should be visible
-        expect(screen.getByLabelText(/modpack slug/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/mod loader/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/modpack version/i)).toBeInTheDocument();
+        // Modpack search field (Autocomplete combobox) should be visible
+        expect(screen.getByRole('combobox', { name: /modpack/i })).toBeInTheDocument();
 
-        // Standard fields should not be visible
+        // Standard server-type field should not be visible
         expect(screen.queryByLabelText(/server type/i)).not.toBeInTheDocument();
-        expect(screen.queryByLabelText(/minecraft version/i)).not.toBeInTheDocument();
-      });
-    });
-
-    it('should show info alert about auto-detected version in Modpack mode', async () => {
-      renderWithTheme(
-        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
-      );
-
-      const modpackButton = screen.getByRole('button', { name: /modpack/i });
-      fireEvent.click(modpackButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/minecraft version is automatically determined by the modpack/i)).toBeInTheDocument();
       });
     });
   });
@@ -404,7 +423,7 @@ describe('CreateServerDialog', () => {
       fireEvent.click(modpackButton);
 
       await waitFor(() => {
-        expect(screen.getByLabelText(/modpack slug/i)).toBeInTheDocument();
+        expect(screen.getByRole('combobox', { name: /modpack/i })).toBeInTheDocument();
       });
 
       // Fill only server name
@@ -417,11 +436,14 @@ describe('CreateServerDialog', () => {
 
       await waitFor(() => {
         expect(onSubmit).not.toHaveBeenCalled();
-        expect(screen.getByText(/modpack slug is required/i)).toBeInTheDocument();
+        expect(screen.getByText(/modpack is required/i)).toBeInTheDocument();
       });
     });
 
-    it('should submit successfully with valid modpack data', async () => {
+    it('should submit modLoader and selected Minecraft version once a modpack is chosen', async () => {
+      // Once a slug is typed, the matrix resolves and loader/version selects appear.
+      mockUseModVersions.mockReturnValue(cobblemonMatrix);
+
       const onSubmit = vi.fn();
       renderWithTheme(
         <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
@@ -431,75 +453,41 @@ describe('CreateServerDialog', () => {
       fireEvent.click(modpackButton);
 
       await waitFor(() => {
-        expect(screen.getByLabelText(/modpack slug/i)).toBeInTheDocument();
+        expect(screen.getByRole('combobox', { name: /modpack/i })).toBeInTheDocument();
       });
 
-      // Fill modpack form
       const nameInput = screen.getByLabelText(/server name/i);
       fireEvent.change(nameInput, { target: { value: 'cobblemon-server' } });
 
-      const slugInput = screen.getByLabelText(/modpack slug/i);
+      // Type a modpack slug into the autocomplete (freeSolo)
+      const slugInput = screen.getByRole('combobox', { name: /modpack/i });
       fireEvent.change(slugInput, { target: { value: 'cobblemon' } });
 
+      // Loader + Minecraft version selects appear; default loader = first (forge)
+      await waitFor(() => {
+        expect(screen.getByLabelText(/mod loader/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/minecraft version/i)).toBeInTheDocument();
+      });
+
+      // Select neoforge loader
+      fireEvent.mouseDown(screen.getByLabelText(/mod loader/i));
+      const neoforgeOption = await screen.findByRole('option', { name: 'neoforge' });
+      fireEvent.click(neoforgeOption);
+
       // Submit
-      const createButton = screen.getByRole('button', { name: /create/i });
+      const createButton = screen.getByRole('button', { name: /^create$/i });
       fireEvent.click(createButton);
 
       await waitFor(() => {
-        expect(onSubmit).toHaveBeenCalledWith({
-          name: 'cobblemon-server',
-          type: 'MODRINTH',
-          modpack: 'cobblemon',
-          memory: '6G',
-          autoStart: false,
-          sudoPassword: '',
-        });
-      });
-    });
-
-    it('should include optional modpack fields when provided', async () => {
-      const onSubmit = vi.fn();
-      renderWithTheme(
-        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
-      );
-
-      const modpackButton = screen.getByRole('button', { name: /modpack/i });
-      fireEvent.click(modpackButton);
-
-      await waitFor(() => {
-        expect(screen.getByLabelText(/modpack slug/i)).toBeInTheDocument();
-      });
-
-      // Fill all modpack fields
-      const nameInput = screen.getByLabelText(/server name/i);
-      fireEvent.change(nameInput, { target: { value: 'test-server' } });
-
-      const slugInput = screen.getByLabelText(/modpack slug/i);
-      fireEvent.change(slugInput, { target: { value: 'adrenaserver' } });
-
-      const versionInput = screen.getByLabelText(/modpack version/i);
-      fireEvent.change(versionInput, { target: { value: '1.0.0' } });
-
-      const loaderInput = screen.getByLabelText(/mod loader/i);
-      fireEvent.mouseDown(loaderInput);
-      const forgeOption = await screen.findByRole('option', { name: 'forge' });
-      fireEvent.click(forgeOption);
-
-      // Submit
-      const createButton = screen.getByRole('button', { name: /create/i });
-      fireEvent.click(createButton);
-
-      await waitFor(() => {
-        expect(onSubmit).toHaveBeenCalledWith({
-          name: 'test-server',
-          type: 'MODRINTH',
-          modpack: 'adrenaserver',
-          modpackVersion: '1.0.0',
-          modLoader: 'forge',
-          memory: '6G',
-          autoStart: false,
-          sudoPassword: '',
-        });
+        expect(onSubmit).toHaveBeenCalledTimes(1);
+        const arg = onSubmit.mock.calls[0][0];
+        expect(arg.name).toBe('cobblemon-server');
+        expect(arg.type).toBe('MODRINTH');
+        expect(arg.modpack).toBe('cobblemon');
+        expect(arg.modLoader).toBe('neoforge');
+        expect(arg.version).toBe('1.21.1');
+        // recommended modpack version for (neoforge, 1.21.1)
+        expect(arg.modpackVersion).toBe('2.0.0');
       });
     });
   });
@@ -516,7 +504,7 @@ describe('CreateServerDialog', () => {
       // Wait for Collapse animation (300ms) + focus delay
       await waitFor(
         () => {
-          const slugInput = screen.getByLabelText(/modpack slug/i);
+          const slugInput = screen.getByRole('combobox', { name: /modpack/i });
           expect(slugInput).toHaveFocus();
         },
         { timeout: 1000 }

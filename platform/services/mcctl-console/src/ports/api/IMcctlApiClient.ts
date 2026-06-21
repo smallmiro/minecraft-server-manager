@@ -430,6 +430,21 @@ export interface ModSearchResponse {
   limit: number;
 }
 
+export interface LoaderCompatibility {
+  /** Minecraft versions supported by this loader, newest-first. */
+  gameVersions: string[];
+  /** Recommended modpack version number per game version. */
+  recommended: Record<string, string>;
+}
+
+export interface ModVersionsResponse {
+  slug: string;
+  /** Supported mod loaders, sorted alphabetically. */
+  loaders: string[];
+  /** Per-loader compatibility info. */
+  byLoader: Record<string, LoaderCompatibility>;
+}
+
 // ============================================================
 // File Management Types
 // ============================================================
@@ -811,8 +826,9 @@ export interface IMcctlApiClient {
   getServerMods(serverName: string): Promise<ModListResponse>;
   addServerMods(serverName: string, slugs: string[], source?: string): Promise<AddModsResponse>;
   removeServerMod(serverName: string, slug: string): Promise<RemoveModResponse>;
-  searchMods(query: string, limit?: number, offset?: number): Promise<ModSearchResponse>;
+  searchMods(query: string, limit?: number, offset?: number, type?: string): Promise<ModSearchResponse>;
   getModProjects(slugs: string[], source?: string): Promise<ModProjectsResponse>;
+  getModVersions(slug: string, source?: string): Promise<ModVersionsResponse>;
 
   // Playit.gg operations
   getPlayitStatus(): Promise<PlayitAgentStatus>;
