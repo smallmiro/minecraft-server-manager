@@ -423,6 +423,23 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
         };
       }
 
+      // Sync the server's LEVEL with the lock so it loads the assigned world (#489).
+      const levelResult = await this.shell.setServerConfig(
+        server.name.value,
+        'LEVEL',
+        world.name
+      );
+      if (!levelResult.success) {
+        spinner.stop('Failed to update server LEVEL');
+        this.prompt.error(levelResult.stderr || 'Failed to update server LEVEL');
+        return {
+          success: false,
+          worldName: world.name,
+          serverName: server.name.value,
+          error: levelResult.stderr || 'Failed to update server LEVEL',
+        };
+      }
+
       spinner.stop('World assigned');
       this.prompt.success(`World '${world.name}' assigned to '${server.name.value}'`);
       this.prompt.outro('Assignment complete');
@@ -484,14 +501,33 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       };
     }
 
-    // Execute assignment
+    // Execute assignment (creates the lock)
     const result = await this.shell.worldAssign(worldName, serverName);
+    if (!result.success) {
+      return {
+        success: false,
+        worldName,
+        serverName,
+        error: result.stderr,
+      };
+    }
+
+    // Keep the server's LEVEL in sync with the lock so the container actually
+    // loads the assigned world (otherwise lockedBy and servers[]/LEVEL diverge — #489).
+    const levelResult = await this.shell.setServerConfig(serverName, 'LEVEL', worldName);
+    if (!levelResult.success) {
+      return {
+        success: false,
+        worldName,
+        serverName,
+        error: levelResult.stderr || 'Failed to update server LEVEL',
+      };
+    }
 
     return {
-      success: result.success,
+      success: true,
       worldName,
       serverName,
-      error: result.success ? undefined : result.stderr,
     };
   }
 
