@@ -35,6 +35,7 @@ export interface MockPromptValues {
   modpackSlug?: string;
   modpackVersion?: string;
   modpackLoader?: string;
+  modpackExcludeFiles?: string[];
   whitelistPlayers?: string[];
 }
 
@@ -249,6 +250,13 @@ export class MockPromptAdapter implements IPromptPort {
       throw new MockCancelError();
     }
     return this.values.modpackLoader;
+  }
+
+  async promptModpackExcludeFiles(): Promise<string[] | undefined> {
+    if (this._cancelled) {
+      throw new MockCancelError();
+    }
+    return this.values.modpackExcludeFiles;
   }
 
   // ========================================

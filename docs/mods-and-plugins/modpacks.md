@@ -201,6 +201,31 @@ mcctl config modded MODRINTH_FORCE_INCLUDE_FILES "some-server-mod"
 mcctl config modded MODRINTH_FORCE_SYNCHRONIZE "true"
 ```
 
+### Excluding Client-Only Mods
+
+Some modpacks bundle **client-only mods** (HUD/UI mods such as Status Effect Bars)
+that crash a dedicated server with an error like:
+
+```
+java.lang.BootstrapMethodError: Attempted to load class
+net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER
+→ Failed to start the minecraft server
+```
+
+This happens when the modpack incorrectly marks a client mod as server-compatible,
+so the image's automatic client-mod filtering does not catch it. Exclude such mods
+by (partial) file name when creating the server:
+
+```bash
+# Exclude one or more client-only mods (comma-separated)
+mcctl create myserver -t MODRINTH --modpack create-plus \
+  --mod-loader neoforge --exclude-files statuseffectbars
+```
+
+In the Web Console, use the **Exclude mods** field in the Create Server dialog's
+modpack section. The values are written to `MODRINTH_EXCLUDE_FILES`
+(or `CF_EXCLUDE_MODS` for CurseForge) in the server's `config.env`.
+
 ### Complete Example
 
 ```bash

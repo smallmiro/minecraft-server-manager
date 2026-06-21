@@ -100,6 +100,44 @@ describe('ModpackOptions', () => {
         CF_VERSION: '2.0.0',
       });
     });
+
+    test('should convert Modrinth excludeFiles to MODRINTH_EXCLUDE_FILES (comma-joined)', () => {
+      const options = ModpackOptions.modrinth('create-plus', {
+        loader: 'neoforge',
+        excludeFiles: ['statuseffectbars', 'jei'],
+      });
+      const envVars = options.toEnvVars();
+
+      expect(envVars).toEqual({
+        TYPE: 'MODRINTH',
+        MODRINTH_MODPACK: 'create-plus',
+        MODRINTH_LOADER: 'neoforge',
+        MODRINTH_EXCLUDE_FILES: 'statuseffectbars,jei',
+      });
+    });
+
+    test('should convert CurseForge excludeFiles to CF_EXCLUDE_MODS', () => {
+      const options = ModpackOptions.curseforge('forge-example', {
+        excludeFiles: ['1284599'],
+      });
+      const envVars = options.toEnvVars();
+
+      expect(envVars).toEqual({
+        TYPE: 'AUTO_CURSEFORGE',
+        CF_SLUG: 'forge-example',
+        CF_EXCLUDE_MODS: '1284599',
+      });
+    });
+
+    test('should omit exclude env var when excludeFiles is empty', () => {
+      const options = ModpackOptions.modrinth('create-plus', { excludeFiles: [] });
+      const envVars = options.toEnvVars();
+
+      expect(envVars).toEqual({
+        TYPE: 'MODRINTH',
+        MODRINTH_MODPACK: 'create-plus',
+      });
+    });
   });
 
   describe('toCliArgs', () => {
@@ -137,6 +175,36 @@ describe('ModpackOptions', () => {
         '--modpack-slug', 'forge-example',
         '--modpack-version', '2.0.0',
       ]);
+    });
+
+    test('should convert excludeFiles to --exclude-files CLI arg (comma-joined)', () => {
+      const options = ModpackOptions.modrinth('create-plus', {
+        loader: 'neoforge',
+        excludeFiles: ['statuseffectbars', 'jei'],
+      });
+      const args = options.toCliArgs();
+
+      expect(args).toEqual([
+        '--type', 'MODRINTH',
+        '--modpack-slug', 'create-plus',
+        '--mod-loader', 'neoforge',
+        '--exclude-files', 'statuseffectbars,jei',
+      ]);
+    });
+  });
+
+  describe('excludeFiles normalization', () => {
+    test('should trim and drop empty entries', () => {
+      const options = ModpackOptions.modrinth('create-plus', {
+        excludeFiles: ['  statuseffectbars  ', '', '   ', 'jei'],
+      });
+
+      expect(options.excludeFiles).toEqual(['statuseffectbars', 'jei']);
+    });
+
+    test('should default excludeFiles to undefined when not provided', () => {
+      const options = ModpackOptions.modrinth('create-plus');
+      expect(options.excludeFiles).toBe(undefined);
     });
   });
 });

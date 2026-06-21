@@ -34,6 +34,11 @@ export interface CreateServerConfig {
   modpackSlug?: string;
   modpackVersion?: string;
   modLoader?: string;
+  /**
+   * Mods to exclude from modpack installation (client-only mods that crash a
+   * dedicated server). Maps to MODRINTH_EXCLUDE_FILES / CF_EXCLUDE_MODS.
+   */
+  modpackExcludeFiles?: string[];
   enableWhitelist?: boolean;
   whitelistPlayers?: string[];
   playitDomain?: string;

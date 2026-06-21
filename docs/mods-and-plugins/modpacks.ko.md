@@ -201,6 +201,32 @@ mcctl config modded MODRINTH_FORCE_INCLUDE_FILES "some-server-mod"
 mcctl config modded MODRINTH_FORCE_SYNCHRONIZE "true"
 ```
 
+### 클라이언트 전용 모드 제외
+
+일부 모드팩은 데디케이티드 서버에서 크래시를 일으키는 **클라이언트 전용 모드**
+(Status Effect Bars 같은 HUD/UI 모드)를 포함합니다. 이 경우 다음과 같은 오류가
+발생합니다.
+
+```
+java.lang.BootstrapMethodError: Attempted to load class
+net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER
+→ Failed to start the minecraft server
+```
+
+모드팩이 클라이언트 모드를 서버 호환으로 잘못 표시하면 이미지의 자동 클라이언트
+모드 필터링이 동작하지 않습니다. 서버 생성 시 (부분) 파일명으로 해당 모드를
+제외하세요.
+
+```bash
+# 클라이언트 전용 모드를 콤마로 구분해 제외
+mcctl create myserver -t MODRINTH --modpack create-plus \
+  --mod-loader neoforge --exclude-files statuseffectbars
+```
+
+웹 콘솔에서는 Create Server 다이얼로그의 모드팩 섹션에 있는 **Exclude mods**
+필드를 사용합니다. 입력값은 서버의 `config.env`에 `MODRINTH_EXCLUDE_FILES`
+(CurseForge는 `CF_EXCLUDE_MODS`)로 기록됩니다.
+
 ### 전체 예제
 
 ```bash

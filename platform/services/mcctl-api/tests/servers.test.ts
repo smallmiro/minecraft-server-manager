@@ -741,6 +741,45 @@ describe('POST /api/servers - Modrinth Modpack Support', () => {
       expect(args).not.toContain('--modpack-version');
       expect(args).not.toContain('--mod-loader');
     });
+
+    it('should pass --exclude-files (comma-joined) when excludeFiles provided', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'modpack-exclude',
+          type: 'MODRINTH',
+          modpack: 'create-plus',
+          modLoader: 'neoforge',
+          excludeFiles: ['statuseffectbars', 'jei'],
+        },
+      });
+
+      expect(mockedSpawn).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.arrayContaining(['--exclude-files', 'statuseffectbars,jei']),
+        expect.any(Object)
+      );
+    });
+
+    it('should reject excludeFiles entries with shell metacharacters (400)', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: {
+          name: 'modpack-bad-exclude',
+          type: 'MODRINTH',
+          modpack: 'create-plus',
+          excludeFiles: ['statuseffectbars; rm -rf /'],
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
   });
 
   describe('Audit Logging', () => {

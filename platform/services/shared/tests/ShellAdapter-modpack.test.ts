@@ -67,6 +67,20 @@ describe('ShellAdapter - Modpack Support', () => {
       expect(options.modLoader).toBe('fabric');
     });
 
+    test('should accept modpackExcludeFiles option', () => {
+      const options: CreateServerOptions = {
+        type: ServerType.fromEnum(ServerTypeEnum.MODRINTH),
+        version: McVersion.create('1.21.1'),
+        worldOptions: WorldOptions.newWorld(),
+        modpackSlug: 'create-plus',
+        modLoader: 'neoforge',
+        modpackExcludeFiles: ['statuseffectbars'],
+        autoStart: false,
+      };
+
+      expect(options.modpackExcludeFiles).toEqual(['statuseffectbars']);
+    });
+
     test('should work for AUTO_CURSEFORGE type', () => {
       const options: CreateServerOptions = {
         type: ServerType.fromEnum(ServerTypeEnum.AUTO_CURSEFORGE),

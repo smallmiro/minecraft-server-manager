@@ -91,6 +91,46 @@ describe('create command - MODRINTH modpack support', () => {
       });
     });
 
+    it('should split --exclude-files into modpackExcludeFiles array', async () => {
+      // ARRANGE
+      const options: CreateCommandOptions = {
+        name: 'myserver',
+        type: 'MODRINTH',
+        modpack: 'create-plus',
+        modLoader: 'neoforge',
+        excludeFiles: 'statuseffectbars, jei ,',
+        noStart: false,
+      };
+
+      const mockServer = {
+        name: { value: 'myserver' },
+        containerName: 'mc-myserver',
+        type: { label: 'Modrinth Modpack', isModpack: true },
+        version: { value: 'LATEST' },
+        memory: { value: '6G' },
+        modpackOptions: {
+          slug: 'create-plus',
+          loader: 'neoforge',
+          excludeFiles: ['statuseffectbars', 'jei'],
+        },
+      };
+
+      mockCreateServerUseCase.executeWithConfig.mockResolvedValue(mockServer);
+
+      // ACT
+      const exitCode = await createCommand(options);
+
+      // ASSERT
+      expect(exitCode).toBe(0);
+      expect(mockCreateServerUseCase.executeWithConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          modpackSlug: 'create-plus',
+          modLoader: 'neoforge',
+          modpackExcludeFiles: ['statuseffectbars', 'jei'],
+        })
+      );
+    });
+
     it('should pass only slug if version and loader are not provided', async () => {
       // ARRANGE
       const options: CreateCommandOptions = {
