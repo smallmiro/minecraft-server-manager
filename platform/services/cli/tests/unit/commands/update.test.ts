@@ -113,17 +113,16 @@ describe('update command', () => {
     consoleLogSpy.mockRestore();
   });
 
-  describe('without --all flag', () => {
-    it('should not call checkServiceAvailability', async () => {
-      await updateCommand({ check: false, force: false, yes: false });
+  describe('default (no flag) = full update', () => {
+    it('should call checkServiceAvailability by default (services included)', async () => {
+      await updateCommand({ check: false, force: false, yes: true });
 
-      expect(mockCheckServiceAvailability).not.toHaveBeenCalled();
+      expect(mockCheckServiceAvailability).toHaveBeenCalled();
     });
-  });
 
-  describe('with --all flag', () => {
-    it('should call checkServiceAvailability when --all is set', async () => {
-      await updateCommand({ all: true, yes: true });
+    it('should update services even when CLI is already up to date', async () => {
+      // beforeEach sets isUpdateAvailable = false (CLI already latest)
+      await updateCommand({ yes: true });
 
       expect(mockCheckServiceAvailability).toHaveBeenCalled();
     });
@@ -134,7 +133,7 @@ describe('update command', () => {
         console: { available: false },
       });
 
-      const exitCode = await updateCommand({ all: true, yes: true });
+      const exitCode = await updateCommand({ yes: true });
 
       expect(exitCode).toBe(0);
       expect(mockCheckServiceAvailability).toHaveBeenCalled();
@@ -145,7 +144,7 @@ describe('update command', () => {
       expect(serviceInstallCalls.length).toBe(0);
     });
 
-    it('should show service versions with --check --all without installing', async () => {
+    it('should show service versions with --check by default without installing', async () => {
       mockCheckServiceAvailability.mockReturnValue({
         api: { available: true, path: '/tmp/node_modules/@minecraft-docker/mcctl-api/dist/index.js' },
         console: { available: false },
@@ -164,7 +163,7 @@ describe('update command', () => {
         return false;
       });
 
-      await updateCommand({ check: true, all: true, yes: false });
+      await updateCommand({ check: true, yes: false });
 
       expect(mockCheckServiceAvailability).toHaveBeenCalled();
       // npm install should NOT be called (check-only mode)
@@ -172,6 +171,28 @@ describe('update command', () => {
         (call: any[]) => call[0] === 'npm' && call[1]?.[0] === 'install'
       );
       expect(installCalls.length).toBe(0);
+    });
+  });
+
+  describe('--cli-only flag (opt-out)', () => {
+    it('should NOT call checkServiceAvailability when --cli-only is set', async () => {
+      await updateCommand({ cliOnly: true, yes: true });
+
+      expect(mockCheckServiceAvailability).not.toHaveBeenCalled();
+    });
+
+    it('should not check services with --check --cli-only', async () => {
+      await updateCommand({ check: true, cliOnly: true, yes: false });
+
+      expect(mockCheckServiceAvailability).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('--all flag (backward-compatible alias for default)', () => {
+    it('should still call checkServiceAvailability when --all is set', async () => {
+      await updateCommand({ all: true, yes: true });
+
+      expect(mockCheckServiceAvailability).toHaveBeenCalled();
     });
   });
 

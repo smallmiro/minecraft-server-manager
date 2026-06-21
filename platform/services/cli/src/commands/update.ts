@@ -241,7 +241,15 @@ export interface UpdateCommandOptions {
   check?: boolean;
   force?: boolean;
   yes?: boolean;
+  /**
+   * Backward-compatible alias. Updating CLI + services is now the default,
+   * so this flag is a no-op kept so existing `--all` invocations keep working.
+   */
   all?: boolean;
+  /**
+   * Opt out of the full update and only update the CLI binary.
+   */
+  cliOnly?: boolean;
   root?: string;
 }
 
@@ -717,8 +725,8 @@ export async function updateCommand(options: UpdateCommandOptions): Promise<numb
   // Print version info
   printVersionInfo(currentVersion, latestVersion, hasUpdate);
 
-  // If --check with --all, show service info too
-  if (options.check && options.all) {
+  // By default the check also covers services (unless --cli-only)
+  if (options.check && !options.cliOnly) {
     const rootDir = new Paths(options.root).root;
     await updateServices(rootDir, { check: true });
     return hasUpdate ? 1 : 0;
@@ -731,8 +739,8 @@ export async function updateCommand(options: UpdateCommandOptions): Promise<numb
 
   // If no update available for CLI, skip CLI update
   if (!hasUpdate) {
-    // But still update services if --all
-    if (options.all) {
+    // But still update services by default (unless --cli-only)
+    if (!options.cliOnly) {
       const rootDir = new Paths(options.root).root;
       return updateServices(rootDir, { yes: options.yes });
     }
@@ -767,8 +775,8 @@ export async function updateCommand(options: UpdateCommandOptions): Promise<numb
     // Clear cache after successful update
     clearCache();
 
-    // Update services if --all
-    if (options.all) {
+    // Update services by default (unless --cli-only)
+    if (!options.cliOnly) {
       const rootDir = new Paths(options.root).root;
       return updateServices(rootDir, { yes: options.yes });
     }
