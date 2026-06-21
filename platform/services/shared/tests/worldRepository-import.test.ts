@@ -163,6 +163,30 @@ describe('WorldRepository.importFromZip', () => {
       repo.importFromZip(worldName, '/nonexistent/dummy.zip')
     ).rejects.toThrow(`World '${worldName}' already exists`);
   });
+
+  test('rejects when a split-dimension satellite already exists, leaving it intact', async () => {
+    const worldName = 'survival';
+    // Pre-existing satellite (e.g. an independent world or stale data)
+    const netherDir = join(worldsRootDir, 'worlds', `${worldName}_nether`);
+    await mkdir(netherDir, { recursive: true });
+    await writeFile(join(netherDir, 'keep.dat'), 'precious');
+
+    await expect(
+      repo.importFromZip(worldName, '/nonexistent/dummy.zip')
+    ).rejects.toThrow(`World '${worldName}' already exists`);
+
+    // The pre-existing satellite must NOT have been deleted by any rollback.
+    expect(existsSync(join(netherDir, 'keep.dat'))).toBe(true);
+  });
+
+  test('rejects names that could escape the worlds directory', async () => {
+    await expect(
+      repo.importFromZip('../evil', '/nonexistent/dummy.zip')
+    ).rejects.toThrow(/Invalid world name/);
+    await expect(
+      repo.importFromZip('a/b', '/nonexistent/dummy.zip')
+    ).rejects.toThrow(/Invalid world name/);
+  });
 });
 
 // ---------------------------------------------------------------------------

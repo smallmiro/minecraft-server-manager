@@ -162,4 +162,20 @@ describe('WorldManagementUseCase.listWorlds - satellite grouping', () => {
     const sw = result.find((w) => w.name === 'standalone')!;
     expect(sw.dimensions).toEqual({ nether: false, end: false });
   });
+
+  test('both satellite suffixes without a matching base stay as two primaries', async () => {
+    // No 'survey' parent → neither folds the other in.
+    const worlds = [
+      makeWorld('survey_nether', 200),
+      makeWorld('survey_the_end', 300),
+    ];
+    const useCase = makeUseCase(worlds);
+    const result = await useCase.listWorlds();
+
+    const names = result.map((w) => w.name).sort();
+    expect(names).toEqual(['survey_nether', 'survey_the_end']);
+    for (const w of result) {
+      expect(w.dimensions).toEqual({ nether: false, end: false });
+    }
+  });
 });

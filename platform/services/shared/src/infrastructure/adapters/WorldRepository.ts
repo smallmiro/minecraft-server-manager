@@ -9,12 +9,12 @@ import {
   rename,
   cp,
 } from 'node:fs/promises';
-import { join, basename, dirname } from 'node:path';
+import { join, basename, dirname, resolve, sep } from 'node:path';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import * as unzipper from 'unzipper';
-import { createReadStream } from 'node:fs';
+import { createReadStream, createWriteStream } from 'node:fs';
 import { Paths } from '../../utils/index.js';
 import { World } from '../../domain/index.js';
 import { getContainerStatus } from '../../docker/index.js';
@@ -29,6 +29,26 @@ import type {
 // ---------------------------------------------------------------------------
 // Exported pure helper — testable without real zips
 // ---------------------------------------------------------------------------
+
+/** Allowed world-name characters (defense-in-depth, independent of API schema). */
+const WORLD_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+/**
+ * Reject world names that could escape the worlds/ directory.
+ * This guards the repository boundary so traversal is impossible even if a
+ * future caller forgets upstream validation.
+ */
+function assertValidWorldName(name: string): void {
+  if (!WORLD_NAME_PATTERN.test(name)) {
+    throw new Error(`Invalid world name '${name}'`);
+  }
+}
+
+/** Caps to defend against decompression bombs during zip extraction. */
+const WORLD_EXTRACT_MAX_SIZE =
+  Number(process.env['WORLD_EXTRACT_MAX_SIZE']) || 5 * 1024 * 1024 * 1024; // 5 GB
+const WORLD_EXTRACT_MAX_ENTRIES =
+  Number(process.env['WORLD_EXTRACT_MAX_ENTRIES']) || 100000;
 
 /**
  * World layout descriptor returned by findWorldLayout
@@ -75,9 +95,10 @@ export async function findWorldLayout(rootDir: string): Promise<WorldLayout> {
   const netherCandidate = join(parentDir, `${baseName}_nether`);
   const endCandidate = join(parentDir, `${baseName}_the_end`);
 
-  // Only consider siblings if mainDir is not the rootDir itself
-  // (if mainDir === parentDir, there are no siblings to find)
-  if (parentDir !== mainDir) {
+  // Only consider satellites when the world is nested under a real parent
+  // INSIDE the archive. In a flat layout (level.dat at the extract root) the
+  // "parent" is the temp dir itself, whose unrelated siblings must be ignored.
+  if (mainDir !== rootDir) {
     if (existsSync(netherCandidate)) {
       const s = await stat(netherCandidate);
       if (s.isDirectory()) nether = netherCandidate;
@@ -324,6 +345,7 @@ export class WorldRepository implements IWorldRepository {
    * Returns true if the main world was deleted.
    */
   async delete(name: string): Promise<boolean> {
+    assertValidWorldName(name);
     const worldPath = join(this.worldsDir, name);
     const lockFile = join(this.locksDir, `${name}.lock`);
 
@@ -362,6 +384,7 @@ export class WorldRepository implements IWorldRepository {
    * Create a new world directory with optional seed
    */
   async create(name: string, seed?: string): Promise<World> {
+    assertValidWorldName(name);
     const worldPath = join(this.worldsDir, name);
 
     // Check if already exists
@@ -423,10 +446,15 @@ export class WorldRepository implements IWorldRepository {
    * 5. On error after creating target dirs, rolls back.
    */
   async importFromZip(name: string, zipPath: string): Promise<World> {
+    assertValidWorldName(name);
     const targetPath = join(this.worldsDir, name);
 
-    if (existsSync(targetPath)) {
-      throw new Error(`World '${name}' already exists`);
+    // Reject if the world or any of its split-dimension satellites already exist,
+    // so the rollback below can safely remove every path it creates.
+    for (const suffix of ['', '_nether', '_the_end']) {
+      if (existsSync(join(this.worldsDir, `${name}${suffix}`))) {
+        throw new Error(`World '${name}' already exists`);
+      }
     }
 
     // Ensure worlds dir exists
@@ -471,15 +499,55 @@ export class WorldRepository implements IWorldRepository {
   }
 
   /**
-   * Extract a zip file into destDir using unzipper streaming.
+   * Extract a zip file into destDir with defenses against:
+   * - decompression bombs (cumulative uncompressed-size + entry-count caps,
+   *   pre-checked from the central directory and re-checked while streaming), and
+   * - zip-slip (every entry is resolved and confirmed to stay within destDir).
    */
   private async extractZip(zipPath: string, destDir: string): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
-      createReadStream(zipPath)
-        .pipe(unzipper.Extract({ path: destDir }))
-        .on('close', resolve)
-        .on('error', reject);
-    });
+    const directory = await unzipper.Open.file(zipPath);
+    const base = resolve(destDir);
+
+    // Pre-check from the central directory before writing anything.
+    if (directory.files.length > WORLD_EXTRACT_MAX_ENTRIES) {
+      throw new Error(
+        `World archive has too many entries (>${WORLD_EXTRACT_MAX_ENTRIES})`
+      );
+    }
+    const declaredTotal = directory.files.reduce(
+      (sum, f) => sum + (f.uncompressedSize || 0),
+      0
+    );
+    if (declaredTotal > WORLD_EXTRACT_MAX_SIZE) {
+      throw new Error('World archive too large when extracted');
+    }
+
+    let written = 0;
+    for (const file of directory.files) {
+      const target = resolve(base, file.path);
+      // zip-slip guard: the resolved path must stay within destDir.
+      if (target !== base && !target.startsWith(base + sep)) {
+        throw new Error(`Unsafe path in archive: ${file.path}`);
+      }
+
+      if (file.type === 'Directory') {
+        await mkdir(target, { recursive: true });
+        continue;
+      }
+
+      await mkdir(dirname(target), { recursive: true });
+      written += file.uncompressedSize || 0;
+      if (written > WORLD_EXTRACT_MAX_SIZE) {
+        throw new Error('World archive too large when extracted');
+      }
+      await new Promise<void>((res, rej) => {
+        file
+          .stream()
+          .pipe(createWriteStream(target))
+          .on('finish', res)
+          .on('error', rej);
+      });
+    }
   }
 
   /**
@@ -522,6 +590,11 @@ export class WorldRepository implements IWorldRepository {
    * Falls back to recursive copy + rm when rename fails (cross-device EXDEV).
    */
   private async moveDir(src: string, dest: string): Promise<void> {
+    // Refuse to overwrite an existing destination so rename (throws) and the
+    // cp/EXDEV fallback (which would silently merge) behave identically.
+    if (existsSync(dest)) {
+      throw new Error(`Destination already exists: ${dest}`);
+    }
     try {
       await rename(src, dest);
     } catch (err: unknown) {
