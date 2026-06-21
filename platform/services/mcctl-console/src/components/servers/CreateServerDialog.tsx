@@ -258,6 +258,11 @@ export function CreateServerDialog({
         setErrors({ modpack: slugError });
         return;
       }
+      // Block submission while compatibility data is still loading.
+      if (matrixLoading) {
+        setErrors({ modpack: 'Loading modpack compatibility — please wait a moment' });
+        return;
+      }
       // Once a matrix is available, require a compatible loader + version.
       if (matrix && availableLoaders.length > 0) {
         if (!selectedLoader) {
@@ -314,6 +319,16 @@ export function CreateServerDialog({
     // Submit
     onSubmit(submitData);
   };
+
+  // In modpack mode, Create stays disabled until a modpack is chosen and its
+  // compatible loader + Minecraft version are resolved (or the matrix failed,
+  // in which case we let the backend's secondary validation respond).
+  const modpackSelectionIncomplete =
+    category === 'modpack' &&
+    !!modpackSlug &&
+    !matrixError &&
+    (matrixLoading ||
+      (availableLoaders.length > 0 && (!selectedLoader || !selectedGameVersion)));
 
   return (
     <Dialog open={open} onClose={isCreating ? undefined : onClose} maxWidth="sm" fullWidth fullScreen={isSmallScreen}>
@@ -480,6 +495,12 @@ export function CreateServerDialog({
                         setModpackSearchInput(newInput);
                         // Typing also sets the slug (supports direct slug entry).
                         setModpackSlug(newInput.trim());
+                        // Reset dependent selections so they re-populate from the
+                        // new modpack's matrix. Without this, a loader name shared
+                        // by the previous modpack would not trigger the auto-select
+                        // Effect, leaving a stale (loader, version) pair.
+                        setSelectedLoader('');
+                        setSelectedGameVersion('');
                         if (errors.modpack) {
                           setErrors((prev) => ({ ...prev, modpack: '' }));
                         }
@@ -695,7 +716,7 @@ export function CreateServerDialog({
               <Button
                 type="submit"
                 variant="contained"
-                disabled={isCreating}
+                disabled={isCreating || modpackSelectionIncomplete}
                 startIcon={isCreating ? <CircularProgress size={16} /> : null}
               >
                 {isCreating ? 'Creating...' : 'Create'}

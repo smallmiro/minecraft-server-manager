@@ -490,6 +490,126 @@ describe('CreateServerDialog', () => {
         expect(arg.modpackVersion).toBe('2.0.0');
       });
     });
+
+    it('should disable Create while the compatibility matrix is loading', async () => {
+      mockUseModVersions.mockReturnValue({ data: undefined, isLoading: true, isError: false });
+
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /modpack/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /modpack/i })).toBeInTheDocument();
+      });
+
+      const nameInput = screen.getByLabelText(/server name/i);
+      fireEvent.change(nameInput, { target: { value: 'loading-server' } });
+
+      const slugInput = screen.getByRole('combobox', { name: /modpack/i });
+      fireEvent.change(slugInput, { target: { value: 'cobblemon' } });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /^create$/i })).toBeDisabled();
+      });
+    });
+
+    it('should not submit while the matrix is loading even if Create is forced', async () => {
+      mockUseModVersions.mockReturnValue({ data: undefined, isLoading: true, isError: false });
+      const onSubmit = vi.fn();
+
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /modpack/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /modpack/i })).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/server name/i), {
+        target: { value: 'loading-server' },
+      });
+      fireEvent.change(screen.getByRole('combobox', { name: /modpack/i }), {
+        target: { value: 'cobblemon' },
+      });
+
+      // Submit the form directly (bypasses the disabled button).
+      fireEvent.submit(screen.getByRole('combobox', { name: /modpack/i }).closest('form')!);
+
+      // handleSubmit guards: no incomplete modpack request goes out.
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('should reset loader and version when the modpack slug is re-typed', async () => {
+      // Two modpacks share the "fabric" loader but support different MC versions.
+      const firstMatrix = {
+        data: {
+          slug: 'pack-a',
+          loaders: ['fabric'],
+          byLoader: { fabric: { gameVersions: ['1.20.1'], recommended: { '1.20.1': 'a1' } } },
+        },
+        isLoading: false,
+        isError: false,
+      };
+      const secondMatrix = {
+        data: {
+          slug: 'pack-b',
+          loaders: ['fabric'],
+          byLoader: { fabric: { gameVersions: ['1.21.4'], recommended: { '1.21.4': 'b1' } } },
+        },
+        isLoading: false,
+        isError: false,
+      };
+
+      mockUseModVersions.mockReturnValue(firstMatrix);
+      const onSubmit = vi.fn();
+
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /modpack/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /modpack/i })).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/server name/i), {
+        target: { value: 'pack-server' },
+      });
+
+      // Choose first modpack -> version auto-selects 1.20.1
+      fireEvent.change(screen.getByRole('combobox', { name: /modpack/i }), {
+        target: { value: 'pack-a' },
+      });
+      await waitFor(() => {
+        expect(screen.getByLabelText(/minecraft version/i)).toBeInTheDocument();
+      });
+
+      // Re-type a different modpack; matrix now returns pack-b versions.
+      mockUseModVersions.mockReturnValue(secondMatrix);
+      fireEvent.change(screen.getByRole('combobox', { name: /modpack/i }), {
+        target: { value: 'pack-b' },
+      });
+
+      // The version must follow the new modpack, not stay stale on 1.20.1.
+      await waitFor(() => {
+        const createButton = screen.getByRole('button', { name: /^create$/i });
+        expect(createButton).not.toBeDisabled();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledTimes(1);
+        const arg = onSubmit.mock.calls[0][0];
+        expect(arg.modpack).toBe('pack-b');
+        expect(arg.version).toBe('1.21.4');
+        expect(arg.modpackVersion).toBe('b1');
+      });
+    });
   });
 
   describe('Accessibility', () => {
