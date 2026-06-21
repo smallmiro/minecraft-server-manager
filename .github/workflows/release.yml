@@ -130,6 +130,14 @@ jobs:
           ls -la platform/services/cli/scripts/
           echo "Scripts synced successfully"
 
+      - name: Sync scripts to mcctl-api package
+        run: |
+          echo "Syncing scripts to mcctl-api package..."
+          rm -rf platform/services/mcctl-api/scripts
+          cp -r platform/scripts platform/services/mcctl-api/scripts
+          ls -la platform/services/mcctl-api/scripts/
+          echo "Scripts synced successfully"
+
       - name: Publish @minecraft-docker/mcctl-api
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
