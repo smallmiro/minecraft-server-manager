@@ -491,6 +491,45 @@ describe('CreateServerDialog', () => {
       });
     });
 
+    it('should submit excludeFiles parsed from the Exclude mods field', async () => {
+      mockUseModVersions.mockReturnValue(cobblemonMatrix);
+
+      const onSubmit = vi.fn();
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /modpack/i }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /modpack/i })).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/server name/i), {
+        target: { value: 'exclude-server' },
+      });
+      fireEvent.change(screen.getByRole('combobox', { name: /modpack/i }), {
+        target: { value: 'cobblemon' },
+      });
+
+      // Exclude mods field appears once a modpack slug is set
+      await waitFor(() => {
+        expect(screen.getByLabelText(/exclude mods/i)).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByLabelText(/exclude mods/i), {
+        target: { value: 'statuseffectbars, jei ,' },
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledTimes(1);
+        const arg = onSubmit.mock.calls[0][0];
+        expect(arg.excludeFiles).toEqual(['statuseffectbars', 'jei']);
+      });
+    });
+
     it('should disable Create while the compatibility matrix is loading', async () => {
       mockUseModVersions.mockReturnValue({ data: undefined, isLoading: true, isError: false });
 

@@ -96,6 +96,8 @@ export function CreateServerDialog({
   const [modpackSearchInput, setModpackSearchInput] = useState('');
   const [selectedLoader, setSelectedLoader] = useState('');
   const [selectedGameVersion, setSelectedGameVersion] = useState('');
+  // Comma-separated list of mods to exclude from the modpack (e.g. client-only mods)
+  const [excludeFilesInput, setExcludeFilesInput] = useState('');
 
   // Refs for accessibility
   const firstModpackFieldRef = useRef<HTMLInputElement>(null);
@@ -162,6 +164,7 @@ export function CreateServerDialog({
       setModpackSearchInput('');
       setSelectedLoader('');
       setSelectedGameVersion('');
+      setExcludeFilesInput('');
     }
   }, [open]);
 
@@ -311,6 +314,14 @@ export function CreateServerDialog({
         if (recommended) {
           submitData.modpackVersion = recommended;
         }
+      }
+      // Exclude client-only mods that would crash a dedicated server.
+      const excludeFiles = excludeFilesInput
+        .split(',')
+        .map((f) => f.trim())
+        .filter((f) => f.length > 0);
+      if (excludeFiles.length > 0) {
+        submitData.excludeFiles = excludeFiles;
       }
     }
 
@@ -655,6 +666,18 @@ export function CreateServerDialog({
                           ))}
                         </TextField>
                       </>
+                    )}
+
+                    {modpackSlug && (
+                      <TextField
+                        label="Exclude mods (optional)"
+                        value={excludeFilesInput}
+                        onChange={(e) => setExcludeFilesInput(e.target.value)}
+                        placeholder="e.g. statuseffectbars, jei"
+                        helperText="Comma-separated. Use this to drop client-only mods that crash a dedicated server."
+                        fullWidth
+                        disabled={isCreating}
+                      />
                     )}
                   </Box>
                 </Collapse>
