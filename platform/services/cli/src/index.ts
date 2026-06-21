@@ -291,11 +291,12 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
 
 ${colors.cyan('Self Update:')}
-  ${colors.bold('update')}                     Check and update mcctl to latest version
+  ${colors.bold('update')}                     Update CLI and all installed services (default)
+  ${colors.bold('update')} --cli-only          Update only the mcctl CLI binary
   ${colors.bold('update')} --check             Check for updates only (no install)
   ${colors.bold('update')} --force             Force check (ignore cache)
   ${colors.bold('update')} --yes               Auto-confirm update
-  ${colors.bold('update')} --all               Update CLI and all installed services
+  ${colors.bold('update')} --all               Deprecated alias (same as default)
 
 ${colors.cyan('Platform Upgrade:')}
   ${colors.bold('upgrade')}                    Sync .env and templates with latest CLI version
@@ -986,6 +987,7 @@ async function main(): Promise<void> {
           force: flags['force'] === true,
           yes: flags['yes'] === true,
           all: flags['all'] === true,
+          cliOnly: flags['cli-only'] === true,
           root: rootDir,
         });
         break;
