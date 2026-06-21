@@ -11,6 +11,12 @@ import {
   getContainerHealth,
   stopContainer,
   getServerPlayitDomain,
+  WorldManagementUseCase,
+  ApiPromptAdapter,
+  ShellAdapter,
+  WorldRepository,
+  ServerRepository,
+  Paths,
 } from '@minecraft-docker/shared';
 import {
   ServerListResponseSchema,
@@ -602,6 +608,52 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         error: 'BadRequest',
         message: `Modpack slug is required for ${type} server type`,
       });
+    }
+
+    // World options are mutually exclusive (seed / worldUrl / worldName).
+    // Enforce here so clients get a 400 instead of a 500 from the bash guard.
+    // NOTE: must run before the SSE branch below, where HTTP status can no
+    // longer be set once the event stream headers are written.
+    const worldOptionCount = [seed, worldUrl, worldName].filter(Boolean).length;
+    if (worldOptionCount > 1) {
+      return reply.code(400).send({
+        error: 'BadRequest',
+        message:
+          'World options (seed, worldUrl, worldName) are mutually exclusive — provide at most one',
+      });
+    }
+
+    // When attaching an existing world, verify it exists and is unmapped.
+    if (worldName) {
+      try {
+        const paths = new Paths();
+        const worldUseCase = new WorldManagementUseCase(
+          new ApiPromptAdapter({ confirmValue: true }),
+          new ShellAdapter({ paths }),
+          new WorldRepository(paths),
+          new ServerRepository(paths)
+        );
+        const worlds = await worldUseCase.listWorlds();
+        const target = worlds.find((w) => w.name === worldName);
+        if (!target) {
+          return reply.code(400).send({
+            error: 'BadRequest',
+            message: `World '${worldName}' not found`,
+          });
+        }
+        if (target.servers.length > 0 || target.isLocked) {
+          return reply.code(409).send({
+            error: 'Conflict',
+            message: `World '${worldName}' is already in use by another server`,
+          });
+        }
+      } catch (error) {
+        fastify.log.error(error, 'Failed to validate worldName');
+        return reply.code(500).send({
+          error: 'InternalServerError',
+          message: 'Failed to validate world selection',
+        });
+      }
     }
 
     // Build create-server.sh command arguments

@@ -48,6 +48,12 @@ export interface IWorldManagementUseCase {
   listWorlds(): Promise<WorldListResult[]>;
 
   /**
+   * List worlds that are not mapped to any server (servers.length === 0).
+   * Satellites are already folded into their parent by listWorlds().
+   */
+  listUnmappedWorlds(): Promise<WorldListResult[]>;
+
+  /**
    * Interactive world creation with seed support
    */
   createWorld(options?: WorldCreateOptions): Promise<WorldCreateResult>;

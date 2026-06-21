@@ -117,3 +117,36 @@ describe('WorldManagementUseCase.listWorlds - servers using each world', () => {
     expect(result.find((x) => x.name === 'unused-world')?.servers).toEqual([]);
   });
 });
+
+describe('WorldManagementUseCase.listUnmappedWorlds', () => {
+  test('returns only worlds no server maps to', async () => {
+    const serverRepo = makeServerRepo({
+      survival: { LEVEL: 'mapped-world' },
+    });
+    const useCase = makeUseCase(['mapped-world', 'free-world'], serverRepo);
+
+    const result = await useCase.listUnmappedWorlds();
+    const names = result.map((w) => w.name);
+
+    expect(names).toContain('free-world');
+    expect(names).not.toContain('mapped-world');
+  });
+
+  test('a world whose name equals an unconfigured server name is considered mapped (fallback)', async () => {
+    // Server "myserver" with no LEVEL defaults to using worlds/myserver.
+    const serverRepo = makeServerRepo({ myserver: {} });
+    const useCase = makeUseCase(['myserver', 'free-world'], serverRepo);
+
+    const names = (await useCase.listUnmappedWorlds()).map((w) => w.name);
+
+    expect(names).toEqual(['free-world']);
+  });
+
+  test('all worlds are unmapped when there are no servers', async () => {
+    const serverRepo = makeServerRepo({});
+    const useCase = makeUseCase(['a', 'b'], serverRepo);
+
+    const names = (await useCase.listUnmappedWorlds()).map((w) => w.name).sort();
+    expect(names).toEqual(['a', 'b']);
+  });
+});

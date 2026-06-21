@@ -27,6 +27,7 @@ import Collapse from '@mui/material/Collapse';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import { useWorlds } from '@/hooks/useMcctl';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 import type { CreateServerStatus } from '@/hooks/useCreateServerSSE';
 
@@ -89,6 +90,8 @@ export function CreateServerDialog({
   const [formData, setFormData] = useState<CreateServerRequest>(DEFAULT_FORM_VALUES);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [memoryTouched, setMemoryTouched] = useState(false);
+  const [worldMode, setWorldMode] = useState<'none' | 'seed' | 'existingWorld'>('none');
+  const [selectedWorldName, setSelectedWorldName] = useState('');
 
   // Refs for accessibility
   const firstModpackFieldRef = useRef<HTMLInputElement>(null);
@@ -98,6 +101,12 @@ export function CreateServerDialog({
   const activeStep = PROGRESS_STEPS.findIndex((step) => step.key === status);
   const isCreating = status !== 'idle' && status !== 'completed' && status !== 'error';
 
+  // World data for "Existing World" option
+  const { data: worldsData, isLoading: worldsLoading } = useWorlds();
+  const unmappedWorlds = (worldsData?.worlds ?? []).filter(
+    (w) => (!w.servers || w.servers.length === 0) && !w.isLocked
+  );
+
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
@@ -105,6 +114,8 @@ export function CreateServerDialog({
       setFormData(DEFAULT_FORM_VALUES);
       setErrors({});
       setMemoryTouched(false);
+      setWorldMode('none');
+      setSelectedWorldName('');
     }
   }, [open]);
 
@@ -149,6 +160,22 @@ export function CreateServerDialog({
         firstModpackFieldRef.current.focus();
       }
     }, 300);
+  };
+
+  const handleWorldModeChange = (
+    _: React.MouseEvent<HTMLElement>,
+    newMode: 'none' | 'seed' | 'existingWorld' | null,
+  ) => {
+    if (newMode === null) return;
+
+    if (newMode !== 'seed') {
+      setFormData((prev) => ({ ...prev, seed: undefined }));
+    }
+    if (newMode !== 'existingWorld') {
+      setSelectedWorldName('');
+    }
+    setErrors((prev) => ({ ...prev, world: '' }));
+    setWorldMode(newMode);
   };
 
   const handleChange = (field: keyof CreateServerRequest) => (
@@ -218,6 +245,17 @@ export function CreateServerDialog({
       if (formData.modLoader) {
         submitData.modLoader = formData.modLoader;
       }
+    }
+
+    // Apply world setup fields
+    if (worldMode === 'seed' && formData.seed) {
+      submitData.seed = formData.seed;
+    } else if (worldMode === 'existingWorld') {
+      if (!selectedWorldName) {
+        setErrors((prev) => ({ ...prev, world: 'Please select a world' }));
+        return;
+      }
+      submitData.worldName = selectedWorldName;
     }
 
     // Submit
@@ -409,6 +447,84 @@ export function CreateServerDialog({
                       fullWidth
                       disabled={isCreating}
                     />
+                  </Box>
+                </Collapse>
+              </Box>
+
+              {/* Group 2.5: World Setup */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  World Setup
+                </Typography>
+
+                <ToggleButtonGroup
+                  value={worldMode}
+                  exclusive
+                  onChange={handleWorldModeChange}
+                  aria-label="World setup mode"
+                  fullWidth
+                  disabled={isCreating}
+                >
+                  <ToggleButton value="none" aria-label="Default World">
+                    Default World
+                  </ToggleButton>
+                  <ToggleButton value="seed" aria-label="Seed">
+                    Seed
+                  </ToggleButton>
+                  <ToggleButton value="existingWorld" aria-label="Existing World">
+                    Existing World
+                  </ToggleButton>
+                </ToggleButtonGroup>
+
+                <Collapse in={worldMode === 'seed'} unmountOnExit>
+                  <TextField
+                    label="Seed"
+                    value={formData.seed || ''}
+                    onChange={handleChange('seed')}
+                    fullWidth
+                    disabled={isCreating}
+                    sx={{ mt: 2 }}
+                  />
+                </Collapse>
+
+                <Collapse in={worldMode === 'existingWorld'} unmountOnExit>
+                  <Box sx={{ mt: 2 }}>
+                    {worldsLoading ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                        <CircularProgress size={24} />
+                      </Box>
+                    ) : (
+                      <TextField
+                        label="World"
+                        select
+                        value={selectedWorldName}
+                        onChange={(e) => {
+                          setSelectedWorldName(e.target.value);
+                          if (errors.world) {
+                            setErrors((prev) => ({ ...prev, world: '' }));
+                          }
+                        }}
+                        fullWidth
+                        disabled={isCreating || unmappedWorlds.length === 0}
+                        error={!!errors.world}
+                        helperText={
+                          errors.world ||
+                          (unmappedWorlds.length === 0 ? 'No unmapped worlds available' : '')
+                        }
+                      >
+                        {unmappedWorlds.length === 0 ? (
+                          <MenuItem value="" disabled>
+                            No unmapped worlds available
+                          </MenuItem>
+                        ) : (
+                          unmappedWorlds.map((world) => (
+                            <MenuItem key={world.name} value={world.name}>
+                              {world.name}
+                            </MenuItem>
+                          ))
+                        )}
+                      </TextField>
+                    )}
                   </Box>
                 </Collapse>
               </Box>

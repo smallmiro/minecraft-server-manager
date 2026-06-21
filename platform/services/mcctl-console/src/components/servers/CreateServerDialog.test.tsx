@@ -3,6 +3,21 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import { CreateServerDialog } from './CreateServerDialog';
 
+// Mock useWorlds so the dialog can render without a QueryClientProvider
+vi.mock('@/hooks/useMcctl', () => ({
+  useWorlds: vi.fn(() => ({
+    data: {
+      worlds: [
+        { name: 'free-world', path: '/worlds/free-world', isLocked: false, servers: [] },
+        { name: 'taken-world', path: '/worlds/taken-world', isLocked: false, servers: ['some-server'] },
+        { name: 'locked-world', path: '/worlds/locked-world', isLocked: true, servers: [] },
+      ],
+      total: 3,
+    },
+    isLoading: false,
+  })),
+}));
+
 const renderWithTheme = (component: React.ReactNode) => {
   return render(<ThemeProvider>{component}</ThemeProvider>);
 };
@@ -516,6 +531,155 @@ describe('CreateServerDialog', () => {
       // Check for aria-live region
       const liveRegion = screen.getByRole('status');
       expect(liveRegion).toHaveAttribute('aria-live', 'polite');
+    });
+  });
+
+  describe('World Setup', () => {
+    it('should render the World Setup toggle with three options', () => {
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+      );
+
+      const worldToggle = screen.getByRole('group', { name: /world setup mode/i });
+      expect(worldToggle).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /default world/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^seed$/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /existing world/i })).toBeInTheDocument();
+    });
+
+    it('should default to "Default World" mode and submit without seed or worldName', async () => {
+      const onSubmit = vi.fn();
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+      );
+
+      // "Default World" should be selected by default
+      expect(screen.getByRole('button', { name: /default world/i })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+
+      const nameInput = screen.getByLabelText(/server name/i);
+      fireEvent.change(nameInput, { target: { value: 'my-server' } });
+
+      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledTimes(1);
+        const arg = onSubmit.mock.calls[0][0];
+        expect(arg).not.toHaveProperty('seed');
+        expect(arg).not.toHaveProperty('worldName');
+      });
+    });
+
+    it('should submit with seed when Seed mode is selected and seed is entered', async () => {
+      const onSubmit = vi.fn();
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+      );
+
+      // Switch to Seed mode (ToggleButton)
+      fireEvent.click(screen.getByRole('button', { name: /^seed$/i }));
+
+      // Wait for Collapse to open and Seed textbox to appear
+      // Use getByRole('textbox') to avoid ambiguity with the "Seed" toggle button
+      await waitFor(() => {
+        expect(screen.getByRole('textbox', { name: /^seed$/i })).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByRole('textbox', { name: /^seed$/i }), {
+        target: { value: '12345' },
+      });
+
+      const nameInput = screen.getByLabelText(/server name/i);
+      fireEvent.change(nameInput, { target: { value: 'seeded-server' } });
+
+      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledTimes(1);
+        const arg = onSubmit.mock.calls[0][0];
+        expect(arg.seed).toBe('12345');
+        expect(arg).not.toHaveProperty('worldName');
+      });
+    });
+
+    it('should show only unmapped worlds in Existing World mode', async () => {
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /existing world/i }));
+
+      // Wait for Collapse and the World select to appear
+      await waitFor(() => {
+        expect(screen.getByLabelText(/^world$/i)).toBeInTheDocument();
+      });
+
+      // Open the select dropdown
+      fireEvent.mouseDown(screen.getByLabelText(/^world$/i));
+
+      await waitFor(() => {
+        // Only the unmapped, unlocked world should be available
+        expect(screen.getByRole('option', { name: 'free-world' })).toBeInTheDocument();
+        // Mapped and locked worlds must NOT appear
+        expect(screen.queryByRole('option', { name: 'taken-world' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('option', { name: 'locked-world' })).not.toBeInTheDocument();
+      });
+    });
+
+    it('should submit with worldName when Existing World mode has a world selected', async () => {
+      const onSubmit = vi.fn();
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /existing world/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/^world$/i)).toBeInTheDocument();
+      });
+
+      // Select the unmapped world
+      fireEvent.mouseDown(screen.getByLabelText(/^world$/i));
+      const option = await screen.findByRole('option', { name: 'free-world' });
+      fireEvent.click(option);
+
+      const nameInput = screen.getByLabelText(/server name/i);
+      fireEvent.change(nameInput, { target: { value: 'world-server' } });
+
+      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledTimes(1);
+        const arg = onSubmit.mock.calls[0][0];
+        expect(arg.worldName).toBe('free-world');
+        expect(arg).not.toHaveProperty('seed');
+      });
+    });
+
+    it('should show validation error and not call onSubmit when Existing World mode has no world selected', async () => {
+      const onSubmit = vi.fn();
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /existing world/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/^world$/i)).toBeInTheDocument();
+      });
+
+      // Fill server name but do NOT select a world
+      const nameInput = screen.getByLabelText(/server name/i);
+      fireEvent.change(nameInput, { target: { value: 'no-world-server' } });
+
+      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => {
+        expect(onSubmit).not.toHaveBeenCalled();
+        expect(screen.getByText(/please select a world/i)).toBeInTheDocument();
+      });
     });
   });
 });
