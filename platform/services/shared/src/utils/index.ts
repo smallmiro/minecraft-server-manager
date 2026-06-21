@@ -356,6 +356,10 @@ export class Config {
   }
 }
 
+// Re-export the pure formatter (kept in a dependency-free module so the domain
+// layer can use it without importing this I/O-bearing barrel).
+export { formatWorldBytes } from './format.js';
+
 /**
  * Console output utilities with colors
  */

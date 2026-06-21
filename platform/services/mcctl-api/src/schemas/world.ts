@@ -15,6 +15,10 @@ export const WorldSummarySchema = Type.Object({
   size: Type.String(),
   lastModified: Type.Optional(Type.String({ format: 'date-time' })),
   servers: Type.Array(Type.String()),
+  dimensions: Type.Optional(Type.Object({
+    nether: Type.Boolean(),
+    end: Type.Boolean(),
+  })),
 });
 
 /**
@@ -28,6 +32,10 @@ export const WorldDetailSchema = Type.Object({
   size: Type.String(),
   lastModified: Type.Optional(Type.String({ format: 'date-time' })),
   servers: Type.Array(Type.String()),
+  dimensions: Type.Optional(Type.Object({
+    nether: Type.Boolean(),
+    end: Type.Boolean(),
+  })),
 });
 
 // ========================================
@@ -63,6 +71,14 @@ export const AssignWorldRequestSchema = Type.Object({
  */
 export const DeleteWorldQuerySchema = Type.Object({
   force: Type.Optional(Type.Boolean({ default: false })),
+});
+
+/**
+ * Upload world query parameters (multipart route)
+ */
+export const UploadWorldQuerySchema = Type.Object({
+  name: Type.String({ minLength: 1, pattern: '^[a-zA-Z0-9_-]+$' }),
+  seed: Type.Optional(Type.String()),
 });
 
 /**
@@ -152,6 +168,7 @@ export type CreateWorldRequest = Static<typeof CreateWorldRequestSchema>;
 export type AssignWorldRequest = Static<typeof AssignWorldRequestSchema>;
 export type DeleteWorldQuery = Static<typeof DeleteWorldQuerySchema>;
 export type ReleaseWorldQuery = Static<typeof ReleaseWorldQuerySchema>;
+export type UploadWorldQuery = Static<typeof UploadWorldQuerySchema>;
 export type WorldListResponse = Static<typeof WorldListResponseSchema>;
 export type WorldDetailResponse = Static<typeof WorldDetailResponseSchema>;
 export type CreateWorldResponse = Static<typeof CreateWorldResponseSchema>;

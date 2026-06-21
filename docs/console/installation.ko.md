@@ -177,6 +177,7 @@ docker compose -f docker-compose.admin.yml up -d
 | `LOG_LEVEL` | 로깅 레벨 | `info` |
 | `MCCTL_API_PORT` | API 서버 포트 | `5001` |
 | `MCCTL_CONSOLE_PORT` | 콘솔 포트 | `5000` |
+| `WORLD_UPLOAD_MAX_SIZE` | 월드 ZIP 업로드 최대 크기 (바이트, `POST /api/worlds/upload`) | `1073741824` (1 GB) |
 
 ### 접근 모드
 

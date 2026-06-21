@@ -23,6 +23,7 @@ import { AssignWorldDialog } from '@/components/worlds/AssignWorldDialog';
 import {
   useWorlds,
   useCreateWorld,
+  useCreateWorldWithZip,
   useAssignWorld,
   useReleaseWorld,
   useDeleteWorld,
@@ -44,16 +45,28 @@ export default function WorldsPage() {
 
   // Mutations
   const createWorld = useCreateWorld();
+  const createWorldWithZip = useCreateWorldWithZip();
   const assignWorld = useAssignWorld();
   const releaseWorld = useReleaseWorld();
   const deleteWorld = useDeleteWorld();
 
-  const handleCreateWorld = (request: CreateWorldRequest) => {
-    createWorld.mutate(request, {
-      onSuccess: () => {
-        setCreateDialogOpen(false);
-      },
-    });
+  const handleCreateWorld = (request: CreateWorldRequest, zipFile?: File | null) => {
+    if (zipFile) {
+      createWorldWithZip.mutate(
+        { data: request, zipFile },
+        {
+          onSuccess: () => {
+            setCreateDialogOpen(false);
+          },
+        }
+      );
+    } else {
+      createWorld.mutate(request, {
+        onSuccess: () => {
+          setCreateDialogOpen(false);
+        },
+      });
+    }
   };
 
   const handleAssignWorld = (worldName: string, serverName: string) => {
@@ -173,6 +186,12 @@ export default function WorldsPage() {
         </Alert>
       )}
 
+      {createWorldWithZip.isError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Failed to import world: {createWorldWithZip.error?.message}
+        </Alert>
+      )}
+
       {assignWorld.isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
           Failed to assign world: {assignWorld.error?.message}
@@ -211,9 +230,10 @@ export default function WorldsPage() {
         onClose={() => {
           setCreateDialogOpen(false);
           createWorld.reset();
+          createWorldWithZip.reset();
         }}
         onSubmit={handleCreateWorld}
-        loading={createWorld.isPending}
+        loading={createWorld.isPending || createWorldWithZip.isPending}
       />
 
       <AssignWorldDialog

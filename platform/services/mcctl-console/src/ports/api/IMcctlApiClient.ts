@@ -106,6 +106,11 @@ export interface World {
   lastModified?: string;
   /** Names of servers configured to use this world. */
   servers?: string[];
+  /** Dimension availability (only present for worlds that fold in split satellites). */
+  dimensions?: {
+    nether: boolean;
+    end: boolean;
+  };
 }
 
 export interface WorldListResponse {

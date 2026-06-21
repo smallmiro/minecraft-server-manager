@@ -158,6 +158,7 @@ mcctl console init
 | `HOSTNAME` | Console server hostname | `0.0.0.0` |
 | `MCCTL_API_URL` | Internal API URL | `http://localhost:5001` |
 | `NODE_ENV` | Environment mode | `production` |
+| `WORLD_UPLOAD_MAX_SIZE` | Max world ZIP size in bytes for `POST /api/worlds/upload` | `1073741824` (1 GB) |
 
 ### PM2 Ecosystem Configuration
 

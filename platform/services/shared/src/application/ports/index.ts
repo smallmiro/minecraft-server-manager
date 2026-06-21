@@ -13,6 +13,8 @@ export type {
   WorldDeleteResult,
   WorldCreateOptions,
   WorldCreateResult,
+  WorldImportOptions,
+  WorldImportResult,
   IBackupUseCase,
   BackupInitResult,
   BackupPushResult,

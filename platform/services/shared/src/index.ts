@@ -28,7 +28,7 @@ export {
 } from './types/index.js';
 
 // Re-export utilities
-export { Paths, Config, colors, log, getPackageRoot } from './utils/index.js';
+export { Paths, Config, colors, log, getPackageRoot, formatWorldBytes } from './utils/index.js';
 
 // Re-export docker utilities
 export {

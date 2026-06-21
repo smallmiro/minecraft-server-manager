@@ -9,6 +9,8 @@ export type {
   WorldDeleteResult,
   WorldCreateOptions,
   WorldCreateResult,
+  WorldImportOptions,
+  WorldImportResult,
 } from './IWorldManagementUseCase.js';
 export type {
   IBackupUseCase,
