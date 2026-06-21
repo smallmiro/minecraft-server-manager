@@ -114,6 +114,14 @@ export class ModrinthApiClient {
     const url = `${this.baseUrl}/project/${slugOrId}/version${queryString ? '?' + queryString : ''}`;
     const response = await fetch(url);
 
+    // A non-existent project returns 404. Treat it as "no versions" (empty list)
+    // rather than throwing, mirroring getProject()'s 404 handling. This lets the
+    // API layer respond with a clean 404 instead of a 500 when a user types a
+    // partial/unknown slug into the modpack search.
+    if (response.status === 404) {
+      return [];
+    }
+
     if (!response.ok) {
       throw new Error(`Modrinth API error: ${response.status} ${response.statusText}`);
     }
