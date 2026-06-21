@@ -1,3 +1,5 @@
+import { formatWorldBytes } from '../../utils/index.js';
+
 /**
  * World lock status
  */
@@ -79,17 +81,7 @@ export class World {
    */
   get sizeFormatted(): string {
     if (!this._sizeBytes) return 'Unknown';
-
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    let size = this._sizeBytes;
-    let unitIndex = 0;
-
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024;
-      unitIndex++;
-    }
-
-    return `${size.toFixed(1)}${units[unitIndex]}`;
+    return formatWorldBytes(this._sizeBytes);
   }
 
   /**
