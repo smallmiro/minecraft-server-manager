@@ -26,7 +26,7 @@ const mockUseModpackSearch = vi.fn(
   (): SearchResult => ({ data: undefined, isLoading: false })
 );
 const mockUseModVersions = vi.fn(
-  (): MatrixResult => ({ data: undefined, isLoading: false, isError: false })
+  (_slug?: string): MatrixResult => ({ data: undefined, isLoading: false, isError: false })
 );
 
 vi.mock('@/hooks/useMods', () => ({

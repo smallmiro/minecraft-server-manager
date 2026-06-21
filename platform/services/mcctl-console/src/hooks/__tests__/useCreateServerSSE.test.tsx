@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { useCreateServerSSE } from '../useCreateServerSSE';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 
@@ -7,9 +9,17 @@ import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 const ASYNC_TIMEOUT = 10000;
 
 describe('useCreateServerSSE', () => {
+  let queryClient: QueryClient;
+  let wrapper: ({ children }: { children: ReactNode }) => JSX.Element;
+
   beforeEach(() => {
     // Mock global.fetch to avoid actual network requests
     global.fetch = vi.fn();
+    // The hook uses useQueryClient(); provide one and a wrapper for renderHook.
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
   });
 
   afterEach(() => {
@@ -17,7 +27,7 @@ describe('useCreateServerSSE', () => {
   });
 
   it('should initialize with default state', () => {
-    const { result } = renderHook(() => useCreateServerSSE());
+    const { result } = renderHook(() => useCreateServerSSE(), { wrapper });
 
     expect(result.current.status).toBe('idle');
     expect(result.current.progress).toBe(0);
@@ -27,7 +37,7 @@ describe('useCreateServerSSE', () => {
   });
 
   it('should start server creation', async () => {
-    const { result } = renderHook(() => useCreateServerSSE());
+    const { result } = renderHook(() => useCreateServerSSE(), { wrapper });
 
     const serverData: CreateServerRequest = {
       name: 'test-server',
@@ -54,7 +64,7 @@ describe('useCreateServerSSE', () => {
 
   it('should handle completion', async () => {
     const onSuccess = vi.fn();
-    const { result } = renderHook(() => useCreateServerSSE({ onSuccess }));
+    const { result } = renderHook(() => useCreateServerSSE({ onSuccess }), { wrapper });
 
     const serverData: CreateServerRequest = {
       name: 'test-server',
@@ -81,9 +91,34 @@ describe('useCreateServerSSE', () => {
     expect(onSuccess).toHaveBeenCalledWith('test-server');
   });
 
+  it('should invalidate the servers query on completion so the list refreshes', async () => {
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    const { result } = renderHook(() => useCreateServerSSE(), { wrapper });
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ success: true }),
+    });
+
+    act(() => {
+      result.current.createServer({
+        name: 'test-server',
+        type: 'PAPER',
+        version: '1.21.1',
+        memory: '4G',
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('completed');
+    }, { timeout: ASYNC_TIMEOUT });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['servers'] });
+  });
+
   it('should handle network errors', async () => {
     const onError = vi.fn();
-    const { result } = renderHook(() => useCreateServerSSE({ onError }));
+    const { result } = renderHook(() => useCreateServerSSE({ onError }), { wrapper });
 
     const serverData: CreateServerRequest = {
       name: 'test-server',
@@ -110,7 +145,7 @@ describe('useCreateServerSSE', () => {
 
   it('should handle API errors', async () => {
     const onError = vi.fn();
-    const { result } = renderHook(() => useCreateServerSSE({ onError }));
+    const { result } = renderHook(() => useCreateServerSSE({ onError }), { wrapper });
 
     const serverData: CreateServerRequest = {
       name: 'test-server',
@@ -140,7 +175,7 @@ describe('useCreateServerSSE', () => {
   });
 
   it('should reset state', async () => {
-    const { result } = renderHook(() => useCreateServerSSE());
+    const { result } = renderHook(() => useCreateServerSSE(), { wrapper });
 
     const serverData: CreateServerRequest = {
       name: 'test-server',
@@ -175,7 +210,7 @@ describe('useCreateServerSSE', () => {
   });
 
   it('should not allow multiple simultaneous creations', async () => {
-    const { result } = renderHook(() => useCreateServerSSE());
+    const { result } = renderHook(() => useCreateServerSSE(), { wrapper });
 
     const serverData: CreateServerRequest = {
       name: 'test-server',
@@ -215,7 +250,7 @@ describe('useCreateServerSSE', () => {
 
   it('should call onProgress callback', async () => {
     const onProgress = vi.fn();
-    const { result } = renderHook(() => useCreateServerSSE({ onProgress }));
+    const { result } = renderHook(() => useCreateServerSSE({ onProgress }), { wrapper });
 
     const serverData: CreateServerRequest = {
       name: 'test-server',

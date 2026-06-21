@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 import type { ServerCreateEvent } from '@/types/events';
 
@@ -104,6 +105,7 @@ export function useCreateServerSSE(
   options: UseCreateServerSSEOptions = {}
 ): UseCreateServerSSEReturn {
   const { onSuccess, onError, onProgress } = options;
+  const queryClient = useQueryClient();
 
   const [status, setStatus] = useState<CreateServerStatus>('idle');
   const [progress, setProgress] = useState<number>(0);
@@ -193,6 +195,9 @@ export function useCreateServerSSE(
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         updateProgress('completed', 'Server created successfully!', 100);
+        // Refresh the server list so the newly created server shows up without
+        // a manual reload. Other mutations (delete/start/stop) already do this.
+        queryClient.invalidateQueries({ queryKey: ['servers'] });
         onSuccess?.(data.name);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -202,7 +207,7 @@ export function useCreateServerSSE(
         onError?.(errorMessage);
       }
     },
-    [status, updateProgress, onSuccess, onError]
+    [status, updateProgress, onSuccess, onError, queryClient]
   );
 
   // Cleanup on unmount
