@@ -18,6 +18,7 @@ import {
   Paths,
   AuditActionEnum,
   BlueMapCliRenderer,
+  BlueMapMarkerWriter,
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import {
@@ -56,6 +57,10 @@ import {
   type MapRenderRequest,
   type MapRenderQuery,
 } from '../schemas/world-map.js';
+import {
+  StructuresResponseSchema,
+  MapMarkersResponseSchema,
+} from '../schemas/world-structures.js';
 import { config } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
 import { resolve as resolvePath, sep, extname } from 'node:path';
@@ -556,6 +561,83 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const contentType = MAP_CONTENT_TYPES[extname(target).toLowerCase()] || 'application/octet-stream';
     reply.header('Content-Type', contentType);
     return reply.send(createReadStream(target));
+  });
+
+  /**
+   * GET /api/worlds/:name/structures
+   * Generated structures (villages, fortresses, temples, …) across dimensions,
+   * parsed from region NBT structure starts. (#530)
+   */
+  fastify.get<{ Params: MapWorldNameParams }>('/api/worlds/:name/structures', {
+    schema: {
+      tags: ['worlds'],
+      summary: 'List world structures',
+      description: 'Returns generated structures parsed from region structure-start NBT',
+      params: MapWorldNameParamsSchema,
+      response: {
+        200: StructuresResponseSchema,
+        404: MapErrorResponseSchema,
+        500: MapErrorResponseSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const { name } = request.params;
+    try {
+      const useCase = createWorldInfoUseCase();
+      const structures = await useCase.getStructures(name);
+      return reply.send({ structures, total: structures.length });
+    } catch (error) {
+      if (error instanceof Error && /not found/i.test(error.message)) {
+        return reply.code(404).send({ error: 'NotFound', message: `World '${name}' not found` });
+      }
+      fastify.log.error(error, 'Failed to read structures');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to read structures' });
+    }
+  });
+
+  /**
+   * POST /api/worlds/:name/map/markers
+   * Extract structures and write them as BlueMap markers into the rendered
+   * webroot (live/markers.json per dimension). Requires the map to be rendered
+   * first. No tile re-render is needed. (#530)
+   */
+  fastify.post<{ Params: MapWorldNameParams }>('/api/worlds/:name/map/markers', {
+    schema: {
+      tags: ['worlds'],
+      summary: 'Write structure markers to the map',
+      description: 'Extracts structures and writes BlueMap marker-sets into the rendered webroot',
+      params: MapWorldNameParamsSchema,
+      response: {
+        200: MapMarkersResponseSchema,
+        404: MapErrorResponseSchema,
+        409: MapErrorResponseSchema,
+        500: MapErrorResponseSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const { name } = request.params;
+
+    if (!existsSync(join(new Paths().worlds, name))) {
+      return reply.code(404).send({ error: 'NotFound', message: `World '${name}' not found` });
+    }
+
+    const webroot = getWebroot(name);
+    if (!existsSync(join(webroot, 'index.html'))) {
+      return reply.code(409).send({
+        error: 'Conflict',
+        message: 'Map not rendered yet — render the map before writing markers',
+      });
+    }
+
+    try {
+      const useCase = createWorldInfoUseCase();
+      const structures = await useCase.getStructures(name);
+      const counts = await new BlueMapMarkerWriter().writeMarkers(webroot, structures);
+      return reply.send({ counts, total: structures.length });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to write map markers');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to write map markers' });
+    }
   });
 
   /**
