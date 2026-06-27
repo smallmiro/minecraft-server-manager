@@ -45,7 +45,9 @@ export function WorldInfoPanel({ worldName, serverName }: WorldInfoPanelProps) {
   const info = infoQuery.data.info;
   const offline = offlineQuery.data?.players ?? [];
   const live = liveQuery.data?.players ?? [];
-  const serverStopped = Boolean(serverName) && live.length === 0;
+  // We can't distinguish "stopped" from "running but empty" here, so keep the
+  // message neutral: simply note that the shown positions are last-known.
+  const noPlayersOnline = Boolean(serverName) && live.length === 0;
 
   return (
     <Stack spacing={3} data-testid="world-info-panel">
@@ -79,9 +81,9 @@ export function WorldInfoPanel({ worldName, serverName }: WorldInfoPanelProps) {
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
           👥 Players
         </Typography>
-        {serverStopped && (
+        {noPlayersOnline && (
           <Alert severity="info" sx={{ mb: 1 }} data-testid="world-info-offline-note">
-            Server is stopped — showing last known (offline) locations.
+            No players online — showing last known (offline) locations.
           </Alert>
         )}
         <PlayerLocationList offline={offline} live={live} />
