@@ -4,7 +4,8 @@ import { mkdirSync, rmSync, existsSync, copyFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-world-info-test');
-const BACKUP = join(import.meta.dirname, '..', '..', '..', 'backups', 'worlds', 'worlds');
+// Committed fixtures (do NOT read from gitignored platform/backups).
+const FIXTURE = join(import.meta.dirname, 'fixtures', 'world-info', 'factory');
 
 process.env.MCCTL_ROOT = TEST_PLATFORM_PATH;
 process.env.PLATFORM_PATH = TEST_PLATFORM_PATH;
@@ -17,11 +18,12 @@ function seedWorld(name: string) {
   mkdirSync(join(dir, 'region'), { recursive: true });
   mkdirSync(join(dir, 'DIM-1'), { recursive: true });
   mkdirSync(join(dir, 'DIM1'), { recursive: true });
-  copyFileSync(join(BACKUP, 'factory', 'level.dat'), join(dir, 'level.dat'));
+  copyFileSync(join(FIXTURE, 'level.dat'), join(dir, 'level.dat'));
   copyFileSync(
-    join(BACKUP, 'botagent', 'playerdata', '91091459-b299-302c-b521-a17fae71bce3.dat'),
+    join(FIXTURE, 'playerdata', '91091459-b299-302c-b521-a17fae71bce3.dat'),
     join(dir, 'playerdata', '91091459-b299-302c-b521-a17fae71bce3.dat')
   );
+  copyFileSync(join(FIXTURE, 'usercache.json'), join(dir, 'usercache.json'));
 }
 
 function makeServer(name: string, env: Record<string, string>) {
