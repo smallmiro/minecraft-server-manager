@@ -33,3 +33,4 @@ export type {
 } from './IBackupScheduleUseCase.js';
 export type { IConfigSnapshotUseCase } from './IConfigSnapshotUseCase.js';
 export type { IConfigSnapshotScheduleUseCase } from './IConfigSnapshotScheduleUseCase.js';
+export type { IWorldInfoUseCase } from './IWorldInfoUseCase.js';
