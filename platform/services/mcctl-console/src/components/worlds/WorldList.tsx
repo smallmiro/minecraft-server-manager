@@ -19,6 +19,7 @@ interface WorldListProps {
   onAssign?: (worldName: string) => void;
   onRelease?: (worldName: string) => void;
   onDelete?: (worldName: string) => void;
+  onViewInfo?: (worldName: string) => void;
   onCreate?: () => void;
   loadingWorlds?: string[];
 }
@@ -30,6 +31,7 @@ export function WorldList({
   onAssign,
   onRelease,
   onDelete,
+  onViewInfo,
   onCreate,
   loadingWorlds = [],
 }: WorldListProps) {
@@ -154,6 +156,7 @@ export function WorldList({
                 onAssign={onAssign}
                 onRelease={onRelease}
                 onDelete={onDelete}
+                onViewInfo={onViewInfo}
                 loading={loadingWorlds.includes(world.name)}
               />
             </Grid>
