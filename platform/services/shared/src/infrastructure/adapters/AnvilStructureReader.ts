@@ -1,6 +1,3 @@
-import { promisify } from 'node:util';
-import zlib from 'node:zlib';
-import nbt from 'prismarine-nbt';
 import {
   Dimension,
   type Structure,
@@ -8,23 +5,7 @@ import {
   STRUCTURE_CATEGORY_LABELS,
   categorizeStructure,
 } from '../../domain/index.js';
-
-const inflate = promisify(zlib.inflate);
-const gunzip = promisify(zlib.gunzip);
-
-const SECTOR_BYTES = 4096;
-
-/** Decompress a single Anvil chunk payload by its compression type byte. */
-async function decompressChunk(data: Buffer, compression: number): Promise<Buffer | null> {
-  try {
-    if (compression === 1) return await gunzip(data);
-    if (compression === 2) return await inflate(data);
-    if (compression === 3) return data; // uncompressed
-  } catch {
-    return null;
-  }
-  return null;
-}
+import { iterateRegionChunks } from './anvilRegion.js';
 
 /** Read an NBT property regardless of intermediate tag-wrapping. */
 function prop(obj: unknown, key: string): unknown {
@@ -117,35 +98,11 @@ export async function parseStructuresFromRegion(
   buffer: Buffer,
   dimension: Dimension
 ): Promise<Structure[]> {
-  if (buffer.length < SECTOR_BYTES) return [];
   const out: Structure[] = [];
   const seen = new Set<string>();
 
-  for (let i = 0; i < 1024; i++) {
-    const entry = buffer.readUInt32BE(i * 4);
-    const sectorOffset = entry >>> 8;
-    const sectorCount = entry & 0xff;
-    if (sectorOffset < 2 || sectorCount === 0) continue;
-
-    const start = sectorOffset * SECTOR_BYTES;
-    if (start + 5 > buffer.length) continue;
-    const length = buffer.readUInt32BE(start);
-    if (length <= 1 || start + 4 + length > buffer.length) continue;
-    const compression = buffer.readUInt8(start + 4);
-    const payload = buffer.subarray(start + 5, start + 4 + length);
-
-    const raw = await decompressChunk(payload, compression);
-    if (!raw) continue;
-
-    let root: { value: unknown };
-    try {
-      const result = await nbt.parse(raw);
-      root = result.parsed as { value: unknown };
-    } catch {
-      continue;
-    }
-
-    const starts = getStarts(root.value);
+  for await (const rootValue of iterateRegionChunks(buffer)) {
+    const starts = getStarts(rootValue);
     if (!starts) continue;
 
     for (const [, startTag] of Object.entries(starts)) {
