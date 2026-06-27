@@ -23,6 +23,8 @@ vi.mock('@/hooks/useMods', () => ({
   useModProjects: () => ({ data: null, isLoading: false }),
   useAddMod: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useRemoveMod: () => ({ mutateAsync: vi.fn() }),
+  useInstalledMods: () => ({ data: { mods: [] }, isLoading: false, refetch: vi.fn() }),
+  useToggleModExclude: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 // Files/Backups tabs are implemented components with their own data hooks;
