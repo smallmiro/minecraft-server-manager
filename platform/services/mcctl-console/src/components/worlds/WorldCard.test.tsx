@@ -141,4 +141,27 @@ describe('WorldCard', () => {
     renderWithTheme(<WorldCard world={worldNoServers} />);
     expect(screen.getByText('No servers')).toBeInTheDocument();
   });
+
+  it('calls onViewInfo when the card body is clicked', () => {
+    const onViewInfo = vi.fn();
+    renderWithTheme(<WorldCard world={mockAvailableWorld} onViewInfo={onViewInfo} />);
+    fireEvent.click(screen.getByTestId('world-card-view-info'));
+    expect(onViewInfo).toHaveBeenCalledWith('survival-world');
+  });
+
+  it('does not trigger onViewInfo when an action button is clicked', () => {
+    const onViewInfo = vi.fn();
+    const onDelete = vi.fn();
+    renderWithTheme(
+      <WorldCard world={mockAvailableWorld} onViewInfo={onViewInfo} onDelete={onDelete} />
+    );
+    fireEvent.click(screen.getByLabelText('Delete world'));
+    expect(onDelete).toHaveBeenCalledWith('survival-world');
+    expect(onViewInfo).not.toHaveBeenCalled();
+  });
+
+  it('is not clickable when onViewInfo is not provided', () => {
+    renderWithTheme(<WorldCard world={mockAvailableWorld} />);
+    expect(screen.queryByTestId('world-card-view-info')).toBeNull();
+  });
 });
