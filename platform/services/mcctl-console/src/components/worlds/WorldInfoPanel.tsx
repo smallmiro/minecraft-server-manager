@@ -10,6 +10,7 @@ import { useWorldInfo, useWorldPlayers, useLivePlayers } from '@/hooks/useMcctl'
 import { WorldInfoCards } from './WorldInfoCards';
 import { PlayerLocationList } from './PlayerLocationList';
 import { WorldMapPanel } from './WorldMapPanel';
+import { WorldStatsPanel } from './WorldStatsPanel';
 
 export interface WorldInfoPanelProps {
   worldName: string;
@@ -79,6 +80,8 @@ export function WorldInfoPanel({ worldName, serverName }: WorldInfoPanelProps) {
       <WorldInfoCards info={info} />
 
       <WorldMapPanel worldName={worldName} />
+
+      <WorldStatsPanel worldName={worldName} />
 
       <Box>
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>

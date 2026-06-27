@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   useMapStatus: vi.fn(),
   useRenderMap: vi.fn(),
   useWriteMapMarkers: vi.fn(),
+  useWorldStats: vi.fn(),
+  useAnalyzeStats: vi.fn(),
 }));
 
 vi.mock('@/hooks/useMcctl', () => mocks);
@@ -70,6 +72,13 @@ describe('WorldInfoPanel', () => {
       mutateAsync: vi.fn(),
       isPending: false,
       isError: false,
+      error: null,
+    });
+    mocks.useWorldStats.mockReturnValue({ data: undefined, error: { statusCode: 404 }, refetch: vi.fn() });
+    mocks.useAnalyzeStats.mockReturnValue({
+      analyze: vi.fn(),
+      isAnalyzing: false,
+      progress: null,
       error: null,
     });
   });

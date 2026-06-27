@@ -210,6 +210,30 @@ export interface MapMarkersResponse {
   total: number;
 }
 
+// World block stats (#531, Phase 4)
+export interface BlockCount {
+  id: string;
+  count: number;
+}
+
+export interface BlockStatsResult {
+  world: string;
+  analyzedAt: string;
+  durationMs: number;
+  dimensions: string[];
+  regionsScanned: number;
+  totalBlocks: number;
+  blockTypeCount: number;
+  ores: Record<string, number>;
+  topBlocks: BlockCount[];
+}
+
+export interface StatsAnalyzeProgress {
+  dimension: string;
+  regionsDone: number;
+  regionsTotal: number;
+}
+
 export interface CreateWorldRequest {
   name: string;
   seed?: string;

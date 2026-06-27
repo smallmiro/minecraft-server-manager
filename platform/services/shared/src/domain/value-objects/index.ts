@@ -59,3 +59,10 @@ export {
   categorizeStructure,
   type Structure,
 } from './Structure.js';
+export {
+  isAir,
+  isOre,
+  aggregateBlockCounts,
+  type BlockCount,
+  type BlockStatsResult,
+} from './BlockStats.js';
