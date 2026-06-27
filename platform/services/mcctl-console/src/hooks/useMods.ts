@@ -152,3 +152,41 @@ export function useRemoveMod() {
     },
   });
 }
+
+// ============================================================
+// Modpack client-only detection (#524)
+// ============================================================
+
+/** Response of GET /api/mods/:slug/client-only */
+export interface ModpackClientOnlyResponse {
+  slug: string;
+  clientOnly: string[];
+}
+
+/**
+ * Hook to detect client-only mods bundled in a modpack, so the Create Server
+ * dialog can pre-fill them into the exclude list. Fails quietly (no retry) — a
+ * detection failure simply means no suggestions.
+ */
+export function useModpackClientOnly(
+  slug: string,
+  version?: string,
+  options?: { enabled?: boolean; source?: string }
+) {
+  const params = new URLSearchParams();
+  if (version) params.set('version', version);
+  if (options?.source) params.set('source', options.source);
+  const qs = params.toString();
+
+  return useQuery<ModpackClientOnlyResponse, Error>({
+    queryKey: ['mods', slug, 'client-only', version, options?.source],
+    queryFn: () =>
+      apiFetch<ModpackClientOnlyResponse>(
+        `/api/mods/${encodeURIComponent(slug)}/client-only${qs ? `?${qs}` : ''}`
+      ),
+    enabled: options?.enabled !== false && !!slug.trim(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: false,
+  });
+}
