@@ -61,3 +61,9 @@ export type { IConfigSnapshotStorage } from './IConfigSnapshotStorage.js';
 
 export type { IWorldDataReader } from './IWorldDataReader.js';
 export type { IRconPort } from './IRconPort.js';
+export type {
+  IMapRenderer,
+  MapRenderProgress,
+  MapRenderResult,
+  MapRenderOptions,
+} from './IMapRenderer.js';
