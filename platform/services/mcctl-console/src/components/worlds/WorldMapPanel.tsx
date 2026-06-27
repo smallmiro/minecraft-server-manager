@@ -41,9 +41,14 @@ export function WorldMapPanel({ worldName }: WorldMapPanelProps) {
   };
 
   const handleMarkers = async () => {
-    const result = await markers.mutateAsync(worldName);
-    setMarkerCount(result.total);
-    setIframeKey((k) => k + 1); // reload so BlueMap re-fetches markers.json
+    try {
+      const result = await markers.mutateAsync(worldName);
+      setMarkerCount(result.total);
+      setIframeKey((k) => k + 1); // reload so BlueMap re-fetches markers.json
+    } catch {
+      // Error is surfaced via markers.isError; swallow here so the async
+      // onClick handler does not produce an unhandled rejection.
+    }
   };
 
   return (

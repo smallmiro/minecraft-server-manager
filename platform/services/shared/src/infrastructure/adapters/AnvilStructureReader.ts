@@ -36,6 +36,26 @@ function prop(obj: unknown, key: string): unknown {
 }
 
 /**
+ * Coerce an NBT numeric value to a JS number. Handles plain numbers, bigints,
+ * and Long-typed values that simplify to `[hi, lo]` pairs or decimal strings.
+ * Returns null when no finite number can be derived.
+ */
+function toNumber(value: unknown): number | null {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'bigint') return Number(value);
+  if (Array.isArray(value) && value.length === 2) {
+    // prismarine-nbt Long as [high, low] 32-bit words.
+    const n = Number((BigInt(value[0] as number) << 32n) | BigInt((value[1] as number) >>> 0));
+    return Number.isFinite(n) ? n : null;
+  }
+  if (value != null) {
+    const n = Number(String(value));
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+/**
  * Derive a representative block position for a structure start. Prefers the
  * union centre of the children bounding boxes (BB = [minX,minY,minZ,maxX,maxY,maxZ]);
  * falls back to the start chunk centre. Y defaults to 64 when unknown.
@@ -44,7 +64,8 @@ function structurePosition(start: unknown): { x: number; y: number; z: number } 
   const childrenList = prop(start, 'Children');
   const children = (childrenList as { value?: unknown[] } | undefined)?.value;
   if (Array.isArray(children) && children.length > 0) {
-    let minX = Infinity, minZ = Infinity, maxX = -Infinity, maxZ = -Infinity, minY = Infinity;
+    let minX = Infinity, minZ = Infinity, minY = Infinity;
+    let maxX = -Infinity, maxZ = -Infinity, maxY = -Infinity;
     let found = false;
     for (const child of children) {
       const bb = prop(child, 'BB') as number[] | undefined;
@@ -54,23 +75,24 @@ function structurePosition(start: unknown): { x: number; y: number; z: number } 
         minY = Math.min(minY, bb[1]!);
         minZ = Math.min(minZ, bb[2]!);
         maxX = Math.max(maxX, bb[3]!);
+        maxY = Math.max(maxY, bb[4]!);
         maxZ = Math.max(maxZ, bb[5]!);
       }
     }
     if (found) {
       return {
         x: Math.round((minX + maxX) / 2),
-        y: Number.isFinite(minY) ? minY : 64,
+        y: Number.isFinite(minY) ? Math.round((minY + maxY) / 2) : 64,
         z: Math.round((minZ + maxZ) / 2),
       };
     }
   }
-  const cx = prop(start, 'ChunkX');
-  const cz = prop(start, 'ChunkZ');
+  const cx = toNumber(prop(start, 'ChunkX'));
+  const cz = toNumber(prop(start, 'ChunkZ'));
   return {
-    x: typeof cx === 'number' ? cx * 16 + 8 : 0,
+    x: cx !== null ? cx * 16 + 8 : 0,
     y: 64,
-    z: typeof cz === 'number' ? cz * 16 + 8 : 0,
+    z: cz !== null ? cz * 16 + 8 : 0,
   };
 }
 

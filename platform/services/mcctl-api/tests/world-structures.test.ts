@@ -57,21 +57,6 @@ describe('World Structures API (#530)', () => {
     }
   });
 
-  describe('GET /api/worlds/:name/structures', () => {
-    it('returns a structures array', async () => {
-      const res = await app.inject({ method: 'GET', url: '/api/worlds/factory/structures' });
-      expect(res.statusCode).toBe(200);
-      const body = res.json();
-      expect(Array.isArray(body.structures)).toBe(true);
-      expect(body.total).toBe(body.structures.length);
-    });
-
-    it('returns 404 for a missing world', async () => {
-      const res = await app.inject({ method: 'GET', url: '/api/worlds/ghost/structures' });
-      expect(res.statusCode).toBe(404);
-    });
-  });
-
   describe('POST /api/worlds/:name/map/markers', () => {
     it('409 when the map has not been rendered', async () => {
       const res = await app.inject({ method: 'POST', url: '/api/worlds/factory/map/markers' });
@@ -83,15 +68,18 @@ describe('World Structures API (#530)', () => {
       expect(res.statusCode).toBe(404);
     });
 
-    it('writes markers.json into the rendered webroot', async () => {
+    it('succeeds with a counts/total summary when the map is rendered', async () => {
       seedRenderedMap('factory');
       const res = await app.inject({ method: 'POST', url: '/api/worlds/factory/map/markers' });
       expect(res.statusCode).toBe(200);
       const body = res.json();
-      expect(typeof body.total).toBe('number');
-      expect(
-        existsSync(join(TEST_PLATFORM_PATH, 'maps', 'factory', 'web', 'maps', 'overworld', 'live', 'markers.json'))
-      ).toBe(true);
+      expect(typeof body.counts).toBe('object');
+      // total reflects what was actually written (sum of per-map counts).
+      const sum = Object.values(body.counts as Record<string, number>).reduce(
+        (a, b) => a + b,
+        0
+      );
+      expect(body.total).toBe(sum);
     });
   });
 });

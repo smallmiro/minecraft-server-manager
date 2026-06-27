@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { BlueMapMarkerWriter, buildMarkerSets } from '../src/infrastructure/adapters/BlueMapMarkerWriter.js';
@@ -73,13 +73,18 @@ describe('BlueMapMarkerWriter', () => {
     expect(result).toEqual({ overworld: 1, nether: 1 });
   });
 
-  it('writes an empty marker object when a dimension has no structures', async () => {
-    mkdirSync(join(webroot(), 'maps', 'overworld'), { recursive: true });
+  it('does not overwrite an existing markers.json when there are no structures', async () => {
+    // A prior write left markers; a later empty parse must NOT wipe it.
+    const liveDir = join(webroot(), 'maps', 'overworld', 'live');
+    mkdirSync(liveDir, { recursive: true });
+    writeFileSync(join(liveDir, 'markers.json'), '{"village":{"markers":{}}}', 'utf-8');
+
     const writer = new BlueMapMarkerWriter();
-    await writer.writeMarkers(webroot(), []);
-    const data = JSON.parse(
-      readFileSync(join(webroot(), 'maps', 'overworld', 'live', 'markers.json'), 'utf-8')
-    );
-    expect(data).toEqual({});
+    const result = await writer.writeMarkers(webroot(), []);
+
+    expect(result).toEqual({});
+    // Existing file preserved (not overwritten with {}).
+    const data = JSON.parse(readFileSync(join(liveDir, 'markers.json'), 'utf-8'));
+    expect(data.village).toBeDefined();
   });
 });

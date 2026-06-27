@@ -116,13 +116,17 @@ export class BlueMapMarkerWriter {
       if (!existsSync(mapDir)) continue; // dimension not rendered → skip
 
       const dimStructures = byDimension.get(dimension) ?? [];
-      const sets = buildMarkerSets(dimStructures);
+      // Never overwrite an existing markers.json with an empty set: a transient
+      // region-read failure yields zero structures, and blindly writing `{}`
+      // would silently erase previously-visible markers. Only write when this
+      // dimension actually has structures to place.
+      if (dimStructures.length === 0) continue;
 
+      const sets = buildMarkerSets(dimStructures);
       const liveDir = join(mapDir, 'live');
       await mkdir(liveDir, { recursive: true });
       await writeFile(join(liveDir, 'markers.json'), JSON.stringify(sets), 'utf-8');
-
-      if (dimStructures.length > 0) counts[mapId] = dimStructures.length;
+      counts[mapId] = dimStructures.length;
     }
 
     return counts;

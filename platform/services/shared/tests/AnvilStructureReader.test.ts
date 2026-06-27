@@ -67,7 +67,7 @@ describe('parseStructuresFromRegion', () => {
       category: StructureCategory.Village,
       label: 'Village',
       x: 120, // (100 + 140) / 2
-      y: 60, // min BB Y
+      y: 70, // (60 + 80) / 2 — bounding-box centre
       z: 50, // (30 + 70) / 2
       dimension: Dimension.Overworld,
     });

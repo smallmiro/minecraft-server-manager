@@ -1,5 +1,5 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import nbt from 'prismarine-nbt';
 import type { IWorldDataReader } from '../../application/ports/outbound/IWorldDataReader.js';
@@ -205,18 +205,27 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
   /**
    * Resolve a dimension's region directory, handling vanilla (DIM-1/DIM1) and
    * Paper/Spigot split-folder (`<name>_nether` / `<name>_the_end`) layouts.
-   * Returns null when the dimension has no region data on disk.
+   * Mirrors render-map.sh: a candidate only wins if it actually contains region
+   * (`.mca`) data, so an empty split folder never shadows a populated vanilla
+   * folder. Returns null when the dimension has no region data on disk.
    */
   private resolveRegionDir(worldPath: string, dimension: Dimension): string | null {
-    const parent = dirname(worldPath);
-    const name = basename(worldPath);
     const candidates: string[] =
       dimension === Dimension.Overworld
         ? [join(worldPath, 'region')]
         : dimension === Dimension.Nether
           ? [join(`${worldPath}_nether`, 'DIM-1', 'region'), join(worldPath, 'DIM-1', 'region')]
-          : [join(`${join(parent, name)}_the_end`, 'DIM1', 'region'), join(worldPath, 'DIM1', 'region')];
-    return candidates.find((dir) => existsSync(dir)) ?? null;
+          : [join(`${worldPath}_the_end`, 'DIM1', 'region'), join(worldPath, 'DIM1', 'region')];
+    return candidates.find((dir) => this.hasRegionData(dir)) ?? null;
+  }
+
+  /** True when a directory holds at least one `.mca` region file. */
+  private hasRegionData(dir: string): boolean {
+    try {
+      return existsSync(dir) && readdirSync(dir).some((f) => f.endsWith('.mca'));
+    } catch {
+      return false;
+    }
   }
 
   async readStructures(worldPath: string): Promise<Structure[]> {
