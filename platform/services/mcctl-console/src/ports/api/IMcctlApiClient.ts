@@ -204,6 +204,12 @@ export interface MapRenderRequest {
   force?: boolean;
 }
 
+// World Structure markers (#530, Phase 3)
+export interface MapMarkersResponse {
+  counts: Record<string, number>;
+  total: number;
+}
+
 export interface CreateWorldRequest {
   name: string;
   seed?: string;

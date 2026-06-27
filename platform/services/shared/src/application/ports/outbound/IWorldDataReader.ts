@@ -2,6 +2,7 @@ import type {
   WorldLevelData,
   PlayerLocation,
   DimensionPresence,
+  Structure,
 } from '../../../domain/index.js';
 
 /**
@@ -39,4 +40,12 @@ export interface IWorldDataReader {
    * @param worldPath Absolute path to the world directory.
    */
   countRegions(worldPath: string): Promise<number>;
+
+  /**
+   * Extract generated structures (villages, fortresses, temples, outposts, end
+   * cities, …) from the Anvil region NBT (`structures.starts`) across all
+   * dimensions present on disk. Returns an empty array when no region data.
+   * @param worldPath Absolute path to the world directory.
+   */
+  readStructures(worldPath: string): Promise<Structure[]>;
 }

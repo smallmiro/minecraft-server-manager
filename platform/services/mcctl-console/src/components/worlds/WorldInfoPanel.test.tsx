@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   useLivePlayers: vi.fn(),
   useMapStatus: vi.fn(),
   useRenderMap: vi.fn(),
+  useWriteMapMarkers: vi.fn(),
 }));
 
 vi.mock('@/hooks/useMcctl', () => mocks);
@@ -54,6 +55,7 @@ describe('WorldInfoPanel', () => {
     mocks.useLivePlayers.mockReset();
     mocks.useMapStatus.mockReset();
     mocks.useRenderMap.mockReset();
+    mocks.useWriteMapMarkers.mockReset();
     mocks.useWorldPlayers.mockReturnValue({ data: { players: offline } });
     mocks.useLivePlayers.mockReturnValue({ data: { players: [] } });
     mocks.useMapStatus.mockReturnValue({ data: { rendered: false, maps: [] }, refetch: vi.fn() });
@@ -62,6 +64,12 @@ describe('WorldInfoPanel', () => {
       isRendering: false,
       progress: null,
       result: null,
+      error: null,
+    });
+    mocks.useWriteMapMarkers.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+      isError: false,
       error: null,
     });
   });

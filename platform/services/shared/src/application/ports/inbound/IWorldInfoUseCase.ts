@@ -1,4 +1,4 @@
-import type { WorldInfo, PlayerLocation } from '../../../domain/index.js';
+import type { WorldInfo, PlayerLocation, Structure } from '../../../domain/index.js';
 
 /**
  * World Info Use Case - Inbound Port
@@ -30,4 +30,10 @@ export interface IWorldInfoUseCase {
     container: string,
     players: string[]
   ): Promise<PlayerLocation[]>;
+
+  /**
+   * Extract generated structures across all present dimensions (#530).
+   * @param name World name.
+   */
+  getStructures(name: string): Promise<Structure[]>;
 }

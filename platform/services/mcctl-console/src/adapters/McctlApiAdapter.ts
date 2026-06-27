@@ -13,6 +13,7 @@ import {
   WorldInfoResponse,
   PlayerLocationsResponse,
   MapStatusResponse,
+  MapMarkersResponse,
   CreateWorldRequest,
   CreateWorldResponse,
   AssignWorldResponse,
@@ -247,6 +248,13 @@ export class McctlApiAdapter implements IMcctlApiClient {
 
   async getWorldMapStatus(name: string): Promise<MapStatusResponse> {
     return this.fetch<MapStatusResponse>(`/api/worlds/${encodeURIComponent(name)}/map/status`);
+  }
+
+  async writeMapMarkers(name: string): Promise<MapMarkersResponse> {
+    return this.fetch<MapMarkersResponse>(
+      `/api/worlds/${encodeURIComponent(name)}/map/markers`,
+      { method: 'POST' }
+    );
   }
 
   async createWorld(request: CreateWorldRequest): Promise<CreateWorldResponse> {

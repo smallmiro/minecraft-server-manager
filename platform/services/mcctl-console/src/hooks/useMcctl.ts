@@ -17,6 +17,7 @@ import type {
   MapStatusResponse,
   MapRenderProgress,
   MapRenderRequest,
+  MapMarkersResponse,
   CreateWorldRequest,
   CreateWorldResponse,
   AssignWorldResponse,
@@ -370,6 +371,18 @@ export function useRenderMap() {
   );
 
   return { render, isRendering, progress, error };
+}
+
+/**
+ * Hook to write structure markers into the rendered map (#530).
+ */
+export function useWriteMapMarkers() {
+  return useMutation<MapMarkersResponse, Error, string>({
+    mutationFn: (name: string) =>
+      apiFetch<MapMarkersResponse>(`/api/worlds/${encodeURIComponent(name)}/map/markers`, {
+        method: 'POST',
+      }),
+  });
 }
 
 /**
