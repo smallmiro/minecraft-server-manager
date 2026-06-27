@@ -373,6 +373,13 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // ============================================================
 
   /**
+   * Safe jar filename pattern: only [A-Za-z0-9._+-] characters, must end with .jar.
+   * Rejects: path separators (/\), newlines, spaces, shell metacharacters (; | ` $ & ( ) < > * ? ! # { } [ ] ~ ' ").
+   * Mirrors the excludeFiles pattern from #515 server creation schema.
+   */
+  const SAFE_JAR_FILENAME_RE = /^[A-Za-z0-9._+\-]+\.jar$/;
+
+  /**
    * GET /api/servers/:name/mods/installed
    * Scan <data>/mods/*.jar and return list with excluded status
    */
@@ -428,6 +435,24 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       if (typeof excluded !== 'boolean') {
         return reply.code(400).send({ error: 'BadRequest', message: '"excluded" field (boolean) is required' });
+      }
+
+      // Security: validate filename against safe pattern before touching config.env
+      if (!SAFE_JAR_FILENAME_RE.test(filename)) {
+        return reply.code(400).send({
+          error: 'BadRequest',
+          message: 'Invalid filename: only alphanumeric characters, dots, underscores, hyphens, and plus signs are allowed, and filename must end with .jar',
+        });
+      }
+
+      // Cross-check: filename must actually exist in the installed jar list
+      const installedMods = modConfigService.getInstalledModJars(name);
+      const isInstalled = installedMods.some((m) => m.filename === filename);
+      if (!isInstalled) {
+        return reply.code(404).send({
+          error: 'NotFound',
+          message: `Jar file '${filename}' is not found in the server's mods directory`,
+        });
       }
 
       const { excludeKey, excludeList } = modConfigService.toggleModExclude(name, filename, excluded);

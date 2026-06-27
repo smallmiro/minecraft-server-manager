@@ -646,6 +646,10 @@ MODRINTH_EXCLUDE_FILES=status-effect-bars-client.jar
       mockReadFileSync.mockReturnValue(`TYPE=MODRINTH
 MODRINTH_MODPACK=cobblemon
 `);
+      const { readdirSync } = await import('fs');
+      vi.mocked(readdirSync).mockReturnValue([
+        { name: 'sodium-1.0.jar', isFile: () => true, isDirectory: () => false },
+      ] as any);
 
       const response = await app.inject({
         method: 'PATCH',
@@ -668,6 +672,11 @@ MODRINTH_MODPACK=cobblemon
 MODRINTH_MODPACK=cobblemon
 MODRINTH_EXCLUDE_FILES=sodium-1.0.jar,lithium-0.5.jar
 `);
+      const { readdirSync } = await import('fs');
+      vi.mocked(readdirSync).mockReturnValue([
+        { name: 'sodium-1.0.jar', isFile: () => true, isDirectory: () => false },
+        { name: 'lithium-0.5.jar', isFile: () => true, isDirectory: () => false },
+      ] as any);
 
       const response = await app.inject({
         method: 'PATCH',
@@ -688,6 +697,10 @@ MODRINTH_EXCLUDE_FILES=sodium-1.0.jar,lithium-0.5.jar
       mockReadFileSync.mockReturnValue(`TYPE=AUTO_CURSEFORGE
 CF_SLUG=cobblemon
 `);
+      const { readdirSync } = await import('fs');
+      vi.mocked(readdirSync).mockReturnValue([
+        { name: 'client-mod.jar', isFile: () => true, isDirectory: () => false },
+      ] as any);
 
       const response = await app.inject({
         method: 'PATCH',
@@ -713,6 +726,117 @@ CF_SLUG=cobblemon
       });
 
       expect(response.statusCode).toBe(400);
+    });
+
+    // ── Security: filename validation ─────────────────────────────
+
+    it('should return 400 for filename with newline injection', async () => {
+      mockedServerExists.mockReturnValue(true);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/test.jar%0AEULA%3DFALSE/exclude',
+        payload: { excluded: true },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.error).toBe('BadRequest');
+    });
+
+    it('should return 400 for filename with semicolon (shell metachar)', async () => {
+      mockedServerExists.mockReturnValue(true);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/mod;rm+-rf.jar/exclude',
+        payload: { excluded: true },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.error).toBe('BadRequest');
+    });
+
+    it('should return 400 for filename with backtick (shell metachar)', async () => {
+      mockedServerExists.mockReturnValue(true);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/mod%60id%60.jar/exclude',
+        payload: { excluded: true },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.error).toBe('BadRequest');
+    });
+
+    it('should return 400 for filename with path traversal (../)', async () => {
+      mockedServerExists.mockReturnValue(true);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/..%2F..%2Fetc%2Fpasswd/exclude',
+        payload: { excluded: true },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.error).toBe('BadRequest');
+    });
+
+    it('should return 400 for filename without .jar extension', async () => {
+      mockedServerExists.mockReturnValue(true);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/config.env/exclude',
+        payload: { excluded: true },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.error).toBe('BadRequest');
+    });
+
+    it('should return 404 for filename not in installed jar list', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(`TYPE=MODRINTH\nMODRINTH_MODPACK=cobblemon\n`);
+
+      const { readdirSync } = await import('fs');
+      // Only sodium-1.0.jar is installed
+      vi.mocked(readdirSync).mockReturnValue([
+        { name: 'sodium-1.0.jar', isFile: () => true, isDirectory: () => false },
+      ] as any);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/ghost-mod.jar/exclude',
+        payload: { excluded: true },
+      });
+
+      expect(response.statusCode).toBe(404);
+      const body = JSON.parse(response.body);
+      expect(body.error).toBe('NotFound');
+    });
+
+    it('should accept a valid jar filename with plus/underscore/hyphen/dot', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(`TYPE=MODRINTH\nMODRINTH_MODPACK=cobblemon\n`);
+
+      const { readdirSync } = await import('fs');
+      vi.mocked(readdirSync).mockReturnValue([
+        { name: 'my_mod+extra-1.2.3.jar', isFile: () => true, isDirectory: () => false },
+      ] as any);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/my_mod%2Bextra-1.2.3.jar/exclude',
+        payload: { excluded: true },
+      });
+
+      expect(response.statusCode).toBe(200);
     });
   });
 });
