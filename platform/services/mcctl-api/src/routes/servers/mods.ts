@@ -423,7 +423,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
    * Rejects: path separators (/\), newlines, spaces, shell metacharacters (; | ` $ & ( ) < > * ? ! # { } [ ] ~ ' ").
    * Mirrors the excludeFiles pattern from #515 server creation schema.
    */
-  const SAFE_JAR_FILENAME_RE = /^[A-Za-z0-9._+\-]+\.jar$/;
+  const SAFE_JAR_FILENAME_RE = /^[A-Za-z0-9._+-]+\.jar$/;
 
   /**
    * GET /api/servers/:name/mods/installed
