@@ -194,7 +194,7 @@ export class ModrinthApiClient {
     const index = JSON.parse(await indexEntry.async('string')) as {
       files?: ModrinthIndexFileRaw[];
     };
-    return index.files ?? [];
+    return Array.isArray(index.files) ? index.files : [];
   }
 
   /**
