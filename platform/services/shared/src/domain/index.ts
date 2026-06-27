@@ -52,6 +52,11 @@ export {
   STRUCTURE_CATEGORY_LABELS,
   categorizeStructure,
   type Structure,
+  isAir,
+  isOre,
+  aggregateBlockCounts,
+  type BlockCount,
+  type BlockStatsResult,
 } from './value-objects/index.js';
 
 // Entities

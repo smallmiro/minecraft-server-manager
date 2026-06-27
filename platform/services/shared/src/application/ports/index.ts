@@ -31,7 +31,10 @@ export type {
   IConfigSnapshotUseCase,
   IConfigSnapshotScheduleUseCase,
   IWorldInfoUseCase,
+  IWorldStatsUseCase,
+  AnalyzeOptions,
 } from './inbound/index.js';
+export { AnalysisCancelledError } from './inbound/index.js';
 
 // Outbound Ports (Infrastructure)
 export type {

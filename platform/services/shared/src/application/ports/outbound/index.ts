@@ -67,3 +67,9 @@ export type {
   MapRenderResult,
   MapRenderOptions,
 } from './IMapRenderer.js';
+export type {
+  IBlockScanner,
+  BlockScanProgress,
+  BlockScanOutcome,
+  BlockScanOptions,
+} from './IBlockScanner.js';

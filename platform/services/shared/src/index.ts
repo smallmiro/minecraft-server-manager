@@ -139,6 +139,12 @@ export {
   SnapshotDiff,
   type SnapshotDiffData,
   type SnapshotDiffSummary,
+  // World block stats (#531)
+  isAir,
+  isOre,
+  aggregateBlockCounts,
+  type BlockCount,
+  type BlockStatsResult,
 } from './domain/index.js';
 
 // Re-export mod domain models
