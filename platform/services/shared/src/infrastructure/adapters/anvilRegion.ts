@@ -7,6 +7,19 @@ const gunzip = promisify(zlib.gunzip);
 
 const SECTOR_BYTES = 4096;
 
+/**
+ * Read an NBT property's unwrapped value regardless of intermediate
+ * tag-wrapping (`{ type, value }`). Shared by the structure reader (#530) and
+ * block scanner (#531).
+ */
+export function prop(obj: unknown, key: string): unknown {
+  if (obj && typeof obj === 'object') {
+    const v = (obj as Record<string, { value?: unknown }>)[key];
+    if (v && typeof v === 'object' && 'value' in v) return (v as { value: unknown }).value;
+  }
+  return undefined;
+}
+
 /** Decompress a single Anvil chunk payload by its compression-type byte. */
 async function decompressChunk(data: Buffer, compression: number): Promise<Buffer | null> {
   try {

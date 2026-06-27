@@ -5,16 +5,7 @@ import {
   STRUCTURE_CATEGORY_LABELS,
   categorizeStructure,
 } from '../../domain/index.js';
-import { iterateRegionChunks } from './anvilRegion.js';
-
-/** Read an NBT property regardless of intermediate tag-wrapping. */
-function prop(obj: unknown, key: string): unknown {
-  if (obj && typeof obj === 'object') {
-    const v = (obj as Record<string, { value?: unknown }>)[key];
-    if (v && typeof v === 'object' && 'value' in v) return (v as { value: unknown }).value;
-  }
-  return undefined;
-}
+import { iterateRegionChunks, prop } from './anvilRegion.js';
 
 /**
  * Coerce an NBT numeric value to a JS number. Handles plain numbers, bigints,
