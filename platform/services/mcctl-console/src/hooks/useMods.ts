@@ -7,6 +7,8 @@ import type {
   ModSearchResponse,
   ModProjectsResponse,
   ModVersionsResponse,
+  InstalledModsResponse,
+  ToggleModExcludeResponse,
 } from '@/ports/api/IMcctlApiClient';
 
 // ============================================================
@@ -188,5 +190,50 @@ export function useModpackClientOnly(
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: false,
+  });
+}
+
+// ============================================================
+// Installed Mod Jar Hooks (Phase 1 — #523)
+// ============================================================
+
+/**
+ * Hook to fetch installed mod jar files from server data/mods directory
+ */
+export function useInstalledMods(serverName: string, options?: { enabled?: boolean }) {
+  return useQuery<InstalledModsResponse, Error>({
+    queryKey: ['servers', serverName, 'mods', 'installed'],
+    queryFn: () =>
+      apiFetch<InstalledModsResponse>(
+        `/api/servers/${encodeURIComponent(serverName)}/mods/installed`
+      ),
+    enabled: options?.enabled !== false && !!serverName,
+  });
+}
+
+/**
+ * Hook to toggle exclude state of an installed mod jar
+ */
+export function useToggleModExclude() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ToggleModExcludeResponse,
+    Error,
+    { serverName: string; filename: string; excluded: boolean }
+  >({
+    mutationFn: ({ serverName, filename, excluded }) =>
+      apiFetch<ToggleModExcludeResponse>(
+        `/api/servers/${encodeURIComponent(serverName)}/mods/installed/${encodeURIComponent(filename)}/exclude`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ excluded }),
+        }
+      ),
+    onSuccess: (_, { serverName }) => {
+      queryClient.invalidateQueries({
+        queryKey: ['servers', serverName, 'mods', 'installed'],
+      });
+    },
   });
 }

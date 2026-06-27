@@ -11,6 +11,7 @@ import { writeAuditLog } from '../../services/audit-log-service.js';
 import { createModConfigService } from '../../services/ModConfigService.js';
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
 import { config } from '../../config/index.js';
+import type { InstalledModEntry } from '../../services/ModConfigService.js';
 
 // ============================================================
 // Types
@@ -45,6 +46,15 @@ interface ModVersionsRoute {
 interface ModClientOnlyRoute {
   Params: { slug: string };
   Querystring: { version?: string; source?: string };
+}
+
+interface InstalledModsRoute {
+  Params: ServerNameParams;
+}
+
+interface ToggleModExcludeRoute {
+  Params: ServerNameParams & { filename: string };
+  Body: { excluded: boolean };
 }
 
 // ============================================================
@@ -401,6 +411,119 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         error: 'BadGateway',
         message: 'Failed to detect client-only mods for this modpack',
       });
+    }
+  });
+
+  // ============================================================
+  // Installed Mod Jar Endpoints (Phase 1 — #523)
+  // ============================================================
+
+  /**
+   * Safe jar filename pattern: only [A-Za-z0-9._+-] characters, must end with .jar.
+   * Rejects: path separators (/\), newlines, spaces, shell metacharacters (; | ` $ & ( ) < > * ? ! # { } [ ] ~ ' ").
+   * Mirrors the excludeFiles pattern from #515 server creation schema.
+   */
+  const SAFE_JAR_FILENAME_RE = /^[A-Za-z0-9._+\-]+\.jar$/;
+
+  /**
+   * GET /api/servers/:name/mods/installed
+   * Scan <data>/mods/*.jar and return list with excluded status
+   */
+  fastify.get<InstalledModsRoute>('/api/servers/:name/mods/installed', {
+    schema: {
+      description: 'List installed mod jar files in the server data directory',
+      tags: ['servers', 'mods'],
+      params: ServerNameParamsSchema,
+      response: {
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<InstalledModsRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+
+    try {
+      if (!serverExists(name)) {
+        return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
+      }
+
+      const mods: InstalledModEntry[] = modConfigService.getInstalledModJars(name);
+      return reply.send({ mods });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to list installed mod jars');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to list installed mod jars' });
+    }
+  });
+
+  /**
+   * PATCH /api/servers/:name/mods/installed/:filename/exclude
+   * Toggle exclude state of a jar file in MODRINTH_EXCLUDE_FILES or CF_EXCLUDE_MODS
+   */
+  fastify.patch<ToggleModExcludeRoute>('/api/servers/:name/mods/installed/:filename/exclude', {
+    schema: {
+      description: 'Toggle exclude state of an installed mod jar',
+      tags: ['servers', 'mods'],
+      params: ServerNameParamsSchema,
+      response: {
+        404: ErrorResponseSchema,
+        400: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<ToggleModExcludeRoute>, reply: FastifyReply) => {
+    const { name, filename } = request.params;
+    const { excluded } = request.body ?? {};
+
+    try {
+      if (!serverExists(name)) {
+        return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
+      }
+
+      if (typeof excluded !== 'boolean') {
+        return reply.code(400).send({ error: 'BadRequest', message: '"excluded" field (boolean) is required' });
+      }
+
+      // Security: validate filename against safe pattern before touching config.env
+      if (!SAFE_JAR_FILENAME_RE.test(filename)) {
+        return reply.code(400).send({
+          error: 'BadRequest',
+          message: 'Invalid filename: only alphanumeric characters, dots, underscores, hyphens, and plus signs are allowed, and filename must end with .jar',
+        });
+      }
+
+      // Cross-check: filename must actually exist in the installed jar list
+      const installedMods = modConfigService.getInstalledModJars(name);
+      const isInstalled = installedMods.some((m) => m.filename === filename);
+      if (!isInstalled) {
+        return reply.code(404).send({
+          error: 'NotFound',
+          message: `Jar file '${filename}' is not found in the server's mods directory`,
+        });
+      }
+
+      const { excludeKey, excludeList } = modConfigService.toggleModExclude(name, filename, excluded);
+
+      await writeAuditLog({
+        action: AuditActionEnum.MOD_ADD,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        details: { filename, excluded, excludeKey },
+        status: 'success',
+      });
+
+      fastify.log.info({ server: name, filename, excluded, excludeKey }, 'Mod exclude toggled');
+
+      return reply.send({
+        success: true,
+        filename,
+        excluded,
+        excludeList,
+        restartRequired: true,
+      });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to toggle mod exclude');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to toggle mod exclude' });
     }
   });
 };

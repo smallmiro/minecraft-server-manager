@@ -435,6 +435,27 @@ export interface ModSearchResponse {
   limit: number;
 }
 
+// ============================================================
+// Installed Mod Jar Types (#523)
+// ============================================================
+
+export interface InstalledModEntry {
+  filename: string;
+  excluded: boolean;
+}
+
+export interface InstalledModsResponse {
+  mods: InstalledModEntry[];
+}
+
+export interface ToggleModExcludeResponse {
+  success: boolean;
+  filename: string;
+  excluded: boolean;
+  excludeList: string[];
+  restartRequired: boolean;
+}
+
 export interface LoaderCompatibility {
   /** Minecraft versions supported by this loader, newest-first. */
   gameVersions: string[];

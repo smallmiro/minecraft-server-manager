@@ -26,8 +26,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import ExtensionIcon from '@mui/icons-material/Extension';
 import DownloadIcon from '@mui/icons-material/Download';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { useServerMods, useModSearch, useModProjects, useAddMod, useRemoveMod } from '@/hooks/useMods';
-import type { ModProjectDetail } from '@/ports/api/IMcctlApiClient';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FolderZipIcon from '@mui/icons-material/FolderZip';
+import BlockIcon from '@mui/icons-material/Block';
+import { useServerMods, useModSearch, useModProjects, useAddMod, useRemoveMod, useInstalledMods, useToggleModExclude } from '@/hooks/useMods';
+import type { ModProjectDetail, InstalledModEntry } from '@/ports/api/IMcctlApiClient';
 
 interface ServerModsTabProps {
   serverName: string;
@@ -194,13 +198,16 @@ function InstalledModCard({
 
 export function ServerModsTab({ serverName }: ServerModsTabProps) {
   const { data: modsData, isLoading, error } = useServerMods(serverName);
+  const { data: installedModsData, isLoading: isInstalledLoading, refetch: refetchInstalled } = useInstalledMods(serverName);
   const addMod = useAddMod();
   const removeMod = useRemoveMod();
+  const toggleExclude = useToggleModExclude();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [modChanged, setModChanged] = useState(false);
+  const [excludeChanged, setExcludeChanged] = useState(false);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: '',
@@ -265,6 +272,27 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
     }
   }, [addMod, serverName]);
 
+  const handleToggleExclude = useCallback(async (entry: InstalledModEntry) => {
+    const newExcluded = !entry.excluded;
+    try {
+      await toggleExclude.mutateAsync({ serverName, filename: entry.filename, excluded: newExcluded });
+      setExcludeChanged(true);
+      setSnackbar({
+        open: true,
+        message: newExcluded
+          ? `Excluded ${entry.filename} — restart required`
+          : `Included ${entry.filename} — restart required`,
+        severity: 'info',
+      });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Failed to update exclude',
+        severity: 'error',
+      });
+    }
+  }, [toggleExclude, serverName]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -287,10 +315,17 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
 
   return (
     <Box>
-      {/* Restart Alert */}
+      {/* Restart Alert — mod config change */}
       {modChanged && (
         <Alert severity="info" sx={{ mb: 2 }}>
           Restart the server to apply mod changes.
+        </Alert>
+      )}
+
+      {/* Restart Alert — exclude change */}
+      {excludeChanged && !modChanged && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Mod exclude list updated. Restart the server for changes to take effect.
         </Alert>
       )}
 
@@ -346,6 +381,99 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
                 </Box>
               </Box>
             ))
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Installed Jar Files — modpack installed mods (#523) */}
+      <Card sx={{ borderRadius: 3, mt: 3 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <FolderZipIcon sx={{ color: 'text.secondary' }} />
+            <Typography variant="h6" fontWeight={600}>
+              Installed Jar Files
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+              (from modpack)
+            </Typography>
+          </Box>
+          <Divider sx={{ mb: 2 }} />
+
+          {isInstalledLoading ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} variant="rounded" height={48} />
+              ))}
+            </Box>
+          ) : !installedModsData || installedModsData.mods.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <Typography variant="body2" color="text.secondary">
+                No jar files found in the mods directory.
+              </Typography>
+              <Typography variant="caption" color="text.disabled">
+                Jar files appear after the modpack is first installed.
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              {installedModsData.mods.map((entry: InstalledModEntry) => (
+                <Card
+                  key={entry.filename}
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 2,
+                    opacity: entry.excluded ? 0.6 : 1,
+                    borderColor: entry.excluded ? 'warning.main' : 'divider',
+                  }}
+                >
+                  <CardContent sx={{ py: 1, px: 2, '&:last-child': { pb: 1 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {entry.excluded ? (
+                        <BlockIcon sx={{ fontSize: 18, color: 'warning.main', flexShrink: 0 }} />
+                      ) : (
+                        <ExtensionIcon sx={{ fontSize: 18, color: 'text.disabled', flexShrink: 0 }} />
+                      )}
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          textDecoration: entry.excluded ? 'line-through' : 'none',
+                          color: entry.excluded ? 'text.disabled' : 'text.primary',
+                          fontFamily: 'monospace',
+                          fontSize: '0.8rem',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {entry.filename}
+                      </Typography>
+                      <Tooltip title={entry.excluded ? 'Include this mod' : 'Exclude this mod from next install'}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              size="small"
+                              checked={!entry.excluded}
+                              onChange={() => handleToggleExclude(entry)}
+                              disabled={toggleExclude.isPending}
+                              color="primary"
+                            />
+                          }
+                          label={
+                            <Typography variant="caption" color="text.secondary">
+                              {entry.excluded ? 'Excluded' : 'Included'}
+                            </Typography>
+                          }
+                          labelPlacement="start"
+                          sx={{ m: 0, flexShrink: 0 }}
+                        />
+                      </Tooltip>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
           )}
         </CardContent>
       </Card>

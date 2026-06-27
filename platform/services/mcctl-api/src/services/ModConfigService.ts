@@ -1,6 +1,29 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { ModSourceFactory } from '@minecraft-docker/shared';
+
+// ============================================================
+// Installed Mod Types
+// ============================================================
+
+export interface InstalledModEntry {
+  filename: string;
+  excluded: boolean;
+}
+
+/**
+ * Detect the exclude env key based on server TYPE in config.env
+ * - MODRINTH -> MODRINTH_EXCLUDE_FILES
+ * - AUTO_CURSEFORGE -> CF_EXCLUDE_MODS
+ * - default (unknown) -> MODRINTH_EXCLUDE_FILES
+ */
+function getExcludeEnvKey(envMap: Map<string, string>): string {
+  const type = (envMap.get('TYPE') || '').toUpperCase();
+  if (type === 'AUTO_CURSEFORGE') {
+    return 'CF_EXCLUDE_MODS';
+  }
+  return 'MODRINTH_EXCLUDE_FILES';
+}
 
 /**
  * Parse config.env file content into key-value pairs
@@ -122,6 +145,74 @@ export class ModConfigService {
     writeFileSync(configPath, updatedContent, 'utf-8');
 
     return { added, mods: existing };
+  }
+
+  /**
+   * Get the data directory for a server (where mods/*.jar reside)
+   */
+  private getServerDataDir(serverName: string): string {
+    return join(this.platformPath, 'servers', serverName, 'data');
+  }
+
+  /**
+   * Scan installed mod jars in <data>/mods/ and merge with exclude config
+   * Returns list of InstalledModEntry with excluded flag.
+   * Safe to call even when the server is not running (jars are on disk).
+   */
+  getInstalledModJars(serverName: string): InstalledModEntry[] {
+    const modsDir = join(this.getServerDataDir(serverName), 'mods');
+    if (!existsSync(modsDir)) {
+      return [];
+    }
+
+    // Read exclude list from config.env (empty if config missing)
+    const configPath = this.getConfigPath(serverName);
+    let excludedSet = new Set<string>();
+    if (existsSync(configPath)) {
+      const content = readFileSync(configPath, 'utf-8');
+      const envMap = parseEnvFile(content);
+      const excludeKey = getExcludeEnvKey(envMap);
+      const excludeList = parseModList(envMap.get(excludeKey));
+      excludedSet = new Set(excludeList);
+    }
+
+    const entries = readdirSync(modsDir, { withFileTypes: true });
+    return entries
+      .filter((e) => e.isFile() && e.name.endsWith('.jar'))
+      .map((e) => ({
+        filename: e.name,
+        excluded: excludedSet.has(e.name),
+      }));
+  }
+
+  /**
+   * Toggle exclude state of a single jar filename in config.env.
+   * Returns the updated exclude key and full list of exclusions.
+   */
+  toggleModExclude(
+    serverName: string,
+    filename: string,
+    excluded: boolean
+  ): { excludeKey: string; excludeList: string[] } {
+    const configPath = this.getConfigPath(serverName);
+    const content = existsSync(configPath) ? readFileSync(configPath, 'utf-8') : '';
+    const envMap = parseEnvFile(content);
+    const excludeKey = getExcludeEnvKey(envMap);
+    const current = parseModList(envMap.get(excludeKey));
+
+    let updated: string[];
+    if (excluded) {
+      // Add if not present
+      updated = current.includes(filename) ? current : [...current, filename];
+    } else {
+      // Remove all occurrences
+      updated = current.filter((f) => f !== filename);
+    }
+
+    const updatedContent = updateEnvFile(content, excludeKey, updated.join(','));
+    writeFileSync(configPath, updatedContent, 'utf-8');
+
+    return { excludeKey, excludeList: updated };
   }
 
   /**
