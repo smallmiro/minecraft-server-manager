@@ -1,19 +1,26 @@
-import { execSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import type { IRconPort } from '../../application/ports/outbound/IRconPort.js';
 import { Dimension, type EntityPosition } from '../../domain/index.js';
 
-/**
- * Runs a shell command and returns its stdout. Throws on failure.
- * Injectable so the adapter can be unit-tested without Docker.
- */
-export type CommandRunner = (command: string) => string;
+const execFileAsync = promisify(execFile);
 
-const defaultRunner: CommandRunner = (command) =>
-  execSync(command, {
-    encoding: 'utf-8',
+/**
+ * Runs a command with explicit argv (no shell) and returns stdout.
+ * Injectable so the adapter can be unit-tested without Docker.
+ *
+ * Using argv (not a shell string) prevents command injection via player
+ * names and is async so it never blocks the Node event loop.
+ */
+export type CommandRunner = (file: string, args: string[]) => Promise<string>;
+
+const defaultRunner: CommandRunner = async (file, args) => {
+  const { stdout } = await execFileAsync(file, args, {
     timeout: 5000,
-    stdio: ['pipe', 'pipe', 'pipe'],
+    encoding: 'utf-8',
   });
+  return stdout;
+};
 
 /** Strip ANSI escape codes from RCON output. */
 function stripAnsi(text: string): string {
@@ -56,9 +63,17 @@ export function parseDimension(output: string): Dimension | undefined {
 /**
  * RCON adapter that resolves live entity positions via
  * `docker exec <container> rcon-cli data get entity <player> Pos`.
+ *
+ * Commands are run with explicit argv (no shell interpolation) and
+ * asynchronously, so player names with spaces/metacharacters are safe
+ * and concurrent lookups do not block the event loop.
  */
 export class RconCliAdapter implements IRconPort {
   constructor(private readonly run: CommandRunner = defaultRunner) {}
+
+  private rconArgs(container: string, player: string, path: string): string[] {
+    return ['exec', container, 'rcon-cli', 'data', 'get', 'entity', player, path];
+  }
 
   async getEntityPosition(
     container: string,
@@ -66,9 +81,7 @@ export class RconCliAdapter implements IRconPort {
   ): Promise<EntityPosition | null> {
     let posOutput: string;
     try {
-      posOutput = this.run(
-        `docker exec ${container} rcon-cli data get entity ${player} Pos`
-      );
+      posOutput = await this.run('docker', this.rconArgs(container, player, 'Pos'));
     } catch {
       return null;
     }
@@ -79,9 +92,7 @@ export class RconCliAdapter implements IRconPort {
     let dimension: Dimension | undefined;
     try {
       dimension = parseDimension(
-        this.run(
-          `docker exec ${container} rcon-cli data get entity ${player} Dimension`
-        )
+        await this.run('docker', this.rconArgs(container, player, 'Dimension'))
       );
     } catch {
       dimension = undefined;
