@@ -21,10 +21,12 @@ interface WorldCardProps {
   onAssign?: (worldName: string) => void;
   onRelease?: (worldName: string) => void;
   onDelete?: (worldName: string) => void;
+  /** Open the world info panel for this world. */
+  onViewInfo?: (worldName: string) => void;
   loading?: boolean;
 }
 
-export function WorldCard({ world, onAssign, onRelease, onDelete, loading = false }: WorldCardProps) {
+export function WorldCard({ world, onAssign, onRelease, onDelete, onViewInfo, loading = false }: WorldCardProps) {
   const handleActionClick = (
     e: React.MouseEvent,
     action: (worldName: string) => void
@@ -60,7 +62,13 @@ export function WorldCard({ world, onAssign, onRelease, onDelete, loading = fals
         },
       }}
     >
-      <CardContent sx={{ flex: 1, pb: 1 }}>
+      <CardContent
+        sx={{ flex: 1, pb: 1, cursor: onViewInfo ? 'pointer' : 'default' }}
+        onClick={onViewInfo ? () => onViewInfo(world.name) : undefined}
+        data-testid={onViewInfo ? 'world-card-view-info' : undefined}
+        role={onViewInfo ? 'button' : undefined}
+        aria-label={onViewInfo ? `View ${world.name} details` : undefined}
+      >
         {/* Header: Name + Lock Status */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography

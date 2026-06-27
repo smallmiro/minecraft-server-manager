@@ -20,6 +20,7 @@ import PublicIcon from '@mui/icons-material/Public';
 import { WorldList } from '@/components/worlds/WorldList';
 import { CreateWorldDialog } from '@/components/worlds/CreateWorldDialog';
 import { AssignWorldDialog } from '@/components/worlds/AssignWorldDialog';
+import { WorldInfoPanel } from '@/components/worlds/WorldInfoPanel';
 import {
   useWorlds,
   useCreateWorld,
@@ -38,6 +39,7 @@ export default function WorldsPage() {
   const [assignDialogWorld, setAssignDialogWorld] = useState<string | null>(null);
   const [deleteConfirmWorld, setDeleteConfirmWorld] = useState<string | null>(null);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
+  const [infoWorld, setInfoWorld] = useState<string | null>(null);
   const [loadingWorlds, setLoadingWorlds] = useState<string[]>([]);
 
   // Data fetching
@@ -220,6 +222,7 @@ export default function WorldsPage() {
           onAssign={(worldName) => setAssignDialogWorld(worldName)}
           onRelease={handleReleaseWorld}
           onDelete={handleDeleteClick}
+          onViewInfo={(worldName) => setInfoWorld(worldName)}
           onCreate={() => setCreateDialogOpen(true)}
           loadingWorlds={loadingWorlds}
         />
@@ -243,6 +246,23 @@ export default function WorldsPage() {
         onSubmit={handleAssignWorld}
         loading={assignWorld.isPending}
       />
+
+      {/* World Info Dialog */}
+      <Dialog
+        open={!!infoWorld}
+        onClose={() => setInfoWorld(null)}
+        maxWidth="md"
+        fullWidth
+        fullScreen={isSmallScreen}
+      >
+        <DialogTitle>World Details</DialogTitle>
+        <DialogContent dividers>
+          {infoWorld && <WorldInfoPanel worldName={infoWorld} />}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setInfoWorld(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog
