@@ -16,7 +16,6 @@ import type {
   PlayerLocationsResponse,
   MapStatusResponse,
   MapRenderProgress,
-  MapRenderResult,
   MapRenderRequest,
   CreateWorldRequest,
   CreateWorldResponse,
@@ -280,7 +279,6 @@ export interface UseRenderMapState {
   render: (name: string, request?: MapRenderRequest) => Promise<void>;
   isRendering: boolean;
   progress: MapRenderProgress | null;
-  result: MapRenderResult | null;
   error: string | null;
 }
 
@@ -295,7 +293,6 @@ export function useRenderMap() {
   const queryClient = useQueryClient();
   const [isRendering, setIsRendering] = useState(false);
   const [progress, setProgress] = useState<MapRenderProgress | null>(null);
-  const [result, setResult] = useState<MapRenderResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const activeRef = useRef(false);
 
@@ -305,7 +302,6 @@ export function useRenderMap() {
       activeRef.current = true;
       setIsRendering(true);
       setProgress(null);
-      setResult(null);
       setError(null);
 
       try {
@@ -342,7 +338,6 @@ export function useRenderMap() {
             return;
           }
           if (event === 'progress') setProgress(payload as MapRenderProgress);
-          else if (event === 'done') setResult(payload as MapRenderResult);
           else if (event === 'error') {
             setError((payload as { message?: string }).message ?? 'Render failed');
           }
@@ -374,7 +369,7 @@ export function useRenderMap() {
     [queryClient]
   );
 
-  return { render, isRendering, progress, result, error };
+  return { render, isRendering, progress, error };
 }
 
 /**

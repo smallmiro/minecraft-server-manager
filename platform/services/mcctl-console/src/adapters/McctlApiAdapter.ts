@@ -10,6 +10,9 @@ import {
   LogsResponse,
   WorldListResponse,
   WorldDetailResponse,
+  WorldInfoResponse,
+  PlayerLocationsResponse,
+  MapStatusResponse,
   CreateWorldRequest,
   CreateWorldResponse,
   AssignWorldResponse,
@@ -232,6 +235,18 @@ export class McctlApiAdapter implements IMcctlApiClient {
 
   async getWorld(name: string): Promise<WorldDetailResponse> {
     return this.fetch<WorldDetailResponse>(`/api/worlds/${encodeURIComponent(name)}`);
+  }
+
+  async getWorldInfo(name: string): Promise<WorldInfoResponse> {
+    return this.fetch<WorldInfoResponse>(`/api/worlds/${encodeURIComponent(name)}/info`);
+  }
+
+  async getWorldPlayers(name: string): Promise<PlayerLocationsResponse> {
+    return this.fetch<PlayerLocationsResponse>(`/api/worlds/${encodeURIComponent(name)}/players`);
+  }
+
+  async getWorldMapStatus(name: string): Promise<MapStatusResponse> {
+    return this.fetch<MapStatusResponse>(`/api/worlds/${encodeURIComponent(name)}/map/status`);
   }
 
   async createWorld(request: CreateWorldRequest): Promise<CreateWorldResponse> {
