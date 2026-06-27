@@ -53,3 +53,9 @@ export {
   type PlayerLocation,
   type EntityPosition,
 } from './WorldInfo.js';
+export {
+  StructureCategory,
+  STRUCTURE_CATEGORY_LABELS,
+  categorizeStructure,
+  type Structure,
+} from './Structure.js';

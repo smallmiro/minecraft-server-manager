@@ -4,7 +4,12 @@ import type {
   IRconPort,
   IWorldRepository,
 } from '../ports/index.js';
-import { Dimension, type WorldInfo, type PlayerLocation } from '../../domain/index.js';
+import {
+  Dimension,
+  type WorldInfo,
+  type PlayerLocation,
+  type Structure,
+} from '../../domain/index.js';
 
 /**
  * World Info Use Case
@@ -49,6 +54,18 @@ export class WorldInfoUseCase implements IWorldInfoUseCase {
       throw new Error(`World not found: ${name}`);
     }
     return this.dataReader.readPlayerData(world.path);
+  }
+
+  /**
+   * Extract generated structures (villages, fortresses, temples, …) from the
+   * world's Anvil region data across all present dimensions (#530, Phase 3).
+   */
+  async getStructures(name: string): Promise<Structure[]> {
+    const world = await this.worldRepository.findByName(name);
+    if (!world) {
+      throw new Error(`World not found: ${name}`);
+    }
+    return this.dataReader.readStructures(world.path);
   }
 
   async getLivePlayerLocations(

@@ -3,8 +3,10 @@ import { existsSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import nbt from 'prismarine-nbt';
 import type { IWorldDataReader } from '../../application/ports/outbound/IWorldDataReader.js';
+import { parseStructuresFromRegion } from './AnvilStructureReader.js';
 import {
   Dimension,
+  type Structure,
   type WorldLevelData,
   type PlayerLocation,
   type DimensionPresence,
@@ -198,5 +200,52 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
     } catch {
       return 0;
     }
+  }
+
+  /**
+   * Resolve a dimension's region directory, handling vanilla (DIM-1/DIM1) and
+   * Paper/Spigot split-folder (`<name>_nether` / `<name>_the_end`) layouts.
+   * Returns null when the dimension has no region data on disk.
+   */
+  private resolveRegionDir(worldPath: string, dimension: Dimension): string | null {
+    const parent = dirname(worldPath);
+    const name = basename(worldPath);
+    const candidates: string[] =
+      dimension === Dimension.Overworld
+        ? [join(worldPath, 'region')]
+        : dimension === Dimension.Nether
+          ? [join(`${worldPath}_nether`, 'DIM-1', 'region'), join(worldPath, 'DIM-1', 'region')]
+          : [join(`${join(parent, name)}_the_end`, 'DIM1', 'region'), join(worldPath, 'DIM1', 'region')];
+    return candidates.find((dir) => existsSync(dir)) ?? null;
+  }
+
+  async readStructures(worldPath: string): Promise<Structure[]> {
+    const dimensions = [Dimension.Overworld, Dimension.Nether, Dimension.End];
+    const all: Structure[] = [];
+
+    for (const dimension of dimensions) {
+      const regionDir = this.resolveRegionDir(worldPath, dimension);
+      if (!regionDir) continue;
+
+      let files: string[];
+      try {
+        files = (await readdir(regionDir)).filter((f) => f.endsWith('.mca'));
+      } catch {
+        continue;
+      }
+
+      for (const file of files) {
+        let buf: Buffer;
+        try {
+          buf = await readFile(join(regionDir, file));
+        } catch {
+          continue;
+        }
+        const structures = await parseStructuresFromRegion(buf, dimension);
+        all.push(...structures);
+      }
+    }
+
+    return all;
   }
 }

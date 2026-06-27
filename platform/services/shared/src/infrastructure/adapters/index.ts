@@ -30,6 +30,13 @@ export {
   type ISchedulerLogger,
 } from './ConfigSnapshotSchedulerService.js';
 export { PrismarineWorldDataReader } from './PrismarineWorldDataReader.js';
+export { parseStructuresFromRegion } from './AnvilStructureReader.js';
+export {
+  BlueMapMarkerWriter,
+  buildMarkerSets,
+  type BlueMapMarker,
+  type BlueMapMarkerSet,
+} from './BlueMapMarkerWriter.js';
 export {
   RconCliAdapter,
   parsePos,

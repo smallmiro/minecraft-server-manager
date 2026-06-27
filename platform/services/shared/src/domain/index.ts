@@ -48,6 +48,10 @@ export {
   type WorldInfo,
   type PlayerLocation,
   type EntityPosition,
+  StructureCategory,
+  STRUCTURE_CATEGORY_LABELS,
+  categorizeStructure,
+  type Structure,
 } from './value-objects/index.js';
 
 // Entities

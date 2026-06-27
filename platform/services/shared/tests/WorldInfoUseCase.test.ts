@@ -75,4 +75,21 @@ describe('WorldInfoUseCase', () => {
       expect(live[0]!.x).toBe(1);
     });
   });
+
+  describe('getStructures', () => {
+    it('returns an array of structures from region data', async () => {
+      const structures = await useCase.getStructures('factory');
+      expect(Array.isArray(structures)).toBe(true);
+      // Every entry is well-formed (the parser is unit-tested separately).
+      for (const s of structures) {
+        expect(typeof s.id).toBe('string');
+        expect(typeof s.x).toBe('number');
+        expect(s.dimension).toBeDefined();
+      }
+    });
+
+    it('throws when the world does not exist', async () => {
+      await expect(useCase.getStructures('missing')).rejects.toThrow(/not found/i);
+    });
+  });
 });
