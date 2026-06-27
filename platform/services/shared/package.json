@@ -66,6 +66,7 @@
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.6.2",
     "js-yaml": "^4.1.1",
+    "prismarine-nbt": "^2.8.0",
     "unzipper": "^0.12.3"
   },
   "devDependencies": {
