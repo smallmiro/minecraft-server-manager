@@ -20,7 +20,6 @@ vi.mock('@/lib/auth-utils', () => {
 const mockGetWorldInfo = vi.fn();
 const mockGetWorldPlayers = vi.fn();
 const mockGetWorldMapStatus = vi.fn();
-const mockGetWorldStructures = vi.fn();
 const mockWriteMapMarkers = vi.fn();
 
 vi.mock('@/adapters/McctlApiAdapter', () => {
@@ -38,7 +37,6 @@ vi.mock('@/adapters/McctlApiAdapter', () => {
       getWorldInfo: mockGetWorldInfo,
       getWorldPlayers: mockGetWorldPlayers,
       getWorldMapStatus: mockGetWorldMapStatus,
-      getWorldStructures: mockGetWorldStructures,
       writeMapMarkers: mockWriteMapMarkers,
     })),
     McctlApiError,
@@ -50,7 +48,6 @@ import { requireAuth, AuthError } from '@/lib/auth-utils';
 import { GET as getInfo } from '../[name]/info/route';
 import { GET as getPlayers } from '../[name]/players/route';
 import { GET as getMapStatus } from '../[name]/map/status/route';
-import { GET as getStructures } from '../[name]/structures/route';
 import { POST as postMarkers } from '../[name]/map/markers/route';
 
 const session = { user: { name: 'admin', email: 'a@b.c', role: 'admin' } };
@@ -82,14 +79,6 @@ describe('World info/players/map BFF proxy routes (#525/#529)', () => {
     const res = await getMapStatus(new NextRequest('http://localhost/api/worlds/factory/map/status'), ctx('factory'));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ rendered: true, maps: ['overworld'] });
-  });
-
-  it('GET /structures proxies generated structures', async () => {
-    mockGetWorldStructures.mockResolvedValue({ structures: [], total: 0 });
-    const res = await getStructures(new NextRequest('http://localhost/api/worlds/factory/structures'), ctx('factory'));
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ structures: [], total: 0 });
-    expect(mockGetWorldStructures).toHaveBeenCalledWith('factory');
   });
 
   it('POST /map/markers proxies the marker write', async () => {

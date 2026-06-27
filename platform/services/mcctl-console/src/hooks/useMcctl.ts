@@ -17,7 +17,6 @@ import type {
   MapStatusResponse,
   MapRenderProgress,
   MapRenderRequest,
-  StructuresResponse,
   MapMarkersResponse,
   CreateWorldRequest,
   CreateWorldResponse,
@@ -372,18 +371,6 @@ export function useRenderMap() {
   );
 
   return { render, isRendering, progress, error };
-}
-
-/**
- * Hook to fetch generated structures for a world (#530).
- */
-export function useWorldStructures(name: string, options?: { enabled?: boolean }) {
-  return useQuery<StructuresResponse, Error>({
-    queryKey: ['worlds', name, 'structures'],
-    queryFn: () =>
-      apiFetch<StructuresResponse>(`/api/worlds/${encodeURIComponent(name)}/structures`),
-    enabled: options?.enabled !== false && !!name,
-  });
 }
 
 /**
