@@ -5,19 +5,10 @@ import type {
   BlockScanOptions,
   BlockScanOutcome,
 } from '../../application/ports/outbound/IBlockScanner.js';
-import { iterateRegionChunks } from './anvilRegion.js';
+import { iterateRegionChunks, prop } from './anvilRegion.js';
 import { resolveRegionDirs } from './dimensionRegions.js';
 
 const BLOCKS_PER_SECTION = 4096; // 16 × 16 × 16
-
-/** Read an NBT property's unwrapped value. */
-function prop(obj: unknown, key: string): unknown {
-  if (obj && typeof obj === 'object') {
-    const v = (obj as Record<string, { value?: unknown }>)[key];
-    if (v && typeof v === 'object' && 'value' in v) return (v as { value: unknown }).value;
-  }
-  return undefined;
-}
 
 /** Combine a prismarine-nbt long (either `[hi, lo]` words or a bigint) to BigInt. */
 function toBigInt(v: unknown): bigint {
@@ -108,10 +99,11 @@ export class AnvilBlockScanner implements IBlockScanner {
     const regionsTotal = work.reduce((sum, w) => sum + w.files.length, 0);
     const counts: Record<string, number> = {};
     const dimensions: string[] = [];
-    let regionsDone = 0;
+    let processed = 0; // files attempted (drives progress)
+    let scanned = 0; // files actually decoded (reported coverage)
     let cancelled = false;
 
-    for (const { dimension, dir, files } of work) {
+    outer: for (const { dimension, dir, files } of work) {
       if (signal?.aborted) {
         cancelled = true;
         break;
@@ -121,26 +113,32 @@ export class AnvilBlockScanner implements IBlockScanner {
       for (const file of files) {
         if (signal?.aborted) {
           cancelled = true;
-          break;
+          break outer;
         }
 
-        let buf: Buffer;
+        let buf: Buffer | null = null;
         try {
           buf = await readFile(join(dir, file));
         } catch {
-          regionsDone += 1;
-          continue;
+          buf = null; // unreadable region — not counted as scanned
         }
 
-        for await (const rootValue of iterateRegionChunks(buf)) {
-          countChunk(rootValue, counts);
+        if (buf) {
+          for await (const rootValue of iterateRegionChunks(buf)) {
+            if (signal?.aborted) {
+              cancelled = true;
+              break outer;
+            }
+            countChunk(rootValue, counts);
+          }
+          scanned += 1;
         }
 
-        regionsDone += 1;
-        onProgress?.({ dimension, regionsDone, regionsTotal });
+        processed += 1;
+        onProgress?.({ dimension, regionsDone: processed, regionsTotal });
       }
     }
 
-    return { counts, dimensions, regionsScanned: regionsDone, cancelled };
+    return { counts, dimensions, regionsScanned: scanned, cancelled };
   }
 }

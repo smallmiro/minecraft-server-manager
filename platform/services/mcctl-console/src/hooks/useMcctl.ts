@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from './useApi';
+import { consumeSseStream } from './sse';
 import type {
   ServerListResponse,
   ServerDetailResponse,
@@ -321,43 +322,12 @@ export function useRenderMap() {
           throw new Error(`Render failed (HTTP ${response.status})`);
         }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        // Parse SSE frames separated by a blank line.
-        const handleFrame = (frame: string) => {
-          let event = 'message';
-          const dataLines: string[] = [];
-          for (const line of frame.split('\n')) {
-            if (line.startsWith('event:')) event = line.slice(6).trim();
-            else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
-          }
-          if (dataLines.length === 0) return;
-          let payload: unknown;
-          try {
-            payload = JSON.parse(dataLines.join('\n'));
-          } catch {
-            return;
-          }
+        await consumeSseStream(response, (event, payload) => {
           if (event === 'progress') setProgress(payload as MapRenderProgress);
           else if (event === 'error') {
             setError((payload as { message?: string }).message ?? 'Render failed');
           }
-        };
-
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          let sep: number;
-          while ((sep = buffer.indexOf('\n\n')) !== -1) {
-            handleFrame(buffer.slice(0, sep));
-            buffer = buffer.slice(sep + 2);
-          }
-        }
-        if (buffer.trim()) handleFrame(buffer);
+        });
 
         await queryClient.invalidateQueries({
           queryKey: ['worlds', name, 'map', 'status'],
@@ -436,43 +406,17 @@ export function useAnalyzeStats() {
           throw new Error(`Analysis failed (HTTP ${response.status})`);
         }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        const handleFrame = (frame: string) => {
-          let event = 'message';
-          const dataLines: string[] = [];
-          for (const line of frame.split('\n')) {
-            if (line.startsWith('event:')) event = line.slice(6).trim();
-            else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
-          }
-          if (dataLines.length === 0) return;
-          let payload: unknown;
-          try {
-            payload = JSON.parse(dataLines.join('\n'));
-          } catch {
-            return;
-          }
+        await consumeSseStream(response, (event, payload) => {
           if (event === 'progress') setProgress(payload as StatsAnalyzeProgress);
-          else if (event === 'cancelled') setError('Analysis cancelled');
+          else if (event === 'done') {
+            // Seed the cache directly so the result shows even if the follow-up
+            // refetch races the cache write.
+            queryClient.setQueryData(['worlds', name, 'stats'], payload as BlockStatsResult);
+          } else if (event === 'cancelled') setError('Analysis cancelled');
           else if (event === 'error') {
             setError((payload as { message?: string }).message ?? 'Analysis failed');
           }
-        };
-
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          let sep: number;
-          while ((sep = buffer.indexOf('\n\n')) !== -1) {
-            handleFrame(buffer.slice(0, sep));
-            buffer = buffer.slice(sep + 2);
-          }
-        }
-        if (buffer.trim()) handleFrame(buffer);
+        });
 
         await queryClient.invalidateQueries({ queryKey: ['worlds', name, 'stats'] });
       } catch (e) {

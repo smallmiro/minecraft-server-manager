@@ -66,7 +66,7 @@ import {
   StatsAnalyzeQuerySchema,
   type StatsAnalyzeQuery,
 } from '../schemas/world-stats.js';
-import { mkdir, readFile as readFileAsync, writeFile } from 'fs/promises';
+import { mkdir, readFile as readFileAsync, writeFile, rename } from 'fs/promises';
 import { config } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
 import { resolve as resolvePath, sep, extname } from 'node:path';
@@ -694,11 +694,24 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     const useCase = createWorldStatsUseCase();
 
+    // Atomic write: stage to a temp file then rename, so a concurrent GET (or
+    // a second analyze) never reads a half-written stats file.
     const persist = async (result: unknown) => {
       const file = getStatsPath(name);
       await mkdir(join(config.platformPath, 'stats'), { recursive: true });
-      await writeFile(file, JSON.stringify(result), 'utf-8');
+      const tmp = `${file}.${process.pid}.tmp`;
+      await writeFile(tmp, JSON.stringify(result), 'utf-8');
+      await rename(tmp, file);
     };
+
+    const controller = new AbortController();
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, STATS_ANALYZE_TIMEOUT_MS);
+    // Cancel the scan if the client disconnects (both SSE and sync modes).
+    request.raw.on('close', () => controller.abort());
 
     // SSE streaming mode
     if (follow) {
@@ -708,10 +721,6 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         'Connection': 'keep-alive',
         'Access-Control-Allow-Origin': '*',
       });
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), STATS_ANALYZE_TIMEOUT_MS);
-      request.raw.on('close', () => controller.abort());
 
       const write = (event: string, data: unknown) => {
         try {
@@ -730,7 +739,9 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         await persist(result);
         write('done', result);
       } catch (error) {
-        if (error instanceof AnalysisCancelledError) {
+        if (error instanceof AnalysisCancelledError && timedOut) {
+          write('error', { message: `Analysis timed out after ${STATS_ANALYZE_TIMEOUT_MS}ms` });
+        } else if (error instanceof AnalysisCancelledError) {
           write('cancelled', { message: 'Analysis cancelled' });
         } else {
           write('error', {
@@ -745,15 +756,16 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     }
 
     // Synchronous mode
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), STATS_ANALYZE_TIMEOUT_MS);
     try {
       const result = await useCase.analyze(name, { signal: controller.signal });
       await persist(result);
       return reply.send(result);
     } catch (error) {
       if (error instanceof AnalysisCancelledError) {
-        return reply.code(500).send({ error: 'Cancelled', message: 'Analysis timed out' });
+        return reply.code(500).send({
+          error: timedOut ? 'GatewayTimeout' : 'Cancelled',
+          message: timedOut ? 'Analysis timed out' : 'Analysis cancelled',
+        });
       }
       fastify.log.error(error, 'Failed to analyze world stats');
       return reply.code(500).send({
