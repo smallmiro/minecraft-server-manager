@@ -7,3 +7,4 @@ export { PlayerLookupUseCase } from './PlayerLookupUseCase.js';
 export { BackupScheduleUseCase } from './BackupScheduleUseCase.js';
 export { ConfigSnapshotUseCaseImpl } from './ConfigSnapshotUseCase.js';
 export { ConfigSnapshotScheduleUseCaseImpl } from './ConfigSnapshotScheduleUseCase.js';
+export { WorldInfoUseCase } from './WorldInfoUseCase.js';

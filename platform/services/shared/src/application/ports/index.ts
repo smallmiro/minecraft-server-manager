@@ -30,6 +30,7 @@ export type {
   UpdateBackupScheduleParams,
   IConfigSnapshotUseCase,
   IConfigSnapshotScheduleUseCase,
+  IWorldInfoUseCase,
 } from './inbound/index.js';
 
 // Outbound Ports (Infrastructure)
@@ -71,4 +72,6 @@ export type {
   IConfigSnapshotScheduleRepository,
   IConfigFileCollector,
   IConfigSnapshotStorage,
+  IWorldDataReader,
+  IRconPort,
 } from './outbound/index.js';
