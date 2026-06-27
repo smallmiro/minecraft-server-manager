@@ -20,17 +20,20 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
+    "test": "vitest run",
     "prepublishOnly": "pnpm build"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@minecraft-docker/shared": "workspace:*"
+    "@minecraft-docker/shared": "workspace:*",
+    "jszip": "^3.10.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.1",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^2.0.0"
   },
   "keywords": [
     "minecraft",

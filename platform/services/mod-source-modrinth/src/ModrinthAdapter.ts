@@ -23,6 +23,11 @@ import type {
 
 import { ModrinthApiClient } from './infrastructure/api/index.js';
 import { ModrinthMapper } from './infrastructure/mappers/index.js';
+import {
+  extractProjectIdFromCdnUrl,
+  selectClientOnlyFilenames,
+  type ModpackIndexEntry,
+} from './modpackClientSide.js';
 
 /**
  * Modrinth adapter implementing IModSourcePort
@@ -140,6 +145,49 @@ export class ModrinthAdapter implements IModSourcePort {
     });
 
     return rawVersions.map(v => this.mapper.toVersion(v));
+  }
+
+  /**
+   * Detect client-only mods bundled in a modpack.
+   *
+   * Resolves the modpack's `.mrpack`, enumerates its mod files, and looks up
+   * each mod's *canonical* Modrinth `server_side`. Mods that are `unsupported`
+   * on the server (i.e. client-only) are returned as partial file names suitable
+   * for `MODRINTH_EXCLUDE_FILES`, regardless of how the pack itself labels them.
+   *
+   * @param slugOrId - Modpack slug or id
+   * @param versionId - Specific modpack version id (defaults to the first/latest)
+   * @returns exclude names (basename without `.jar`) of client-only mods
+   */
+  async getModpackClientOnlyMods(slugOrId: string, versionId?: string): Promise<string[]> {
+    const versions = await this.getVersions(slugOrId);
+    if (versions.length === 0) return [];
+
+    const version =
+      (versionId ? versions.find(v => v.id === versionId) : undefined) ?? versions[0];
+    if (!version) return [];
+    const mrpack =
+      version.files.find(f => f.filename.toLowerCase().endsWith('.mrpack')) ??
+      version.files.find(f => f.primary) ??
+      version.files[0];
+    if (!mrpack) return [];
+
+    const indexFiles = await this.apiClient.getModpackIndexFiles(mrpack.url);
+
+    const entries: ModpackIndexEntry[] = [];
+    for (const file of indexFiles) {
+      const url = file.downloads?.[0];
+      if (!url) continue;
+      const projectId = extractProjectIdFromCdnUrl(url);
+      if (projectId) entries.push({ path: file.path, projectId });
+    }
+    if (entries.length === 0) return [];
+
+    const projectIds = [...new Set(entries.map(e => e.projectId))];
+    const rawProjects = await this.apiClient.getProjects(projectIds);
+    const serverSideById = new Map(rawProjects.map(p => [p.id, p.server_side] as const));
+
+    return selectClientOnlyFilenames(entries, serverSideById);
   }
 
   /**
