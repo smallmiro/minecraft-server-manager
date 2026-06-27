@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import { useWorldInfo, useWorldPlayers, useLivePlayers } from '@/hooks/useMcctl';
 import { WorldInfoCards } from './WorldInfoCards';
 import { PlayerLocationList } from './PlayerLocationList';
+import { WorldMapPanel } from './WorldMapPanel';
 
 export interface WorldInfoPanelProps {
   worldName: string;
@@ -76,6 +77,8 @@ export function WorldInfoPanel({ worldName, serverName }: WorldInfoPanelProps) {
       </Box>
 
       <WorldInfoCards info={info} />
+
+      <WorldMapPanel worldName={worldName} />
 
       <Box>
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>

@@ -74,4 +74,8 @@ export type {
   IConfigSnapshotStorage,
   IWorldDataReader,
   IRconPort,
+  IMapRenderer,
+  MapRenderProgress,
+  MapRenderResult,
+  MapRenderOptions,
 } from './outbound/index.js';

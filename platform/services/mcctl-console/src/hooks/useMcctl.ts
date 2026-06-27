@@ -1,3 +1,4 @@
+import { useCallback, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from './useApi';
 import type {
@@ -13,6 +14,9 @@ import type {
   WorldDetailResponse,
   WorldInfoResponse,
   PlayerLocationsResponse,
+  MapStatusResponse,
+  MapRenderProgress,
+  MapRenderRequest,
   CreateWorldRequest,
   CreateWorldResponse,
   AssignWorldResponse,
@@ -256,6 +260,116 @@ export function useLivePlayers(serverName: string, options?: { enabled?: boolean
     enabled: options?.enabled !== false && !!serverName,
     refetchInterval: 5000,
   });
+}
+
+/**
+ * Hook to fetch the rendered-map status for a world (#529).
+ */
+export function useMapStatus(name: string, options?: { enabled?: boolean }) {
+  return useQuery<MapStatusResponse, Error>({
+    queryKey: ['worlds', name, 'map', 'status'],
+    queryFn: () =>
+      apiFetch<MapStatusResponse>(`/api/worlds/${encodeURIComponent(name)}/map/status`),
+    enabled: options?.enabled !== false && !!name,
+  });
+}
+
+export interface UseRenderMapState {
+  /** Trigger a render for the given world. */
+  render: (name: string, request?: MapRenderRequest) => Promise<void>;
+  isRendering: boolean;
+  progress: MapRenderProgress | null;
+  error: string | null;
+}
+
+/**
+ * Hook to trigger a BlueMap render and stream progress via SSE (#529).
+ *
+ * Uses fetch (not EventSource, which is GET-only) to POST and read the
+ * text/event-stream body, parsing `event:`/`data:` frames. On completion the
+ * world's map-status query is invalidated so the viewer can refresh.
+ */
+export function useRenderMap() {
+  const queryClient = useQueryClient();
+  const [isRendering, setIsRendering] = useState(false);
+  const [progress, setProgress] = useState<MapRenderProgress | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const activeRef = useRef(false);
+
+  const render = useCallback(
+    async (name: string, request?: MapRenderRequest) => {
+      if (activeRef.current) return;
+      activeRef.current = true;
+      setIsRendering(true);
+      setProgress(null);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `/api/worlds/${encodeURIComponent(name)}/map/render?follow=true`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(request ?? {}),
+          }
+        );
+
+        if (!response.ok || !response.body) {
+          throw new Error(`Render failed (HTTP ${response.status})`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        // Parse SSE frames separated by a blank line.
+        const handleFrame = (frame: string) => {
+          let event = 'message';
+          const dataLines: string[] = [];
+          for (const line of frame.split('\n')) {
+            if (line.startsWith('event:')) event = line.slice(6).trim();
+            else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+          }
+          if (dataLines.length === 0) return;
+          let payload: unknown;
+          try {
+            payload = JSON.parse(dataLines.join('\n'));
+          } catch {
+            return;
+          }
+          if (event === 'progress') setProgress(payload as MapRenderProgress);
+          else if (event === 'error') {
+            setError((payload as { message?: string }).message ?? 'Render failed');
+          }
+        };
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let sep: number;
+          while ((sep = buffer.indexOf('\n\n')) !== -1) {
+            handleFrame(buffer.slice(0, sep));
+            buffer = buffer.slice(sep + 2);
+          }
+        }
+        if (buffer.trim()) handleFrame(buffer);
+
+        await queryClient.invalidateQueries({
+          queryKey: ['worlds', name, 'map', 'status'],
+        });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Render failed');
+      } finally {
+        setIsRendering(false);
+        activeRef.current = false;
+      }
+    },
+    [queryClient]
+  );
+
+  return { render, isRendering, progress, error };
 }
 
 /**
