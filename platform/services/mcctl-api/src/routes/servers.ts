@@ -55,6 +55,7 @@ import {
 import { PlayerLocationsResponseSchema } from '../schemas/world-info.js';
 import { config } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
+import { getContainerName } from '../lib/rcon.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 import { exec } from 'child_process';
@@ -460,7 +461,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      const container = `mc-${name}`;
+      const container = getContainerName(name);
       const useCase = new WorldInfoUseCase(
         new WorldRepository(new Paths()),
         new PrismarineWorldDataReader(),
@@ -486,23 +487,39 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           'Access-Control-Allow-Origin': '*',
         });
 
+        let polling: ReturnType<typeof setInterval> | undefined;
+        let heartbeat: ReturnType<typeof setInterval> | undefined;
+        const cleanup = () => {
+          if (polling) clearInterval(polling);
+          if (heartbeat) clearInterval(heartbeat);
+        };
+
         const sendPlayers = async () => {
-          const players = await resolveLive();
-          reply.raw.write(`event: players-live\n`);
-          reply.raw.write(`data: ${JSON.stringify({ players })}\n\n`);
+          try {
+            const players = await resolveLive();
+            reply.raw.write(`event: players-live\n`);
+            reply.raw.write(`data: ${JSON.stringify({ players })}\n\n`);
+          } catch {
+            // Socket likely closed/errored — stop streaming.
+            cleanup();
+            reply.raw.end();
+          }
         };
 
         await sendPlayers();
-        const polling = setInterval(() => {
+        polling = setInterval(() => {
           void sendPlayers();
         }, interval);
-        const heartbeat = setInterval(() => {
-          reply.raw.write(': heartbeat\n\n');
+        heartbeat = setInterval(() => {
+          try {
+            reply.raw.write(': heartbeat\n\n');
+          } catch {
+            cleanup();
+          }
         }, 30000);
 
         request.raw.on('close', () => {
-          clearInterval(polling);
-          clearInterval(heartbeat);
+          cleanup();
           reply.raw.end();
         });
         return;
