@@ -30,6 +30,7 @@ export enum AuditActionEnum {
   WORLD_DELETE = 'world.delete',
   WORLD_ASSIGN = 'world.assign',
   WORLD_RELEASE = 'world.release',
+  WORLD_MAP_RENDER = 'world.map.render',
 
   // System
   AUDIT_PURGE = 'audit.purge',

@@ -467,9 +467,26 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           write('progress', p);
         });
         write('done', result);
+        await writeAuditLog({
+          action: AuditActionEnum.WORLD_MAP_RENDER,
+          actor: 'api:console',
+          targetType: 'world',
+          targetName: name,
+          details: { dimensions: result.maps, force: Boolean(force) },
+          status: 'success',
+        });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Render failed';
         write('error', { message });
+        await writeAuditLog({
+          action: AuditActionEnum.WORLD_MAP_RENDER,
+          actor: 'api:console',
+          targetType: 'world',
+          targetName: name,
+          details: { dimensions, force: Boolean(force) },
+          status: 'failure',
+          errorMessage: message,
+        });
       } finally {
         reply.raw.end();
       }
@@ -479,12 +496,30 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // Synchronous mode
     try {
       const result = await renderer.renderWorld(name, { dimensions, force });
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_MAP_RENDER,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: name,
+        details: { dimensions: result.maps, force: Boolean(force) },
+        status: 'success',
+      });
       return reply.send(result);
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to render world map';
       fastify.log.error(error, 'Failed to render world map');
+      await writeAuditLog({
+        action: AuditActionEnum.WORLD_MAP_RENDER,
+        actor: 'api:console',
+        targetType: 'world',
+        targetName: name,
+        details: { dimensions, force: Boolean(force) },
+        status: 'failure',
+        errorMessage: message,
+      });
       return reply.code(500).send({
         error: 'InternalServerError',
-        message: error instanceof Error ? error.message : 'Failed to render world map',
+        message,
       });
     }
   });
