@@ -42,6 +42,11 @@ interface ModVersionsRoute {
   Querystring: { source?: string };
 }
 
+interface ModClientOnlyRoute {
+  Params: { slug: string };
+  Querystring: { version?: string; source?: string };
+}
+
 // ============================================================
 // Plugin Definition
 // ============================================================
@@ -355,6 +360,47 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     } catch (error) {
       fastify.log.error(error, 'Failed to get mod versions');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get mod versions' });
+    }
+  });
+
+  /**
+   * GET /api/mods/:slug/client-only
+   * Detect client-only mods (canonical server_side: unsupported) bundled in a
+   * modpack, so the Create Server flow can pre-fill them into the exclude list.
+   * Returns 502 on detection failure so the client can simply skip pre-filling.
+   */
+  fastify.get<ModClientOnlyRoute>('/api/mods/:slug/client-only', {
+    schema: {
+      description: 'Detect client-only mods bundled in a modpack (to exclude on a server)',
+      tags: ['mods'],
+      response: {
+        400: ErrorResponseSchema,
+        502: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<ModClientOnlyRoute>, reply: FastifyReply) => {
+    const { slug } = request.params;
+    const { version, source: sourceName } = request.query;
+
+    if (!slug || !slug.trim()) {
+      return reply.code(400).send({ error: 'BadRequest', message: 'Path parameter "slug" is required' });
+    }
+
+    const source = ModSourceFactory.get(sourceName || 'modrinth');
+    if (typeof source.getModpackClientOnlyMods !== 'function') {
+      // Source doesn't support modpack inspection — nothing to detect.
+      return reply.send({ slug, clientOnly: [] });
+    }
+
+    try {
+      const clientOnly = await source.getModpackClientOnlyMods(slug, version);
+      return reply.send({ slug, clientOnly });
+    } catch (error) {
+      fastify.log.warn(error, 'Failed to detect client-only modpack mods');
+      return reply.code(502).send({
+        error: 'BadGateway',
+        message: 'Failed to detect client-only mods for this modpack',
+      });
     }
   });
 };

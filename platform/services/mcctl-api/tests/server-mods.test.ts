@@ -65,6 +65,7 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
     search: vi.fn(),
     getProject: vi.fn(),
     getVersions: vi.fn(),
+    getModpackClientOnlyMods: vi.fn(),
     isAvailable: vi.fn().mockResolvedValue(true),
   };
 
@@ -526,6 +527,39 @@ MEMORY=4G
 
       // URL form passes schema validation; not a 400 from pattern rejection.
       expect(response.statusCode).not.toBe(400);
+    });
+  });
+
+  describe('GET /api/mods/:slug/client-only', () => {
+    it('should return the detected client-only mod names', async () => {
+      const adapter = ModSourceFactory.get('modrinth');
+      (adapter.getModpackClientOnlyMods as any).mockResolvedValue([
+        'searchables-1.21.1-1.0',
+        'statuseffectbars-1.21.1',
+      ]);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/mods/create-plus/client-only?version=abc123',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.slug).toBe('create-plus');
+      expect(body.clientOnly).toEqual(['searchables-1.21.1-1.0', 'statuseffectbars-1.21.1']);
+      expect(adapter.getModpackClientOnlyMods).toHaveBeenCalledWith('create-plus', 'abc123');
+    });
+
+    it('should return 502 when detection fails', async () => {
+      const adapter = ModSourceFactory.get('modrinth');
+      (adapter.getModpackClientOnlyMods as any).mockRejectedValue(new Error('download failed'));
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/mods/create-plus/client-only',
+      });
+
+      expect(response.statusCode).toBe(502);
     });
   });
 });
