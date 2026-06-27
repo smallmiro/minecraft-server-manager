@@ -28,6 +28,7 @@ import { ResourceStatCard } from './ResourceStatCard';
 import { useServerLogs } from '@/hooks/useServerLogs';
 import { ServerConsole } from './ServerConsole';
 import { ServerActivityTab } from './ServerActivityTab';
+import { ServerWorldTab } from './ServerWorldTab';
 import { ServerOptionsTab } from './ServerOptionsTab';
 import { ServerAccessTab } from './ServerAccessTab';
 import { ConnectionInfoCard } from './ConnectionInfoCard';
@@ -43,7 +44,7 @@ interface ServerDetailProps {
 }
 
 // Tab configuration
-const TABS = ['Overview', 'Activity', 'Mods', 'Files', 'Config History', 'Backups', 'Access', 'Options'] as const;
+const TABS = ['Overview', 'World', 'Activity', 'Mods', 'Files', 'Config History', 'Backups', 'Access', 'Options'] as const;
 type TabType = (typeof TABS)[number];
 
 // Icon size for stat cards
@@ -548,6 +549,20 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
             <ConnectionInfoCard serverName={server.name} hostname={server.hostname} />
           </Grid>
         </Grid>
+      )}
+
+      {activeTab === 'World' && (
+        <Box sx={{ mt: 3 }}>
+          <Card sx={{ borderRadius: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom fontWeight={600}>
+                World
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <ServerWorldTab serverName={server.name} worldName={server.worldName} />
+            </CardContent>
+          </Card>
+        </Box>
       )}
 
       {activeTab === 'Activity' && (
