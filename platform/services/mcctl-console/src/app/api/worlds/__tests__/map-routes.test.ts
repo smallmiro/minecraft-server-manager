@@ -21,6 +21,7 @@ const mockGetWorldInfo = vi.fn();
 const mockGetWorldPlayers = vi.fn();
 const mockGetWorldMapStatus = vi.fn();
 const mockWriteMapMarkers = vi.fn();
+const mockGetWorldStats = vi.fn();
 
 vi.mock('@/adapters/McctlApiAdapter', () => {
   class McctlApiError extends Error {
@@ -38,6 +39,7 @@ vi.mock('@/adapters/McctlApiAdapter', () => {
       getWorldPlayers: mockGetWorldPlayers,
       getWorldMapStatus: mockGetWorldMapStatus,
       writeMapMarkers: mockWriteMapMarkers,
+      getWorldStats: mockGetWorldStats,
     })),
     McctlApiError,
     UserContext: undefined,
@@ -49,6 +51,7 @@ import { GET as getInfo } from '../[name]/info/route';
 import { GET as getPlayers } from '../[name]/players/route';
 import { GET as getMapStatus } from '../[name]/map/status/route';
 import { POST as postMarkers } from '../[name]/map/markers/route';
+import { GET as getStats } from '../[name]/stats/route';
 
 const session = { user: { name: 'admin', email: 'a@b.c', role: 'admin' } };
 const ctx = (name: string) => ({ params: Promise.resolve({ name }) });
@@ -90,6 +93,14 @@ describe('World info/players/map BFF proxy routes (#525/#529)', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ counts: { overworld: 2 }, total: 2 });
     expect(mockWriteMapMarkers).toHaveBeenCalledWith('factory');
+  });
+
+  it('GET /stats proxies cached block stats', async () => {
+    mockGetWorldStats.mockResolvedValue({ world: 'factory', totalBlocks: 100, ores: {} });
+    const res = await getStats(new NextRequest('http://localhost/api/worlds/factory/stats'), ctx('factory'));
+    expect(res.status).toBe(200);
+    expect((await res.json()).world).toBe('factory');
+    expect(mockGetWorldStats).toHaveBeenCalledWith('factory');
   });
 
   it('returns 401 when unauthenticated', async () => {
