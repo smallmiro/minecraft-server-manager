@@ -7,6 +7,7 @@
  * @see https://docs.modrinth.com/api-spec
  */
 
+import JSZip from 'jszip';
 import type {
   ModrinthProjectRaw,
   ModrinthSearchResultRaw,
@@ -15,6 +16,15 @@ import type {
 } from '../../types.js';
 
 const MODRINTH_API = 'https://api.modrinth.com/v2';
+
+/**
+ * A single file entry from a modpack's `modrinth.index.json`.
+ */
+export interface ModrinthIndexFileRaw {
+  path: string;
+  downloads: string[];
+  env?: { client?: string; server?: string };
+}
 
 /**
  * Search options for Modrinth API
@@ -160,6 +170,31 @@ export class ModrinthApiClient {
     }
 
     return response.json() as Promise<ModrinthProjectRaw[]>;
+  }
+
+  /**
+   * Download a `.mrpack` (a zip archive) and return the file entries from its
+   * `modrinth.index.json`. Used to enumerate the mods a modpack installs.
+   *
+   * @param mrpackUrl - Direct download URL of the `.mrpack` file
+   */
+  async getModpackIndexFiles(mrpackUrl: string): Promise<ModrinthIndexFileRaw[]> {
+    const response = await fetch(mrpackUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download modpack: ${response.status} ${response.statusText}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    const zip = await JSZip.loadAsync(buffer);
+    const indexEntry = zip.file('modrinth.index.json');
+    if (!indexEntry) {
+      throw new Error('modrinth.index.json not found in modpack archive');
+    }
+
+    const index = JSON.parse(await indexEntry.async('string')) as {
+      files?: ModrinthIndexFileRaw[];
+    };
+    return Array.isArray(index.files) ? index.files : [];
   }
 
   /**

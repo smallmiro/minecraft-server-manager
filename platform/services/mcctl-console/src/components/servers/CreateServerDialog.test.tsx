@@ -28,12 +28,18 @@ const mockUseModpackSearch = vi.fn(
 const mockUseModVersions = vi.fn(
   (_slug?: string): MatrixResult => ({ data: undefined, isLoading: false, isError: false })
 );
+const mockUseModpackClientOnly = vi.fn(
+  (_slug?: string, _version?: string) =>
+    ({ data: undefined, isFetching: false }) as { data: unknown; isFetching: boolean }
+);
 
 vi.mock('@/hooks/useMods', () => ({
   useModpackSearch: () => mockUseModpackSearch(),
   // Forward the slug so tests can assert which slug the matrix lookup uses
   // (debounce behaviour). The return value still comes from the mock.
   useModVersions: (slug: string) => mockUseModVersions(slug),
+  useModpackClientOnly: (slug: string, version?: string) =>
+    mockUseModpackClientOnly(slug, version),
 }));
 
 // Compatibility matrix for cobblemon-like modpack: neoforge -> 1.21.1, forge -> 1.19.2
@@ -58,6 +64,7 @@ describe('CreateServerDialog', () => {
   beforeEach(() => {
     mockUseModpackSearch.mockReturnValue({ data: undefined, isLoading: false });
     mockUseModVersions.mockReturnValue({ data: undefined, isLoading: false, isError: false });
+    mockUseModpackClientOnly.mockReturnValue({ data: undefined, isFetching: false });
   });
 
   it('should render when open is true', () => {
@@ -558,6 +565,35 @@ describe('CreateServerDialog', () => {
         () => expect(mockUseModVersions).toHaveBeenCalledWith('cobblemon'),
         { timeout: 2000 }
       );
+    });
+
+    it('should pre-fill the exclude field with detected client-only mods', async () => {
+      mockUseModVersions.mockReturnValue(cobblemonMatrix);
+      mockUseModpackClientOnly.mockReturnValue({
+        data: { slug: 'cobblemon', clientOnly: ['searchables-1.0', 'statuseffectbars-1.0'] },
+        isFetching: false,
+      });
+
+      renderWithTheme(
+        <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /modpack/i }));
+      await waitFor(() => {
+        expect(screen.getByRole('combobox', { name: /modpack/i })).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByRole('combobox', { name: /modpack/i }), {
+        target: { value: 'cobblemon' },
+      });
+
+      // neoforge -> 1.21.1 is auto-selected from the matrix, enabling detection
+      const excludeField = (await screen.findByLabelText(/exclude mods/i)) as HTMLInputElement;
+      await waitFor(() => {
+        expect(excludeField.value).toContain('searchables-1.0');
+        expect(excludeField.value).toContain('statuseffectbars-1.0');
+      });
+      expect(screen.getByText(/Detected 2 client-only mods/i)).toBeInTheDocument();
     });
 
     it('should disable Create while the compatibility matrix is loading', async () => {

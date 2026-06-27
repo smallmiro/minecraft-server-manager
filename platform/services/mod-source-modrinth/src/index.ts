@@ -51,6 +51,13 @@ export type { ModrinthSearchParams, ModrinthVersionParams } from './infrastructu
 // Export raw types for advanced usage
 export type * from './types.js';
 
+// Export modpack client-side detection helpers
+export {
+  extractProjectIdFromCdnUrl,
+  selectClientOnlyFilenames,
+} from './modpackClientSide.js';
+export type { ModpackIndexEntry } from './modpackClientSide.js';
+
 // Auto-register with factory
 const adapter = new ModrinthAdapter();
 ModSourceFactory.register(adapter);

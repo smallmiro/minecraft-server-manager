@@ -78,6 +78,16 @@ export interface IModSourcePort {
   getProjects?(slugsOrIds: string[]): Promise<Map<string, ModProject>>;
 
   /**
+   * Detect client-only mods bundled in a modpack.
+   * Optional: only sources that support modpack inspection implement this.
+   * Returns partial file names (for MODRINTH_EXCLUDE_FILES / CF_EXCLUDE_MODS) of
+   * mods whose canonical server-side support is `unsupported`.
+   * @param slugOrId - Modpack slug or ID
+   * @param versionId - Specific modpack version (defaults to latest)
+   */
+  getModpackClientOnlyMods?(slugOrId: string, versionId?: string): Promise<string[]>;
+
+  /**
    * Get the environment variable key for this source
    * Used for config.env configuration
    * @example 'MODRINTH_PROJECTS', 'CURSEFORGE_FILES', 'SPIGET_RESOURCES'

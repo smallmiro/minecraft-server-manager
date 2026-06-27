@@ -32,7 +32,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import Autocomplete from '@mui/material/Autocomplete';
 import { useWorlds } from '@/hooks/useMcctl';
-import { useModpackSearch, useModVersions } from '@/hooks/useMods';
+import { useModpackSearch, useModVersions, useModpackClientOnly } from '@/hooks/useMods';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { CreateServerRequest } from '@/ports/api/IMcctlApiClient';
 import type { CreateServerStatus } from '@/hooks/useCreateServerSSE';
@@ -150,6 +150,42 @@ export function CreateServerDialog({
   // backend's secondary validation respond.
   const matrixUnresolved = !!modpackSlug && !matrix && !matrixError;
 
+  // The modpack version id resolved for the chosen (loader, Minecraft version).
+  const resolvedModpackVersion =
+    selectedLoader && selectedGameVersion
+      ? matrix?.byLoader[selectedLoader]?.recommended[selectedGameVersion]
+      : undefined;
+
+  // Detect client-only mods bundled in this modpack to suggest excluding (#524).
+  const { data: clientOnlyData, isFetching: clientOnlyLoading } = useModpackClientOnly(
+    debouncedModpackSlug,
+    resolvedModpackVersion,
+    {
+      enabled:
+        category === 'modpack' &&
+        debouncedModpackSlug.trim().length > 0 &&
+        !!resolvedModpackVersion,
+    }
+  );
+  const detectedClientOnly = useMemo(
+    () => clientOnlyData?.clientOnly ?? [],
+    [clientOnlyData]
+  );
+
+  // Auto-add detected client-only mods to the exclude field (once per detection,
+  // merged with any manual entries so we don't clobber the user's input).
+  const appliedClientOnlyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (detectedClientOnly.length === 0) return;
+    const sig = `${clientOnlyData?.slug ?? ''}:${resolvedModpackVersion ?? ''}`;
+    if (appliedClientOnlyRef.current === sig) return;
+    appliedClientOnlyRef.current = sig;
+    setExcludeFilesInput((prev) => {
+      const existing = prev.split(',').map((s) => s.trim()).filter(Boolean);
+      return Array.from(new Set([...existing, ...detectedClientOnly])).join(', ');
+    });
+  }, [clientOnlyData, detectedClientOnly, resolvedModpackVersion]);
+
   // Auto-select the first loader once the matrix resolves.
   useEffect(() => {
     if (availableLoaders.length > 0 && !availableLoaders.includes(selectedLoader)) {
@@ -178,6 +214,7 @@ export function CreateServerDialog({
       setSelectedLoader('');
       setSelectedGameVersion('');
       setExcludeFilesInput('');
+      appliedClientOnlyRef.current = null;
     }
   }, [open]);
 
@@ -684,15 +721,33 @@ export function CreateServerDialog({
                     )}
 
                     {modpackSlug && (
-                      <TextField
-                        label="Exclude mods (optional)"
-                        value={excludeFilesInput}
-                        onChange={(e) => setExcludeFilesInput(e.target.value)}
-                        placeholder="e.g. statuseffectbars, jei"
-                        helperText="Comma-separated. Use this to drop client-only mods that crash a dedicated server."
-                        fullWidth
-                        disabled={isCreating}
-                      />
+                      <>
+                        {clientOnlyLoading && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <CircularProgress size={16} />
+                            <Typography variant="caption" color="text.secondary">
+                              Checking for client-only mods…
+                            </Typography>
+                          </Box>
+                        )}
+                        {detectedClientOnly.length > 0 && (
+                          <Alert severity="info" sx={{ py: 0 }}>
+                            Detected {detectedClientOnly.length} client-only mod
+                            {detectedClientOnly.length > 1 ? 's' : ''} and added{' '}
+                            {detectedClientOnly.length > 1 ? 'them' : 'it'} to the exclude
+                            list below. You can remove any you want to keep.
+                          </Alert>
+                        )}
+                        <TextField
+                          label="Exclude mods (optional)"
+                          value={excludeFilesInput}
+                          onChange={(e) => setExcludeFilesInput(e.target.value)}
+                          placeholder="e.g. statuseffectbars, jei"
+                          helperText="Comma-separated. Use this to drop client-only mods that crash a dedicated server."
+                          fullWidth
+                          disabled={isCreating}
+                        />
+                      </>
                     )}
                   </Box>
                 </Collapse>
