@@ -17,6 +17,7 @@ import {
   ServerRepository,
   Paths,
   AuditActionEnum,
+  BlueMapCliRenderer,
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import {
@@ -44,6 +45,22 @@ import {
   WorldInfoResponseSchema,
   PlayerLocationsResponseSchema,
 } from '../schemas/world-info.js';
+import {
+  MapWorldNameParamsSchema,
+  MapRenderRequestSchema,
+  MapRenderQuerySchema,
+  MapRenderResultSchema,
+  MapStatusResponseSchema,
+  MapErrorResponseSchema,
+  type MapWorldNameParams,
+  type MapRenderRequest,
+  type MapRenderQuery,
+} from '../schemas/world-map.js';
+import { config } from '../config/index.js';
+import { resolveScriptPath } from '../lib/script-resolver.js';
+import { resolve as resolvePath, sep, extname } from 'node:path';
+import { existsSync, statSync, createReadStream } from 'node:fs';
+import { stat as statAsync, readdir } from 'node:fs/promises';
 
 // Route generic interfaces for type-safe request handling
 interface WorldNameRoute {
@@ -71,6 +88,16 @@ interface DeleteWorldRoute {
 
 interface UploadWorldRoute {
   Querystring: UploadWorldQuery;
+}
+
+interface MapRenderRoute {
+  Params: MapWorldNameParams;
+  Body: MapRenderRequest;
+  Querystring: MapRenderQuery;
+}
+
+interface MapServeRoute {
+  Params: MapWorldNameParams & { '*': string };
 }
 
 /**
@@ -107,6 +134,55 @@ function createWorldInfoUseCase(): WorldInfoUseCase {
   const rcon = new RconCliAdapter();
   return new WorldInfoUseCase(worldRepo, dataReader, rcon);
 }
+
+/** Base directory for rendered web maps (kept out of worlds/ for lean backups). */
+function getMapsDir(): string {
+  return join(config.platformPath, 'maps');
+}
+
+/** Absolute webroot for a world's rendered map. */
+function getWebroot(name: string): string {
+  return join(getMapsDir(), name, 'web');
+}
+
+/**
+ * Create the BlueMap-backed map renderer (#529).
+ * Returns null when render-map.sh cannot be resolved.
+ *
+ * The script needs MCCTL_ROOT/MCCTL_SCRIPTS so it resolves the deployed data
+ * dir (not the bundled package dir), plus MCCTL_DOCKER for the renderer image
+ * build context.
+ */
+function createMapRenderer(): BlueMapCliRenderer | null {
+  const resolved = resolveScriptPath('render-map.sh', config.platformPath);
+  if (!resolved) return null;
+  const dockerDir = join(resolved.scriptsDir, '..', 'docker');
+  return new BlueMapCliRenderer(resolved.scriptPath, undefined, {
+    cwd: config.platformPath,
+    env: {
+      ...process.env,
+      MCCTL_ROOT: config.platformPath,
+      MCCTL_SCRIPTS: resolved.scriptsDir,
+      MCCTL_DOCKER: dockerDir,
+    },
+  });
+}
+
+/** Minimal content-type map for BlueMap's static webapp assets. */
+const MAP_CONTENT_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
+  '.wasm': 'application/wasm',
+  '.prbm': 'application/octet-stream',
+};
 
 /**
  * Default max upload size for world zip files: 1 GB
@@ -287,6 +363,164 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         message: 'Failed to get player locations',
       });
     }
+  });
+
+  /**
+   * GET /api/worlds/:name/map/status
+   * Whether a rendered web map exists for the world, and which dimensions. (#529)
+   */
+  fastify.get<{ Params: MapWorldNameParams }>('/api/worlds/:name/map/status', {
+    schema: {
+      tags: ['worlds'],
+      summary: 'Get world map render status',
+      description: 'Returns whether a BlueMap web map has been rendered and which dimensions exist',
+      params: MapWorldNameParamsSchema,
+      response: {
+        200: MapStatusResponseSchema,
+        500: MapErrorResponseSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const { name } = request.params;
+    try {
+      const webroot = getWebroot(name);
+      const indexFile = join(webroot, 'index.html');
+      if (!existsSync(indexFile)) {
+        return reply.send({ rendered: false, maps: [] });
+      }
+      const mapsRoot = join(webroot, 'maps');
+      let maps: string[] = [];
+      if (existsSync(mapsRoot)) {
+        const entries = await readdir(mapsRoot, { withFileTypes: true });
+        maps = entries.filter((e) => e.isDirectory()).map((e) => e.name);
+      }
+      const lastModified = (await statAsync(indexFile)).mtime.toISOString();
+      return reply.send({ rendered: true, maps, lastModified });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to get map status');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'Failed to get map status',
+      });
+    }
+  });
+
+  /**
+   * POST /api/worlds/:name/map/render
+   * Trigger an offline BlueMap render. With ?follow=true, streams progress as
+   * SSE; otherwise renders synchronously and returns the result JSON. (#529)
+   */
+  fastify.post<MapRenderRoute>('/api/worlds/:name/map/render', {
+    schema: {
+      tags: ['worlds'],
+      summary: 'Render world map',
+      description: 'Renders a static BlueMap web map for the world (optionally SSE progress)',
+      params: MapWorldNameParamsSchema,
+      body: MapRenderRequestSchema,
+      querystring: MapRenderQuerySchema,
+      response: {
+        200: MapRenderResultSchema,
+        404: MapErrorResponseSchema,
+        500: MapErrorResponseSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const { name } = request.params;
+    const { dimensions, force } = request.body ?? {};
+    const { follow = false } = request.query;
+
+    if (!existsSync(join(new Paths().worlds, name))) {
+      return reply.code(404).send({
+        error: 'NotFound',
+        message: `World '${name}' not found`,
+      });
+    }
+
+    const renderer = createMapRenderer();
+    if (!renderer) {
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'render-map.sh script not found',
+      });
+    }
+
+    // SSE streaming mode
+    if (follow) {
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      });
+
+      const write = (event: string, data: unknown) => {
+        try {
+          reply.raw.write(`event: ${event}\n`);
+          reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
+        } catch {
+          // Socket closed — ignore.
+        }
+      };
+
+      try {
+        const result = await renderer.renderWorld(name, { dimensions, force }, (p) => {
+          write('progress', p);
+        });
+        write('done', result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Render failed';
+        write('error', { message });
+      } finally {
+        reply.raw.end();
+      }
+      return;
+    }
+
+    // Synchronous mode
+    try {
+      const result = await renderer.renderWorld(name, { dimensions, force });
+      return reply.send(result);
+    } catch (error) {
+      fastify.log.error(error, 'Failed to render world map');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: error instanceof Error ? error.message : 'Failed to render world map',
+      });
+    }
+  });
+
+  /**
+   * GET /api/worlds/:name/map/web/*
+   * Serve the rendered BlueMap webapp (iframe target + tiles/assets).
+   * Path-traversal safe: the resolved file must stay within the world webroot.
+   * (#529)
+   */
+  fastify.get<MapServeRoute>('/api/worlds/:name/map/web/*', {
+    schema: {
+      tags: ['worlds'],
+      summary: 'Serve rendered map files',
+      description: 'Static file serving for a rendered BlueMap webroot (path-traversal protected)',
+      params: MapWorldNameParamsSchema,
+    },
+  }, async (request, reply) => {
+    const { name } = request.params;
+    const webroot = getWebroot(name);
+    const relRaw = request.params['*'] || 'index.html';
+    const rel = relRaw === '' ? 'index.html' : relRaw;
+
+    const target = resolvePath(webroot, rel);
+    // Defense in depth: the resolved path must be the webroot itself or inside it.
+    if (target !== webroot && !target.startsWith(webroot + sep)) {
+      return reply.code(403).send({ error: 'Forbidden', message: 'Invalid path' });
+    }
+
+    if (!existsSync(target) || !statSync(target).isFile()) {
+      return reply.code(404).send({ error: 'NotFound', message: 'File not found' });
+    }
+
+    const contentType = MAP_CONTENT_TYPES[extname(target).toLowerCase()] || 'application/octet-stream';
+    reply.header('Content-Type', contentType);
+    return reply.send(createReadStream(target));
   });
 
   /**
