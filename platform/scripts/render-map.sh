@@ -209,8 +209,11 @@ CONFIG_DIR="$WORLD_MAPS/config"
 WEB_DIR="$WORLD_MAPS/web"
 
 if [[ "$FORCE" == "true" ]]; then
-    info "Force render: clearing cached output for '$WORLD_NAME'"
-    rm -rf "$WEB_DIR" "$CONFIG_DIR"
+    # Regenerate config from scratch (cheap), but KEEP the existing web output so
+    # a failed re-render does not destroy the previously working map. BlueMap's
+    # `-f` flag re-renders all tiles in place, overwriting on success.
+    info "Force render: regenerating config for '$WORLD_NAME' (existing map kept until overwritten)"
+    rm -rf "$CONFIG_DIR"
 fi
 
 # Pre-create writable dirs as the host user so the container (run via --user)
