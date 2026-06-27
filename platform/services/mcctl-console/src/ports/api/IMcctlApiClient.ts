@@ -127,6 +127,58 @@ export interface WorldDetailResponse {
   world: World;
 }
 
+// ===== World Info (#525) =====
+
+export type WorldDimension = 'overworld' | 'nether' | 'end';
+
+export interface WorldLevelData {
+  levelName: string;
+  seed: string;
+  spawn: { x: number; y: number; z: number };
+  gameMode: string;
+  difficulty: string;
+  hardcore: boolean;
+  dayTime: number;
+  dayCount: number;
+  raining: boolean;
+  thundering: boolean;
+  versionName: string;
+  dataVersion: number;
+  worldBorder: { size: number; centerX: number; centerZ: number };
+  dataPacks: string[];
+  gameRules?: Record<string, string>;
+}
+
+export interface WorldInfo {
+  name: string;
+  level: WorldLevelData;
+  dimensions: { overworld: boolean; nether: boolean; end: boolean };
+  sizeBytes: number;
+  regionCount: number;
+  lastModified: string | null;
+}
+
+export interface PlayerLocation {
+  uuid: string;
+  name?: string;
+  x: number;
+  y: number;
+  z: number;
+  dimension: WorldDimension;
+  health?: number;
+  food?: number;
+  xpLevel?: number;
+  online: boolean;
+}
+
+export interface WorldInfoResponse {
+  info: WorldInfo;
+}
+
+export interface PlayerLocationsResponse {
+  players: PlayerLocation[];
+}
+
 export interface CreateWorldRequest {
   name: string;
   seed?: string;

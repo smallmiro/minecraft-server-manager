@@ -58,3 +58,6 @@ export type { IConfigSnapshotRepository } from './IConfigSnapshotRepository.js';
 export type { IConfigSnapshotScheduleRepository } from './IConfigSnapshotScheduleRepository.js';
 export type { IConfigFileCollector } from './IConfigFileCollector.js';
 export type { IConfigSnapshotStorage } from './IConfigSnapshotStorage.js';
+
+export type { IWorldDataReader } from './IWorldDataReader.js';
+export type { IRconPort } from './IRconPort.js';

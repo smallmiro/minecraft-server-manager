@@ -8,6 +8,9 @@ import { rm } from 'fs/promises';
 import { pipeline } from 'stream/promises';
 import {
   WorldManagementUseCase,
+  WorldInfoUseCase,
+  PrismarineWorldDataReader,
+  RconCliAdapter,
   ApiPromptAdapter,
   ShellAdapter,
   WorldRepository,
@@ -37,6 +40,10 @@ import {
   type ReleaseWorldQuery,
   type UploadWorldQuery,
 } from '../schemas/world.js';
+import {
+  WorldInfoResponseSchema,
+  PlayerLocationsResponseSchema,
+} from '../schemas/world-info.js';
 
 // Route generic interfaces for type-safe request handling
 interface WorldNameRoute {
@@ -87,6 +94,18 @@ function createWorldUseCase(options?: {
   const serverRepo = new ServerRepository(paths);
 
   return new WorldManagementUseCase(prompt, shell, worldRepo, serverRepo);
+}
+
+/**
+ * Create WorldInfoUseCase instance with API adapters (#525).
+ * Read-only: world metadata, offline player locations, live RCON locations.
+ */
+function createWorldInfoUseCase(): WorldInfoUseCase {
+  const paths = new Paths();
+  const worldRepo = new WorldRepository(paths);
+  const dataReader = new PrismarineWorldDataReader();
+  const rcon = new RconCliAdapter();
+  return new WorldInfoUseCase(worldRepo, dataReader, rcon);
 }
 
 /**
@@ -192,6 +211,80 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to get world details',
+      });
+    }
+  });
+
+  /**
+   * GET /api/worlds/:name/info
+   * Get parsed world metadata (level.dat) + on-disk structure (#525)
+   */
+  fastify.get<WorldNameRoute>('/api/worlds/:name/info', {
+    schema: {
+      tags: ['worlds'],
+      summary: 'Get world info',
+      description: 'Returns parsed level.dat metadata, dimension presence, size and region count',
+      params: WorldNameParamsSchema,
+      response: {
+        200: WorldInfoResponseSchema,
+        404: WorldErrorResponseSchema,
+        500: WorldErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<WorldNameRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+    try {
+      const useCase = createWorldInfoUseCase();
+      const info = await useCase.getWorldInfo(name);
+      return reply.send({ info });
+    } catch (error) {
+      if (error instanceof Error && /not found/i.test(error.message)) {
+        return reply.code(404).send({
+          error: 'NotFound',
+          message: `World '${name}' not found`,
+        });
+      }
+      fastify.log.error(error, 'Failed to get world info');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'Failed to get world info',
+      });
+    }
+  });
+
+  /**
+   * GET /api/worlds/:name/players
+   * Get offline player locations from playerdata (#525)
+   */
+  fastify.get<WorldNameRoute>('/api/worlds/:name/players', {
+    schema: {
+      tags: ['worlds'],
+      summary: 'Get offline player locations',
+      description: 'Returns last-known player locations parsed from playerdata/*.dat',
+      params: WorldNameParamsSchema,
+      response: {
+        200: PlayerLocationsResponseSchema,
+        404: WorldErrorResponseSchema,
+        500: WorldErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<WorldNameRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+    try {
+      const useCase = createWorldInfoUseCase();
+      const players = await useCase.getPlayerLocations(name);
+      return reply.send({ players });
+    } catch (error) {
+      if (error instanceof Error && /not found/i.test(error.message)) {
+        return reply.code(404).send({
+          error: 'NotFound',
+          message: `World '${name}' not found`,
+        });
+      }
+      fastify.log.error(error, 'Failed to get player locations');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'Failed to get player locations',
       });
     }
   });

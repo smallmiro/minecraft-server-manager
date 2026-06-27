@@ -39,6 +39,15 @@ export {
   SnapshotDiff,
   type SnapshotDiffData,
   type SnapshotDiffSummary,
+  Dimension,
+  type GameMode,
+  type Difficulty,
+  type WorldBorder,
+  type WorldLevelData,
+  type DimensionPresence,
+  type WorldInfo,
+  type PlayerLocation,
+  type EntityPosition,
 } from './value-objects/index.js';
 
 // Entities

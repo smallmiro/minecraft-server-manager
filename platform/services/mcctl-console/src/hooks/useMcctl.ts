@@ -11,6 +11,8 @@ import type {
   LogsResponse,
   WorldListResponse,
   WorldDetailResponse,
+  WorldInfoResponse,
+  PlayerLocationsResponse,
   CreateWorldRequest,
   CreateWorldResponse,
   AssignWorldResponse,
@@ -215,6 +217,44 @@ export function useWorld(name: string, options?: { enabled?: boolean }) {
     queryKey: ['worlds', name],
     queryFn: () => apiFetch<WorldDetailResponse>(`/api/worlds/${encodeURIComponent(name)}`),
     enabled: options?.enabled !== false && !!name,
+  });
+}
+
+/**
+ * Hook to fetch parsed world info (level.dat metadata + structure) (#525)
+ */
+export function useWorldInfo(name: string, options?: { enabled?: boolean }) {
+  return useQuery<WorldInfoResponse, Error>({
+    queryKey: ['worlds', name, 'info'],
+    queryFn: () => apiFetch<WorldInfoResponse>(`/api/worlds/${encodeURIComponent(name)}/info`),
+    enabled: options?.enabled !== false && !!name,
+  });
+}
+
+/**
+ * Hook to fetch offline player locations from playerdata (#525)
+ */
+export function useWorldPlayers(name: string, options?: { enabled?: boolean }) {
+  return useQuery<PlayerLocationsResponse, Error>({
+    queryKey: ['worlds', name, 'players'],
+    queryFn: () => apiFetch<PlayerLocationsResponse>(`/api/worlds/${encodeURIComponent(name)}/players`),
+    enabled: options?.enabled !== false && !!name,
+  });
+}
+
+/**
+ * Hook to poll live player locations via RCON (#525).
+ * Polls every 5s; gracefully returns an empty list when the server is stopped.
+ */
+export function useLivePlayers(serverName: string, options?: { enabled?: boolean }) {
+  return useQuery<PlayerLocationsResponse, Error>({
+    queryKey: ['servers', serverName, 'players', 'live'],
+    queryFn: () =>
+      apiFetch<PlayerLocationsResponse>(
+        `/api/servers/${encodeURIComponent(serverName)}/players/live`
+      ),
+    enabled: options?.enabled !== false && !!serverName,
+    refetchInterval: 5000,
   });
 }
 

@@ -42,3 +42,14 @@ export {
   type SnapshotDiffData,
   type SnapshotDiffSummary,
 } from './SnapshotDiff.js';
+export {
+  Dimension,
+  type GameMode,
+  type Difficulty,
+  type WorldBorder,
+  type WorldLevelData,
+  type DimensionPresence,
+  type WorldInfo,
+  type PlayerLocation,
+  type EntityPosition,
+} from './WorldInfo.js';
