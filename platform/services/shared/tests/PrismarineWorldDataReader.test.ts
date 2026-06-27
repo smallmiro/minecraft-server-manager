@@ -53,6 +53,8 @@ describe('PrismarineWorldDataReader', () => {
       expect(p!.food).toBe(20);
       expect(p!.xpLevel).toBe(0);
       expect(p!.online).toBe(false);
+      // name resolved from usercache.json
+      expect(p!.name).toBe('Seatree1229');
     });
 
     it('returns empty array when playerdata is absent', async () => {

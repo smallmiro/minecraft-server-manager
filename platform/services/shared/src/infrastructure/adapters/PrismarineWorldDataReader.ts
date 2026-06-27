@@ -100,7 +100,8 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
       versionName: String(version.Name ?? 'unknown'),
       dataVersion: toNumber(data.DataVersion),
       worldBorder: {
-        size: toNumber(data.BorderSize),
+        // Vanilla default (59,999,968) is not persisted unless customized.
+        size: toNumber(data.BorderSize, 59999968),
         centerX: toNumber(data.BorderCenterX),
         centerZ: toNumber(data.BorderCenterZ),
       },
@@ -118,6 +119,8 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
       return [];
     }
 
+    const names = await this.loadUserCache(worldPath);
+
     const result: PlayerLocation[] = [];
     for (const entry of entries) {
       if (!entry.endsWith('.dat')) continue;
@@ -126,8 +129,10 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
         const { parsed } = await nbt.parse(buf);
         const p = nbt.simplify(parsed) as Record<string, unknown>;
         const pos = (p.Pos as number[] | undefined) ?? [0, 0, 0];
+        const uuid = entry.replace(/\.dat$/, '');
         result.push({
-          uuid: entry.replace(/\.dat$/, ''),
+          uuid,
+          name: names.get(uuid.toLowerCase()),
           x: toNumber(pos[0]),
           y: toNumber(pos[1]),
           z: toNumber(pos[2]),
@@ -142,6 +147,32 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
       }
     }
     return result;
+  }
+
+  /**
+   * Build a uuid -> username map from `usercache.json` (found beside the
+   * world or in the worlds root). Returns an empty map when unavailable,
+   * so player names are best-effort and never block parsing.
+   */
+  private async loadUserCache(worldPath: string): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    const candidates = [
+      join(worldPath, 'usercache.json'),
+      join(dirname(worldPath), 'usercache.json'),
+    ];
+    for (const file of candidates) {
+      try {
+        const raw = await readFile(file, 'utf-8');
+        const entries = JSON.parse(raw) as Array<{ name?: string; uuid?: string }>;
+        for (const e of entries) {
+          if (e.uuid && e.name) map.set(e.uuid.toLowerCase(), e.name);
+        }
+        if (map.size > 0) break;
+      } catch {
+        // Try next candidate
+      }
+    }
+    return map;
   }
 
   async detectDimensions(worldPath: string): Promise<DimensionPresence> {
