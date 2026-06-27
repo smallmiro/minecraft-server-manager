@@ -19,6 +19,9 @@ import {
   AuditActionEnum,
   BlueMapCliRenderer,
   BlueMapMarkerWriter,
+  WorldStatsUseCase,
+  AnvilBlockScanner,
+  AnalysisCancelledError,
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import {
@@ -58,6 +61,12 @@ import {
   type MapRenderQuery,
 } from '../schemas/world-map.js';
 import { MapMarkersResponseSchema } from '../schemas/world-structures.js';
+import {
+  BlockStatsResponseSchema,
+  StatsAnalyzeQuerySchema,
+  type StatsAnalyzeQuery,
+} from '../schemas/world-stats.js';
+import { mkdir, readFile as readFileAsync, writeFile } from 'fs/promises';
 import { config } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
 import { resolve as resolvePath, sep, extname } from 'node:path';
@@ -141,6 +150,21 @@ function createWorldInfoUseCase(): WorldInfoUseCase {
 function getMapsDir(): string {
   return join(config.platformPath, 'maps');
 }
+
+/** Cached block-stats result file for a world (#531). */
+function getStatsPath(name: string): string {
+  return join(config.platformPath, 'stats', `${name}.json`);
+}
+
+/** Create the world block-stats use case (#531). */
+function createWorldStatsUseCase(): WorldStatsUseCase {
+  const paths = new Paths();
+  return new WorldStatsUseCase(new WorldRepository(paths), new AnvilBlockScanner());
+}
+
+/** Default block-stats analysis timeout (10 minutes). */
+const STATS_ANALYZE_TIMEOUT_MS =
+  Number(process.env['STATS_ANALYZE_TIMEOUT_MS']) || 10 * 60 * 1000;
 
 /** Absolute webroot for a world's rendered map. */
 function getWebroot(name: string): string {
@@ -608,6 +632,136 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
       fastify.log.error(error, 'Failed to write map markers');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to write map markers' });
+    }
+  });
+
+  /**
+   * GET /api/worlds/:name/stats
+   * Last cached block-stats analysis result. 404 when never analyzed. (#531)
+   */
+  fastify.get<{ Params: MapWorldNameParams }>('/api/worlds/:name/stats', {
+    schema: {
+      tags: ['worlds'],
+      summary: 'Get cached world block stats',
+      description: 'Returns the last cached ore/block statistics analysis for the world',
+      params: MapWorldNameParamsSchema,
+      response: {
+        200: BlockStatsResponseSchema,
+        404: MapErrorResponseSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const { name } = request.params;
+    try {
+      const raw = await readFileAsync(getStatsPath(name), 'utf-8');
+      return reply.send(JSON.parse(raw));
+    } catch {
+      return reply.code(404).send({
+        error: 'NotFound',
+        message: `No analysis found for '${name}' — run an analysis first`,
+      });
+    }
+  });
+
+  /**
+   * POST /api/worlds/:name/stats/analyze
+   * Run a full region block scan. With ?follow=true streams progress as SSE
+   * (progress/done/cancelled/error); otherwise runs synchronously. The result
+   * is cached to stats/<world>.json. Cancellable by disconnecting; times out
+   * after STATS_ANALYZE_TIMEOUT_MS. (#531)
+   */
+  fastify.post<{ Params: MapWorldNameParams; Querystring: StatsAnalyzeQuery }>(
+    '/api/worlds/:name/stats/analyze', {
+    schema: {
+      tags: ['worlds'],
+      summary: 'Analyze world block stats',
+      description: 'Full region scan for ore/block statistics (heavy; optionally SSE progress)',
+      params: MapWorldNameParamsSchema,
+      querystring: StatsAnalyzeQuerySchema,
+      response: {
+        200: BlockStatsResponseSchema,
+        404: MapErrorResponseSchema,
+        500: MapErrorResponseSchema,
+      },
+    },
+  }, async (request, reply) => {
+    const { name } = request.params;
+    const { follow = false } = request.query;
+
+    if (!existsSync(join(new Paths().worlds, name))) {
+      return reply.code(404).send({ error: 'NotFound', message: `World '${name}' not found` });
+    }
+
+    const useCase = createWorldStatsUseCase();
+
+    const persist = async (result: unknown) => {
+      const file = getStatsPath(name);
+      await mkdir(join(config.platformPath, 'stats'), { recursive: true });
+      await writeFile(file, JSON.stringify(result), 'utf-8');
+    };
+
+    // SSE streaming mode
+    if (follow) {
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      });
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), STATS_ANALYZE_TIMEOUT_MS);
+      request.raw.on('close', () => controller.abort());
+
+      const write = (event: string, data: unknown) => {
+        try {
+          reply.raw.write(`event: ${event}\n`);
+          reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
+        } catch {
+          // socket closed — ignore
+        }
+      };
+
+      try {
+        const result = await useCase.analyze(name, {
+          signal: controller.signal,
+          onProgress: (p) => write('progress', p),
+        });
+        await persist(result);
+        write('done', result);
+      } catch (error) {
+        if (error instanceof AnalysisCancelledError) {
+          write('cancelled', { message: 'Analysis cancelled' });
+        } else {
+          write('error', {
+            message: error instanceof Error ? error.message : 'Analysis failed',
+          });
+        }
+      } finally {
+        clearTimeout(timeout);
+        reply.raw.end();
+      }
+      return;
+    }
+
+    // Synchronous mode
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), STATS_ANALYZE_TIMEOUT_MS);
+    try {
+      const result = await useCase.analyze(name, { signal: controller.signal });
+      await persist(result);
+      return reply.send(result);
+    } catch (error) {
+      if (error instanceof AnalysisCancelledError) {
+        return reply.code(500).send({ error: 'Cancelled', message: 'Analysis timed out' });
+      }
+      fastify.log.error(error, 'Failed to analyze world stats');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: error instanceof Error ? error.message : 'Failed to analyze world stats',
+      });
+    } finally {
+      clearTimeout(timeout);
     }
   });
 
