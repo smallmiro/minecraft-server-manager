@@ -11,7 +11,11 @@ import {
   getContainerHealth,
   stopContainer,
   getServerPlayitDomain,
+  getOnlinePlayers,
   WorldManagementUseCase,
+  WorldInfoUseCase,
+  PrismarineWorldDataReader,
+  RconCliAdapter,
   ApiPromptAdapter,
   ShellAdapter,
   WorldRepository,
@@ -48,6 +52,7 @@ import {
   type CreateServerQuery,
   type DeleteServerQuery,
 } from '../schemas/server.js';
+import { PlayerLocationsResponseSchema } from '../schemas/world-info.js';
 import { config } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
@@ -425,6 +430,91 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
   /**
    * GET /api/servers/:name/logs
+   * GET /api/servers/:name/players/live
+   * Live player locations via RCON (supports SSE with follow=true). (#525)
+   * Gracefully returns an empty list when the server is offline.
+   */
+  fastify.get<{ Params: ServerNameParams; Querystring: StatusQuery }>(
+    '/api/servers/:name/players/live',
+    {
+      schema: {
+        tags: ['servers'],
+        summary: 'Get live player locations',
+        description: 'Returns online player positions via RCON. Empty when the server is stopped.',
+        params: ServerNameParamsSchema,
+        querystring: StatusQuerySchema,
+        response: {
+          200: PlayerLocationsResponseSchema,
+          404: ErrorResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { name } = request.params;
+      const { follow = false, interval = 5000 } = request.query;
+
+      if (!serverExists(name)) {
+        return reply.code(404).send({
+          error: 'NotFound',
+          message: `Server '${name}' not found`,
+        });
+      }
+
+      const container = `mc-${name}`;
+      const useCase = new WorldInfoUseCase(
+        new WorldRepository(new Paths()),
+        new PrismarineWorldDataReader(),
+        new RconCliAdapter()
+      );
+
+      const resolveLive = async () => {
+        try {
+          const list = await getOnlinePlayers(container);
+          if (!list || list.players.length === 0) return [];
+          return await useCase.getLivePlayerLocations(container, list.players);
+        } catch {
+          return [];
+        }
+      };
+
+      // SSE streaming mode
+      if (follow) {
+        reply.raw.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*',
+        });
+
+        const sendPlayers = async () => {
+          const players = await resolveLive();
+          reply.raw.write(`event: players-live\n`);
+          reply.raw.write(`data: ${JSON.stringify({ players })}\n\n`);
+        };
+
+        await sendPlayers();
+        const polling = setInterval(() => {
+          void sendPlayers();
+        }, interval);
+        const heartbeat = setInterval(() => {
+          reply.raw.write(': heartbeat\n\n');
+        }, 30000);
+
+        request.raw.on('close', () => {
+          clearInterval(polling);
+          clearInterval(heartbeat);
+          reply.raw.end();
+        });
+        return;
+      }
+
+      // Standard JSON response
+      const players = await resolveLive();
+      return reply.send({ players });
+    }
+  );
+
+  /**
    * Get server logs (supports SSE streaming with follow=true)
    */
   fastify.get<LogsRoute>('/api/servers/:name/logs', {
