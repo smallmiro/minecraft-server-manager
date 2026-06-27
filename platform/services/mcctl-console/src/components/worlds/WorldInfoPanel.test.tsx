@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   useWorldInfo: vi.fn(),
   useWorldPlayers: vi.fn(),
   useLivePlayers: vi.fn(),
+  useMapStatus: vi.fn(),
+  useRenderMap: vi.fn(),
 }));
 
 vi.mock('@/hooks/useMcctl', () => mocks);
@@ -50,8 +52,18 @@ describe('WorldInfoPanel', () => {
     mocks.useWorldInfo.mockReset();
     mocks.useWorldPlayers.mockReset();
     mocks.useLivePlayers.mockReset();
+    mocks.useMapStatus.mockReset();
+    mocks.useRenderMap.mockReset();
     mocks.useWorldPlayers.mockReturnValue({ data: { players: offline } });
     mocks.useLivePlayers.mockReturnValue({ data: { players: [] } });
+    mocks.useMapStatus.mockReturnValue({ data: { rendered: false, maps: [] }, refetch: vi.fn() });
+    mocks.useRenderMap.mockReturnValue({
+      render: vi.fn(),
+      isRendering: false,
+      progress: null,
+      result: null,
+      error: null,
+    });
   });
 
   it('shows a skeleton while loading', () => {

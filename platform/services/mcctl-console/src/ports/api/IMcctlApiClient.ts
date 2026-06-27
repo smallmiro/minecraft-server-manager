@@ -179,6 +179,31 @@ export interface PlayerLocationsResponse {
   players: PlayerLocation[];
 }
 
+// World Map (#529, Phase 2 — BlueMap)
+export interface MapStatusResponse {
+  rendered: boolean;
+  maps: string[];
+  lastModified?: string;
+}
+
+export interface MapRenderProgress {
+  map: string;
+  percent: number;
+  eta?: string;
+}
+
+export interface MapRenderResult {
+  world: string;
+  maps: string[];
+  webroot: string;
+  entry: string;
+}
+
+export interface MapRenderRequest {
+  dimensions?: WorldDimension[];
+  force?: boolean;
+}
+
 export interface CreateWorldRequest {
   name: string;
   seed?: string;
