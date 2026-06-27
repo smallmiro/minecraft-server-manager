@@ -528,4 +528,191 @@ MEMORY=4G
       expect(response.statusCode).not.toBe(400);
     });
   });
+
+  // ============================================================
+  // GET /api/servers/:name/mods/installed
+  // ============================================================
+
+  describe('GET /api/servers/:name/mods/installed', () => {
+    it('should return 404 if server does not exist', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/servers/nonexistent/mods/installed',
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return empty list when mods directory does not exist', async () => {
+      mockedServerExists.mockReturnValue(true);
+      const { readdirSync, statSync } = await import('fs');
+      vi.mocked(readdirSync).mockReturnValue([]);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/servers/myserver/mods/installed',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.mods).toEqual([]);
+    });
+
+    it('should return jar file list with excluded status', async () => {
+      mockedServerExists.mockReturnValue(true);
+      const { readdirSync } = await import('fs');
+
+      const mockDirents = [
+        { name: 'sodium-1.0.jar', isFile: () => true, isDirectory: () => false },
+        { name: 'lithium-0.5.jar', isFile: () => true, isDirectory: () => false },
+        { name: 'status-effect-bars-client.jar', isFile: () => true, isDirectory: () => false },
+        { name: 'somefolder', isFile: () => false, isDirectory: () => true },
+      ] as any;
+
+      vi.mocked(readdirSync).mockReturnValue(mockDirents);
+
+      // Config has MODRINTH_EXCLUDE_FILES=status-effect-bars-client.jar
+      mockReadFileSync.mockReturnValue(`TYPE=MODRINTH
+MODRINTH_MODPACK=cobblemon
+MODRINTH_EXCLUDE_FILES=status-effect-bars-client.jar
+`);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/servers/myserver/mods/installed',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.mods).toHaveLength(3);
+
+      const sodium = body.mods.find((m: any) => m.filename === 'sodium-1.0.jar');
+      expect(sodium).toBeDefined();
+      expect(sodium.excluded).toBe(false);
+
+      const clientMod = body.mods.find((m: any) => m.filename === 'status-effect-bars-client.jar');
+      expect(clientMod).toBeDefined();
+      expect(clientMod.excluded).toBe(true);
+    });
+
+    it('should handle missing config.env gracefully (no excludes)', async () => {
+      mockedServerExists.mockReturnValue(true);
+      const { readdirSync, existsSync } = await import('fs');
+
+      vi.mocked(existsSync).mockImplementation((p: any) => {
+        const pathStr = String(p);
+        // config.env does not exist, but mods dir does
+        if (pathStr.includes('config.env')) return false;
+        return true;
+      });
+
+      const mockDirents = [
+        { name: 'sodium-1.0.jar', isFile: () => true, isDirectory: () => false },
+      ] as any;
+      vi.mocked(readdirSync).mockReturnValue(mockDirents);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/servers/myserver/mods/installed',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.mods[0].excluded).toBe(false);
+    });
+  });
+
+  // ============================================================
+  // PATCH /api/servers/:name/mods/installed/:filename/exclude
+  // ============================================================
+
+  describe('PATCH /api/servers/:name/mods/installed/:filename/exclude', () => {
+    it('should return 404 if server does not exist', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/nonexistent/mods/installed/sodium-1.0.jar/exclude',
+        payload: { excluded: true },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should exclude a mod by adding to MODRINTH_EXCLUDE_FILES', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(`TYPE=MODRINTH
+MODRINTH_MODPACK=cobblemon
+`);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/sodium-1.0.jar/exclude',
+        payload: { excluded: true },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.success).toBe(true);
+      expect(body.filename).toBe('sodium-1.0.jar');
+      expect(body.excluded).toBe(true);
+      expect(body.restartRequired).toBe(true);
+      expect(mockWriteFileSync).toHaveBeenCalled();
+    });
+
+    it('should un-exclude a mod by removing from MODRINTH_EXCLUDE_FILES', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(`TYPE=MODRINTH
+MODRINTH_MODPACK=cobblemon
+MODRINTH_EXCLUDE_FILES=sodium-1.0.jar,lithium-0.5.jar
+`);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/sodium-1.0.jar/exclude',
+        payload: { excluded: false },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.success).toBe(true);
+      expect(body.excluded).toBe(false);
+      expect(body.restartRequired).toBe(true);
+      expect(mockWriteFileSync).toHaveBeenCalled();
+    });
+
+    it('should use CF_EXCLUDE_MODS for CurseForge servers', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(`TYPE=AUTO_CURSEFORGE
+CF_SLUG=cobblemon
+`);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/client-mod.jar/exclude',
+        payload: { excluded: true },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.success).toBe(true);
+      // The written content should contain CF_EXCLUDE_MODS
+      const writtenContent = mockWriteFileSync.mock.calls[0][1] as string;
+      expect(writtenContent).toContain('CF_EXCLUDE_MODS=client-mod.jar');
+    });
+
+    it('should return 400 if excluded field is missing', async () => {
+      mockedServerExists.mockReturnValue(true);
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/api/servers/myserver/mods/installed/sodium-1.0.jar/exclude',
+        payload: {},
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
 });
