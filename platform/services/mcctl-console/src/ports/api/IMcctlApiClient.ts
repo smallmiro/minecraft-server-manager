@@ -204,6 +204,27 @@ export interface MapRenderRequest {
   force?: boolean;
 }
 
+// World Structures (#530, Phase 3)
+export interface WorldStructure {
+  id: string;
+  category: string;
+  label: string;
+  x: number;
+  y: number;
+  z: number;
+  dimension: WorldDimension;
+}
+
+export interface StructuresResponse {
+  structures: WorldStructure[];
+  total: number;
+}
+
+export interface MapMarkersResponse {
+  counts: Record<string, number>;
+  total: number;
+}
+
 export interface CreateWorldRequest {
   name: string;
   seed?: string;

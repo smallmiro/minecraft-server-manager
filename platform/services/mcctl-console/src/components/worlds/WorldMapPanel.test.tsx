@@ -6,6 +6,7 @@ import { darkTheme } from '@/theme/muiTheme';
 const mocks = vi.hoisted(() => ({
   useMapStatus: vi.fn(),
   useRenderMap: vi.fn(),
+  useWriteMapMarkers: vi.fn(),
 }));
 
 vi.mock('@/hooks/useMcctl', () => mocks);
@@ -19,11 +20,18 @@ describe('WorldMapPanel', () => {
   beforeEach(() => {
     mocks.useMapStatus.mockReset();
     mocks.useRenderMap.mockReset();
+    mocks.useWriteMapMarkers.mockReset();
     mocks.useRenderMap.mockReturnValue({
       render: vi.fn().mockResolvedValue(undefined),
       isRendering: false,
       progress: null,
       result: null,
+      error: null,
+    });
+    mocks.useWriteMapMarkers.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({ counts: {}, total: 0 }),
+      isPending: false,
+      isError: false,
       error: null,
     });
   });
@@ -90,5 +98,31 @@ describe('WorldMapPanel', () => {
     renderWithTheme(<WorldMapPanel worldName="factory" />);
     fireEvent.click(screen.getByTestId('world-map-render-button'));
     await waitFor(() => expect(render).toHaveBeenCalledWith('factory'));
+  });
+
+  it('hides the structure-markers button until the map is rendered', () => {
+    mocks.useMapStatus.mockReturnValue({ data: { rendered: false, maps: [] }, refetch: vi.fn() });
+    renderWithTheme(<WorldMapPanel worldName="factory" />);
+    expect(screen.queryByTestId('world-map-markers-button')).toBeNull();
+  });
+
+  it('writes structure markers and reports the count when clicked', async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({ counts: { overworld: 3 }, total: 3 });
+    mocks.useMapStatus.mockReturnValue({
+      data: { rendered: true, maps: ['overworld'] },
+      refetch: vi.fn(),
+    });
+    mocks.useWriteMapMarkers.mockReturnValue({
+      mutateAsync,
+      isPending: false,
+      isError: false,
+      error: null,
+    });
+    renderWithTheme(<WorldMapPanel worldName="factory" />);
+    fireEvent.click(screen.getByTestId('world-map-markers-button'));
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith('factory'));
+    await waitFor(() =>
+      expect(screen.getByTestId('world-map-markers-result')).toHaveTextContent('3 structures')
+    );
   });
 });
