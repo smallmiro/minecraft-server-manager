@@ -247,6 +247,12 @@ export class McctlApiAdapter implements IMcctlApiClient {
     return this.fetch<PlayerLocationsResponse>(`/api/worlds/${encodeURIComponent(name)}/players`);
   }
 
+  async getLivePlayers(serverName: string): Promise<PlayerLocationsResponse> {
+    return this.fetch<PlayerLocationsResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/players/live`
+    );
+  }
+
   async getWorldMapStatus(name: string): Promise<MapStatusResponse> {
     return this.fetch<MapStatusResponse>(`/api/worlds/${encodeURIComponent(name)}/map/status`);
   }
