@@ -121,23 +121,35 @@ pick_dimension_root() {
 }
 
 # Resolve the world-save root that holds a dimension's region data, handling
-# both vanilla (single folder: DIM-1/DIM1) and Paper/Spigot (split folders:
-# <world>_nether/<world>_the_end) layouts. Echoes the host path, or nothing.
+# vanilla (single folder: DIM-1/DIM1), Paper/Spigot (split folders:
+# <world>_nether/<world>_the_end) and latest-Minecraft (every dimension under
+# <world>/dimensions/minecraft/<dim>) layouts. The mounted root stays <world>
+# for non-split layouts — BlueMap resolves the dimension key to DIM-1/DIM1 or
+# dimensions/minecraft/<dim> itself. Echoes the host path, or nothing.
 resolve_dimension_root() {
-    local world_root="$1" dim="$2"
+    local world_root="$1" dim="$2" single_region
     case "$dim" in
         overworld)
-            has_region_data "$world_root/region" && echo "$world_root"
+            if has_region_data "$world_root/region" \
+                || has_region_data "$world_root/dimensions/minecraft/overworld/region"; then
+                echo "$world_root"
+            fi
             ;;
         nether)
+            single_region="$world_root/DIM-1/region"
+            has_region_data "$single_region" \
+                || single_region="$world_root/dimensions/minecraft/the_nether/region"
             pick_dimension_root \
                 "${world_root}_nether/DIM-1/region" "${world_root}_nether" \
-                "$world_root/DIM-1/region" "$world_root"
+                "$single_region" "$world_root"
             ;;
         end)
+            single_region="$world_root/DIM1/region"
+            has_region_data "$single_region" \
+                || single_region="$world_root/dimensions/minecraft/the_end/region"
             pick_dimension_root \
                 "${world_root}_the_end/DIM1/region" "${world_root}_the_end" \
-                "$world_root/DIM1/region" "$world_root"
+                "$single_region" "$world_root"
             ;;
     esac
 }

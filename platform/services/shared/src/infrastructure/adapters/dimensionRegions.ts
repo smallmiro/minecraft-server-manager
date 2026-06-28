@@ -65,15 +65,23 @@ function pickRegionDir(candidates: string[]): string | undefined {
  * reader (#530) and block scanner (#531).
  */
 export function resolveRegionDirs(worldPath: string): DimensionRegionDir[] {
+  // Layout candidates per dimension, oldest-style first. The last entry is the
+  // `dimensions/minecraft/<dim>/region` layout used by latest Minecraft, where
+  // every dimension (overworld included) lives under `dimensions/` (#546).
   const candidates: Record<Dimension, string[]> = {
-    [Dimension.Overworld]: [join(worldPath, 'region')],
+    [Dimension.Overworld]: [
+      join(worldPath, 'region'),
+      join(worldPath, 'dimensions', 'minecraft', 'overworld', 'region'),
+    ],
     [Dimension.Nether]: [
       join(`${worldPath}_nether`, 'DIM-1', 'region'),
       join(worldPath, 'DIM-1', 'region'),
+      join(worldPath, 'dimensions', 'minecraft', 'the_nether', 'region'),
     ],
     [Dimension.End]: [
       join(`${worldPath}_the_end`, 'DIM1', 'region'),
       join(worldPath, 'DIM1', 'region'),
+      join(worldPath, 'dimensions', 'minecraft', 'the_end', 'region'),
     ],
   };
 

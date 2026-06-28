@@ -75,4 +75,30 @@ describe('resolveRegionDirs', () => {
     mkRegion(join(w, 'region'), NEW);
     expect(dirFor(w, Dimension.Overworld)).toBe(join(w, 'region'));
   });
+
+  // Latest Minecraft stores every dimension (overworld included) under
+  // dimensions/minecraft/<dim>/region (issue #546).
+  it('overworld: dimensions/ layout -> dimensions overworld region', () => {
+    const w = join(work, 'd1');
+    mkRegion(join(w, 'dimensions', 'minecraft', 'overworld', 'region'), NEW);
+    expect(dirFor(w, Dimension.Overworld)).toBe(
+      join(w, 'dimensions', 'minecraft', 'overworld', 'region'),
+    );
+  });
+
+  it('nether: dimensions/ layout -> dimensions the_nether region', () => {
+    const w = join(work, 'd2');
+    mkRegion(join(w, 'dimensions', 'minecraft', 'the_nether', 'region'), NEW);
+    expect(dirFor(w, Dimension.Nether)).toBe(
+      join(w, 'dimensions', 'minecraft', 'the_nether', 'region'),
+    );
+  });
+
+  it('end: dimensions/ layout -> dimensions the_end region', () => {
+    const w = join(work, 'd3');
+    mkRegion(join(w, 'dimensions', 'minecraft', 'the_end', 'region'), NEW);
+    expect(dirFor(w, Dimension.End)).toBe(
+      join(w, 'dimensions', 'minecraft', 'the_end', 'region'),
+    );
+  });
 });
