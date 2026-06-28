@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.26.1] - 2026-06-28
+
+### Fixed
+- **Server World tab now shows live player locations** - The World tab reported "No players online" and only last-known offline positions even when players were online. The console had no BFF proxy route for `GET /api/servers/:name/players/live`, so the live query 404'd; the route is now added (#538)
+- **World map dimension switching / textures now load** - Switching the embedded BlueMap viewer to another dimension failed with "Failed to load map" and high-res tiles/textures were missing, because BlueMap stores map data gzip-compressed (`textures.json.gz`, `*.prbm.gz`) while the webapp requests the uncompressed name. The map static-serving endpoint now transparently decompresses `.gz` files (no re-render needed) (#540)
+
 ## [2.26.0] - 2026-06-28
 
 ### Added
