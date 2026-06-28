@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.26.2] - 2026-06-28
+
+### Fixed
+- **Nether/End maps, block stats & structure markers no longer render from stale data on layout-switched worlds** - When a world was moved from a server software that uses separate dimension folders (e.g. Paper: `<world>_nether`, `<world>_the_end`) to one that uses a single combined folder (e.g. NeoForge: `<world>/DIM-1`, `<world>/DIM1`), the old satellite folders were left behind empty. Dimension resolution preferred those stale satellite folders, so BlueMap rendered blank Nether/End maps and block statistics/structure markers read empty data. Both the `render-map.sh` `resolve_dimension_root` (#542) and the TypeScript `dimensionRegions.ts` `resolveRegionDirs` (#544) now select the active layout by newest region (`.mca`) data mtime (#542, #543, #544, #545)
+
 ## [2.26.1] - 2026-06-28
 
 ### Fixed
