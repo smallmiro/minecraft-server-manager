@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.26.0] - 2026-06-28
+
+### Added
+- **World Info Panel** - A new world-detail view, reachable from the world management screen and the server "World" tab, surfaces what's inside a world. Delivered across four phases under #525:
+  - **World info & player locations** - Parsed `level.dat` metadata (seed, spawn, game mode, difficulty, day/weather, version, world border, data packs), on-disk dimension presence, size and region count, plus last-known offline player locations from `playerdata` and live player positions via RCON (#525, #532, #533)
+  - **Full map (BlueMap)** - Renders a static, pan/zoom-able web map of the world with the BlueMap CLI (offline, no running server required) and embeds BlueMap's viewer in the console. Manual render with live SSE progress; the rendered webroot is served with path-traversal protection (#529, #535)
+  - **Village & structure markers** - Extracts generated structures (villages, fortresses, temples, outposts, end cities, …) from region structure data and overlays them on the map as native BlueMap markers with per-category toggle and click popups (#530, #536)
+  - **Ore & block statistics** - A full region scan decodes every chunk's block-state palette to count ores and blocks; runs as a cancellable analysis with live progress and a cached bar-chart visualization (#531, #537)
+- **Auto-detect client-only mods in modpacks** - Modpack server creation now detects and excludes client-only mods using official metadata, preventing the `invalid dist DEDICATED_SERVER` crash on dedicated servers (#524, #527)
+- **Installed modpack jar listing + Exclude toggle** - View the jars bundled in an installed modpack and toggle excluded mods directly (#523, #526)
+
 ## [2.25.1] - 2026-06-21
 
 ### Fixed
