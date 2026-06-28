@@ -126,6 +126,11 @@ ensure_image() {
     docker build -t "$IMAGE" "$DOCKER_DIR" >&2
 }
 
+# When sourced (e.g. by tests) expose the helper functions above without running
+# the CLI flow below. `return` only succeeds while being sourced; on direct
+# execution the `|| true` keeps `set -e` happy and we fall through to main.
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && return 0 2>/dev/null || true
+
 # =============================================================================
 # Argument parsing
 # =============================================================================
