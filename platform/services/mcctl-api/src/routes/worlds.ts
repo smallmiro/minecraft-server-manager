@@ -71,6 +71,7 @@ import { config } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
 import { resolve as resolvePath, sep, extname } from 'node:path';
 import { existsSync, statSync, createReadStream } from 'node:fs';
+import { createGunzip } from 'node:zlib';
 import { stat as statAsync, readdir } from 'node:fs/promises';
 
 // Route generic interfaces for type-safe request handling
@@ -575,13 +576,26 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.code(403).send({ error: 'Forbidden', message: 'Invalid path' });
     }
 
-    if (!existsSync(target) || !statSync(target).isFile()) {
-      return reply.code(404).send({ error: 'NotFound', message: 'File not found' });
+    const isFile = (p: string) => existsSync(p) && statSync(p).isFile();
+    // Content-type is derived from the REQUESTED (uncompressed) name.
+    const contentType = MAP_CONTENT_TYPES[extname(target).toLowerCase()] || 'application/octet-stream';
+
+    if (isFile(target)) {
+      reply.header('Content-Type', contentType);
+      return reply.send(createReadStream(target));
     }
 
-    const contentType = MAP_CONTENT_TYPES[extname(target).toLowerCase()] || 'application/octet-stream';
-    reply.header('Content-Type', contentType);
-    return reply.send(createReadStream(target));
+    // BlueMap stores map data gzip-compressed (`<file>.gz`, e.g. textures.json,
+    // hires `*.prbm`) but the webapp requests the uncompressed name. Transparently
+    // decompress the `.gz` and serve plain bytes (no Content-Encoding, so the
+    // console BFF proxy hop forwards it unchanged). (#540)
+    const gz = `${target}.gz`;
+    if (isFile(gz)) {
+      reply.header('Content-Type', contentType);
+      return reply.send(createReadStream(gz).pipe(createGunzip()));
+    }
+
+    return reply.code(404).send({ error: 'NotFound', message: 'File not found' });
   });
 
   /**

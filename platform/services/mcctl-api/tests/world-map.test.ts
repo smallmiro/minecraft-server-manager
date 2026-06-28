@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { mkdirSync, rmSync, existsSync, writeFileSync } from 'fs';
+import { gzipSync } from 'zlib';
 import { join } from 'path';
 
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-world-map-test');
@@ -104,6 +105,22 @@ describe('World Map API (#529)', () => {
       });
       expect(res.statusCode).not.toBe(200);
       expect(res.body).not.toContain('top-secret');
+    });
+
+    it('transparently serves gzip-stored files (BlueMap .gz) decompressed (#540)', async () => {
+      seedRenderedMap('survival');
+      const web = join(TEST_PLATFORM_PATH, 'maps', 'survival', 'web');
+      const payload = JSON.stringify([{ resourcePath: 'bluemap:block/stone' }]);
+      // Only the .gz exists on disk (as BlueMap stores it).
+      writeFileSync(join(web, 'maps', 'nether', 'textures.json.gz'), gzipSync(Buffer.from(payload)));
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/worlds/survival/map/web/maps/nether/textures.json',
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers['content-type']).toContain('application/json');
+      expect(res.body).toBe(payload); // decompressed, not raw gzip bytes
     });
   });
 
