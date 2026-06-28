@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.26.3] - 2026-06-28
+
+### Fixed
+- **Maps, block statistics & structure markers now work on latest Minecraft (`dimensions/` world layout)** - The newest Minecraft versions (Vanilla `VERSION=LATEST`, MC 26.x) store every dimension — including the overworld — under `dimensions/minecraft/<dimension>/region`. The manager only recognized the legacy paths (`region`, `DIM-1`, `DIM1` plus Paper satellite folders), so map rendering, block statistics, structure scanning, and dimension detection all failed on these worlds. Added this third layout to `render-map.sh`, `dimensionRegions.ts`, and `PrismarineWorldDataReader`, and generalized dimension-path resolution so the active layout is selected by newest region (`.mca`) data mtime across all three layouts (#546, #547)
+
 ## [2.26.2] - 2026-06-28
 
 ### Fixed

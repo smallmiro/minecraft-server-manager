@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-docker/mcctl-console",
-  "version": "2.26.2",
+  "version": "2.26.3",
   "description": "Web management console for Docker Minecraft servers",
   "bin": {
     "mcctl-console": "bin/start.js"
