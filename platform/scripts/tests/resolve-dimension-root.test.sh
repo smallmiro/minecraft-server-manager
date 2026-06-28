@@ -120,6 +120,16 @@ mk_region "${W}_nether/DIM-1/region" "2026-02-02 12:00:00"
 assert_eq "nether: dimensions/ (new) vs stale satellite -> world root" \
     "$W" "$(resolve_dimension_root "$W" nether)"
 
+# All three layouts coexist (classic -> latest migration with a Paper satellite
+# left over). The active dimensions/ data is newest, even though the satellite
+# is newer than the old DIM-1 — must still resolve to the world root.
+W="$WORK/d5"
+mk_region "$W/dimensions/minecraft/the_nether/region" "2026-06-28 12:00:00" # active
+mk_region "${W}_nether/DIM-1/region" "2026-04-04 12:00:00"                  # stale satellite
+mk_region "$W/DIM-1/region" "2026-02-02 12:00:00"                           # stale classic
+assert_eq "nether: all three layouts, dimensions/ newest -> world root" \
+    "$W" "$(resolve_dimension_root "$W" nether)"
+
 # -----------------------------------------------------------------------------
 echo ""
 if [[ $FAILED -eq 0 ]]; then

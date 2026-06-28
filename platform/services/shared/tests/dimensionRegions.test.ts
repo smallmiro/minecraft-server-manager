@@ -101,4 +101,18 @@ describe('resolveRegionDirs', () => {
       join(w, 'dimensions', 'minecraft', 'the_end', 'region'),
     );
   });
+
+  // All three layouts coexist (classic -> latest migration with a leftover Paper
+  // satellite). The active dimensions/ data is newest even though the satellite
+  // is newer than the old DIM-1 -> must pick the dimensions/ region.
+  it('nether: all three layouts, dimensions/ newest -> dimensions region', () => {
+    const w = join(work, 'd4');
+    const MID = Date.parse('2026-04-04T12:00:00Z');
+    mkRegion(join(w, 'dimensions', 'minecraft', 'the_nether', 'region'), NEW); // active
+    mkRegion(join(`${w}_nether`, 'DIM-1', 'region'), MID); // stale satellite
+    mkRegion(join(w, 'DIM-1', 'region'), OLD); // stale classic
+    expect(dirFor(w, Dimension.Nether)).toBe(
+      join(w, 'dimensions', 'minecraft', 'the_nether', 'region'),
+    );
+  });
 });

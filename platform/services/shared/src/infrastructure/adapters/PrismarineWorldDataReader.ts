@@ -204,13 +204,14 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
   }
 
   async countRegions(worldPath: string): Promise<number> {
-    const rootRegion = join(worldPath, 'region');
-    const dir = existsSync(rootRegion)
-      ? rootRegion
-      : join(worldPath, 'dimensions', 'minecraft', 'overworld', 'region');
+    // Use the same active-layout resolution as the scanners so the count never
+    // reflects a stale layout (#546): resolveRegionDirs picks the overworld
+    // region dir across root/dimensions layouts by newest mtime.
+    const dir = resolveRegionDirs(worldPath).find(
+      (r) => r.dimension === Dimension.Overworld,
+    )?.dir;
+    if (!dir) return 0;
     try {
-      const s = await stat(dir);
-      if (!s.isDirectory()) return 0;
       const entries = await readdir(dir);
       return entries.filter((e) => e.endsWith('.mca')).length;
     } catch {
