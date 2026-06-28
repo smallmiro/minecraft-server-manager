@@ -83,6 +83,43 @@ has_region_data() {
     compgen -G "$dir/*.mca" > /dev/null 2>&1
 }
 
+# Echo the newest *.mca modification time (epoch seconds) in a region dir,
+# or 0 when the directory is missing or holds no region files.
+newest_region_mtime() {
+    local dir="$1"
+    [[ -d "$dir" ]] || { echo 0; return; }
+    local newest
+    newest="$(find "$dir" -maxdepth 1 -name '*.mca' -printf '%T@\n' 2>/dev/null \
+        | cut -d. -f1 | sort -rn | head -n1)"
+    echo "${newest:-0}"
+}
+
+# Choose between a split-layout (satellite) candidate and a single-folder
+# candidate for one dimension. When BOTH hold region data — e.g. a world that
+# migrated from Paper (split) to a single-folder server type leaves a stale
+# satellite behind — pick whichever was written most recently, i.e. the layout
+# the server is actually using. Echoes the chosen world-save root, or nothing.
+# Args: <split_region_dir> <split_root> <single_region_dir> <single_root>
+pick_dimension_root() {
+    local split_region="$1" split_root="$2" single_region="$3" single_root="$4"
+    local split_ok=false single_ok=false
+    has_region_data "$split_region" && split_ok=true
+    has_region_data "$single_region" && single_ok=true
+    if $split_ok && $single_ok; then
+        # Tie favours the satellite (the historical default) — only relevant
+        # when both layouts share an identical newest mtime, which is unlikely.
+        if (( $(newest_region_mtime "$split_region") >= $(newest_region_mtime "$single_region") )); then
+            echo "$split_root"
+        else
+            echo "$single_root"
+        fi
+    elif $split_ok; then
+        echo "$split_root"
+    elif $single_ok; then
+        echo "$single_root"
+    fi
+}
+
 # Resolve the world-save root that holds a dimension's region data, handling
 # both vanilla (single folder: DIM-1/DIM1) and Paper/Spigot (split folders:
 # <world>_nether/<world>_the_end) layouts. Echoes the host path, or nothing.
@@ -93,18 +130,14 @@ resolve_dimension_root() {
             has_region_data "$world_root/region" && echo "$world_root"
             ;;
         nether)
-            if has_region_data "${world_root}_nether/DIM-1/region"; then
-                echo "${world_root}_nether"
-            elif has_region_data "$world_root/DIM-1/region"; then
-                echo "$world_root"
-            fi
+            pick_dimension_root \
+                "${world_root}_nether/DIM-1/region" "${world_root}_nether" \
+                "$world_root/DIM-1/region" "$world_root"
             ;;
         end)
-            if has_region_data "${world_root}_the_end/DIM1/region"; then
-                echo "${world_root}_the_end"
-            elif has_region_data "$world_root/DIM1/region"; then
-                echo "$world_root"
-            fi
+            pick_dimension_root \
+                "${world_root}_the_end/DIM1/region" "${world_root}_the_end" \
+                "$world_root/DIM1/region" "$world_root"
             ;;
     esac
 }
@@ -125,6 +158,11 @@ ensure_image() {
     info "Building BlueMap renderer image '$IMAGE' (first run only)..."
     docker build -t "$IMAGE" "$DOCKER_DIR" >&2
 }
+
+# When sourced (e.g. by tests) expose the helper functions above without running
+# the CLI flow below. `return` only succeeds while being sourced; on direct
+# execution the `|| true` keeps `set -e` happy and we fall through to main.
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && return 0 2>/dev/null || true
 
 # =============================================================================
 # Argument parsing
