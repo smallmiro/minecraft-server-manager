@@ -56,24 +56,33 @@ function pickRegionDir(candidates: string[]): string | undefined {
 }
 
 /**
- * Resolve each present dimension's region directory for a world, handling both
- * vanilla (DIM-1/DIM1) and Paper/Spigot split-folder (`<name>_nether` /
- * `<name>_the_end`) layouts. A candidate only wins if it actually contains
- * region data; when both layouts hold data the more recently written one is
- * chosen, so a stale split satellite never shadows the active single-folder
- * data (mirrors render-map.sh). Single source of truth shared by the structure
- * reader (#530) and block scanner (#531).
+ * Resolve each present dimension's region directory for a world, handling
+ * vanilla (DIM-1/DIM1), Paper/Spigot split-folder (`<name>_nether` /
+ * `<name>_the_end`) and latest-Minecraft (`dimensions/minecraft/<dim>/region`,
+ * #546) layouts. A candidate only wins if it actually contains region data;
+ * when several layouts hold data the more recently written one is chosen, so a
+ * stale layout never shadows the active one (mirrors render-map.sh). Single
+ * source of truth shared by the structure reader (#530) and block scanner
+ * (#531).
  */
 export function resolveRegionDirs(worldPath: string): DimensionRegionDir[] {
+  // Layout candidates per dimension, oldest-style first. The last entry is the
+  // `dimensions/minecraft/<dim>/region` layout used by latest Minecraft, where
+  // every dimension (overworld included) lives under `dimensions/` (#546).
   const candidates: Record<Dimension, string[]> = {
-    [Dimension.Overworld]: [join(worldPath, 'region')],
+    [Dimension.Overworld]: [
+      join(worldPath, 'region'),
+      join(worldPath, 'dimensions', 'minecraft', 'overworld', 'region'),
+    ],
     [Dimension.Nether]: [
       join(`${worldPath}_nether`, 'DIM-1', 'region'),
       join(worldPath, 'DIM-1', 'region'),
+      join(worldPath, 'dimensions', 'minecraft', 'the_nether', 'region'),
     ],
     [Dimension.End]: [
       join(`${worldPath}_the_end`, 'DIM1', 'region'),
       join(worldPath, 'DIM1', 'region'),
+      join(worldPath, 'dimensions', 'minecraft', 'the_end', 'region'),
     ],
   };
 

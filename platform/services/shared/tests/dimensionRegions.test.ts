@@ -75,4 +75,44 @@ describe('resolveRegionDirs', () => {
     mkRegion(join(w, 'region'), NEW);
     expect(dirFor(w, Dimension.Overworld)).toBe(join(w, 'region'));
   });
+
+  // Latest Minecraft stores every dimension (overworld included) under
+  // dimensions/minecraft/<dim>/region (issue #546).
+  it('overworld: dimensions/ layout -> dimensions overworld region', () => {
+    const w = join(work, 'd1');
+    mkRegion(join(w, 'dimensions', 'minecraft', 'overworld', 'region'), NEW);
+    expect(dirFor(w, Dimension.Overworld)).toBe(
+      join(w, 'dimensions', 'minecraft', 'overworld', 'region'),
+    );
+  });
+
+  it('nether: dimensions/ layout -> dimensions the_nether region', () => {
+    const w = join(work, 'd2');
+    mkRegion(join(w, 'dimensions', 'minecraft', 'the_nether', 'region'), NEW);
+    expect(dirFor(w, Dimension.Nether)).toBe(
+      join(w, 'dimensions', 'minecraft', 'the_nether', 'region'),
+    );
+  });
+
+  it('end: dimensions/ layout -> dimensions the_end region', () => {
+    const w = join(work, 'd3');
+    mkRegion(join(w, 'dimensions', 'minecraft', 'the_end', 'region'), NEW);
+    expect(dirFor(w, Dimension.End)).toBe(
+      join(w, 'dimensions', 'minecraft', 'the_end', 'region'),
+    );
+  });
+
+  // All three layouts coexist (classic -> latest migration with a leftover Paper
+  // satellite). The active dimensions/ data is newest even though the satellite
+  // is newer than the old DIM-1 -> must pick the dimensions/ region.
+  it('nether: all three layouts, dimensions/ newest -> dimensions region', () => {
+    const w = join(work, 'd4');
+    const MID = Date.parse('2026-04-04T12:00:00Z');
+    mkRegion(join(w, 'dimensions', 'minecraft', 'the_nether', 'region'), NEW); // active
+    mkRegion(join(`${w}_nether`, 'DIM-1', 'region'), MID); // stale satellite
+    mkRegion(join(w, 'DIM-1', 'region'), OLD); // stale classic
+    expect(dirFor(w, Dimension.Nether)).toBe(
+      join(w, 'dimensions', 'minecraft', 'the_nether', 'region'),
+    );
+  });
 });

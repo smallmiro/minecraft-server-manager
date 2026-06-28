@@ -95,6 +95,41 @@ mk_region "$W/region" "2026-06-28 12:00:00"
 assert_eq "overworld: region present -> world root" \
     "$W" "$(resolve_dimension_root "$W" overworld)"
 
+# --- Latest Minecraft dimensions/ layout (issue #546) ------------------------
+
+# Every dimension (overworld included) under dimensions/minecraft/<dim>.
+W="$WORK/d1"
+mk_region "$W/dimensions/minecraft/overworld/region" "2026-06-28 12:00:00"
+assert_eq "overworld: dimensions/ layout -> world root" \
+    "$W" "$(resolve_dimension_root "$W" overworld)"
+
+W="$WORK/d2"
+mk_region "$W/dimensions/minecraft/the_nether/region" "2026-06-28 12:00:00"
+assert_eq "nether: dimensions/ layout -> world root" \
+    "$W" "$(resolve_dimension_root "$W" nether)"
+
+W="$WORK/d3"
+mk_region "$W/dimensions/minecraft/the_end/region" "2026-06-28 12:00:00"
+assert_eq "end: dimensions/ layout -> world root" \
+    "$W" "$(resolve_dimension_root "$W" end)"
+
+# Stale Paper satellite must NOT shadow a newer dimensions/ nether.
+W="$WORK/d4"
+mk_region "$W/dimensions/minecraft/the_nether/region" "2026-06-28 12:00:00"
+mk_region "${W}_nether/DIM-1/region" "2026-02-02 12:00:00"
+assert_eq "nether: dimensions/ (new) vs stale satellite -> world root" \
+    "$W" "$(resolve_dimension_root "$W" nether)"
+
+# All three layouts coexist (classic -> latest migration with a Paper satellite
+# left over). The active dimensions/ data is newest, even though the satellite
+# is newer than the old DIM-1 — must still resolve to the world root.
+W="$WORK/d5"
+mk_region "$W/dimensions/minecraft/the_nether/region" "2026-06-28 12:00:00" # active
+mk_region "${W}_nether/DIM-1/region" "2026-04-04 12:00:00"                  # stale satellite
+mk_region "$W/DIM-1/region" "2026-02-02 12:00:00"                           # stale classic
+assert_eq "nether: all three layouts, dimensions/ newest -> world root" \
+    "$W" "$(resolve_dimension_root "$W" nether)"
+
 # -----------------------------------------------------------------------------
 echo ""
 if [[ $FAILED -eq 0 ]]; then

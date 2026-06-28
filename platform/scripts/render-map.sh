@@ -94,50 +94,52 @@ newest_region_mtime() {
     echo "${newest:-0}"
 }
 
-# Choose between a split-layout (satellite) candidate and a single-folder
-# candidate for one dimension. When BOTH hold region data — e.g. a world that
-# migrated from Paper (split) to a single-folder server type leaves a stale
-# satellite behind — pick whichever was written most recently, i.e. the layout
-# the server is actually using. Echoes the chosen world-save root, or nothing.
-# Args: <split_region_dir> <split_root> <single_region_dir> <single_root>
+# Choose the active region layout among (region_dir, world_root) candidate
+# pairs: echo the world-save root whose region holds the most recently written
+# .mca data. Earlier candidates win ties, so a Paper satellite (listed first)
+# stays the historical default. Candidates without region data are skipped;
+# echoes nothing when none have data. A migrated world can leave several layouts
+# behind at once (stale Paper satellite, old DIM-1/DIM1, active dimensions/) —
+# comparing all of them by mtime selects the one the server actually writes
+# (#542, #546). Args: <region_dir> <root> [<region_dir> <root> ...]
 pick_dimension_root() {
-    local split_region="$1" split_root="$2" single_region="$3" single_root="$4"
-    local split_ok=false single_ok=false
-    has_region_data "$split_region" && split_ok=true
-    has_region_data "$single_region" && single_ok=true
-    if $split_ok && $single_ok; then
-        # Tie favours the satellite (the historical default) — only relevant
-        # when both layouts share an identical newest mtime, which is unlikely.
-        if (( $(newest_region_mtime "$split_region") >= $(newest_region_mtime "$single_region") )); then
-            echo "$split_root"
-        else
-            echo "$single_root"
+    local best_root="" best_mtime=-1 region root mtime
+    while (( $# >= 2 )); do
+        region="$1"; root="$2"; shift 2
+        has_region_data "$region" || continue
+        mtime="$(newest_region_mtime "$region")"
+        if (( mtime > best_mtime )); then
+            best_mtime="$mtime"; best_root="$root"
         fi
-    elif $split_ok; then
-        echo "$split_root"
-    elif $single_ok; then
-        echo "$single_root"
-    fi
+    done
+    [[ -n "$best_root" ]] && echo "$best_root"
 }
 
 # Resolve the world-save root that holds a dimension's region data, handling
-# both vanilla (single folder: DIM-1/DIM1) and Paper/Spigot (split folders:
-# <world>_nether/<world>_the_end) layouts. Echoes the host path, or nothing.
+# vanilla (single folder: DIM-1/DIM1), Paper/Spigot (split folders:
+# <world>_nether/<world>_the_end) and latest-Minecraft (every dimension under
+# <world>/dimensions/minecraft/<dim>) layouts. The mounted root stays <world>
+# for non-split layouts — BlueMap resolves the dimension key to DIM-1/DIM1 or
+# dimensions/minecraft/<dim> itself. Echoes the host path, or nothing.
 resolve_dimension_root() {
     local world_root="$1" dim="$2"
     case "$dim" in
         overworld)
-            has_region_data "$world_root/region" && echo "$world_root"
+            pick_dimension_root \
+                "$world_root/region" "$world_root" \
+                "$world_root/dimensions/minecraft/overworld/region" "$world_root"
             ;;
         nether)
             pick_dimension_root \
                 "${world_root}_nether/DIM-1/region" "${world_root}_nether" \
-                "$world_root/DIM-1/region" "$world_root"
+                "$world_root/DIM-1/region" "$world_root" \
+                "$world_root/dimensions/minecraft/the_nether/region" "$world_root"
             ;;
         end)
             pick_dimension_root \
                 "${world_root}_the_end/DIM1/region" "${world_root}_the_end" \
-                "$world_root/DIM1/region" "$world_root"
+                "$world_root/DIM1/region" "$world_root" \
+                "$world_root/dimensions/minecraft/the_end/region" "$world_root"
             ;;
     esac
 }

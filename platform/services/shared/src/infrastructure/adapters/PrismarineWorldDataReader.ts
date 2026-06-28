@@ -183,19 +183,35 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
     const name = basename(worldPath);
     const has = (p: string): boolean => existsSync(p);
 
+    // Latest Minecraft stores every dimension under dimensions/minecraft/<dim>
+    // (overworld included), alongside the older root/DIM-1/DIM1 and Paper split
+    // layouts (#546).
+    const dims = join(worldPath, 'dimensions', 'minecraft');
     return {
-      overworld: has(join(worldPath, 'level.dat')) || has(join(worldPath, 'region')),
+      overworld:
+        has(join(worldPath, 'level.dat')) ||
+        has(join(worldPath, 'region')) ||
+        has(join(dims, 'overworld', 'region')),
       nether:
-        has(join(worldPath, 'DIM-1')) || has(join(parent, `${name}_nether`)),
-      end: has(join(worldPath, 'DIM1')) || has(join(parent, `${name}_the_end`)),
+        has(join(worldPath, 'DIM-1')) ||
+        has(join(parent, `${name}_nether`)) ||
+        has(join(dims, 'the_nether')),
+      end:
+        has(join(worldPath, 'DIM1')) ||
+        has(join(parent, `${name}_the_end`)) ||
+        has(join(dims, 'the_end')),
     };
   }
 
   async countRegions(worldPath: string): Promise<number> {
-    const dir = join(worldPath, 'region');
+    // Use the same active-layout resolution as the scanners so the count never
+    // reflects a stale layout (#546): resolveRegionDirs picks the overworld
+    // region dir across root/dimensions layouts by newest mtime.
+    const dir = resolveRegionDirs(worldPath).find(
+      (r) => r.dimension === Dimension.Overworld,
+    )?.dir;
+    if (!dir) return 0;
     try {
-      const s = await stat(dir);
-      if (!s.isDirectory()) return 0;
       const entries = await readdir(dir);
       return entries.filter((e) => e.endsWith('.mca')).length;
     } catch {
