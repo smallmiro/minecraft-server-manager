@@ -33,6 +33,7 @@ export type {
   IWorldInfoUseCase,
   IWorldStatsUseCase,
   AnalyzeOptions,
+  IPlayerManagementUseCase,
 } from './inbound/index.js';
 export { AnalysisCancelledError } from './inbound/index.js';
 
