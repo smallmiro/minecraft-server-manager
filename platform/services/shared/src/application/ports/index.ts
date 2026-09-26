@@ -77,6 +77,8 @@ export type {
   IConfigSnapshotStorage,
   IWorldDataReader,
   IRconPort,
+  IPlayerRepository,
+  UserCacheEntry,
   IMapRenderer,
   MapRenderProgress,
   MapRenderResult,
