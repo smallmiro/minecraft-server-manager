@@ -27,7 +27,7 @@ test.describe('Players API', () => {
       expect(body).toHaveProperty('error', 'NotFound');
     });
 
-    test('should return 400 for non-running server', async ({ request }) => {
+    test('should return 200 merged roster for a stopped (but defined) server', async ({ request }) => {
       const listResponse = await request.get(`${API_BASE_URL}/api/servers`);
       const listBody = await listResponse.json();
       const stoppedServer = listBody.servers.find((s: { status: string }) => s.status !== 'running');
@@ -35,28 +35,84 @@ test.describe('Players API', () => {
       if (stoppedServer) {
         const response = await request.get(`${API_BASE_URL}/api/servers/${stoppedServer.name}/players`);
 
-        expect(response.status()).toBe(400);
+        expect(response.status()).toBe(200);
 
         const body = await response.json();
-        expect(body).toHaveProperty('error', 'BadRequest');
+        expect(body).toHaveProperty('running', false);
+        expect(body).toHaveProperty('online', 0);
+        expect(Array.isArray(body.players)).toBe(true);
+        expect(Array.isArray(body.roster)).toBe(true);
       }
     });
 
-    test('should return player list for running server', async ({ request }) => {
-      const runningServer = await getRunningServer(request);
+    test('should return merged roster shape for any server', async ({ request }) => {
+      const server = await getAnyServer(request);
 
-      if (runningServer) {
-        const response = await request.get(`${API_BASE_URL}/api/servers/${runningServer.name}/players`);
+      if (server) {
+        const response = await request.get(`${API_BASE_URL}/api/servers/${server.name}/players`);
 
         expect(response.status()).toBe(200);
 
         const body = await response.json();
+        expect(body).toHaveProperty('serverName', server.name);
+        expect(body).toHaveProperty('running');
         expect(body).toHaveProperty('online');
         expect(body).toHaveProperty('max');
         expect(body).toHaveProperty('players');
+        expect(body).toHaveProperty('roster');
+        expect(typeof body.running).toBe('boolean');
         expect(typeof body.online).toBe('number');
         expect(typeof body.max).toBe('number');
         expect(Array.isArray(body.players)).toBe(true);
+        expect(Array.isArray(body.roster)).toBe(true);
+
+        for (const player of body.roster) {
+          expect(player).toHaveProperty('uuid');
+          expect(player).toHaveProperty('name');
+          expect(player).toHaveProperty('lastSeen');
+          expect(player).toHaveProperty('isOp');
+          expect(player).toHaveProperty('isBanned');
+          expect(player).toHaveProperty('isWhitelisted');
+          expect(player).toHaveProperty('online');
+        }
+      }
+    });
+  });
+
+  test.describe('GET /api/servers/:name/players/:uuid - Player Detail', () => {
+    test('should return 400 for a malformed uuid', async ({ request }) => {
+      const server = await getAnyServer(request);
+
+      if (server) {
+        const response = await request.get(`${API_BASE_URL}/api/servers/${server.name}/players/not-a-uuid`);
+
+        expect(response.status()).toBe(400);
+      }
+    });
+
+    test('should return 404 for a non-existent server', async ({ request }) => {
+      const response = await request.get(
+        `${API_BASE_URL}/api/servers/non-existent-server/players/069a79f4-44e9-4726-a5be-fca90e38aaf5`
+      );
+
+      expect(response.status()).toBe(404);
+
+      const body = await response.json();
+      expect(body).toHaveProperty('error', 'NotFound');
+    });
+
+    test('should return 404 for a well-formed but unknown uuid', async ({ request }) => {
+      const server = await getAnyServer(request);
+
+      if (server) {
+        const response = await request.get(
+          `${API_BASE_URL}/api/servers/${server.name}/players/069a79f4-44e9-4726-a5be-fca90e38aaf5`
+        );
+
+        expect(response.status()).toBe(404);
+
+        const body = await response.json();
+        expect(body).toHaveProperty('error', 'NotFound');
       }
     });
   });
