@@ -3,6 +3,7 @@ import { FastifyInstance } from 'fastify';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import http from 'http';
+import nbt from 'prismarine-nbt';
 
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-players-roster-test');
 // A deliberately wrong MCCTL_ROOT with no fixture data, used by the
@@ -29,6 +30,8 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 // Mock Docker functions: containerExists reflects whether docker-compose.yml
 // was written for the fixture server; getContainerStatus is controlled per-test.
 let containerStatus: 'running' | 'stopped' = 'stopped';
+// Controls RconCliAdapter#getEntityPosition for ?include=nbt's livePosition (#528, Phase 3).
+const mockGetEntityPosition = vi.fn();
 vi.mock('@minecraft-docker/shared', async () => {
   const actual = await vi.importActual('@minecraft-docker/shared');
   return {
@@ -39,6 +42,9 @@ vi.mock('@minecraft-docker/shared', async () => {
       return existsSync(serverPath);
     }),
     getContainerStatus: vi.fn(() => containerStatus),
+    RconCliAdapter: vi.fn().mockImplementation(() => ({
+      getEntityPosition: mockGetEntityPosition,
+    })),
   };
 });
 
@@ -50,6 +56,13 @@ vi.mock('../src/lib/rcon.js', async (importOriginal) => {
     execRconCommand: vi.fn(),
   };
 });
+
+/** Writes a synthetic worlds/<serverName>/playerdata/<uuid>.dat fixture (#528, Phase 3). */
+function writePlayerDat(serverName: string, uuid: string, fields: Record<string, unknown>) {
+  const dir = join(TEST_PLATFORM_PATH, 'worlds', serverName, 'playerdata');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, `${uuid}.dat`), nbt.writeUncompressed(nbt.comp(fields)));
+}
 
 function setupServer(serverName: string, opts: { files?: Record<string, unknown> } = {}) {
   const serverDir = join(TEST_PLATFORM_PATH, 'servers', serverName);
@@ -137,6 +150,7 @@ describe('Player roster API (#528)', () => {
     mkdirSync(join(TEST_PLATFORM_PATH, 'servers'), { recursive: true });
     mkdirSync(join(TEST_PLATFORM_PATH, 'worlds'), { recursive: true });
     containerStatus = 'stopped';
+    mockGetEntityPosition.mockReset();
 
     const { config } = await import('../src/config/index.js');
     (config as any).platformPath = TEST_PLATFORM_PATH;
@@ -377,7 +391,7 @@ describe('Player roster API (#528)', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=nbt`,
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=bogus`,
       });
 
       expect(response.statusCode).toBe(400);
@@ -453,6 +467,116 @@ describe('Player roster API (#528)', () => {
       expect(response.statusCode).toBe(200);
       const body = response.json();
       expect(body).toHaveProperty('stats', null);
+    });
+
+    it('returns 400 for an unknown ?include value mixed with a known one', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=stats,bogus`,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('accepts ?include=stats,nbt (any order/combination) and returns both extras', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+      writePlayerDat('test-server', NOTCH_UUID, {
+        Pos: nbt.list(nbt.double([10, 64, -20])),
+        Dimension: nbt.string('minecraft:overworld'),
+        Health: nbt.float(20),
+        playerGameType: nbt.int(0),
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=nbt,stats`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body).toHaveProperty('stats', null); // no stats file written
+      expect(body.data).toMatchObject({
+        x: 10,
+        y: 64,
+        z: -20,
+        dimension: 'overworld',
+        gameMode: 'survival',
+      });
+      expect(body.data.inventory).toEqual({ slotsUsed: 0, items: [] });
+    });
+
+    it('?include=nbt returns data: null and livePosition: null when no playerdata file exists', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=nbt`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body).toHaveProperty('data', null);
+      expect(body).toHaveProperty('livePosition', null);
+      expect(body).not.toHaveProperty('stats');
+    });
+
+    it('?include=nbt resolves livePosition via RCON when the player is online and the server is running', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+      writePlayerDat('test-server', NOTCH_UUID, {
+        Pos: nbt.list(nbt.double([1, 2, 3])),
+      });
+      containerStatus = 'running';
+
+      const { execRconCommand } = await import('../src/lib/rcon.js');
+      vi.mocked(execRconCommand).mockResolvedValue('There are 1 of a max of 20 players online: Notch');
+      mockGetEntityPosition.mockResolvedValue({ x: 5, y: 70, z: -5, dimension: 'nether' });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=nbt`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.online).toBe(true);
+      expect(body.livePosition).toEqual({ x: 5, y: 70, z: -5, dimension: 'nether' });
+      expect(mockGetEntityPosition).toHaveBeenCalledWith('mc-test-server', 'Notch');
+    });
+
+    it('?include=nbt returns livePosition: null when the player is online but the server is not running (no container to query)', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+      containerStatus = 'stopped';
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=nbt`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json().livePosition).toBeNull();
+      expect(mockGetEntityPosition).not.toHaveBeenCalled();
     });
 
     it('does not shadow the /players/live static route', async () => {

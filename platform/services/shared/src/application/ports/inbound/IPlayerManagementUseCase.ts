@@ -1,11 +1,19 @@
-import type { Player, PlayerStats } from '../../../domain/index.js';
+import type { Player, PlayerStats, PlayerData, EntityPosition } from '../../../domain/index.js';
 
 /**
- * Extra data to include in a `getPlayerDetail` result. Only `'stats'` exists
- * today (#528, Phase 2); Phase 3/4 will add `'nbt'`/`'sessions'` later.
+ * Extra data to include in a `getPlayerDetail` result. Phase 4 will add
+ * `'sessions'` later.
  */
 export interface GetPlayerDetailOptions {
-  include?: Array<'stats'>;
+  include?: Array<'stats' | 'nbt'>;
+  /**
+   * Server container name (e.g. `mc-<server>`), required to fetch
+   * `livePosition` via RCON when `include` contains `'nbt'` and the player
+   * is online. Callers own container-name derivation (mirrors
+   * `WorldInfoUseCase.getLivePlayerLocations`) — omitted/not running →
+   * `livePosition` is `null`.
+   */
+  container?: string;
 }
 
 /** Result of `getPlayerDetail`: the player, plus any requested extras. */
@@ -13,6 +21,13 @@ export interface PlayerDetail {
   player: Player;
   /** Present only when `include` contains `'stats'`. */
   stats?: PlayerStats | null;
+  /** Present only when `include` contains `'nbt'` (#528, Phase 3). */
+  data?: PlayerData | null;
+  /**
+   * Live RCON position, present only when `include` contains `'nbt'`.
+   * `null` when offline, no container was given, or the RCON call failed.
+   */
+  livePosition?: EntityPosition | null;
 }
 
 /**
@@ -34,6 +49,8 @@ export interface IPlayerManagementUseCase {
    * not found. `online` is merged from `onlineNames` using the same
    * case-insensitive name match as `listPlayers`. `stats` is only read (and
    * only present on the result) when `options.include` contains `'stats'`.
+   * `data`/`livePosition` are likewise only present when `options.include`
+   * contains `'nbt'` (#528, Phase 3).
    */
   getPlayerDetail(
     serverName: string,

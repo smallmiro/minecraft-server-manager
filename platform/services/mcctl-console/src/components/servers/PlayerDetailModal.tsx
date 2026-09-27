@@ -16,7 +16,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import PersonIcon from '@mui/icons-material/Person';
 import { usePlayerDetail } from '@/hooks/useMcctl';
-import type { PlayerSummary, PlayerStats } from '@/ports/api/IMcctlApiClient';
+import type { PlayerSummary, PlayerStats, PlayerData, LivePosition } from '@/ports/api/IMcctlApiClient';
 
 export interface PlayerDetailModalProps {
   serverName: string;
@@ -82,9 +82,85 @@ function StatisticsSection({ stats }: { stats: PlayerStats | null | undefined })
   );
 }
 
+/** Strip the "minecraft:" namespace prefix for display. */
+function stripNamespace(id: string): string {
+  return id.replace(/^minecraft:/, '');
+}
+
+function PositionStatusSection({
+  data,
+  livePosition,
+}: {
+  data: PlayerData | null | undefined;
+  livePosition: LivePosition | null | undefined;
+}) {
+  if (!livePosition && !data) {
+    return (
+      <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+        No player data file.
+      </Typography>
+    );
+  }
+
+  const pos = livePosition ?? data!;
+  const dimension = livePosition?.dimension ?? data?.dimension;
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+        <Typography variant="body2" fontWeight={600}>
+          {livePosition ? 'Live position' : 'Last saved position'}
+        </Typography>
+        {livePosition && <Chip label="Live" size="small" color="success" />}
+      </Box>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+        X: {pos.x.toFixed(1)} Y: {pos.y.toFixed(1)} Z: {pos.z.toFixed(1)}
+        {dimension && ` · ${dimension}`}
+      </Typography>
+
+      {data && (
+        <>
+          <Grid container spacing={1.5}>
+            <Grid item xs={6} sm={3}>
+              <StatCell label="Health" value={data.health != null ? `${data.health}/20` : '—/20'} />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <StatCell label="Food" value={data.food != null ? `${data.food}/20` : '—/20'} />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <StatCell label="XP Level" value={data.xpLevel != null ? String(data.xpLevel) : '—'} />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <StatCell label="Game Mode" value={data.gameMode} />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ mt: 1.5 }}>
+            <Typography variant="caption" color="text.secondary">
+              Inventory: {data.inventory.slotsUsed} slots used
+            </Typography>
+            {data.inventory.items.length > 0 && (
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                {data.inventory.items.slice(0, 10).map((item, i) => (
+                  <Chip
+                    key={`${item.id}-${i}`}
+                    size="small"
+                    variant="outlined"
+                    label={`${stripNamespace(item.id)} x${item.count}`}
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+        </>
+      )}
+    </Box>
+  );
+}
+
 /**
- * Player detail modal (#528 Phase 2): header + statistics section.
- * Later phases can append position/NBT and session sections here.
+ * Player detail modal (#528 Phase 2/3): header + statistics + position/status.
+ * Later phases can append session sections here.
  */
 export function PlayerDetailModal({ serverName, player, open, onClose }: PlayerDetailModalProps) {
   const uuid = player?.uuid ?? '';
@@ -140,6 +216,16 @@ export function PlayerDetailModal({ serverName, player, open, onClose }: PlayerD
         )}
         {isError && <Alert severity="error">Failed to load player statistics.</Alert>}
         {!isLoading && !isError && <StatisticsSection stats={data?.stats} />}
+
+        {!isLoading && !isError && (
+          <>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+              Position &amp; Status
+            </Typography>
+            <PositionStatusSection data={data?.data} livePosition={data?.livePosition} />
+          </>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>

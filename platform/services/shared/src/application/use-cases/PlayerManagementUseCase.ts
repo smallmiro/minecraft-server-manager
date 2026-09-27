@@ -4,16 +4,22 @@ import type {
   PlayerDetail,
 } from '../ports/inbound/IPlayerManagementUseCase.js';
 import type { IPlayerRepository } from '../ports/outbound/IPlayerRepository.js';
-import { Player } from '../../domain/index.js';
+import type { IRconPort } from '../ports/outbound/IRconPort.js';
+import { Player, type EntityPosition } from '../../domain/index.js';
 
 /**
  * Player Management Use Case
  *
  * Merges file-based known players (`IPlayerRepository`) with the live
  * online player names resolved by the caller via RCON `list` (#528, Phase 1).
+ * `rcon` is optional — only needed for `include: ['nbt']`'s `livePosition`
+ * (#528, Phase 3); omit it when the caller never requests `'nbt'`.
  */
 export class PlayerManagementUseCase implements IPlayerManagementUseCase {
-  constructor(private readonly playerRepository: IPlayerRepository) {}
+  constructor(
+    private readonly playerRepository: IPlayerRepository,
+    private readonly rcon?: IRconPort
+  ) {}
 
   async listPlayers(serverName: string, onlineNames: string[]): Promise<Player[]> {
     const known = await this.playerRepository.listKnownPlayers(serverName);
@@ -81,7 +87,26 @@ export class PlayerManagementUseCase implements IPlayerManagementUseCase {
     if (options?.include?.includes('stats')) {
       detail.stats = await this.playerRepository.readStats(serverName, player.uuid || uuid);
     }
+    if (options?.include?.includes('nbt')) {
+      detail.data = await this.playerRepository.readPlayerData(serverName, player.uuid || uuid);
+      detail.livePosition = player.online
+        ? await this.getLivePosition(options.container, player.name)
+        : null;
+    }
     return detail;
+  }
+
+  /** RCON live position for an online player; `null` on any failure (no container, no rcon, RCON error). */
+  private async getLivePosition(
+    container: string | undefined,
+    playerName: string
+  ): Promise<EntityPosition | null> {
+    if (!container || !this.rcon) return null;
+    try {
+      return await this.rcon.getEntityPosition(container, playerName);
+    } catch {
+      return null;
+    }
   }
 }
 

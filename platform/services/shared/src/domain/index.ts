@@ -60,6 +60,11 @@ export {
   PlayerStats,
   type PlayerStatsProps,
   type PlayerStatsJson,
+  PlayerData,
+  type PlayerDataProps,
+  type PlayerDataJson,
+  type PlayerInventorySummary,
+  type InventoryItemSummary,
 } from './value-objects/index.js';
 
 // Entities

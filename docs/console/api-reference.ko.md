@@ -518,9 +518,13 @@ UUID로 알려진 플레이어 한 명을 조회합니다 (#528, `uuid`는 대�
 
 | 파라미터 | 타입 | 설명 |
 |---------|------|------|
-| `include` | string | 쉼표로 구분된 추가 데이터 목록. 현재는 `stats`만 지원 (#528, Phase 2); 알 수 없는 값은 400을 반환합니다. |
+| `include` | string | 쉼표로 구분된 추가 데이터 목록: `stats`, `nbt` (순서/조합 무관, #528, Phase 2/3); 알 수 없는 값은 400을 반환합니다. |
 
-`?include=stats`를 지정하면 `stats` 필드가 추가됩니다(플레이어의 `stats/<uuid>.json` + `advancements/<uuid>.json` 기반). 통계 파일이 있으면 객체, 없으면 `null`입니다. `include`를 지정하지 않으면 `stats` 키 자체가 응답에 포함되지 않습니다.
+`?include=stats`를 지정하면 `stats` 필드가 추가됩니다(플레이어의 `stats/<uuid>.json` + `advancements/<uuid>.json` 기반). 통계 파일이 있으면 객체, 없으면 `null`입니다.
+
+`?include=nbt`를 지정하면 `data`(플레이어의 `playerdata/<uuid>.dat`에서 파싱한 마지막 위치/체력/게임모드/인벤토리 요약)와 `livePosition`(플레이어가 온라인이고 서버가 실행 중일 때만 RCON으로 조회하는 현재 위치) 필드가 추가됩니다. 두 필드 모두 데이터가 없으면(playerdata 파일 없음, 오프라인, 서버 중지 등) `null`입니다.
+
+각 키(`stats`, `data`, `livePosition`)는 해당하는 `include` 값을 요청하지 않으면 응답에 포함되지 않습니다.
 
 **응답:**
 
@@ -557,6 +561,32 @@ UUID로 알려진 플레이어 한 명을 조회합니다 (#528, `uuid`는 대�
     "itemsCrafted": 7,
     "advancementsCompleted": 1
   }
+}
+```
+
+**`?include=nbt` 응답:**
+
+```json
+{
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "name": "Player1",
+  "lastSeen": "2026-09-20T12:34:56.000Z",
+  "isOp": false,
+  "isBanned": false,
+  "isWhitelisted": true,
+  "online": true,
+  "data": {
+    "x": 10.5,
+    "y": 64,
+    "z": -20.25,
+    "dimension": "overworld",
+    "health": 20,
+    "food": 18,
+    "xpLevel": 7,
+    "gameMode": "survival",
+    "inventory": { "slotsUsed": 3, "items": [{ "id": "minecraft:diamond", "count": 12 }] }
+  },
+  "livePosition": { "x": 10.6, "y": 64, "z": -20.1, "dimension": "overworld" }
 }
 ```
 

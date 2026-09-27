@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { usePlayerDetail } from '../useMcctl';
+import { usePlayerDetail, playerDetailRefetchInterval } from '../useMcctl';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -19,7 +19,7 @@ describe('usePlayerDetail (#528 Phase 2)', () => {
     mockFetch.mockReset();
   });
 
-  it('fetches the player detail with stats included', async () => {
+  it('fetches the player detail with stats and nbt included', async () => {
     const mockData = {
       uuid: 'abc',
       name: 'Steve',
@@ -38,6 +38,7 @@ describe('usePlayerDetail (#528 Phase 2)', () => {
         itemsCrafted: 20,
         advancementsCompleted: 15,
       },
+      data: null,
     };
 
     mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockData) });
@@ -48,9 +49,23 @@ describe('usePlayerDetail (#528 Phase 2)', () => {
 
     expect(result.current.data).toEqual(mockData);
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/servers/survival/players/abc?include=stats',
+      '/api/servers/survival/players/abc?include=stats,nbt',
       expect.any(Object)
     );
+  });
+
+  describe('playerDetailRefetchInterval (#528 Phase 3)', () => {
+    it('polls every 5s while the player is online', () => {
+      expect(playerDetailRefetchInterval({ online: true } as never)).toBe(5000);
+    });
+
+    it('does not poll when the player is offline', () => {
+      expect(playerDetailRefetchInterval({ online: false } as never)).toBe(false);
+    });
+
+    it('does not poll when there is no data yet', () => {
+      expect(playerDetailRefetchInterval(undefined)).toBe(false);
+    });
   });
 
   it('does not fetch when uuid is empty', () => {

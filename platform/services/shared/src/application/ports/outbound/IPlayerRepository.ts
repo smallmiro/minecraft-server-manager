@@ -1,4 +1,4 @@
-import type { Player, PlayerStats } from '../../../domain/index.js';
+import type { Player, PlayerStats, PlayerData } from '../../../domain/index.js';
 
 /**
  * Raw entry from a server's `usercache.json`.
@@ -35,4 +35,12 @@ export interface IPlayerRepository {
    * advancements file is optional (missing/corrupt → 0 advancements).
    */
   readStats(serverName: string, uuid: string): Promise<PlayerStats | null>;
+
+  /**
+   * Parsed `playerdata/<uuid>.dat` NBT (position, dimension, vitals, game
+   * mode, inventory summary) for a player (#528, Phase 3). `null` when the
+   * uuid is malformed or the file is missing/corrupt. Shares its parser
+   * with #525's world player locations (`PrismarineWorldDataReader`).
+   */
+  readPlayerData(serverName: string, uuid: string): Promise<PlayerData | null>;
 }

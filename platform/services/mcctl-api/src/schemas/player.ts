@@ -40,12 +40,12 @@ export const PlayerUuidParamsSchema = Type.Object({
   uuid: Type.String({ pattern: UUID_PATTERN }),
 });
 
-// `?include=stats` on the player detail route (#528, Phase 2). Comma-separated,
-// only known values accepted (currently just `stats`; later phases add
-// `nbt`/`sessions`) — an unknown value 400s via the pattern below rather than
-// being silently ignored.
+// `?include=stats,nbt` on the player detail route (#528, Phase 2/3). Comma-
+// separated, only known values accepted (`stats`, `nbt`; later phases add
+// `sessions`) in any order/combination — an unknown value 400s via the
+// pattern below rather than being silently ignored.
 export const PlayerDetailQuerySchema = Type.Object({
-  include: Type.Optional(Type.String({ pattern: '^(stats)(,(stats))*$' })),
+  include: Type.Optional(Type.String({ pattern: '^(stats|nbt)(,(stats|nbt))*$' })),
 });
 
 // PlayerStats.toJSON() shape from @minecraft-docker/shared (#528, Phase 2)
@@ -60,8 +60,46 @@ export const PlayerStatsSchema = Type.Object({
   advancementsCompleted: Type.Number(),
 });
 
-// PlayerSummarySchema + optional `stats`, present only when `?include=stats`
-// was requested (object when a stats file exists, null when it doesn't).
+// Minecraft dimension id, as returned by PlayerData/EntityPosition (#528, Phase 3)
+const DimensionSchema = Type.Union([
+  Type.Literal('overworld'),
+  Type.Literal('nether'),
+  Type.Literal('end'),
+]);
+
+// PlayerData.toJSON() shape from @minecraft-docker/shared (#528, Phase 3):
+// last known position/vitals/game mode/inventory from playerdata/<uuid>.dat.
+export const PlayerDataSchema = Type.Object({
+  x: Type.Number(),
+  y: Type.Number(),
+  z: Type.Number(),
+  dimension: DimensionSchema,
+  health: Type.Optional(Type.Number()),
+  food: Type.Optional(Type.Number()),
+  xpLevel: Type.Optional(Type.Number()),
+  gameMode: Type.Union([
+    Type.Literal('survival'),
+    Type.Literal('creative'),
+    Type.Literal('adventure'),
+    Type.Literal('spectator'),
+  ]),
+  inventory: Type.Object({
+    slotsUsed: Type.Number(),
+    items: Type.Array(Type.Object({ id: Type.String(), count: Type.Number() })),
+  }),
+});
+
+// EntityPosition shape from @minecraft-docker/shared (#528, Phase 3): live RCON
+// position, resolved only while the player is online.
+export const LivePositionSchema = Type.Object({
+  x: Type.Number(),
+  y: Type.Number(),
+  z: Type.Number(),
+  dimension: Type.Optional(DimensionSchema),
+});
+
+// PlayerSummarySchema + optional `stats`/`data`/`livePosition`, present only
+// when their respective `?include` value was requested (#528, Phase 2/3).
 export const PlayerDetailResponseSchema = Type.Object({
   uuid: Type.String(),
   name: Type.String(),
@@ -71,6 +109,8 @@ export const PlayerDetailResponseSchema = Type.Object({
   isWhitelisted: Type.Boolean(),
   online: Type.Boolean(),
   stats: Type.Optional(Type.Union([PlayerStatsSchema, Type.Null()])),
+  data: Type.Optional(Type.Union([PlayerDataSchema, Type.Null()])),
+  livePosition: Type.Optional(Type.Union([LivePositionSchema, Type.Null()])),
 });
 
 // Whitelist entry
@@ -178,6 +218,8 @@ export type PlayerRosterResponse = Static<typeof PlayerRosterResponseSchema>;
 export type PlayerUuidParams = Static<typeof PlayerUuidParamsSchema>;
 export type PlayerDetailQuery = Static<typeof PlayerDetailQuerySchema>;
 export type PlayerStatsResponse = Static<typeof PlayerStatsSchema>;
+export type PlayerDataResponse = Static<typeof PlayerDataSchema>;
+export type LivePositionResponse = Static<typeof LivePositionSchema>;
 export type PlayerDetailResponse = Static<typeof PlayerDetailResponseSchema>;
 export type PlayerListResponse = Static<typeof PlayerListResponseSchema>;
 export type WhitelistEntry = Static<typeof WhitelistEntrySchema>;

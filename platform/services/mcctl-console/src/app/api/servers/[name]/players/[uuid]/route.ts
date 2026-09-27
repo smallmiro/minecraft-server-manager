@@ -21,9 +21,9 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
   };
 }
 
-// Recognized `include` values. Unknown values (e.g. a future `nbt`/`sessions`
+// Recognized `include` values. Unknown values (e.g. a future `sessions`
 // from later phases) are dropped rather than forwarded.
-const SUPPORTED_INCLUDE = new Set(['stats']);
+const SUPPORTED_INCLUDE = new Set(['stats', 'nbt']);
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {

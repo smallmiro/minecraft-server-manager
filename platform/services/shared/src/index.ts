@@ -149,6 +149,12 @@ export {
   PlayerStats,
   type PlayerStatsProps,
   type PlayerStatsJson,
+  // Player NBT data (#528, Phase 3)
+  PlayerData,
+  type PlayerDataProps,
+  type PlayerDataJson,
+  type PlayerInventorySummary,
+  type InventoryItemSummary,
 } from './domain/index.js';
 
 // Re-export mod domain models

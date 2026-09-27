@@ -9,6 +9,7 @@ import {
   Paths,
   PlayerRepository,
   PlayerManagementUseCase,
+  RconCliAdapter,
   type IPlayerManagementUseCase,
 } from '@minecraft-docker/shared';
 import {
@@ -47,7 +48,7 @@ import {
   type UpdateOperatorLevelRequest,
 } from '../schemas/op.js';
 import { ServerNameParamsSchema, type ServerNameParams } from '../schemas/server.js';
-import { execRconCommand, parsePlayerList } from '../lib/rcon.js';
+import { execRconCommand, parsePlayerList, getContainerName } from '../lib/rcon.js';
 import { config } from '../config/index.js';
 import { PlayerFileService } from '../services/PlayerFileService.js';
 import { OpsJsonService } from '../services/OpsJsonService.js';
@@ -118,7 +119,8 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const playerFileService = new PlayerFileService(config.platformPath);
   const opsJsonService = new OpsJsonService(config.platformPath);
   const playerManagementUseCase: IPlayerManagementUseCase = new PlayerManagementUseCase(
-    new PlayerRepository(new Paths(config.platformPath))
+    new PlayerRepository(new Paths(config.platformPath)),
+    new RconCliAdapter()
   );
 
   // Helper to check server exists (container created)
@@ -281,7 +283,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
    */
   fastify.get<PlayerDetailRoute>('/api/servers/:name/players/:uuid', {
     schema: {
-      description: 'Get a single known player by uuid, optionally with ?include=stats',
+      description: 'Get a single known player by uuid, optionally with ?include=stats,nbt',
       tags: ['players'],
       params: PlayerUuidParamsSchema,
       querystring: PlayerDetailQuerySchema,
@@ -296,22 +298,32 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { include } = request.query;
     if (!checkServerDefined(name, reply)) return;
 
-    const wantsStats = (include ?? '').split(',').includes('stats');
+    const requested = (include ?? '').split(',').filter(Boolean);
+    const wantsNbt = requested.includes('nbt');
+    const detailOptions: { include: Array<'stats' | 'nbt'>; container?: string } | undefined =
+      requested.length > 0 ? { include: requested as Array<'stats' | 'nbt'> } : undefined;
 
     try {
-      const { names: onlineNames } = await getOnlinePlayers(name);
-      const detail = await playerManagementUseCase.getPlayerDetail(
-        name,
-        uuid,
-        onlineNames,
-        wantsStats ? { include: ['stats'] } : undefined
-      );
+      const { names: onlineNames, running } = await getOnlinePlayers(name);
+      if (detailOptions && wantsNbt && running) {
+        detailOptions.container = getContainerName(name);
+      }
+      const detail = await playerManagementUseCase.getPlayerDetail(name, uuid, onlineNames, detailOptions);
       if (!detail) {
         return reply.code(404).send({ error: 'NotFound', message: `Player '${uuid}' not found` });
       }
       const response: PlayerDetailResponse = detail.player.toJSON();
       if (detail.stats !== undefined) {
         response.stats = detail.stats ? detail.stats.toJSON() : null;
+      }
+      if (detail.data !== undefined) {
+        // dimension/gameMode are narrow string unions in shared's domain types;
+        // toJSON() widens them to `string` for JSON-shape compatibility, so a
+        // schema-level cast is needed here (values are always valid).
+        response.data = detail.data ? (detail.data.toJSON() as PlayerDetailResponse['data']) : null;
+      }
+      if (detail.livePosition !== undefined) {
+        response.livePosition = detail.livePosition;
       }
       return reply.send(response);
     } catch (error) {
