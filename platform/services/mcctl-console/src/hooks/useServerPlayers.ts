@@ -78,6 +78,9 @@ export function useServerPlayers(options: UseServerPlayersOptions): UseServerPla
     onMessage: handleMessage,
     enabled,
     reconnectInterval,
+    // mcctl-api emits this stream as a named `event: players` SSE event,
+    // which never reaches the default onmessage handler (see SSEAdapter).
+    eventName: 'players',
   });
 
   return {

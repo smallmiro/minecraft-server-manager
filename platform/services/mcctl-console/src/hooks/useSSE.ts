@@ -51,6 +51,12 @@ export interface UseSSEOptions {
    * @default false
    */
   withCredentials?: boolean;
+
+  /**
+   * When set, listen for a named SSE event (`event: <eventName>`) in
+   * addition to the default `message` event. See ISSEClient.
+   */
+  eventName?: string;
 }
 
 /**
@@ -115,6 +121,7 @@ export function useSSE<T extends SSEEvent = SSEEvent>(
     maxReconnectAttempts = Infinity,
     enabled = true,
     withCredentials = false,
+    eventName,
   } = options;
 
   const [data, setData] = useState<T | null>(null);
@@ -193,6 +200,7 @@ export function useSSE<T extends SSEEvent = SSEEvent>(
       reconnectInterval,
       maxReconnectAttempts,
       withCredentials,
+      eventName,
     });
 
     // Cleanup on unmount or dependency change
@@ -208,6 +216,7 @@ export function useSSE<T extends SSEEvent = SSEEvent>(
     reconnectInterval,
     maxReconnectAttempts,
     withCredentials,
+    eventName,
     handleMessage,
     handleStateChange,
     handleError,

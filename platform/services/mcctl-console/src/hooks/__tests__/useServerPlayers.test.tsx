@@ -16,9 +16,14 @@ class MockEventSource {
   public onopen: ((event: Event) => void) | null = null;
   public onmessage: ((event: MessageEvent) => void) | null = null;
   public onerror: ((event: Event) => void) | null = null;
+  private listeners: Record<string, ((event: MessageEvent) => void)[]> = {};
 
   constructor(url: string) {
     this.url = url;
+  }
+
+  addEventListener(type: string, listener: (event: MessageEvent) => void): void {
+    (this.listeners[type] ??= []).push(listener);
   }
 
   close(): void {
@@ -36,6 +41,15 @@ class MockEventSource {
     if (this.onmessage) {
       const event = new MessageEvent('message', { data });
       this.onmessage(event);
+    }
+  }
+
+  // The players endpoint sends a named `event: players` SSE event, which
+  // only reaches listeners registered via addEventListener (see SSEAdapter).
+  simulatePlayersEvent(data: string): void {
+    const event = new MessageEvent('players', { data });
+    for (const listener of this.listeners['players'] ?? []) {
+      listener(event);
     }
   }
 }
@@ -92,7 +106,7 @@ describe('useServerPlayers Hook (#528)', () => {
     };
 
     act(() => {
-      mockEventSource.simulateMessage(JSON.stringify(payload));
+      mockEventSource.simulatePlayersEvent(JSON.stringify(payload));
     });
 
     await waitFor(() => {
@@ -114,7 +128,7 @@ describe('useServerPlayers Hook (#528)', () => {
     });
 
     act(() => {
-      mockEventSource.simulateMessage(JSON.stringify({
+      mockEventSource.simulatePlayersEvent(JSON.stringify({
         serverName: 'server1',
         running: true,
         online: 1,
