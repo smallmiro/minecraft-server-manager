@@ -64,7 +64,7 @@ export default function DashboardPage() {
   const { data: worldsData, isLoading: worldsLoading } = useWorlds();
 
   // Real-time server status updates
-  const { statusMap } = useServersSSE();
+  const { statusMap, isConnected } = useServersSSE();
 
   const isLoading = serversLoading || worldsLoading;
 
@@ -85,6 +85,12 @@ export default function DashboardPage() {
 
   // Derived metrics for the compact stat cards (computed values only — no history)
   const stoppedServers = totalServers - onlineServers;
+  const attentionServers = serversData?.servers.filter((server) => {
+    const sseStatus = statusMap[server.name];
+    const currentStatus = sseStatus?.status || server.status;
+    const currentHealth = sseStatus?.health || server.health;
+    return currentStatus !== 'running' || currentHealth === 'unhealthy';
+  }).length || 0;
   const onlinePercent = totalServers > 0 ? Math.round((onlineServers / totalServers) * 100) : 0;
   const assignedWorlds = worldsData?.worlds.filter((world) => world.isLocked).length || 0;
   const freeWorlds = totalWorlds - assignedWorlds;
@@ -177,8 +183,9 @@ export default function DashboardPage() {
       <DashboardHero
         totalServers={totalServers}
         onlineServers={onlineServers}
-        stoppedServers={stoppedServers}
+        attentionServers={attentionServers}
         onlinePercent={onlinePercent}
+        isLive={isConnected}
       />
 
       <Box sx={metricItemSx}>

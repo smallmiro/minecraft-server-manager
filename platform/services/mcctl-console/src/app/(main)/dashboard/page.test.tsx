@@ -28,6 +28,7 @@ vi.mock('@/hooks/useServersSSE', () => ({
 
 // Import the mocked hooks
 import { useServers, useWorlds } from '@/hooks/useMcctl';
+import { useServersSSE } from '@/hooks/useServersSSE';
 
 const createTestQueryClient = () => {
   return new QueryClient({
@@ -137,6 +138,61 @@ describe('DashboardPage', () => {
     const overview = await screen.findByRole('region', { name: 'Dashboard overview' });
     expect(within(overview).getByText('2 of 3 servers online')).toBeInTheDocument();
     expect(within(overview).getByText('1 server needs attention')).toBeInTheDocument();
+  });
+
+  it('should flag a running but unhealthy server as needing attention', async () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: {
+        servers: [
+          { name: 'survival', status: 'running', health: 'healthy', container: 'mc-survival', hostname: 'survival.local' },
+        ],
+        total: 1,
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: { worlds: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useServersSSE).mockReturnValue({
+      statusMap: {
+        survival: {
+          status: 'running',
+          health: 'unhealthy',
+          timestamp: '2026-09-28T00:00:00.000Z',
+        },
+      },
+      isConnected: true,
+    } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    expect(await screen.findByText('1 server needs attention')).toBeInTheDocument();
+    expect(screen.getByText('Live')).toBeInTheDocument();
+  });
+
+  it('should show reconnecting instead of live while server updates are disconnected', async () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: { servers: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: { worlds: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useServersSSE).mockReturnValue({
+      statusMap: {},
+      isConnected: false,
+    } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    expect(await screen.findByText('Reconnecting')).toBeInTheDocument();
+    expect(screen.queryByText('Live')).not.toBeInTheDocument();
   });
 
   it('should display zero when no servers', async () => {

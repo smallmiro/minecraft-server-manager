@@ -12,26 +12,29 @@ import {
 import {
   DashboardRounded as DashboardIcon,
   SensorsRounded as LiveIcon,
+  SyncRounded as ReconnectingIcon,
 } from '@mui/icons-material';
 
 interface DashboardHeroProps {
   totalServers: number;
   onlineServers: number;
-  stoppedServers: number;
+  attentionServers: number;
   onlinePercent: number;
+  isLive: boolean;
 }
 
 export function DashboardHero({
   totalServers,
   onlineServers,
-  stoppedServers,
+  attentionServers,
   onlinePercent,
+  isLive,
 }: DashboardHeroProps) {
   const attentionMessage = totalServers === 0
     ? 'No servers configured'
-    : stoppedServers === 0
+    : attentionServers === 0
       ? 'All systems operational'
-      : `${stoppedServers} ${stoppedServers === 1 ? 'server needs' : 'servers need'} attention`;
+      : `${attentionServers} ${attentionServers === 1 ? 'server needs' : 'servers need'} attention`;
 
   return (
     <Paper
@@ -102,14 +105,20 @@ export function DashboardHero({
             </Typography>
           </Stack>
           <Chip
-            icon={<LiveIcon />}
-            label="Live"
+            icon={isLive ? <LiveIcon /> : <ReconnectingIcon />}
+            label={isLive ? 'Live' : 'Reconnecting'}
             size="small"
             sx={{
-              bgcolor: (theme) => alpha(theme.palette.success.main, 0.1),
-              color: 'success.light',
-              border: (theme) => `1px solid ${alpha(theme.palette.success.main, 0.24)}`,
-              '& .MuiChip-icon': { color: 'success.main' },
+              bgcolor: (theme) => alpha(
+                isLive ? theme.palette.success.main : theme.palette.text.secondary,
+                0.1,
+              ),
+              color: isLive ? 'success.light' : 'text.secondary',
+              border: (theme) => `1px solid ${alpha(
+                isLive ? theme.palette.success.main : theme.palette.text.secondary,
+                0.24,
+              )}`,
+              '& .MuiChip-icon': { color: isLive ? 'success.main' : 'text.secondary' },
             }}
           />
         </Stack>
@@ -160,7 +169,7 @@ export function DashboardHero({
         />
         <Typography
           variant="caption"
-          sx={{ display: 'block', mt: 1.25, color: stoppedServers > 0 ? 'warning.light' : 'success.light' }}
+          sx={{ display: 'block', mt: 1.25, color: attentionServers > 0 ? 'warning.light' : 'success.light' }}
         >
           {attentionMessage}
         </Typography>
