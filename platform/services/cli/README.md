@@ -77,6 +77,24 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.27.0 (2026-09-27)
+- **feat(console)**: Server **Players** tab - merged online (RCON) + offline roster with avatars, badges, and kick/ban/op/whitelist actions; works while the server is stopped (#528, #550)
+- **feat(console)**: Player detail modal with statistics/advancements (#551), saved + live position and status from `playerdata` NBT (#552), and session/visit history collected from container logs into `data/players.db` (#553)
+- **feat(api)**: `GET /api/servers/:name/players` returns the full roster (no more `400` for stopped servers); new `GET /api/servers/:name/players/:uuid?include=stats,nbt,sessions` (#550–#553)
+
+### v2.26.3 (2026-06-28)
+- **fix(worlds)**: Maps, block statistics, and structure markers now support the latest Minecraft `dimensions/` world layout (#546, #547)
+
+### v2.26.2 (2026-06-28)
+- **fix(worlds)**: Nether/End maps and stats no longer read stale satellite folders on layout-switched worlds (#542–#545)
+
+### v2.26.1 (2026-06-28)
+- **fix(console)**: Live player locations in the World tab; BlueMap gzip-stored map files are now served (#538–#541)
+
+### v2.26.0 (2026-06-28)
+- **feat(console)**: World Info Panel - world info & player locations, BlueMap full map, structure markers, ore/block statistics (#525, #529–#537)
+- **feat(modpack)**: Auto-detect client-only mods; installed modpack jar listing + Exclude toggle (#523, #524, #526, #527)
+
 ### v2.25.1 (2026-06-21)
 - **fix(console)**: Server list now refreshes automatically after creating a server (#521, #522)
 - **fix(modpack)**: Debounce the modpack compatibility lookup and return a clean 404 for unknown slugs, fixing the 500 error flood while searching modpacks (#519, #520)

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.27.0] - 2026-09-27
+
+### Added
+- **Server Player Panel** - A new **Players** tab in the server detail screen shows every player who has ever joined, with detailed per-player views. Delivered across four phases under #528:
+  - **Players tab: online/offline roster + management** - Merges live online players (RCON) with offline players known from `usercache.json`, `playerdata`, and `ops`/`whitelist`/`banned-players.json`. Shows avatars and Online/OP/Banned/Whitelisted badges, with kick/ban/unban/op/deop/whitelist actions. Works even while the server is stopped; live updates via SSE (#550)
+  - **Player statistics** - A player detail modal with play time, deaths, mob/player kills, distance traveled, blocks mined, items crafted, and completed advancements, parsed from vanilla `stats/` and `advancements/` files (#551)
+  - **Position & status** - Last saved position, dimension, health, food, XP level, game mode, and inventory summary from `playerdata` NBT, plus a live position (refreshed every 5s) for online players via RCON (#552)
+  - **Session & visit history** - Visit count, total playtime, last seen, and recent sessions. A background collector reads join/leave events from container logs every 30s and stores them in a new SQLite database (`data/players.db`), so history persists across restarts. History is collected from this version onward (the first run looks back 24h of container logs) (#553)
+
+### API
+- `GET /api/servers/:name/players` now returns the merged online+offline roster and no longer returns `400` for a stopped server. The response is a superset of the previous shape (`online`, `max`, `players` kept; `serverName`, `running`, `roster` added) (#550)
+- New `GET /api/servers/:name/players/:uuid` with `?include=stats,nbt,sessions` (#550, #551, #552, #553)
+
+### Changed
+- The `playerdata` NBT parser from the World Info Panel (#525) is extracted into a shared adapter and reused by both the world panel and player details. `prismarine-nbt` (already a `shared` dependency) is added to `mcctl-api` as a dev dependency for test fixtures only (#552)
+
 ## [2.26.3] - 2026-06-28
 
 ### Fixed
