@@ -283,7 +283,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
    */
   fastify.get<PlayerDetailRoute>('/api/servers/:name/players/:uuid', {
     schema: {
-      description: 'Get a single known player by uuid, optionally with ?include=stats',
+      description: 'Get a single known player by uuid, optionally with ?include=stats,nbt',
       tags: ['players'],
       params: PlayerUuidParamsSchema,
       querystring: PlayerDetailQuerySchema,
