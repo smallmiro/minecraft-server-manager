@@ -594,4 +594,89 @@ describe('Player roster API (#528)', () => {
       expect(Array.isArray(body.players)).toBe(true);
     });
   });
+
+  describe('GET /api/servers/:name/players/:uuid?include=sessions (#528, Phase 4)', () => {
+    const NOTCH_UUID = '069a79f4-44e9-4726-a5be-fca90e38aaf5';
+
+    it('returns zeroed visit stats and an empty timeline when no session history exists', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=sessions`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json().sessions).toEqual({
+        visitCount: 0,
+        totalPlaytimeSeconds: 0,
+        lastSeen: null,
+        recent: [],
+      });
+    });
+
+    it('returns visit stats and recent sessions recorded in players.db', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+
+      // players.ts wires PlayerManagementUseCase to a SqlitePlayerSessionRepository
+      // at data/players.db (under config.mcctlRoot); seed it directly with a
+      // second connection to the same file (WAL mode allows this).
+      const { SqlitePlayerSessionRepository } = await import('@minecraft-docker/shared');
+      const dbPath = join(TEST_PLATFORM_PATH, 'data', 'players.db');
+      const repo = new SqlitePlayerSessionRepository(dbPath);
+      try {
+        await repo.recordJoin('test-server', 'Notch', new Date('2026-01-01T00:00:00.000Z'));
+        await repo.recordLeave('test-server', 'Notch', new Date('2026-01-01T01:00:00.000Z'));
+      } finally {
+        repo.close();
+      }
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=sessions`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.sessions).toMatchObject({
+        visitCount: 1,
+        totalPlaytimeSeconds: 3600,
+        lastSeen: '2026-01-01T01:00:00.000Z',
+      });
+      expect(body.sessions.recent).toEqual([
+        {
+          joinedAt: '2026-01-01T00:00:00.000Z',
+          leftAt: '2026-01-01T01:00:00.000Z',
+          durationSeconds: 3600,
+        },
+      ]);
+    });
+
+    it('accepts ?include=sessions,stats,nbt combined', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=sessions,stats,nbt`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body).toHaveProperty('sessions');
+      expect(body).toHaveProperty('stats');
+      expect(body).toHaveProperty('data');
+    });
+  });
 });

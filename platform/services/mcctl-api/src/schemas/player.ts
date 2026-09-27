@@ -40,12 +40,12 @@ export const PlayerUuidParamsSchema = Type.Object({
   uuid: Type.String({ pattern: UUID_PATTERN }),
 });
 
-// `?include=stats,nbt` on the player detail route (#528, Phase 2/3). Comma-
-// separated, only known values accepted (`stats`, `nbt`; later phases add
+// `?include=stats,nbt,sessions` on the player detail route (#528, Phase
+// 2/3/4). Comma-separated, only known values accepted (`stats`, `nbt`,
 // `sessions`) in any order/combination — an unknown value 400s via the
 // pattern below rather than being silently ignored.
 export const PlayerDetailQuerySchema = Type.Object({
-  include: Type.Optional(Type.String({ pattern: '^(stats|nbt)(,(stats|nbt))*$' })),
+  include: Type.Optional(Type.String({ pattern: '^(stats|nbt|sessions)(,(stats|nbt|sessions))*$' })),
 });
 
 // PlayerStats.toJSON() shape from @minecraft-docker/shared (#528, Phase 2)
@@ -98,8 +98,24 @@ export const LivePositionSchema = Type.Object({
   dimension: Type.Optional(DimensionSchema),
 });
 
-// PlayerSummarySchema + optional `stats`/`data`/`livePosition`, present only
-// when their respective `?include` value was requested (#528, Phase 2/3).
+// SessionHistory shape from @minecraft-docker/shared, serialized for JSON
+// (#528, Phase 4): dates as ISO strings.
+export const PlayerSessionEntrySchema = Type.Object({
+  joinedAt: Type.String(),
+  leftAt: Type.Union([Type.String(), Type.Null()]),
+  durationSeconds: Type.Number(),
+});
+
+export const SessionHistorySchema = Type.Object({
+  visitCount: Type.Number(),
+  totalPlaytimeSeconds: Type.Number(),
+  lastSeen: Type.Union([Type.String(), Type.Null()]),
+  recent: Type.Array(PlayerSessionEntrySchema),
+});
+
+// PlayerSummarySchema + optional `stats`/`data`/`livePosition`/`sessions`,
+// present only when their respective `?include` value was requested (#528,
+// Phase 2/3/4).
 export const PlayerDetailResponseSchema = Type.Object({
   uuid: Type.String(),
   name: Type.String(),
@@ -111,6 +127,7 @@ export const PlayerDetailResponseSchema = Type.Object({
   stats: Type.Optional(Type.Union([PlayerStatsSchema, Type.Null()])),
   data: Type.Optional(Type.Union([PlayerDataSchema, Type.Null()])),
   livePosition: Type.Optional(Type.Union([LivePositionSchema, Type.Null()])),
+  sessions: Type.Optional(Type.Union([SessionHistorySchema, Type.Null()])),
 });
 
 // Whitelist entry
@@ -220,6 +237,8 @@ export type PlayerDetailQuery = Static<typeof PlayerDetailQuerySchema>;
 export type PlayerStatsResponse = Static<typeof PlayerStatsSchema>;
 export type PlayerDataResponse = Static<typeof PlayerDataSchema>;
 export type LivePositionResponse = Static<typeof LivePositionSchema>;
+export type PlayerSessionEntryResponse = Static<typeof PlayerSessionEntrySchema>;
+export type SessionHistoryResponse = Static<typeof SessionHistorySchema>;
 export type PlayerDetailResponse = Static<typeof PlayerDetailResponseSchema>;
 export type PlayerListResponse = Static<typeof PlayerListResponseSchema>;
 export type WhitelistEntry = Static<typeof WhitelistEntrySchema>;
