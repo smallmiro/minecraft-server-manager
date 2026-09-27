@@ -115,6 +115,40 @@ test.describe('Players API', () => {
         expect(body).toHaveProperty('error', 'NotFound');
       }
     });
+
+    test('should return 404 for a non-existent server with ?include=sessions (#528, Phase 4)', async ({ request }) => {
+      const response = await request.get(
+        `${API_BASE_URL}/api/servers/non-existent-server/players/069a79f4-44e9-4726-a5be-fca90e38aaf5?include=sessions`
+      );
+
+      expect(response.status()).toBe(404);
+    });
+
+    test('should return a sessions object shaped for visit history when include=sessions and the player is known (#528, Phase 4)', async ({ request }) => {
+      const server = await getAnyServer(request);
+      if (!server) return;
+
+      const rosterResponse = await request.get(`${API_BASE_URL}/api/servers/${server.name}/players`);
+      const rosterBody = await rosterResponse.json();
+      const known = rosterBody.roster.find((p: { uuid: string }) => p.uuid);
+      if (!known) return;
+
+      const response = await request.get(
+        `${API_BASE_URL}/api/servers/${server.name}/players/${known.uuid}?include=sessions`
+      );
+
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      expect(body).toHaveProperty('sessions');
+      expect(typeof body.sessions.visitCount).toBe('number');
+      expect(typeof body.sessions.totalPlaytimeSeconds).toBe('number');
+      expect(Array.isArray(body.sessions.recent)).toBe(true);
+      for (const session of body.sessions.recent) {
+        expect(session).toHaveProperty('joinedAt');
+        expect(session).toHaveProperty('leftAt');
+        expect(typeof session.durationSeconds).toBe('number');
+      }
+    });
   });
 
   test.describe('GET /api/players/:username - Player Info', () => {
