@@ -13,7 +13,7 @@ export class PlayerManagementUseCase implements IPlayerManagementUseCase {
 
   async listPlayers(serverName: string, onlineNames: string[]): Promise<Player[]> {
     const known = await this.playerRepository.listKnownPlayers(serverName);
-    const onlineSet = new Set(onlineNames.map((n) => n.toLowerCase()));
+    const onlineSet = buildOnlineSet(onlineNames);
     const knownNames = new Set(known.map((p) => p.name.toLowerCase()));
 
     const merged = known.map((p) =>
@@ -50,10 +50,33 @@ export class PlayerManagementUseCase implements IPlayerManagementUseCase {
     return merged.sort(comparePlayers);
   }
 
-  async getPlayerDetail(serverName: string, uuid: string): Promise<Player | null> {
+  async getPlayerDetail(
+    serverName: string,
+    uuid: string,
+    onlineNames: string[] = []
+  ): Promise<Player | null> {
     const known = await this.playerRepository.listKnownPlayers(serverName);
-    return known.find((p) => p.uuid === uuid) ?? null;
+    const player = known.find((p) => p.uuid.toLowerCase() === uuid.toLowerCase()) ?? null;
+    if (!player) return null;
+
+    const onlineSet = buildOnlineSet(onlineNames);
+    if (!onlineSet.has(player.name.toLowerCase())) return player;
+
+    return Player.create({
+      uuid: player.uuid,
+      name: player.name,
+      lastSeen: player.lastSeen,
+      isOp: player.isOp,
+      isBanned: player.isBanned,
+      isWhitelisted: player.isWhitelisted,
+      online: true,
+    });
   }
+}
+
+/** Case-insensitive lookup set for online-name matching (shared by listPlayers/getPlayerDetail). */
+function buildOnlineSet(onlineNames: string[]): Set<string> {
+  return new Set(onlineNames.map((n) => n.toLowerCase()));
 }
 
 /** Online first, then last-seen desc, then name. */

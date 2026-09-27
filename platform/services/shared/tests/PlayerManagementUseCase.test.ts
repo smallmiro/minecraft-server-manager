@@ -86,5 +86,35 @@ describe('PlayerManagementUseCase', () => {
 
       expect(player).toBeNull();
     });
+
+    it('uuid는 대소문자를 구분하지 않고 매칭한다', async () => {
+      const useCase = new PlayerManagementUseCase(makeRepo([steve]));
+      const player = await useCase.getPlayerDetail('myserver', 'UUID-STEVE');
+
+      expect(player).not.toBeNull();
+      expect(player!.name).toBe('Steve');
+    });
+
+    it('onlineNames에 포함된 플레이어는 online:true를 반환한다 (listPlayers와 동일한 매칭 로직)', async () => {
+      const useCase = new PlayerManagementUseCase(makeRepo([steve, alex]));
+      const player = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['Steve']);
+
+      expect(player).not.toBeNull();
+      expect(player!.online).toBe(true);
+    });
+
+    it('onlineNames 매칭도 대소문자를 구분하지 않는다', async () => {
+      const useCase = new PlayerManagementUseCase(makeRepo([steve]));
+      const player = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['steve']);
+
+      expect(player!.online).toBe(true);
+    });
+
+    it('onlineNames에 없으면 online:false를 반환한다', async () => {
+      const useCase = new PlayerManagementUseCase(makeRepo([steve, alex]));
+      const player = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['Alex']);
+
+      expect(player!.online).toBe(false);
+    });
   });
 });

@@ -15,7 +15,13 @@ export interface IPlayerManagementUseCase {
   listPlayers(serverName: string, onlineNames: string[]): Promise<Player[]>;
 
   /**
-   * A single known player by uuid, or null when not found.
+   * A single known player by uuid (matched case-insensitively), or null when
+   * not found. `online` is merged from `onlineNames` using the same
+   * case-insensitive name match as `listPlayers`.
    */
-  getPlayerDetail(serverName: string, uuid: string): Promise<Player | null>;
+  getPlayerDetail(
+    serverName: string,
+    uuid: string,
+    onlineNames?: string[]
+  ): Promise<Player | null>;
 }
