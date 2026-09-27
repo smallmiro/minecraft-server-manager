@@ -66,3 +66,8 @@ export {
   type BlockCount,
   type BlockStatsResult,
 } from './BlockStats.js';
+export {
+  PlayerStats,
+  type PlayerStatsProps,
+  type PlayerStatsJson,
+} from './PlayerStats.js';

@@ -40,6 +40,39 @@ export const PlayerUuidParamsSchema = Type.Object({
   uuid: Type.String({ pattern: UUID_PATTERN }),
 });
 
+// `?include=stats` on the player detail route (#528, Phase 2). Comma-separated,
+// only known values accepted (currently just `stats`; later phases add
+// `nbt`/`sessions`) — an unknown value 400s via the pattern below rather than
+// being silently ignored.
+export const PlayerDetailQuerySchema = Type.Object({
+  include: Type.Optional(Type.String({ pattern: '^(stats)(,(stats))*$' })),
+});
+
+// PlayerStats.toJSON() shape from @minecraft-docker/shared (#528, Phase 2)
+export const PlayerStatsSchema = Type.Object({
+  playTimeSeconds: Type.Number(),
+  deaths: Type.Number(),
+  mobKills: Type.Number(),
+  playerKills: Type.Number(),
+  distanceMeters: Type.Number(),
+  blocksMined: Type.Number(),
+  itemsCrafted: Type.Number(),
+  advancementsCompleted: Type.Number(),
+});
+
+// PlayerSummarySchema + optional `stats`, present only when `?include=stats`
+// was requested (object when a stats file exists, null when it doesn't).
+export const PlayerDetailResponseSchema = Type.Object({
+  uuid: Type.String(),
+  name: Type.String(),
+  lastSeen: Type.Union([Type.String(), Type.Null()]),
+  isOp: Type.Boolean(),
+  isBanned: Type.Boolean(),
+  isWhitelisted: Type.Boolean(),
+  online: Type.Boolean(),
+  stats: Type.Optional(Type.Union([PlayerStatsSchema, Type.Null()])),
+});
+
 // Whitelist entry
 export const WhitelistEntrySchema = Type.Object({
   name: Type.String(),
@@ -143,6 +176,9 @@ export type PlayerInfo = Static<typeof PlayerInfoSchema>;
 export type PlayerSummary = Static<typeof PlayerSummarySchema>;
 export type PlayerRosterResponse = Static<typeof PlayerRosterResponseSchema>;
 export type PlayerUuidParams = Static<typeof PlayerUuidParamsSchema>;
+export type PlayerDetailQuery = Static<typeof PlayerDetailQuerySchema>;
+export type PlayerStatsResponse = Static<typeof PlayerStatsSchema>;
+export type PlayerDetailResponse = Static<typeof PlayerDetailResponseSchema>;
 export type PlayerListResponse = Static<typeof PlayerListResponseSchema>;
 export type WhitelistEntry = Static<typeof WhitelistEntrySchema>;
 export type BannedPlayerEntry = Static<typeof BannedPlayerEntrySchema>;

@@ -1,15 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { PlayerManagementUseCase } from '../src/application/use-cases/PlayerManagementUseCase.js';
-import { Player } from '../src/domain/index.js';
+import { Player, PlayerStats } from '../src/domain/index.js';
 import type { IPlayerRepository, UserCacheEntry } from '../src/application/ports/index.js';
 
-function makeRepo(known: Player[]): IPlayerRepository {
+function makeRepo(known: Player[], stats: PlayerStats | null = null): IPlayerRepository {
   return {
     async readUserCache(): Promise<UserCacheEntry[]> {
       return [];
     },
     async listKnownPlayers(): Promise<Player[]> {
       return known;
+    },
+    async readStats(): Promise<PlayerStats | null> {
+      return stats;
     },
   };
 }
@@ -74,47 +77,91 @@ describe('PlayerManagementUseCase', () => {
   describe('getPlayerDetail', () => {
     it('uuid로 플레이어를 조회한다', async () => {
       const useCase = new PlayerManagementUseCase(makeRepo([steve, alex]));
-      const player = await useCase.getPlayerDetail('myserver', 'uuid-alex');
+      const detail = await useCase.getPlayerDetail('myserver', 'uuid-alex');
 
-      expect(player).not.toBeNull();
-      expect(player!.name).toBe('Alex');
+      expect(detail).not.toBeNull();
+      expect(detail!.player.name).toBe('Alex');
     });
 
     it('존재하지 않는 uuid는 null을 반환한다', async () => {
       const useCase = new PlayerManagementUseCase(makeRepo([steve]));
-      const player = await useCase.getPlayerDetail('myserver', 'missing');
+      const detail = await useCase.getPlayerDetail('myserver', 'missing');
 
-      expect(player).toBeNull();
+      expect(detail).toBeNull();
     });
 
     it('uuid는 대소문자를 구분하지 않고 매칭한다', async () => {
       const useCase = new PlayerManagementUseCase(makeRepo([steve]));
-      const player = await useCase.getPlayerDetail('myserver', 'UUID-STEVE');
+      const detail = await useCase.getPlayerDetail('myserver', 'UUID-STEVE');
 
-      expect(player).not.toBeNull();
-      expect(player!.name).toBe('Steve');
+      expect(detail).not.toBeNull();
+      expect(detail!.player.name).toBe('Steve');
     });
 
     it('onlineNames에 포함된 플레이어는 online:true를 반환한다 (listPlayers와 동일한 매칭 로직)', async () => {
       const useCase = new PlayerManagementUseCase(makeRepo([steve, alex]));
-      const player = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['Steve']);
+      const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['Steve']);
 
-      expect(player).not.toBeNull();
-      expect(player!.online).toBe(true);
+      expect(detail).not.toBeNull();
+      expect(detail!.player.online).toBe(true);
     });
 
     it('onlineNames 매칭도 대소문자를 구분하지 않는다', async () => {
       const useCase = new PlayerManagementUseCase(makeRepo([steve]));
-      const player = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['steve']);
+      const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['steve']);
 
-      expect(player!.online).toBe(true);
+      expect(detail!.player.online).toBe(true);
     });
 
     it('onlineNames에 없으면 online:false를 반환한다', async () => {
       const useCase = new PlayerManagementUseCase(makeRepo([steve, alex]));
-      const player = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['Alex']);
+      const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['Alex']);
 
-      expect(player!.online).toBe(false);
+      expect(detail!.player.online).toBe(false);
+    });
+
+    it('include가 없으면 stats를 읽지 않는다', async () => {
+      let readStatsCalled = false;
+      const repo: IPlayerRepository = {
+        ...makeRepo([steve]),
+        async readStats() {
+          readStatsCalled = true;
+          return null;
+        },
+      };
+      const useCase = new PlayerManagementUseCase(repo);
+      const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve');
+
+      expect(detail!.stats).toBeUndefined();
+      expect(readStatsCalled).toBe(false);
+    });
+
+    it("include: ['stats']이면 stats를 포함한다", async () => {
+      const stats = PlayerStats.create({
+        playTimeSeconds: 60,
+        deaths: 1,
+        mobKills: 2,
+        playerKills: 0,
+        distanceMeters: 10,
+        blocksMined: 5,
+        itemsCrafted: 1,
+        advancementsCompleted: 3,
+      });
+      const useCase = new PlayerManagementUseCase(makeRepo([steve], stats));
+      const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', [], {
+        include: ['stats'],
+      });
+
+      expect(detail!.stats).toBe(stats);
+    });
+
+    it("include: ['stats']이고 stats 파일이 없으면 stats는 null이다", async () => {
+      const useCase = new PlayerManagementUseCase(makeRepo([steve], null));
+      const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', [], {
+        include: ['stats'],
+      });
+
+      expect(detail!.stats).toBeNull();
     });
   });
 });

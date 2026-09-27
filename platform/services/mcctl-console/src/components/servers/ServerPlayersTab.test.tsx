@@ -12,9 +12,11 @@ vi.mock('@/hooks/useServerPlayers', () => ({
 
 const mockAddToWhitelist = vi.fn();
 const mockRemoveFromWhitelist = vi.fn();
+const mockUsePlayerDetail = vi.fn();
 vi.mock('@/hooks/useMcctl', () => ({
   useAddToWhitelist: () => ({ mutate: mockAddToWhitelist, isPending: false }),
   useRemoveFromWhitelist: () => ({ mutate: mockRemoveFromWhitelist, isPending: false }),
+  usePlayerDetail: (...args: unknown[]) => mockUsePlayerDetail(...args),
 }));
 
 const renderWithProviders = (component: React.ReactNode) => {
@@ -63,6 +65,7 @@ describe('ServerPlayersTab (#528)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ success: true }) });
+    mockUsePlayerDetail.mockReturnValue({ data: undefined, isLoading: false, isError: false });
   });
 
   it('shows an empty state when the roster is empty', () => {
@@ -204,5 +207,25 @@ describe('ServerPlayersTab (#528)', () => {
     fireEvent.click(screen.getByText('Remove from Whitelist'));
 
     expect(mockRemoveFromWhitelist).toHaveBeenCalledWith({ serverName: 'survival', player: 'Steve' });
+  });
+
+  it('opens the detail modal from the action menu', () => {
+    mockRoster([offlinePlayer]);
+    renderWithProviders(<ServerPlayersTab serverName="survival" />);
+
+    fireEvent.click(screen.getByLabelText(/player actions/i));
+    fireEvent.click(screen.getByText('Details'));
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(mockUsePlayerDetail).toHaveBeenCalledWith('survival', 'uuid-offline', { enabled: true });
+  });
+
+  it('disables Details for a player without a cached uuid', () => {
+    const uncachedOnline: PlayerSummary = { ...onlinePlayer, uuid: '' };
+    mockRoster([uncachedOnline]);
+    renderWithProviders(<ServerPlayersTab serverName="survival" />);
+
+    fireEvent.click(screen.getByLabelText(/player actions/i));
+    expect(screen.getByText('Details').closest('li')).toHaveAttribute('aria-disabled', 'true');
   });
 });

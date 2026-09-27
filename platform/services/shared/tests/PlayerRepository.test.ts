@@ -3,12 +3,13 @@
  * Uses real temp-dir fixtures mirroring `servers/<name>/data/` and
  * `worlds/<level>/playerdata/` — the same layout create-server.sh produces.
  */
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdir, writeFile, rm, utimes } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { PlayerRepository } from '../src/infrastructure/adapters/PlayerRepository.js';
+import { PlayerStats } from '../src/domain/value-objects/PlayerStats.js';
 import type { Paths } from '../src/utils/index.js';
 
 async function makeTempDir(): Promise<string> {
@@ -153,6 +154,85 @@ describe('PlayerRepository', () => {
 
     test('모든 파일이 없으면 빈 배열을 반환한다', async () => {
       expect(await repo.listKnownPlayers('myserver')).toEqual([]);
+    });
+  });
+
+  describe('readStats', () => {
+    const uuid = '069a79f4-44e9-4726-a5be-fca90e38aaf5';
+
+    test('stats.json + advancements.json을 파싱한다', async () => {
+      const worldDir = join(root, 'worlds', 'myserver');
+      await writeJson(join(worldDir, 'stats', `${uuid}.json`), {
+        stats: {
+          'minecraft:custom': {
+            'minecraft:play_time': 2400,
+            'minecraft:deaths': 3,
+            'minecraft:mob_kills': 10,
+            'minecraft:player_kills': 1,
+            'minecraft:walk_one_cm': 5000,
+            'minecraft:sprint_one_cm': 5000,
+          },
+          'minecraft:mined': { 'minecraft:stone': 50, 'minecraft:dirt': 10 },
+          'minecraft:crafted': { 'minecraft:torch': 20 },
+        },
+        DataVersion: 3465,
+      });
+      await writeJson(join(worldDir, 'advancements', `${uuid}.json`), {
+        'minecraft:story/root': { criteria: {}, done: true },
+        'minecraft:story/smelt_iron': { criteria: {}, done: false },
+        'minecraft:recipes/misc/torch': { criteria: {}, done: true },
+        DataVersion: 3465,
+      });
+
+      const stats = await repo.readStats('myserver', uuid);
+      expect(stats).not.toBeNull();
+      expect(stats!.playTimeSeconds).toBe(120);
+      expect(stats!.deaths).toBe(3);
+      expect(stats!.mobKills).toBe(10);
+      expect(stats!.playerKills).toBe(1);
+      expect(stats!.distanceMeters).toBe(100);
+      expect(stats!.blocksMined).toBe(60);
+      expect(stats!.itemsCrafted).toBe(20);
+      expect(stats!.advancementsCompleted).toBe(1);
+    });
+
+    test('advancements.json이 없으면 advancementsCompleted는 0이다', async () => {
+      await writeJson(join(root, 'worlds', 'myserver', 'stats', `${uuid}.json`), {
+        stats: { 'minecraft:custom': { 'minecraft:deaths': 1 } },
+      });
+
+      const stats = await repo.readStats('myserver', uuid);
+      expect(stats).not.toBeNull();
+      expect(stats!.advancementsCompleted).toBe(0);
+    });
+
+    test('stats.json이 없으면 null을 반환한다', async () => {
+      expect(await repo.readStats('myserver', uuid)).toBeNull();
+    });
+
+    test('손상된 stats.json은 null을 반환한다', async () => {
+      const statsPath = join(root, 'worlds', 'myserver', 'stats', `${uuid}.json`);
+      await mkdir(join(statsPath, '..'), { recursive: true });
+      await writeFile(statsPath, '{not json', 'utf-8');
+
+      expect(await repo.readStats('myserver', uuid)).toBeNull();
+    });
+
+    test('uuid 형식이 아니면 null을 반환한다 (경로 조작 방지)', async () => {
+      expect(await repo.readStats('myserver', '../../etc/passwd')).toBeNull();
+    });
+
+    test('fromMinecraftJson이 예외를 던지면 null을 반환한다', async () => {
+      await writeJson(join(root, 'worlds', 'myserver', 'stats', `${uuid}.json`), {
+        stats: { 'minecraft:custom': { 'minecraft:deaths': 1 } },
+      });
+      const spy = vi.spyOn(PlayerStats, 'fromMinecraftJson').mockImplementation(() => {
+        throw new Error('unexpected corrupt shape');
+      });
+
+      expect(await repo.readStats('myserver', uuid)).toBeNull();
+
+      spy.mockRestore();
     });
   });
 });

@@ -57,6 +57,9 @@ export {
   aggregateBlockCounts,
   type BlockCount,
   type BlockStatsResult,
+  PlayerStats,
+  type PlayerStatsProps,
+  type PlayerStatsJson,
 } from './value-objects/index.js';
 
 // Entities

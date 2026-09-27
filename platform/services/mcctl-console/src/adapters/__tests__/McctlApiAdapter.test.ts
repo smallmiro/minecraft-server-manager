@@ -520,6 +520,41 @@ describe('McctlApiAdapter', () => {
         expect.any(Object)
       );
     });
+
+    it('getPlayer should forward include as a comma-separated query param (#528 Phase 2)', async () => {
+      const mockResponse = {
+        uuid: 'abc',
+        name: 'Steve',
+        online: false,
+        lastSeen: '2024-01-01T00:00:00Z',
+        isOp: false,
+        isBanned: false,
+        isWhitelisted: true,
+        stats: {
+          playTimeSeconds: 3600,
+          deaths: 1,
+          mobKills: 2,
+          playerKills: 0,
+          distanceMeters: 100,
+          blocksMined: 10,
+          itemsCrafted: 5,
+          advancementsCompleted: 3,
+        },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await adapter.getPlayer('test', 'abc', ['stats']);
+
+      expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers/test/players/abc?include=stats',
+        expect.any(Object)
+      );
+    });
   });
 
   describe('URL encoding', () => {

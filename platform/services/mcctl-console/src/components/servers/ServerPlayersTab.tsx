@@ -30,8 +30,10 @@ import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import BlockIcon from '@mui/icons-material/Block';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useServerPlayers } from '@/hooks/useServerPlayers';
 import { useAddToWhitelist, useRemoveFromWhitelist } from '@/hooks/useMcctl';
+import { PlayerDetailModal } from './PlayerDetailModal';
 import type { PlayerSummary } from '@/ports/api/IMcctlApiClient';
 
 export interface ServerPlayersTabProps {
@@ -74,6 +76,8 @@ export function ServerPlayersTab({ serverName }: ServerPlayersTabProps) {
   const [banReason, setBanReason] = useState('');
   const [banning, setBanning] = useState(false);
 
+  const [detailOpen, setDetailOpen] = useState(false);
+
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, player: PlayerSummary) => {
     setMenuAnchorEl(event.currentTarget);
     setMenuTarget(player);
@@ -95,6 +99,12 @@ export function ServerPlayersTab({ serverName }: ServerPlayersTabProps) {
     } finally {
       setPendingUuid(null);
     }
+  };
+
+  const handleOpenDetail = () => {
+    setDialogTarget(menuTarget);
+    setDetailOpen(true);
+    handleMenuClose();
   };
 
   const handleOpenKick = () => {
@@ -277,6 +287,12 @@ export function ServerPlayersTab({ serverName }: ServerPlayersTabProps) {
 
         {/* Action Menu */}
         <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={handleMenuClose}>
+          {menuTarget && (
+            <MenuItem onClick={handleOpenDetail} disabled={!menuTarget.uuid}>
+              <InfoOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
+              Details
+            </MenuItem>
+          )}
           {menuTarget?.online && (
             <MenuItem onClick={handleOpenKick}>
               <PersonRemoveIcon fontSize="small" sx={{ mr: 1 }} />
@@ -387,6 +403,13 @@ export function ServerPlayersTab({ serverName }: ServerPlayersTabProps) {
             </Button>
           </DialogActions>
         </Dialog>
+
+        <PlayerDetailModal
+          serverName={serverName}
+          player={dialogTarget}
+          open={detailOpen}
+          onClose={() => setDetailOpen(false)}
+        />
       </CardContent>
     </Card>
   );

@@ -514,6 +514,14 @@ mc-router 상태와 라우팅 정보를 조회합니다.
 
 UUID로 알려진 플레이어 한 명을 조회합니다 (#528, `uuid`는 대시 포함 Minecraft UUID 형식이어야 함). 서버가 정의되지 않았거나 플레이어를 알 수 없으면 404를 반환합니다.
 
+**쿼리 파라미터:**
+
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| `include` | string | 쉼표로 구분된 추가 데이터 목록. 현재는 `stats`만 지원 (#528, Phase 2); 알 수 없는 값은 400을 반환합니다. |
+
+`?include=stats`를 지정하면 `stats` 필드가 추가됩니다(플레이어의 `stats/<uuid>.json` + `advancements/<uuid>.json` 기반). 통계 파일이 있으면 객체, 없으면 `null`입니다. `include`를 지정하지 않으면 `stats` 키 자체가 응답에 포함되지 않습니다.
+
 **응답:**
 
 ```json
@@ -525,6 +533,30 @@ UUID로 알려진 플레이어 한 명을 조회합니다 (#528, `uuid`는 대�
   "isBanned": false,
   "isWhitelisted": true,
   "online": true
+}
+```
+
+**`?include=stats` 응답:**
+
+```json
+{
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "name": "Player1",
+  "lastSeen": "2026-09-20T12:34:56.000Z",
+  "isOp": false,
+  "isBanned": false,
+  "isWhitelisted": true,
+  "online": true,
+  "stats": {
+    "playTimeSeconds": 600,
+    "deaths": 3,
+    "mobKills": 10,
+    "playerKills": 1,
+    "distanceMeters": 500,
+    "blocksMined": 42,
+    "itemsCrafted": 7,
+    "advancementsCompleted": 1
+  }
 }
 ```
 

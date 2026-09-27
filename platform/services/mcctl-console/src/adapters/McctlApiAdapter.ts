@@ -35,7 +35,7 @@ import {
   UpdateBackupScheduleRequest,
   BackupScheduleActionResponse,
   PlayerListResponse,
-  PlayerSummary,
+  PlayerDetail,
   PlayersResponse,
   WhitelistResponse,
   WhitelistStatusResponse,
@@ -480,9 +480,12 @@ export class McctlApiAdapter implements IMcctlApiClient {
     );
   }
 
-  async getPlayer(serverName: string, uuid: string): Promise<PlayerSummary> {
-    return this.fetch<PlayerSummary>(
-      `/api/servers/${encodeURIComponent(serverName)}/players/${encodeURIComponent(uuid)}`
+  async getPlayer(serverName: string, uuid: string, include?: string[]): Promise<PlayerDetail> {
+    const params = new URLSearchParams();
+    if (include && include.length > 0) params.set('include', include.join(','));
+    const qs = params.toString();
+    return this.fetch<PlayerDetail>(
+      `/api/servers/${encodeURIComponent(serverName)}/players/${encodeURIComponent(uuid)}${qs ? `?${qs}` : ''}`
     );
   }
 

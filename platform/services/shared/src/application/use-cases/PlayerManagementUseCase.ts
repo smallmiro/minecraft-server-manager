@@ -1,4 +1,8 @@
-import type { IPlayerManagementUseCase } from '../ports/inbound/IPlayerManagementUseCase.js';
+import type {
+  IPlayerManagementUseCase,
+  GetPlayerDetailOptions,
+  PlayerDetail,
+} from '../ports/inbound/IPlayerManagementUseCase.js';
 import type { IPlayerRepository } from '../ports/outbound/IPlayerRepository.js';
 import { Player } from '../../domain/index.js';
 
@@ -53,24 +57,31 @@ export class PlayerManagementUseCase implements IPlayerManagementUseCase {
   async getPlayerDetail(
     serverName: string,
     uuid: string,
-    onlineNames: string[] = []
-  ): Promise<Player | null> {
+    onlineNames: string[] = [],
+    options?: GetPlayerDetailOptions
+  ): Promise<PlayerDetail | null> {
     const known = await this.playerRepository.listKnownPlayers(serverName);
-    const player = known.find((p) => p.uuid.toLowerCase() === uuid.toLowerCase()) ?? null;
-    if (!player) return null;
+    const found = known.find((p) => p.uuid.toLowerCase() === uuid.toLowerCase()) ?? null;
+    if (!found) return null;
 
     const onlineSet = buildOnlineSet(onlineNames);
-    if (!onlineSet.has(player.name.toLowerCase())) return player;
+    const player = onlineSet.has(found.name.toLowerCase())
+      ? Player.create({
+          uuid: found.uuid,
+          name: found.name,
+          lastSeen: found.lastSeen,
+          isOp: found.isOp,
+          isBanned: found.isBanned,
+          isWhitelisted: found.isWhitelisted,
+          online: true,
+        })
+      : found;
 
-    return Player.create({
-      uuid: player.uuid,
-      name: player.name,
-      lastSeen: player.lastSeen,
-      isOp: player.isOp,
-      isBanned: player.isBanned,
-      isWhitelisted: player.isWhitelisted,
-      online: true,
-    });
+    const detail: PlayerDetail = { player };
+    if (options?.include?.includes('stats')) {
+      detail.stats = await this.playerRepository.readStats(serverName, player.uuid || uuid);
+    }
+    return detail;
   }
 }
 

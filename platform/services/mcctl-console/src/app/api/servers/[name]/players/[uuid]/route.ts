@@ -21,13 +21,25 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
   };
 }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+// Recognized `include` values. Unknown values (e.g. a future `nbt`/`sessions`
+// from later phases) are dropped rather than forwarded.
+const SUPPORTED_INCLUDE = new Set(['stats']);
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { name, uuid } = await params;
     const session = await requireServerPermission(await headers(), name, 'view');
 
+    const { searchParams } = new URL(request.url);
+    const includeParam = searchParams.get('include');
+    const include = includeParam
+      ? includeParam.split(',').map((s) => s.trim()).filter((s) => SUPPORTED_INCLUDE.has(s))
+      : [];
+
     const client = createMcctlApiClient(getUserContext(session));
-    const data = await client.getPlayer(name, uuid);
+    const data = include.length > 0
+      ? await client.getPlayer(name, uuid, include)
+      : await client.getPlayer(name, uuid);
 
     return NextResponse.json(data);
   } catch (error) {

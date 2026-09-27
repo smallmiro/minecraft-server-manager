@@ -145,6 +145,10 @@ export {
   aggregateBlockCounts,
   type BlockCount,
   type BlockStatsResult,
+  // Player stats (#528, Phase 2)
+  PlayerStats,
+  type PlayerStatsProps,
+  type PlayerStatsJson,
 } from './domain/index.js';
 
 // Re-export mod domain models

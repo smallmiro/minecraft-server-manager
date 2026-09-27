@@ -514,6 +514,14 @@ List the merged online (RCON) + known (files) player roster for a server (#528).
 
 Get a single known player by UUID (#528, `uuid` must be a dashed Minecraft UUID). 404 when the server is undefined or the player is unknown.
 
+**Query parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `include` | string | Comma-separated extras to include. Only `stats` exists today (#528, Phase 2); an unknown value returns 400. |
+
+`?include=stats` adds a `stats` field (from the player's `stats/<uuid>.json` + `advancements/<uuid>.json`): an object when a stats file exists, `null` when it doesn't. The `stats` key is omitted entirely when `include` isn't requested.
+
 **Response:**
 
 ```json
@@ -525,6 +533,30 @@ Get a single known player by UUID (#528, `uuid` must be a dashed Minecraft UUID)
   "isBanned": false,
   "isWhitelisted": true,
   "online": true
+}
+```
+
+**Response with `?include=stats`:**
+
+```json
+{
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "name": "Player1",
+  "lastSeen": "2026-09-20T12:34:56.000Z",
+  "isOp": false,
+  "isBanned": false,
+  "isWhitelisted": true,
+  "online": true,
+  "stats": {
+    "playTimeSeconds": 600,
+    "deaths": 3,
+    "mobKills": 10,
+    "playerKills": 1,
+    "distanceMeters": 500,
+    "blocksMined": 42,
+    "itemsCrafted": 7,
+    "advancementsCompleted": 1
+  }
 }
 ```
 
