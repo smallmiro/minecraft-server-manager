@@ -518,13 +518,15 @@ Get a single known player by UUID (#528, `uuid` must be a dashed Minecraft UUID)
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `include` | string | Comma-separated extras to include: `stats`, `nbt` (any order/combination, #528, Phase 2/3); an unknown value returns 400. |
+| `include` | string | Comma-separated extras to include: `stats`, `nbt`, `sessions` (any order/combination, #528, Phase 2/3/4); an unknown value returns 400. |
 
 `?include=stats` adds a `stats` field (from the player's `stats/<uuid>.json` + `advancements/<uuid>.json`): an object when a stats file exists, `null` when it doesn't.
 
 `?include=nbt` adds `data` (last known position/vitals/game mode/inventory summary, parsed from `playerdata/<uuid>.dat`) and `livePosition` (current position via RCON, resolved only while the player is online and the server is running). Both are `null` when unavailable (no playerdata file; offline or server stopped).
 
-Each key (`stats`, `data`, `livePosition`) is omitted entirely unless its corresponding `include` value was requested.
+`?include=sessions` adds a `sessions` field: visit count, cumulative playtime, last-seen timestamp, and the most recent join/leave timeline (newest first, up to 20 entries). This history is collected going forward only — a background collector parses each running server's Docker logs for `<player> joined/left the game` every 30 seconds and stores the events in `data/players.db` (SQLite, under `MCCTL_ROOT`); no history exists for time before this feature was deployed. A brand-new player (or a fresh `players.db`) still gets a `sessions` object, not `null` — `visitCount: 0`, `totalPlaytimeSeconds: 0`, `lastSeen: null`, `recent: []`.
+
+Each key (`stats`, `data`, `livePosition`, `sessions`) is omitted entirely unless its corresponding `include` value was requested.
 
 **Response:**
 
@@ -587,6 +589,29 @@ Each key (`stats`, `data`, `livePosition`) is omitted entirely unless its corres
     "inventory": { "slotsUsed": 3, "items": [{ "id": "minecraft:diamond", "count": 12 }] }
   },
   "livePosition": { "x": 10.6, "y": 64, "z": -20.1, "dimension": "overworld" }
+}
+```
+
+**Response with `?include=sessions`:**
+
+```json
+{
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "name": "Player1",
+  "lastSeen": "2026-09-20T12:34:56.000Z",
+  "isOp": false,
+  "isBanned": false,
+  "isWhitelisted": true,
+  "online": true,
+  "sessions": {
+    "visitCount": 12,
+    "totalPlaytimeSeconds": 43200,
+    "lastSeen": "2026-09-27T08:13:49.000Z",
+    "recent": [
+      { "joinedAt": "2026-09-27T07:00:00.000Z", "leftAt": "2026-09-27T08:13:49.000Z", "durationSeconds": 4429 },
+      { "joinedAt": "2026-09-26T20:00:00.000Z", "leftAt": "2026-09-26T21:30:00.000Z", "durationSeconds": 5400 }
+    ]
+  }
 }
 ```
 

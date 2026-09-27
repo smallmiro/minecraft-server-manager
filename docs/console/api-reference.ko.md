@@ -518,13 +518,15 @@ UUID로 알려진 플레이어 한 명을 조회합니다 (#528, `uuid`는 대�
 
 | 파라미터 | 타입 | 설명 |
 |---------|------|------|
-| `include` | string | 쉼표로 구분된 추가 데이터 목록: `stats`, `nbt` (순서/조합 무관, #528, Phase 2/3); 알 수 없는 값은 400을 반환합니다. |
+| `include` | string | 쉼표로 구분된 추가 데이터 목록: `stats`, `nbt`, `sessions` (순서/조합 무관, #528, Phase 2/3/4); 알 수 없는 값은 400을 반환합니다. |
 
 `?include=stats`를 지정하면 `stats` 필드가 추가됩니다(플레이어의 `stats/<uuid>.json` + `advancements/<uuid>.json` 기반). 통계 파일이 있으면 객체, 없으면 `null`입니다.
 
 `?include=nbt`를 지정하면 `data`(플레이어의 `playerdata/<uuid>.dat`에서 파싱한 마지막 위치/체력/게임모드/인벤토리 요약)와 `livePosition`(플레이어가 온라인이고 서버가 실행 중일 때만 RCON으로 조회하는 현재 위치) 필드가 추가됩니다. 두 필드 모두 데이터가 없으면(playerdata 파일 없음, 오프라인, 서버 중지 등) `null`입니다.
 
-각 키(`stats`, `data`, `livePosition`)는 해당하는 `include` 값을 요청하지 않으면 응답에 포함되지 않습니다.
+`?include=sessions`를 지정하면 `sessions` 필드가 추가됩니다: 방문 횟수, 누적 플레이타임, 마지막 접속 시각, 최근 접속/퇴장 타임라인(최신순, 최대 20개)을 담습니다. 이 이력은 이 기능이 배포된 시점 이후부터만 수집됩니다 — 백그라운드 수집기가 30초마다 실행 중인 서버의 Docker 로그에서 `<플레이어> joined/left the game` 메시지를 파싱하여 `data/players.db`(SQLite, `MCCTL_ROOT` 하위)에 저장합니다. 신규 플레이어이거나 `players.db`가 비어 있어도 `sessions`는 `null`이 아니라 `visitCount: 0`, `totalPlaytimeSeconds: 0`, `lastSeen: null`, `recent: []` 형태의 객체로 반환됩니다.
+
+각 키(`stats`, `data`, `livePosition`, `sessions`)는 해당하는 `include` 값을 요청하지 않으면 응답에 포함되지 않습니다.
 
 **응답:**
 
@@ -587,6 +589,29 @@ UUID로 알려진 플레이어 한 명을 조회합니다 (#528, `uuid`는 대�
     "inventory": { "slotsUsed": 3, "items": [{ "id": "minecraft:diamond", "count": 12 }] }
   },
   "livePosition": { "x": 10.6, "y": 64, "z": -20.1, "dimension": "overworld" }
+}
+```
+
+**`?include=sessions` 응답:**
+
+```json
+{
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "name": "Player1",
+  "lastSeen": "2026-09-20T12:34:56.000Z",
+  "isOp": false,
+  "isBanned": false,
+  "isWhitelisted": true,
+  "online": true,
+  "sessions": {
+    "visitCount": 12,
+    "totalPlaytimeSeconds": 43200,
+    "lastSeen": "2026-09-27T08:13:49.000Z",
+    "recent": [
+      { "joinedAt": "2026-09-27T07:00:00.000Z", "leftAt": "2026-09-27T08:13:49.000Z", "durationSeconds": 4429 },
+      { "joinedAt": "2026-09-26T20:00:00.000Z", "leftAt": "2026-09-26T21:30:00.000Z", "durationSeconds": 5400 }
+    ]
+  }
 }
 ```
 
