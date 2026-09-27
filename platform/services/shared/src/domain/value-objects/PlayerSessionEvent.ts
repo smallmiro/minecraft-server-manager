@@ -18,6 +18,22 @@ const JOIN_LEAVE_MESSAGE =
   /^\[[^\]]*\]\s+\[Server thread\/INFO\]:\s+([A-Za-z0-9_]{1,16}) (joined|left) the game$/;
 
 /**
+ * Parse the RFC3339Nano timestamp `docker logs --timestamps` prefixes onto
+ * every line (join/leave or not), or `null` when the line has no valid
+ * timestamp prefix. Pure — no I/O.
+ */
+export function parseDockerLogTimestamp(line: string): Date | null {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+
+  const lineMatch = DOCKER_TIMESTAMP_LINE.exec(trimmed);
+  if (!lineMatch) return null;
+
+  const at = new Date(lineMatch[1]!);
+  return Number.isNaN(at.getTime()) ? null : at;
+}
+
+/**
  * Parse one `docker logs --timestamps` line into a join/leave event, or
  * `null` when the line isn't a player join/leave message. Pure — no I/O.
  */

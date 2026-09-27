@@ -96,6 +96,44 @@ describe('PlayerSessionUseCase', () => {
       expect(repo.recordJoin).not.toHaveBeenCalled();
       expect(repo.setCursor).not.toHaveBeenCalled();
     });
+
+    it('advances the cursor to the latest line timestamp even when no events match (idle server)', async () => {
+      const repo = makeRepo();
+      const useCase = new PlayerSessionUseCase(repo);
+      const idleLine =
+        '2026-09-27T08:30:00.000000000Z [08:30:00] [Server thread/INFO]: Done (12.3s)!';
+
+      await useCase.ingestLogLines('myserver', [idleLine]);
+
+      expect(repo.recordJoin).not.toHaveBeenCalled();
+      expect(repo.recordLeave).not.toHaveBeenCalled();
+      expect(repo.setCursor).toHaveBeenCalledWith(
+        'myserver',
+        new Date('2026-09-27T08:30:00.000Z')
+      );
+    });
+
+    it('does not move the cursor backwards when the batch has no timestamped lines past it', async () => {
+      const repo = makeRepo({
+        getCursor: vi.fn().mockResolvedValue(new Date('2026-09-27T09:00:00.000Z')),
+      });
+      const useCase = new PlayerSessionUseCase(repo);
+
+      await useCase.ingestLogLines('myserver', ['garbage']);
+
+      expect(repo.setCursor).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getCursor', () => {
+    it('delegates to the repository', async () => {
+      const cursor = new Date('2026-09-27T08:00:00.000Z');
+      const repo = makeRepo({ getCursor: vi.fn().mockResolvedValue(cursor) });
+      const useCase = new PlayerSessionUseCase(repo);
+
+      await expect(useCase.getCursor('myserver')).resolves.toBe(cursor);
+      expect(repo.getCursor).toHaveBeenCalledWith('myserver');
+    });
   });
 
   describe('markServerStopped', () => {

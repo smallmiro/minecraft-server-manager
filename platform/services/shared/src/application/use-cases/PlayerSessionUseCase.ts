@@ -3,7 +3,7 @@ import type {
   SessionHistory,
 } from '../ports/inbound/IPlayerSessionUseCase.js';
 import type { IPlayerSessionRepository } from '../ports/outbound/IPlayerSessionRepository.js';
-import { parsePlayerSessionEvent } from '../../domain/index.js';
+import { parsePlayerSessionEvent, parseDockerLogTimestamp } from '../../domain/index.js';
 
 const DEFAULT_RECENT_LIMIT = 20;
 
@@ -22,6 +22,15 @@ export class PlayerSessionUseCase implements IPlayerSessionUseCase {
     let latest: Date | null = null;
 
     for (const line of lines) {
+      // Advance the cursor on every line's timestamp, not just matched
+      // join/leave events — otherwise an idle server (no joins/leaves)
+      // never moves the cursor and keeps re-fetching its full lookback
+      // window on every tick.
+      const at = parseDockerLogTimestamp(line);
+      if (at && (!latest || at.getTime() > latest.getTime())) {
+        latest = at;
+      }
+
       const event = parsePlayerSessionEvent(line);
       if (!event) continue;
       if (cursor && event.at.getTime() <= cursor.getTime()) continue;
@@ -31,19 +40,19 @@ export class PlayerSessionUseCase implements IPlayerSessionUseCase {
       } else {
         await this.sessions.recordLeave(serverName, event.playerName, event.at);
       }
-
-      if (!latest || event.at.getTime() > latest.getTime()) {
-        latest = event.at;
-      }
     }
 
-    if (latest) {
+    if (latest && (!cursor || latest.getTime() > cursor.getTime())) {
       await this.sessions.setCursor(serverName, latest);
     }
   }
 
   async markServerStopped(serverName: string, at: Date): Promise<void> {
     await this.sessions.closeOpenSessions(serverName, at);
+  }
+
+  async getCursor(serverName: string): Promise<Date | null> {
+    return this.sessions.getCursor(serverName);
   }
 
   async getSessionHistory(

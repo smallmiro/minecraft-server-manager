@@ -80,5 +80,6 @@ export {
 } from './PlayerData.js';
 export {
   parsePlayerSessionEvent,
+  parseDockerLogTimestamp,
   type PlayerSessionEvent,
 } from './PlayerSessionEvent.js';

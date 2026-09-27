@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parsePlayerSessionEvent } from '../src/domain/index.js';
+import { parsePlayerSessionEvent, parseDockerLogTimestamp } from '../src/domain/index.js';
 
 describe('parsePlayerSessionEvent', () => {
   it('parses a join line (vanilla/Paper format, docker --timestamps prefix)', () => {
@@ -50,5 +50,22 @@ describe('parsePlayerSessionEvent', () => {
     const line = '[08:13:49] [Server thread/INFO]: Steve joined the game';
 
     expect(parsePlayerSessionEvent(line)).toBeNull();
+  });
+});
+
+describe('parseDockerLogTimestamp', () => {
+  it('parses the leading RFC3339Nano timestamp of any log line', () => {
+    const line = '2026-09-27T08:13:49.123456789Z [08:13:49] [Server thread/INFO]: Done (12.3s)!';
+
+    expect(parseDockerLogTimestamp(line)).toEqual(new Date('2026-09-27T08:13:49.123Z'));
+  });
+
+  it('ignores blank/empty lines', () => {
+    expect(parseDockerLogTimestamp('')).toBeNull();
+    expect(parseDockerLogTimestamp('   ')).toBeNull();
+  });
+
+  it('ignores lines with no valid timestamp prefix', () => {
+    expect(parseDockerLogTimestamp('[08:13:49] [Server thread/INFO]: Done (12.3s)!')).toBeNull();
   });
 });

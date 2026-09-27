@@ -160,6 +160,7 @@ export {
   type PlayerSessionProps,
   type PlayerSessionJson,
   parsePlayerSessionEvent,
+  parseDockerLogTimestamp,
   type PlayerSessionEvent,
 } from './domain/index.js';
 

@@ -66,6 +66,7 @@ export {
   type PlayerInventorySummary,
   type InventoryItemSummary,
   parsePlayerSessionEvent,
+  parseDockerLogTimestamp,
   type PlayerSessionEvent,
 } from './value-objects/index.js';
 

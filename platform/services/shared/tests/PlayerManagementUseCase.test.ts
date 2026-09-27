@@ -285,6 +285,7 @@ describe('PlayerManagementUseCase', () => {
         const playerSessions: IPlayerSessionUseCase = {
           ingestLogLines: vi.fn(),
           markServerStopped: vi.fn(),
+          getCursor: vi.fn().mockResolvedValue(null),
           getSessionHistory: vi.fn().mockResolvedValue(history),
         };
         const useCase = new PlayerManagementUseCase(makeRepo([steve]), undefined, playerSessions);
@@ -298,6 +299,7 @@ describe('PlayerManagementUseCase', () => {
         const playerSessions: IPlayerSessionUseCase = {
           ingestLogLines: vi.fn(),
           markServerStopped: vi.fn(),
+          getCursor: vi.fn().mockResolvedValue(null),
           getSessionHistory: vi.fn().mockResolvedValue(history),
         };
         const useCase = new PlayerManagementUseCase(makeRepo([steve]), undefined, playerSessions);
