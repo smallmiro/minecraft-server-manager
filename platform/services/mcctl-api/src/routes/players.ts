@@ -159,7 +159,6 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     playerSessionUseCase,
     () => getAllServers(join(config.platformPath, 'servers')),
     getContainerStatus,
-    (serverName) => playerSessionRepository.getCursor(serverName),
     undefined,
     fastify.log
   );

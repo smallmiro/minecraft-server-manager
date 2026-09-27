@@ -16,12 +16,21 @@ const INITIAL_LOOKBACK = '24h';
 /** Fetches `docker logs --timestamps` lines for a container. Injectable for tests. */
 export type LogFetcher = (container: string, since: string) => Promise<string[]>;
 
+// Caps each fetch's line count regardless of how wide `--since` is (e.g. the
+// 24h initial-lookback), so a chatty server can never produce more output
+// than maxBuffer and stall its collection tick forever.
+const MAX_TAIL_LINES = 10_000;
+
+/** Builds the `docker logs` argv for a bounded fetch. Exported for testing. */
+export function buildDockerLogsArgs(container: string, since: string): string[] {
+  return ['logs', '--timestamps', '--since', since, '--tail', String(MAX_TAIL_LINES), container];
+}
+
 const defaultLogFetcher: LogFetcher = async (container, since) => {
-  const { stdout } = await execFileAsync(
-    'docker',
-    ['logs', '--timestamps', '--since', since, container],
-    { timeout: 10_000, maxBuffer: 10 * 1024 * 1024 }
-  );
+  const { stdout } = await execFileAsync('docker', buildDockerLogsArgs(container, since), {
+    timeout: 10_000,
+    maxBuffer: 10 * 1024 * 1024,
+  });
   return stdout.split('\n').filter(Boolean);
 };
 
@@ -34,12 +43,12 @@ const defaultLogFetcher: LogFetcher = async (container, since) => {
  */
 export class PlayerSessionCollectorService {
   private timer: ReturnType<typeof setInterval> | undefined;
+  private inFlight = false;
 
   constructor(
     private readonly sessions: IPlayerSessionUseCase,
     private readonly listServerNames: () => string[],
     private readonly getStatus: (container: string) => ContainerStatus,
-    private readonly getCursor: (serverName: string) => Promise<Date | null>,
     private readonly fetchLogs: LogFetcher = defaultLogFetcher,
     private readonly logger?: Pick<FastifyBaseLogger, 'warn'>
   ) {}
@@ -58,14 +67,24 @@ export class PlayerSessionCollectorService {
     }
   }
 
-  /** One collection pass across every defined server. */
+  /**
+   * One collection pass across every defined server. Skips the pass entirely
+   * if a previous tick is still in flight (e.g. a slow `docker logs` call),
+   * so ticks never pile up concurrently against the same server.
+   */
   async tick(): Promise<void> {
-    for (const serverName of this.listServerNames()) {
-      try {
-        await this.collectServer(serverName);
-      } catch (error) {
-        this.logger?.warn(error, `Player session collection failed for server '${serverName}'`);
+    if (this.inFlight) return;
+    this.inFlight = true;
+    try {
+      for (const serverName of this.listServerNames()) {
+        try {
+          await this.collectServer(serverName);
+        } catch (error) {
+          this.logger?.warn(error, `Player session collection failed for server '${serverName}'`);
+        }
       }
+    } finally {
+      this.inFlight = false;
     }
   }
 
@@ -77,7 +96,7 @@ export class PlayerSessionCollectorService {
       return;
     }
 
-    const cursor = await this.getCursor(serverName);
+    const cursor = await this.sessions.getCursor(serverName);
     const since = cursor ? cursor.toISOString() : INITIAL_LOOKBACK;
     const lines = await this.fetchLogs(container, since);
     await this.sessions.ingestLogLines(serverName, lines);

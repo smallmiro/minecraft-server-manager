@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { IPlayerSessionUseCase } from '@minecraft-docker/shared';
-import { PlayerSessionCollectorService } from '../src/services/player-session-collector.js';
+import { PlayerSessionCollectorService, buildDockerLogsArgs } from '../src/services/player-session-collector.js';
 
 function createMockLogger() {
   return {
@@ -16,20 +16,20 @@ function createMockLogger() {
   } as any;
 }
 
-function createMockSessions(): IPlayerSessionUseCase {
+function createMockSessions() {
   return {
     ingestLogLines: vi.fn().mockResolvedValue(undefined),
     markServerStopped: vi.fn().mockResolvedValue(undefined),
     getSessionHistory: vi.fn(),
-  };
+    getCursor: vi.fn().mockResolvedValue(null),
+  } satisfies IPlayerSessionUseCase;
 }
 
 describe('PlayerSessionCollectorService', () => {
-  let sessions: IPlayerSessionUseCase;
+  let sessions: ReturnType<typeof createMockSessions>;
   let logger: ReturnType<typeof createMockLogger>;
   let listServers: ReturnType<typeof vi.fn>;
   let getStatus: ReturnType<typeof vi.fn>;
-  let getCursor: ReturnType<typeof vi.fn>;
   let fetchLogs: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -37,7 +37,6 @@ describe('PlayerSessionCollectorService', () => {
     logger = createMockLogger();
     listServers = vi.fn().mockReturnValue(['alpha']);
     getStatus = vi.fn().mockReturnValue('running');
-    getCursor = vi.fn().mockResolvedValue(null);
     fetchLogs = vi.fn().mockResolvedValue(['2026-01-01T00:00:00.000000000Z [00:00:00] [Server thread/INFO]: Notch joined the game']);
   });
 
@@ -46,7 +45,6 @@ describe('PlayerSessionCollectorService', () => {
       sessions,
       listServers,
       getStatus,
-      getCursor,
       fetchLogs,
       logger
     );
@@ -64,7 +62,7 @@ describe('PlayerSessionCollectorService', () => {
 
   it('fetches logs since the stored cursor ISO string when one exists', async () => {
     const cursor = new Date('2026-01-01T00:00:00.000Z');
-    getCursor.mockResolvedValue(cursor);
+    sessions.getCursor.mockResolvedValue(cursor);
     const service = createService();
 
     await service.tick();
@@ -100,6 +98,33 @@ describe('PlayerSessionCollectorService', () => {
     expect(sessions.ingestLogLines).toHaveBeenCalledWith('beta', []);
   });
 
+  it('skips a tick when the previous tick is still running (re-entrancy guard)', async () => {
+    let resolveFirstFetch: (lines: string[]) => void = () => {};
+    fetchLogs.mockImplementationOnce(
+      () => new Promise<string[]>((resolve) => (resolveFirstFetch = resolve))
+    );
+    const service = createService();
+
+    const firstTick = service.tick();
+    // Let the first tick run past its `await getCursor(...)` hop so it
+    // reaches (and calls) fetchLogs before the second tick is issued.
+    await Promise.resolve();
+    const secondTick = service.tick();
+    resolveFirstFetch([]);
+    await Promise.all([firstTick, secondTick]);
+
+    expect(fetchLogs).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows the next tick to run once the previous one finished', async () => {
+    const service = createService();
+
+    await service.tick();
+    await service.tick();
+
+    expect(fetchLogs).toHaveBeenCalledTimes(2);
+  });
+
   it('start() schedules tick() on an interval and stop() clears it', () => {
     vi.useFakeTimers();
     try {
@@ -118,5 +143,19 @@ describe('PlayerSessionCollectorService', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('buildDockerLogsArgs', () => {
+  it('bounds the fetch with --tail so a large --since window cannot exceed maxBuffer', () => {
+    expect(buildDockerLogsArgs('mc-alpha', '24h')).toEqual([
+      'logs',
+      '--timestamps',
+      '--since',
+      '24h',
+      '--tail',
+      '10000',
+      'mc-alpha',
+    ]);
   });
 });
