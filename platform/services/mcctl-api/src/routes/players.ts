@@ -14,8 +14,10 @@ import {
 import {
   PlayerInfoSchema,
   PlayerRosterResponseSchema,
-  PlayerSummarySchema,
   PlayerUuidParamsSchema,
+  PlayerDetailQuerySchema,
+  PlayerDetailResponseSchema,
+  type PlayerDetailResponse,
   PlayerListResponseSchema,
   WhitelistResponseSchema,
   WhitelistStatusResponseSchema,
@@ -32,6 +34,7 @@ import {
   type WhitelistStatusRequest,
   type PlayerParams,
   type PlayerUuidParams,
+  type PlayerDetailQuery,
   type UsernameParams,
 } from '../schemas/player.js';
 import { StatusQuerySchema, type StatusQuery } from '../schemas/server.js';
@@ -67,6 +70,7 @@ interface PlayerRosterRoute {
 
 interface PlayerDetailRoute {
   Params: PlayerUuidParams;
+  Querystring: PlayerDetailQuery;
 }
 
 interface UsernameRoute {
@@ -277,26 +281,39 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
    */
   fastify.get<PlayerDetailRoute>('/api/servers/:name/players/:uuid', {
     schema: {
-      description: 'Get a single known player by uuid',
+      description: 'Get a single known player by uuid, optionally with ?include=stats',
       tags: ['players'],
       params: PlayerUuidParamsSchema,
+      querystring: PlayerDetailQuerySchema,
       response: {
-        200: PlayerSummarySchema,
+        200: PlayerDetailResponseSchema,
         404: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
   }, async (request: FastifyRequest<PlayerDetailRoute>, reply: FastifyReply) => {
     const { name, uuid } = request.params;
+    const { include } = request.query;
     if (!checkServerDefined(name, reply)) return;
+
+    const wantsStats = (include ?? '').split(',').includes('stats');
 
     try {
       const { names: onlineNames } = await getOnlinePlayers(name);
-      const detail = await playerManagementUseCase.getPlayerDetail(name, uuid, onlineNames);
+      const detail = await playerManagementUseCase.getPlayerDetail(
+        name,
+        uuid,
+        onlineNames,
+        wantsStats ? { include: ['stats'] } : undefined
+      );
       if (!detail) {
         return reply.code(404).send({ error: 'NotFound', message: `Player '${uuid}' not found` });
       }
-      return reply.send(detail.player.toJSON());
+      const response: PlayerDetailResponse = detail.player.toJSON();
+      if (detail.stats !== undefined) {
+        response.stats = detail.stats ? detail.stats.toJSON() : null;
+      }
+      return reply.send(response);
     } catch (error) {
       fastify.log.error(error, 'Failed to get player detail');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get player detail' });

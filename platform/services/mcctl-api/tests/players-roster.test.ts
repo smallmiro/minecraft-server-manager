@@ -355,6 +355,106 @@ describe('Player roster API (#528)', () => {
       });
     });
 
+    it('does not include stats when ?include is omitted', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+
+      const response = await app.inject({ method: 'GET', url: `/api/servers/test-server/players/${NOTCH_UUID}` });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).not.toHaveProperty('stats');
+    });
+
+    it('returns 400 for an unknown ?include value', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=nbt`,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('returns stats when ?include=stats and a stats file exists', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+      const worldDir = join(TEST_PLATFORM_PATH, 'worlds', 'test-server');
+      mkdirSync(join(worldDir, 'stats'), { recursive: true });
+      mkdirSync(join(worldDir, 'advancements'), { recursive: true });
+      writeFileSync(
+        join(worldDir, 'stats', `${NOTCH_UUID}.json`),
+        JSON.stringify({
+          stats: {
+            'minecraft:custom': {
+              'minecraft:play_time': 12000,
+              'minecraft:deaths': 3,
+              'minecraft:mob_kills': 10,
+              'minecraft:player_kills': 1,
+              'minecraft:walk_one_cm': 50000,
+            },
+            'minecraft:mined': { 'minecraft:stone': 42 },
+            'minecraft:crafted': { 'minecraft:torch': 7 },
+          },
+        }),
+        'utf-8'
+      );
+      writeFileSync(
+        join(worldDir, 'advancements', `${NOTCH_UUID}.json`),
+        JSON.stringify({
+          DataVersion: 3465,
+          'minecraft:story/mine_stone': { done: true },
+          'minecraft:recipes/misc/torch': { done: true },
+        }),
+        'utf-8'
+      );
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=stats`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.stats).toEqual({
+        playTimeSeconds: 600,
+        deaths: 3,
+        mobKills: 10,
+        playerKills: 1,
+        distanceMeters: 500,
+        blocksMined: 42,
+        itemsCrafted: 7,
+        advancementsCompleted: 1,
+      });
+    });
+
+    it('returns stats: null when ?include=stats but no stats file exists', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/servers/test-server/players/${NOTCH_UUID}?include=stats`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body).toHaveProperty('stats', null);
+    });
+
     it('does not shadow the /players/live static route', async () => {
       setupServer('test-server', { files: {} });
       containerStatus = 'stopped';
