@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import DashboardPage from './page';
@@ -111,6 +111,32 @@ describe('DashboardPage', () => {
       const twos = screen.getAllByText('2');
       expect(twos.length).toBeGreaterThanOrEqual(2);
     });
+  });
+
+  it('should present an at-a-glance server summary inside the dashboard overview', async () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: {
+        servers: [
+          { name: 'survival', status: 'running', health: 'healthy', container: 'mc-survival', hostname: 'survival.local' },
+          { name: 'creative', status: 'running', health: 'healthy', container: 'mc-creative', hostname: 'creative.local' },
+          { name: 'events', status: 'stopped', health: 'none', container: 'mc-events', hostname: 'events.local' },
+        ],
+        total: 3,
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: { worlds: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    const overview = await screen.findByRole('region', { name: 'Dashboard overview' });
+    expect(within(overview).getByText('2 of 3 servers online')).toBeInTheDocument();
+    expect(within(overview).getByText('1 server needs attention')).toBeInTheDocument();
   });
 
   it('should display zero when no servers', async () => {

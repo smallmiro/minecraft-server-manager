@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, alpha } from '@mui/material';
 
 export interface StatCardProps {
   title: string;
@@ -40,22 +40,34 @@ export function StatCard({
       data-testid="stat-card"
       sx={{
         height: '100%',
+        minHeight: 152,
         position: 'relative',
         overflow: 'hidden',
-        '&::before': {
+        borderRadius: 4,
+        transition: 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
+        background: (theme) =>
+          `radial-gradient(circle at 100% 0%, ${alpha(accent, 0.12)} 0%, transparent 42%), ${theme.palette.background.paper}`,
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: alpha(accent, 0.35),
+          boxShadow: `0 18px 42px ${alpha(accent, 0.09)}`,
+        },
+        '&::after': {
           content: '""',
           position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '4px',
+          width: 6,
+          height: 6,
+          top: 16,
+          right: 16,
+          borderRadius: 999,
           background: accent,
+          boxShadow: `0 0 16px ${alpha(accent, 0.9)}`,
         },
       }}
     >
-      <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
+      <CardContent sx={{ p: 2.25, '&:last-child': { pb: 2.25 } }}>
         {/* Title row */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1.5 }}>
           <Typography
             variant="body2"
             color="text.secondary"
@@ -64,7 +76,19 @@ export function StatCard({
             {title}
           </Typography>
           {icon && (
-            <Box sx={{ ml: 'auto', display: 'inline-flex', color: accent, opacity: 0.8 }}>
+            <Box
+              sx={{
+                ml: 'auto',
+                mr: 1.5,
+                width: 32,
+                height: 32,
+                display: 'grid',
+                placeItems: 'center',
+                color: accent,
+                borderRadius: 2,
+                bgcolor: alpha(accent, 0.1),
+              }}
+            >
               {icon}
             </Box>
           )}
@@ -74,7 +98,7 @@ export function StatCard({
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75 }}>
           <Typography
             component="div"
-            sx={{ fontWeight: 700, fontSize: '1.9rem', lineHeight: 1, color: 'text.primary' }}
+            sx={{ fontWeight: 800, fontSize: '2.15rem', lineHeight: 1, color: 'text.primary', letterSpacing: '-0.04em' }}
           >
             {value}
           </Typography>
@@ -92,7 +116,7 @@ export function StatCard({
               height: 4,
               borderRadius: 2,
               mt: 1,
-              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              backgroundColor: 'rgba(255, 255, 255, 0.07)',
               overflow: 'hidden',
             }}
           >
