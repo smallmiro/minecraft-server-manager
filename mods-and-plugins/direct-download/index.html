@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2982,7 +2982,7 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>--type<span class="w"> </span>FABRIC<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Add mods from direct URLs</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">&quot;https://example.com/custom-mod.jar,https://github.com/user/repo/releases/download/v1.0/mod.jar&quot;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">"https://example.com/custom-mod.jar,https://github.com/user/repo/releases/download/v1.0/mod.jar"</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Restart to apply</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
@@ -2999,10 +2999,10 @@
 <h3 id="mods-variable">MODS Variable<a class="headerlink" href="#mods-variable" title="Permanent link">&para;</a></h3>
 <p>For Forge/Fabric servers, download mods from URLs:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Single mod</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODS<span class="w"> </span><span class="s2">&quot;https://example.com/custom-mod.jar&quot;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODS<span class="w"> </span><span class="s2">"https://example.com/custom-mod.jar"</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Multiple mods (comma-separated)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODS<span class="w"> </span><span class="s2">&quot;https://example.com/mod1.jar,https://example.com/mod2.jar&quot;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODS<span class="w"> </span><span class="s2">"https://example.com/mod1.jar,https://example.com/mod2.jar"</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Restart to apply</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
@@ -3010,10 +3010,10 @@
 <h3 id="plugins-variable">PLUGINS Variable<a class="headerlink" href="#plugins-variable" title="Permanent link">&para;</a></h3>
 <p>For Paper/Spigot servers, download plugins from URLs:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Single plugin</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>PLUGINS<span class="w"> </span><span class="s2">&quot;https://example.com/custom-plugin.jar&quot;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>PLUGINS<span class="w"> </span><span class="s2">"https://example.com/custom-plugin.jar"</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Multiple plugins</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>PLUGINS<span class="w"> </span><span class="s2">&quot;https://example.com/plugin1.jar,https://example.com/plugin2.jar&quot;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>PLUGINS<span class="w"> </span><span class="s2">"https://example.com/plugin1.jar,https://example.com/plugin2.jar"</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Restart to apply</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
@@ -3076,7 +3076,7 @@
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>--type<span class="w"> </span>FABRIC<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Add mods from GitHub releases</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">&quot;https://github.com/CaffeineMC/sodium-fabric/releases/download/mc1.21-0.6.0/sodium-fabric-0.6.0+mc1.21.jar&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">"https://github.com/CaffeineMC/sodium-fabric/releases/download/mc1.21-0.6.0/sodium-fabric-0.6.0+mc1.21.jar"</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Restart to apply</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
@@ -3086,10 +3086,10 @@
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>--type<span class="w"> </span>FABRIC<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Direct URLs for custom mods</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">&quot;https://example.com/custom-mod.jar&quot;</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">"https://example.com/custom-mod.jar"</span>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Modrinth for popular mods</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,sodium&quot;</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,lithium,sodium"</span>
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
 <a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># Restart to apply</span>
 <a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
@@ -3168,11 +3168,11 @@
 <h2 id="auto-cleanup">Auto Cleanup<a class="headerlink" href="#auto-cleanup" title="Permanent link">&para;</a></h2>
 <h3 id="remove-old-mods">Remove Old Mods<a class="headerlink" href="#remove-old-mods" title="Permanent link">&para;</a></h3>
 <p>Configure automatic cleanup before applying new content:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS<span class="w"> </span><span class="s2">&quot;TRUE&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS<span class="w"> </span><span class="s2">"TRUE"</span>
 </code></pre></div>
 <h3 id="exclude-specific-files">Exclude Specific Files<a class="headerlink" href="#exclude-specific-files" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS_INCLUDE<span class="w"> </span><span class="s2">&quot;*.jar&quot;</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS_EXCLUDE<span class="w"> </span><span class="s2">&quot;keep-this-mod.jar&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS_INCLUDE<span class="w"> </span><span class="s2">"*.jar"</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS_EXCLUDE<span class="w"> </span><span class="s2">"keep-this-mod.jar"</span>
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h3>
@@ -3223,13 +3223,13 @@
 </code></pre></div>
 <h3 id="debug-mode">Debug Mode<a class="headerlink" href="#debug-mode" title="Permanent link">&para;</a></h3>
 <p>Enable debug output to troubleshoot:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>DEBUG<span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>DEBUG<span class="w"> </span><span class="s2">"true"</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver
 </code></pre></div>
 <h3 id="verify-url-access">Verify URL Access<a class="headerlink" href="#verify-url-access" title="Permanent link">&para;</a></h3>
 <p>Test URL accessibility:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>curl<span class="w"> </span>-I<span class="w"> </span><span class="s2">&quot;https://example.com/mod.jar&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>curl<span class="w"> </span>-I<span class="w"> </span><span class="s2">"https://example.com/mod.jar"</span>
 </code></pre></div>
 <h3 id="check-shared-directory">Check Shared Directory<a class="headerlink" href="#check-shared-directory" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># List shared mods</span>
@@ -3325,7 +3325,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2692,7 +2692,7 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Change settings</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MEMORY<span class="w"> </span>8G
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Welcome!&quot;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">"Welcome!"</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">50</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Shortcuts for common settings</span>
@@ -3129,7 +3129,7 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 </table>
 <p><strong>Example - Add mods:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Fabric server with performance mods</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,sodium&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,lithium,sodium"</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span>required
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
 </code></pre></div>
@@ -3340,8 +3340,8 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 </code></pre></div></p>
 <p><strong>Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Set custom retention policy</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;AUDIT_RETENTION_DAYS=180&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/.env
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;AUDIT_AUTO_CLEANUP=true&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/.env
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"AUDIT_RETENTION_DAYS=180"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/.env
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"AUDIT_AUTO_CLEANUP=true"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/minecraft-servers/.env
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># Restart services to apply</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart
@@ -3413,7 +3413,7 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Configure</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Survival Server - Good luck!&quot;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">"Survival Server - Good luck!"</span>
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>DIFFICULTY<span class="w"> </span>hard
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">30</span>
@@ -3426,7 +3426,7 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>creative<span class="w"> </span>-t<span class="w"> </span>VANILLA<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Configure</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Creative Mode - Build freely!&quot;</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">"Creative Mode - Build freely!"</span>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>DIFFICULTY<span class="w"> </span>peaceful
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>GAMEMODE<span class="w"> </span>creative
 <a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>creative<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">20</span>
@@ -3438,14 +3438,14 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>-t<span class="w"> </span>FORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Configure</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Modded Server - Enhanced Experience&quot;</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">"Modded Server - Enhanced Experience"</span>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>DIFFICULTY<span class="w"> </span>normal
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MEMORY<span class="w"> </span>8G
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
 <a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="c1"># Add mods (requires CF_API_KEY in .env)</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>CURSEFORGE_FILES<span class="w"> </span><span class="s2">&quot;jei,journeymap,create&quot;</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>CURSEFORGE_FILES<span class="w"> </span><span class="s2">"jei,journeymap,create"</span>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>
 <a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="c1"># Restart to apply</span>
 <a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
@@ -3455,13 +3455,13 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>fabric<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Configure</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Fabric Server - Performance Mods&quot;</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">"Fabric Server - Performance Mods"</span>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>DIFFICULTY<span class="w"> </span>normal
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>GAMEMODE<span class="w"> </span>survival
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MEMORY<span class="w"> </span>6G
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
 <a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="c1"># Add mods from Modrinth</span>
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,sodium,starlight&quot;</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,lithium,sodium,starlight"</span>
 <a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span>required
 <a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>
 <a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="c1"># Restart to apply</span>
@@ -3560,7 +3560,7 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

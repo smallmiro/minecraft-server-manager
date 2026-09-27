@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2806,7 +2806,7 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>--type<span class="w"> </span>PAPER<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Add SpigotMC plugins (using numeric resource IDs)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">&quot;28140,34315,6245&quot;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">"28140,34315,6245"</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Restart to apply changes</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>survival<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>survival
@@ -2861,7 +2861,7 @@
 <h2 id="configuration-via-mcctl">Configuration via mcctl<a class="headerlink" href="#configuration-via-mcctl" title="Permanent link">&para;</a></h2>
 <h3 id="basic-setup">Basic Setup<a class="headerlink" href="#basic-setup" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Add plugins (comma-separated numeric IDs)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">&quot;28140,34315,6245&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">"28140,34315,6245"</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Restart to apply</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
@@ -2932,8 +2932,8 @@
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>--type<span class="w"> </span>PAPER<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Configure plugins</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">&quot;28140,34315,6245&quot;</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">&quot;4G&quot;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">"28140,34315,6245"</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">"4G"</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># Start server</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>mcctl<span class="w"> </span>start<span class="w"> </span>survival
@@ -2943,10 +2943,10 @@
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>--type<span class="w"> </span>PAPER<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Spiget plugins (SpigotMC)</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">&quot;28140,34315&quot;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">"28140,34315"</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Modrinth plugins (additional)</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;chunky,spark&quot;</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"chunky,spark"</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Restart to apply</span>
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>survival<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>survival
@@ -2962,7 +2962,7 @@
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>--type<span class="w"> </span>PAPER<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Add Spiget plugins for ones that work</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">&quot;28140,34315&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">"28140,34315"</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Manual plugins in shared/plugins/ are automatically available</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>mcctl<span class="w"> </span>start<span class="w"> </span>survival
@@ -3072,13 +3072,13 @@
 </code></pre></div>
 <h3 id="debug-mode">Debug Mode<a class="headerlink" href="#debug-mode" title="Permanent link">&para;</a></h3>
 <p>Enable debug output to troubleshoot issues:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>DEBUG<span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>DEBUG<span class="w"> </span><span class="s2">"true"</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver
 </code></pre></div>
 <h3 id="check-spiget-api">Check Spiget API<a class="headerlink" href="#check-spiget-api" title="Permanent link">&para;</a></h3>
 <p>Verify a resource exists and is available:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span><span class="s2">&quot;https://api.spiget.org/v2/resources/28140&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span><span class="s2">"https://api.spiget.org/v2/resources/28140"</span>
 </code></pre></div>
 <h2 id="modrinth-vs-spiget-for-plugins">Modrinth vs Spiget for Plugins<a class="headerlink" href="#modrinth-vs-spiget-for-plugins" title="Permanent link">&para;</a></h2>
 <p>If a plugin is available on both Modrinth and SpigotMC, consider:</p>
@@ -3114,10 +3114,10 @@
 </tbody>
 </table>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Preferred: Use Modrinth when available</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;luckperms,chunky,spark&quot;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"luckperms,chunky,spark"</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Alternative: Use Spiget for SpigotMC-only plugins</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">&quot;390,2124&quot;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>SPIGET_RESOURCES<span class="w"> </span><span class="s2">"390,2124"</span>
 </code></pre></div>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
@@ -3207,7 +3207,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2596,21 +2596,21 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Length:     14 + password_length
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Request ID: 클라이언트_생성_id
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Type:       3 (SERVERDATA_AUTH)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Payload:    &quot;your_password\0&quot;
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Payload:    "your_password\0"
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Padding:    0x00 0x00
 </code></pre></div></p>
 <p><strong>인증 응답 (성공):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Length:     10
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Request ID: 요청과_동일 (클라이언트 ID와 일치)
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Type:       2 (SERVERDATA_AUTH_RESPONSE)
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Payload:    &quot;\0&quot;
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Payload:    "\0"
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Padding:    0x00 0x00
 </code></pre></div></p>
 <p><strong>인증 응답 (실패):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Length:     10
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Request ID: -1 (실패를 나타냄)
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Type:       2 (SERVERDATA_AUTH_RESPONSE)
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Payload:    &quot;\0&quot;
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Payload:    "\0"
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Padding:    0x00 0x00
 </code></pre></div></p>
 <h3 id="명령-실행">명령 실행<a class="headerlink" href="#명령-실행" title="Permanent link">&para;</a></h3>
@@ -2626,14 +2626,14 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Length:     14 + command_length
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Request ID: 클라이언트_생성_id
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Type:       2 (SERVERDATA_EXECCOMMAND)
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Payload:    &quot;list\0&quot;
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Payload:    "list\0"
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>Padding:    0x00 0x00
 </code></pre></div></p>
 <p><strong>명령 응답:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Length:     10 + response_length
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Request ID: 요청과_동일
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Type:       0 (SERVERDATA_RESPONSE_VALUE)
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>Payload:    &quot;There are 2 of a max 20 players online: Steve, Alex\0&quot;
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>Payload:    "There are 2 of a max 20 players online: Steve, Alex\0"
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Padding:    0x00 0x00
 </code></pre></div></p>
 <h3 id="응답-분할">응답 분할<a class="headerlink" href="#응답-분할" title="Permanent link">&para;</a></h3>
@@ -2765,7 +2765,7 @@
 <h3 id="mcctl-cli-사용">mcctl CLI 사용<a class="headerlink" href="#mcctl-cli-사용" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># 단일 명령 실행</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>list
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">&quot;5분 후 서버가 재시작됩니다!&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">"5분 후 서버가 재시작됩니다!"</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># 대화형 RCON 콘솔</span>
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>mcctl<span class="w"> </span>console<span class="w"> </span>myserver
@@ -2773,8 +2773,8 @@
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># 플레이어 관리 (내부적으로 RCON 사용)</span>
 <a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>mcctl<span class="w"> </span>whitelist<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Steve
 <a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>mcctl<span class="w"> </span>op<span class="w"> </span>myserver<span class="w"> </span>add<span class="w"> </span>Steve
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>myserver<span class="w"> </span>Steve<span class="w"> </span><span class="s2">&quot;장시간 자리 비움&quot;</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>myserver<span class="w"> </span>Griefer<span class="w"> </span><span class="s2">&quot;그리핑&quot;</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>mcctl<span class="w"> </span>kick<span class="w"> </span>myserver<span class="w"> </span>Steve<span class="w"> </span><span class="s2">"장시간 자리 비움"</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>mcctl<span class="w"> </span>ban<span class="w"> </span>myserver<span class="w"> </span>Griefer<span class="w"> </span><span class="s2">"그리핑"</span>
 </code></pre></div>
 <h3 id="docker-직접-사용">Docker 직접 사용<a class="headerlink" href="#docker-직접-사용" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># 단일 명령</span>
@@ -2839,7 +2839,7 @@
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">mc-myserver</span><span class="p">:</span>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="c1"># ports:</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="c1">#   - &quot;25575:25575&quot;  # RCON 포트 노출하지 않음</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="c1">#   - "25575:25575"  # RCON 포트 노출하지 않음</span>
 </code></pre></div>
 <h3 id="보안-대안">보안 대안<a class="headerlink" href="#보안-대안" title="Permanent link">&para;</a></h3>
 <p>인터넷을 통한 원격 관리의 경우:</p>
@@ -2977,7 +2977,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

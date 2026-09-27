@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2982,7 +2982,7 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>--type<span class="w"> </span>FABRIC<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># 직접 URL로 모드 추가</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">&quot;https://example.com/custom-mod.jar,https://github.com/user/repo/releases/download/v1.0/mod.jar&quot;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">"https://example.com/custom-mod.jar,https://github.com/user/repo/releases/download/v1.0/mod.jar"</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># 재시작하여 적용</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
@@ -2999,10 +2999,10 @@
 <h3 id="mods-변수">MODS 변수<a class="headerlink" href="#mods-변수" title="Permanent link">&para;</a></h3>
 <p>Forge/Fabric 서버의 경우 URL에서 모드 다운로드:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># 단일 모드</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODS<span class="w"> </span><span class="s2">&quot;https://example.com/custom-mod.jar&quot;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODS<span class="w"> </span><span class="s2">"https://example.com/custom-mod.jar"</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># 여러 모드 (쉼표로 구분)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODS<span class="w"> </span><span class="s2">&quot;https://example.com/mod1.jar,https://example.com/mod2.jar&quot;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODS<span class="w"> </span><span class="s2">"https://example.com/mod1.jar,https://example.com/mod2.jar"</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># 재시작하여 적용</span>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
@@ -3010,10 +3010,10 @@
 <h3 id="plugins-변수">PLUGINS 변수<a class="headerlink" href="#plugins-변수" title="Permanent link">&para;</a></h3>
 <p>Paper/Spigot 서버의 경우 URL에서 플러그인 다운로드:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># 단일 플러그인</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>PLUGINS<span class="w"> </span><span class="s2">&quot;https://example.com/custom-plugin.jar&quot;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>PLUGINS<span class="w"> </span><span class="s2">"https://example.com/custom-plugin.jar"</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># 여러 플러그인</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>PLUGINS<span class="w"> </span><span class="s2">&quot;https://example.com/plugin1.jar,https://example.com/plugin2.jar&quot;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>PLUGINS<span class="w"> </span><span class="s2">"https://example.com/plugin1.jar,https://example.com/plugin2.jar"</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># 재시작하여 적용</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
@@ -3076,7 +3076,7 @@
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>--type<span class="w"> </span>FABRIC<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># GitHub 릴리스에서 모드 추가</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">&quot;https://github.com/CaffeineMC/sodium-fabric/releases/download/mc1.21-0.6.0/sodium-fabric-0.6.0+mc1.21.jar&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">"https://github.com/CaffeineMC/sodium-fabric/releases/download/mc1.21-0.6.0/sodium-fabric-0.6.0+mc1.21.jar"</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># 재시작하여 적용</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
@@ -3086,10 +3086,10 @@
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>--type<span class="w"> </span>FABRIC<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># 커스텀 모드는 직접 URL</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">&quot;https://example.com/custom-mod.jar&quot;</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODS<span class="w"> </span><span class="s2">"https://example.com/custom-mod.jar"</span>
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># 인기 모드는 Modrinth</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,sodium&quot;</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,lithium,sodium"</span>
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
 <a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># 재시작하여 적용</span>
 <a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
@@ -3168,11 +3168,11 @@
 <h2 id="자동-정리">자동 정리<a class="headerlink" href="#자동-정리" title="Permanent link">&para;</a></h2>
 <h3 id="이전-모드-제거">이전 모드 제거<a class="headerlink" href="#이전-모드-제거" title="Permanent link">&para;</a></h3>
 <p>새 콘텐츠 적용 전 자동 정리 설정:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS<span class="w"> </span><span class="s2">&quot;TRUE&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS<span class="w"> </span><span class="s2">"TRUE"</span>
 </code></pre></div>
 <h3 id="특정-파일-제외">특정 파일 제외<a class="headerlink" href="#특정-파일-제외" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS_INCLUDE<span class="w"> </span><span class="s2">&quot;*.jar&quot;</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS_EXCLUDE<span class="w"> </span><span class="s2">&quot;keep-this-mod.jar&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS_INCLUDE<span class="w"> </span><span class="s2">"*.jar"</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>REMOVE_OLD_MODS_EXCLUDE<span class="w"> </span><span class="s2">"keep-this-mod.jar"</span>
 </code></pre></div>
 <h2 id="문제-해결">문제 해결<a class="headerlink" href="#문제-해결" title="Permanent link">&para;</a></h2>
 <h3 id="일반적인-문제">일반적인 문제<a class="headerlink" href="#일반적인-문제" title="Permanent link">&para;</a></h3>
@@ -3223,13 +3223,13 @@
 </code></pre></div>
 <h3 id="디버그-모드">디버그 모드<a class="headerlink" href="#디버그-모드" title="Permanent link">&para;</a></h3>
 <p>문제 해결을 위해 디버그 출력 활성화:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>DEBUG<span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>DEBUG<span class="w"> </span><span class="s2">"true"</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver
 </code></pre></div>
 <h3 id="url-접근성-확인">URL 접근성 확인<a class="headerlink" href="#url-접근성-확인" title="Permanent link">&para;</a></h3>
 <p>URL 접근성 테스트:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>curl<span class="w"> </span>-I<span class="w"> </span><span class="s2">&quot;https://example.com/mod.jar&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>curl<span class="w"> </span>-I<span class="w"> </span><span class="s2">"https://example.com/mod.jar"</span>
 </code></pre></div>
 <h3 id="공유-디렉토리-확인">공유 디렉토리 확인<a class="headerlink" href="#공유-디렉토리-확인" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># 공유 모드 목록</span>
@@ -3325,7 +3325,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

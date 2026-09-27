@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2630,14 +2630,14 @@
 <p class="admonition-title"><code>MODRINTH_LOADER</code></p>
 <p>Override the loader type sent to Modrinth API. Useful for custom server setups, for example when using <strong>Sinytra Connector</strong> with Forge to load Fabric mods:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">MODRINTH_LOADER</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fabric&quot;</span><span class="w">  </span><span class="c1"># Download Fabric versions for use with Sinytra Connector</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"FORGE"</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">MODRINTH_LOADER</span><span class="p">:</span><span class="w"> </span><span class="s">"fabric"</span><span class="w">  </span><span class="c1"># Download Fabric versions for use with Sinytra Connector</span>
 </code></pre></div></p>
 </div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FABRIC&quot;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">VERSION_FROM_MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">MODRINTH_DOWNLOAD_DEPENDENCIES</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;required&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"FABRIC"</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">VERSION_FROM_MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">MODRINTH_DOWNLOAD_DEPENDENCIES</span><span class="p">:</span><span class="w"> </span><span class="s">"required"</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nt">MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="no">fabric-api</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="no">lithium</span>
@@ -2645,7 +2645,7 @@
 <h3 id="modrinth-modpacks">Modrinth Modpacks<a class="headerlink" href="#modrinth-modpacks" title="Permanent link">&para;</a></h3>
 <p>Install modpacks from Modrinth using <code>MODRINTH_MODPACK</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">MODRINTH_MODPACK</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;adrenaline&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">MODRINTH_MODPACK</span><span class="p">:</span><span class="w"> </span><span class="s">"adrenaline"</span>
 </code></pre></div>
 <h4 id="modpack-options">Modpack Options<a class="headerlink" href="#modpack-options" title="Permanent link">&para;</a></h4>
 <table>
@@ -2689,11 +2689,11 @@
 <h3 id="required-setup">Required Setup<a class="headerlink" href="#required-setup" title="Permanent link">&para;</a></h3>
 <p>CurseForge API key is required:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${CF_API_KEY}&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">"${CF_API_KEY}"</span>
 </code></pre></div>
 <h3 id="curseforge_files">CURSEFORGE_FILES<a class="headerlink" href="#curseforge_files" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${CF_API_KEY}&quot;</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">"${CF_API_KEY}"</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">CURSEFORGE_FILES</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="no">jei</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="no">journeymap</span>
@@ -2737,7 +2737,7 @@
 <h2 id="download-from-spiget-spigotmc">Download from Spiget (SpigotMC)<a class="headerlink" href="#download-from-spiget-spigotmc" title="Permanent link">&para;</a></h2>
 <p>Download Paper/Spigot plugins:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">SPIGET_RESOURCES</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;9089,34315&quot;</span><span class="w">  </span><span class="c1"># Resource IDs</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">SPIGET_RESOURCES</span><span class="p">:</span><span class="w"> </span><span class="s">"9089,34315"</span><span class="w">  </span><span class="c1"># Resource IDs</span>
 </code></pre></div>
 <p>Find the resource ID from the SpigotMC page URL:
 <code>https://www.spigotmc.org/resources/example-plugin.12345/</code> → ID: <code>12345</code></p>
@@ -2772,7 +2772,7 @@
 <h2 id="packwiz-modpacks">Packwiz Modpacks<a class="headerlink" href="#packwiz-modpacks" title="Permanent link">&para;</a></h2>
 <p>Modpacks managed with Packwiz:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">PACKWIZ_URL</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/pack.toml&quot;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">PACKWIZ_URL</span><span class="p">:</span><span class="w"> </span><span class="s">"https://example.com/pack.toml"</span>
 </code></pre></div>
 <hr />
 <h2 id="modplugin-list-files">Mod/Plugin List Files<a class="headerlink" href="#modplugin-list-files" title="Permanent link">&para;</a></h2>
@@ -2788,14 +2788,14 @@
 </code></pre></div>
 <h3 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">MODS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/mods.txt&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">MODS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">"/data/mods.txt"</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="c1"># or</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">PLUGINS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/plugins.txt&quot;</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">PLUGINS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">"https://example.com/plugins.txt"</span>
 </code></pre></div>
 <hr />
 <h2 id="zip-file-modpacks">ZIP File Modpacks<a class="headerlink" href="#zip-file-modpacks" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">MODPACK</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/modpack.zip&quot;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">MODPACK</span><span class="p">:</span><span class="w"> </span><span class="s">"https://example.com/modpack.zip"</span>
 </code></pre></div>
 <h3 id="generic-pack">Generic Pack<a class="headerlink" href="#generic-pack" title="Permanent link">&para;</a></h3>
 <p>Support for multiple packs:</p>
@@ -2808,13 +2808,13 @@
 <h2 id="auto-cleanup">Auto Cleanup<a class="headerlink" href="#auto-cleanup" title="Permanent link">&para;</a></h2>
 <h3 id="remove-old-mods">Remove Old Mods<a class="headerlink" href="#remove-old-mods" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">REMOVE_OLD_MODS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">REMOVE_OLD_MODS</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
 </code></pre></div>
 <h3 id="exclude-specific-mods">Exclude Specific Mods<a class="headerlink" href="#exclude-specific-mods" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">REMOVE_OLD_MODS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span><span class="nt">REMOVE_OLD_MODS_INCLUDE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;*.jar&quot;</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span><span class="nt">REMOVE_OLD_MODS_EXCLUDE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;keep-this-mod.jar&quot;</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">REMOVE_OLD_MODS</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span><span class="nt">REMOVE_OLD_MODS_INCLUDE</span><span class="p">:</span><span class="w"> </span><span class="s">"*.jar"</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span><span class="nt">REMOVE_OLD_MODS_EXCLUDE</span><span class="p">:</span><span class="w"> </span><span class="s">"keep-this-mod.jar"</span>
 </code></pre></div>
 <hr />
 <h2 id="example-configurations">Example Configurations<a class="headerlink" href="#example-configurations" title="Permanent link">&para;</a></h2>
@@ -2823,9 +2823,9 @@
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java21</span>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FABRIC&quot;</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"FABRIC"</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"1.20.4"</span>
 <a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">      </span><span class="nt">MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">        </span><span class="no">fabric-api</span>
 <a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">        </span><span class="no">lithium</span>
@@ -2839,10 +2839,10 @@
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server</span>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PAPER&quot;</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">      </span><span class="nt">SPIGET_RESOURCES</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;9089&quot;</span><span class="w">  </span><span class="c1"># EssentialsX</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"PAPER"</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"1.20.4"</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">      </span><span class="nt">SPIGET_RESOURCES</span><span class="p">:</span><span class="w"> </span><span class="s">"9089"</span><span class="w">  </span><span class="c1"># EssentialsX</span>
 <a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">      </span><span class="nt">MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">        </span><span class="no">luckperms</span>
 <a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">        </span><span class="no">vault</span>
@@ -2854,10 +2854,10 @@
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="w">      </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${CF_API_KEY}&quot;</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"FORGE"</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"1.20.1"</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="w">      </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">"${CF_API_KEY}"</span>
 <a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">      </span><span class="nt">CURSEFORGE_FILES</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="w">        </span><span class="no">jei</span>
 <a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">        </span><span class="no">journeymap</span>
@@ -2867,10 +2867,10 @@
 </code></pre></div>
 <h3 id="mixed-sources">Mixed Sources<a class="headerlink" href="#mixed-sources" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="nt">MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fabric-api,lithium&quot;</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">  </span><span class="nt">MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="s">"fabric-api,lithium"</span>
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">  </span><span class="nt">MODS</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span><span class="no">https://example.com/custom-mod.jar</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">  </span><span class="nt">MODS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/extra-mods.txt&quot;</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">  </span><span class="nt">MODS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">"/data/extra-mods.txt"</span>
 </code></pre></div>
 
 
@@ -2950,7 +2950,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

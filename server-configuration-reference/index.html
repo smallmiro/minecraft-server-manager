@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -3569,7 +3569,7 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Non-interactive with all options</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Forge modded server, don&#39;t auto-start</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Forge modded server, don't auto-start</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>-t<span class="w"> </span>FORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4<span class="w"> </span>--no-start
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># With specific seed</span>
@@ -3608,14 +3608,14 @@
 <p><strong>Note</strong>: Minecraft version is skipped for modpack servers as it is determined by the modpack.</p>
 </blockquote>
 <h3 id="via-rest-api-post-apiservers">Via REST API: <code>POST /api/servers</code><a class="headerlink" href="#via-rest-api-post-apiservers" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">    &quot;name&quot;: &quot;survival&quot;,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">    &quot;type&quot;: &quot;PAPER&quot;,</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">    &quot;version&quot;: &quot;1.21.1&quot;,</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">    &quot;memory&quot;: &quot;4G&quot;</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">  }&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">    "name": "survival",</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">    "type": "PAPER",</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">    "version": "1.21.1",</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">    "memory": "4G"</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">  }'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span>http://localhost:5001/api/servers
 </code></pre></div>
 <p><strong>Request body fields:</strong></p>
@@ -3704,15 +3704,15 @@
 </tbody>
 </table>
 <p><strong>Example: MODRINTH modpack server via REST API (v1.14.0+):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">    &quot;name&quot;: &quot;cobblemon&quot;,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">    &quot;type&quot;: &quot;MODRINTH&quot;,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">    &quot;memory&quot;: &quot;6G&quot;,</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s1">    &quot;modpack&quot;: &quot;cobblemon-modpack&quot;,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s1">    &quot;modLoader&quot;: &quot;fabric&quot;</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s1">  }&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="s1">    "name": "cobblemon",</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s1">    "type": "MODRINTH",</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s1">    "memory": "6G",</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s1">    "modpack": "cobblemon-modpack",</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s1">    "modLoader": "fabric"</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s1">  }'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>http://localhost:5001/api/servers
 </code></pre></div>
 <h3 id="what-happens-during-creation">What Happens During Creation<a class="headerlink" href="#what-happens-during-creation" title="Permanent link">&para;</a></h3>
@@ -5728,14 +5728,14 @@
 <a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a><span class="w">  </span><span class="nt">mc-&lt;name&gt;</span><span class="p">:</span>
 <a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java25</span><span class="w">  </span><span class="c1"># Use java21 for MC 1.21.x, java25 or latest for MC 26+</span>
 <a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mc-&lt;name&gt;</span>
-<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;no&quot;</span>
+<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="s">"no"</span>
 <a id="__codelineno-50-6" name="__codelineno-50-6" href="#__codelineno-50-6"></a><span class="w">    </span><span class="nt">tty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <a id="__codelineno-50-7" name="__codelineno-50-7" href="#__codelineno-50-7"></a><span class="w">    </span><span class="nt">stdin_open</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <a id="__codelineno-50-8" name="__codelineno-50-8" href="#__codelineno-50-8"></a><span class="w">    </span><span class="nt">env_file</span><span class="p">:</span>
 <a id="__codelineno-50-9" name="__codelineno-50-9" href="#__codelineno-50-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">../../.env</span><span class="w">          </span><span class="c1"># Platform-wide variables (RCON_PASSWORD, HOST_IP)</span>
 <a id="__codelineno-50-10" name="__codelineno-50-10" href="#__codelineno-50-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">config.env</span><span class="w">           </span><span class="c1"># Server-specific variables</span>
 <a id="__codelineno-50-11" name="__codelineno-50-11" href="#__codelineno-50-11"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-50-12" name="__codelineno-50-12" href="#__codelineno-50-12"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-50-12" name="__codelineno-50-12" href="#__codelineno-50-12"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
 <a id="__codelineno-50-13" name="__codelineno-50-13" href="#__codelineno-50-13"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
 <a id="__codelineno-50-14" name="__codelineno-50-14" href="#__codelineno-50-14"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./data:/data</span>
 <a id="__codelineno-50-15" name="__codelineno-50-15" href="#__codelineno-50-15"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./logs:/data/logs</span>
@@ -5744,10 +5744,10 @@
 <a id="__codelineno-50-18" name="__codelineno-50-18" href="#__codelineno-50-18"></a><span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
 <a id="__codelineno-50-19" name="__codelineno-50-19" href="#__codelineno-50-19"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minecraft-net</span>
 <a id="__codelineno-50-20" name="__codelineno-50-20" href="#__codelineno-50-20"></a><span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
-<a id="__codelineno-50-21" name="__codelineno-50-21" href="#__codelineno-50-21"></a><span class="w">      </span><span class="nt">mc-router.host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;name&gt;.local,&lt;name&gt;.&lt;HOST_IP&gt;.nip.io&quot;</span>
-<a id="__codelineno-50-22" name="__codelineno-50-22" href="#__codelineno-50-22"></a><span class="w">      </span><span class="nt">mc-router.auto-scale-up</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-50-23" name="__codelineno-50-23" href="#__codelineno-50-23"></a><span class="w">      </span><span class="nt">mc-router.auto-scale-down</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-50-24" name="__codelineno-50-24" href="#__codelineno-50-24"></a><span class="w">      </span><span class="nt">mc-router.auto-scale-asleep-motd</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Server</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">sleeping.</span><span class="nv"> </span><span class="s">Connect</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">wake</span><span class="nv"> </span><span class="s">up!&quot;</span>
+<a id="__codelineno-50-21" name="__codelineno-50-21" href="#__codelineno-50-21"></a><span class="w">      </span><span class="nt">mc-router.host</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;name&gt;.local,&lt;name&gt;.&lt;HOST_IP&gt;.nip.io"</span>
+<a id="__codelineno-50-22" name="__codelineno-50-22" href="#__codelineno-50-22"></a><span class="w">      </span><span class="nt">mc-router.auto-scale-up</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-50-23" name="__codelineno-50-23" href="#__codelineno-50-23"></a><span class="w">      </span><span class="nt">mc-router.auto-scale-down</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-50-24" name="__codelineno-50-24" href="#__codelineno-50-24"></a><span class="w">      </span><span class="nt">mc-router.auto-scale-asleep-motd</span><span class="p">:</span><span class="w"> </span><span class="s">"Server</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">sleeping.</span><span class="nv"> </span><span class="s">Connect</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">wake</span><span class="nv"> </span><span class="s">up!"</span>
 </code></pre></div>
 <h3 id="template-main-docker-composeyml">Template: Main docker-compose.yml<a class="headerlink" href="#template-main-docker-composeyml" title="Permanent link">&para;</a></h3>
 <p>The platform-level <code>docker-compose.yml</code> defines mc-router and includes all server configurations:</p>
@@ -5762,16 +5762,16 @@
 <a id="__codelineno-51-9" name="__codelineno-51-9" href="#__codelineno-51-9"></a><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mc-router</span>
 <a id="__codelineno-51-10" name="__codelineno-51-10" href="#__codelineno-51-10"></a><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
 <a id="__codelineno-51-11" name="__codelineno-51-11" href="#__codelineno-51-11"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-51-12" name="__codelineno-51-12" href="#__codelineno-51-12"></a><span class="w">      </span><span class="nt">IN_DOCKER</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-51-13" name="__codelineno-51-13" href="#__codelineno-51-13"></a><span class="w">      </span><span class="nt">AUTO_SCALE_UP</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-51-14" name="__codelineno-51-14" href="#__codelineno-51-14"></a><span class="w">      </span><span class="nt">AUTO_SCALE_DOWN</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-51-15" name="__codelineno-51-15" href="#__codelineno-51-15"></a><span class="w">      </span><span class="nt">AUTO_SCALE_DOWN_AFTER</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1m&quot;</span>
-<a id="__codelineno-51-16" name="__codelineno-51-16" href="#__codelineno-51-16"></a><span class="w">      </span><span class="c1"># Go time.Duration format required (e.g., &quot;120s&quot;, &quot;2m&quot;). Bare integers fail to parse.</span>
-<a id="__codelineno-51-17" name="__codelineno-51-17" href="#__codelineno-51-17"></a><span class="w">      </span><span class="nt">DOCKER_TIMEOUT</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;120s&quot;</span>
-<a id="__codelineno-51-18" name="__codelineno-51-18" href="#__codelineno-51-18"></a><span class="w">      </span><span class="nt">API_BINDING</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;:8080&quot;</span>
+<a id="__codelineno-51-12" name="__codelineno-51-12" href="#__codelineno-51-12"></a><span class="w">      </span><span class="nt">IN_DOCKER</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-51-13" name="__codelineno-51-13" href="#__codelineno-51-13"></a><span class="w">      </span><span class="nt">AUTO_SCALE_UP</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-51-14" name="__codelineno-51-14" href="#__codelineno-51-14"></a><span class="w">      </span><span class="nt">AUTO_SCALE_DOWN</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-51-15" name="__codelineno-51-15" href="#__codelineno-51-15"></a><span class="w">      </span><span class="nt">AUTO_SCALE_DOWN_AFTER</span><span class="p">:</span><span class="w"> </span><span class="s">"1m"</span>
+<a id="__codelineno-51-16" name="__codelineno-51-16" href="#__codelineno-51-16"></a><span class="w">      </span><span class="c1"># Go time.Duration format required (e.g., "120s", "2m"). Bare integers fail to parse.</span>
+<a id="__codelineno-51-17" name="__codelineno-51-17" href="#__codelineno-51-17"></a><span class="w">      </span><span class="nt">DOCKER_TIMEOUT</span><span class="p">:</span><span class="w"> </span><span class="s">"120s"</span>
+<a id="__codelineno-51-18" name="__codelineno-51-18" href="#__codelineno-51-18"></a><span class="w">      </span><span class="nt">API_BINDING</span><span class="p">:</span><span class="w"> </span><span class="s">":8080"</span>
 <a id="__codelineno-51-19" name="__codelineno-51-19" href="#__codelineno-51-19"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-51-20" name="__codelineno-51-20" href="#__codelineno-51-20"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
-<a id="__codelineno-51-21" name="__codelineno-51-21" href="#__codelineno-51-21"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;127.0.0.1:25580:8080&quot;</span>
+<a id="__codelineno-51-20" name="__codelineno-51-20" href="#__codelineno-51-20"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"25565:25565"</span>
+<a id="__codelineno-51-21" name="__codelineno-51-21" href="#__codelineno-51-21"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"127.0.0.1:25580:8080"</span>
 <a id="__codelineno-51-22" name="__codelineno-51-22" href="#__codelineno-51-22"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
 <a id="__codelineno-51-23" name="__codelineno-51-23" href="#__codelineno-51-23"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run/docker.sock:/var/run/docker.sock:ro</span>
 <a id="__codelineno-51-24" name="__codelineno-51-24" href="#__codelineno-51-24"></a><span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
@@ -5791,7 +5791,7 @@
 <a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MOTD
 <a id="__codelineno-52-6" name="__codelineno-52-6" href="#__codelineno-52-6"></a>
 <a id="__codelineno-52-7" name="__codelineno-52-7" href="#__codelineno-52-7"></a><span class="c1"># Set a value</span>
-<a id="__codelineno-52-8" name="__codelineno-52-8" href="#__codelineno-52-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Welcome to my server!&quot;</span>
+<a id="__codelineno-52-8" name="__codelineno-52-8" href="#__codelineno-52-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">"Welcome to my server!"</span>
 <a id="__codelineno-52-9" name="__codelineno-52-9" href="#__codelineno-52-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MEMORY<span class="w"> </span>8G
 <a id="__codelineno-52-10" name="__codelineno-52-10" href="#__codelineno-52-10"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>VIEW_DISTANCE<span class="w"> </span><span class="m">12</span>
 <a id="__codelineno-52-11" name="__codelineno-52-11" href="#__codelineno-52-11"></a>
@@ -6387,7 +6387,7 @@
 <a id="__codelineno-80-26" name="__codelineno-80-26" href="#__codelineno-80-26"></a>REMOVE_OLD_MODS=TRUE
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>fabric-perf<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-81-2" name="__codelineno-81-2" href="#__codelineno-81-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric-perf<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,starlight,krypton,ferritecore,c2me-fabric&quot;</span>
+<a id="__codelineno-81-2" name="__codelineno-81-2" href="#__codelineno-81-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric-perf<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,lithium,starlight,krypton,ferritecore,c2me-fabric"</span>
 <a id="__codelineno-81-3" name="__codelineno-81-3" href="#__codelineno-81-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>fabric-perf<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span>required
 </code></pre></div>
 <hr />
@@ -6602,7 +6602,7 @@
 - Server crashes immediately after starting</p>
 <p><strong>Diagnosis:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-92-1" name="__codelineno-92-1" href="#__codelineno-92-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;
-<a id="__codelineno-92-2" name="__codelineno-92-2" href="#__codelineno-92-2"></a><span class="c1"># Look for &quot;class file version&quot; or &quot;Unsupported&quot; errors</span>
+<a id="__codelineno-92-2" name="__codelineno-92-2" href="#__codelineno-92-2"></a><span class="c1"># Look for "class file version" or "Unsupported" errors</span>
 </code></pre></div></p>
 <p><strong>Fix:</strong>
 1. Check the <a href="#5-java-version-compatibility-matrix">Java Version Matrix</a>
@@ -6615,7 +6615,7 @@
 - "Not enough memory" at startup</p>
 <p><strong>Diagnosis:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-93-1" name="__codelineno-93-1" href="#__codelineno-93-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;
-<a id="__codelineno-93-2" name="__codelineno-93-2" href="#__codelineno-93-2"></a><span class="c1"># Look for &quot;OutOfMemoryError&quot; or GC-related messages</span>
+<a id="__codelineno-93-2" name="__codelineno-93-2" href="#__codelineno-93-2"></a><span class="c1"># Look for "OutOfMemoryError" or GC-related messages</span>
 <a id="__codelineno-93-3" name="__codelineno-93-3" href="#__codelineno-93-3"></a>
 <a id="__codelineno-93-4" name="__codelineno-93-4" href="#__codelineno-93-4"></a><span class="c1"># Enable memory debugging</span>
 <a id="__codelineno-93-5" name="__codelineno-93-5" href="#__codelineno-93-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>DEBUG_MEMORY<span class="w"> </span><span class="nb">true</span>
@@ -6987,7 +6987,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

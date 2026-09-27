@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -3096,8 +3096,8 @@
 </code></pre></div>
 <p>You'll be prompted to enter a commit message.</p>
 <h4 id="cli-mode">CLI Mode<a class="headerlink" href="#cli-mode" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Before server upgrade&quot;</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Weekly backup&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Before server upgrade"</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Weekly backup"</span>
 </code></pre></div>
 <h3 id="view-backup-history">View Backup History<a class="headerlink" href="#view-backup-history" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span>
@@ -3123,7 +3123,7 @@
 <div class="admonition danger">
 <p class="admonition-title">Data Overwrite Warning</p>
 <p>Restore will overwrite all current world data. Consider backing up first:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Backup before restore&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Backup before restore"</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span>abc1234
 </code></pre></div></p>
 </div>
@@ -3141,10 +3141,10 @@
 </code></pre></div>
 <p>Add:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a># Daily backup at 4 AM
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>0 4 * * * /usr/local/bin/mcctl backup push -m &quot;Scheduled daily backup&quot;
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>0 4 * * * /usr/local/bin/mcctl backup push -m "Scheduled daily backup"
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a># Weekly backup on Sunday at 3 AM
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>0 3 * * 0 /usr/local/bin/mcctl backup push -m &quot;Scheduled weekly backup&quot;
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>0 3 * * 0 /usr/local/bin/mcctl backup push -m "Scheduled weekly backup"
 </code></pre></div>
 <hr />
 <h2 id="what-gets-backed-up">What Gets Backed Up<a class="headerlink" href="#what-gets-backed-up" title="Permanent link">&para;</a></h2>
@@ -3261,7 +3261,7 @@
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
 <a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Option 2: Pull and merge first</span>
 <a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>git<span class="w"> </span>-C<span class="w"> </span>~/minecraft-servers/worlds<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>main
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Merged backup&quot;</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Merged backup"</span>
 </code></pre></div>
 <h3 id="large-file-error">Large File Error<a class="headerlink" href="#large-file-error" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>Error: File exceeds 100MB limit
@@ -3269,10 +3269,10 @@
 <p>Use Git LFS for large files:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers/worlds
 <a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>git<span class="w"> </span>lfs<span class="w"> </span>install
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>git<span class="w"> </span>lfs<span class="w"> </span>track<span class="w"> </span><span class="s2">&quot;*.dat&quot;</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>git<span class="w"> </span>lfs<span class="w"> </span>track<span class="w"> </span><span class="s2">&quot;*.mca&quot;</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>git<span class="w"> </span>lfs<span class="w"> </span>track<span class="w"> </span><span class="s2">"*.dat"</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>git<span class="w"> </span>lfs<span class="w"> </span>track<span class="w"> </span><span class="s2">"*.mca"</span>
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>git<span class="w"> </span>add<span class="w"> </span>.gitattributes
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Enable Git LFS&quot;</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Enable Git LFS"</span>
 </code></pre></div>
 <hr />
 <h2 id="alternative-backup-strategies">Alternative Backup Strategies<a class="headerlink" href="#alternative-backup-strategies" title="Permanent link">&para;</a></h2>
@@ -3390,7 +3390,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

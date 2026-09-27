@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1902,6 +1902,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#players-탭" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Players 탭
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Players 탭">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#플레이어-액션" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        플레이어 액션
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#플레이어-상세-모달" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        플레이어 상세 모달
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mods-탭" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3333,6 +3372,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#players-탭" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Players 탭
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Players 탭">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#플레이어-액션" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        플레이어 액션
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#플레이어-상세-모달" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        플레이어 상세 모달
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mods-탭" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4173,7 +4251,7 @@
 <li><strong>World Size</strong> -- 현재 월드가 사용하는 디스크 공간</li>
 </ul>
 <h4 id="탐색-탭">탐색 탭<a class="headerlink" href="#탐색-탭" title="Permanent link">&para;</a></h4>
-<p>서버 상세 페이지는 7개의 탭으로 구성됩니다:</p>
+<p>서버 상세 페이지는 다음 탭으로 구성됩니다(주요 탭):</p>
 <table>
 <thead>
 <tr>
@@ -4185,6 +4263,10 @@
 <tr>
 <td><strong>Overview</strong></td>
 <td>실시간 로그 출력과 RCON 명령 입력이 가능한 서버 콘솔</td>
+</tr>
+<tr>
+<td><strong>Players</strong></td>
+<td>관리 액션과 플레이어별 상세 보기를 제공하는 온라인 + 오프라인 플레이어 목록 (v2.27.0+)</td>
 </tr>
 <tr>
 <td><strong>Activity</strong></td>
@@ -4268,6 +4350,143 @@
 </table>
 <h4 id="플레이어">플레이어<a class="headerlink" href="#플레이어" title="Permanent link">&para;</a></h4>
 <p>하단 오른쪽의 <strong>Players</strong> 패널은 현재 서버에 접속 중인 플레이어 목록을 보여줍니다. 접속 중인 플레이어가 없을 때는 "Player information unavailable" 또는 빈 상태가 표시됩니다. 플레이어가 접속하면 Minecraft 사용자명과 아바타가 표시되어 빠르게 확인할 수 있습니다.</p>
+<h3 id="players-탭">Players 탭<a class="headerlink" href="#players-탭" title="Permanent link">&para;</a></h3>
+<p><em>v2.27.0부터 사용할 수 있습니다.</em></p>
+<p><strong>Players</strong> 탭은 현재 접속 중인 플레이어뿐 아니라 서버가 알고 있는 모든 플레이어를 보여줍니다. 두 가지 소스를 합쳐서 표시합니다:</p>
+<ul>
+<li><strong>온라인 플레이어</strong> -- 서버 실행 중 RCON으로 실시간 조회</li>
+<li><strong>알려진 플레이어</strong> -- 서버 파일(<code>usercache.json</code>, <code>playerdata/</code>, <code>ops.json</code>, <code>whitelist.json</code>, <code>banned-players.json</code>)에서 읽음</li>
+</ul>
+<p>파일 기반 목록은 RCON이 필요 없으므로 서버가 <strong>중지된 상태</strong>에서도 목록이 표시됩니다(이때 모든 플레이어가 Offline으로 표시됩니다). 목록은 SSE로 실시간 갱신되며, 헤더의 <code>online / max</code> 카운터 옆 점은 실시간 연결 여부를 나타냅니다.</p>
+<p>각 행에는 플레이어 아바타(<code>mc-heads.net</code>), 이름, 배지가 표시됩니다:</p>
+<table>
+<thead>
+<tr>
+<th>배지</th>
+<th>의미</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Online</strong> / <strong>Offline</strong></td>
+<td>현재 접속 상태</td>
+</tr>
+<tr>
+<td><strong>OP</strong></td>
+<td>서버 운영자(Operator)</td>
+</tr>
+<tr>
+<td><strong>Banned</strong></td>
+<td>차단 목록에 등록됨</td>
+</tr>
+<tr>
+<td><strong>Whitelisted</strong></td>
+<td>화이트리스트에 등록됨</td>
+</tr>
+</tbody>
+</table>
+<p>오프라인 플레이어에는 서버가 플레이어 데이터를 마지막으로 저장한 시각이 <strong>Last saved</strong>로 함께 표시됩니다.</p>
+<h4 id="플레이어-액션">플레이어 액션<a class="headerlink" href="#플레이어-액션" title="Permanent link">&para;</a></h4>
+<p>행의 <strong>⋮</strong> 메뉴를 클릭하여 플레이어를 관리합니다. 플레이어의 현재 상태에 해당하는 액션만 표시됩니다:</p>
+<table>
+<thead>
+<tr>
+<th>액션</th>
+<th>표시 조건</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Details</strong></td>
+<td>UUID가 있는 플레이어</td>
+<td>플레이어 상세 모달을 엽니다 (아래 참조)</td>
+</tr>
+<tr>
+<td><strong>Kick</strong></td>
+<td>온라인 플레이어</td>
+<td>사유(선택) 입력이 가능한 확인 대화상자</td>
+</tr>
+<tr>
+<td><strong>Ban</strong> / <strong>Unban</strong></td>
+<td>미차단 / 차단됨</td>
+<td>Ban 시 사유 입력 (기본값: <code>Banned by administrator</code>)</td>
+</tr>
+<tr>
+<td><strong>Make OP</strong> / <strong>Remove OP</strong></td>
+<td>OP 아님 / OP</td>
+<td>Make OP는 권한 레벨 4를 부여합니다</td>
+</tr>
+<tr>
+<td><strong>Add to Whitelist</strong> / <strong>Remove from Whitelist</strong></td>
+<td>미등록 / 등록됨</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Players 탭과 플레이어 관리 페이지의 차이</p>
+<p>Players 탭은 서버 상세 페이지에서 해당 서버 하나의 플레이어를 관리합니다. 사이드바의 <a href="#플레이어-관리">플레이어 관리</a> 페이지는 서버 선택기와 함께 동일한 화이트리스트/운영자/차단 목록을 제공합니다.</p>
+</div>
+<h4 id="플레이어-상세-모달">플레이어 상세 모달<a class="headerlink" href="#플레이어-상세-모달" title="Permanent link">&para;</a></h4>
+<p>액션 메뉴에서 <strong>Details</strong>를 선택하면 플레이어 상세 모달이 열립니다. 헤더에는 아바타, 이름, UUID와 목록과 동일한 배지가 표시되며, 본문은 세 개의 섹션으로 구성됩니다.</p>
+<p><strong>Statistics</strong> -- 서버가 마지막으로 저장한 값입니다(월드 폴더의 <code>stats/&lt;uuid&gt;.json</code>, <code>advancements/&lt;uuid&gt;.json</code> 기반):</p>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Play Time</td>
+<td>누적 게임 플레이 시간 (<code>Xh Ym</code>)</td>
+</tr>
+<tr>
+<td>Deaths</td>
+<td>사망 횟수</td>
+</tr>
+<tr>
+<td>Mob Kills / Player Kills</td>
+<td>몹 / 플레이어 처치 수</td>
+</tr>
+<tr>
+<td>Distance Traveled</td>
+<td>총 이동 거리 (m / km)</td>
+</tr>
+<tr>
+<td>Blocks Mined</td>
+<td>채굴한 블록 수</td>
+</tr>
+<tr>
+<td>Items Crafted</td>
+<td>제작한 아이템 수</td>
+</tr>
+<tr>
+<td>Advancements</td>
+<td>달성한 발전과제 수</td>
+</tr>
+</tbody>
+</table>
+<p>통계 파일이 아직 없으면 "No statistics recorded yet."이 표시됩니다.</p>
+<p><strong>Position &amp; Status</strong> -- 플레이어의 <code>playerdata/&lt;uuid&gt;.dat</code>에서 파싱한 정보입니다:</p>
+<ul>
+<li>좌표(X / Y / Z)와 차원(dimension)</li>
+<li>체력과 허기(각 20 기준), XP 레벨, 게임 모드</li>
+<li>인벤토리 요약: 사용 중인 슬롯 수와 최대 10개의 아이템 스택</li>
+</ul>
+<p>플레이어가 온라인이고 서버가 실행 중이면 좌표를 RCON으로 실시간 조회하며 <strong>Live position</strong>과 <strong>Live</strong> 배지가 표시됩니다. 플레이어가 온라인인 동안 모달은 5초마다 갱신됩니다. 오프라인 플레이어는 <strong>Last saved position</strong>(마지막 저장 위치)이 표시됩니다.</p>
+<p><strong>Session History</strong> -- 서버 로그에서 수집한 접속/퇴장 이력입니다:</p>
+<ul>
+<li><strong>Visits</strong>(방문 횟수), <strong>Total Playtime</strong>(누적 플레이 시간), <strong>Last Seen</strong>(마지막 접속)</li>
+<li>최근 세션 목록(최신순, 최대 20개): 접속 → 퇴장 시각과 머문 시간. 아직 접속 중인 세션은 <strong>Online now</strong>로 표시됩니다</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">세션 이력은 수집기 도입 시점부터 기록됩니다</p>
+<p>세션 이력은 월드 파일에서 읽는 정보가 아닙니다. mcctl-api가 30초마다 실행 중인 각 서버의 Docker 로그에서 <code>&lt;player&gt; joined/left the game</code> 메시지를 파싱하여 <code>data/players.db</code>(SQLite, 플랫폼 루트 하위)에 저장합니다. 따라서 이력은 <strong>mcctl-api v2.27.0 이상이 수집기를 처음 실행한 시점부터</strong>만 존재합니다. 서버별 최초 수집 시에는 해당 컨테이너 로그의 <strong>최근 24시간분까지만</strong> 소급하며, 그 이전 세션은 복구되지 않습니다. 이후에는 서버별 커서(cursor)부터 이어서 수집하므로, 공백 기간(예: mcctl-api가 중지되어 있던 동안)은 해당 로그가 컨테이너 로그에 아직 남아 있을 때만 채워집니다. 컨테이너를 재생성하면 이전 로그는 사라집니다. 서버가 중지된 것이 감지되면 열려 있는 세션은 그 시각으로 종료 처리됩니다.</p>
+<p>수집된 데이터가 없으면 "No sessions recorded yet (history is collected from server logs)."가 표시됩니다.</p>
+</div>
 <h3 id="mods-탭">Mods 탭<a class="headerlink" href="#mods-탭" title="Permanent link">&para;</a></h3>
 <p>Mods 탭은 모드 서버 플랫폼(FORGE, NEOFORGE, FABRIC)을 실행하는 서버를 위한 완전한 모드 관리 인터페이스를 제공합니다. 수동 파일 관리 없이 <a href="https://modrinth.com/">Modrinth</a> 저장소에서 직접 모드를 검색, 설치, 제거할 수 있습니다.</p>
 <p><img alt="서버 Mods" src="../../../images/server-mods.png" /></p>
@@ -4914,7 +5133,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

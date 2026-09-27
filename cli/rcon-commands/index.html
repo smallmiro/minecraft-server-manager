@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2550,8 +2550,8 @@
 <h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
 <h3 id="interactive-mode-rcon">Interactive Mode (rcon)<a class="headerlink" href="#interactive-mode-rcon" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>$<span class="w"> </span>mcctl<span class="w"> </span>rcon<span class="w"> </span>survival
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Connecting<span class="w"> </span>to<span class="w"> </span>RCON<span class="w"> </span>console<span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="s1">&#39;survival&#39;</span>...
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Type<span class="w"> </span><span class="s2">&quot;help&quot;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>commands,<span class="w"> </span>Ctrl+C<span class="w"> </span>or<span class="w"> </span><span class="s2">&quot;exit&quot;</span><span class="w"> </span>to<span class="w"> </span>quit
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Connecting<span class="w"> </span>to<span class="w"> </span>RCON<span class="w"> </span>console<span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="s1">'survival'</span>...
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Type<span class="w"> </span><span class="s2">"help"</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>commands,<span class="w"> </span>Ctrl+C<span class="w"> </span>or<span class="w"> </span><span class="s2">"exit"</span><span class="w"> </span>to<span class="w"> </span>quit
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>&gt;<span class="w"> </span>list
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>There<span class="w"> </span>are<span class="w"> </span><span class="m">2</span><span class="w"> </span>of<span class="w"> </span><span class="m">20</span><span class="w"> </span>players<span class="w"> </span>online:<span class="w"> </span>Steve,<span class="w"> </span>Alex
@@ -2568,12 +2568,12 @@
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>There<span class="w"> </span>are<span class="w"> </span><span class="m">2</span><span class="w"> </span>of<span class="w"> </span><span class="m">20</span><span class="w"> </span>players<span class="w"> </span>online:<span class="w"> </span>Steve,<span class="w"> </span>Alex
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Scripting example</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>$<span class="w"> </span>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">&quot;Backup starting...&quot;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>$<span class="w"> </span>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">"Backup starting..."</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="o">[</span>Server:<span class="w"> </span>Backup<span class="w"> </span>starting...<span class="o">]</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># Use in scripts</span>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="nv">PLAYERS</span><span class="o">=</span><span class="k">$(</span>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>list<span class="k">)</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">if</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$PLAYERS</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;0 of&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="k">if</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="nv">$PLAYERS</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">"0 of"</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">  </span>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="k">fi</span>
 </code></pre></div>
@@ -3102,7 +3102,7 @@
 </tbody>
 </table>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>&gt;<span class="w"> </span>gamemode<span class="w"> </span>creative<span class="w"> </span>Steve
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Set<span class="w"> </span>Steve<span class="err">&#39;</span>s<span class="w"> </span>game<span class="w"> </span>mode<span class="w"> </span>to<span class="w"> </span>Creative<span class="w"> </span>Mode
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Set<span class="w"> </span>Steve<span class="err">'</span>s<span class="w"> </span>game<span class="w"> </span>mode<span class="w"> </span>to<span class="w"> </span>Creative<span class="w"> </span>Mode
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>&gt;<span class="w"> </span>defaultgamemode<span class="w"> </span>survival
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>The<span class="w"> </span>default<span class="w"> </span>game<span class="w"> </span>mode<span class="w"> </span>is<span class="w"> </span>now<span class="w"> </span>Survival<span class="w"> </span>Mode
@@ -3341,7 +3341,7 @@
 </table>
 <h3 id="server-not-running-error">Server Not Running Error<a class="headerlink" href="#server-not-running-error" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>$<span class="w"> </span>mcctl<span class="w"> </span>rcon<span class="w"> </span>myserver
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Server<span class="w"> </span><span class="s1">&#39;myserver&#39;</span><span class="w"> </span>is<span class="w"> </span>not<span class="w"> </span>running
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Server<span class="w"> </span><span class="s1">'myserver'</span><span class="w"> </span>is<span class="w"> </span>not<span class="w"> </span>running
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Start<span class="w"> </span>the<span class="w"> </span>server<span class="w"> </span>first:<span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
 </code></pre></div>
 <hr />
@@ -3430,7 +3430,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

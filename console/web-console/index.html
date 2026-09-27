@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1902,6 +1902,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#players-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Players Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Players Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#player-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#player-detail-modal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Detail Modal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mods-tab" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3333,6 +3372,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#players-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Players Tab
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Players Tab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#player-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#player-detail-modal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Detail Modal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mods-tab" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4173,7 +4251,7 @@
 <li><strong>World Size</strong> -- The disk space used by the current world</li>
 </ul>
 <h4 id="navigation-tabs">Navigation Tabs<a class="headerlink" href="#navigation-tabs" title="Permanent link">&para;</a></h4>
-<p>The server detail page is organized into seven tabs:</p>
+<p>The server detail page is organized into the following tabs (main tabs shown):</p>
 <table>
 <thead>
 <tr>
@@ -4185,6 +4263,10 @@
 <tr>
 <td><strong>Overview</strong></td>
 <td>Server console with live log output and RCON command input</td>
+</tr>
+<tr>
+<td><strong>Players</strong></td>
+<td>Online + offline player roster with management actions and a per-player detail view (v2.27.0+)</td>
 </tr>
 <tr>
 <td><strong>Activity</strong></td>
@@ -4268,6 +4350,143 @@
 </table>
 <h4 id="players">Players<a class="headerlink" href="#players" title="Permanent link">&para;</a></h4>
 <p>The <strong>Players</strong> panel on the bottom-right shows the list of players currently connected to the server. When no players are online, it displays "Player information unavailable" or an empty state. When players are connected, their Minecraft usernames and avatars are shown here for quick reference.</p>
+<h3 id="players-tab">Players Tab<a class="headerlink" href="#players-tab" title="Permanent link">&para;</a></h3>
+<p><em>Available since v2.27.0.</em></p>
+<p>The <strong>Players</strong> tab lists every player known to the server, not just those currently online. It combines two sources:</p>
+<ul>
+<li><strong>Online players</strong> -- queried live via RCON while the server is running</li>
+<li><strong>Known players</strong> -- read from the server's files (<code>usercache.json</code>, <code>playerdata/</code>, <code>ops.json</code>, <code>whitelist.json</code>, <code>banned-players.json</code>)</li>
+</ul>
+<p>Because the file-based part does not need RCON, the roster is also shown when the server is <strong>stopped</strong> (everyone then appears as Offline). The list updates in real time over SSE; the dot next to the <code>online / max</code> counter in the header shows whether the live connection is active.</p>
+<p>Each row shows the player's avatar (from <code>mc-heads.net</code>), name, and badges:</p>
+<table>
+<thead>
+<tr>
+<th>Badge</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Online</strong> / <strong>Offline</strong></td>
+<td>Current connection state</td>
+</tr>
+<tr>
+<td><strong>OP</strong></td>
+<td>Player is a server operator</td>
+</tr>
+<tr>
+<td><strong>Banned</strong></td>
+<td>Player is on the ban list</td>
+</tr>
+<tr>
+<td><strong>Whitelisted</strong></td>
+<td>Player is on the whitelist</td>
+</tr>
+</tbody>
+</table>
+<p>Offline players also show <strong>Last saved</strong>, the time their player data was last written by the server.</p>
+<h4 id="player-actions">Player Actions<a class="headerlink" href="#player-actions" title="Permanent link">&para;</a></h4>
+<p>Click the <strong>⋮</strong> menu on a row to manage the player. Only the actions that apply to the player's current state are shown:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Shown when</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Details</strong></td>
+<td>Player has a UUID</td>
+<td>Opens the player detail modal (see below)</td>
+</tr>
+<tr>
+<td><strong>Kick</strong></td>
+<td>Player is online</td>
+<td>Confirmation dialog with optional reason</td>
+</tr>
+<tr>
+<td><strong>Ban</strong> / <strong>Unban</strong></td>
+<td>Not banned / banned</td>
+<td>Ban asks for a reason (default: <code>Banned by administrator</code>)</td>
+</tr>
+<tr>
+<td><strong>Make OP</strong> / <strong>Remove OP</strong></td>
+<td>Not OP / OP</td>
+<td>Make OP grants permission level 4</td>
+</tr>
+<tr>
+<td><strong>Add to Whitelist</strong> / <strong>Remove from Whitelist</strong></td>
+<td>Not whitelisted / whitelisted</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Players tab vs. Players page</p>
+<p>The Players tab manages the players of a single server from its detail page. The sidebar <a href="#player-management">Player Management</a> page offers the same whitelist/ops/ban lists with a server selector.</p>
+</div>
+<h4 id="player-detail-modal">Player Detail Modal<a class="headerlink" href="#player-detail-modal" title="Permanent link">&para;</a></h4>
+<p>Select <strong>Details</strong> in the action menu to open the player detail modal. The header shows the avatar, name, UUID, and the same badges as the list. The body has three sections:</p>
+<p><strong>Statistics</strong> -- values as last saved by the server (from <code>stats/&lt;uuid&gt;.json</code> and <code>advancements/&lt;uuid&gt;.json</code> in the world folder):</p>
+<table>
+<thead>
+<tr>
+<th>Stat</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Play Time</td>
+<td>Total in-game play time (<code>Xh Ym</code>)</td>
+</tr>
+<tr>
+<td>Deaths</td>
+<td>Number of deaths</td>
+</tr>
+<tr>
+<td>Mob Kills / Player Kills</td>
+<td>Kill counts</td>
+</tr>
+<tr>
+<td>Distance Traveled</td>
+<td>Total distance (m / km)</td>
+</tr>
+<tr>
+<td>Blocks Mined</td>
+<td>Total blocks mined</td>
+</tr>
+<tr>
+<td>Items Crafted</td>
+<td>Total items crafted</td>
+</tr>
+<tr>
+<td>Advancements</td>
+<td>Completed advancements</td>
+</tr>
+</tbody>
+</table>
+<p>If the player has no stats file yet, "No statistics recorded yet." is shown.</p>
+<p><strong>Position &amp; Status</strong> -- parsed from the player's <code>playerdata/&lt;uuid&gt;.dat</code>:</p>
+<ul>
+<li>Coordinates (X / Y / Z) and dimension</li>
+<li>Health and food (out of 20), XP level, game mode</li>
+<li>Inventory summary: slots used and up to 10 item stacks</li>
+</ul>
+<p>While the player is online and the server is running, the position is read live via RCON and labeled <strong>Live position</strong> with a <strong>Live</strong> badge. The modal refreshes every 5 seconds while the player is online. Offline players show <strong>Last saved position</strong> instead.</p>
+<p><strong>Session History</strong> -- join/leave history collected from server logs:</p>
+<ul>
+<li><strong>Visits</strong>, <strong>Total Playtime</strong>, and <strong>Last Seen</strong></li>
+<li>The most recent sessions (up to 20, newest first) with join → leave time and duration; a session that is still open shows <strong>Online now</strong></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Session history starts when the collector is installed</p>
+<p>Session history is not read from the world files. mcctl-api parses each running server's Docker logs (<code>&lt;player&gt; joined/left the game</code>) every 30 seconds and stores the events in <code>data/players.db</code> (SQLite, under the platform root). History therefore only exists <strong>from the time mcctl-api v2.27.0+ first runs the collector</strong>. On its first pass for a server, the collector backfills at most the <strong>last 24 hours</strong> of that container's logs; older sessions are not recovered. After that it resumes from a per-server cursor, so a gap (for example, while mcctl-api was stopped) is filled in only if those lines are still in the container's logs — logs of a recreated container are lost. When a server is found stopped, its open sessions are closed at that time.</p>
+<p>Until data is collected, the section shows "No sessions recorded yet (history is collected from server logs)."</p>
+</div>
 <h3 id="mods-tab">Mods Tab<a class="headerlink" href="#mods-tab" title="Permanent link">&para;</a></h3>
 <p>The Mods tab provides a complete mod management interface for servers running modded platforms (FORGE, NEOFORGE, FABRIC). This tab allows you to browse, install, and remove mods directly from the <a href="https://modrinth.com/">Modrinth</a> repository without manual file management.</p>
 <p><img alt="Server Mods" src="../../images/server-mods.png" /></p>
@@ -4914,7 +5133,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

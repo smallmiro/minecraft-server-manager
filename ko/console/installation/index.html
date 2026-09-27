@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -3166,7 +3166,7 @@
 <a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># MCCTL_CONSOLE_PORT=5000</span>
 </code></pre></div>
 <h4 id="3단계-관리자-사용자-생성">3단계: 관리자 사용자 생성<a class="headerlink" href="#3단계-관리자-사용자-생성" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>admin<span class="w"> </span>--role<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;YourSecurePassword123&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>admin<span class="w"> </span>--role<span class="w"> </span>admin<span class="w"> </span>--password<span class="w"> </span><span class="s2">"YourSecurePassword123"</span>
 </code></pre></div>
 <h4 id="4단계-docker-compose로-시작">4단계: Docker Compose로 시작<a class="headerlink" href="#4단계-docker-compose로-시작" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers
@@ -3277,7 +3277,7 @@
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># CLI 모드</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>operator1<span class="w"> </span>--role<span class="w"> </span>viewer<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;SecurePass123&quot;</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>operator1<span class="w"> </span>--role<span class="w"> </span>viewer<span class="w"> </span>--password<span class="w"> </span><span class="s2">"SecurePass123"</span>
 </code></pre></div>
 <h4 id="사용자-목록-조회">사용자 목록 조회<a class="headerlink" href="#사용자-목록-조회" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
@@ -3300,7 +3300,7 @@
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator1
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
 <a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># CLI</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator1<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;NewSecurePass456&quot;</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator1<span class="w"> </span>--password<span class="w"> </span><span class="s2">"NewSecurePass456"</span>
 </code></pre></div>
 <h4 id="사용자-삭제">사용자 삭제<a class="headerlink" href="#사용자-삭제" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>remove<span class="w"> </span>operator1
@@ -3317,7 +3317,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>curl<span class="w"> </span>http://localhost:5001/health
 </code></pre></div>
 <p>예상 응답:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="p">{</span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="s2">&quot;healthy&quot;</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="s2">"healthy"</span><span class="p">}</span>
 </code></pre></div>
 <h3 id="웹-콘솔-접속">웹 콘솔 접속<a class="headerlink" href="#웹-콘솔-접속" title="Permanent link">&para;</a></h3>
 <ol>
@@ -3335,7 +3335,7 @@
 </li>
 <li>
 <p><strong>포트 충돌 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;5000|5001&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"5000|5001"</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -3514,7 +3514,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

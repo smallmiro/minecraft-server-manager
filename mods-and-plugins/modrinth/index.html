@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2802,10 +2802,10 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded<span class="w"> </span>--type<span class="w"> </span>FABRIC<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Add Modrinth mods</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,sodium&quot;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,lithium,sodium"</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Enable automatic dependency download</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span><span class="s2">&quot;required&quot;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span><span class="s2">"required"</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Restart to apply changes</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded
@@ -2815,7 +2815,7 @@
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>--type<span class="w"> </span>PAPER<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Add Modrinth plugins</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;luckperms,chunky,spark&quot;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"luckperms,chunky,spark"</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Restart to apply changes</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>survival<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>survival
@@ -2872,38 +2872,38 @@
 </table>
 <h3 id="version-specifiers">Version Specifiers<a class="headerlink" href="#version-specifiers" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Latest release</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api&quot;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api"</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Specific version</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api:0.92.0&quot;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api:0.92.0"</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Beta version</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;lithium:beta&quot;</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"lithium:beta"</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Multiple mods with mixed versions</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,sodium:release,iris:beta&quot;</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,sodium:release,iris:beta"</span>
 </code></pre></div>
 <h3 id="loader-prefix">Loader Prefix<a class="headerlink" href="#loader-prefix" title="Permanent link">&para;</a></h3>
 <p>Override the auto-detected loader for specific projects:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Force Fabric loader</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric:fabric-api&quot;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric:fabric-api"</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Force Paper loader for plugins</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;paper:luckperms&quot;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"paper:luckperms"</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Datapack</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;datapack:better-villages&quot;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"datapack:better-villages"</span>
 </code></pre></div>
 <h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
 <h3 id="core-settings">Core Settings<a class="headerlink" href="#core-settings" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Add mods (comma-separated)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,sodium&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,lithium,sodium"</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Download dependencies automatically</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span><span class="s2">&quot;required&quot;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span><span class="s2">"required"</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Default version type for all mods</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE<span class="w"> </span><span class="s2">&quot;release&quot;</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE<span class="w"> </span><span class="s2">"release"</span>
 </code></pre></div>
 <h3 id="dependency-options">Dependency Options<a class="headerlink" href="#dependency-options" title="Permanent link">&para;</a></h3>
 <table>
@@ -2930,10 +2930,10 @@
 </table>
 <h3 id="version-control">Version Control<a class="headerlink" href="#version-control" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Auto-detect Minecraft version from mods</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>VERSION_FROM_MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>VERSION_FROM_MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"true"</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Override loader type</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_LOADER<span class="w"> </span><span class="s2">&quot;fabric&quot;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_LOADER<span class="w"> </span><span class="s2">"fabric"</span>
 </code></pre></div>
 <h2 id="configuration-reference">Configuration Reference<a class="headerlink" href="#configuration-reference" title="Permanent link">&para;</a></h2>
 <table>
@@ -2978,9 +2978,9 @@
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>performance<span class="w"> </span>--type<span class="w"> </span>FABRIC<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Configure mods</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>performance<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,phosphor,ferritecore,krypton,c2me-fabric&quot;</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>performance<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span><span class="s2">&quot;required&quot;</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>performance<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">&quot;4G&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>performance<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,lithium,phosphor,ferritecore,krypton,c2me-fabric"</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>performance<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span><span class="s2">"required"</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>mcctl<span class="w"> </span>config<span class="w"> </span>performance<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">"4G"</span>
 <a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
 <a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="c1"># Start server</span>
 <a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>mcctl<span class="w"> </span>start<span class="w"> </span>performance
@@ -2990,18 +2990,18 @@
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>--type<span class="w"> </span>PAPER<span class="w"> </span>--version<span class="w"> </span><span class="m">1</span>.21.1
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Configure plugins</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;luckperms,vault,chunky,spark&quot;</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">&quot;4G&quot;</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"luckperms,vault,chunky,spark"</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MEMORY<span class="w"> </span><span class="s2">"4G"</span>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1"># Start server</span>
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>mcctl<span class="w"> </span>start<span class="w"> </span>survival
 </code></pre></div>
 <h3 id="mixed-version-types">Mixed Version Types<a class="headerlink" href="#mixed-version-types" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Set default to beta</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE<span class="w"> </span><span class="s2">&quot;beta&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE<span class="w"> </span><span class="s2">"beta"</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Override individual mods</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,sodium:release,iris:alpha&quot;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,sodium:release,iris:alpha"</span>
 </code></pre></div>
 <h2 id="advanced-configuration-manual">Advanced Configuration (Manual)<a class="headerlink" href="#advanced-configuration-manual" title="Permanent link">&para;</a></h2>
 <p>For advanced multi-line configurations, edit <code>config.env</code> directly:</p>
@@ -3046,7 +3046,7 @@
 <h2 id="auto-removal">Auto-Removal<a class="headerlink" href="#auto-removal" title="Permanent link">&para;</a></h2>
 <p>When you remove a project from <code>MODRINTH_PROJECTS</code>, the corresponding file is automatically removed from the server.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Remove sodium from the list</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium&quot;</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,lithium"</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Restart to apply (sodium will be removed)</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
@@ -3100,7 +3100,7 @@
 </code></pre></div>
 <h3 id="debug-mode">Debug Mode<a class="headerlink" href="#debug-mode" title="Permanent link">&para;</a></h3>
 <p>Enable debug output to troubleshoot issues:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>DEBUG<span class="w"> </span><span class="s2">&quot;true&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>DEBUG<span class="w"> </span><span class="s2">"true"</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>myserver
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>myserver
 </code></pre></div>
@@ -3191,7 +3191,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

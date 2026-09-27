@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -3142,7 +3142,7 @@
 <p>Or configure interactively:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># When prompted &quot;Configure custom ports?&quot; select Yes</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># When prompted "Configure custom ports?" select Yes</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Then enter your desired API and console ports</span>
 </code></pre></div>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
@@ -3194,24 +3194,24 @@
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nx">apps</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;mcctl-api&#39;</span><span class="p">,</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;node_modules/@minecraft-docker/mcctl-api/dist/index.js&#39;</span><span class="p">,</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nx">cwd</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MCCTL_ROOT</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;.&#39;</span><span class="p">,</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'mcctl-api'</span><span class="p">,</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">'node_modules/@minecraft-docker/mcctl-api/dist/index.js'</span><span class="p">,</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nx">cwd</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MCCTL_ROOT</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'.'</span><span class="p">,</span>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">      </span><span class="nx">env</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">        </span><span class="nx">NODE_ENV</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;production&#39;</span><span class="p">,</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">        </span><span class="nx">NODE_ENV</span><span class="o">:</span><span class="w"> </span><span class="s1">'production'</span><span class="p">,</span>
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">        </span><span class="nx">PORT</span><span class="o">:</span><span class="w"> </span><span class="mf">5001</span><span class="p">,</span>
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">        </span><span class="nx">HOST</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;0.0.0.0&#39;</span><span class="p">,</span>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">        </span><span class="nx">MCCTL_ROOT</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MCCTL_ROOT</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;.&#39;</span><span class="p">,</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">        </span><span class="nx">HOST</span><span class="o">:</span><span class="w"> </span><span class="s1">'0.0.0.0'</span><span class="p">,</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">        </span><span class="nx">MCCTL_ROOT</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MCCTL_ROOT</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'.'</span><span class="p">,</span>
 <a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">      </span><span class="p">},</span>
 <a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">      </span><span class="nx">instances</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">      </span><span class="nx">exec_mode</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;fork&#39;</span><span class="p">,</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">      </span><span class="nx">exec_mode</span><span class="o">:</span><span class="w"> </span><span class="s1">'fork'</span><span class="p">,</span>
 <a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">      </span><span class="nx">watch</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
 <a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">      </span><span class="nx">autorestart</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">      </span><span class="nx">max_memory_restart</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;500M&#39;</span><span class="p">,</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">      </span><span class="nx">max_memory_restart</span><span class="o">:</span><span class="w"> </span><span class="s1">'500M'</span><span class="p">,</span>
 <a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">    </span><span class="p">},</span>
 <a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;mcctl-console&#39;</span><span class="p">,</span>
-<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;node_modules/@minecraft-docker/mcctl-console/.next/standalone/...&#39;</span><span class="p">,</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'mcctl-console'</span><span class="p">,</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">'node_modules/@minecraft-docker/mcctl-console/.next/standalone/...'</span><span class="p">,</span>
 <a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">      </span><span class="c1">// ... console configuration</span>
 <a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">    </span><span class="p">},</span>
 <a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">  </span><span class="p">],</span>
@@ -3221,12 +3221,12 @@
 <h4 id="internal-recommended-for-production">internal (Recommended for Production)<a class="headerlink" href="#internal-recommended-for-production" title="Permanent link">&para;</a></h4>
 <p>Only allows access from the local network. The most secure option for home/local deployments.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Select &quot;internal&quot; when prompted for API access mode</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Select "internal" when prompted for API access mode</span>
 </code></pre></div>
 <h4 id="api-key">api-key<a class="headerlink" href="#api-key" title="Permanent link">&para;</a></h4>
 <p>Requires <code>X-API-Key</code> header for all API requests.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># Select &quot;api-key&quot; when prompted</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># Select "api-key" when prompted</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1"># An API key will be generated and displayed</span>
 </code></pre></div>
 <p>After initialization, your API key will be displayed. Save it securely.</p>
@@ -3236,7 +3236,7 @@
 <h4 id="ip-whitelist">ip-whitelist<a class="headerlink" href="#ip-whitelist" title="Permanent link">&para;</a></h4>
 <p>Only allows access from specified IP addresses or CIDR ranges.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1"># Select &quot;ip-whitelist&quot; when prompted</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1"># Select "ip-whitelist" when prompted</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="c1"># Enter allowed IPs when prompted (comma-separated)</span>
 </code></pre></div>
 <p>After initialization, manage the whitelist:</p>
@@ -3247,7 +3247,7 @@
 <h4 id="api-key-ip-highest-security">api-key-ip (Highest Security)<a class="headerlink" href="#api-key-ip-highest-security" title="Permanent link">&para;</a></h4>
 <p>Requires both a valid API key AND the client IP must be in the whitelist.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># Select &quot;api-key-ip&quot; when prompted</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># Select "api-key-ip" when prompted</span>
 </code></pre></div>
 <h4 id="open-development-only">open (Development Only)<a class="headerlink" href="#open-development-only" title="Permanent link">&para;</a></h4>
 <div class="admonition danger">
@@ -3262,7 +3262,7 @@
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># CLI mode</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>operator1<span class="w"> </span>--role<span class="w"> </span>viewer<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;SecurePass123&quot;</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>operator1<span class="w"> </span>--role<span class="w"> </span>viewer<span class="w"> </span>--password<span class="w"> </span><span class="s2">"SecurePass123"</span>
 </code></pre></div>
 <h4 id="list-users">List Users<a class="headerlink" href="#list-users" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
@@ -3285,7 +3285,7 @@
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator1
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># CLI</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator1<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;NewSecurePass456&quot;</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator1<span class="w"> </span>--password<span class="w"> </span><span class="s2">"NewSecurePass456"</span>
 </code></pre></div>
 <h4 id="remove-user">Remove User<a class="headerlink" href="#remove-user" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>remove<span class="w"> </span>operator1
@@ -3302,7 +3302,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>curl<span class="w"> </span>http://localhost:5001/health
 </code></pre></div>
 <p>Expected response:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p">{</span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="s2">&quot;healthy&quot;</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="s2">"healthy"</span><span class="p">}</span>
 </code></pre></div>
 <h3 id="access-web-console">Access Web Console<a class="headerlink" href="#access-web-console" title="Permanent link">&para;</a></h3>
 <ol>
@@ -3325,7 +3325,7 @@
 </li>
 <li>
 <p><strong>Check for port conflicts:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;5000|5001&quot;</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"5000|5001"</span>
 <a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="c1"># or on macOS</span>
 <a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5000
 <a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5001
@@ -3545,7 +3545,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

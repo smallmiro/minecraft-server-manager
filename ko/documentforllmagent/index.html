@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -4269,6 +4269,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-2270-2026-09-27---server-players-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.27.0 (2026-09-27) - Server Players Panel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-2220-2026-06-21---itzg-image-refresh" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4691,8 +4702,8 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.22.0
-<strong>Last Updated</strong>: 2026-06-21
+<p><strong>Version</strong>: 2.27.0
+<strong>Last Updated</strong>: 2026-09-27
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
 <hr />
@@ -5084,43 +5095,45 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>├── .mcctl-admin.yml                  # Management Console config (after console init)
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>├── users.yaml                        # Console user credentials (hashed)
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>├── audit.db                          # SQLite audit log database
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>│
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>├── platform/
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>│   ├── docker-compose.yml            # Main orchestration (mc-router)
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>│   ├── ecosystem.config.cjs          # PM2 process config (after console init)
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>│   └── scripts/                      # Bash management scripts
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>│
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>├── servers/
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>│   ├── compose.yml                   # Auto-generated server include list
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>│   ├── _template/                    # Template for new servers
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>│   │   ├── docker-compose.yml
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>│   │   └── config.env
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>│   └── &lt;server-name&gt;/               # Per-server directory
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>│       ├── docker-compose.yml        # Server-specific compose
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>│       ├── config.env                # Server configuration
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>│       └── data/                     # Server container data mount
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>│
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>├── worlds/                           # Shared world storage
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>│   ├── .locks/                       # Lock files (server-world assignment)
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>│   │   └── &lt;world&gt;.lock              # Lock file content: server-name
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>│   └── &lt;world-name&gt;/                 # World directories
-<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>│       ├── .meta                     # World metadata (seed, createdAt)
-<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>│       ├── level.dat                 # Minecraft world data
-<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>│       ├── region/                   # Overworld chunks
-<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>│       ├── DIM-1/                    # Nether dimension
-<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>│       └── DIM1/                     # End dimension
-<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>│
-<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>├── shared/
-<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>│   ├── plugins/                      # Shared plugins (read-only mount)
-<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>│   └── mods/                         # Shared mods (read-only mount)
-<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>│
-<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>├── backups/                          # Local backup storage
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>├── data/
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>│   └── players.db                    # SQLite player session history (mcctl-api, v2.27.0+)
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>│
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>├── platform/
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>│   ├── docker-compose.yml            # Main orchestration (mc-router)
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>│   ├── ecosystem.config.cjs          # PM2 process config (after console init)
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>│   └── scripts/                      # Bash management scripts
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>│
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>├── servers/
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>│   ├── compose.yml                   # Auto-generated server include list
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>│   ├── _template/                    # Template for new servers
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>│   │   ├── docker-compose.yml
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>│   │   └── config.env
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>│   └── &lt;server-name&gt;/               # Per-server directory
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>│       ├── docker-compose.yml        # Server-specific compose
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>│       ├── config.env                # Server configuration
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>│       └── data/                     # Server container data mount
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>│
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>├── worlds/                           # Shared world storage
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>│   ├── .locks/                       # Lock files (server-world assignment)
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>│   │   └── &lt;world&gt;.lock              # Lock file content: server-name
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>│   └── &lt;world-name&gt;/                 # World directories
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>│       ├── .meta                     # World metadata (seed, createdAt)
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>│       ├── level.dat                 # Minecraft world data
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>│       ├── region/                   # Overworld chunks
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>│       ├── DIM-1/                    # Nether dimension
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>│       └── DIM1/                     # End dimension
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>│
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>├── shared/
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>│   ├── plugins/                      # Shared plugins (read-only mount)
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>│   └── mods/                         # Shared mods (read-only mount)
 <a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>│
-<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>└── node_modules/                     # npm packages (after console init)
-<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>    └── @minecraft-docker/
-<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>        ├── mcctl-api/                # REST API package
-<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>        ├── mcctl-console/            # Web Console package
-<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>        └── shared/                   # Shared domain package
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>├── backups/                          # Local backup storage
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>│
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>└── node_modules/                     # npm packages (after console init)
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>    └── @minecraft-docker/
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>        ├── mcctl-api/                # REST API package
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>        ├── mcctl-console/            # Web Console package
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a>        └── shared/                   # Shared domain package
 </code></pre></div>
 <h3 id="connection-flow-lan">Connection Flow (LAN)<a class="headerlink" href="#connection-flow-lan" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>1. Player opens Minecraft → Add Server → survival.192.168.1.100.nip.io:25565
@@ -5224,12 +5237,12 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Or during initial setup:</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>mcctl<span class="w"> </span>init
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="c1"># Select &quot;Yes&quot; when asked about playit.gg</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="c1"># Select "Yes" when asked about playit.gg</span>
 </code></pre></div></p>
 <p><strong>Step 3: Start the playit agent</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>start
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># Verify it&#39;s running:</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># Verify it's running:</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>mcctl<span class="w"> </span>playit<span class="w"> </span>status
 </code></pre></div></p>
 <p><strong>Step 4: Create a tunnel on playit.gg</strong>
@@ -5603,14 +5616,14 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </code></pre></div>
 <h4 id="mcctl-exec">mcctl exec<a class="headerlink" href="#mcctl-exec" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;command&gt;<span class="w">   </span><span class="c1"># Execute single RCON command</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">&quot;Hello!&quot;</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>say<span class="w"> </span><span class="s2">"Hello!"</span>
 <a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>list
 <a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>mcctl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>myserver<span class="w"> </span>give<span class="w"> </span>Steve<span class="w"> </span>diamond<span class="w"> </span><span class="m">64</span>
 </code></pre></div>
 <h4 id="mcctl-config">mcctl config<a class="headerlink" href="#mcctl-config" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w">                    </span><span class="c1"># View all config</span>
 <a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>MOTD<span class="w">               </span><span class="c1"># View specific key</span>
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Welcome!&quot;</span><span class="w">    </span><span class="c1"># Set value</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">"Welcome!"</span><span class="w">    </span><span class="c1"># Set value</span>
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>--cheats<span class="w">           </span><span class="c1"># Enable cheats (ALLOW_CHEATS=true)</span>
 <a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>--no-cheats<span class="w">        </span><span class="c1"># Disable cheats</span>
 <a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>--pvp<span class="w">              </span><span class="c1"># Enable PvP</span>
@@ -5660,7 +5673,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span><span class="o">[</span>name<span class="o">]</span><span class="w">                        </span><span class="c1"># Create new world (interactive or CLI)</span>
 <a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--seed<span class="w"> </span><span class="m">12345</span><span class="w">           </span><span class="c1"># Create with seed</span>
 <a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--server<span class="w"> </span>&lt;srv&gt;<span class="w">         </span><span class="c1"># Create and assign to server</span>
-<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--server<span class="w"> </span>&lt;srv&gt;<span class="w"> </span>--no-start<span class="w">  </span><span class="c1"># Don&#39;t auto-start server</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--server<span class="w"> </span>&lt;srv&gt;<span class="w"> </span>--no-start<span class="w">  </span><span class="c1"># Don't auto-start server</span>
 <a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>server<span class="o">]</span><span class="w">           </span><span class="c1"># Lock world to server</span>
 <a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w">                   </span><span class="c1"># Release lock</span>
 <a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span>--force<span class="w">           </span><span class="c1"># Force release</span>
@@ -5708,14 +5721,14 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>init<span class="w">                    </span><span class="c1"># Interactive GitHub backup setup</span>
 <a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>status<span class="w">                  </span><span class="c1"># Show backup config</span>
 <a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w">                    </span><span class="c1"># Backup to GitHub</span>
-<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;message&quot;</span><span class="w">       </span><span class="c1"># With commit message</span>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">"message"</span><span class="w">       </span><span class="c1"># With commit message</span>
 <a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span><span class="w">                 </span><span class="c1"># Show backup history</span>
 <a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span><span class="o">[</span>commit<span class="o">]</span><span class="w">        </span><span class="c1"># Restore from backup</span>
 <a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a>
 <a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a><span class="c1"># Server config backup</span>
 <a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>&lt;server&gt;<span class="w">         </span><span class="c1"># Backup server config</span>
 <a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>&lt;server&gt;<span class="w"> </span>--list<span class="w">  </span><span class="c1"># List backups</span>
-<a id="__codelineno-35-12" name="__codelineno-35-12" href="#__codelineno-35-12"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>&lt;server&gt;<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;msg&quot;</span><span class="w">  </span><span class="c1"># With message</span>
+<a id="__codelineno-35-12" name="__codelineno-35-12" href="#__codelineno-35-12"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>&lt;server&gt;<span class="w"> </span>-m<span class="w"> </span><span class="s2">"msg"</span><span class="w">  </span><span class="c1"># With message</span>
 <a id="__codelineno-35-13" name="__codelineno-35-13" href="#__codelineno-35-13"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>&lt;server&gt;<span class="w">        </span><span class="c1"># Interactive restore</span>
 <a id="__codelineno-35-14" name="__codelineno-35-14" href="#__codelineno-35-14"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;id&gt;<span class="w">   </span><span class="c1"># Restore specific backup</span>
 <a id="__codelineno-35-15" name="__codelineno-35-15" href="#__codelineno-35-15"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>&lt;server&gt;<span class="w"> </span>--dry-run<span class="w">  </span><span class="c1"># Preview changes</span>
@@ -5775,12 +5788,12 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </table>
 <h4 id="service-lifecycle-v1130-interactive-selection">Service Lifecycle (v1.13.0+ Interactive Selection)<a class="headerlink" href="#service-lifecycle-v1130-interactive-selection" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># Start services (interactive prompt if both available)</span>
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w">           </span><span class="c1"># Prompts: &quot;API only&quot; or &quot;API + Console&quot;</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w">           </span><span class="c1"># Prompts: "API only" or "API + Console"</span>
 <a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w"> </span>--api<span class="w">     </span><span class="c1"># Start API only (no prompt)</span>
 <a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w"> </span>--console<span class="w"> </span><span class="c1"># Start API + Console (console needs API)</span>
 <a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>
 <a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a><span class="c1"># Stop services (interactive prompt if both available)</span>
-<a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop<span class="w">            </span><span class="c1"># Prompts: &quot;All services&quot; or &quot;Console only&quot;</span>
+<a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop<span class="w">            </span><span class="c1"># Prompts: "All services" or "Console only"</span>
 <a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop<span class="w"> </span>--api<span class="w">      </span><span class="c1"># Stop ALL services (console depends on API)</span>
 <a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop<span class="w"> </span>--console<span class="w">  </span><span class="c1"># Stop console only</span>
 <a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop<span class="w"> </span>--force<span class="w">    </span><span class="c1"># Force kill PM2 processes</span>
@@ -5839,7 +5852,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h4 id="user-management">User Management<a class="headerlink" href="#user-management" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list<span class="w">                  </span><span class="c1"># List console users</span>
 <a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>&lt;name&gt;<span class="w">            </span><span class="c1"># Add user (interactive password prompt)</span>
-<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--role<span class="w"> </span>viewer<span class="w"> </span>--password<span class="w"> </span><span class="s2">&quot;Pass123&quot;</span>
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--role<span class="w"> </span>viewer<span class="w"> </span>--password<span class="w"> </span><span class="s2">"Pass123"</span>
 <a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>remove<span class="w"> </span>&lt;name&gt;<span class="w">         </span><span class="c1"># Remove user</span>
 <a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="c1"># Reset password</span>
 <a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--role<span class="w"> </span>admin<span class="w">  </span><span class="c1"># Change role</span>
@@ -6264,7 +6277,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h3 id="global-configuration-env">Global Configuration (.env)<a class="headerlink" href="#global-configuration-env" title="Permanent link">&para;</a></h3>
 <p>Located at <code>~/minecraft-servers/.env</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="c1"># Network</span>
-<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a><span class="nv">HOST_IP</span><span class="o">=</span><span class="m">192</span>.168.1.100<span class="w">               </span><span class="c1"># Your server&#39;s IP</span>
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a><span class="nv">HOST_IP</span><span class="o">=</span><span class="m">192</span>.168.1.100<span class="w">               </span><span class="c1"># Your server's IP</span>
 <a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a><span class="nv">HOST_IPS</span><span class="o">=</span><span class="m">192</span>.168.1.100,100.64.0.5<span class="w">   </span><span class="c1"># Multiple IPs (VPN mesh)</span>
 <a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="nv">MINECRAFT_NETWORK</span><span class="o">=</span>minecraft-net
 <a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a><span class="nv">MINECRAFT_SUBNET</span><span class="o">=</span><span class="m">172</span>.28.0.0/16
@@ -6884,7 +6897,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <p>Management Console provides a REST API on port 5001.</p>
 <h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a><span class="c1"># API Key (recommended)</span>
-<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers
+<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/servers
 <a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>
 <a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a><span class="c1"># Basic Auth</span>
 <a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a>curl<span class="w"> </span>-u<span class="w"> </span>admin:password<span class="w"> </span>http://localhost:5001/api/servers
@@ -7063,7 +7076,12 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <tr>
 <td>GET</td>
 <td><code>/api/servers/:name/players</code></td>
-<td>List online players</td>
+<td>Online (RCON) + known (files) player roster; works while stopped; <code>?follow=true</code> for SSE (v2.27.0+)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/servers/:name/players/:uuid</code></td>
+<td>Single known player; <code>?include=stats,nbt,sessions</code> (v2.27.0+)</td>
 </tr>
 <tr>
 <td>GET</td>
@@ -7299,32 +7317,32 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </tbody>
 </table>
 <h3 id="example-list-servers">Example: List Servers<a class="headerlink" href="#example-list-servers" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/servers
 </code></pre></div>
 <h3 id="example-execute-command">Example: Execute Command<a class="headerlink" href="#example-execute-command" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;command&quot;: &quot;list&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"command": "list"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-48-4" name="__codelineno-48-4" href="#__codelineno-48-4"></a><span class="w">  </span>http://localhost:5001/api/servers/survival/exec
 </code></pre></div>
 <h3 id="example-create-server">Example: Create Server<a class="headerlink" href="#example-create-server" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a><span class="c1"># Standard server</span>
-<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-49-4" name="__codelineno-49-4" href="#__codelineno-49-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;name&quot;: &quot;survival&quot;, &quot;type&quot;: &quot;PAPER&quot;, &quot;version&quot;: &quot;1.21.1&quot;, &quot;memory&quot;: &quot;4G&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-4" name="__codelineno-49-4" href="#__codelineno-49-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"name": "survival", "type": "PAPER", "version": "1.21.1", "memory": "4G"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-49-5" name="__codelineno-49-5" href="#__codelineno-49-5"></a><span class="w">  </span>http://localhost:5001/api/servers
 <a id="__codelineno-49-6" name="__codelineno-49-6" href="#__codelineno-49-6"></a>
 <a id="__codelineno-49-7" name="__codelineno-49-7" href="#__codelineno-49-7"></a><span class="c1"># MODRINTH modpack server (v1.14.0+)</span>
-<a id="__codelineno-49-8" name="__codelineno-49-8" href="#__codelineno-49-8"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-49-9" name="__codelineno-49-9" href="#__codelineno-49-9"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-49-10" name="__codelineno-49-10" href="#__codelineno-49-10"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
-<a id="__codelineno-49-11" name="__codelineno-49-11" href="#__codelineno-49-11"></a><span class="s1">    &quot;name&quot;: &quot;cobblemon&quot;,</span>
-<a id="__codelineno-49-12" name="__codelineno-49-12" href="#__codelineno-49-12"></a><span class="s1">    &quot;type&quot;: &quot;MODRINTH&quot;,</span>
-<a id="__codelineno-49-13" name="__codelineno-49-13" href="#__codelineno-49-13"></a><span class="s1">    &quot;memory&quot;: &quot;6G&quot;,</span>
-<a id="__codelineno-49-14" name="__codelineno-49-14" href="#__codelineno-49-14"></a><span class="s1">    &quot;modpack&quot;: &quot;cobblemon-modpack&quot;,</span>
-<a id="__codelineno-49-15" name="__codelineno-49-15" href="#__codelineno-49-15"></a><span class="s1">    &quot;modLoader&quot;: &quot;fabric&quot;,</span>
-<a id="__codelineno-49-16" name="__codelineno-49-16" href="#__codelineno-49-16"></a><span class="s1">    &quot;modpackVersion&quot;: &quot;&quot;</span>
-<a id="__codelineno-49-17" name="__codelineno-49-17" href="#__codelineno-49-17"></a><span class="s1">  }&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-8" name="__codelineno-49-8" href="#__codelineno-49-8"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-9" name="__codelineno-49-9" href="#__codelineno-49-9"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-49-10" name="__codelineno-49-10" href="#__codelineno-49-10"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{</span>
+<a id="__codelineno-49-11" name="__codelineno-49-11" href="#__codelineno-49-11"></a><span class="s1">    "name": "cobblemon",</span>
+<a id="__codelineno-49-12" name="__codelineno-49-12" href="#__codelineno-49-12"></a><span class="s1">    "type": "MODRINTH",</span>
+<a id="__codelineno-49-13" name="__codelineno-49-13" href="#__codelineno-49-13"></a><span class="s1">    "memory": "6G",</span>
+<a id="__codelineno-49-14" name="__codelineno-49-14" href="#__codelineno-49-14"></a><span class="s1">    "modpack": "cobblemon-modpack",</span>
+<a id="__codelineno-49-15" name="__codelineno-49-15" href="#__codelineno-49-15"></a><span class="s1">    "modLoader": "fabric",</span>
+<a id="__codelineno-49-16" name="__codelineno-49-16" href="#__codelineno-49-16"></a><span class="s1">    "modpackVersion": ""</span>
+<a id="__codelineno-49-17" name="__codelineno-49-17" href="#__codelineno-49-17"></a><span class="s1">  }'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-49-18" name="__codelineno-49-18" href="#__codelineno-49-18"></a><span class="w">  </span>http://localhost:5001/api/servers
 </code></pre></div>
 <p><strong>Create Server request body fields:</strong></p>
@@ -7413,102 +7431,102 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </tbody>
 </table>
 <h3 id="example-startstoprestart-server">Example: Start/Stop/Restart Server<a class="headerlink" href="#example-startstoprestart-server" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers/survival/start
-<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers/survival/stop
-<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers/survival/restart
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/servers/survival/start
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/servers/survival/stop
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/servers/survival/restart
 </code></pre></div>
 <h3 id="example-get-server-logs">Example: Get Server Logs<a class="headerlink" href="#example-get-server-logs" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a><span class="c1"># Static logs (last N lines)</span>
-<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="s2">&quot;http://localhost:5001/api/servers/survival/logs?lines=50&quot;</span>
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="s2">"http://localhost:5001/api/servers/survival/logs?lines=50"</span>
 <a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>
 <a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a><span class="c1"># SSE streaming logs</span>
-<a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a>curl<span class="w"> </span>-N<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="s2">&quot;http://localhost:5001/api/servers/survival/logs?stream=true&quot;</span>
+<a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a>curl<span class="w"> </span>-N<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="s2">"http://localhost:5001/api/servers/survival/logs?stream=true"</span>
 </code></pre></div>
 <h3 id="example-player-management-via-api">Example: Player Management via API<a class="headerlink" href="#example-player-management-via-api" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a><span class="c1"># Get online players</span>
-<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers/survival/players
+<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/servers/survival/players
 <a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>
 <a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="c1"># Whitelist operations</span>
-<a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-6" name="__codelineno-52-6" href="#__codelineno-52-6"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-7" name="__codelineno-52-7" href="#__codelineno-52-7"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;player&quot;: &quot;Steve&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-6" name="__codelineno-52-6" href="#__codelineno-52-6"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-7" name="__codelineno-52-7" href="#__codelineno-52-7"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"player": "Steve"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-52-8" name="__codelineno-52-8" href="#__codelineno-52-8"></a><span class="w">  </span>http://localhost:5001/api/servers/survival/whitelist
 <a id="__codelineno-52-9" name="__codelineno-52-9" href="#__codelineno-52-9"></a>
-<a id="__codelineno-52-10" name="__codelineno-52-10" href="#__codelineno-52-10"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-10" name="__codelineno-52-10" href="#__codelineno-52-10"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-52-11" name="__codelineno-52-11" href="#__codelineno-52-11"></a><span class="w">  </span>http://localhost:5001/api/servers/survival/whitelist/Steve
 <a id="__codelineno-52-12" name="__codelineno-52-12" href="#__codelineno-52-12"></a>
 <a id="__codelineno-52-13" name="__codelineno-52-13" href="#__codelineno-52-13"></a><span class="c1"># Ban/Unban</span>
-<a id="__codelineno-52-14" name="__codelineno-52-14" href="#__codelineno-52-14"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-15" name="__codelineno-52-15" href="#__codelineno-52-15"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-16" name="__codelineno-52-16" href="#__codelineno-52-16"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;player&quot;: &quot;Griefer&quot;, &quot;reason&quot;: &quot;Griefing&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-14" name="__codelineno-52-14" href="#__codelineno-52-14"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-15" name="__codelineno-52-15" href="#__codelineno-52-15"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-16" name="__codelineno-52-16" href="#__codelineno-52-16"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"player": "Griefer", "reason": "Griefing"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-52-17" name="__codelineno-52-17" href="#__codelineno-52-17"></a><span class="w">  </span>http://localhost:5001/api/servers/survival/bans
 <a id="__codelineno-52-18" name="__codelineno-52-18" href="#__codelineno-52-18"></a>
 <a id="__codelineno-52-19" name="__codelineno-52-19" href="#__codelineno-52-19"></a><span class="c1"># Kick</span>
-<a id="__codelineno-52-20" name="__codelineno-52-20" href="#__codelineno-52-20"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-21" name="__codelineno-52-21" href="#__codelineno-52-21"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-22" name="__codelineno-52-22" href="#__codelineno-52-22"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;player&quot;: &quot;Troublemaker&quot;, &quot;reason&quot;: &quot;Breaking rules&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-20" name="__codelineno-52-20" href="#__codelineno-52-20"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-21" name="__codelineno-52-21" href="#__codelineno-52-21"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-22" name="__codelineno-52-22" href="#__codelineno-52-22"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"player": "Troublemaker", "reason": "Breaking rules"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-52-23" name="__codelineno-52-23" href="#__codelineno-52-23"></a><span class="w">  </span>http://localhost:5001/api/servers/survival/kick
 <a id="__codelineno-52-24" name="__codelineno-52-24" href="#__codelineno-52-24"></a>
 <a id="__codelineno-52-25" name="__codelineno-52-25" href="#__codelineno-52-25"></a><span class="c1"># Operator management</span>
-<a id="__codelineno-52-26" name="__codelineno-52-26" href="#__codelineno-52-26"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-27" name="__codelineno-52-27" href="#__codelineno-52-27"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-52-28" name="__codelineno-52-28" href="#__codelineno-52-28"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;player&quot;: &quot;TrustedPlayer&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-26" name="__codelineno-52-26" href="#__codelineno-52-26"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-27" name="__codelineno-52-27" href="#__codelineno-52-27"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-52-28" name="__codelineno-52-28" href="#__codelineno-52-28"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"player": "TrustedPlayer"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-52-29" name="__codelineno-52-29" href="#__codelineno-52-29"></a><span class="w">  </span>http://localhost:5001/api/servers/survival/ops
 </code></pre></div>
 <h3 id="example-world-management-via-api">Example: World Management via API<a class="headerlink" href="#example-world-management-via-api" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a><span class="c1"># List worlds</span>
-<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/worlds
+<a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/worlds
 <a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a>
 <a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a><span class="c1"># Create world</span>
-<a id="__codelineno-53-5" name="__codelineno-53-5" href="#__codelineno-53-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-53-6" name="__codelineno-53-6" href="#__codelineno-53-6"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-53-7" name="__codelineno-53-7" href="#__codelineno-53-7"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;name&quot;: &quot;newworld&quot;, &quot;seed&quot;: &quot;12345&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-5" name="__codelineno-53-5" href="#__codelineno-53-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-6" name="__codelineno-53-6" href="#__codelineno-53-6"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-7" name="__codelineno-53-7" href="#__codelineno-53-7"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"name": "newworld", "seed": "12345"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-53-8" name="__codelineno-53-8" href="#__codelineno-53-8"></a><span class="w">  </span>http://localhost:5001/api/worlds
 <a id="__codelineno-53-9" name="__codelineno-53-9" href="#__codelineno-53-9"></a>
 <a id="__codelineno-53-10" name="__codelineno-53-10" href="#__codelineno-53-10"></a><span class="c1"># Assign world to server</span>
-<a id="__codelineno-53-11" name="__codelineno-53-11" href="#__codelineno-53-11"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-53-12" name="__codelineno-53-12" href="#__codelineno-53-12"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-53-13" name="__codelineno-53-13" href="#__codelineno-53-13"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;server&quot;: &quot;survival&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-11" name="__codelineno-53-11" href="#__codelineno-53-11"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-12" name="__codelineno-53-12" href="#__codelineno-53-12"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-13" name="__codelineno-53-13" href="#__codelineno-53-13"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"server": "survival"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-53-14" name="__codelineno-53-14" href="#__codelineno-53-14"></a><span class="w">  </span>http://localhost:5001/api/worlds/newworld/assign
 <a id="__codelineno-53-15" name="__codelineno-53-15" href="#__codelineno-53-15"></a>
 <a id="__codelineno-53-16" name="__codelineno-53-16" href="#__codelineno-53-16"></a><span class="c1"># Release world lock</span>
-<a id="__codelineno-53-17" name="__codelineno-53-17" href="#__codelineno-53-17"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-17" name="__codelineno-53-17" href="#__codelineno-53-17"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-53-18" name="__codelineno-53-18" href="#__codelineno-53-18"></a><span class="w">  </span>http://localhost:5001/api/worlds/newworld/release
 <a id="__codelineno-53-19" name="__codelineno-53-19" href="#__codelineno-53-19"></a>
 <a id="__codelineno-53-20" name="__codelineno-53-20" href="#__codelineno-53-20"></a><span class="c1"># Delete world</span>
-<a id="__codelineno-53-21" name="__codelineno-53-21" href="#__codelineno-53-21"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-21" name="__codelineno-53-21" href="#__codelineno-53-21"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-53-22" name="__codelineno-53-22" href="#__codelineno-53-22"></a><span class="w">  </span>http://localhost:5001/api/worlds/newworld
 </code></pre></div>
 <h3 id="example-sse-real-time-status">Example: SSE Real-time Status<a class="headerlink" href="#example-sse-real-time-status" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a><span class="c1"># Stream all server statuses (Server-Sent Events)</span>
-<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a>curl<span class="w"> </span>-N<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/sse/servers-status
+<a id="__codelineno-54-2" name="__codelineno-54-2" href="#__codelineno-54-2"></a>curl<span class="w"> </span>-N<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/sse/servers-status
 <a id="__codelineno-54-3" name="__codelineno-54-3" href="#__codelineno-54-3"></a>
 <a id="__codelineno-54-4" name="__codelineno-54-4" href="#__codelineno-54-4"></a><span class="c1"># Output format:</span>
-<a id="__codelineno-54-5" name="__codelineno-54-5" href="#__codelineno-54-5"></a><span class="c1"># data: {&quot;servers&quot;:[{&quot;name&quot;:&quot;survival&quot;,&quot;status&quot;:&quot;running&quot;,&quot;players&quot;:3,&quot;maxPlayers&quot;:20},...]}</span>
+<a id="__codelineno-54-5" name="__codelineno-54-5" href="#__codelineno-54-5"></a><span class="c1"># data: {"servers":[{"name":"survival","status":"running","players":3,"maxPlayers":20},...]}</span>
 </code></pre></div>
 <h3 id="example-audit-logs-via-api">Example: Audit Logs via API<a class="headerlink" href="#example-audit-logs-via-api" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a><span class="c1"># List audit logs with filtering</span>
-<a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a><span class="w">  </span><span class="s2">&quot;http://localhost:5001/api/audit?action=server.create&amp;limit=20&quot;</span>
+<a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a><span class="w">  </span><span class="s2">"http://localhost:5001/api/audit?action=server.create&amp;limit=20"</span>
 <a id="__codelineno-55-4" name="__codelineno-55-4" href="#__codelineno-55-4"></a>
 <a id="__codelineno-55-5" name="__codelineno-55-5" href="#__codelineno-55-5"></a><span class="c1"># Get audit statistics</span>
-<a id="__codelineno-55-6" name="__codelineno-55-6" href="#__codelineno-55-6"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/audit/stats
+<a id="__codelineno-55-6" name="__codelineno-55-6" href="#__codelineno-55-6"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/audit/stats
 <a id="__codelineno-55-7" name="__codelineno-55-7" href="#__codelineno-55-7"></a>
 <a id="__codelineno-55-8" name="__codelineno-55-8" href="#__codelineno-55-8"></a><span class="c1"># Stream real-time audit events</span>
-<a id="__codelineno-55-9" name="__codelineno-55-9" href="#__codelineno-55-9"></a>curl<span class="w"> </span>-N<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/audit/stream
+<a id="__codelineno-55-9" name="__codelineno-55-9" href="#__codelineno-55-9"></a>curl<span class="w"> </span>-N<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/audit/stream
 </code></pre></div>
 <h3 id="example-backup-via-api">Example: Backup via API<a class="headerlink" href="#example-backup-via-api" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a><span class="c1"># Check backup status</span>
-<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/backup/status
+<a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/backup/status
 <a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a>
 <a id="__codelineno-56-4" name="__codelineno-56-4" href="#__codelineno-56-4"></a><span class="c1"># Push backup</span>
-<a id="__codelineno-56-5" name="__codelineno-56-5" href="#__codelineno-56-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-56-6" name="__codelineno-56-6" href="#__codelineno-56-6"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-56-7" name="__codelineno-56-7" href="#__codelineno-56-7"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;message&quot;: &quot;Pre-upgrade backup&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-56-5" name="__codelineno-56-5" href="#__codelineno-56-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-56-6" name="__codelineno-56-6" href="#__codelineno-56-6"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-56-7" name="__codelineno-56-7" href="#__codelineno-56-7"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"message": "Pre-upgrade backup"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-56-8" name="__codelineno-56-8" href="#__codelineno-56-8"></a><span class="w">  </span>http://localhost:5001/api/backup/push
 <a id="__codelineno-56-9" name="__codelineno-56-9" href="#__codelineno-56-9"></a>
 <a id="__codelineno-56-10" name="__codelineno-56-10" href="#__codelineno-56-10"></a><span class="c1"># Get backup history</span>
-<a id="__codelineno-56-11" name="__codelineno-56-11" href="#__codelineno-56-11"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/backup/history
+<a id="__codelineno-56-11" name="__codelineno-56-11" href="#__codelineno-56-11"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/backup/history
 </code></pre></div>
 <h3 id="api-response-formats">API Response Formats<a class="headerlink" href="#api-response-formats" title="Permanent link">&para;</a></h3>
 <p><strong>Server Object:</strong></p>
@@ -7686,7 +7704,9 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h4 id="server-detail-serversname">Server Detail (<code>/servers/:name</code>)<a class="headerlink" href="#server-detail-serversname" title="Permanent link">&para;</a></h4>
 <ul>
 <li><strong>Overview Tab</strong>: Container info, uptime, memory, world name/size</li>
-<li><strong>Players Tab</strong>: Online player list with Mojang skins</li>
+<li><strong>Players Tab</strong> (v2.27.0+): Unified online (RCON) + offline (usercache/playerdata/ops/whitelist/banned files) roster, shown even when the server is stopped; real-time via SSE. Avatars (<code>mc-heads.net</code>), badges (Online/Offline, OP, Banned, Whitelisted), per-row menu: Details, Kick, Ban/Unban, Make OP/Remove OP, Add/Remove Whitelist</li>
+<li><strong>Player Detail Modal</strong>: Statistics (play time, deaths, mob/player kills, distance, blocks mined, items crafted, advancements; from <code>stats/</code>+<code>advancements/</code>), Position &amp; Status (XYZ, dimension, health, food, XP level, game mode, inventory summary; from <code>playerdata/&lt;uuid&gt;.dat</code>, live position via RCON polled every 5s while online), Session History (visits, total playtime, last seen, recent 20 sessions)</li>
+<li>Session history exists only from when the mcctl-api v2.27.0+ collector first runs (first pass backfills up to 24h of container logs)</li>
 <li><strong>Console Tab</strong>: RCON command execution with output display</li>
 <li><strong>Logs Tab</strong>: Real-time server logs viewer</li>
 <li><strong>Mods Tab</strong> (v2.4.0+): View configured mods (Modrinth, CurseForge, Spiget, URL)</li>
@@ -7794,6 +7814,18 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <td>Reset world</td>
 </tr>
 <tr>
+<td><code>/api/servers/:name/players</code></td>
+<td>GET</td>
+<td><code>/api/servers/:name/players</code></td>
+<td>Player roster (JSON or SSE with <code>follow=true</code>)</td>
+</tr>
+<tr>
+<td><code>/api/servers/:name/players/:uuid</code></td>
+<td>GET</td>
+<td><code>/api/servers/:name/players/:uuid</code></td>
+<td>Player detail (<code>include</code> forwarded; unknown values dropped, not 400)</td>
+</tr>
+<tr>
 <td><code>/api/worlds</code></td>
 <td>GET/POST</td>
 <td><code>/api/worlds</code></td>
@@ -7850,18 +7882,20 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-58-10" name="__codelineno-58-10" href="#__codelineno-58-10"></a><span class="nx">useServerLogs</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">lines</span><span class="p">)</span><span class="w">      </span><span class="c1">// Get server logs (auto-refresh 3s)</span>
 <a id="__codelineno-58-11" name="__codelineno-58-11" href="#__codelineno-58-11"></a><span class="nx">useServersSSE</span><span class="p">()</span><span class="w">                 </span><span class="c1">// SSE real-time server status stream</span>
 <a id="__codelineno-58-12" name="__codelineno-58-12" href="#__codelineno-58-12"></a><span class="nx">useServerStatus</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w">           </span><span class="c1">// Individual server SSE status</span>
-<a id="__codelineno-58-13" name="__codelineno-58-13" href="#__codelineno-58-13"></a>
-<a id="__codelineno-58-14" name="__codelineno-58-14" href="#__codelineno-58-14"></a><span class="c1">// World hooks</span>
-<a id="__codelineno-58-15" name="__codelineno-58-15" href="#__codelineno-58-15"></a><span class="nx">useWorlds</span><span class="p">()</span><span class="w">                     </span><span class="c1">// List all worlds (auto-refresh 30s)</span>
-<a id="__codelineno-58-16" name="__codelineno-58-16" href="#__codelineno-58-16"></a><span class="nx">useWorld</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w">                  </span><span class="c1">// Get world details</span>
-<a id="__codelineno-58-17" name="__codelineno-58-17" href="#__codelineno-58-17"></a><span class="nx">useCreateWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Create world mutation</span>
-<a id="__codelineno-58-18" name="__codelineno-58-18" href="#__codelineno-58-18"></a><span class="nx">useAssignWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Assign world mutation</span>
-<a id="__codelineno-58-19" name="__codelineno-58-19" href="#__codelineno-58-19"></a><span class="nx">useReleaseWorld</span><span class="p">()</span><span class="w">               </span><span class="c1">// Release world mutation</span>
-<a id="__codelineno-58-20" name="__codelineno-58-20" href="#__codelineno-58-20"></a><span class="nx">useDeleteWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Delete world mutation</span>
-<a id="__codelineno-58-21" name="__codelineno-58-21" href="#__codelineno-58-21"></a>
-<a id="__codelineno-58-22" name="__codelineno-58-22" href="#__codelineno-58-22"></a><span class="c1">// Audit hooks</span>
-<a id="__codelineno-58-23" name="__codelineno-58-23" href="#__codelineno-58-23"></a><span class="nx">useAuditLogs</span><span class="p">(</span><span class="nx">filters</span><span class="p">)</span><span class="w">           </span><span class="c1">// List audit logs with filtering</span>
-<a id="__codelineno-58-24" name="__codelineno-58-24" href="#__codelineno-58-24"></a><span class="nx">useAuditStats</span><span class="p">()</span><span class="w">                 </span><span class="c1">// Audit log statistics</span>
+<a id="__codelineno-58-13" name="__codelineno-58-13" href="#__codelineno-58-13"></a><span class="nx">useServerPlayers</span><span class="p">({</span><span class="nx">serverName</span><span class="p">})</span><span class="w">  </span><span class="c1">// SSE player roster (online + offline)</span>
+<a id="__codelineno-58-14" name="__codelineno-58-14" href="#__codelineno-58-14"></a><span class="nx">usePlayerDetail</span><span class="p">(</span><span class="nx">server</span><span class="p">,</span><span class="w"> </span><span class="nx">uuid</span><span class="p">)</span><span class="w">   </span><span class="c1">// Player detail (?include=stats,nbt,sessions; refetch 5s while online)</span>
+<a id="__codelineno-58-15" name="__codelineno-58-15" href="#__codelineno-58-15"></a>
+<a id="__codelineno-58-16" name="__codelineno-58-16" href="#__codelineno-58-16"></a><span class="c1">// World hooks</span>
+<a id="__codelineno-58-17" name="__codelineno-58-17" href="#__codelineno-58-17"></a><span class="nx">useWorlds</span><span class="p">()</span><span class="w">                     </span><span class="c1">// List all worlds (auto-refresh 30s)</span>
+<a id="__codelineno-58-18" name="__codelineno-58-18" href="#__codelineno-58-18"></a><span class="nx">useWorld</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w">                  </span><span class="c1">// Get world details</span>
+<a id="__codelineno-58-19" name="__codelineno-58-19" href="#__codelineno-58-19"></a><span class="nx">useCreateWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Create world mutation</span>
+<a id="__codelineno-58-20" name="__codelineno-58-20" href="#__codelineno-58-20"></a><span class="nx">useAssignWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Assign world mutation</span>
+<a id="__codelineno-58-21" name="__codelineno-58-21" href="#__codelineno-58-21"></a><span class="nx">useReleaseWorld</span><span class="p">()</span><span class="w">               </span><span class="c1">// Release world mutation</span>
+<a id="__codelineno-58-22" name="__codelineno-58-22" href="#__codelineno-58-22"></a><span class="nx">useDeleteWorld</span><span class="p">()</span><span class="w">                </span><span class="c1">// Delete world mutation</span>
+<a id="__codelineno-58-23" name="__codelineno-58-23" href="#__codelineno-58-23"></a>
+<a id="__codelineno-58-24" name="__codelineno-58-24" href="#__codelineno-58-24"></a><span class="c1">// Audit hooks</span>
+<a id="__codelineno-58-25" name="__codelineno-58-25" href="#__codelineno-58-25"></a><span class="nx">useAuditLogs</span><span class="p">(</span><span class="nx">filters</span><span class="p">)</span><span class="w">           </span><span class="c1">// List audit logs with filtering</span>
+<a id="__codelineno-58-26" name="__codelineno-58-26" href="#__codelineno-58-26"></a><span class="nx">useAuditStats</span><span class="p">()</span><span class="w">                 </span><span class="c1">// Audit log statistics</span>
 </code></pre></div>
 <h3 id="web-console-environment-variables">Web Console Environment Variables<a class="headerlink" href="#web-console-environment-variables" title="Permanent link">&para;</a></h3>
 <table>
@@ -8354,25 +8388,25 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router:1.43.1</span><span class="w">  </span><span class="c1"># Pin to explicit version for reproducible deployments</span>
 <a id="__codelineno-66-4" name="__codelineno-66-4" href="#__codelineno-66-4"></a><span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--in-docker --auto-scale-up --auto-scale-down</span>
 <a id="__codelineno-66-5" name="__codelineno-66-5" href="#__codelineno-66-5"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-66-6" name="__codelineno-66-6" href="#__codelineno-66-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
+<a id="__codelineno-66-6" name="__codelineno-66-6" href="#__codelineno-66-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"25565:25565"</span>
 <a id="__codelineno-66-7" name="__codelineno-66-7" href="#__codelineno-66-7"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
 <a id="__codelineno-66-8" name="__codelineno-66-8" href="#__codelineno-66-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run/docker.sock:/var/run/docker.sock</span>
 <a id="__codelineno-66-9" name="__codelineno-66-9" href="#__codelineno-66-9"></a>
 <a id="__codelineno-66-10" name="__codelineno-66-10" href="#__codelineno-66-10"></a><span class="w">  </span><span class="nt">mc-survival</span><span class="p">:</span>
 <a id="__codelineno-66-11" name="__codelineno-66-11" href="#__codelineno-66-11"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server</span>
 <a id="__codelineno-66-12" name="__codelineno-66-12" href="#__codelineno-66-12"></a><span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
-<a id="__codelineno-66-13" name="__codelineno-66-13" href="#__codelineno-66-13"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;mc-router.host=survival.local,survival.192.168.1.100.nip.io&quot;</span>
-<a id="__codelineno-66-14" name="__codelineno-66-14" href="#__codelineno-66-14"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;mc-router.port=25565&quot;</span>
+<a id="__codelineno-66-13" name="__codelineno-66-13" href="#__codelineno-66-13"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"mc-router.host=survival.local,survival.192.168.1.100.nip.io"</span>
+<a id="__codelineno-66-14" name="__codelineno-66-14" href="#__codelineno-66-14"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"mc-router.port=25565"</span>
 </code></pre></div>
 <p><strong>2. Command-Line Mapping:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>mc-router<span class="w"> </span>-mapping<span class="w"> </span><span class="s2">&quot;server1.example.com=mc-server1:25565,server2.example.com=mc-server2:25565&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a>mc-router<span class="w"> </span>-mapping<span class="w"> </span><span class="s2">"server1.example.com=mc-server1:25565,server2.example.com=mc-server2:25565"</span>
 </code></pre></div>
 <p><strong>3. JSON Configuration File:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-68-1" name="__codelineno-68-1" href="#__codelineno-68-1"></a><span class="p">{</span>
-<a id="__codelineno-68-2" name="__codelineno-68-2" href="#__codelineno-68-2"></a><span class="w">  </span><span class="nt">&quot;default-server&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;vanilla:25565&quot;</span><span class="p">,</span>
-<a id="__codelineno-68-3" name="__codelineno-68-3" href="#__codelineno-68-3"></a><span class="w">  </span><span class="nt">&quot;mappings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-68-4" name="__codelineno-68-4" href="#__codelineno-68-4"></a><span class="w">    </span><span class="nt">&quot;survival.example.com&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mc-survival:25565&quot;</span><span class="p">,</span>
-<a id="__codelineno-68-5" name="__codelineno-68-5" href="#__codelineno-68-5"></a><span class="w">    </span><span class="nt">&quot;creative.example.com&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mc-creative:25565&quot;</span>
+<a id="__codelineno-68-2" name="__codelineno-68-2" href="#__codelineno-68-2"></a><span class="w">  </span><span class="nt">"default-server"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vanilla:25565"</span><span class="p">,</span>
+<a id="__codelineno-68-3" name="__codelineno-68-3" href="#__codelineno-68-3"></a><span class="w">  </span><span class="nt">"mappings"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-68-4" name="__codelineno-68-4" href="#__codelineno-68-4"></a><span class="w">    </span><span class="nt">"survival.example.com"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mc-survival:25565"</span><span class="p">,</span>
+<a id="__codelineno-68-5" name="__codelineno-68-5" href="#__codelineno-68-5"></a><span class="w">    </span><span class="nt">"creative.example.com"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mc-creative:25565"</span>
 <a id="__codelineno-68-6" name="__codelineno-68-6" href="#__codelineno-68-6"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-68-7" name="__codelineno-68-7" href="#__codelineno-68-7"></a><span class="p">}</span>
 </code></pre></div>
@@ -8548,20 +8582,20 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-69-3" name="__codelineno-69-3" href="#__codelineno-69-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router:1.43.1</span><span class="w">  </span><span class="c1"># Pin to explicit version for reproducible deployments</span>
 <a id="__codelineno-69-4" name="__codelineno-69-4" href="#__codelineno-69-4"></a><span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--in-docker --auto-scale-up --auto-scale-down</span>
 <a id="__codelineno-69-5" name="__codelineno-69-5" href="#__codelineno-69-5"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-69-6" name="__codelineno-69-6" href="#__codelineno-69-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
+<a id="__codelineno-69-6" name="__codelineno-69-6" href="#__codelineno-69-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"25565:25565"</span>
 <a id="__codelineno-69-7" name="__codelineno-69-7" href="#__codelineno-69-7"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
 <a id="__codelineno-69-8" name="__codelineno-69-8" href="#__codelineno-69-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run/docker.sock:/var/run/docker.sock</span>
 <a id="__codelineno-69-9" name="__codelineno-69-9" href="#__codelineno-69-9"></a>
 <a id="__codelineno-69-10" name="__codelineno-69-10" href="#__codelineno-69-10"></a><span class="w">  </span><span class="nt">mc-survival</span><span class="p">:</span>
 <a id="__codelineno-69-11" name="__codelineno-69-11" href="#__codelineno-69-11"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java25</span><span class="w">  </span><span class="c1"># Use java25 or latest for MC 26+, java21 for MC 1.21.x</span>
 <a id="__codelineno-69-12" name="__codelineno-69-12" href="#__codelineno-69-12"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-69-13" name="__codelineno-69-13" href="#__codelineno-69-13"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-69-14" name="__codelineno-69-14" href="#__codelineno-69-14"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PAPER&quot;</span>
-<a id="__codelineno-69-15" name="__codelineno-69-15" href="#__codelineno-69-15"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;LATEST&quot;</span>
-<a id="__codelineno-69-16" name="__codelineno-69-16" href="#__codelineno-69-16"></a><span class="w">      </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4G&quot;</span>
-<a id="__codelineno-69-17" name="__codelineno-69-17" href="#__codelineno-69-17"></a><span class="w">      </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<a id="__codelineno-69-13" name="__codelineno-69-13" href="#__codelineno-69-13"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-69-14" name="__codelineno-69-14" href="#__codelineno-69-14"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"PAPER"</span>
+<a id="__codelineno-69-15" name="__codelineno-69-15" href="#__codelineno-69-15"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"LATEST"</span>
+<a id="__codelineno-69-16" name="__codelineno-69-16" href="#__codelineno-69-16"></a><span class="w">      </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"4G"</span>
+<a id="__codelineno-69-17" name="__codelineno-69-17" href="#__codelineno-69-17"></a><span class="w">      </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 <a id="__codelineno-69-18" name="__codelineno-69-18" href="#__codelineno-69-18"></a><span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
-<a id="__codelineno-69-19" name="__codelineno-69-19" href="#__codelineno-69-19"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;mc-router.host=survival.local,survival.192.168.1.100.nip.io&quot;</span>
+<a id="__codelineno-69-19" name="__codelineno-69-19" href="#__codelineno-69-19"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"mc-router.host=survival.local,survival.192.168.1.100.nip.io"</span>
 <a id="__codelineno-69-20" name="__codelineno-69-20" href="#__codelineno-69-20"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
 <a id="__codelineno-69-21" name="__codelineno-69-21" href="#__codelineno-69-21"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./data:/data</span>
 </code></pre></div>
@@ -8570,10 +8604,10 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-70-2" name="__codelineno-70-2" href="#__codelineno-70-2"></a><span class="w">  </span><span class="nt">mc-modded</span><span class="p">:</span>
 <a id="__codelineno-70-3" name="__codelineno-70-3" href="#__codelineno-70-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java25</span><span class="w">  </span><span class="c1"># Use java25 or latest for MC 26+, java21 for MC 1.21.x</span>
 <a id="__codelineno-70-4" name="__codelineno-70-4" href="#__codelineno-70-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-70-5" name="__codelineno-70-5" href="#__codelineno-70-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-70-6" name="__codelineno-70-6" href="#__codelineno-70-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FABRIC&quot;</span>
-<a id="__codelineno-70-7" name="__codelineno-70-7" href="#__codelineno-70-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;LATEST&quot;</span>
-<a id="__codelineno-70-8" name="__codelineno-70-8" href="#__codelineno-70-8"></a><span class="w">      </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;8G&quot;</span>
+<a id="__codelineno-70-5" name="__codelineno-70-5" href="#__codelineno-70-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-70-6" name="__codelineno-70-6" href="#__codelineno-70-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"FABRIC"</span>
+<a id="__codelineno-70-7" name="__codelineno-70-7" href="#__codelineno-70-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"LATEST"</span>
+<a id="__codelineno-70-8" name="__codelineno-70-8" href="#__codelineno-70-8"></a><span class="w">      </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"8G"</span>
 <a id="__codelineno-70-9" name="__codelineno-70-9" href="#__codelineno-70-9"></a><span class="w">      </span><span class="nt">MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <a id="__codelineno-70-10" name="__codelineno-70-10" href="#__codelineno-70-10"></a><span class="w">        </span><span class="no">fabric-api</span>
 <a id="__codelineno-70-11" name="__codelineno-70-11" href="#__codelineno-70-11"></a><span class="w">        </span><span class="no">sodium</span>
@@ -8588,11 +8622,11 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-71-2" name="__codelineno-71-2" href="#__codelineno-71-2"></a><span class="w">  </span><span class="nt">mc-forge</span><span class="p">:</span>
 <a id="__codelineno-71-3" name="__codelineno-71-3" href="#__codelineno-71-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17</span>
 <a id="__codelineno-71-4" name="__codelineno-71-4" href="#__codelineno-71-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-71-5" name="__codelineno-71-5" href="#__codelineno-71-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-71-6" name="__codelineno-71-6" href="#__codelineno-71-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
-<a id="__codelineno-71-7" name="__codelineno-71-7" href="#__codelineno-71-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.1&quot;</span>
-<a id="__codelineno-71-8" name="__codelineno-71-8" href="#__codelineno-71-8"></a><span class="w">      </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;8G&quot;</span>
-<a id="__codelineno-71-9" name="__codelineno-71-9" href="#__codelineno-71-9"></a><span class="w">      </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${CF_API_KEY}&quot;</span>
+<a id="__codelineno-71-5" name="__codelineno-71-5" href="#__codelineno-71-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-71-6" name="__codelineno-71-6" href="#__codelineno-71-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"FORGE"</span>
+<a id="__codelineno-71-7" name="__codelineno-71-7" href="#__codelineno-71-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"1.20.1"</span>
+<a id="__codelineno-71-8" name="__codelineno-71-8" href="#__codelineno-71-8"></a><span class="w">      </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"8G"</span>
+<a id="__codelineno-71-9" name="__codelineno-71-9" href="#__codelineno-71-9"></a><span class="w">      </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">"${CF_API_KEY}"</span>
 <a id="__codelineno-71-10" name="__codelineno-71-10" href="#__codelineno-71-10"></a><span class="w">      </span><span class="nt">CURSEFORGE_FILES</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <a id="__codelineno-71-11" name="__codelineno-71-11" href="#__codelineno-71-11"></a><span class="w">        </span><span class="no">jei</span>
 <a id="__codelineno-71-12" name="__codelineno-71-12" href="#__codelineno-71-12"></a><span class="w">        </span><span class="no">journeymap</span>
@@ -8605,10 +8639,10 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-72-2" name="__codelineno-72-2" href="#__codelineno-72-2"></a><span class="w">  </span><span class="nt">mc-legacy</span><span class="p">:</span>
 <a id="__codelineno-72-3" name="__codelineno-72-3" href="#__codelineno-72-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java8</span><span class="w">  </span><span class="c1"># Java 8 required!</span>
 <a id="__codelineno-72-4" name="__codelineno-72-4" href="#__codelineno-72-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-72-5" name="__codelineno-72-5" href="#__codelineno-72-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-72-6" name="__codelineno-72-6" href="#__codelineno-72-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;FORGE&quot;</span>
-<a id="__codelineno-72-7" name="__codelineno-72-7" href="#__codelineno-72-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.16.5&quot;</span>
-<a id="__codelineno-72-8" name="__codelineno-72-8" href="#__codelineno-72-8"></a><span class="w">      </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;6G&quot;</span>
+<a id="__codelineno-72-5" name="__codelineno-72-5" href="#__codelineno-72-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-72-6" name="__codelineno-72-6" href="#__codelineno-72-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"FORGE"</span>
+<a id="__codelineno-72-7" name="__codelineno-72-7" href="#__codelineno-72-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"1.16.5"</span>
+<a id="__codelineno-72-8" name="__codelineno-72-8" href="#__codelineno-72-8"></a><span class="w">      </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"6G"</span>
 <a id="__codelineno-72-9" name="__codelineno-72-9" href="#__codelineno-72-9"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
 <a id="__codelineno-72-10" name="__codelineno-72-10" href="#__codelineno-72-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./data:/data</span>
 </code></pre></div>
@@ -8617,7 +8651,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h3 id="1-create-survival-server-for-friends">1. Create Survival Server for Friends<a class="headerlink" href="#1-create-survival-server-for-friends" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-73-1" name="__codelineno-73-1" href="#__codelineno-73-1"></a>mcctl<span class="w"> </span>init
 <a id="__codelineno-73-2" name="__codelineno-73-2" href="#__codelineno-73-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-73-3" name="__codelineno-73-3" href="#__codelineno-73-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">&quot;Welcome friends!&quot;</span>
+<a id="__codelineno-73-3" name="__codelineno-73-3" href="#__codelineno-73-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MOTD<span class="w"> </span><span class="s2">"Welcome friends!"</span>
 <a id="__codelineno-73-4" name="__codelineno-73-4" href="#__codelineno-73-4"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>DIFFICULTY<span class="w"> </span>hard
 <a id="__codelineno-73-5" name="__codelineno-73-5" href="#__codelineno-73-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>survival<span class="w"> </span>MAX_PLAYERS<span class="w"> </span><span class="m">10</span>
 <a id="__codelineno-73-6" name="__codelineno-73-6" href="#__codelineno-73-6"></a>mcctl<span class="w"> </span>op<span class="w"> </span>survival<span class="w"> </span>add<span class="w"> </span>YourName
@@ -8631,7 +8665,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </code></pre></div>
 <h3 id="3-performance-fabric-server">3. Performance Fabric Server<a class="headerlink" href="#3-performance-fabric-server" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>perf<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>perf<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">&quot;fabric-api,lithium,starlight,krypton&quot;</span>
+<a id="__codelineno-75-2" name="__codelineno-75-2" href="#__codelineno-75-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>perf<span class="w"> </span>MODRINTH_PROJECTS<span class="w"> </span><span class="s2">"fabric-api,lithium,starlight,krypton"</span>
 <a id="__codelineno-75-3" name="__codelineno-75-3" href="#__codelineno-75-3"></a>mcctl<span class="w"> </span>config<span class="w"> </span>perf<span class="w"> </span>MODRINTH_DOWNLOAD_DEPENDENCIES<span class="w"> </span>required
 <a id="__codelineno-75-4" name="__codelineno-75-4" href="#__codelineno-75-4"></a>mcctl<span class="w"> </span>config<span class="w"> </span>perf<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
 <a id="__codelineno-75-5" name="__codelineno-75-5" href="#__codelineno-75-5"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>perf<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>perf
@@ -8644,8 +8678,8 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-76-5" name="__codelineno-76-5" href="#__codelineno-76-5"></a>mcctl<span class="w"> </span>start<span class="w"> </span>newserver
 </code></pre></div>
 <h3 id="5-backup-before-major-changes">5. Backup Before Major Changes<a class="headerlink" href="#5-backup-before-major-changes" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>myserver<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Before 1.22 upgrade&quot;</span>
-<a id="__codelineno-77-2" name="__codelineno-77-2" href="#__codelineno-77-2"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Pre-upgrade backup&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>myserver<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Before 1.22 upgrade"</span>
+<a id="__codelineno-77-2" name="__codelineno-77-2" href="#__codelineno-77-2"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>push<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Pre-upgrade backup"</span>
 <a id="__codelineno-77-3" name="__codelineno-77-3" href="#__codelineno-77-3"></a><span class="c1"># If something goes wrong:</span>
 <a id="__codelineno-77-4" name="__codelineno-77-4" href="#__codelineno-77-4"></a>mcctl<span class="w"> </span>server-restore<span class="w"> </span>myserver
 <a id="__codelineno-77-5" name="__codelineno-77-5" href="#__codelineno-77-5"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span>abc1234
@@ -8675,24 +8709,24 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-81-3" name="__codelineno-81-3" href="#__codelineno-81-3"></a><span class="c1"># Enter admin username and password</span>
 <a id="__codelineno-81-4" name="__codelineno-81-4" href="#__codelineno-81-4"></a><span class="c1"># Choose API access mode</span>
 <a id="__codelineno-81-5" name="__codelineno-81-5" href="#__codelineno-81-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
-<a id="__codelineno-81-6" name="__codelineno-81-6" href="#__codelineno-81-6"></a><span class="c1"># Select: &quot;API + Console&quot;</span>
+<a id="__codelineno-81-6" name="__codelineno-81-6" href="#__codelineno-81-6"></a><span class="c1"># Select: "API + Console"</span>
 <a id="__codelineno-81-7" name="__codelineno-81-7" href="#__codelineno-81-7"></a><span class="c1"># Web Console: http://localhost:5000</span>
 <a id="__codelineno-81-8" name="__codelineno-81-8" href="#__codelineno-81-8"></a><span class="c1"># REST API: http://localhost:5001</span>
 <a id="__codelineno-81-9" name="__codelineno-81-9" href="#__codelineno-81-9"></a><span class="c1"># Swagger Docs: http://localhost:5001/docs</span>
 </code></pre></div>
 <h3 id="10-use-rest-api">10. Use REST API<a class="headerlink" href="#10-use-rest-api" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-82-1" name="__codelineno-82-1" href="#__codelineno-82-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
-<a id="__codelineno-82-2" name="__codelineno-82-2" href="#__codelineno-82-2"></a><span class="c1"># Select &quot;api-key&quot; access mode</span>
+<a id="__codelineno-82-2" name="__codelineno-82-2" href="#__codelineno-82-2"></a><span class="c1"># Select "api-key" access mode</span>
 <a id="__codelineno-82-3" name="__codelineno-82-3" href="#__codelineno-82-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
-<a id="__codelineno-82-4" name="__codelineno-82-4" href="#__codelineno-82-4"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers
-<a id="__codelineno-82-5" name="__codelineno-82-5" href="#__codelineno-82-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers/myserver/start
+<a id="__codelineno-82-4" name="__codelineno-82-4" href="#__codelineno-82-4"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/servers
+<a id="__codelineno-82-5" name="__codelineno-82-5" href="#__codelineno-82-5"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/servers/myserver/start
 </code></pre></div>
 <h3 id="11-set-up-api-only-no-web-console">11. Set Up API Only (No Web Console)<a class="headerlink" href="#11-set-up-api-only-no-web-console" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
 <a id="__codelineno-83-2" name="__codelineno-83-2" href="#__codelineno-83-2"></a><span class="c1"># Select: [mcctl-api] only (deselect mcctl-console)</span>
 <a id="__codelineno-83-3" name="__codelineno-83-3" href="#__codelineno-83-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
 <a id="__codelineno-83-4" name="__codelineno-83-4" href="#__codelineno-83-4"></a><span class="c1"># No prompt (only API available)</span>
-<a id="__codelineno-83-5" name="__codelineno-83-5" href="#__codelineno-83-5"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: mctk_xxx&quot;</span><span class="w"> </span>http://localhost:5001/api/servers
+<a id="__codelineno-83-5" name="__codelineno-83-5" href="#__codelineno-83-5"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span>http://localhost:5001/api/servers
 </code></pre></div>
 <h3 id="12-auto-start-services-on-boot">12. Auto-Start Services on Boot<a class="headerlink" href="#12-auto-start-services-on-boot" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a>pm2<span class="w"> </span>startup
@@ -8787,7 +8821,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h4 id="cant-connect-to-server">Can't Connect to Server<a class="headerlink" href="#cant-connect-to-server" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-90-1" name="__codelineno-90-1" href="#__codelineno-90-1"></a><span class="c1"># 1. Check mc-router is running</span>
 <a id="__codelineno-90-2" name="__codelineno-90-2" href="#__codelineno-90-2"></a>mcctl<span class="w"> </span>status
-<a id="__codelineno-90-3" name="__codelineno-90-3" href="#__codelineno-90-3"></a><span class="c1"># mc-router should show &quot;running&quot; and &quot;healthy&quot;</span>
+<a id="__codelineno-90-3" name="__codelineno-90-3" href="#__codelineno-90-3"></a><span class="c1"># mc-router should show "running" and "healthy"</span>
 <a id="__codelineno-90-4" name="__codelineno-90-4" href="#__codelineno-90-4"></a>
 <a id="__codelineno-90-5" name="__codelineno-90-5" href="#__codelineno-90-5"></a><span class="c1"># 2. Check server status</span>
 <a id="__codelineno-90-6" name="__codelineno-90-6" href="#__codelineno-90-6"></a>mcctl<span class="w"> </span>status<span class="w"> </span>myserver
@@ -8941,7 +8975,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </table>
 <p><strong>Diagnosis:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-94-1" name="__codelineno-94-1" href="#__codelineno-94-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server&gt;
-<a id="__codelineno-94-2" name="__codelineno-94-2" href="#__codelineno-94-2"></a><span class="c1"># Look for &quot;class file version&quot; or &quot;Unsupported&quot; errors</span>
+<a id="__codelineno-94-2" name="__codelineno-94-2" href="#__codelineno-94-2"></a><span class="c1"># Look for "class file version" or "Unsupported" errors</span>
 </code></pre></div></p>
 <p><strong>Fix steps:</strong>
 1. Check the Java version matrix in Section 10
@@ -8979,7 +9013,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-97-1" name="__codelineno-97-1" href="#__codelineno-97-1"></a><span class="c1"># Disable watchdog when using autopause (critical!)</span>
 <a id="__codelineno-97-2" name="__codelineno-97-2" href="#__codelineno-97-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>MAX_TICK_TIME<span class="w"> </span>-1
 <a id="__codelineno-97-3" name="__codelineno-97-3" href="#__codelineno-97-3"></a>
-<a id="__codelineno-97-4" name="__codelineno-97-4" href="#__codelineno-97-4"></a><span class="c1"># Check network interface (must match container&#39;s interface)</span>
+<a id="__codelineno-97-4" name="__codelineno-97-4" href="#__codelineno-97-4"></a><span class="c1"># Check network interface (must match container's interface)</span>
 <a id="__codelineno-97-5" name="__codelineno-97-5" href="#__codelineno-97-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>&lt;server&gt;<span class="w"> </span>AUTOPAUSE_KNOCK_INTERFACE<span class="w"> </span>eth0
 <a id="__codelineno-97-6" name="__codelineno-97-6" href="#__codelineno-97-6"></a>
 <a id="__codelineno-97-7" name="__codelineno-97-7" href="#__codelineno-97-7"></a><span class="c1"># Enable debug logging for autopause</span>
@@ -9075,7 +9109,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-99-4" name="__codelineno-99-4" href="#__codelineno-99-4"></a>sudo<span class="w"> </span>lsof<span class="w"> </span>-i<span class="w"> </span>:5001
 <a id="__codelineno-99-5" name="__codelineno-99-5" href="#__codelineno-99-5"></a>
 <a id="__codelineno-99-6" name="__codelineno-99-6" href="#__codelineno-99-6"></a><span class="c1"># Or use netstat</span>
-<a id="__codelineno-99-7" name="__codelineno-99-7" href="#__codelineno-99-7"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;25565|5000|5001&quot;</span>
+<a id="__codelineno-99-7" name="__codelineno-99-7" href="#__codelineno-99-7"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"25565|5000|5001"</span>
 </code></pre></div>
 <p><strong>Fix:</strong> Stop the conflicting service or change the port in configuration.</p>
 <hr />
@@ -9161,6 +9195,10 @@ A: Since v1.13.0, <code>mcctl console service start/stop/restart</code> shows in
 A: <code>mcctl console service status</code></p>
 <p><strong>Q: How do I view console logs?</strong>
 A: <code>mcctl console service logs</code> or <code>mcctl console service logs -f</code> for real-time.</p>
+<p><strong>Q: Why is a player's session history empty or short?</strong>
+A: Session history (v2.27.0+) is collected by mcctl-api from Docker logs (<code>joined/left the game</code>) every 30s into <code>data/players.db</code>. It starts when the collector first runs; the first pass backfills at most 24h of container logs. Older sessions, or logs of a recreated container, cannot be recovered. Stats/position come from world files and are not affected.</p>
+<p><strong>Q: Can I see players of a stopped server?</strong>
+A: Yes (v2.27.0+). <code>GET /api/servers/:name/players</code> returns the file-based <code>roster</code> with <code>running: false</code>; <code>online</code>/<code>max</code>/<code>players</code> are 0/empty.</p>
 <p><strong>Q: How does SSE work in the Web Console?</strong>
 A: Server-Sent Events provide real-time status updates without polling. Endpoint: <code>GET /api/sse/servers-status</code>.</p>
 <h3 id="performance">Performance<a class="headerlink" href="#performance" title="Permanent link">&para;</a></h3>
@@ -9231,6 +9269,18 @@ A: Yes. It only appends new variables and never modifies existing ones. Use <cod
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-2270-2026-09-27---server-players-panel">Version 2.27.0 (2026-09-27) - Server Players Panel<a class="headerlink" href="#version-2270-2026-09-27---server-players-panel" title="Permanent link">&para;</a></h3>
+<p><strong>Added (#528):</strong>
+- <strong>Players Tab</strong> in server detail (#550) - Unified online (RCON) + offline (<code>usercache.json</code>, <code>playerdata/</code>, <code>ops.json</code>, <code>whitelist.json</code>, <code>banned-players.json</code>) roster with avatars, badges, and kick/ban/unban/op/deop/whitelist actions
+- <strong>Player Detail Modal: Statistics</strong> (#551) - Play time, deaths, kills, distance, blocks mined, items crafted, advancements (<code>?include=stats</code>)
+- <strong>Player Detail Modal: Position &amp; Status</strong> (#552) - Last saved position/dimension, health, food, XP level, game mode, inventory summary from <code>playerdata/&lt;uuid&gt;.dat</code>; live RCON position polled every 5s while online (<code>?include=nbt</code> → <code>data</code>, <code>livePosition</code>)
+- <strong>Player Detail Modal: Session History</strong> (#553) - Visits, total playtime, last seen, recent 20 sessions (<code>?include=sessions</code>). <code>PlayerSessionCollectorService</code> in mcctl-api polls <code>docker logs --timestamps</code> every 30s into <code>data/players.db</code> (SQLite; tables <code>player_sessions</code>, <code>player_session_cursors</code>); first pass per server backfills 24h
+- <strong>New endpoint</strong>: <code>GET /api/servers/:name/players/:uuid</code> (<code>?include=stats,nbt,sessions</code>, any combination; unknown value → 400; unknown player → 404)
+- <strong>Shared domain</strong>: entities <code>Player</code>, <code>PlayerSession</code>; value objects <code>PlayerStats</code>, <code>PlayerData</code>, <code>PlayerSessionEvent</code>; use cases <code>PlayerManagementUseCase</code>, <code>PlayerSessionUseCase</code>; ports <code>IPlayerRepository</code>, <code>IPlayerSessionRepository</code>; adapters <code>PlayerRepository</code>, <code>SqlitePlayerSessionRepository</code></p>
+<p><strong>Changed:</strong>
+- <code>GET /api/servers/:name/players</code> now responds while the server is stopped (previously 400). Existing fields <code>online</code>/<code>max</code>/<code>players</code> are kept; added <code>serverName</code>, <code>running</code>, <code>roster[]</code> (<code>uuid</code>, <code>name</code>, <code>lastSeen</code>, <code>isOp</code>, <code>isBanned</code>, <code>isWhitelisted</code>, <code>online</code>). <code>?follow=true&amp;interval=&lt;ms&gt;</code> streams <code>event: players</code> via SSE</p>
+<p><strong>Notes:</strong>
+- Session history only covers the period since the collector first ran (plus up to 24h backfill); it is not reconstructed from world files</p>
 <h3 id="version-2220-2026-06-21---itzg-image-refresh">Version 2.22.0 (2026-06-21) - itzg Image Refresh<a class="headerlink" href="#version-2220-2026-06-21---itzg-image-refresh" title="Permanent link">&para;</a></h3>
 <p><strong>Changed:</strong>
 - <strong>mc-router Image Pin</strong> - Bump <code>itzg/mc-router</code> pin from <code>1.42.0</code> to <code>1.43.1</code> in <code>platform/docker-compose.yml</code> and pin the two previously-unpinned mc-router compose templates to <code>1.43.1</code> (#503, #504)
@@ -9754,7 +9804,7 @@ A: <code>mcctl update</code> updates the CLI and service packages to newer versi
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

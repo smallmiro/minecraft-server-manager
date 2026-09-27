@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2347,16 +2347,16 @@
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Single value</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4G&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"4G"</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Separate initial/max</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">INIT_MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2G&quot;</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">MAX_MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4G&quot;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">INIT_MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"2G"</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">MAX_MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"4G"</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Percentage of container memory</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;75%&quot;</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"75%"</span>
 </code></pre></div>
 <h2 id="passing-jvm-options">Passing JVM Options<a class="headerlink" href="#passing-jvm-options" title="Permanent link">&para;</a></h2>
 <table>
@@ -2383,15 +2383,15 @@
 </table>
 <h3 id="examples_1">Examples<a class="headerlink" href="#examples_1" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">JVM_OPTS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;-Dfoo=bar</span><span class="nv"> </span><span class="s">-Xms512M&quot;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">JVM_XX_OPTS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;-XX:+UseG1GC</span><span class="nv"> </span><span class="s">-XX:MaxGCPauseMillis=200&quot;</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">JVM_DD_OPTS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;foo=bar,baz=qux&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">JVM_OPTS</span><span class="p">:</span><span class="w"> </span><span class="s">"-Dfoo=bar</span><span class="nv"> </span><span class="s">-Xms512M"</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">JVM_XX_OPTS</span><span class="p">:</span><span class="w"> </span><span class="s">"-XX:+UseG1GC</span><span class="nv"> </span><span class="s">-XX:MaxGCPauseMillis=200"</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">JVM_DD_OPTS</span><span class="p">:</span><span class="w"> </span><span class="s">"foo=bar,baz=qux"</span>
 </code></pre></div>
 <h2 id="optimization-flags">Optimization Flags<a class="headerlink" href="#optimization-flags" title="Permanent link">&para;</a></h2>
 <h3 id="aikar-flags">Aikar Flags<a class="headerlink" href="#aikar-flags" title="Permanent link">&para;</a></h3>
 <p>Recommended GC tuning flags for Paper/Spigot servers:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 </code></pre></div>
 <p>Applied options include:
 - G1GC garbage collector
@@ -2400,22 +2400,22 @@
 <h3 id="meowice-flags">MeowIce Flags<a class="headerlink" href="#meowice-flags" title="Permanent link">&para;</a></h3>
 <p>Updated version of Aikar flags:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">USE_MEOWICE_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">USE_MEOWICE_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 </code></pre></div>
 <h3 id="graalvm-optimization">GraalVM Optimization<a class="headerlink" href="#graalvm-optimization" title="Permanent link">&para;</a></h3>
 <p>When using GraalVM JVM:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">USE_MEOWICE_GRAALVM_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">USE_MEOWICE_GRAALVM_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 </code></pre></div>
 <h3 id="flare-profiling">Flare Profiling<a class="headerlink" href="#flare-profiling" title="Permanent link">&para;</a></h3>
 <p>Performance profiling support:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">USE_FLARE_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">USE_FLARE_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 </code></pre></div>
 <h3 id="simd-optimization">SIMD Optimization<a class="headerlink" href="#simd-optimization" title="Permanent link">&para;</a></h3>
 <p>Vector operation optimization:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">USE_SIMD_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">USE_SIMD_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 </code></pre></div>
 <h2 id="jmx-remote-monitoring">JMX Remote Monitoring<a class="headerlink" href="#jmx-remote-monitoring" title="Permanent link">&para;</a></h2>
 <p>Remote profiling through JMX (Java Management Extensions):</p>
@@ -2449,13 +2449,13 @@
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">      </span><span class="nt">ENABLE_JMX</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">JMX_HOST</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.0.0.0&quot;</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">      </span><span class="nt">JMX_PORT</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;7091&quot;</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">      </span><span class="nt">ENABLE_JMX</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">JMX_HOST</span><span class="p">:</span><span class="w"> </span><span class="s">"0.0.0.0"</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">      </span><span class="nt">JMX_PORT</span><span class="p">:</span><span class="w"> </span><span class="s">"7091"</span>
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;7091:7091&quot;</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"25565:25565"</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"7091:7091"</span>
 </code></pre></div>
 <h2 id="openj9-specific-options">OpenJ9 Specific Options<a class="headerlink" href="#openj9-specific-options" title="Permanent link">&para;</a></h2>
 <p>When using IBM OpenJ9 JVM:</p>
@@ -2478,39 +2478,39 @@
 </tbody>
 </table>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">TUNE_VIRTUALIZED</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">TUNE_NURSERY_SIZES</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">TUNE_VIRTUALIZED</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">TUNE_NURSERY_SIZES</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
 </code></pre></div>
 <h2 id="memory-debugging">Memory Debugging<a class="headerlink" href="#memory-debugging" title="Permanent link">&para;</a></h2>
 <p>Diagnose memory allocation issues:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">DEBUG_MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">DEBUG_MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 </code></pre></div>
 <h2 id="recommended-configuration-examples">Recommended Configuration Examples<a class="headerlink" href="#recommended-configuration-examples" title="Permanent link">&para;</a></h2>
 <h3 id="small-server-1-10-players">Small Server (1-10 players)<a class="headerlink" href="#small-server-1-10-players" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2G&quot;</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"2G"</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 </code></pre></div>
 <h3 id="medium-server-10-30-players">Medium Server (10-30 players)<a class="headerlink" href="#medium-server-10-30-players" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4G&quot;</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">VIEW_DISTANCE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;10&quot;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"4G"</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">VIEW_DISTANCE</span><span class="p">:</span><span class="w"> </span><span class="s">"10"</span>
 </code></pre></div>
 <h3 id="large-server-30-players">Large Server (30+ players)<a class="headerlink" href="#large-server-30-players" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">INIT_MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4G&quot;</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">MAX_MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;8G&quot;</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">VIEW_DISTANCE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;8&quot;</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="nt">SIMULATION_DISTANCE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;6&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">INIT_MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"4G"</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">MAX_MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"8G"</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">VIEW_DISTANCE</span><span class="p">:</span><span class="w"> </span><span class="s">"8"</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="nt">SIMULATION_DISTANCE</span><span class="p">:</span><span class="w"> </span><span class="s">"6"</span>
 </code></pre></div>
 <h3 id="modpack-server">Modpack Server<a class="headerlink" href="#modpack-server" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;6G&quot;</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="nt">JVM_XX_OPTS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;-XX:+UnlockExperimentalVMOptions</span><span class="nv"> </span><span class="s">-XX:G1NewSizePercent=40&quot;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">MEMORY</span><span class="p">:</span><span class="w"> </span><span class="s">"6G"</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">USE_AIKAR_FLAGS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="nt">JVM_XX_OPTS</span><span class="p">:</span><span class="w"> </span><span class="s">"-XX:+UnlockExperimentalVMOptions</span><span class="nv"> </span><span class="s">-XX:G1NewSizePercent=40"</span>
 </code></pre></div>
 
 
@@ -2590,7 +2590,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

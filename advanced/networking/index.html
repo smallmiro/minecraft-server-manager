@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -3541,7 +3541,7 @@
 </code></pre></div>
 <p>Manual registration:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Add entry</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;192.168.1.100 myserver.local&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span>/etc/avahi/hosts
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"192.168.1.100 myserver.local"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span>/etc/avahi/hosts
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Restart avahi</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>avahi-daemon
@@ -3625,7 +3625,7 @@ label-based <code>--in-docker</code> auto-scale workflow used here needs no conf
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">mc-myserver</span><span class="p">:</span>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">      </span><span class="nt">mc-router.host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;myserver.local,myserver.192.168.1.100.nip.io&quot;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">      </span><span class="nt">mc-router.host</span><span class="p">:</span><span class="w"> </span><span class="s">"myserver.local,myserver.192.168.1.100.nip.io"</span>
 </code></pre></div>
 <h3 id="auto-scaling-settings">Auto-scaling Settings<a class="headerlink" href="#auto-scaling-settings" title="Permanent link">&para;</a></h3>
 <p>Configure in <code>~/minecraft-servers/.env</code>:</p>
@@ -3802,7 +3802,7 @@ See <a href="https://github.com/itzg/mc-router/issues/507">mc-router #507</a> fo
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">  </span><span class="nt">router</span><span class="p">:</span>
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span><span class="w">  </span><span class="c1"># Public port</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"25565:25565"</span><span class="w">  </span><span class="c1"># Public port</span>
 </code></pre></div>
 <p>Individual Minecraft servers don't expose ports - they're accessed through mc-router.</p>
 <h3 id="container-discovery">Container Discovery<a class="headerlink" href="#container-discovery" title="Permanent link">&para;</a></h3>
@@ -3821,7 +3821,7 @@ See <a href="https://github.com/itzg/mc-router/issues/507">mc-router #507</a> fo
 <h3 id="server-configuration">Server Configuration<a class="headerlink" href="#server-configuration" title="Permanent link">&para;</a></h3>
 <p>Update the mc-router.host label:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="nt">labels</span><span class="p">:</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">  </span><span class="nt">mc-router.host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;survival.minecraft.example.com&quot;</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">  </span><span class="nt">mc-router.host</span><span class="p">:</span><span class="w"> </span><span class="s">"survival.minecraft.example.com"</span>
 </code></pre></div>
 <h3 id="httpstls">HTTPS/TLS<a class="headerlink" href="#httpstls" title="Permanent link">&para;</a></h3>
 <p>Minecraft uses its own protocol, not HTTPS. TLS is not needed for the game connection.</p>
@@ -3850,8 +3850,8 @@ See <a href="https://github.com/itzg/mc-router/issues/507">mc-router #507</a> fo
 </tbody>
 </table>
 <h3 id="ufw-ubuntu">UFW (Ubuntu)<a class="headerlink" href="#ufw-ubuntu" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">25565</span>/tcp<span class="w"> </span>comment<span class="w"> </span><span class="s2">&quot;Minecraft&quot;</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">5353</span>/udp<span class="w"> </span>comment<span class="w"> </span><span class="s2">&quot;mDNS&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">25565</span>/tcp<span class="w"> </span>comment<span class="w"> </span><span class="s2">"Minecraft"</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">5353</span>/udp<span class="w"> </span>comment<span class="w"> </span><span class="s2">"mDNS"</span>
 </code></pre></div>
 <h3 id="firewalld-centosrhel">firewalld (CentOS/RHEL)<a class="headerlink" href="#firewalld-centosrhel" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>sudo<span class="w"> </span>firewall-cmd<span class="w"> </span>--permanent<span class="w"> </span>--add-port<span class="o">=</span><span class="m">25565</span>/tcp
@@ -3983,7 +3983,7 @@ See <a href="https://github.com/itzg/mc-router/issues/507">mc-router #507</a> fo
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

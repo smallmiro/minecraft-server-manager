@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2379,7 +2379,7 @@
 <h2 id="importing-worlds">Importing Worlds<a class="headerlink" href="#importing-worlds" title="Permanent link">&para;</a></h2>
 <h3 id="download-world-from-url">Download World from URL<a class="headerlink" href="#download-world-from-url" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">WORLD</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/world.zip&quot;</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">WORLD</span><span class="p">:</span><span class="w"> </span><span class="s">"https://example.com/world.zip"</span>
 </code></pre></div>
 <h3 id="supported-formats">Supported Formats<a class="headerlink" href="#supported-formats" title="Permanent link">&para;</a></h3>
 <ul>
@@ -2393,7 +2393,7 @@
 </code></pre></div>
 <p>Or:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">WORLD</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/worlds/my-world&quot;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">WORLD</span><span class="p">:</span><span class="w"> </span><span class="s">"/worlds/my-world"</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nt">volumes</span><span class="p">:</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./worlds:/worlds:ro</span>
 </code></pre></div>
@@ -2426,15 +2426,15 @@
 </table>
 <h2 id="changing-world-directory">Changing World Directory<a class="headerlink" href="#changing-world-directory" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">EXTRA_ARGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;--world-dir</span><span class="nv"> </span><span class="s">./worlds/&quot;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">EXTRA_ARGS</span><span class="p">:</span><span class="w"> </span><span class="s">"--world-dir</span><span class="nv"> </span><span class="s">./worlds/"</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="c1"># or</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">EXTRA_ARGS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;--universe</span><span class="nv"> </span><span class="s">./worlds/&quot;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">EXTRA_ARGS</span><span class="p">:</span><span class="w"> </span><span class="s">"--universe</span><span class="nv"> </span><span class="s">./worlds/"</span>
 </code></pre></div>
 <hr />
 <h2 id="datapacks">Datapacks<a class="headerlink" href="#datapacks" title="Permanent link">&para;</a></h2>
 <h3 id="single-datapack">Single Datapack<a class="headerlink" href="#single-datapack" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">DATAPACKS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/datapack.zip&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">DATAPACKS</span><span class="p">:</span><span class="w"> </span><span class="s">"https://example.com/datapack.zip"</span>
 </code></pre></div>
 <h3 id="multiple-datapacks">Multiple Datapacks<a class="headerlink" href="#multiple-datapacks" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">environment</span><span class="p">:</span>
@@ -2445,7 +2445,7 @@
 </code></pre></div>
 <h3 id="datapack-list-file">Datapack List File<a class="headerlink" href="#datapack-list-file" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">DATAPACKS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/datapacks.txt&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">DATAPACKS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">"/data/datapacks.txt"</span>
 </code></pre></div>
 <p><code>datapacks.txt</code>:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>https://example.com/datapack1.zip
@@ -2453,9 +2453,9 @@
 </code></pre></div></p>
 <h3 id="removing-old-datapacks">Removing Old Datapacks<a class="headerlink" href="#removing-old-datapacks" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">REMOVE_OLD_DATAPACKS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">REMOVE_OLD_DATAPACKS_DEPTH</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;16&quot;</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">REMOVE_OLD_DATAPACKS_INCLUDE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;*.zip&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">REMOVE_OLD_DATAPACKS</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">REMOVE_OLD_DATAPACKS_DEPTH</span><span class="p">:</span><span class="w"> </span><span class="s">"16"</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">REMOVE_OLD_DATAPACKS_INCLUDE</span><span class="p">:</span><span class="w"> </span><span class="s">"*.zip"</span>
 </code></pre></div>
 <hr />
 <h2 id="vanillatweaks">VanillaTweaks<a class="headerlink" href="#vanillatweaks" title="Permanent link">&para;</a></h2>
@@ -2463,19 +2463,19 @@
 <h3 id="using-share-code">Using Share Code<a class="headerlink" href="#using-share-code" title="Permanent link">&para;</a></h3>
 <p>Share code generated from VanillaTweaks website:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">VANILLATWEAKS_SHARECODE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MGr52E,q2Ec6z&quot;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">VANILLATWEAKS_SHARECODE</span><span class="p">:</span><span class="w"> </span><span class="s">"MGr52E,q2Ec6z"</span>
 </code></pre></div>
 <h3 id="json-configuration-file">JSON Configuration File<a class="headerlink" href="#json-configuration-file" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">VANILLATWEAKS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/vanillatweaks.json&quot;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">VANILLATWEAKS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">"/data/vanillatweaks.json"</span>
 </code></pre></div>
 <p><code>vanillatweaks.json</code>:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;datapacks&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.20&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">&quot;packs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="nt">&quot;survival&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;multiplayer sleep&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;afk display&quot;</span><span class="p">],</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="nt">&quot;items&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;player head drops&quot;</span><span class="p">]</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"datapacks"</span><span class="p">,</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.20"</span><span class="p">,</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">"packs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="nt">"survival"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"multiplayer sleep"</span><span class="p">,</span><span class="w"> </span><span class="s2">"afk display"</span><span class="p">],</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="nt">"items"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"player head drops"</span><span class="p">]</span>
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="p">}</span>
 </code></pre></div></p>
@@ -2489,19 +2489,19 @@
 <h2 id="world-generation-settings">World Generation Settings<a class="headerlink" href="#world-generation-settings" title="Permanent link">&para;</a></h2>
 <h3 id="basic-settings">Basic Settings<a class="headerlink" href="#basic-settings" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">LEVEL_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;default&quot;</span><span class="w">    </span><span class="c1"># default, flat, largeBiomes, amplified</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">SEED</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12345&quot;</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">GENERATE_STRUCTURES</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">LEVEL_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"default"</span><span class="w">    </span><span class="c1"># default, flat, largeBiomes, amplified</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">SEED</span><span class="p">:</span><span class="w"> </span><span class="s">"12345"</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">GENERATE_STRUCTURES</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 </code></pre></div>
 <h3 id="superflat-world">Superflat World<a class="headerlink" href="#superflat-world" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">LEVEL_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;flat&quot;</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">GENERATOR_SETTINGS</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;{&quot;layers&quot;:[{&quot;block&quot;:&quot;bedrock&quot;,&quot;height&quot;:1},{&quot;block&quot;:&quot;dirt&quot;,&quot;height&quot;:2},{&quot;block&quot;:&quot;grass_block&quot;,&quot;height&quot;:1}]}&#39;</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">LEVEL_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"flat"</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">GENERATOR_SETTINGS</span><span class="p">:</span><span class="w"> </span><span class="s">'{"layers":[{"block":"bedrock","height":1},{"block":"dirt","height":2},{"block":"grass_block","height":1}]}'</span>
 </code></pre></div>
 <h3 id="initial-datapack-settings">Initial Datapack Settings<a class="headerlink" href="#initial-datapack-settings" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">INITIAL_ENABLED_PACKS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;vanilla,file/my_datapack&quot;</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nt">INITIAL_DISABLED_PACKS</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;file/disabled_pack&quot;</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">INITIAL_ENABLED_PACKS</span><span class="p">:</span><span class="w"> </span><span class="s">"vanilla,file/my_datapack"</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="nt">INITIAL_DISABLED_PACKS</span><span class="p">:</span><span class="w"> </span><span class="s">"file/disabled_pack"</span>
 </code></pre></div>
 <hr />
 <h2 id="world-backup">World Backup<a class="headerlink" href="#world-backup" title="Permanent link">&para;</a></h2>
@@ -2518,11 +2518,11 @@
 </code></pre></div>
 <h3 id="automatic-backup-script">Automatic Backup Script<a class="headerlink" href="#automatic-backup-script" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="ch">#!/bin/bash</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nv">CONTAINER</span><span class="o">=</span><span class="s2">&quot;mc&quot;</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="nv">BACKUP_DIR</span><span class="o">=</span><span class="s2">&quot;./backups&quot;</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nv">CONTAINER</span><span class="o">=</span><span class="s2">"mc"</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="nv">BACKUP_DIR</span><span class="o">=</span><span class="s2">"./backups"</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="nv">DATE</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d_%H%M%S<span class="k">)</span>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BACKUP_DIR</span><span class="s2">&quot;</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$BACKUP_DIR</span><span class="s2">"</span>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="c1"># Save world</span>
 <a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span><span class="nv">$CONTAINER</span><span class="w"> </span>rcon-cli<span class="w"> </span>save-all
@@ -2530,13 +2530,13 @@
 <a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span><span class="nv">$CONTAINER</span><span class="w"> </span>rcon-cli<span class="w"> </span>save-off
 <a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>
 <a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="c1"># Backup</span>
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>tar<span class="w"> </span>-czf<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BACKUP_DIR</span><span class="s2">/world_</span><span class="nv">$DATE</span><span class="s2">.tar.gz&quot;</span><span class="w"> </span>./data/world
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>tar<span class="w"> </span>-czf<span class="w"> </span><span class="s2">"</span><span class="nv">$BACKUP_DIR</span><span class="s2">/world_</span><span class="nv">$DATE</span><span class="s2">.tar.gz"</span><span class="w"> </span>./data/world
 <a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>
 <a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="c1"># Re-enable saving</span>
 <a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span><span class="nv">$CONTAINER</span><span class="w"> </span>rcon-cli<span class="w"> </span>save-on
 <a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>
 <a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="c1"># Delete old backups (7 days)</span>
-<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a>find<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BACKUP_DIR</span><span class="s2">&quot;</span><span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;*.tar.gz&quot;</span><span class="w"> </span>-mtime<span class="w"> </span>+7<span class="w"> </span>-delete
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a>find<span class="w"> </span><span class="s2">"</span><span class="nv">$BACKUP_DIR</span><span class="s2">"</span><span class="w"> </span>-name<span class="w"> </span><span class="s2">"*.tar.gz"</span><span class="w"> </span>-mtime<span class="w"> </span>+7<span class="w"> </span>-delete
 </code></pre></div>
 <hr />
 <h2 id="example-configurations">Example Configurations<a class="headerlink" href="#example-configurations" title="Permanent link">&para;</a></h2>
@@ -2545,13 +2545,13 @@
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server</span>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PAPER&quot;</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"PAPER"</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"1.20.4"</span>
 <a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
 <a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="w">      </span><span class="c1"># World settings</span>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">      </span><span class="nt">WORLD</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://example.com/custom-world.zip&quot;</span>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="w">      </span><span class="nt">LEVEL</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;custom-world&quot;</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">      </span><span class="nt">WORLD</span><span class="p">:</span><span class="w"> </span><span class="s">"https://example.com/custom-world.zip"</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="w">      </span><span class="nt">LEVEL</span><span class="p">:</span><span class="w"> </span><span class="s">"custom-world"</span>
 <a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
 <a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">      </span><span class="c1"># Datapacks</span>
 <a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="w">      </span><span class="nt">DATAPACKS</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
@@ -2559,31 +2559,31 @@
 <a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="w">        </span><span class="no">https://example.com/datapack2.zip</span>
 <a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>
 <a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="w">      </span><span class="c1"># VanillaTweaks</span>
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="w">      </span><span class="nt">VANILLATWEAKS_SHARECODE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;MGr52E&quot;</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="w">      </span><span class="nt">VANILLATWEAKS_SHARECODE</span><span class="p">:</span><span class="w"> </span><span class="s">"MGr52E"</span>
 <a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
 <a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./data:/data</span>
 <a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"25565:25565"</span>
 </code></pre></div>
 <h3 id="new-world-generation">New World Generation<a class="headerlink" href="#new-world-generation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">mc</span><span class="p">:</span>
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server</span>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TRUE&quot;</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;PAPER&quot;</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.20.4&quot;</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">      </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">      </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"PAPER"</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">      </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"1.20.4"</span>
 <a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>
 <a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">      </span><span class="c1"># World generation settings</span>
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">      </span><span class="nt">LEVEL</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;survival-world&quot;</span>
-<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">      </span><span class="nt">SEED</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;minecraft-seed-123&quot;</span>
-<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">      </span><span class="nt">LEVEL_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;default&quot;</span>
-<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">      </span><span class="nt">GENERATE_STRUCTURES</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
-<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="w">      </span><span class="nt">DIFFICULTY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;normal&quot;</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">      </span><span class="nt">LEVEL</span><span class="p">:</span><span class="w"> </span><span class="s">"survival-world"</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">      </span><span class="nt">SEED</span><span class="p">:</span><span class="w"> </span><span class="s">"minecraft-seed-123"</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">      </span><span class="nt">LEVEL_TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"default"</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">      </span><span class="nt">GENERATE_STRUCTURES</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="w">      </span><span class="nt">DIFFICULTY</span><span class="p">:</span><span class="w"> </span><span class="s">"normal"</span>
 <a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
 <a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./data:/data</span>
 <a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;25565:25565&quot;</span>
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"25565:25565"</span>
 </code></pre></div>
 
 
@@ -2663,7 +2663,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
