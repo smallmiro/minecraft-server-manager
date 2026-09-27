@@ -917,9 +917,19 @@ export function useRemoveFromWhitelist() {
 // ============================================================
 
 /**
- * Hook to fetch a single player's detail (with stats) for the detail modal.
- * Skipped when `uuid` is empty (an online player not yet cached) or when
- * explicitly disabled.
+ * Poll every 5s while the player is online, so `livePosition` stays current
+ * (#528 Phase 3); offline players have no live position to refresh.
+ * Exported standalone so the polling decision is unit-testable without
+ * racing real/fake timers.
+ */
+export function playerDetailRefetchInterval(data: PlayerDetail | undefined): number | false {
+  return data?.online ? 5000 : false;
+}
+
+/**
+ * Hook to fetch a single player's detail (stats + NBT position/status) for
+ * the detail modal. Skipped when `uuid` is empty (an online player not yet
+ * cached) or when explicitly disabled.
  */
 export function usePlayerDetail(
   serverName: string,
@@ -930,8 +940,9 @@ export function usePlayerDetail(
     queryKey: ['servers', serverName, 'players', uuid, 'detail'],
     queryFn: () =>
       apiFetch<PlayerDetail>(
-        `/api/servers/${encodeURIComponent(serverName)}/players/${encodeURIComponent(uuid)}?include=stats`
+        `/api/servers/${encodeURIComponent(serverName)}/players/${encodeURIComponent(uuid)}?include=stats,nbt`
       ),
     enabled: (options?.enabled ?? true) && !!serverName && !!uuid,
+    refetchInterval: (query) => playerDetailRefetchInterval(query.state.data),
   });
 }

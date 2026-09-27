@@ -831,12 +831,44 @@ export interface PlayerStats {
 }
 
 /**
+ * `playerdata/<uuid>.dat`-derived last-saved position/status (#528 Phase 3),
+ * parsed via `prismarine-nbt`.
+ */
+export interface PlayerData {
+  x: number;
+  y: number;
+  z: number;
+  dimension: WorldDimension;
+  health: number;
+  food: number;
+  xpLevel: number;
+  gameMode: GameMode;
+  inventory: {
+    slotsUsed: number;
+    items: Array<{ id: string; count: number }>;
+  };
+}
+
+/**
+ * Live RCON position (#528 Phase 3). Only present (object or `null`) when the
+ * player is currently online.
+ */
+export interface LivePosition {
+  x: number;
+  y: number;
+  z: number;
+  dimension?: WorldDimension;
+}
+
+/**
  * Player detail as returned by `GET .../players/:uuid?include=...`.
- * `stats` is `null` when the player has no stats file, and absent when not
- * requested via `include`.
+ * `stats`/`data`/`livePosition` are `null` when the player has no such data,
+ * and absent when not requested via `include`.
  */
 export interface PlayerDetail extends PlayerSummary {
   stats?: PlayerStats | null;
+  data?: PlayerData | null;
+  livePosition?: LivePosition | null;
 }
 
 // ============================================================
