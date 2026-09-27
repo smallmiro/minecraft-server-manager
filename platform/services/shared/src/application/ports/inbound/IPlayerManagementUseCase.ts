@@ -1,11 +1,11 @@
 import type { Player, PlayerStats, PlayerData, EntityPosition } from '../../../domain/index.js';
+import type { SessionHistory } from './IPlayerSessionUseCase.js';
 
 /**
- * Extra data to include in a `getPlayerDetail` result. Phase 4 will add
- * `'sessions'` later.
+ * Extra data to include in a `getPlayerDetail` result.
  */
 export interface GetPlayerDetailOptions {
-  include?: Array<'stats' | 'nbt'>;
+  include?: Array<'stats' | 'nbt' | 'sessions'>;
   /**
    * Server container name (e.g. `mc-<server>`), required to fetch
    * `livePosition` via RCON when `include` contains `'nbt'` and the player
@@ -28,6 +28,11 @@ export interface PlayerDetail {
    * `null` when offline, no container was given, or the RCON call failed.
    */
   livePosition?: EntityPosition | null;
+  /**
+   * Session history, present only when `include` contains `'sessions'`
+   * (#528, Phase 4). `null` when no `IPlayerSessionUseCase` was injected.
+   */
+  sessions?: SessionHistory | null;
 }
 
 /**

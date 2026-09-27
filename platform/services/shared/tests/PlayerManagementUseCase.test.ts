@@ -5,6 +5,8 @@ import type {
   IPlayerRepository,
   IRconPort,
   UserCacheEntry,
+  IPlayerSessionUseCase,
+  SessionHistory,
 } from '../src/application/ports/index.js';
 
 function makeRepo(
@@ -268,6 +270,56 @@ describe('PlayerManagementUseCase', () => {
         });
 
         expect(detail!.livePosition).toBeNull();
+      });
+    });
+
+    describe("include: ['sessions']", () => {
+      const history: SessionHistory = {
+        visitCount: 3,
+        totalPlaytimeSeconds: 900,
+        lastSeen: new Date('2026-01-01T00:00:00.000Z'),
+        recent: [],
+      };
+
+      it('include가 없으면 sessions를 읽지 않는다', async () => {
+        const playerSessions: IPlayerSessionUseCase = {
+          ingestLogLines: vi.fn(),
+          markServerStopped: vi.fn(),
+          getSessionHistory: vi.fn().mockResolvedValue(history),
+        };
+        const useCase = new PlayerManagementUseCase(makeRepo([steve]), undefined, playerSessions);
+        const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve');
+
+        expect(detail!.sessions).toBeUndefined();
+        expect(playerSessions.getSessionHistory).not.toHaveBeenCalled();
+      });
+
+      it("include: ['sessions']이면 세션 이력을 조회해 포함한다", async () => {
+        const playerSessions: IPlayerSessionUseCase = {
+          ingestLogLines: vi.fn(),
+          markServerStopped: vi.fn(),
+          getSessionHistory: vi.fn().mockResolvedValue(history),
+        };
+        const useCase = new PlayerManagementUseCase(makeRepo([steve]), undefined, playerSessions);
+        const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', [], {
+          include: ['sessions'],
+        });
+
+        expect(detail!.sessions).toBe(history);
+        expect(playerSessions.getSessionHistory).toHaveBeenCalledWith(
+          'myserver',
+          'Steve',
+          expect.any(Date)
+        );
+      });
+
+      it('IPlayerSessionUseCase가 주입되지 않으면 sessions는 null이다', async () => {
+        const useCase = new PlayerManagementUseCase(makeRepo([steve]));
+        const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', [], {
+          include: ['sessions'],
+        });
+
+        expect(detail!.sessions).toBeNull();
       });
     });
   });
