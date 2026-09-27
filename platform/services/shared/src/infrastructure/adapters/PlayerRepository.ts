@@ -1,7 +1,7 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
-import { Player } from '../../domain/index.js';
+import { Player, PlayerStats } from '../../domain/index.js';
 import type {
   IPlayerRepository,
   UserCacheEntry,
@@ -11,6 +11,10 @@ interface NamedUuidEntry {
   uuid: string;
   name: string;
 }
+
+// Dashed Minecraft UUID, e.g. 069a79f4-44e9-4726-a5be-fca90e38aaf5. Validated
+// before building a file path from user input (no path traversal).
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Merge target: fields collected from every source, keyed by uuid/name. */
 interface PlayerRecord {
@@ -93,6 +97,20 @@ export class PlayerRepository implements IPlayerRepository {
       );
   }
 
+  async readStats(serverName: string, uuid: string): Promise<PlayerStats | null> {
+    if (!UUID_PATTERN.test(uuid)) return null;
+
+    const level = await this.resolveWorldLevel(serverName);
+    const worldDir = join(this.paths.root, 'worlds', level);
+    const statsJson = await this.readJsonFile(join(worldDir, 'stats', `${uuid}.json`));
+    if (statsJson === null) return null;
+
+    const advancementsJson = await this.readJsonFile(
+      join(worldDir, 'advancements', `${uuid}.json`)
+    );
+    return PlayerStats.fromMinecraftJson(statsJson, advancementsJson ?? undefined);
+  }
+
   /** Scan `worlds/<level>/playerdata/*.dat`, using file mtime as last-seen. */
   private async readPlayerData(
     serverName: string
@@ -152,6 +170,16 @@ export class PlayerRepository implements IPlayerRepository {
       return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
+    }
+  }
+
+  /** Parsed JSON, or `null` when the file is missing or not valid JSON. */
+  private async readJsonFile(filePath: string): Promise<unknown | null> {
+    try {
+      const content = await readFile(filePath, 'utf-8');
+      return JSON.parse(content);
+    } catch {
+      return null;
     }
   }
 }

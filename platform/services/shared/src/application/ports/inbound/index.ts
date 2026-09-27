@@ -34,6 +34,10 @@ export type {
 export type { IConfigSnapshotUseCase } from './IConfigSnapshotUseCase.js';
 export type { IConfigSnapshotScheduleUseCase } from './IConfigSnapshotScheduleUseCase.js';
 export type { IWorldInfoUseCase } from './IWorldInfoUseCase.js';
-export type { IPlayerManagementUseCase } from './IPlayerManagementUseCase.js';
+export type {
+  IPlayerManagementUseCase,
+  PlayerDetail,
+  GetPlayerDetailOptions,
+} from './IPlayerManagementUseCase.js';
 export { AnalysisCancelledError } from './IWorldStatsUseCase.js';
 export type { IWorldStatsUseCase, AnalyzeOptions } from './IWorldStatsUseCase.js';
