@@ -10,3 +10,4 @@ export { ConfigSnapshotScheduleUseCaseImpl } from './ConfigSnapshotScheduleUseCa
 export { WorldInfoUseCase } from './WorldInfoUseCase.js';
 export { WorldStatsUseCase } from './WorldStatsUseCase.js';
 export { PlayerManagementUseCase } from './PlayerManagementUseCase.js';
+export { PlayerSessionUseCase } from './PlayerSessionUseCase.js';
