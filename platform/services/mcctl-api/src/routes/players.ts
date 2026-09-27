@@ -292,11 +292,11 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       const { names: onlineNames } = await getOnlinePlayers(name);
-      const player = await playerManagementUseCase.getPlayerDetail(name, uuid, onlineNames);
-      if (!player) {
+      const detail = await playerManagementUseCase.getPlayerDetail(name, uuid, onlineNames);
+      if (!detail) {
         return reply.code(404).send({ error: 'NotFound', message: `Player '${uuid}' not found` });
       }
-      return reply.send(player.toJSON());
+      return reply.send(detail.player.toJSON());
     } catch (error) {
       fastify.log.error(error, 'Failed to get player detail');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get player detail' });
