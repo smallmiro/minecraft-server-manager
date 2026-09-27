@@ -79,4 +79,29 @@ describe('parsePlayerDat', () => {
     const data = await parsePlayerDat(buildPlayerDat({ Health: nbt.float(20) }));
     expect(data.inventory).toEqual({ slotsUsed: 0, items: [] });
   });
+
+  it('includes 1.21.5+ equipment (armor/offhand) items in the inventory summary', async () => {
+    const buf = buildPlayerDat({
+      Inventory: nbt.list(
+        nbt.comp([inventoryStack('minecraft:diamond', 0, 5, true)])
+      ),
+      equipment: nbt.comp({
+        head: nbt.comp({ id: nbt.string('minecraft:diamond_helmet'), count: nbt.int(1) }),
+        chest: nbt.comp({ id: nbt.string('minecraft:diamond_chestplate'), count: nbt.int(1) }),
+        offhand: nbt.comp({ id: nbt.string('minecraft:shield'), count: nbt.int(1) }),
+      }),
+    });
+
+    const data = await parsePlayerDat(buf);
+
+    expect(data.inventory.slotsUsed).toBe(4);
+    expect(data.inventory.items).toEqual(
+      expect.arrayContaining([
+        { id: 'minecraft:diamond', count: 5 },
+        { id: 'minecraft:diamond_helmet', count: 1 },
+        { id: 'minecraft:diamond_chestplate', count: 1 },
+        { id: 'minecraft:shield', count: 1 },
+      ])
+    );
+  });
 });
