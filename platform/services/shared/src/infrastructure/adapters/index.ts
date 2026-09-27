@@ -30,6 +30,7 @@ export {
   type ISchedulerLogger,
 } from './ConfigSnapshotSchedulerService.js';
 export { PrismarineWorldDataReader } from './PrismarineWorldDataReader.js';
+export { PlayerRepository } from './PlayerRepository.js';
 export { parseStructuresFromRegion } from './AnvilStructureReader.js';
 export { AnvilBlockScanner, decodeSection } from './AnvilBlockScanner.js';
 export { iterateRegionChunks } from './anvilRegion.js';

@@ -35,6 +35,8 @@ import {
   UpdateBackupScheduleRequest,
   BackupScheduleActionResponse,
   PlayerListResponse,
+  PlayerSummary,
+  PlayersResponse,
   WhitelistResponse,
   WhitelistStatusResponse,
   BannedPlayersResponse,
@@ -465,6 +467,22 @@ export class McctlApiAdapter implements IMcctlApiClient {
     return this.fetch<PlayerActionResponse>(
       `/api/servers/${encodeURIComponent(serverName)}/bans/${encodeURIComponent(player)}`,
       { method: 'DELETE' }
+    );
+  }
+
+  // ============================================================
+  // Player Roster Operations (#528)
+  // ============================================================
+
+  async getPlayers(serverName: string): Promise<PlayersResponse> {
+    return this.fetch<PlayersResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/players`
+    );
+  }
+
+  async getPlayer(serverName: string, uuid: string): Promise<PlayerSummary> {
+    return this.fetch<PlayerSummary>(
+      `/api/servers/${encodeURIComponent(serverName)}/players/${encodeURIComponent(uuid)}`
     );
   }
 

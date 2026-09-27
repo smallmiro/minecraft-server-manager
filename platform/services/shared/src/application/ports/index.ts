@@ -33,6 +33,7 @@ export type {
   IWorldInfoUseCase,
   IWorldStatsUseCase,
   AnalyzeOptions,
+  IPlayerManagementUseCase,
 } from './inbound/index.js';
 export { AnalysisCancelledError } from './inbound/index.js';
 
@@ -77,6 +78,8 @@ export type {
   IConfigSnapshotStorage,
   IWorldDataReader,
   IRconPort,
+  IPlayerRepository,
+  UserCacheEntry,
   IMapRenderer,
   MapRenderProgress,
   MapRenderResult,

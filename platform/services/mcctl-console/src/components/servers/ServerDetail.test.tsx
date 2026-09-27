@@ -37,6 +37,10 @@ vi.mock('./ServerBackupTab', () => ({
   ServerBackupTab: () => <div>Backup Tab Content</div>,
 }));
 
+vi.mock('./ServerPlayersTab', () => ({
+  ServerPlayersTab: () => <div>Players Tab Content</div>,
+}));
+
 const renderWithTheme = (component: React.ReactNode) => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -125,6 +129,15 @@ describe('ServerDetail', () => {
     fireEvent.click(filesTab);
 
     expect(screen.getByText('Files Tab Content')).toBeInTheDocument();
+  });
+
+  it('should switch to players tab', () => {
+    renderWithTheme(<ServerDetail server={mockServer} />);
+
+    const playersTab = screen.getByRole('button', { name: /players/i });
+    fireEvent.click(playersTab);
+
+    expect(screen.getByText('Players Tab Content')).toBeInTheDocument();
   });
 
   it('should switch to backups tab', () => {

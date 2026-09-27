@@ -1,10 +1,21 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import { join } from 'node:path';
-import { containerExists, getContainerStatus, serverExists, OpLevel } from '@minecraft-docker/shared';
+import {
+  containerExists,
+  getContainerStatus,
+  serverExists,
+  OpLevel,
+  Paths,
+  PlayerRepository,
+  PlayerManagementUseCase,
+  type IPlayerManagementUseCase,
+} from '@minecraft-docker/shared';
 import {
   PlayerInfoSchema,
-  OnlinePlayersResponseSchema,
+  PlayerRosterResponseSchema,
+  PlayerSummarySchema,
+  PlayerUuidParamsSchema,
   PlayerListResponseSchema,
   WhitelistResponseSchema,
   WhitelistStatusResponseSchema,
@@ -20,8 +31,10 @@ import {
   type KickPlayerRequest,
   type WhitelistStatusRequest,
   type PlayerParams,
+  type PlayerUuidParams,
   type UsernameParams,
 } from '../schemas/player.js';
+import { StatusQuerySchema, type StatusQuery } from '../schemas/server.js';
 import {
   OperatorsListResponseSchema,
   AddOperatorRequestSchema,
@@ -45,6 +58,15 @@ interface ServerRoute {
 
 interface PlayerRoute {
   Params: PlayerParams;
+}
+
+interface PlayerRosterRoute {
+  Params: ServerNameParams;
+  Querystring: StatusQuery;
+}
+
+interface PlayerDetailRoute {
+  Params: PlayerUuidParams;
 }
 
 interface UsernameRoute {
@@ -91,6 +113,9 @@ async function lookupUuid(playerName: string): Promise<string> {
 const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const playerFileService = new PlayerFileService(config.platformPath);
   const opsJsonService = new OpsJsonService(config.platformPath);
+  const playerManagementUseCase: IPlayerManagementUseCase = new PlayerManagementUseCase(
+    new PlayerRepository(new Paths(config.platformPath))
+  );
 
   // Helper to check server exists (container created)
   const checkServerExists = (name: string, reply: FastifyReply): boolean => {
@@ -131,32 +156,150 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   };
 
   /**
-   * GET /api/servers/:name/players
-   * List online players (requires running server)
+   * Fetch currently online player names/counts via RCON `list`, only when the
+   * server is running. An RCON failure is treated as "no online players"
+   * rather than failing the request. Shared by the roster and detail routes
+   * so both agree on who's online (#528).
    */
-  fastify.get<ServerRoute>('/api/servers/:name/players', {
-    schema: {
-      description: 'List online players on a server',
-      tags: ['players'],
-      params: ServerNameParamsSchema,
-      response: {
-        200: OnlinePlayersResponseSchema,
-        400: ErrorResponseSchema,
-        404: ErrorResponseSchema,
-        500: ErrorResponseSchema,
-      },
-    },
-  }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
-    const { name } = request.params;
-    if (!checkServerRunning(name, reply)) return;
+  const getOnlinePlayers = async (name: string): Promise<{ running: boolean; online: number; max: number; names: string[] }> => {
+    const running = isServerRunning(name);
+    if (!running) return { running, online: 0, max: 0, names: [] };
 
     try {
       const result = await execRconCommand(name, 'list');
       const parsed = parsePlayerList(result);
-      return reply.send(parsed);
+      return { running, online: parsed.online, max: parsed.max, names: parsed.players };
     } catch (error) {
-      fastify.log.error(error, 'Failed to get online players');
-      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get online players' });
+      fastify.log.warn(error, 'RCON failed for players list, treating as no online players');
+      return { running, online: 0, max: 0, names: [] };
+    }
+  };
+
+  /** Build the merged online+known roster for a server (#528). */
+  const buildPlayerRoster = async (name: string) => {
+    const { running, online, max, names: onlineNames } = await getOnlinePlayers(name);
+    const roster = await playerManagementUseCase.listPlayers(name, onlineNames);
+
+    return {
+      serverName: name,
+      running,
+      online,
+      max,
+      players: onlineNames,
+      roster: roster.map((p) => p.toJSON()),
+    };
+  };
+
+  /**
+   * GET /api/servers/:name/players
+   * Merged online (RCON) + known (files) player roster. Available even when
+   * the server is stopped (file-based roster only). Supports SSE streaming
+   * via ?follow=true, mirroring GET /api/servers/:name/players/live (#525).
+   */
+  fastify.get<PlayerRosterRoute>('/api/servers/:name/players', {
+    schema: {
+      description: 'List the merged online+known player roster for a server (supports SSE via follow=true)',
+      tags: ['players'],
+      params: ServerNameParamsSchema,
+      querystring: StatusQuerySchema,
+      response: {
+        200: PlayerRosterResponseSchema,
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<PlayerRosterRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+    const { follow = false, interval = 5000 } = request.query;
+    if (!checkServerDefined(name, reply)) return;
+
+    // SSE streaming mode
+    if (follow) {
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*',
+      });
+
+      let polling: ReturnType<typeof setInterval> | undefined;
+      let heartbeat: ReturnType<typeof setInterval> | undefined;
+      const cleanup = () => {
+        if (polling) clearInterval(polling);
+        if (heartbeat) clearInterval(heartbeat);
+      };
+
+      const sendRoster = async () => {
+        try {
+          const data = await buildPlayerRoster(name);
+          reply.raw.write(`event: players\n`);
+          reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
+        } catch {
+          // Socket likely closed/errored — stop streaming.
+          cleanup();
+          reply.raw.end();
+        }
+      };
+
+      await sendRoster();
+      polling = setInterval(() => {
+        void sendRoster();
+      }, interval);
+      heartbeat = setInterval(() => {
+        try {
+          reply.raw.write(': heartbeat\n\n');
+        } catch {
+          cleanup();
+        }
+      }, 30000);
+
+      request.raw.on('close', () => {
+        cleanup();
+        reply.raw.end();
+      });
+      return;
+    }
+
+    try {
+      const data = await buildPlayerRoster(name);
+      return reply.send(data);
+    } catch (error) {
+      fastify.log.error(error, 'Failed to get player roster');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get player roster' });
+    }
+  });
+
+  /**
+   * GET /api/servers/:name/players/:uuid
+   * A single known player by uuid (#528). Registered with a stricter, static
+   * `/players/live` route already present (routes/servers.ts, #525) — Fastify
+   * resolves the static segment first, so this never shadows it.
+   */
+  fastify.get<PlayerDetailRoute>('/api/servers/:name/players/:uuid', {
+    schema: {
+      description: 'Get a single known player by uuid',
+      tags: ['players'],
+      params: PlayerUuidParamsSchema,
+      response: {
+        200: PlayerSummarySchema,
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<PlayerDetailRoute>, reply: FastifyReply) => {
+    const { name, uuid } = request.params;
+    if (!checkServerDefined(name, reply)) return;
+
+    try {
+      const { names: onlineNames } = await getOnlinePlayers(name);
+      const player = await playerManagementUseCase.getPlayerDetail(name, uuid, onlineNames);
+      if (!player) {
+        return reply.code(404).send({ error: 'NotFound', message: `Player '${uuid}' not found` });
+      }
+      return reply.send(player.toJSON());
+    } catch (error) {
+      fastify.log.error(error, 'Failed to get player detail');
+      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get player detail' });
     }
   });
 

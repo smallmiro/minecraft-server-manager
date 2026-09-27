@@ -469,6 +469,59 @@ describe('McctlApiAdapter', () => {
     });
   });
 
+  describe('Player roster operations (#528)', () => {
+    it('getPlayers should GET the players roster', async () => {
+      const mockResponse = {
+        serverName: 'test',
+        running: true,
+        online: 1,
+        max: 20,
+        players: ['Steve'],
+        roster: [
+          { uuid: 'abc', name: 'Steve', online: true, lastSeen: null, isOp: false, isBanned: false, isWhitelisted: true },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await adapter.getPlayers('test');
+
+      expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers/test/players',
+        expect.any(Object)
+      );
+    });
+
+    it('getPlayer should GET a single player by uuid', async () => {
+      const mockResponse = {
+        uuid: 'abc',
+        name: 'Steve',
+        online: false,
+        lastSeen: '2024-01-01T00:00:00Z',
+        isOp: false,
+        isBanned: false,
+        isWhitelisted: true,
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await adapter.getPlayer('test', 'abc');
+
+      expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers/test/players/abc',
+        expect.any(Object)
+      );
+    });
+  });
+
   describe('URL encoding', () => {
     it('should properly encode server names with special characters', async () => {
       mockFetch.mockResolvedValueOnce({

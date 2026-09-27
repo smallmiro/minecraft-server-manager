@@ -483,15 +483,48 @@ Get mc-router status and routing information.
 
 #### GET /api/servers/:name/players
 
-List online players on a server.
+List the merged online (RCON) + known (files) player roster for a server (#528). Works even when the server is stopped — `roster` is then file-based only, and `online`/`max`/`players` are all empty/zero. Supports SSE streaming via `?follow=true&interval=<ms>` (default `5000`), emitting `event: players` with the same JSON payload plus a heartbeat every 30 seconds — mirrors `GET /api/servers/:name/players/live`.
 
 **Response:**
 
 ```json
 {
+  "serverName": "survival",
+  "running": true,
   "online": 3,
   "max": 20,
-  "players": ["Player1", "Player2", "Player3"]
+  "players": ["Player1", "Player2", "Player3"],
+  "roster": [
+    {
+      "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+      "name": "Player1",
+      "lastSeen": "2026-09-20T12:34:56.000Z",
+      "isOp": false,
+      "isBanned": false,
+      "isWhitelisted": true,
+      "online": true
+    }
+  ]
+}
+```
+
+---
+
+#### GET /api/servers/:name/players/:uuid
+
+Get a single known player by UUID (#528, `uuid` must be a dashed Minecraft UUID). 404 when the server is undefined or the player is unknown.
+
+**Response:**
+
+```json
+{
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "name": "Player1",
+  "lastSeen": "2026-09-20T12:34:56.000Z",
+  "isOp": false,
+  "isBanned": false,
+  "isWhitelisted": true,
+  "online": true
 }
 ```
 

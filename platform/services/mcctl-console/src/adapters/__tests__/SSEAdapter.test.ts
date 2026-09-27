@@ -15,13 +15,27 @@ class MockEventSource {
   public onopen: ((event: Event) => void) | null = null;
   public onmessage: ((event: MessageEvent) => void) | null = null;
   public onerror: ((event: Event) => void) | null = null;
+  private listeners: Record<string, ((event: MessageEvent) => void)[]> = {};
 
   constructor(url: string) {
     this.url = url;
   }
 
+  addEventListener(type: string, listener: (event: MessageEvent) => void): void {
+    (this.listeners[type] ??= []).push(listener);
+  }
+
   close(): void {
     this.readyState = MockEventSource.CLOSED;
+  }
+
+  // Helper for testing named SSE events (`event: <name>`), which per spec
+  // only reach listeners registered via addEventListener, never onmessage.
+  simulateNamedEvent(type: string, data: string): void {
+    const event = new MessageEvent(type, { data });
+    for (const listener of this.listeners[type] ?? []) {
+      listener(event);
+    }
   }
 
   // Helper for testing
@@ -213,6 +227,38 @@ describe('SSEAdapter', () => {
       mockEventSource.simulateMessage('invalid json');
 
       // Should not crash, but should handle error
+      expect(onMessage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Named events', () => {
+    it('should call onMessage for a named event when eventName is set', () => {
+      const onMessage = vi.fn();
+      adapter.connect({
+        url: 'http://localhost/test',
+        eventName: 'players',
+        onMessage,
+      });
+
+      mockEventSource.simulateOpen();
+
+      const payload = { roster: [], online: 0, max: 20 };
+      mockEventSource.simulateNamedEvent('players', JSON.stringify(payload));
+
+      expect(onMessage).toHaveBeenCalledWith(payload);
+    });
+
+    it('should skip heartbeat comments on a named event too', () => {
+      const onMessage = vi.fn();
+      adapter.connect({
+        url: 'http://localhost/test',
+        eventName: 'players',
+        onMessage,
+      });
+
+      mockEventSource.simulateOpen();
+      mockEventSource.simulateNamedEvent('players', ': heartbeat');
+
       expect(onMessage).not.toHaveBeenCalled();
     });
   });

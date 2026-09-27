@@ -789,6 +789,33 @@ export interface OperatorActionResponse {
 }
 
 // ============================================================
+// Player Roster Types (#528)
+// ============================================================
+
+/**
+ * Unified online+offline player summary, as returned by the players roster
+ * endpoint. `lastSeen` is the last saved value (playerdata mtime), not live.
+ */
+export interface PlayerSummary {
+  uuid: string;
+  name: string;
+  online: boolean;
+  lastSeen: string | null;
+  isOp: boolean;
+  isBanned: boolean;
+  isWhitelisted: boolean;
+}
+
+export interface PlayersResponse {
+  serverName: string;
+  running: boolean;
+  online: number;
+  max: number;
+  players: string[];
+  roster: PlayerSummary[];
+}
+
+// ============================================================
 // Config Snapshot Types
 // ============================================================
 
@@ -940,6 +967,10 @@ export interface IMcctlApiClient {
   getBans(serverName: string): Promise<BannedPlayersResponse>;
   banPlayer(serverName: string, player: string, reason?: string): Promise<PlayerActionResponse>;
   unbanPlayer(serverName: string, player: string): Promise<PlayerActionResponse>;
+
+  // Player roster operations (#528)
+  getPlayers(serverName: string): Promise<PlayersResponse>;
+  getPlayer(serverName: string, uuid: string): Promise<PlayerSummary>;
 
   // OP management operations (with level support)
   getOpsWithLevel(serverName: string): Promise<OperatorsListResponse>;

@@ -9,11 +9,35 @@ export const PlayerInfoSchema = Type.Object({
   skinUrl: Type.Optional(Type.String()),
 });
 
-// Online players response
-export const OnlinePlayersResponseSchema = Type.Object({
+// Player summary (Player.toJSON() shape from @minecraft-docker/shared) (#528)
+export const PlayerSummarySchema = Type.Object({
+  uuid: Type.String(),
+  name: Type.String(),
+  lastSeen: Type.Union([Type.String(), Type.Null()]),
+  isOp: Type.Boolean(),
+  isBanned: Type.Boolean(),
+  isWhitelisted: Type.Boolean(),
+  online: Type.Boolean(),
+});
+
+// Players roster response: online (RCON, when running) + known players
+// (files, always available) merged (#528)
+export const PlayerRosterResponseSchema = Type.Object({
+  serverName: Type.String(),
+  running: Type.Boolean(),
   online: Type.Number(),
   max: Type.Number(),
   players: Type.Array(Type.String()),
+  roster: Type.Array(PlayerSummarySchema),
+});
+
+// Dashed Minecraft UUID, e.g. 069a79f4-44e9-4726-a5be-fca90e38aaf5 (#528)
+const UUID_PATTERN =
+  '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';
+
+export const PlayerUuidParamsSchema = Type.Object({
+  name: Type.String(),
+  uuid: Type.String({ pattern: UUID_PATTERN }),
 });
 
 // Whitelist entry
@@ -116,7 +140,9 @@ export { ErrorResponseSchema };
 
 // Type exports
 export type PlayerInfo = Static<typeof PlayerInfoSchema>;
-export type OnlinePlayersResponse = Static<typeof OnlinePlayersResponseSchema>;
+export type PlayerSummary = Static<typeof PlayerSummarySchema>;
+export type PlayerRosterResponse = Static<typeof PlayerRosterResponseSchema>;
+export type PlayerUuidParams = Static<typeof PlayerUuidParamsSchema>;
 export type PlayerListResponse = Static<typeof PlayerListResponseSchema>;
 export type WhitelistEntry = Static<typeof WhitelistEntrySchema>;
 export type BannedPlayerEntry = Static<typeof BannedPlayerEntrySchema>;

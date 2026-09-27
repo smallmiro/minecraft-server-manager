@@ -483,15 +483,48 @@ mc-router 상태와 라우팅 정보를 조회합니다.
 
 #### GET /api/servers/:name/players
 
-서버의 온라인 플레이어를 조회합니다.
+서버의 온라인(RCON) + 알려진(파일 기반) 플레이어를 통합 조회합니다 (#528). 서버가 정지 상태여도 조회 가능하며, 이 경우 `roster`는 파일 기반으로만 채워지고 `online`/`max`/`players`는 0/빈 배열입니다. `?follow=true&interval=<ms>`(기본값 `5000`)로 SSE 스트리밍을 지원하며, 동일한 JSON을 담은 `event: players` 이벤트와 30초 간격 하트비트를 전송합니다 — `GET /api/servers/:name/players/live`와 동일한 패턴입니다.
 
 **응답:**
 
 ```json
 {
+  "serverName": "survival",
+  "running": true,
   "online": 3,
   "max": 20,
-  "players": ["Player1", "Player2", "Player3"]
+  "players": ["Player1", "Player2", "Player3"],
+  "roster": [
+    {
+      "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+      "name": "Player1",
+      "lastSeen": "2026-09-20T12:34:56.000Z",
+      "isOp": false,
+      "isBanned": false,
+      "isWhitelisted": true,
+      "online": true
+    }
+  ]
+}
+```
+
+---
+
+#### GET /api/servers/:name/players/:uuid
+
+UUID로 알려진 플레이어 한 명을 조회합니다 (#528, `uuid`는 대시 포함 Minecraft UUID 형식이어야 함). 서버가 정의되지 않았거나 플레이어를 알 수 없으면 404를 반환합니다.
+
+**응답:**
+
+```json
+{
+  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "name": "Player1",
+  "lastSeen": "2026-09-20T12:34:56.000Z",
+  "isOp": false,
+  "isBanned": false,
+  "isWhitelisted": true,
+  "online": true
 }
 ```
 
