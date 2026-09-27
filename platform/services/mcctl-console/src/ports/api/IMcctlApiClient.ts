@@ -815,6 +815,30 @@ export interface PlayersResponse {
   roster: PlayerSummary[];
 }
 
+/**
+ * `stats/<uuid>.json`-derived play statistics (#528 Phase 2). Values are as
+ * last saved by the server, not live.
+ */
+export interface PlayerStats {
+  playTimeSeconds: number;
+  deaths: number;
+  mobKills: number;
+  playerKills: number;
+  distanceMeters: number;
+  blocksMined: number;
+  itemsCrafted: number;
+  advancementsCompleted: number;
+}
+
+/**
+ * Player detail as returned by `GET .../players/:uuid?include=...`.
+ * `stats` is `null` when the player has no stats file, and absent when not
+ * requested via `include`.
+ */
+export interface PlayerDetail extends PlayerSummary {
+  stats?: PlayerStats | null;
+}
+
 // ============================================================
 // Config Snapshot Types
 // ============================================================
@@ -970,7 +994,7 @@ export interface IMcctlApiClient {
 
   // Player roster operations (#528)
   getPlayers(serverName: string): Promise<PlayersResponse>;
-  getPlayer(serverName: string, uuid: string): Promise<PlayerSummary>;
+  getPlayer(serverName: string, uuid: string, include?: string[]): Promise<PlayerDetail>;
 
   // OP management operations (with level support)
   getOpsWithLevel(serverName: string): Promise<OperatorsListResponse>;

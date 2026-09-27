@@ -45,6 +45,7 @@ import type {
   WhitelistResponse,
   WhitelistStatusResponse,
   PlayerActionResponse,
+  PlayerDetail,
   PlayitAgentStatus,
   PlayitActionResponse,
   PlayitServerInfo,
@@ -908,5 +909,29 @@ export function useRemoveFromWhitelist() {
     onSuccess: (_, { serverName }) => {
       queryClient.invalidateQueries({ queryKey: ['servers', serverName, 'whitelist'] });
     },
+  });
+}
+
+// ============================================================
+// Player Detail Hooks (#528 Phase 2)
+// ============================================================
+
+/**
+ * Hook to fetch a single player's detail (with stats) for the detail modal.
+ * Skipped when `uuid` is empty (an online player not yet cached) or when
+ * explicitly disabled.
+ */
+export function usePlayerDetail(
+  serverName: string,
+  uuid: string,
+  options?: { enabled?: boolean }
+) {
+  return useQuery<PlayerDetail, Error>({
+    queryKey: ['servers', serverName, 'players', uuid, 'detail'],
+    queryFn: () =>
+      apiFetch<PlayerDetail>(
+        `/api/servers/${encodeURIComponent(serverName)}/players/${encodeURIComponent(uuid)}?include=stats`
+      ),
+    enabled: (options?.enabled ?? true) && !!serverName && !!uuid,
   });
 }

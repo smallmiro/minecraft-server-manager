@@ -92,4 +92,64 @@ describe('GET /api/servers/:name/players/:uuid (#528)', () => {
 
     expect(res.status).toBe(401);
   });
+
+  it('forwards ?include=stats to the adapter (#528 Phase 2)', async () => {
+    mockGetPlayer.mockResolvedValue({
+      uuid: 'abc',
+      name: 'Steve',
+      online: false,
+      lastSeen: null,
+      isOp: false,
+      isBanned: false,
+      isWhitelisted: true,
+      stats: null,
+    });
+
+    const res = await GET(
+      new NextRequest('http://localhost/api/servers/survival/players/abc?include=stats'),
+      ctx('survival', 'abc')
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockGetPlayer).toHaveBeenCalledWith('survival', 'abc', ['stats']);
+  });
+
+  it('drops unrecognized include values instead of forwarding them', async () => {
+    mockGetPlayer.mockResolvedValue({
+      uuid: 'abc',
+      name: 'Steve',
+      online: false,
+      lastSeen: null,
+      isOp: false,
+      isBanned: false,
+      isWhitelisted: true,
+    });
+
+    const res = await GET(
+      new NextRequest('http://localhost/api/servers/survival/players/abc?include=nbt,stats,sessions'),
+      ctx('survival', 'abc')
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockGetPlayer).toHaveBeenCalledWith('survival', 'abc', ['stats']);
+  });
+
+  it('does not pass an include argument when no include param is given', async () => {
+    mockGetPlayer.mockResolvedValue({
+      uuid: 'abc',
+      name: 'Steve',
+      online: false,
+      lastSeen: null,
+      isOp: false,
+      isBanned: false,
+      isWhitelisted: true,
+    });
+
+    await GET(
+      new NextRequest('http://localhost/api/servers/survival/players/abc'),
+      ctx('survival', 'abc')
+    );
+
+    expect(mockGetPlayer).toHaveBeenCalledWith('survival', 'abc');
+  });
 });
