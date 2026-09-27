@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.22.0
-> **Last Updated**: 2026-06-21
+> **Version**: 2.27.0
+> **Last Updated**: 2026-09-27
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -225,6 +225,8 @@ After running `mcctl init`, the following directory structure is created:
 ├── .mcctl-admin.yml                  # Management Console config (after console init)
 ├── users.yaml                        # Console user credentials (hashed)
 ├── audit.db                          # SQLite audit log database
+├── data/
+│   └── players.db                    # SQLite player session history (mcctl-api, v2.27.0+)
 │
 ├── platform/
 │   ├── docker-compose.yml            # Main orchestration (mc-router)
@@ -1344,7 +1346,8 @@ curl -u admin:password http://localhost:5001/api/servers
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/servers/:name/players` | List online players |
+| GET | `/api/servers/:name/players` | Online (RCON) + known (files) player roster; works while stopped; `?follow=true` for SSE (v2.27.0+) |
+| GET | `/api/servers/:name/players/:uuid` | Single known player; `?include=stats,nbt,sessions` (v2.27.0+) |
 | GET | `/api/players/:username` | Get player info from Mojang |
 
 **Whitelist:**
@@ -1674,7 +1677,9 @@ mcctl-console is a Next.js web application providing a modern UI for managing Mi
 #### Server Detail (`/servers/:name`)
 
 - **Overview Tab**: Container info, uptime, memory, world name/size
-- **Players Tab**: Online player list with Mojang skins
+- **Players Tab** (v2.27.0+): Unified online (RCON) + offline (usercache/playerdata/ops/whitelist/banned files) roster, shown even when the server is stopped; real-time via SSE. Avatars (`mc-heads.net`), badges (Online/Offline, OP, Banned, Whitelisted), per-row menu: Details, Kick, Ban/Unban, Make OP/Remove OP, Add/Remove Whitelist
+  - **Player Detail Modal**: Statistics (play time, deaths, mob/player kills, distance, blocks mined, items crafted, advancements; from `stats/`+`advancements/`), Position & Status (XYZ, dimension, health, food, XP level, game mode, inventory summary; from `playerdata/<uuid>.dat`, live position via RCON polled every 5s while online), Session History (visits, total playtime, last seen, recent 20 sessions)
+  - Session history exists only from when the mcctl-api v2.27.0+ collector first runs (first pass backfills up to 24h of container logs)
 - **Console Tab**: RCON command execution with output display
 - **Logs Tab**: Real-time server logs viewer
 - **Mods Tab** (v2.4.0+): View configured mods (Modrinth, CurseForge, Spiget, URL)
@@ -1719,6 +1724,8 @@ mcctl-console is a Next.js web application providing a modern UI for managing Mi
 | `/api/servers/:name/logs` | GET | `/api/servers/:name/logs` | Logs |
 | `/api/servers/:name/config` | GET/PUT | `/api/servers/:name/config` | Config |
 | `/api/servers/:name/world/reset` | POST | `/api/servers/:name/world/reset` | Reset world |
+| `/api/servers/:name/players` | GET | `/api/servers/:name/players` | Player roster (JSON or SSE with `follow=true`) |
+| `/api/servers/:name/players/:uuid` | GET | `/api/servers/:name/players/:uuid` | Player detail (`include` forwarded; unknown values dropped, not 400) |
 | `/api/worlds` | GET/POST | `/api/worlds` | List/Create worlds |
 | `/api/worlds/:name` | GET/DELETE | `/api/worlds/:name` | World detail/delete |
 | `/api/worlds/:name/assign` | POST | `/api/worlds/:name/assign` | Assign world |
@@ -1742,6 +1749,8 @@ useExecCommand()                // Execute RCON command
 useServerLogs(name, lines)      // Get server logs (auto-refresh 3s)
 useServersSSE()                 // SSE real-time server status stream
 useServerStatus(name)           // Individual server SSE status
+useServerPlayers({serverName})  // SSE player roster (online + offline)
+usePlayerDetail(server, uuid)   // Player detail (?include=stats,nbt,sessions; refetch 5s while online)
 
 // World hooks
 useWorlds()                     // List all worlds (auto-refresh 30s)
@@ -2722,6 +2731,12 @@ A: `mcctl console service status`
 **Q: How do I view console logs?**
 A: `mcctl console service logs` or `mcctl console service logs -f` for real-time.
 
+**Q: Why is a player's session history empty or short?**
+A: Session history (v2.27.0+) is collected by mcctl-api from Docker logs (`joined/left the game`) every 30s into `data/players.db`. It starts when the collector first runs; the first pass backfills at most 24h of container logs. Older sessions, or logs of a recreated container, cannot be recovered. Stats/position come from world files and are not affected.
+
+**Q: Can I see players of a stopped server?**
+A: Yes (v2.27.0+). `GET /api/servers/:name/players` returns the file-based `roster` with `running: false`; `online`/`max`/`players` are 0/empty.
+
 **Q: How does SSE work in the Web Console?**
 A: Server-Sent Events provide real-time status updates without polling. Endpoint: `GET /api/sse/servers-status`.
 
@@ -2830,6 +2845,22 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.27.0 (2026-09-27) - Server Players Panel
+
+**Added (#528):**
+- **Players Tab** in server detail (#550) - Unified online (RCON) + offline (`usercache.json`, `playerdata/`, `ops.json`, `whitelist.json`, `banned-players.json`) roster with avatars, badges, and kick/ban/unban/op/deop/whitelist actions
+- **Player Detail Modal: Statistics** (#551) - Play time, deaths, kills, distance, blocks mined, items crafted, advancements (`?include=stats`)
+- **Player Detail Modal: Position & Status** (#552) - Last saved position/dimension, health, food, XP level, game mode, inventory summary from `playerdata/<uuid>.dat`; live RCON position polled every 5s while online (`?include=nbt` → `data`, `livePosition`)
+- **Player Detail Modal: Session History** (#553) - Visits, total playtime, last seen, recent 20 sessions (`?include=sessions`). `PlayerSessionCollectorService` in mcctl-api polls `docker logs --timestamps` every 30s into `data/players.db` (SQLite; tables `player_sessions`, `player_session_cursors`); first pass per server backfills 24h
+- **New endpoint**: `GET /api/servers/:name/players/:uuid` (`?include=stats,nbt,sessions`, any combination; unknown value → 400; unknown player → 404)
+- **Shared domain**: entities `Player`, `PlayerSession`; value objects `PlayerStats`, `PlayerData`, `PlayerSessionEvent`; use cases `PlayerManagementUseCase`, `PlayerSessionUseCase`; ports `IPlayerRepository`, `IPlayerSessionRepository`; adapters `PlayerRepository`, `SqlitePlayerSessionRepository`
+
+**Changed:**
+- `GET /api/servers/:name/players` now responds while the server is stopped (previously 400). Existing fields `online`/`max`/`players` are kept; added `serverName`, `running`, `roster[]` (`uuid`, `name`, `lastSeen`, `isOp`, `isBanned`, `isWhitelisted`, `online`). `?follow=true&interval=<ms>` streams `event: players` via SSE
+
+**Notes:**
+- Session history only covers the period since the collector first ran (plus up to 24h backfill); it is not reconstructed from world files
 
 ### Version 2.22.0 (2026-06-21) - itzg Image Refresh
 

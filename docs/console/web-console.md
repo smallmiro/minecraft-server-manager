@@ -164,11 +164,12 @@ Three stat cards display real-time resource usage:
 
 #### Navigation Tabs
 
-The server detail page is organized into seven tabs:
+The server detail page is organized into the following tabs (main tabs shown):
 
 | Tab | Description |
 |-----|-------------|
 | **Overview** | Server console with live log output and RCON command input |
+| **Players** | Online + offline player roster with management actions and a per-player detail view (v2.27.0+) |
 | **Activity** | Per-server audit history showing all actions performed on this server |
 | **Mods** | Mod management -- search, install, and remove mods from Modrinth |
 | **Files** | Full file manager for browsing, editing, uploading, and downloading server files |
@@ -210,6 +211,79 @@ The **Server Information** panel on the bottom-left displays essential details a
 #### Players
 
 The **Players** panel on the bottom-right shows the list of players currently connected to the server. When no players are online, it displays "Player information unavailable" or an empty state. When players are connected, their Minecraft usernames and avatars are shown here for quick reference.
+
+### Players Tab
+
+*Available since v2.27.0.*
+
+The **Players** tab lists every player known to the server, not just those currently online. It combines two sources:
+
+- **Online players** -- queried live via RCON while the server is running
+- **Known players** -- read from the server's files (`usercache.json`, `playerdata/`, `ops.json`, `whitelist.json`, `banned-players.json`)
+
+Because the file-based part does not need RCON, the roster is also shown when the server is **stopped** (everyone then appears as Offline). The list updates in real time over SSE; the dot next to the `online / max` counter in the header shows whether the live connection is active.
+
+Each row shows the player's avatar (from `mc-heads.net`), name, and badges:
+
+| Badge | Meaning |
+|-------|---------|
+| **Online** / **Offline** | Current connection state |
+| **OP** | Player is a server operator |
+| **Banned** | Player is on the ban list |
+| **Whitelisted** | Player is on the whitelist |
+
+Offline players also show **Last saved**, the time their player data was last written by the server.
+
+#### Player Actions
+
+Click the **⋮** menu on a row to manage the player. Only the actions that apply to the player's current state are shown:
+
+| Action | Shown when | Notes |
+|--------|------------|-------|
+| **Details** | Player has a UUID | Opens the player detail modal (see below) |
+| **Kick** | Player is online | Confirmation dialog with optional reason |
+| **Ban** / **Unban** | Not banned / banned | Ban asks for a reason (default: `Banned by administrator`) |
+| **Make OP** / **Remove OP** | Not OP / OP | Make OP grants permission level 4 |
+| **Add to Whitelist** / **Remove from Whitelist** | Not whitelisted / whitelisted | |
+
+!!! note "Players tab vs. Players page"
+    The Players tab manages the players of a single server from its detail page. The sidebar [Player Management](#player-management) page offers the same whitelist/ops/ban lists with a server selector.
+
+#### Player Detail Modal
+
+Select **Details** in the action menu to open the player detail modal. The header shows the avatar, name, UUID, and the same badges as the list. The body has three sections:
+
+**Statistics** -- values as last saved by the server (from `stats/<uuid>.json` and `advancements/<uuid>.json` in the world folder):
+
+| Stat | Description |
+|------|-------------|
+| Play Time | Total in-game play time (`Xh Ym`) |
+| Deaths | Number of deaths |
+| Mob Kills / Player Kills | Kill counts |
+| Distance Traveled | Total distance (m / km) |
+| Blocks Mined | Total blocks mined |
+| Items Crafted | Total items crafted |
+| Advancements | Completed advancements |
+
+If the player has no stats file yet, "No statistics recorded yet." is shown.
+
+**Position & Status** -- parsed from the player's `playerdata/<uuid>.dat`:
+
+- Coordinates (X / Y / Z) and dimension
+- Health and food (out of 20), XP level, game mode
+- Inventory summary: slots used and up to 10 item stacks
+
+While the player is online and the server is running, the position is read live via RCON and labeled **Live position** with a **Live** badge. The modal refreshes every 5 seconds while the player is online. Offline players show **Last saved position** instead.
+
+**Session History** -- join/leave history collected from server logs:
+
+- **Visits**, **Total Playtime**, and **Last Seen**
+- The most recent sessions (up to 20, newest first) with join → leave time and duration; a session that is still open shows **Online now**
+
+!!! warning "Session history starts when the collector is installed"
+    Session history is not read from the world files. mcctl-api parses each running server's Docker logs (`<player> joined/left the game`) every 30 seconds and stores the events in `data/players.db` (SQLite, under the platform root). History therefore only exists **from the time mcctl-api v2.27.0+ first runs the collector**. On its first pass for a server, the collector backfills at most the **last 24 hours** of that container's logs; older sessions are not recovered. After that it resumes from a per-server cursor, so a gap (for example, while mcctl-api was stopped) is filled in only if those lines are still in the container's logs — logs of a recreated container are lost. When a server is found stopped, its open sessions are closed at that time.
+
+    Until data is collected, the section shows "No sessions recorded yet (history is collected from server logs)."
 
 ### Mods Tab
 
