@@ -5,6 +5,11 @@ import { join } from 'path';
 import http from 'http';
 
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-players-roster-test');
+// A deliberately wrong MCCTL_ROOT with no fixture data, used by the
+// regression test below. Routes must resolve PlayerRepository's Paths from
+// config.platformPath (PLATFORM_PATH), never from this env var, or the
+// roster/detail endpoints silently read nothing.
+const WRONG_MCCTL_ROOT = join(import.meta.dirname, '.tmp-players-roster-wrong-root');
 
 // Set env vars BEFORE any imports. PlayerRepository (shared) resolves its data
 // root from MCCTL_ROOT, while mcctl-api config resolves from PLATFORM_PATH —
@@ -231,6 +236,39 @@ describe('Player roster API (#528)', () => {
       expect(body.running).toBe(true);
       expect(body.online).toBe(0);
       expect(body.players).toEqual([]);
+    });
+
+    it('reads the roster from PLATFORM_PATH even when MCCTL_ROOT points elsewhere (#528 regression)', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [
+            { uuid: '069a79f4-44e9-4726-a5be-fca90e38aaf5', name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' },
+          ],
+        },
+      });
+      containerStatus = 'stopped';
+
+      // players.ts must build PlayerRepository's Paths from config.platformPath,
+      // not from process.env.MCCTL_ROOT — prove it by pointing MCCTL_ROOT at an
+      // empty directory and rebuilding the app around it.
+      const previousMcctlRoot = process.env.MCCTL_ROOT;
+      process.env.MCCTL_ROOT = WRONG_MCCTL_ROOT;
+      let isolatedApp: FastifyInstance | undefined;
+      try {
+        const { buildApp } = await import('../src/app.js');
+        isolatedApp = await buildApp({ logger: false });
+        await isolatedApp.ready();
+
+        const response = await isolatedApp.inject({ method: 'GET', url: '/api/servers/test-server/players' });
+
+        expect(response.statusCode).toBe(200);
+        const body = response.json();
+        expect(body.roster).toHaveLength(1);
+        expect(body.roster[0].name).toBe('Notch');
+      } finally {
+        if (isolatedApp) await isolatedApp.close();
+        process.env.MCCTL_ROOT = previousMcctlRoot;
+      }
     });
   });
 

@@ -114,7 +114,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const playerFileService = new PlayerFileService(config.platformPath);
   const opsJsonService = new OpsJsonService(config.platformPath);
   const playerManagementUseCase: IPlayerManagementUseCase = new PlayerManagementUseCase(
-    new PlayerRepository(new Paths())
+    new PlayerRepository(new Paths(config.platformPath))
   );
 
   // Helper to check server exists (container created)
