@@ -126,12 +126,35 @@ describe('GET /api/servers/:name/players/:uuid (#528)', () => {
     });
 
     const res = await GET(
-      new NextRequest('http://localhost/api/servers/survival/players/abc?include=stats,sessions'),
+      new NextRequest('http://localhost/api/servers/survival/players/abc?include=stats,bogus'),
       ctx('survival', 'abc')
     );
 
     expect(res.status).toBe(200);
     expect(mockGetPlayer).toHaveBeenCalledWith('survival', 'abc', ['stats']);
+  });
+
+  it('forwards ?include=stats,nbt,sessions to the adapter (#528 Phase 4)', async () => {
+    mockGetPlayer.mockResolvedValue({
+      uuid: 'abc',
+      name: 'Steve',
+      online: false,
+      lastSeen: null,
+      isOp: false,
+      isBanned: false,
+      isWhitelisted: true,
+      stats: null,
+      data: null,
+      sessions: null,
+    });
+
+    const res = await GET(
+      new NextRequest('http://localhost/api/servers/survival/players/abc?include=stats,nbt,sessions'),
+      ctx('survival', 'abc')
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockGetPlayer).toHaveBeenCalledWith('survival', 'abc', ['stats', 'nbt', 'sessions']);
   });
 
   it('forwards ?include=stats,nbt to the adapter (#528 Phase 3)', async () => {
