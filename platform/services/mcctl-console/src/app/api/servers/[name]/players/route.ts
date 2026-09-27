@@ -61,6 +61,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           'X-User': userContext.username,
           'X-Role': userContext.role,
         },
+        // Forward client disconnects so the upstream stream is aborted too.
+        signal: request.signal,
       }
     );
 
