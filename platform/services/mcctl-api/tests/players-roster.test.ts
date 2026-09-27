@@ -313,6 +313,26 @@ describe('Player roster API (#528)', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('returns online:true when the player is currently connected (#528 regression)', async () => {
+      setupServer('test-server', {
+        files: {
+          'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
+        },
+      });
+      containerStatus = 'running';
+
+      const { execRconCommand } = await import('../src/lib/rcon.js');
+      vi.mocked(execRconCommand).mockResolvedValue(
+        'There are 1 of a max of 20 players online: Notch'
+      );
+
+      const response = await app.inject({ method: 'GET', url: `/api/servers/test-server/players/${NOTCH_UUID}` });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.online).toBe(true);
+    });
+
     it('returns the player summary when known', async () => {
       setupServer('test-server', {
         files: {

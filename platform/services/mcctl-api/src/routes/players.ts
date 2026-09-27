@@ -156,28 +156,28 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   };
 
   /**
-   * Build the merged online+known roster for a server (#528).
-   * Online names/counts come from RCON `list` when running; an RCON failure
-   * is treated as "no online players" rather than failing the request.
+   * Fetch currently online player names/counts via RCON `list`, only when the
+   * server is running. An RCON failure is treated as "no online players"
+   * rather than failing the request. Shared by the roster and detail routes
+   * so both agree on who's online (#528).
    */
-  const buildPlayerRoster = async (name: string) => {
+  const getOnlinePlayers = async (name: string): Promise<{ running: boolean; online: number; max: number; names: string[] }> => {
     const running = isServerRunning(name);
-    let online = 0;
-    let max = 0;
-    let onlineNames: string[] = [];
+    if (!running) return { running, online: 0, max: 0, names: [] };
 
-    if (running) {
-      try {
-        const result = await execRconCommand(name, 'list');
-        const parsed = parsePlayerList(result);
-        online = parsed.online;
-        max = parsed.max;
-        onlineNames = parsed.players;
-      } catch (error) {
-        fastify.log.warn(error, 'RCON failed for players list, treating as no online players');
-      }
+    try {
+      const result = await execRconCommand(name, 'list');
+      const parsed = parsePlayerList(result);
+      return { running, online: parsed.online, max: parsed.max, names: parsed.players };
+    } catch (error) {
+      fastify.log.warn(error, 'RCON failed for players list, treating as no online players');
+      return { running, online: 0, max: 0, names: [] };
     }
+  };
 
+  /** Build the merged online+known roster for a server (#528). */
+  const buildPlayerRoster = async (name: string) => {
+    const { running, online, max, names: onlineNames } = await getOnlinePlayers(name);
     const roster = await playerManagementUseCase.listPlayers(name, onlineNames);
 
     return {
@@ -291,7 +291,8 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (!checkServerDefined(name, reply)) return;
 
     try {
-      const player = await playerManagementUseCase.getPlayerDetail(name, uuid);
+      const { names: onlineNames } = await getOnlinePlayers(name);
+      const player = await playerManagementUseCase.getPlayerDetail(name, uuid, onlineNames);
       if (!player) {
         return reply.code(404).send({ error: 'NotFound', message: `Player '${uuid}' not found` });
       }
