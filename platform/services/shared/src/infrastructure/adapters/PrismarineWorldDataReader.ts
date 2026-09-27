@@ -5,53 +5,21 @@ import nbt from 'prismarine-nbt';
 import type { IWorldDataReader } from '../../application/ports/outbound/IWorldDataReader.js';
 import { parseStructuresFromRegion } from './AnvilStructureReader.js';
 import { resolveRegionDirs } from './dimensionRegions.js';
+import { GAME_MODES, toNumber, parsePlayerDat } from './playerDataNbt.js';
 import {
   Dimension,
   type Structure,
   type WorldLevelData,
   type PlayerLocation,
   type DimensionPresence,
-  type GameMode,
   type Difficulty,
 } from '../../domain/index.js';
 
-const GAME_MODES: GameMode[] = ['survival', 'creative', 'adventure', 'spectator'];
 const DIFFICULTIES: Difficulty[] = ['peaceful', 'easy', 'normal', 'hard'];
-
-/**
- * Convert a numeric NBT value to Number.
- *
- * prismarine-nbt's `simplify` represents 64-bit longs (DayTime, seed, ...)
- * as a special object whose `toString()` yields the decimal value, so we
- * route through String() for non-number/bigint inputs.
- */
-function toNumber(value: unknown, fallback = 0): number {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'bigint') return Number(value);
-  if (value !== null && value !== undefined) {
-    const n = Number(String(value));
-    if (!Number.isNaN(n)) return n;
-  }
-  return fallback;
-}
 
 /** NBT byte booleans come through as 0/1. */
 function toBool(value: unknown): boolean {
   return toNumber(value) !== 0;
-}
-
-/** Map a dimension id string to the normalized Dimension enum. */
-function mapDimension(id: unknown): Dimension {
-  switch (id) {
-    case 'minecraft:the_nether':
-    case -1:
-      return Dimension.Nether;
-    case 'minecraft:the_end':
-    case 1:
-      return Dimension.End;
-    default:
-      return Dimension.Overworld;
-  }
 }
 
 /**
@@ -129,20 +97,18 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
       if (!entry.endsWith('.dat')) continue;
       try {
         const buf = await readFile(join(dir, entry));
-        const { parsed } = await nbt.parse(buf);
-        const p = nbt.simplify(parsed) as Record<string, unknown>;
-        const pos = (p.Pos as number[] | undefined) ?? [0, 0, 0];
+        const data = await parsePlayerDat(buf);
         const uuid = entry.replace(/\.dat$/, '');
         result.push({
           uuid,
           name: names.get(uuid.toLowerCase()),
-          x: toNumber(pos[0]),
-          y: toNumber(pos[1]),
-          z: toNumber(pos[2]),
-          dimension: mapDimension(p.Dimension),
-          health: p.Health !== undefined ? toNumber(p.Health) : undefined,
-          food: p.foodLevel !== undefined ? toNumber(p.foodLevel) : undefined,
-          xpLevel: p.XpLevel !== undefined ? toNumber(p.XpLevel) : undefined,
+          x: data.x,
+          y: data.y,
+          z: data.z,
+          dimension: data.dimension,
+          health: data.health,
+          food: data.food,
+          xpLevel: data.xpLevel,
           online: false,
         });
       } catch {
