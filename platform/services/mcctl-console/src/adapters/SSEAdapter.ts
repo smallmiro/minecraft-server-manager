@@ -19,6 +19,25 @@ export class SSEAdapter implements ISSEClient {
   private shouldReconnect = true;
 
   /**
+   * Shared handler for both the default `message` event and a named event
+   * (see `eventName`): skips heartbeat comments, parses JSON, forwards to onMessage.
+   */
+  private handleEvent = (event: MessageEvent): void => {
+    // Skip heartbeat messages (SSE comments starting with :)
+    if (event.data.startsWith(':')) {
+      return;
+    }
+
+    try {
+      const parsedEvent = JSON.parse(event.data) as SSEEvent;
+      this.options?.onMessage?.(parsedEvent);
+    } catch (error) {
+      // Ignore malformed messages
+      console.warn('Failed to parse SSE message:', error);
+    }
+  };
+
+  /**
    * Establish SSE connection
    */
   connect(options: SSEConnectionOptions): void {
@@ -58,20 +77,13 @@ export class SSEAdapter implements ISSEClient {
     };
 
     // Message received
-    this.eventSource.onmessage = (event: MessageEvent) => {
-      // Skip heartbeat messages (SSE comments starting with :)
-      if (event.data.startsWith(':')) {
-        return;
-      }
+    this.eventSource.onmessage = this.handleEvent;
 
-      try {
-        const parsedEvent = JSON.parse(event.data) as SSEEvent;
-        this.options?.onMessage?.(parsedEvent);
-      } catch (error) {
-        // Ignore malformed messages
-        console.warn('Failed to parse SSE message:', error);
-      }
-    };
+    // Backends that emit a named event (`event: <name>\ndata: ...`) never
+    // trigger onmessage per the EventSource spec, so listen explicitly too.
+    if (this.options.eventName) {
+      this.eventSource.addEventListener(this.options.eventName, this.handleEvent);
+    }
 
     // Error occurred
     this.eventSource.onerror = () => {

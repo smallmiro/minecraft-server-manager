@@ -51,6 +51,14 @@ export interface SSEConnectionOptions {
    * @default false
    */
   withCredentials?: boolean;
+
+  /**
+   * When set, listen for a named SSE event (`event: <eventName>`) instead of
+   * (in addition to) the default unnamed `message` event. Per the EventSource
+   * spec, `onmessage` never fires for named events, so backends that emit
+   * `event: <name>` require an explicit `addEventListener(name, ...)`.
+   */
+  eventName?: string;
 }
 
 /**
