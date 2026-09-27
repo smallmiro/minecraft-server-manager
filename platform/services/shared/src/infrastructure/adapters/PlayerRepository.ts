@@ -1,7 +1,8 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
-import { Player, PlayerStats } from '../../domain/index.js';
+import { Player, PlayerStats, PlayerData } from '../../domain/index.js';
+import { parsePlayerDat } from './playerDataNbt.js';
 import type {
   IPlayerRepository,
   UserCacheEntry,
@@ -55,7 +56,7 @@ export class PlayerRepository implements IPlayerRepository {
       this.readJsonArray<NamedUuidEntry>(join(dataDir, 'ops.json')),
       this.readJsonArray<NamedUuidEntry>(join(dataDir, 'whitelist.json')),
       this.readJsonArray<NamedUuidEntry>(join(dataDir, 'banned-players.json')),
-      this.readPlayerData(serverName),
+      this.scanPlayerDataMtimes(serverName),
     ]);
 
     const opNames = new Set(ops.map((e) => e.name.toLowerCase()));
@@ -115,8 +116,22 @@ export class PlayerRepository implements IPlayerRepository {
     }
   }
 
+  async readPlayerData(serverName: string, uuid: string): Promise<PlayerData | null> {
+    if (!UUID_PATTERN.test(uuid)) return null;
+
+    const level = await this.resolveWorldLevel(serverName);
+    const datPath = join(this.paths.root, 'worlds', level, 'playerdata', `${uuid}.dat`);
+    try {
+      const buf = await readFile(datPath);
+      const parsed = await parsePlayerDat(buf);
+      return PlayerData.create(parsed);
+    } catch {
+      return null;
+    }
+  }
+
   /** Scan `worlds/<level>/playerdata/*.dat`, using file mtime as last-seen. */
-  private async readPlayerData(
+  private async scanPlayerDataMtimes(
     serverName: string
   ): Promise<Array<{ uuid: string; lastSeen: Date }>> {
     const level = await this.resolveWorldLevel(serverName);

@@ -71,3 +71,10 @@ export {
   type PlayerStatsProps,
   type PlayerStatsJson,
 } from './PlayerStats.js';
+export {
+  PlayerData,
+  type PlayerDataProps,
+  type PlayerDataJson,
+  type PlayerInventorySummary,
+  type InventoryItemSummary,
+} from './PlayerData.js';

@@ -1,5 +1,9 @@
 import nbt from 'prismarine-nbt';
-import { Dimension, type GameMode } from '../../domain/index.js';
+import {
+  Dimension,
+  type GameMode,
+  type PlayerInventorySummary,
+} from '../../domain/index.js';
 
 /** `level.dat` GameType / playerdata `playerGameType` share this 0-3 mapping. */
 export const GAME_MODES: GameMode[] = ['survival', 'creative', 'adventure', 'spectator'];
@@ -44,6 +48,8 @@ export interface ParsedPlayerDat {
   health?: number;
   food?: number;
   xpLevel?: number;
+  gameMode: GameMode;
+  inventory: PlayerInventorySummary;
 }
 
 /**
@@ -64,5 +70,28 @@ export async function parsePlayerDat(buf: Buffer): Promise<ParsedPlayerDat> {
     health: p.Health !== undefined ? toNumber(p.Health) : undefined,
     food: p.foodLevel !== undefined ? toNumber(p.foodLevel) : undefined,
     xpLevel: p.XpLevel !== undefined ? toNumber(p.XpLevel) : undefined,
+    gameMode: GAME_MODES[toNumber(p.playerGameType)] ?? 'survival',
+    inventory: summarizeInventory(p.Inventory),
   };
+}
+
+/**
+ * Aggregate `Inventory` stacks by item id. Handles both the legacy `Count`
+ * (signed byte, pre-1.20.5) and the current `count` (int, 1.20.5+) fields.
+ */
+function summarizeInventory(raw: unknown): PlayerInventorySummary {
+  const stacks = Array.isArray(raw) ? (raw as Array<Record<string, unknown>>) : [];
+
+  const totals = new Map<string, number>();
+  for (const stack of stacks) {
+    if (typeof stack.id !== 'string') continue;
+    const count = toNumber(stack.count ?? stack.Count, 0);
+    totals.set(stack.id, (totals.get(stack.id) ?? 0) + count);
+  }
+
+  const items = [...totals.entries()]
+    .map(([id, count]) => ({ id, count }))
+    .sort((a, b) => b.count - a.count);
+
+  return { slotsUsed: stacks.length, items };
 }

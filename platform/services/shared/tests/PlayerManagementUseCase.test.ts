@@ -1,9 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { PlayerManagementUseCase } from '../src/application/use-cases/PlayerManagementUseCase.js';
-import { Player, PlayerStats } from '../src/domain/index.js';
-import type { IPlayerRepository, UserCacheEntry } from '../src/application/ports/index.js';
+import { Player, PlayerStats, PlayerData, Dimension } from '../src/domain/index.js';
+import type {
+  IPlayerRepository,
+  IRconPort,
+  UserCacheEntry,
+} from '../src/application/ports/index.js';
 
-function makeRepo(known: Player[], stats: PlayerStats | null = null): IPlayerRepository {
+function makeRepo(
+  known: Player[],
+  stats: PlayerStats | null = null,
+  data: PlayerData | null = null
+): IPlayerRepository {
   return {
     async readUserCache(): Promise<UserCacheEntry[]> {
       return [];
@@ -13,6 +21,9 @@ function makeRepo(known: Player[], stats: PlayerStats | null = null): IPlayerRep
     },
     async readStats(): Promise<PlayerStats | null> {
       return stats;
+    },
+    async readPlayerData(): Promise<PlayerData | null> {
+      return data;
     },
   };
 }
@@ -162,6 +173,102 @@ describe('PlayerManagementUseCase', () => {
       });
 
       expect(detail!.stats).toBeNull();
+    });
+
+    describe("include: ['nbt']", () => {
+      const playerData = PlayerData.create({
+        x: 1,
+        y: 2,
+        z: 3,
+        dimension: Dimension.Overworld,
+        gameMode: 'survival',
+        inventory: { slotsUsed: 0, items: [] },
+      });
+
+      it('include가 없으면 data/livePosition을 읽지 않는다', async () => {
+        let readPlayerDataCalled = false;
+        const repo: IPlayerRepository = {
+          ...makeRepo([steve]),
+          async readPlayerData() {
+            readPlayerDataCalled = true;
+            return playerData;
+          },
+        };
+        const useCase = new PlayerManagementUseCase(repo);
+        const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve');
+
+        expect(detail!.data).toBeUndefined();
+        expect(detail!.livePosition).toBeUndefined();
+        expect(readPlayerDataCalled).toBe(false);
+      });
+
+      it('data를 저장소에서 읽어 포함한다', async () => {
+        const useCase = new PlayerManagementUseCase(makeRepo([steve], null, playerData));
+        const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', [], {
+          include: ['nbt'],
+        });
+
+        expect(detail!.data).toBe(playerData);
+      });
+
+      it('오프라인이면 livePosition은 null이고 RCON을 호출하지 않는다', async () => {
+        const rcon: IRconPort = { getEntityPosition: vi.fn() };
+        const useCase = new PlayerManagementUseCase(makeRepo([steve], null, playerData), rcon);
+        const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', [], {
+          include: ['nbt'],
+          container: 'mc-myserver',
+        });
+
+        expect(detail!.livePosition).toBeNull();
+        expect(rcon.getEntityPosition).not.toHaveBeenCalled();
+      });
+
+      it('온라인 + container가 있으면 RCON으로 livePosition을 조회한다', async () => {
+        const position = { x: 5, y: 6, z: 7, dimension: Dimension.Nether };
+        const rcon: IRconPort = { getEntityPosition: vi.fn().mockResolvedValue(position) };
+        const useCase = new PlayerManagementUseCase(makeRepo([steve], null, playerData), rcon);
+        const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['Steve'], {
+          include: ['nbt'],
+          container: 'mc-myserver',
+        });
+
+        expect(detail!.livePosition).toBe(position);
+        expect(rcon.getEntityPosition).toHaveBeenCalledWith('mc-myserver', 'Steve');
+      });
+
+      it('container가 없으면 온라인이어도 livePosition은 null이다', async () => {
+        const rcon: IRconPort = { getEntityPosition: vi.fn() };
+        const useCase = new PlayerManagementUseCase(makeRepo([steve], null, playerData), rcon);
+        const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['Steve'], {
+          include: ['nbt'],
+        });
+
+        expect(detail!.livePosition).toBeNull();
+        expect(rcon.getEntityPosition).not.toHaveBeenCalled();
+      });
+
+      it('rcon이 주입되지 않으면 온라인이어도 livePosition은 null이다', async () => {
+        const useCase = new PlayerManagementUseCase(makeRepo([steve], null, playerData));
+        const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['Steve'], {
+          include: ['nbt'],
+          container: 'mc-myserver',
+        });
+
+        expect(detail!.livePosition).toBeNull();
+      });
+
+      it('RCON 호출이 실패하면 livePosition은 null이다', async () => {
+        const rcon: IRconPort = {
+          getEntityPosition: vi.fn().mockRejectedValue(new Error('rcon down')),
+        };
+        const useCase = new PlayerManagementUseCase(makeRepo([steve], null, playerData), rcon);
+        const detail = await useCase.getPlayerDetail('myserver', 'uuid-steve', ['Steve'], {
+          include: ['nbt'],
+          container: 'mc-myserver',
+        });
+
+        expect(detail!.livePosition).toBeNull();
+      });
     });
   });
 });

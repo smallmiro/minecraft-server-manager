@@ -8,8 +8,10 @@ import { mkdir, writeFile, rm, utimes } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
+import nbt from 'prismarine-nbt';
 import { PlayerRepository } from '../src/infrastructure/adapters/PlayerRepository.js';
 import { PlayerStats } from '../src/domain/value-objects/PlayerStats.js';
+import { Dimension } from '../src/domain/value-objects/WorldInfo.js';
 import type { Paths } from '../src/utils/index.js';
 
 async function makeTempDir(): Promise<string> {
@@ -233,6 +235,62 @@ describe('PlayerRepository', () => {
       expect(await repo.readStats('myserver', uuid)).toBeNull();
 
       spy.mockRestore();
+    });
+  });
+
+  describe('readPlayerData', () => {
+    const uuid = '069a79f4-44e9-4726-a5be-fca90e38aaf5';
+
+    test('playerdata/<uuid>.dat을 파싱한다', async () => {
+      const dat = nbt.writeUncompressed(
+        nbt.comp({
+          Pos: nbt.list(nbt.double([10, 64, -20])),
+          Dimension: nbt.string('minecraft:the_end'),
+          Health: nbt.float(20),
+          foodLevel: nbt.int(20),
+          XpLevel: nbt.int(5),
+          playerGameType: nbt.int(1),
+          Inventory: nbt.list(
+            nbt.comp([
+              { id: nbt.string('minecraft:diamond'), Slot: nbt.byte(0), Count: nbt.byte(3) },
+            ])
+          ),
+        })
+      );
+      const playerDataDir = join(root, 'worlds', 'myserver', 'playerdata');
+      await mkdir(playerDataDir, { recursive: true });
+      await writeFile(join(playerDataDir, `${uuid}.dat`), dat);
+
+      const data = await repo.readPlayerData('myserver', uuid);
+      expect(data).not.toBeNull();
+      expect(data!.x).toBe(10);
+      expect(data!.y).toBe(64);
+      expect(data!.z).toBe(-20);
+      expect(data!.dimension).toBe(Dimension.End);
+      expect(data!.health).toBe(20);
+      expect(data!.food).toBe(20);
+      expect(data!.xpLevel).toBe(5);
+      expect(data!.gameMode).toBe('creative');
+      expect(data!.inventory).toEqual({
+        slotsUsed: 1,
+        items: [{ id: 'minecraft:diamond', count: 3 }],
+      });
+    });
+
+    test('파일이 없으면 null을 반환한다', async () => {
+      expect(await repo.readPlayerData('myserver', uuid)).toBeNull();
+    });
+
+    test('손상된 파일은 null을 반환한다', async () => {
+      const playerDataDir = join(root, 'worlds', 'myserver', 'playerdata');
+      await mkdir(playerDataDir, { recursive: true });
+      await writeFile(join(playerDataDir, `${uuid}.dat`), 'not nbt');
+
+      expect(await repo.readPlayerData('myserver', uuid)).toBeNull();
+    });
+
+    test('uuid 형식이 아니면 null을 반환한다 (경로 조작 방지)', async () => {
+      expect(await repo.readPlayerData('myserver', '../../etc/passwd')).toBeNull();
     });
   });
 });
