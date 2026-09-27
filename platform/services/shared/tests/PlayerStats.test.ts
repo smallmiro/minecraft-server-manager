@@ -120,5 +120,32 @@ describe('PlayerStats', () => {
       const stats = PlayerStats.fromMinecraftJson({}, advancementsJson);
       expect(stats.advancementsCompleted).toBe(0);
     });
+
+    test('overflow된(음수) int 카운터는 unsigned 32-bit로 재해석한다', () => {
+      const statsJson = {
+        stats: {
+          'minecraft:custom': {
+            'minecraft:walk_one_cm': -2147483648, // overflowed int: real distance was > 21,474 km
+          },
+        },
+      };
+
+      const stats = PlayerStats.fromMinecraftJson(statsJson);
+      // -2147483648 + 2**32 = 2147483648 cm -> 21474836.48 m, rounded to nearest meter
+      expect(stats.distanceMeters).toBe(21474836);
+    });
+
+    test('정수가 아닌 음수 값은 0으로 취급한다', () => {
+      const statsJson = {
+        stats: {
+          'minecraft:custom': {
+            'minecraft:deaths': -1.5,
+          },
+        },
+      };
+
+      const stats = PlayerStats.fromMinecraftJson(statsJson);
+      expect(stats.deaths).toBe(0);
+    });
   });
 });

@@ -3,12 +3,13 @@
  * Uses real temp-dir fixtures mirroring `servers/<name>/data/` and
  * `worlds/<level>/playerdata/` — the same layout create-server.sh produces.
  */
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdir, writeFile, rm, utimes } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { PlayerRepository } from '../src/infrastructure/adapters/PlayerRepository.js';
+import { PlayerStats } from '../src/domain/value-objects/PlayerStats.js';
 import type { Paths } from '../src/utils/index.js';
 
 async function makeTempDir(): Promise<string> {
@@ -219,6 +220,19 @@ describe('PlayerRepository', () => {
 
     test('uuid 형식이 아니면 null을 반환한다 (경로 조작 방지)', async () => {
       expect(await repo.readStats('myserver', '../../etc/passwd')).toBeNull();
+    });
+
+    test('fromMinecraftJson이 예외를 던지면 null을 반환한다', async () => {
+      await writeJson(join(root, 'worlds', 'myserver', 'stats', `${uuid}.json`), {
+        stats: { 'minecraft:custom': { 'minecraft:deaths': 1 } },
+      });
+      const spy = vi.spyOn(PlayerStats, 'fromMinecraftJson').mockImplementation(() => {
+        throw new Error('unexpected corrupt shape');
+      });
+
+      expect(await repo.readStats('myserver', uuid)).toBeNull();
+
+      spy.mockRestore();
     });
   });
 });

@@ -106,8 +106,17 @@ function record(value: unknown, ...path: string[]): Record<string, unknown> {
     : {};
 }
 
+/**
+ * Vanilla stats counters are signed 32-bit ints; long-running servers overflow
+ * them to negative values (e.g. `*_one_cm` distances past ~21,474 km, or play
+ * ticks). Reinterpret a negative integer as unsigned 32-bit — the real count
+ * the overflow lost. A negative non-integer isn't a plausible overflow, so it
+ * is treated as 0 rather than propagated.
+ */
 function numberOf(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  if (value >= 0) return value;
+  return Number.isInteger(value) ? value + 2 ** 32 : 0;
 }
 
 function sumValues(obj: Record<string, unknown>): number {

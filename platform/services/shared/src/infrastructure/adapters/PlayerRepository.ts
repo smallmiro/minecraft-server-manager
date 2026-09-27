@@ -108,7 +108,11 @@ export class PlayerRepository implements IPlayerRepository {
     const advancementsJson = await this.readJsonFile(
       join(worldDir, 'advancements', `${uuid}.json`)
     );
-    return PlayerStats.fromMinecraftJson(statsJson, advancementsJson ?? undefined);
+    try {
+      return PlayerStats.fromMinecraftJson(statsJson, advancementsJson ?? undefined);
+    } catch {
+      return null;
+    }
   }
 
   /** Scan `worlds/<level>/playerdata/*.dat`, using file mtime as last-seen. */
