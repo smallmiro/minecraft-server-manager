@@ -53,6 +53,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Local Git worktrees
+.worktrees/
+
 # Docker
 *.log
 docker-compose.test.yml
