@@ -184,6 +184,31 @@ describe('PlayerDetailModal (#528 Phase 2)', () => {
       expect(screen.getByText(/nether/i)).toBeInTheDocument();
     });
 
+    it('renders "—" for health/food/xpLevel when the NBT tag is absent', () => {
+      mockUsePlayerDetail.mockReturnValue({
+        data: {
+          ...player,
+          stats: null,
+          data: {
+            x: 0,
+            y: 64,
+            z: 0,
+            dimension: 'overworld',
+            gameMode: 'survival',
+            inventory: { slotsUsed: 0, items: [] },
+          },
+        },
+        isLoading: false,
+        isError: false,
+      });
+      renderWithProviders(
+        <PlayerDetailModal serverName="survival" player={player} open={true} onClose={vi.fn()} />
+      );
+
+      expect(screen.getAllByText('—/20')).toHaveLength(2); // health, food
+      expect(screen.getByText('—')).toBeInTheDocument(); // xpLevel
+    });
+
     it('caps the displayed inventory items at 10', () => {
       const items = Array.from({ length: 15 }, (_, i) => ({ id: `minecraft:item_${i}`, count: 1 }));
       mockUsePlayerDetail.mockReturnValue({

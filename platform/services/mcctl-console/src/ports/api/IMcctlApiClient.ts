@@ -839,9 +839,9 @@ export interface PlayerData {
   y: number;
   z: number;
   dimension: WorldDimension;
-  health: number;
-  food: number;
-  xpLevel: number;
+  health?: number;
+  food?: number;
+  xpLevel?: number;
   gameMode: GameMode;
   inventory: {
     slotsUsed: number;

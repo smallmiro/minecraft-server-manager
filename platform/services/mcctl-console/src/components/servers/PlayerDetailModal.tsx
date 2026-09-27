@@ -122,13 +122,13 @@ function PositionStatusSection({
         <>
           <Grid container spacing={1.5}>
             <Grid item xs={6} sm={3}>
-              <StatCell label="Health" value={`${data.health}/20`} />
+              <StatCell label="Health" value={data.health != null ? `${data.health}/20` : '—/20'} />
             </Grid>
             <Grid item xs={6} sm={3}>
-              <StatCell label="Food" value={`${data.food}/20`} />
+              <StatCell label="Food" value={data.food != null ? `${data.food}/20` : '—/20'} />
             </Grid>
             <Grid item xs={6} sm={3}>
-              <StatCell label="XP Level" value={String(data.xpLevel)} />
+              <StatCell label="XP Level" value={data.xpLevel != null ? String(data.xpLevel) : '—'} />
             </Grid>
             <Grid item xs={6} sm={3}>
               <StatCell label="Game Mode" value={data.gameMode} />
