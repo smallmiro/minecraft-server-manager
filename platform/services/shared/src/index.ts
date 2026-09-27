@@ -155,6 +155,13 @@ export {
   type PlayerDataJson,
   type PlayerInventorySummary,
   type InventoryItemSummary,
+  // Player session history (#528, Phase 4)
+  PlayerSession,
+  type PlayerSessionProps,
+  type PlayerSessionJson,
+  parsePlayerSessionEvent,
+  parseDockerLogTimestamp,
+  type PlayerSessionEvent,
 } from './domain/index.js';
 
 // Re-export mod domain models

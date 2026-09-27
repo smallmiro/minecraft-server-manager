@@ -927,9 +927,9 @@ export function playerDetailRefetchInterval(data: PlayerDetail | undefined): num
 }
 
 /**
- * Hook to fetch a single player's detail (stats + NBT position/status) for
- * the detail modal. Skipped when `uuid` is empty (an online player not yet
- * cached) or when explicitly disabled.
+ * Hook to fetch a single player's detail (stats + NBT position/status +
+ * session history) for the detail modal. Skipped when `uuid` is empty (an
+ * online player not yet cached) or when explicitly disabled.
  */
 export function usePlayerDetail(
   serverName: string,
@@ -940,7 +940,7 @@ export function usePlayerDetail(
     queryKey: ['servers', serverName, 'players', uuid, 'detail'],
     queryFn: () =>
       apiFetch<PlayerDetail>(
-        `/api/servers/${encodeURIComponent(serverName)}/players/${encodeURIComponent(uuid)}?include=stats,nbt`
+        `/api/servers/${encodeURIComponent(serverName)}/players/${encodeURIComponent(uuid)}?include=stats,nbt,sessions`
       ),
     enabled: (options?.enabled ?? true) && !!serverName && !!uuid,
     refetchInterval: (query) => playerDetailRefetchInterval(query.state.data),

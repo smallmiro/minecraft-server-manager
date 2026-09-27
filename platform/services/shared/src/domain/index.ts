@@ -65,6 +65,9 @@ export {
   type PlayerDataJson,
   type PlayerInventorySummary,
   type InventoryItemSummary,
+  parsePlayerSessionEvent,
+  parseDockerLogTimestamp,
+  type PlayerSessionEvent,
 } from './value-objects/index.js';
 
 // Entities
@@ -78,6 +81,9 @@ export {
   Player,
   type PlayerProps,
   type PlayerJson,
+  PlayerSession,
+  type PlayerSessionProps,
+  type PlayerSessionJson,
   User,
   type UserData,
   AuditLog,

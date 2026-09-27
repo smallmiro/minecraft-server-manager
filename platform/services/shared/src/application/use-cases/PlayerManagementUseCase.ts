@@ -5,6 +5,7 @@ import type {
 } from '../ports/inbound/IPlayerManagementUseCase.js';
 import type { IPlayerRepository } from '../ports/outbound/IPlayerRepository.js';
 import type { IRconPort } from '../ports/outbound/IRconPort.js';
+import type { IPlayerSessionUseCase } from '../ports/inbound/IPlayerSessionUseCase.js';
 import { Player, type EntityPosition } from '../../domain/index.js';
 
 /**
@@ -14,11 +15,14 @@ import { Player, type EntityPosition } from '../../domain/index.js';
  * online player names resolved by the caller via RCON `list` (#528, Phase 1).
  * `rcon` is optional — only needed for `include: ['nbt']`'s `livePosition`
  * (#528, Phase 3); omit it when the caller never requests `'nbt'`.
+ * `playerSessions` is optional — only needed for `include: ['sessions']`
+ * (#528, Phase 4); omit it when the caller never requests `'sessions'`.
  */
 export class PlayerManagementUseCase implements IPlayerManagementUseCase {
   constructor(
     private readonly playerRepository: IPlayerRepository,
-    private readonly rcon?: IRconPort
+    private readonly rcon?: IRconPort,
+    private readonly playerSessions?: IPlayerSessionUseCase
   ) {}
 
   async listPlayers(serverName: string, onlineNames: string[]): Promise<Player[]> {
@@ -91,6 +95,11 @@ export class PlayerManagementUseCase implements IPlayerManagementUseCase {
       detail.data = await this.playerRepository.readPlayerData(serverName, player.uuid || uuid);
       detail.livePosition = player.online
         ? await this.getLivePosition(options.container, player.name)
+        : null;
+    }
+    if (options?.include?.includes('sessions')) {
+      detail.sessions = this.playerSessions
+        ? await this.playerSessions.getSessionHistory(serverName, player.name, new Date())
         : null;
     }
     return detail;

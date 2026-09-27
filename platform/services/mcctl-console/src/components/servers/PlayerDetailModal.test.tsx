@@ -238,4 +238,46 @@ describe('PlayerDetailModal (#528 Phase 2)', () => {
       expect(screen.queryByText(/item_10/)).not.toBeInTheDocument();
     });
   });
+
+  describe('Session History (#528 Phase 4)', () => {
+    it('shows an empty state when there is no session history', () => {
+      mockUsePlayerDetail.mockReturnValue({
+        data: { ...player, stats: null, data: null, sessions: null },
+        isLoading: false,
+        isError: false,
+      });
+      renderWithProviders(
+        <PlayerDetailModal serverName="survival" player={player} open={true} onClose={vi.fn()} />
+      );
+      expect(screen.getByText(/no sessions recorded yet/i)).toBeInTheDocument();
+    });
+
+    it('shows visit count, total playtime and recent sessions', () => {
+      mockUsePlayerDetail.mockReturnValue({
+        data: {
+          ...player,
+          stats: null,
+          data: null,
+          sessions: {
+            visitCount: 12,
+            totalPlaytimeSeconds: 5400,
+            lastSeen: '2024-01-02T00:00:00Z',
+            recent: [
+              { joinedAt: '2024-01-02T00:00:00Z', leftAt: null, durationSeconds: 0 },
+              { joinedAt: '2024-01-01T00:00:00Z', leftAt: '2024-01-01T01:00:00Z', durationSeconds: 3600 },
+            ],
+          },
+        },
+        isLoading: false,
+        isError: false,
+      });
+      renderWithProviders(
+        <PlayerDetailModal serverName="survival" player={player} open={true} onClose={vi.fn()} />
+      );
+
+      expect(screen.getByText('12')).toBeInTheDocument();
+      expect(screen.getByText('1h 30m')).toBeInTheDocument();
+      expect(screen.getByText('Online now')).toBeInTheDocument();
+    });
+  });
 });

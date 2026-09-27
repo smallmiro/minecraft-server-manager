@@ -3,14 +3,18 @@ import fp from 'fastify-plugin';
 import { join } from 'node:path';
 import {
   containerExists,
+  getAllServers,
   getContainerStatus,
   serverExists,
   OpLevel,
   Paths,
   PlayerRepository,
   PlayerManagementUseCase,
+  PlayerSessionUseCase,
   RconCliAdapter,
+  SqlitePlayerSessionRepository,
   type IPlayerManagementUseCase,
+  type SessionHistory,
 } from '@minecraft-docker/shared';
 import {
   PlayerInfoSchema,
@@ -19,6 +23,7 @@ import {
   PlayerDetailQuerySchema,
   PlayerDetailResponseSchema,
   type PlayerDetailResponse,
+  type SessionHistoryResponse,
   PlayerListResponseSchema,
   WhitelistResponseSchema,
   WhitelistStatusResponseSchema,
@@ -53,6 +58,7 @@ import { config } from '../config/index.js';
 import { PlayerFileService } from '../services/PlayerFileService.js';
 import { OpsJsonService } from '../services/OpsJsonService.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
+import { PlayerSessionCollectorService } from '../services/player-session-collector.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 
 // Route interfaces
@@ -98,6 +104,21 @@ interface UpdateOperatorLevelRoute {
   Body: UpdateOperatorLevelRequest;
 }
 
+/** Serialize a `SessionHistory` (shared) into the API's JSON shape (#528, Phase 4). */
+function serializeSessionHistory(history: SessionHistory): SessionHistoryResponse {
+  const now = new Date();
+  return {
+    visitCount: history.visitCount,
+    totalPlaytimeSeconds: history.totalPlaytimeSeconds,
+    lastSeen: history.lastSeen ? history.lastSeen.toISOString() : null,
+    recent: history.recent.map((session) => ({
+      joinedAt: session.joinedAt.toISOString(),
+      leftAt: session.leftAt ? session.leftAt.toISOString() : null,
+      durationSeconds: session.durationSeconds(now),
+    })),
+  };
+}
+
 /**
  * Look up UUID from Mojang API. Returns empty string on failure.
  */
@@ -118,10 +139,37 @@ async function lookupUuid(playerName: string): Promise<string> {
 const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const playerFileService = new PlayerFileService(config.platformPath);
   const opsJsonService = new OpsJsonService(config.platformPath);
+
+  // Session/visit history store (#528, Phase 4). Mirrors audit-log-service's
+  // `audit.db` singleton pattern; closed via the onClose hook below.
+  const sessionDbPath = join(config.mcctlRoot, 'data', 'players.db');
+  const playerSessionRepository = new SqlitePlayerSessionRepository(sessionDbPath);
+  const playerSessionUseCase = new PlayerSessionUseCase(playerSessionRepository);
+
   const playerManagementUseCase: IPlayerManagementUseCase = new PlayerManagementUseCase(
     new PlayerRepository(new Paths(config.platformPath)),
-    new RconCliAdapter()
+    new RconCliAdapter(),
+    playerSessionUseCase
   );
+
+  // Background collector: every 30s, ingest each defined server's log lines
+  // into session history (#528, Phase 4). Skipped in tests to avoid spawning
+  // `docker` calls / a lingering interval outside app.close().
+  const sessionCollector = new PlayerSessionCollectorService(
+    playerSessionUseCase,
+    () => getAllServers(join(config.platformPath, 'servers')),
+    getContainerStatus,
+    undefined,
+    fastify.log
+  );
+  if (config.nodeEnv !== 'test') {
+    sessionCollector.start();
+  }
+
+  fastify.addHook('onClose', async () => {
+    sessionCollector.stop();
+    playerSessionRepository.close();
+  });
 
   // Helper to check server exists (container created)
   const checkServerExists = (name: string, reply: FastifyReply): boolean => {
@@ -300,8 +348,8 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     const requested = (include ?? '').split(',').filter(Boolean);
     const wantsNbt = requested.includes('nbt');
-    const detailOptions: { include: Array<'stats' | 'nbt'>; container?: string } | undefined =
-      requested.length > 0 ? { include: requested as Array<'stats' | 'nbt'> } : undefined;
+    const detailOptions: { include: Array<'stats' | 'nbt' | 'sessions'>; container?: string } | undefined =
+      requested.length > 0 ? { include: requested as Array<'stats' | 'nbt' | 'sessions'> } : undefined;
 
     try {
       const { names: onlineNames, running } = await getOnlinePlayers(name);
@@ -324,6 +372,9 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
       if (detail.livePosition !== undefined) {
         response.livePosition = detail.livePosition;
+      }
+      if (detail.sessions !== undefined) {
+        response.sessions = detail.sessions ? serializeSessionHistory(detail.sessions) : null;
       }
       return reply.send(response);
     } catch (error) {

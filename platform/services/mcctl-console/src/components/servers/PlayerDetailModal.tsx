@@ -16,7 +16,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import PersonIcon from '@mui/icons-material/Person';
 import { usePlayerDetail } from '@/hooks/useMcctl';
-import type { PlayerSummary, PlayerStats, PlayerData, LivePosition } from '@/ports/api/IMcctlApiClient';
+import type { PlayerSummary, PlayerStats, PlayerData, LivePosition, SessionHistory } from '@/ports/api/IMcctlApiClient';
 
 export interface PlayerDetailModalProps {
   serverName: string;
@@ -158,9 +158,82 @@ function PositionStatusSection({
   );
 }
 
+/** Format an ISO timestamp as relative time ("2h ago"), falling back to a date once past a day. */
+function formatRelativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMinutes < 1) return 'just now';
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 30) return `${diffDays}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function SessionHistorySection({ sessions }: { sessions: SessionHistory | null | undefined }) {
+  if (!sessions || sessions.recent.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+        No sessions recorded yet (history is collected from server logs).
+      </Typography>
+    );
+  }
+
+  return (
+    <Box>
+      <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
+        <Grid item xs={6} sm={4}>
+          <StatCell label="Visits" value={sessions.visitCount.toLocaleString()} />
+        </Grid>
+        <Grid item xs={6} sm={4}>
+          <StatCell label="Total Playtime" value={formatPlayTime(sessions.totalPlaytimeSeconds)} />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <StatCell
+            label="Last Seen"
+            value={sessions.lastSeen ? formatRelativeTime(sessions.lastSeen) : '—'}
+          />
+        </Grid>
+      </Grid>
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+        {sessions.recent.map((s, i) => (
+          <Box
+            key={`${s.joinedAt}-${i}`}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
+              px: 1.5,
+              py: 0.75,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1,
+            }}
+          >
+            <Typography variant="body2">
+              {new Date(s.joinedAt).toLocaleString()}
+              {' → '}
+              {s.leftAt ? new Date(s.leftAt).toLocaleString() : ''}
+            </Typography>
+            {s.leftAt ? (
+              <Chip label={formatPlayTime(s.durationSeconds)} size="small" variant="outlined" />
+            ) : (
+              <Chip label="Online now" size="small" color="success" />
+            )}
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
 /**
- * Player detail modal (#528 Phase 2/3): header + statistics + position/status.
- * Later phases can append session sections here.
+ * Player detail modal (#528 Phase 2/3/4): header + statistics +
+ * position/status + session history.
  */
 export function PlayerDetailModal({ serverName, player, open, onClose }: PlayerDetailModalProps) {
   const uuid = player?.uuid ?? '';
@@ -224,6 +297,12 @@ export function PlayerDetailModal({ serverName, player, open, onClose }: PlayerD
               Position &amp; Status
             </Typography>
             <PositionStatusSection data={data?.data} livePosition={data?.livePosition} />
+
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+              Session History
+            </Typography>
+            <SessionHistorySection sessions={data?.sessions} />
           </>
         )}
       </DialogContent>

@@ -19,7 +19,7 @@ describe('usePlayerDetail (#528 Phase 2)', () => {
     mockFetch.mockReset();
   });
 
-  it('fetches the player detail with stats and nbt included', async () => {
+  it('fetches the player detail with stats, nbt and sessions included', async () => {
     const mockData = {
       uuid: 'abc',
       name: 'Steve',
@@ -49,7 +49,7 @@ describe('usePlayerDetail (#528 Phase 2)', () => {
 
     expect(result.current.data).toEqual(mockData);
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/servers/survival/players/abc?include=stats,nbt',
+      '/api/servers/survival/players/abc?include=stats,nbt,sessions',
       expect.any(Object)
     );
   });

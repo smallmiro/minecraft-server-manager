@@ -61,6 +61,10 @@ export type { IConfigSnapshotStorage } from './IConfigSnapshotStorage.js';
 
 export type { IWorldDataReader } from './IWorldDataReader.js';
 export type { IPlayerRepository, UserCacheEntry } from './IPlayerRepository.js';
+export type {
+  IPlayerSessionRepository,
+  PlayerSessionSummary,
+} from './IPlayerSessionRepository.js';
 export type { IRconPort } from './IRconPort.js';
 export type {
   IMapRenderer,

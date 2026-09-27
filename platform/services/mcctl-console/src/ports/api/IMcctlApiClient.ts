@@ -861,14 +861,38 @@ export interface LivePosition {
 }
 
 /**
+ * A single join/leave session, as recorded by the server-log collector
+ * (#528 Phase 4). `leftAt: null` means the player is still online in that
+ * session.
+ */
+export interface PlayerSessionEntry {
+  joinedAt: string;
+  leftAt: string | null;
+  durationSeconds: number;
+}
+
+/**
+ * Aggregated session/visit history (#528 Phase 4), collected from server
+ * logs since the collector was introduced — older history may be empty.
+ * `recent` is newest-first, capped at 20 entries.
+ */
+export interface SessionHistory {
+  visitCount: number;
+  totalPlaytimeSeconds: number;
+  lastSeen: string | null;
+  recent: PlayerSessionEntry[];
+}
+
+/**
  * Player detail as returned by `GET .../players/:uuid?include=...`.
- * `stats`/`data`/`livePosition` are `null` when the player has no such data,
- * and absent when not requested via `include`.
+ * `stats`/`data`/`livePosition`/`sessions` are `null` when the player has no
+ * such data, and absent when not requested via `include`.
  */
 export interface PlayerDetail extends PlayerSummary {
   stats?: PlayerStats | null;
   data?: PlayerData | null;
   livePosition?: LivePosition | null;
+  sessions?: SessionHistory | null;
 }
 
 // ============================================================

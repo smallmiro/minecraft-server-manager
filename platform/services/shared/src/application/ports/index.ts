@@ -34,6 +34,8 @@ export type {
   IWorldStatsUseCase,
   AnalyzeOptions,
   IPlayerManagementUseCase,
+  IPlayerSessionUseCase,
+  SessionHistory,
 } from './inbound/index.js';
 export { AnalysisCancelledError } from './inbound/index.js';
 
@@ -80,6 +82,8 @@ export type {
   IRconPort,
   IPlayerRepository,
   UserCacheEntry,
+  IPlayerSessionRepository,
+  PlayerSessionSummary,
   IMapRenderer,
   MapRenderProgress,
   MapRenderResult,

@@ -39,5 +39,6 @@ export type {
   PlayerDetail,
   GetPlayerDetailOptions,
 } from './IPlayerManagementUseCase.js';
+export type { IPlayerSessionUseCase, SessionHistory } from './IPlayerSessionUseCase.js';
 export { AnalysisCancelledError } from './IWorldStatsUseCase.js';
 export type { IWorldStatsUseCase, AnalyzeOptions } from './IWorldStatsUseCase.js';
