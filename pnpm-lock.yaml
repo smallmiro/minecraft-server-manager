@@ -132,6 +132,9 @@ importers:
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
+      prismarine-nbt:
+        specifier: ^2.8.0
+        version: 2.8.0
       tsx:
         specifier: ^4.19.2
         version: 4.21.0
