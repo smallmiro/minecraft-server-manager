@@ -3,7 +3,7 @@ import type {
   SessionHistory,
 } from '../ports/inbound/IPlayerSessionUseCase.js';
 import type { IPlayerSessionRepository } from '../ports/outbound/IPlayerSessionRepository.js';
-import { parsePlayerSessionEvent } from '../../infrastructure/adapters/parsePlayerSessionEvent.js';
+import { parsePlayerSessionEvent } from '../../domain/index.js';
 
 const DEFAULT_RECENT_LIMIT = 20;
 

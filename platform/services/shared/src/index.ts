@@ -159,6 +159,8 @@ export {
   PlayerSession,
   type PlayerSessionProps,
   type PlayerSessionJson,
+  parsePlayerSessionEvent,
+  type PlayerSessionEvent,
 } from './domain/index.js';
 
 // Re-export mod domain models

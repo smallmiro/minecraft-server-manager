@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parsePlayerSessionEvent } from '../src/infrastructure/adapters/parsePlayerSessionEvent.js';
+import { parsePlayerSessionEvent } from '../src/domain/index.js';
 
 describe('parsePlayerSessionEvent', () => {
   it('parses a join line (vanilla/Paper format, docker --timestamps prefix)', () => {

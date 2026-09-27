@@ -78,3 +78,7 @@ export {
   type PlayerInventorySummary,
   type InventoryItemSummary,
 } from './PlayerData.js';
+export {
+  parsePlayerSessionEvent,
+  type PlayerSessionEvent,
+} from './PlayerSessionEvent.js';

@@ -65,6 +65,8 @@ export {
   type PlayerDataJson,
   type PlayerInventorySummary,
   type InventoryItemSummary,
+  parsePlayerSessionEvent,
+  type PlayerSessionEvent,
 } from './value-objects/index.js';
 
 // Entities
