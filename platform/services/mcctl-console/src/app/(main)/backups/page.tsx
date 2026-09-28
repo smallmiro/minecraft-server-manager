@@ -1,11 +1,8 @@
 'use client';
 
 import { useCallback } from 'react';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import { alpha } from '@mui/material/styles';
+import Chip from '@mui/material/Chip';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
   BackupStatus,
@@ -18,10 +15,16 @@ import {
 } from '@/components/backups';
 import { useBackupStatus } from '@/hooks/useMcctl';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { BentoPanel, PageHero } from '@/components/bento';
 
 export default function BackupsPage() {
-  const { data: statusData } = useBackupStatus();
+  const { data: statusData, isLoading: statusLoading } = useBackupStatus();
   const configured = statusData?.configured ?? false;
+  const configurationLabel = statusLoading
+    ? 'Checking backup configuration'
+    : configured
+      ? 'Configured'
+      : 'Not configured';
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -45,70 +48,50 @@ export default function BackupsPage() {
 
   return (
     <>
-      {/* Page Header */}
-      <Paper
-        elevation={0}
-        sx={{
-          mb: 4,
-          p: 3,
-          background: (theme) =>
-            `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.1)} 100%)`,
-          borderRadius: 2,
-          border: (theme) => `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 56,
-              height: 56,
-              borderRadius: 2,
-              bgcolor: 'secondary.main',
-              color: 'secondary.contrastText',
-            }}
-          >
-            <CloudUploadIcon sx={{ fontSize: 32 }} />
-          </Box>
-          <Box>
-            <Typography variant="h4" component="h1" fontWeight="bold">
-              Backups
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Manage world backups and config snapshots
-            </Typography>
-          </Box>
-        </Box>
-        {currentTab === 'world-backups' && (
-          <BackupPushButton disabled={!configured} />
+      <PageHero
+        compact
+        title="Backups"
+        description="Manage world backups and config snapshots"
+        eyebrow="Recovery"
+        icon={<CloudUploadIcon />}
+        status={(
+          <Chip
+            label={configurationLabel}
+            color={statusLoading ? 'default' : configured ? 'success' : 'warning'}
+            size="small"
+          />
         )}
-      </Paper>
+        actions={currentTab === 'world-backups' ? (
+          <BackupPushButton disabled={!configured || statusLoading} />
+        ) : undefined}
+        sx={{ mb: 2.5 }}
+      />
 
       {/* Tab Switcher */}
-      <BackupPageTabs value={currentTab} onChange={handleTabChange} />
+      <BentoPanel sx={{ p: 1, mb: 2.5 }}>
+        <BackupPageTabs value={currentTab} onChange={handleTabChange} />
+      </BentoPanel>
 
       {/* Tab Content */}
-      {currentTab === 'world-backups' && (
-        <Stack spacing={3}>
-          {/* Backup Status */}
-          <BackupStatus />
+      <BentoPanel
+        role="region"
+        aria-label="Backup content"
+        sx={{ p: { xs: 2, sm: 3 }, minHeight: 360 }}
+      >
+        {currentTab === 'world-backups' && (
+          <Stack spacing={3}>
+            <BackupStatus />
 
-          {/* Backup Schedules */}
-          <BackupScheduleList />
+            <BackupScheduleList />
 
-          {/* Backup History */}
-          {configured && <BackupHistory />}
-        </Stack>
-      )}
+            {configured && <BackupHistory />}
+          </Stack>
+        )}
 
-      {currentTab === 'config-snapshots' && (
-        <ConfigSnapshotTab />
-      )}
+        {currentTab === 'config-snapshots' && (
+          <ConfigSnapshotTab />
+        )}
+      </BentoPanel>
     </>
   );
 }
