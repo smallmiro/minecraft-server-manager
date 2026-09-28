@@ -7,14 +7,13 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
-import Paper from '@mui/material/Paper';
+import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
-import { alpha } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import PublicIcon from '@mui/icons-material/Public';
 import { WorldList } from '@/components/worlds/WorldList';
@@ -30,6 +29,7 @@ import {
   useDeleteWorld,
 } from '@/hooks/useMcctl';
 import type { CreateWorldRequest } from '@/ports/api/IMcctlApiClient';
+import { BentoGrid, BentoMetricCard, BentoPanel, PageHero } from '@/components/bento';
 
 export default function WorldsPage() {
   const theme = useTheme();
@@ -51,6 +51,10 @@ export default function WorldsPage() {
   const assignWorld = useAssignWorld();
   const releaseWorld = useReleaseWorld();
   const deleteWorld = useDeleteWorld();
+  const worlds = data?.worlds ?? [];
+  const worldsUnavailable = !isLoading && !data;
+  const assignedWorlds = worlds.filter((world) => world.isLocked).length;
+  const freeWorlds = worlds.length - assignedWorlds;
 
   const handleCreateWorld = (request: CreateWorldRequest, zipFile?: File | null) => {
     if (zipFile) {
@@ -124,57 +128,50 @@ export default function WorldsPage() {
 
   return (
     <>
-      {/* Page Header */}
-      <Paper
-        elevation={0}
-        sx={{
-          mb: 4,
-          p: 3,
-          background: (theme) =>
-            `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`,
-          borderRadius: 2,
-          border: (theme) => `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          gap: 2,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box
-            sx={{
-              display: { xs: 'none', sm: 'flex' },
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 56,
-              height: 56,
-              borderRadius: 2,
-              bgcolor: 'success.main',
-              color: 'success.contrastText',
-            }}
+      <PageHero
+        title="Worlds"
+        description="Manage your Minecraft worlds"
+        eyebrow="World library"
+        icon={<PublicIcon />}
+        actions={(
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setCreateDialogOpen(true)}
+            size="large"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
-            <PublicIcon sx={{ fontSize: 32 }} />
+            Create World
+          </Button>
+        )}
+        sx={{ mb: 2.5 }}
+      >
+        <BentoGrid>
+          <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
+            <BentoMetricCard
+              title="Total worlds"
+              value={isLoading ? <Skeleton width={56} /> : worldsUnavailable ? 'Unavailable' : worlds.length}
+              icon={<PublicIcon />}
+            />
           </Box>
-          <Box>
-            <Typography variant="h4" component="h1" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
-              Worlds
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Manage your Minecraft worlds
-            </Typography>
+          <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
+            <BentoMetricCard
+              title="Assigned worlds"
+              value={isLoading ? <Skeleton width={56} /> : worldsUnavailable ? 'Unavailable' : assignedWorlds}
+              accent="warning"
+              description="Attached to a server"
+            />
           </Box>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateDialogOpen(true)}
-          size="large"
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
-        >
-          Create World
-        </Button>
-      </Paper>
+          <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
+            <BentoMetricCard
+              title="Free worlds"
+              value={isLoading ? <Skeleton width={56} /> : worldsUnavailable ? 'Unavailable' : freeWorlds}
+              accent="success"
+              description="Ready to assign"
+            />
+          </Box>
+        </BentoGrid>
+      </PageHero>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -212,21 +209,37 @@ export default function WorldsPage() {
         </Alert>
       )}
 
-      {isLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <WorldList
-          worlds={data?.worlds || []}
-          onAssign={(worldName) => setAssignDialogWorld(worldName)}
-          onRelease={handleReleaseWorld}
-          onDelete={handleDeleteClick}
-          onViewInfo={(worldName) => setInfoWorld(worldName)}
-          onCreate={() => setCreateDialogOpen(true)}
-          loadingWorlds={loadingWorlds}
-        />
-      )}
+      <BentoPanel
+        role="region"
+        aria-label="World inventory"
+        aria-busy={isLoading}
+        sx={{ p: { xs: 2, sm: 3 }, minHeight: 400 }}
+      >
+        {isLoading ? (
+          <BentoGrid>
+            {[0, 1, 2].map((item) => (
+              <Box
+                key={item}
+                sx={{ gridColumn: { xs: '1 / -1', sm: 'span 3', md: 'span 4' } }}
+              >
+                <Skeleton variant="rounded" height={220} />
+              </Box>
+            ))}
+          </BentoGrid>
+        ) : worldsUnavailable ? (
+          <Typography color="text.secondary">World inventory unavailable</Typography>
+        ) : (
+          <WorldList
+            worlds={worlds}
+            onAssign={(worldName) => setAssignDialogWorld(worldName)}
+            onRelease={handleReleaseWorld}
+            onDelete={handleDeleteClick}
+            onViewInfo={(worldName) => setInfoWorld(worldName)}
+            onCreate={() => setCreateDialogOpen(true)}
+            loadingWorlds={loadingWorlds}
+          />
+        )}
+      </BentoPanel>
 
       <CreateWorldDialog
         open={createDialogOpen}

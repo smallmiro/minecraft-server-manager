@@ -8,7 +8,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import Convert from 'ansi-to-html';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -24,6 +23,7 @@ import SendIcon from '@mui/icons-material/Send';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useServerLogs } from '@/hooks/useServerLogs';
+import { BentoPanel } from '@/components/bento';
 
 /**
  * Log level filter types
@@ -38,6 +38,7 @@ interface ServerConsoleProps {
    * Name of the server to connect to
    */
   serverName: string;
+  onConnectionStateChange?: (state: { isConnected: boolean; retryCount: number }) => void;
 }
 
 /**
@@ -111,6 +112,7 @@ const LogLine = memo(function LogLine({ log }: { log: string }) {
 
   return (
     <Box
+      data-testid="console-log-line"
       sx={{
         py: 0.25,
         whiteSpace: 'pre-wrap',
@@ -152,7 +154,7 @@ function getLogLevelColor(level: LogLevel): string {
 /**
  * ServerConsole - Real-time log streaming and command execution
  */
-export function ServerConsole({ serverName }: ServerConsoleProps) {
+export function ServerConsole({ serverName, onConnectionStateChange }: ServerConsoleProps) {
   const [command, setCommand] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -168,6 +170,10 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
   const { logs, isConnected, clearLogs, reconnect, retryCount } = useServerLogs({
     serverName,
   });
+
+  useEffect(() => {
+    onConnectionStateChange?.({ isConnected, retryCount });
+  }, [isConnected, retryCount, onConnectionStateChange]);
 
   // Filter logs based on selected level and RCON filter
   const filteredLogs = useMemo(() => {
@@ -278,13 +284,15 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
   const connectionStatus = getConnectionStatus();
 
   return (
-    <Paper
+    <BentoPanel
       data-testid="server-console"
+      role="region"
+      aria-label="Server terminal"
       sx={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        minHeight: 400,
+        minHeight: { xs: 480, md: 560 },
       }}
     >
       {/* Header */}
@@ -378,6 +386,7 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
       {/* Logs Container */}
       <Box
         ref={logsContainerRef}
+        data-testid="console-log-region"
         sx={{
           flex: 1,
           overflow: 'auto',
@@ -404,7 +413,7 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
 
       {/* Quick Commands */}
       <Box sx={{ px: 2, py: 1, bgcolor: 'background.default' }}>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
           <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center' }}>
             Quick:
           </Typography>
@@ -447,6 +456,6 @@ export function ServerConsole({ serverName }: ServerConsoleProps) {
           Send
         </Button>
       </Box>
-    </Paper>
+    </BentoPanel>
   );
 }

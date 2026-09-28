@@ -72,7 +72,7 @@ describe('RoutingPage', () => {
       </QueryClientProvider>
     );
 
-  it('should render loading state with skeleton', () => {
+  it('renders one hero and matched loading panels', () => {
     vi.mocked(useRouterStatus).mockReturnValue({
       data: undefined,
       isLoading: true,
@@ -81,11 +81,13 @@ describe('RoutingPage', () => {
 
     renderComponent();
 
-    // Loading state shows skeletons, not progress bar
-    expect(screen.getByText('Routing')).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByTestId('page-hero')).toHaveAttribute('data-compact', 'true');
+    expect(screen.getByLabelText('Router status')).toHaveTextContent('Checking');
+    expect(screen.getAllByTestId('routing-skeleton-panel')).toHaveLength(5);
   });
 
-  it('should render error state', () => {
+  it('renders an explicit unavailable error state', () => {
     const errorMessage = 'Failed to fetch router status';
     vi.mocked(useRouterStatus).mockReturnValue({
       data: undefined,
@@ -94,7 +96,22 @@ describe('RoutingPage', () => {
     } as any);
 
     renderComponent();
+    expect(screen.getByLabelText('Router status')).toHaveTextContent('Unavailable');
+    expect(screen.getByRole('alert')).toHaveTextContent(errorMessage);
     expect(screen.getByText(new RegExp(errorMessage, 'i'))).toBeInTheDocument();
+  });
+
+  it('renders an explicit unavailable state when router data is absent', () => {
+    vi.mocked(useRouterStatus).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: null,
+    } as any);
+
+    renderComponent();
+
+    expect(screen.getByLabelText('Router status')).toHaveTextContent('Unavailable');
+    expect(screen.getByText('Router status is unavailable.')).toBeInTheDocument();
   });
 
   it('should render router status when data is loaded', async () => {
@@ -108,7 +125,9 @@ describe('RoutingPage', () => {
 
     await waitFor(() => {
       // Check page title
-      expect(screen.getByText('Routing')).toBeInTheDocument();
+      expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+      expect(screen.getByLabelText('Router status')).toHaveTextContent('running');
+      expect(screen.getByLabelText('Route count')).toHaveTextContent('2 routes');
 
       // Check router status section
       expect(screen.getByText('MC-Router Status')).toBeInTheDocument();
@@ -160,5 +179,21 @@ describe('RoutingPage', () => {
     await waitFor(() => {
       expect(screen.getByText('mDNS (Avahi)')).toBeInTheDocument();
     });
+  });
+
+  it('groups the routing content into named Bento regions', () => {
+    vi.mocked(useRouterStatus).mockReturnValue({
+      data: mockRouterStatusData,
+      isLoading: false,
+      error: null,
+    } as any);
+
+    renderComponent();
+
+    expect(screen.getByRole('region', { name: 'Router routes' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Platform information' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Network settings' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Avahi status' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Playit tunnel' })).toBeInTheDocument();
   });
 });

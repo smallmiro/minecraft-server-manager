@@ -97,6 +97,50 @@ describe('ServerConsole', () => {
 
       expect(screen.getByRole('button', { name: /send/i })).toBeInTheDocument();
     });
+
+    it('reports connection state only when the connection values change', () => {
+      const onConnectionStateChange = vi.fn();
+      let hookReturn = { ...defaultHookReturn };
+      mockUseServerLogs.mockImplementation(() => hookReturn);
+
+      const { rerender } = renderWithTheme(
+        <ServerConsole
+          serverName="test-server"
+          onConnectionStateChange={onConnectionStateChange}
+        />,
+      );
+
+      expect(onConnectionStateChange).toHaveBeenCalledTimes(1);
+      expect(onConnectionStateChange).toHaveBeenLastCalledWith({
+        isConnected: true,
+        retryCount: 0,
+      });
+
+      rerender(
+        <ThemeProvider>
+          <ServerConsole
+            serverName="test-server"
+            onConnectionStateChange={onConnectionStateChange}
+          />
+        </ThemeProvider>,
+      );
+      expect(onConnectionStateChange).toHaveBeenCalledTimes(1);
+
+      hookReturn = { ...defaultHookReturn, isConnected: false, retryCount: 2 };
+      rerender(
+        <ThemeProvider>
+          <ServerConsole
+            serverName="test-server"
+            onConnectionStateChange={onConnectionStateChange}
+          />
+        </ThemeProvider>,
+      );
+      expect(onConnectionStateChange).toHaveBeenCalledTimes(2);
+      expect(onConnectionStateChange).toHaveBeenLastCalledWith({
+        isConnected: false,
+        retryCount: 2,
+      });
+    });
   });
 
   describe('Log Display', () => {
@@ -140,6 +184,22 @@ describe('ServerConsole', () => {
       fireEvent.click(clearButton);
 
       expect(clearLogs).toHaveBeenCalled();
+    });
+
+    it('contains long unbroken log lines inside the terminal region', () => {
+      const longLine = `prefix-${'a'.repeat(320)}`;
+      mockUseServerLogs.mockReturnValue({
+        ...defaultHookReturn,
+        logs: [longLine],
+      });
+
+      renderWithTheme(<ServerConsole serverName="test-server" />);
+
+      const logRegion = screen.getByTestId('console-log-region');
+      const logLine = screen.getByTestId('console-log-line');
+      expect(logRegion).toContainElement(logLine);
+      expect(logLine).toHaveTextContent(longLine);
+      expect(logLine).toHaveStyle({ wordBreak: 'break-all' });
     });
   });
 

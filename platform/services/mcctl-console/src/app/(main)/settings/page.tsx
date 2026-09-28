@@ -1,13 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import Stack from '@mui/material/Stack';
 import SettingsIcon from '@mui/icons-material/Settings';
+import { BentoGrid, BentoPanel, PageHero } from '@/components/bento';
 import { ProfileSection, PasswordSection, AccountInfoSection } from '@/components/settings';
+
+const embeddedCardSx = {
+  height: '100%',
+  '& > .MuiCard-root': {
+    height: '100%',
+    border: 0,
+    borderRadius: 0,
+    boxShadow: 'none',
+    backgroundColor: 'transparent',
+  },
+};
 
 export default function SettingsPage() {
   const [snackbar, setSnackbar] = useState<{
@@ -33,25 +43,40 @@ export default function SettingsPage() {
   };
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 4 }}>
-        <SettingsIcon sx={{ fontSize: 32 }} color="primary" />
-        <Typography variant="h4" component="h1" fontWeight="bold">
-          Settings
-        </Typography>
-      </Box>
+    <Stack spacing={{ xs: 2, sm: 2.5 }}>
+      <PageHero
+        compact
+        title="Settings"
+        description="Manage your profile, account details, and sign-in security"
+        eyebrow="Account"
+        icon={<SettingsIcon />}
+      />
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <BentoGrid aria-label="Account settings">
+        <BentoPanel
+          role="region"
+          aria-label="Profile settings"
+          accent="primary"
+          sx={{ ...embeddedCardSx, gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 6' } }}
+        >
           <ProfileSection onSuccess={handleSuccess} onError={handleError} />
-        </Grid>
-        <Grid item xs={12} md={6}>
+        </BentoPanel>
+        <BentoPanel
+          role="region"
+          aria-label="Account information"
+          sx={{ ...embeddedCardSx, gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 6' } }}
+        >
           <AccountInfoSection />
-        </Grid>
-        <Grid item xs={12}>
+        </BentoPanel>
+        <BentoPanel
+          role="region"
+          aria-label="Password settings"
+          accent="warning"
+          sx={{ ...embeddedCardSx, gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 12' } }}
+        >
           <PasswordSection onSuccess={handleSuccess} onError={handleError} />
-        </Grid>
-      </Grid>
+        </BentoPanel>
+      </BentoGrid>
 
       <Snackbar
         open={snackbar.open}
@@ -68,6 +93,6 @@ export default function SettingsPage() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </Stack>
   );
 }

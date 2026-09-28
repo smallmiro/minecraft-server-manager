@@ -81,11 +81,12 @@ const mockWorlds = [
   },
 ];
 
-const setupMocks = (overrides: { worldsLoading?: boolean; worldsError?: Error } = {}) => {
+const setupMocks = (overrides: { worldsLoading?: boolean; worldsError?: Error; worlds?: typeof mockWorlds } = {}) => {
+  const worlds = overrides.worlds ?? mockWorlds;
   vi.mocked(useWorlds).mockReturnValue({
-    data: overrides.worldsLoading
+    data: overrides.worldsLoading || overrides.worldsError
       ? undefined
-      : { worlds: mockWorlds, total: mockWorlds.length },
+      : { worlds, total: worlds.length },
     isLoading: overrides.worldsLoading ?? false,
     error: overrides.worldsError ?? null,
   } as any);
@@ -109,12 +110,24 @@ const setupMocks = (overrides: { worldsLoading?: boolean; worldsError?: Error } 
 };
 
 describe('WorldsPage', () => {
-  it('should render page header with title', () => {
+  it('renders one Bento hero heading with the create action', () => {
     setupMocks();
     renderWithProviders(<WorldsPage />);
 
-    expect(screen.getByText('Worlds')).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 1, name: 'Worlds' })).toBeInTheDocument();
+    expect(screen.getByTestId('page-hero')).toBeInTheDocument();
     expect(screen.getByText('Manage your Minecraft worlds')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /create world/i })).toBeInTheDocument();
+  });
+
+  it('derives total, assigned, and free metrics from world locks', () => {
+    setupMocks();
+    renderWithProviders(<WorldsPage />);
+
+    expect(screen.getByRole('article', { name: 'Total worlds' })).toHaveTextContent('2');
+    expect(screen.getByRole('article', { name: 'Assigned worlds' })).toHaveTextContent('1');
+    expect(screen.getByRole('article', { name: 'Free worlds' })).toHaveTextContent('1');
   });
 
   it('should render Create World button', () => {
@@ -124,11 +137,16 @@ describe('WorldsPage', () => {
     expect(screen.getByRole('button', { name: /create world/i })).toBeInTheDocument();
   });
 
-  it('should render loading state', () => {
+  it('renders a matched loading inventory below the persistent hero', () => {
     setupMocks({ worldsLoading: true });
     renderWithProviders(<WorldsPage />);
 
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Worlds' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'World inventory' })).toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
+    expect(document.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0);
   });
 
   it('should render error state', () => {
@@ -136,6 +154,11 @@ describe('WorldsPage', () => {
     renderWithProviders(<WorldsPage />);
 
     expect(screen.getByText(/failed to load worlds/i)).toBeInTheDocument();
+    expect(screen.getAllByText('Unavailable')).toHaveLength(3);
+    expect(screen.getByRole('region', { name: 'World inventory' })).toHaveTextContent(
+      'World inventory unavailable',
+    );
+    expect(screen.queryByText('No worlds found')).not.toBeInTheDocument();
   });
 
   it('should render world list when data is loaded', () => {
@@ -144,6 +167,24 @@ describe('WorldsPage', () => {
 
     expect(screen.getByText('survival-world')).toBeInTheDocument();
     expect(screen.getByText('creative-world')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'World inventory' })).toBeInTheDocument();
+  });
+
+  it('keeps the empty state inside the inventory surface', () => {
+    setupMocks({ worlds: [] });
+    renderWithProviders(<WorldsPage />);
+
+    expect(screen.getByRole('region', { name: 'World inventory' })).toHaveTextContent(
+      'No worlds found',
+    );
+  });
+
+  it('contains a long world name inside the inventory surface', () => {
+    const longName = `world-${'very-long-unbroken-name-'.repeat(10)}`;
+    setupMocks({ worlds: [{ ...mockWorlds[0], name: longName }] });
+    renderWithProviders(<WorldsPage />);
+
+    expect(screen.getByRole('region', { name: 'World inventory' })).toHaveTextContent(longName);
   });
 
   it('should open create dialog when Create World button is clicked', () => {

@@ -7,19 +7,19 @@
 
 import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
+import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Grid';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import Paper from '@mui/material/Paper';
-import { alpha } from '@mui/material/styles';
 import PeopleIcon from '@mui/icons-material/People';
 import { PlayerList, WhitelistManager, OpManager, BanManager } from '@/components/players';
 import { useServers } from '@/hooks/useMcctl';
+import { BentoGrid, BentoMetricCard, BentoPanel, PageHero } from '@/components/bento';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -30,7 +30,7 @@ interface TabPanelProps {
 function TabPanel({ children, value, index }: TabPanelProps) {
   return (
     <div role="tabpanel" hidden={value !== index}>
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ pt: 2.5 }}>{children}</Box>}
     </div>
   );
 }
@@ -38,8 +38,11 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 export default function PlayersPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedServer, setSelectedServer] = useState<string>('');
-  const { data: serversData, isLoading: serversLoading } = useServers();
+  const { data: serversData, isLoading: serversLoading, error: serversError } = useServers();
   const servers = serversData?.servers;
+  const serversUnavailable = !serversLoading && !serversData;
+  const availableServers = servers?.length ?? 0;
+  const runningServers = servers?.filter((server) => server.status === 'running').length ?? 0;
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -54,73 +57,92 @@ export default function PlayersPage() {
 
   return (
     <>
-      {/* Page Header */}
-      <Paper
-        elevation={0}
-        sx={{
-          mb: 4,
-          p: 3,
-          background: (theme) =>
-            `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
-          borderRadius: 2,
-          border: (theme) => `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-        }}
+      <PageHero
+        compact
+        title="Player Management"
+        description="Manage players, whitelist, operators, and bans across your servers"
+        eyebrow="Access control"
+        icon={<PeopleIcon />}
+        sx={{ mb: 2.5 }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 56,
-              height: 56,
-              borderRadius: 2,
-              bgcolor: 'info.main',
-              color: 'info.contrastText',
-            }}
-          >
-            <PeopleIcon sx={{ fontSize: 32 }} />
+        <BentoGrid>
+          <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 3', md: 'span 6' } }}>
+            <BentoMetricCard
+              title="Available servers"
+              value={serversLoading ? <Skeleton width={56} /> : serversUnavailable ? 'Unavailable' : availableServers}
+              icon={<PeopleIcon />}
+              accent="info"
+            />
           </Box>
-          <Box>
-            <Typography variant="h4" component="h1" fontWeight="bold">
-              Player Management
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Manage players, whitelist, operators, and bans across your servers
-            </Typography>
+          <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 3', md: 'span 6' } }}>
+            <BentoMetricCard
+              title="Running servers"
+              value={serversLoading ? <Skeleton width={56} /> : serversUnavailable ? 'Unavailable' : runningServers}
+              accent="success"
+              description="Ready for live player actions"
+            />
           </Box>
+        </BentoGrid>
+      </PageHero>
+
+      <BentoPanel
+        role="region"
+        aria-label="Player manager"
+        sx={{ p: { xs: 2, sm: 3 }, minHeight: 460 }}
+      >
+        {serversError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Failed to load servers: {serversError.message}
+          </Alert>
+        )}
+        {/* Server Selector */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: 1.5,
+            mb: 2.5,
+          }}
+        >
+          <FormControl sx={{ minWidth: { xs: '100%', sm: 240 } }}>
+            <InputLabel id="server-select-label">Server</InputLabel>
+            <Select
+              labelId="server-select-label"
+              value={selectedServer}
+              label="Server"
+              onChange={(e) => setSelectedServer(e.target.value)}
+              disabled={serversLoading || serversUnavailable}
+            >
+              {servers?.map((server) => (
+                <MenuItem key={server.name} value={server.name}>
+                  {server.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {(serversLoading || (!serversUnavailable && availableServers === 0)) && (
+            <Typography variant="body2" color="text.secondary">
+              {serversLoading ? 'Loading servers...' : 'No servers available'}
+            </Typography>
+          )}
         </Box>
-      </Paper>
 
-      {/* Server Selector */}
-      <Box sx={{ mb: 3 }}>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel id="server-select-label">Server</InputLabel>
-          <Select
-            labelId="server-select-label"
-            value={selectedServer}
-            label="Server"
-            onChange={(e) => setSelectedServer(e.target.value)}
-            disabled={serversLoading}
+        {/* Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            aria-label="Player management tabs"
+            variant="scrollable"
+            allowScrollButtonsMobile
           >
-            {servers?.map((server) => (
-              <MenuItem key={server.name} value={server.name}>
-                {server.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
-
-      {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={activeTab} onChange={handleTabChange} aria-label="Player management tabs">
           <Tab label="Online Players" />
           <Tab label="Whitelist" disabled={!selectedServer} />
           <Tab label="Operators" disabled={!selectedServer} />
           <Tab label="Ban List" disabled={!selectedServer} />
-        </Tabs>
-      </Box>
+          </Tabs>
+        </Box>
 
       {/* Online Players Tab */}
       <TabPanel value={activeTab} index={0}>
@@ -130,11 +152,11 @@ export default function PlayersPage() {
       {/* Whitelist Tab */}
       <TabPanel value={activeTab} index={1}>
         {selectedServer && (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
+          <BentoGrid>
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' }, minWidth: 0 }}>
               <WhitelistManager serverName={selectedServer} />
-            </Grid>
-            <Grid item xs={12} md={4}>
+            </Box>
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 4' }, minWidth: 0 }}>
               <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   About Whitelist
@@ -145,19 +167,19 @@ export default function PlayersPage() {
                   username.
                 </Typography>
               </Box>
-            </Grid>
-          </Grid>
+            </Box>
+          </BentoGrid>
         )}
       </TabPanel>
 
       {/* Operators Tab */}
       <TabPanel value={activeTab} index={2}>
         {selectedServer && (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
+          <BentoGrid>
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' }, minWidth: 0 }}>
               <OpManager serverName={selectedServer} />
-            </Grid>
-            <Grid item xs={12} md={4}>
+            </Box>
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 4' }, minWidth: 0 }}>
               <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   About Operators
@@ -182,19 +204,19 @@ export default function PlayersPage() {
                   </Typography>
                 </Box>
               </Box>
-            </Grid>
-          </Grid>
+            </Box>
+          </BentoGrid>
         )}
       </TabPanel>
 
       {/* Ban List Tab */}
       <TabPanel value={activeTab} index={3}>
         {selectedServer && (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
+          <BentoGrid>
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' }, minWidth: 0 }}>
               <BanManager serverName={selectedServer} />
-            </Grid>
-            <Grid item xs={12} md={4}>
+            </Box>
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 4' }, minWidth: 0 }}>
               <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   About Bans
@@ -205,10 +227,11 @@ export default function PlayersPage() {
                   at any time.
                 </Typography>
               </Box>
-            </Grid>
-          </Grid>
+            </Box>
+          </BentoGrid>
         )}
       </TabPanel>
+      </BentoPanel>
     </>
   );
 }

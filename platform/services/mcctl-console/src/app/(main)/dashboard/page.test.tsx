@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import DashboardPage from './page';
@@ -28,6 +28,7 @@ vi.mock('@/hooks/useServersSSE', () => ({
 
 // Import the mocked hooks
 import { useServers, useWorlds } from '@/hooks/useMcctl';
+import { useServersSSE } from '@/hooks/useServersSSE';
 
 const createTestQueryClient = () => {
   return new QueryClient({
@@ -111,6 +112,143 @@ describe('DashboardPage', () => {
       const twos = screen.getAllByText('2');
       expect(twos.length).toBeGreaterThanOrEqual(2);
     });
+  });
+
+  it('should present an at-a-glance server summary inside the dashboard overview', async () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: {
+        servers: [
+          { name: 'survival', status: 'running', health: 'healthy', container: 'mc-survival', hostname: 'survival.local' },
+          { name: 'creative', status: 'running', health: 'healthy', container: 'mc-creative', hostname: 'creative.local' },
+          { name: 'events', status: 'stopped', health: 'none', container: 'mc-events', hostname: 'events.local' },
+        ],
+        total: 3,
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: { worlds: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    const overview = await screen.findByRole('region', { name: 'Dashboard overview' });
+    expect(within(overview).getByText('2 of 3 servers online')).toBeInTheDocument();
+    expect(within(overview).getByText('1 server needs attention')).toBeInTheDocument();
+  });
+
+  it('should flag a running but unhealthy server as needing attention', async () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: {
+        servers: [
+          { name: 'survival', status: 'running', health: 'healthy', container: 'mc-survival', hostname: 'survival.local' },
+        ],
+        total: 1,
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: { worlds: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useServersSSE).mockReturnValue({
+      statusMap: {
+        survival: {
+          status: 'running',
+          health: 'unhealthy',
+          timestamp: '2026-09-28T00:00:00.000Z',
+        },
+      },
+      isConnected: true,
+    } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    expect(await screen.findByText('1 server needs attention')).toBeInTheDocument();
+    expect(screen.getByText('Live')).toBeInTheDocument();
+  });
+
+  it('should show reconnecting instead of live while server updates are disconnected', async () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: { servers: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: { worlds: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useServersSSE).mockReturnValue({
+      statusMap: {},
+      isConnected: false,
+    } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    expect(await screen.findByText('Reconnecting')).toBeInTheDocument();
+    expect(screen.queryByText('Live')).not.toBeInTheDocument();
+  });
+
+  it('ignores stale SSE status after the live connection drops', () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: {
+        servers: [
+          { name: 'survival', status: 'stopped', health: 'none', container: 'mc-survival', hostname: 'survival.local' },
+        ],
+        total: 1,
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: { worlds: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useServersSSE).mockReturnValue({
+      statusMap: {
+        survival: {
+          status: 'running',
+          health: 'healthy',
+          timestamp: '2026-09-28T00:00:00.000Z',
+        },
+      },
+      isConnected: false,
+    } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    expect(screen.getByText('0 of 1 servers online')).toBeInTheDocument();
+    expect(within(screen.getByText('Online Servers').closest('article')!).getByText('0')).toBeInTheDocument();
+  });
+
+  it('labels failed operational summaries as unavailable instead of zero or empty', () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('servers unavailable'),
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('worlds unavailable'),
+    } as any);
+    vi.mocked(useServersSSE).mockReturnValue({ statusMap: {}, isConnected: false } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    expect(screen.getAllByRole('alert')).toHaveLength(2);
+    expect(screen.getByText('Server status unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Servers unavailable')).toBeInTheDocument();
+    expect(screen.queryByText(/No servers found/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Total Servers').closest('article')).toHaveTextContent('Unavailable');
+    expect(screen.getByText('Total Worlds').closest('article')).toHaveTextContent('Unavailable');
   });
 
   it('should display zero when no servers', async () => {

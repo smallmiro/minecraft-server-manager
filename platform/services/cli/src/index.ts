@@ -94,13 +94,13 @@ async function handleConsoleCommand(
     case 'user': {
       // Use Commander-based command
       const userCmd = consoleUserCommand();
-      userCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
+      userCmd.parse(['node', 'mcctl', ...positional], { from: 'node' });
       return 0;
     }
     case 'api': {
       // Use Commander-based command
       const apiCmd = consoleApiCommand();
-      apiCmd.parse(['node', 'mcctl', ...positional], { from: 'user' });
+      apiCmd.parse(['node', 'mcctl', ...positional], { from: 'node' });
       return 0;
     }
     case 'remove':

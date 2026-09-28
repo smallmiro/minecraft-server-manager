@@ -24,7 +24,7 @@ import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import type { ServerDetail as ServerDetailType } from '@/ports/api/IMcctlApiClient';
-import { ResourceStatCard } from './ResourceStatCard';
+import { BentoGrid, BentoMetricCard, BentoPanel } from '@/components/bento';
 import { useServerLogs } from '@/hooks/useServerLogs';
 import { ServerConsole } from './ServerConsole';
 import { ServerActivityTab } from './ServerActivityTab';
@@ -203,7 +203,10 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
   return (
     <Box>
       {/* Tabs - Pill Style */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 3 }}>
+      <BentoPanel
+        aria-label="Server detail navigation"
+        sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, p: 1, mb: 2.5 }}
+      >
         {TABS.map((tab) => (
           <Button
             key={tab}
@@ -225,54 +228,44 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
             {tab}
           </Button>
         ))}
-      </Box>
+      </BentoPanel>
 
       {/* Stats Cards */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-          gap: 2,
-          mb: 2.5,
-        }}
-      >
-        <ResourceStatCard
-          value={`${cpuPercent.toFixed(2)}%`}
-          unit="/ 100%"
-          label="CPU usage"
-          icon={<SpeedIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
-          progress={cpuPercent}
-          progressMax={100}
-          color="#1bd96a"
-        />
-        <ResourceStatCard
-          value={`${memoryPercent.toFixed(2)}%`}
-          unit="/ 100%"
-          label="Memory usage"
-          icon={<SdStorageIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
-          progress={memoryPercent}
-          progressMax={100}
-          color="#1bd96a"
-        />
-        <ResourceStatCard
-          value={server.worldSize || '0 B'}
-          unit="/ 10 GB"
-          label="World size"
-          icon={<FolderOpenIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
-          progress={parseMemoryToMB(server.worldSize)}
-          progressMax={10240}
-          color="#1bd96a"
-        />
-      </Box>
+      <BentoGrid aria-label="Server resources" sx={{ mb: 2.5 }}>
+        <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
+          <BentoMetricCard
+            title="CPU usage"
+            value={`${cpuPercent.toFixed(2)}%`}
+            unit="/ 100%"
+            icon={<SpeedIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
+            progress={cpuPercent}
+          />
+        </Box>
+        <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
+          <BentoMetricCard
+            title="Memory usage"
+            value={`${memoryPercent.toFixed(2)}%`}
+            unit="/ 100%"
+            icon={<SdStorageIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
+            progress={memoryPercent}
+          />
+        </Box>
+        <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
+          <BentoMetricCard
+            title="World size"
+            value={server.worldSize || '0 B'}
+            unit="/ 10 GB"
+            icon={<FolderOpenIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
+            progress={(parseMemoryToMB(server.worldSize) / 10240) * 100}
+          />
+        </Box>
+      </BentoGrid>
 
       {/* Console - Overview tab only */}
       {activeTab === 'Overview' && (
-      <Card
+      <BentoPanel
+        aria-label="Server console"
         sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 3,
-          border: '1px solid',
-          borderColor: 'divider',
           overflow: 'hidden',
         }}
       >
@@ -302,6 +295,9 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
                 : '0 0 8px rgba(239, 68, 68, 0.4)',
             }}
           />
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+            {isConnected ? 'Connected' : 'Disconnected'}
+          </Typography>
         </Box>
 
         {/* Console Body */}
@@ -478,12 +474,18 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
             }}
           />
         </Box>
-      </Card>
+      </BentoPanel>
       )}
 
       {/* Additional content based on tab */}
+      <BentoPanel
+        component="section"
+        role="region"
+        aria-label="Server detail content"
+        sx={{ mt: 2.5, p: { xs: 2, sm: 2.5 } }}
+      >
       {activeTab === 'Overview' && (
-        <Grid container spacing={3} sx={{ mt: 1 }}>
+        <Grid container spacing={3}>
           {/* Server Information */}
           <Grid item xs={12} md={6}>
             <Card sx={{ borderRadius: 3 }}>
@@ -620,10 +622,11 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
       )}
 
       {activeTab === 'Options' && (
-        <Box sx={{ mt: 3 }}>
+        <Box>
           <ServerOptionsTab serverName={server.name} isRunning={server.status === 'running'} />
         </Box>
       )}
+      </BentoPanel>
 
       {/* Full-screen Console Dialog - Overview tab only */}
       {activeTab === 'Overview' && (
@@ -669,11 +672,15 @@ function InfoRow({ label, value }: { label: string; value?: string | React.React
   if (!value) return null;
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, minWidth: 0, py: 1 }}>
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="body2" component="div" sx={{ fontWeight: 500 }}>
+      <Typography
+        variant="body2"
+        component="div"
+        sx={{ minWidth: 0, fontWeight: 500, overflowWrap: 'anywhere', textAlign: 'right' }}
+      >
         {value}
       </Typography>
     </Box>

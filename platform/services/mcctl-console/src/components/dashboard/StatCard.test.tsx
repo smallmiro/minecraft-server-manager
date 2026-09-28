@@ -27,39 +27,47 @@ describe('StatCard', () => {
   });
 
   it('should apply primary color variant', () => {
-    const { container } = renderWithTheme(
+    renderWithTheme(
       <StatCard title="Total Servers" value={5} color="primary" />
     );
 
-    const card = container.querySelector('[data-testid="stat-card"]');
-    expect(card).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Total Servers' })).toHaveAttribute(
+      'data-accent',
+      'primary',
+    );
   });
 
   it('should apply success color variant', () => {
-    const { container } = renderWithTheme(
+    renderWithTheme(
       <StatCard title="Online Servers" value={3} color="success" />
     );
 
-    const card = container.querySelector('[data-testid="stat-card"]');
-    expect(card).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Online Servers' })).toHaveAttribute(
+      'data-accent',
+      'success',
+    );
   });
 
   it('should apply info color variant', () => {
-    const { container } = renderWithTheme(
+    renderWithTheme(
       <StatCard title="Total Players" value={12} color="info" />
     );
 
-    const card = container.querySelector('[data-testid="stat-card"]');
-    expect(card).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Total Players' })).toHaveAttribute(
+      'data-accent',
+      'info',
+    );
   });
 
   it('should apply secondary color variant', () => {
-    const { container } = renderWithTheme(
+    renderWithTheme(
       <StatCard title="Total Worlds" value={8} color="secondary" />
     );
 
-    const card = container.querySelector('[data-testid="stat-card"]');
-    expect(card).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Total Worlds' })).toHaveAttribute(
+      'data-accent',
+      'secondary',
+    );
   });
 
   it('should render zero value', () => {
@@ -100,9 +108,10 @@ describe('StatCard', () => {
       <StatCard title="Online Servers" value={3} progress={40} color="success" />
     );
 
-    const fill = screen.getByTestId('stat-card-progress-fill');
-    expect(fill).toBeInTheDocument();
-    expect(fill).toHaveStyle({ width: '40%' });
+    expect(screen.getByRole('progressbar', { name: 'Online Servers progress' })).toHaveAttribute(
+      'aria-valuenow',
+      '40',
+    );
   });
 
   it('should not render a progress bar when progress is omitted', () => {
@@ -110,7 +119,7 @@ describe('StatCard', () => {
       <StatCard title="Total Players" value={0} />
     );
 
-    expect(screen.queryByTestId('stat-card-progress-fill')).not.toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
 
   it('should clamp progress above 100 to 100%', () => {
@@ -118,7 +127,7 @@ describe('StatCard', () => {
       <StatCard title="Online Servers" value={9} progress={150} />
     );
 
-    expect(screen.getByTestId('stat-card-progress-fill')).toHaveStyle({ width: '100%' });
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
   });
 
   it('should clamp negative progress to 0%', () => {
@@ -126,6 +135,6 @@ describe('StatCard', () => {
       <StatCard title="Online Servers" value={0} progress={-20} />
     );
 
-    expect(screen.getByTestId('stat-card-progress-fill')).toHaveStyle({ width: '0%' });
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
   });
 });
