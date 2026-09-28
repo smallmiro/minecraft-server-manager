@@ -40,7 +40,7 @@ export default function PlayersPage() {
   const [selectedServer, setSelectedServer] = useState<string>('');
   const { data: serversData, isLoading: serversLoading, error: serversError } = useServers();
   const servers = serversData?.servers;
-  const serversUnavailable = !serversLoading && (!serversData || Boolean(serversError));
+  const serversUnavailable = !serversLoading && !serversData;
   const availableServers = servers?.length ?? 0;
   const runningServers = servers?.filter((server) => server.status === 'running').length ?? 0;
 

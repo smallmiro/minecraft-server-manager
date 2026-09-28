@@ -161,6 +161,20 @@ describe('ServersPage', () => {
     expect(screen.queryByText(/No servers found/i)).not.toBeInTheDocument();
   });
 
+  it('keeps cached server data visible when a refresh fails', () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: { servers, total: servers.length },
+      isLoading: false,
+      error: new Error('refresh unavailable'),
+    } as never);
+
+    renderPage();
+
+    expect(screen.getByRole('article', { name: 'Total servers' })).toHaveTextContent('3');
+    expect(screen.getByRole('region', { name: 'Server inventory' })).toHaveTextContent('survival');
+    expect(screen.getByRole('alert')).toHaveTextContent('refresh unavailable');
+  });
+
   it('ignores stale SSE overlays while reconnecting', () => {
     vi.mocked(useServersSSE).mockReturnValue({
       statusMap: {

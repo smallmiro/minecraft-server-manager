@@ -128,6 +128,20 @@ describe('BackupsPage', () => {
     expect(screen.getByRole('button', { name: 'Create backup' })).toBeDisabled();
   });
 
+  it('keeps cached backup configuration usable after a refresh failure', () => {
+    vi.mocked(useBackupStatus).mockReturnValue({
+      data: { configured: true },
+      isLoading: false,
+      error: new Error('refresh unavailable'),
+    } as never);
+
+    renderPage();
+
+    expect(screen.getByText('Configured (cached)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create backup' })).toBeEnabled();
+    expect(screen.getByRole('alert')).toHaveTextContent('refresh unavailable');
+  });
+
   it('keeps world backup features in one full-width active panel', () => {
     renderPage();
 

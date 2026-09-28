@@ -57,8 +57,8 @@ export default function DashboardPage() {
   const { statusMap, isConnected } = useServersSSE();
 
   const isLoading = serversLoading || worldsLoading;
-  const serversUnavailable = !serversLoading && (!serversData || Boolean(serversError));
-  const worldsUnavailable = !worldsLoading && (!worldsData || Boolean(worldsError));
+  const serversUnavailable = !serversLoading && !serversData;
+  const worldsUnavailable = !worldsLoading && !worldsData;
   const liveStatusMap = isConnected ? statusMap : {};
 
   // Calculate statistics with real-time status overlay

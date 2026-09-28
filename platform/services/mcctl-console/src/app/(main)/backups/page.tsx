@@ -23,9 +23,11 @@ export default function BackupsPage() {
   const configured = statusData?.configured ?? false;
   const configurationLabel = statusLoading
     ? 'Checking backup configuration'
-    : statusError || !statusData
+    : !statusData
       ? 'Unavailable'
-    : configured
+      : statusError
+        ? configured ? 'Configured (cached)' : 'Not configured (cached)'
+        : configured
       ? 'Configured'
       : 'Not configured';
 
@@ -60,12 +62,12 @@ export default function BackupsPage() {
         status={(
           <Chip
             label={configurationLabel}
-            color={statusLoading ? 'default' : statusError || !statusData ? 'error' : configured ? 'success' : 'warning'}
+            color={statusLoading ? 'default' : !statusData ? 'error' : configured ? 'success' : 'warning'}
             size="small"
           />
         )}
         actions={currentTab === 'world-backups' ? (
-          <BackupPushButton disabled={!configured || statusLoading || Boolean(statusError)} />
+          <BackupPushButton disabled={!configured || statusLoading || !statusData} />
         ) : undefined}
         sx={{ mb: 2.5 }}
       />

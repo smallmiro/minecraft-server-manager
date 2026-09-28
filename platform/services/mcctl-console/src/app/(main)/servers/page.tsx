@@ -55,7 +55,7 @@ export default function ServersPage() {
   });
 
   const servers = data?.servers ?? [];
-  const serversUnavailable = !isLoading && (!data || Boolean(error));
+  const serversUnavailable = !isLoading && !data;
   const liveStatusMap = isConnected ? statusMap : {};
   const totalServers = data?.total ?? servers.length;
   const runningServers = servers.filter((server) => {

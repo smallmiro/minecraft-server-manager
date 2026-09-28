@@ -52,7 +52,7 @@ export default function WorldsPage() {
   const releaseWorld = useReleaseWorld();
   const deleteWorld = useDeleteWorld();
   const worlds = data?.worlds ?? [];
-  const worldsUnavailable = !isLoading && (!data || Boolean(error));
+  const worldsUnavailable = !isLoading && !data;
   const assignedWorlds = worlds.filter((world) => world.isLocked).length;
   const freeWorlds = worlds.length - assignedWorlds;
 

@@ -18,6 +18,7 @@ import { UserDetailDialog } from '@/components/admin/UserDetailDialog';
 export default function UsersPage() {
   const { data: users, isLoading, isError, error } = useAdminUsers();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const usersUnavailable = !isLoading && !users;
   const currentUsers = users ?? [];
   const adminCount = currentUsers.filter((user) => user.role === 'admin').length;
   const bannedCount = currentUsers.filter((user) => user.banned).length;
@@ -44,7 +45,7 @@ export default function UsersPage() {
         <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 4' } }}>
           <BentoMetricCard
             title="Total users"
-            value={isLoading ? <Skeleton width={56} /> : isError ? 'Unavailable' : currentUsers.length}
+            value={isLoading ? <Skeleton width={56} /> : usersUnavailable ? 'Unavailable' : currentUsers.length}
             description="Registered accounts"
             icon={<GroupIcon />}
             accent="primary"
@@ -53,7 +54,7 @@ export default function UsersPage() {
         <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 4' } }}>
           <BentoMetricCard
             title="Administrators"
-            value={isLoading ? <Skeleton width={56} /> : isError ? 'Unavailable' : adminCount}
+            value={isLoading ? <Skeleton width={56} /> : usersUnavailable ? 'Unavailable' : adminCount}
             description="Accounts with admin access"
             icon={<AdminPanelSettingsIcon />}
             accent="info"
@@ -62,7 +63,7 @@ export default function UsersPage() {
         <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 4' } }}>
           <BentoMetricCard
             title="Banned users"
-            value={isLoading ? <Skeleton width={56} /> : isError ? 'Unavailable' : bannedCount}
+            value={isLoading ? <Skeleton width={56} /> : usersUnavailable ? 'Unavailable' : bannedCount}
             description="Restricted accounts"
             icon={<BlockIcon />}
             accent={bannedCount > 0 ? 'error' : 'success'}
@@ -88,7 +89,7 @@ export default function UsersPage() {
             >
               <CircularProgress aria-label="Loading users" />
             </Box>
-          ) : isError ? (
+          ) : usersUnavailable ? (
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
               <Alert severity="error">
                 Failed to load users. {error?.message || 'Please try again later.'}
