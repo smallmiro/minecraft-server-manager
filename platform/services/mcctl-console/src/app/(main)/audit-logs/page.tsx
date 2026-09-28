@@ -3,12 +3,12 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
-import { alpha } from '@mui/material/styles';
+import Stack from '@mui/material/Stack';
 import HistoryIcon from '@mui/icons-material/History';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import { BentoGrid, BentoPanel, PageHero } from '@/components/bento';
 import {
   AuditLogStats,
   AuditLogFilters,
@@ -154,114 +154,102 @@ export default function AuditLogPage() {
   }, [refetch]);
 
   return (
-    <>
-      {/* Page Header */}
-      <Paper
-        elevation={0}
-        sx={{
-          mb: 4,
-          p: 3,
-          background: (theme) =>
-            `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.error.main, 0.1)} 100%)`,
-          borderRadius: 2,
-          border: (theme) => `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 56,
-              height: 56,
-              borderRadius: 2,
-              bgcolor: 'warning.main',
-              color: 'warning.contrastText',
-            }}
-          >
-            <HistoryIcon sx={{ fontSize: 32 }} />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Typography variant="h4" component="h1" fontWeight="bold">
-                Audit Log
-              </Typography>
-              {/* Live indicator */}
-              <Chip
-                icon={
-                  <FiberManualRecordIcon
-                    sx={{
-                      fontSize: 10,
-                      color: isConnected ? 'success.main' : 'text.disabled',
-                      animation: isConnected ? 'pulse 2s infinite' : 'none',
-                      '@keyframes pulse': {
-                        '0%': { opacity: 1 },
-                        '50%': { opacity: 0.4 },
-                        '100%': { opacity: 1 },
-                      },
-                    }}
-                  />
-                }
-                label={isConnected ? 'Live' : 'Offline'}
-                size="small"
-                variant="outlined"
-                sx={{ fontSize: '0.7rem' }}
+    <Stack spacing={{ xs: 2, sm: 2.5 }}>
+      <PageHero
+        compact
+        title="Audit Log"
+        description="Monitor all management activities across your servers"
+        eyebrow="Operations"
+        icon={<HistoryIcon />}
+        status={
+          <Chip
+            aria-label="Audit stream status"
+            icon={
+              <FiberManualRecordIcon
+                sx={{
+                  fontSize: 10,
+                  color: isConnected ? 'success.main' : 'text.disabled',
+                  animation: isConnected ? 'pulse 2s infinite' : 'none',
+                  '@keyframes pulse': {
+                    '0%': { opacity: 1 },
+                    '50%': { opacity: 0.4 },
+                    '100%': { opacity: 1 },
+                  },
+                }}
               />
-            </Box>
-            <Typography variant="body1" color="text.secondary">
-              Monitor all management activities across your servers
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
+            }
+            label={isConnected ? 'Live' : 'Disconnected'}
+            color={isConnected ? 'success' : 'default'}
+            size="small"
+            variant="outlined"
+          />
+        }
+      />
 
-      {/* Stats Cards */}
-      <Box sx={{ mb: 3 }}>
-        <AuditLogStats stats={stats} isLoading={statsLoading} />
-      </Box>
-
-      {/* New logs banner */}
-      {newLogsCount > 0 && (
-        <Box
-          sx={{
-            mb: 2,
-            p: 1.5,
-            textAlign: 'center',
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-            borderRadius: 1,
-            cursor: 'pointer',
-            '&:hover': { opacity: 0.9 },
-          }}
-          onClick={handleRefresh}
-          role="button"
-          aria-label={`${newLogsCount} new logs, click to refresh`}
+      <BentoGrid aria-label="Audit log workspace">
+        <BentoPanel
+          role="region"
+          aria-label="Audit log metrics"
+          sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 12' }, p: { xs: 1.5, sm: 2 } }}
         >
-          <Typography variant="body2" fontWeight={600}>
-            {newLogsCount} new {newLogsCount === 1 ? 'log' : 'logs'} available - Click to refresh
-          </Typography>
-        </Box>
-      )}
+          <AuditLogStats stats={stats} isLoading={statsLoading} />
+        </BentoPanel>
 
-      {/* Filters */}
-      <AuditLogFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        onExport={() => setExportOpen(true)}
-      />
+        <BentoPanel
+          role="region"
+          aria-label="Audit log controls"
+          accent={newLogsCount > 0 ? 'primary' : 'neutral'}
+          sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 12' }, p: { xs: 2, sm: 2.5 } }}
+        >
+          {newLogsCount > 0 && (
+            <Box
+              sx={{
+                mb: 2,
+                p: 1.5,
+                textAlign: 'center',
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                borderRadius: 2,
+                cursor: 'pointer',
+                '&:hover': { opacity: 0.9 },
+              }}
+              onClick={handleRefresh}
+              role="button"
+              aria-label={`${newLogsCount} new logs, click to refresh`}
+            >
+              <Typography variant="body2" fontWeight={600}>
+                {newLogsCount} new {newLogsCount === 1 ? 'log' : 'logs'} available - Click to refresh
+              </Typography>
+            </Box>
+          )}
 
-      {/* Log Table */}
-      <AuditLogTable
-        logs={data?.logs ?? []}
-        total={data?.total ?? 0}
-        isLoading={isLoading}
-        error={error}
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        onRowClick={handleRowClick}
-        onRetry={() => refetch()}
-      />
+          <AuditLogFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onExport={() => setExportOpen(true)}
+          />
+        </BentoPanel>
+
+        <BentoPanel
+          role="region"
+          aria-label="Audit log results"
+          sx={{
+            gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 12' },
+            '& > .MuiPaper-root': { border: 0, boxShadow: 'none', borderRadius: 0 },
+          }}
+        >
+          <AuditLogTable
+            logs={data?.logs ?? []}
+            total={data?.total ?? 0}
+            isLoading={isLoading}
+            error={error}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onRowClick={handleRowClick}
+            onRetry={() => refetch()}
+          />
+        </BentoPanel>
+      </BentoGrid>
 
       {/* Detail Drawer */}
       <AuditLogDetail
@@ -280,6 +268,6 @@ export default function AuditLogPage() {
         filters={filters}
         totalCount={data?.total ?? 0}
       />
-    </>
+    </Stack>
   );
 }
