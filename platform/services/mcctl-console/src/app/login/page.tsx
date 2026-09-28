@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Box, Card, CardContent, Typography, Link, Container } from '@mui/material';
+import { Box, Typography, Link, Container } from '@mui/material';
 import { LoginForm } from '@/components/auth';
+import { BentoPanel } from '@/components/bento';
 import NextLink from 'next/link';
 
 export default function LoginPage() {
@@ -16,6 +17,7 @@ export default function LoginPage() {
   return (
     <Container maxWidth="sm">
       <Box
+        data-testid="auth-shell"
         sx={{
           minHeight: '100vh',
           display: 'flex',
@@ -24,8 +26,13 @@ export default function LoginPage() {
           py: 4,
         }}
       >
-        <Card sx={{ width: '100%', maxWidth: 500 }}>
-          <CardContent sx={{ p: 4 }}>
+        <BentoPanel
+          data-testid="auth-panel"
+          aria-label="Sign in"
+          accent="primary"
+          sx={{ width: '100%', maxWidth: 500 }}
+        >
+          <Box sx={{ p: { xs: 3, sm: 4 } }}>
             <Typography
               variant="h4"
               component="h1"
@@ -52,8 +59,8 @@ export default function LoginPage() {
                 </Link>
               </Typography>
             </Box>
-          </CardContent>
-        </Card>
+          </Box>
+        </BentoPanel>
       </Box>
     </Container>
   );
