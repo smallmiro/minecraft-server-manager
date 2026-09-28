@@ -5,14 +5,6 @@ import ConsolePage from './page';
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 
-vi.mock('react', async () => {
-  const actual = await vi.importActual<typeof import('react')>('react');
-  return {
-    ...actual,
-    use: () => ({ name: 'survival%20server' }),
-  };
-});
-
 vi.mock('@/hooks/useAppRouter', () => ({
   useAppRouter: () => ({ push }),
 }));
@@ -38,7 +30,7 @@ vi.mock('@/components/servers/ServerConsole', () => ({
 function renderPage() {
   return render(
     <ThemeProvider>
-      <ConsolePage params={Promise.resolve({ name: 'survival%20server' })} />
+      <ConsolePage params={{ name: 'survival%20server' }} />
     </ThemeProvider>,
   );
 }

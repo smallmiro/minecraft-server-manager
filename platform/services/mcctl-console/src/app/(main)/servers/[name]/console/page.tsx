@@ -5,7 +5,7 @@
 
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import Box from '@mui/material/Box';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
@@ -18,12 +18,12 @@ import { ServerConsole } from '@/components/servers/ServerConsole';
 import { PageHero } from '@/components/bento';
 
 interface PageProps {
-  params: Promise<{ name: string }>;
+  params: { name: string };
 }
 
 export default function ConsolePage({ params }: PageProps) {
   const router = useAppRouter();
-  const { name } = use(params);
+  const { name } = params;
   const serverName = decodeURIComponent(name);
   const [connectionState, setConnectionState] = useState({
     isConnected: true,
