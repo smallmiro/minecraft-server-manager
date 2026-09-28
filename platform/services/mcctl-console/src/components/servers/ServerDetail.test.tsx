@@ -102,15 +102,69 @@ describe('ServerDetail', () => {
   it('should render resource stat cards', () => {
     renderWithTheme(<ServerDetail server={mockServer} />);
 
-    expect(screen.getByText('CPU usage')).toBeInTheDocument();
-    expect(screen.getByText('Memory usage')).toBeInTheDocument();
-    expect(screen.getByText('World size')).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'CPU usage' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Memory usage' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'World size' })).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'CPU usage progress' })).toHaveAttribute(
+      'aria-valuenow',
+      '25',
+    );
+    expect(screen.getByRole('progressbar', { name: 'Memory usage progress' })).toHaveAttribute(
+      'aria-valuenow',
+      '62.5',
+    );
   });
 
   it('should render console section with connection indicator', () => {
     renderWithTheme(<ServerDetail server={mockServer} />);
 
     expect(screen.getByText('Console')).toBeInTheDocument();
+    expect(screen.getByText('Connected')).toBeInTheDocument();
+  });
+
+  it('keeps all tab buttons in DOM reading order', () => {
+    renderWithTheme(<ServerDetail server={mockServer} />);
+
+    const labels = [
+      'Overview',
+      'Players',
+      'World',
+      'Activity',
+      'Mods',
+      'Files',
+      'Config History',
+      'Backups',
+      'Access',
+      'Options',
+    ];
+    const buttons = labels.map((label) => screen.getByRole('button', { name: label }));
+
+    buttons.slice(0, -1).forEach((button, index) => {
+      expect(
+        button.compareDocumentPosition(buttons[index + 1]) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+  });
+
+  it('keeps selected tab content in the full-width detail panel', () => {
+    renderWithTheme(<ServerDetail server={mockServer} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Files' }));
+
+    expect(screen.getByRole('region', { name: 'Server detail content' })).toHaveTextContent(
+      'Files Tab Content',
+    );
+  });
+
+  it('keeps a long hostname inside the overview details', () => {
+    const longHostname = 'a-very-long-minecraft-hostname-that-must-not-expand-the-page.example.local';
+    renderWithTheme(
+      <ServerDetail server={{ ...mockServer, hostname: longHostname }} />,
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'Server detail content' }),
+    ).toHaveTextContent(longHostname);
   });
 
   it('should switch to mods tab', () => {
