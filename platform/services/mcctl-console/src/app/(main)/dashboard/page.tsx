@@ -9,6 +9,7 @@ import {
 } from '@mui/icons-material';
 import { useServers, useWorlds } from '@/hooks/useMcctl';
 import { useServersSSE } from '@/hooks/useServersSSE';
+import { BentoGrid } from '@/components/bento';
 import {
   DashboardHero,
   StatCard,
@@ -17,17 +18,6 @@ import {
   RecentActivityFeed,
   PlayitSummaryCard,
 } from '@/components/dashboard';
-
-const bentoGridSx = {
-  display: 'grid',
-  gridTemplateColumns: {
-    xs: 'minmax(0, 1fr)',
-    sm: 'repeat(6, minmax(0, 1fr))',
-    md: 'repeat(12, minmax(0, 1fr))',
-  },
-  gap: { xs: 2, sm: 2.5 },
-  alignItems: 'stretch',
-} as const;
 
 const metricItemSx = {
   gridColumn: { xs: '1 / -1', sm: 'span 3', md: 'span 3' },
@@ -97,7 +87,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <Box component="section" aria-label="Dashboard overview" aria-busy="true" sx={bentoGridSx}>
+      <BentoGrid aria-label="Dashboard overview" aria-busy="true">
         <Paper
           elevation={0}
           sx={{
@@ -174,12 +164,12 @@ export default function DashboardPage() {
             </Card>
           </Box>
         ))}
-      </Box>
+      </BentoGrid>
     );
   }
 
   return (
-    <Box component="section" aria-label="Dashboard overview" sx={bentoGridSx}>
+    <BentoGrid aria-label="Dashboard overview">
       <DashboardHero
         totalServers={totalServers}
         onlineServers={onlineServers}
@@ -247,6 +237,6 @@ export default function DashboardPage() {
       <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 5' } }}>
         <ChangelogFeed maxVersions={2} />
       </Box>
-    </Box>
+    </BentoGrid>
   );
 }

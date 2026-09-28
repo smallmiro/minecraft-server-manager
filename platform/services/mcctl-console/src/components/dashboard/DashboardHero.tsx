@@ -4,7 +4,6 @@ import {
   Box,
   Chip,
   LinearProgress,
-  Paper,
   Stack,
   Typography,
   alpha,
@@ -14,6 +13,7 @@ import {
   SensorsRounded as LiveIcon,
   SyncRounded as ReconnectingIcon,
 } from '@mui/icons-material';
+import { BentoPanel } from '@/components/bento';
 
 interface DashboardHeroProps {
   totalServers: number;
@@ -37,8 +37,8 @@ export function DashboardHero({
       : `${attentionServers} ${attentionServers === 1 ? 'server needs' : 'servers need'} attention`;
 
   return (
-    <Paper
-      elevation={0}
+    <BentoPanel
+      accent="primary"
       sx={{
         gridColumn: { xs: '1 / -1', md: 'span 6' },
         gridRow: { md: 'span 2' },
@@ -174,6 +174,6 @@ export function DashboardHero({
           {attentionMessage}
         </Typography>
       </Box>
-    </Paper>
+    </BentoPanel>
   );
 }
