@@ -7,6 +7,8 @@
 
 import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
+import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -36,8 +38,9 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 export default function PlayersPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedServer, setSelectedServer] = useState<string>('');
-  const { data: serversData, isLoading: serversLoading } = useServers();
+  const { data: serversData, isLoading: serversLoading, error: serversError } = useServers();
   const servers = serversData?.servers;
+  const serversUnavailable = !serversLoading && (!serversData || Boolean(serversError));
   const availableServers = servers?.length ?? 0;
   const runningServers = servers?.filter((server) => server.status === 'running').length ?? 0;
 
@@ -66,7 +69,7 @@ export default function PlayersPage() {
           <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 3', md: 'span 6' } }}>
             <BentoMetricCard
               title="Available servers"
-              value={availableServers}
+              value={serversLoading ? <Skeleton width={56} /> : serversUnavailable ? 'Unavailable' : availableServers}
               icon={<PeopleIcon />}
               accent="info"
             />
@@ -74,7 +77,7 @@ export default function PlayersPage() {
           <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 3', md: 'span 6' } }}>
             <BentoMetricCard
               title="Running servers"
-              value={runningServers}
+              value={serversLoading ? <Skeleton width={56} /> : serversUnavailable ? 'Unavailable' : runningServers}
               accent="success"
               description="Ready for live player actions"
             />
@@ -87,6 +90,11 @@ export default function PlayersPage() {
         aria-label="Player manager"
         sx={{ p: { xs: 2, sm: 3 }, minHeight: 460 }}
       >
+        {serversError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Failed to load servers: {serversError.message}
+          </Alert>
+        )}
         {/* Server Selector */}
         <Box
           sx={{
@@ -104,7 +112,7 @@ export default function PlayersPage() {
               value={selectedServer}
               label="Server"
               onChange={(e) => setSelectedServer(e.target.value)}
-              disabled={serversLoading}
+              disabled={serversLoading || serversUnavailable}
             >
               {servers?.map((server) => (
                 <MenuItem key={server.name} value={server.name}>
@@ -113,7 +121,7 @@ export default function PlayersPage() {
               ))}
             </Select>
           </FormControl>
-          {(serversLoading || availableServers === 0) && (
+          {(serversLoading || (!serversUnavailable && availableServers === 0)) && (
             <Typography variant="body2" color="text.secondary">
               {serversLoading ? 'Loading servers...' : 'No servers available'}
             </Typography>

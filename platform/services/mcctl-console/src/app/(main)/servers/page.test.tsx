@@ -154,6 +154,26 @@ describe('ServersPage', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Servers' })).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('Failed to load servers: API unavailable');
+    expect(screen.getAllByText('Unavailable')).toHaveLength(3);
+    expect(screen.getByRole('region', { name: 'Server inventory' })).toHaveTextContent(
+      'Server inventory unavailable',
+    );
+    expect(screen.queryByText(/No servers found/i)).not.toBeInTheDocument();
+  });
+
+  it('ignores stale SSE overlays while reconnecting', () => {
+    vi.mocked(useServersSSE).mockReturnValue({
+      statusMap: {
+        survival: { status: 'running', health: 'healthy' },
+      },
+      isConnected: false,
+    } as never);
+
+    renderPage();
+
+    expect(screen.getByText('Reconnecting')).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Running servers' })).toHaveTextContent('1');
+    expect(screen.getByRole('article', { name: 'Needs attention' })).toHaveTextContent('2');
   });
 
   it('keeps a very long server name inside the content region', () => {

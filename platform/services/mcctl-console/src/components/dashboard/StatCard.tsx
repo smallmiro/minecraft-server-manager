@@ -5,7 +5,7 @@ import { BentoMetricCard } from '@/components/bento';
 
 export interface StatCardProps {
   title: string;
-  value: number;
+  value: ReactNode;
   icon?: ReactNode;
   color?: 'primary' | 'success' | 'info' | 'secondary';
   description?: string;

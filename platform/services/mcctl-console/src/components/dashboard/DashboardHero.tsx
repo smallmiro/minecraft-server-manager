@@ -21,6 +21,7 @@ interface DashboardHeroProps {
   attentionServers: number;
   onlinePercent: number;
   isLive: boolean;
+  dataUnavailable?: boolean;
 }
 
 export function DashboardHero({
@@ -29,8 +30,11 @@ export function DashboardHero({
   attentionServers,
   onlinePercent,
   isLive,
+  dataUnavailable = false,
 }: DashboardHeroProps) {
-  const attentionMessage = totalServers === 0
+  const attentionMessage = dataUnavailable
+    ? 'Server data unavailable'
+    : totalServers === 0
     ? 'No servers configured'
     : attentionServers === 0
       ? 'All systems operational'
@@ -149,27 +153,33 @@ export function DashboardHero({
             letterSpacing: '-0.035em',
           }}
         >
-          {onlineServers} of {totalServers} servers online
+          {dataUnavailable ? 'Server status unavailable' : `${onlineServers} of ${totalServers} servers online`}
         </Typography>
-        <LinearProgress
-          variant="determinate"
-          value={onlinePercent}
-          aria-label="Online server percentage"
-          sx={{
-            mt: 2,
-            height: 7,
-            borderRadius: 999,
-            bgcolor: (theme) => alpha(theme.palette.common.white, 0.08),
-            '& .MuiLinearProgress-bar': {
+        {!dataUnavailable && (
+          <LinearProgress
+            variant="determinate"
+            value={onlinePercent}
+            aria-label="Online server percentage"
+            sx={{
+              mt: 2,
+              height: 7,
               borderRadius: 999,
-              background: (theme) =>
-                `linear-gradient(90deg, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
-            },
-          }}
-        />
+              bgcolor: (theme) => alpha(theme.palette.common.white, 0.08),
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 999,
+                background: (theme) =>
+                  `linear-gradient(90deg, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
+              },
+            }}
+          />
+        )}
         <Typography
           variant="caption"
-          sx={{ display: 'block', mt: 1.25, color: attentionServers > 0 ? 'warning.light' : 'success.light' }}
+          sx={{
+            display: 'block',
+            mt: 1.25,
+            color: dataUnavailable || attentionServers > 0 ? 'warning.light' : 'success.light',
+          }}
         >
           {attentionMessage}
         </Typography>

@@ -113,6 +113,21 @@ describe('BackupsPage', () => {
     expect(screen.getByRole('region', { name: 'Backup content' })).toBeInTheDocument();
   });
 
+  it('reports backup status failures as unavailable, not unconfigured', () => {
+    vi.mocked(useBackupStatus).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('backup API unavailable'),
+    } as never);
+
+    renderPage();
+
+    expect(screen.getByText('Unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('Not configured')).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('backup API unavailable');
+    expect(screen.getByRole('button', { name: 'Create backup' })).toBeDisabled();
+  });
+
   it('keeps world backup features in one full-width active panel', () => {
     renderPage();
 

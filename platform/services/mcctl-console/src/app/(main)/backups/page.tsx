@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
+import Alert from '@mui/material/Alert';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
   BackupStatus,
@@ -18,10 +19,12 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { BentoPanel, PageHero } from '@/components/bento';
 
 export default function BackupsPage() {
-  const { data: statusData, isLoading: statusLoading } = useBackupStatus();
+  const { data: statusData, isLoading: statusLoading, error: statusError } = useBackupStatus();
   const configured = statusData?.configured ?? false;
   const configurationLabel = statusLoading
     ? 'Checking backup configuration'
+    : statusError || !statusData
+      ? 'Unavailable'
     : configured
       ? 'Configured'
       : 'Not configured';
@@ -57,15 +60,21 @@ export default function BackupsPage() {
         status={(
           <Chip
             label={configurationLabel}
-            color={statusLoading ? 'default' : configured ? 'success' : 'warning'}
+            color={statusLoading ? 'default' : statusError || !statusData ? 'error' : configured ? 'success' : 'warning'}
             size="small"
           />
         )}
         actions={currentTab === 'world-backups' ? (
-          <BackupPushButton disabled={!configured || statusLoading} />
+          <BackupPushButton disabled={!configured || statusLoading || Boolean(statusError)} />
         ) : undefined}
         sx={{ mb: 2.5 }}
       />
+
+      {statusError && (
+        <Alert severity="error" sx={{ mb: 2.5 }}>
+          Failed to load backup status: {statusError.message}
+        </Alert>
+      )}
 
       {/* Tab Switcher */}
       <BentoPanel sx={{ p: 1, mb: 2.5 }}>

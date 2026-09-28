@@ -52,6 +52,7 @@ export default function WorldsPage() {
   const releaseWorld = useReleaseWorld();
   const deleteWorld = useDeleteWorld();
   const worlds = data?.worlds ?? [];
+  const worldsUnavailable = !isLoading && (!data || Boolean(error));
   const assignedWorlds = worlds.filter((world) => world.isLocked).length;
   const freeWorlds = worlds.length - assignedWorlds;
 
@@ -147,12 +148,16 @@ export default function WorldsPage() {
       >
         <BentoGrid>
           <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
-            <BentoMetricCard title="Total worlds" value={worlds.length} icon={<PublicIcon />} />
+            <BentoMetricCard
+              title="Total worlds"
+              value={isLoading ? <Skeleton width={56} /> : worldsUnavailable ? 'Unavailable' : worlds.length}
+              icon={<PublicIcon />}
+            />
           </Box>
           <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
             <BentoMetricCard
               title="Assigned worlds"
-              value={assignedWorlds}
+              value={isLoading ? <Skeleton width={56} /> : worldsUnavailable ? 'Unavailable' : assignedWorlds}
               accent="warning"
               description="Attached to a server"
             />
@@ -160,7 +165,7 @@ export default function WorldsPage() {
           <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
             <BentoMetricCard
               title="Free worlds"
-              value={freeWorlds}
+              value={isLoading ? <Skeleton width={56} /> : worldsUnavailable ? 'Unavailable' : freeWorlds}
               accent="success"
               description="Ready to assign"
             />
@@ -221,6 +226,8 @@ export default function WorldsPage() {
               </Box>
             ))}
           </BentoGrid>
+        ) : worldsUnavailable ? (
+          <Typography color="text.secondary">World inventory unavailable</Typography>
         ) : (
           <WorldList
             worlds={worlds}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography, Skeleton, Card, CardContent, Paper, alpha } from '@mui/material';
+import { Alert, Box, Typography, Skeleton, Card, CardContent, Paper, alpha } from '@mui/material';
 import {
   Storage as ServerIcon,
   CheckCircle as OnlineIcon,
@@ -50,20 +50,23 @@ function SkeletonMetricCard() {
 }
 
 export default function DashboardPage() {
-  const { data: serversData, isLoading: serversLoading } = useServers();
-  const { data: worldsData, isLoading: worldsLoading } = useWorlds();
+  const { data: serversData, isLoading: serversLoading, error: serversError } = useServers();
+  const { data: worldsData, isLoading: worldsLoading, error: worldsError } = useWorlds();
 
   // Real-time server status updates
   const { statusMap, isConnected } = useServersSSE();
 
   const isLoading = serversLoading || worldsLoading;
+  const serversUnavailable = !serversLoading && (!serversData || Boolean(serversError));
+  const worldsUnavailable = !worldsLoading && (!worldsData || Boolean(worldsError));
+  const liveStatusMap = isConnected ? statusMap : {};
 
   // Calculate statistics with real-time status overlay
   const totalServers = serversData?.total || 0;
 
   // Count online servers using SSE status if available
   const onlineServers = serversData?.servers.filter(server => {
-    const sseStatus = statusMap[server.name];
+    const sseStatus = liveStatusMap[server.name];
     const currentStatus = sseStatus?.status || server.status;
     return currentStatus === 'running';
   }).length || 0;
@@ -76,7 +79,7 @@ export default function DashboardPage() {
   // Derived metrics for the compact stat cards (computed values only — no history)
   const stoppedServers = totalServers - onlineServers;
   const attentionServers = serversData?.servers.filter((server) => {
-    const sseStatus = statusMap[server.name];
+    const sseStatus = liveStatusMap[server.name];
     const currentStatus = sseStatus?.status || server.status;
     const currentHealth = sseStatus?.health || server.health;
     return currentStatus !== 'running' || currentHealth === 'unhealthy';
@@ -176,27 +179,39 @@ export default function DashboardPage() {
         attentionServers={attentionServers}
         onlinePercent={onlinePercent}
         isLive={isConnected}
+        dataUnavailable={serversUnavailable}
       />
+
+      {serversError && (
+        <Alert severity="error" sx={{ gridColumn: '1 / -1' }}>
+          Failed to load servers: {serversError.message}
+        </Alert>
+      )}
+      {worldsError && (
+        <Alert severity="error" sx={{ gridColumn: '1 / -1' }}>
+          Failed to load worlds: {worldsError.message}
+        </Alert>
+      )}
 
       <Box sx={metricItemSx}>
           <StatCard
             title="Total Servers"
-            value={totalServers}
+            value={serversUnavailable ? 'Unavailable' : totalServers}
             icon={<ServerIcon fontSize="small" />}
             color="primary"
-            progress={totalServers > 0 ? (onlineServers / totalServers) * 100 : undefined}
-            description={`${onlineServers} running · ${stoppedServers} stopped`}
+            progress={!serversUnavailable && totalServers > 0 ? (onlineServers / totalServers) * 100 : undefined}
+            description={serversUnavailable ? 'Server data unavailable' : `${onlineServers} running · ${stoppedServers} stopped`}
           />
       </Box>
       <Box sx={metricItemSx}>
           <StatCard
             title="Online Servers"
-            value={onlineServers}
-            unit={totalServers > 0 ? `/ ${totalServers}` : undefined}
+            value={serversUnavailable ? 'Unavailable' : onlineServers}
+            unit={!serversUnavailable && totalServers > 0 ? `/ ${totalServers}` : undefined}
             icon={<OnlineIcon fontSize="small" />}
             color="success"
-            progress={totalServers > 0 ? onlinePercent : undefined}
-            description={`${onlinePercent}% running`}
+            progress={!serversUnavailable && totalServers > 0 ? onlinePercent : undefined}
+            description={serversUnavailable ? 'Server data unavailable' : `${onlinePercent}% running`}
           />
       </Box>
       <Box sx={metricItemSx}>
@@ -211,22 +226,31 @@ export default function DashboardPage() {
       <Box sx={metricItemSx}>
           <StatCard
             title="Total Worlds"
-            value={totalWorlds}
+            value={worldsUnavailable ? 'Unavailable' : totalWorlds}
             icon={<WorldIcon fontSize="small" />}
             color="secondary"
-            progress={totalWorlds > 0 ? (assignedWorlds / totalWorlds) * 100 : undefined}
-            description={`${assignedWorlds} assigned · ${freeWorlds} free`}
+            progress={!worldsUnavailable && totalWorlds > 0 ? (assignedWorlds / totalWorlds) * 100 : undefined}
+            description={worldsUnavailable ? 'World data unavailable' : `${assignedWorlds} assigned · ${freeWorlds} free`}
           />
       </Box>
 
       <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 8' } }}>
-          <ServerOverview
-            servers={serversData?.servers || []}
-            statusMap={statusMap}
-            isLoading={serversLoading}
-            maxItems={5}
-            showViewAll={true}
-          />
+          {serversUnavailable ? (
+            <Card>
+              <CardContent>
+                <Typography variant="h6">Servers</Typography>
+                <Typography color="text.secondary" sx={{ mt: 2 }}>Servers unavailable</Typography>
+              </CardContent>
+            </Card>
+          ) : (
+            <ServerOverview
+              servers={serversData?.servers || []}
+              statusMap={liveStatusMap}
+              isLoading={serversLoading}
+              maxItems={5}
+              showViewAll={true}
+            />
+          )}
       </Box>
       <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 4' } }}>
         <PlayitSummaryCard />

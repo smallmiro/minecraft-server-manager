@@ -40,10 +40,7 @@ export function BentoPanel({
       border: '1px solid',
       borderColor: accent === 'neutral' ? 'divider' : alpha(accentColor, 0.3),
       backgroundColor: 'background.paper',
-      backgroundImage:
-        accent === 'neutral'
-          ? 'none'
-          : `radial-gradient(circle at 100% 0%, ${alpha(accentColor, 0.12)} 0%, transparent 44%)`,
+      backgroundImage: 'none',
       transition: interactive
         ? 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease'
         : 'none',

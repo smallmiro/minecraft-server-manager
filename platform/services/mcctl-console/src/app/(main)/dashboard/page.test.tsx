@@ -195,6 +195,62 @@ describe('DashboardPage', () => {
     expect(screen.queryByText('Live')).not.toBeInTheDocument();
   });
 
+  it('ignores stale SSE status after the live connection drops', () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: {
+        servers: [
+          { name: 'survival', status: 'stopped', health: 'none', container: 'mc-survival', hostname: 'survival.local' },
+        ],
+        total: 1,
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: { worlds: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useServersSSE).mockReturnValue({
+      statusMap: {
+        survival: {
+          status: 'running',
+          health: 'healthy',
+          timestamp: '2026-09-28T00:00:00.000Z',
+        },
+      },
+      isConnected: false,
+    } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    expect(screen.getByText('0 of 1 servers online')).toBeInTheDocument();
+    expect(within(screen.getByText('Online Servers').closest('article')!).getByText('0')).toBeInTheDocument();
+  });
+
+  it('labels failed operational summaries as unavailable instead of zero or empty', () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('servers unavailable'),
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('worlds unavailable'),
+    } as any);
+    vi.mocked(useServersSSE).mockReturnValue({ statusMap: {}, isConnected: false } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    expect(screen.getAllByRole('alert')).toHaveLength(2);
+    expect(screen.getByText('Server status unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Servers unavailable')).toBeInTheDocument();
+    expect(screen.queryByText(/No servers found/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Total Servers').closest('article')).toHaveTextContent('Unavailable');
+    expect(screen.getByText('Total Worlds').closest('article')).toHaveTextContent('Unavailable');
+  });
+
   it('should display zero when no servers', async () => {
     vi.mocked(useServers).mockReturnValue({
       data: {

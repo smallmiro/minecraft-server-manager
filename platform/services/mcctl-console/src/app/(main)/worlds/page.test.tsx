@@ -84,7 +84,7 @@ const mockWorlds = [
 const setupMocks = (overrides: { worldsLoading?: boolean; worldsError?: Error; worlds?: typeof mockWorlds } = {}) => {
   const worlds = overrides.worlds ?? mockWorlds;
   vi.mocked(useWorlds).mockReturnValue({
-    data: overrides.worldsLoading
+    data: overrides.worldsLoading || overrides.worldsError
       ? undefined
       : { worlds, total: worlds.length },
     isLoading: overrides.worldsLoading ?? false,
@@ -154,6 +154,11 @@ describe('WorldsPage', () => {
     renderWithProviders(<WorldsPage />);
 
     expect(screen.getByText(/failed to load worlds/i)).toBeInTheDocument();
+    expect(screen.getAllByText('Unavailable')).toHaveLength(3);
+    expect(screen.getByRole('region', { name: 'World inventory' })).toHaveTextContent(
+      'World inventory unavailable',
+    );
+    expect(screen.queryByText('No worlds found')).not.toBeInTheDocument();
   });
 
   it('should render world list when data is loaded', () => {

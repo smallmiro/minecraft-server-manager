@@ -44,6 +44,8 @@ describe('Admin Users Page', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'User Management' })).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('Failed to fetch users');
+    expect(screen.getAllByText('Unavailable')).toHaveLength(3);
+    expect(screen.queryByText('No users found')).not.toBeInTheDocument();
   });
 
   it('renders a compact hero, metrics, and full-width user list from existing data', async () => {

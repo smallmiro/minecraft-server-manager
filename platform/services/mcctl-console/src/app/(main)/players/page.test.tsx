@@ -117,6 +117,21 @@ describe('PlayersPage', () => {
     expect(screen.getByText('Loading servers...')).toBeInTheDocument();
   });
 
+  it('shows unavailable metrics and error context when servers fail to load', () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('servers unavailable'),
+    } as never);
+
+    renderPage();
+
+    expect(screen.getByRole('alert')).toHaveTextContent('servers unavailable');
+    expect(screen.getAllByText('Unavailable')).toHaveLength(2);
+    expect(screen.queryByText('No servers available')).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Server' })).toHaveAttribute('aria-disabled', 'true');
+  });
+
   it('renders only the active manager in one dense full-width panel', () => {
     renderPage();
 

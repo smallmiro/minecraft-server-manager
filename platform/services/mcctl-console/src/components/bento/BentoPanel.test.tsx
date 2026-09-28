@@ -42,4 +42,16 @@ describe('BentoPanel', () => {
       'true',
     );
   });
+
+  it('keeps standard accented panels free of background imagery', () => {
+    render(
+      <ThemeProvider>
+        <BentoPanel aria-label="Accented panel" accent="primary">Content</BentoPanel>
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByRole('region', { name: 'Accented panel' })).toHaveStyle({
+      backgroundImage: 'none',
+    });
+  });
 });

@@ -45,7 +45,7 @@ describe('ConsolePage', () => {
 
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 1, name: 'survival server' })).toBeInTheDocument();
-    expect(screen.getByText('Connected')).toBeInTheDocument();
+    expect(screen.getByText('Connecting')).toBeInTheDocument();
   });
 
   it('keeps breadcrumbs and the back action reachable', () => {
@@ -55,6 +55,9 @@ describe('ConsolePage', () => {
     expect(breadcrumbs).toHaveTextContent('Servers');
     expect(breadcrumbs).toHaveTextContent('survival server');
     expect(breadcrumbs).toHaveTextContent('Console');
+    expect(screen.getByRole('button', { name: 'survival server' })).toHaveStyle({
+      overflowWrap: 'anywhere',
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Back to server' }));
     expect(push).toHaveBeenCalledWith('/servers/survival%20server');
   });

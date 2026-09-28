@@ -198,6 +198,26 @@ describe('AuditLogPage', () => {
     expect(screen.queryByRole('button', { name: '1 new logs, click to refresh' })).not.toBeInTheDocument();
   });
 
+  it('disables the live pulse for reduced-motion users', () => {
+    render(<AuditLogPage />);
+
+    const icon = screen.getByLabelText('Audit stream status').querySelector('svg');
+    const generatedClass = Array.from(icon?.classList ?? []).find((name) => name.startsWith('css-'));
+    const reducedMotionDisablesIcon = Array.from(document.styleSheets).some((sheet) =>
+      Array.from(sheet.cssRules ?? []).some((rule) => {
+        if (!(rule instanceof CSSMediaRule) || !rule.conditionText.includes('prefers-reduced-motion')) {
+          return false;
+        }
+        return Array.from(rule.cssRules).some((nestedRule) =>
+          nestedRule.cssText.includes(`.${generatedClass}`) && /animation:\s*none/.test(nestedRule.cssText),
+        );
+      }),
+    );
+
+    expect(generatedClass).toBeDefined();
+    expect(reducedMotionDisablesIcon).toBe(true);
+  });
+
   it.each([
     ['loading', true, null, [], 'Loading logs'],
     ['empty', false, null, [], 'No logs'],

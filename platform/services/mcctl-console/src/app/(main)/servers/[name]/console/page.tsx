@@ -26,14 +26,14 @@ export default function ConsolePage({ params }: PageProps) {
   const { name } = params;
   const serverName = decodeURIComponent(name);
   const [connectionState, setConnectionState] = useState({
-    isConnected: true,
+    isConnected: false,
     retryCount: 0,
   });
   const connectionLabel = connectionState.isConnected
     ? 'Connected'
     : connectionState.retryCount > 0
       ? `Disconnected (Retry ${connectionState.retryCount})`
-      : 'Disconnected';
+      : 'Connecting';
 
   return (
     <Box sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -46,7 +46,7 @@ export default function ConsolePage({ params }: PageProps) {
         status={(
           <Chip
             label={connectionLabel}
-            color={connectionState.isConnected ? 'success' : connectionState.retryCount > 0 ? 'warning' : 'error'}
+            color={connectionState.isConnected ? 'success' : connectionState.retryCount > 0 ? 'warning' : 'default'}
             size="small"
           />
         )}
@@ -61,15 +61,15 @@ export default function ConsolePage({ params }: PageProps) {
           </IconButton>
         )}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
-          <Breadcrumbs aria-label="breadcrumb">
+        <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0, overflow: 'hidden' }}>
+          <Breadcrumbs aria-label="breadcrumb" sx={{ minWidth: 0, '& ol': { minWidth: 0, flexWrap: 'wrap' } }}>
             <Link
               component="button"
               variant="body1"
               onClick={() => router.push('/servers')}
-              sx={{ cursor: 'pointer' }}
               underline="hover"
               color="inherit"
+              sx={{ cursor: 'pointer' }}
             >
               Servers
             </Link>
@@ -77,7 +77,7 @@ export default function ConsolePage({ params }: PageProps) {
               component="button"
               variant="body1"
               onClick={() => router.push(`/servers/${name}`)}
-              sx={{ cursor: 'pointer' }}
+              sx={{ cursor: 'pointer', overflowWrap: 'anywhere', minWidth: 0 }}
               underline="hover"
               color="inherit"
             >

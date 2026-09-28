@@ -175,6 +175,9 @@ export default function AuditLogPage() {
                     '50%': { opacity: 0.4 },
                     '100%': { opacity: 1 },
                   },
+                  '@media (prefers-reduced-motion: reduce)': {
+                    animation: 'none',
+                  },
                 }}
               />
             }

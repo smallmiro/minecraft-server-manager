@@ -73,7 +73,7 @@ export default function ServerDetailPage() {
   const router = useAppRouter();
   const serverName = decodeURIComponent(params.name as string);
   const { data, isLoading, error } = useServer(serverName);
-  const { status: sseStatus, health: sseHealth } = useServerStatus({
+  const { status: sseStatus, health: sseHealth, isConnected } = useServerStatus({
     serverName,
     enabled: Boolean(serverName),
   });
@@ -87,8 +87,8 @@ export default function ServerDetailPage() {
   const restartServer = useRestartServer();
   const deleteServer = useDeleteServer();
   const server = data?.server;
-  const currentStatus = sseStatus ?? server?.status;
-  const currentHealth = sseHealth ?? server?.health;
+  const currentStatus = isConnected ? (sseStatus ?? server?.status) : server?.status;
+  const currentHealth = isConnected ? (sseHealth ?? server?.health) : server?.health;
   const isRunning = currentStatus === 'running';
   const isStopped = ['stopped', 'exited', 'not_created'].includes(currentStatus ?? '');
   const isActionPending =
@@ -253,6 +253,9 @@ export default function ServerDetailPage() {
                   }
                   variant="outlined"
                 />
+                {!isConnected && (
+                  <Chip size="small" label="Reconnecting" color="warning" variant="outlined" />
+                )}
               </Stack>
             )
           }

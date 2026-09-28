@@ -81,6 +81,7 @@ describe('ServerDetailPage', () => {
     vi.mocked(useServerStatus).mockReturnValue({
       status: 'running',
       health: 'healthy',
+      isConnected: true,
     } as never);
     vi.mocked(useStartServer).mockReturnValue({ ...asyncMutation } as never);
     vi.mocked(useStopServer).mockReturnValue({ ...asyncMutation } as never);
@@ -113,12 +114,28 @@ describe('ServerDetailPage', () => {
     vi.mocked(useServerStatus).mockReturnValue({
       status: 'stopped',
       health: 'none',
+      isConnected: true,
     } as never);
 
     renderPage();
 
     expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Restart' })).not.toBeInTheDocument();
+  });
+
+  it('falls back to API status when a stale SSE value is disconnected', () => {
+    vi.mocked(useServerStatus).mockReturnValue({
+      status: 'stopped',
+      health: 'none',
+      isConnected: false,
+    } as never);
+
+    renderPage();
+
+    expect(screen.getByText('Reconnecting')).toBeInTheDocument();
+    expect(screen.getByText('Running')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Start' })).not.toBeInTheDocument();
   });
 
   it('shows the error without hiding server context', () => {

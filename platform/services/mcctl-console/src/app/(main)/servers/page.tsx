@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Skeleton from '@mui/material/Skeleton';
+import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import StorageIcon from '@mui/icons-material/Storage';
@@ -54,14 +55,16 @@ export default function ServersPage() {
   });
 
   const servers = data?.servers ?? [];
+  const serversUnavailable = !isLoading && (!data || Boolean(error));
+  const liveStatusMap = isConnected ? statusMap : {};
   const totalServers = data?.total ?? servers.length;
   const runningServers = servers.filter((server) => {
-    const currentStatus = statusMap[server.name]?.status ?? server.status;
+    const currentStatus = liveStatusMap[server.name]?.status ?? server.status;
     return currentStatus === 'running';
   }).length;
   const attentionServers = servers.filter((server) => {
-    const currentStatus = statusMap[server.name]?.status ?? server.status;
-    const currentHealth = statusMap[server.name]?.health ?? server.health;
+    const currentStatus = liveStatusMap[server.name]?.status ?? server.status;
+    const currentHealth = liveStatusMap[server.name]?.health ?? server.health;
     return currentStatus !== 'running' || currentHealth === 'unhealthy';
   }).length;
   const runningPercent = totalServers > 0 ? Math.round((runningServers / totalServers) * 100) : 0;
@@ -160,29 +163,29 @@ export default function ServersPage() {
             <Box sx={metricItemSx}>
               <BentoMetricCard
                 title="Total servers"
-                value={totalServers}
+                value={serversUnavailable ? 'Unavailable' : totalServers}
                 icon={<StorageIcon fontSize="small" />}
-                description={`${runningServers} currently running`}
+                description={serversUnavailable ? 'Server data unavailable' : `${runningServers} currently running`}
               />
             </Box>
             <Box sx={metricItemSx}>
               <BentoMetricCard
                 title="Running servers"
-                value={runningServers}
-                unit={totalServers > 0 ? `/ ${totalServers}` : undefined}
+                value={serversUnavailable ? 'Unavailable' : runningServers}
+                unit={!serversUnavailable && totalServers > 0 ? `/ ${totalServers}` : undefined}
                 icon={<CheckCircleIcon fontSize="small" />}
                 accent="success"
-                progress={totalServers > 0 ? runningPercent : undefined}
-                description={`${runningPercent}% available`}
+                progress={!serversUnavailable && totalServers > 0 ? runningPercent : undefined}
+                description={serversUnavailable ? 'Server data unavailable' : `${runningPercent}% available`}
               />
             </Box>
             <Box sx={metricItemSx}>
               <BentoMetricCard
                 title="Needs attention"
-                value={attentionServers}
+                value={serversUnavailable ? 'Unavailable' : attentionServers}
                 icon={<WarningAmberIcon fontSize="small" />}
-                accent={attentionServers > 0 ? 'warning' : 'success'}
-                description={attentionServers > 0 ? 'Stopped or unhealthy' : 'All systems operational'}
+                accent={serversUnavailable || attentionServers > 0 ? 'warning' : 'success'}
+                description={serversUnavailable ? 'Server data unavailable' : attentionServers > 0 ? 'Stopped or unhealthy' : 'All systems operational'}
               />
             </Box>
           </>
@@ -197,10 +200,12 @@ export default function ServersPage() {
               <Skeleton variant="rounded" width="100%" height={40} />
               <Skeleton variant="rounded" width="100%" height={180} />
             </Box>
+          ) : serversUnavailable ? (
+            <Typography color="text.secondary">Server inventory unavailable</Typography>
           ) : (
             <ServerList
               servers={servers}
-              statusMap={statusMap}
+              statusMap={liveStatusMap}
               onServerClick={handleServerClick}
               onStart={handleStartServer}
               onStop={handleStopServer}

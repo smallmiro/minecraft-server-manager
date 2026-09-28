@@ -5,6 +5,7 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
+import Skeleton from '@mui/material/Skeleton';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import BlockIcon from '@mui/icons-material/Block';
 import GroupIcon from '@mui/icons-material/Group';
@@ -43,7 +44,7 @@ export default function UsersPage() {
         <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 4' } }}>
           <BentoMetricCard
             title="Total users"
-            value={currentUsers.length}
+            value={isLoading ? <Skeleton width={56} /> : isError ? 'Unavailable' : currentUsers.length}
             description="Registered accounts"
             icon={<GroupIcon />}
             accent="primary"
@@ -52,7 +53,7 @@ export default function UsersPage() {
         <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 4' } }}>
           <BentoMetricCard
             title="Administrators"
-            value={adminCount}
+            value={isLoading ? <Skeleton width={56} /> : isError ? 'Unavailable' : adminCount}
             description="Accounts with admin access"
             icon={<AdminPanelSettingsIcon />}
             accent="info"
@@ -61,7 +62,7 @@ export default function UsersPage() {
         <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 4' } }}>
           <BentoMetricCard
             title="Banned users"
-            value={bannedCount}
+            value={isLoading ? <Skeleton width={56} /> : isError ? 'Unavailable' : bannedCount}
             description="Restricted accounts"
             icon={<BlockIcon />}
             accent={bannedCount > 0 ? 'error' : 'success'}
