@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.27.0
-> **Last Updated**: 2026-09-27
+> **Version**: 2.28.0
+> **Last Updated**: 2026-10-01
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -2845,6 +2845,18 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.28.0 (2026-10-01) - Console Bento Layout
+
+**Changed:**
+- **Bento layout in mcctl-console** - All screens (dashboard, servers list, server detail, server console, worlds, players, backups, routing, audit logs, settings, login/signup, admin users) use a page hero (title, key status, metrics, primary action) followed by bounded panels. No API, permission, navigation, or behavior changes. Dense views (tables, tabs, file browser, terminal) keep their layout inside a panel
+- **Shared components** in `platform/services/mcctl-console/src/components/bento/`: `BentoGrid` (1/6/12-column responsive grid), `BentoPanel`, `PageHero`, `BentoMetricCard`. `ResourceStatCard` (server detail) was removed in favor of `BentoMetricCard`; dashboard `StatCard` wraps it
+- Design/plan documents: `docs/superpowers/specs/2026-09-28-console-bento-design.md`, `docs/superpowers/plans/2026-09-28-console-bento-implementation.md`
+
+**Fixed:**
+- Dashboard "needs attention" count = servers that are not `running` or are `unhealthy`; status chip shows `Reconnecting` when the SSE connection is down, and SSE status overlays are ignored while disconnected
+- Console pages show `Unavailable` / an error alert when data fails to load (no misleading `0`); after a successful load, refetch errors keep the cached data (backups show `Configured (cached)`)
+- `mcctl console user ...` / `mcctl console api ...` failed with `error: unknown command 'node'`; Commander now parses with `{ from: 'node' }` (#556, PR #557)
 
 ### Version 2.27.0 (2026-09-27) - Server Players Panel
 

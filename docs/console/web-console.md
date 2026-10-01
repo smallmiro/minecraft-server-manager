@@ -60,9 +60,13 @@ The Dashboard is your command center -- it gives you an at-a-glance overview of 
 
 ![Dashboard](../images/dashboard.png)
 
+### Status Hero
+
+Since v2.28.0, the Dashboard opens with a status hero that summarizes platform health: how many servers are online (with an online percentage), how many servers need attention (not running, or `unhealthy`), and a **Live** / **Reconnecting** chip that reflects the real-time (SSE) connection. When server data cannot be loaded, the hero says so instead of showing zero.
+
 ### Statistics Cards
 
-At the top of the Dashboard, four statistics cards provide key metrics:
+Below the status hero, four statistics cards provide key metrics:
 
 | Card | Description |
 |------|-------------|
@@ -114,7 +118,7 @@ The Servers page is where you manage all your Minecraft servers.
 
 ### Server List
 
-The page displays all configured servers as cards in a grid layout. Each server card shows:
+A summary panel at the top of the page shows the total, running, and needs-attention server counts, a **Live** / **Reconnecting** indicator, and the **+ Create Server** button. Below it, the page displays all configured servers as cards in a grid layout. Each server card shows:
 
 - **Server name** (e.g., `botagent`, `factory`, `wild-deity`)
 - **Status badge** -- `Running` (green) or `Stopped` (red)
@@ -150,9 +154,9 @@ Click on any server card to open the detailed server management view. The detail
 
 #### Header Section
 
-- Server name, type, version, and hostname information
+- Server name, type, version, hostname, and uptime
 - **Stop** and **Restart** buttons for server lifecycle control
-- Status badge showing the current server state
+- Status badge showing the current server state, a health badge (e.g., `Healthy`, `Unhealthy`), and a **Reconnecting** badge while the real-time connection is being restored
 
 #### Resource Monitoring
 
