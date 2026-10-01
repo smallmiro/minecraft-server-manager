@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.28.0] - 2026-10-01
+
+### Changed
+- **Bento layout across the Web Console** - Every `mcctl-console` screen now uses a consistent "Bento" layout: a page hero with the page's key status, summary metrics, and primary action at the top, followed by bounded panels for the detailed content. Applied to the dashboard, servers list, server detail, server console, worlds, player management, backups, routing, audit logs, settings, login/signup, and user administration. Dense views (tables, tabs, file browser, terminal output) keep their existing layout inside a panel, and all existing actions, permissions, and navigation are unchanged. Layouts are validated from 375px mobile to wide desktop, and hover motion is disabled when `prefers-reduced-motion` is set
+  - The server list hero shows total / running / needs-attention counts with a **Live** / **Reconnecting** indicator
+  - The server detail hero shows status, health, hostname, uptime, and lifecycle actions, with CPU / memory / world size as a metric row
+  - Shared layout components (`BentoGrid`, `BentoPanel`, `PageHero`, `BentoMetricCard`) replace page-local styling; the server detail `ResourceStatCard` is replaced by `BentoMetricCard`
+
+### Fixed
+- **Dashboard health and live state** - The dashboard "needs attention" count now includes servers that are `unhealthy`, not only stopped ones, and the status chip shows **Reconnecting** instead of always showing **Live** when the real-time (SSE) connection is down. Stale SSE status is no longer overlaid while disconnected
+- **Honest status when data fails to load** - Console pages (dashboard, servers, worlds, players, backups, audit logs, user administration) now show **Unavailable** or an error message when their data cannot be loaded, instead of showing `0` or an empty state that looks like real data. The backup **Push** button is disabled while backup status is unknown
+- **Cached data kept on refetch errors** - If a background refresh fails after data was already loaded, the console keeps showing the last loaded data (backups show e.g. "Configured (cached)") instead of switching the whole page to **Unavailable**
+- **`mcctl console user` / `mcctl console api` subcommands** - Running any `mcctl console user ...` or `mcctl console api ...` subcommand failed with `error: unknown command 'node'`. The CLI now passes the arguments to Commander with the correct `from: 'node'` convention (#556, #557)
+
 ## [2.27.0] - 2026-09-27
 
 ### Added
