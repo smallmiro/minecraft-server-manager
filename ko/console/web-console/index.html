@@ -1697,6 +1697,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#상태-히어로" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        상태 히어로
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#통계-카드" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3167,6 +3178,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#상태-히어로" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        상태 히어로
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#통계-카드" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4150,8 +4172,10 @@
 <h2 id="대시보드">대시보드<a class="headerlink" href="#대시보드" title="Permanent link">&para;</a></h2>
 <p>대시보드는 여러분의 지휘 센터입니다. Minecraft 서버 인프라 전체를 한눈에 파악할 수 있습니다.</p>
 <p><img alt="대시보드" src="../../../images/dashboard.png" /></p>
+<h3 id="상태-히어로">상태 히어로<a class="headerlink" href="#상태-히어로" title="Permanent link">&para;</a></h3>
+<p>v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 히어로가 표시됩니다. 온라인 서버 수(온라인 비율 포함), 주의가 필요한 서버 수(실행 중이 아니거나 <code>unhealthy</code>인 서버), 그리고 실시간(SSE) 연결 상태를 나타내는 <strong>Live</strong> / <strong>Reconnecting</strong> 칩을 보여줍니다. 서버 데이터를 불러오지 못한 경우에는 0으로 표시하지 않고 데이터를 사용할 수 없음을 명시합니다.</p>
 <h3 id="통계-카드">통계 카드<a class="headerlink" href="#통계-카드" title="Permanent link">&para;</a></h3>
-<p>대시보드 상단에 4개의 통계 카드가 주요 지표를 보여줍니다:</p>
+<p>상태 히어로 아래에 4개의 통계 카드가 주요 지표를 보여줍니다:</p>
 <table>
 <thead>
 <tr>
@@ -4209,7 +4233,7 @@
 <p>서버 페이지에서 모든 Minecraft 서버를 관리합니다.</p>
 <p><img alt="서버" src="../../../images/servers.png" /></p>
 <h3 id="서버-목록">서버 목록<a class="headerlink" href="#서버-목록" title="Permanent link">&para;</a></h3>
-<p>페이지에 구성된 모든 서버가 그리드 레이아웃의 카드로 표시됩니다. 각 서버 카드에는 다음이 표시됩니다:</p>
+<p>페이지 상단의 요약 패널에는 전체/실행 중/주의 필요 서버 수, <strong>Live</strong> / <strong>Reconnecting</strong> 표시, <strong>+ Create Server</strong> 버튼이 표시됩니다. 그 아래에 구성된 모든 서버가 그리드 레이아웃의 카드로 표시됩니다. 각 서버 카드에는 다음이 표시됩니다:</p>
 <ul>
 <li><strong>서버 이름</strong> (예: <code>botagent</code>, <code>factory</code>, <code>wild-deity</code>)</li>
 <li><strong>상태 배지</strong> -- <code>Running</code>(녹색) 또는 <code>Stopped</code>(빨간색)</li>
@@ -4239,9 +4263,9 @@
 <p>서버 카드를 클릭하면 상세 서버 관리 화면이 열립니다. 상세 페이지의 구성:</p>
 <h4 id="헤더-섹션">헤더 섹션<a class="headerlink" href="#헤더-섹션" title="Permanent link">&para;</a></h4>
 <ul>
-<li>서버 이름, 유형, 버전, 호스트명 정보</li>
+<li>서버 이름, 유형, 버전, 호스트명, 가동 시간(Uptime)</li>
 <li>서버 생명주기 제어를 위한 <strong>Stop</strong> 및 <strong>Restart</strong> 버튼</li>
-<li>현재 서버 상태를 나타내는 상태 배지</li>
+<li>현재 서버 상태를 나타내는 상태 배지, 헬스 배지(예: <code>Healthy</code>, <code>Unhealthy</code>), 실시간 연결 복구 중에 표시되는 <strong>Reconnecting</strong> 배지</li>
 </ul>
 <h4 id="리소스-모니터링">리소스 모니터링<a class="headerlink" href="#리소스-모니터링" title="Permanent link">&para;</a></h4>
 <p>3개의 통계 카드가 실시간 리소스 사용량을 표시합니다:</p>

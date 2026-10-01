@@ -1697,6 +1697,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#status-hero" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status Hero
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#statistics-cards" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3167,6 +3178,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#status-hero" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status Hero
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#statistics-cards" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4150,8 +4172,10 @@
 <h2 id="dashboard">Dashboard<a class="headerlink" href="#dashboard" title="Permanent link">&para;</a></h2>
 <p>The Dashboard is your command center -- it gives you an at-a-glance overview of your entire Minecraft server infrastructure.</p>
 <p><img alt="Dashboard" src="../../images/dashboard.png" /></p>
+<h3 id="status-hero">Status Hero<a class="headerlink" href="#status-hero" title="Permanent link">&para;</a></h3>
+<p>Since v2.28.0, the Dashboard opens with a status hero that summarizes platform health: how many servers are online (with an online percentage), how many servers need attention (not running, or <code>unhealthy</code>), and a <strong>Live</strong> / <strong>Reconnecting</strong> chip that reflects the real-time (SSE) connection. When server data cannot be loaded, the hero says so instead of showing zero.</p>
 <h3 id="statistics-cards">Statistics Cards<a class="headerlink" href="#statistics-cards" title="Permanent link">&para;</a></h3>
-<p>At the top of the Dashboard, four statistics cards provide key metrics:</p>
+<p>Below the status hero, four statistics cards provide key metrics:</p>
 <table>
 <thead>
 <tr>
@@ -4209,7 +4233,7 @@
 <p>The Servers page is where you manage all your Minecraft servers.</p>
 <p><img alt="Servers" src="../../images/servers.png" /></p>
 <h3 id="server-list">Server List<a class="headerlink" href="#server-list" title="Permanent link">&para;</a></h3>
-<p>The page displays all configured servers as cards in a grid layout. Each server card shows:</p>
+<p>A summary panel at the top of the page shows the total, running, and needs-attention server counts, a <strong>Live</strong> / <strong>Reconnecting</strong> indicator, and the <strong>+ Create Server</strong> button. Below it, the page displays all configured servers as cards in a grid layout. Each server card shows:</p>
 <ul>
 <li><strong>Server name</strong> (e.g., <code>botagent</code>, <code>factory</code>, <code>wild-deity</code>)</li>
 <li><strong>Status badge</strong> -- <code>Running</code> (green) or <code>Stopped</code> (red)</li>
@@ -4239,9 +4263,9 @@
 <p>Click on any server card to open the detailed server management view. The detail page features:</p>
 <h4 id="header-section">Header Section<a class="headerlink" href="#header-section" title="Permanent link">&para;</a></h4>
 <ul>
-<li>Server name, type, version, and hostname information</li>
+<li>Server name, type, version, hostname, and uptime</li>
 <li><strong>Stop</strong> and <strong>Restart</strong> buttons for server lifecycle control</li>
-<li>Status badge showing the current server state</li>
+<li>Status badge showing the current server state, a health badge (e.g., <code>Healthy</code>, <code>Unhealthy</code>), and a <strong>Reconnecting</strong> badge while the real-time connection is being restored</li>
 </ul>
 <h4 id="resource-monitoring">Resource Monitoring<a class="headerlink" href="#resource-monitoring" title="Permanent link">&para;</a></h4>
 <p>Three stat cards display real-time resource usage:</p>

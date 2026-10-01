@@ -4269,6 +4269,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-2280-2026-10-01---console-bento-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.28.0 (2026-10-01) - Console Bento Layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-2270-2026-09-27---server-players-panel" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4702,8 +4713,8 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.27.0
-<strong>Last Updated</strong>: 2026-09-27
+<p><strong>Version</strong>: 2.28.0
+<strong>Last Updated</strong>: 2026-10-01
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
 <hr />
@@ -9269,6 +9280,15 @@ A: Yes. It only appends new variables and never modifies existing ones. Use <cod
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-2280-2026-10-01---console-bento-layout">Version 2.28.0 (2026-10-01) - Console Bento Layout<a class="headerlink" href="#version-2280-2026-10-01---console-bento-layout" title="Permanent link">&para;</a></h3>
+<p><strong>Changed:</strong>
+- <strong>Bento layout in mcctl-console</strong> - All screens (dashboard, servers list, server detail, server console, worlds, players, backups, routing, audit logs, settings, login/signup, admin users) use a page hero (title, key status, metrics, primary action) followed by bounded panels. No API, permission, navigation, or behavior changes. Dense views (tables, tabs, file browser, terminal) keep their layout inside a panel
+- <strong>Shared components</strong> in <code>platform/services/mcctl-console/src/components/bento/</code>: <code>BentoGrid</code> (1/6/12-column responsive grid), <code>BentoPanel</code>, <code>PageHero</code>, <code>BentoMetricCard</code>. <code>ResourceStatCard</code> (server detail) was removed in favor of <code>BentoMetricCard</code>; dashboard <code>StatCard</code> wraps it
+- Design/plan documents: <code>docs/superpowers/specs/2026-09-28-console-bento-design.md</code>, <code>docs/superpowers/plans/2026-09-28-console-bento-implementation.md</code></p>
+<p><strong>Fixed:</strong>
+- Dashboard "needs attention" count = servers that are not <code>running</code> or are <code>unhealthy</code>; status chip shows <code>Reconnecting</code> when the SSE connection is down, and SSE status overlays are ignored while disconnected
+- Console pages show <code>Unavailable</code> / an error alert when data fails to load (no misleading <code>0</code>); after a successful load, refetch errors keep the cached data (backups show <code>Configured (cached)</code>)
+- <code>mcctl console user ...</code> / <code>mcctl console api ...</code> failed with <code>error: unknown command 'node'</code>; Commander now parses with <code>{ from: 'node' }</code> (#556, PR #557)</p>
 <h3 id="version-2270-2026-09-27---server-players-panel">Version 2.27.0 (2026-09-27) - Server Players Panel<a class="headerlink" href="#version-2270-2026-09-27---server-players-panel" title="Permanent link">&para;</a></h3>
 <p><strong>Added (#528):</strong>
 - <strong>Players Tab</strong> in server detail (#550) - Unified online (RCON) + offline (<code>usercache.json</code>, <code>playerdata/</code>, <code>ops.json</code>, <code>whitelist.json</code>, <code>banned-players.json</code>) roster with avatars, badges, and kick/ban/unban/op/deop/whitelist actions
