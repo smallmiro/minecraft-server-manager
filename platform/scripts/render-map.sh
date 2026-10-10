@@ -114,7 +114,8 @@ pick_dimension_root() {
             best_mtime="$mtime"; best_root="$root"
         fi
     done
-    [[ -n "$best_root" ]] && echo "$best_root"
+    # `if` (not `&&`) keeps status 0 when empty, so `set -e` callers can skip it.
+    if [[ -n "$best_root" ]]; then echo "$best_root"; fi
 }
 
 # Resolve the world-save root that holds a dimension's region data, handling
@@ -318,6 +319,14 @@ docker run --rm --user "$DOCKER_USER" \
 if [[ ! -f "$WEB_DIR/index.html" ]]; then
     error "Render finished but $WEB_DIR/index.html is missing"
     exit 1
+fi
+
+# BlueMap lists maps alphabetically in settings.json and the viewer opens the
+# first one (End/Nether before Overworld), ignoring `sorting`. Rewrite the list
+# in MAP_IDS order (overworld first) so the default view is the overworld (#564, #575).
+if [[ -f "$WEB_DIR/settings.json" ]]; then
+    maps_list="$(printf '"%s",' "${MAP_IDS[@]}")"
+    sed -i -E "s/\"maps\":\[[^]]*\]/\"maps\":[${maps_list%,}]/" "$WEB_DIR/settings.json"
 fi
 
 info "Map rendered: $WEB_DIR/index.html"
