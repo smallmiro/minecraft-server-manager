@@ -130,6 +130,16 @@ mk_region "$W/DIM-1/region" "2026-02-02 12:00:00"                           # st
 assert_eq "nether: all three layouts, dimensions/ newest -> world root" \
     "$W" "$(resolve_dimension_root "$W" nether)"
 
+# --- No region data (issue #575) ---------------------------------------------
+
+# render-map.sh runs under `set -e`; a dimension without region data must yield
+# an empty root (so the caller can skip it) instead of aborting the script.
+W="$WORK/e1"
+mkdir -p "$W/dimensions/minecraft/the_nether/region"
+out="$(set -e; root="$(resolve_dimension_root "$W" nether)"; echo "survived:[$root]")"
+assert_eq "nether: no region data under set -e -> empty root, no abort" \
+    "survived:[]" "$out"
+
 # -----------------------------------------------------------------------------
 echo ""
 if [[ $FAILED -eq 0 ]]; then
