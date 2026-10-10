@@ -9,6 +9,7 @@ The platform provides several advanced features for production deployments and c
 - **Networking** - nip.io magic DNS, mDNS, mc-router configuration
 - **External Access** - playit.gg tunneling for internet-wide access without port forwarding
 - **Backup** - Automatic GitHub backup for world data
+- **Upgrade Runbook** - Release-independent procedure to upgrade every component, with post-upgrade verification
 - **RCON** - Remote console protocol for server administration
 - **World Management** - Multi-server world sharing with locking
 - **Auto-scaling** - Automatic server start/stop based on player activity
@@ -40,6 +41,14 @@ The platform provides several advanced features for production deployments and c
     Set up automatic GitHub backup for world data
 
     [:octicons-arrow-right-24: Backup Guide](backup.md)
+
+-   :material-update:{ .lg .middle } **Upgrade Runbook**
+
+    ---
+
+    Upgrade CLI, API, Console, router, servers and maps in order, then verify
+
+    [:octicons-arrow-right-24: Upgrade Runbook](upgrade-runbook.md)
 
 -   :material-console:{ .lg .middle } **RCON**
 
@@ -309,4 +318,5 @@ See the [Troubleshooting Guide](../troubleshooting/index.md) for more details.
 
 - **[Networking Guide](networking.md)** - Configure hostname routing
 - **[Backup Guide](backup.md)** - Set up automatic backups
+- **[Upgrade Runbook](upgrade-runbook.md)** - Upgrade every component and verify
 - **[RCON Specification](rcon.md)** - Remote console protocol details

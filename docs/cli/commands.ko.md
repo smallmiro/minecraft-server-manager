@@ -302,6 +302,8 @@ mcctl status router
 
 ### mcctl update
 
+> 릴리즈 전체 업그레이드 절차와 업그레이드 후 검증: [업그레이드 런북](../advanced/upgrade-runbook.ko.md)
+
 mcctl CLI 및 서비스의 업데이트를 확인하고 최신 버전으로 업데이트합니다.
 
 ```bash
@@ -420,6 +422,8 @@ mcctl update [options]
     `mcctl upgrade`는 플랫폼 **설정 파일** 및 템플릿을 새 버전으로 마이그레이션합니다.
 
 ### mcctl upgrade
+
+> 릴리즈 전체 업그레이드 절차와 업그레이드 후 검증: [업그레이드 런북](../advanced/upgrade-runbook.ko.md)
 
 플랫폼 설정 파일을 설치된 mcctl 버전에 맞게 마이그레이션합니다.
 
