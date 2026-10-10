@@ -6,14 +6,17 @@
 
 | 이미지 태그 | Java 버전 | 기반 OS | 아키텍처 | 비고 |
 |-----------|-----------|---------|---------|------|
-| `latest`, `stable` | Java 25 | Ubuntu | amd64, arm64 | 기본값; `stable`은 최신 릴리즈 버전 |
-| `java25` | Java 25 | Ubuntu | amd64, arm64 | |
+| `latest`, `stable` | Java 25 | Ubuntu | amd64, arm64, riscv64 | 기본값; `stable`은 최신 릴리즈 버전 |
+| `java25` | Java 25 | Ubuntu | amd64, arm64, riscv64 | |
 | `java25-alpine` | Java 25 | Alpine | amd64, arm64 | |
 | `java25-jdk` | Java 25 | Ubuntu+JDK | amd64, arm64 | 전체 JDK 포함 |
 | `java21` | Java 21 | Ubuntu | amd64, arm64 | |
 | `java21-jdk` | Java 21 | Ubuntu+JDK | amd64, arm64 | 전체 JDK 포함 |
 | `java21-alpine` | Java 21 | Alpine | amd64, arm64 | |
-| `java17` | Java 17 | Ubuntu | amd64, arm64, armv7 | |
+| `java25-graalvm` | Java 25 | Oracle Linux | amd64, arm64 | Oracle GraalVM (아래 참조) |
+| `java21-graalvm` | Java 21 | Oracle Linux | amd64, arm64 | Oracle GraalVM (아래 참조) |
+| `java17-graalvm` | Java 17 | Oracle Linux | amd64, arm64 | Oracle GraalVM (아래 참조) |
+| `java17` | Java 17 | Ubuntu | amd64, arm64 | |
 | `java16` | Java 16 | Ubuntu | amd64, arm64, armv7 | |
 | `java11` | Java 11 | Ubuntu | amd64, arm64, armv7 | 레거시 |
 | `java8` | Java 8 | Ubuntu | amd64, arm64, armv7 | Forge 1.17 이하 |
@@ -30,8 +33,8 @@
 
     - `java23`, `java23-alpine`, `java23-jdk` -- 대신 `java25`를 사용하세요
     - `java24`, `java24-graalvm` -- 대신 `java25`를 사용하세요
+    - `java20`, `java20-graalvm`, `java20-alpine`, `java17-graalvm-ce`, `java17-openj9` -- 더 이상 업데이트되지 않음
     - `java17-alpine` -- 대신 `java17` 또는 `java21-alpine`을 사용하세요
-    - `java25-graalvm`, `java21-graalvm`, `java17-graalvm` -- **모든 GraalVM 태그가 지원 중단됨** (아래 참조)
 
 ### 프로그래밍 방식 접근
 
@@ -135,14 +138,17 @@ image: itzg/minecraft-server:java8
 
 | 태그 | Java | Linux | 아키텍처 |
 |-----|------|-------|---------|
-| `latest`, `stable` | 25 | Ubuntu | amd64, arm64 |
-| `java25` | 25 | Ubuntu | amd64, arm64 |
+| `latest`, `stable` | 25 | Ubuntu | amd64, arm64, riscv64 |
+| `java25` | 25 | Ubuntu | amd64, arm64, riscv64 |
 | `java25-alpine` | 25 | Alpine | amd64, arm64 |
 | `java25-jdk` | 25 | Ubuntu+JDK | amd64, arm64 |
 | `java21` | 21 | Ubuntu | amd64, arm64 |
 | `java21-jdk` | 21 | Ubuntu+JDK | amd64, arm64 |
 | `java21-alpine` | 21 | Alpine | amd64, arm64 |
-| `java17` | 17 | Ubuntu | amd64, arm64, armv7 |
+| `java25-graalvm` | 25 | Oracle Linux | amd64, arm64 |
+| `java21-graalvm` | 21 | Oracle Linux | amd64, arm64 |
+| `java17-graalvm` | 17 | Oracle Linux | amd64, arm64 |
+| `java17` | 17 | Ubuntu | amd64, arm64 |
 | `java16` | 16 | Ubuntu | amd64, arm64, armv7 |
 | `java11` | 11 | Ubuntu | amd64, arm64, armv7 |
 | `java8` | 8 | Ubuntu | amd64, arm64, armv7 |
@@ -151,19 +157,22 @@ image: itzg/minecraft-server:java8
 
 ```yaml
 image: itzg/minecraft-server:java17
-# java17은 armv7 지원 (Raspberry Pi 3/4 32비트)
-# java21+는 arm64만 지원 (Raspberry Pi 4/5 64비트)
+# armv7(32비트 Raspberry Pi)은 java16, java11, java8만 지원
+# java17+는 amd64/arm64 지원 (Raspberry Pi 4/5 64비트)
 ```
 
-## GraalVM 변형 (지원 중단)
+## GraalVM 변형
 
-!!! danger "모든 GraalVM 태그 지원 중단"
-    GraalVM 이미지 변형(`java25-graalvm`, `java21-graalvm`, `java17-graalvm`)은
-    **모두 지원 중단(deprecated)** 되었으며 향후 릴리즈에서 제거될 예정입니다.
+Oracle GraalVM 변형(`java25-graalvm`, `java21-graalvm`, `java17-graalvm`)은 공식 문서에서 지원 태그로 안내됩니다 (릴리즈 2026.8.0에서 복원됨).
 
-    **마이그레이션**: 표준 OpenJDK 기반 태그(`java25`, `java21`, `java17`)로 전환하세요.
+!!! note "GraalVM 참고 사항 (공식 문서 기준)"
+    - Oracle GraalVM 컨테이너 이미지를 기반으로 하며, JDK 17부터 GraalVM Free License가 적용됩니다.
+    - 이 이미지는 Oracle Linux를 사용하므로 Forge installer가 동작하지 않습니다(zlib-ng). 최초 설치와 Forge 버전 업그레이드에는 다른 이미지를 사용하세요.
 
-    이전에 GraalVM 이미지는 Auto-Pause(`ENABLE_AUTOPAUSE`) 기능과도 호환되지 않았습니다.
+## Java 8과 CurseForge
+
+!!! warning "Java 8은 유지보수 모드입니다"
+    `java8`, `java8-jdk` 및 Java 17 미만 태그(`java11`, `java16`)는 CurseForge API 키가 내장되기 이전의 `mc-image-helper`를 사용합니다. 해당 이미지에서 `AUTO_CURSEFORGE`와 `CURSEFORGE_FILES`를 사용하려면 `CF_API_KEY`를 직접 설정해야 합니다. Java 17 이상 이미지에는 키가 내장되어 있습니다.
 
 ## 버전 선택 가이드
 

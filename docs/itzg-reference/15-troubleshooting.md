@@ -190,7 +190,9 @@ environment:
 CF_API_KEY is required
 ```
 
-**Solution:**
+A CurseForge API key is built into the image on Java 17 and newer (since 2026.7.1), so this error is expected only on `java8` / pre-Java 17 tags.
+
+**Solution:** On those tags, set your own key:
 ```yaml
 environment:
   CF_API_KEY: "${CF_API_KEY}"

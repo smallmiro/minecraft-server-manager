@@ -109,7 +109,8 @@ services:
     environment:
       EULA: "TRUE"
       TYPE: "AUTO_CURSEFORGE"
-      CF_API_KEY: "${CF_API_KEY}"
+      # CF_API_KEY is built in on Java 17+ images; required only on java8 / pre-Java 17 tags
+      # CF_API_KEY: "${CF_API_KEY}"
       CF_SLUG: "all-the-mods-9"
       MEMORY: "8G"
     ports:

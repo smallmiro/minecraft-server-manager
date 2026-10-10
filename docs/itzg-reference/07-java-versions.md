@@ -16,7 +16,7 @@ A guide to Java requirements by Minecraft version and image tag selection.
 | `java25-graalvm` | Java 25 | Oracle Linux | amd64, arm64 | Oracle GraalVM (see notes) |
 | `java21-graalvm` | Java 21 | Oracle Linux | amd64, arm64 | Oracle GraalVM (see notes) |
 | `java17-graalvm` | Java 17 | Oracle Linux | amd64, arm64 | Oracle GraalVM (see notes) |
-| `java17` | Java 17 | Ubuntu | amd64, arm64, armv7 | |
+| `java17` | Java 17 | Ubuntu | amd64, arm64 | |
 | `java16` | Java 16 | Ubuntu | amd64, arm64, armv7 | |
 | `java11` | Java 11 | Ubuntu | amd64, arm64, armv7 | Legacy |
 | `java8` | Java 8 | Ubuntu | amd64, arm64, armv7 | Forge 1.17 and below |
@@ -145,7 +145,10 @@ Support for various CPU architectures:
 | `java21` | 21 | Ubuntu | amd64, arm64 |
 | `java21-jdk` | 21 | Ubuntu+JDK | amd64, arm64 |
 | `java21-alpine` | 21 | Alpine | amd64, arm64 |
-| `java17` | 17 | Ubuntu | amd64, arm64, armv7 |
+| `java25-graalvm` | 25 | Oracle Linux | amd64, arm64 |
+| `java21-graalvm` | 21 | Oracle Linux | amd64, arm64 |
+| `java17-graalvm` | 17 | Oracle Linux | amd64, arm64 |
+| `java17` | 17 | Ubuntu | amd64, arm64 |
 | `java16` | 16 | Ubuntu | amd64, arm64, armv7 |
 | `java11` | 11 | Ubuntu | amd64, arm64, armv7 |
 | `java8` | 8 | Ubuntu | amd64, arm64, armv7 |
@@ -154,8 +157,8 @@ Support for various CPU architectures:
 
 ```yaml
 image: itzg/minecraft-server:java17
-# java17 supports armv7 (Raspberry Pi 3/4 32-bit)
-# java21+ supports arm64 only (Raspberry Pi 4/5 64-bit)
+# armv7 (32-bit Raspberry Pi) is supported only by java16, java11 and java8
+# java17+ support amd64/arm64 (Raspberry Pi 4/5 64-bit)
 ```
 
 ## GraalVM Variants

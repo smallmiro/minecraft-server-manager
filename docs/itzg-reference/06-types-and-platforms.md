@@ -147,8 +147,6 @@ environment:
 - `NEOFORGE_VERSION` can be a specific version, `latest`, or `beta`. By default the latest non-beta NeoForge version available for the requested Minecraft version is used.
 - Specific version example: `-e TYPE=NEOFORGE -e VERSION=1.20.1 -e NEOFORGE_VERSION=47.1.79`
 
-> **Note (year-based versions)**: Image release 2026.4.2 added "neoforge: support year-based versions" (per the release notes). The official docs do not describe the year-based scheme in detail; with Minecraft's new version numbering (e.g., `VERSION: "26.1"`), use `VERSION` as documented for new-numbering versions and verify the resolved NeoForge version in the container logs.
-
 ---
 
 ## Fabric
