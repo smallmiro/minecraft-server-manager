@@ -141,7 +141,7 @@ Friends on your VPN network can connect via:
 
 See [VPN Mesh Networks Guide](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/networking/#vpn-mesh-networks) for setup instructions.
 
-Add more servers using `create-server.sh` - they're automatically discoverable!
+Add more servers using `mcctl create` - they're automatically discoverable!
 
 ## Architecture
 
@@ -179,25 +179,25 @@ Add more servers using `create-server.sh` - they're automatically discoverable!
 Fully automated with a single command:
 
 ```bash
-cd platform
-./scripts/create-server.sh <server-name> [options]
+mcctl create <server-name> [options]
 
 # Basic examples:
-./scripts/create-server.sh myworld              # Creates & starts myworld.local (PAPER)
-./scripts/create-server.sh techcraft -t FORGE   # Creates & starts techcraft.local (FORGE)
-./scripts/create-server.sh modern -t NEOFORGE -v 1.21.1  # NeoForge for modern mods
-./scripts/create-server.sh myworld --no-start   # Create only, don't start
+mcctl create myworld                            # Creates & starts myworld.local (PAPER)
+mcctl create techcraft -t FORGE                 # Creates & starts techcraft.local (FORGE)
+mcctl create modern -t NEOFORGE -v 1.21.1       # NeoForge for modern mods
+mcctl create myworld --no-start                 # Create only, don't start
+mcctl create                                    # Interactive mode (guided prompts)
 
 # With version:
-./scripts/create-server.sh myworld -t VANILLA -v 1.21.1   # Specific version
+mcctl create myworld -t VANILLA -v 1.21.1       # Specific version
 
 # World options (mutually exclusive):
-./scripts/create-server.sh myworld --seed 12345           # Specific seed
-./scripts/create-server.sh myworld --world-url <URL>      # Download from ZIP
-./scripts/create-server.sh myworld -w existing-world -v 1.21.1 # Use existing world (symlink)
+mcctl create myworld --seed 12345               # Specific seed
+mcctl create myworld --world-url <URL>          # Download from ZIP
+mcctl create myworld -w existing-world -v 1.21.1  # Use existing world (symlink)
 ```
 
-The script automatically:
+`mcctl create` automatically:
 1. Creates server directory with configuration
 2. Sets LEVEL to server name (world stored in `/worlds/<server-name>/`)
 3. Creates symlink to existing world (if `--world` specified)
@@ -211,7 +211,7 @@ The script automatically:
 
 New servers are automatically discoverable via mDNS - just connect!
 
-See [CLAUDE.md](CLAUDE.md) for detailed instructions.
+See [CLI Commands Reference](docs/cli/commands.md) for all `create` options.
 
 ## Management Console
 
