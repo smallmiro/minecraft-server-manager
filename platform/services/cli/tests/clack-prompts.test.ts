@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import * as assert from 'node:assert';
 
 // Test that @clack/prompts can be imported

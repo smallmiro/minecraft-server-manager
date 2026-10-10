@@ -25,6 +25,7 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
 });
 
 vi.mock('node:child_process', () => ({
+  execFile: vi.fn(),
   execSync: vi.fn(),
   spawnSync: vi.fn(),
 }));
