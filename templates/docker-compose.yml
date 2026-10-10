@@ -49,9 +49,9 @@ services:
   # No MAPPING environment variable needed with --in-docker mode
   # ===========================================================================
   router:
-    # Pinned to v1.43.1 for production stability.
+    # Pinned to v1.47.1 for production stability.
     # Check releases: https://github.com/itzg/mc-router/releases
-    image: itzg/mc-router:1.43.1
+    image: itzg/mc-router:1.47.1
     container_name: mc-router
     restart: unless-stopped
     environment:
@@ -67,6 +67,9 @@ services:
       - "127.0.0.1:25580:8080"  # Management API (localhost only, for healthcheck)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    # v1.46+ runs as non-root: join the docker socket's group (auto-set by mcctl init/upgrade)
+    group_add:
+      - "${DOCKER_GID:-999}"
     networks:
       - minecraft-net
 

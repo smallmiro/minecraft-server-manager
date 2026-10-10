@@ -3,6 +3,7 @@ import { join, dirname } from 'node:path';
 import { Paths, Config, log, colors } from '@minecraft-docker/shared';
 import type { McctlConfig } from '@minecraft-docker/shared';
 import { diffEnvFiles, applyEnvDiff } from '../lib/env-diff.js';
+import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import * as prompts from '@clack/prompts';
 
 export interface UpgradeCommandOptions {
@@ -73,6 +74,18 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
     return 1;
   }
   envChangesApplied = envResult.changed;
+
+  // --- Step 1b: DOCKER_GID for non-root mc-router (v1.46+) ---
+  if (!options.dryRun && existsSync(paths.envFile) && setDockerGid(paths.envFile, detectDockerGid())) {
+    prompts.log.success('DOCKER_GID set from docker socket.');
+    envChangesApplied = true;
+  }
+  if (existsSync(paths.composeFile) && !readFileSync(paths.composeFile, 'utf-8').includes('DOCKER_GID')) {
+    prompts.log.warn(
+      'docker-compose.yml has no group_add for mc-router. Before bumping mc-router to 1.46+, add:\n' +
+      '    group_add:\n      - "${DOCKER_GID:-999}"',
+    );
+  }
 
   // --- Step 2: Update servers/_template files ---
   templateFilesUpdated = updateTemplateFiles(paths, options);

@@ -5,6 +5,7 @@ import { Paths, Config, log, colors, checkPlatformPrerequisites } from '@minecra
 import type { McctlConfig } from '@minecraft-docker/shared';
 import { selectHostIPs, getNetworkInterfaces } from '../lib/prompts/ip-select.js';
 import { multiselect, text, select, confirm, password, isCancel } from '@clack/prompts';
+import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import { displayPrerequisiteReport } from '../lib/prerequisite-display.js';
 import { printBanner, getGitHash, type UpdateCheckResult } from '../lib/banner.js';
 import {
@@ -146,6 +147,9 @@ export async function initCommand(options: {
     }
 
     console.log(`  Copied: ${dest}`);
+  }
+  if (setDockerGid(join(paths.root, '.env'), detectDockerGid())) {
+    console.log('  ✓ Set DOCKER_GID from docker socket');
   }
   console.log('');
 
