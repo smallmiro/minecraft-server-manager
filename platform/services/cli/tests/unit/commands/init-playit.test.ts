@@ -31,7 +31,7 @@ vi.mock('node:child_process', () => ({
 }));
 
 describe('init command - playit.gg setup', () => {
-  const testRoot = join(process.cwd(), 'tests', '.tmp-playit-test');
+  const testRoot = join(process.cwd(), 'tests', `.tmp-playit-test-${process.pid}`);
 
   beforeEach(() => {
     vi.clearAllMocks();
