@@ -1,9 +1,11 @@
 import { existsSync, readFileSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { execSync } from 'node:child_process';
 import { Paths, Config, log, colors } from '@minecraft-docker/shared';
 import type { McctlConfig } from '@minecraft-docker/shared';
 import { diffEnvFiles, applyEnvDiff } from '../lib/env-diff.js';
 import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
+import { patchRouterCompose } from '../lib/compose-router-patch.js';
 import * as prompts from '@clack/prompts';
 
 export interface UpgradeCommandOptions {
@@ -80,11 +82,11 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
     prompts.log.success('DOCKER_GID set from docker socket.');
     envChangesApplied = true;
   }
-  if (existsSync(paths.composeFile) && !readFileSync(paths.composeFile, 'utf-8').includes('DOCKER_GID')) {
-    prompts.log.warn(
-      'docker-compose.yml has no group_add for mc-router. Before bumping mc-router to 1.46+, add:\n' +
-      '    group_add:\n      - "${DOCKER_GID:-999}"',
-    );
+
+  // --- Step 1c: docker-compose.yml router (image tag + group_add) ---
+  const composeResult = await migrateComposeFile(paths, options);
+  if (composeResult.error) {
+    return 1;
   }
 
   // --- Step 2: Update servers/_template files ---
@@ -108,7 +110,7 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
   }
 
   // --- Summary ---
-  printSummary(envChangesApplied, templateFilesUpdated, cliVersion, options.dryRun);
+  printSummary(envChangesApplied, templateFilesUpdated, cliVersion, options.dryRun, composeResult.changed);
 
   return 0;
 }
@@ -238,6 +240,82 @@ function updateTemplateFiles(
 }
 
 /**
+ * Patch the user's docker-compose.yml: mc-router image tag and group_add only.
+ * Everything else (extra services, ports, comments) is left untouched.
+ */
+async function migrateComposeFile(
+  paths: Paths,
+  options: UpgradeCommandOptions,
+): Promise<{ changed: boolean; error?: boolean }> {
+  const templatePath = join(paths.templates, 'docker-compose.yml');
+  if (!existsSync(paths.composeFile) || !existsSync(templatePath)) {
+    return { changed: false };
+  }
+
+  const user = readFileSync(paths.composeFile, 'utf-8');
+  const result = patchRouterCompose(user, readFileSync(templatePath, 'utf-8'));
+
+  if (result.skipped) {
+    prompts.log.warn(
+      'Could not patch mc-router in docker-compose.yml automatically. For mc-router 1.46+, set:\n' +
+      '    image: itzg/mc-router:<tag from template>\n    group_add:\n      - "${DOCKER_GID:-999}"',
+    );
+    return { changed: false };
+  }
+  if (result.changes.length === 0) {
+    prompts.log.success('docker-compose.yml is up to date.');
+    return { changed: false };
+  }
+
+  const oldLines = new Set(user.split('\n'));
+  const newLines = new Set(result.content.split('\n'));
+  const diff = [
+    ...user.split('\n').filter((l) => !newLines.has(l)).map((l) => colors.red(`- ${l}`)),
+    ...result.content.split('\n').filter((l) => !oldLines.has(l)).map((l) => colors.green(`+ ${l}`)),
+  ];
+  prompts.log.step(`docker-compose.yml: ${result.changes.join(', ')}`);
+  prompts.log.message(diff.join('\n'));
+
+  if (options.dryRun) {
+    prompts.log.info('Dry run mode - docker-compose.yml not modified.');
+    return { changed: false };
+  }
+
+  if (!options.nonInteractive) {
+    const ok = await prompts.confirm({ message: 'Apply to docker-compose.yml?', initialValue: true });
+    if (prompts.isCancel(ok) || !ok) {
+      prompts.log.warn('Skipped docker-compose.yml update.');
+      return { changed: false };
+    }
+  }
+
+  const stamp = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
+  const backup = `${paths.composeFile}.bak-${stamp}`;
+  try {
+    copyFileSync(paths.composeFile, backup);
+    writeFileSync(paths.composeFile, result.content, 'utf-8');
+  } catch (err) {
+    try { copyFileSync(backup, paths.composeFile); } catch { /* backup restore best effort */ }
+    prompts.log.error(`Failed to update docker-compose.yml: ${(err as Error).message}`);
+    return { changed: false, error: true };
+  }
+  prompts.log.success(`docker-compose.yml updated (backup: ${backup}).`);
+
+  recreateRouter(paths);
+  return { changed: true };
+}
+
+/** Recreate mc-router so the patched compose takes effect (servers keep running). */
+function recreateRouter(paths: Paths): void {
+  try {
+    execSync('docker compose up -d router', { cwd: paths.root, stdio: 'pipe' });
+    prompts.log.success('mc-router recreated.');
+  } catch {
+    prompts.log.warn('Could not recreate mc-router. Run: docker compose up -d router');
+  }
+}
+
+/**
  * Print upgrade summary.
  */
 function printSummary(
@@ -245,6 +323,7 @@ function printSummary(
   templateFilesUpdated: number,
   newVersion: string,
   dryRun?: boolean,
+  composeChanged?: boolean,
 ): void {
   console.log('');
 
@@ -255,6 +334,7 @@ function printSummary(
 
   const changes: string[] = [];
   if (envChanged) changes.push('.env updated with new variables');
+  if (composeChanged) changes.push('docker-compose.yml router patched');
   if (templateFilesUpdated > 0) changes.push(`${templateFilesUpdated} template file(s) updated`);
   changes.push(`templateVersion set to ${newVersion}`);
 

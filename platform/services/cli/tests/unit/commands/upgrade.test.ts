@@ -14,6 +14,12 @@ vi.mock('node:fs', () => ({
   mkdirSync: (...args: any[]) => mockMkdirSync(...args),
 }));
 
+// Mock child_process (docker compose up -d router)
+const mockExecSync = vi.fn();
+vi.mock('node:child_process', () => ({
+  execSync: (...args: any[]) => mockExecSync(...args),
+}));
+
 // Mock @clack/prompts
 const mockSpinnerStart = vi.fn();
 const mockSpinnerStop = vi.fn();
@@ -62,6 +68,7 @@ vi.mock('@minecraft-docker/shared', () => ({
     root: '/mock/root',
     templates: '/mock/templates',
     envFile: '/mock/root/.env',
+    composeFile: '/mock/root/docker-compose.yml',
     configFile: '/mock/root/.mcctl.json',
     servers: '/mock/root/servers',
     serverTemplate: '/mock/root/servers/_template',
@@ -244,5 +251,88 @@ describe('upgradeCommand', () => {
     expect(result).toBe(0);
     // text prompt should NOT have been called
     expect(mockText).not.toHaveBeenCalled();
+  });
+});
+
+describe('upgradeCommand - docker-compose.yml router patch', () => {
+  const TEMPLATE = 'services:\n  router:\n    image: itzg/mc-router:1.47.1\n    group_add:\n      - "${DOCKER_GID:-999}"\n    networks:\n      - n\n';
+  const OLD = 'services:\n  router:\n    image: itzg/mc-router:1.43.1\n    networks:\n      - n\n';
+
+  function setupCompose(user: string | null) {
+    setupBaseMocks();
+    const baseExists = mockExistsSync.getMockImplementation()!;
+    const baseRead = mockReadFileSync.getMockImplementation()!;
+    mockExistsSync.mockImplementation((p: string) => {
+      const s = String(p);
+      if (s.endsWith('templates/docker-compose.yml')) return true;
+      if (s.endsWith('root/docker-compose.yml')) return user !== null;
+      return baseExists(p);
+    });
+    mockReadFileSync.mockImplementation((p: string, ...rest: any[]) => {
+      const s = String(p);
+      if (s.endsWith('templates/docker-compose.yml')) return TEMPLATE;
+      if (s.endsWith('root/docker-compose.yml')) return user;
+      return baseRead(p, ...rest);
+    });
+  }
+  const composeWrites = () =>
+    mockWriteFileSync.mock.calls.filter((c: any[]) => String(c[0]).endsWith('root/docker-compose.yml'));
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockConfirm.mockResolvedValue(true);
+  });
+
+  it('dry-run shows the change but writes, backs up and recreates nothing', async () => {
+    setupCompose(OLD);
+    expect(await upgradeCommand({ root: '/mock/root', dryRun: true })).toBe(0);
+    expect(composeWrites()).toHaveLength(0);
+    expect(mockCopyFileSync).not.toHaveBeenCalled();
+    expect(mockExecSync).not.toHaveBeenCalled();
+  });
+
+  it('non-interactive: backs up, patches and recreates router without prompting', async () => {
+    setupCompose(OLD);
+    expect(await upgradeCommand({ root: '/mock/root', nonInteractive: true })).toBe(0);
+    expect(mockConfirm).not.toHaveBeenCalled();
+    const bak = mockCopyFileSync.mock.calls.find((c: any[]) => /docker-compose\.yml\.bak-\d{14}$/.test(String(c[1])));
+    expect(bak).toBeDefined();
+    const [w] = composeWrites();
+    expect(w![1]).toContain('mc-router:1.47.1');
+    expect(w![1]).toContain('group_add:');
+    expect(mockExecSync).toHaveBeenCalledWith('docker compose up -d router', expect.objectContaining({ cwd: '/mock/root' }));
+  });
+
+  it('interactive: declining the patch leaves the file untouched', async () => {
+    setupCompose(OLD);
+    mockConfirm.mockResolvedValue(false);
+    expect(await upgradeCommand({ root: '/mock/root' })).toBe(0);
+    expect(composeWrites()).toHaveLength(0);
+    expect(mockExecSync).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when compose is already up to date', async () => {
+    setupCompose(TEMPLATE);
+    expect(await upgradeCommand({ root: '/mock/root', nonInteractive: true })).toBe(0);
+    expect(composeWrites()).toHaveLength(0);
+    expect(mockExecSync).not.toHaveBeenCalled();
+  });
+
+  it('restores from the backup and returns 1 when the write fails', async () => {
+    setupCompose(OLD);
+    mockWriteFileSync.mockImplementation((p: string) => {
+      if (String(p).endsWith('root/docker-compose.yml')) throw new Error('EACCES');
+    });
+    expect(await upgradeCommand({ root: '/mock/root', nonInteractive: true })).toBe(1);
+    const restore = mockCopyFileSync.mock.calls.find((c: any[]) => String(c[1]).endsWith('root/docker-compose.yml'));
+    expect(restore).toBeDefined();
+    mockWriteFileSync.mockReset();
+  });
+
+  it('a failing router recreate only warns', async () => {
+    setupCompose(OLD);
+    mockExecSync.mockImplementation(() => { throw new Error('docker not running'); });
+    expect(await upgradeCommand({ root: '/mock/root', nonInteractive: true })).toBe(0);
+    mockExecSync.mockReset();
   });
 });
