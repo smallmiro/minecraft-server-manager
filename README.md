@@ -15,6 +15,7 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 | **Node.js** | >= 18.0.0 | 20 LTS | Required for mcctl CLI |
 | **Docker Engine** | >= 24.0.0 | Latest | Container runtime |
 | **Docker Compose** | >= 2.20.0 | Latest | `include` feature required |
+| **PM2** | >= 6.0.14 | Bundled | Installed with mcctl; runs the Console services |
 | **OS** | Linux, macOS | Ubuntu 22.04+ | Windows via WSL2 |
 
 ## Features
@@ -37,6 +38,11 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 - **Backup Scheduling**: Cron-based automated backup scheduling with retention policies
 - **Audit Logs**: Comprehensive activity tracking with SQLite storage, auto-cleanup, and web UI
 - **World Management UI**: Web-based world management with reset, assignment, and real-time status
+- **Create World from ZIP**: Import a world from a ZIP upload (flat/wrapper/split-dimension layouts auto-detected) and pick an existing world, seed, or URL when creating a server
+- **World Info Panel & Map**: Per-world details (level.dat, dimensions, structures, players), Ore & Block Stats, and a BlueMap web map that opens on the Overworld
+- **Server Player Panel**: Online/offline roster with per-player stats, last position, and session history
+- **Modpack Safety**: Loader/version compatibility checks and automatic exclusion of client-only mods
+- **Installable PWA**: Add the web console to your home screen
 - **External Access (playit.gg)**: Allow external players to join without port forwarding via playit.gg tunneling
 
 ## Quick Start
@@ -218,8 +224,9 @@ The Management Console provides a full-featured web interface and REST API for m
 | **Server Files** | Browse, edit, upload, and download files with smart editors for server.properties and player data |
 | **Server Options** | Hostname management, gameplay settings, JVM/performance tuning with FORM/RAW toggle |
 | **Mod Management** | Search, install, and remove mods from Modrinth with rich detail cards |
-| **World Management** | Create, assign, release, delete, and reset worlds with lock status tracking |
-| **Player Management** | Whitelist, operator, and ban management across all servers |
+| **World Management** | Create (seed, URL, or ZIP upload), assign, release, delete, and reset worlds with lock status tracking |
+| **World Info & Map** | World details, Ore & Block Stats, structure markers, and a BlueMap web map (render from the world detail page) |
+| **Player Management** | Whitelist, operator, and ban management across all servers, plus a per-server Players tab with stats and session history |
 | **Backup & Scheduling** | Manual push + cron-based automated backup schedules with retention policies |
 | **Audit Logs** | Activity tracking with filtering, statistics, export, and real-time updates |
 | **Routing** | mc-router status, mDNS (Avahi) monitoring, and playit.gg external access management |
@@ -308,6 +315,7 @@ See [CLI Commands Reference](docs/cli/commands.md) for complete documentation.
 | [Networking](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/networking/) | nip.io, mDNS, VPN mesh |
 | [External Access (playit.gg)](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/external-access/) | Allow external players without port forwarding |
 | [Backup](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/backup/) | GitHub backup setup |
+| [Upgrade Runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/) | Upgrade every component on each release, with post-upgrade verification |
 
 ### Development
 
@@ -774,23 +782,20 @@ The migration:
 Keep mcctl and all services up to date:
 
 ```bash
-# Check for updates (no install)
+# Check for updates (no install; exit code 1 = update available)
 mcctl update --check
 
-# Update mcctl CLI to latest version
+# Update the CLI and all installed services (mcctl-api, mcctl-console, shared)
 mcctl update
-
-# Update CLI + all services (mcctl-api, mcctl-console, shared)
-mcctl update --all
 
 # Auto-confirm without prompt (for CI/CD)
 mcctl update --yes
 
-# Force check (ignore cache)
-mcctl update --force
+# Update only the mcctl CLI binary
+mcctl update --cli-only
 
-# Combine flags for fully automated updates
-mcctl update --all --yes
+# Force check (ignore the 24h cache)
+mcctl update --force
 ```
 
 **Options:**
@@ -800,16 +805,25 @@ mcctl update --all --yes
 | `--check` | Check only, don't install (exit code 1 = update available) |
 | `--force` | Force fresh version check (ignore 24h cache) |
 | `--yes` | Auto-confirm update without prompt |
-| `--all` | Update CLI and all installed services |
+| `--cli-only` | Update only the CLI binary, not the services |
+| `--all` | Deprecated alias (same as the default) |
 
 **`update` vs `upgrade`:**
 
 | Command | Purpose |
 |---------|---------|
-| `mcctl update` | Update npm packages (CLI, API, Console) to latest version |
-| `mcctl upgrade` | Migrate platform config files (.env, templates) after CLI update |
+| `mcctl update` | Update npm packages (CLI, API, Console) and restart the Console services |
+| `mcctl upgrade` | Migrate platform files after a CLI update: new `.env` variables, `servers/_template`, and the `router` service in your root `docker-compose.yml` |
 
-After updating, run `mcctl upgrade` to sync platform configuration with the new version.
+`mcctl update` does **not** run `mcctl upgrade`. Run it afterwards:
+
+```bash
+mcctl upgrade --dry-run        # preview changes only
+mcctl upgrade                  # apply (asks before changing docker-compose.yml)
+mcctl upgrade --non-interactive  # apply defaults without prompting
+```
+
+`mcctl upgrade` only patches the router's `image` tag and `group_add` in `docker-compose.yml` (a timestamped `.bak` is written first), and recreates the router. For the complete, release-independent procedure including backups, verification, and rollback, see the [Upgrade Runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/).
 
 ### Automation (sudo Password Handling)
 
@@ -996,40 +1010,41 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
-### [2.18.0] - 2026-02-24
+### [2.29.1] - 2026-10-10
 
-**Changed:**
-- **Backup Storage Paths** - Relocate all backup storage to `<MCCTL_ROOT>/backups/` (#429, #430)
-  - World backup cache, schedule DB, config snapshot DB consolidated under `backups/`
+**Fixed:**
+- **World map render** - No longer fails ("exit code 1") on worlds with an empty Nether/End; those dimensions are skipped with a warning (#575, #576)
+- **World map default view** - The map list is rewritten overworld → nether → end so the viewer opens on the Overworld; re-render existing worlds to apply (#575, #576)
 
-**Documentation:**
-- **CLAUDE.md** - Simplify Project Structure (35% reduction)
-
-### [2.17.1] - 2026-02-24
-
-**Changed:**
-- **Console Backup Sub-tabs** - Reorder to show Config Snapshots first, World Backups second
-
-### [2.17.0] - 2026-02-24
+### [2.29.0] - 2026-10-10
 
 **Added:**
-- **Server Detail Backups Tab** - Implement Backups tab in Server Detail page (#427, #428)
-
-### [2.16.0] - 2026-02-23
-
-**Added:**
-- **Config Snapshot System** - Full-stack server configuration versioning (#397~#406)
-- **Backup Retention Policy Pruning** - `applyRetentionPolicy()` implementation (#396, #426)
-
-### [2.15.3] - 2026-02-22
+- **`mcctl upgrade` patches the router** in your root `docker-compose.yml` (image + `group_add`) with diff, confirmation, and backup (#562, #569)
+- **Ore & Block Stats** visualization in the world panel (#567, #568)
 
 **Changed:**
-- **README.md** - Major update with Management Console section and Architecture diagram
+- **mc-router 1.43.1 → 1.47.1**; the router now needs `DOCKER_GID` for Docker socket access (#549, #559)
 
-### [2.15.0] - 2026-02-22
+### [2.28.0] - 2026-10-01
+
+**Changed:**
+- **Bento layout** across the Web Console, with honest "Unavailable"/"Reconnecting" states when data fails to load
+
+### [2.27.0] - 2026-09-27
 
 **Added:**
-- **Automated Backup Scheduling** - Cron-based backup scheduler with full-stack implementation (#394, #395)
+- **Server Player Panel** - Players tab with online/offline roster, stats, position, and session history (#528)
+
+### [2.26.0] - 2026-06-28
+
+**Added:**
+- **World Info Panel** and **BlueMap world map** (#525, #529)
+- **Auto-detect client-only mods** in modpacks (#524, #527)
+
+### [2.23.0] - 2026-06-21
+
+**Added:**
+- **Create World from ZIP** and flexible world selection on Create Server (#490, #491)
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
