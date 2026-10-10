@@ -4,6 +4,8 @@
 # =============================================================================
 # /work writes .claude/work-state (gitignored) when it starts:
 #   MODE=issue|milestone   ISSUE=<n> | MILESTONE=<n>   REVIEW=pending|done|skipped
+#   ROLE=contributor (optional, issue mode): no write access to the origin repo,
+#   so done = PR open (or merged) + review done; checkboxes/merge not required.
 # Each time Claude tries to stop, this hook checks the real GitHub/git state and
 # blocks the stop with the list of unmet conditions. No state file = no-op.
 #
@@ -37,12 +39,20 @@ case "$(get MODE)" in
     issue)
         n=$(get ISSUE)
         body=$(gh issue view "$n" --json body -q .body 2>/dev/null) || allow "$GH_FAIL"
-        grep -qE '^[[:space:]]*- \[ \]' <<< "$body" \
-            && missing+=("이슈 #$n 본문에 미완료 체크박스가 있음")
-        merged=$(gh pr list --state merged --limit 100 --json title,headRefName \
-            --jq "[.[] | select((.title | contains(\"(#$n)\")) or (.headRefName | test(\"^(feature|bugfix)/$n-\")))] | length" \
-            2>/dev/null) || allow "$GH_FAIL"
-        (( ${merged:-0} > 0 )) || missing+=("이슈 #$n의 PR이 아직 merge되지 않음")
+        if [[ "$(get ROLE)" == contributor ]]; then
+            # Closed-unmerged PRs don't count. Fork PRs are listed by number, not branch.
+            prs=$(gh pr list --state all --limit 100 --json title,headRefName,state \
+                --jq "[.[] | select(.state != \"CLOSED\") | select((.title | contains(\"(#$n)\")) or (.headRefName | test(\"^(feature|bugfix)/$n-\")))] | length" \
+                2>/dev/null) || allow "$GH_FAIL"
+            (( ${prs:-0} > 0 )) || missing+=("이슈 #$n의 PR이 아직 생성되지 않음")
+        else
+            grep -qE '^[[:space:]]*- \[ \]' <<< "$body" \
+                && missing+=("이슈 #$n 본문에 미완료 체크박스가 있음")
+            merged=$(gh pr list --state merged --limit 100 --json title,headRefName \
+                --jq "[.[] | select((.title | contains(\"(#$n)\")) or (.headRefName | test(\"^(feature|bugfix)/$n-\")))] | length" \
+                2>/dev/null) || allow "$GH_FAIL"
+            (( ${merged:-0} > 0 )) || missing+=("이슈 #$n의 PR이 아직 merge되지 않음")
+        fi
         case "$(get REVIEW)" in
             done|skipped) ;;
             *) missing+=("코드 리뷰 미완료 (끝나면 REVIEW=done 기록)") ;;

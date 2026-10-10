@@ -25,6 +25,7 @@ hooks:
 | `--issue <N>` | Implement single issue #N |
 | `--milestone <N>` | Process all issues in milestone N, in dependency order |
 | `--dry-run` | Print the plan (issues, order, branches) and stop. No state file, no changes |
+| `--contributor` | Fork/contributor mode: no merge; done = PR open + review done. Auto-detected when `viewerPermission` is not WRITE/MAINTAIN/ADMIN |
 | `--skip-review` | Skip code review (emergency fixes only); records `REVIEW=skipped` |
 | `--parallel` | Milestone mode only: run independent issues concurrently, each Agent with `isolation: "worktree"` |
 
@@ -37,6 +38,8 @@ A Stop hook (`.claude/hooks/work-done-check.sh`, declared in this file's frontma
 ```bash
 # Single issue (also used by Context mode, after the issue is created)
 printf 'MODE=issue\nISSUE=%s\nREVIEW=pending\n' <N> > .claude/work-state
+# Contributor (no write access): add ROLE=contributor
+printf 'MODE=issue\nISSUE=%s\nREVIEW=pending\nROLE=contributor\n' <N> > .claude/work-state
 # Milestone
 printf 'MODE=milestone\nMILESTONE=%s\n' <N> > .claude/work-state
 ```
@@ -44,11 +47,24 @@ printf 'MODE=milestone\nMILESTONE=%s\n' <N> > .claude/work-state
 | Mode | Work is complete when |
 |------|-----------------------|
 | issue | Issue body has no unchecked `- [ ]`, a PR for the issue is merged, `REVIEW` is `done` or `skipped`, no uncommitted changes |
+| issue, `ROLE=contributor` | A non-closed PR for the issue exists in the origin repo, `REVIEW` is `done` or `skipped`, no uncommitted changes (issue boxes and merge not required) |
 | milestone | The milestone has no open issues, no uncommitted changes |
 
 After the code review passes, record it: `sed -i.bak 's/^REVIEW=.*/REVIEW=done/' .claude/work-state && rm .claude/work-state.bak`.
 
 The hook deletes the state file when the conditions are met. It gives up after 30 blocked stops and skips verification if `gh` fails. If you hit a blocker you cannot resolve (failing tests you cannot fix, a merge conflict needing a human decision), say so, delete `.claude/work-state`, and stop.
+
+---
+
+## Contributor Mode
+
+Contributor mode is on with `--contributor`, or automatically when
+`gh repo view --json viewerPermission -q .viewerPermission` is not `WRITE`, `MAINTAIN` or `ADMIN`. Write `ROLE=contributor` to the state file, then follow Single Issue Mode with these changes:
+
+- Step 2: sync the fork's `develop` first (`git fetch upstream && git checkout develop && git merge --ff-only upstream/develop && git push origin develop`), then branch.
+- Step 4: update issue checkboxes only if you can edit the issue; otherwise skip and list the completed items in the PR body.
+- Step 6: push the branch to the fork and run `gh pr create --repo <origin> --base develop --head <user>:<branch> ...`.
+- Step 8: do not merge. Done once the PR is open and the review is `done`.
 
 ---
 

@@ -24,7 +24,8 @@ case "$1 $2" in
     "api repos/{owner}/{repo}/milestones/3") cat "$STUB_DIR/open_count" ;;
     "api repos/{owner}/{repo}/milestones/99") exit 1 ;;
     "issue view") cat "$STUB_DIR/issue_body" ;;
-    "pr list")    cat "$STUB_DIR/merged_count" ;;
+    "pr list")
+        if [[ "$*" == *"--state all"* ]]; then cat "$STUB_DIR/pr_count"; else cat "$STUB_DIR/merged_count"; fi ;;
     "issue list") cat "$STUB_DIR/open_issues" ;;
 esac
 STUB
@@ -98,6 +99,24 @@ assert_contains "skipped review is accepted" "완료 조건을 모두 충족" "$
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
 echo ' M file.ts' > "$STUB_DIR/git_status"
 assert_contains "dirty tree blocks" "커밋되지 않은 변경" "$(run)"
+
+echo "contributor mode"
+reset 'MODE=issue\nISSUE=7\nREVIEW=done\nROLE=contributor\n'
+printf -- '- [ ] b\n' > "$STUB_DIR/issue_body"
+echo 1 > "$STUB_DIR/pr_count"; echo 0 > "$STUB_DIR/merged_count"
+assert_contains "open PR + unchecked boxes allows stop" "완료 조건을 모두 충족" "$(run)"
+
+reset 'MODE=issue\nISSUE=7\nREVIEW=done\nROLE=contributor\n'
+echo 0 > "$STUB_DIR/pr_count"
+assert_contains "no PR blocks" "PR이 아직 생성되지 않음" "$(run)"
+
+reset 'MODE=issue\nISSUE=7\nREVIEW=pending\nROLE=contributor\n'
+echo 1 > "$STUB_DIR/pr_count"
+assert_contains "pending review still blocks" "코드 리뷰 미완료" "$(run)"
+
+reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
+echo 1 > "$STUB_DIR/pr_count"; echo 0 > "$STUB_DIR/merged_count"
+assert_contains "maintainer still requires merge" "merge되지 않음" "$(run)"
 
 echo "milestone mode"
 reset 'MODE=milestone\nMILESTONE=3\n'
