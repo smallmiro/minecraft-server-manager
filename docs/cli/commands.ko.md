@@ -1987,7 +1987,7 @@ mcctl mod add <server> <mod...> [options]
 | 옵션 | 설명 |
 |--------|-------------|
 | `--modrinth` | Modrinth 사용 (기본값) |
-| `--curseforge` | CurseForge 사용 (CF_API_KEY 필요) |
+| `--curseforge` | CurseForge 사용 (CF_API_KEY는 Java 17+에서 선택 사항) |
 | `--spiget` | Spiget 사용 (SpigotMC 플러그인) |
 | `--url` | 직접 JAR URL 다운로드 |
 | `--force` | 모드를 찾을 수 없거나 서버 타입 불일치해도 추가 |
@@ -2009,7 +2009,7 @@ mcctl mod add <server> <mod...> [options]
 
 === "CurseForge"
     ```bash
-    # .env 파일에 CF_API_KEY 필요
+    # Java 17+ 이미지에서는 .env의 CF_API_KEY가 선택 사항
     mcctl mod add myserver --curseforge jei journeymap
 
     # 인기 모드팩 모드 추가
@@ -2046,7 +2046,7 @@ mcctl mod add <server> <mod...> [options]
 | 소스 | 환경 변수 | 서버 타입 |
 |--------|---------------------|--------------|
 | Modrinth | `MODRINTH_PROJECTS` | 전체 |
-| CurseForge | `CURSEFORGE_FILES` | 전체 (CF_API_KEY 필요) |
+| CurseForge | `CURSEFORGE_FILES` | 전체 (CF_API_KEY는 Java 17+에서 선택 사항) |
 | Spiget | `SPIGET_RESOURCES` | Paper, Spigot, Bukkit |
 | URL | `MODS` | Forge, NeoForge, Fabric, Quilt |
 | URL | `PLUGINS` | Paper, Spigot, Bukkit |
@@ -2231,7 +2231,7 @@ Available Mod Sources:
     mcctl mod add myserver sodium lithium
 
   CurseForge --curseforge
-    Popular mod platform. Requires CF_API_KEY in .env
+    Popular mod platform. CF_API_KEY optional (built into Java 17+ images)
     Config: CURSEFORGE_FILES
     mcctl mod add myserver --curseforge jei journeymap
 
@@ -2291,7 +2291,7 @@ mcctl stop plugin-server && mcctl start plugin-server
 
 #### CurseForge 설정
 
-CurseForge 모드를 사용하려면 API 키가 필요합니다:
+Java 17+ 이미지는 키가 내장되어 있으며, java8/17 미만 태그 또는 자체 키를 사용할 때만 CF_API_KEY를 설정합니다. 자체 키를 설정하려면:
 
 1. [CurseForge for Studios](https://console.curseforge.com/)에서 API 키 발급
 2. `.env` 파일에 추가:

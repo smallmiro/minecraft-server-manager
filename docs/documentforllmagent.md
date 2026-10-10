@@ -738,7 +738,7 @@ mcctl world delete [world] --force            # Force delete
 ```bash
 mcctl mod search <query>                 # Search mods on Modrinth
 mcctl mod add <server> <mod...>          # Add mods (Modrinth default)
-mcctl mod add <server> --curseforge <mod>  # CurseForge (requires CF_API_KEY)
+mcctl mod add <server> --curseforge <mod>  # CurseForge (CF_API_KEY optional on Java 17+)
 mcctl mod add <server> --spiget <id>     # SpigotMC plugin
 mcctl mod add <server> --url <url>       # Direct URL
 mcctl mod list <server>                  # List configured mods
@@ -1024,7 +1024,7 @@ The `--all` flag updates mcctl-api, mcctl-console, and @minecraft-docker/shared 
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `CF_API_KEY` | Yes | CurseForge API key |
+| `CF_API_KEY` | No | CurseForge API key (built in for Java 17+ images; set only for java8/pre-17 tags or your own key) |
 | `CF_PAGE_URL` / `CF_SLUG` | Yes (one) | Modpack URL or slug |
 | `CF_FILE_ID` | No | Specific file/version ID |
 | `CF_EXCLUDE_MODS` | No | Mods to exclude |
@@ -1207,7 +1207,7 @@ USE_AIKAR_FLAGS=true
 
 | Variable | Description |
 |----------|-------------|
-| `CF_API_KEY` | CurseForge API key (required) |
+| `CF_API_KEY` | CurseForge API key (optional: built in for Java 17+ images; set only for java8/pre-17 tags or your own key) |
 | `CURSEFORGE_FILES` | Mod slugs, IDs, or URLs |
 
 **Spiget:**
@@ -2553,7 +2553,7 @@ mcctl logs <server>
 - Mods fail to download from CurseForge
 - 403 Forbidden errors
 
-**Fix:**
+**Fix:** (Java 17+ images have a built-in key; this applies to java8/pre-17 tags or a custom key)
 1. Set `CF_API_KEY` in `~/minecraft-servers/.env`:
    ```bash
    CF_API_KEY=your-curseforge-api-key
@@ -2663,7 +2663,7 @@ A: `mcctl mod add <server> <mod-name>`. Default source is Modrinth. Use `--curse
 A: Modrinth (default), CurseForge, Spiget (SpigotMC), and direct URLs.
 
 **Q: Do I need an API key for CurseForge?**
-A: Yes. Get one from console.curseforge.com and set `CF_API_KEY` in .env.
+A: No on Java 17+ images (key built in). Set `CF_API_KEY` in .env (key from console.curseforge.com) only for java8/pre-17 tags or to use your own key.
 
 **Q: Where are mods stored?**
 A: Downloaded automatically by the server container based on config.env settings.
@@ -3229,7 +3229,7 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 | **NeoForge** | Community fork of Forge (1.20.1+), increasingly popular |
 | **Fabric** | Lightweight, modern mod loader with fast updates |
 | **Modrinth** | Open-source mod hosting platform (default source in mcctl) |
-| **CurseForge** | Popular mod hosting platform (requires API key) |
+| **CurseForge** | Popular mod hosting platform (CF_API_KEY optional on Java 17+ images) |
 | **Spiget** | API for SpigotMC plugin resources |
 | **Auto-scale** | mc-router feature that starts/stops servers based on player activity |
 | **World lock** | Mechanism preventing simultaneous server access to a world |

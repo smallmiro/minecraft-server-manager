@@ -62,8 +62,8 @@ mcctl stop modded && mcctl start modded
 
 ### 사전 요구사항
 
-!!! warning "API 키 필수"
-    CurseForge는 API 키가 필요합니다. 설정 지침은 [CurseForge 가이드](curseforge.ko.md#api-키-발급)를 참조하세요.
+!!! note "API 키 선택 사항"
+    Java 17+ 이미지는 키가 내장되어 있으며, java8/17 미만 태그 또는 자체 키를 사용할 때만 CF_API_KEY를 설정합니다. 설정 지침은 [CurseForge 가이드](curseforge.ko.md#api-키-발급)를 참조하세요.
 
 ### mcctl 빠른 시작
 
@@ -100,7 +100,7 @@ mcctl stop modded && mcctl start modded
 
 | 설정 키 | 설명 |
 |--------|------|
-| `CF_API_KEY` | CurseForge API 키 (필수, `.env`에 설정) |
+| `CF_API_KEY` | CurseForge API 키 (선택 사항: Java 17+ 이미지는 내장, java8/17 미만 태그 또는 자체 키 사용 시에만 `.env`에 설정) |
 | `CF_PAGE_URL` | 모드팩 또는 특정 파일의 전체 URL |
 | `CF_SLUG` | URL 경로의 짧은 식별자 |
 | `CF_FILE_ID` | 버전 고정을 위한 특정 파일 ID |
@@ -347,7 +347,7 @@ mcctl config modded GENERIC_PACKS "https://example.com/base-pack.zip,https://exa
 
 | 기능 | Packwiz | CurseForge | Modrinth | FTB | ZIP |
 |------|---------|------------|----------|-----|-----|
-| API 키 | 아니오 | 예 | 아니오 | 아니오 | 아니오 |
+| API 키 | 아니오 | 선택 사항 (Java 17+ 내장) | 아니오 | 아니오 | 아니오 |
 | 자동 업그레이드 | 예 | 예 | 예 | 예 | 아니오 |
 | 버전 제어 | pack.toml | CF_FILE_ID | MODRINTH_VERSION | FTB_MODPACK_VERSION_ID | 수동 |
 | 커스텀 모드 | 예 | 제한적 | 제한적 | 아니오 | 예 |

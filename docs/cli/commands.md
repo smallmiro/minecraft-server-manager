@@ -1987,7 +1987,7 @@ mcctl mod add <server> <mod...> [options]
 | Option | Description |
 |--------|-------------|
 | `--modrinth` | Use Modrinth (default) |
-| `--curseforge` | Use CurseForge (requires CF_API_KEY) |
+| `--curseforge` | Use CurseForge (CF_API_KEY optional on Java 17+) |
 | `--spiget` | Use Spiget (SpigotMC plugins) |
 | `--url` | Direct JAR URL download |
 | `--force` | Add even if mod not found or server type mismatch |
@@ -2009,7 +2009,7 @@ mcctl mod add <server> <mod...> [options]
 
 === "CurseForge"
     ```bash
-    # Requires CF_API_KEY in .env file
+    # CF_API_KEY in .env is optional on Java 17+ images
     mcctl mod add myserver --curseforge jei journeymap
 
     # Add popular modpack mods
@@ -2046,7 +2046,7 @@ mcctl mod add <server> <mod...> [options]
 | Source | Environment Variable | Server Types |
 |--------|---------------------|--------------|
 | Modrinth | `MODRINTH_PROJECTS` | All |
-| CurseForge | `CURSEFORGE_FILES` | All (requires CF_API_KEY) |
+| CurseForge | `CURSEFORGE_FILES` | All (CF_API_KEY optional on Java 17+) |
 | Spiget | `SPIGET_RESOURCES` | Paper, Spigot, Bukkit |
 | URL | `MODS` | Forge, NeoForge, Fabric, Quilt |
 | URL | `PLUGINS` | Paper, Spigot, Bukkit |
@@ -2231,7 +2231,7 @@ Available Mod Sources:
     mcctl mod add myserver sodium lithium
 
   CurseForge --curseforge
-    Popular mod platform. Requires CF_API_KEY in .env
+    Popular mod platform. CF_API_KEY optional (built into Java 17+ images)
     Config: CURSEFORGE_FILES
     mcctl mod add myserver --curseforge jei journeymap
 
@@ -2291,7 +2291,7 @@ mcctl stop plugin-server && mcctl start plugin-server
 
 #### CurseForge Configuration
 
-To use CurseForge mods, you need an API key:
+Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key. To set your own key:
 
 1. Get an API key from [CurseForge for Studios](https://console.curseforge.com/)
 2. Add to your `.env` file:

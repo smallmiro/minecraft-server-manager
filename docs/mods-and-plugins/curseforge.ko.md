@@ -7,7 +7,7 @@
 | 기능 | 값 |
 |------|-----|
 | 공식 웹사이트 | [https://www.curseforge.com/minecraft](https://www.curseforge.com/minecraft) |
-| API 키 필요 | **예** |
+| API 키 필요 | **아니오** (Java 17+ 이미지는 내장, java8/17 미만 태그 또는 자체 키 사용 시에만 `CF_API_KEY` 설정) |
 | API 콘솔 | [https://console.curseforge.com/](https://console.curseforge.com/) |
 | 의존성 해결 | 수동 (메타데이터만 제공) |
 | 모드 라이브러리 규모 | 최대 |
@@ -41,8 +41,8 @@ mcctl config modded CURSEFORGE_FILES "jei,journeymap,jade"
 mcctl stop modded && mcctl start modded
 ```
 
-!!! warning "API 키 필수"
-    CurseForge는 모든 다운로드에 API 키가 필요합니다. 키는 `.env` 파일에 설정해야 합니다.
+!!! note "API 키 선택 사항"
+    Java 17+ 이미지는 키가 내장되어 있으며, java8/17 미만 태그 또는 자체 키를 사용할 때만 CF_API_KEY를 설정합니다. 키는 `.env` 파일에 설정합니다.
 
 ## API 키 발급
 
@@ -161,7 +161,7 @@ mcctl start modded
 # Fabric 서버 생성
 mcctl create mixed --type FABRIC --version 1.21.1
 
-# CurseForge 모드 (API 키 필요)
+# CurseForge 모드 (Java 17+ 이미지에서는 CF_API_KEY 선택 사항)
 mcctl config mixed CURSEFORGE_FILES "jei,journeymap"
 
 # Modrinth 모드 (API 키 불필요)
