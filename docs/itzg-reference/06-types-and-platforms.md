@@ -144,6 +144,9 @@ environment:
   NEOFORGE_VERSION: "latest"  # also supports "beta"
 ```
 
+- `NEOFORGE_VERSION` can be a specific version, `latest`, or `beta`. By default the latest non-beta NeoForge version available for the requested Minecraft version is used.
+- Specific version example: `-e TYPE=NEOFORGE -e VERSION=1.20.1 -e NEOFORGE_VERSION=47.1.79`
+
 ---
 
 ## Fabric
@@ -265,7 +268,14 @@ Automatic CurseForge modpack installation:
 | Variable | Description |
 |----------|-------------|
 | `TYPE` / `MODPACK_PLATFORM` | `AUTO_CURSEFORGE` |
-| `CF_API_KEY` | CurseForge API key (**required**) |
+| `CF_API_KEY` | CurseForge API key. Built into the image on Java 17+ (since 2026.7.1); you may still supply your own. **Required** on `java8` and other pre-Java 17 tags |
+| `CF_API_KEY_FILE` | Path to a file in the container containing the API key (e.g., Docker secret) |
+| `CF_FILENAME_MATCHER` | Substring, or regex surrounded by `/`, to select a modpack file by filename |
+| `CF_IGNORE_MISSING_FILES` | Comma/newline-delimited list or glob of files to ignore when detecting missing files (avoids reinstall) |
+| `CF_PARALLEL_DOWNLOADS` | Parallel mod downloads (default `4`) |
+| `CF_OVERRIDES_SKIP_EXISTING` | Skip overrides files that already exist in `/data` (default `false`; world data is always skipped) |
+| `CF_FORCE_REINSTALL_MODLOADER` | Force reinstall of the modpack's mod loader (default `false`) |
+| `REMOVE_OLD_CONFIGS` | Clear old configs before modpack install (see [Mods and Plugins](08-mods-and-plugins.md)) |
 | `CF_PAGE_URL` | Modpack page URL |
 | `CF_SLUG` | Modpack slug |
 | `CF_FILE_ID` | Specific file ID |
@@ -276,9 +286,11 @@ Automatic CurseForge modpack installation:
 environment:
   EULA: "TRUE"
   TYPE: "AUTO_CURSEFORGE"
-  CF_API_KEY: "${CF_API_KEY}"
+  CF_API_KEY: "${CF_API_KEY}"  # optional on Java 17+ images (built-in key); required on java8
   CF_SLUG: "all-the-mods-9"
 ```
+
+> **Note**: Since 2026.7.1 the image includes a CurseForge API key on Java 17 and newer. The `java8` image (and other pre-Java 17 tags) does not; set `CF_API_KEY` yourself or install the pack on a Java 17+ image first.
 
 ### Modrinth Modpacks
 

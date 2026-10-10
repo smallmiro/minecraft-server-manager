@@ -52,11 +52,6 @@ services:
     For Minecraft 1.21.2+, use the native `PAUSE_WHEN_EMPTY_SECONDS` above.
     The container-level AutoPause below is recommended only for older Minecraft versions.
 
-!!! warning "GraalVM Incompatibility"
-    As of 2026.2.0, auto-pause is **temporarily disabled** when using GraalVM images
-    (`java21-graalvm`, `java17-graalvm`). Use standard OpenJDK/HotSpot Java images
-    for auto-pause functionality.
-
 Pauses the server process when no players are online.
 
 ### Enable
