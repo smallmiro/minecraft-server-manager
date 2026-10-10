@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.29.1] - 2026-10-10
+
+### Fixed
+- **World map render no longer fails on worlds with an empty Nether/End** - On worlds where a dimension (e.g. `the_nether`, `the_end`) had no region (`.mca`) data, `render-map.sh` exited with code 1 ("Map render failed: exit code 1") instead of skipping that dimension, so the #564 `sorting` change was never written either. Dimensions without region data are now skipped with a warning and the render completes (#575, #576)
+- **World map opens on the Overworld** - BlueMap's `settings.json` lists maps alphabetically and ignores per-map `sorting`, so the viewer still opened on the End. After rendering, the map list is rewritten overworld → nether → end. Existing worlds pick this up on the next **Re-render** (#575, #576)
+
+### Internal
+- Added a test that a dimension with no region data does not abort the script under `set -e` (#575)
+- Documentation: `mcctl upgrade` / `DOCKER_GID`, console world map default view, and Ore & Block Stats (#572); v2.29.0 upgrade guide and local host runbook (#573)
+- Removed the project-level `statusLine` setting from `.claude/settings.json` (#574)
+
 ## [2.29.0] - 2026-10-10
 
 ### Added

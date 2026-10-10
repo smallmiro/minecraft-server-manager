@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.29.1 (2026-10-10)
+- **fix(map)**: Map render no longer fails with exit code 1 on worlds whose Nether/End has no region data; empty dimensions are skipped (#575, #576)
+- **fix(map)**: World map now opens on the Overworld (map list rewritten overworld → nether → end after render; apply with **Re-render**) (#575, #576)
+
 ### v2.29.0 (2026-10-10)
 - **feat(cli)**: `mcctl upgrade` now updates the `router` image and `group_add` in your root `docker-compose.yml` (diff + confirm, timestamped `.bak` backup, router recreated); other customizations are left untouched (#562, #569)
 - **chore(router)**: mc-router 1.43.1 → 1.47.1; non-root router gets Docker socket access via `group_add` + auto-detected `DOCKER_GID` (#549, #559)
@@ -99,9 +103,6 @@ mcctl logs myserver
 
 ### v2.26.2 (2026-06-28)
 - **fix(worlds)**: Nether/End maps and stats no longer read stale satellite folders on layout-switched worlds (#542–#545)
-
-### v2.26.1 (2026-06-28)
-- **fix(console)**: Live player locations in the World tab; BlueMap gzip-stored map files are now served (#538–#541)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
