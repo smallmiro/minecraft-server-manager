@@ -7,7 +7,7 @@ Download mods and plugins from [CurseForge](https://www.curseforge.com/minecraft
 | Feature | Value |
 |---------|-------|
 | Official Website | [https://www.curseforge.com/minecraft](https://www.curseforge.com/minecraft) |
-| API Key Required | **Yes** |
+| API Key Required | **No** (built in for Java 17+ images; set `CF_API_KEY` only for java8/pre-17 tags or your own key) |
 | API Console | [https://console.curseforge.com/](https://console.curseforge.com/) |
 | Dependency Resolution | Manual (metadata only) |
 | Mod Library Size | Largest |
@@ -41,8 +41,8 @@ mcctl config modded CURSEFORGE_FILES "jei,journeymap,jade"
 mcctl stop modded && mcctl start modded
 ```
 
-!!! warning "API Key Required"
-    CurseForge requires an API key for all downloads. The key must be set in your `.env` file.
+!!! note "API Key Optional"
+    Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key. The key goes in your `.env` file.
 
 ## Getting API Key
 
@@ -161,7 +161,7 @@ mcctl start modded
 # Create Fabric server
 mcctl create mixed --type FABRIC --version 1.21.1
 
-# CurseForge mods (requires API key)
+# CurseForge mods (CF_API_KEY optional on Java 17+ images)
 mcctl config mixed CURSEFORGE_FILES "jei,journeymap"
 
 # Modrinth mods (no API key needed)

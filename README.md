@@ -246,7 +246,7 @@ mcctl mod search sodium
 # Add mods to your server (from Modrinth, the default)
 mcctl mod add myserver sodium lithium phosphor
 
-# Add mods from CurseForge (requires CF_API_KEY in .env)
+# Add mods from CurseForge (CF_API_KEY optional on Java 17+ images)
 mcctl mod add myserver --curseforge jei journeymap
 
 # Add plugins from SpigotMC (use resource ID)

@@ -141,7 +141,7 @@ mcctl create myserver -t FORGE -v 1.20.4
 # 메모리 설정 (모드팩은 더 많이 필요)
 mcctl config myserver MEMORY 8G
 
-# 모드 추가 (.env에 CF_API_KEY 필요)
+# 모드 추가 (Java 17+ 이미지에서는 CF_API_KEY 선택 사항)
 mcctl config myserver CURSEFORGE_FILES "jei,journeymap,create"
 
 # 또는 특정 Forge 버전
@@ -512,7 +512,7 @@ mcctl create modded -t FORGE -v 1.20.4
 mcctl config modded MEMORY 8G
 mcctl config modded USE_AIKAR_FLAGS true
 
-# 모드 추가 (.env에 CF_API_KEY 필요)
+# 모드 추가 (Java 17+ 이미지에서는 CF_API_KEY 선택 사항)
 mcctl config modded CURSEFORGE_FILES "create,jei,journeymap"
 
 # 적용을 위해 재시작

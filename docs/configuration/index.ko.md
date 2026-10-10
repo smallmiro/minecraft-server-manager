@@ -84,7 +84,7 @@ mcctl stop myserver && mcctl start myserver
 # Modrinth 모드
 mcctl config myserver MODRINTH_PROJECTS "fabric-api,lithium,sodium"
 
-# CurseForge 모드 (.env에 API 키 필요)
+# CurseForge 모드 (Java 17+ 이미지에서는 CF_API_KEY 선택 사항)
 mcctl config myserver CURSEFORGE_FILES "jei,journeymap"
 ```
 

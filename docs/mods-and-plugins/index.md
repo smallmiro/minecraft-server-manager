@@ -31,7 +31,7 @@ Use `mcctl config` to set mod and plugin sources:
 # Modrinth mods (Fabric example)
 mcctl config modded MODRINTH_PROJECTS "fabric-api,lithium,sodium"
 
-# CurseForge mods (requires API key in .env)
+# CurseForge mods (CF_API_KEY optional on Java 17+ images)
 mcctl config modded CURSEFORGE_FILES "jei,journeymap"
 
 # SpigotMC plugins
@@ -60,7 +60,7 @@ mcctl stop modded && mcctl start modded
 
 | Feature | Modrinth | CurseForge |
 |---------|----------|------------|
-| API Key | Not required | Required |
+| API Key | Not required | Optional (built in for Java 17+ images) |
 | Dependency Resolution | Automatic | Manual |
 | Version Auto-detect | Yes | No |
 | Mod Library Size | Growing | Largest |

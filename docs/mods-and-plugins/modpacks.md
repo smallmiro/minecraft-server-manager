@@ -62,8 +62,8 @@ Install modpacks from [CurseForge](https://www.curseforge.com/minecraft/modpacks
 
 ### Prerequisites
 
-!!! warning "API Key Required"
-    CurseForge requires an API key. See [CurseForge Guide](curseforge.md#getting-api-key) for setup instructions.
+!!! note "API Key Optional"
+    Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key. See [CurseForge Guide](curseforge.md#getting-api-key) for setup instructions.
 
 ### Quick Start with mcctl
 
@@ -100,7 +100,7 @@ mcctl stop modded && mcctl start modded
 
 | Config Key | Description |
 |------------|-------------|
-| `CF_API_KEY` | CurseForge API key (required, set in `.env`) |
+| `CF_API_KEY` | CurseForge API key (optional: built in for Java 17+ images; set only for java8/pre-17 tags or your own key) |
 | `CF_PAGE_URL` | Full URL to modpack or specific file |
 | `CF_SLUG` | Short identifier from URL path |
 | `CF_FILE_ID` | Specific file ID for version pinning |
@@ -346,7 +346,7 @@ mcctl config modded GENERIC_PACKS "https://example.com/base-pack.zip,https://exa
 
 | Feature | Packwiz | CurseForge | Modrinth | FTB | ZIP |
 |---------|---------|------------|----------|-----|-----|
-| API Key | No | Yes | No | No | No |
+| API Key | No | Optional (built in for Java 17+) | No | No | No |
 | Auto-upgrade | Yes | Yes | Yes | Yes | No |
 | Version Control | pack.toml | CF_FILE_ID | MODRINTH_VERSION | FTB_MODPACK_VERSION_ID | Manual |
 | Custom Mods | Yes | Limited | Limited | No | Yes |

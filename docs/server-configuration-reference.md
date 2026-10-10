@@ -587,13 +587,13 @@ VERSION=1.20.1
 
 ### AUTO_CURSEFORGE (Modpack Platform)
 
-Automatically installs modpacks from CurseForge. Requires a CurseForge API key.
+Automatically installs modpacks from CurseForge. Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key.
 
 **Specific Variables:**
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `CF_API_KEY` | Yes | CurseForge API key |
+| `CF_API_KEY` | No | CurseForge API key (built in for Java 17+ images; set only for java8/pre-17 tags or your own key) |
 | `CF_PAGE_URL` | No | Modpack page URL |
 | `CF_SLUG` | No | Modpack slug (alternative to URL) |
 | `CF_FILE_ID` | No | Specific file/version ID |
@@ -839,7 +839,7 @@ MEMORY=75%
 
 | Variable | Description |
 |----------|-------------|
-| `CF_API_KEY` | CurseForge API key (**required** for CurseForge mods) |
+| `CF_API_KEY` | CurseForge API key (optional: built in for Java 17+ images; set only for java8/pre-17 tags or your own key) |
 | `CURSEFORGE_FILES` | CurseForge mod slugs, IDs, or URLs (newline or comma separated) |
 
 #### Spiget (SpigotMC)
@@ -1404,7 +1404,7 @@ mcctl mod search <query>
 # Add mods (Modrinth is the default source)
 mcctl mod add <server> <mod1> [mod2] [mod3...]
 
-# Add from CurseForge (requires CF_API_KEY in platform .env)
+# Add from CurseForge (CF_API_KEY in platform .env is optional on Java 17+ images)
 mcctl mod add <server> --curseforge <mod1> [mod2...]
 
 # Add from Spiget (SpigotMC plugins)
@@ -1448,7 +1448,7 @@ MODRINTH_DOWNLOAD_DEPENDENCIES=required
 
 ### Via CurseForge Environment Variables
 
-Requires `CF_API_KEY` set in the platform `.env` file.
+Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key. (Set it in the platform `.env` file.)
 
 ```env
 CF_API_KEY=${CF_API_KEY}
@@ -1894,7 +1894,7 @@ ENABLE_RCON=true
 MOTD=All The Mods 9 Server
 ```
 
-> **Note**: The `CF_API_KEY` must be set in the platform-level `.env` file at `~/minecraft-servers/.env`. Get a key from [CurseForge for Studios](https://console.curseforge.com/).
+> **Note**: Java 17+ images include a built-in `CF_API_KEY`; set it only for java8/pre-17 tags or to use your own key. When needed, set it in the platform-level `.env` file at `~/minecraft-servers/.env`. Get a key from [CurseForge for Studios](https://console.curseforge.com/).
 
 ```bash
 mcctl create atm9 -t AUTO_CURSEFORGE -v 1.20.1 --no-start
@@ -2151,7 +2151,7 @@ mcctl logs <server>
 - Mods fail to download from CurseForge
 - 403 Forbidden errors
 
-**Fix:**
+**Fix:** (Java 17+ images have a built-in key; this applies to java8/pre-17 tags or a custom key)
 1. Set `CF_API_KEY` in `~/minecraft-servers/.env`:
    ```env
    CF_API_KEY=your-curseforge-api-key

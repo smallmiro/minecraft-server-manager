@@ -141,7 +141,7 @@ mcctl create myserver -t FORGE -v 1.20.4
 # Set memory (modpacks need more)
 mcctl config myserver MEMORY 8G
 
-# Add mods (requires CF_API_KEY in .env)
+# Add mods (CF_API_KEY optional on Java 17+ images)
 mcctl config myserver CURSEFORGE_FILES "jei,journeymap,create"
 
 # Or specific Forge version
@@ -512,7 +512,7 @@ mcctl create modded -t FORGE -v 1.20.4
 mcctl config modded MEMORY 8G
 mcctl config modded USE_AIKAR_FLAGS true
 
-# Add mods (requires CF_API_KEY in .env)
+# Add mods (CF_API_KEY optional on Java 17+ images)
 mcctl config modded CURSEFORGE_FILES "create,jei,journeymap"
 
 # Restart to apply

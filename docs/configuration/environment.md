@@ -327,7 +327,7 @@ mcctl config modded GAMEMODE survival
 mcctl config modded MEMORY 8G
 mcctl config modded USE_AIKAR_FLAGS true
 
-# Add mods (requires CF_API_KEY in .env)
+# Add mods (CF_API_KEY optional on Java 17+ images)
 mcctl config modded CURSEFORGE_FILES "jei,journeymap,create"
 
 # Restart to apply

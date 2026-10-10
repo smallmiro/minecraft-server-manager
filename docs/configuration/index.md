@@ -84,7 +84,7 @@ For mod servers (Forge/Fabric):
 # Modrinth mods
 mcctl config myserver MODRINTH_PROJECTS "fabric-api,lithium,sodium"
 
-# CurseForge mods (requires API key in .env)
+# CurseForge mods (CF_API_KEY optional on Java 17+ images)
 mcctl config myserver CURSEFORGE_FILES "jei,journeymap"
 ```
 

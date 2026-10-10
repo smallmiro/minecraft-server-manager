@@ -403,7 +403,7 @@ async function modSources(options: ModCommandOptions): Promise<number> {
       name: 'CurseForge',
       flag: '--curseforge',
       envKey: 'CURSEFORGE_FILES',
-      description: 'Popular mod platform. Requires CF_API_KEY in .env',
+      description: 'Popular mod platform. Java 17+ images include a built-in CF_API_KEY; set it in .env only for java8 or pre-17 tags or your own key',
       example: 'mcctl mod add myserver --curseforge jei journeymap',
     },
     {

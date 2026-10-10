@@ -31,7 +31,7 @@ mcctl create survival --type PAPER --version 1.21.1
 # Modrinth 모드 (Fabric 예시)
 mcctl config modded MODRINTH_PROJECTS "fabric-api,lithium,sodium"
 
-# CurseForge 모드 (.env에 API 키 필요)
+# CurseForge 모드 (Java 17+ 이미지에서는 CF_API_KEY 선택 사항)
 mcctl config modded CURSEFORGE_FILES "jei,journeymap"
 
 # SpigotMC 플러그인
@@ -60,7 +60,7 @@ mcctl stop modded && mcctl start modded
 
 | 기능 | Modrinth | CurseForge |
 |------|----------|------------|
-| API 키 | 불필요 | 필수 |
+| API 키 | 불필요 | 선택 사항 (Java 17+ 이미지는 내장) |
 | 의존성 해결 | 자동 | 수동 |
 | 버전 자동 감지 | 예 | 아니오 |
 | 모드 라이브러리 규모 | 성장 중 | 최대 |
