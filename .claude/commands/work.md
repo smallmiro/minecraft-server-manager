@@ -62,9 +62,9 @@ Contributor mode is on with `--contributor`, or automatically when
 `gh repo view --json viewerPermission -q .viewerPermission` is not `WRITE`, `MAINTAIN` or `ADMIN`. Write `ROLE=contributor` to the state file, then follow Single Issue Mode with these changes:
 
 - Step 2: sync the fork's `develop` first (`git fetch upstream && git checkout develop && git merge --ff-only upstream/develop && git push origin develop`), then branch.
-- Step 4: update issue checkboxes only if you can edit the issue; otherwise skip and list the completed items in the PR body.
-- Step 6: push the branch to the fork and run `gh pr create --repo <origin> --base develop --head <user>:<branch> ...`.
-- Step 8: do not merge. Done once the PR is open and the review is `done`.
+- Step 5: update issue checkboxes only if you can edit the issue; otherwise skip and list the completed items in the PR body.
+- Step 7: push the branch to the fork and run `gh pr create --repo <origin> --base develop --head <user>:<branch> ...`.
+- Step 9: do not merge. Done once the PR is open and the review is `done`.
 
 ---
 
@@ -80,6 +80,7 @@ Contributor mode is on with `--contributor`, or automatically when
    ## Acceptance Criteria
    - [ ] <criterion>
    ## Technical Notes
+   ## Files to Modify
    ---
    *Auto-generated from conversation context*
    EOF
@@ -94,18 +95,53 @@ Contributor mode is on with `--contributor`, or automatically when
 
 1. **Load context**: `gh issue view <N> --json number,title,body,labels,milestone`. Note dependencies ("depends on #N", "blocked by #N") and resolve them first. Write the state file.
 2. **Prepare**: `git checkout develop && git pull origin develop && git checkout -b feature/<N>-<description>` (`bugfix/` for bug fixes). Initialize `task.md` with the issue context.
-3. **Implement with TDD** (Red → Green → Refactor). At each checkpoint: commit as `<type>: <description> (#<N>)`, append to `task.md`, mark the item in `plan.md` if it tracks this issue.
-4. **Issue checkboxes**: check items off as they are completed. Edit the body as a file instead of with `sed`, which breaks on special characters:
+3. **Route**: the main session acts as orchestrator. Pick the owner agent from the issue's `Files to Modify` and a tier from the tables in [Agent Routing](#agent-routing). T0 means do it yourself (add one line to the PR body: `직접 처리: <reason>`); otherwise delegate.
+4. **Implement with TDD** (Red → Green → Refactor), by the assigned agent or by you for T0. At each checkpoint: commit as `<type>: <description> (#<N>)`, append to `task.md`, mark the item in `plan.md` if it tracks this issue.
+5. **Issue checkboxes**: check items off as they are completed. Edit the body as a file instead of with `sed`, which breaks on special characters:
    ```bash
    f=$(mktemp); gh issue view <N> --json body -q .body > "$f"
    # edit $f: "- [ ] <task>" -> "- [x] <task>"
    gh issue edit <N> --body-file "$f"; rm "$f"
    ```
    Update after each commit that completes an item, and make sure every box is checked before the PR is created.
-5. **E2E tests** for new or changed external behavior (see below). Run them before the PR.
-6. **Create PR**: `gh pr create --base develop --title "<type>: <description> (#<N>)" --body "Closes #<N> ..."`.
-7. **Code review**: run `/code-review:code-review`, fix every finding, push, then set `REVIEW=done`. Skipped with `--skip-review` (`REVIEW=skipped`).
-8. **Merge**: `gh pr merge --merge --delete-branch` (the repository uses merge commits), then `git checkout develop && git pull origin develop`. Confirm the issue is closed and all boxes are checked.
+6. **E2E tests** for new or changed external behavior (see below). Run them before the PR.
+7. **Create PR**: `gh pr create --base develop --title "<type>: <description> (#<N>)" --body "Closes #<N> ..."`.
+8. **Code review**: run `/code-review:code-review`, fix every finding, push, then set `REVIEW=done`. Skipped with `--skip-review` (`REVIEW=skipped`).
+9. **Merge**: `gh pr merge --merge --delete-branch` (the repository uses merge commits), then `git checkout develop && git pull origin develop`. Confirm the issue is closed and all boxes are checked.
+
+---
+
+## Agent Routing
+
+Applies to Single Issue Mode step 3 (Milestone Mode inherits it per issue). Most specific path wins.
+
+| Paths in `Files to Modify` | Owner |
+|----------------------------|-------|
+| `platform/services/shared/**`, `platform/services/mod-source-*/**` | core-agent |
+| `platform/services/cli/**`, `platform/scripts/**`, `templates/**` | cli-agent |
+| `platform/services/mcctl-api/**` | backend-agent |
+| `platform/services/mcctl-console/**` | frontend-agent |
+| rest of `platform/**`, `e2e/**`, `.github/workflows/**`, `.claude/hooks/**` (hook logic and its tests) | devops-agent |
+| `docs/**`, `README*`, `CHANGELOG.md` | technical-writer |
+| `.claude/commands/**`, `.claude/agents/**`, `CLAUDE.md`, `DEVELOPMENT.md`, prose only | handle directly; if they change together with logic files, the logic owner handles them too |
+
+| Tier | Condition | Handling | `model` | `effort` |
+|------|-----------|----------|---------|----------|
+| T0 direct | 1 module, ≤2 files, no new public interface, bug has confirmed root cause; or typo/comment/instruction prose only | main session | - | - |
+| T1 single | 1 module, 3-8 files, root cause confirmed | one owner agent | agent default | omit |
+| T2 hardened | shared domain change, unconfirmed root cause, `security` label, data-loss risk, 9+ files | owner agent (analysis first if unconfirmed) | `opus` | `high` |
+| T3 multi-module | 2 modules | delegate per module, core first, independent ones in parallel (worktree) | per module T1/T2 | per module T1/T2 |
+| T4 design | 3+ modules, architecture change | `/plan-work` + architect, then T3 | architect `opus` | `high` |
+
+Set `model` (aliases only) and `effort` only when the table gives a value that differs from the agent default.
+
+**Delegation prompt** must contain: issue number and body, the checked-out branch, the files the agent owns, TDD, the commit format and Tidy First, and "commit at every checkpoint". Forbidden for the agent: switching branches, creating PRs or merging, editing the issue body, touching `.claude/work-state`, invoking `/work`. It returns: commit SHAs, test results, completed items.
+
+**Worktrees**: a single agent works on the feature branch directly, no worktree. Use `isolation: "worktree"` only for parallel delegation inside one issue, and merge those branches into the feature branch before the PR.
+
+**Async delegation**: delegated agents run in the background. If the Stop hook blocks you while one is running, wait for its completion notification and do not edit its files yourself.
+
+**Review fixes** (step 8): confirm you are back on the feature branch first (`/code-review` may leave a `pr-NNN` checkout). Fix small findings yourself; resume the same agent for large ones.
 
 ---
 
