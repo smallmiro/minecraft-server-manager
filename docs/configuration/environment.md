@@ -36,6 +36,7 @@ These variables are set in `~/minecraft-servers/.env` and apply to all servers.
 |----------|-------------|---------|-------|
 | `HOST_IP` | Host machine IP address | Auto-detected | `mcctl init` |
 | `HOST_IPS` | Multiple IPs for VPN mesh (comma-separated) | - | Manual |
+| `DOCKER_GID` | Docker socket group ID for non-root mc-router (1.46+) | `999` | `mcctl init` / `mcctl upgrade` |
 | `MINECRAFT_NETWORK` | Docker network name | `minecraft-net` | Auto |
 | `MINECRAFT_SUBNET` | Network subnet | `172.28.0.0/16` | Auto |
 

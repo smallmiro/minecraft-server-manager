@@ -532,6 +532,16 @@ Click the **red trash can icon** on a world card. A confirmation dialog appears 
 !!! warning "Data Loss"
     Deleting a world permanently removes all world data including terrain, player builds, and entities. Always create a backup before deleting a world.
 
+### World Info, Map & Stats
+
+The world info panel (also shown in a server's **World** tab) includes a **Map** section and an **Ore & Block Stats** section.
+
+- **Map** -- **Render map** generates a BlueMap web map and **Re-render** refreshes it. The map opens on the **Overworld** by default (Nether and End remain selectable in the viewer). Worlds rendered before v2.29.0 pick this up on **Re-render**. **Show structures** marks structures on the map.
+- **Ore & Block Stats** -- **Analyze** scans every chunk of the world (it can take minutes on large worlds; progress is shown) and caches the result, and **Re-analyze** refreshes it. The result shows:
+    - **KPI cards**: total blocks, block types, regions scanned, analysis time, dimensions
+    - **Ores**: a donut chart with a legend (count and share), highlight chips for rare ores (gold, diamond, emerald, ancient debris), and a **Merge stone/deepslate variants** toggle
+    - **Top blocks**: a stacked bar by category (Stone, Earth, Wood, Fluid, Nether, Other) and a top-5 list that **Show all** expands
+
 ---
 
 ## Backups

@@ -419,6 +419,43 @@ mcctl update [options]
     `mcctl update`는 npm에서 CLI 및 서비스 **패키지**를 업데이트합니다.
     `mcctl upgrade`는 플랫폼 **설정 파일** 및 템플릿을 새 버전으로 마이그레이션합니다.
 
+### mcctl upgrade
+
+플랫폼 설정 파일을 설치된 mcctl 버전에 맞게 마이그레이션합니다.
+
+```bash
+mcctl upgrade [options]
+```
+
+**옵션:**
+
+| 옵션 | 설명 |
+|------|------|
+| `--dry-run` | 파일을 수정하지 않고 변경 사항만 미리 보기 |
+| `--non-interactive` | 확인 없이 적용 |
+| `--root <path>` | 사용자 지정 데이터 디렉터리 |
+
+**동작:**
+
+1. 번들된 `.env.example`의 새 변수를 `.env`에 추가합니다 (기존 값은 변경하지 않음)
+2. Docker 소켓의 그룹 ID를 감지해 `.env`에 `DOCKER_GID`로 기록합니다 (non-root mc-router 1.46+에 필요)
+3. 루트 `docker-compose.yml`의 `router` 서비스를 패치합니다 (아래 참조)
+4. `servers/_template/` 파일을 갱신하고 `.mcctl.json`에 `templateVersion`을 기록합니다
+
+**docker-compose.yml router 패치:** `router` 서비스의 `image` 태그와 `group_add` 항목만 번들 템플릿에 맞춥니다. 다른 서비스, 포트, 주석, 줄바꿈 형식은 그대로 유지됩니다.
+
+- 줄 단위 diff를 보여 준 뒤 적용 여부를 확인합니다 (`--non-interactive`는 확인 없이 적용, `--dry-run`은 diff만 표시)
+- 원본은 `docker-compose.yml.bak-<timestamp>`로 백업되며, 쓰기에 실패하면 복원됩니다
+- 패치가 적용되면 `docker compose up -d router`로 mc-router를 재생성합니다 (실행 중인 서버는 영향을 받지 않음)
+- 자동 패치가 불가능하면 직접 추가할 줄을 안내하는 경고를 표시합니다
+- compose 갱신에 실패해도 나머지 단계는 계속 진행하며, 명령은 종료 코드 `1`로 끝납니다
+
+```bash
+mcctl upgrade --dry-run
+mcctl upgrade
+mcctl upgrade --non-interactive
+```
+
 ---
 
 ## 서버 명령어

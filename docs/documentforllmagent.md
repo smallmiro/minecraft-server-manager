@@ -2852,7 +2852,7 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 
 **Added:**
 - `mcctl upgrade` patches the root `docker-compose.yml` `router` service (`image` tag + `group_add` only) with diff/confirm, `.bak-<timestamp>` backup, validation/restore, and `docker compose up -d router`. `--dry-run` = diff only, `--non-interactive` = apply without asking (#562, PR #569)
-- Console world map **Ore & Block Stats**: KPI cards, block-composition donut chart, category bars (#567, PR #568)
+- Console world **Ore & Block Stats**: KPI cards, ore donut chart with legend and rare-ore chips, category-colored top-blocks bar (#567, PR #568)
 
 **Changed:**
 - mc-router `itzg/mc-router:1.43.1` → `1.47.1`. 1.46+ runs as non-root, so the router service has `group_add: ["${DOCKER_GID:-999}"]`; `mcctl init`/`mcctl upgrade` auto-detect the socket GID (honoring `DOCKER_HOST`) into `.env` (#549, PR #559)

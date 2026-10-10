@@ -36,6 +36,7 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 |------|------|--------|-------|
 | `HOST_IP` | 호스트 머신 IP 주소 | 자동 감지 | `mcctl init` |
 | `HOST_IPS` | VPN mesh용 다중 IP (쉼표 구분) | - | 수동 |
+| `DOCKER_GID` | non-root mc-router(1.46+)용 Docker 소켓 그룹 ID | `999` | `mcctl init` / `mcctl upgrade` |
 | `MINECRAFT_NETWORK` | Docker 네트워크 이름 | `minecraft-net` | 자동 |
 | `MINECRAFT_SUBNET` | 네트워크 서브넷 | `172.28.0.0/16` | 자동 |
 
