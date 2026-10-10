@@ -3601,10 +3601,12 @@
 <p>mc-router handles hostname-based routing and auto-scaling.</p>
 <div class="admonition info">
 <p class="admonition-title">Pinned version</p>
-<p>The platform pins <code>itzg/mc-router</code> to <code>1.43.1</code> in <code>docker-compose.yml</code> for reproducible deployments.
+<p>The platform pins <code>itzg/mc-router</code> to <code>1.47.1</code> in <code>docker-compose.yml</code> for reproducible deployments.
 Compared to <code>1.42.0</code>, this release adds event-based Docker polling (faster auto-scale reactions),
 timezone (<code>TZ</code>) support, and a <code>--log-level</code> option. There are no breaking changes, and the
 label-based <code>--in-docker</code> auto-scale workflow used here needs no configuration changes.</p>
+<p>Since <code>1.46</code>, mc-router runs as a non-root user. The compose file adds the Docker socket's group via
+<code>group_add: ["${DOCKER_GID:-999}"]</code>; <code>mcctl init</code>/<code>mcctl upgrade</code> detect and write <code>DOCKER_GID</code> to <code>.env</code>.</p>
 </div>
 <h3 id="router-management-with-mcctl">Router Management with mcctl<a class="headerlink" href="#router-management-with-mcctl" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Check router status</span>

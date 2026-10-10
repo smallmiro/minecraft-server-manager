@@ -2250,10 +2250,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#graalvm-변형-지원-중단" class="md-nav__link">
+  <a href="#graalvm-변형" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GraalVM 변형 (지원 중단)
+        GraalVM 변형
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#java-8과-curseforge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Java 8과 CurseForge
       
     </span>
   </a>
@@ -2359,14 +2370,14 @@
 <td><code>latest</code>, <code>stable</code></td>
 <td>Java 25</td>
 <td>Ubuntu</td>
-<td>amd64, arm64</td>
+<td>amd64, arm64, riscv64</td>
 <td>기본값; <code>stable</code>은 최신 릴리즈 버전</td>
 </tr>
 <tr>
 <td><code>java25</code></td>
 <td>Java 25</td>
 <td>Ubuntu</td>
-<td>amd64, arm64</td>
+<td>amd64, arm64, riscv64</td>
 <td></td>
 </tr>
 <tr>
@@ -2405,10 +2416,31 @@
 <td></td>
 </tr>
 <tr>
+<td><code>java25-graalvm</code></td>
+<td>Java 25</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+<td>Oracle GraalVM (아래 참조)</td>
+</tr>
+<tr>
+<td><code>java21-graalvm</code></td>
+<td>Java 21</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+<td>Oracle GraalVM (아래 참조)</td>
+</tr>
+<tr>
+<td><code>java17-graalvm</code></td>
+<td>Java 17</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+<td>Oracle GraalVM (아래 참조)</td>
+</tr>
+<tr>
 <td><code>java17</code></td>
 <td>Java 17</td>
 <td>Ubuntu</td>
-<td>amd64, arm64, armv7</td>
+<td>amd64, arm64</td>
 <td></td>
 </tr>
 <tr>
@@ -2447,8 +2479,8 @@
 <ul>
 <li><code>java23</code>, <code>java23-alpine</code>, <code>java23-jdk</code> -- 대신 <code>java25</code>를 사용하세요</li>
 <li><code>java24</code>, <code>java24-graalvm</code> -- 대신 <code>java25</code>를 사용하세요</li>
+<li><code>java20</code>, <code>java20-graalvm</code>, <code>java20-alpine</code>, <code>java17-graalvm-ce</code>, <code>java17-openj9</code> -- 더 이상 업데이트되지 않음</li>
 <li><code>java17-alpine</code> -- 대신 <code>java17</code> 또는 <code>java21-alpine</code>을 사용하세요</li>
-<li><code>java25-graalvm</code>, <code>java21-graalvm</code>, <code>java17-graalvm</code> -- <strong>모든 GraalVM 태그가 지원 중단됨</strong> (아래 참조)</li>
 </ul>
 </div>
 <h3 id="프로그래밍-방식-접근">프로그래밍 방식 접근<a class="headerlink" href="#프로그래밍-방식-접근" title="Permanent link">&para;</a></h3>
@@ -2583,13 +2615,13 @@
 <td><code>latest</code>, <code>stable</code></td>
 <td>25</td>
 <td>Ubuntu</td>
-<td>amd64, arm64</td>
+<td>amd64, arm64, riscv64</td>
 </tr>
 <tr>
 <td><code>java25</code></td>
 <td>25</td>
 <td>Ubuntu</td>
-<td>amd64, arm64</td>
+<td>amd64, arm64, riscv64</td>
 </tr>
 <tr>
 <td><code>java25-alpine</code></td>
@@ -2622,10 +2654,28 @@
 <td>amd64, arm64</td>
 </tr>
 <tr>
+<td><code>java25-graalvm</code></td>
+<td>25</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>java21-graalvm</code></td>
+<td>21</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>java17-graalvm</code></td>
+<td>17</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
 <td><code>java17</code></td>
 <td>17</td>
 <td>Ubuntu</td>
-<td>amd64, arm64, armv7</td>
+<td>amd64, arm64</td>
 </tr>
 <tr>
 <td><code>java16</code></td>
@@ -2649,16 +2699,22 @@
 </table>
 <h3 id="arm-장치-raspberry-pi-등">ARM 장치 (Raspberry Pi 등)<a class="headerlink" href="#arm-장치-raspberry-pi-등" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># java17은 armv7 지원 (Raspberry Pi 3/4 32비트)</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># java21+는 arm64만 지원 (Raspberry Pi 4/5 64비트)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># armv7(32비트 Raspberry Pi)은 java16, java11, java8만 지원</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># java17+는 amd64/arm64 지원 (Raspberry Pi 4/5 64비트)</span>
 </code></pre></div>
-<h2 id="graalvm-변형-지원-중단">GraalVM 변형 (지원 중단)<a class="headerlink" href="#graalvm-변형-지원-중단" title="Permanent link">&para;</a></h2>
-<div class="admonition danger">
-<p class="admonition-title">모든 GraalVM 태그 지원 중단</p>
-<p>GraalVM 이미지 변형(<code>java25-graalvm</code>, <code>java21-graalvm</code>, <code>java17-graalvm</code>)은
-<strong>모두 지원 중단(deprecated)</strong> 되었으며 향후 릴리즈에서 제거될 예정입니다.</p>
-<p><strong>마이그레이션</strong>: 표준 OpenJDK 기반 태그(<code>java25</code>, <code>java21</code>, <code>java17</code>)로 전환하세요.</p>
-<p>이전에 GraalVM 이미지는 Auto-Pause(<code>ENABLE_AUTOPAUSE</code>) 기능과도 호환되지 않았습니다.</p>
+<h2 id="graalvm-변형">GraalVM 변형<a class="headerlink" href="#graalvm-변형" title="Permanent link">&para;</a></h2>
+<p>Oracle GraalVM 변형(<code>java25-graalvm</code>, <code>java21-graalvm</code>, <code>java17-graalvm</code>)은 공식 문서에서 지원 태그로 안내됩니다 (릴리즈 2026.8.0에서 복원됨).</p>
+<div class="admonition note">
+<p class="admonition-title">GraalVM 참고 사항 (공식 문서 기준)</p>
+<ul>
+<li>Oracle GraalVM 컨테이너 이미지를 기반으로 하며, JDK 17부터 GraalVM Free License가 적용됩니다.</li>
+<li>이 이미지는 Oracle Linux를 사용하므로 Forge installer가 동작하지 않습니다(zlib-ng). 최초 설치와 Forge 버전 업그레이드에는 다른 이미지를 사용하세요.</li>
+</ul>
+</div>
+<h2 id="java-8과-curseforge">Java 8과 CurseForge<a class="headerlink" href="#java-8과-curseforge" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Java 8은 유지보수 모드입니다</p>
+<p><code>java8</code>, <code>java8-jdk</code> 및 Java 17 미만 태그(<code>java11</code>, <code>java16</code>)는 CurseForge API 키가 내장되기 이전의 <code>mc-image-helper</code>를 사용합니다. 해당 이미지에서 <code>AUTO_CURSEFORGE</code>와 <code>CURSEFORGE_FILES</code>를 사용하려면 <code>CF_API_KEY</code>를 직접 설정해야 합니다. Java 17 이상 이미지에는 키가 내장되어 있습니다.</p>
 </div>
 <h2 id="버전-선택-가이드">버전 선택 가이드<a class="headerlink" href="#버전-선택-가이드" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Minecraft 1.21+ --&gt; java21 또는 latest (Java 25)

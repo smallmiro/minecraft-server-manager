@@ -2220,10 +2220,32 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#miscellaneous" class="md-nav__link">
     <span class="md-ellipsis">
       
         Miscellaneous
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loading-environment-variables-from-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loading Environment Variables from Files
       
     </span>
   </a>
@@ -2275,7 +2297,7 @@
 <tr>
 <td><code>VERSION</code></td>
 <td><code>LATEST</code></td>
-<td>Minecraft version</td>
+<td>Minecraft version (<code>LATEST</code>, <code>SNAPSHOT</code>, legacy such as <code>1.21.11-rc1</code>, or new version numbering such as <code>26.1</code>, <code>26.1-snapshot-1</code>, <code>26.1-pre-1</code>, <code>26.1-rc-1</code>)</td>
 </tr>
 <tr>
 <td><code>TZ</code></td>
@@ -2323,6 +2345,11 @@
 <td><code>MAX_PLAYERS</code></td>
 <td><code>20</code></td>
 <td>Maximum player count</td>
+</tr>
+<tr>
+<td><code>HARDCORE</code></td>
+<td><code>false</code></td>
+<td>Enable hardcore mode (<code>true</code>/<code>false</code>). Maps to the <code>hardcore</code> server property</td>
 </tr>
 <tr>
 <td><code>PVP</code></td>
@@ -2622,6 +2649,11 @@
 <td>Graceful stop wait time (seconds)</td>
 </tr>
 <tr>
+<td><code>STOP_SERVER_DELAY_COMMAND</code></td>
+<td>-</td>
+<td>Full command to run at the start of the stop announce delay, in place of the default announcement (added 2026.6.1; trailing-"s" bug fixed in 2026.8.2)</td>
+</tr>
+<tr>
 <td><code>FORCE_REDOWNLOAD</code></td>
 <td><code>false</code></td>
 <td>Force re-download server files</td>
@@ -2630,6 +2662,21 @@
 <td><code>SETUP_ONLY</code></td>
 <td><code>false</code></td>
 <td>Setup only, then exit</td>
+</tr>
+<tr>
+<td><code>PRE_START_SCRIPT</code></td>
+<td>-</td>
+<td>Path to an executable (mounted into the container) run after setup and just before the server starts. Runs directly, not through a shell, as the server user from the server's working directory. If it exits non-zero, the server is not started (added 2026.9.2)</td>
+</tr>
+<tr>
+<td><code>SERVER_RUNNER</code></td>
+<td>-</td>
+<td>Replace the default <code>mc-server-runner</code> exec. Value is expanded on <code>exec</code>, so the runner can be wrapped by a mounted executable (added 2026.7.2)</td>
+</tr>
+<tr>
+<td><code>CLEAN_SERVER_LIBRARIES</code></td>
+<td><code>true</code></td>
+<td>Remove stale server libraries during installation for supported server types; set <code>false</code> to disable</td>
 </tr>
 </tbody>
 </table>
@@ -2706,6 +2753,26 @@
 </tr>
 </tbody>
 </table>
+<h2 id="network">Network<a class="headerlink" href="#network" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PREFER_IPV6</code></td>
+<td><code>false</code></td>
+<td>Set <code>true</code> to prefer IPv6 addresses and stack. Sets <code>java.net.preferIPv6Addresses</code> and <code>java.net.preferIPv6Stack</code> for mc-image-helper and the Minecraft server (added 2026.7.2)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Note</strong>: The variable name is <code>PREFER_IPV6</code> (upper-case <code>V6</code>), as used in the image scripts and official docs.</p>
+</blockquote>
 <h2 id="miscellaneous">Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2727,8 +2794,45 @@
 <td><code>SKIP_CHOWN_DATA</code></td>
 <td>Skip <code>/data</code> ownership change</td>
 </tr>
+<tr>
+<td><code>OVERRIDE_ICON</code></td>
+<td>Set <code>TRUE</code> to override an already-set server icon (default <code>FALSE</code>)</td>
+</tr>
+<tr>
+<td><code>BROADCAST_RCON_TO_OPS</code></td>
+<td>Sets the <code>broadcast-rcon-to-ops</code> server property (default <code>false</code>)</td>
+</tr>
 </tbody>
 </table>
+<h2 id="loading-environment-variables-from-files">Loading Environment Variables from Files<a class="headerlink" href="#loading-environment-variables-from-files" title="Permanent link">&para;</a></h2>
+<p>Added in 2026.5.3. Values loaded this way <strong>override</strong> values passed via <code>docker run -e</code> or compose <code>environment:</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LOAD_ENV_FROM_FILE</code></td>
+<td>Container path or URL of a shell-style env file (<code>KEY=VALUE</code> per line; comments and blank lines allowed)</td>
+</tr>
+<tr>
+<td><code>LOAD_ENV_FROM_ARCHIVE</code></td>
+<td>Container path or URL of a zip/tar archive containing an env file</td>
+</tr>
+<tr>
+<td><code>LOAD_ENV_FROM_ARCHIVE_ENTRY</code></td>
+<td>Relative path of the env file inside the archive (default <code>.env</code>)</td>
+</tr>
+<tr>
+<td><code>LOAD_ENV_FROM_GENERIC_PACK</code></td>
+<td>When <code>true</code>, probe each <code>GENERIC_PACKS</code> entry for a top-level <code>.env</code> and source it</td>
+</tr>
+</tbody>
+</table>
+<p>Load order: generic packs, then <code>LOAD_ENV_FROM_FILE</code>, then <code>LOAD_ENV_FROM_ARCHIVE</code> (later overrides earlier).</p>
 
 
 

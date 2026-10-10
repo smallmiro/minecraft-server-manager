@@ -4262,7 +4262,7 @@
 </code></pre></div>
 <hr />
 <h3 id="auto_curseforge-modpack-platform">AUTO_CURSEFORGE (Modpack Platform)<a class="headerlink" href="#auto_curseforge-modpack-platform" title="Permanent link">&para;</a></h3>
-<p>Automatically installs modpacks from CurseForge. Requires a CurseForge API key.</p>
+<p>Automatically installs modpacks from CurseForge. Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key.</p>
 <p><strong>Specific Variables:</strong></p>
 <table>
 <thead>
@@ -4275,8 +4275,8 @@
 <tbody>
 <tr>
 <td><code>CF_API_KEY</code></td>
-<td>Yes</td>
-<td>CurseForge API key</td>
+<td>No</td>
+<td>CurseForge API key (built in for Java 17+ images; set only for java8/pre-17 tags or your own key)</td>
 </tr>
 <tr>
 <td><code>CF_PAGE_URL</code></td>
@@ -4831,7 +4831,7 @@
 <tbody>
 <tr>
 <td><code>CF_API_KEY</code></td>
-<td>CurseForge API key (<strong>required</strong> for CurseForge mods)</td>
+<td>CurseForge API key (optional: built in for Java 17+ images; set only for java8/pre-17 tags or your own key)</td>
 </tr>
 <tr>
 <td><code>CURSEFORGE_FILES</code></td>
@@ -5756,9 +5756,9 @@
 <a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>
 <a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a><span class="w">  </span><span class="nt">router</span><span class="p">:</span>
-<a id="__codelineno-51-6" name="__codelineno-51-6" href="#__codelineno-51-6"></a><span class="w">    </span><span class="c1"># Pinned to v1.43.1 for production stability.</span>
+<a id="__codelineno-51-6" name="__codelineno-51-6" href="#__codelineno-51-6"></a><span class="w">    </span><span class="c1"># Pinned to v1.47.1 for production stability.</span>
 <a id="__codelineno-51-7" name="__codelineno-51-7" href="#__codelineno-51-7"></a><span class="w">    </span><span class="c1"># Check releases: https://github.com/itzg/mc-router/releases</span>
-<a id="__codelineno-51-8" name="__codelineno-51-8" href="#__codelineno-51-8"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router:1.43.1</span>
+<a id="__codelineno-51-8" name="__codelineno-51-8" href="#__codelineno-51-8"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router:1.47.1</span>
 <a id="__codelineno-51-9" name="__codelineno-51-9" href="#__codelineno-51-9"></a><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mc-router</span>
 <a id="__codelineno-51-10" name="__codelineno-51-10" href="#__codelineno-51-10"></a><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
 <a id="__codelineno-51-11" name="__codelineno-51-11" href="#__codelineno-51-11"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
@@ -6042,7 +6042,7 @@
 <a id="__codelineno-54-4" name="__codelineno-54-4" href="#__codelineno-54-4"></a><span class="c1"># Add mods (Modrinth is the default source)</span>
 <a id="__codelineno-54-5" name="__codelineno-54-5" href="#__codelineno-54-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;mod1&gt;<span class="w"> </span><span class="o">[</span>mod2<span class="o">]</span><span class="w"> </span><span class="o">[</span>mod3...<span class="o">]</span>
 <a id="__codelineno-54-6" name="__codelineno-54-6" href="#__codelineno-54-6"></a>
-<a id="__codelineno-54-7" name="__codelineno-54-7" href="#__codelineno-54-7"></a><span class="c1"># Add from CurseForge (requires CF_API_KEY in platform .env)</span>
+<a id="__codelineno-54-7" name="__codelineno-54-7" href="#__codelineno-54-7"></a><span class="c1"># Add from CurseForge (CF_API_KEY in platform .env is optional on Java 17+ images)</span>
 <a id="__codelineno-54-8" name="__codelineno-54-8" href="#__codelineno-54-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>--curseforge<span class="w"> </span>&lt;mod1&gt;<span class="w"> </span><span class="o">[</span>mod2...<span class="o">]</span>
 <a id="__codelineno-54-9" name="__codelineno-54-9" href="#__codelineno-54-9"></a>
 <a id="__codelineno-54-10" name="__codelineno-54-10" href="#__codelineno-54-10"></a><span class="c1"># Add from Spiget (SpigotMC plugins)</span>
@@ -6080,7 +6080,7 @@
 <a id="__codelineno-55-16" name="__codelineno-55-16" href="#__codelineno-55-16"></a>MODRINTH_DOWNLOAD_DEPENDENCIES=required
 </code></pre></div>
 <h3 id="via-curseforge-environment-variables">Via CurseForge Environment Variables<a class="headerlink" href="#via-curseforge-environment-variables" title="Permanent link">&para;</a></h3>
-<p>Requires <code>CF_API_KEY</code> set in the platform <code>.env</code> file.</p>
+<p>Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key. (Set it in the platform <code>.env</code> file.)</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>CF_API_KEY=${CF_API_KEY}
 <a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>CURSEFORGE_FILES=jei
 <a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a>journeymap
@@ -6478,7 +6478,7 @@
 <a id="__codelineno-86-15" name="__codelineno-86-15" href="#__codelineno-86-15"></a>MOTD=All The Mods 9 Server
 </code></pre></div>
 <blockquote>
-<p><strong>Note</strong>: The <code>CF_API_KEY</code> must be set in the platform-level <code>.env</code> file at <code>~/minecraft-servers/.env</code>. Get a key from <a href="https://console.curseforge.com/">CurseForge for Studios</a>.</p>
+<p><strong>Note</strong>: Java 17+ images include a built-in <code>CF_API_KEY</code>; set it only for java8/pre-17 tags or to use your own key. When needed, set it in the platform-level <code>.env</code> file at <code>~/minecraft-servers/.env</code>. Get a key from <a href="https://console.curseforge.com/">CurseForge for Studios</a>.</p>
 </blockquote>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>atm9<span class="w"> </span>-t<span class="w"> </span>AUTO_CURSEFORGE<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.1<span class="w"> </span>--no-start
 <a id="__codelineno-87-2" name="__codelineno-87-2" href="#__codelineno-87-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>atm9<span class="w"> </span>CF_SLUG<span class="w"> </span>all-the-mods-9
@@ -6717,7 +6717,7 @@
 - "API key required" errors
 - Mods fail to download from CurseForge
 - 403 Forbidden errors</p>
-<p><strong>Fix:</strong>
+<p><strong>Fix:</strong> (Java 17+ images have a built-in key; this applies to java8/pre-17 tags or a custom key)
 1. Set <code>CF_API_KEY</code> in <code>~/minecraft-servers/.env</code>:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-102-1" name="__codelineno-102-1" href="#__codelineno-102-1"></a>CF_API_KEY=your-curseforge-api-key
 </code></pre></div>

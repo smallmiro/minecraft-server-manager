@@ -4269,6 +4269,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-2290-2026-10-10---mc-router-1471--compose-upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.29.0 (2026-10-10) - mc-router 1.47.1 &amp; Compose Upgrade
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-2280-2026-10-01---console-bento-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4713,8 +4724,8 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.28.0
-<strong>Last Updated</strong>: 2026-10-01
+<p><strong>Version</strong>: 2.29.0
+<strong>Last Updated</strong>: 2026-10-10
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
 <hr />
@@ -5462,8 +5473,10 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 2. Identifies new variables added in the latest version
 3. In interactive mode, prompts for values for each new variable
 4. Appends new variables to your <code>.env</code> file (grouped by section)
-5. Updates <code>servers/_template/</code> files (docker-compose.yml, config.env)
-6. Records <code>templateVersion</code> in <code>.mcctl.json</code></p>
+5. Detects the Docker socket group ID and writes <code>DOCKER_GID</code> to <code>.env</code> (needed by non-root mc-router 1.46+)
+6. Updates <code>servers/_template/</code> files (docker-compose.yml, config.env)
+7. Patches the root <code>docker-compose.yml</code> <code>router</code> service (since 2.29.0): only the <code>image</code> tag and the <code>group_add</code> entry are aligned with the bundled template; other services, ports, profiles, comments and CRLF line endings are kept. Shows a line diff and asks for confirmation (skipped with <code>--non-interactive</code>, diff only with <code>--dry-run</code>), writes a <code>docker-compose.yml.bak-&lt;timestamp&gt;</code> backup, restores it if validation fails, then runs <code>docker compose up -d router</code>
+8. Records <code>templateVersion</code> in <code>.mcctl.json</code></p>
 <p><strong>Examples:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># See what would change before applying</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>mcctl<span class="w"> </span>upgrade<span class="w"> </span>--dry-run
@@ -5696,7 +5709,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h3 id="mod-management">Mod Management<a class="headerlink" href="#mod-management" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>&lt;query&gt;<span class="w">                 </span><span class="c1"># Search mods on Modrinth</span>
 <a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;mod...&gt;<span class="w">          </span><span class="c1"># Add mods (Modrinth default)</span>
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>--curseforge<span class="w"> </span>&lt;mod&gt;<span class="w">  </span><span class="c1"># CurseForge (requires CF_API_KEY)</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>--curseforge<span class="w"> </span>&lt;mod&gt;<span class="w">  </span><span class="c1"># CurseForge (CF_API_KEY optional on Java 17+)</span>
 <a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>--spiget<span class="w"> </span>&lt;id&gt;<span class="w">     </span><span class="c1"># SpigotMC plugin</span>
 <a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>--url<span class="w"> </span>&lt;url&gt;<span class="w">       </span><span class="c1"># Direct URL</span>
 <a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>&lt;server&gt;<span class="w">                  </span><span class="c1"># List configured mods</span>
@@ -6263,8 +6276,8 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <tbody>
 <tr>
 <td><code>CF_API_KEY</code></td>
-<td>Yes</td>
-<td>CurseForge API key</td>
+<td>No</td>
+<td>CurseForge API key (built in for Java 17+ images; set only for java8/pre-17 tags or your own key)</td>
 </tr>
 <tr>
 <td><code>CF_PAGE_URL</code> / <code>CF_SLUG</code></td>
@@ -6686,7 +6699,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <tbody>
 <tr>
 <td><code>CF_API_KEY</code></td>
-<td>CurseForge API key (required)</td>
+<td>CurseForge API key (optional: built in for Java 17+ images; set only for java8/pre-17 tags or your own key)</td>
 </tr>
 <tr>
 <td><code>CURSEFORGE_FILES</code></td>
@@ -8396,7 +8409,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <p><strong>1. Docker Auto-Discovery (Recommended for Docker Compose):</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-66-2" name="__codelineno-66-2" href="#__codelineno-66-2"></a><span class="w">  </span><span class="nt">mc-router</span><span class="p">:</span>
-<a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router:1.43.1</span><span class="w">  </span><span class="c1"># Pin to explicit version for reproducible deployments</span>
+<a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router:1.47.1</span><span class="w">  </span><span class="c1"># Pin to explicit version for reproducible deployments</span>
 <a id="__codelineno-66-4" name="__codelineno-66-4" href="#__codelineno-66-4"></a><span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--in-docker --auto-scale-up --auto-scale-down</span>
 <a id="__codelineno-66-5" name="__codelineno-66-5" href="#__codelineno-66-5"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
 <a id="__codelineno-66-6" name="__codelineno-66-6" href="#__codelineno-66-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"25565:25565"</span>
@@ -8590,7 +8603,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h3 id="basic-paper-server-with-mc-router">Basic Paper Server with mc-router<a class="headerlink" href="#basic-paper-server-with-mc-router" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-69-1" name="__codelineno-69-1" href="#__codelineno-69-1"></a><span class="nt">services</span><span class="p">:</span>
 <a id="__codelineno-69-2" name="__codelineno-69-2" href="#__codelineno-69-2"></a><span class="w">  </span><span class="nt">router</span><span class="p">:</span>
-<a id="__codelineno-69-3" name="__codelineno-69-3" href="#__codelineno-69-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router:1.43.1</span><span class="w">  </span><span class="c1"># Pin to explicit version for reproducible deployments</span>
+<a id="__codelineno-69-3" name="__codelineno-69-3" href="#__codelineno-69-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/mc-router:1.47.1</span><span class="w">  </span><span class="c1"># Pin to explicit version for reproducible deployments</span>
 <a id="__codelineno-69-4" name="__codelineno-69-4" href="#__codelineno-69-4"></a><span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--in-docker --auto-scale-up --auto-scale-down</span>
 <a id="__codelineno-69-5" name="__codelineno-69-5" href="#__codelineno-69-5"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
 <a id="__codelineno-69-6" name="__codelineno-69-6" href="#__codelineno-69-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"25565:25565"</span>
@@ -9038,7 +9051,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 - "API key required" errors
 - Mods fail to download from CurseForge
 - 403 Forbidden errors</p>
-<p><strong>Fix:</strong>
+<p><strong>Fix:</strong> (Java 17+ images have a built-in key; this applies to java8/pre-17 tags or a custom key)
 1. Set <code>CF_API_KEY</code> in <code>~/minecraft-servers/.env</code>:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-98-1" name="__codelineno-98-1" href="#__codelineno-98-1"></a><span class="nv">CF_API_KEY</span><span class="o">=</span>your-curseforge-api-key
 </code></pre></div>
@@ -9162,7 +9175,7 @@ A: <code>mcctl mod add &lt;server&gt; &lt;mod-name&gt;</code>. Default source is
 <p><strong>Q: What mod sources are supported?</strong>
 A: Modrinth (default), CurseForge, Spiget (SpigotMC), and direct URLs.</p>
 <p><strong>Q: Do I need an API key for CurseForge?</strong>
-A: Yes. Get one from console.curseforge.com and set <code>CF_API_KEY</code> in .env.</p>
+A: No on Java 17+ images (key built in). Set <code>CF_API_KEY</code> in .env (key from console.curseforge.com) only for java8/pre-17 tags or to use your own key.</p>
 <p><strong>Q: Where are mods stored?</strong>
 A: Downloaded automatically by the server container based on config.env settings.</p>
 <p><strong>Q: Are mod dependencies downloaded automatically?</strong>
@@ -9271,15 +9284,27 @@ A: No. Minecraft server containers are independent of mcctl. Only Management Con
 <p><strong>Q: How do I migrate from an old version?</strong>
 A: <code>mcctl migrate status</code> to check, then <code>mcctl migrate worlds --all</code> to fix known issues.</p>
 <p><strong>Q: What is <code>mcctl upgrade</code>?</strong>
-A: A command that detects new environment variables added in newer mcctl versions and appends them to your <code>.env</code> file. It never modifies existing values.</p>
+A: A command that detects new environment variables added in newer mcctl versions and appends them to your <code>.env</code> file (it never modifies existing values), syncs <code>servers/_template/</code>, and (since 2.29.0) updates only the <code>router</code> service's <code>image</code> and <code>group_add</code> in your root <code>docker-compose.yml</code>, with a diff, confirmation and timestamped <code>.bak</code> backup.</p>
 <p><strong>Q: When should I run <code>mcctl upgrade</code>?</strong>
 A: After updating mcctl to a new version via <code>mcctl update</code> or <code>npm update -g @minecraft-docker/mcctl</code>.</p>
 <p><strong>Q: Is <code>mcctl upgrade</code> safe?</strong>
-A: Yes. It only appends new variables and never modifies existing ones. Use <code>--dry-run</code> to preview changes first.</p>
+A: Yes. It only appends new <code>.env</code> variables and never modifies existing ones; the root <code>docker-compose.yml</code> patch is limited to <code>router.image</code> and <code>group_add</code>, is backed up first, and is restored if validation fails. Use <code>--dry-run</code> to preview changes first.</p>
 <p><strong>Q: What is the difference between <code>mcctl update</code> and <code>mcctl upgrade</code>?</strong>
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-2290-2026-10-10---mc-router-1471--compose-upgrade">Version 2.29.0 (2026-10-10) - mc-router 1.47.1 &amp; Compose Upgrade<a class="headerlink" href="#version-2290-2026-10-10---mc-router-1471--compose-upgrade" title="Permanent link">&para;</a></h3>
+<p><strong>Added:</strong>
+- <code>mcctl upgrade</code> patches the root <code>docker-compose.yml</code> <code>router</code> service (<code>image</code> tag + <code>group_add</code> only) with diff/confirm, <code>.bak-&lt;timestamp&gt;</code> backup, validation/restore, and <code>docker compose up -d router</code>. <code>--dry-run</code> = diff only, <code>--non-interactive</code> = apply without asking (#562, PR #569)
+- Console world map <strong>Ore &amp; Block Stats</strong>: KPI cards, block-composition donut chart, category bars (#567, PR #568)</p>
+<p><strong>Changed:</strong>
+- mc-router <code>itzg/mc-router:1.43.1</code> → <code>1.47.1</code>. 1.46+ runs as non-root, so the router service has <code>group_add: ["${DOCKER_GID:-999}"]</code>; <code>mcctl init</code>/<code>mcctl upgrade</code> auto-detect the socket GID (honoring <code>DOCKER_HOST</code>) into <code>.env</code> (#549, PR #559)
+- <code>CF_API_KEY</code> is optional: itzg Java 17+ images embed a CurseForge key; set it only for Java 8 / pre-17 tags or your own key (#561, PR #566)
+- itzg reference docs synced to 2026.9.2 (#548, PR #560)</p>
+<p><strong>Fixed:</strong>
+- BlueMap map confs set <code>sorting</code> (overworld=0, nether=1, end=2) so the map opens on the Overworld; existing worlds apply it on Re-render (#564, PR #565)</p>
+<p><strong>Internal:</strong>
+- CLI and <code>shared</code> tests run in CI; 15 unloadable CLI test files fixed; <code>DIM-1</code>/<code>DIM1</code> fixtures tracked (#555, #570, PRs #558, #571)</p>
 <h3 id="version-2280-2026-10-01---console-bento-layout">Version 2.28.0 (2026-10-01) - Console Bento Layout<a class="headerlink" href="#version-2280-2026-10-01---console-bento-layout" title="Permanent link">&para;</a></h3>
 <p><strong>Changed:</strong>
 - <strong>Bento layout in mcctl-console</strong> - All screens (dashboard, servers list, server detail, server console, worlds, players, backups, routing, audit logs, settings, login/signup, admin users) use a page hero (title, key status, metrics, primary action) followed by bounded panels. No API, permission, navigation, or behavior changes. Dense views (tables, tabs, file browser, terminal) keep their layout inside a panel
@@ -9628,7 +9653,7 @@ A: <code>mcctl update</code> updates the CLI and service packages to newer versi
 </tr>
 <tr>
 <td><strong>CurseForge</strong></td>
-<td>Popular mod hosting platform (requires API key)</td>
+<td>Popular mod hosting platform (CF_API_KEY optional on Java 17+ images)</td>
 </tr>
 <tr>
 <td><strong>Spiget</strong></td>

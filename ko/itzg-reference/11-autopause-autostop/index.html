@@ -2535,12 +2535,6 @@ this as the <code>PAUSE_WHEN_EMPTY_SECONDS</code> environment variable.</p>
 <p>For Minecraft 1.21.2+, use the native <code>PAUSE_WHEN_EMPTY_SECONDS</code> above.
 The container-level AutoPause below is recommended only for older Minecraft versions.</p>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">GraalVM Incompatibility</p>
-<p>As of 2026.2.0, auto-pause is <strong>temporarily disabled</strong> when using GraalVM images
-(<code>java21-graalvm</code>, <code>java17-graalvm</code>). Use standard OpenJDK/HotSpot Java images
-for auto-pause functionality.</p>
-</div>
 <p>Pauses the server process when no players are online.</p>
 <h3 id="enable">Enable<a class="headerlink" href="#enable" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">environment</span><span class="p">:</span>

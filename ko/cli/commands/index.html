@@ -5864,7 +5864,7 @@
 </tr>
 <tr>
 <td><code>--curseforge</code></td>
-<td>CurseForge 사용 (CF_API_KEY 필요)</td>
+<td>CurseForge 사용 (CF_API_KEY는 Java 17+에서 선택 사항)</td>
 </tr>
 <tr>
 <td><code>--spiget</code></td>
@@ -5899,7 +5899,7 @@
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a><span class="c1"># .env 파일에 CF_API_KEY 필요</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a><span class="c1"># Java 17+ 이미지에서는 .env의 CF_API_KEY가 선택 사항</span>
 <a id="__codelineno-144-2" name="__codelineno-144-2" href="#__codelineno-144-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>jei<span class="w"> </span>journeymap
 <a id="__codelineno-144-3" name="__codelineno-144-3" href="#__codelineno-144-3"></a>
 <a id="__codelineno-144-4" name="__codelineno-144-4" href="#__codelineno-144-4"></a><span class="c1"># 인기 모드팩 모드 추가</span>
@@ -5949,7 +5949,7 @@
 <tr>
 <td>CurseForge</td>
 <td><code>CURSEFORGE_FILES</code></td>
-<td>전체 (CF_API_KEY 필요)</td>
+<td>전체 (CF_API_KEY는 Java 17+에서 선택 사항)</td>
 </tr>
 <tr>
 <td>Spiget</td>
@@ -6172,7 +6172,7 @@
 <a id="__codelineno-158-6" name="__codelineno-158-6" href="#__codelineno-158-6"></a>    mcctl mod add myserver sodium lithium
 <a id="__codelineno-158-7" name="__codelineno-158-7" href="#__codelineno-158-7"></a>
 <a id="__codelineno-158-8" name="__codelineno-158-8" href="#__codelineno-158-8"></a>  CurseForge --curseforge
-<a id="__codelineno-158-9" name="__codelineno-158-9" href="#__codelineno-158-9"></a>    Popular mod platform. Requires CF_API_KEY in .env
+<a id="__codelineno-158-9" name="__codelineno-158-9" href="#__codelineno-158-9"></a>    Popular mod platform. CF_API_KEY optional (built into Java 17+ images)
 <a id="__codelineno-158-10" name="__codelineno-158-10" href="#__codelineno-158-10"></a>    Config: CURSEFORGE_FILES
 <a id="__codelineno-158-11" name="__codelineno-158-11" href="#__codelineno-158-11"></a>    mcctl mod add myserver --curseforge jei journeymap
 <a id="__codelineno-158-12" name="__codelineno-158-12" href="#__codelineno-158-12"></a>
@@ -6220,7 +6220,7 @@
 <a id="__codelineno-160-11" name="__codelineno-160-11" href="#__codelineno-160-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>plugin-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>plugin-server
 </code></pre></div>
 <h4 id="curseforge-설정">CurseForge 설정<a class="headerlink" href="#curseforge-설정" title="Permanent link">&para;</a></h4>
-<p>CurseForge 모드를 사용하려면 API 키가 필요합니다:</p>
+<p>Java 17+ 이미지는 키가 내장되어 있으며, java8/17 미만 태그 또는 자체 키를 사용할 때만 CF_API_KEY를 설정합니다. 자체 키를 설정하려면:</p>
 <ol>
 <li><a href="https://console.curseforge.com/">CurseForge for Studios</a>에서 API 키 발급</li>
 <li><code>.env</code> 파일에 추가:</li>

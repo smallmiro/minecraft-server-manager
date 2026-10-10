@@ -3142,9 +3142,9 @@
 <h2 id="curseforge-모드팩">CurseForge 모드팩<a class="headerlink" href="#curseforge-모드팩" title="Permanent link">&para;</a></h2>
 <p>자동 업그레이드 지원과 함께 <a href="https://www.curseforge.com/minecraft/modpacks">CurseForge</a>에서 모드팩을 설치합니다.</p>
 <h3 id="사전-요구사항">사전 요구사항<a class="headerlink" href="#사전-요구사항" title="Permanent link">&para;</a></h3>
-<div class="admonition warning">
-<p class="admonition-title">API 키 필수</p>
-<p>CurseForge는 API 키가 필요합니다. 설정 지침은 <a href="../curseforge/#api-키-발급">CurseForge 가이드</a>를 참조하세요.</p>
+<div class="admonition note">
+<p class="admonition-title">API 키 선택 사항</p>
+<p>Java 17+ 이미지는 키가 내장되어 있으며, java8/17 미만 태그 또는 자체 키를 사용할 때만 CF_API_KEY를 설정합니다. 설정 지침은 <a href="../curseforge/#api-키-발급">CurseForge 가이드</a>를 참조하세요.</p>
 </div>
 <h3 id="mcctl-빠른-시작_1">mcctl 빠른 시작<a class="headerlink" href="#mcctl-빠른-시작_1" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 서버 생성 (CurseForge 모드팩의 경우 TYPE이 자동 설정됨)</span>
@@ -3208,7 +3208,7 @@
 <tbody>
 <tr>
 <td><code>CF_API_KEY</code></td>
-<td>CurseForge API 키 (필수, <code>.env</code>에 설정)</td>
+<td>CurseForge API 키 (선택 사항: Java 17+ 이미지는 내장, java8/17 미만 태그 또는 자체 키 사용 시에만 <code>.env</code>에 설정)</td>
 </tr>
 <tr>
 <td><code>CF_PAGE_URL</code></td>
@@ -3533,7 +3533,7 @@
 <tr>
 <td>API 키</td>
 <td>아니오</td>
-<td>예</td>
+<td>선택 사항 (Java 17+ 내장)</td>
 <td>아니오</td>
 <td>아니오</td>
 <td>아니오</td>

@@ -3827,7 +3827,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># 메모리 설정 (모드팩은 더 많이 필요)</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>MEMORY<span class="w"> </span>8G
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># 모드 추가 (.env에 CF_API_KEY 필요)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># 모드 추가 (Java 17+ 이미지에서는 CF_API_KEY 선택 사항)</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>myserver<span class="w"> </span>CURSEFORGE_FILES<span class="w"> </span><span class="s2">"jei,journeymap,create"</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># 또는 특정 Forge 버전</span>
@@ -4228,7 +4228,7 @@
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>MEMORY<span class="w"> </span>8G
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
 <a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="c1"># 모드 추가 (.env에 CF_API_KEY 필요)</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="c1"># 모드 추가 (Java 17+ 이미지에서는 CF_API_KEY 선택 사항)</span>
 <a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>mcctl<span class="w"> </span>config<span class="w"> </span>modded<span class="w"> </span>CURSEFORGE_FILES<span class="w"> </span><span class="s2">"create,jei,journeymap"</span>
 <a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>
 <a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a><span class="c1"># 적용을 위해 재시작</span>

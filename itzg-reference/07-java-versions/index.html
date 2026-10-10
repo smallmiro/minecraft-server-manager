@@ -2250,10 +2250,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#graalvm-variants-deprecated" class="md-nav__link">
+  <a href="#graalvm-variants" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GraalVM Variants (Deprecated)
+        GraalVM Variants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#java-8-and-curseforge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Java 8 and CurseForge
       
     </span>
   </a>
@@ -2359,14 +2370,14 @@
 <td><code>latest</code>, <code>stable</code></td>
 <td>Java 25</td>
 <td>Ubuntu</td>
-<td>amd64, arm64</td>
+<td>amd64, arm64, riscv64</td>
 <td>Default; <code>stable</code> points to most recent release</td>
 </tr>
 <tr>
 <td><code>java25</code></td>
 <td>Java 25</td>
 <td>Ubuntu</td>
-<td>amd64, arm64</td>
+<td>amd64, arm64, riscv64</td>
 <td></td>
 </tr>
 <tr>
@@ -2405,10 +2416,31 @@
 <td></td>
 </tr>
 <tr>
+<td><code>java25-graalvm</code></td>
+<td>Java 25</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+<td>Oracle GraalVM (see notes)</td>
+</tr>
+<tr>
+<td><code>java21-graalvm</code></td>
+<td>Java 21</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+<td>Oracle GraalVM (see notes)</td>
+</tr>
+<tr>
+<td><code>java17-graalvm</code></td>
+<td>Java 17</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+<td>Oracle GraalVM (see notes)</td>
+</tr>
+<tr>
 <td><code>java17</code></td>
 <td>Java 17</td>
 <td>Ubuntu</td>
-<td>amd64, arm64, armv7</td>
+<td>amd64, arm64</td>
 <td></td>
 </tr>
 <tr>
@@ -2447,8 +2479,8 @@ production-ready image.</p>
 <ul>
 <li><code>java23</code>, <code>java23-alpine</code>, <code>java23-jdk</code> -- Use <code>java25</code> instead</li>
 <li><code>java24</code>, <code>java24-graalvm</code> -- Use <code>java25</code> instead</li>
+<li><code>java20</code>, <code>java20-graalvm</code>, <code>java20-alpine</code>, <code>java17-graalvm-ce</code>, <code>java17-openj9</code> -- no longer updated</li>
 <li><code>java17-alpine</code> -- Use <code>java17</code> or <code>java21-alpine</code> instead</li>
-<li><code>java25-graalvm</code>, <code>java21-graalvm</code>, <code>java17-graalvm</code> -- <strong>All GraalVM tags are deprecated</strong> (see below)</li>
 </ul>
 </div>
 <h3 id="programmatic-access">Programmatic Access<a class="headerlink" href="#programmatic-access" title="Permanent link">&para;</a></h3>
@@ -2583,13 +2615,13 @@ production-ready image.</p>
 <td><code>latest</code>, <code>stable</code></td>
 <td>25</td>
 <td>Ubuntu</td>
-<td>amd64, arm64</td>
+<td>amd64, arm64, riscv64</td>
 </tr>
 <tr>
 <td><code>java25</code></td>
 <td>25</td>
 <td>Ubuntu</td>
-<td>amd64, arm64</td>
+<td>amd64, arm64, riscv64</td>
 </tr>
 <tr>
 <td><code>java25-alpine</code></td>
@@ -2622,10 +2654,28 @@ production-ready image.</p>
 <td>amd64, arm64</td>
 </tr>
 <tr>
+<td><code>java25-graalvm</code></td>
+<td>25</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>java21-graalvm</code></td>
+<td>21</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
+<td><code>java17-graalvm</code></td>
+<td>17</td>
+<td>Oracle Linux</td>
+<td>amd64, arm64</td>
+</tr>
+<tr>
 <td><code>java17</code></td>
 <td>17</td>
 <td>Ubuntu</td>
-<td>amd64, arm64, armv7</td>
+<td>amd64, arm64</td>
 </tr>
 <tr>
 <td><code>java16</code></td>
@@ -2649,16 +2699,22 @@ production-ready image.</p>
 </table>
 <h3 id="arm-devices-raspberry-pi-etc">ARM Devices (Raspberry Pi, etc.)<a class="headerlink" href="#arm-devices-raspberry-pi-etc" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java17</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># java17 supports armv7 (Raspberry Pi 3/4 32-bit)</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># java21+ supports arm64 only (Raspberry Pi 4/5 64-bit)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># armv7 (32-bit Raspberry Pi) is supported only by java16, java11 and java8</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># java17+ support amd64/arm64 (Raspberry Pi 4/5 64-bit)</span>
 </code></pre></div>
-<h2 id="graalvm-variants-deprecated">GraalVM Variants (Deprecated)<a class="headerlink" href="#graalvm-variants-deprecated" title="Permanent link">&para;</a></h2>
-<div class="admonition danger">
-<p class="admonition-title">All GraalVM Tags Are Deprecated</p>
-<p>The GraalVM image variants (<code>java25-graalvm</code>, <code>java21-graalvm</code>, <code>java17-graalvm</code>)
-are <strong>all deprecated</strong> and will be removed in a future release.</p>
-<p><strong>Migration</strong>: Switch to the standard OpenJDK-based tags (<code>java25</code>, <code>java21</code>, <code>java17</code>).</p>
-<p>Previously, GraalVM images were also incompatible with Auto-Pause (<code>ENABLE_AUTOPAUSE</code>).</p>
+<h2 id="graalvm-variants">GraalVM Variants<a class="headerlink" href="#graalvm-variants" title="Permanent link">&para;</a></h2>
+<p>The Oracle GraalVM variants (<code>java25-graalvm</code>, <code>java21-graalvm</code>, <code>java17-graalvm</code>) are listed as supported tags in the official docs (the variants were restored in release 2026.8.0).</p>
+<div class="admonition note">
+<p class="admonition-title">GraalVM notes (from official docs)</p>
+<ul>
+<li>Based on the Oracle GraalVM container images, which as of JDK 17 are under the GraalVM Free License.</li>
+<li>These images use Oracle Linux, so the Forge installer will not work (zlib-ng). Use another image for the initial installation and Forge version upgrades.</li>
+</ul>
+</div>
+<h2 id="java-8-and-curseforge">Java 8 and CurseForge<a class="headerlink" href="#java-8-and-curseforge" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Java 8 is in maintenance mode</p>
+<p><code>java8</code>, <code>java8-jdk</code>, and other pre-Java 17 tags (<code>java11</code>, <code>java16</code>) pin an older <code>mc-image-helper</code> that predates the built-in CurseForge API key. <code>AUTO_CURSEFORGE</code> and <code>CURSEFORGE_FILES</code> on those images require you to set <code>CF_API_KEY</code> yourself. Java 17+ images include a key.</p>
 </div>
 <h2 id="version-selection-guide">Version Selection Guide<a class="headerlink" href="#version-selection-guide" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>Minecraft 1.21+ --&gt; java21 or latest (Java 25)

@@ -2692,7 +2692,8 @@
 <h3 id="curseforge-api-error">CurseForge API Error<a class="headerlink" href="#curseforge-api-error" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>CF_API_KEY is required
 </code></pre></div>
-<p><strong>Solution:</strong>
+<p>A CurseForge API key is built into the image on Java 17 and newer (since 2026.7.1), so this error is expected only on <code>java8</code> / pre-Java 17 tags.</p>
+<p><strong>Solution:</strong> On those tags, set your own key:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nt">environment</span><span class="p">:</span>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">  </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">"${CF_API_KEY}"</span>
 </code></pre></div></p>

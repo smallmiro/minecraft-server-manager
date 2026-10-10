@@ -5864,7 +5864,7 @@ This migration command is for existing servers created before this change.</p>
 </tr>
 <tr>
 <td><code>--curseforge</code></td>
-<td>Use CurseForge (requires CF_API_KEY)</td>
+<td>Use CurseForge (CF_API_KEY optional on Java 17+)</td>
 </tr>
 <tr>
 <td><code>--spiget</code></td>
@@ -5899,7 +5899,7 @@ This migration command is for existing servers created before this change.</p>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a><span class="c1"># Requires CF_API_KEY in .env file</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a><span class="c1"># CF_API_KEY in .env is optional on Java 17+ images</span>
 <a id="__codelineno-144-2" name="__codelineno-144-2" href="#__codelineno-144-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>jei<span class="w"> </span>journeymap
 <a id="__codelineno-144-3" name="__codelineno-144-3" href="#__codelineno-144-3"></a>
 <a id="__codelineno-144-4" name="__codelineno-144-4" href="#__codelineno-144-4"></a><span class="c1"># Add popular modpack mods</span>
@@ -5949,7 +5949,7 @@ This migration command is for existing servers created before this change.</p>
 <tr>
 <td>CurseForge</td>
 <td><code>CURSEFORGE_FILES</code></td>
-<td>All (requires CF_API_KEY)</td>
+<td>All (CF_API_KEY optional on Java 17+)</td>
 </tr>
 <tr>
 <td>Spiget</td>
@@ -6172,7 +6172,7 @@ This migration command is for existing servers created before this change.</p>
 <a id="__codelineno-158-6" name="__codelineno-158-6" href="#__codelineno-158-6"></a>    mcctl mod add myserver sodium lithium
 <a id="__codelineno-158-7" name="__codelineno-158-7" href="#__codelineno-158-7"></a>
 <a id="__codelineno-158-8" name="__codelineno-158-8" href="#__codelineno-158-8"></a>  CurseForge --curseforge
-<a id="__codelineno-158-9" name="__codelineno-158-9" href="#__codelineno-158-9"></a>    Popular mod platform. Requires CF_API_KEY in .env
+<a id="__codelineno-158-9" name="__codelineno-158-9" href="#__codelineno-158-9"></a>    Popular mod platform. CF_API_KEY optional (built into Java 17+ images)
 <a id="__codelineno-158-10" name="__codelineno-158-10" href="#__codelineno-158-10"></a>    Config: CURSEFORGE_FILES
 <a id="__codelineno-158-11" name="__codelineno-158-11" href="#__codelineno-158-11"></a>    mcctl mod add myserver --curseforge jei journeymap
 <a id="__codelineno-158-12" name="__codelineno-158-12" href="#__codelineno-158-12"></a>
@@ -6220,7 +6220,7 @@ This migration command is for existing servers created before this change.</p>
 <a id="__codelineno-160-11" name="__codelineno-160-11" href="#__codelineno-160-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>plugin-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>plugin-server
 </code></pre></div>
 <h4 id="curseforge-configuration">CurseForge Configuration<a class="headerlink" href="#curseforge-configuration" title="Permanent link">&para;</a></h4>
-<p>To use CurseForge mods, you need an API key:</p>
+<p>Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key. To set your own key:</p>
 <ol>
 <li>Get an API key from <a href="https://console.curseforge.com/">CurseForge for Studios</a></li>
 <li>Add to your <code>.env</code> file:</li>

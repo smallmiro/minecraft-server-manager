@@ -2599,6 +2599,10 @@
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nt">VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"1.20.4"</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="nt">NEOFORGE_VERSION</span><span class="p">:</span><span class="w"> </span><span class="s">"latest"</span><span class="w">  </span><span class="c1"># also supports "beta"</span>
 </code></pre></div>
+<ul>
+<li><code>NEOFORGE_VERSION</code> can be a specific version, <code>latest</code>, or <code>beta</code>. By default the latest non-beta NeoForge version available for the requested Minecraft version is used.</li>
+<li>Specific version example: <code>-e TYPE=NEOFORGE -e VERSION=1.20.1 -e NEOFORGE_VERSION=47.1.79</code></li>
+</ul>
 <hr />
 <h2 id="fabric">Fabric<a class="headerlink" href="#fabric" title="Permanent link">&para;</a></h2>
 <p>Lightweight mod loader:</p>
@@ -2738,7 +2742,35 @@
 </tr>
 <tr>
 <td><code>CF_API_KEY</code></td>
-<td>CurseForge API key (<strong>required</strong>)</td>
+<td>CurseForge API key. Built into the image on Java 17+ (since 2026.7.1); you may still supply your own. <strong>Required</strong> on <code>java8</code> and other pre-Java 17 tags</td>
+</tr>
+<tr>
+<td><code>CF_API_KEY_FILE</code></td>
+<td>Path to a file in the container containing the API key (e.g., Docker secret)</td>
+</tr>
+<tr>
+<td><code>CF_FILENAME_MATCHER</code></td>
+<td>Substring, or regex surrounded by <code>/</code>, to select a modpack file by filename</td>
+</tr>
+<tr>
+<td><code>CF_IGNORE_MISSING_FILES</code></td>
+<td>Comma/newline-delimited list or glob of files to ignore when detecting missing files (avoids reinstall)</td>
+</tr>
+<tr>
+<td><code>CF_PARALLEL_DOWNLOADS</code></td>
+<td>Parallel mod downloads (default <code>4</code>)</td>
+</tr>
+<tr>
+<td><code>CF_OVERRIDES_SKIP_EXISTING</code></td>
+<td>Skip overrides files that already exist in <code>/data</code> (default <code>false</code>; world data is always skipped)</td>
+</tr>
+<tr>
+<td><code>CF_FORCE_REINSTALL_MODLOADER</code></td>
+<td>Force reinstall of the modpack's mod loader (default <code>false</code>)</td>
+</tr>
+<tr>
+<td><code>REMOVE_OLD_CONFIGS</code></td>
+<td>Clear old configs before modpack install (see <a href="../08-mods-and-plugins/">Mods and Plugins</a>)</td>
 </tr>
 <tr>
 <td><code>CF_PAGE_URL</code></td>
@@ -2765,9 +2797,12 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nt">environment</span><span class="p">:</span>
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">EULA</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span><span class="nt">TYPE</span><span class="p">:</span><span class="w"> </span><span class="s">"AUTO_CURSEFORGE"</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">"${CF_API_KEY}"</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">  </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">"${CF_API_KEY}"</span><span class="w">  </span><span class="c1"># optional on Java 17+ images (built-in key); required on java8</span>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">  </span><span class="nt">CF_SLUG</span><span class="p">:</span><span class="w"> </span><span class="s">"all-the-mods-9"</span>
 </code></pre></div>
+<blockquote>
+<p><strong>Note</strong>: Since 2026.7.1 the image includes a CurseForge API key on Java 17 and newer. The <code>java8</code> image (and other pre-Java 17 tags) does not; set <code>CF_API_KEY</code> yourself or install the pack on a Java 17+ image first.</p>
+</blockquote>
 <h3 id="modrinth-modpacks">Modrinth Modpacks<a class="headerlink" href="#modrinth-modpacks" title="Permanent link">&para;</a></h3>
 <table>
 <thead>

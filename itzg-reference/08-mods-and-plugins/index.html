@@ -2195,10 +2195,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#required-setup" class="md-nav__link">
+  <a href="#api-key" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Required Setup
+        API Key
       
     </span>
   </a>
@@ -2440,6 +2440,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#removing-old-configs-on-modpack-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing Old Configs on Modpack Update
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2686,8 +2697,8 @@
 </table>
 <hr />
 <h2 id="download-from-curseforge">Download from CurseForge<a class="headerlink" href="#download-from-curseforge" title="Permanent link">&para;</a></h2>
-<h3 id="required-setup">Required Setup<a class="headerlink" href="#required-setup" title="Permanent link">&para;</a></h3>
-<p>CurseForge API key is required:</p>
+<h3 id="api-key">API Key<a class="headerlink" href="#api-key" title="Permanent link">&para;</a></h3>
+<p>A CurseForge API key is included by the image on Java 17 and newer (since 2026.7.1); you can always supply your own. The <code>java8</code> image (and other pre-Java 17 tags) does <strong>not</strong> include a key, so <code>CF_API_KEY</code> must be set there:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">environment</span><span class="p">:</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">CF_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">"${CF_API_KEY}"</span>
 </code></pre></div>
@@ -2711,8 +2722,13 @@
 <tbody>
 <tr>
 <td><code>CF_API_KEY</code></td>
+<td>(built-in on Java 17+)</td>
+<td>CurseForge API key. Required only on <code>java8</code> / pre-Java 17 tags</td>
+</tr>
+<tr>
+<td><code>CF_API_KEY_FILE</code></td>
 <td></td>
-<td><strong>Required</strong>. CurseForge API key</td>
+<td>Path to a file containing the API key</td>
 </tr>
 <tr>
 <td><code>CF_MOD_LOADER_VERSION</code></td>
@@ -2871,6 +2887,49 @@
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">  </span><span class="nt">MODS</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span><span class="no">https://example.com/custom-mod.jar</span>
 <a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="w">  </span><span class="nt">MODS_FILE</span><span class="p">:</span><span class="w"> </span><span class="s">"/data/extra-mods.txt"</span>
+</code></pre></div>
+<hr />
+<h2 id="removing-old-configs-on-modpack-update">Removing Old Configs on Modpack Update<a class="headerlink" href="#removing-old-configs-on-modpack-update" title="Permanent link">&para;</a></h2>
+<p>Set <code>REMOVE_OLD_CONFIGS=TRUE</code> to remove all files in <code>/data/config</code> before a modpack is downloaded and unpacked (added 2026.9.2). Useful when a modpack update would otherwise override locally customized configs.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>REMOVE_OLD_CONFIGS</code></td>
+<td><code>false</code></td>
+<td>Enable removal before modpack install</td>
+</tr>
+<tr>
+<td><code>REMOVE_OLD_CONFIGS_INCLUDE</code></td>
+<td><code>*</code></td>
+<td>Comma-separated file glob patterns to remove</td>
+</tr>
+<tr>
+<td><code>REMOVE_OLD_CONFIGS_EXCLUDE</code></td>
+<td></td>
+<td>Comma-separated file glob patterns to keep</td>
+</tr>
+<tr>
+<td><code>REMOVE_OLD_CONFIGS_DEPTH</code></td>
+<td><code>16</code></td>
+<td>Directory depth</td>
+</tr>
+<tr>
+<td><code>CONFIG_OUT_DIR</code></td>
+<td><code>/data/config</code></td>
+<td>Target directory</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">  </span><span class="nt">REMOVE_OLD_CONFIGS</span><span class="p">:</span><span class="w"> </span><span class="s">"TRUE"</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">  </span><span class="nt">REMOVE_OLD_CONFIGS_EXCLUDE</span><span class="p">:</span><span class="w"> </span><span class="s">"*.toml"</span>
 </code></pre></div>
 
 

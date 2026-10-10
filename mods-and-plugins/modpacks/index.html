@@ -3142,9 +3142,9 @@
 <h2 id="curseforge-modpacks">CurseForge Modpacks<a class="headerlink" href="#curseforge-modpacks" title="Permanent link">&para;</a></h2>
 <p>Install modpacks from <a href="https://www.curseforge.com/minecraft/modpacks">CurseForge</a> with automatic upgrade support.</p>
 <h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
-<div class="admonition warning">
-<p class="admonition-title">API Key Required</p>
-<p>CurseForge requires an API key. See <a href="../curseforge/#getting-api-key">CurseForge Guide</a> for setup instructions.</p>
+<div class="admonition note">
+<p class="admonition-title">API Key Optional</p>
+<p>Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key. See <a href="../curseforge/#getting-api-key">CurseForge Guide</a> for setup instructions.</p>
 </div>
 <h3 id="quick-start-with-mcctl_1">Quick Start with mcctl<a class="headerlink" href="#quick-start-with-mcctl_1" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Create server (TYPE is set automatically for CurseForge modpacks)</span>
@@ -3208,7 +3208,7 @@
 <tbody>
 <tr>
 <td><code>CF_API_KEY</code></td>
-<td>CurseForge API key (required, set in <code>.env</code>)</td>
+<td>CurseForge API key (optional: built in for Java 17+ images; set only for java8/pre-17 tags or your own key)</td>
 </tr>
 <tr>
 <td><code>CF_PAGE_URL</code></td>
@@ -3532,7 +3532,7 @@ modpack section. The values are written to <code>MODRINTH_EXCLUDE_FILES</code>
 <tr>
 <td>API Key</td>
 <td>No</td>
-<td>Yes</td>
+<td>Optional (built in for Java 17+)</td>
 <td>No</td>
 <td>No</td>
 <td>No</td>
