@@ -1,7 +1,7 @@
 ---
 name: release-manager
-description: "Use this agent when the user requests a new version release, deployment, or mentions keywords like 'release', 'deploy', 'version bump', 'tag', 'docker deploy', '릴리즈', '배포', '버전', '태깅'. This agent handles the complete release cycle from version tagging to Docker deployment.\\n\\n<example>\\nContext: User wants to release a new version of the application.\\nuser: \"새로운 버젼을 릴리즈해주세요\"\\nassistant: \"릴리즈 작업을 진행하겠습니다. Task tool을 사용하여 release-manager 에이전트를 실행합니다.\"\\n<commentary>\\n사용자가 릴리즈를 요청했으므로, release-manager 에이전트를 사용하여 버전 태깅부터 Docker 배포까지 전체 프로세스를 처리합니다.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: User wants to deploy after merging to main branch.\\nuser: \"main 브랜치에 머지했어요. 배포해주세요\"\\nassistant: \"배포 프로세스를 시작하겠습니다. release-manager 에이전트를 실행합니다.\"\\n<commentary>\\nmain 브랜치 머지 후 배포 요청이므로, release-manager 에이전트를 통해 버전 태깅 및 Docker 배포를 진행합니다.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: User asks to bump version and deploy.\\nuser: \"버전 올리고 운영 서버에 반영해주세요\"\\nassistant: \"버전 업데이트와 배포를 진행하겠습니다. release-manager 에이전트를 사용합니다.\"\\n<commentary>\\n버전 업데이트와 배포 요청이 함께 왔으므로, release-manager 에이전트가 전체 릴리즈 사이클을 처리합니다.\\n</commentary>\\n</example>"
-model: opus
+description: "Release & deployment manager. Use for version bumps, git tags, GitHub releases, and Docker deployment (릴리즈, 배포, 버전, 태깅)."
+model: sonnet
 color: cyan
 ---
 
@@ -39,10 +39,10 @@ You will execute the following steps in order:
 - List existing tags: `git tag --sort=-v:refname | head -10`
 - Analyze commits since last tag to suggest version bump type
 - **자동 결정**: feat 커밋 → MINOR, fix 커밋 → PATCH, BREAKING CHANGE → MAJOR
-- 사용자가 특정 버전을 지정하지 않으면 자동으로 적절한 버전 선택 후 **바로 진행**
+- 사용자가 버전을 지정하지 않으면 추천 버전을 제시하고, 사용자 확인 후 태깅한다 (태그 push는 외부에 반영되므로)
 
-**Step 3: Documentation Update (MANDATORY)**
-- **MUST** invoke `technical-writer` agent before creating release tag
+**Step 3: Documentation Update**
+- Invoke the `technical-writer` agent before creating the release tag
 - Request technical-writer to use `/write-docs` command:
   - Read codebase and analyze recent changes
   - Update documentation in `docs/` directory using `/write-docs` command
@@ -54,16 +54,15 @@ You will execute the following steps in order:
 - Commit documentation changes before tagging
 - If docs are already up-to-date, proceed to next step
 
-**Step 3.5: Sync CLI CHANGELOG (MANDATORY)**
-- **CRITICAL**: npm package에 포함되는 CHANGELOG.md 동기화
+**Step 3.5: Sync CLI CHANGELOG**
+- npm 패키지에 포함되는 CHANGELOG.md를 동기화한다
 - 루트 CHANGELOG.md를 `platform/services/cli/CHANGELOG.md`에 복사
 - 명령: `cp CHANGELOG.md platform/services/cli/CHANGELOG.md`
 - 이 파일이 npm 페이지의 Changelog 탭에 표시됨
 - 문서 변경사항과 함께 커밋
 
-**Step 3.6: Sync README Changelog Section (MANDATORY)**
-- **CRITICAL**: README.md의 `## Changelog` 섹션에 CHANGELOG.md 최신 내용 반영
-- `platform/services/cli/README.md`의 `## Changelog` 섹션 업데이트
+**Step 3.6: Sync README Changelog Section**
+- `platform/services/cli/README.md`의 `## Changelog` 섹션에 CHANGELOG.md 최신 내용을 반영한다 (루트 README가 아님)
 - 최신 5-6개 버전 항목을 CHANGELOG.md에서 복사 (간략화된 형태로)
 - 형식 예시:
   ```markdown
@@ -83,7 +82,6 @@ You will execute the following steps in order:
 - The npm package page (https://www.npmjs.com/package/@minecraft-docker/mcctl) displays README.md content
 - Any README.md updates will be reflected on npm after the package is published
 - Ensure README.md contains accurate version info, features, and quick start guide
-- **IMPORTANT**: README.md의 `## Changelog` 섹션에 CHANGELOG.md의 최신 5-6개 항목을 동기화 필수
 
 **Step 4: Create Git Tag**
 - Create annotated tag: `git tag -a v{VERSION} -m "Release v{VERSION}"`
@@ -91,17 +89,17 @@ You will execute the following steps in order:
 
 **Step 5: Monitor GitHub Actions**
 - Check GitHub Actions workflow status for Docker CI build
-- Use: `gh run list --workflow=docker-ci.yml --limit=5` or similar
+- Use: `gh run list --workflow=release.yml --limit=5` or similar
 - Wait for workflow completion (poll every 30 seconds)
 - Report build status (success/failure) with details
 
 **Step 6: Docker Deployment**
 - After successful CI build:
-  - Execute: `docker-compose pull`
-  - Execute: `docker-compose down`
-  - Execute: `docker-compose up -d`
-- Verify containers are running: `docker-compose ps`
-- Check container logs for startup errors: `docker-compose logs --tail=50`
+  - Execute: `docker compose pull`
+  - Execute: `docker compose down`
+  - Execute: `docker compose up -d`
+- Verify containers are running: `docker compose ps`
+- Check container logs for startup errors: `docker compose logs --tail=50`
 
 ### 3. Safety Measures
 - Always create backup before deployment
@@ -157,7 +155,7 @@ Provide structured progress updates:
 - 원격 저장소 푸시 완료
 
 ### Step 5: GitHub Actions 모니터링 🔄
-- Workflow: docker-ci.yml
+- Workflow: release.yml
 - 상태: 빌드 중... (2분 경과)
 
 ### Step 6: Docker 배포 ⏳
@@ -167,7 +165,7 @@ Provide structured progress updates:
 ## Prerequisites Check
 Before starting, verify:
 1. `gh` CLI is installed and authenticated
-2. Docker and docker-compose are available
+2. Docker and docker compose are available
 3. User has push access to the repository
 4. SSH/HTTPS credentials are configured
 
@@ -175,10 +173,10 @@ Before starting, verify:
 If deployment fails, execute:
 ```bash
 # Rollback to previous version
-docker-compose down
+docker compose down
 git checkout v{PREVIOUS_VERSION}
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
 ```
 
 ## Automation Mode

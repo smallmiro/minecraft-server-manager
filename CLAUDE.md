@@ -28,6 +28,7 @@ This project is a DevOps project for building and operating multiple Minecraft J
 
 | Command | Description |
 |---------|-------------|
+| `/plan-work` | 작업 착수 전 계획 수립 (orchestrator-agent의 필수 선행 단계, 실행은 `/work`) |
 | `/work` | Execute development work based on GitHub Issues/Milestones |
 | `/update-docs` | Update docs/itzg-reference/ from official documentation |
 | `/sync-docs` | Sync project documentation (CLAUDE.md, README.md) with codebase |
@@ -122,11 +123,11 @@ For full CLI reference, see [docs/cli/commands.md](docs/cli/commands.md).
 
 ## Development Philosophy
 
-### Mandatory Development Practices
+### Development Practices
 
-> **IMPORTANT**: The following practices are **MANDATORY**, not optional. All code contributions MUST follow these principles.
+> 아래 방식은 모든 코드 기여에 적용한다. TDD는 회귀를 막고, Tidy First는 리뷰와 롤백 단위를 깨끗하게 유지하기 위해서다.
 
-#### Required Practices (Non-Negotiable)
+#### Required Practices
 
 | Practice | Description | Enforcement |
 |----------|-------------|-------------|
@@ -136,14 +137,14 @@ For full CLI reference, see [docs/cli/commands.md](docs/cli/commands.md).
 | **Clean Architecture** | Dependency inversion, use cases, ports/adapters | Business logic independent of frameworks |
 | **Hexagonal Architecture** | Ports & Adapters pattern | All external dependencies behind interfaces |
 
-#### TDD is NOT Optional
+#### TDD
 
 ```
 ❌ WRONG: Write code first, add tests later (or skip tests)
 ✅ RIGHT: Write failing test → Write minimal code → Refactor
 ```
 
-Every new command, feature, or bug fix MUST follow the TDD cycle:
+Every new command, feature, or bug fix follows the TDD cycle:
 1. **Red**: Write a failing test that defines the expected behavior
 2. **Green**: Write the minimum code to make the test pass
 3. **Refactor**: Clean up while keeping tests green
@@ -179,8 +180,8 @@ All TypeScript code MUST follow this layered architecture:
 This project follows **XP (Extreme Programming)** practices as the core development methodology.
 
 **Core Practices**:
-- **TDD (Test-Driven Development)**: Red → Green → Refactor cycle **(MANDATORY)**
-- **Tidy First**: Never mix structural and behavioral changes **(MANDATORY)**
+- **TDD (Test-Driven Development)**: Red → Green → Refactor cycle (see [TDD](#tdd))
+- **Tidy First**: Never mix structural and behavioral changes (see [Tidy First](#tidy-first))
 - **Pair Programming**: For complex features and architecture decisions
 - **Continuous Integration**: All PRs must pass lint, type-check, test, build
 - **Small Releases**: Frequent, incremental deployments
@@ -206,7 +207,7 @@ All features are implemented via CLI first, with Web Management UI available.
 
 ### CLI Architecture
 
-The CLI uses **Hexagonal Architecture** (Ports & Adapters) with **Clean Architecture** principles. This is **MANDATORY** for all CLI code.
+The CLI uses **Hexagonal Architecture** (Ports & Adapters) with **Clean Architecture** principles. Apply it to all CLI code.
 
 See [docs/development/cli-architecture.md](docs/development/cli-architecture.md) for details.
 
@@ -214,7 +215,7 @@ See [docs/development/cli-architecture.md](docs/development/cli-architecture.md)
 
 This project uses a **Multi-Agent Collaboration** system where specialized agents are responsible for different modules.
 
-> **MANDATORY**: 모든 작업은 반드시 **Orchestrator Agent**를 통해 시작해야 합니다. 사용자의 요청을 직접 처리하지 말고, 먼저 `orchestrator-agent`로 작업을 접수하여 적절한 전문 에이전트에게 분석/구현을 위임하세요.
+> 모든 작업은 **Orchestrator Agent**를 통해 시작합니다. 사용자의 요청을 직접 처리하지 말고, 먼저 `orchestrator-agent`로 작업을 접수하여 적절한 전문 에이전트에게 분석/구현을 위임하세요.
 
 | Agent | Module | Role |
 |-------|--------|------|
@@ -243,6 +244,15 @@ This project uses a **Multi-Agent Collaboration** system where specialized agent
 
 See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) and [`.claude/agents/orchestrator-agent.md`](.claude/agents/orchestrator-agent.md) for the complete collaboration guide.
 
+#### Model Assignment
+
+모델은 버전 없는 별칭(`opus`, `sonnet`)만 쓴다. 새 모델이 나와도 파일을 고치지 않기 위해서다.
+
+| 모델 | 대상 | 이유 |
+|------|------|------|
+| `opus` | orchestrator-agent, core-agent, `/plan-work`, `/build-kb` | 작업 분해, 도메인 설계, 대규모 코드 분석 |
+| `sonnet` | backend/cli/frontend/devops-agent, release-manager, technical-writer, `/work`, `/sync-docs`, `/write-docs`, `/update-docs` | 범위가 정해진 구현, 절차형 작업, 문서 작성 |
+
 ### Git-Flow Workflow
 
 This project follows **Git-Flow** branching strategy with **Semantic Versioning**.
@@ -260,14 +270,14 @@ This project follows **Git-Flow** branching strategy with **Semantic Versioning*
 
 <body>
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
-#### TDD (Test-Driven Development) - MANDATORY
+#### TDD (Test-Driven Development)
 
-> **This is NOT optional.** Every feature, bug fix, or enhancement MUST follow TDD.
+Every feature, bug fix, or enhancement follows TDD.
 
 Follow the **Red → Green → Refactor** cycle:
 1. **Red**: Write a failing test first
@@ -288,9 +298,9 @@ pnpm test -- --watch src/commands/newcmd.test.ts
 git commit -m "feat(cli): add newcmd command (#123)"
 ```
 
-#### Tidy First - MANDATORY
+#### Tidy First
 
-> **This is NOT optional.** Structural and behavioral changes MUST be in separate commits.
+Structural and behavioral changes go in separate commits.
 
 **Never mix structural and behavioral changes in the same commit.**
 
@@ -325,9 +335,9 @@ Use `task.md` (gitignored) for local work-in-progress tracking:
 
 See [docs/development/git-workflow.md](docs/development/git-workflow.md) for complete details.
 
-#### Issue-Driven Development Workflow - MANDATORY
+#### Issue-Driven Development Workflow
 
-> **IMPORTANT**: 이 워크플로우는 **필수**입니다. 모든 개발 작업(버그 수정, 새 기능, 개선, 리팩토링)은 반드시 이 프로세스를 따릅니다. **develop 브랜치에서 직접 코드를 수정하는 것은 금지됩니다.**
+> 이 워크플로우는 모든 개발 작업(버그 수정, 새 기능, 개선, 리팩토링)은 이 프로세스를 따릅니다. **develop 브랜치에서 직접 코드를 수정하는 것은 금지됩니다.**
 
 ```
 ❌ WRONG: 문제 발견 → 바로 코드 수정 → 커밋

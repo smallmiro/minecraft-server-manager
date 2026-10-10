@@ -1,3 +1,7 @@
+---
+model: opus
+---
+
 # Work Planning - 업무 계획 수립
 
 이 커맨드는 전체 업무, 마일스톤, 이슈 단위로 업무 계획을 수립합니다.
@@ -6,10 +10,10 @@
 ## Usage
 
 ```bash
-/project:plan-work                           # 대화 컨텍스트 기반 계획 수립
-/project:plan-work --issue <number>          # 단일 이슈 작업 계획
-/project:plan-work --milestone <number>      # 마일스톤 전체 작업 계획
-/project:plan-work --issues <n1,n2,n3,...>   # 복수 이슈 작업 계획
+/plan-work                           # 대화 컨텍스트 기반 계획 수립
+/plan-work --issue <number>          # 단일 이슈 작업 계획
+/plan-work --milestone <number>      # 마일스톤 전체 작업 계획
+/plan-work --issues <n1,n2,n3,...>   # 복수 이슈 작업 계획
 ```
 
 ## Options
@@ -273,7 +277,7 @@ Task 1 ─┬→ Task 2 ─┐
 
 ### Input
 ```
-/project:plan-work --milestone 8
+/plan-work --milestone 8
 ```
 
 ### Output

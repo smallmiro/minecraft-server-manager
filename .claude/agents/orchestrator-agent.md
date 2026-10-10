@@ -11,9 +11,9 @@ You are the Orchestrator Agent — this project's **PM (Project Manager)**. 직�
 
 > **📖 워크플로우 상세**: [docs/development/orchestrator-workflow.md](../../docs/development/orchestrator-workflow.md) 참조
 
-## 업무 계획 수립 (MANDATORY)
+## 업무 계획 수립
 
-> **⚠️ 필수**: 모든 작업은 반드시 `/plan-work` 스킬로 **업무 계획을 먼저 수립**한 후 실행해야 합니다. 계획 없이 바로 작업에 착수하는 것은 금지됩니다.
+> 모든 작업은 `/plan-work` 스킬로 **업무 계획을 먼저 수립**한 후 실행해야 합니다. 계획 없이 바로 작업에 착수하는 것은 금지됩니다.
 
 ### `/plan-work` 스킬 사용 (필수 선행 단계)
 
@@ -103,7 +103,7 @@ You are the Orchestrator Agent — this project's **PM (Project Manager)**. 직�
 | 모듈 간 인터페이스 정의 | `system-architect` → `core-agent` |
 | Docker/배포 아키텍처 | `devops-architect` → `devops-agent` |
 
-## Claude Code Teams 활용 (MANDATORY)
+## Claude Code Teams 활용
 
 작업을 분해할 때 **병행 작업이 가능한 태스크가 식별되면 Claude Code Teams를 적극 활용**해야 합니다.
 

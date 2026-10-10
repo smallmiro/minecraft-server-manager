@@ -1,3 +1,7 @@
+---
+model: sonnet
+---
+
 # GitHub Issue/Milestone Work Execution
 
 This command executes development work based on GitHub Issues or Milestones following the project workflow.
@@ -5,9 +9,9 @@ This command executes development work based on GitHub Issues or Milestones foll
 ## Usage
 
 ```bash
-/project:work                         # Context mode: create issue from conversation and execute
-/project:work --issue <number>        # Single issue implementation
-/project:work --milestone <number>    # All issues in milestone (Ralph Loop)
+/work                         # Context mode: create issue from conversation and execute
+/work --issue <number>        # Single issue implementation
+/work --milestone <number>    # All issues in milestone (Ralph Loop)
 ```
 
 ## Options
@@ -124,7 +128,7 @@ Claude:
    - Update `plan.md` checkbox (mark with ✅)
    - **Update GitHub Issue body checkboxes** (see details below)
 
-4. **GitHub Issue Checkbox Updates** ⚠️ CRITICAL
+4. **GitHub Issue Checkbox Updates**
 
    **When to update checkboxes:**
    - ✅ After completing each requirement item
@@ -196,7 +200,7 @@ Claude:
 
 ### Workflow
 
-1. **Load Milestone Context** ⚠️ IMPORTANT
+1. **Load Milestone Context**
    ```bash
    gh api repos/{owner}/{repo}/milestones/<number>
    ```
@@ -271,7 +275,7 @@ Claude:
 ### 1.1 Create Directory Structure ([#1](...)) ✅
 ```
 
-### GitHub Issue Body Update ⚠️ IMPORTANT
+### GitHub Issue Body Update
 
 Issue body checkboxes must be updated at each development checkpoint to reflect progress.
 
@@ -416,7 +420,7 @@ cd platform/services/cli && pnpm test:e2e
 
 ### Single Issue
 ```
-User: /project:work --issue 7
+User: /work --issue 7
 
 Claude:
 1. Loading Issue #7: "Implement lock.sh"
@@ -459,7 +463,7 @@ Claude:
 
 ### Milestone
 ```
-User: /project:work --milestone 1
+User: /work --milestone 1
 
 Claude:
 1. Loading Milestone #1: "v0.2.0 - Infrastructure"

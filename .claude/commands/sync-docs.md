@@ -1,3 +1,7 @@
+---
+model: sonnet
+---
+
 # Sync Project Documentation
 
 This command analyzes the codebase and updates project documentation to reflect the current state.
@@ -294,7 +298,7 @@ docs/usage/                   → Legacy usage examples
 - **NEVER edit files in docs/itzg-reference/** - These are synced from official documentation
 - **Always read files before editing** - Understand current content first
 - **Preserve user customizations** - Don't overwrite intentional modifications
-- **English only** - All documentation must be in English for open-source
+- **LLM 문서 입력은 영어만** - `documentforllmagent.md`는 영어 원본(`.ko.md` 제외)으로만 생성한다. 한국어 문서(`.ko.md`)는 별도로 유지한다.
 - **docs/documentforllmagent.md is auto-generated** - Do not manually edit
   - Generated from docs/ source files (exclude `.ko.md`, `itzg-reference/`, `development/`)
   - Users upload this to ChatGPT/Gemini/Claude for mcctl Q&A

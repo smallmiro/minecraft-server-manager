@@ -1,3 +1,7 @@
+---
+model: opus
+---
+
 # Build LLM Knowledge Base (Deep)
 
 Build the comprehensive LLM Knowledge Base (`docs/documentforllmagent.md`) through deep source code analysis. This produces a 2,500-3,000 line document covering all 18 sections with maximum depth.

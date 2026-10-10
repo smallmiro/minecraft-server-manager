@@ -1,3 +1,7 @@
+---
+model: sonnet
+---
+
 # Docker Minecraft Server Documentation Update
 
 This command reads the official itzg/docker-minecraft-server documentation and updates the docs/itzg-reference/ directory to keep it current.
