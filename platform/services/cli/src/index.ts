@@ -193,7 +193,7 @@ ${colors.cyan('Mod Management:')}
 
 ${colors.cyan('Mod Add Options:')}
   --modrinth                 Use Modrinth (default)
-  --curseforge               Use CurseForge (requires CF_API_KEY)
+  --curseforge               Use CurseForge (CF_API_KEY built into Java 17+ images)
   --spiget                   Use Spiget (SpigotMC plugins)
   --url                      Direct JAR URL download
 
@@ -206,7 +206,7 @@ ${colors.cyan('Mod Management:')}
 
 ${colors.cyan('Mod Add Options:')}
   --modrinth                 Use Modrinth (default)
-  --curseforge               Use CurseForge (requires CF_API_KEY)
+  --curseforge               Use CurseForge (CF_API_KEY built into Java 17+ images)
   --spiget                   Use Spiget (SpigotMC plugins)
   --url                      Direct JAR URL download
 
