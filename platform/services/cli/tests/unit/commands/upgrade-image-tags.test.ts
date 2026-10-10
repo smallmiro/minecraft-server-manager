@@ -49,6 +49,7 @@ vi.mock('@minecraft-docker/shared', async () => {
 
 // Mock child_process (needed for update.ts imports)
 vi.mock('child_process', () => ({
+  execFile: vi.fn(),
   spawnSync: vi.fn().mockReturnValue({ status: 0, stdout: '', stderr: '' }),
 }));
 

@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach } from 'vitest';
 import assert from 'node:assert';
 import { DocsAdapter } from '@minecraft-docker/shared';
 
@@ -158,12 +158,12 @@ describe('DocsAdapter', () => {
       }
     });
 
-    it('should recommend java21 for LATEST', async () => {
+    it('should recommend java25 for LATEST', async () => {
       const compatibility = await adapter.getVersionCompatibility('PAPER');
       const latest = compatibility.find((c) => c.mcVersion === 'LATEST');
 
       assert.ok(latest);
-      assert.strictEqual(latest.javaVersion, 'java21');
+      assert.strictEqual(latest.javaVersion, 'java25');
     });
 
     it('should recommend java8 for old versions', async () => {

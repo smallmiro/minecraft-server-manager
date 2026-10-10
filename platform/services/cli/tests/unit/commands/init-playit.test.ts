@@ -25,12 +25,13 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
 });
 
 vi.mock('node:child_process', () => ({
+  execFile: vi.fn(),
   execSync: vi.fn(),
   spawnSync: vi.fn(),
 }));
 
 describe('init command - playit.gg setup', () => {
-  const testRoot = join(process.cwd(), 'tests', '.tmp-playit-test');
+  const testRoot = join(process.cwd(), 'tests', `.tmp-playit-test-${process.pid}`);
 
   beforeEach(() => {
     vi.clearAllMocks();
