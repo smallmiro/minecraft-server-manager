@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock fs
 const mockExistsSync = vi.fn();
@@ -283,6 +283,11 @@ describe('upgradeCommand - docker-compose.yml router patch', () => {
     mockConfirm.mockResolvedValue(true);
   });
 
+  afterEach(() => {
+    mockWriteFileSync.mockReset();
+    mockExecSync.mockReset();
+  });
+
   it('dry-run shows the change but writes, backs up and recreates nothing', async () => {
     setupCompose(OLD);
     expect(await upgradeCommand({ root: '/mock/root', dryRun: true })).toBe(0);
@@ -300,7 +305,7 @@ describe('upgradeCommand - docker-compose.yml router patch', () => {
     const [w] = composeWrites();
     expect(w![1]).toContain('mc-router:1.47.1');
     expect(w![1]).toContain('group_add:');
-    expect(mockExecSync).toHaveBeenCalledWith('docker compose up -d router', expect.objectContaining({ cwd: '/mock/root' }));
+    expect(mockExecSync).toHaveBeenCalledWith('docker compose up -d router', expect.objectContaining({ cwd: '/mock/root', stdio: 'inherit', timeout: expect.any(Number) }));
   });
 
   it('interactive: declining the patch leaves the file untouched', async () => {
@@ -326,13 +331,13 @@ describe('upgradeCommand - docker-compose.yml router patch', () => {
     expect(await upgradeCommand({ root: '/mock/root', nonInteractive: true })).toBe(1);
     const restore = mockCopyFileSync.mock.calls.find((c: any[]) => String(c[1]).endsWith('root/docker-compose.yml'));
     expect(restore).toBeDefined();
-    mockWriteFileSync.mockReset();
+    // compose failure must not leave the upgrade half-done: remaining steps still run
+    expect(mockConfigSave).toHaveBeenCalled();
   });
 
   it('a failing router recreate only warns', async () => {
     setupCompose(OLD);
     mockExecSync.mockImplementation(() => { throw new Error('docker not running'); });
     expect(await upgradeCommand({ root: '/mock/root', nonInteractive: true })).toBe(0);
-    mockExecSync.mockReset();
   });
 });

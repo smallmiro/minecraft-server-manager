@@ -84,10 +84,8 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
   }
 
   // --- Step 1c: docker-compose.yml router (image tag + group_add) ---
+  // A compose failure must not leave the upgrade half-done: run the remaining steps, then exit 1.
   const composeResult = await migrateComposeFile(paths, options);
-  if (composeResult.error) {
-    return 1;
-  }
 
   // --- Step 2: Update servers/_template files ---
   templateFilesUpdated = updateTemplateFiles(paths, options);
@@ -112,7 +110,7 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
   // --- Summary ---
   printSummary(envChangesApplied, templateFilesUpdated, cliVersion, options.dryRun, composeResult.changed);
 
-  return 0;
+  return composeResult.error ? 1 : 0;
 }
 
 /**
@@ -248,7 +246,11 @@ async function migrateComposeFile(
   options: UpgradeCommandOptions,
 ): Promise<{ changed: boolean; error?: boolean }> {
   const templatePath = join(paths.templates, 'docker-compose.yml');
-  if (!existsSync(paths.composeFile) || !existsSync(templatePath)) {
+  if (!existsSync(paths.composeFile)) {
+    return { changed: false };
+  }
+  if (!existsSync(templatePath)) {
+    prompts.log.warn('Template docker-compose.yml not found. Skipping docker-compose.yml update.');
     return { changed: false };
   }
 
@@ -267,12 +269,7 @@ async function migrateComposeFile(
     return { changed: false };
   }
 
-  const oldLines = new Set(user.split('\n'));
-  const newLines = new Set(result.content.split('\n'));
-  const diff = [
-    ...user.split('\n').filter((l) => !newLines.has(l)).map((l) => colors.red(`- ${l}`)),
-    ...result.content.split('\n').filter((l) => !oldLines.has(l)).map((l) => colors.green(`+ ${l}`)),
-  ];
+  const diff = lineDiff(user.split('\n'), result.content.split('\n'));
   prompts.log.step(`docker-compose.yml: ${result.changes.join(', ')}`);
   prompts.log.message(diff.join('\n'));
 
@@ -305,10 +302,29 @@ async function migrateComposeFile(
   return { changed: true };
 }
 
+/** Minimal LCS line diff (compose files are small): `-`/`+` lines only, in file order. */
+function lineDiff(a: string[], b: string[]): string[] {
+  const lcs = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--) {
+    for (let j = b.length - 1; j >= 0; j--) {
+      lcs[i]![j] = a[i] === b[j] ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!);
+    }
+  }
+  const out: string[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < a.length || j < b.length) {
+    if (i < a.length && j < b.length && a[i] === b[j]) { i++; j++; }
+    else if (i < a.length && (j === b.length || lcs[i + 1]![j]! >= lcs[i]![j + 1]!)) out.push(colors.red(`- ${a[i++]}`));
+    else out.push(colors.green(`+ ${b[j++]}`));
+  }
+  return out;
+}
+
 /** Recreate mc-router so the patched compose takes effect (servers keep running). */
 function recreateRouter(paths: Paths): void {
   try {
-    execSync('docker compose up -d router', { cwd: paths.root, stdio: 'pipe' });
+    execSync('docker compose up -d router', { cwd: paths.root, stdio: 'inherit', timeout: 5 * 60_000 });
     prompts.log.success('mc-router recreated.');
   } catch {
     prompts.log.warn('Could not recreate mc-router. Run: docker compose up -d router');

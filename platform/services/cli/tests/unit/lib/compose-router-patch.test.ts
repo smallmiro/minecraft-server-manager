@@ -113,13 +113,46 @@ describe('patchRouterCompose', () => {
     );
   });
 
-  it('refuses to write when the patched YAML would differ beyond image/group_add', () => {
+  it('skips a flow-style router it cannot line-patch', () => {
     // flow-style router can not be line-patched safely: parsed result must still be validated
     const user = 'services:\n  router: {image: "itzg/mc-router:1.43.1"}\n';
     const r = patchRouterCompose(user, TEMPLATE);
     expect(r.content).toBe(user);
     expect(r.changes).toEqual([]);
     expect(r.skipped).toBe('no-router');
+  });
+
+  it('refuses to write when the user YAML does not parse (duplicate keys)', () => {
+    const user = OLD.replace('    container_name: mc-router', '    image: itzg/mc-router:1.43.1\n    container_name: mc-router');
+    const r = patchRouterCompose(user, TEMPLATE);
+    expect(r.skipped).toBe('invalid');
+    expect(r.content).toBe(user);
+  });
+
+  it('takes the group_add indent from the router block, not the image line (registry-prefixed image)', () => {
+    const user = OLD.replace(/^( +)/gm, (m) => m + m).replace('itzg/mc-router:1.43.1', 'ghcr.io/itzg/mc-router:1.43.1');
+    const r = patchRouterCompose(user, TEMPLATE);
+    expect(r.changes).toEqual(['router.group_add added']);
+    expect(r.content).toContain('ghcr.io/itzg/mc-router:1.43.1');
+    expect(r.content).toContain('        group_add:\n            - "${DOCKER_GID:-999}"\n        networks:');
+  });
+
+  it('keeps a comment that sits above networks together with networks', () => {
+    const user = OLD.replace('    networks:\n      - minecraft-net\n\n  # my', '    # attach to the shared net\n    networks:\n      - minecraft-net\n\n  # my');
+    const r = patchRouterCompose(user, TEMPLATE);
+    expect(r.content).toContain('      - "${DOCKER_GID:-999}"\n    # attach to the shared net\n    networks:');
+  });
+
+  it('keeps CRLF line endings on inserted lines', () => {
+    const r = patchRouterCompose(OLD.replace(/\n/g, '\r\n'), TEMPLATE);
+    expect(r.changes).toHaveLength(2);
+    expect(r.content.replace(/\r\n/g, '')).not.toContain('\n');
+  });
+
+  it('does not add group_add when it comes from a YAML merge key', () => {
+    const user = 'x-base: &base\n  group_add:\n    - "1"\n\nservices:\n  router:\n    <<: *base\n    image: itzg/mc-router:1.43.1\n';
+    const r = patchRouterCompose(user, TEMPLATE);
+    expect(r.changes).toEqual(['router.image 1.43.1 → 1.47.1']);
   });
 
   it('skips when the template has no router', () => {

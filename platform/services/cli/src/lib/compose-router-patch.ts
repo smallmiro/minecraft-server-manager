@@ -12,7 +12,7 @@ interface Block {
   end: number; // exclusive end of the router block (trailing blank/comment lines excluded)
 }
 
-const IMAGE_RE = /^(\s+image:\s*)(["']?)itzg\/mc-router:([^\s"'#]+)\2(\s*#.*)?$/;
+const IMAGE_RE = /^(\s+image:\s*)(["']?)itzg\/mc-router:([^\s"'#]+)\2(\s*#.*)?\r?$/;
 const meaningful = (l: string) => l.trim() !== '' && !l.trim().startsWith('#');
 const indentOf = (l: string) => l.length - l.trimStart().length;
 
@@ -49,6 +49,12 @@ function findRouter(content: string): Block | null {
 }
 
 const routerLines = (b: Block) => b.lines.slice(b.start + 1, b.end);
+/** Indent of the router's own keys (first non-comment line inside the block). */
+const childIndent = (b: Block) => indentOf(routerLines(b).find(meaningful) ?? '');
+
+type Router = Record<string, unknown> | undefined;
+const parseRouter = (content: string): Router =>
+  (yaml.load(content) as { services?: { router?: Record<string, unknown> } } | null)?.services?.router;
 const routerTag = (b: Block) => routerLines(b).map((l) => l.match(IMAGE_RE)?.[3]).find(Boolean);
 
 function newer(a: string, b: string): boolean {
@@ -92,10 +98,14 @@ export function patchRouterCompose(user: string, template: string): ComposePatch
   const changes: string[] = [];
   const lines = [...block.lines];
   let end = block.end;
+  const userIndent = childIndent(block);
+  const eol = user.includes('\r\n') ? '\r' : '';
 
   // image: bump only a lower itzg/mc-router version tag
   const tplTag = routerTag(tpl);
-  const imageIdx = lines.findIndex((l, i) => i > block.start && i < end && IMAGE_RE.test(l));
+  const imageIdx = lines.findIndex(
+    (l, i) => i > block.start && i < end && indentOf(l) === userIndent && IMAGE_RE.test(l),
+  );
   if (tplTag && imageIdx >= 0) {
     const m = lines[imageIdx]!.match(IMAGE_RE)!;
     const oldTag = m[3]!;
@@ -108,25 +118,29 @@ export function patchRouterCompose(user: string, template: string): ComposePatch
     }
   }
 
-  // group_add: add the template's lines when the user has none
-  const hasGroupAdd = lines.slice(block.start + 1, end).some((l) => /^\s+group_add:/.test(l));
-  if (!hasGroupAdd) {
-    const tplRouter = routerLines(tpl);
+  // group_add: add the template's lines when the user has none (also counts YAML merge keys)
+  let userHasGroupAdd = lines.slice(block.start + 1, end).some((l) => /^\s+group_add:/.test(l));
+  try {
+    userHasGroupAdd ||= parseRouter(user)?.['group_add'] !== undefined;
+  } catch {
+    return unchanged('invalid');
+  }
+  if (!userHasGroupAdd) {
+    const tplRouter = routerLines(tpl).map((l) => l.replace(/\r$/, ''));
     const g = tplRouter.findIndex((l) => /^\s+group_add:/.test(l));
     if (g >= 0) {
       let gEnd = g + 1;
       while (gEnd < tplRouter.length && /^\s+-\s/.test(tplRouter[gEnd]!)) gEnd++;
       let gStart = g;
       while (gStart > 0 && tplRouter[gStart - 1]!.trim().startsWith('#')) gStart--;
-      const childIndent = indentOf(tplRouter[g]!);
-      const userIndent = imageIdx >= 0 ? indentOf(lines[imageIdx]!) : childIndent;
-      const pad = ' '.repeat(Math.max(userIndent - childIndent, 0));
-      const unit = userIndent / Math.max(childIndent, 1);
-      const reindent = (l: string) => ' '.repeat(Math.round(indentOf(l) * unit)) + l.trimStart();
-      const insert = tplRouter.slice(gStart, gEnd).map((l) => (pad ? reindent(l) : l));
+      const tplIndent = childIndent(tpl);
+      const insert = tplRouter
+        .slice(gStart, gEnd)
+        .map((l) => ' '.repeat(Math.round((indentOf(l) / tplIndent) * userIndent)) + l.trimStart() + eol);
 
       let at = lines.findIndex((l, i) => i > block.start && i < end && indentOf(l) === userIndent && /^\s+networks:/.test(l));
       if (at < 0) at = end;
+      while (at - 1 > block.start && lines[at - 1]!.trim().startsWith('#')) at--; // keep comments with their key
       lines.splice(at, 0, ...insert);
       end += insert.length;
       changes.push('router.group_add added');
@@ -138,6 +152,17 @@ export function patchRouterCompose(user: string, template: string): ComposePatch
   const content = lines.join('\n');
   try {
     if (JSON.stringify(withoutManaged(content)) !== JSON.stringify(withoutManaged(user))) {
+      return unchanged('invalid');
+    }
+    const patched = parseRouter(content);
+    const want = parseRouter(template);
+    if (changes.some((c) => c.startsWith('router.image')) && patched?.['image'] !== want?.['image']) {
+      return unchanged('invalid');
+    }
+    if (
+      changes.includes('router.group_add added') &&
+      JSON.stringify(patched?.['group_add']) !== JSON.stringify(want?.['group_add'])
+    ) {
       return unchanged('invalid');
     }
   } catch {
