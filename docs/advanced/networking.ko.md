@@ -166,10 +166,13 @@ avahi-daemon --check
 mc-router는 호스트네임 기반 라우팅과 자동 스케일링을 처리합니다.
 
 !!! info "고정된 버전"
-    플랫폼은 재현 가능한 배포를 위해 `docker-compose.yml`에서 `itzg/mc-router`를 `1.43.1`로 고정합니다.
+    플랫폼은 재현 가능한 배포를 위해 `docker-compose.yml`에서 `itzg/mc-router`를 `1.47.1`로 고정합니다.
     `1.42.0` 대비 이 릴리스는 이벤트 기반 Docker 폴링(자동 스케일 반응성 향상),
     타임존(`TZ`) 지원, `--log-level` 옵션을 추가했습니다. 호환성을 깨는 변경(breaking change)은 없으며,
     여기서 사용하는 라벨 기반 `--in-docker` 자동 스케일 방식은 설정 변경이 필요하지 않습니다.
+
+    `1.46`부터 mc-router는 non-root 사용자로 실행됩니다. compose 파일이 `group_add: ["${DOCKER_GID:-999}"]`로
+    Docker 소켓의 그룹을 추가하며, `mcctl init`/`mcctl upgrade`가 `DOCKER_GID`를 감지해 `.env`에 기록합니다.
 
 ### mcctl로 라우터 관리
 

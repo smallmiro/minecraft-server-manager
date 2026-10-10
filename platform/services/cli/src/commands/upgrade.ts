@@ -75,6 +75,18 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
   }
   envChangesApplied = envResult.changed;
 
+  // --- Step 1b: DOCKER_GID for non-root mc-router (v1.46+) ---
+  if (!options.dryRun && existsSync(paths.envFile) && setDockerGid(paths.envFile, detectDockerGid())) {
+    prompts.log.success('DOCKER_GID set from docker socket.');
+    envChangesApplied = true;
+  }
+  if (existsSync(paths.composeFile) && !readFileSync(paths.composeFile, 'utf-8').includes('DOCKER_GID')) {
+    prompts.log.warn(
+      'docker-compose.yml has no group_add for mc-router. Before bumping mc-router to 1.46+, add:\n' +
+      '    group_add:\n      - "${DOCKER_GID:-999}"',
+    );
+  }
+
   // --- Step 2: Update servers/_template files ---
   templateFilesUpdated = updateTemplateFiles(paths, options);
 
@@ -179,7 +191,6 @@ async function migrateEnvFile(
   // Apply diff
   const updatedContent = applyEnvDiff(userContent, diff, values);
   writeFileSync(userEnvPath, updatedContent, 'utf-8');
-  setDockerGid(userEnvPath, detectDockerGid());
   prompts.log.success(`.env updated with ${totalNew} new variable(s).`);
 
   return { changed: true, error: false };

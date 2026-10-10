@@ -166,10 +166,13 @@ avahi-daemon --check
 mc-router handles hostname-based routing and auto-scaling.
 
 !!! info "Pinned version"
-    The platform pins `itzg/mc-router` to `1.43.1` in `docker-compose.yml` for reproducible deployments.
+    The platform pins `itzg/mc-router` to `1.47.1` in `docker-compose.yml` for reproducible deployments.
     Compared to `1.42.0`, this release adds event-based Docker polling (faster auto-scale reactions),
     timezone (`TZ`) support, and a `--log-level` option. There are no breaking changes, and the
     label-based `--in-docker` auto-scale workflow used here needs no configuration changes.
+
+    Since `1.46`, mc-router runs as a non-root user. The compose file adds the Docker socket's group via
+    `group_add: ["${DOCKER_GID:-999}"]`; `mcctl init`/`mcctl upgrade` detect and write `DOCKER_GID` to `.env`.
 
 ### Router Management with mcctl
 
