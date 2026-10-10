@@ -302,6 +302,8 @@ mcctl status router
 
 ### mcctl update
 
+> Full release upgrade procedure with post-upgrade verification: [Upgrade Runbook](../advanced/upgrade-runbook.md).
+
 Check for updates and update mcctl CLI and services to the latest version.
 
 ```bash
@@ -420,6 +422,8 @@ mcctl update [options]
     `mcctl upgrade` migrates platform **configuration files** and templates to a new version.
 
 ### mcctl upgrade
+
+> Full release upgrade procedure with post-upgrade verification: [Upgrade Runbook](../advanced/upgrade-runbook.md).
 
 Migrate platform configuration files to the installed mcctl version.
 

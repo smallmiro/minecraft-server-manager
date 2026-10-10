@@ -111,6 +111,7 @@ nav:
       - Networking: advanced/networking.md
       - External Access (playit.gg): advanced/external-access.md
       - Backup: advanced/backup.md
+      - Upgrade Runbook: advanced/upgrade-runbook.md
   - Troubleshooting: troubleshooting/index.md
   - Development:
       - Overview: development/index.md
