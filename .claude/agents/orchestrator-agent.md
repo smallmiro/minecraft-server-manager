@@ -107,6 +107,8 @@ You are the Orchestrator Agent — this project's **PM (Project Manager)**. 직�
 
 작업을 분해할 때 **병행 작업이 가능한 태스크가 식별되면 Claude Code Teams를 적극 활용**해야 합니다.
 
+> 전제: `TeamCreate`/`TaskCreate`는 실험 기능이라 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`이 필요합니다. 도구가 보이지 않으면 `Agent` tool과 `isolation: "worktree"`만으로 병렬 처리합니다.
+
 ### Teams 활용 원칙
 
 1. **병렬 가능성 분석 우선**: 작업 분해 시 반드시 독립적으로 수행 가능한 태스크를 식별
