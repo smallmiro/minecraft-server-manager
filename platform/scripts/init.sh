@@ -229,6 +229,17 @@ else
     print_success ".env already exists"
 fi
 
+# mc-router (v1.46+) runs non-root: grant docker socket group access
+DOCKER_GID_DETECTED=$(stat -c %g /var/run/docker.sock 2>/dev/null || stat -f %g /var/run/docker.sock 2>/dev/null || true)
+if [ -n "$DOCKER_GID_DETECTED" ]; then
+    if grep -q "^DOCKER_GID=" "$ENV_FILE"; then
+        sed -i.bak -E "s/^DOCKER_GID=999$/DOCKER_GID=$DOCKER_GID_DETECTED/" "$ENV_FILE" && rm -f "$ENV_FILE.bak"
+    else
+        echo "DOCKER_GID=$DOCKER_GID_DETECTED" >> "$ENV_FILE"
+    fi
+    print_success "DOCKER_GID=$DOCKER_GID_DETECTED"
+fi
+
 # =============================================================================
 # 4. Create Required Directories
 # =============================================================================
@@ -330,7 +341,7 @@ if [ "$START_SERVICES" = true ]; then
     # Wait for router to be ready
     print_step "Waiting for router to be ready..."
     for i in {1..30}; do
-        if docker exec mc-router nc -zv localhost 25565 &> /dev/null; then
+        if [ "$(docker inspect -f "{{.State.Running}}" mc-router 2>/dev/null)" = "true" ]; then
             print_success "Router is ready"
             break
         fi

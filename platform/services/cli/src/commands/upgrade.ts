@@ -3,6 +3,7 @@ import { join, dirname } from 'node:path';
 import { Paths, Config, log, colors } from '@minecraft-docker/shared';
 import type { McctlConfig } from '@minecraft-docker/shared';
 import { diffEnvFiles, applyEnvDiff } from '../lib/env-diff.js';
+import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import * as prompts from '@clack/prompts';
 
 export interface UpgradeCommandOptions {
@@ -178,6 +179,7 @@ async function migrateEnvFile(
   // Apply diff
   const updatedContent = applyEnvDiff(userContent, diff, values);
   writeFileSync(userEnvPath, updatedContent, 'utf-8');
+  setDockerGid(userEnvPath, detectDockerGid());
   prompts.log.success(`.env updated with ${totalNew} new variable(s).`);
 
   return { changed: true, error: false };
