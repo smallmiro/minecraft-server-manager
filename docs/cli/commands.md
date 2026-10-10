@@ -419,6 +419,43 @@ mcctl update [options]
     `mcctl update` updates the CLI and service **packages** from npm.
     `mcctl upgrade` migrates platform **configuration files** and templates to a new version.
 
+### mcctl upgrade
+
+Migrate platform configuration files to the installed mcctl version.
+
+```bash
+mcctl upgrade [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Preview changes without modifying files |
+| `--non-interactive` | Apply without prompting |
+| `--root <path>` | Custom data directory |
+
+**What it does:**
+
+1. Appends new variables from the bundled `.env.example` to `.env` (existing values are never changed)
+2. Detects the Docker socket group ID and writes `DOCKER_GID` to `.env` (needed by non-root mc-router 1.46+)
+3. Patches the `router` service in the root `docker-compose.yml` (see below)
+4. Updates `servers/_template/` files and records `templateVersion` in `.mcctl.json`
+
+**docker-compose.yml router patch:** only the `router` service's `image` tag and `group_add` entry are aligned with the bundled template. Other services, ports, comments, and line endings are kept.
+
+- A line diff is shown, then you are asked to confirm (`--non-interactive` applies without asking, `--dry-run` shows the diff only)
+- The original file is backed up as `docker-compose.yml.bak-<timestamp>` and restored if writing fails
+- After a successful patch, mc-router is recreated with `docker compose up -d router` (running servers are not affected)
+- If the file cannot be patched automatically, a warning shows the lines to add by hand
+- If the compose update fails, the remaining steps still run and the command exits with code `1`
+
+```bash
+mcctl upgrade --dry-run
+mcctl upgrade
+mcctl upgrade --non-interactive
+```
+
 ---
 
 ## Server Commands
