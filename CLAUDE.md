@@ -235,6 +235,8 @@ This project uses a **Multi-Agent Collaboration** system where specialized agent
 ✅ RIGHT: 사용자 요청 → Orchestrator 접수 → 분석 에이전트 위임 → 결과 종합 → 실행
 ```
 
+`/work` 단일 이슈 모드에서는 메인 세션이 orchestrator 프로토콜로 접수하고 담당 에이전트에게 직접 위임한다(경로 매핑·난이도 등급은 `.claude/commands/work.md`).
+
 **Orchestrator Agent의 역할**:
 1. **작업 접수**: 사용자의 요청/문제를 분석하여 관련 모듈 식별
 2. **에이전트 위임**: 적절한 전문 에이전트에게 분석/구현 작업 할당
