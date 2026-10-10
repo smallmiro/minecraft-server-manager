@@ -532,6 +532,16 @@ Worlds 페이지에서 플랫폼에 저장된 모든 Minecraft 월드를 관리�
 !!! warning "데이터 손실"
     월드를 삭제하면 지형, 플레이어 건축물, 엔티티를 포함한 모든 월드 데이터가 영구적으로 제거됩니다. 월드를 삭제하기 전에 반드시 백업을 생성하세요.
 
+### 월드 정보, 지도 및 통계
+
+월드 정보 패널(서버의 **World** 탭에도 표시됨)에는 **Map** 섹션과 **Ore & Block Stats** 섹션이 있습니다.
+
+- **Map** -- **Render map**으로 BlueMap 웹 지도를 생성하고, **Re-render**로 갱신합니다. 지도는 기본적으로 **Overworld**에서 열립니다 (Nether와 End는 뷰어에서 선택할 수 있습니다). v2.29.0 이전에 렌더링한 월드는 **Re-render** 시 이 설정이 적용됩니다. **Show structures**는 지도에 구조물을 표시합니다.
+- **Ore & Block Stats** -- **Analyze**는 월드의 모든 청크를 스캔하고(큰 월드에서는 수 분이 걸릴 수 있으며 진행률이 표시됨) 결과를 캐시하며, **Re-analyze**로 갱신합니다. 결과는 다음과 같이 표시됩니다:
+    - **KPI 카드**: 전체 블록 수, 블록 종류, 스캔한 리전 수, 분석 시간, 차원
+    - **광석(Ores)**: 범례(개수와 비율)가 있는 도넛 차트, 희귀 광석(gold, diamond, emerald, ancient debris) 강조 칩, **Merge stone/deepslate variants** 토글
+    - **상위 블록(Top blocks)**: 카테고리별(Stone, Earth, Wood, Fluid, Nether, Other) 누적 막대와 상위 5개 목록 (**Show all**로 확장)
+
 ---
 
 ## 백업
