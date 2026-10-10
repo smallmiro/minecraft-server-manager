@@ -56,9 +56,21 @@ describe('WorldStatsPanel', () => {
     expect(screen.getByTestId('world-stats-result')).toBeInTheDocument();
     expect(screen.getByTestId('world-stats-ores')).toBeInTheDocument();
     expect(screen.getByTestId('world-stats-top-blocks')).toBeInTheDocument();
-    expect(screen.getByText(/iron ore/i)).toBeInTheDocument();
-    expect(screen.getByText(/stone/i)).toBeInTheDocument();
+    expect(screen.getByTestId('world-stats-kpis')).toBeInTheDocument();
+    expect(screen.getByTestId('world-stats-rare-ores')).toHaveTextContent(/diamond/i);
+    expect(screen.getAllByText(/iron/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^stone$/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('img', { name: /ore composition/i })).toBeInTheDocument();
     expect(screen.getByTestId('world-stats-analyze-button')).toHaveTextContent('Re-analyze');
+  });
+
+  it('limits top blocks to 5 until expanded', () => {
+    const many = { ...stats, topBlocks: Array.from({ length: 8 }, (_, i) => ({ id: `minecraft:b${i}`, count: 100 - i })) };
+    mocks.useWorldStats.mockReturnValue({ data: many, error: null, refetch: vi.fn() });
+    renderWithTheme(<WorldStatsPanel worldName="factory" />);
+    expect(screen.queryByText('b6')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('world-stats-top-toggle'));
+    expect(screen.getByText('b6')).toBeInTheDocument();
   });
 
   it('shows progress while analyzing', () => {

@@ -8,49 +8,17 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import type { BlockCount } from '@/ports/api/IMcctlApiClient';
+import { OreSection, StatsKpiRow, TopBlocksSection } from './stats/StatsCharts';
 import { useWorldStats, useAnalyzeStats } from '@/hooks/useMcctl';
 
 export interface WorldStatsPanelProps {
   worldName: string;
 }
 
-/** Strip the `minecraft:` namespace and prettify a block id. */
-function blockLabel(id: string): string {
-  const name = id.includes(':') ? id.slice(id.indexOf(':') + 1) : id;
-  return name.replace(/_/g, ' ');
-}
-
-/** Horizontal bar list for block/ore counts, scaled to the max. */
-function BarList({ items, testId }: { items: BlockCount[]; testId: string }) {
-  const max = items.reduce((m, i) => Math.max(m, i.count), 0) || 1;
-  return (
-    <Stack spacing={0.75} data-testid={testId}>
-      {items.map((item) => (
-        <Box key={item.id} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="caption" sx={{ width: 140, flexShrink: 0, textTransform: 'capitalize' }}>
-            {blockLabel(item.id)}
-          </Typography>
-          <Box sx={{ flexGrow: 1 }}>
-            <LinearProgress
-              variant="determinate"
-              value={(item.count / max) * 100}
-              sx={{ height: 8, borderRadius: 1 }}
-            />
-          </Box>
-          <Typography variant="caption" sx={{ width: 80, textAlign: 'right', flexShrink: 0 }}>
-            {item.count.toLocaleString()}
-          </Typography>
-        </Box>
-      ))}
-    </Stack>
-  );
-}
-
 /**
  * World ore/block statistics (#531, Phase 4). A heavy, on-demand full region
  * scan: the "Analyze" button streams progress over SSE and the cached result
- * is shown as bar charts. This can take minutes on large worlds.
+ * is shown as KPI cards, an ore donut and block-category bars. This can take minutes on large worlds.
  */
 export function WorldStatsPanel({ worldName }: WorldStatsPanelProps) {
   const statsQuery = useWorldStats(worldName);
@@ -67,11 +35,6 @@ export function WorldStatsPanel({ worldName }: WorldStatsPanelProps) {
     await statsQuery.refetch();
   };
 
-  const ores: BlockCount[] = stats
-    ? Object.entries(stats.ores)
-        .map(([id, count]) => ({ id, count }))
-        .sort((a, b) => b.count - a.count)
-    : [];
 
   return (
     <Box data-testid="world-stats-panel">
@@ -127,30 +90,11 @@ export function WorldStatsPanel({ worldName }: WorldStatsPanelProps) {
       {stats ? (
         <Stack spacing={2} data-testid="world-stats-result">
           <Typography variant="caption" color="text.secondary">
-            Last analyzed {new Date(stats.analyzedAt).toLocaleString()} ·{' '}
-            {stats.totalBlocks.toLocaleString()} blocks · {stats.blockTypeCount} types ·{' '}
-            {stats.regionsScanned} regions ({stats.dimensions.join(', ')})
+            Last analyzed {new Date(stats.analyzedAt).toLocaleString()}
           </Typography>
-
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-              ⛏️ Ores
-            </Typography>
-            {ores.length > 0 ? (
-              <BarList items={ores} testId="world-stats-ores" />
-            ) : (
-              <Typography variant="caption" color="text.secondary">
-                No ores found.
-              </Typography>
-            )}
-          </Box>
-
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-              🧱 Top blocks
-            </Typography>
-            <BarList items={stats.topBlocks} testId="world-stats-top-blocks" />
-          </Box>
+          <StatsKpiRow stats={stats} />
+          <OreSection ores={stats.ores} />
+          <TopBlocksSection blocks={stats.topBlocks} totalBlocks={stats.totalBlocks} />
         </Stack>
       ) : (
         !isAnalyzing &&

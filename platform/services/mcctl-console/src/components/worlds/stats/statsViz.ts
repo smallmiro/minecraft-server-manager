@@ -44,8 +44,8 @@ export function buildOreSlices(ores: Record<string, number>, merge = true): OreS
     const key = merge ? oreBase(id) : id;
     grouped.set(key, (grouped.get(key) ?? 0) + count);
   }
-  const total = [...grouped.values()].reduce((a, b) => a + b, 0);
-  return [...grouped.entries()]
+  const total = Array.from(grouped.values()).reduce((a, b) => a + b, 0);
+  return Array.from(grouped.entries())
     .map(([key, count]) => {
       const meta = ORE_META[merge ? key : oreBase(key)];
       return {
