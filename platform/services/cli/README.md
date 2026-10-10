@@ -77,6 +77,13 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.29.0 (2026-10-10)
+- **feat(cli)**: `mcctl upgrade` now updates the `router` image and `group_add` in your root `docker-compose.yml` (diff + confirm, timestamped `.bak` backup, router recreated); other customizations are left untouched (#562, #569)
+- **chore(router)**: mc-router 1.43.1 → 1.47.1; non-root router gets Docker socket access via `group_add` + auto-detected `DOCKER_GID` (#549, #559)
+- **feat(console)**: Ore & Block Stats shown as KPIs, a donut chart, and category bars (#567, #568)
+- **fix(map)**: World map opens on the Overworld instead of the End (#564)
+- **fix(cli)**: `CF_API_KEY` is optional on Java 17+ images; CLI messages and docs corrected (#561, #566)
+
 ### v2.28.0 (2026-10-01)
 - **feat(console)**: Bento layout across every Web Console screen - page hero with key status, metrics, and primary action, followed by panels for detailed content; existing actions and permissions unchanged
 - **fix(console)**: Dashboard "needs attention" includes unhealthy servers and shows **Reconnecting** when SSE is down; pages show **Unavailable** instead of misleading zeros on load failure, and keep cached data on refetch errors
@@ -95,10 +102,6 @@ mcctl logs myserver
 
 ### v2.26.1 (2026-06-28)
 - **fix(console)**: Live player locations in the World tab; BlueMap gzip-stored map files are now served (#538–#541)
-
-### v2.26.0 (2026-06-28)
-- **feat(console)**: World Info Panel - world info & player locations, BlueMap full map, structure markers, ore/block statistics (#525, #529–#537)
-- **feat(modpack)**: Auto-detect client-only mods; installed modpack jar listing + Exclude toggle (#523, #524, #526, #527)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
