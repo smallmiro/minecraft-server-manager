@@ -249,14 +249,14 @@ Running `/work` is your approval to carry that work through to the end. The step
 4. Open the PR, run the code review, and fix the findings.
 5. Merge.
 
-**Completion is enforced by a hook.** When it starts, `/work` records the job in `.claude/work-state` (git-ignored). Every time Claude tries to stop, `.claude/hooks/work-done-check.sh` checks the real GitHub and git state. If conditions are unmet, it lists what remains and sends Claude back to work.
+**Completion is enforced by a hook.** When it starts, `/work` records the job in `.claude/work-state.<session_id>` (git-ignored; one file per session, so concurrent sessions don't interfere). Every time Claude tries to stop, `.claude/hooks/work-done-check.sh` checks the real GitHub and git state. If conditions are unmet, it lists what remains and sends Claude back to work.
 
 | Mode | Complete when |
 |------|---------------|
 | Issue | All checkboxes in the issue body are checked, the PR is merged, code review is done, and there are no uncommitted changes |
 | Milestone | The milestone has no open issues and there are no uncommitted changes |
 
-As safety valves, the check is skipped if `gh` fails, and the hook gives up after 30 blocked stops. If Claude hits a problem it cannot resolve, it reports the reason, deletes `.claude/work-state`, and stops.
+As safety valves, the check is skipped if `gh` fails, and the hook gives up after 30 blocked stops. If Claude hits a problem it cannot resolve, it reports the reason, deletes its `.claude/work-state.<session_id>`, and stops. Parallel `/work` sessions share the checkout's branch and working tree, so run them in separate `git worktree` folders.
 
 ### 7.6 Using `/work` from a fork
 
