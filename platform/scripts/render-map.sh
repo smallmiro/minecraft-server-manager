@@ -61,6 +61,8 @@ declare -A DIM_MC=(
     [nether]="minecraft:the_nether"
     [end]="minecraft:the_end"
 )
+# BlueMap `sorting` sets viewer order; by default it sorts by map id, opening on End.
+declare -A DIM_ORDER=([overworld]=0 [nether]=1 [end]=2)
 declare -A DIM_NAME=(
     [overworld]="Overworld"
     [nether]="Nether"
@@ -293,6 +295,7 @@ world: "/worlds/$id"
 dimension: "${DIM_MC[$id]}"
 name: "${DIM_NAME[$id]}"
 storage: "file"
+sorting: ${DIM_ORDER[$id]}
 EOF
 done
 
