@@ -1,6 +1,6 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.29.0
+> **Version**: 2.29.1
 > **Last Updated**: 2026-10-10
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
@@ -2847,6 +2847,12 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.29.1 (2026-10-10) - Map Render Fix
+
+**Fixed:**
+- `render-map.sh`: `pick_dimension_root` no longer returns status 1 when a dimension has no region data, so `set -e` no longer aborts the render; empty dimensions are skipped with a warning (#575, PR #576)
+- After rendering, BlueMap `settings.json` `maps` array is rewritten overworld → nether → end (BlueMap ignores per-map `sorting` for list order), so the viewer opens on the Overworld; existing worlds apply it on Re-render (#575, PR #576)
 
 ### Version 2.29.0 (2026-10-10) - mc-router 1.47.1 & Compose Upgrade
 
