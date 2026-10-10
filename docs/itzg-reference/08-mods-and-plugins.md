@@ -135,9 +135,9 @@ environment:
 
 ## Download from CurseForge
 
-### Required Setup
+### API Key
 
-CurseForge API key is required:
+A CurseForge API key is included by the image on Java 17 and newer (since 2026.7.1); you can always supply your own. The `java8` image (and other pre-Java 17 tags) does **not** include a key, so `CF_API_KEY` must be set there:
 
 ```yaml
 environment:
@@ -159,7 +159,8 @@ environment:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CF_API_KEY` | | **Required**. CurseForge API key |
+| `CF_API_KEY` | (built-in on Java 17+) | CurseForge API key. Required only on `java8` / pre-Java 17 tags |
+| `CF_API_KEY_FILE` | | Path to a file containing the API key |
 | `CF_MOD_LOADER_VERSION` | (auto) | Override the mod loader version for CurseForge modpacks |
 
 !!! tip "`CF_MOD_LOADER_VERSION`"
@@ -355,4 +356,24 @@ environment:
   MODS: |
     https://example.com/custom-mod.jar
   MODS_FILE: "/data/extra-mods.txt"
+```
+
+---
+
+## Removing Old Configs on Modpack Update
+
+Set `REMOVE_OLD_CONFIGS=TRUE` to remove all files in `/data/config` before a modpack is downloaded and unpacked (added 2026.9.2). Useful when a modpack update would otherwise override locally customized configs.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REMOVE_OLD_CONFIGS` | `false` | Enable removal before modpack install |
+| `REMOVE_OLD_CONFIGS_INCLUDE` | `*` | Comma-separated file glob patterns to remove |
+| `REMOVE_OLD_CONFIGS_EXCLUDE` | | Comma-separated file glob patterns to keep |
+| `REMOVE_OLD_CONFIGS_DEPTH` | `16` | Directory depth |
+| `CONFIG_OUT_DIR` | `/data/config` | Target directory |
+
+```yaml
+environment:
+  REMOVE_OLD_CONFIGS: "TRUE"
+  REMOVE_OLD_CONFIGS_EXCLUDE: "*.toml"
 ```

@@ -6,13 +6,16 @@ A guide to Java requirements by Minecraft version and image tag selection.
 
 | Image Tag | Java Version | Base OS | Architecture | Notes |
 |-----------|--------------|---------|-------------|-------|
-| `latest`, `stable` | Java 25 | Ubuntu | amd64, arm64 | Default; `stable` points to most recent release |
-| `java25` | Java 25 | Ubuntu | amd64, arm64 | |
+| `latest`, `stable` | Java 25 | Ubuntu | amd64, arm64, riscv64 | Default; `stable` points to most recent release |
+| `java25` | Java 25 | Ubuntu | amd64, arm64, riscv64 | |
 | `java25-alpine` | Java 25 | Alpine | amd64, arm64 | |
 | `java25-jdk` | Java 25 | Ubuntu+JDK | amd64, arm64 | Full JDK included |
 | `java21` | Java 21 | Ubuntu | amd64, arm64 | |
 | `java21-jdk` | Java 21 | Ubuntu+JDK | amd64, arm64 | Full JDK included |
 | `java21-alpine` | Java 21 | Alpine | amd64, arm64 | |
+| `java25-graalvm` | Java 25 | Oracle Linux | amd64, arm64 | Oracle GraalVM (see notes) |
+| `java21-graalvm` | Java 21 | Oracle Linux | amd64, arm64 | Oracle GraalVM (see notes) |
+| `java17-graalvm` | Java 17 | Oracle Linux | amd64, arm64 | Oracle GraalVM (see notes) |
 | `java17` | Java 17 | Ubuntu | amd64, arm64, armv7 | |
 | `java16` | Java 16 | Ubuntu | amd64, arm64, armv7 | |
 | `java11` | Java 11 | Ubuntu | amd64, arm64, armv7 | Legacy |
@@ -30,8 +33,8 @@ A guide to Java requirements by Minecraft version and image tag selection.
 
     - `java23`, `java23-alpine`, `java23-jdk` -- Use `java25` instead
     - `java24`, `java24-graalvm` -- Use `java25` instead
+    - `java20`, `java20-graalvm`, `java20-alpine`, `java17-graalvm-ce`, `java17-openj9` -- no longer updated
     - `java17-alpine` -- Use `java17` or `java21-alpine` instead
-    - `java25-graalvm`, `java21-graalvm`, `java17-graalvm` -- **All GraalVM tags are deprecated** (see below)
 
 ### Programmatic Access
 
@@ -135,8 +138,8 @@ Support for various CPU architectures:
 
 | Tag | Java | Linux | Architecture |
 |-----|------|-------|-------------|
-| `latest`, `stable` | 25 | Ubuntu | amd64, arm64 |
-| `java25` | 25 | Ubuntu | amd64, arm64 |
+| `latest`, `stable` | 25 | Ubuntu | amd64, arm64, riscv64 |
+| `java25` | 25 | Ubuntu | amd64, arm64, riscv64 |
 | `java25-alpine` | 25 | Alpine | amd64, arm64 |
 | `java25-jdk` | 25 | Ubuntu+JDK | amd64, arm64 |
 | `java21` | 21 | Ubuntu | amd64, arm64 |
@@ -155,15 +158,18 @@ image: itzg/minecraft-server:java17
 # java21+ supports arm64 only (Raspberry Pi 4/5 64-bit)
 ```
 
-## GraalVM Variants (Deprecated)
+## GraalVM Variants
 
-!!! danger "All GraalVM Tags Are Deprecated"
-    The GraalVM image variants (`java25-graalvm`, `java21-graalvm`, `java17-graalvm`)
-    are **all deprecated** and will be removed in a future release.
+The Oracle GraalVM variants (`java25-graalvm`, `java21-graalvm`, `java17-graalvm`) are listed as supported tags in the official docs (the variants were restored in release 2026.8.0).
 
-    **Migration**: Switch to the standard OpenJDK-based tags (`java25`, `java21`, `java17`).
+!!! note "GraalVM notes (from official docs)"
+    - Based on the Oracle GraalVM container images, which as of JDK 17 are under the GraalVM Free License.
+    - These images use Oracle Linux, so the Forge installer will not work (zlib-ng). Use another image for the initial installation and Forge version upgrades.
 
-    Previously, GraalVM images were also incompatible with Auto-Pause (`ENABLE_AUTOPAUSE`).
+## Java 8 and CurseForge
+
+!!! warning "Java 8 is in maintenance mode"
+    `java8`, `java8-jdk`, and other pre-Java 17 tags (`java11`, `java16`) pin an older `mc-image-helper` that predates the built-in CurseForge API key. `AUTO_CURSEFORGE` and `CURSEFORGE_FILES` on those images require you to set `CF_API_KEY` yourself. Java 17+ images include a key.
 
 ## Version Selection Guide
 

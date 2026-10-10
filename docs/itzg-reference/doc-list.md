@@ -2,6 +2,8 @@
 
 원본 문서: https://docker-minecraft-server.readthedocs.io/en/latest/
 
+최종 동기화: 2026-10-10 (itzg/docker-minecraft-server 릴리즈 2026.9.2 기준)
+
 ## 메인 페이지
 - https://docker-minecraft-server.readthedocs.io/en/latest/
 
