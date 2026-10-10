@@ -264,8 +264,7 @@ The intended flow is: the issue is in the original repository, you run Claude Co
 
 - Sync your fork's `develop` first (section 2). `/work` branches from `develop`, so a stale `develop` produces a stale branch.
 - With `gh repo set-default` set (section 7.1), `/work` reads the issue and updates its checkboxes in the original repository. You can edit the body of issues you authored; for someone else's issue, ask a maintainer to check items off.
-- The last step of `/work` is merging the PR, which requires write access to the original repository. As a contributor, treat the job as finished once the PR is open and its code review is done; a maintainer performs the merge.
-- If the hook keeps asking for more work because the completion condition (PR merged) is not met, delete `.claude/work-state` to turn it off.
+- `/work` detects that you lack write access to the original repository (or you can pass `--contributor`) and switches to contributor mode: it opens the PR from your fork, runs the code review, and does not merge. The hook treats the job as finished once the PR is open and reviewed; a maintainer performs the merge.
 
 ### 7.7 Ground rules
 
