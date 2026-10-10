@@ -1,16 +1,17 @@
 # Development Guide
 
-This guide is for open-source developers who want to contribute to `minecraft-server-manager`. It covers the development rules, the fork-based, issue-per-PR workflow, and how to develop with Claude Code using this project's commands and subagents.
+This guide is for open-source developers who want to contribute to `minecraft-server-manager`. It covers the development rules, the issue-per-PR workflow (issue in the original repository, work in your fork, PR back to the original), and how to develop with Claude Code using this project's commands and subagents.
 
 ## At a Glance
 
 ```
-Fork → Create issue → Create branch → Tests first (TDD) → Implement → Open PR → Address review → Merge
+Create issue in the original repo → Fork → Create branch → Tests first (TDD) → Implement → Open PR to the original repo → Address review → Merge
 ```
 
 | Rule | Details |
 |------|---------|
 | Unit of work | **One issue = one branch = one PR** |
+| Where things live | **Issues live in the original repository.** Work happens in your fork. The PR goes from your fork back to the original repository. |
 | Base branch | `develop` (branch from `develop`, and open the PR against `develop`) |
 | Method | TDD (Red → Green → Refactor), Tidy First |
 | Architecture | Hexagonal / Clean Architecture |
@@ -31,6 +32,8 @@ Supported operating systems are Linux and macOS, because the `mcctl` CLI depends
 
 ## 2. Fork and Set Up Locally
 
+Create (or pick) the issue in the original repository first (section 4.1), then fork it.
+
 ```bash
 # 1) Fork smallmiro/minecraft-server-manager on GitHub, then:
 git clone https://github.com/<your-account>/minecraft-server-manager.git
@@ -39,7 +42,10 @@ cd minecraft-server-manager
 # 2) Register the original repository as "upstream"
 git remote add upstream https://github.com/smallmiro/minecraft-server-manager.git
 
-# 3) Install dependencies and build
+# 3) Make gh target the original repository for issues and PRs
+gh repo set-default smallmiro/minecraft-server-manager
+
+# 4) Install dependencies and build
 pnpm install
 pnpm build
 ```
@@ -70,9 +76,9 @@ git push origin develop
 
 ## 4. Issue-Driven Development Rules
 
-### 4.1 Create the issue first
+### 4.1 Create the issue first, in the original repository
 
-Create an issue before changing code. Include:
+Create the issue in the **original repository** (`smallmiro/minecraft-server-manager`), not in your fork. Search the existing issues first; if one already covers your change, comment on it instead of opening a duplicate. Create the issue yourself when you can: as its author you can edit its body, which is how the acceptance-criteria checkboxes are kept up to date. Include:
 
 - **Summary**: the problem or feature
 - **Root Cause** (bugs) or **Requirements** (features)
@@ -84,7 +90,7 @@ Trivial one-line changes such as typo fixes may skip the issue.
 
 ### 4.2 Branches
 
-Branch from `develop` and put the issue number in the name.
+In your fork, branch from `develop` and put the original repository's issue number in the name.
 
 | Type | Pattern | Example |
 |------|---------|---------|
@@ -130,11 +136,12 @@ TypeScript code follows the layers: Presentation (CLI, API routes) → Applicati
 
 ### 4.7 Opening the PR
 
-Open one PR per issue, targeting `develop` of the original repository.
+Push the branch to your fork, then open one PR per issue from your fork to `develop` of the original repository. `Closes #12` in the PR body links to the issue in the original repository.
 
 ```bash
 git push -u origin feature/12-add-backup
 gh pr create --repo smallmiro/minecraft-server-manager --base develop \
+  --head <your-account>:feature/12-add-backup \
   --title "feat: add backup script (#12)" --body "Closes #12 ..."
 ```
 
@@ -182,7 +189,7 @@ This repository ships Claude Code configuration. Run `claude` from the repositor
 ### 7.1 Setup
 
 - Install Claude Code and sign in.
-- Run `gh auth login` (used for issues and PRs).
+- Run `gh auth login` (used for issues and PRs), then `gh repo set-default smallmiro/minecraft-server-manager` so `gh` reads issues from and sends PRs to the original repository.
 - `/work` uses `/code-review:code-review` for code review. Install the `code-review` plugin.
 - Optional: set `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` to run subagents as a team in parallel. Without it you can still parallelize with the `Agent` tool and git worktrees.
 
@@ -253,10 +260,11 @@ As safety valves, the check is skipped if `gh` fails, and the hook gives up afte
 
 ### 7.6 Using `/work` from a fork
 
-The last step of `/work` is merging the PR. Contributors without write access to the original repository cannot merge that PR themselves. As a contributor:
+The intended flow is: the issue is in the original repository, you run Claude Code in your fork's clone, and the PR goes back to the original repository.
 
-- Use `gh repo set-default` to set the repository PRs go to (the original `smallmiro/minecraft-server-manager`).
-- The job ends once the PR is open against the original repository and its code review is done. A maintainer performs the merge.
+- Sync your fork's `develop` first (section 2). `/work` branches from `develop`, so a stale `develop` produces a stale branch.
+- With `gh repo set-default` set (section 7.1), `/work` reads the issue and updates its checkboxes in the original repository. You can edit the body of issues you authored; for someone else's issue, ask a maintainer to check items off.
+- The last step of `/work` is merging the PR, which requires write access to the original repository. As a contributor, treat the job as finished once the PR is open and its code review is done; a maintainer performs the merge.
 - If the hook keeps asking for more work because the completion condition (PR merged) is not met, delete `.claude/work-state` to turn it off.
 
 ### 7.7 Ground rules
