@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.29.0] - 2026-10-10
+
+### Added
+- **`mcctl upgrade` updates the router in your root `docker-compose.yml`** - Previously `mcctl upgrade` only synced `.env` and `servers/_template/`, so router changes reached new `mcctl init` users only. It now patches just the `router` service's `image` tag and `group_add` entry to match the bundled template, leaving any other customization (extra services, ports, playit profile, comments, CRLF line endings) untouched. It shows a diff and asks for confirmation, writes a timestamped `docker-compose.yml.bak-<timestamp>` backup, restores the backup if the patched file fails validation, and recreates the router with `docker compose up -d router`. `--dry-run` shows the diff only; `--non-interactive` applies without asking (#562, #569)
+- **Ore & Block Stats visualization** - The world map's **Ore & Block Stats** panel now shows summary KPIs, a donut chart of block composition, and category bars, instead of a flat list of identical progress bars (#567, #568)
+
+### Changed
+- **mc-router 1.43.1 → 1.47.1** - Brings upstream auto-scale and MOTD fixes. mc-router 1.46+ runs as a non-root user, so the router service now gets `group_add: ["${DOCKER_GID:-999}"]` to keep read access to the Docker socket. `mcctl init` and `mcctl upgrade` detect the socket's group ID (including a custom `DOCKER_HOST` socket path) and write `DOCKER_GID` to `.env`. Existing installs: run `mcctl upgrade` to apply both the new image and `group_add` (#549, #559)
+- **CurseForge `CF_API_KEY` is no longer described as required** - itzg images for Java 17+ ship with a built-in key, so `CF_API_KEY` is only needed for Java 8 / pre-17 image tags or to use your own key. CLI messages (`mcctl mod`, `--curseforge` help) and EN/KO docs are corrected (#561, #566)
+- **itzg reference docs synced to 2026.9.2** - New variables (`PRE_START_SCRIPT`, `STOP_SERVER_DELAY_COMMAND`, `PREFER_IPV6`, `REMOVE_OLD_CONFIGS`, `HARDCORE`, ...), `NEOFORGE_VERSION`, GraalVM tags, and riscv64 (#548, #560)
+
+### Fixed
+- **World map opens on the Overworld** - The BlueMap viewer sorted maps by id and opened the End first. Rendered maps now set `sorting` (overworld → nether → end). Existing worlds pick this up on the next **Re-render** (#564, #565)
+
+### Internal
+- CLI tests now run in CI; 15 test files that vitest could not load (`node:test`-based suites and `child_process` mocks missing `execFile`) were fixed (#570, #571)
+- `shared` package tests now run in CI, and the empty `DIM-1`/`DIM1` test fixture directories are tracked so dimension tests pass on a fresh checkout (#555, #558)
+
 ## [2.28.0] - 2026-10-01
 
 ### Changed

@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.28.0
-> **Last Updated**: 2026-10-01
+> **Version**: 2.29.0
+> **Last Updated**: 2026-10-10
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -520,8 +520,10 @@ Upgrade platform configuration files when updating mcctl to a new version. Compa
 2. Identifies new variables added in the latest version
 3. In interactive mode, prompts for values for each new variable
 4. Appends new variables to your `.env` file (grouped by section)
-5. Updates `servers/_template/` files (docker-compose.yml, config.env)
-6. Records `templateVersion` in `.mcctl.json`
+5. Detects the Docker socket group ID and writes `DOCKER_GID` to `.env` (needed by non-root mc-router 1.46+)
+6. Updates `servers/_template/` files (docker-compose.yml, config.env)
+7. Patches the root `docker-compose.yml` `router` service (since 2.29.0): only the `image` tag and the `group_add` entry are aligned with the bundled template; other services, ports, profiles, comments and CRLF line endings are kept. Shows a line diff and asks for confirmation (skipped with `--non-interactive`, diff only with `--dry-run`), writes a `docker-compose.yml.bak-<timestamp>` backup, restores it if validation fails, then runs `docker compose up -d router`
+8. Records `templateVersion` in `.mcctl.json`
 
 **Examples:**
 
@@ -2831,13 +2833,13 @@ A: No. Minecraft server containers are independent of mcctl. Only Management Con
 A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix known issues.
 
 **Q: What is `mcctl upgrade`?**
-A: A command that detects new environment variables added in newer mcctl versions and appends them to your `.env` file. It never modifies existing values.
+A: A command that detects new environment variables added in newer mcctl versions and appends them to your `.env` file (it never modifies existing values), syncs `servers/_template/`, and (since 2.29.0) updates only the `router` service's `image` and `group_add` in your root `docker-compose.yml`, with a diff, confirmation and timestamped `.bak` backup.
 
 **Q: When should I run `mcctl upgrade`?**
 A: After updating mcctl to a new version via `mcctl update` or `npm update -g @minecraft-docker/mcctl`.
 
 **Q: Is `mcctl upgrade` safe?**
-A: Yes. It only appends new variables and never modifies existing ones. Use `--dry-run` to preview changes first.
+A: Yes. It only appends new `.env` variables and never modifies existing ones; the root `docker-compose.yml` patch is limited to `router.image` and `group_add`, is backed up first, and is restored if validation fails. Use `--dry-run` to preview changes first.
 
 **Q: What is the difference between `mcctl update` and `mcctl upgrade`?**
 A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl upgrade` updates your platform configuration files (.env, templates) to match the new version's template.
@@ -2845,6 +2847,23 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.29.0 (2026-10-10) - mc-router 1.47.1 & Compose Upgrade
+
+**Added:**
+- `mcctl upgrade` patches the root `docker-compose.yml` `router` service (`image` tag + `group_add` only) with diff/confirm, `.bak-<timestamp>` backup, validation/restore, and `docker compose up -d router`. `--dry-run` = diff only, `--non-interactive` = apply without asking (#562, PR #569)
+- Console world map **Ore & Block Stats**: KPI cards, block-composition donut chart, category bars (#567, PR #568)
+
+**Changed:**
+- mc-router `itzg/mc-router:1.43.1` → `1.47.1`. 1.46+ runs as non-root, so the router service has `group_add: ["${DOCKER_GID:-999}"]`; `mcctl init`/`mcctl upgrade` auto-detect the socket GID (honoring `DOCKER_HOST`) into `.env` (#549, PR #559)
+- `CF_API_KEY` is optional: itzg Java 17+ images embed a CurseForge key; set it only for Java 8 / pre-17 tags or your own key (#561, PR #566)
+- itzg reference docs synced to 2026.9.2 (#548, PR #560)
+
+**Fixed:**
+- BlueMap map confs set `sorting` (overworld=0, nether=1, end=2) so the map opens on the Overworld; existing worlds apply it on Re-render (#564, PR #565)
+
+**Internal:**
+- CLI and `shared` tests run in CI; 15 unloadable CLI test files fixed; `DIM-1`/`DIM1` fixtures tracked (#555, #570, PRs #558, #571)
 
 ### Version 2.28.0 (2026-10-01) - Console Bento Layout
 
