@@ -29,17 +29,21 @@ npm view @minecraft-docker/mcctl version      # = $NEW 인지 확인(발행 직�
 
 ```bash
 cd $ROOT
-S=pre-$NEW
-cp docker-compose.yml docker-compose.yml.$S
-cp .env .env.$S
-cp .mcctl.json .mcctl.json.$S
-cp -r servers/_template servers/_template.$S
+S=pre-$NEW; B=$ROOT/backups-$S
+mkdir -p $B                                   # servers/ 밖에 둡니다 (아래 경고 참고)
+cp docker-compose.yml $B/docker-compose.yml
+cp .env $B/.env
+cp .mcctl.json $B/.mcctl.json
+cp -r servers/_template $B/_template
 mcctl status                                  # 현재 상태 기록
 # 월드/서버 설정 백업(설정된 방식으로)
 mcctl server-backup <server> -m "Before v$NEW"
 ```
 
-**게이트:** `*.pre-$NEW` 파일이 모두 존재.
+**게이트:** `$B` 안에 `docker-compose.yml`, `.env`, `.mcctl.json`, `_template`이 모두 존재.
+
+!!! danger "백업을 `servers/` 안에 두지 마세요"
+    `mcctl update`는 `servers/` 아래 모든 디렉터리를 서버로 보고 이미지 태그를 점검·변경합니다. `servers/_template.pre-…` 같은 사본이 있으면 서버로 오인되어 내용이 바뀌고, 롤백 시 변조된 값이 복원됩니다.
 
 ## 2. 패키지 업데이트
 
@@ -64,6 +68,7 @@ dry-run에서 확인: 새 `.env` 변수, compose 변경(`router.image`, `router.
 
 ```bash
 mcctl upgrade                 # 새 .env 변수는 기본값 수락, compose 적용은 y
+mcctl upgrade --non-interactive   # 프롬프트 없이 기본값 적용(자동화용)
 ```
 
 - `.env`에 새 변수가 추가되고(`DOCKER_GID` 등), `docker-compose.yml.bak-<타임스탬프>`가 생성되며, router가 변경되면 `docker compose up -d router`가 자동 실행됩니다.
@@ -106,7 +111,7 @@ mcctl update --check                              # 더 올릴 패키지가 없�
 ```bash
 cd $ROOT
 python3 -c "import json;print('templateVersion =',json.load(open('.mcctl.json')).get('templateVersion'))"   # = $NEW 이하의 최신 템플릿 버전
-diff <(grep -oE '^[A-Z_]+=' .env | sort) <(grep -oE '^[A-Z_]+=' .env.pre-$NEW | sort)   # 추가된 변수만 보여야 함
+diff <(grep -oE '^[A-Z_]+=' .env | sort) <(grep -oE '^[A-Z_]+=' $B/.env | sort)   # 추가된 변수만 보여야 함
 docker compose config -q && echo "compose OK"
 ```
 
@@ -150,16 +155,16 @@ docker ps --format '{{.Names}}\t{{.Image}}\t{{.Status}}'
 - [ ] API `/health` 200, Console 200, PM2 restarts 증가 없음
 - [ ] 중지된 서버가 접속으로 기동됨(auto-scale)
 - [ ] 화면 스모크 테스트 통과
-- [ ] 안정 확인 후 `*.pre-$NEW`, `servers/_template.pre-$NEW` 삭제
+- [ ] 안정 확인 후 `$B`(`backups-pre-$NEW`) 삭제
 
 ## 8. 롤백
 
 ```bash
-cd $ROOT; S=pre-$NEW
-cp docker-compose.yml.$S docker-compose.yml
-cp .env.$S .env
-cp .mcctl.json.$S .mcctl.json
-rm -rf servers/_template && cp -r servers/_template.$S servers/_template
+cd $ROOT; B=$ROOT/backups-pre-$NEW
+cp $B/docker-compose.yml docker-compose.yml
+cp $B/.env .env
+cp $B/.mcctl.json .mcctl.json
+rm -rf servers/_template && cp -r $B/_template servers/_template
 docker compose up -d router
 # 패키지를 이전 버전 OLD로 (PM2 Node 셸에서)
 npm install -g @minecraft-docker/mcctl@$OLD

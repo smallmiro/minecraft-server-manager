@@ -29,16 +29,20 @@ npm view @minecraft-docker/mcctl version      # must equal $NEW (registry can la
 
 ```bash
 cd $ROOT
-S=pre-$NEW
-cp docker-compose.yml docker-compose.yml.$S
-cp .env .env.$S
-cp .mcctl.json .mcctl.json.$S
-cp -r servers/_template servers/_template.$S
+S=pre-$NEW; B=$ROOT/backups-$S
+mkdir -p $B                                   # keep it OUTSIDE servers/ (see warning below)
+cp docker-compose.yml $B/docker-compose.yml
+cp .env $B/.env
+cp .mcctl.json $B/.mcctl.json
+cp -r servers/_template $B/_template
 mcctl status                                  # record current state
 mcctl server-backup <server> -m "Before v$NEW"   # worlds/config, whichever you use
 ```
 
-**Gate:** all `*.pre-$NEW` files exist.
+**Gate:** `$B` contains `docker-compose.yml`, `.env`, `.mcctl.json` and `_template`.
+
+!!! danger "Never put backups inside `servers/`"
+    `mcctl update` treats every directory under `servers/` as a server and checks/changes its image tag. A copy such as `servers/_template.pre-…` is mistaken for a server and modified, so a rollback would restore tampered values.
 
 ## 2. Update packages
 
@@ -63,6 +67,7 @@ Check the dry run for new `.env` variables, compose changes (`router.image`, `ro
 
 ```bash
 mcctl upgrade                 # accept defaults for new .env vars, y to apply compose changes
+mcctl upgrade --non-interactive   # apply defaults without prompting (automation)
 ```
 
 - New `.env` variables are added (e.g. `DOCKER_GID`), `docker-compose.yml.bak-<timestamp>` is created, and `docker compose up -d router` runs automatically when the router changes.
@@ -105,7 +110,7 @@ mcctl update --check                              # nothing left to update (incl
 ```bash
 cd $ROOT
 python3 -c "import json;print('templateVersion =',json.load(open('.mcctl.json')).get('templateVersion'))"
-diff <(grep -oE '^[A-Z_]+=' .env | sort) <(grep -oE '^[A-Z_]+=' .env.pre-$NEW | sort)   # only added variables
+diff <(grep -oE '^[A-Z_]+=' .env | sort) <(grep -oE '^[A-Z_]+=' $B/.env | sort)   # only added variables
 docker compose config -q && echo "compose OK"
 ```
 
@@ -149,16 +154,16 @@ In a browser (hard refresh) open `http://<host>:5000`: log in → server list �
 - [ ] API `/health` 200, Console 200, PM2 restarts not increasing
 - [ ] a stopped server starts on connect (auto-scale)
 - [ ] UI smoke test passes
-- [ ] once stable, delete `*.pre-$NEW` and `servers/_template.pre-$NEW`
+- [ ] once stable, delete `$B` (`backups-pre-$NEW`)
 
 ## 8. Rollback
 
 ```bash
-cd $ROOT; S=pre-$NEW
-cp docker-compose.yml.$S docker-compose.yml
-cp .env.$S .env
-cp .mcctl.json.$S .mcctl.json
-rm -rf servers/_template && cp -r servers/_template.$S servers/_template
+cd $ROOT; B=$ROOT/backups-pre-$NEW
+cp $B/docker-compose.yml docker-compose.yml
+cp $B/.env .env
+cp $B/.mcctl.json .mcctl.json
+rm -rf servers/_template && cp -r $B/_template servers/_template
 docker compose up -d router
 # packages back to $OLD (in the PM2-Node shell)
 npm install -g @minecraft-docker/mcctl@$OLD
