@@ -4269,6 +4269,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-2291-2026-10-10---map-render-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.29.1 (2026-10-10) - Map Render Fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-2290-2026-10-10---mc-router-1471--compose-upgrade" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4724,7 +4735,7 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.29.0
+<p><strong>Version</strong>: 2.29.1
 <strong>Last Updated</strong>: 2026-10-10
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
@@ -9293,10 +9304,14 @@ A: Yes. It only appends new <code>.env</code> variables and never modifies exist
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-2291-2026-10-10---map-render-fix">Version 2.29.1 (2026-10-10) - Map Render Fix<a class="headerlink" href="#version-2291-2026-10-10---map-render-fix" title="Permanent link">&para;</a></h3>
+<p><strong>Fixed:</strong>
+- <code>render-map.sh</code>: <code>pick_dimension_root</code> no longer returns status 1 when a dimension has no region data, so <code>set -e</code> no longer aborts the render; empty dimensions are skipped with a warning (#575, PR #576)
+- After rendering, BlueMap <code>settings.json</code> <code>maps</code> array is rewritten overworld → nether → end (BlueMap ignores per-map <code>sorting</code> for list order), so the viewer opens on the Overworld; existing worlds apply it on Re-render (#575, PR #576)</p>
 <h3 id="version-2290-2026-10-10---mc-router-1471--compose-upgrade">Version 2.29.0 (2026-10-10) - mc-router 1.47.1 &amp; Compose Upgrade<a class="headerlink" href="#version-2290-2026-10-10---mc-router-1471--compose-upgrade" title="Permanent link">&para;</a></h3>
 <p><strong>Added:</strong>
 - <code>mcctl upgrade</code> patches the root <code>docker-compose.yml</code> <code>router</code> service (<code>image</code> tag + <code>group_add</code> only) with diff/confirm, <code>.bak-&lt;timestamp&gt;</code> backup, validation/restore, and <code>docker compose up -d router</code>. <code>--dry-run</code> = diff only, <code>--non-interactive</code> = apply without asking (#562, PR #569)
-- Console world map <strong>Ore &amp; Block Stats</strong>: KPI cards, block-composition donut chart, category bars (#567, PR #568)</p>
+- Console world <strong>Ore &amp; Block Stats</strong>: KPI cards, ore donut chart with legend and rare-ore chips, category-colored top-blocks bar (#567, PR #568)</p>
 <p><strong>Changed:</strong>
 - mc-router <code>itzg/mc-router:1.43.1</code> → <code>1.47.1</code>. 1.46+ runs as non-root, so the router service has <code>group_add: ["${DOCKER_GID:-999}"]</code>; <code>mcctl init</code>/<code>mcctl upgrade</code> auto-detect the socket GID (honoring <code>DOCKER_HOST</code>) into <code>.env</code> (#549, PR #559)
 - <code>CF_API_KEY</code> is optional: itzg Java 17+ images embed a CurseForge key; set it only for Java 8 / pre-17 tags or your own key (#561, PR #566)
