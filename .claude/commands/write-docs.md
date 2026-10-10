@@ -1,3 +1,7 @@
+---
+model: sonnet
+---
+
 # Technical Documentation Writer
 
 Bilingual (English/Korean) technical documentation writer for MkDocs + Read the Docs.

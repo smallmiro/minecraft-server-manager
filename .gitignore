@@ -11,6 +11,7 @@ platform/.env
 
 # Task checkpoint (local work-in-progress tracking)
 task.md
+.claude/work-state
 mapplan.md
 user.md
 

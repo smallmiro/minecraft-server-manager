@@ -1,6 +1,7 @@
 ---
 name: technical-writer
 description: "Bilingual (English/Korean) technical documentation writer for MkDocs + Read the Docs with DevOps expertise. Uses /write-docs command for documentation tasks."
+model: sonnet
 color: purple
 ---
 
