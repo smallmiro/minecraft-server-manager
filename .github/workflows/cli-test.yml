@@ -25,5 +25,5 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @minecraft-docker/shared build
+      - run: pnpm --filter "@minecraft-docker/mcctl..." build
       - run: pnpm --filter @minecraft-docker/mcctl test
