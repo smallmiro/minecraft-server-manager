@@ -1,8 +1,19 @@
-import { describe, it, beforeEach, afterEach } from 'vitest';
+import { describe, it, beforeEach, afterEach, afterAll, vi } from 'vitest';
 import assert from 'node:assert';
-import { existsSync, writeFileSync, unlinkSync, readFileSync } from 'fs';
+import { existsSync, writeFileSync, unlinkSync, readFileSync, rmSync } from 'fs';
 import { join } from 'path';
-import { homedir } from 'os';
+
+// 실제 홈 디렉터리의 캐시 파일을 건드리지 않도록 homedir()를 tmp로 대체
+const fakeHome = vi.hoisted(() => {
+  const { mkdtempSync } = require('node:fs');
+  const { join } = require('node:path');
+  const { tmpdir } = require('node:os');
+  return mkdtempSync(join(tmpdir(), 'mcctl-home-'));
+});
+vi.mock('os', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('os')>()),
+  homedir: () => fakeHome,
+}));
 import {
   getInstalledVersion,
   getCachedVersion,
@@ -10,7 +21,9 @@ import {
   isUpdateAvailable,
 } from '../../../src/lib/update-checker.js';
 
-const CACHE_FILE = join(homedir(), '.mcctl-update-check.json');
+const CACHE_FILE = join(fakeHome, '.mcctl-update-check.json');
+
+afterAll(() => rmSync(fakeHome, { recursive: true, force: true }));
 
 describe('update-checker', () => {
   // Save original cache if exists

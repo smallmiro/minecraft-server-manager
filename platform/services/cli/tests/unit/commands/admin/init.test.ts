@@ -2,7 +2,7 @@ import { describe, it, beforeEach, afterEach } from 'vitest';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { existsSync, rmSync, mkdirSync } from 'node:fs';
-import { AdminConfigManager, type ApiAccessMode } from '../../../../dist/lib/admin-config.js';
+import { AdminConfigManager, type ApiAccessMode } from '../../../../src/lib/admin-config.js';
 
 describe('AdminConfigManager', () => {
   const testDir = join(process.cwd(), 'tests', '.tmp-admin-config');
