@@ -188,8 +188,8 @@ Users:
 
 Email                         Name                Role        Created
 ---------------------------------------------------------------------------
-admin@example.com             Administrator       admin       2025-01-15
 operator@example.com          Operator            user        2025-01-16
+admin@example.com             Administrator       admin       2025-01-15
 
 Total: 2 user(s)
 ```
@@ -203,16 +203,6 @@ mcctl console user list --json
 ```json
 [
   {
-    "id": "a1b2c3d4e5f60718293a4b5c6d7e8f90",
-    "name": "Administrator",
-    "email": "admin@example.com",
-    "role": "admin",
-    "emailVerified": true,
-    "banned": false,
-    "createdAt": "2025-01-15T10:00:00.000Z",
-    "updatedAt": "2025-01-15T10:00:00.000Z"
-  },
-  {
     "id": "0f9e8d7c6b5a49382716f5e4d3c2b1a0",
     "name": "Operator",
     "email": "operator@example.com",
@@ -221,6 +211,16 @@ mcctl console user list --json
     "banned": false,
     "createdAt": "2025-01-16T14:30:00.000Z",
     "updatedAt": "2025-01-16T14:30:00.000Z"
+  },
+  {
+    "id": "a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    "name": "Administrator",
+    "email": "admin@example.com",
+    "role": "admin",
+    "emailVerified": true,
+    "banned": false,
+    "createdAt": "2025-01-15T10:00:00.000Z",
+    "updatedAt": "2025-01-15T10:00:00.000Z"
   }
 ]
 ```
@@ -266,7 +266,7 @@ mcctl console user add operator@example.com --role user --password "SecurePass12
 {"success":true,"email":"operator@example.com"}
 ```
 
-CLI 모드는 `[email]`, `--role`, `--password`를 모두 지정한 경우에만 적용되며, 하나라도 빠지면 대화형 프롬프트가 표시됩니다. 사용자 이름은 이메일의 `@` 앞부분으로 설정되고, `--password`로 지정한 비밀번호는 별도 검증 없이 그대로 사용됩니다.
+CLI 모드는 `[email]`, `--role`, `--password`를 모두 지정한 경우에만 적용되며, 하나라도 빠지면 대화형 프롬프트가 표시됩니다. 사용자 이름은 이메일의 `@` 앞부분으로 설정되고, `--password`로 지정한 비밀번호는 8자 최소 길이 검사를 거치지 않습니다.
 
 **역할:**
 
