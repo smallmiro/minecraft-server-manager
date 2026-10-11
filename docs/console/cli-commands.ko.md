@@ -88,7 +88,7 @@ mcctl console init --api-port 8001 --console-port 8000
 | 파일 | 설명 |
 |------|-------------|
 | `.mcctl-admin.yml` | 메인 Management Console 설정 |
-| `users.yaml` | 해시된 비밀번호가 포함된 사용자 인증정보 |
+| `data/mcctl.db` | 콘솔 사용자 데이터베이스 (`mcctl-console`을 선택한 경우에만 생성) |
 | `ecosystem.config.cjs` | PM2 프로세스 설정 |
 
 ---

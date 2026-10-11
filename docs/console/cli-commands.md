@@ -88,7 +88,7 @@ mcctl console init --api-port 8001 --console-port 8000
 | File | Description |
 |------|-------------|
 | `.mcctl-admin.yml` | Main Management Console configuration |
-| `users.yaml` | User credentials with hashed passwords |
+| `data/mcctl.db` | Console user database (created only when `mcctl-console` is selected) |
 | `ecosystem.config.cjs` | PM2 process configuration |
 
 ---
