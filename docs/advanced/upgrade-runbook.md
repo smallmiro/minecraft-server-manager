@@ -84,6 +84,39 @@ mcctl console service restart --force
 cd $ROOT && npm rebuild better-sqlite3 && mcctl console service restart --force
 ```
 
+### 4-1. Upgrading to v2.31.1 or later: check the console access mode (#633)
+
+Do this once when upgrading from v2.31.0 or earlier to v2.31.1 or later, and only on hosts where `mcctl console init` was run.
+
+Up to v2.31.0, `mcctl console init` wrote the chosen access mode to `AUTH_MODE` as is. mcctl-api does not recognise `internal`, `api-key-ip` or `open`, and falls back to `api-key` under `NODE_ENV=production` (`disabled` otherwise). From v2.31.1, `mcctl console init` writes a value mcctl-api recognises. `mcctl update` and `mcctl upgrade` do not rewrite `ecosystem.config.cjs`, so an existing install keeps the old value until you change it.
+
+```bash
+grep -nE "AUTH_MODE|AUTH_IP_WHITELIST" $ROOT/ecosystem.config.cjs
+```
+
+| Current `AUTH_MODE` | Change to | Effect |
+|---|---|---|
+| `api-key`, `ip-whitelist`, `disabled`, `basic`, `combined` | nothing to do | - |
+| `internal` | `ip-whitelist` + `AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1'` | only clients on the host itself (the Console) can call the API |
+| `api-key-ip` | `combined` (keep `AUTH_API_KEY` and `AUTH_IP_WHITELIST`) | the IP whitelist is now enforced; clients outside it get 403 |
+| `open` | `disabled` | authentication is really off; development only |
+
+```bash
+cd $ROOT
+cp ecosystem.config.cjs $B/ecosystem.config.cjs     # for rollback (step 8)
+sed -i \
+  -e "s/^\( *\)AUTH_MODE: 'internal',/\1AUTH_MODE: 'ip-whitelist',\n\1AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1',/" \
+  -e "s/AUTH_MODE: 'api-key-ip',/AUTH_MODE: 'combined',/" \
+  -e "s/AUTH_MODE: 'open',/AUTH_MODE: 'disabled',/" \
+  ecosystem.config.cjs
+grep -nE "AUTH_MODE|AUTH_IP_WHITELIST" ecosystem.config.cjs
+mcctl console service restart --force               # plain restart keeps the old env
+```
+
+The `sed` leaves the other modes untouched. Instead of editing the file, you can re-run `mcctl console init --force`, which rewrites the whole file and asks every setup question again.
+
+**Gate:** `AUTH_MODE` is one of `disabled`, `api-key`, `ip-whitelist`, `basic`, `combined`; API `/health` returns 200 and the Console can list servers (step 7-6).
+
 ## 5. Apply server images
 
 Stopped servers get the new image on next start. Restart running servers at a quiet time with `mcctl stop <server> && mcctl start <server>` (worlds are preserved).
@@ -155,6 +188,7 @@ In a browser (hard refresh) open `http://<host>:5000`: log in → server list �
 - [ ] API `/health` 200, Console 200, PM2 restarts not increasing
 - [ ] a stopped server starts on connect (auto-scale)
 - [ ] UI smoke test passes
+- [ ] (v2.31.0 or earlier → v2.31.1+) `AUTH_MODE` in `ecosystem.config.cjs` is a value mcctl-api recognises (step 4-1)
 - [ ] once stable, delete `$B` (`backups-pre-$NEW`)
 
 ## 8. Rollback
@@ -166,6 +200,7 @@ cp $B/.env .env
 cp $B/.mcctl.json .mcctl.json
 rm -rf servers/_template && cp -r $B/_template servers/_template
 docker compose up -d router
+[ -f $B/ecosystem.config.cjs ] && cp $B/ecosystem.config.cjs ecosystem.config.cjs   # if changed in step 4-1
 # packages back to $OLD (in the PM2-Node shell)
 npm install -g @minecraft-docker/mcctl@$OLD
 npm install @minecraft-docker/mcctl-api@$OLD @minecraft-docker/mcctl-console@$OLD @minecraft-docker/shared@$OLD
