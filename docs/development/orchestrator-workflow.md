@@ -2,8 +2,11 @@
 
 Orchestrator Agent의 전체 워크플로우를 상세히 설명합니다.
 
-에이전트 정의: [`.claude/agents/orchestrator-agent.md`](../../.claude/agents/orchestrator-agent.md)
+에이전트 정의: [`.claude/agents/orchestrator-agent.md`](https://github.com/smallmiro/minecraft-server-manager/blob/develop/.claude/agents/orchestrator-agent.md)
 에이전트 협업 가이드: [`agent-collaboration.md`](agent-collaboration.md)
+실행 커맨드 정의: [`.claude/commands/work.md`](https://github.com/smallmiro/minecraft-server-manager/blob/develop/.claude/commands/work.md), [`.claude/commands/plan-work.md`](https://github.com/smallmiro/minecraft-server-manager/blob/develop/.claude/commands/plan-work.md)
+
+> **참고**: 이 문서의 `system-architect`, `backend-architect`, `frontend-architect`, `devops-architect`, `quality-engineer`는 저장소에 포함되지 않은 **선택 사항(사용자 레벨) 에이전트**입니다. 없어도 워크플로우는 동작하며, 이 경우 메인 세션이나 담당 구현 에이전트가 설계 단계를 처리합니다.
 
 ---
 
@@ -32,8 +35,8 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
                     │                   │                   │
                     ▼                   ▼                   ▼
            ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-           │ Teams 구성    │   │ 순차 실행     │   │ 직접 실행     │
-           │ + Worktree   │   │ 서브에이전트  │   │ /work        │
+           │ Teams 구성    │   │ 순차 실행     │   │ /work        │
+           │ + Worktree   │   │ 서브에이전트  │   │ (티어 라우팅) │
            └───────┬──────┘   └──────┬───────┘   └──────┬───────┘
                    │                 │                   │
       ┌────────────┼────────┐       │                   │
@@ -85,6 +88,8 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
 ```
 
 **핵심 원칙**: Orchestrator는 절대 직접 코드를 수정하지 않습니다. 반드시 `/plan-work`로 계획을 수립한 후 전문 에이전트에게 위임합니다.
+
+> **`/plan-work`의 적용 범위**: orchestrator-agent를 통해 접수한 요청은 `/plan-work`가 먼저입니다. 반면 `/work` 안에서 메인 세션이 라우팅할 때는 티어 T4(3개 이상 모듈, 아키텍처 변경)에서만 `/plan-work`를 직접 실행합니다. 나머지 티어는 이슈의 `Files to Modify`를 기준으로 바로 구현합니다(`.claude/commands/work.md`의 Agent Routing 참조).
 
 ---
 
@@ -201,14 +206,14 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
     ┌─────────────┐ ┌──────────────┐ ┌──────────────┐
     │ 병렬 작업    │ │ 순차 작업만  │ │ 단일 파일    │
     │ 2개 이상     │ │ 존재         │ │ 간단 수정    │
-    │ + 다른 모듈  │ │              │ │              │
+    │ + 다른 모듈  │ │              │ │ (소규모)     │
     └──────┬──────┘ └──────┬───────┘ └──────┬───────┘
            │               │                │
            ▼               ▼                ▼
     ┌─────────────┐ ┌──────────────┐ ┌──────────────┐
     │ Claude Code │ │ 순차          │ │ /work        │
-    │ Teams       │ │ 서브에이전트  │ │ --issue <N>  │
-    │ + Worktree  │ │ 순차 실행     │ │ 직접 실행    │
+    │ Teams       │ │ 서브에이전트  │ │ 티어 라우팅  │
+    │ + Worktree  │ │ 순차 실행     │ │ (T0~T4)      │
     └──────┬──────┘ └──────┬───────┘ └──────┬───────┘
            │               │                │
            ▼               ▼                ▼
@@ -222,7 +227,9 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
 | 병렬 작업 2개 이상 + 서로 다른 모듈 | **Claude Code Teams** (팀 + Git Worktree) |
 | 병렬 작업 2개 이상 + 동일 모듈 다른 파일 | **Claude Code Teams** + Git Worktree |
 | 순차 의존성만 존재 | **순차 서브에이전트** |
-| 단일 파일 수정의 간단한 작업 | **직접 실행** (`/work --issue <N>`) |
+| 소규모 단일 모듈 작업 | **`/work`** (메인 세션이 티어 T0~T4로 라우팅, 아래 Phase 3C 참조) |
+
+> Teams(`TeamCreate`, `TaskCreate`, `SendMessage`)는 실험 기능이라 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`이 필요합니다. 설정되지 않아 도구가 보이지 않으면 `Agent` tool과 `isolation: "worktree"`만으로 병렬 처리합니다.
 
 ---
 
@@ -257,7 +264,7 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
 │  Step 5: P1 실행 (독립 작업)                                    │
 │        ▼                                                        │
 │  ┌─────────────┐                                                │
-│  │ core-agent  │  ← isolation: "worktree"                       │
+│  │ core-agent  │  ← 단독 실행: worktree 불필요                  │
 │  │ Task 1 실행 │                                                │
 │  └──────┬──────┘                                                │
 │         │ 완료                                                   │
@@ -275,7 +282,7 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
 │                  ▼                                                │
 │  Step 7: P3 실행 (통합)                                         │
 │  ┌──────────────┐                                               │
-│  │ devops-agent │  ← isolation: "worktree"                      │
+│  │ devops-agent │  ← 단독 실행: worktree 불필요                 │
 │  │ Task 4 실행  │                                               │
 │  └──────┬───────┘                                               │
 │         │ 완료                                                   │
@@ -301,6 +308,8 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
 | 에이전트 배치 | `Agent` | `team_name` + `isolation: "worktree"` |
 | 동기화 | `SendMessage` | 에이전트 간 결과 공유 |
 | 정리 | `TeamDelete` | 팀 리소스 정리 |
+
+> **worktree는 병렬 위임에만 사용합니다.** 에이전트 하나가 단독으로 작업할 때는 worktree 없이 feature 브랜치에서 직접 작업하고, `isolation: "worktree"`는 여러 에이전트가 동시에 코드를 수정할 때만 지정합니다. 각 worktree 브랜치는 PR 전에 feature 브랜치로 병합합니다. 위 Teams 도구는 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`이 있을 때만 사용할 수 있으며, 없으면 `Agent` tool + worktree로 대체합니다.
 
 ---
 
@@ -332,29 +341,60 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
 
 ---
 
-## Phase 3C: 직접 실행
+## Phase 3C: `/work` 실행 (범용 실행기)
 
-단일 파일 수정 등 간단한 작업은 `/work` 명령으로 직접 실행합니다.
+`/work`는 단일 파일 수정 같은 간단한 작업만 위한 명령이 아니라, 이슈와 마일스톤을 완료까지 진행하는 범용 실행기입니다. `/work`를 호출하는 것이 브랜치 생성부터 머지까지에 대한 승인입니다. 메인 세션이 오케스트레이터 역할을 하며, 이슈의 `Files to Modify`로 담당 에이전트를 정하고 티어(T0~T4)로 처리 방식을 정합니다.
 
 ```
-┌──────────────────────────────────────────────┐
-│              직접 실행                        │
-├──────────────────────────────────────────────┤
-│                                              │
-│  /work --issue <N>                           │
-│         │                                    │
-│         ▼                                    │
-│  ┌─────────────────────────────────┐        │
-│  │ 브랜치 생성                      │        │
-│  │ → TDD (Red → Green → Refactor)  │        │
-│  │ → 커밋                           │        │
-│  │ → PR 생성                        │        │
-│  │ → 코드 리뷰                      │        │
-│  │ → 머지                           │        │
-│  └─────────────────────────────────┘        │
-│                                              │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                  /work (메인 세션 = 오케스트레이터)         │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  /work --issue <N>   (또는 --milestone <N>, 옵션 없음)    │
+│         │                                                │
+│         ▼                                                │
+│  ┌─────────────────────────────────────┐                │
+│  │ 상태 파일 기록 → feature 브랜치 생성  │                │
+│  │ → 티어 라우팅 (T0~T4)                │                │
+│  │ → TDD (Red → Green → Refactor)      │                │
+│  │ → 커밋 + 이슈 체크박스 체크           │                │
+│  │ → E2E 테스트 (외부 동작 변경 시)      │                │
+│  │ → PR 생성                            │                │
+│  │ → /code-review:code-review           │                │
+│  │ → 머지                               │                │
+│  └─────────────────────────────────────┘                │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
 ```
+
+### 티어 라우팅
+
+| 티어 | 조건 | 처리 |
+|------|------|------|
+| T0 직접 | 1개 모듈, 2개 파일 이하, 새 public 인터페이스 없음, 근본 원인 확정. 또는 오타/주석/지침 문서만 변경 | 메인 세션이 직접 처리 (PR 본문에 `직접 처리: <사유>` 한 줄) |
+| T1 단일 | 1개 모듈, 3~8개 파일, 근본 원인 확정 | 담당 에이전트 1개 |
+| T2 강화 | shared 도메인 변경, 근본 원인 미확정, `security` 레이블, 데이터 손실 위험, 9개 이상 파일 | 담당 에이전트, `model: opus`, `effort: high` (원인 미확정이면 분석 먼저) |
+| T3 다중 모듈 | 2개 모듈 | 모듈별 위임, core 먼저, 독립 작업은 병렬(worktree) |
+| T4 설계 | 3개 이상 모듈, 아키텍처 변경 | `/plan-work` + (있다면) architect, 이후 T3 |
+
+경로별 담당 에이전트 매핑의 원본은 `.claude/commands/work.md`의 Agent Routing입니다. 위임 프롬프트에는 이슈 번호와 본문, 체크아웃된 브랜치, 담당 파일, TDD/커밋 형식/Tidy First, "체크포인트마다 커밋"을 담습니다. 위임받은 에이전트는 브랜치 전환, PR 생성/머지, 이슈 본문 수정, work-state 파일 수정, `/work` 호출을 하지 않으며, 커밋 SHA, 테스트 결과, 완료 항목을 반환합니다. 코드 리뷰의 작은 지적은 메인 세션이 직접 수정하고, 큰 지적은 같은 에이전트를 다시 호출합니다.
+
+### 마일스톤 모드와 `--parallel`
+
+`/work --milestone <N>`은 마일스톤의 열린 이슈를 의존성 순서(`depends on #N`, `blocked by #N`, `blocked` 레이블, 같은 파일, 단계 순서)로 처리하며, 각 이슈는 단일 이슈 워크플로우와 티어 라우팅을 따릅니다. 막힌 이슈는 `task.md`에 기록하고 다른 이슈를 먼저 진행합니다.
+
+`--parallel`은 마일스톤 모드에서만 사용할 수 있습니다. 독립적인 이슈를 각각 `isolation: "worktree"`의 Agent로 동시에 실행하고, 하나씩 병합하며 병합할 때마다 테스트를 다시 실행합니다.
+
+### 기여자(fork) 모드
+
+`--contributor`를 지정하거나, `gh repo view --json viewerPermission`이 `WRITE`/`MAINTAIN`/`ADMIN`이 아니면 자동으로 켜집니다. fork의 `develop`을 먼저 동기화하고, 이슈를 수정할 수 있을 때만 체크박스를 체크하며, fork에 push해 원본 저장소로 PR을 엽니다. 머지는 하지 않으며 PR이 열리고 리뷰가 끝나면 완료입니다. 상태 파일에는 `ROLE=contributor`가 기록됩니다.
+
+### 기타 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `--dry-run` | 계획(이슈, 순서, 브랜치)만 출력하고 중단. 상태 파일 없음 |
+| `--skip-review` | 코드 리뷰 생략(긴급 수정 전용), `REVIEW=skipped` 기록 |
 
 ---
 
@@ -394,9 +434,27 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
 
 ---
 
+### 완료 계약 (Stop hook)
+
+`/work`는 frontmatter에 Stop hook(`.claude/hooks/work-done-check.sh`)을 선언합니다. 작업 시작 전(`--dry-run` 제외)에 `.claude/work-state.<session_id>`(gitignore 대상, 세션별 파일)를 기록하고, Claude가 멈추려 할 때마다 hook이 실제 GitHub/git 상태를 확인해 미충족 조건을 알려 주고 작업으로 돌려보냅니다.
+
+| 모드 | 완료 조건 |
+|------|-----------|
+| 이슈 | 이슈 본문에 미체크 `- [ ]` 없음, 이슈의 PR이 머지됨, `REVIEW`가 `done` 또는 `skipped`, 커밋되지 않은 변경 없음 |
+| 이슈 + `ROLE=contributor` | 닫히지 않은 이슈 PR이 존재, `REVIEW`가 `done` 또는 `skipped`, 커밋되지 않은 변경 없음 (체크박스/머지는 요구하지 않음) |
+| 마일스톤 | 마일스톤에 열린 이슈 없음, 커밋되지 않은 변경 없음 |
+
+- 조건을 충족하면 hook이 상태 파일을 삭제합니다.
+- 30회 연속으로 멈춤을 막으면 포기하고(`WORK_MAX_LOOPS`로 조정 가능), `gh` 조회가 실패하면 검증을 건너뜁니다.
+- 해결할 수 없는 블로커가 있으면 사유를 보고하고 상태 파일을 삭제한 뒤 멈춥니다.
+- 완료 전 확인할 것: 이슈 체크박스를 항목 완료마다 체크했는지, `/code-review:code-review`로 리뷰하고 지적을 수정한 뒤 `REVIEW=done`을 기록했는지, 새 외부 동작(REST API, CLI 명령/플래그/출력)에 E2E 테스트(`e2e/tests/api-*.spec.ts`, `platform/services/cli/tests/e2e/cli-*.test.ts`)를 추가했는지.
+- 동시에 여러 `/work` 세션을 쓰면 체크아웃(브랜치, 작업 트리)은 공유되므로 별도의 `git worktree` 폴더에서 실행합니다.
+
+---
+
 ## 설계 에이전트 호출 분기
 
-`/plan-work` 단계에서 설계가 필요한 작업이 식별되면, 구현 전에 Architect 에이전트를 먼저 호출합니다.
+`/plan-work` 단계에서 설계가 필요한 작업이 식별되면, 구현 전에 Architect 에이전트를 먼저 호출합니다. 단, 아래 Architect 에이전트(`system-architect`, `backend-architect`, `frontend-architect`, `devops-architect`)는 이 저장소에 포함되지 않은 **선택 사항(사용자 레벨) 에이전트**입니다. 설치되어 있지 않으면 메인 세션이나 담당 구현 에이전트가 설계를 처리하며, 워크플로우는 이들에 의존하지 않습니다.
 
 ```
                   설계 필요 판단
@@ -508,7 +566,7 @@ E2E 테스트 실패
 |-------|------|--------|--------|
 | **0** | 작업 접수 | Orchestrator | 요구사항 정리 |
 | **1** | 업무 계획 수립 | `/plan-work` (필수) | 실행 계획서 (WBS, 의존성, 병렬 그룹) |
-| **1.5** | 설계 (필요시) | Architect 에이전트 | 아키텍처/API/UI 설계서 |
-| **2** | 실행 구성 판단 | Orchestrator | Teams / 순차 / 직접 실행 결정 |
+| **1.5** | 설계 (필요시) | Architect 에이전트 (선택 사항, 저장소 미포함) | 아키텍처/API/UI 설계서 |
+| **2** | 실행 구성 판단 | Orchestrator | Teams / 순차 / `/work` 티어 라우팅 결정 |
 | **3** | 작업 실행 | 전문 에이전트들 | 코드, 테스트, 문서 |
 | **4** | 통합 및 완료 | Orchestrator | PR 머지, 진행 보고서 |

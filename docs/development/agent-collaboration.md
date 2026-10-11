@@ -1,878 +1,247 @@
-# Agent Collaboration Guide
+# Agent Collaboration
 
-Multi-agent collaboration guide for all development work in this project.
+This page describes how the Claude Code subagents and slash commands in `.claude/` work together on this repository: who owns what, how work is planned, how `/work` routes it, and how completion is enforced.
 
----
+!!! note "Source of truth"
+    The behavior described here is defined by the files in `.claude/agents/`, `.claude/commands/`, and `.claude/hooks/`, plus `CLAUDE.md` and `DEVELOPMENT.md` in the repository root. If this page and those files disagree, the files win.
 
-## 🔴 Critical Rules
+## Overview and Principles
 
-> **These rules apply to ALL agents, for ALL work, at ALL times.**
+- **Issue-driven.** Every change starts from a GitHub Issue. One issue = one branch = one PR. See [Git Workflow](git-workflow.md).
+- **Plan first, then execute.** `/plan-work` produces a plan and does not change code. `/work` executes.
+- **Specialists own modules.** Each agent owns a set of paths. The main session routes work to the owner.
+- **No message bus.** Agents do not exchange messages through a runtime protocol. Work is handed over through the `Agent` tool call (the prompt in, the agent's final report out) or, in a team, through `SendMessage`.
+- **Progress lives in Git and GitHub.** Local progress is written to `task.md` (gitignored). Issue checkboxes track completed items.
 
-### Rule 1: NEVER Do Another Agent's Work
+## Agents
 
-Each agent has **exclusive ownership** of their module. You must NOT:
+All agent definitions are in `.claude/agents/`. Agents have no `tools:` restriction; they inherit all tools. Model names are aliases (`opus`, `sonnet`) so files do not need editing when a new model ships.
 
-| ❌ Forbidden | Explanation |
-|-------------|-------------|
-| Modify code in another agent's module | Even for "small fixes" or "obvious changes" |
-| Create files in another agent's directory | Each agent manages their own files |
-| Implement features that belong to another agent | Even if you think you can do it faster |
-| Make assumptions about another agent's code | Always request, never assume |
+| Agent | Owns | Model | Label |
+|-------|------|-------|-------|
+| `orchestrator-agent` | Entry point for requests. Analyzes, plans, delegates, coordinates. Does not write code. | opus | `agent:orchestrator` |
+| `core-agent` | `platform/services/shared/`, `platform/services/mod-source-*/` (domain entities, value objects, use cases, ports/adapters) | opus | `agent:core` |
+| `cli-agent` | `platform/services/cli/`, `platform/scripts/`, `templates/` | sonnet | `agent:cli` |
+| `backend-agent` | `platform/services/mcctl-api/` (Fastify, OpenAPI) | sonnet | `agent:backend` |
+| `frontend-agent` | `platform/services/mcctl-console/` (Next.js, React, MUI 5.x, Better Auth) | sonnet | `agent:frontend` |
+| `devops-agent` | Docker files and the rest of `platform/`, `e2e/`, `.github/workflows/`, `.claude/hooks/` | sonnet | `agent:devops` |
+| `technical-writer` | `docs/`, `README*`, `CHANGELOG.md` (English and Korean) | sonnet | `agent:docs` |
+| `release-manager` | Version bumps, `v*` tags, GitHub releases, post-release verification | sonnet | `agent:release` |
 
-### Rule 2: ALWAYS Collaborate via Protocol
+The commands `/plan-work` and `/build-kb` also run on `opus`; `/work`, `/write-docs`, `/sync-docs`, and `/update-docs` run on `sonnet`.
 
-When you need something from another agent:
+Notes on specific agents:
 
-```markdown
-## 📋 DEPENDENCY_NEEDED
+- `mcctl-console` runs natively under PM2, not in Docker.
+- `release-manager` handles npm packages, not Docker images. Pushing a `v*` tag triggers `.github/workflows/release.yml`, which publishes five packages (`shared`, `mod-source-modrinth`, `mcctl-api`, `mcctl-console`, `mcctl`) and creates the GitHub Release.
+- The `agent:*` values in the Label column are the label each agent definition declares in its Identity table.
 
-**From**: [your agent name]
-**To**: [target agent name]
-**Issue**: #XX (if applicable)
+!!! warning "Architect agents are not part of this repository"
+    `orchestrator-agent.md` and `/plan-work` mention `system-architect`, `backend-architect`, `frontend-architect`, `devops-architect`, and `quality-engineer`. These are **optional user-level agents** and are not shipped in `.claude/agents/`. The workflow does not depend on them: without them, the main session or the owner agent does the design step.
 
-### Need
-[Describe what interface/artifact/spec you need]
+## Workflow
 
-### Reason
-[Why you need it for your work]
-
-### Expected Format
-[How you expect to receive it - interface, file, spec]
+```mermaid
+flowchart LR
+    A[Request] --> B[orchestrator-agent<br/>intake and analysis]
+    B --> C[GitHub Issue]
+    C --> D["/plan-work<br/>plan only"]
+    D --> E{Plan approved?}
+    E -- no --> D
+    E -- yes --> F["/work<br/>branch, TDD, PR, review, merge"]
+    F --> G[Done: Stop hook verifies]
 ```
 
-When you complete work that others depend on:
-
-```markdown
-## ✅ DEPENDENCY_READY
-
-**From**: [your agent name]
-**To**: [comma-separated list of dependent agents]
-**Issue**: #XX
-
-### Artifact
-[What is now available]
-
-### Location
-[File path or import statement]
-
-### Usage
-[How to use the provided artifact]
-```
-
-### Rule 3: Report Blockers Immediately
-
-If you are blocked by another agent:
-
-```markdown
-## ⚠️ BLOCKING_ISSUE
-
-**From**: [your agent name]
-**Blocked By**: [blocking agent name]
-**Issue**: #XX
-
-### Blocker
-[What is blocking you]
-
-### Impact
-[What you cannot do until this is resolved]
-
-### Urgency
-[HIGH/MEDIUM/LOW]
-```
-
----
-
-## Team Structure
-
-### Development Agents (Module Ownership)
-
-```
-                    ┌─────────────────────────────────────┐
-                    │       🎯 ORCHESTRATOR               │
-                    │  (Dependency analysis, assignment,  │
-                    │       synchronization)              │
-                    └──────────────────┬──────────────────┘
-                                       │
-        ┌──────────────┬───────────────┼───────────────┬──────────────┐
-        │              │               │               │              │
-        ▼              ▼               ▼               ▼              ▼
-┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│ 🔧 CORE      │ │ 💻 CLI       │ │ 🖥️ BACKEND   │ │ 🎨 FRONTEND  │ │ 🐳 DEVOPS    │
-│              │ │              │ │              │ │              │ │              │
-│ shared/      │ │ cli/,scripts/│ │ mcctl-api/   │ │ mcctl-console│ │ Integration  │
-│              │ │              │ │              │ │              │ │              │
-│ Domain &     │ │ Commands &   │ │ REST API     │ │ Web UI       │ │ Docker &     │
-│ Interfaces   │ │ Prompts      │ │ Server       │ │ Console      │ │ E2E Tests    │
-└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
-```
-
-### Support Agents (Cross-cutting Concerns)
-
-```
-┌─────────────────────────────────────┐   ┌─────────────────────────────────────┐
-│       📝 TECHNICAL WRITER           │   │       🚀 RELEASE MANAGER            │
-│                                     │   │                                     │
-│  Invoked by:                        │   │  Invoked by:                        │
-│  - /write-docs command              │   │  - User request (릴리즈, 배포)        │
-│  - Release Manager (before release) │   │                                     │
-│                                     │   │  Invokes:                           │
-│  Module: docs/                      │   │  - Technical Writer (documentation) │
-│  Output: EN (.md) + KO (.ko.md)     │   │  - Git tagging, Docker deploy       │
-└─────────────────────────────────────┘   └─────────────────────────────────────┘
-```
-
-## Agent Definitions
-
-### 🎯 Orchestrator Agent
-
-**Role**: Overall project coordination and task distribution
-
-| Attribute | Description |
-|-----------|-------------|
-| **Responsibilities** | Dependency analysis, parallel task identification, sync point management |
-| **Input** | Milestone issue list, agent status reports |
-| **Output** | Work assignments, sync requests, progress reports |
-| **Tools** | GitHub API, Task Management |
-
-```yaml
-orchestrator:
-  triggers:
-    - milestone_start
-    - agent_completion_report
-    - blocking_dependency_detected
-    - sync_point_reached
-
-  actions:
-    - analyze_dependencies
-    - assign_parallel_tasks
-    - coordinate_sync_points
-    - generate_progress_report
-```
-
----
-
-### 🔧 Core Agent (shared/)
-
-**Role**: Shared library and domain layer development
-
-| Attribute | Description |
-|-----------|-------------|
-| **Module** | `platform/services/shared/` |
-| **Label** | `agent:core` |
-| **Documents** | `shared/prd.md`, `shared/plan.md` |
-| **Expertise** | Hexagonal Architecture, TypeScript, Domain Modeling |
-
-**Example Tasks**:
-- Domain entity definitions (Server, World, etc.)
-- Port interfaces (IUserRepository, IModSourcePort, etc.)
-- Value objects (ServerName, ServerType, McVersion, etc.)
-- Infrastructure adapters (YamlUserRepository, etc.)
-
-**Provides** (→ to other agents):
-- Domain interfaces → CLI, Backend
-- Repository implementations → CLI
-- Adapter interfaces → Backend
-
-**Requires** (← from other agents):
-- (Often no dependencies - starts first in dependency chains)
-
----
-
-### 💻 CLI Agent (cli/)
-
-**Role**: CLI command implementation
-
-| Attribute | Description |
-|-----------|-------------|
-| **Module** | `platform/services/cli/`, `scripts/` |
-| **Label** | `agent:cli` |
-| **Documents** | `cli/prd.md`, `cli/plan.md` |
-| **Expertise** | @clack/prompts, Commander.js, YAML, Shell scripting |
-
-**Example Tasks**:
-- New CLI commands (mcctl create, mcctl console, etc.)
-- Interactive prompts and wizards
-- Bash management scripts
-- Configuration file handling
-
-**Provides** (→ to other agents):
-- CLI command interface → DevOps
-- Config file specifications → Backend, Frontend
-
-**Requires** (← from other agents):
-- Domain interfaces ← Core
-- Repository implementations ← Core
-
----
-
-### 🖥️ Backend Agent (mcctl-api/)
-
-**Role**: REST API server development
-
-| Attribute | Description |
-|-----------|-------------|
-| **Module** | `platform/services/mcctl-api/` |
-| **Label** | `agent:backend` |
-| **Documents** | `mcctl-api/prd.md`, `mcctl-api/plan.md` |
-| **Expertise** | Fastify, REST API, Authentication, OpenAPI |
-
-**Example Tasks**:
-- API endpoint implementation
-- Authentication and authorization plugins
-- OpenAPI/Swagger documentation
-- Dockerfile and container builds
-
-**Provides** (→ to other agents):
-- REST API endpoint spec → Frontend
-- OpenAPI documentation → Frontend, DevOps
-- Docker image → DevOps
-
-**Requires** (← from other agents):
-- Domain adapters ← Core
-- Shared Use Cases ← Core
-
----
-
-### 🎨 Frontend Agent (mcctl-console/)
-
-**Role**: Web Management Console development
-
-| Attribute | Description |
-|-----------|-------------|
-| **Module** | `platform/services/mcctl-console/` |
-| **Label** | `agent:frontend` |
-| **Documents** | `mcctl-console/prd.md`, `mcctl-console/plan.md` |
-| **Expertise** | Next.js, React, Tailwind CSS, NextAuth.js |
-
-**Example Tasks**:
-- Next.js pages and components
-- Authentication integration (NextAuth.js)
-- BFF proxy layer
-- Dashboard and management UI
-
-**Provides** (→ to other agents):
-- Docker image → DevOps
-- UI component specifications → (documentation)
-
-**Requires** (← from other agents):
-- API endpoint spec ← Backend
-- Auth plugin spec ← Backend
-
----
-
-### 🐳 DevOps Agent (Integration)
-
-**Role**: Docker integration and E2E testing
-
-| Attribute | Description |
-|-----------|-------------|
-| **Module** | `platform/` (docker-compose), `e2e/` |
-| **Label** | `agent:devops` |
-| **Documents** | `platform/README.md`, `e2e/README.md` |
-| **Expertise** | Docker Compose, Playwright, CI/CD |
-
-**Example Tasks**:
-- Docker Compose integration
-- E2E tests with Playwright
-- Service orchestration
-- CI/CD pipeline configuration
-
-**Provides** (→ to other agents):
-- Integration test results → All
-- Deployment configurations → All
-
-**Requires** (← from other agents):
-- API Dockerfile ← Backend
-- Console Dockerfile ← Frontend
-- CLI service command ← CLI
-
----
-
-## Support Agents
-
-> Support agents handle cross-cutting concerns and are invoked by commands or other agents.
-
-### 📝 Technical Writer Agent (docs/)
-
-**Role**: Bilingual documentation maintenance
-
-| Attribute | Description |
-|-----------|-------------|
-| **Module** | `docs/` |
-| **Command** | `/write-docs` |
-| **Documents** | MkDocs i18n structure |
-| **Expertise** | MkDocs, Read the Docs, EN/KO translation |
-
-**Invocation**:
-- `/write-docs create <path>` - Create new document
-- `/write-docs translate <path>` - Translate document
-- `/write-docs review <path>` - Review documentation
-- Called by Release Manager before releases
-
-**Provides** (→ to other agents):
-- Updated documentation → All
-- Release notes → Release Manager
-
-**Rules**:
-- ❌ Does NOT implement application features
-- ❌ Does NOT make architectural decisions
-- ✅ Only modifies files in `docs/` directory
-- ✅ Creates both `.md` and `.ko.md` versions
-
----
-
-### 🚀 Release Manager Agent
-
-**Role**: Version tagging and deployment
-
-| Attribute | Description |
-|-----------|-------------|
-| **Scope** | Git tags, Docker images, GitHub releases |
-| **Trigger** | User request (릴리즈, 배포, release, deploy) |
-| **Expertise** | Semantic Versioning, Git Flow, Docker, CI/CD |
-
-**Workflow**:
-1. Pre-release checks (branch, uncommitted changes)
-2. Version determination (MAJOR/MINOR/PATCH)
-3. **Invoke Technical Writer** for documentation update
-4. Create Git tag
-5. Monitor GitHub Actions
-6. Verify Docker deployment
-
-**Provides** (→ to other agents):
-- Release tags → All
-- Deployment status → DevOps
-
-**Rules**:
-- ❌ Does NOT modify application code
-- ❌ Does NOT skip documentation update
-- ✅ Always invokes Technical Writer before tagging
-- ✅ Follows Semantic Versioning
-
----
-
-## Communication Protocol
-
-### Message Types
-
-Message types used for inter-agent communication:
-
-```typescript
-interface AgentMessage {
-  id: string;
-  type: MessageType;
-  from: AgentId;
-  to: AgentId | 'orchestrator' | 'broadcast';
-  timestamp: string;
-  payload: MessagePayload;
-}
-
-type MessageType =
-  | 'WORK_REQUEST'      // Work assignment
-  | 'WORK_COMPLETE'     // Work completion
-  | 'DEPENDENCY_READY'  // Dependency available
-  | 'DEPENDENCY_NEEDED' // Dependency required
-  | 'SYNC_REQUEST'      // Synchronization request
-  | 'STATUS_UPDATE'     // Status update
-  | 'BLOCKING_ISSUE'    // Blocking issue occurred
-  | 'REVIEW_REQUEST'    // Review request
-  | 'REVIEW_COMPLETE';  // Review completion
-
-type AgentId =
-  | 'core' | 'cli' | 'backend' | 'frontend' | 'devops'  // Development
-  | 'technical-writer' | 'release-manager';              // Support
-```
-
-### Message Format Examples
-
-**Work Request (WORK_REQUEST)**:
-```yaml
-type: WORK_REQUEST
-from: orchestrator
-to: core
-payload:
-  issue: "#XX"
-  title: "feat(shared): Add repository interface"
-  priority: high
-  deadline: null
-  context:
-    milestone: N
-    phase: "X.Y"
-    dependencies: []
-```
-
-**Dependency Ready (DEPENDENCY_READY)**:
-```yaml
-type: DEPENDENCY_READY
-from: core
-to: broadcast  # to multiple agents
-payload:
-  issue: "#XX"
-  artifact: "IRepository interface"
-  location: "shared/src/application/ports/outbound/IRepository.ts"
-  exports:
-    - "Entity"
-    - "IRepository"
-  usage_example: |
-    import { IRepository, Entity } from '@minecraft-docker/shared';
-```
-
-**Work Complete (WORK_COMPLETE)**:
-```yaml
-type: WORK_COMPLETE
-from: core
-to: orchestrator
-payload:
-  issue: "#XX"
-  status: completed
-  artifacts:
-    - path: "shared/src/application/ports/outbound/IRepository.ts"
-      type: "interface"
-    - path: "shared/src/index.ts"
-      type: "export"
-  tests_passed: true
-  ready_for_merge: true
-  unblocks: ["#YY", "#ZZ"]
-```
-
-**Blocking Issue (BLOCKING_ISSUE)**:
-```yaml
-type: BLOCKING_ISSUE
-from: frontend
-to: orchestrator
-payload:
-  issue: "#XX"
-  blocked_by: "#YY"
-  reason: "Need auth plugin spec to implement BFF proxy"
-  suggested_action: "Request Backend agent to share auth spec early"
-```
-
----
-
-## Execution Flow
-
-### Phase 1: Initialization
-
-```
-Orchestrator                    All Agents
-    │                               │
-    │  1. WORK_REQUEST (#A)         │
-    │──────────────────────────────▶│ Core (foundation tasks)
-    │                               │
-    │  2. WORK_REQUEST (#B)         │
-    │──────────────────────────────▶│ Backend (parallel - foundation)
-    │                               │
-    │  3. WORK_REQUEST (#C)         │
-    │──────────────────────────────▶│ Frontend (parallel - foundation)
-    │                               │
-```
-
-### Phase 2: Dependency Resolution
-
-```
-Core                 Orchestrator              CLI / Backend
-  │                       │                         │
-  │ WORK_COMPLETE (#A)    │                         │
-  │──────────────────────▶│                         │
-  │                       │                         │
-  │                       │ DEPENDENCY_READY        │
-  │                       │────────────────────────▶│
-  │                       │                         │
-  │                       │ WORK_REQUEST (next)     │
-  │                       │────────────────────────▶│
-  │                       │                         │
-```
-
-### Phase 3: Parallel Execution
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    PARALLEL EXECUTION WINDOW                     │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Core Agent          CLI Agent         Backend Agent            │
-│  ───────────         ──────────        ──────────────           │
-│  Repository          CLI commands      Auth Plugin              │
-│  implementations          │            API routes               │
-│       │                   │                  │                   │
-│       ▼                   ▼                  ▼                   │
-│  Additional          More commands     More routes              │
-│  adapters                 │                  │                   │
-│                           │                  │                   │
-│                           ▼                  ▼                   │
-│                      Service cmd       OpenAPI docs             │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Phase 4: Sync Point - API Spec Ready
-
-```
-Backend                Orchestrator              Frontend
-   │                        │                        │
-   │ WORK_COMPLETE          │                        │
-   │ (API Spec Ready)       │                        │
-   │───────────────────────▶│                        │
-   │                        │                        │
-   │                        │ SYNC: API_SPEC_READY   │
-   │                        │───────────────────────▶│
-   │                        │                        │
-   │                        │ WORK_REQUEST (BFF)     │
-   │                        │───────────────────────▶│
-   │                        │                        │
-```
-
-### Phase 5: Docker & Integration
-
-```
-Backend / Frontend          Orchestrator              DevOps
-       │                         │                       │
-       │ WORK_COMPLETE           │                       │
-       │ (Dockerfiles)           │                       │
-       │────────────────────────▶│                       │
-       │                         │                       │
-       │                         │ DEPENDENCY_READY      │
-       │                         │ (Both Dockerfiles)    │
-       │                         │──────────────────────▶│
-       │                         │                       │
-       │                         │ WORK_REQUEST          │
-       │                         │ (Integration)         │
-       │                         │──────────────────────▶│
-       │                         │                       │
-```
-
----
-
-## Parallel Execution Matrix
-
-### Identifying Parallelizable Tasks
-
-| Criteria | Parallelizable | Sequential |
-|----------|----------------|------------|
-| No shared dependencies | ✅ Yes | - |
-| Different modules | ✅ Yes | - |
-| Same module, different features | ⚠️ Depends | - |
-| Explicit dependency exists | - | ✅ Required |
-| Output of one is input of another | - | ✅ Required |
-
-### Example Parallel Groups
-
-| Group | Agents | Can Run In Parallel | Prerequisites |
-|-------|--------|---------------------|---------------|
-| **Foundation** | Core, Backend, Frontend | Yes | None |
-| **Feature Development** | Core, CLI, Backend, Frontend | Yes | Foundation complete |
-| **Dockerization** | Backend, Frontend, CLI | Yes | Features complete |
-| **Integration** | DevOps | No (sequential) | Dockerfiles ready |
-
-### Conceptual Dependency Flow
-
-```
-Legend: ─── direct dependency
-        ··· optional/weak dependency
-
-Foundation:  Core ─────┬─── Adapters ───┬─── CLI Commands ───┐
-                       │                │                     │
-                       ├─── Optional    │                     ├─── Service Cmd
-                       │   (extensions) │                     │
-                       │                └··· Backend ─── Auth │─── Routes ───┐
-                       │                         │            │               │
-                       └─── Interfaces ──────────┘            ├─── More Routes│─── Swagger ─── Dockerfile
-                                                              │               │
-Frontend:    Foundation ─── Auth ─────────────────────────────┼─── BFF ─── Pages ─── More Pages ─── Dockerfile
-                                                              │
-                                                              ▼
-Integration:                              Backend + Frontend Dockerfiles ─── Compose ─── E2E Tests
-```
-
----
-
-## Sync Points
-
-### Defining Sync Points
-
-A sync point is required when:
-1. One agent's output is needed by another agent
-2. Multiple agents must coordinate before proceeding
-3. Integration testing requires all components ready
-
-### Example Sync Points
-
-| Sync ID | Condition | From | To | Purpose |
-|---------|-----------|------|----|---------|
-| **SYNC-INTERFACE** | Interface complete | Core → All | Share domain interfaces |
-| **SYNC-AUTH** | Auth spec complete | Backend → Frontend | Share auth configuration |
-| **SYNC-API** | API docs complete | Backend → Frontend | Share OpenAPI spec |
-| **SYNC-DOCKER** | Dockerfiles complete | Backend, Frontend → DevOps | Docker images ready |
-| **SYNC-INTEGRATION** | Integration ready | DevOps → All | Test environment ready |
-
-### Information Shared at Sync Points
-
-**SYNC-INTERFACE: Interface Ready**
-```yaml
-sync: SYNC-INTERFACE
-artifacts:
-  - file: "shared/src/application/ports/outbound/IRepository.ts"
-    exports: ["Entity", "IRepository"]
-
-usage:
-  cli: "Used for repository implementation"
-  backend: "Used for API integration"
-```
-
-**SYNC-AUTH: Auth Spec Ready**
-```yaml
-sync: SYNC-AUTH
-artifacts:
-  - file: "mcctl-api/src/plugins/auth.ts"
-    exports: ["AuthPluginOptions"]
-  - spec: |
-      Access Modes: internal | api-key | ip-whitelist | api-key-ip | open
-      Header: X-API-Key
-      Response: 401 Unauthorized, 403 Forbidden
-
-usage:
-  frontend: "Set X-API-Key header in BFF proxy"
-```
-
-**SYNC-API: API Spec Ready**
-```yaml
-sync: SYNC-API
-artifacts:
-  - file: "mcctl-api/docs/openapi.json"
-  - url: "http://localhost:5001/docs"
-
-endpoints:
-  servers: "GET/POST /api/servers, GET/POST/DELETE /api/servers/:name"
-  worlds: "GET/POST /api/worlds, GET/DELETE /api/worlds/:name"
-  players: "GET /api/servers/:name/players, whitelist, bans, ops"
-
-usage:
-  frontend: "Generate React Query hooks, map BFF routes"
-```
-
----
-
-## Work Request/Response Protocol
-
-### Work Request Format
-
-When an agent requests work from another agent:
-
-```markdown
-## 📋 WORK_REQUEST
-
-**From**: {requesting_agent}
-**To**: {target_agent}
-**Issue**: #{issue_number}
-**Priority**: {high|medium|low}
-
-### Context
-{Background explanation of why this work is needed}
-
-### Requirements
-- [ ] {Specific requirement 1}
-- [ ] {Specific requirement 2}
-
-### Expected Output
-{Expected deliverable format}
-
-### Deadline
-{Deadline if any, otherwise "as soon as dependencies met"}
-```
-
-### Work Completion Report Format
-
-When an agent reports work completion:
-
-```markdown
-## ✅ WORK_COMPLETE
-
-**From**: {completing_agent}
-**To**: orchestrator
-**Issue**: #{issue_number}
-
-### Completed Tasks
-- [x] {Completed task 1}
-- [x] {Completed task 2}
-
-### Artifacts
-| File | Type | Description |
-|------|------|-------------|
-| {path} | {type} | {description} |
-
-### Exports (if applicable)
-```typescript
-// Usage example
-import { ... } from '@minecraft-docker/{package}';
-```
-
-### Tests
-- Unit Tests: ✅ Passed ({n} tests)
-- Integration Tests: ✅ Passed ({n} tests)
-
-### Unblocks
-The following issues can now start:
-- #{issue1} - {title}
-- #{issue2} - {title}
-
-### Notes
-{Special notes or things subsequent workers should know}
-```
-
----
-
-## Progress Tracking
-
-### Milestone Progress File
-
-Each agent updates their progress in plan.md:
-
-```markdown
-<!-- platform/services/{module}/plan.md -->
-# Module Plan
-
-## Progress
-
-| Issue | Title | Status | Agent | Updated |
-|-------|-------|--------|-------|---------|
-| #XX | Feature A | ✅ Complete | {agent} | YYYY-MM-DD |
-| #YY | Feature B | 🔄 In Progress | {agent} | YYYY-MM-DD |
-| #ZZ | Feature C | ⏳ Pending | - | - |
-| #WW | Feature D | 🚫 Blocked by #XX | - | - |
-
-## Dependencies Provided
-- [x] Interface A → Other agents
-- [ ] Interface B → Other agents
-
-## Sync Points
-- [x] SYNC-1: Interface shared
-- [ ] SYNC-2: Pending
-```
-
-### Dashboard View
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    MILESTONE PROGRESS DASHBOARD                  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Overall: ████████░░░░░░░░░░░░ 35% (X/Y issues)                 │
-│                                                                  │
-│  🔧 Core (shared/)      ████████████░░░░░░░░ 50% (A/B)          │
-│                                                                  │
-│  💻 CLI (cli/)          ████░░░░░░░░░░░░░░░░ 25% (C/D)          │
-│                                                                  │
-│  🖥️ Backend (mcctl-api/) ██████░░░░░░░░░░░░░░ 29% (E/F)          │
-│                                                                  │
-│  🎨 Frontend (console/)  ████████░░░░░░░░░░░░ 33% (G/H)          │
-│                                                                  │
-│  🐳 DevOps (integration) ░░░░░░░░░░░░░░░░░░░░ 0% (I/J)           │
-│                                                                  │
-│  Legend: ✅ Complete  🔄 In Progress  ⏳ Pending  🚫 Blocked     │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Error Handling
-
-### Handling Blockers
-
-```yaml
-scenario: "Frontend blocked by Backend dependency"
-
-resolution_steps:
-  1. Frontend sends BLOCKING_ISSUE to Orchestrator
-  2. Orchestrator checks Backend progress
-  3. Options:
-     a. If dependency near completion → Wait
-     b. If dependency delayed → Request early spec sharing
-     c. If dependency blocked → Escalate and replan
-
-message_flow:
-  frontend → orchestrator: "BLOCKING_ISSUE: need dependency from backend"
-  orchestrator → backend: "SYNC_REQUEST: Share spec early"
-  backend → frontend: "DEPENDENCY_READY: Spec (partial)"
-  frontend: Proceeds with partial spec, marks for later update
-```
-
-### Rollback Handling
-
-```yaml
-scenario: "Integration test fails"
-
-resolution_steps:
-  1. DevOps reports BLOCKING_ISSUE with test results
-  2. Orchestrator analyzes failure root cause
-  3. Assigns fix task to responsible agent
-  4. Re-runs integration after fix
-
-message_flow:
-  devops → orchestrator: "BLOCKING_ISSUE: Integration failure in E2E"
-  orchestrator → {responsible_agent}: "REVIEW_REQUEST: Fix issue"
-  {responsible_agent} → orchestrator: "WORK_COMPLETE: Fix applied"
-  orchestrator → devops: "WORK_REQUEST: Re-run E2E tests"
-```
-
----
-
-## Quick Reference
-
-### Agent Module Mapping
-
-| Agent | Module | Label | Primary Focus |
-|-------|--------|-------|---------------|
-| 🔧 Core | `platform/services/shared/` | `agent:core` | Domain/Ports |
-| 💻 CLI | `platform/services/cli/`, `scripts/` | `agent:cli` | Commands |
-| 🖥️ Backend | `platform/services/mcctl-api/` | `agent:backend` | API Routes |
-| 🎨 Frontend | `platform/services/mcctl-console/` | `agent:frontend` | UI Pages |
-| 🐳 DevOps | `platform/`, `e2e/` | `agent:devops` | Docker/E2E |
-| 📝 Docs | `docs/` | `agent:docs` | Documentation |
-| 🚀 Release | Git tags, releases | `agent:release` | Releases |
-
-### Typical Dependency Flow
-
-```
-Core (Foundation)
-   ├─→ CLI (Commands, uses Core interfaces)
-   ├─→ Backend (API, uses Core interfaces)
-   │      └─→ Frontend (UI, uses Backend API)
-   │              └─→ DevOps (Integration, uses all Dockerfiles)
-   └─→ DevOps (Service scripts)
-```
-
-### Command Reference
+1. **Intake.** By the repository rules in `CLAUDE.md`, a request is received by `orchestrator-agent`, which analyzes it and delegates analysis to specialists. No code is modified in this phase.
+2. **Issue.** The analysis becomes a GitHub Issue (summary, root cause or requirements, plan, files to modify, branch strategy, acceptance criteria).
+3. **Plan.** `/plan-work` produces a plan: work breakdown, dependencies, parallel groups, agent assignment, and an execution proposal (Teams or sequential sub-agents). It never edits code or creates branches.
+4. **Approval.** You review the plan.
+5. **Execute.** `/work` carries the work through to completion. Invoking `/work` is the approval to branch, commit, open the PR, run the review, and merge.
+
+### `/plan-work`
 
 ```bash
-# Orchestrator commands
-/work --milestone N              # Start milestone orchestration
-/work --issue XX                 # Work on specific issue
-
-# Agent-specific
-/work --agent core --issue XX    # Assign to Core agent
-/work --agent backend --parallel # Run backend tasks in parallel
-
-# Status
-/status --milestone N            # Show progress
-/status --agent core             # Show agent status
-/deps --issue XX                 # Show dependencies for issue
+/plan-work                           # Plan from the conversation
+/plan-work --issue <N>               # One issue
+/plan-work --milestone <N>           # Every open issue in a milestone
+/plan-work --issues <N1,N2,...>      # Several issues
 ```
 
----
+### How "plan first" applies
+
+- When a request comes in through `orchestrator-agent`, planning with `/plan-work` comes first, then `/work`.
+- Inside `/work`, the main session routes by tier (below). It runs `/plan-work` itself only at tier T4. Smaller tiers use the issue's `Files to Modify` and go straight to implementation.
+
+## `/work` Modes and Routing
+
+```bash
+/work                         # Context mode: create an issue from the conversation, then execute
+/work --issue <N>             # Single issue
+/work --milestone <N>         # All issues in a milestone, in dependency order
+```
+
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Print the plan (issues, order, branches) and stop. No state file, no changes. |
+| `--contributor` | Fork mode: no merge. See the Contributor Mode section below. |
+| `--skip-review` | Skip the code review (emergency fixes only). Records `REVIEW=skipped`. |
+| `--parallel` | Milestone mode only. Run independent issues concurrently, each Agent with `isolation: "worktree"`. Branches are merged one at a time, with tests re-run after each. |
+
+For a single issue, `/work`:
+
+1. Loads the issue and writes the state file.
+2. Creates `feature/<N>-<description>` (or `bugfix/...`) from an updated `develop`.
+3. Routes the work (below) and implements it with TDD, committing as `<type>: <description> (#<N>)` at each checkpoint.
+4. Ticks the issue checkboxes as items complete.
+5. Adds E2E tests for new or changed external behavior (REST API: Playwright in `e2e/`; CLI: Vitest in `platform/services/cli/tests/e2e/`).
+6. Opens the PR, runs `/code-review:code-review`, fixes every finding, and sets `REVIEW=done`.
+7. Merges with a merge commit and returns to `develop`.
+
+In milestone mode, each issue goes through the same steps. A blocked issue is noted in `task.md` and revisited after its dependency is merged.
+
+### Module routing
+
+The main session acts as the orchestrator. The most specific path wins.
+
+| Paths in `Files to Modify` | Owner |
+|----------------------------|-------|
+| `platform/services/shared/**`, `platform/services/mod-source-*/**` | core-agent |
+| `platform/services/cli/**`, `platform/scripts/**`, `templates/**` | cli-agent |
+| `platform/services/mcctl-api/**` | backend-agent |
+| `platform/services/mcctl-console/**` | frontend-agent |
+| rest of `platform/**`, `e2e/**`, `.github/workflows/**`, `.claude/hooks/**` | devops-agent |
+| `docs/**`, `README*`, `CHANGELOG.md` | technical-writer |
+| `.claude/commands/**`, `.claude/agents/**`, `CLAUDE.md`, `DEVELOPMENT.md`, prose only | handled directly by the main session |
+
+If prose files change together with logic files, the logic owner handles both.
+
+### Routing tiers
+
+| Tier | Condition | Handling |
+|------|-----------|----------|
+| T0 direct | One module, 2 files or fewer, no new public interface, confirmed root cause; or typo/comment/instruction prose only | Main session. The PR body gets one line noting the direct handling. |
+| T1 single | One module, 3-8 files, confirmed root cause | One owner agent, default model |
+| T2 hardened | Shared domain change, unconfirmed root cause, `security` label, data-loss risk, or 9+ files | Owner agent (analysis first if the cause is unconfirmed), `model: opus`, `effort: high` |
+| T3 multi-module | Two modules | Delegate per module, core first, independent parts in parallel (worktrees) |
+| T4 design | Three or more modules, or architecture change | `/plan-work` plus an architect if available, then T3 |
+
+`model` and `effort` are set on the delegation only when the tier gives a value that differs from the agent's default.
+
+!!! info "Not every task goes to an agent"
+    Tier T0 work and prose-only files are handled by the main session. Small code-review findings are also fixed directly; large ones go back to the same agent. The rule is not "never touch another agent's files" but "route by the table, and do not edit files a running agent owns".
+
+## Delegation Contract
+
+A delegation prompt must contain:
+
+- the issue number and body
+- the branch that is already checked out
+- the files the agent owns
+- TDD, the commit format, and Tidy First (structural and behavioral changes in separate commits)
+- "commit at every checkpoint"
+
+The agent must **not**: switch branches, create PRs or merge, edit the issue body, touch the `work-state` file, or invoke `/work`.
+
+The agent returns: commit SHAs, test results, and the list of completed items.
+
+Delegated agents run in the background. If the Stop hook blocks the main session while one is running, wait for its completion notification and do not edit its files.
+
+## Parallel Work
+
+| Mechanism | When | Notes |
+|-----------|------|-------|
+| Single agent | One owner for the issue | Works directly on the feature branch. **No worktree.** |
+| `Agent` tool + `isolation: "worktree"` | Parallel delegation (T3, or `--parallel` in milestone mode) | Each agent gets its own worktree. Merge the branches into the feature branch before the PR. |
+| Claude Code Teams | Larger parallel plans | Needs `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`. Provides `TeamCreate`, `TaskCreate`/`TaskUpdate` (dependencies), and `SendMessage`. |
+
+If the Teams tools are not available, parallelize with the `Agent` tool and worktrees only.
+
+Worktrees are for parallel delegation, not for every agent. Separately, concurrent `/work` **sessions** share one checkout's branch and working tree, so run them in separate `git worktree` folders.
+
+## Completion Enforcement
+
+`/work` declares a Stop hook in its frontmatter: `.claude/hooks/work-done-check.sh`. When `/work` starts (not for `--dry-run`), it writes `.claude/work-state.<session_id>` (gitignored; one file per session so concurrent sessions do not block each other):
+
+```bash
+# Issue mode
+printf 'MODE=issue\nISSUE=%s\nREVIEW=pending\n' <N> > .claude/work-state.${CLAUDE_SESSION_ID}
+# Milestone mode
+printf 'MODE=milestone\nMILESTONE=%s\n' <N> > .claude/work-state.${CLAUDE_SESSION_ID}
+```
+
+Each time Claude tries to stop, the hook checks the real GitHub and git state and, if conditions are unmet, blocks the stop and lists what remains.
+
+| Mode | Work is complete when |
+|------|-----------------------|
+| Issue | No unchecked `- [ ]` in the issue body, a PR for the issue is merged, `REVIEW` is `done` or `skipped`, no uncommitted changes |
+| Issue, `ROLE=contributor` | A non-closed PR for the issue exists, `REVIEW` is `done` or `skipped`, no uncommitted changes |
+| Milestone | The milestone has no open issues, no uncommitted changes |
+
+Safety valves:
+
+- The hook gives up after **30** blocked stops (`WORK_MAX_LOOPS` overrides the limit).
+- If `gh` fails, verification is skipped.
+- On an unresolvable blocker, the session reports it, deletes its state file, and stops.
+- No state file means the hook does nothing.
+
+## Contributor Mode
+
+For people without write access to the original repository. It turns on with `--contributor`, or automatically when `gh repo view --json viewerPermission` reports something other than `WRITE`, `MAINTAIN`, or `ADMIN`. The state file gets `ROLE=contributor`, and the flow changes as follows:
+
+- Sync the fork's `develop` first, then branch.
+- Tick issue checkboxes only if you can edit the issue; otherwise list completed items in the PR body.
+- Push to the fork and open the PR against the original repository's `develop`.
+- Do not merge. The job is done when the PR is open and the review is `done`.
+
+See `DEVELOPMENT.md` (section 7.6) in the repository root for the contributor-facing steps.
+
+## Handoff Conventions
+
+Some agent prompts use markdown headings as handoff conventions. They are prompt conventions, not a protocol: nothing parses them.
+
+| Convention | Used by | Meaning |
+|------------|---------|---------|
+| `DEPENDENCY_NEEDED` | core, cli | The agent is blocked on another agent's output |
+| `DEPENDENCY_READY` | backend, orchestrator | A shared artifact (type, API spec) is available |
+| `WORK_COMPLETE` | core, cli, frontend | The agent's task is finished |
+| `BLOCKER_DETECTED` | orchestrator | A blocker and the chosen resolution |
+| `PROGRESS_REPORT` | orchestrator | Overall and per-agent status |
+| `STATUS_REQUEST` | orchestrator | Ask an unresponsive agent for status |
+
+Example of a completion report:
+
+```markdown
+## WORK_COMPLETE
+Task: Mod domain entities (#42)
+Commits: a1b2c3d, e4f5a6b
+Tests: shared package, all passing
+Ready for: cli-agent, backend-agent
+```
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/plan-work` | Plan before starting (`--issue`, `--milestone`, `--issues`). Plans only. |
+| `/work` | Run an issue or milestone through to completion: branch, TDD, PR, code review, merge. |
+| `/write-docs` | Write bilingual (English/Korean) technical documentation. |
+| `/sync-docs` | Sync `CLAUDE.md`, `README.md`, and other docs with the code. |
+| `/update-docs` | Refresh `docs/itzg-reference/` from the official documentation. |
+| `/build-kb` | Analyze the source in depth and build an LLM knowledge base. |
+
+Command definitions are in `.claude/commands/`. The contributor-facing description is in `DEVELOPMENT.md` (section 7). For the surrounding development rules, see the [Development Guide](index.md).
 
 ## Agent Prompt Files
 
-Each agent has its own prompt file in `.claude/agents/`:
+| File | Agent |
+|------|-------|
+| `.claude/agents/orchestrator-agent.md` | Orchestrator |
+| `.claude/agents/core-agent.md` | Core |
+| `.claude/agents/cli-agent.md` | CLI |
+| `.claude/agents/backend-agent.md` | Backend |
+| `.claude/agents/frontend-agent.md` | Frontend |
+| `.claude/agents/devops-agent.md` | DevOps |
+| `.claude/agents/technical-writer.md` | Technical Writer |
+| `.claude/agents/release-manager.md` | Release Manager |
 
-| Agent | Prompt File |
-|-------|-------------|
-| Orchestrator | `.claude/agents/orchestrator-agent.md` |
-| Core | `.claude/agents/core-agent.md` |
-| CLI | `.claude/agents/cli-agent.md` |
-| Backend | `.claude/agents/backend-agent.md` |
-| Frontend | `.claude/agents/frontend-agent.md` |
-| DevOps | `.claude/agents/devops-agent.md` |
-| Technical Writer | `.claude/agents/technical-writer.md` |
-| Release Manager | `.claude/agents/release-manager.md` |
-
-Use these prompts to spawn specialized agents for each domain.
+To hand a specific area to one agent directly, name it in the conversation, for example: "Use cli-agent to add a `--dry-run` option to `mcctl backup` (issue #42)".
