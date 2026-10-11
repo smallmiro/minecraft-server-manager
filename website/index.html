@@ -325,7 +325,7 @@
     <a class="brand" href="#" aria-label="Minecraft Server Manager home">
       <svg aria-hidden="true"><use href="#i-cube"/></svg>
       Minecraft Server Manager
-      <span class="pill" data-version>v2.30.0</span>
+      <span class="pill" data-version hidden></span>
     </a>
     <nav class="nav" aria-label="Primary">
       <a href="#features"><span class="en">Features</span><span class="ko">기능</span></a>
@@ -737,7 +737,7 @@ modded               <span class="g">running</span>      healthy    modded.local
 <footer>
   <div class="wrap">
     <div class="foot-top">
-      <a class="brand" href="#"><svg aria-hidden="true"><use href="#i-cube"/></svg>Minecraft Server Manager <span class="pill" data-version>v2.30.0</span></a>
+      <a class="brand" href="#"><svg aria-hidden="true"><use href="#i-cube"/></svg>Minecraft Server Manager <span class="pill" data-version hidden></span></a>
       <nav class="foot-links" aria-label="Footer">
         <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/">docs</a>
         <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/">docs</a>
@@ -801,10 +801,10 @@ modded               <span class="g">running</span>      healthy    modded.local
     }
   });
 
-  // Keep the version badge current without editing this file each release
+  // Version badge comes from npm only; it stays hidden if the registry is unreachable
   fetch('https://registry.npmjs.org/@minecraft-docker/mcctl/latest')
     .then(function (r) { return r.json(); })
-    .then(function (d) { document.querySelectorAll('[data-version]').forEach(function (el) { el.textContent = 'v' + d.version; }); })
+    .then(function (d) { document.querySelectorAll('[data-version]').forEach(function (el) { el.textContent = 'v' + d.version; el.hidden = false; }); })
     .catch(function () {});
 </script>
 </body>
