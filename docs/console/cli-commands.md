@@ -17,7 +17,7 @@ mcctl console <subcommand> [options]
 | Command | Description |
 |---------|-------------|
 | `mcctl console init` | Initialize Management Console configuration |
-| `mcctl console remove` | Remove Management Console completely |
+| `mcctl console remove` | Remove Management Console processes and configuration (keeps the console database) |
 | `mcctl console user` | Manage admin console users |
 | `mcctl console api` | Manage API configuration |
 | `mcctl console service` | Manage Management Console lifecycle |
@@ -39,7 +39,7 @@ mcctl console init [options]
 | Option | Description |
 |--------|-------------|
 | `--root <path>` | Custom data directory |
-| `--force` | Reinitialize even if already configured |
+| `--force` | Skip the reinitialize confirmation and replace an existing admin user with the same email (see Reinitializing below) |
 | `--api-port <port>` | API server port (default: 5001) |
 | `--console-port <port>` | Console server port (default: 5000) |
 
@@ -83,7 +83,19 @@ mcctl console init --root /opt/minecraft
 mcctl console init --api-port 8001 --console-port 8000
 ```
 
+### Reinitializing
+
+If the console is already initialized, the command asks whether to reinitialize. `--force` skips that question. Reinitializing:
+
+- stops the `mcctl-api` and `mcctl-console` PM2 processes,
+- deletes `.mcctl-admin.yml` and `ecosystem.config.cjs`, so the access mode, API key and ports are chosen and generated again,
+- keeps `data/mcctl.db`, so other users are not touched.
+
+If the admin email you enter already exists in `data/mcctl.db`, the command fails with `User '<email>' already exists` and suggests `mcctl console init --force`. With `--force`, that user is deleted (including its sessions) and created again with the new name and password.
+
 ### Output Files
+
+All paths are relative to the data directory (`MCCTL_ROOT`, default `~/minecraft-servers`).
 
 | File | Description |
 |------|-------------|
@@ -95,7 +107,7 @@ mcctl console init --api-port 8001 --console-port 8000
 
 ## mcctl console remove
 
-Remove Management Console completely, including PM2 processes and configuration files.
+Remove the Management Console PM2 processes and configuration files. The console database (`data/mcctl.db`) is kept on purpose.
 
 ### Usage
 
@@ -117,8 +129,36 @@ mcctl console remove [options]
 |-----------|-------------|
 | PM2 processes | mcctl-api, mcctl-console processes are stopped and removed |
 | `.mcctl-admin.yml` | Main configuration file |
-| `users.yaml` | User credentials file |
 | `ecosystem.config.cjs` | PM2 ecosystem configuration |
+| `users.yaml` | Legacy user credentials file (removed only if it exists) |
+
+With `--keep-config`, the three files above are kept; only the PM2 processes are removed.
+
+### What Is Kept
+
+| Component | Description |
+|-----------|-------------|
+| `data/mcctl.db` | Console database: users, sessions and per-user server permissions. Not removed on purpose, so accounts survive a reinstall |
+| `.services/` | The installed `mcctl-api` and `mcctl-console` packages |
+| `api-config.json` | Settings written by `mcctl console api` (if present) |
+
+Minecraft servers and worlds are not touched.
+
+### Reinstalling After Removal
+
+Because `data/mcctl.db` is kept, running `mcctl console init` again with the same admin email fails with `User '<email>' already exists`. Use `mcctl console init --force` to replace that user, or enter a different email.
+
+To start completely from scratch, delete the database yourself:
+
+!!! danger "This cannot be undone"
+    Deleting the database removes every console user, session and per-user server permission.
+
+```bash
+# Replace ~/minecraft-servers with your data directory (MCCTL_ROOT)
+rm -f ~/minecraft-servers/data/mcctl.db*
+```
+
+The `*` also removes the SQLite `-wal` and `-shm` files that sit next to the database.
 
 ### Examples
 
@@ -144,12 +184,14 @@ mcctl console remove --keep-config
 ? Are you sure you want to remove Console Service? Yes
 
 Stopping and removing PM2 processes...  Stopped and removed: mcctl-api, mcctl-console
-Removing configuration files...  Removed 3 configuration file(s)
+Removing configuration files...  Removed 2 configuration file(s)
 
 Console Service removed successfully
 
   To reinstall, run: mcctl console init
 ```
+
+The confirmation prompt still names `users.yaml`, but that file is only deleted if it exists, so a current installation reports 2 removed files (`.mcctl-admin.yml` and `ecosystem.config.cjs`).
 
 ---
 
@@ -370,6 +412,8 @@ mcctl console user reset-password operator@example.com --password "NewSecurePass
 
 Manage API configuration and access control.
 
+These commands read and write `api-config.json` in the data directory (`MCCTL_ROOT`, default `~/minecraft-servers`). It is a separate file from the `.mcctl-admin.yml` written by `mcctl console init`. Until a command saves a change, the defaults are used: mode `internal`, port `5001`, empty IP whitelist.
+
 ### Subcommands
 
 | Subcommand | Description |
@@ -400,7 +444,7 @@ API Configuration
 
   Access Mode: api-key
   Port: 5001
-  API Key: mctk_abc1...xyz9
+  API Key: mctk_a1b...9f3c
 
   IP Whitelist: (empty)
 
@@ -426,11 +470,11 @@ mcctl console api key regenerate [options]
 ```bash
 mcctl console api key regenerate
 
-? Are you sure you want to regenerate the API key? Yes
+? Are you sure you want to regenerate the API key? All existing clients will need to be updated. Yes
 
 API key regenerated successfully.
 
-New API Key: mctk_1234567890abcdef1234567890abcdef
+New API Key: mctk_0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0
 
 Please update all clients with the new API key.
 ```
@@ -447,7 +491,7 @@ mcctl console api mode [mode] [options]
 
 | Mode | Description |
 |------|-------------|
-| `internal` | Local network only (most secure) |
+| `internal` | Docker network only (most secure) |
 | `api-key` | External access with X-API-Key header |
 | `ip-whitelist` | IP-based access control |
 | `api-key-ip` | Both API key and IP required |
@@ -457,7 +501,9 @@ mcctl console api mode [mode] [options]
 
 | Option | Description |
 |--------|-------------|
-| `--force` | Skip confirmation for dangerous modes |
+| `--force` | Skip the confirmation shown when switching to `open` |
+
+On success the command prints `Access mode changed to: <mode>`.
 
 **Examples:**
 
@@ -477,16 +523,16 @@ mcctl console api mode open --force
 Manage IP whitelist for ip-whitelist and api-key-ip modes.
 
 ```bash
-mcctl console api whitelist <action> [ip] [options]
+mcctl console api whitelist [action] [ip] [options]
 ```
 
 **Actions:**
 
 | Action | Description |
 |--------|-------------|
-| `list` | List whitelisted IPs |
-| `add <ip>` | Add IP or CIDR range |
-| `remove <ip>` | Remove IP from whitelist |
+| `list` | List whitelisted IPs (default when `[action]` is omitted) |
+| `add <ip>` | Add IP or CIDR range (IPv4 only; prompts for the value if `<ip>` is omitted) |
+| `remove <ip>` | Remove IP from whitelist (prompts for a choice if `<ip>` is omitted) |
 
 **Options:**
 
@@ -497,7 +543,7 @@ mcctl console api whitelist <action> [ip] [options]
 **Examples:**
 
 ```bash
-# List whitelist
+# List whitelist (same as "whitelist" with no action)
 mcctl console api whitelist list
 
 # Add single IP
@@ -538,20 +584,22 @@ mcctl console service start [options]
 
 | Option | Description |
 |--------|-------------|
-| `--api-only` | Start only mcctl-api |
-| `--console-only` | Start only mcctl-console |
+| `--api` | Start only mcctl-api |
+| `--console` | Start mcctl-console. mcctl-api is started too, because the console depends on it |
+
+Without `--api` or `--console`, the command asks whether to start "API only" or "API + Console" when both services are installed.
 
 **Examples:**
 
 ```bash
-# Start all services
+# Start services (asks which ones when both are installed)
 mcctl console service start
 
 # Start API only
-mcctl console service start --api-only
+mcctl console service start --api
 
-# Start console only
-mcctl console service start --console-only
+# Start console (together with the API)
+mcctl console service start --console
 ```
 
 **Output Example:**
@@ -596,17 +644,23 @@ mcctl console service stop [options]
 
 | Option | Description |
 |--------|-------------|
-| `--api-only` | Stop only mcctl-api |
-| `--console-only` | Stop only mcctl-console |
+| `--api` | Stop mcctl-api. mcctl-console is stopped too, because the console cannot run without the API |
+| `--console` | Stop only mcctl-console |
+| `--force` | Delete the PM2 processes and kill the PM2 daemon (this stops every process PM2 manages, not only the mcctl services) |
+
+Without `--api` or `--console`, the command asks whether to stop "All services" or "Console only" when both services are installed.
 
 **Examples:**
 
 ```bash
-# Stop all services
+# Stop services (asks which ones when both are installed)
 mcctl console service stop
 
-# Stop API only
-mcctl console service stop --api-only
+# Stop the console only
+mcctl console service stop --console
+
+# Stop the API (this also stops the console)
+mcctl console service stop --api
 ```
 
 ### mcctl console service restart
@@ -621,17 +675,20 @@ mcctl console service restart [options]
 
 | Option | Description |
 |--------|-------------|
-| `--api-only` | Restart only mcctl-api |
-| `--console-only` | Restart only mcctl-console |
+| `--api` | Restart only mcctl-api |
+| `--console` | Restart mcctl-console. mcctl-api is restarted too, because the console depends on it |
+| `--force` | Delete the PM2 processes, kill the PM2 daemon, then start the services again (this stops every process PM2 manages while it runs) |
+
+Without `--api` or `--console`, the command asks whether to restart "API only" or "API + Console" when both services are installed.
 
 **Examples:**
 
 ```bash
-# Restart all services
+# Restart services (asks which ones when both are installed)
 mcctl console service restart
 
 # Restart API only
-mcctl console service restart --api-only
+mcctl console service restart --api
 ```
 
 ### mcctl console service status
@@ -713,8 +770,8 @@ mcctl console service logs [options]
 | Option | Description |
 |--------|-------------|
 | `-f, --follow` | Follow log output (stream) |
-| `--api-only` | Show only mcctl-api logs |
-| `--console-only` | Show only mcctl-console logs |
+| `--api` | Show only mcctl-api logs |
+| `--console` | Show mcctl-console logs (mcctl-api logs are included as well) |
 
 **Examples:**
 
@@ -726,10 +783,10 @@ mcctl console service logs
 mcctl console service logs -f
 
 # View API logs only
-mcctl console service logs --api-only
+mcctl console service logs --api
 
-# Follow console logs
-mcctl console service logs --console-only -f
+# Follow console logs (API logs are included)
+mcctl console service logs --console -f
 ```
 
 Press `Ctrl+C` to stop following logs.
@@ -757,7 +814,8 @@ mcctl console user add operator@example.com --role user --password "SecurePass12
 
 ```bash
 mcctl console api mode api-key
-# Save the displayed API key
+mcctl console api key regenerate
+# Save the displayed API key (it is only shown in full when generated)
 ```
 
 **Configure IP Whitelist:**
@@ -773,7 +831,7 @@ mcctl console api whitelist list
 
 ```bash
 mcctl console service status
-mcctl console service logs --api-only
+mcctl console service logs --api
 ```
 
 **Restart After Configuration Change:**
@@ -789,7 +847,7 @@ pm2 startup
 pm2 save
 ```
 
-**Complete Removal:**
+**Remove (keeps `data/mcctl.db`):**
 
 ```bash
 mcctl console remove
