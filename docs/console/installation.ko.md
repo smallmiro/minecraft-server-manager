@@ -184,7 +184,7 @@ module.exports = {
         PORT: 5001,
         HOST: '0.0.0.0',
         MCCTL_ROOT: '/home/user/minecraft-servers',
-        AUTH_MODE: 'internal',
+        AUTH_MODE: 'internal', // 예시 아래의 참고 사항 확인
         // 해당 접근 모드에서는 AUTH_API_KEY, AUTH_IP_WHITELIST가 추가됩니다
       },
       instances: 1,
@@ -217,11 +217,14 @@ module.exports = {
 };
 ```
 
+!!! note "`AUTH_MODE` 값"
+    `AUTH_MODE`에는 `mcctl console init`에서 선택한 접근 모드가 들어갑니다. mcctl-api 인증 플러그인이 인식하는 값은 `disabled`, `api-key`, `ip-whitelist`, `basic`, `combined`이며, `mcctl console init`이 기록할 수 있는 `internal`, `api-key-ip`, `open`은 이 목록에 없습니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+
 파일에는 `mcctl console init`에서 선택한 서비스만 포함됩니다. `.services/` 디렉토리가 도입되기 이전에 설치한 환경은 패키지가 `<root>/node_modules/`에 있으며, 패키지가 그 위치에서 발견되면 `mcctl console init`은 계속 해당 위치를 사용합니다.
 
 ### 접근 모드
 
-`mcctl console init`은 설정 중에 접근 모드를 묻습니다. 재초기화 없이 나중에 모드를 바꾸려면 `mcctl console api mode <mode>`를 사용하세요 ([CLI 명령어](cli-commands.md#mcctl-console-api-mode) 참조).
+`mcctl console init`은 설정 중에 접근 모드를 묻습니다. 모드, API 키, IP 화이트리스트는 `ecosystem.config.cjs`의 `env` 블록(`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`)에 기록되며, 실행 중인 mcctl-api가 읽는 값이 바로 이것입니다. `mcctl console api` 명령어는 아직 이 값을 바꾸지 않으므로([CLI 명령어](cli-commands.ko.md#mcctl-console-api)의 경고 참조, 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633)), 모드를 바꾸거나 API 키 또는 IP 화이트리스트를 변경하려면 현재는 `mcctl console init --force`로 다시 초기화해야 합니다.
 
 #### internal (프로덕션 권장)
 
@@ -244,11 +247,7 @@ mcctl console init
 
 초기화 후 API 키가 표시됩니다. 안전하게 저장하세요.
 
-API 키를 재생성하려면:
-
-```bash
-mcctl console api key regenerate
-```
+새 API 키가 필요하면 `mcctl console init --force`로 다시 초기화하세요. `mcctl console api key regenerate`는 현재 실행 중인 API가 사용하는 키를 바꾸지 않습니다.
 
 #### ip-whitelist
 
@@ -260,13 +259,7 @@ mcctl console init
 # 허용할 IP를 입력합니다 (쉼표로 구분)
 ```
 
-초기화 후 화이트리스트를 관리합니다:
-
-```bash
-mcctl console api whitelist add 192.168.1.100
-mcctl console api whitelist add 10.0.0.0/8
-mcctl console api whitelist list
-```
+허용 IP를 바꾸려면 `mcctl console init --force`로 다시 초기화하고 새 목록을 입력하세요. `mcctl console api whitelist`는 현재 실행 중인 API가 사용하는 화이트리스트를 바꾸지 않습니다.
 
 #### api-key-ip (최고 보안)
 
@@ -283,7 +276,8 @@ mcctl console init
     이 모드는 모든 인증을 비활성화합니다. 프로덕션에서는 절대 사용하지 마세요!
 
 ```bash
-mcctl console api mode open --force
+mcctl console init
+# 프롬프트에서 "open" 선택 (확인을 묻습니다)
 ```
 
 ### 사용자 관리
@@ -421,18 +415,18 @@ curl http://localhost:5001/health
 
 ### API에서 401 Unauthorized 반환
 
-1. **접근 모드 확인:**
+1. **접근 모드 확인** (실행 중인 API는 `ecosystem.config.cjs`에서 읽으며, `mcctl console api status`는 대신 `api-config.json`을 보여줍니다):
    ```bash
-   mcctl console api status
+   grep AUTH_MODE ~/minecraft-servers/ecosystem.config.cjs
    ```
 
 2. **API 키 확인 (api-key 모드 사용 시):**
    - 요청에 `X-API-Key` 헤더가 포함되어 있는지 확인
-   - 필요시 키 재생성: `mcctl console api key regenerate`
+   - 사용 중인 키는 `ecosystem.config.cjs`의 `AUTH_API_KEY`입니다. 새 키가 필요하면 `mcctl console init --force`로 다시 초기화하세요
 
 3. **IP 화이트리스트 확인 (ip-whitelist 모드 사용 시):**
    ```bash
-   mcctl console api whitelist list
+   grep AUTH_IP_WHITELIST ~/minecraft-servers/ecosystem.config.cjs
    ```
 
 ### PM2 프로세스가 계속 재시작됨

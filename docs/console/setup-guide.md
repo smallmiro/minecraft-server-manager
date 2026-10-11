@@ -395,10 +395,7 @@ If you chose `api-key` or `api-key-ip` mode, the API key is also displayed:
 ```
 
 !!! warning "Save Your API Key"
-    The API key is only shown once during initialization. Copy and store it in a secure location. If you lose it, you can regenerate it with:
-    ```bash
-    mcctl console api key regenerate
-    ```
+    The API key is only shown once during initialization. Copy and store it in a secure location. The key the running API uses is `AUTH_API_KEY` in `ecosystem.config.cjs`; to get a new one, reinitialize with `mcctl console init --force`. `mcctl console api key regenerate` currently does not change that key (see the warning in [CLI Commands](cli-commands.md#mcctl-console-api)).
 
 ---
 

@@ -414,6 +414,11 @@ API 설정 및 접근 제어를 관리합니다.
 
 이 명령어들은 데이터 디렉토리(`MCCTL_ROOT`, 기본값 `~/minecraft-servers`)의 `api-config.json`을 읽고 씁니다. 이 파일은 `mcctl console init`이 생성하는 `.mcctl-admin.yml`과는 별개의 파일입니다. 명령어가 변경 사항을 저장하기 전까지는 기본값(모드 `internal`, 포트 `5001`, 빈 IP 화이트리스트)이 사용됩니다.
 
+!!! warning "변경 사항이 실행 중인 mcctl-api에 반영되지 않습니다"
+    이 명령어들은 `api-config.json`만 변경합니다. 실행 중인 `mcctl-api`는 접근 모드, API 키, IP 화이트리스트를 `ecosystem.config.cjs`의 `env` 블록(`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`)에서 읽는데, 이 명령어들은 해당 파일을 건드리지 않습니다. 따라서 여기서 바꾼 값은 `mcctl console service restart`를 실행해도 API에 영향을 주지 않으며, `mcctl console api status`도 실행 중인 API가 사용하는 값이 아니라 `api-config.json`의 내용을 보여줍니다.
+
+    실제로 적용되는 모드와 키는 `mcctl console init` 때 정한 값입니다. 현재는 `mcctl console init --force`로 다시 초기화해야 바꿀 수 있습니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+
 ### 하위 명령어
 
 | 하위 명령어 | 설명 |
@@ -815,19 +820,23 @@ mcctl console user add operator@example.com --role user --password "SecurePass12
 **API 키 모드로 전환:**
 
 ```bash
-mcctl console api mode api-key
-mcctl console api key regenerate
-# 표시된 API 키 저장 (전체 키는 생성 시에만 표시됩니다)
+# API 접근 모드를 물을 때 "api-key" 선택
+mcctl console init --force
+# 마지막에 출력되는 API 키를 저장 (한 번만 표시됩니다)
+mcctl console service start
 ```
+
+`mcctl console api mode`와 `mcctl console api key regenerate`는 `api-config.json`만 변경하므로 실행 중인 API를 전환하지 못합니다 ([mcctl console api](#mcctl-console-api) 절의 경고 참조).
 
 **IP 화이트리스트 설정:**
 
 ```bash
-mcctl console api mode ip-whitelist
-mcctl console api whitelist add 192.168.1.0/24
-mcctl console api whitelist add 10.0.0.0/8
-mcctl console api whitelist list
+# "ip-whitelist"(또는 "api-key-ip")를 선택하고 허용할 IP를 쉼표로 구분해 입력
+mcctl console init --force
+mcctl console service start
 ```
+
+`mcctl console api whitelist`도 현재는 `api-config.json`만 수정합니다.
 
 **서비스 상태 확인:**
 

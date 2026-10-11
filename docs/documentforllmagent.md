@@ -887,8 +887,10 @@ Users are identified by email address. `--role` accepts `admin` or `user`.
 
 #### API Key Management
 
+> **Warning**: `mcctl console api ...` only reads and writes `<root>/api-config.json`. The running mcctl-api takes its mode, key and IP whitelist from the `env` block of `<root>/ecosystem.config.cjs` (`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`), so changes made with these commands do not affect it, and `status` shows `api-config.json`, not necessarily what the API uses. The mode and key in effect are the ones chosen during `mcctl console init`; to change them for now, run `mcctl console init --force`. Tracked in #633.
+
 ```bash
-mcctl console api status               # Show API access mode and config (stored in <root>/api-config.json)
+mcctl console api status               # Show api-config.json (access mode, port, masked key, whitelist)
 mcctl console api key regenerate       # Regenerate API key
 mcctl console api whitelist list       # List allowed IPs
 mcctl console api whitelist add <ip>   # Add IP to whitelist
@@ -2435,12 +2437,12 @@ mcctl world assign myworld mc-myserver
 - Check service: `mcctl console service status`
 - Verify API key (shown only once during init)
 - Test health: `curl http://localhost:5001/health`
-- Check access mode: `mcctl console api status`
+- Check access mode: `grep AUTH_MODE ~/minecraft-servers/ecosystem.config.cjs` (`mcctl console api status` shows `api-config.json`, not the running API's settings; see #633)
 
 #### Can't log in to Web Console
 
 - Verify user: `mcctl console user list`
-- Reset password: `mcctl console user reset-password admin`
+- Reset password: `mcctl console user reset-password admin@example.com`
 - Check Better Auth config in ecosystem config
 - View logs: `mcctl console service logs -f`
 

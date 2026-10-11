@@ -414,6 +414,11 @@ Manage API configuration and access control.
 
 These commands read and write `api-config.json` in the data directory (`MCCTL_ROOT`, default `~/minecraft-servers`). It is a separate file from the `.mcctl-admin.yml` written by `mcctl console init`. Until a command saves a change, the defaults are used: mode `internal`, port `5001`, empty IP whitelist.
 
+!!! warning "Changes do not reach the running mcctl-api"
+    These commands only change `api-config.json`. The running `mcctl-api` takes its access mode, API key and IP whitelist from the `env` block of `ecosystem.config.cjs` (`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`), which they do not touch. A change made here therefore has no effect on the API, even after `mcctl console service restart`, and `mcctl console api status` shows the contents of `api-config.json`, not necessarily what the running API uses.
+
+    The mode and key in effect are the ones chosen during `mcctl console init`. For now, change them by reinitializing with `mcctl console init --force`. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+
 ### Subcommands
 
 | Subcommand | Description |
@@ -815,19 +820,23 @@ mcctl console user add operator@example.com --role user --password "SecurePass12
 **Switch to API Key Mode:**
 
 ```bash
-mcctl console api mode api-key
-mcctl console api key regenerate
-# Save the displayed API key (it is only shown in full when generated)
+# Choose "api-key" when asked for the API access mode
+mcctl console init --force
+# Save the API key printed at the end (it is only shown once)
+mcctl console service start
 ```
+
+`mcctl console api mode` and `mcctl console api key regenerate` only change `api-config.json`, so they do not switch the running API (see the warning under [mcctl console api](#mcctl-console-api)).
 
 **Configure IP Whitelist:**
 
 ```bash
-mcctl console api mode ip-whitelist
-mcctl console api whitelist add 192.168.1.0/24
-mcctl console api whitelist add 10.0.0.0/8
-mcctl console api whitelist list
+# Choose "ip-whitelist" (or "api-key-ip") and enter the allowed IPs, comma-separated
+mcctl console init --force
+mcctl console service start
 ```
+
+`mcctl console api whitelist` likewise only edits `api-config.json` for now.
 
 **Check Service Health:**
 

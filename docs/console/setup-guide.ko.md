@@ -395,10 +395,7 @@ Console Service initialized!
 ```
 
 !!! warning "API 키를 안전하게 보관하세요"
-    API 키는 초기화 시 한 번만 표시됩니다. 복사하여 안전한 곳에 저장하세요. 분실한 경우 다음 명령으로 재생성할 수 있습니다:
-    ```bash
-    mcctl console api key regenerate
-    ```
+    API 키는 초기화 시 한 번만 표시됩니다. 복사하여 안전한 곳에 저장하세요. 실행 중인 API가 사용하는 키는 `ecosystem.config.cjs`의 `AUTH_API_KEY`이며, 새 키가 필요하면 `mcctl console init --force`로 다시 초기화하세요. `mcctl console api key regenerate`는 현재 이 키를 바꾸지 않습니다 ([CLI 명령어](cli-commands.ko.md#mcctl-console-api)의 경고 참조).
 
 ---
 
