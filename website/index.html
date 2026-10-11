@@ -111,6 +111,24 @@
       radial-gradient(600px 320px at 12% 20%, rgba(27, 217, 106, .13), transparent 70%),
       radial-gradient(520px 300px at 85% 0%, rgba(124, 58, 237, .10), transparent 70%);
   }
+  /* Hero background: BlueMap render of a real world, faded into the page on the left and bottom */
+  .hero { overflow: hidden; }
+  .hero > .wrap { position: relative; z-index: 1; }
+  .hero-bg {
+    position: absolute; top: 0; right: 0; bottom: 0; width: min(64%, 1100px); z-index: 0; pointer-events: none;
+    background: url("assets/hero-world.webp") center / cover no-repeat;
+    filter: brightness(.62) saturate(1.05);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 45%), linear-gradient(to bottom, #000 55%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to right, transparent 0%, #000 45%), linear-gradient(to bottom, #000 55%, transparent 100%);
+    mask-composite: intersect;
+  }
+  .hero-credit { position: absolute; right: 32px; top: 20px; z-index: 1; font: 400 11.5px/1.4 var(--mono); color: rgba(243, 244, 246, .55); }
+  @media (max-width: 860px) {
+    .hero-bg { width: 100%; opacity: .35; -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 90%); mask-image: linear-gradient(to bottom, #000 30%, transparent 90%); }
+    .hero-credit { display: none; }
+  }
+
   .eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
     font: 700 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--green);
@@ -410,6 +428,8 @@
 <main>
   <!-- Hero -->
   <div class="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <span class="hero-credit"><span class="en">Background: a BlueMap render of a world hosted with mcctl</span><span class="ko">배경: mcctl로 운영 중인 월드를 BlueMap으로 렌더링</span></span>
     <div class="wrap">
       <span class="eyebrow"><i class="led"></i><span class="en">Docker Minecraft server manager</span><span class="ko">Docker 마인크래프트 서버 매니저</span></span>
       <h1>
