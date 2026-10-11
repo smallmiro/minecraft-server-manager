@@ -11,13 +11,13 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 28 10 16 17 4 10Z' fill='%234de38a'/%3E%3Cpath d='M4 10 16 17V30L4 23Z' fill='%231bd96a'/%3E%3Cpath d='M28 10 16 17V30L28 23Z' fill='%23109a4b'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap">
 <script>
-  // Set language before first paint: saved choice > browser language > English
+  // Set language before first paint: the visitor's saved choice, otherwise English
   (function () {
     var saved = null;
     try { saved = localStorage.getItem('lang'); } catch (e) {}
-    document.documentElement.lang = saved || ((navigator.language || '').toLowerCase().indexOf('ko') === 0 ? 'ko' : 'en');
+    document.documentElement.lang = ['en', 'ko', 'ja'].indexOf(saved) >= 0 ? saved : 'en';
   })();
 </script>
 <style>
@@ -55,7 +55,10 @@
     overflow-x: hidden;
   }
   html[lang="ko"] body { word-break: keep-all; }
-  html[lang="en"] .ko, html[lang="ko"] .en { display: none !important; }
+  html[lang="en"] :is(.ko, .ja):not(.en),
+  html[lang="ko"] :is(.en, .ja):not(.ko),
+  html[lang="ja"] :is(.en, .ko):not(.ja) { display: none !important; }
+  html[lang="ja"] { --sans: Inter, "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, "Noto Sans JP", monospace; }
   a { color: inherit; text-decoration: none; }
   code, pre, .mono { font-family: var(--mono); }
   /* `font` shorthands below reset ligatures; keep `===`, `&&`, `->` literal in terminal text */
@@ -100,7 +103,10 @@
   .gh span { display: none; }
   @media (min-width: 480px) { .gh span { display: inline; } }
   .lang { display: flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
-  .lang button { font: 500 12px/1 var(--mono); padding: 8px 10px; color: var(--muted); }
+  .lang button { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1 var(--mono); padding: 7px 9px; color: var(--muted); }
+  .lang .flag { width: 18px; height: 12px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .18); }
+  .lang button:not([aria-pressed="true"]) .flag { opacity: .7; }
+  @media (max-width: 480px) { .lang .lang-code { display: none; } .lang button { padding: 8px; } }
   .lang button[aria-pressed="true"] { background: var(--hover); color: var(--text); }
 
   /* Hero */
@@ -143,6 +149,9 @@
     font-size: clamp(2.4rem, 7vw, 4.6rem); line-height: 1.02; font-weight: 800; letter-spacing: -.045em;
   }
   html[lang="ko"] h1 { max-width: 16ch; line-height: 1.12; letter-spacing: -.035em; }
+  html[lang="ja"] h1 { max-width: 13em; line-height: 1.15; letter-spacing: -.02em; }
+  /* break Japanese headings between phrases (Chromium); other browsers fall back to normal breaking */
+  html[lang="ja"] :is(h1, h2, h3) { word-break: auto-phrase; }
   h1 em {
     font-style: normal; color: var(--green);
     text-decoration: underline wavy rgba(27, 217, 106, .45); text-decoration-thickness: 3px; text-underline-offset: 10px;
@@ -342,7 +351,6 @@
   .arch .dg-mono { font-size: 11px; fill: var(--muted); }
   .arch .dg-mono.xs { font-size: 9.5px; }
   .arch .dg-tag { font-size: 10px; font-weight: 700; letter-spacing: .12em; fill: var(--dim); }
-  html[lang="en"] .arch tspan.ko, html[lang="ko"] .arch tspan.en { display: none; }
   @keyframes arch-dash { to { stroke-dashoffset: -20; } }
   @media (prefers-reduced-motion: reduce) { .arch .mg { animation: none; } }
   .arch-cap { margin: 0 0 28px; font: 400 12.5px/1.6 var(--mono); color: var(--dim); }
@@ -384,6 +392,45 @@
   .community-foot a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
   .community-foot a:hover { color: var(--text); }
 
+  /* About */
+  .about { display: grid; gap: 32px; grid-template-columns: 1fr; align-items: start; }
+  @media (min-width: 960px) { .about { grid-template-columns: 1.1fr 1fr; gap: 56px; } }
+  .story p { margin: 0 0 16px; font-size: 16.5px; line-height: 1.75; color: var(--text-2); }
+  .story .closing { margin-top: 24px; padding-left: 16px; border-left: 2px solid var(--green); color: var(--text); }
+  .sign { margin-top: 20px; display: flex; align-items: center; gap: 10px; font: 400 13px/1.5 var(--mono); color: var(--muted); }
+  .sign a { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 700; }
+  .sign a:hover { color: var(--green); }
+  .about-fig { margin: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--term); }
+  .about-fig img { width: 100%; height: auto; }
+  .about-fig figcaption { padding: 10px 14px; font: 400 12px/1.5 var(--mono); color: var(--dim); }
+  .timeline { list-style: none; margin: 24px 0 0; padding: 0; }
+  .timeline li { position: relative; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 0 0 18px; }
+  .timeline li::before { content: ""; position: absolute; left: 100px; top: 8px; bottom: -2px; border-left: 1px dashed var(--line-2); }
+  .timeline li:last-child::before { display: none; }
+  .timeline time { font: 700 12.5px/1.6 var(--mono); color: var(--green); text-align: right; padding-right: 14px; }
+  .timeline time.soft { color: var(--dim); }
+  .timeline span.t { position: relative; padding-left: 14px; font-size: 14.5px; line-height: 1.6; color: var(--muted); }
+  .timeline span.t::before { content: ""; position: absolute; left: -16px; top: 7px; width: 9px; height: 9px; border-radius: 2px; background: var(--card); border: 2px solid var(--green); }
+  .timeline b { color: var(--text); font-weight: 600; }
+  .timeline code { font-size: 12.5px; color: var(--text-2); }
+
+  /* About carousel (scroll-snap; buttons, dots and arrow keys move one slide) */
+  .car-view { position: relative; }
+  .slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .slides::-webkit-scrollbar { display: none; }
+  .slide { position: relative; flex: 0 0 100%; scroll-snap-align: start; }
+  .slide img { width: 100%; height: auto; }
+  .slide-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 32px 14px 10px; background: linear-gradient(transparent, rgba(0, 0, 0, .7)); font: 500 13.5px/1.4 var(--sans); color: #fff; }
+  .car-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: rgba(12, 14, 18, .72); border: 1px solid var(--line-2); color: var(--text); }
+  .car-btn:hover { background: rgba(38, 40, 46, .9); color: var(--green); }
+  .car-btn.prev { left: 10px; }
+  .car-btn.next { right: 10px; }
+  .car-dots { display: flex; justify-content: center; gap: 2px; padding: 8px 0 0; }
+  .car-dots button { width: 24px; height: 20px; display: grid; place-items: center; }
+  .car-dots button::before { content: ""; width: 8px; height: 8px; border-radius: 4px; background: var(--line-2); transition: width .2s, background .2s; }
+  .car-dots button[aria-current="true"]::before { width: 18px; background: var(--green); }
+  .story .closing .from { display: block; margin-top: 12px; font-size: 14.5px; color: var(--muted); }
+
   /* Footer */
   footer { border-top: 1px solid var(--line); padding: 36px 0 48px; color: var(--dim); font-size: 13px; }
   footer .wrap { display: grid; gap: 18px; }
@@ -393,6 +440,8 @@
   .foot-links a svg.i { width: 14px; height: 14px; }
   .foot-links a:hover { color: var(--text); }
   footer code { color: var(--text-2); }
+  footer a.ext-link code { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
+  footer a.ext-link:hover code { color: var(--green); text-decoration-color: var(--green); }
 </style>
 </head>
 <body>
@@ -408,6 +457,11 @@
   <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></symbol>
   <symbol id="i-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+  <symbol id="f-us" viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><path d="M0 0h30v1.54H0zm0 3.08h30v1.54H0zm0 3.07h30v1.54H0zm0 3.08h30v1.54H0zm0 3.08h30v1.54H0zm0 3.07h30v1.54H0zm0 3.08h30v1.54H0z" fill="#b22234"/><rect width="12" height="10.77" fill="#3c3b6e"/></symbol>
+  <symbol id="f-kr" viewBox="-72 -48 144 96"><path fill="#fff" d="M-72-48v96H72v-96z"/><g stroke="#000" stroke-width="4"><path transform="rotate(33.69006752598)" d="M-50-12v24m6 0v-24m6 0v24m76 0V1m0-2v-11m6 0v11m0 2v11m6 0V1m0-2v-11"/><path transform="rotate(-33.69006752598)" d="M-50-12v24m6 0V1m0-2v-11m6 0v24m76 0V1m0-2v-11m6 0v24m6 0V1m0-2v-11"/></g><g transform="rotate(33.69006752598)"><path fill="#cd2e3a" d="M12 0a18 18 0 11-36 0 24 24 0 1148 0"/><path fill="#0047a0" d="M-24 0a24 24 0 1048 0A12 12 0 100 0a12 12 0 11-24 0"/></g></symbol>
+  <symbol id="f-jp" viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
   <symbol id="i-cube" viewBox="0 0 32 32"><path d="M16 3 28 10 16 17 4 10Z" fill="#4de38a"/><path d="M4 10 16 17V30L4 23Z" fill="#1bd96a"/><path d="M28 10 16 17V30L28 23Z" fill="#109a4b"/></symbol>
 </svg>
 
@@ -419,10 +473,11 @@
       <span class="pill" data-version hidden></span>
     </a>
     <nav class="nav" aria-label="Primary">
-      <a href="#features"><span class="en">Features</span><span class="ko">기능</span></a>
-      <a href="#console"><span class="en">Web console</span><span class="ko">웹 콘솔</span></a>
-      <a href="#commands"><span class="en">Commands</span><span class="ko">명령어</span></a>
-      <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/">Docs ↗</a>
+      <a href="#features"><span class="en">Features</span><span class="ko">기능</span><span class="ja">機能</span></a>
+      <a href="#console"><span class="en">Web console</span><span class="ko">웹 콘솔</span><span class="ja">Web コンソール</span></a>
+      <a href="#commands"><span class="en">Commands</span><span class="ko">명령어</span><span class="ja">コマンド</span></a>
+      <a href="#about"><span class="en">About</span><span class="ko">소개</span><span class="ja">紹介</span></a>
+      <a class="en ja" href="https://minecraft-server-manager.readthedocs.io/en/latest/"><span class="en">Docs ↗</span><span class="ja">ドキュメント ↗</span></a>
       <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/">문서 ↗</a>
     </nav>
     <div class="top-right">
@@ -430,8 +485,9 @@
         <svg class="i" aria-hidden="true"><use href="#i-gh"/></svg><span>GitHub</span>
       </a>
       <div class="lang" role="group" aria-label="Language">
-        <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
-        <button type="button" data-set-lang="ko" aria-pressed="false">KO</button>
+        <button type="button" data-set-lang="en" aria-pressed="false" aria-label="English"><svg class="flag" aria-hidden="true"><use href="#f-us"/></svg><span class="lang-code">US</span></button>
+        <button type="button" data-set-lang="ko" aria-pressed="false" aria-label="한국어"><svg class="flag" aria-hidden="true"><use href="#f-kr"/></svg><span class="lang-code">KR</span></button>
+        <button type="button" data-set-lang="ja" aria-pressed="false" aria-label="日本語"><svg class="flag" aria-hidden="true"><use href="#f-jp"/></svg><span class="lang-code">JP</span></button>
       </div>
     </div>
   </div>
@@ -441,16 +497,16 @@
   <!-- Hero -->
   <div class="hero">
     <div class="hero-bg" aria-hidden="true"></div>
-    <span class="hero-credit"><span class="en">Background: a BlueMap render of a world hosted with mcctl</span><span class="ko">배경: mcctl로 운영 중인 월드를 BlueMap으로 렌더링</span></span>
+    <span class="hero-credit"><span class="en">Background: a BlueMap render of a world hosted with mcctl</span><span class="ko">배경: mcctl로 운영 중인 월드를 BlueMap으로 렌더링</span><span class="ja">背景: mcctl で運用しているワールドの BlueMap レンダー</span></span>
     <div class="wrap">
-      <span class="eyebrow"><i class="led"></i><span class="en">Docker Minecraft server manager</span><span class="ko">Docker 마인크래프트 서버 매니저</span></span>
+      <span class="eyebrow"><i class="led"></i><span class="en">Docker Minecraft server manager</span><span class="ko">Docker 마인크래프트 서버 매니저</span><span class="ja">Docker マインクラフトサーバーマネージャー</span></span>
       <h1>
         <span class="en">Run them in Docker. <em>Wake them</em> when players connect.</span>
-        <span class="ko">Docker로 띄우고, 플레이어가 오면 <em>깨웁니다.</em></span>
+        <span class="ko">Docker로 띄우고, 플레이어가 오면 <em>깨웁니다.</em></span><span class="ja">Docker で動かし、プレイヤーが来たら<em>起こす。</em></span>
       </h1>
       <p class="lead">
         <span class="en">mcctl puts every Minecraft Java server you host behind <b>a single port</b>. A server starts when the first player connects and stops after it goes idle, so an empty host runs only the router — <b>about 40&nbsp;MB of RAM</b>. Manage it all from the CLI or the web console.</span>
-        <span class="ko">mcctl은 직접 운영하는 마인크래프트 자바 서버를 <b>포트 하나</b> 뒤에 모읍니다. 첫 플레이어가 접속하면 서버가 켜지고, 아무도 없으면 다시 꺼집니다. 그래서 빈 호스트에는 라우터만 남습니다(<b>RAM 약 40MB</b>). 관리는 CLI나 웹 콘솔에서 합니다.</span>
+        <span class="ko">mcctl은 직접 운영하는 마인크래프트 자바 서버를 <b>포트 하나</b> 뒤에 모읍니다. 첫 플레이어가 접속하면 서버가 켜지고, 아무도 없으면 다시 꺼집니다. 그래서 빈 호스트에는 라우터만 남습니다(<b>RAM 약 40MB</b>). 관리는 CLI나 웹 콘솔에서 합니다.</span><span class="ja">mcctl は、あなたが運用するすべての Minecraft Java サーバーを<b>ひとつのポート</b>の後ろにまとめます。最初のプレイヤーが接続するとサーバーが起動し、誰もいなくなれば停止します。空いているホストで動くのはルーターだけ — <b>RAM 約 40MB</b> です。管理は CLI でも Web コンソールでも行えます。</span>
       </p>
 
       <div class="install" id="install">
@@ -460,14 +516,14 @@
           <button class="btn" type="button" data-copy="npm install -g @minecraft-docker/mcctl" aria-label="Copy install command">
             <svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg>
             <svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg>
-            <span class="en">Copy</span><span class="ko">복사</span>
+            <span class="en">Copy</span><span class="ko">복사</span><span class="ja">コピー</span>
           </button>
         </div>
       </div>
       <div class="meta">
         <span>Linux · macOS · Windows (WSL2)</span>
         <span>Node.js ≥ 18 · Docker ≥ 24</span>
-        <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/quickstart/">Full install guide →</a>
+        <a class="en ja" href="https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/quickstart/"><span class="en">Full install guide →</span><span class="ja">インストールガイド →</span></a>
         <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/getting-started/quickstart/">설치 가이드 →</a>
       </div>
       <div class="badges">
@@ -479,10 +535,10 @@
       </div>
 
       <div class="stats">
-        <div class="stat"><b>1</b><span class="en">port for every server (:25565)</span><span class="ko">모든 서버를 포트 하나로 (:25565)</span></div>
-        <div class="stat"><b>~40<small>MB</small></b><span class="en">RAM while every server sleeps</span><span class="ko">모든 서버가 쉴 때 RAM</span></div>
-        <div class="stat"><b>12</b><span class="en">server types, plus modpacks</span><span class="ko">서버 타입 + 모드팩</span></div>
-        <div class="stat"><b>3</b><span class="en">mod sources: Modrinth, CurseForge, Spiget</span><span class="ko">모드 소스: Modrinth, CurseForge, Spiget</span></div>
+        <div class="stat"><b>1</b><span class="en">port for every server (:25565)</span><span class="ko">모든 서버를 포트 하나로 (:25565)</span><span class="ja">すべてのサーバーをひとつのポートで (:25565)</span></div>
+        <div class="stat"><b>~40<small>MB</small></b><span class="en">RAM while every server sleeps</span><span class="ko">모든 서버가 쉴 때 RAM</span><span class="ja">全サーバー休止中の RAM</span></div>
+        <div class="stat"><b>12</b><span class="en">server types, plus modpacks</span><span class="ko">서버 타입 + 모드팩</span><span class="ja">サーバータイプ + モッドパック</span></div>
+        <div class="stat"><b>3</b><span class="en">mod sources: Modrinth, CurseForge, Spiget</span><span class="ko">모드 소스: Modrinth, CurseForge, Spiget</span><span class="ja">Mod ソース: Modrinth、CurseForge、Spiget</span></div>
       </div>
     </div>
   </div>
@@ -491,8 +547,8 @@
   <section class="demo" aria-label="CLI demo">
     <div class="wrap">
       <div class="demo-cap">
-        <span><b class="en">your servers, from one terminal</b><b class="ko">서버 전체를 터미널 하나에서</b></span>
-        <span class="en">pick a server ↓</span><span class="ko">서버를 골라 보세요 ↓</span>
+        <span><b class="en">your servers, from one terminal</b><b class="ko">서버 전체를 터미널 하나에서</b><b class="ja">すべてのサーバーをひとつのターミナルから</b></span>
+        <span class="en">pick a server ↓</span><span class="ko">서버를 골라 보세요 ↓</span><span class="ja">サーバーを選んでください ↓</span>
       </div>
       <div class="window">
         <div class="bar">
@@ -579,7 +635,7 @@ modded               <span class="g">running</span>      healthy    modded.local
       </div>
       <p class="demo-foot">
         <span class="en">A mock-up built from real mcctl output. <span class="y">exited</span> isn't broken — the server is asleep, and mc-router starts it on the next connection.</span>
-        <span class="ko">실제 mcctl 출력으로 만든 목업입니다. <span class="y">exited</span>는 고장이 아니라 쉬는 상태이며, 다음 접속 때 mc-router가 다시 켭니다.</span>
+        <span class="ko">실제 mcctl 출력으로 만든 목업입니다. <span class="y">exited</span>는 고장이 아니라 쉬는 상태이며, 다음 접속 때 mc-router가 다시 켭니다.</span><span class="ja">実際の mcctl 出力から作ったモックアップです。<span class="y">exited</span> は故障ではなく休止中の状態で、次の接続時に mc-router が起動します。</span>
       </p>
     </div>
   </section>
@@ -589,15 +645,15 @@ modded               <span class="g">running</span>      healthy    modded.local
     <div class="wrap">
       <div class="head">
         <div>
-          <span class="eyebrow">01 / <span class="en">Features</span><span class="ko">기능</span></span>
-          <h2><span class="en">Built for people who host for friends.</span><span class="ko">친구들 서버를 직접 굴리는 사람을 위해.</span></h2>
+          <span class="eyebrow">01 / <span class="en">Features</span><span class="ko">기능</span><span class="ja">機能</span></span>
+          <h2><span class="en">Built for people who host for friends.</span><span class="ko">친구들 서버를 직접 굴리는 사람을 위해.</span><span class="ja">友だちのためにサーバーを立てる人のために。</span></h2>
         </div>
       </div>
       <div class="grid three">
         <article class="card">
           <span class="num">01</span>
-          <h3><span class="en">One port, every server</span><span class="ko">포트 하나로 모든 서버</span></h3>
-          <p><span class="en">mc-router reads the hostname a player connects with and forwards them to the matching container. Use nip.io names with no client setup, <code>.local</code> names over mDNS, or a playit.gg tunnel for friends outside your network.</span><span class="ko">mc-router가 접속 주소의 호스트명을 보고 해당 컨테이너로 연결합니다. 클라이언트 설정이 필요 없는 nip.io 주소, mDNS(<code>.local</code>) 주소, 외부 친구용 playit.gg 터널을 지원합니다.</span></p>
+          <h3><span class="en">One port, every server</span><span class="ko">포트 하나로 모든 서버</span><span class="ja">ひとつのポートで全サーバー</span></h3>
+          <p><span class="en">mc-router reads the hostname a player connects with and forwards them to the matching container. Use nip.io names with no client setup, <code>.local</code> names over mDNS, or a playit.gg tunnel for friends outside your network.</span><span class="ko">mc-router가 접속 주소의 호스트명을 보고 해당 컨테이너로 연결합니다. 클라이언트 설정이 필요 없는 nip.io 주소, mDNS(<code>.local</code>) 주소, 외부 친구용 playit.gg 터널을 지원합니다.</span><span class="ja">mc-router はプレイヤーが接続に使ったホスト名を読み取り、対応するコンテナへ転送します。クライアント設定不要の nip.io アドレス、mDNS の <code>.local</code> アドレス、ネットワーク外の友だち向けの playit.gg トンネルが使えます。</span></p>
           <div class="mini"><div>
             <div class="row"><span class="c">survival.192.168.1.50.nip.io</span><span class="d">→</span>mc-survival</div>
             <div class="row"><span class="c">creative.local</span><span class="d">→</span>mc-creative</div>
@@ -606,8 +662,8 @@ modded               <span class="g">running</span>      healthy    modded.local
         </article>
         <article class="card">
           <span class="num">02</span>
-          <h3><span class="en">Asleep until someone joins</span><span class="ko">누군가 들어올 때까지 잠들기</span></h3>
-          <p><span class="en">Servers start on the first connection and stop after an idle timeout. When nobody is playing, only the router and its helpers stay up.</span><span class="ko">첫 접속에 서버가 켜지고, 일정 시간 아무도 없으면 꺼집니다. 아무도 플레이하지 않을 때는 라우터와 보조 서비스만 남습니다.</span></p>
+          <h3><span class="en">Asleep until someone joins</span><span class="ko">누군가 들어올 때까지 잠들기</span><span class="ja">誰かが来るまで眠らせる</span></h3>
+          <p><span class="en">Servers start on the first connection and stop after an idle timeout. When nobody is playing, only the router and its helpers stay up.</span><span class="ko">첫 접속에 서버가 켜지고, 일정 시간 아무도 없으면 꺼집니다. 아무도 플레이하지 않을 때는 라우터와 보조 서비스만 남습니다.</span><span class="ja">最初の接続でサーバーが起動し、一定時間誰もいなければ停止します。誰も遊んでいないときに動いているのは、ルーターと補助サービスだけです。</span></p>
           <div class="mini"><div>
             <div class="row"><i class="led on"></i><span class="grow">survival</span><span class="g">running</span></div>
             <div class="row"><i class="led boot"></i><span class="grow">modded</span><span class="c">starting</span></div>
@@ -616,26 +672,26 @@ modded               <span class="g">running</span>      healthy    modded.local
         </article>
         <article class="card">
           <span class="num">03</span>
-          <h3><span class="en">Mods and modpacks from the CLI</span><span class="ko">모드와 모드팩을 CLI로</span></h3>
-          <p><span class="en">Search and add mods from Modrinth, CurseForge, and Spiget. Create a server straight from a Modrinth modpack — the loader is detected and client-only mods are left out.</span><span class="ko">Modrinth, CurseForge, Spiget에서 모드를 찾아 추가합니다. Modrinth 모드팩으로 바로 서버를 만들면 로더를 자동으로 감지하고 클라이언트 전용 모드는 뺍니다.</span></p>
+          <h3><span class="en">Mods and modpacks from the CLI</span><span class="ko">모드와 모드팩을 CLI로</span><span class="ja">Mod とモッドパックを CLI で</span></h3>
+          <p><span class="en">Search and add mods from Modrinth, CurseForge, and Spiget. Create a server straight from a Modrinth modpack — the loader is detected and client-only mods are left out.</span><span class="ko">Modrinth, CurseForge, Spiget에서 모드를 찾아 추가합니다. Modrinth 모드팩으로 바로 서버를 만들면 로더를 자동으로 감지하고 클라이언트 전용 모드는 뺍니다.</span><span class="ja">Modrinth、CurseForge、Spiget から Mod を検索して追加できます。Modrinth のモッドパックから直接サーバーを作ると、ローダーを自動検出し、クライアント専用 Mod は除外します。</span></p>
           <div class="mini"><div><span class="ps1">$</span> mcctl create pack -t MODRINTH --modpack cobblemon</div></div>
         </article>
         <article class="card">
           <span class="num">04</span>
-          <h3><span class="en">Worlds that move between servers</span><span class="ko">서버를 옮겨 다니는 월드</span></h3>
-          <p><span class="en">Worlds live in one shared directory. Assign a world to a server and it stays locked until released. Import worlds from ZIP, then browse dimensions, structures, players, and a BlueMap web map.</span><span class="ko">월드는 공용 디렉터리 한곳에 보관됩니다. 서버에 할당한 월드는 해제할 때까지 잠깁니다. ZIP으로 월드를 가져오고 차원·구조물·플레이어 정보와 BlueMap 웹 지도를 볼 수 있습니다.</span></p>
+          <h3><span class="en">Worlds that move between servers</span><span class="ko">서버를 옮겨 다니는 월드</span><span class="ja">サーバー間を移動できるワールド</span></h3>
+          <p><span class="en">Worlds live in one shared directory. Assign a world to a server and it stays locked until released. Import worlds from ZIP, then browse dimensions, structures, players, and a BlueMap web map.</span><span class="ko">월드는 공용 디렉터리 한곳에 보관됩니다. 서버에 할당한 월드는 해제할 때까지 잠깁니다. ZIP으로 월드를 가져오고 차원·구조물·플레이어 정보와 BlueMap 웹 지도를 볼 수 있습니다.</span><span class="ja">ワールドは共有ディレクトリにまとめて保存されます。サーバーに割り当てたワールドは、解除するまでロックされます。ZIP からワールドを取り込み、ディメンション・構造物・プレイヤー情報や BlueMap の Web マップを確認できます。</span></p>
           <div class="mini"><div><span class="ps1">$</span> mcctl world assign hardcore-01 survival</div></div>
         </article>
         <article class="card">
           <span class="num">05</span>
-          <h3><span class="en">Backups to your GitHub</span><span class="ko">내 GitHub로 백업</span></h3>
-          <p><span class="en">Push world data to a private GitHub repository on demand or on a cron schedule with retention, and restore from any backup commit.</span><span class="ko">월드 데이터를 비공개 GitHub 저장소에 직접 또는 cron 일정으로 푸시하고 보관 정책을 적용합니다. 원하는 백업 커밋으로 복원할 수 있습니다.</span></p>
+          <h3><span class="en">Backups to your GitHub</span><span class="ko">내 GitHub로 백업</span><span class="ja">GitHub へバックアップ</span></h3>
+          <p><span class="en">Push world data to a private GitHub repository on demand or on a cron schedule with retention, and restore from any backup commit.</span><span class="ko">월드 데이터를 비공개 GitHub 저장소에 직접 또는 cron 일정으로 푸시하고 보관 정책을 적용합니다. 원하는 백업 커밋으로 복원할 수 있습니다.</span><span class="ja">ワールドデータを非公開の GitHub リポジトリへ手動または cron スケジュールでプッシュし、保持ポリシーを適用できます。任意のバックアップコミットから復元できます。</span></p>
           <div class="mini"><div><span class="ps1">$</span> mcctl backup schedule add --cron daily</div></div>
         </article>
         <article class="card">
           <span class="num">06</span>
-          <h3><span class="en">A web console when you want one</span><span class="ko">필요할 땐 웹 콘솔</span></h3>
-          <p><span class="en"><code>mcctl console init</code> adds a Next.js console and a REST API: file manager, server.properties editor, player panels, audit logs, and an installable PWA.</span><span class="ko"><code>mcctl console init</code>으로 Next.js 콘솔과 REST API를 추가합니다. 파일 관리자, server.properties 편집기, 플레이어 패널, 감사 로그, 설치형 PWA를 제공합니다.</span></p>
+          <h3><span class="en">A web console when you want one</span><span class="ko">필요할 땐 웹 콘솔</span><span class="ja">必要なときは Web コンソール</span></h3>
+          <p><span class="en"><code>mcctl console init</code> adds a Next.js console and a REST API: file manager, server.properties editor, player panels, audit logs, and an installable PWA.</span><span class="ko"><code>mcctl console init</code>으로 Next.js 콘솔과 REST API를 추가합니다. 파일 관리자, server.properties 편집기, 플레이어 패널, 감사 로그, 설치형 PWA를 제공합니다.</span><span class="ja"><code>mcctl console init</code> で Next.js コンソールと REST API を追加できます。ファイルマネージャー、server.properties エディター、プレイヤーパネル、監査ログ、インストール可能な PWA を備えています。</span></p>
           <div class="mini"><div class="chips">
             <span class="chip"><span class="g">:5000</span> web console</span>
             <span class="chip"><span class="v">:5001</span> REST API</span>
@@ -651,19 +707,19 @@ modded               <span class="g">running</span>      healthy    modded.local
     <div class="wrap">
       <div class="head">
         <div>
-          <span class="eyebrow">02 / <span class="en">Web console</span><span class="ko">웹 콘솔</span></span>
-          <h2><span class="en">Everything the CLI does, in a browser.</span><span class="ko">CLI로 하던 일을 브라우저에서.</span></h2>
-          <p class="sub"><span class="en">Captured from a running mcctl console. IP addresses, the tunnel domain, and player names were swapped for placeholders.</span><span class="ko">실행 중인 mcctl 콘솔에서 캡처한 화면입니다. IP 주소, 터널 도메인, 플레이어 이름은 예시 값으로 바꿨습니다.</span></p>
+          <span class="eyebrow">02 / <span class="en">Web console</span><span class="ko">웹 콘솔</span><span class="ja">Web コンソール</span></span>
+          <h2><span class="en">Everything the CLI does, in a browser.</span><span class="ko">CLI로 하던 일을 브라우저에서.</span><span class="ja">CLI でできることを、ブラウザで。</span></h2>
+          <p class="sub"><span class="en">Captured from a running mcctl console. IP addresses, the tunnel domain, and player names were swapped for placeholders.</span><span class="ko">실행 중인 mcctl 콘솔에서 캡처한 화면입니다. IP 주소, 터널 도메인, 플레이어 이름은 예시 값으로 바꿨습니다.</span><span class="ja">稼働中の mcctl コンソールからキャプチャした画面です。IP アドレス、トンネルのドメイン、プレイヤー名はサンプル値に置き換えています。</span></p>
         </div>
       </div>
       <div data-tabs>
         <div class="tabs" role="tablist" aria-label="Console screens">
-          <button class="tab" role="tab" type="button" id="g-dashboard" aria-controls="s-dashboard" aria-selected="true"><span class="en">Dashboard</span><span class="ko">대시보드</span></button>
-          <button class="tab" role="tab" type="button" id="g-server" aria-controls="s-server" aria-selected="false"><span class="en">Server</span><span class="ko">서버</span></button>
-          <button class="tab" role="tab" type="button" id="g-world" aria-controls="s-world" aria-selected="false"><span class="en">World map</span><span class="ko">월드 지도</span></button>
-          <button class="tab" role="tab" type="button" id="g-stats" aria-controls="s-stats" aria-selected="false"><span class="en">Block stats</span><span class="ko">블록 통계</span></button>
-          <button class="tab" role="tab" type="button" id="g-worlds" aria-controls="s-worlds" aria-selected="false"><span class="en">Worlds</span><span class="ko">월드</span></button>
-          <button class="tab" role="tab" type="button" id="g-routing" aria-controls="s-routing" aria-selected="false"><span class="en">Routing</span><span class="ko">라우팅</span></button>
+          <button class="tab" role="tab" type="button" id="g-dashboard" aria-controls="s-dashboard" aria-selected="true"><span class="en">Dashboard</span><span class="ko">대시보드</span><span class="ja">ダッシュボード</span></button>
+          <button class="tab" role="tab" type="button" id="g-server" aria-controls="s-server" aria-selected="false"><span class="en">Server</span><span class="ko">서버</span><span class="ja">サーバー</span></button>
+          <button class="tab" role="tab" type="button" id="g-world" aria-controls="s-world" aria-selected="false"><span class="en">World map</span><span class="ko">월드 지도</span><span class="ja">ワールドマップ</span></button>
+          <button class="tab" role="tab" type="button" id="g-stats" aria-controls="s-stats" aria-selected="false"><span class="en">Block stats</span><span class="ko">블록 통계</span><span class="ja">ブロック統計</span></button>
+          <button class="tab" role="tab" type="button" id="g-worlds" aria-controls="s-worlds" aria-selected="false"><span class="en">Worlds</span><span class="ko">월드</span><span class="ja">ワールド</span></button>
+          <button class="tab" role="tab" type="button" id="g-routing" aria-controls="s-routing" aria-selected="false"><span class="en">Routing</span><span class="ko">라우팅</span><span class="ja">ルーティング</span></button>
         </div>
         <div class="browser">
           <div class="bar">
@@ -672,27 +728,27 @@ modded               <span class="g">running</span>      healthy    modded.local
           </div>
           <figure class="shot" role="tabpanel" id="s-dashboard" aria-labelledby="g-dashboard" style="margin:0">
             <a href="assets/dashboard.webp" target="_blank" rel="noopener"><img src="assets/dashboard.webp" width="2160" height="1350" alt="mcctl console dashboard with server, player and world counts"></a>
-            <figcaption><span class="en">Servers, players, worlds, external access, and recent activity at a glance.</span><span class="ko">서버·플레이어·월드·외부 접속·최근 활동을 한 화면에서.</span></figcaption>
+            <figcaption><span class="en">Servers, players, worlds, external access, and recent activity at a glance.</span><span class="ko">서버·플레이어·월드·외부 접속·최근 활동을 한 화면에서.</span><span class="ja">サーバー、プレイヤー、ワールド、外部アクセス、最近のアクティビティをひと目で。</span></figcaption>
           </figure>
           <figure class="shot" role="tabpanel" id="s-server" aria-labelledby="g-server" style="margin:0" hidden>
             <a href="assets/server.webp" target="_blank" rel="noopener"><img src="assets/server.webp" width="2160" height="1350" loading="lazy" alt="Server detail page with CPU, memory, world size and a live console"></a>
-            <figcaption><span class="en">Start, stop, and restart; CPU, memory, and world size; a live console that takes commands.</span><span class="ko">시작·중지·재시작, CPU·메모리·월드 크기, 명령을 보낼 수 있는 실시간 콘솔.</span></figcaption>
+            <figcaption><span class="en">Start, stop, and restart; CPU, memory, and world size; a live console that takes commands.</span><span class="ko">시작·중지·재시작, CPU·메모리·월드 크기, 명령을 보낼 수 있는 실시간 콘솔.</span><span class="ja">起動・停止・再起動、CPU・メモリ・ワールドサイズ、コマンドを送れるライブコンソール。</span></figcaption>
           </figure>
           <figure class="shot" role="tabpanel" id="s-world" aria-labelledby="g-world" style="margin:0" hidden>
             <a href="assets/world.webp" target="_blank" rel="noopener"><img src="assets/world.webp" width="2160" height="1350" loading="lazy" alt="World info cards and a BlueMap web map of the world"></a>
-            <figcaption><span class="en">World details read from level.dat, and a BlueMap web map rendered from the world files.</span><span class="ko">level.dat에서 읽은 월드 정보와, 월드 파일로 렌더링한 BlueMap 웹 지도.</span></figcaption>
+            <figcaption><span class="en">World details read from level.dat, and a BlueMap web map rendered from the world files.</span><span class="ko">level.dat에서 읽은 월드 정보와, 월드 파일로 렌더링한 BlueMap 웹 지도.</span><span class="ja">level.dat から読み取ったワールド情報と、ワールドファイルからレンダリングした BlueMap の Web マップ。</span></figcaption>
           </figure>
           <figure class="shot" role="tabpanel" id="s-stats" aria-labelledby="g-stats" style="margin:0" hidden>
             <a href="assets/stats.webp" target="_blank" rel="noopener"><img src="assets/stats.webp" width="2160" height="1350" loading="lazy" alt="Ore and block statistics with last known player positions"></a>
-            <figcaption><span class="en">Ore and block counts across dimensions, plus where each player last stood.</span><span class="ko">차원별 광물·블록 통계와 플레이어별 마지막 위치.</span></figcaption>
+            <figcaption><span class="en">Ore and block counts across dimensions, plus where each player last stood.</span><span class="ko">차원별 광물·블록 통계와 플레이어별 마지막 위치.</span><span class="ja">ディメンションごとの鉱石・ブロック統計と、各プレイヤーの最終位置。</span></figcaption>
           </figure>
           <figure class="shot" role="tabpanel" id="s-worlds" aria-labelledby="g-worlds" style="margin:0" hidden>
             <a href="assets/worlds.webp" target="_blank" rel="noopener"><img src="assets/worlds.webp" width="2160" height="1350" loading="lazy" alt="World library with assignment status for each world"></a>
-            <figcaption><span class="en">One world library: assign, release, and create worlds — including from a ZIP upload.</span><span class="ko">월드 라이브러리 한곳에서 할당·해제·생성(ZIP 업로드 포함).</span></figcaption>
+            <figcaption><span class="en">One world library: assign, release, and create worlds — including from a ZIP upload.</span><span class="ko">월드 라이브러리 한곳에서 할당·해제·생성(ZIP 업로드 포함).</span><span class="ja">ひとつのワールドライブラリで割り当て・解除・作成(ZIP アップロードにも対応)。</span></figcaption>
           </figure>
           <figure class="shot" role="tabpanel" id="s-routing" aria-labelledby="g-routing" style="margin:0" hidden>
             <a href="assets/routing.webp" target="_blank" rel="noopener"><img src="assets/routing.webp" width="2160" height="1350" loading="lazy" alt="Routing page listing mc-router hostnames per server"></a>
-            <figcaption><span class="en">Every hostname mc-router knows, and where it points.</span><span class="ko">mc-router에 등록된 호스트명과 연결 대상.</span></figcaption>
+            <figcaption><span class="en">Every hostname mc-router knows, and where it points.</span><span class="ko">mc-router에 등록된 호스트명과 연결 대상.</span><span class="ja">mc-router が知っているすべてのホスト名と、その転送先。</span></figcaption>
           </figure>
         </div>
       </div>
@@ -704,9 +760,9 @@ modded               <span class="g">running</span>      healthy    modded.local
     <div class="wrap">
       <div class="head">
         <div>
-          <span class="eyebrow">03 / <span class="en">Architecture</span><span class="ko">아키텍처</span></span>
-          <h2><span class="en">One port in. One container per server.</span><span class="ko">들어오는 포트는 하나, 서버마다 컨테이너 하나.</span></h2>
-          <p class="sub"><span class="en">Built on <code>itzg/minecraft-server</code> and <code>itzg/mc-router</code>. No firewall rule per server, no port list to remember.</span><span class="ko"><code>itzg/minecraft-server</code>와 <code>itzg/mc-router</code> 기반. 서버마다 방화벽 규칙을 열거나 포트 번호를 외울 필요가 없습니다.</span></p>
+          <span class="eyebrow">03 / <span class="en">Architecture</span><span class="ko">아키텍처</span><span class="ja">アーキテクチャ</span></span>
+          <h2><span class="en">One port in. One container per server.</span><span class="ko">들어오는 포트는 하나, 서버마다 컨테이너 하나.</span><span class="ja">入口のポートはひとつ、サーバーごとにコンテナひとつ。</span></h2>
+          <p class="sub"><span class="en">Built on <code>itzg/minecraft-server</code> and <code>itzg/mc-router</code>. No firewall rule per server, no port list to remember.</span><span class="ko"><code>itzg/minecraft-server</code>와 <code>itzg/mc-router</code> 기반. 서버마다 방화벽 규칙을 열거나 포트 번호를 외울 필요가 없습니다.</span><span class="ja"><code>itzg/minecraft-server</code> と <code>itzg/mc-router</code> がベースです。サーバーごとにファイアウォールを開けたり、ポート番号を覚えたりする必要はありません。</span></p>
         </div>
       </div>
       <div class="arch-wrap">
@@ -728,11 +784,11 @@ modded               <span class="g">running</span>      healthy    modded.local
           <circle class="pkt" r="5" style="fill:var(--amber);color:var(--amber)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.5;0.78;1" keyPoints="0;0;1;1" path="M250,167 C305,167 305,220 360,220 L540,220 C595,220 595,220 650,220"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.5;0.505;0.775;0.78;1" values="0;0;1;1;0;0"/></circle>
           <circle class="pkt" r="5" style="fill:var(--cyan);color:var(--cyan)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.3;0.58;1" keyPoints="0;0;1;1" path="M250,273 C305,273 305,220 360,220 L540,220 C595,220 595,80 650,80"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.3;0.305;0.575;0.58;1" values="0;0;1;1;0;0"/></circle>
           <circle class="pkt" r="5" style="fill:var(--green);color:var(--green)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.12;0.4;1" keyPoints="0;0;1;1" path="M250,379 C305,379 305,220 360,220 L540,220 C595,220 595,360 650,360"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.12;0.125;0.395;0.4;1" values="0;0;1;1;0;0"/></circle>
-          <g><rect class="box" x="0" y="30" width="250" height="62" rx="8"/><rect x="14" y="49" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="49" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="61" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="61" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="57"><tspan class="en">Steve</tspan><tspan class="ko">Steve</tspan></text><circle cx="54" cy="72" r="3.5" style="fill:var(--cyan)"/><text class="dg-mono" x="63" y="76">survival.192.168.1.50.nip.io</text></g>
-          <g><rect class="box" x="0" y="136" width="250" height="62" rx="8"/><rect x="14" y="155" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="155" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="167" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="167" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="163"><tspan class="en">Alex</tspan><tspan class="ko">Alex</tspan></text><circle cx="54" cy="178" r="3.5" style="fill:var(--amber)"/><text class="dg-mono" x="63" y="182">creative.local</text></g>
-          <g><rect class="box" x="0" y="242" width="250" height="62" rx="8"/><rect x="14" y="261" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="261" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="273" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="273" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="269"><tspan class="en">builder_kim</tspan><tspan class="ko">builder_kim</tspan></text><circle cx="54" cy="284" r="3.5" style="fill:var(--cyan)"/><text class="dg-mono" x="63" y="288">survival.192.168.1.50.nip.io</text></g>
-          <g><rect class="box" x="0" y="348" width="250" height="62" rx="8"/><rect x="14" y="367" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="367" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="379" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="379" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="375"><tspan class="en">Friend · via playit.gg</tspan><tspan class="ko">친구 · playit.gg 경유</tspan></text><circle cx="54" cy="390" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="63" y="394">xx-xx.craft.playit.gg</text></g>
-          <g><rect class="box router" x="360" y="150" width="180" height="140" rx="10"/><text class="dg-tag" x="378" y="178" style="fill:var(--green)">ROUTER</text><text class="dg-big" x="378" y="206">mc-router</text><text class="dg-mono" x="378" y="228" style="fill:var(--green)">:25565</text><text class="dg-mono" x="378" y="254"><tspan class="en">routes by hostname</tspan><tspan class="ko">호스트명으로 라우팅</tspan></text><text class="dg-mono" x="378" y="272"><tspan class="en">starts sleeping servers</tspan><tspan class="ko">잠든 서버를 깨움</tspan></text></g>
+          <g><rect class="box" x="0" y="30" width="250" height="62" rx="8"/><rect x="14" y="49" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="49" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="61" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="61" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="57"><tspan class="en">Steve</tspan><tspan class="ko">Steve</tspan><tspan class="ja">Steve</tspan></text><circle cx="54" cy="72" r="3.5" style="fill:var(--cyan)"/><text class="dg-mono" x="63" y="76">survival.192.168.1.50.nip.io</text></g>
+          <g><rect class="box" x="0" y="136" width="250" height="62" rx="8"/><rect x="14" y="155" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="155" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="167" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="167" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="163"><tspan class="en">Alex</tspan><tspan class="ko">Alex</tspan><tspan class="ja">Alex</tspan></text><circle cx="54" cy="178" r="3.5" style="fill:var(--amber)"/><text class="dg-mono" x="63" y="182">creative.local</text></g>
+          <g><rect class="box" x="0" y="242" width="250" height="62" rx="8"/><rect x="14" y="261" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="261" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="273" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="273" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="269"><tspan class="en">builder_kim</tspan><tspan class="ko">builder_kim</tspan><tspan class="ja">builder_kim</tspan></text><circle cx="54" cy="284" r="3.5" style="fill:var(--cyan)"/><text class="dg-mono" x="63" y="288">survival.192.168.1.50.nip.io</text></g>
+          <g><rect class="box" x="0" y="348" width="250" height="62" rx="8"/><rect x="14" y="367" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="367" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="379" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="379" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="375"><tspan class="en">Friend · via playit.gg</tspan><tspan class="ko">친구 · playit.gg 경유</tspan><tspan class="ja">友だち · playit.gg 経由</tspan></text><circle cx="54" cy="390" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="63" y="394">xx-xx.craft.playit.gg</text></g>
+          <g><rect class="box router" x="360" y="150" width="180" height="140" rx="10"/><text class="dg-tag" x="378" y="178" style="fill:var(--green)">ROUTER</text><text class="dg-big" x="378" y="206">mc-router</text><text class="dg-mono" x="378" y="228" style="fill:var(--green)">:25565</text><text class="dg-mono" x="378" y="254"><tspan class="en">routes by hostname</tspan><tspan class="ko">호스트명으로 라우팅</tspan><tspan class="ja">ホスト名でルーティング</tspan></text><text class="dg-mono" x="378" y="272"><tspan class="en">starts sleeping servers</tspan><tspan class="ko">잠든 서버를 깨움</tspan><tspan class="ja">眠っているサーバーを起動</tspan></text></g>
           <g><rect class="box" x="650" y="40" width="220" height="80" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.28;0.29;0.4;0.58;0.59;0.7;1" values="#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035"/></rect><text class="dg-name" x="666" y="70">mc-survival</text><text class="dg-mono" x="666" y="90">Paper 1.21.1</text><circle cx="668" cy="106" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="678" y="110" style="fill:var(--green)">running</text></g>
           <g><rect class="box" x="650" y="180" width="220" height="80" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.79;0.9;1" values="#2e3035;#2e3035;#ffd54f;#2e3035;#2e3035"/></rect><text class="dg-name" x="666" y="210">mc-creative</text><text class="dg-mono" x="666" y="230">Paper 1.21.1</text><g opacity="1"><circle cx="668" cy="246" r="3.5" style="fill:#ffd54f"/><text class="dg-mono" x="678" y="250" style="fill:#ffd54f">sleeping</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.98;0.982;1" values="1;1;0;0;1;1"/></g><g opacity="0"><circle cx="668" cy="246" r="3.5" style="fill:#00e5ff"/><text class="dg-mono" x="678" y="250" style="fill:#00e5ff">starting</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.86;0.862;1" values="0;0;1;1;0;0"/></g><g opacity="0"><circle cx="668" cy="246" r="3.5" style="fill:#1bd96a"/><text class="dg-mono" x="678" y="250" style="fill:#1bd96a">running</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.86;0.862;0.98;0.982;1" values="0;0;1;1;0;0"/></g></g>
           <g><rect class="box" x="650" y="320" width="220" height="80" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.4;0.41;0.52;1" values="#2e3035;#2e3035;#1bd96a;#2e3035;#2e3035"/></rect><text class="dg-name" x="666" y="350">mc-modded</text><text class="dg-mono" x="666" y="370">Fabric 1.21.1</text><circle cx="668" cy="386" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="678" y="390" style="fill:var(--green)">running</text></g>
@@ -757,11 +813,11 @@ modded               <span class="g">running</span>      healthy    modded.local
           <circle class="pkt" r="5" style="fill:var(--amber);color:var(--amber)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.5;0.78;1" keyPoints="0;0;1;1" path="M111,66 C111,96 150,86 150,116 L150,190 C150,218 150,216 150,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.5;0.505;0.775;0.78;1" values="0;0;1;1;0;0"/></circle>
           <circle class="pkt" r="5" style="fill:var(--cyan);color:var(--cyan)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.3;0.58;1" keyPoints="0;0;1;1" path="M187,66 C187,96 150,86 150,116 L150,190 C150,218 48,216 48,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.3;0.305;0.575;0.58;1" values="0;0;1;1;0;0"/></circle>
           <circle class="pkt" r="5" style="fill:var(--green);color:var(--green)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.12;0.4;1" keyPoints="0;0;1;1" path="M263,66 C263,96 150,86 150,116 L150,190 C150,218 252,216 252,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.12;0.125;0.395;0.4;1" values="0;0;1;1;0;0"/></circle>
-          <g><rect class="box" x="0" y="0" width="70" height="66" rx="8"/><rect x="23" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="23" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="28" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="38" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="35" y="48" text-anchor="middle"><tspan class="en">Steve</tspan><tspan class="ko">Steve</tspan></text><rect x="21" y="55" width="28" height="3" rx="1.5" style="fill:var(--cyan)"/></g>
-          <g><rect class="box" x="76" y="0" width="70" height="66" rx="8"/><rect x="99" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="99" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="104" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="114" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="111" y="48" text-anchor="middle"><tspan class="en">Alex</tspan><tspan class="ko">Alex</tspan></text><rect x="97" y="55" width="28" height="3" rx="1.5" style="fill:var(--amber)"/></g>
-          <g><rect class="box" x="152" y="0" width="70" height="66" rx="8"/><rect x="175" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="175" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="180" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="190" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="187" y="48" text-anchor="middle"><tspan class="en">builder_kim</tspan><tspan class="ko">builder_kim</tspan></text><rect x="173" y="55" width="28" height="3" rx="1.5" style="fill:var(--cyan)"/></g>
-          <g><rect class="box" x="228" y="0" width="70" height="66" rx="8"/><rect x="251" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="251" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="256" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="266" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="263" y="48" text-anchor="middle"><tspan class="en">Friend</tspan><tspan class="ko">친구</tspan></text><rect x="249" y="55" width="28" height="3" rx="1.5" style="fill:var(--green)"/></g>
-          <g><rect class="box router" x="50" y="116" width="200" height="74" rx="10"/><text class="dg-big" x="150" y="146" text-anchor="middle">mc-router</text><text class="dg-mono" x="150" y="164" text-anchor="middle" style="fill:var(--green)">:25565</text><text class="dg-mono" x="150" y="180" text-anchor="middle"><tspan class="en">routes by hostname</tspan><tspan class="ko">호스트명으로 라우팅</tspan></text></g>
+          <g><rect class="box" x="0" y="0" width="70" height="66" rx="8"/><rect x="23" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="23" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="28" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="38" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="35" y="48" text-anchor="middle"><tspan class="en">Steve</tspan><tspan class="ko">Steve</tspan><tspan class="ja">Steve</tspan></text><rect x="21" y="55" width="28" height="3" rx="1.5" style="fill:var(--cyan)"/></g>
+          <g><rect class="box" x="76" y="0" width="70" height="66" rx="8"/><rect x="99" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="99" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="104" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="114" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="111" y="48" text-anchor="middle"><tspan class="en">Alex</tspan><tspan class="ko">Alex</tspan><tspan class="ja">Alex</tspan></text><rect x="97" y="55" width="28" height="3" rx="1.5" style="fill:var(--amber)"/></g>
+          <g><rect class="box" x="152" y="0" width="70" height="66" rx="8"/><rect x="175" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="175" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="180" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="190" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="187" y="48" text-anchor="middle"><tspan class="en">builder_kim</tspan><tspan class="ko">builder_kim</tspan><tspan class="ja">builder_kim</tspan></text><rect x="173" y="55" width="28" height="3" rx="1.5" style="fill:var(--cyan)"/></g>
+          <g><rect class="box" x="228" y="0" width="70" height="66" rx="8"/><rect x="251" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="251" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="256" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="266" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="263" y="48" text-anchor="middle"><tspan class="en">Friend</tspan><tspan class="ko">친구</tspan><tspan class="ja">友だち</tspan></text><rect x="249" y="55" width="28" height="3" rx="1.5" style="fill:var(--green)"/></g>
+          <g><rect class="box router" x="50" y="116" width="200" height="74" rx="10"/><text class="dg-big" x="150" y="146" text-anchor="middle">mc-router</text><text class="dg-mono" x="150" y="164" text-anchor="middle" style="fill:var(--green)">:25565</text><text class="dg-mono" x="150" y="180" text-anchor="middle"><tspan class="en">routes by hostname</tspan><tspan class="ko">호스트명으로 라우팅</tspan><tspan class="ja">ホスト名でルーティング</tspan></text></g>
           <g><rect class="box" x="0" y="244" width="96" height="74" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.28;0.29;0.4;0.58;0.59;0.7;1" values="#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035"/></rect><text class="dg-name sm" x="10" y="266">mc-survival</text><text class="dg-mono xs" x="10" y="284">Paper 1.21.1</text><circle cx="13" cy="300" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="23" y="304" style="fill:var(--green)">running</text></g>
           <g><rect class="box" x="102" y="244" width="96" height="74" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.79;0.9;1" values="#2e3035;#2e3035;#ffd54f;#2e3035;#2e3035"/></rect><text class="dg-name sm" x="112" y="266">mc-creative</text><text class="dg-mono xs" x="112" y="284">Paper 1.21.1</text><g opacity="1"><circle cx="115" cy="300" r="3.5" style="fill:#ffd54f"/><text class="dg-mono" x="125" y="304" style="fill:#ffd54f">sleeping</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.98;0.982;1" values="1;1;0;0;1;1"/></g><g opacity="0"><circle cx="115" cy="300" r="3.5" style="fill:#00e5ff"/><text class="dg-mono" x="125" y="304" style="fill:#00e5ff">starting</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.86;0.862;1" values="0;0;1;1;0;0"/></g><g opacity="0"><circle cx="115" cy="300" r="3.5" style="fill:#1bd96a"/><text class="dg-mono" x="125" y="304" style="fill:#1bd96a">running</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.86;0.862;0.98;0.982;1" values="0;0;1;1;0;0"/></g></g>
           <g><rect class="box" x="204" y="244" width="96" height="74" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.4;0.41;0.52;1" values="#2e3035;#2e3035;#1bd96a;#2e3035;#2e3035"/></rect><text class="dg-name sm" x="214" y="266">mc-modded</text><text class="dg-mono xs" x="214" y="284">Fabric 1.21.1</text><circle cx="217" cy="300" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="227" y="304" style="fill:var(--green)">running</text></g>
@@ -769,32 +825,32 @@ modded               <span class="g">running</span>      healthy    modded.local
           <g><rect class="box mgbox" x="160" y="384" width="140" height="84" rx="8"/><text class="dg-tag" x="172" y="404" style="fill:var(--violet)">WEB</text><text class="dg-name sm" x="172" y="424">Minecraft Server</text><text class="dg-name sm" x="172" y="440">Manager</text><text class="dg-mono xs" x="172" y="458">:5000 · :5001</text></g>
           </svg>
       </div>
-      <p class="arch-cap"><span class="en">Each colour is one hostname. mc-router reads it from the Minecraft handshake and forwards the player to that container — starting it first if it is asleep. mcctl and Minecraft Server Manager drive the containers through Docker.</span><span class="ko">색 하나가 호스트명 하나입니다. mc-router가 접속 패킷에서 호스트명을 읽어 해당 컨테이너로 보내고, 잠든 서버는 먼저 깨웁니다. mcctl과 Minecraft Server Manager는 Docker를 통해 컨테이너를 관리합니다.</span></p>
+      <p class="arch-cap"><span class="en">Each colour is one hostname. mc-router reads it from the Minecraft handshake and forwards the player to that container — starting it first if it is asleep. mcctl and Minecraft Server Manager drive the containers through Docker.</span><span class="ko">색 하나가 호스트명 하나입니다. mc-router가 접속 패킷에서 호스트명을 읽어 해당 컨테이너로 보내고, 잠든 서버는 먼저 깨웁니다. mcctl과 Minecraft Server Manager는 Docker를 통해 컨테이너를 관리합니다.</span><span class="ja">色ひとつがホスト名ひとつです。mc-router は Minecraft のハンドシェイクからホスト名を読み取り、そのコンテナへプレイヤーを転送します。眠っていれば先に起動します。mcctl と Minecraft Server Manager は Docker を通じてコンテナを管理します。</span></p>
       <div class="flow">
         <div class="node">
-          <span class="eyebrow" style="color:var(--cyan)"><span class="en">Players</span><span class="ko">플레이어</span></span>
+          <span class="eyebrow" style="color:var(--cyan)"><span class="en">Players</span><span class="ko">플레이어</span><span class="ja">プレイヤー</span></span>
           <h3>Minecraft Java</h3>
-          <p><span class="en">Connect by hostname:</span><span class="ko">호스트명으로 접속:</span></p>
+          <p><span class="en">Connect by hostname:</span><span class="ko">호스트명으로 접속:</span><span class="ja">ホスト名で接続:</span></p>
           <ul><li class="c">&lt;server&gt;.&lt;ip&gt;.nip.io</li><li class="c">&lt;server&gt;.local</li><li class="c">*.craft.playit.gg</li></ul>
         </div>
         <div class="arrow" aria-hidden="true">→</div>
         <div class="node hl">
-          <span class="eyebrow"><span class="en">Router</span><span class="ko">라우터</span></span>
+          <span class="eyebrow"><span class="en">Router</span><span class="ko">라우터</span><span class="ja">ルーター</span></span>
           <h3>mc-router <span class="g mono">:25565</span></h3>
-          <p><span class="en">Routes by hostname, starts a stopped server on connect, stops it after the idle timeout.</span><span class="ko">호스트명으로 라우팅하고, 접속하면 꺼진 서버를 켜고, 유휴 시간이 지나면 끕니다.</span></p>
+          <p><span class="en">Routes by hostname, starts a stopped server on connect, stops it after the idle timeout.</span><span class="ko">호스트명으로 라우팅하고, 접속하면 꺼진 서버를 켜고, 유휴 시간이 지나면 끕니다.</span><span class="ja">ホスト名でルーティングし、接続があれば停止中のサーバーを起動、アイドル時間が過ぎれば停止します。</span></p>
         </div>
         <div class="arrow" aria-hidden="true">→</div>
         <div class="node">
-          <span class="eyebrow" style="color:var(--amber)"><span class="en">Servers</span><span class="ko">서버</span></span>
+          <span class="eyebrow" style="color:var(--amber)"><span class="en">Servers</span><span class="ko">서버</span><span class="ja">サーバー</span></span>
           <h3>itzg/minecraft-server</h3>
-          <p><span class="en">One container per server, sharing a worlds directory.</span><span class="ko">서버마다 컨테이너 하나, 월드 디렉터리는 공유.</span></p>
+          <p><span class="en">One container per server, sharing a worlds directory.</span><span class="ko">서버마다 컨테이너 하나, 월드 디렉터리는 공유.</span><span class="ja">サーバーごとにコンテナひとつ、ワールドディレクトリは共有。</span></p>
           <ul><li>mc-survival · Paper</li><li>mc-modded · Fabric</li><li>mc-creative · Paper</li></ul>
         </div>
         <div class="arrow" aria-hidden="true">←</div>
         <div class="node">
-          <span class="eyebrow" style="color:var(--violet)"><span class="en">Manage</span><span class="ko">관리</span></span>
+          <span class="eyebrow" style="color:var(--violet)"><span class="en">Manage</span><span class="ko">관리</span><span class="ja">管理</span></span>
           <h3>mcctl</h3>
-          <p><span class="en">CLI, plus an optional Fastify REST API and Next.js console that read the Docker socket read-only.</span><span class="ko">CLI, 그리고 Docker 소켓을 읽기 전용으로 쓰는 Fastify REST API와 Next.js 콘솔(선택).</span></p>
+          <p><span class="en">CLI, plus an optional Fastify REST API and Next.js console that read the Docker socket read-only.</span><span class="ko">CLI, 그리고 Docker 소켓을 읽기 전용으로 쓰는 Fastify REST API와 Next.js 콘솔(선택).</span><span class="ja">CLI と、Docker ソケットを読み取り専用で使う Fastify REST API・Next.js コンソール(任意)。</span></p>
           <ul><li><span class="v">:5001</span> mcctl-api</li><li><span class="g">:5000</span> mcctl-console</li></ul>
         </div>
       </div>
@@ -806,34 +862,34 @@ modded               <span class="g">running</span>      healthy    modded.local
     <div class="wrap">
       <div class="ext">
         <div>
-          <span class="eyebrow">04 / <span class="en">External access</span><span class="ko">외부 접속</span></span>
-          <h2><span class="en">Play with friends outside your home.</span><span class="ko">집 밖에 있는 친구와도 함께.</span></h2>
-          <p class="sub"><span class="en">By default your servers are reachable only on your home network. Turn on playit.gg and friends anywhere can join — no port forwarding, no router settings, no static IP. A free playit.gg account is enough.</span><span class="ko">기본적으로 서버는 우리 집 네트워크 안에서만 접속됩니다. playit.gg를 켜면 어디에 있는 친구든 들어올 수 있습니다. 포트 포워딩도, 공유기 설정도, 고정 IP도 필요 없고 무료 playit.gg 계정이면 충분합니다.</span></p>
+          <span class="eyebrow">04 / <span class="en">External access</span><span class="ko">외부 접속</span><span class="ja">外部アクセス</span></span>
+          <h2><span class="en">Play with friends outside your home.</span><span class="ko">집 밖에 있는 친구와도 함께.</span><span class="ja">家の外にいる友だちとも一緒に。</span></h2>
+          <p class="sub"><span class="en">By default your servers are reachable only on your home network. Turn on playit.gg and friends anywhere can join — no port forwarding, no router settings, no static IP. A free playit.gg account is enough.</span><span class="ko">기본적으로 서버는 우리 집 네트워크 안에서만 접속됩니다. playit.gg를 켜면 어디에 있는 친구든 들어올 수 있습니다. 포트 포워딩도, 공유기 설정도, 고정 IP도 필요 없고 무료 playit.gg 계정이면 충분합니다.</span><span class="ja">初期状態では、サーバーには自宅のネットワーク内からしか接続できません。playit.gg を有効にすれば、どこにいる友だちでも参加できます。ポート開放もルーター設定も固定 IP も不要で、無料の playit.gg アカウントで十分です。</span></p>
           <ol class="steps">
-            <li><code>mcctl playit setup</code><p><span class="en">Paste the agent SECRET_KEY from your playit.gg account.</span><span class="ko">playit.gg 계정에서 발급한 에이전트 SECRET_KEY를 입력합니다.</span></p></li>
-            <li><code>mcctl playit start</code><p><span class="en">Start the playit-agent container next to mc-router.</span><span class="ko">mc-router 옆에서 playit-agent 컨테이너를 실행합니다.</span></p></li>
-            <li><code>Minecraft Java → localhost:25565</code><p><span class="en">On playit.gg, add a Minecraft Java tunnel that points to <code>localhost:25565</code>.</span><span class="ko">playit.gg에서 <code>localhost:25565</code>로 향하는 Minecraft Java 터널을 추가합니다.</span></p></li>
-            <li><code>mcctl create myserver -t PAPER -v 1.21.1 --playit-domain xx-xx.craft.playit.gg</code><p><span class="en">Register the tunnel domain. Friends join <code>xx-xx.craft.playit.gg</code> — no port number.</span><span class="ko">터널 도메인을 서버에 등록합니다. 친구는 포트 번호 없이 <code>xx-xx.craft.playit.gg</code>로 접속합니다.</span></p></li>
+            <li><code>mcctl playit setup</code><p><span class="en">Paste the agent SECRET_KEY from your playit.gg account.</span><span class="ko">playit.gg 계정에서 발급한 에이전트 SECRET_KEY를 입력합니다.</span><span class="ja">playit.gg アカウントで発行したエージェントの SECRET_KEY を入力します。</span></p></li>
+            <li><code>mcctl playit start</code><p><span class="en">Start the playit-agent container next to mc-router.</span><span class="ko">mc-router 옆에서 playit-agent 컨테이너를 실행합니다.</span><span class="ja">mc-router の隣で playit-agent コンテナを起動します。</span></p></li>
+            <li><code>Minecraft Java → localhost:25565</code><p><span class="en">On playit.gg, add a Minecraft Java tunnel that points to <code>localhost:25565</code>.</span><span class="ko">playit.gg에서 <code>localhost:25565</code>로 향하는 Minecraft Java 터널을 추가합니다.</span><span class="ja">playit.gg で、<code>localhost:25565</code> に向けた Minecraft Java トンネルを追加します。</span></p></li>
+            <li><code>mcctl create myserver -t PAPER -v 1.21.1 --playit-domain xx-xx.craft.playit.gg</code><p><span class="en">Register the tunnel domain. Friends join <code>xx-xx.craft.playit.gg</code> — no port number.</span><span class="ko">터널 도메인을 서버에 등록합니다. 친구는 포트 번호 없이 <code>xx-xx.craft.playit.gg</code>로 접속합니다.</span><span class="ja">トンネルのドメインをサーバーに登録します。友だちはポート番号なしで <code>xx-xx.craft.playit.gg</code> に接続します。</span></p></li>
           </ol>
-          <p class="ext-note"><span class="en">The tunnel lands on mc-router, so a sleeping server still wakes when a friend joins. You can also start or stop the agent from the web console's Routing page. playit.gg is a separate third-party service.</span><span class="ko">터널은 mc-router로 들어오므로 친구가 접속해도 잠든 서버가 똑같이 깨어납니다. 에이전트는 웹 콘솔의 라우팅 화면에서도 켜고 끌 수 있습니다. playit.gg는 별도의 외부 서비스입니다.</span></p>
+          <p class="ext-note"><span class="en">The tunnel lands on mc-router, so a sleeping server still wakes when a friend joins. You can also start or stop the agent from the web console's Routing page. playit.gg is a separate third-party service.</span><span class="ko">터널은 mc-router로 들어오므로 친구가 접속해도 잠든 서버가 똑같이 깨어납니다. 에이전트는 웹 콘솔의 라우팅 화면에서도 켜고 끌 수 있습니다. playit.gg는 별도의 외부 서비스입니다.</span><span class="ja">トンネルは mc-router に届くので、友だちが接続すれば眠っているサーバーも同じように起動します。エージェントは Web コンソールのルーティング画面からも起動・停止できます。playit.gg は別のサードパーティサービスです。</span></p>
           <div class="links">
-            <a class="btn ghost en" href="https://minecraft-server-manager.readthedocs.io/en/latest/advanced/external-access/">External access guide <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></a>
+            <a class="btn ghost en ja" href="https://minecraft-server-manager.readthedocs.io/en/latest/advanced/external-access/"><span class="en">External access guide</span><span class="ja">外部アクセスガイド</span> <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></a>
             <a class="btn ghost ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/advanced/external-access/">외부 접속 가이드 <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></a>
             <a class="btn ghost" href="https://playit.gg/"><svg class="i" aria-hidden="true"><use href="#i-globe"/></svg> playit.gg</a>
           </div>
         </div>
         <div class="tunnel" aria-label="Connection path through playit.gg">
-          <div class="tnode friend"><b><span class="en">Friend</span><span class="ko">친구</span></b><span class="c">xx-xx.craft.playit.gg</span></div>
+          <div class="tnode friend"><b><span class="en">Friend</span><span class="ko">친구</span><span class="ja">友だち</span></b><span class="c">xx-xx.craft.playit.gg</span></div>
           <div class="tline" aria-hidden="true"></div>
-          <div class="tnode"><b>playit.gg</b><span><span class="en">TCP relay on the internet</span><span class="ko">인터넷의 TCP 중계</span></span></div>
+          <div class="tnode"><b>playit.gg</b><span><span class="en">TCP relay on the internet</span><span class="ko">인터넷의 TCP 중계</span><span class="ja">インターネット上の TCP 中継</span></span></div>
           <div class="tline" aria-hidden="true"></div>
           <div class="home">
-            <span class="lbl"><span class="en">Your home network</span><span class="ko">우리 집 네트워크</span></span>
-            <div class="tnode"><b>playit-agent</b><span><span class="en">container on your host</span><span class="ko">호스트의 컨테이너</span></span></div>
+            <span class="lbl"><span class="en">Your home network</span><span class="ko">우리 집 네트워크</span><span class="ja">自宅のネットワーク</span></span>
+            <div class="tnode"><b>playit-agent</b><span><span class="en">container on your host</span><span class="ko">호스트의 컨테이너</span><span class="ja">ホスト上のコンテナ</span></span></div>
             <div class="tline" aria-hidden="true"></div>
             <div class="tnode"><b>mc-router</b><span class="g">:25565</span></div>
             <div class="tline" aria-hidden="true"></div>
-            <div class="tnode"><b>mc-myserver</b><span><span class="en">wakes on join</span><span class="ko">접속하면 깨어남</span></span></div>
+            <div class="tnode"><b>mc-myserver</b><span><span class="en">wakes on join</span><span class="ko">접속하면 깨어남</span><span class="ja">接続すると起動</span></span></div>
           </div>
         </div>
       </div>
@@ -845,51 +901,51 @@ modded               <span class="g">running</span>      healthy    modded.local
     <div class="wrap">
       <div class="head">
         <div>
-          <span class="eyebrow">05 / <span class="en">Commands</span><span class="ko">명령어</span></span>
-          <h2><span class="en">One command per job.</span><span class="ko">작업 하나에 명령 하나.</span></h2>
+          <span class="eyebrow">05 / <span class="en">Commands</span><span class="ko">명령어</span><span class="ja">コマンド</span></span>
+          <h2><span class="en">One command per job.</span><span class="ko">작업 하나에 명령 하나.</span><span class="ja">作業ひとつに、コマンドひとつ。</span></h2>
         </div>
-        <span class="hint"><span class="en">click a card to copy</span><span class="ko">카드를 누르면 복사됩니다</span></span>
+        <span class="hint"><span class="en">click a card to copy</span><span class="ko">카드를 누르면 복사됩니다</span><span class="ja">カードをクリックするとコピーします</span></span>
       </div>
       <div class="grid four">
         <button class="card cmdcard" type="button" data-copy="mcctl create survival -t PAPER -v 1.21.1">
           <span class="top-line"><span class="num">CREATE</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
           <code>mcctl create survival -t PAPER -v 1.21.1</code>
-          <p><span class="en">Create a Paper server and register its hostname with the router.</span><span class="ko">Paper 서버를 만들고 라우터에 호스트명을 등록합니다.</span></p>
+          <p><span class="en">Create a Paper server and register its hostname with the router.</span><span class="ko">Paper 서버를 만들고 라우터에 호스트명을 등록합니다.</span><span class="ja">Paper サーバーを作成し、ホスト名をルーターに登録します。</span></p>
         </button>
         <button class="card cmdcard" type="button" data-copy="mcctl create pack -t MODRINTH --modpack cobblemon">
           <span class="top-line"><span class="num">MODPACK</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
           <code>mcctl create pack -t MODRINTH --modpack cobblemon</code>
-          <p><span class="en">Build a server from a Modrinth modpack.</span><span class="ko">Modrinth 모드팩으로 서버를 만듭니다.</span></p>
+          <p><span class="en">Build a server from a Modrinth modpack.</span><span class="ko">Modrinth 모드팩으로 서버를 만듭니다.</span><span class="ja">Modrinth のモッドパックからサーバーを作成します。</span></p>
         </button>
         <button class="card cmdcard" type="button" data-copy="mcctl mod add modded fabric-api lithium">
           <span class="top-line"><span class="num">MODS</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
           <code>mcctl mod add modded fabric-api lithium</code>
-          <p><span class="en">Add mods from Modrinth (default), CurseForge, or Spiget.</span><span class="ko">Modrinth(기본), CurseForge, Spiget에서 모드를 추가합니다.</span></p>
+          <p><span class="en">Add mods from Modrinth (default), CurseForge, or Spiget.</span><span class="ko">Modrinth(기본), CurseForge, Spiget에서 모드를 추가합니다.</span><span class="ja">Modrinth(既定)、CurseForge、Spiget から Mod を追加します。</span></p>
         </button>
         <button class="card cmdcard" type="button" data-copy="mcctl world assign hardcore-01 survival">
           <span class="top-line"><span class="num">WORLD</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
           <code>mcctl world assign hardcore-01 survival</code>
-          <p><span class="en">Lock a world to a server until you release it.</span><span class="ko">해제할 때까지 월드를 서버에 잠급니다.</span></p>
+          <p><span class="en">Lock a world to a server until you release it.</span><span class="ko">해제할 때까지 월드를 서버에 잠급니다.</span><span class="ja">解除するまでワールドをサーバーにロックします。</span></p>
         </button>
         <button class="card cmdcard" type="button" data-copy="mcctl player online --all">
           <span class="top-line"><span class="num">PLAYERS</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
           <code>mcctl player online --all</code>
-          <p><span class="en">See who is online on every running server.</span><span class="ko">실행 중인 모든 서버의 접속자를 봅니다.</span></p>
+          <p><span class="en">See who is online on every running server.</span><span class="ko">실행 중인 모든 서버의 접속자를 봅니다.</span><span class="ja">稼働中のすべてのサーバーの接続者を確認します。</span></p>
         </button>
         <button class="card cmdcard" type="button" data-copy="mcctl backup push -m weekly">
           <span class="top-line"><span class="num">BACKUP</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
           <code>mcctl backup push -m weekly</code>
-          <p><span class="en">Commit world data to your GitHub backup repository.</span><span class="ko">월드 데이터를 GitHub 백업 저장소에 커밋합니다.</span></p>
+          <p><span class="en">Commit world data to your GitHub backup repository.</span><span class="ko">월드 데이터를 GitHub 백업 저장소에 커밋합니다.</span><span class="ja">ワールドデータを GitHub のバックアップリポジトリにコミットします。</span></p>
         </button>
         <button class="card cmdcard" type="button" data-copy="mcctl playit setup">
           <span class="top-line"><span class="num">EXTERNAL</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
           <code>mcctl playit setup</code>
-          <p><span class="en">Let friends outside your network join — no port forwarding.</span><span class="ko">포트 포워딩 없이 외부 친구도 접속하게 합니다.</span></p>
+          <p><span class="en">Let friends outside your network join — no port forwarding.</span><span class="ko">포트 포워딩 없이 외부 친구도 접속하게 합니다.</span><span class="ja">ポート開放なしで、ネットワーク外の友だちも参加できます。</span></p>
         </button>
         <button class="card cmdcard" type="button" data-copy="mcctl console init">
           <span class="top-line"><span class="num">CONSOLE</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
           <code>mcctl console init</code>
-          <p><span class="en">Set up the web console and REST API.</span><span class="ko">웹 콘솔과 REST API를 설정합니다.</span></p>
+          <p><span class="en">Set up the web console and REST API.</span><span class="ko">웹 콘솔과 REST API를 설정합니다.</span><span class="ja">Web コンソールと REST API をセットアップします。</span></p>
         </button>
       </div>
     </div>
@@ -899,9 +955,9 @@ modded               <span class="g">running</span>      healthy    modded.local
   <section id="start">
     <div class="wrap">
       <div class="cta">
-        <span class="eyebrow"><span class="en">Get started</span><span class="ko">시작하기</span></span>
-        <h2><span class="en">Your first server in four commands.</span><span class="ko">명령 네 줄이면 첫 서버가 뜹니다.</span></h2>
-        <p class="sub"><span class="en">Needs Node.js 18+ and Docker Engine 24+ on Linux or macOS. Your existing Minecraft client is all players need.</span><span class="ko">Linux 또는 macOS에 Node.js 18+, Docker Engine 24+가 필요합니다. 플레이어는 평소 쓰던 마인크래프트 클라이언트만 있으면 됩니다.</span></p>
+        <span class="eyebrow"><span class="en">Get started</span><span class="ko">시작하기</span><span class="ja">はじめる</span></span>
+        <h2><span class="en">Your first server in four commands.</span><span class="ko">명령 네 줄이면 첫 서버가 뜹니다.</span><span class="ja">コマンド 4 行で最初のサーバーを。</span></h2>
+        <p class="sub"><span class="en">Needs Node.js 18+ and Docker Engine 24+ on Linux or macOS. Your existing Minecraft client is all players need.</span><span class="ko">Linux 또는 macOS에 Node.js 18+, Docker Engine 24+가 필요합니다. 플레이어는 평소 쓰던 마인크래프트 클라이언트만 있으면 됩니다.</span><span class="ja">Linux または macOS に Node.js 18 以上と Docker Engine 24 以上が必要です。プレイヤーは、いつもの Minecraft クライアントがあれば十分です。</span></p>
         <div class="cta-row">
 <pre><span class="ps1">$</span> npm install -g @minecraft-docker/mcctl
 <span class="ps1">$</span> mcctl init
@@ -911,16 +967,16 @@ modded               <span class="g">running</span>      healthy    modded.local
             <button class="btn" type="button" data-copy="npm install -g @minecraft-docker/mcctl&#10;mcctl init&#10;mcctl create myserver -t PAPER -v 1.21.1&#10;mcctl console init">
               <svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg>
               <svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg>
-              <span class="en">Copy all</span><span class="ko">모두 복사</span>
+              <span class="en">Copy all</span><span class="ko">모두 복사</span><span class="ja">すべてコピー</span>
             </button>
-            <a class="btn ghost en" href="https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/quickstart/">Quickstart <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></a>
+            <a class="btn ghost en ja" href="https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/quickstart/"><span class="en">Quickstart</span><span class="ja">クイックスタート</span> <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></a>
             <a class="btn ghost ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/getting-started/quickstart/">빠른 시작 <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></a>
             <a class="btn ghost" href="https://github.com/smallmiro/minecraft-server-manager"><svg class="i" aria-hidden="true"><use href="#i-gh"/></svg> GitHub</a>
           </div>
         </div>
         <p class="meta" style="margin-top:20px">
           <span class="en">Then connect to <code>myserver.&lt;HOST_IP&gt;.nip.io:25565</code></span>
-          <span class="ko">그다음 <code>myserver.&lt;HOST_IP&gt;.nip.io:25565</code>로 접속하세요</span>
+          <span class="ko">그다음 <code>myserver.&lt;HOST_IP&gt;.nip.io:25565</code>로 접속하세요</span><span class="ja">その後 <code>myserver.&lt;HOST_IP&gt;.nip.io:25565</code> に接続してください</span>
         </p>
       </div>
     </div>
@@ -931,29 +987,112 @@ modded               <span class="g">running</span>      healthy    modded.local
     <div class="wrap">
       <div class="head">
         <div>
-          <span class="eyebrow">06 / <span class="en">Community</span><span class="ko">커뮤니티</span></span>
-          <h2><span class="en">Ideas and questions welcome.</span><span class="ko">아이디어와 질문을 기다립니다.</span></h2>
-          <p class="sub"><span class="en">mcctl is built in the open. Join the conversation on GitHub Discussions.</span><span class="ko">mcctl은 공개적으로 개발됩니다. GitHub Discussions에서 함께 이야기해요.</span></p>
+          <span class="eyebrow">06 / <span class="en">Community</span><span class="ko">커뮤니티</span><span class="ja">コミュニティ</span></span>
+          <h2><span class="en">Ideas and questions welcome.</span><span class="ko">아이디어와 질문을 기다립니다.</span><span class="ja">アイデアと質問を歓迎します。</span></h2>
+          <p class="sub"><span class="en">mcctl is built in the open. Join the conversation on GitHub Discussions.</span><span class="ko">mcctl은 공개적으로 개발됩니다. GitHub Discussions에서 함께 이야기해요.</span><span class="ja">mcctl はオープンに開発しています。GitHub Discussions で会話に参加してください。</span></p>
         </div>
       </div>
       <div class="grid">
         <a class="card" href="https://github.com/smallmiro/minecraft-server-manager/discussions/categories/ideas">
           <span class="ico" style="color:var(--amber);background:rgba(255,213,79,.1);border:1px solid rgba(255,213,79,.25)"><svg aria-hidden="true"><use href="#i-bulb"/></svg></span>
-          <h3><span class="en">Ideas</span><span class="ko">아이디어</span></h3>
-          <p><span class="en">Suggest a feature or an improvement, and see what others have proposed.</span><span class="ko">새 기능이나 개선을 제안하고, 다른 사람의 제안도 살펴보세요.</span></p>
-          <span class="go"><span class="en">Share an idea</span><span class="ko">아이디어 제안하기</span> <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></span>
+          <h3><span class="en">Ideas</span><span class="ko">아이디어</span><span class="ja">アイデア</span></h3>
+          <p><span class="en">Suggest a feature or an improvement, and see what others have proposed.</span><span class="ko">새 기능이나 개선을 제안하고, 다른 사람의 제안도 살펴보세요.</span><span class="ja">新機能や改善を提案したり、ほかの人の提案を見たりできます。</span></p>
+          <span class="go"><span class="en">Share an idea</span><span class="ko">아이디어 제안하기</span><span class="ja">アイデアを提案する</span> <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></span>
         </a>
         <a class="card" href="https://github.com/smallmiro/minecraft-server-manager/discussions/categories/q-a">
           <span class="ico" style="color:var(--cyan);background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.25)"><svg aria-hidden="true"><use href="#i-chat"/></svg></span>
-          <h3><span class="en">Q&amp;A</span><span class="ko">질문과 답변</span></h3>
-          <p><span class="en">Stuck on setup, routing, or mods? Ask, and mark the answer that solved it.</span><span class="ko">설치, 라우팅, 모드 설정에서 막혔나요? 질문하고, 해결해 준 답변을 채택하세요.</span></p>
-          <span class="go"><span class="en">Ask a question</span><span class="ko">질문하기</span> <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></span>
+          <h3><span class="en">Q&amp;A</span><span class="ko">질문과 답변</span><span class="ja">Q&amp;A</span></h3>
+          <p><span class="en">Stuck on setup, routing, or mods? Ask, and mark the answer that solved it.</span><span class="ko">설치, 라우팅, 모드 설정에서 막혔나요? 질문하고, 해결해 준 답변을 채택하세요.</span><span class="ja">セットアップ、ルーティング、Mod で困っていませんか? 質問して、解決した回答をマークしてください。</span></p>
+          <span class="go"><span class="en">Ask a question</span><span class="ko">질문하기</span><span class="ja">質問する</span> <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></span>
         </a>
       </div>
       <p class="community-foot">
-        <a href="https://github.com/smallmiro/minecraft-server-manager/discussions"><span class="en">All discussions</span><span class="ko">전체 토론 보기</span></a>
-        <span><span class="en">Found a bug?</span><span class="ko">버그를 발견했나요?</span> <a href="https://github.com/smallmiro/minecraft-server-manager/issues"><span class="en">Open an issue</span><span class="ko">이슈로 알려 주세요</span></a></span>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/discussions"><span class="en">All discussions</span><span class="ko">전체 토론 보기</span><span class="ja">すべてのディスカッション</span></a>
+        <span><span class="en">Found a bug?</span><span class="ko">버그를 발견했나요?</span><span class="ja">バグを見つけましたか?</span> <a href="https://github.com/smallmiro/minecraft-server-manager/issues"><span class="en">Open an issue</span><span class="ko">이슈로 알려 주세요</span><span class="ja">Issue で報告してください</span></a></span>
       </p>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <span class="eyebrow">07 / <span class="en">About</span><span class="ko">소개</span><span class="ja">紹介</span></span>
+          <h2><span class="en">Built by a dad, for two brothers.</span><span class="ko">두 형제를 위해, 아빠가 만들었습니다.</span><span class="ja">父が、ふたりの兄弟のために作りました。</span></h2>
+        </div>
+      </div>
+      <div class="about">
+        <div class="story">
+          <p><span class="en">I'm a software engineer and the dad of two boys. When they were little they loved Minecraft — and more than anything, they loved playing it together.</span><span class="ko">저는 아들 둘을 둔 소프트웨어 개발자입니다. 형제는 어릴 때부터 마인크래프트를 좋아했고, 무엇보다 같이 하는 걸 좋아했습니다.</span><span class="ja">私は息子ふたりを持つソフトウェアエンジニアです。兄弟は小さい頃から Minecraft が大好きで、何より一緒に遊ぶのが好きでした。</span></p>
+          <p><span class="en">Then came 2020. COVID closed the schools and the playgrounds, and Minecraft became the one place my younger son could still meet his friends. I put a Bedrock server on the Google Cloud free tier for them and kept it running for a year.</span><span class="ko">그러다 2020년, 코로나로 학교도 놀이터도 닫혔습니다. 둘째가 친구들과 모여 놀 수 있는 곳은 마인크래프트뿐이었죠. 둘째와 친구들을 위해 GCP 무료 플랜에 베드락 서버를 올리고 1년 동안 운영했습니다.</span><span class="ja">そして 2020 年、コロナで学校も公園も閉ざされました。下の息子が友だちと集まって遊べる場所は Minecraft だけでした。息子と友だちのために Google Cloud の無料枠に Bedrock サーバーを立て、1 年間運用しました。</span></p>
+          <p><span class="en">For a while I tried paid hosting too, but it was expensive, and the features and speed never felt right. In 2025 I installed Ubuntu on a Mac mini at home and started building servers for the boys with <code>itzg/minecraft-server</code>.</span><span class="ko">한동안 유료 호스팅도 써 봤지만, 비싼 데다 기능과 속도가 만족스럽지 않았습니다. 2025년에는 집에 있는 맥미니에 우분투를 설치하고 <code>itzg/minecraft-server</code>로 아이들 서버를 직접 만들어 주기 시작했습니다.</span><span class="ja">しばらく有料のホスティングも使ってみましたが、高いうえに機能も速度も満足できませんでした。2025 年には自宅の Mac mini に Ubuntu を入れ、<code>itzg/minecraft-server</code> で子どもたちのサーバーを自分で作り始めました。</span></p>
+          <p><span class="en">Today the older one is in university and the younger one is in middle school, and they still play together now and then. The tools I wrote to run their servers grew into the mcctl CLI and the web console, and I've released them as open source.</span><span class="ko">지금은 대학생이 된 첫째와 중학생 둘째가 가끔 여전히 함께 게임을 합니다. 아이들 서버를 관리하려고 만든 도구가 mcctl CLI와 웹 콘솔로 자랐고, 이를 오픈소스로 공개했습니다.</span><span class="ja">大学生になった兄と中学生の弟は、今でもときどき一緒に遊んでいます。子どもたちのサーバーを管理するために作ったツールが mcctl CLI と Web コンソールに育ち、それをオープンソースとして公開しました。</span></p>
+          <p class="closing"><span class="en">If you run a world for the friends and family you play with, I hope this makes it a little easier.<span class="from">— One day in 2026, from a software engineer dad</span></span><span class="ko">친구, 가족과 함께할 서버를 운영하는 모든 분께 이 도구가 조금이나마 수고를 덜어 주길 바랍니다.<span class="from">— 2026년 어느 날, 소프트웨어 개발자 아빠로부터</span></span><span class="ja">友だちや家族と遊ぶためのワールドを運用しているすべての方にとって、このツールが少しでも助けになればうれしいです。<span class="from">— 2026 年のある日、ソフトウェアエンジニアの父より</span></span></p>
+          <div class="sign"><a href="https://github.com/smallmiro"><svg class="i" aria-hidden="true"><use href="#i-gh"/></svg>@smallmiro</a></div>
+        </div>
+        <div>
+          <figure class="about-fig carousel" role="region" aria-roledescription="carousel" aria-label="World renders">
+            <div class="car-view">
+              <div class="slides" tabindex="0">
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="1 / 10">
+                  <img src="assets/about-base.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of a hilltop base: houses on a flattened stone platform">
+                  <span class="slide-cap"><span class="en">A hilltop base on a stone platform</span><span class="ko">석재 대지 위의 언덕 기지</span><span class="ja">石の土台に建つ丘の上の拠点</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="2 / 10">
+                  <img src="assets/about-factory.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of a wooden base by a river in a modded world">
+                  <span class="slide-cap"><span class="en">A wooden base by the river (modded world)</span><span class="ko">강가의 나무 기지 (모드 월드)</span><span class="ja">川辺の木造の拠点(Mod ワールド)</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="3 / 10">
+                  <img src="assets/about-base-night.webp" width="1200" height="750" loading="lazy" alt="BlueMap night render of the hilltop base with its lights on">
+                  <span class="slide-cap"><span class="en">The hilltop base at night</span><span class="ko">밤의 언덕 기지</span><span class="ja">夜の丘の上の拠点</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="4 / 10">
+                  <img src="assets/about-base-top.webp" width="1200" height="750" loading="lazy" alt="Top-down BlueMap render of the hilltop base and its crop fields">
+                  <span class="slide-cap"><span class="en">The hilltop base from above, with its farms</span><span class="ko">위에서 본 언덕 기지와 농장</span><span class="ja">上から見た丘の上の拠点と畑</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="5 / 10">
+                  <img src="assets/about-factory-night.webp" width="1200" height="750" loading="lazy" alt="BlueMap night render of the riverside base">
+                  <span class="slide-cap"><span class="en">The riverside base at night</span><span class="ko">밤의 강가 기지</span><span class="ja">夜の川辺の拠点</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="6 / 10">
+                  <img src="assets/about-factory-top.webp" width="1200" height="750" loading="lazy" alt="Top-down BlueMap render of the riverside base between two rivers">
+                  <span class="slide-cap"><span class="en">The riverside base from above</span><span class="ko">위에서 본 강가 기지</span><span class="ja">上から見た川辺の拠点</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="7 / 10">
+                  <img src="assets/about-base-sea.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of the hilltop base with the sea behind it">
+                  <span class="slide-cap"><span class="en">The hilltop base above the sea</span><span class="ko">바다가 내려다보이는 언덕 기지</span><span class="ja">海を見下ろす丘の上の拠点</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="8 / 10">
+                  <img src="assets/about-factory-river.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of the riverside base seen from a distance">
+                  <span class="slide-cap"><span class="en">The riverside base from afar</span><span class="ko">멀리서 본 강가 기지</span><span class="ja">遠くから見た川辺の拠点</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="9 / 10">
+                  <img src="assets/about-factory-cherry.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of cherry blossom trees near the riverside base">
+                  <span class="slide-cap"><span class="en">Cherry blossoms near the riverside base</span><span class="ko">강가 기지 근처의 벚꽃</span><span class="ja">川辺の拠点近くの桜</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="10 / 10">
+                  <img src="assets/about-world.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of badlands around a bay, beaches and a turquoise sea">
+                  <span class="slide-cap"><span class="en">Badlands around a bay</span><span class="ko">만을 둘러싼 배드랜드</span><span class="ja">入り江を囲むバッドランド</span></span>
+                </div>
+              </div>
+              <button class="car-btn prev" type="button" aria-label="Previous image"><svg class="i" aria-hidden="true"><use href="#i-prev"/></svg></button>
+              <button class="car-btn next" type="button" aria-label="Next image"><svg class="i" aria-hidden="true"><use href="#i-next"/></svg></button>
+            </div>
+            <div class="car-dots"><button type="button" aria-label="Show image 1"></button><button type="button" aria-label="Show image 2"></button><button type="button" aria-label="Show image 3"></button><button type="button" aria-label="Show image 4"></button><button type="button" aria-label="Show image 5"></button><button type="button" aria-label="Show image 6"></button><button type="button" aria-label="Show image 7"></button><button type="button" aria-label="Show image 8"></button><button type="button" aria-label="Show image 9"></button><button type="button" aria-label="Show image 10"></button></div>
+            <figcaption><span class="en">One of the worlds the brothers play on — rendered with BlueMap.</span><span class="ko">형제가 함께 노는 월드 중 하나 — BlueMap 렌더.</span><span class="ja">兄弟が一緒に遊ぶワールドのひとつ — BlueMap でレンダリング。</span></figcaption>
+          </figure>
+          <ol class="timeline">
+            <li><time>2020</time><span class="t"><span class="en"><b>COVID.</b> A Bedrock server on the GCP free tier for my younger son and his friends, run for a year.</span><span class="ko"><b>코로나.</b> 둘째와 친구들을 위해 GCP 무료 플랜에 베드락 서버를 올려 1년간 운영.</span><span class="ja"><b>コロナ。</b>下の息子と友だちのために GCP の無料枠に Bedrock サーバーを立て、1 年間運用。</span></span></li>
+            <li><time class="soft"><span class="en">Before 2025</span><span class="ko">2025 이전</span><span class="ja">2025 年以前</span></time><span class="t"><span class="en"><b>Paid hosting.</b> Expensive, and the features and speed fell short.</span><span class="ko"><b>유료 호스팅.</b> 비싸고 기능·속도가 아쉬웠음.</span><span class="ja"><b>有料ホスティング。</b>高く、機能も速度も物足りなかった。</span></span></li>
+            <li><time>2025</time><span class="t"><span class="en"><b>Home server.</b> Ubuntu on a Mac mini, servers for the brothers with itzg/minecraft-server.</span><span class="ko"><b>홈 서버.</b> 맥미니에 우분투를 설치하고 itzg/minecraft-server로 형제의 서버를 호스팅.</span><span class="ja"><b>ホームサーバー。</b>Mac mini に Ubuntu を入れ、itzg/minecraft-server で兄弟のサーバーをホスティング。</span></span></li>
+            <li><time>2026.01.17</time><span class="t"><span class="en"><b>Shell scripts.</b> Bash scripts around Docker Compose and mc-router: <code>create-server.sh</code>, <code>backup.sh</code>, <code>lock.sh</code>…</span><span class="ko"><b>셸 스크립트.</b> Docker Compose와 mc-router를 다루는 bash 스크립트: <code>create-server.sh</code>, <code>backup.sh</code>, <code>lock.sh</code>…</span><span class="ja"><b>シェルスクリプト。</b>Docker Compose と mc-router を扱う bash スクリプト: <code>create-server.sh</code>、<code>backup.sh</code>、<code>lock.sh</code>…</span></span></li>
+            <li><time>2026.01.18</time><span class="t"><span class="en"><b>TypeScript CLI.</b> mcctl wraps those scripts. Built for the boys first, then polished and released as open source on npm.</span><span class="ko"><b>TypeScript CLI.</b> 그 스크립트를 감싼 mcctl. 아이들을 위해 만든 도구의 완성도를 높여 npm에 오픈소스로 공개.</span><span class="ja"><b>TypeScript CLI。</b>そのスクリプトをラップした mcctl。子どもたちのために作ったツールの完成度を高め、npm でオープンソースとして公開。</span></span></li>
+            <li><time>2026.02.07</time><span class="t"><span class="en"><b>Web console.</b> A REST API and a Next.js console wrap the CLI again, so servers can be managed from a browser.</span><span class="ko"><b>웹 관리 도구.</b> CLI를 다시 감싼 REST API와 Next.js 웹 콘솔. 브라우저에서 서버 관리.</span><span class="ja"><b>Web 管理ツール。</b>CLI をさらにラップした REST API と Next.js の Web コンソール。ブラウザからサーバーを管理。</span></span></li>
+            <li><time class="soft"><span class="en">Today</span><span class="ko">지금</span><span class="ja">現在</span></time><span class="t"><span class="en"><b>Still playing.</b> A university student and a middle schooler, still logging in together.</span><span class="ko"><b>여전히 함께.</b> 대학생 형과 중학생 동생이 아직도 같이 접속합니다.</span><span class="ja"><b>今も一緒に。</b>大学生の兄と中学生の弟が、今でも一緒にログインしています。</span></span></li>
+          </ol>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -963,7 +1102,7 @@ modded               <span class="g">running</span>      healthy    modded.local
     <div class="foot-top">
       <a class="brand" href="#"><svg aria-hidden="true"><use href="#i-cube"/></svg>Minecraft Server Manager <span class="pill" data-version hidden></span></a>
       <nav class="foot-links" aria-label="Footer">
-        <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg>docs</a>
+        <a class="en ja" href="https://minecraft-server-manager.readthedocs.io/en/latest/"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg>docs</a>
         <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg>docs</a>
         <a href="https://www.npmjs.com/package/@minecraft-docker/mcctl"><svg class="i" aria-hidden="true"><use href="#i-npm"/></svg>npm</a>
         <a href="https://github.com/smallmiro/minecraft-server-manager"><svg class="i" aria-hidden="true"><use href="#i-gh"/></svg>github</a>
@@ -973,8 +1112,8 @@ modded               <span class="g">running</span>      healthy    modded.local
         <a href="https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE"><svg class="i" aria-hidden="true"><use href="#i-scale"/></svg>Apache-2.0</a>
       </nav>
     </div>
-    <p style="margin:0"><span class="en">Built on <code>itzg/minecraft-server</code> and <code>itzg/mc-router</code>.</span><span class="ko"><code>itzg/minecraft-server</code>와 <code>itzg/mc-router</code> 기반.</span></p>
-    <p style="margin:0"><span class="en">Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span><span class="ko">공식 마인크래프트 제품이 아니며, Mojang 또는 Microsoft의 승인을 받거나 제휴하지 않았습니다.</span></p>
+    <p style="margin:0"><span class="en">Built on <a class="ext-link" href="https://github.com/itzg/docker-minecraft-server" target="_blank" rel="noopener"><code>itzg/minecraft-server</code></a> and <a class="ext-link" href="https://github.com/itzg/mc-router" target="_blank" rel="noopener"><code>itzg/mc-router</code></a>.</span><span class="ko"><a class="ext-link" href="https://github.com/itzg/docker-minecraft-server" target="_blank" rel="noopener"><code>itzg/minecraft-server</code></a>와 <a class="ext-link" href="https://github.com/itzg/mc-router" target="_blank" rel="noopener"><code>itzg/mc-router</code></a> 기반.</span><span class="ja"><a class="ext-link" href="https://github.com/itzg/docker-minecraft-server" target="_blank" rel="noopener"><code>itzg/minecraft-server</code></a> と <a class="ext-link" href="https://github.com/itzg/mc-router" target="_blank" rel="noopener"><code>itzg/mc-router</code></a> がベースです。</span></p>
+    <p style="margin:0"><span class="en">Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span><span class="ko">공식 마인크래프트 제품이 아니며, Mojang 또는 Microsoft의 승인을 받거나 제휴하지 않았습니다.</span><span class="ja">Minecraft 公式製品ではありません。Mojang および Microsoft の承認を受けたものではなく、両社とは関係ありません。</span></p>
   </div>
 </footer>
 
@@ -983,6 +1122,24 @@ modded               <span class="g">running</span>      healthy    modded.local
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.querySelectorAll('svg.arch').forEach(function (s) { s.pauseAnimations(); });
   }
+
+  // About carousel: prev/next wrap around, dots jump, arrow keys work when the track has focus
+  document.querySelectorAll('.carousel').forEach(function (c) {
+    var track = c.querySelector('.slides'), dots = c.querySelectorAll('.car-dots button'), n = dots.length;
+    var smooth = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var cur = function () { return Math.round(track.scrollLeft / track.clientWidth); };
+    var go = function (i) { track.scrollTo({ left: ((i + n) % n) * track.clientWidth, behavior: smooth ? 'smooth' : 'auto' }); };
+    var mark = function () { var i = cur(); dots.forEach(function (d, k) { d.setAttribute('aria-current', String(k === i)); }); };
+    c.querySelector('.prev').addEventListener('click', function () { go(cur() - 1); });
+    c.querySelector('.next').addEventListener('click', function () { go(cur() + 1); });
+    dots.forEach(function (d, i) { d.addEventListener('click', function () { go(i); }); });
+    track.addEventListener('scroll', mark, { passive: true });
+    track.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(cur() + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur() - 1); }
+    });
+    mark();
+  });
 
   // Language toggle
   function setLang(lang) {
