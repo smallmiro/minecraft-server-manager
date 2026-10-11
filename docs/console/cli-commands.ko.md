@@ -88,7 +88,7 @@ mcctl console init --api-port 8001 --console-port 8000
 콘솔이 이미 초기화되어 있으면 재초기화할지 묻습니다. `--force`는 이 질문을 건너뜁니다. 재초기화하면 다음과 같이 동작합니다.
 
 - `mcctl-api`와 `mcctl-console` PM2 프로세스를 중지합니다.
-- `.mcctl-admin.yml`과 `ecosystem.config.cjs`를 삭제하므로, 접근 모드, API 키, 포트를 다시 선택하고 생성합니다.
+- `.mcctl-admin.yml`과 `ecosystem.config.cjs`를 삭제하므로, API 접근 모드를 다시 선택하고, api-key 계열 모드에서는 새 API 키가 생성되며, `--api-port`와 `--console-port`를 지정하지 않으면 포트는 기본값으로 돌아갑니다.
 - `data/mcctl.db`는 유지하므로 다른 사용자는 영향을 받지 않습니다.
 
 입력한 관리자 이메일이 `data/mcctl.db`에 이미 있으면 `User '<email>' already exists` 오류와 함께 `mcctl console init --force`를 안내하고 실패합니다. `--force`를 지정하면 해당 사용자를 (세션 포함) 삭제한 뒤 새 이름과 비밀번호로 다시 생성합니다.
@@ -677,7 +677,7 @@ mcctl console service restart [options]
 |--------|-------------|
 | `--api` | mcctl-api만 재시작 |
 | `--console` | mcctl-console 재시작. 콘솔은 API에 의존하므로 mcctl-api도 함께 재시작됨 |
-| `--force` | PM2 프로세스를 삭제하고 PM2 데몬을 종료한 뒤 서비스를 다시 시작 (실행 중에는 PM2가 관리하는 모든 프로세스가 중지됨) |
+| `--force` | mcctl PM2 프로세스를 삭제하고 PM2 데몬을 종료한 뒤, 선택한 mcctl 서비스를 다시 시작하고 PM2 프로세스 목록을 저장 (`pm2 save`). PM2가 관리하던 나머지(다른 앱, 선택하지 않은 mcctl 서비스)는 데몬과 함께 중지되고 다시 시작되지 않으며 저장된 목록에서도 빠짐 |
 
 `--api`나 `--console`을 지정하지 않으면, 두 서비스가 모두 설치된 경우 "API only"와 "API + Console" 중 무엇을 재시작할지 묻습니다.
 
@@ -772,6 +772,8 @@ mcctl console service logs [options]
 | `-f, --follow` | 로그 출력 추적 (스트리밍) |
 | `--api` | mcctl-api 로그만 표시 |
 | `--console` | mcctl-console 로그 표시 (mcctl-api 로그도 함께 표시됨) |
+
+CLI 도움말은 `--console`을 "Target console service only"로 설명하지만, `logs`의 현재 동작은 mcctl-api도 포함합니다 (`start`, `restart`와 같은 선택 방식).
 
 **예제:**
 

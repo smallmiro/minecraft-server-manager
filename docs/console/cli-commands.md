@@ -88,7 +88,7 @@ mcctl console init --api-port 8001 --console-port 8000
 If the console is already initialized, the command asks whether to reinitialize. `--force` skips that question. Reinitializing:
 
 - stops the `mcctl-api` and `mcctl-console` PM2 processes,
-- deletes `.mcctl-admin.yml` and `ecosystem.config.cjs`, so the access mode, API key and ports are chosen and generated again,
+- deletes `.mcctl-admin.yml` and `ecosystem.config.cjs`, so the API access mode is chosen again, a new API key is generated for the api-key modes, and the ports return to the defaults unless you pass `--api-port` and `--console-port`,
 - keeps `data/mcctl.db`, so other users are not touched.
 
 If the admin email you enter already exists in `data/mcctl.db`, the command fails with `User '<email>' already exists` and suggests `mcctl console init --force`. With `--force`, that user is deleted (including its sessions) and created again with the new name and password.
@@ -677,7 +677,7 @@ mcctl console service restart [options]
 |--------|-------------|
 | `--api` | Restart only mcctl-api |
 | `--console` | Restart mcctl-console. mcctl-api is restarted too, because the console depends on it |
-| `--force` | Delete the PM2 processes, kill the PM2 daemon, then start the services again (this stops every process PM2 manages while it runs) |
+| `--force` | Delete the mcctl PM2 processes, kill the PM2 daemon, start the selected mcctl services again, then save the PM2 process list (`pm2 save`). Everything else PM2 manages (other apps, and an mcctl service you did not select) is stopped with the daemon, is not started again, and is missing from the saved list |
 
 Without `--api` or `--console`, the command asks whether to restart "API only" or "API + Console" when both services are installed.
 
@@ -772,6 +772,8 @@ mcctl console service logs [options]
 | `-f, --follow` | Follow log output (stream) |
 | `--api` | Show only mcctl-api logs |
 | `--console` | Show mcctl-console logs (mcctl-api logs are included as well) |
+
+The CLI help describes `--console` as "Target console service only". For `logs`, the current behavior also includes mcctl-api, the same selection as `start` and `restart`.
 
 **Examples:**
 
