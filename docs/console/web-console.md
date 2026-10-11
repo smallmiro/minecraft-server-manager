@@ -911,6 +911,61 @@ mcctl console user reset-password user@example.com
 
 ---
 
+## Usage Analytics
+
+In production mode, the web console sends anonymous usage data to Google Analytics 4 (GA4) so we can see which screens are used. Development mode (`pnpm dev`) never sends anything.
+
+**What is sent:**
+
+- An anonymous `installId` (random UUID), one per installation, sent as the GA `user_id`. It is unrelated to your accounts or hostnames.
+- The normalized page path, such as `/dashboard`, `/servers/:name`, or `/servers/:name/console`
+- The mcctl console version (`mcctl_version`)
+
+**What is not sent:**
+
+- The console's hostname or IP address (the page URL is rewritten to `http://mcctl-console.invalid/...` before sending)
+- Server names, world names, or query strings
+- Accounts or email addresses
+
+!!! note
+    Your browser sends the request to Google, so Google receives the connecting IP address. According to Google's documentation, GA4 does not log or store IP addresses.
+
+### The installId
+
+The `installId` is stored as `installId` in `<root>/.mcctl.json`. It is created once and never changes:
+
+- New installation: created by `mcctl init`
+- Upgrade: `mcctl upgrade` adds it only if it is missing (an existing value is kept)
+- Package-only update with `mcctl update`: created and saved on the console's first request
+
+`mcctl console init` and `mcctl update` print this notice when analytics is on:
+
+```
+Console usage analytics is on (anonymous install ID and page paths, sent to Google Analytics). To turn it off, set "telemetry": false in <root>/.mcctl.json.
+```
+
+### Turning It Off
+
+=== "Option 1: .mcctl.json"
+
+    Add `"telemetry": false` to `<root>/.mcctl.json` and keep the existing fields. It takes effect from the next page load, and no restart is needed.
+
+    ```json
+    {
+      "telemetry": false
+    }
+    ```
+
+=== "Option 2: DO_NOT_TRACK"
+
+    Set `DO_NOT_TRACK=1` in the mcctl-console `env` in PM2's `ecosystem.config.cjs`, then restart the console.
+
+    ```bash
+    mcctl console service restart
+    ```
+
+---
+
 ## Troubleshooting
 
 ### Can't Access the Console

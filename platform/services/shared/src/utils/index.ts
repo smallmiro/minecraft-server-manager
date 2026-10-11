@@ -2,6 +2,7 @@ import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { randomUUID } from 'node:crypto';
 import type { McctlConfig, EnvConfig } from '../types/index.js';
 
 /**
@@ -260,6 +261,25 @@ export class Config {
     writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
   }
 
+  /**
+   * Return the persistent install id, generating and saving one if absent.
+   * Returns null (and writes nothing) when .mcctl.json is missing, unreadable
+   * or cannot be written, so callers treat that as "telemetry off".
+   */
+  getOrCreateInstallId(): string | null {
+    const config = this.load();
+    if (!config) return null;
+    if (config.installId) return config.installId;
+
+    const installId = randomUUID();
+    try {
+      this.save({ ...config, installId });
+    } catch {
+      return null;
+    }
+    return installId;
+  }
+
   /** Load .env file */
   loadEnv(): EnvConfig {
     const envPath = this.paths.envFile;
@@ -354,6 +374,19 @@ export class Config {
 
     writeFileSync(envPath, updatedLines.join('\n'), 'utf-8');
   }
+}
+
+/**
+ * Whether mcctl-console telemetry may run. Opt-out via `.mcctl.json`
+ * (`"telemetry": false`) or `DO_NOT_TRACK=1|true`; off when there is no config.
+ */
+export function isTelemetryEnabled(
+  config: McctlConfig | null,
+  env: Record<string, string | undefined> = process.env
+): boolean {
+  if (!config || config.telemetry === false) return false;
+  const dnt = env['DO_NOT_TRACK'];
+  return dnt !== '1' && dnt !== 'true';
 }
 
 // Re-export the pure formatter (kept in a dependency-free module so the domain

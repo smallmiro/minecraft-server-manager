@@ -445,6 +445,7 @@ mcctl upgrade [options]
 2. Docker 소켓의 그룹 ID를 감지해 `.env`에 `DOCKER_GID`로 기록합니다 (non-root mc-router 1.46+에 필요)
 3. 루트 `docker-compose.yml`의 `router` 서비스를 패치합니다 (아래 참조)
 4. `servers/_template/` 파일을 갱신하고 `.mcctl.json`에 `templateVersion`을 기록합니다
+5. `.mcctl.json`에 `installId`가 없으면 추가합니다 (기존 값은 유지)
 
 **docker-compose.yml router 패치:** `router` 서비스의 `image` 태그와 `group_add` 항목만 번들 템플릿에 맞춥니다. 다른 서비스, 포트, 주석, 줄바꿈 형식은 그대로 유지됩니다.
 

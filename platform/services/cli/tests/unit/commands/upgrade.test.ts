@@ -254,6 +254,52 @@ describe('upgradeCommand', () => {
   });
 });
 
+describe('upgradeCommand - installId', () => {
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  const baseConfig = {
+    version: '2.3.0',
+    initialized: '2024-01-01',
+    dataDir: '/mock/root',
+    defaultType: 'PAPER',
+    defaultVersion: '1.21.1',
+    autoStart: true,
+    avahiEnabled: true,
+    templateVersion: '2.3.0',
+    playitEnabled: true,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('adds installId and preserves other fields when missing', async () => {
+    setupBaseMocks({ config: { ...baseConfig } });
+    await upgradeCommand({ root: '/mock/root' });
+    const saved = mockConfigSave.mock.calls[0]![0];
+    expect(saved.installId).toMatch(UUID);
+    expect(saved.playitEnabled).toBe(true);
+    expect(saved.dataDir).toBe('/mock/root');
+  });
+
+  it('keeps an existing installId', async () => {
+    setupBaseMocks({ config: { ...baseConfig, installId: 'existing-id' } });
+    await upgradeCommand({ root: '/mock/root' });
+    expect(mockConfigSave.mock.calls[0]![0].installId).toBe('existing-id');
+  });
+
+  it('adds installId when creating a default config', async () => {
+    setupBaseMocks({ config: null });
+    await upgradeCommand({ root: '/mock/root' });
+    expect(mockConfigSave.mock.calls[0]![0].installId).toMatch(UUID);
+  });
+
+  it('does not write config in dry-run', async () => {
+    setupBaseMocks({ config: { ...baseConfig } });
+    await upgradeCommand({ root: '/mock/root', dryRun: true });
+    expect(mockConfigSave).not.toHaveBeenCalled();
+  });
+});
+
 describe('upgradeCommand - docker-compose.yml router patch', () => {
   const TEMPLATE = 'services:\n  router:\n    image: itzg/mc-router:1.47.1\n    group_add:\n      - "${DOCKER_GID:-999}"\n    networks:\n      - n\n';
   const OLD = 'services:\n  router:\n    image: itzg/mc-router:1.43.1\n    networks:\n      - n\n';

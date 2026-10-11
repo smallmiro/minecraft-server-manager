@@ -80,6 +80,7 @@ jobs:
                   NODE_ENV: 'production',
                   PORT: 5000,
                   NEXT_PUBLIC_API_URL: 'http://localhost:5001',
+                  DO_NOT_TRACK: '1',
                 },
                 instances: 1,
                 exec_mode: 'fork',

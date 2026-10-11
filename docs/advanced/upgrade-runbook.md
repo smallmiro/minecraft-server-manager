@@ -72,6 +72,7 @@ mcctl upgrade --non-interactive   # apply defaults without prompting (automation
 
 - New `.env` variables are added (e.g. `DOCKER_GID`), `docker-compose.yml.bak-<timestamp>` is created, and `docker compose up -d router` runs automatically when the router changes.
 - `servers/_template/*` is overwritten and `templateVersion` in `.mcctl.json` is updated.
+- If `.mcctl.json` has no `installId`, it is added once (an existing value is kept). The web console uses it for anonymous usage analytics; to opt out, set `"telemetry": false` in `.mcctl.json` (see [Usage Analytics](../console/web-console.md#usage-analytics)).
 - **If the router image is the untagged `itzg/mc-router`, `mcctl upgrade` does not bump the image.** Pin `image:` in `docker-compose.yml` to the version named in the release notes, then run `docker compose config -q && docker compose up -d router`.
 
 ## 4. Restart API / Console (if needed)
@@ -109,7 +110,7 @@ mcctl update --check                              # nothing left to update (incl
 
 ```bash
 cd $ROOT
-python3 -c "import json;print('templateVersion =',json.load(open('.mcctl.json')).get('templateVersion'))"
+python3 -c "import json;c=json.load(open('.mcctl.json'));print('templateVersion =',c.get('templateVersion'),'| installId present =','installId' in c)"
 diff <(grep -oE '^[A-Z_]+=' .env | sort) <(grep -oE '^[A-Z_]+=' $B/.env | sort)   # only added variables
 docker compose config -q && echo "compose OK"
 ```

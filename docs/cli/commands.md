@@ -445,6 +445,7 @@ mcctl upgrade [options]
 2. Detects the Docker socket group ID and writes `DOCKER_GID` to `.env` (needed by non-root mc-router 1.46+)
 3. Patches the `router` service in the root `docker-compose.yml` (see below)
 4. Updates `servers/_template/` files and records `templateVersion` in `.mcctl.json`
+5. Adds `installId` to `.mcctl.json` if it is missing (an existing value is kept)
 
 **docker-compose.yml router patch:** only the `router` service's `image` tag and `group_add` entry are aligned with the bundled template. Other services, ports, comments, and line endings are kept.
 

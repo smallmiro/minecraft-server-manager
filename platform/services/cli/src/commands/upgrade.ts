@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { execSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { Paths, Config, log, colors } from '@minecraft-docker/shared';
 import type { McctlConfig } from '@minecraft-docker/shared';
 import { diffEnvFiles, applyEnvDiff } from '../lib/env-diff.js';
@@ -90,10 +91,12 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
   // --- Step 2: Update servers/_template files ---
   templateFilesUpdated = updateTemplateFiles(paths, options);
 
-  // --- Step 3: Update templateVersion in config ---
+  // --- Step 3: Update templateVersion in config (and backfill installId) ---
+  const addInstallId = !mcctlConfig?.installId;
   if (!options.dryRun) {
+    const installId = mcctlConfig?.installId ?? randomUUID();
     const updatedConfig: McctlConfig = mcctlConfig
-      ? { ...mcctlConfig, templateVersion: cliVersion }
+      ? { ...mcctlConfig, templateVersion: cliVersion, installId }
       : {
           version: cliVersion,
           initialized: new Date().toISOString(),
@@ -103,8 +106,12 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
           autoStart: true,
           avahiEnabled: true,
           templateVersion: cliVersion,
+          installId,
         };
     config.save(updatedConfig);
+    if (addInstallId) prompts.log.success('Added installId to .mcctl.json.');
+  } else if (addInstallId) {
+    prompts.log.info('Would add installId to .mcctl.json.');
   }
 
   // --- Summary ---

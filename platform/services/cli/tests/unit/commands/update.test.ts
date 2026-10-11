@@ -52,6 +52,12 @@ vi.mock('../../../src/lib/pm2-utils.js', () => ({
   },
 }));
 
+// Mock telemetry notice
+const mockPrintTelemetryNotice = vi.fn();
+vi.mock('../../../src/lib/telemetry-notice.js', () => ({
+  printTelemetryNotice: (...args: any[]) => mockPrintTelemetryNotice(...args),
+}));
+
 // Mock Pm2ServiceManagerAdapter
 const mockRestart = vi.fn().mockResolvedValue(undefined);
 const mockDisconnect = vi.fn();
@@ -272,6 +278,30 @@ describe('update command', () => {
       expect(installCalls.length).toBe(0);
       // PM2 should NOT be restarted
       expect(mockRestart).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateServices - telemetry notice', () => {
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ version: '1.8.0' }) }));
+    });
+
+    it('prints the notice when the console service is installed', async () => {
+      mockCheckServiceAvailability.mockReturnValue({
+        api: { available: false },
+        console: { available: true, path: '/tmp/console' },
+      });
+      await updateServices('/tmp/test-root', { check: true });
+      expect(mockPrintTelemetryNotice).toHaveBeenCalledWith('/tmp/test-root', expect.any(Function));
+    });
+
+    it('does not print the notice when only the API is installed', async () => {
+      mockCheckServiceAvailability.mockReturnValue({
+        api: { available: true, path: '/tmp/api' },
+        console: { available: false },
+      });
+      await updateServices('/tmp/test-root', { check: true });
+      expect(mockPrintTelemetryNotice).not.toHaveBeenCalled();
     });
   });
 
