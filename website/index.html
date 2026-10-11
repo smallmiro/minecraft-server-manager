@@ -307,6 +307,8 @@
   footer .wrap { display: grid; gap: 18px; }
   .foot-top { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; justify-content: space-between; }
   .foot-links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .foot-links a { display: inline-flex; align-items: center; gap: 6px; }
+  .foot-links a svg.i { width: 14px; height: 14px; }
   .foot-links a:hover { color: var(--text); }
   footer code { color: var(--text-2); }
 </style>
@@ -317,6 +319,10 @@
   <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="i-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></symbol>
   <symbol id="i-gh" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+  <symbol id="i-npm" viewBox="0 0 24 24" fill="currentColor"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
   <symbol id="i-cube" viewBox="0 0 32 32"><path d="M16 3 28 10 16 17 4 10Z" fill="#4de38a"/><path d="M4 10 16 17V30L4 23Z" fill="#1bd96a"/><path d="M28 10 16 17V30L28 23Z" fill="#109a4b"/></symbol>
 </svg>
 
@@ -739,12 +745,12 @@ modded               <span class="g">running</span>      healthy    modded.local
     <div class="foot-top">
       <a class="brand" href="#"><svg aria-hidden="true"><use href="#i-cube"/></svg>Minecraft Server Manager <span class="pill" data-version hidden></span></a>
       <nav class="foot-links" aria-label="Footer">
-        <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/">docs</a>
-        <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/">docs</a>
-        <a href="https://www.npmjs.com/package/@minecraft-docker/mcctl">npm</a>
-        <a href="https://github.com/smallmiro/minecraft-server-manager">github</a>
-        <a href="https://github.com/smallmiro/minecraft-server-manager/releases">releases</a>
-        <a href="https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE">Apache-2.0</a>
+        <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg>docs</a>
+        <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg>docs</a>
+        <a href="https://www.npmjs.com/package/@minecraft-docker/mcctl"><svg class="i" aria-hidden="true"><use href="#i-npm"/></svg>npm</a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager"><svg class="i" aria-hidden="true"><use href="#i-gh"/></svg>github</a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/releases"><svg class="i" aria-hidden="true"><use href="#i-tag"/></svg>releases</a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE"><svg class="i" aria-hidden="true"><use href="#i-scale"/></svg>Apache-2.0</a>
       </nav>
     </div>
     <p style="margin:0"><span class="en">Built on <code>itzg/minecraft-server</code> and <code>itzg/mc-router</code>.</span><span class="ko"><code>itzg/minecraft-server</code>와 <code>itzg/mc-router</code> 기반.</span></p>
