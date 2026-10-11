@@ -511,7 +511,7 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
 └──────────────┘                          └──────────────┘
 
 ┌──────────────────────┐                  ┌──────────────┐
-│ backend + frontend   │ ──Images Ready─▶ │ devops-agent │
+│ backend + frontend   │ ─Services Ready▶ │ devops-agent │
 └──────────────────────┘                  └──────────────┘
 
 ┌──────────────┐                          ┌──────────────┐
@@ -524,7 +524,7 @@ Orchestrator Agent는 **PM(Project Manager)** 역할로, 직접 코드를 작성
 | Interface Ready | Core | All | 공유 인터페이스/타입 사용 가능 |
 | API Spec Ready | Backend | Frontend | BFF 프록시 구현을 위한 API 스펙 |
 | OpenAPI Ready | Backend | Frontend | API 클라이언트 자동 생성용 |
-| Images Ready | Backend+Frontend | DevOps | Docker 이미지 빌드 가능 |
+| Services Ready | Backend+Frontend | DevOps | PM2로 mcctl-api/mcctl-console 기동 가능 (통합/E2E 테스트 준비) |
 | Env Ready | DevOps | All | 통합 테스트 환경 준비 완료 |
 
 ---

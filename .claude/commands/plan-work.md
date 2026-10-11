@@ -100,6 +100,8 @@ done
 
 ### 설계 필요 여부 판단
 
+> Architect 에이전트(`system-/backend-/frontend-/devops-architect`, `quality-engineer`)는 사용자 레벨 에이전트로 저장소에 포함되어 있지 않아 **선택 사항**입니다. 없으면 메인 세션이나 담당 구현 에이전트가 설계 단계를 맡습니다.
+
 | 조건 | 필요한 설계 에이전트 |
 |------|---------------------|
 | 새로운 시스템 구조, 모듈 간 인터페이스 | `system-architect` |
@@ -169,7 +171,7 @@ Task C ──→ Task D
 | 병렬 작업 2개 이상 + 서로 다른 모듈 | **Claude Code Teams** (팀 구성) |
 | 병렬 작업 2개 이상 + 동일 모듈 다른 파일 | **Claude Code Teams** + Git Worktree |
 | 순차 작업만 존재 | **단일 서브에이전트** 순차 실행 |
-| 단일 파일 수정의 간단한 작업 | **직접 실행** (에이전트 불필요) |
+| 단일 모듈의 작은 작업 | 계획서에 담당 에이전트만 지정. `/work`가 티어(T0–T4)로 라우팅하며 T0는 메인 세션이 직접 처리 (`work.md` Agent Routing) |
 
 ### Teams 구성안 출력 형식
 
@@ -183,7 +185,7 @@ Task C ──→ Task D
 | Lead | orchestrator-agent | 전체 조율 | - |
 | Member 1 | backend-agent | API 구현 | Yes |
 | Member 2 | frontend-agent | UI 구현 | Yes |
-| Member 3 | quality-engineer | 테스트/리뷰 | - |
+| Member 3 | quality-engineer (선택, 없으면 devops-agent) | 테스트/리뷰 | - |
 
 **Sync Points**:
 1. SYNC-1: Member 1 API 완료 → Member 2에 스펙 공유
@@ -215,7 +217,7 @@ Task C ──→ Task D
 - **대상**: Issue #<N> / Milestone #<N>
 - **목표**: <목표 설명>
 - **영향 모듈**: <모듈 목록>
-- **예상 실행 방식**: Teams / Sub-agent / 직접 실행
+- **예상 실행 방식**: Teams / Sub-agent / `/work` (T0는 메인 세션)
 
 ## 작업 분해 (WBS)
 
@@ -250,7 +252,7 @@ Task 1 ─┬→ Task 2 ─┐
 <순차 실행 상세>
 
 ## 설계 필요 사항
-- [ ] <설계가 필요한 항목과 담당 Architect 에이전트>
+- [ ] <설계가 필요한 항목과 담당 Architect 에이전트 (없으면 담당 구현 에이전트)>
 
 ## 브랜치 전략
 - Base: `develop`
@@ -329,7 +331,7 @@ Task 1 → Task 2 ─┬→ Task 3 (CLI)
 - core-agent → cli-agent → backend-agent → frontend-agent → devops-agent
 
 ## 설계 필요 사항
-- [ ] Mod 도메인 모델 설계 → system-architect
+- [ ] Mod 도메인 모델 설계 → system-architect (없으면 core-agent)
 - [ ] Mod 관리 UI 디자인 → frontend-design skill
 
 ## 다음 단계
