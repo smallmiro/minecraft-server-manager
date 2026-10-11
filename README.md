@@ -7,6 +7,8 @@
 [![License](https://img.shields.io/github/license/smallmiro/minecraft-server-manager)](https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/smallmiro)
 
+**Website**: https://mcctl.mirolab.dev/
+
 A multi-server Minecraft management system using `itzg/minecraft-server` with `itzg/mc-router` for automatic scaling and hostname-based routing.
 
 ## System Requirements

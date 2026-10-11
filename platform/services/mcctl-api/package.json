@@ -45,7 +45,7 @@
     "url": "https://github.com/smallmiro/minecraft-server-manager.git",
     "directory": "platform/services/mcctl-api"
   },
-  "homepage": "https://minecraft-server-manager.readthedocs.io/",
+  "homepage": "https://mcctl.mirolab.dev/",
   "engines": {
     "node": ">=18.0.0"
   },

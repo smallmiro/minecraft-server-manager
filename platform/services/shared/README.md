@@ -60,6 +60,7 @@ This package follows **Hexagonal Architecture** (Clean Architecture):
 
 ## Documentation
 
+- [Website](https://mcctl.mirolab.dev/)
 - [Full Documentation](https://minecraft-server-manager.readthedocs.io/)
 - [GitHub Repository](https://github.com/smallmiro/minecraft-server-manager)
 
