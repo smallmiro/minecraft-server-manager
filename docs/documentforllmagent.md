@@ -821,7 +821,7 @@ Before the prompts, init checks prerequisites (Node.js, Docker, Docker Compose, 
 
 | File | Location | Description |
 |------|----------|-------------|
-| `.mcctl-admin.yml` | `~/minecraft-servers/` | Admin service configuration |
+| `.mcctl-admin.yml` | `~/minecraft-servers/` | Management Console configuration |
 | `data/mcctl.db` | `~/minecraft-servers/data/` | Console users, sessions, per-user server permissions (Better Auth SQLite; only if mcctl-console is selected) |
 | `ecosystem.config.cjs` | `~/minecraft-servers/` | PM2 process config |
 | `.services/` | `~/minecraft-servers/` | Installed mcctl-api / mcctl-console packages |

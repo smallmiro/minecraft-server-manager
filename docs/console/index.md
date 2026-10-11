@@ -159,7 +159,7 @@ After initialization, the following files are created:
 
 | File | Description |
 |------|-------------|
-| `~/minecraft-servers/.mcctl-admin.yml` | Admin service configuration |
+| `~/minecraft-servers/.mcctl-admin.yml` | Management Console configuration |
 | `~/minecraft-servers/data/mcctl.db` | Console user database (SQLite, Better Auth; created when `mcctl-console` is selected) |
 | `~/minecraft-servers/ecosystem.config.cjs` | PM2 ecosystem configuration |
 

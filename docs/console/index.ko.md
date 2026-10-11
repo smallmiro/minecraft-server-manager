@@ -156,7 +156,7 @@ http://localhost:5000
 
 | 파일 | 설명 |
 |------|------|
-| `~/minecraft-servers/.mcctl-admin.yml` | 관리자 서비스 설정 |
+| `~/minecraft-servers/.mcctl-admin.yml` | Management Console 설정 |
 | `~/minecraft-servers/data/mcctl.db` | 콘솔 사용자 데이터베이스 (SQLite, Better Auth, `mcctl-console`을 선택한 경우 생성) |
 | `~/minecraft-servers/ecosystem.config.cjs` | PM2 에코시스템 설정 |
 
