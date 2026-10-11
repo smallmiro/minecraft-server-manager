@@ -305,6 +305,30 @@
   .home { position: relative; padding: 26px 12px 12px; border: 1px dashed var(--line-2); border-radius: 10px; }
   .home .lbl { position: absolute; top: -9px; left: 12px; padding: 0 8px; background: var(--card); font: 700 10.5px/1.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--green); }
 
+  /* Architecture diagram (SMIL animation, desktop + mobile variants) */
+  .arch-wrap { margin-bottom: 16px; padding: 24px; border-radius: 12px; border: 1px solid var(--line); background: var(--term); }
+  .arch { display: block; width: 100%; height: auto; }
+  .arch-m { display: none; max-width: 420px; margin: 0 auto; }
+  @media (max-width: 760px) { .arch-wrap { padding: 14px; } .arch-d { display: none; } .arch-m { display: block; } }
+  .arch .box { fill: var(--card); stroke: var(--line); stroke-width: 1.2; }
+  .arch .router { stroke: rgba(27, 217, 106, .55); filter: drop-shadow(0 0 14px rgba(27, 217, 106, .18)); }
+  .arch .mgbox { stroke: rgba(196, 166, 255, .45); }
+  .arch .wire { fill: none; stroke: var(--line-2); stroke-width: 1.5; }
+  .arch .mg { fill: none; stroke: var(--violet); stroke-width: 1.5; stroke-dasharray: 4 6; opacity: .7; animation: arch-dash 1.2s linear infinite; }
+  .arch .pkt { filter: drop-shadow(0 0 6px currentColor); }
+  .arch text { font-family: var(--mono); }
+  .arch .dg-name { font: 700 14px var(--sans); fill: var(--text); }
+  .arch .dg-name.sm { font-size: 12px; }
+  .arch .dg-name.xs { font-size: 10.5px; }
+  .arch .dg-big { font: 800 20px var(--sans); fill: var(--text); letter-spacing: -.02em; }
+  .arch .dg-mono { font-size: 11px; fill: var(--muted); }
+  .arch .dg-mono.xs { font-size: 9.5px; }
+  .arch .dg-tag { font-size: 10px; font-weight: 700; letter-spacing: .12em; fill: var(--dim); }
+  html[lang="en"] .arch tspan.ko, html[lang="ko"] .arch tspan.en { display: none; }
+  @keyframes arch-dash { to { stroke-dashoffset: -20; } }
+  @media (prefers-reduced-motion: reduce) { .arch .mg { animation: none; } }
+  .arch-cap { margin: 0 0 28px; font: 400 12.5px/1.6 var(--mono); color: var(--dim); }
+
   /* Commands */
   .cmdcard { text-align: left; gap: 0; }
   .cmdcard .top-line { display: flex; justify-content: space-between; align-items: center; }
@@ -653,6 +677,67 @@ modded               <span class="g">running</span>      healthy    modded.local
           <p class="sub"><span class="en">Built on <code>itzg/minecraft-server</code> and <code>itzg/mc-router</code>. No firewall rule per server, no port list to remember.</span><span class="ko"><code>itzg/minecraft-server</code>와 <code>itzg/mc-router</code> 기반. 서버마다 방화벽 규칙을 열거나 포트 번호를 외울 필요가 없습니다.</span></p>
         </div>
       </div>
+      <div class="arch-wrap">
+        <svg class="arch arch-d" viewBox="0 0 1120 460" role="img" aria-labelledby="arch-t"><title id="arch-t">Players connect by hostname to mc-router on port 25565, which forwards each one to its server container and starts sleeping servers. mcctl and Minecraft Server Manager manage the containers through Docker.</title>
+          <path class="wire" d="M250,61 C305,61 305,220 360,220"/>
+          <path class="wire" d="M250,167 C305,167 305,220 360,220"/>
+          <path class="wire" d="M250,273 C305,273 305,220 360,220"/>
+          <path class="wire" d="M250,379 C305,379 305,220 360,220"/>
+          <path class="wire" style="stroke:var(--cyan);opacity:.35" d="M540,220 C595,220 595,80 650,80"/>
+          <path class="wire" style="stroke:var(--amber);opacity:.35" d="M540,220 C595,220 595,220 650,220"/>
+          <path class="wire" style="stroke:var(--green);opacity:.35" d="M540,220 C595,220 595,360 650,360"/>
+          <path class="mg" d="M960,128 H915"/><path class="mg" d="M960,312 H915"/>
+          <path class="mg" d="M915,80 V360"/>
+          <path class="mg" d="M915,80 H870"/>
+          <path class="mg" d="M915,220 H870"/>
+          <path class="mg" d="M915,360 H870"/>
+          <text class="dg-tag" x="923" y="224" transform="rotate(-90 923 220)" text-anchor="middle">DOCKER</text>
+          <circle class="pkt" r="5" style="fill:var(--cyan);color:var(--cyan)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0;0.28;1" keyPoints="0;0;1;1" path="M250,61 C305,61 305,220 360,220 L540,220 C595,220 595,80 650,80"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0;0.005;0.275;0.28;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--amber);color:var(--amber)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.5;0.78;1" keyPoints="0;0;1;1" path="M250,167 C305,167 305,220 360,220 L540,220 C595,220 595,220 650,220"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.5;0.505;0.775;0.78;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--cyan);color:var(--cyan)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.3;0.58;1" keyPoints="0;0;1;1" path="M250,273 C305,273 305,220 360,220 L540,220 C595,220 595,80 650,80"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.3;0.305;0.575;0.58;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--green);color:var(--green)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.12;0.4;1" keyPoints="0;0;1;1" path="M250,379 C305,379 305,220 360,220 L540,220 C595,220 595,360 650,360"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.12;0.125;0.395;0.4;1" values="0;0;1;1;0;0"/></circle>
+          <g><rect class="box" x="0" y="30" width="250" height="62" rx="8"/><rect x="14" y="49" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="49" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="61" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="61" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="57"><tspan class="en">Steve</tspan><tspan class="ko">Steve</tspan></text><circle cx="54" cy="72" r="3.5" style="fill:var(--cyan)"/><text class="dg-mono" x="63" y="76">survival.192.168.1.50.nip.io</text></g>
+          <g><rect class="box" x="0" y="136" width="250" height="62" rx="8"/><rect x="14" y="155" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="155" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="167" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="167" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="163"><tspan class="en">Alex</tspan><tspan class="ko">Alex</tspan></text><circle cx="54" cy="178" r="3.5" style="fill:var(--amber)"/><text class="dg-mono" x="63" y="182">creative.local</text></g>
+          <g><rect class="box" x="0" y="242" width="250" height="62" rx="8"/><rect x="14" y="261" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="261" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="273" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="273" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="269"><tspan class="en">builder_kim</tspan><tspan class="ko">builder_kim</tspan></text><circle cx="54" cy="284" r="3.5" style="fill:var(--cyan)"/><text class="dg-mono" x="63" y="288">survival.192.168.1.50.nip.io</text></g>
+          <g><rect class="box" x="0" y="348" width="250" height="62" rx="8"/><rect x="14" y="367" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="367" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="379" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="379" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="375"><tspan class="en">Friend · via playit.gg</tspan><tspan class="ko">친구 · playit.gg 경유</tspan></text><circle cx="54" cy="390" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="63" y="394">xx-xx.craft.playit.gg</text></g>
+          <g><rect class="box router" x="360" y="150" width="180" height="140" rx="10"/><text class="dg-tag" x="378" y="178" style="fill:var(--green)">ROUTER</text><text class="dg-big" x="378" y="206">mc-router</text><text class="dg-mono" x="378" y="228" style="fill:var(--green)">:25565</text><text class="dg-mono" x="378" y="254"><tspan class="en">routes by hostname</tspan><tspan class="ko">호스트명으로 라우팅</tspan></text><text class="dg-mono" x="378" y="272"><tspan class="en">starts sleeping servers</tspan><tspan class="ko">잠든 서버를 깨움</tspan></text></g>
+          <g><rect class="box" x="650" y="40" width="220" height="80" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.28;0.29;0.4;0.58;0.59;0.7;1" values="#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035"/></rect><text class="dg-name" x="666" y="70">mc-survival</text><text class="dg-mono" x="666" y="90">Paper 1.21.1</text><circle cx="668" cy="106" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="678" y="110" style="fill:var(--green)">running</text></g>
+          <g><rect class="box" x="650" y="180" width="220" height="80" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.79;0.9;1" values="#2e3035;#2e3035;#ffd54f;#2e3035;#2e3035"/></rect><text class="dg-name" x="666" y="210">mc-creative</text><text class="dg-mono" x="666" y="230">Paper 1.21.1</text><g opacity="1"><circle cx="668" cy="246" r="3.5" style="fill:#ffd54f"/><text class="dg-mono" x="678" y="250" style="fill:#ffd54f">sleeping</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.98;0.982;1" values="1;1;0;0;1;1"/></g><g opacity="0"><circle cx="668" cy="246" r="3.5" style="fill:#00e5ff"/><text class="dg-mono" x="678" y="250" style="fill:#00e5ff">starting</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.86;0.862;1" values="0;0;1;1;0;0"/></g><g opacity="0"><circle cx="668" cy="246" r="3.5" style="fill:#1bd96a"/><text class="dg-mono" x="678" y="250" style="fill:#1bd96a">running</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.86;0.862;0.98;0.982;1" values="0;0;1;1;0;0"/></g></g>
+          <g><rect class="box" x="650" y="320" width="220" height="80" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.4;0.41;0.52;1" values="#2e3035;#2e3035;#1bd96a;#2e3035;#2e3035"/></rect><text class="dg-name" x="666" y="350">mc-modded</text><text class="dg-mono" x="666" y="370">Fabric 1.21.1</text><circle cx="668" cy="386" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="678" y="390" style="fill:var(--green)">running</text></g>
+          <g><rect class="box mgbox" x="960" y="80" width="160" height="96" rx="8"/><text class="dg-tag" x="976" y="104" style="fill:var(--violet)">CLI</text><text class="dg-name" x="976" y="128">mcctl</text><text class="dg-mono" x="976" y="152">create · start · stop</text></g>
+          <g><rect class="box mgbox" x="960" y="252" width="160" height="120" rx="8"/><text class="dg-tag" x="976" y="276" style="fill:var(--violet)">WEB</text><text class="dg-name" x="976" y="300">Minecraft Server</text><text class="dg-name" x="976" y="318">Manager</text><text class="dg-mono" x="976" y="342">:5000 console</text><text class="dg-mono" x="976" y="358">:5001 REST API</text></g>
+          </svg>
+        <svg class="arch arch-m" viewBox="0 0 300 470" role="img" aria-labelledby="arch-tm"><title id="arch-tm">Players connect by hostname to mc-router on port 25565, which forwards each one to its server container and starts sleeping servers. mcctl and Minecraft Server Manager manage the containers through Docker.</title>
+          <path class="wire" d="M35,66 C35,96 150,86 150,116"/>
+          <path class="wire" d="M111,66 C111,96 150,86 150,116"/>
+          <path class="wire" d="M187,66 C187,96 150,86 150,116"/>
+          <path class="wire" d="M263,66 C263,96 150,86 150,116"/>
+          <path class="wire" style="stroke:var(--cyan);opacity:.35" d="M150,190 C150,218 48,216 48,244"/>
+          <path class="wire" style="stroke:var(--amber);opacity:.35" d="M150,190 C150,218 150,216 150,244"/>
+          <path class="wire" style="stroke:var(--green);opacity:.35" d="M150,190 C150,218 252,216 252,244"/>
+          <path class="mg" d="M70,384 V352"/><path class="mg" d="M230,384 V352"/>
+          <path class="mg" d="M48,352 H252"/>
+          <path class="mg" d="M48,352 V318"/>
+          <path class="mg" d="M150,352 V318"/>
+          <path class="mg" d="M252,352 V318"/>
+          <text class="dg-tag" x="150" y="370" text-anchor="middle">DOCKER</text>
+          <circle class="pkt" r="5" style="fill:var(--cyan);color:var(--cyan)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0;0.28;1" keyPoints="0;0;1;1" path="M35,66 C35,96 150,86 150,116 L150,190 C150,218 48,216 48,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0;0.005;0.275;0.28;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--amber);color:var(--amber)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.5;0.78;1" keyPoints="0;0;1;1" path="M111,66 C111,96 150,86 150,116 L150,190 C150,218 150,216 150,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.5;0.505;0.775;0.78;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--cyan);color:var(--cyan)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.3;0.58;1" keyPoints="0;0;1;1" path="M187,66 C187,96 150,86 150,116 L150,190 C150,218 48,216 48,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.3;0.305;0.575;0.58;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--green);color:var(--green)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.12;0.4;1" keyPoints="0;0;1;1" path="M263,66 C263,96 150,86 150,116 L150,190 C150,218 252,216 252,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.12;0.125;0.395;0.4;1" values="0;0;1;1;0;0"/></circle>
+          <g><rect class="box" x="0" y="0" width="70" height="66" rx="8"/><rect x="23" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="23" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="28" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="38" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="35" y="48" text-anchor="middle"><tspan class="en">Steve</tspan><tspan class="ko">Steve</tspan></text><rect x="21" y="55" width="28" height="3" rx="1.5" style="fill:var(--cyan)"/></g>
+          <g><rect class="box" x="76" y="0" width="70" height="66" rx="8"/><rect x="99" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="99" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="104" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="114" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="111" y="48" text-anchor="middle"><tspan class="en">Alex</tspan><tspan class="ko">Alex</tspan></text><rect x="97" y="55" width="28" height="3" rx="1.5" style="fill:var(--amber)"/></g>
+          <g><rect class="box" x="152" y="0" width="70" height="66" rx="8"/><rect x="175" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="175" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="180" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="190" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="187" y="48" text-anchor="middle"><tspan class="en">builder_kim</tspan><tspan class="ko">builder_kim</tspan></text><rect x="173" y="55" width="28" height="3" rx="1.5" style="fill:var(--cyan)"/></g>
+          <g><rect class="box" x="228" y="0" width="70" height="66" rx="8"/><rect x="251" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="251" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="256" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="266" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="263" y="48" text-anchor="middle"><tspan class="en">Friend</tspan><tspan class="ko">친구</tspan></text><rect x="249" y="55" width="28" height="3" rx="1.5" style="fill:var(--green)"/></g>
+          <g><rect class="box router" x="50" y="116" width="200" height="74" rx="10"/><text class="dg-big" x="150" y="146" text-anchor="middle">mc-router</text><text class="dg-mono" x="150" y="164" text-anchor="middle" style="fill:var(--green)">:25565</text><text class="dg-mono" x="150" y="180" text-anchor="middle"><tspan class="en">routes by hostname</tspan><tspan class="ko">호스트명으로 라우팅</tspan></text></g>
+          <g><rect class="box" x="0" y="244" width="96" height="74" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.28;0.29;0.4;0.58;0.59;0.7;1" values="#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035"/></rect><text class="dg-name sm" x="10" y="266">mc-survival</text><text class="dg-mono xs" x="10" y="284">Paper 1.21.1</text><circle cx="13" cy="300" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="23" y="304" style="fill:var(--green)">running</text></g>
+          <g><rect class="box" x="102" y="244" width="96" height="74" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.79;0.9;1" values="#2e3035;#2e3035;#ffd54f;#2e3035;#2e3035"/></rect><text class="dg-name sm" x="112" y="266">mc-creative</text><text class="dg-mono xs" x="112" y="284">Paper 1.21.1</text><g opacity="1"><circle cx="115" cy="300" r="3.5" style="fill:#ffd54f"/><text class="dg-mono" x="125" y="304" style="fill:#ffd54f">sleeping</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.98;0.982;1" values="1;1;0;0;1;1"/></g><g opacity="0"><circle cx="115" cy="300" r="3.5" style="fill:#00e5ff"/><text class="dg-mono" x="125" y="304" style="fill:#00e5ff">starting</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.86;0.862;1" values="0;0;1;1;0;0"/></g><g opacity="0"><circle cx="115" cy="300" r="3.5" style="fill:#1bd96a"/><text class="dg-mono" x="125" y="304" style="fill:#1bd96a">running</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.86;0.862;0.98;0.982;1" values="0;0;1;1;0;0"/></g></g>
+          <g><rect class="box" x="204" y="244" width="96" height="74" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.4;0.41;0.52;1" values="#2e3035;#2e3035;#1bd96a;#2e3035;#2e3035"/></rect><text class="dg-name sm" x="214" y="266">mc-modded</text><text class="dg-mono xs" x="214" y="284">Fabric 1.21.1</text><circle cx="217" cy="300" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="227" y="304" style="fill:var(--green)">running</text></g>
+          <g><rect class="box mgbox" x="0" y="384" width="140" height="84" rx="8"/><text class="dg-tag" x="12" y="404" style="fill:var(--violet)">CLI</text><text class="dg-name" x="12" y="426">mcctl</text><text class="dg-mono xs" x="12" y="446">create · start · stop</text></g>
+          <g><rect class="box mgbox" x="160" y="384" width="140" height="84" rx="8"/><text class="dg-tag" x="172" y="404" style="fill:var(--violet)">WEB</text><text class="dg-name sm" x="172" y="424">Minecraft Server</text><text class="dg-name sm" x="172" y="440">Manager</text><text class="dg-mono xs" x="172" y="458">:5000 · :5001</text></g>
+          </svg>
+      </div>
+      <p class="arch-cap"><span class="en">Each colour is one hostname. mc-router reads it from the Minecraft handshake and forwards the player to that container — starting it first if it is asleep. mcctl and Minecraft Server Manager drive the containers through Docker.</span><span class="ko">색 하나가 호스트명 하나입니다. mc-router가 접속 패킷에서 호스트명을 읽어 해당 컨테이너로 보내고, 잠든 서버는 먼저 깨웁니다. mcctl과 Minecraft Server Manager는 Docker를 통해 컨테이너를 관리합니다.</span></p>
       <div class="flow">
         <div class="node">
           <span class="eyebrow" style="color:var(--cyan)"><span class="en">Players</span><span class="ko">플레이어</span></span>
@@ -830,6 +915,11 @@ modded               <span class="g">running</span>      healthy    modded.local
 </footer>
 
 <script>
+  // Freeze the architecture diagram's SMIL animation for people who prefer reduced motion
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('svg.arch').forEach(function (s) { s.pauseAnimations(); });
+  }
+
   // Language toggle
   function setLang(lang) {
     document.documentElement.lang = lang;
