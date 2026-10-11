@@ -158,6 +158,8 @@
   .meta { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 6px 14px; font: 400 12.5px/1.6 var(--mono); color: var(--dim); }
   .meta a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
   .meta a:hover { color: var(--text); }
+  .badges { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .badges img { height: 20px; width: auto; border-radius: 3px; }
 
   .stats { margin-top: 48px; display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid var(--line); }
   .stat { padding: 20px 16px 4px 0; }
@@ -372,9 +374,15 @@
       <div class="meta">
         <span>Linux · macOS · Windows (WSL2)</span>
         <span>Node.js ≥ 18 · Docker ≥ 24</span>
-        <span>Apache-2.0</span>
         <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/quickstart/">Full install guide →</a>
         <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/getting-started/quickstart/">설치 가이드 →</a>
+      </div>
+      <div class="badges">
+        <a href="https://www.npmjs.com/package/@minecraft-docker/mcctl"><img src="https://img.shields.io/npm/v/@minecraft-docker/mcctl?style=flat-square&amp;labelColor=1a1d22&amp;color=1bd96a" height="20" alt="npm version"></a>
+        <a href="https://www.npmjs.com/package/@minecraft-docker/mcctl"><img src="https://img.shields.io/npm/dm/@minecraft-docker/mcctl?style=flat-square&amp;labelColor=1a1d22&amp;color=1bd96a" height="20" alt="npm downloads"></a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/issues"><img src="https://img.shields.io/github/issues/smallmiro/minecraft-server-manager?style=flat-square&amp;labelColor=1a1d22&amp;color=1bd96a" height="20" alt="GitHub issues"></a>
+        <a href="https://minecraft-server-manager.readthedocs.io/"><img src="https://img.shields.io/readthedocs/minecraft-server-manager?style=flat-square&amp;labelColor=1a1d22&amp;color=1bd96a" height="20" alt="Documentation status"></a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE"><img src="https://img.shields.io/github/license/smallmiro/minecraft-server-manager?style=flat-square&amp;labelColor=1a1d22&amp;color=1bd96a" height="20" alt="License"></a>
       </div>
 
       <div class="stats">
