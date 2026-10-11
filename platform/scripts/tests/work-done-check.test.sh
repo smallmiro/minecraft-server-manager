@@ -143,5 +143,23 @@ reset 'MODE=issue\nISSUE=7\nREVIEW=pending\n'
 run > /dev/null
 assert_contains "loop counter is persisted" "LOOPS=1" "$(cat "$WORK_STATE_FILE")"
 
+echo "concurrent sessions"
+# Sessions A and B share one checkout; state is keyed by the session_id in the hook input.
+PROJ="$TMP/proj"; mkdir -p "$PROJ/.claude"
+run_as() { WORK_STATE_FILE= CLAUDE_PROJECT_DIR="$PROJ" bash "$HOOK" <<< "{\"session_id\":\"$1\"}"; }
+reset 'MODE=issue\nISSUE=7\nREVIEW=pending\n'
+cp "$WORK_STATE_FILE" "$PROJ/.claude/work-state.A"
+assert_empty "session B is not blocked by session A's state" "$(run_as B)"
+assert_contains "session B's stop leaves A's LOOPS untouched" "REVIEW=pending" "$(cat "$PROJ/.claude/work-state.A")"
+assert_empty "A's LOOPS not incremented by B" "$(grep LOOPS "$PROJ/.claude/work-state.A")"
+assert_contains "session A is still blocked by its own state" '"decision":"block"' "$(run_as A)"
+assert_contains "A's LOOPS counted in its own file" "LOOPS=1" "$(cat "$PROJ/.claude/work-state.A")"
+run_as A > /dev/null
+assert_contains "A's LOOPS keeps counting" "LOOPS=2" "$(cat "$PROJ/.claude/work-state.A")"
+# a session_id-looking string inside another field must not hijack the lookup
+out=$(WORK_STATE_FILE= CLAUDE_PROJECT_DIR="$PROJ" bash "$HOOK" <<< '{"session_id":"A","last_assistant_message":"x \"session_id\": \"Z\" y"}')
+assert_contains "nested session_id text does not bypass the hook" '"decision":"block"' "$out"
+assert_file "no shared work-state file is created" "$PROJ/.claude/work-state" missing
+
 echo
 if (( FAILED == 0 )); then echo "all passed"; else echo "$FAILED failed"; exit 1; fi

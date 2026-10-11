@@ -33,15 +33,15 @@ hooks:
 
 ## Completion Contract
 
-A Stop hook (`.claude/hooks/work-done-check.sh`, declared in this file's frontmatter) checks the real GitHub/git state every time you try to stop, and sends you back to work with the list of unmet conditions. It reads `.claude/work-state` (gitignored). **Write it before starting work** (skip for `--dry-run`):
+A Stop hook (`.claude/hooks/work-done-check.sh`, declared in this file's frontmatter) checks the real GitHub/git state every time you try to stop, and sends you back to work with the list of unmet conditions. It reads `.claude/work-state.${CLAUDE_SESSION_ID}` (gitignored), one file per session, so concurrent sessions never block each other. **Write it before starting work** (skip for `--dry-run`):
 
 ```bash
 # Single issue (also used by Context mode, after the issue is created)
-printf 'MODE=issue\nISSUE=%s\nREVIEW=pending\n' <N> > .claude/work-state
+printf 'MODE=issue\nISSUE=%s\nREVIEW=pending\n' <N> > .claude/work-state.${CLAUDE_SESSION_ID}
 # Contributor (no write access): add ROLE=contributor
-printf 'MODE=issue\nISSUE=%s\nREVIEW=pending\nROLE=contributor\n' <N> > .claude/work-state
+printf 'MODE=issue\nISSUE=%s\nREVIEW=pending\nROLE=contributor\n' <N> > .claude/work-state.${CLAUDE_SESSION_ID}
 # Milestone
-printf 'MODE=milestone\nMILESTONE=%s\n' <N> > .claude/work-state
+printf 'MODE=milestone\nMILESTONE=%s\n' <N> > .claude/work-state.${CLAUDE_SESSION_ID}
 ```
 
 | Mode | Work is complete when |
@@ -50,9 +50,11 @@ printf 'MODE=milestone\nMILESTONE=%s\n' <N> > .claude/work-state
 | issue, `ROLE=contributor` | A non-closed PR for the issue exists in the origin repo, `REVIEW` is `done` or `skipped`, no uncommitted changes (issue boxes and merge not required) |
 | milestone | The milestone has no open issues, no uncommitted changes |
 
-After the code review passes, record it: `sed -i.bak 's/^REVIEW=.*/REVIEW=done/' .claude/work-state && rm .claude/work-state.bak`.
+After the code review passes, record it: `sed -i.bak 's/^REVIEW=.*/REVIEW=done/' .claude/work-state.${CLAUDE_SESSION_ID} && rm .claude/work-state.${CLAUDE_SESSION_ID}.bak`.
 
-The hook deletes the state file when the conditions are met. It gives up after 30 blocked stops and skips verification if `gh` fails. If you hit a blocker you cannot resolve (failing tests you cannot fix, a merge conflict needing a human decision), say so, delete `.claude/work-state`, and stop.
+The hook deletes the state file when the conditions are met. It gives up after 30 blocked stops and skips verification if `gh` fails. If you hit a blocker you cannot resolve (failing tests you cannot fix, a merge conflict needing a human decision), say so, delete `.claude/work-state.${CLAUDE_SESSION_ID}`, and stop.
+
+**Concurrent sessions**: state is per session, but the checkout (branch, working tree) is still shared. Run parallel `/work` sessions in separate `git worktree` folders, not in one folder.
 
 ---
 
@@ -135,7 +137,7 @@ Applies to Single Issue Mode step 3 (Milestone Mode inherits it per issue). Most
 
 Set `model` (aliases only) and `effort` only when the table gives a value that differs from the agent default.
 
-**Delegation prompt** must contain: issue number and body, the checked-out branch, the files the agent owns, TDD, the commit format and Tidy First, and "commit at every checkpoint". Forbidden for the agent: switching branches, creating PRs or merging, editing the issue body, touching `.claude/work-state`, invoking `/work`. It returns: commit SHAs, test results, completed items.
+**Delegation prompt** must contain: issue number and body, the checked-out branch, the files the agent owns, TDD, the commit format and Tidy First, and "commit at every checkpoint". Forbidden for the agent: switching branches, creating PRs or merging, editing the issue body, touching `.claude/work-state.${CLAUDE_SESSION_ID}`, invoking `/work`. It returns: commit SHAs, test results, completed items.
 
 **Worktrees**: a single agent works on the feature branch directly, no worktree. Use `isolation: "worktree"` only for parallel delegation inside one issue, and merge those branches into the feature branch before the PR.
 
@@ -194,6 +196,6 @@ Skip for documentation-only changes, internal refactoring without external behav
 | Merge conflict | Resolve, re-run tests, continue |
 | Review findings | Fix, push, re-run the review |
 | Blocked issue | See Milestone Mode step 4 |
-| Unresolvable blocker | Report it, delete `.claude/work-state`, stop |
+| Unresolvable blocker | Report it, delete `.claude/work-state.${CLAUDE_SESSION_ID}`, stop |
 
 Follow CLAUDE.md throughout: Git-Flow, TDD, Tidy First (structural and behavioral changes in separate commits), small atomic commits.

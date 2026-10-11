@@ -2,7 +2,7 @@
 # =============================================================================
 # /work Stop hook: keeps the session going until the recorded work is done.
 # =============================================================================
-# /work writes .claude/work-state (gitignored) when it starts:
+# /work writes .claude/work-state.<session_id> (gitignored) when it starts:
 #   MODE=issue|milestone   ISSUE=<n> | MILESTONE=<n>   REVIEW=pending|done|skipped
 #   ROLE=contributor (optional, issue mode): no write access to the origin repo,
 #   so done = PR open (or merged) + review done; checkboxes/merge not required.
@@ -16,10 +16,13 @@
 set -uo pipefail
 
 ROOT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-STATE="${WORK_STATE_FILE:-$ROOT/.claude/work-state}"
 MAX_LOOPS="${WORK_MAX_LOOPS:-30}"
 
-cat > /dev/null  # hook input is not needed
+# State is per session (.claude/work-state.<session_id>) so concurrent /work
+# sessions in one checkout don't read, block on, or count loops for each other.
+# Without a session_id in the hook input, fall back to the legacy shared file.
+sid=$(jq -r '.session_id // empty' 2>/dev/null)  # top-level only; no jq = legacy shared file
+STATE="${WORK_STATE_FILE:-$ROOT/.claude/work-state${sid:+.$sid}}"
 [[ -f "$STATE" ]] || exit 0
 
 get() { sed -n "s/^$1=//p" "$STATE" | tail -1; }
