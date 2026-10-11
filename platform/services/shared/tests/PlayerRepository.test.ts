@@ -157,6 +157,21 @@ describe('PlayerRepository', () => {
     test('모든 파일이 없으면 빈 배열을 반환한다', async () => {
       expect(await repo.listKnownPlayers('myserver')).toEqual([]);
     });
+
+    test('26.x players/data/<uuid>.dat mtime을 last seen으로 쓴다 (#601)', async () => {
+      await writeJson(join(root, 'servers', 'myserver', 'data', 'usercache.json'), [
+        { name: 'Steve', uuid: 'uuid-steve' },
+      ]);
+      const dir = join(root, 'worlds', 'myserver', 'players', 'data');
+      await mkdir(dir, { recursive: true });
+      const dat = join(dir, 'uuid-steve.dat');
+      await writeFile(dat, '');
+      const mtime = new Date('2026-09-01T00:00:00.000Z');
+      await utimes(dat, mtime, mtime);
+
+      const [steve] = await repo.listKnownPlayers('myserver');
+      expect(steve.lastSeen).toEqual(mtime);
+    });
   });
 
   describe('readStats', () => {
@@ -224,6 +239,20 @@ describe('PlayerRepository', () => {
       expect(await repo.readStats('myserver', '../../etc/passwd')).toBeNull();
     });
 
+    test('26.x players/stats + players/advancements를 읽는다 (#601)', async () => {
+      const playersDir = join(root, 'worlds', 'myserver', 'players');
+      await writeJson(join(playersDir, 'stats', `${uuid}.json`), {
+        stats: { 'minecraft:custom': { 'minecraft:deaths': 7 } },
+      });
+      await writeJson(join(playersDir, 'advancements', `${uuid}.json`), {
+        'minecraft:story/root': { criteria: {}, done: true },
+      });
+
+      const stats = await repo.readStats('myserver', uuid);
+      expect(stats!.deaths).toBe(7);
+      expect(stats!.advancementsCompleted).toBe(1);
+    });
+
     test('fromMinecraftJson이 예외를 던지면 null을 반환한다', async () => {
       await writeJson(join(root, 'worlds', 'myserver', 'stats', `${uuid}.json`), {
         stats: { 'minecraft:custom': { 'minecraft:deaths': 1 } },
@@ -279,6 +308,22 @@ describe('PlayerRepository', () => {
 
     test('파일이 없으면 null을 반환한다', async () => {
       expect(await repo.readPlayerData('myserver', uuid)).toBeNull();
+    });
+
+    test('26.x players/data/<uuid>.dat을 파싱한다 (#601)', async () => {
+      const dat = nbt.writeUncompressed(
+        nbt.comp({
+          Pos: nbt.list(nbt.double([3, 70, 4])),
+          Dimension: nbt.string('minecraft:overworld'),
+        })
+      );
+      const dir = join(root, 'worlds', 'myserver', 'players', 'data');
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, `${uuid}.dat`), dat);
+
+      const data = await repo.readPlayerData('myserver', uuid);
+      expect(data!.x).toBe(3);
+      expect(data!.z).toBe(4);
     });
 
     test('손상된 파일은 null을 반환한다', async () => {

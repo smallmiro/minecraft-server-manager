@@ -29,8 +29,9 @@ interface PlayerRecord {
  *
  * Filesystem implementation of IPlayerRepository. Reads a server's
  * `usercache.json` / `ops.json` / `whitelist.json` / `banned-players.json`
- * (under `servers/<name>/data/`) and its world's `playerdata/*.dat` (mtime
- * as last-seen) to build the union of every known player (#528, Phase 1).
+ * (under `servers/<name>/data/`) and its world's player `.dat` files
+ * (`playerdata/` or 26.x `players/data/`, mtime as last-seen) to build the
+ * union of every known player (#528, Phase 1).
  */
 export class PlayerRepository implements IPlayerRepository {
   private readonly paths: Paths;
@@ -103,12 +104,16 @@ export class PlayerRepository implements IPlayerRepository {
 
     const level = await this.resolveWorldLevel(serverName);
     const worldDir = join(this.paths.root, 'worlds', level);
-    const statsJson = await this.readJsonFile(join(worldDir, 'stats', `${uuid}.json`));
+    const file = `${uuid}.json`;
+    // 26.x moved these under players/ (#601); fall back to the <= 1.21 layout.
+    const statsJson =
+      (await this.readJsonFile(join(worldDir, 'players', 'stats', file))) ??
+      (await this.readJsonFile(join(worldDir, 'stats', file)));
     if (statsJson === null) return null;
 
-    const advancementsJson = await this.readJsonFile(
-      join(worldDir, 'advancements', `${uuid}.json`)
-    );
+    const advancementsJson =
+      (await this.readJsonFile(join(worldDir, 'players', 'advancements', file))) ??
+      (await this.readJsonFile(join(worldDir, 'advancements', file)));
     try {
       return PlayerStats.fromMinecraftJson(statsJson, advancementsJson ?? undefined);
     } catch {
