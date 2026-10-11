@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/development/cli-architecture/">
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../git-workflow/">
       
       
         <link rel="next" href="../agent-collaboration/">
@@ -1909,6 +1909,8 @@
       
         
       
+        
+      
     
     
     
@@ -1964,6 +1966,34 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../git-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -2033,13 +2063,41 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#package-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Package Layout
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Package Layout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cli-platformservicesclisrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI (platform/services/cli/src/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared-platformservicessharedsrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared (platform/services/shared/src/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2055,44 +2113,77 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#layer-responsibilities" class="md-nav__link">
+  <a href="#two-kinds-of-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Layer Responsibilities
+        Two Kinds of Commands
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Layer Responsibilities">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ports-and-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ports and Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adapters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adapters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-injection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency Injection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Command
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a New Command">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#domain-layer-srcdomain" class="md-nav__link">
+  <a href="#worked-example-config-snapshot" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Domain Layer (src/domain/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#application-layer-srcapplication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Application Layer (src/application/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#infrastructure-layer-srcinfrastructure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Infrastructure Layer (src/infrastructure/)
+        Worked Example: config-snapshot
       
     </span>
   </a>
@@ -2105,91 +2196,35 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#adding-new-commands" class="md-nav__link">
+  <a href="#prompts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding New Commands
+        Prompts
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Adding New Commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-define-the-use-case-interface" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Define the Use Case Interface
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-implement-the-use-case" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Implement the Use Case
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-create-the-command-entry-point" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Create the Command Entry Point
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-register-in-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Register in CLI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#adding-new-prompts" class="md-nav__link">
+  <a href="#mod-sources" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding New Prompts
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Adding New Prompts">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#domain-specific-prompts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Domain-Specific Prompts
+        Mod Sources
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-cli-relates-to-the-other-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the CLI Relates to the Other Packages
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2202,188 +2237,16 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Testing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#unit-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unit Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integration-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
+  <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Best Practices
+        See Also
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Best Practices">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-keep-use-cases-pure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Keep Use Cases Pure
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-handle-cancellation-gracefully" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Handle Cancellation Gracefully
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-use-value-objects-for-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Use Value Objects for Validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-separate-interactive-and-cli-modes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Separate Interactive and CLI Modes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mod-source-factory-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mod Source Factory Pattern
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Mod Source Factory Pattern">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#architecture-overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture Overview
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#domain-models-sharedsrcdomainmod" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Domain Models (shared/src/domain/mod/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#imodsourceport-interface" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        IModSourcePort Interface
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#modsourcefactory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ModSourceFactory
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementing-a-mod-source-adapter" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementing a Mod Source Adapter
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-in-cli-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using in CLI Commands
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adding-new-mod-sources" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding New Mod Sources
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2485,13 +2348,41 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#package-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Package Layout
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Package Layout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cli-platformservicesclisrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI (platform/services/cli/src/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared-platformservicessharedsrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared (platform/services/shared/src/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2507,44 +2398,77 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#layer-responsibilities" class="md-nav__link">
+  <a href="#two-kinds-of-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Layer Responsibilities
+        Two Kinds of Commands
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Layer Responsibilities">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Layer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ports-and-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ports and Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adapters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adapters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-injection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency Injection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Command
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a New Command">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#domain-layer-srcdomain" class="md-nav__link">
+  <a href="#worked-example-config-snapshot" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Domain Layer (src/domain/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#application-layer-srcapplication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Application Layer (src/application/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#infrastructure-layer-srcinfrastructure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Infrastructure Layer (src/infrastructure/)
+        Worked Example: config-snapshot
       
     </span>
   </a>
@@ -2557,91 +2481,35 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#adding-new-commands" class="md-nav__link">
+  <a href="#prompts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding New Commands
+        Prompts
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Adding New Commands">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-define-the-use-case-interface" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Define the Use Case Interface
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-implement-the-use-case" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Implement the Use Case
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-create-the-command-entry-point" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Create the Command Entry Point
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-register-in-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Register in CLI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#adding-new-prompts" class="md-nav__link">
+  <a href="#mod-sources" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding New Prompts
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Adding New Prompts">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#domain-specific-prompts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Domain-Specific Prompts
+        Mod Sources
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-cli-relates-to-the-other-packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the CLI Relates to the Other Packages
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2654,188 +2522,16 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Testing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#unit-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unit Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#integration-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
+  <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Best Practices
+        See Also
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Best Practices">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-keep-use-cases-pure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Keep Use Cases Pure
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-handle-cancellation-gracefully" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Handle Cancellation Gracefully
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-use-value-objects-for-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Use Value Objects for Validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-separate-interactive-and-cli-modes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Separate Interactive and CLI Modes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mod-source-factory-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mod Source Factory Pattern
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Mod Source Factory Pattern">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#architecture-overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture Overview
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#domain-models-sharedsrcdomainmod" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Domain Models (shared/src/domain/mod/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#imodsourceport-interface" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        IModSourcePort Interface
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#modsourcefactory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ModSourceFactory
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementing-a-mod-source-adapter" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementing a Mod Source Adapter
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-in-cli-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using in CLI Commands
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adding-new-mod-sources" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding New Mod Sources
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2860,498 +2556,455 @@
 
 
 <h1 id="cli-architecture">CLI Architecture<a class="headerlink" href="#cli-architecture" title="Permanent link">&para;</a></h1>
-<p>This document describes the architecture of the <code>@minecraft-docker/mcctl</code> CLI tool.</p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>The CLI is built using <strong>Hexagonal Architecture</strong> (Ports &amp; Adapters pattern) combined with <strong>Clean Architecture</strong> principles. This design ensures:</p>
-<ul>
-<li><strong>Testability</strong>: Core business logic is isolated and easily testable</li>
-<li><strong>Flexibility</strong>: External dependencies can be swapped without changing business logic</li>
-<li><strong>Maintainability</strong>: Clear separation of concerns with well-defined boundaries</li>
-</ul>
+<p>This document describes how the <code>@minecraft-docker/mcctl</code> CLI is organized and how to extend it. The CLI follows <strong>Hexagonal Architecture</strong> (Ports &amp; Adapters) with <strong>Clean Architecture</strong> layering, but the domain model, ports, use cases and most adapters live in the shared package, not in the CLI package.</p>
+<h2 id="package-layout">Package Layout<a class="headerlink" href="#package-layout" title="Permanent link">&para;</a></h2>
+<p>Three packages matter here:</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Path</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>@minecraft-docker/mcctl</code></td>
+<td><code>platform/services/cli/</code></td>
+<td>Entry point, command handlers, DI container, CLI-only adapters</td>
+</tr>
+<tr>
+<td><code>@minecraft-docker/shared</code></td>
+<td><code>platform/services/shared/</code></td>
+<td>Domain, ports, use cases, most adapters. Used by the CLI <strong>and</strong> <code>mcctl-api</code></td>
+</tr>
+<tr>
+<td><code>@minecraft-docker/mod-source-modrinth</code></td>
+<td><code>platform/services/mod-source-modrinth/</code></td>
+<td>Modrinth implementation of <code>IModSourcePort</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="cli-platformservicesclisrc">CLI (<code>platform/services/cli/src/</code>)<a class="headerlink" href="#cli-platformservicesclisrc" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>index.ts</code></td>
+<td>Entry point. Own <code>parseArgs()</code> and one large <code>switch (command)</code></td>
+</tr>
+<tr>
+<td><code>commands/</code></td>
+<td>Command handlers (<code>create.ts</code>, <code>world.ts</code>, <code>mod.ts</code>, ...). Subdirectories <code>config-snapshot/</code> and <code>console/</code> hold grouped commands</td>
+</tr>
+<tr>
+<td><code>lib/</code></td>
+<td>Helpers: <code>shell.ts</code> (<code>ShellExecutor</code>), <code>rcon.ts</code>, <code>console-db.ts</code>, <code>pm2-utils.ts</code>, <code>prompts/</code></td>
+</tr>
+<tr>
+<td><code>infrastructure/adapters/</code></td>
+<td>CLI-only adapters: <code>ClackPromptAdapter</code>, <code>OpsJsonAdapter</code>, <code>Pm2ServiceManagerAdapter</code></td>
+</tr>
+<tr>
+<td><code>infrastructure/di/container.ts</code></td>
+<td>Dependency injection container</td>
+</tr>
+<tr>
+<td><code>domain/index.ts</code>, <code>application/index.ts</code></td>
+<td>Only re-export <code>@minecraft-docker/shared</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="shared-platformservicessharedsrc">Shared (<code>platform/services/shared/src/</code>)<a class="headerlink" href="#shared-platformservicessharedsrc" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>domain/value-objects/</code>, <code>domain/entities/</code>, <code>domain/mod/</code></td>
+<td>Domain model</td>
+</tr>
+<tr>
+<td><code>application/ports/inbound/</code></td>
+<td>Use case interfaces (<code>ICreateServerUseCase</code>, <code>IConfigSnapshotUseCase</code>, ...)</td>
+</tr>
+<tr>
+<td><code>application/ports/outbound/</code></td>
+<td>Infrastructure interfaces (<code>IShellPort</code>, <code>IServerRepository</code>, <code>IPromptPort</code>, <code>IDocProvider</code>, <code>IModSourcePort</code>, ...)</td>
+</tr>
+<tr>
+<td><code>application/use-cases/</code></td>
+<td>Use case implementations</td>
+</tr>
+<tr>
+<td><code>infrastructure/adapters/</code></td>
+<td><code>ShellAdapter</code>, <code>ServerRepository</code>, <code>WorldRepository</code>, <code>DocsAdapter</code>, <code>ApiPromptAdapter</code>, <code>Sqlite*Repository</code>, <code>RconCliAdapter</code>, ...</td>
+</tr>
+<tr>
+<td><code>infrastructure/config/</code>, <code>infrastructure/factories/</code></td>
+<td><code>Pm2EcosystemConfig</code>, <code>ModSourceFactory</code></td>
+</tr>
+<tr>
+<td><code>docker/</code>, <code>prerequisite/</code>, <code>types/</code>, <code>utils/</code></td>
+<td>Docker helpers, prerequisite checks, shared types and utilities</td>
+</tr>
+</tbody>
+</table>
 <h2 id="architecture-diagram">Architecture Diagram<a class="headerlink" href="#architecture-diagram" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                          CLI Layer                               │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  │   create    │  │   delete    │  │   world     │   ...        │
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  │   command   │  │   command   │  │   command   │              │
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘              │
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>└─────────┼────────────────┼────────────────┼─────────────────────┘
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>          │                │                │
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>          ▼                ▼                ▼
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>┌─────────────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│                     Application Layer                            │
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────────┐ │
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  │  CreateServer   │  │  DeleteServer   │  │ WorldManagement  │ │
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  │    UseCase      │  │    UseCase      │  │    UseCase       │ │
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  └────────┬────────┘  └────────┬────────┘  └────────┬─────────┘ │
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│           │                    │                    │           │
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│    ┌──────┴──────────────────┬─┴────────────────────┴───────┐   │
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│    │                         │                              │   │
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│    ▼                         ▼                              ▼   │
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│  ┌─────────────┐       ┌─────────────┐              ┌──────────┐│
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│  │ IPromptPort │       │ IShellPort  │              │IServerRepo││
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│  │  (Inbound)  │       │ (Outbound)  │              │(Outbound)││
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>│  └─────────────┘       └─────────────┘              └──────────┘│
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>└─────────────────────────────────────────────────────────────────┘
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>          │                    │                          │
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>          ▼                    ▼                          ▼
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>┌─────────────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│                    Infrastructure Layer                          │
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>│  ┌─────────────┐       ┌─────────────┐              ┌──────────┐│
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>│  │ ClackPrompt │       │ShellAdapter │              │DockerRepo││
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>│  │  Adapter    │       │             │              │          ││
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>│  └─────────────┘       └─────────────┘              └──────────┘│
-<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>│                                                                  │
-<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>│         ┌─────────────────────────────────────────────┐         │
-<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>│         │            Dependency Container              │         │
-<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>│         └─────────────────────────────────────────────┘         │
-<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>└─────────────────────────────────────────────────────────────────┘
+<pre class="mermaid"><code>flowchart TB
+    subgraph CLI["cli package"]
+        IDX["index.ts&lt;br/&gt;parseArgs + switch"] --&gt; CMD["commands/*.ts"]
+        CMD --&gt; DI["Container&lt;br/&gt;getContainer()"]
+        CMD -.thin commands.-&gt; SH["lib/shell.ts&lt;br/&gt;ShellExecutor"]
+        CLIAD["ClackPromptAdapter&lt;br/&gt;OpsJsonAdapter&lt;br/&gt;Pm2ServiceManagerAdapter"]
+    end
+    subgraph SHARED["shared package"]
+        UC["Use cases&lt;br/&gt;(application/use-cases)"] --&gt; PORTS["Ports&lt;br/&gt;(inbound / outbound)"]
+        ADP["Adapters&lt;br/&gt;ShellAdapter, ServerRepository,&lt;br/&gt;Sqlite*, ..."] -.implements.-&gt; PORTS
+        UC --&gt; DOM["Domain&lt;br/&gt;entities, value objects"]
+    end
+    API["mcctl-api"] --&gt; UC
+    DI --&gt; UC
+    DI --&gt; ADP
+    DI --&gt; CLIAD
+    SH --&gt; BASH["platform/scripts/*.sh"]
+    ADP --&gt; BASH</code></pre>
+<h2 id="two-kinds-of-commands">Two Kinds of Commands<a class="headerlink" href="#two-kinds-of-commands" title="Permanent link">&para;</a></h2>
+<p>Be aware of both styles when reading or adding code:</p>
+<ul>
+<li><strong>Use case commands</strong> contain business logic. The handler gets the container, calls a use case from <code>shared</code>, and formats the result. Examples: <code>create</code>, <code>delete</code>, <code>config-snapshot</code>, <code>backup-schedule</code>, <code>world</code>, <code>mod</code>.</li>
+<li><strong>Thin commands</strong> are pass-throughs. They call bash scripts (<code>mcctl.sh</code> and friends) through <code>ShellExecutor</code>, or run RCON through <code>docker exec &lt;container&gt; rcon-cli</code> (<code>lib/rcon.ts</code>). Examples: <code>start</code>, <code>stop</code>, <code>logs</code>, <code>console &lt;server&gt;</code> (RCON console), <code>router</code>, <code>exec</code>. The <code>console init/service/user/api/remove</code> subcommands are separate; see below.</li>
+</ul>
+<p>New business logic belongs in a shared use case, not in a file under <code>commands/</code>. A command file should parse options, call the use case and print output.</p>
+<h2 id="domain-layer">Domain Layer<a class="headerlink" href="#domain-layer" title="Permanent link">&para;</a></h2>
+<p>Lives in <code>platform/services/shared/src/domain/</code>.</p>
+<p><strong>Value objects</strong> (immutable, validated in a static <code>create()</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ServerName</code></td>
+<td>2-32 characters, lowercase, must start with a letter, hyphens allowed but not consecutive. Exposes <code>containerName</code> (<code>mc-&lt;name&gt;</code>) and <code>hostname</code></td>
+</tr>
+<tr>
+<td><code>ServerType</code></td>
+<td>Wraps <code>ServerTypeEnum</code>: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE</td>
+</tr>
+<tr>
+<td><code>McVersion</code></td>
+<td>Minecraft version</td>
+</tr>
+<tr>
+<td><code>Memory</code></td>
+<td>JVM memory such as <code>4G</code> or <code>2048M</code></td>
+</tr>
+<tr>
+<td><code>WorldOptions</code>, <code>ModpackOptions</code></td>
+<td>World and modpack setup</td>
+</tr>
+</tbody>
+</table>
+<p>Other value objects cover cron expressions, snapshot diffs, roles, player data and so on. See <code>domain/value-objects/</code>.</p>
+<p><strong>Entities</strong> include <code>Server</code>, <code>World</code>, <code>ConfigSnapshot</code>, <code>BackupSchedule</code>, <code>Player</code>, <code>PlayerSession</code>, <code>User</code> and <code>AuditLog</code>. See <code>domain/entities/</code>.</p>
+<h2 id="ports-and-use-cases">Ports and Use Cases<a class="headerlink" href="#ports-and-use-cases" title="Permanent link">&para;</a></h2>
+<p><strong>Inbound ports</strong> (<code>application/ports/inbound/</code>) are use case interfaces. Older, interactive use cases expose two entry points:</p>
+<table>
+<thead>
+<tr>
+<th>Interface</th>
+<th>Methods</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ICreateServerUseCase</code></td>
+<td><code>execute()</code> (prompts) / <code>executeWithConfig(config)</code></td>
+</tr>
+<tr>
+<td><code>IDeleteServerUseCase</code></td>
+<td><code>execute()</code> (prompts) / <code>executeWithName(name)</code></td>
+</tr>
+<tr>
+<td><code>IServerStatusUseCase</code></td>
+<td><code>execute()</code> / <code>executeForServer(name)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Newer use cases (config snapshots, backup schedules, player management, ...) have plain CRUD-style methods and no interactive mode:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">// shared/src/application/ports/inbound/IConfigSnapshotUseCase.ts</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">IConfigSnapshotUseCase</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nx">create</span><span class="p">(</span><span class="nx">serverName</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">description?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">scheduleId?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ConfigSnapshot</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nx">list</span><span class="p">(</span><span class="nx">serverName?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">limit?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="nx">offset?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ConfigSnapshot</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nx">findById</span><span class="p">(</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ConfigSnapshot</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nx">diff</span><span class="p">(</span><span class="nx">snapshotId1</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">snapshotId2</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">SnapshotDiff</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nx">restore</span><span class="p">(</span><span class="nx">snapshotId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">force?</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="ow">void</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nx">count</span><span class="p">(</span><span class="nx">serverName?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="kt">number</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="ow">delete</span><span class="p">(</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="ow">void</span><span class="o">&gt;</span><span class="p">;</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">}</span>
 </code></pre></div>
-<h2 id="layer-responsibilities">Layer Responsibilities<a class="headerlink" href="#layer-responsibilities" title="Permanent link">&para;</a></h2>
-<h3 id="domain-layer-srcdomain">Domain Layer (<code>src/domain/</code>)<a class="headerlink" href="#domain-layer-srcdomain" title="Permanent link">&para;</a></h3>
-<p>Contains the core business entities and value objects that are independent of any framework or external concern.</p>
-<p><strong>Value Objects</strong> (immutable, validated on construction):
-- <code>ServerName</code>: Validated server name (lowercase, alphanumeric, 3-30 chars)
-- <code>ServerType</code>: Server type with validation (PAPER, FORGE, FABRIC, etc.)
-- <code>McVersion</code>: Minecraft version with SemVer support
-- <code>Memory</code>: JVM memory allocation (e.g., "4G", "2048M")
-- <code>WorldOptions</code>: World setup configuration</p>
-<p><strong>Entities</strong>:
-- <code>Server</code>: Minecraft server with status and configuration
-- <code>World</code>: World with lock management</p>
-<h3 id="application-layer-srcapplication">Application Layer (<code>src/application/</code>)<a class="headerlink" href="#application-layer-srcapplication" title="Permanent link">&para;</a></h3>
-<p>Contains use cases that orchestrate the business logic and define port interfaces.</p>
-<p><strong>Use Cases</strong>:
-- <code>CreateServerUseCase</code>: Server creation workflow
-- <code>DeleteServerUseCase</code>: Server deletion with confirmation
-- <code>WorldManagementUseCase</code>: World listing, assignment, release
-- <code>BackupUseCase</code>: Backup push, restore, history</p>
-<p><strong>Ports</strong> (interfaces for dependency inversion):</p>
-<p><em>Inbound Ports</em> (driving adapters):
-- <code>IPromptPort</code>: User interaction abstraction
-- <code>IDocProvider</code>: Documentation parsing abstraction</p>
-<p><em>Outbound Ports</em> (driven adapters):
-- <code>IShellPort</code>: Shell command execution
-- <code>IServerRepository</code>: Server data access
-- <code>IWorldRepository</code>: World data access</p>
-<h3 id="infrastructure-layer-srcinfrastructure">Infrastructure Layer (<code>src/infrastructure/</code>)<a class="headerlink" href="#infrastructure-layer-srcinfrastructure" title="Permanent link">&para;</a></h3>
-<p>Contains concrete implementations of ports and framework integrations.</p>
-<p><strong>Adapters</strong>:
-- <code>ClackPromptAdapter</code>: Implements <code>IPromptPort</code> using @clack/prompts
-- <code>ShellAdapter</code>: Implements <code>IShellPort</code> for bash script execution
-- <code>DocsAdapter</code>: Implements <code>IDocProvider</code> for parsing docs/</p>
-<p><strong>Container</strong>:
-- <code>DependencyContainer</code>: Service locator for dependency injection</p>
-<h2 id="adding-new-commands">Adding New Commands<a class="headerlink" href="#adding-new-commands" title="Permanent link">&para;</a></h2>
-<h3 id="1-define-the-use-case-interface">1. Define the Use Case Interface<a class="headerlink" href="#1-define-the-use-case-interface" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// src/application/ports/inbound/INewUseCase.ts</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">NewResult</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nx">success</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nx">data?</span><span class="o">:</span><span class="w"> </span><span class="kt">SomeData</span><span class="p">;</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nx">error?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">}</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">INewUseCase</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="nx">execute</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">NewResult</span><span class="o">&gt;</span><span class="p">;</span><span class="w">           </span><span class="c1">// Interactive mode</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="nx">executeWithArgs</span><span class="p">(</span><span class="nx">args</span><span class="o">:</span><span class="w"> </span><span class="kt">Args</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">NewResult</span><span class="o">&gt;</span><span class="p">;</span><span class="w">  </span><span class="c1">// CLI mode</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">}</span>
+<p><strong>Outbound ports</strong> (<code>application/ports/outbound/</code>) include <code>IPromptPort</code>, <code>IShellPort</code>, <code>IServerRepository</code>, <code>IWorldRepository</code>, <code>IDocProvider</code>, <code>IAuditLogPort</code>, <code>IRconPort</code>, <code>IModSourcePort</code>, <code>IServiceManagerPort</code> and the snapshot/backup repositories. Note that <code>IPromptPort</code> and <code>IDocProvider</code> are outbound ports.</p>
+<h2 id="adapters">Adapters<a class="headerlink" href="#adapters" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Port</th>
+<th>Adapter</th>
+<th>Package</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IPromptPort</code></td>
+<td><code>ClackPromptAdapter</code> (@clack/prompts)</td>
+<td>cli</td>
+</tr>
+<tr>
+<td><code>IPromptPort</code></td>
+<td><code>ApiPromptAdapter</code> (non-interactive, used by <code>mcctl-api</code>)</td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IShellPort</code></td>
+<td><code>ShellAdapter</code></td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IServerRepository</code></td>
+<td><code>ServerRepository</code> (filesystem, via <code>Paths</code>)</td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IWorldRepository</code></td>
+<td><code>WorldRepository</code></td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IDocProvider</code></td>
+<td><code>DocsAdapter</code></td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IAuditLogPort</code>, backup/snapshot repositories</td>
+<td><code>Sqlite*Repository</code> (better-sqlite3)</td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IServiceManagerPort</code></td>
+<td><code>Pm2ServiceManagerAdapter</code></td>
+<td>cli</td>
+</tr>
+<tr>
+<td><code>IModSourcePort</code></td>
+<td><code>ModrinthAdapter</code></td>
+<td>mod-source-modrinth</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dependency-injection">Dependency Injection<a class="headerlink" href="#dependency-injection" title="Permanent link">&para;</a></h2>
+<p><code>cli/src/infrastructure/di/container.ts</code> defines <code>class Container</code> with lazily created singletons exposed as typed getters. There is no string-keyed <code>resolve()</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getContainer</span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">root</span><span class="p">);</span><span class="w">   </span><span class="c1">// ContainerOptions | rootDir string</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">container</span><span class="p">.</span><span class="nx">configSnapshotUseCase</span><span class="p">;</span><span class="w"> </span><span class="c1">// created on first access</span>
 </code></pre></div>
-<h3 id="2-implement-the-use-case">2. Implement the Use Case<a class="headerlink" href="#2-implement-the-use-case" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// src/application/use-cases/NewUseCase.ts</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">NewUseCase</span><span class="w"> </span><span class="k">implements</span><span class="w"> </span><span class="nx">INewUseCase</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="kr">constructor</span><span class="p">(</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="nx">prompt</span><span class="o">:</span><span class="w"> </span><span class="kt">IPromptPort</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="nx">shell</span><span class="o">:</span><span class="w"> </span><span class="kt">IShellPort</span><span class="p">,</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="nx">repo</span><span class="o">:</span><span class="w"> </span><span class="kt">ISomeRepository</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">execute</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">NewResult</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">intro</span><span class="p">(</span><span class="s1">'New Command'</span><span class="p">);</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">      </span><span class="c1">// Interactive prompts</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">text</span><span class="p">({</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">        </span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="s1">'Enter value:'</span><span class="p">,</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">        </span><span class="nx">placeholder</span><span class="o">:</span><span class="w"> </span><span class="s1">'default'</span><span class="p">,</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">      </span><span class="p">});</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">isCancel</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">outro</span><span class="p">(</span><span class="s1">'Cancelled'</span><span class="p">);</span>
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">success</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">'Cancelled'</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">      </span><span class="p">}</span>
-<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>
-<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="w">      </span><span class="c1">// Execute with collected values</span>
-<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">executeWithArgs</span><span class="p">({</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="p">});</span>
-<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">isCancel</span><span class="p">(</span><span class="nx">error</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">outro</span><span class="p">(</span><span class="s1">'Cancelled'</span><span class="p">);</span>
-<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">success</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">'Cancelled'</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="w">      </span><span class="p">}</span>
-<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a><span class="w">      </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
-<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>
-<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a><span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">executeWithArgs</span><span class="p">(</span><span class="nx">args</span><span class="o">:</span><span class="w"> </span><span class="kt">Args</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">NewResult</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">spinner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">spinner</span><span class="p">();</span>
-<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a><span class="w">    </span><span class="nx">spinner</span><span class="p">.</span><span class="nx">start</span><span class="p">(</span><span class="s1">'Processing...'</span><span class="p">);</span>
-<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a>
-<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">shell</span><span class="p">.</span><span class="nx">someOperation</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
-<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a>
-<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">result</span><span class="p">.</span><span class="nx">success</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="w">      </span><span class="nx">spinner</span><span class="p">.</span><span class="nx">stop</span><span class="p">(</span><span class="s1">'Failed'</span><span class="p">);</span>
-<a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">success</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="kt">result.stderr</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a>
-<a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a><span class="w">    </span><span class="nx">spinner</span><span class="p">.</span><span class="nx">stop</span><span class="p">(</span><span class="s1">'Done'</span><span class="p">);</span>
-<a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">success</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="kt">result.data</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="3-create-the-command-entry-point">3. Create the Command Entry Point<a class="headerlink" href="#3-create-the-command-entry-point" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">// src/commands/new.ts</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">container</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'../infrastructure/container.js'</span><span class="p">;</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">NewUseCase</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'../application/use-cases/NewUseCase.js'</span><span class="p">;</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">NewCommandOptions</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="nx">root?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="nx">value?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">}</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="k">export</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">newCommand</span><span class="p">(</span><span class="nx">options</span><span class="o">:</span><span class="w"> </span><span class="kt">NewCommandOptions</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="kt">number</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span><span class="nx">container</span><span class="p">.</span><span class="nx">initialize</span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">root</span><span class="p">);</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">NewUseCase</span><span class="p">(</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="nx">container</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="s1">'prompt'</span><span class="p">),</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="nx">container</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="s1">'shell'</span><span class="p">),</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="nx">container</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="s1">'someRepo'</span><span class="p">)</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">  </span><span class="p">);</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">result</span><span class="p">;</span>
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">      </span><span class="c1">// CLI mode - use provided arguments</span>
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="w">      </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">useCase</span><span class="p">.</span><span class="nx">executeWithArgs</span><span class="p">({</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">options.value</span><span class="w"> </span><span class="p">});</span>
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="w">      </span><span class="c1">// Interactive mode - prompt user</span>
-<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">      </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">useCase</span><span class="p">.</span><span class="nx">execute</span><span class="p">();</span>
-<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>
-<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">success</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">1</span><span class="p">;</span>
-<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Error:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
-<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span>
-<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="4-register-in-cli">4. Register in CLI<a class="headerlink" href="#4-register-in-cli" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">// src/index.ts</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">newCommand</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./commands/new.js'</span><span class="p">;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nx">program</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="p">.</span><span class="nx">command</span><span class="p">(</span><span class="s1">'new'</span><span class="p">)</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="p">.</span><span class="nx">description</span><span class="p">(</span><span class="s1">'Description of new command'</span><span class="p">)</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="p">.</span><span class="nx">option</span><span class="p">(</span><span class="s1">'--value &lt;value&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'Value to use'</span><span class="p">)</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="p">.</span><span class="nx">action</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">options</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">exitCode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">newCommand</span><span class="p">(</span><span class="nx">options</span><span class="p">);</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span><span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="nx">exitCode</span><span class="p">);</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="p">});</span>
-</code></pre></div>
-<h2 id="adding-new-prompts">Adding New Prompts<a class="headerlink" href="#adding-new-prompts" title="Permanent link">&para;</a></h2>
-<h3 id="domain-specific-prompts">Domain-Specific Prompts<a class="headerlink" href="#domain-specific-prompts" title="Permanent link">&para;</a></h3>
-<p>Add new prompt methods to <code>IPromptPort</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">// src/application/ports/outbound/IPromptPort.ts</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">IPromptPort</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="c1">// ... existing methods ...</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="nx">promptNewValue</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">NewValueType</span><span class="o">&gt;</span><span class="p">;</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">}</span>
-</code></pre></div>
-<p>Implement in <code>ClackPromptAdapter</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">// src/infrastructure/adapters/ClackPromptAdapter.ts</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">async</span><span class="w"> </span><span class="nx">promptNewValue</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">NewValueType</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">text</span><span class="p">({</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="s1">'Enter new value:'</span><span class="p">,</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="nx">placeholder</span><span class="o">:</span><span class="w"> </span><span class="s1">'example'</span><span class="p">,</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="nx">validate</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">input</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">input</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s1">'Value is required'</span><span class="p">;</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">isValid</span><span class="p">(</span><span class="nx">input</span><span class="p">))</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s1">'Invalid format'</span><span class="p">;</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span><span class="p">});</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isCancel</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">handleCancel</span><span class="p">();</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">NewValueType</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="nx">value</span><span class="p">);</span>
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="p">}</span>
-</code></pre></div>
-<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
-<h3 id="unit-tests">Unit Tests<a class="headerlink" href="#unit-tests" title="Permanent link">&para;</a></h3>
-<p>Test value objects and entities in isolation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1">// tests/unit/domain/value-objects/NewValue.test.ts</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nx">describe</span><span class="p">(</span><span class="s1">'NewValue'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">'should create valid value'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">NewValue</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="s1">'valid'</span><span class="p">);</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">value</span><span class="p">.</span><span class="nx">value</span><span class="p">,</span><span class="w"> </span><span class="s1">'valid'</span><span class="p">);</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="p">});</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">'should throw on invalid value'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="kr">throws</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">NewValue</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="s1">'invalid!'</span><span class="p">));</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span><span class="p">});</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="p">});</span>
-</code></pre></div>
-<h3 id="integration-tests">Integration Tests<a class="headerlink" href="#integration-tests" title="Permanent link">&para;</a></h3>
-<p>Test use cases with mock adapters:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">// tests/integration/NewUseCase.test.ts</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nx">describe</span><span class="p">(</span><span class="s1">'NewUseCase Integration'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">promptAdapter</span><span class="o">:</span><span class="w"> </span><span class="kt">MockPromptAdapter</span><span class="p">;</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">shellAdapter</span><span class="o">:</span><span class="w"> </span><span class="kt">MockShellAdapter</span><span class="p">;</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">useCase</span><span class="o">:</span><span class="w"> </span><span class="kt">NewUseCase</span><span class="p">;</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span><span class="nx">beforeEach</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="nx">promptAdapter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockPromptAdapter</span><span class="p">({</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">'test-value'</span><span class="w"> </span><span class="p">});</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="nx">shellAdapter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockShellAdapter</span><span class="p">({</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">      </span><span class="nx">someOperationResult</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">success</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span><span class="w"> </span><span class="nx">stdout</span><span class="o">:</span><span class="w"> </span><span class="s1">'OK'</span><span class="w"> </span><span class="p">},</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="p">});</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">    </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">NewUseCase</span><span class="p">(</span><span class="nx">promptAdapter</span><span class="p">,</span><span class="w"> </span><span class="nx">shellAdapter</span><span class="p">,</span><span class="w"> </span><span class="nx">mockRepo</span><span class="p">);</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">  </span><span class="p">});</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">'should execute with prompted values'</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">useCase</span><span class="p">.</span><span class="nx">execute</span><span class="p">();</span>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">success</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">);</span>
-<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">ok</span><span class="p">(</span><span class="nx">shellAdapter</span><span class="p">.</span><span class="nx">wasCommandCalled</span><span class="p">(</span><span class="s1">'someOperation'</span><span class="p">));</span>
-<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="w">  </span><span class="p">});</span>
-<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="p">});</span>
-</code></pre></div>
-<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
-<h3 id="1-keep-use-cases-pure">1. Keep Use Cases Pure<a class="headerlink" href="#1-keep-use-cases-pure" title="Permanent link">&para;</a></h3>
-<p>Use cases should only depend on port interfaces, never on concrete implementations:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// Good</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kr">constructor</span><span class="p">(</span><span class="k">private</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="nx">prompt</span><span class="o">:</span><span class="w"> </span><span class="kt">IPromptPort</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1">// Bad</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="kr">constructor</span><span class="p">(</span><span class="k">private</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="nx">clack</span><span class="o">:</span><span class="w"> </span><span class="kt">ClackPromptAdapter</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
-</code></pre></div>
-<h3 id="2-handle-cancellation-gracefully">2. Handle Cancellation Gracefully<a class="headerlink" href="#2-handle-cancellation-gracefully" title="Permanent link">&para;</a></h3>
-<p>Always wrap interactive code in try-catch and check for cancellation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">text</span><span class="p">({</span><span class="w"> </span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="s1">'Enter:'</span><span class="w"> </span><span class="p">});</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">isCancel</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">success</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">'Cancelled'</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="c1">// ... continue</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">isCancel</span><span class="p">(</span><span class="nx">error</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">success</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">'Cancelled'</span><span class="w"> </span><span class="p">};</span>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">  </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="3-use-value-objects-for-validation">3. Use Value Objects for Validation<a class="headerlink" href="#3-use-value-objects-for-validation" title="Permanent link">&para;</a></h3>
-<p>Validate at construction time, not at use time:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1">// Good - validation at construction</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ServerName</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="nx">input</span><span class="p">);</span><span class="w"> </span><span class="c1">// throws if invalid</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1">// Bad - deferred validation</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="kd">const</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">input</span><span class="p">;</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">isValidServerName</span><span class="p">(</span><span class="nx">name</span><span class="p">))</span><span class="w"> </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">();</span><span class="w"> </span><span class="c1">// easy to forget</span>
-</code></pre></div>
-<h3 id="4-separate-interactive-and-cli-modes">4. Separate Interactive and CLI Modes<a class="headerlink" href="#4-separate-interactive-and-cli-modes" title="Permanent link">&para;</a></h3>
-<p>Every use case should support both modes:
-- <code>execute()</code>: Interactive mode with prompts
-- <code>executeWithArgs()</code> or <code>executeWithConfig()</code>: CLI mode with arguments</p>
-<p>This allows the same business logic to be used from both interactive CLI and scripts.</p>
-<h2 id="mod-source-factory-pattern">Mod Source Factory Pattern<a class="headerlink" href="#mod-source-factory-pattern" title="Permanent link">&para;</a></h2>
-<p>The mod management system uses the <strong>Factory Pattern</strong> with auto-registration for pluggable mod source adapters.</p>
-<h3 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>┌─────────────────────────────────────────────────────────────────┐
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>│  Application Layer (shared)                                      │
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>│  ┌─────────────────────────────────────────────────────────────┐│
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>│  │                    IModSourcePort                            ││
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>│  │  - search(query, options): Promise&lt;ModSearchResult&gt;          ││
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>│  │  - getProject(slugOrId): Promise&lt;ModProject | null&gt;          ││
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>│  │  - getVersions(slugOrId, options): Promise&lt;ModVersion[]&gt;     ││
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>│  │  - isAvailable(): Promise&lt;boolean&gt;                           ││
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>│  │  - getEnvKey(): string                                       ││
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>│  └─────────────────────────────────────────────────────────────┘│
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>└─────────────────────────────────────────────────────────────────┘
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>                                │
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>                                ▼
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>┌─────────────────────────────────────────────────────────────────┐
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>│  Infrastructure Layer (shared)                                   │
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>│  ┌─────────────────────────────────────────────────────────────┐│
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>│  │                  ModSourceFactory                            ││
-<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>│  │  - register(adapter): void                                   ││
-<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>│  │  - get(source): IModSourcePort                               ││
-<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>│  │  - getSupportedSources(): string[]                           ││
-<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>│  │  - getDefaultSource(): string                                ││
-<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>│  └─────────────────────────────────────────────────────────────┘│
-<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>└─────────────────────────────────────────────────────────────────┘
-<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>                                │
-<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>                ┌───────────────┼───────────────┐
-<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>                ▼               ▼               ▼
-<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>┌─────────────────────┐ ┌─────────────┐ ┌─────────────────┐
-<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>│ mod-source-modrinth │ │   Future    │ │     Future      │
-<a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>│ ┌─────────────────┐ │ │ CurseForge  │ │     Spiget      │
-<a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a>│ │ModrinthAdapter  │ │ │   Adapter   │ │    Adapter      │
-<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a>│ └─────────────────┘ │ └─────────────┘ └─────────────────┘
-<a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a>└─────────────────────┘
-</code></pre></div>
-<h3 id="domain-models-sharedsrcdomainmod">Domain Models (shared/src/domain/mod/)<a class="headerlink" href="#domain-models-sharedsrcdomainmod" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1">// ModProject - Represents a mod/plugin project</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">ModProject</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="nx">slug</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">  </span><span class="nx">author</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">  </span><span class="nx">downloads</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">  </span><span class="nx">iconUrl?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">  </span><span class="nx">categories</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[];</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">  </span><span class="nx">serverSide</span><span class="o">:</span><span class="w"> </span><span class="s1">'required'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'optional'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'unsupported'</span><span class="p">;</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">  </span><span class="nx">clientSide</span><span class="o">:</span><span class="w"> </span><span class="s1">'required'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'optional'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'unsupported'</span><span class="p">;</span>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">  </span><span class="nx">sourceUrl?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="p">}</span>
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="c1">// ModSearchResult - Paginated search results</span>
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">ModSearchResult</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">  </span><span class="nx">hits</span><span class="o">:</span><span class="w"> </span><span class="kt">ModProject</span><span class="p">[];</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">  </span><span class="nx">offset</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="w">  </span><span class="nx">limit</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="w">  </span><span class="nx">totalHits</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
-<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="p">}</span>
-<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>
-<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a><span class="c1">// ModVersion - Specific version of a mod</span>
-<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">ModVersion</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a><span class="w">  </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a><span class="w">  </span><span class="nx">projectId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a><span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a><span class="w">  </span><span class="nx">versionNumber</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a><span class="w">  </span><span class="nx">gameVersions</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[];</span>
-<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a><span class="w">  </span><span class="nx">loaders</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[];</span>
-<a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a><span class="w">  </span><span class="nx">files</span><span class="o">:</span><span class="w"> </span><span class="kt">ModFile</span><span class="p">[];</span>
-<a id="__codelineno-13-33" name="__codelineno-13-33" href="#__codelineno-13-33"></a><span class="w">  </span><span class="nx">dependencies</span><span class="o">:</span><span class="w"> </span><span class="kt">ModDependency</span><span class="p">[];</span>
-<a id="__codelineno-13-34" name="__codelineno-13-34" href="#__codelineno-13-34"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="imodsourceport-interface">IModSourcePort Interface<a class="headerlink" href="#imodsourceport-interface" title="Permanent link">&para;</a></h3>
-<p>The port interface that all mod source adapters must implement:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1">// shared/src/application/ports/outbound/IModSourcePort.ts</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">IModSourcePort</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="k">readonly</span><span class="w"> </span><span class="nx">sourceName</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">     </span><span class="c1">// e.g., 'modrinth'</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="k">readonly</span><span class="w"> </span><span class="nx">displayName</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">    </span><span class="c1">// e.g., 'Modrinth'</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="w">  </span><span class="nx">search</span><span class="p">(</span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">options?</span><span class="o">:</span><span class="w"> </span><span class="kt">ModSearchOptions</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ModSearchResult</span><span class="o">&gt;</span><span class="p">;</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="w">  </span><span class="nx">getProject</span><span class="p">(</span><span class="nx">slugOrId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ModProject</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="o">&gt;</span><span class="p">;</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">  </span><span class="nx">getVersions</span><span class="p">(</span><span class="nx">slugOrId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">options?</span><span class="o">:</span><span class="w"> </span><span class="kt">ModVersionOptions</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ModVersion</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">;</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">  </span><span class="nx">isAvailable</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="kt">boolean</span><span class="o">&gt;</span><span class="p">;</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">  </span><span class="nx">getEnvKey</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">             </span><span class="c1">// e.g., 'MODRINTH_PROJECTS'</span>
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">  </span><span class="nx">formatForEnv</span><span class="p">(</span><span class="nx">project</span><span class="o">:</span><span class="w"> </span><span class="kt">ModProject</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="modsourcefactory">ModSourceFactory<a class="headerlink" href="#modsourcefactory" title="Permanent link">&para;</a></h3>
-<p>The factory manages adapter registration and retrieval:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1">// shared/src/infrastructure/factories/ModSourceFactory.ts</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ModSourceFactory</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@minecraft-docker/shared'</span><span class="p">;</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1">// Register an adapter (done automatically on import)</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="nx">ModSourceFactory</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">ModrinthAdapter</span><span class="p">());</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1">// Get an adapter by name</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="kd">const</span><span class="w"> </span><span class="nx">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ModSourceFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'modrinth'</span><span class="p">);</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="kd">const</span><span class="w"> </span><span class="nx">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">source</span><span class="p">.</span><span class="nx">search</span><span class="p">(</span><span class="s1">'sodium'</span><span class="p">);</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="c1">// List available sources</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="kd">const</span><span class="w"> </span><span class="nx">sources</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ModSourceFactory</span><span class="p">.</span><span class="nx">getSupportedSources</span><span class="p">();</span><span class="w"> </span><span class="c1">// ['modrinth']</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="c1">// Get default source</span>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="kd">const</span><span class="w"> </span><span class="nx">defaultSource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ModSourceFactory</span><span class="p">.</span><span class="nx">getDefaultSource</span><span class="p">();</span><span class="w"> </span><span class="c1">// 'modrinth'</span>
-</code></pre></div>
-<h3 id="implementing-a-mod-source-adapter">Implementing a Mod Source Adapter<a class="headerlink" href="#implementing-a-mod-source-adapter" title="Permanent link">&para;</a></h3>
-<p>Each mod source is a separate npm package following Hexagonal Architecture:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mod-source-modrinth/
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>├── src/
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>│   ├── index.ts                 # Exports and auto-registration
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>│   ├── ModrinthAdapter.ts       # IModSourcePort implementation
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>│   ├── types.ts                 # Modrinth-specific API types
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>│   └── infrastructure/
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>│       ├── api/
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>│       │   └── ModrinthApiClient.ts  # HTTP client for Modrinth API
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>│       └── mappers/
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>│           └── ModrinthMapper.ts     # Maps API responses to domain models
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>├── package.json
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>└── tsconfig.json
-</code></pre></div>
-<p>Example adapter implementation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1">// mod-source-modrinth/src/ModrinthAdapter.ts</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="k">import</span><span class="w"> </span><span class="kr">type</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">IModSourcePort</span><span class="p">,</span><span class="w"> </span><span class="nx">ModProject</span><span class="p">,</span><span class="w"> </span><span class="nx">ModSearchResult</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@minecraft-docker/shared'</span><span class="p">;</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ModrinthApiClient</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./infrastructure/api/ModrinthApiClient.js'</span><span class="p">;</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ModrinthMapper</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./infrastructure/mappers/ModrinthMapper.js'</span><span class="p">;</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">ModrinthAdapter</span><span class="w"> </span><span class="k">implements</span><span class="w"> </span><span class="nx">IModSourcePort</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">  </span><span class="k">readonly</span><span class="w"> </span><span class="nx">sourceName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'modrinth'</span><span class="p">;</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">  </span><span class="k">readonly</span><span class="w"> </span><span class="nx">displayName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'Modrinth'</span><span class="p">;</span>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="nx">api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">ModrinthApiClient</span><span class="p">();</span>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="nx">mapper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">ModrinthMapper</span><span class="p">();</span>
-<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">search</span><span class="p">(</span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">options?</span><span class="o">:</span><span class="w"> </span><span class="kt">ModSearchOptions</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ModSearchResult</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">api</span><span class="p">.</span><span class="nx">search</span><span class="p">(</span><span class="nx">query</span><span class="p">,</span><span class="w"> </span><span class="nx">options</span><span class="p">);</span>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">mapper</span><span class="p">.</span><span class="nx">toSearchResult</span><span class="p">(</span><span class="nx">response</span><span class="p">);</span>
-<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>
-<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">getProject</span><span class="p">(</span><span class="nx">slugOrId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ModProject</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">api</span><span class="p">.</span><span class="nx">getProject</span><span class="p">(</span><span class="nx">slugOrId</span><span class="p">);</span>
-<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">mapper</span><span class="p">.</span><span class="nx">toProject</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
-<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>
-<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="w">  </span><span class="nx">getEnvKey</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s1">'MODRINTH_PROJECTS'</span><span class="p">;</span>
-<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a>
-<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a><span class="w">  </span><span class="nx">formatForEnv</span><span class="p">(</span><span class="nx">project</span><span class="o">:</span><span class="w"> </span><span class="kt">ModProject</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">project</span><span class="p">.</span><span class="nx">slug</span><span class="p">;</span>
-<a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a><span class="p">}</span>
-</code></pre></div>
-<p>Auto-registration on import:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1">// mod-source-modrinth/src/index.ts</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ModSourceFactory</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@minecraft-docker/shared'</span><span class="p">;</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ModrinthAdapter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./ModrinthAdapter.js'</span><span class="p">;</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="c1">// Auto-register when module is imported</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="nx">ModSourceFactory</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">ModrinthAdapter</span><span class="p">());</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="k">export</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ModrinthAdapter</span><span class="w"> </span><span class="p">};</span>
-</code></pre></div>
-<h3 id="using-in-cli-commands">Using in CLI Commands<a class="headerlink" href="#using-in-cli-commands" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1">// cli/src/commands/mod.ts</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ModSourceFactory</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@minecraft-docker/shared'</span><span class="p">;</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="k">import</span><span class="w"> </span><span class="s1">'@minecraft-docker/mod-source-modrinth'</span><span class="p">;</span><span class="w"> </span><span class="c1">// Triggers auto-registration</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="k">export</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">searchMods</span><span class="p">(</span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'modrinth'</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">adapter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ModSourceFactory</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">source</span><span class="p">);</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">adapter</span><span class="p">.</span><span class="nx">search</span><span class="p">(</span><span class="nx">query</span><span class="p">);</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">mod</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">results</span><span class="p">.</span><span class="nx">hits</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">mod</span><span class="p">.</span><span class="nx">slug</span><span class="si">}</span><span class="sb"> (</span><span class="si">${</span><span class="nx">mod</span><span class="p">.</span><span class="nx">downloads</span><span class="si">}</span><span class="sb"> downloads)`</span><span class="p">);</span>
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="adding-new-mod-sources">Adding New Mod Sources<a class="headerlink" href="#adding-new-mod-sources" title="Permanent link">&para;</a></h3>
-<p>To add a new mod source (e.g., CurseForge):</p>
+<p>Available getters include <code>promptPort</code>, <code>shellPort</code>, <code>serverRepository</code>, <code>worldRepository</code>, <code>docProvider</code>, <code>auditLogPort</code>, <code>modSourcePort</code>, <code>createServerUseCase</code>, <code>deleteServerUseCase</code>, <code>serverStatusUseCase</code>, <code>worldManagementUseCase</code>, <code>backupUseCase</code>, <code>playerLookupUseCase</code>, <code>backupScheduleUseCase</code>, <code>configSnapshotUseCase</code> and <code>configSnapshotScheduleUseCase</code>.</p>
+<p>Related helpers:</p>
+<ul>
+<li><code>getContainer(options?)</code> returns a process-wide <code>Container</code>.</li>
+<li><code>Container.create(options?)</code> builds a fresh one.</li>
+<li><code>Container.createWithAdapters(...)</code> injects custom adapters (tests).</li>
+<li><code>resetContainer()</code> drops the global instance (tests).</li>
+</ul>
+<h2 id="adding-a-new-command">Adding a New Command<a class="headerlink" href="#adding-a-new-command" title="Permanent link">&para;</a></h2>
+<p>Commands are registered by hand in <code>cli/src/index.ts</code>. The CLI does not use commander for this (commander is only used by <code>console user</code> and <code>console api</code>).</p>
 <ol>
-<li>Create a new package: <code>mod-source-curseforge/</code></li>
-<li>Implement <code>IModSourcePort</code> interface</li>
-<li>Add API client and mappers in <code>infrastructure/</code></li>
-<li>Auto-register in <code>index.ts</code></li>
-<li>Add as dependency to CLI package</li>
+<li>Write <code>cli/src/commands/&lt;name&gt;.ts</code> exporting <code>&lt;name&gt;Command(options): Promise&lt;number&gt;</code> that returns an exit code.</li>
+<li>Re-export it from <code>cli/src/commands/index.ts</code>.</li>
+<li>Import it in <code>cli/src/index.ts</code>.</li>
+<li>Add a <code>case '&lt;name&gt;':</code> to the <code>switch (command)</code> block.</li>
+<li>If it has subcommands, add the command name to the list in <code>parseArgs()</code> that sets <code>result.subCommand</code>. Add any value-less flags to <code>booleanOnlyFlags</code>.</li>
+<li>Add help text to <code>printUsage()</code>.</li>
 </ol>
-<p>The Factory Pattern ensures:
-- <strong>Extensibility</strong>: New sources can be added without modifying core code
-- <strong>Loose Coupling</strong>: CLI doesn't depend on specific implementations
-- <strong>Testability</strong>: Adapters can be mocked for testing
-- <strong>Clean Architecture</strong>: Domain models are source-agnostic</p>
+<p>If the command needs business logic, first add it in shared:</p>
+<ol>
+<li>Add the port interface under <code>application/ports/inbound/</code> (and outbound ports or adapters if new I/O is needed).</li>
+<li>Implement it in <code>application/use-cases/</code>.</li>
+<li>Export both from <code>shared/src/index.ts</code>.</li>
+<li>Add a getter in <code>cli/src/infrastructure/di/container.ts</code>.</li>
+</ol>
+<h3 id="worked-example-config-snapshot">Worked Example: <code>config-snapshot</code><a class="headerlink" href="#worked-example-config-snapshot" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use case</td>
+<td><code>shared/src/application/use-cases/ConfigSnapshotUseCase.ts</code></td>
+</tr>
+<tr>
+<td>Handlers</td>
+<td><code>cli/src/commands/config-snapshot/{list,create,show,diff,restore,delete}.ts</code> and <code>schedule/</code></td>
+</tr>
+<tr>
+<td>Container getter</td>
+<td><code>configSnapshotUseCase</code> in <code>container.ts</code></td>
+</tr>
+<tr>
+<td>Test</td>
+<td><code>cli/tests/commands/config-snapshot.test.ts</code></td>
+</tr>
+</tbody>
+</table>
+<p>A handler is small: build the container, call the use case, print.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// cli/src/commands/config-snapshot/list.ts</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">export</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">configSnapshotListCommand</span><span class="p">(</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nx">options</span><span class="o">:</span><span class="w"> </span><span class="kt">ConfigSnapshotListOptions</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="kt">number</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getContainer</span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">root</span><span class="p">);</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">container</span><span class="p">.</span><span class="nx">configSnapshotUseCase</span><span class="p">;</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">limit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">options</span><span class="p">.</span><span class="nx">limit</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="mf">20</span><span class="p">;</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">snapshots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">useCase</span><span class="p">.</span><span class="nx">list</span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">serverName</span><span class="p">,</span><span class="w"> </span><span class="nx">limit</span><span class="p">,</span><span class="w"> </span><span class="nx">options</span><span class="p">.</span><span class="nx">offset</span><span class="p">);</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">json</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">snapshots</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">s</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">s</span><span class="p">.</span><span class="nx">toJSON</span><span class="p">()),</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">));</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">    </span><span class="c1">// ... format and print</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">    </span><span class="c1">// log error</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="p">}</span>
+</code></pre></div>
+<p>Dispatch in <code>cli/src/index.ts</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">case</span><span class="w"> </span><span class="s1">'config-snapshot'</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">csAction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">subCommand</span><span class="p">;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">csAction</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">'schedule'</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">scheduleAction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">positional</span><span class="p">[</span><span class="mf">0</span><span class="p">];</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="nx">scheduleAction</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="s1">'list'</span><span class="o">:</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">        </span><span class="nx">exitCode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">configSnapshotScheduleListCommand</span><span class="p">({</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">          </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">rootDir</span><span class="p">,</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">          </span><span class="nx">serverName</span><span class="o">:</span><span class="w"> </span><span class="kt">flags</span><span class="p">[</span><span class="s1">'server'</span><span class="p">]</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">undefined</span><span class="p">,</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">          </span><span class="nx">json</span><span class="o">:</span><span class="w"> </span><span class="kt">flags</span><span class="p">[</span><span class="s1">'json'</span><span class="p">]</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">        </span><span class="p">});</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">        </span><span class="k">break</span><span class="p">;</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">      </span><span class="c1">// add, remove, enable, disable ...</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="k">break</span><span class="p">;</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">  </span><span class="c1">// list, create, show, diff, restore, delete ...</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="p">}</span>
+</code></pre></div>
+<h2 id="prompts">Prompts<a class="headerlink" href="#prompts" title="Permanent link">&para;</a></h2>
+<p><code>IPromptPort</code> provides generic prompts (<code>text</code>, <code>confirm</code>, <code>password</code>), domain prompts (<code>promptServerName</code>, <code>promptServerType</code>, <code>promptMcVersion</code>, <code>promptMemory</code>, <code>promptWorldOptions</code>, <code>promptServerSelection</code>, ...), output helpers (<code>intro</code>, <code>outro</code>, <code>success</code>, <code>error</code>, <code>warn</code>, <code>info</code>, <code>note</code>), <code>spinner()</code> and cancellation helpers.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">promptServerName</span><span class="p">();</span><span class="w">   </span><span class="c1">// returns a ServerName</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">isCancel</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">handleCancel</span><span class="p">();</span><span class="w">                         </span><span class="c1">// never returns</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">}</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kd">const</span><span class="w"> </span><span class="nx">spin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">prompt</span><span class="p">.</span><span class="nx">spinner</span><span class="p">();</span>
+</code></pre></div>
+<p>To add a prompt:</p>
+<ul>
+<li>Domain prompt used by a use case: add a <code>promptXxx()</code> method to <code>IPromptPort</code>, implement it in <code>ClackPromptAdapter</code> <strong>and</strong> <code>ApiPromptAdapter</code>, and add it to <code>MockPromptAdapter</code>.</li>
+<li>Standalone prompt used directly by a command (server select, player select, ...): add a file under <code>cli/src/lib/prompts/</code> and export it from its <code>index.ts</code>.</li>
+</ul>
+<h2 id="mod-sources">Mod Sources<a class="headerlink" href="#mod-sources" title="Permanent link">&para;</a></h2>
+<p><code>IModSourcePort</code> has <code>sourceName</code>, <code>displayName</code>, <code>search()</code>, <code>getProject()</code>, <code>getVersions()</code>, <code>isAvailable()</code>, <code>getEnvKey()</code>, <code>formatForEnv()</code>, plus two optional methods: <code>getProjects?()</code> and <code>getModpackClientOnlyMods?()</code>.</p>
+<p>Essential model fields (<code>shared/src/domain/mod/</code>):</p>
+<ul>
+<li><code>ModProject</code>: <code>slug</code>, <code>title</code>, <code>description</code>, <code>downloads</code>, <code>iconUrl</code>, <code>projectType</code>, <code>serverSide</code>, <code>clientSide</code>, <code>categories</code>, <code>author</code>, <code>license</code>, <code>sourceId</code>, <code>sourceName</code>.</li>
+<li><code>ModVersion</code>: version identity plus <code>versionType</code>, <code>downloads</code>, <code>datePublished</code>, optional <code>changelog</code>.</li>
+</ul>
+<p><code>ModSourceFactory</code> (<code>shared/src/infrastructure/factories/ModSourceFactory.ts</code>) is a static registry: <code>register</code> (throws on duplicate), <code>get</code> (throws if unknown), <code>getOrNull</code>, <code>isSupported</code>, <code>getSupportedSources</code>, <code>getAllAdapters</code>, <code>getDefaultSource</code>, <code>clear</code>.</p>
+<p><code>ModrinthAdapter</code> takes <code>ModrinthApiClient</code> and <code>ModrinthMapper</code> through its constructor, with defaults, and registers an instance on import (also exported as <code>modrinthAdapter</code>). The CLI command <code>cli/src/commands/mod.ts</code> resolves sources with <code>ModSourceFactory.getOrNull(source)</code>, while the container creates <code>new ModrinthAdapter()</code> for <code>modSourcePort</code>.</p>
+<p>To add a source: create a package that implements <code>IModSourcePort</code>, call <code>ModSourceFactory.register()</code> from its <code>index.ts</code>, and import the package where it should be active.</p>
+<h2 id="how-the-cli-relates-to-the-other-packages">How the CLI Relates to the Other Packages<a class="headerlink" href="#how-the-cli-relates-to-the-other-packages" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The CLI does <strong>not</strong> call <code>mcctl-api</code> over HTTP. Both consume the same shared use cases.</li>
+<li><code>mcctl console ...</code> manages <code>mcctl-api</code> and <code>mcctl-console</code> as PM2 processes through <code>Pm2ServiceManagerAdapter</code> and <code>shared/src/infrastructure/config/Pm2EcosystemConfig.ts</code>.</li>
+<li><code>mcctl console user</code> writes the console SQLite database directly (<code>cli/src/lib/console-db.ts</code>).</li>
+<li>SQLite stores (better-sqlite3), relative to the platform root: <code>data/audit.db</code>, <code>backups/meta/backup-schedules.db</code>, <code>backups/meta/config-snapshots.db</code>.</li>
+<li>Bash scripts live in <code>platform/scripts/</code> and are copied into the CLI package at publish time by the <code>sync-scripts</code> npm script (run from <code>prepublishOnly</code>).</li>
+<li>Some subsystems are only used by <code>mcctl-api</code>: BlueMap rendering, world analysis, player sessions and the RCON adapter (<code>RconCliAdapter</code>).</li>
+</ul>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<p>The CLI uses <strong>vitest</strong>. Layout under <code>platform/services/cli/tests/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Directory</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>unit/</code></td>
+<td>Domain, lib, infrastructure and command unit tests</td>
+</tr>
+<tr>
+<td><code>integration/</code></td>
+<td>Use cases wired with mocks</td>
+</tr>
+<tr>
+<td><code>commands/</code></td>
+<td>Command handlers with a mocked container</td>
+</tr>
+<tr>
+<td><code>e2e/</code></td>
+<td><code>cli-*.test.ts</code> spawn <code>node dist/index.js</code> via <code>tests/e2e/helpers.ts</code> (<code>runCli</code>)</td>
+</tr>
+<tr>
+<td><code>mocks/</code></td>
+<td><code>MockPromptAdapter</code>, <code>MockShellAdapter</code>, <code>MockServerRepository</code>, <code>MockWorldRepository</code></td>
+</tr>
+</tbody>
+</table>
+<p>Shared package tests are flat files in <code>platform/services/shared/tests/*.test.ts</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pnpm<span class="w"> </span>--filter<span class="w"> </span>@minecraft-docker/mcctl<span class="w"> </span><span class="nb">test</span><span class="w">              </span><span class="c1"># all</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>pnpm<span class="w"> </span>--filter<span class="w"> </span>@minecraft-docker/mcctl<span class="w"> </span>test:unit
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>pnpm<span class="w"> </span>--filter<span class="w"> </span>@minecraft-docker/mcctl<span class="w"> </span>test:integration
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>pnpm<span class="w"> </span>--filter<span class="w"> </span>@minecraft-docker/mcctl<span class="w"> </span>test:e2e<span class="w">          </span><span class="c1"># needs a build (dist/)</span>
+</code></pre></div>
+<p>Older tests use <code>node:assert</code>; newer ones use vitest <code>expect</code> and <code>vi.mock()</code>. Use <code>expect</code> in new tests.</p>
+<p>Use case integration test (construct the use case directly with mocks; <code>MockShellAdapter.wasCommandCalled()</code> matches the exact command string):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">prompt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockPromptAdapter</span><span class="p">({</span><span class="w"> </span><span class="cm">/* scripted answers */</span><span class="w"> </span><span class="p">});</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">shell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockShellAdapter</span><span class="p">();</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">repo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockServerRepository</span><span class="p">();</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="kd">const</span><span class="w"> </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">CreateServerUseCase</span><span class="p">(</span><span class="nx">prompt</span><span class="p">,</span><span class="w"> </span><span class="nx">shell</span><span class="p">,</span><span class="w"> </span><span class="nx">repo</span><span class="p">);</span>
+</code></pre></div>
+<p>Command test with a mocked container (see <code>cli/tests/commands/config-snapshot.test.ts</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nx">vi</span><span class="p">.</span><span class="nx">mock</span><span class="p">(</span><span class="s1">'../../src/infrastructure/di/container.js'</span><span class="p">);</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nx">vi</span><span class="p">.</span><span class="nx">mocked</span><span class="p">(</span><span class="nx">getContainer</span><span class="p">).</span><span class="nx">mockReturnValue</span><span class="p">({</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nx">configSnapshotUseCase</span><span class="o">:</span><span class="w"> </span><span class="kt">mockUseCase</span><span class="p">,</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">}</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">never</span><span class="p">);</span>
+</code></pre></div>
+<p><code>Container.createWithAdapters(prompt, shell, serverRepo, worldRepo)</code> builds a container from mocks when you need a real <code>Container</code>. Reset any global container between tests with <code>resetContainer()</code>.</p>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../">Development Index</a></li>
+<li><a href="../agent-collaboration/">Agent Collaboration</a></li>
+<li><a href="../git-workflow/">Git Workflow</a></li>
+<li><a href="../../cli/commands/">CLI Commands Reference</a></li>
+</ul>
 
 
 
@@ -3410,6 +3063,14 @@
     
     <a href="https://github.com/smallmiro/minecraft-server-manager" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://mcctl.mirolab.dev/" target="_blank" rel="noopener" title="Website" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
     </a>
   
 </div>

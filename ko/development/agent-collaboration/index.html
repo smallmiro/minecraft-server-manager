@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#agent-collaboration-guide" class="md-skip">
+        <a href="#에이전트-협업" class="md-skip">
           콘텐츠로 이동
         </a>
       
@@ -1907,6 +1907,8 @@
       
         
       
+        
+      
     
     
     
@@ -1962,6 +1964,34 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../git-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -2059,22 +2089,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#-critical-rules" class="md-nav__link">
+  <a href="#개요와-원칙" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🔴 Critical Rules
+        개요와 원칙
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="🔴 Critical Rules">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#에이전트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        에이전트
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#워크플로우" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        워크플로우
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="워크플로우">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#rule-1-never-do-another-agents-work" class="md-nav__link">
+  <a href="#plan-work" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rule 1: NEVER Do Another Agent's Work
+        /plan-work
       
     </span>
   </a>
@@ -2082,21 +2134,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#rule-2-always-collaborate-via-protocol" class="md-nav__link">
+  <a href="#계획-먼저의-적용-방식" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rule 2: ALWAYS Collaborate via Protocol
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rule-3-report-blockers-immediately" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rule 3: Report Blockers Immediately
+        "계획 먼저"의 적용 방식
       
     </span>
   </a>
@@ -2109,22 +2150,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#team-structure" class="md-nav__link">
+  <a href="#work-모드와-라우팅" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Team Structure
+        /work 모드와 라우팅
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Team Structure">
+    <nav class="md-nav" aria-label="/work 모드와 라우팅">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#development-agents-module-ownership" class="md-nav__link">
+  <a href="#모듈-라우팅" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Development Agents (Module Ownership)
+        모듈 라우팅
       
     </span>
   </a>
@@ -2132,10 +2173,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#support-agents-cross-cutting-concerns" class="md-nav__link">
+  <a href="#라우팅-티어" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Support Agents (Cross-cutting Concerns)
+        라우팅 티어
       
     </span>
   </a>
@@ -2148,515 +2189,76 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agent-definitions" class="md-nav__link">
+  <a href="#위임-계약" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent Definitions
+        위임 계약
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Agent Definitions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#-orchestrator-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🎯 Orchestrator Agent
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-core-agent-shared" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🔧 Core Agent (shared/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-cli-agent-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        💻 CLI Agent (cli/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-backend-agent-mcctl-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🖥️ Backend Agent (mcctl-api/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-frontend-agent-mcctl-console" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🎨 Frontend Agent (mcctl-console/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-devops-agent-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🐳 DevOps Agent (Integration)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#support-agents" class="md-nav__link">
+  <a href="#병렬-작업" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Support Agents
+        병렬 작업
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Support Agents">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#-technical-writer-agent-docs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        📝 Technical Writer Agent (docs/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-release-manager-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🚀 Release Manager Agent
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#communication-protocol" class="md-nav__link">
+  <a href="#완료-강제" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Communication Protocol
+        완료 강제
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Communication Protocol">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#message-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Message Types
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#message-format-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Message Format Examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#execution-flow" class="md-nav__link">
+  <a href="#기여자-모드" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Execution Flow
+        기여자 모드
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Execution Flow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-initialization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Initialization
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-dependency-resolution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: Dependency Resolution
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-parallel-execution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: Parallel Execution
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-sync-point---api-spec-ready" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: Sync Point - API Spec Ready
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-docker--integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 5: Docker &amp; Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#parallel-execution-matrix" class="md-nav__link">
+  <a href="#핸드오프-규약" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Parallel Execution Matrix
+        핸드오프 규약
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Parallel Execution Matrix">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#identifying-parallelizable-tasks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Identifying Parallelizable Tasks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-parallel-groups" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Parallel Groups
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#conceptual-dependency-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Conceptual Dependency Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#sync-points" class="md-nav__link">
+  <a href="#커맨드" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sync Points
+        커맨드
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Sync Points">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#defining-sync-points" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Defining Sync Points
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-sync-points" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Sync Points
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#information-shared-at-sync-points" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Information Shared at Sync Points
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#work-requestresponse-protocol" class="md-nav__link">
+  <a href="#에이전트-프롬프트-파일" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Work Request/Response Protocol
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Work Request/Response Protocol">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#work-request-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Work Request Format
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#work-completion-report-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Work Completion Report Format
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unblocks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unblocks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dashboard-view" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dashboard View
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#error-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Error Handling
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Error Handling">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#handling-blockers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Handling Blockers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rollback-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rollback Handling
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick Reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agent-module-mapping" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Agent Module Mapping
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#typical-dependency-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Typical Dependency Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#command-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Command Reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#agent-prompt-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Agent Prompt Files
+        에이전트 프롬프트 파일
       
     </span>
   </a>
@@ -2733,22 +2335,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#-critical-rules" class="md-nav__link">
+  <a href="#개요와-원칙" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🔴 Critical Rules
+        개요와 원칙
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="🔴 Critical Rules">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#에이전트" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        에이전트
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#워크플로우" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        워크플로우
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="워크플로우">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#rule-1-never-do-another-agents-work" class="md-nav__link">
+  <a href="#plan-work" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rule 1: NEVER Do Another Agent's Work
+        /plan-work
       
     </span>
   </a>
@@ -2756,21 +2380,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#rule-2-always-collaborate-via-protocol" class="md-nav__link">
+  <a href="#계획-먼저의-적용-방식" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rule 2: ALWAYS Collaborate via Protocol
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rule-3-report-blockers-immediately" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rule 3: Report Blockers Immediately
+        "계획 먼저"의 적용 방식
       
     </span>
   </a>
@@ -2783,22 +2396,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#team-structure" class="md-nav__link">
+  <a href="#work-모드와-라우팅" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Team Structure
+        /work 모드와 라우팅
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Team Structure">
+    <nav class="md-nav" aria-label="/work 모드와 라우팅">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#development-agents-module-ownership" class="md-nav__link">
+  <a href="#모듈-라우팅" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Development Agents (Module Ownership)
+        모듈 라우팅
       
     </span>
   </a>
@@ -2806,10 +2419,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#support-agents-cross-cutting-concerns" class="md-nav__link">
+  <a href="#라우팅-티어" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Support Agents (Cross-cutting Concerns)
+        라우팅 티어
       
     </span>
   </a>
@@ -2822,515 +2435,76 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agent-definitions" class="md-nav__link">
+  <a href="#위임-계약" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent Definitions
+        위임 계약
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Agent Definitions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#-orchestrator-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🎯 Orchestrator Agent
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-core-agent-shared" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🔧 Core Agent (shared/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-cli-agent-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        💻 CLI Agent (cli/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-backend-agent-mcctl-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🖥️ Backend Agent (mcctl-api/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-frontend-agent-mcctl-console" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🎨 Frontend Agent (mcctl-console/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-devops-agent-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🐳 DevOps Agent (Integration)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#support-agents" class="md-nav__link">
+  <a href="#병렬-작업" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Support Agents
+        병렬 작업
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Support Agents">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#-technical-writer-agent-docs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        📝 Technical Writer Agent (docs/)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-release-manager-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        🚀 Release Manager Agent
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#communication-protocol" class="md-nav__link">
+  <a href="#완료-강제" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Communication Protocol
+        완료 강제
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Communication Protocol">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#message-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Message Types
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#message-format-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Message Format Examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#execution-flow" class="md-nav__link">
+  <a href="#기여자-모드" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Execution Flow
+        기여자 모드
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Execution Flow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-initialization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1: Initialization
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-dependency-resolution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2: Dependency Resolution
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-parallel-execution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3: Parallel Execution
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-sync-point---api-spec-ready" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4: Sync Point - API Spec Ready
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-docker--integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 5: Docker &amp; Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#parallel-execution-matrix" class="md-nav__link">
+  <a href="#핸드오프-규약" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Parallel Execution Matrix
+        핸드오프 규약
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Parallel Execution Matrix">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#identifying-parallelizable-tasks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Identifying Parallelizable Tasks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-parallel-groups" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Parallel Groups
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#conceptual-dependency-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Conceptual Dependency Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#sync-points" class="md-nav__link">
+  <a href="#커맨드" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sync Points
+        커맨드
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Sync Points">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#defining-sync-points" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Defining Sync Points
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-sync-points" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Sync Points
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#information-shared-at-sync-points" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Information Shared at Sync Points
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#work-requestresponse-protocol" class="md-nav__link">
+  <a href="#에이전트-프롬프트-파일" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Work Request/Response Protocol
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Work Request/Response Protocol">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#work-request-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Work Request Format
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#work-completion-report-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Work Completion Report Format
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#unblocks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unblocks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dashboard-view" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dashboard View
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#error-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Error Handling
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Error Handling">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#handling-blockers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Handling Blockers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rollback-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rollback Handling
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick Reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agent-module-mapping" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Agent Module Mapping
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#typical-dependency-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Typical Dependency Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#command-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Command Reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#agent-prompt-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Agent Prompt Files
+        에이전트 프롬프트 파일
       
     </span>
   </a>
@@ -3357,1066 +2531,462 @@
   
 
 
-<h1 id="agent-collaboration-guide">Agent Collaboration Guide<a class="headerlink" href="#agent-collaboration-guide" title="Permanent link">&para;</a></h1>
-<p>Multi-agent collaboration guide for all development work in this project.</p>
-<hr />
-<h2 id="-critical-rules">🔴 Critical Rules<a class="headerlink" href="#-critical-rules" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p><strong>These rules apply to ALL agents, for ALL work, at ALL times.</strong></p>
-</blockquote>
-<h3 id="rule-1-never-do-another-agents-work">Rule 1: NEVER Do Another Agent's Work<a class="headerlink" href="#rule-1-never-do-another-agents-work" title="Permanent link">&para;</a></h3>
-<p>Each agent has <strong>exclusive ownership</strong> of their module. You must NOT:</p>
-<table>
-<thead>
-<tr>
-<th>❌ Forbidden</th>
-<th>Explanation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Modify code in another agent's module</td>
-<td>Even for "small fixes" or "obvious changes"</td>
-</tr>
-<tr>
-<td>Create files in another agent's directory</td>
-<td>Each agent manages their own files</td>
-</tr>
-<tr>
-<td>Implement features that belong to another agent</td>
-<td>Even if you think you can do it faster</td>
-</tr>
-<tr>
-<td>Make assumptions about another agent's code</td>
-<td>Always request, never assume</td>
-</tr>
-</tbody>
-</table>
-<h3 id="rule-2-always-collaborate-via-protocol">Rule 2: ALWAYS Collaborate via Protocol<a class="headerlink" href="#rule-2-always-collaborate-via-protocol" title="Permanent link">&para;</a></h3>
-<p>When you need something from another agent:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="gu">## 📋 DEPENDENCY_NEEDED</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="gs">**From**</span>: [your agent name]
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="gs">**To**</span>: [target agent name]
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="gs">**Issue**</span>: <span class="ni">#XX</span> (if applicable)
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="gu">### Need</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>[Describe what interface/artifact/spec you need]
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="gu">### Reason</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>[Why you need it for your work]
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="gu">### Expected Format</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>[How you expect to receive it - interface, file, spec]
-</code></pre></div>
-<p>When you complete work that others depend on:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gu">## ✅ DEPENDENCY_READY</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="gs">**From**</span>: [your agent name]
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="gs">**To**</span>: [comma-separated list of dependent agents]
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="gs">**Issue**</span>: <span class="ni">#XX</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="gu">### Artifact</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>[What is now available]
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="gu">### Location</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>[File path or import statement]
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="gu">### Usage</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>[How to use the provided artifact]
-</code></pre></div>
-<h3 id="rule-3-report-blockers-immediately">Rule 3: Report Blockers Immediately<a class="headerlink" href="#rule-3-report-blockers-immediately" title="Permanent link">&para;</a></h3>
-<p>If you are blocked by another agent:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="gu">## ⚠️ BLOCKING_ISSUE</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="gs">**From**</span>: [your agent name]
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="gs">**Blocked By**</span>: [blocking agent name]
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="gs">**Issue**</span>: <span class="ni">#XX</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="gu">### Blocker</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>[What is blocking you]
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="gu">### Impact</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>[What you cannot do until this is resolved]
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="gu">### Urgency</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>[HIGH/MEDIUM/LOW]
-</code></pre></div>
-<hr />
-<h2 id="team-structure">Team Structure<a class="headerlink" href="#team-structure" title="Permanent link">&para;</a></h2>
-<h3 id="development-agents-module-ownership">Development Agents (Module Ownership)<a class="headerlink" href="#development-agents-module-ownership" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>                    ┌─────────────────────────────────────┐
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>                    │       🎯 ORCHESTRATOR               │
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                    │  (Dependency analysis, assignment,  │
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>                    │       synchronization)              │
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>                    └──────────────────┬──────────────────┘
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>                                       │
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        ┌──────────────┬───────────────┼───────────────┬──────────────┐
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        │              │               │               │              │
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        ▼              ▼               ▼               ▼              ▼
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>│ 🔧 CORE      │ │ 💻 CLI       │ │ 🖥️ BACKEND   │ │ 🎨 FRONTEND  │ │ 🐳 DEVOPS    │
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>│              │ │              │ │              │ │              │ │              │
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>│ shared/      │ │ cli/,scripts/│ │ mcctl-api/   │ │ mcctl-console│ │ Integration  │
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>│              │ │              │ │              │ │              │ │              │
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>│ Domain &amp;     │ │ Commands &amp;   │ │ REST API     │ │ Web UI       │ │ Docker &amp;     │
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>│ Interfaces   │ │ Prompts      │ │ Server       │ │ Console      │ │ E2E Tests    │
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
-</code></pre></div>
-<h3 id="support-agents-cross-cutting-concerns">Support Agents (Cross-cutting Concerns)<a class="headerlink" href="#support-agents-cross-cutting-concerns" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>┌─────────────────────────────────────┐   ┌─────────────────────────────────────┐
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>│       📝 TECHNICAL WRITER           │   │       🚀 RELEASE MANAGER            │
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>│                                     │   │                                     │
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>│  Invoked by:                        │   │  Invoked by:                        │
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>│  - /write-docs command              │   │  - User request (릴리즈, 배포)        │
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>│  - Release Manager (before release) │   │                                     │
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>│                                     │   │  Invokes:                           │
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>│  Module: docs/                      │   │  - Technical Writer (documentation) │
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>│  Output: EN (.md) + KO (.ko.md)     │   │  - Git tagging, Docker deploy       │
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>└─────────────────────────────────────┘   └─────────────────────────────────────┘
-</code></pre></div>
-<h2 id="agent-definitions">Agent Definitions<a class="headerlink" href="#agent-definitions" title="Permanent link">&para;</a></h2>
-<h3 id="-orchestrator-agent">🎯 Orchestrator Agent<a class="headerlink" href="#-orchestrator-agent" title="Permanent link">&para;</a></h3>
-<p><strong>Role</strong>: Overall project coordination and task distribution</p>
-<table>
-<thead>
-<tr>
-<th>Attribute</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Responsibilities</strong></td>
-<td>Dependency analysis, parallel task identification, sync point management</td>
-</tr>
-<tr>
-<td><strong>Input</strong></td>
-<td>Milestone issue list, agent status reports</td>
-</tr>
-<tr>
-<td><strong>Output</strong></td>
-<td>Work assignments, sync requests, progress reports</td>
-</tr>
-<tr>
-<td><strong>Tools</strong></td>
-<td>GitHub API, Task Management</td>
-</tr>
-</tbody>
-</table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">orchestrator</span><span class="p">:</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">triggers</span><span class="p">:</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">milestone_start</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agent_completion_report</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">blocking_dependency_detected</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sync_point_reached</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="nt">actions</span><span class="p">:</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">analyze_dependencies</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">assign_parallel_tasks</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coordinate_sync_points</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">generate_progress_report</span>
-</code></pre></div>
-<hr />
-<h3 id="-core-agent-shared">🔧 Core Agent (shared/)<a class="headerlink" href="#-core-agent-shared" title="Permanent link">&para;</a></h3>
-<p><strong>Role</strong>: Shared library and domain layer development</p>
-<table>
-<thead>
-<tr>
-<th>Attribute</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Module</strong></td>
-<td><code>platform/services/shared/</code></td>
-</tr>
-<tr>
-<td><strong>Label</strong></td>
-<td><code>agent:core</code></td>
-</tr>
-<tr>
-<td><strong>Documents</strong></td>
-<td><code>shared/prd.md</code>, <code>shared/plan.md</code></td>
-</tr>
-<tr>
-<td><strong>Expertise</strong></td>
-<td>Hexagonal Architecture, TypeScript, Domain Modeling</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example Tasks</strong>:
-- Domain entity definitions (Server, World, etc.)
-- Port interfaces (IUserRepository, IModSourcePort, etc.)
-- Value objects (ServerName, ServerType, McVersion, etc.)
-- Infrastructure adapters (YamlUserRepository, etc.)</p>
-<p><strong>Provides</strong> (→ to other agents):
-- Domain interfaces → CLI, Backend
-- Repository implementations → CLI
-- Adapter interfaces → Backend</p>
-<p><strong>Requires</strong> (← from other agents):
-- (Often no dependencies - starts first in dependency chains)</p>
-<hr />
-<h3 id="-cli-agent-cli">💻 CLI Agent (cli/)<a class="headerlink" href="#-cli-agent-cli" title="Permanent link">&para;</a></h3>
-<p><strong>Role</strong>: CLI command implementation</p>
-<table>
-<thead>
-<tr>
-<th>Attribute</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Module</strong></td>
-<td><code>platform/services/cli/</code>, <code>scripts/</code></td>
-</tr>
-<tr>
-<td><strong>Label</strong></td>
-<td><code>agent:cli</code></td>
-</tr>
-<tr>
-<td><strong>Documents</strong></td>
-<td><code>cli/prd.md</code>, <code>cli/plan.md</code></td>
-</tr>
-<tr>
-<td><strong>Expertise</strong></td>
-<td>@clack/prompts, Commander.js, YAML, Shell scripting</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example Tasks</strong>:
-- New CLI commands (mcctl create, mcctl console, etc.)
-- Interactive prompts and wizards
-- Bash management scripts
-- Configuration file handling</p>
-<p><strong>Provides</strong> (→ to other agents):
-- CLI command interface → DevOps
-- Config file specifications → Backend, Frontend</p>
-<p><strong>Requires</strong> (← from other agents):
-- Domain interfaces ← Core
-- Repository implementations ← Core</p>
-<hr />
-<h3 id="-backend-agent-mcctl-api">🖥️ Backend Agent (mcctl-api/)<a class="headerlink" href="#-backend-agent-mcctl-api" title="Permanent link">&para;</a></h3>
-<p><strong>Role</strong>: REST API server development</p>
-<table>
-<thead>
-<tr>
-<th>Attribute</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Module</strong></td>
-<td><code>platform/services/mcctl-api/</code></td>
-</tr>
-<tr>
-<td><strong>Label</strong></td>
-<td><code>agent:backend</code></td>
-</tr>
-<tr>
-<td><strong>Documents</strong></td>
-<td><code>mcctl-api/prd.md</code>, <code>mcctl-api/plan.md</code></td>
-</tr>
-<tr>
-<td><strong>Expertise</strong></td>
-<td>Fastify, REST API, Authentication, OpenAPI</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example Tasks</strong>:
-- API endpoint implementation
-- Authentication and authorization plugins
-- OpenAPI/Swagger documentation
-- Dockerfile and container builds</p>
-<p><strong>Provides</strong> (→ to other agents):
-- REST API endpoint spec → Frontend
-- OpenAPI documentation → Frontend, DevOps
-- Docker image → DevOps</p>
-<p><strong>Requires</strong> (← from other agents):
-- Domain adapters ← Core
-- Shared Use Cases ← Core</p>
-<hr />
-<h3 id="-frontend-agent-mcctl-console">🎨 Frontend Agent (mcctl-console/)<a class="headerlink" href="#-frontend-agent-mcctl-console" title="Permanent link">&para;</a></h3>
-<p><strong>Role</strong>: Web Management Console development</p>
-<table>
-<thead>
-<tr>
-<th>Attribute</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Module</strong></td>
-<td><code>platform/services/mcctl-console/</code></td>
-</tr>
-<tr>
-<td><strong>Label</strong></td>
-<td><code>agent:frontend</code></td>
-</tr>
-<tr>
-<td><strong>Documents</strong></td>
-<td><code>mcctl-console/prd.md</code>, <code>mcctl-console/plan.md</code></td>
-</tr>
-<tr>
-<td><strong>Expertise</strong></td>
-<td>Next.js, React, Tailwind CSS, NextAuth.js</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example Tasks</strong>:
-- Next.js pages and components
-- Authentication integration (NextAuth.js)
-- BFF proxy layer
-- Dashboard and management UI</p>
-<p><strong>Provides</strong> (→ to other agents):
-- Docker image → DevOps
-- UI component specifications → (documentation)</p>
-<p><strong>Requires</strong> (← from other agents):
-- API endpoint spec ← Backend
-- Auth plugin spec ← Backend</p>
-<hr />
-<h3 id="-devops-agent-integration">🐳 DevOps Agent (Integration)<a class="headerlink" href="#-devops-agent-integration" title="Permanent link">&para;</a></h3>
-<p><strong>Role</strong>: Docker integration and E2E testing</p>
-<table>
-<thead>
-<tr>
-<th>Attribute</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Module</strong></td>
-<td><code>platform/</code> (docker-compose), <code>e2e/</code></td>
-</tr>
-<tr>
-<td><strong>Label</strong></td>
-<td><code>agent:devops</code></td>
-</tr>
-<tr>
-<td><strong>Documents</strong></td>
-<td><code>platform/README.md</code>, <code>e2e/README.md</code></td>
-</tr>
-<tr>
-<td><strong>Expertise</strong></td>
-<td>Docker Compose, Playwright, CI/CD</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example Tasks</strong>:
-- Docker Compose integration
-- E2E tests with Playwright
-- Service orchestration
-- CI/CD pipeline configuration</p>
-<p><strong>Provides</strong> (→ to other agents):
-- Integration test results → All
-- Deployment configurations → All</p>
-<p><strong>Requires</strong> (← from other agents):
-- API Dockerfile ← Backend
-- Console Dockerfile ← Frontend
-- CLI service command ← CLI</p>
-<hr />
-<h2 id="support-agents">Support Agents<a class="headerlink" href="#support-agents" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p>Support agents handle cross-cutting concerns and are invoked by commands or other agents.</p>
-</blockquote>
-<h3 id="-technical-writer-agent-docs">📝 Technical Writer Agent (docs/)<a class="headerlink" href="#-technical-writer-agent-docs" title="Permanent link">&para;</a></h3>
-<p><strong>Role</strong>: Bilingual documentation maintenance</p>
-<table>
-<thead>
-<tr>
-<th>Attribute</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Module</strong></td>
-<td><code>docs/</code></td>
-</tr>
-<tr>
-<td><strong>Command</strong></td>
-<td><code>/write-docs</code></td>
-</tr>
-<tr>
-<td><strong>Documents</strong></td>
-<td>MkDocs i18n structure</td>
-</tr>
-<tr>
-<td><strong>Expertise</strong></td>
-<td>MkDocs, Read the Docs, EN/KO translation</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Invocation</strong>:
-- <code>/write-docs create &lt;path&gt;</code> - Create new document
-- <code>/write-docs translate &lt;path&gt;</code> - Translate document
-- <code>/write-docs review &lt;path&gt;</code> - Review documentation
-- Called by Release Manager before releases</p>
-<p><strong>Provides</strong> (→ to other agents):
-- Updated documentation → All
-- Release notes → Release Manager</p>
-<p><strong>Rules</strong>:
-- ❌ Does NOT implement application features
-- ❌ Does NOT make architectural decisions
-- ✅ Only modifies files in <code>docs/</code> directory
-- ✅ Creates both <code>.md</code> and <code>.ko.md</code> versions</p>
-<hr />
-<h3 id="-release-manager-agent">🚀 Release Manager Agent<a class="headerlink" href="#-release-manager-agent" title="Permanent link">&para;</a></h3>
-<p><strong>Role</strong>: Version tagging and deployment</p>
-<table>
-<thead>
-<tr>
-<th>Attribute</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Scope</strong></td>
-<td>Git tags, Docker images, GitHub releases</td>
-</tr>
-<tr>
-<td><strong>Trigger</strong></td>
-<td>User request (릴리즈, 배포, release, deploy)</td>
-</tr>
-<tr>
-<td><strong>Expertise</strong></td>
-<td>Semantic Versioning, Git Flow, Docker, CI/CD</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Workflow</strong>:
-1. Pre-release checks (branch, uncommitted changes)
-2. Version determination (MAJOR/MINOR/PATCH)
-3. <strong>Invoke Technical Writer</strong> for documentation update
-4. Create Git tag
-5. Monitor GitHub Actions
-6. Verify Docker deployment</p>
-<p><strong>Provides</strong> (→ to other agents):
-- Release tags → All
-- Deployment status → DevOps</p>
-<p><strong>Rules</strong>:
-- ❌ Does NOT modify application code
-- ❌ Does NOT skip documentation update
-- ✅ Always invokes Technical Writer before tagging
-- ✅ Follows Semantic Versioning</p>
-<hr />
-<h2 id="communication-protocol">Communication Protocol<a class="headerlink" href="#communication-protocol" title="Permanent link">&para;</a></h2>
-<h3 id="message-types">Message Types<a class="headerlink" href="#message-types" title="Permanent link">&para;</a></h3>
-<p>Message types used for inter-agent communication:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">interface</span><span class="w"> </span><span class="nx">AgentMessage</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="nx">MessageType</span><span class="p">;</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nx">from</span><span class="o">:</span><span class="w"> </span><span class="kt">AgentId</span><span class="p">;</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="nx">to</span><span class="o">:</span><span class="w"> </span><span class="kt">AgentId</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'orchestrator'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'broadcast'</span><span class="p">;</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="nx">timestamp</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span><span class="nx">payload</span><span class="o">:</span><span class="w"> </span><span class="kt">MessagePayload</span><span class="p">;</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">}</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="kr">type</span><span class="w"> </span><span class="nx">MessageType</span><span class="w"> </span><span class="o">=</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'WORK_REQUEST'</span><span class="w">      </span><span class="c1">// Work assignment</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'WORK_COMPLETE'</span><span class="w">     </span><span class="c1">// Work completion</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'DEPENDENCY_READY'</span><span class="w">  </span><span class="c1">// Dependency available</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'DEPENDENCY_NEEDED'</span><span class="w"> </span><span class="c1">// Dependency required</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'SYNC_REQUEST'</span><span class="w">      </span><span class="c1">// Synchronization request</span>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'STATUS_UPDATE'</span><span class="w">     </span><span class="c1">// Status update</span>
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'BLOCKING_ISSUE'</span><span class="w">    </span><span class="c1">// Blocking issue occurred</span>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'REVIEW_REQUEST'</span><span class="w">    </span><span class="c1">// Review request</span>
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'REVIEW_COMPLETE'</span><span class="p">;</span><span class="w">  </span><span class="c1">// Review completion</span>
-<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="kr">type</span><span class="w"> </span><span class="nx">AgentId</span><span class="w"> </span><span class="o">=</span>
-<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'core'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'cli'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'backend'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'frontend'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'devops'</span><span class="w">  </span><span class="c1">// Development</span>
-<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="s1">'technical-writer'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'release-manager'</span><span class="p">;</span><span class="w">              </span><span class="c1">// Support</span>
-</code></pre></div>
-<h3 id="message-format-examples">Message Format Examples<a class="headerlink" href="#message-format-examples" title="Permanent link">&para;</a></h3>
-<p><strong>Work Request (WORK_REQUEST)</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WORK_REQUEST</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">orchestrator</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nt">payload</span><span class="p">:</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="nt">issue</span><span class="p">:</span><span class="w"> </span><span class="s">"#XX"</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="s">"feat(shared):</span><span class="nv"> </span><span class="s">Add</span><span class="nv"> </span><span class="s">repository</span><span class="nv"> </span><span class="s">interface"</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span><span class="nt">priority</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">high</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span><span class="nt">deadline</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span><span class="nt">context</span><span class="p">:</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="nt">milestone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">N</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="nt">phase</span><span class="p">:</span><span class="w"> </span><span class="s">"X.Y"</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">    </span><span class="nt">dependencies</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
-</code></pre></div></p>
-<p><strong>Dependency Ready (DEPENDENCY_READY)</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DEPENDENCY_READY</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">broadcast</span><span class="w">  </span><span class="c1"># to multiple agents</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nt">payload</span><span class="p">:</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">issue</span><span class="p">:</span><span class="w"> </span><span class="s">"#XX"</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span><span class="nt">artifact</span><span class="p">:</span><span class="w"> </span><span class="s">"IRepository</span><span class="nv"> </span><span class="s">interface"</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="s">"shared/src/application/ports/outbound/IRepository.ts"</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">  </span><span class="nt">exports</span><span class="p">:</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"Entity"</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"IRepository"</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span><span class="nt">usage_example</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">    </span><span class="no">import { IRepository, Entity } from '@minecraft-docker/shared';</span>
-</code></pre></div></p>
-<p><strong>Work Complete (WORK_COMPLETE)</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WORK_COMPLETE</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">orchestrator</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nt">payload</span><span class="p">:</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span><span class="nt">issue</span><span class="p">:</span><span class="w"> </span><span class="s">"#XX"</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">completed</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span><span class="nt">artifacts</span><span class="p">:</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">"shared/src/application/ports/outbound/IRepository.ts"</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">"interface"</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">"shared/src/index.ts"</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">"export"</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="w">  </span><span class="nt">tests_passed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">  </span><span class="nt">ready_for_merge</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">  </span><span class="nt">unblocks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"#YY"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"#ZZ"</span><span class="p p-Indicator">]</span>
-</code></pre></div></p>
-<p><strong>Blocking Issue (BLOCKING_ISSUE)</strong>:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BLOCKING_ISSUE</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">frontend</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">orchestrator</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nt">payload</span><span class="p">:</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="nt">issue</span><span class="p">:</span><span class="w"> </span><span class="s">"#XX"</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="nt">blocked_by</span><span class="p">:</span><span class="w"> </span><span class="s">"#YY"</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">  </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="s">"Need</span><span class="nv"> </span><span class="s">auth</span><span class="nv"> </span><span class="s">plugin</span><span class="nv"> </span><span class="s">spec</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">implement</span><span class="nv"> </span><span class="s">BFF</span><span class="nv"> </span><span class="s">proxy"</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">  </span><span class="nt">suggested_action</span><span class="p">:</span><span class="w"> </span><span class="s">"Request</span><span class="nv"> </span><span class="s">Backend</span><span class="nv"> </span><span class="s">agent</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">share</span><span class="nv"> </span><span class="s">auth</span><span class="nv"> </span><span class="s">spec</span><span class="nv"> </span><span class="s">early"</span>
-</code></pre></div></p>
-<hr />
-<h2 id="execution-flow">Execution Flow<a class="headerlink" href="#execution-flow" title="Permanent link">&para;</a></h2>
-<h3 id="phase-1-initialization">Phase 1: Initialization<a class="headerlink" href="#phase-1-initialization" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Orchestrator                    All Agents
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    │                               │
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    │  1. WORK_REQUEST (#A)         │
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    │──────────────────────────────▶│ Core (foundation tasks)
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    │                               │
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    │  2. WORK_REQUEST (#B)         │
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    │──────────────────────────────▶│ Backend (parallel - foundation)
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    │                               │
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    │  3. WORK_REQUEST (#C)         │
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    │──────────────────────────────▶│ Frontend (parallel - foundation)
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    │                               │
-</code></pre></div>
-<h3 id="phase-2-dependency-resolution">Phase 2: Dependency Resolution<a class="headerlink" href="#phase-2-dependency-resolution" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Core                 Orchestrator              CLI / Backend
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>  │                       │                         │
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>  │ WORK_COMPLETE (#A)    │                         │
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>  │──────────────────────▶│                         │
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>  │                       │                         │
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>  │                       │ DEPENDENCY_READY        │
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>  │                       │────────────────────────▶│
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>  │                       │                         │
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>  │                       │ WORK_REQUEST (next)     │
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>  │                       │────────────────────────▶│
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>  │                       │                         │
-</code></pre></div>
-<h3 id="phase-3-parallel-execution">Phase 3: Parallel Execution<a class="headerlink" href="#phase-3-parallel-execution" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>┌─────────────────────────────────────────────────────────────────┐
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>│                    PARALLEL EXECUTION WINDOW                     │
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>├─────────────────────────────────────────────────────────────────┤
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>│                                                                  │
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>│  Core Agent          CLI Agent         Backend Agent            │
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>│  ───────────         ──────────        ──────────────           │
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>│  Repository          CLI commands      Auth Plugin              │
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>│  implementations          │            API routes               │
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>│       │                   │                  │                   │
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>│       ▼                   ▼                  ▼                   │
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>│  Additional          More commands     More routes              │
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>│  adapters                 │                  │                   │
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>│                           │                  │                   │
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>│                           ▼                  ▼                   │
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>│                      Service cmd       OpenAPI docs             │
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>│                                                                  │
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>└─────────────────────────────────────────────────────────────────┘
-</code></pre></div>
-<h3 id="phase-4-sync-point---api-spec-ready">Phase 4: Sync Point - API Spec Ready<a class="headerlink" href="#phase-4-sync-point---api-spec-ready" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Backend                Orchestrator              Frontend
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>   │                        │                        │
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>   │ WORK_COMPLETE          │                        │
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>   │ (API Spec Ready)       │                        │
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>   │───────────────────────▶│                        │
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>   │                        │                        │
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>   │                        │ SYNC: API_SPEC_READY   │
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>   │                        │───────────────────────▶│
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>   │                        │                        │
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>   │                        │ WORK_REQUEST (BFF)     │
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>   │                        │───────────────────────▶│
-<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>   │                        │                        │
-</code></pre></div>
-<h3 id="phase-5-docker--integration">Phase 5: Docker &amp; Integration<a class="headerlink" href="#phase-5-docker--integration" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>Backend / Frontend          Orchestrator              DevOps
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>       │                         │                       │
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>       │ WORK_COMPLETE           │                       │
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>       │ (Dockerfiles)           │                       │
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>       │────────────────────────▶│                       │
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>       │                         │                       │
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>       │                         │ DEPENDENCY_READY      │
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>       │                         │ (Both Dockerfiles)    │
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>       │                         │──────────────────────▶│
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>       │                         │                       │
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>       │                         │ WORK_REQUEST          │
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>       │                         │ (Integration)         │
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>       │                         │──────────────────────▶│
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>       │                         │                       │
-</code></pre></div>
-<hr />
-<h2 id="parallel-execution-matrix">Parallel Execution Matrix<a class="headerlink" href="#parallel-execution-matrix" title="Permanent link">&para;</a></h2>
-<h3 id="identifying-parallelizable-tasks">Identifying Parallelizable Tasks<a class="headerlink" href="#identifying-parallelizable-tasks" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Criteria</th>
-<th>Parallelizable</th>
-<th>Sequential</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>No shared dependencies</td>
-<td>✅ Yes</td>
-<td>-</td>
-</tr>
-<tr>
-<td>Different modules</td>
-<td>✅ Yes</td>
-<td>-</td>
-</tr>
-<tr>
-<td>Same module, different features</td>
-<td>⚠️ Depends</td>
-<td>-</td>
-</tr>
-<tr>
-<td>Explicit dependency exists</td>
-<td>-</td>
-<td>✅ Required</td>
-</tr>
-<tr>
-<td>Output of one is input of another</td>
-<td>-</td>
-<td>✅ Required</td>
-</tr>
-</tbody>
-</table>
-<h3 id="example-parallel-groups">Example Parallel Groups<a class="headerlink" href="#example-parallel-groups" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Group</th>
-<th>Agents</th>
-<th>Can Run In Parallel</th>
-<th>Prerequisites</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Foundation</strong></td>
-<td>Core, Backend, Frontend</td>
-<td>Yes</td>
-<td>None</td>
-</tr>
-<tr>
-<td><strong>Feature Development</strong></td>
-<td>Core, CLI, Backend, Frontend</td>
-<td>Yes</td>
-<td>Foundation complete</td>
-</tr>
-<tr>
-<td><strong>Dockerization</strong></td>
-<td>Backend, Frontend, CLI</td>
-<td>Yes</td>
-<td>Features complete</td>
-</tr>
-<tr>
-<td><strong>Integration</strong></td>
-<td>DevOps</td>
-<td>No (sequential)</td>
-<td>Dockerfiles ready</td>
-</tr>
-</tbody>
-</table>
-<h3 id="conceptual-dependency-flow">Conceptual Dependency Flow<a class="headerlink" href="#conceptual-dependency-flow" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Legend: ─── direct dependency
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>        ··· optional/weak dependency
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>Foundation:  Core ─────┬─── Adapters ───┬─── CLI Commands ───┐
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>                       │                │                     │
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>                       ├─── Optional    │                     ├─── Service Cmd
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>                       │   (extensions) │                     │
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>                       │                └··· Backend ─── Auth │─── Routes ───┐
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>                       │                         │            │               │
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>                       └─── Interfaces ──────────┘            ├─── More Routes│─── Swagger ─── Dockerfile
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>                                                              │               │
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>Frontend:    Foundation ─── Auth ─────────────────────────────┼─── BFF ─── Pages ─── More Pages ─── Dockerfile
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>                                                              │
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>                                                              ▼
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>Integration:                              Backend + Frontend Dockerfiles ─── Compose ─── E2E Tests
-</code></pre></div>
-<hr />
-<h2 id="sync-points">Sync Points<a class="headerlink" href="#sync-points" title="Permanent link">&para;</a></h2>
-<h3 id="defining-sync-points">Defining Sync Points<a class="headerlink" href="#defining-sync-points" title="Permanent link">&para;</a></h3>
-<p>A sync point is required when:
-1. One agent's output is needed by another agent
-2. Multiple agents must coordinate before proceeding
-3. Integration testing requires all components ready</p>
-<h3 id="example-sync-points">Example Sync Points<a class="headerlink" href="#example-sync-points" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Sync ID</th>
-<th>Condition</th>
-<th>From</th>
-<th>To</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>SYNC-INTERFACE</strong></td>
-<td>Interface complete</td>
-<td>Core → All</td>
-<td>Share domain interfaces</td>
-<td></td>
-</tr>
-<tr>
-<td><strong>SYNC-AUTH</strong></td>
-<td>Auth spec complete</td>
-<td>Backend → Frontend</td>
-<td>Share auth configuration</td>
-<td></td>
-</tr>
-<tr>
-<td><strong>SYNC-API</strong></td>
-<td>API docs complete</td>
-<td>Backend → Frontend</td>
-<td>Share OpenAPI spec</td>
-<td></td>
-</tr>
-<tr>
-<td><strong>SYNC-DOCKER</strong></td>
-<td>Dockerfiles complete</td>
-<td>Backend, Frontend → DevOps</td>
-<td>Docker images ready</td>
-<td></td>
-</tr>
-<tr>
-<td><strong>SYNC-INTEGRATION</strong></td>
-<td>Integration ready</td>
-<td>DevOps → All</td>
-<td>Test environment ready</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h3 id="information-shared-at-sync-points">Information Shared at Sync Points<a class="headerlink" href="#information-shared-at-sync-points" title="Permanent link">&para;</a></h3>
-<p><strong>SYNC-INTERFACE: Interface Ready</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nt">sync</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SYNC-INTERFACE</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nt">artifacts</span><span class="p">:</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="s">"shared/src/application/ports/outbound/IRepository.ts"</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="nt">exports</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"Entity"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"IRepository"</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="nt">usage</span><span class="p">:</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">  </span><span class="nt">cli</span><span class="p">:</span><span class="w"> </span><span class="s">"Used</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">repository</span><span class="nv"> </span><span class="s">implementation"</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="s">"Used</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">API</span><span class="nv"> </span><span class="s">integration"</span>
-</code></pre></div></p>
-<p><strong>SYNC-AUTH: Auth Spec Ready</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nt">sync</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SYNC-AUTH</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nt">artifacts</span><span class="p">:</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="s">"mcctl-api/src/plugins/auth.ts"</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="nt">exports</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"AuthPluginOptions"</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">spec</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">      </span><span class="no">Access Modes: internal | api-key | ip-whitelist | api-key-ip | open</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">      </span><span class="no">Header: X-API-Key</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">      </span><span class="no">Response: 401 Unauthorized, 403 Forbidden</span>
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="nt">usage</span><span class="p">:</span>
-<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">  </span><span class="nt">frontend</span><span class="p">:</span><span class="w"> </span><span class="s">"Set</span><span class="nv"> </span><span class="s">X-API-Key</span><span class="nv"> </span><span class="s">header</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">BFF</span><span class="nv"> </span><span class="s">proxy"</span>
-</code></pre></div></p>
-<p><strong>SYNC-API: API Spec Ready</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nt">sync</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SYNC-API</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="nt">artifacts</span><span class="p">:</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="s">"mcctl-api/docs/openapi.json"</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://localhost:5001/docs"</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="nt">endpoints</span><span class="p">:</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="w">  </span><span class="nt">servers</span><span class="p">:</span><span class="w"> </span><span class="s">"GET/POST</span><span class="nv"> </span><span class="s">/api/servers,</span><span class="nv"> </span><span class="s">GET/POST/DELETE</span><span class="nv"> </span><span class="s">/api/servers/:name"</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="w">  </span><span class="nt">worlds</span><span class="p">:</span><span class="w"> </span><span class="s">"GET/POST</span><span class="nv"> </span><span class="s">/api/worlds,</span><span class="nv"> </span><span class="s">GET/DELETE</span><span class="nv"> </span><span class="s">/api/worlds/:name"</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">  </span><span class="nt">players</span><span class="p">:</span><span class="w"> </span><span class="s">"GET</span><span class="nv"> </span><span class="s">/api/servers/:name/players,</span><span class="nv"> </span><span class="s">whitelist,</span><span class="nv"> </span><span class="s">bans,</span><span class="nv"> </span><span class="s">ops"</span>
-<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="nt">usage</span><span class="p">:</span>
-<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="w">  </span><span class="nt">frontend</span><span class="p">:</span><span class="w"> </span><span class="s">"Generate</span><span class="nv"> </span><span class="s">React</span><span class="nv"> </span><span class="s">Query</span><span class="nv"> </span><span class="s">hooks,</span><span class="nv"> </span><span class="s">map</span><span class="nv"> </span><span class="s">BFF</span><span class="nv"> </span><span class="s">routes"</span>
-</code></pre></div></p>
-<hr />
-<h2 id="work-requestresponse-protocol">Work Request/Response Protocol<a class="headerlink" href="#work-requestresponse-protocol" title="Permanent link">&para;</a></h2>
-<h3 id="work-request-format">Work Request Format<a class="headerlink" href="#work-request-format" title="Permanent link">&para;</a></h3>
-<p>When an agent requests work from another agent:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="gu">## 📋 WORK_REQUEST</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="gs">**From**</span>: {requesting_agent}
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="gs">**To**</span>: {target_agent}
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="gs">**Issue**</span>: #{issue_number}
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="gs">**Priority**</span>: {high|medium|low}
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="gu">### Context</span>
-<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>{Background explanation of why this work is needed}
-<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>
-<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="gu">### Requirements</span>
-<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="k">- [ ]</span> {Specific requirement 1}
-<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="k">- [ ]</span> {Specific requirement 2}
-<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>
-<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="gu">### Expected Output</span>
-<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a>{Expected deliverable format}
-<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a>
-<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a><span class="gu">### Deadline</span>
-<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a>{Deadline if any, otherwise "as soon as dependencies met"}
-</code></pre></div>
-<h3 id="work-completion-report-format">Work Completion Report Format<a class="headerlink" href="#work-completion-report-format" title="Permanent link">&para;</a></h3>
-<p>When an agent reports work completion:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="gu">## ✅ WORK_COMPLETE</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="gs">**From**</span>: {completing_agent}
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="gs">**To**</span>: orchestrator
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="gs">**Issue**</span>: #{issue_number}
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
-<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="gu">### Completed Tasks</span>
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="k">- [x]</span> {Completed task 1}
-<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="k">- [x]</span> {Completed task 2}
-<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>
-<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="gu">### Artifacts</span>
-<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>| File | Type | Description |
-<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>|------|------|-------------|
-<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>| {path} | {type} | {description} |
-<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a>
-<a id="__codelineno-21-16" name="__codelineno-21-16" href="#__codelineno-21-16"></a><span class="gu">### Exports (if applicable)</span>
-<a id="__codelineno-21-17" name="__codelineno-21-17" href="#__codelineno-21-17"></a>```typescript
-<a id="__codelineno-21-18" name="__codelineno-21-18" href="#__codelineno-21-18"></a>// Usage example
-<a id="__codelineno-21-19" name="__codelineno-21-19" href="#__codelineno-21-19"></a>import { ... } from '@minecraft-docker/{package}';
-</code></pre></div>
-<h3 id="tests">Tests<a class="headerlink" href="#tests" title="Permanent link">&para;</a></h3>
+<h1 id="에이전트-협업">에이전트 협업<a class="headerlink" href="#에이전트-협업" title="Permanent link">&para;</a></h1>
+<p>이 문서는 <code>.claude/</code>의 Claude Code 서브에이전트와 슬래시 커맨드가 이 저장소에서 어떻게 함께 동작하는지 설명합니다. 누가 무엇을 담당하는지, 작업을 어떻게 계획하는지, <code>/work</code>가 작업을 어떻게 라우팅하는지, 완료를 어떻게 강제하는지를 다룹니다.</p>
+<div class="admonition note">
+<p class="admonition-title">기준 문서</p>
+<p>여기에 설명된 동작은 <code>.claude/agents/</code>, <code>.claude/commands/</code>, <code>.claude/hooks/</code>의 파일과 저장소 루트의 <code>CLAUDE.md</code>, <code>DEVELOPMENT.md</code>에서 정의합니다. 이 문서와 해당 파일의 내용이 다르면 해당 파일이 우선합니다.</p>
+</div>
+<h2 id="개요와-원칙">개요와 원칙<a class="headerlink" href="#개요와-원칙" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Unit Tests: ✅ Passed ({n} tests)</li>
-<li>Integration Tests: ✅ Passed ({n} tests)</li>
+<li><strong>이슈 기반.</strong> 모든 변경은 GitHub Issue에서 시작합니다. 이슈 1개 = 브랜치 1개 = PR 1개입니다. <a href="../git-workflow/">Git 워크플로우</a>를 참조하세요.</li>
+<li><strong>계획 후 실행.</strong> <code>/plan-work</code>는 계획만 만들고 코드를 수정하지 않습니다. 실행은 <code>/work</code>가 합니다.</li>
+<li><strong>전문 에이전트가 모듈을 담당.</strong> 각 에이전트는 정해진 경로를 담당하며, 메인 세션이 담당 에이전트에게 작업을 라우팅합니다.</li>
+<li><strong>메시지 버스 없음.</strong> 에이전트는 런타임 프로토콜로 메시지를 주고받지 않습니다. 작업 전달은 <code>Agent</code> tool 호출(프롬프트 입력, 에이전트의 최종 보고 출력)로 이루어지며, 팀 구성 시에는 <code>SendMessage</code>를 사용합니다.</li>
+<li><strong>진행 상황은 Git과 GitHub에 기록.</strong> 로컬 진행 기록은 <code>task.md</code>(gitignore 대상)에, 완료 항목은 이슈 체크박스에 남깁니다.</li>
 </ul>
-<h3 id="unblocks">Unblocks<a class="headerlink" href="#unblocks" title="Permanent link">&para;</a></h3>
-<p>The following issues can now start:
-- #{issue1} - {title}
-- #{issue2} - {title}</p>
-<h3 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h3>
-<p>{Special notes or things subsequent workers should know}
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>---
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>## Progress Tracking
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>### Milestone Progress File
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>Each agent updates their progress in plan.md:
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>```markdown
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>&lt;!-- platform/services/{module}/plan.md --&gt;
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a># Module Plan
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>
-<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>## Progress
-<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>
-<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>| Issue | Title | Status | Agent | Updated |
-<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a>|-------|-------|--------|-------|---------|
-<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>| #XX | Feature A | ✅ Complete | {agent} | YYYY-MM-DD |
-<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a>| #YY | Feature B | 🔄 In Progress | {agent} | YYYY-MM-DD |
-<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a>| #ZZ | Feature C | ⏳ Pending | - | - |
-<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>| #WW | Feature D | 🚫 Blocked by #XX | - | - |
-<a id="__codelineno-22-21" name="__codelineno-22-21" href="#__codelineno-22-21"></a>
-<a id="__codelineno-22-22" name="__codelineno-22-22" href="#__codelineno-22-22"></a>## Dependencies Provided
-<a id="__codelineno-22-23" name="__codelineno-22-23" href="#__codelineno-22-23"></a>- [x] Interface A → Other agents
-<a id="__codelineno-22-24" name="__codelineno-22-24" href="#__codelineno-22-24"></a>- [ ] Interface B → Other agents
-<a id="__codelineno-22-25" name="__codelineno-22-25" href="#__codelineno-22-25"></a>
-<a id="__codelineno-22-26" name="__codelineno-22-26" href="#__codelineno-22-26"></a>## Sync Points
-<a id="__codelineno-22-27" name="__codelineno-22-27" href="#__codelineno-22-27"></a>- [x] SYNC-1: Interface shared
-<a id="__codelineno-22-28" name="__codelineno-22-28" href="#__codelineno-22-28"></a>- [ ] SYNC-2: Pending
-</code></pre></div></p>
-<h3 id="dashboard-view">Dashboard View<a class="headerlink" href="#dashboard-view" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>┌─────────────────────────────────────────────────────────────────┐
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>│                    MILESTONE PROGRESS DASHBOARD                  │
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>├─────────────────────────────────────────────────────────────────┤
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>│                                                                  │
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>│  Overall: ████████░░░░░░░░░░░░ 35% (X/Y issues)                 │
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>│                                                                  │
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>│  🔧 Core (shared/)      ████████████░░░░░░░░ 50% (A/B)          │
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>│                                                                  │
-<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>│  💻 CLI (cli/)          ████░░░░░░░░░░░░░░░░ 25% (C/D)          │
-<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>│                                                                  │
-<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>│  🖥️ Backend (mcctl-api/) ██████░░░░░░░░░░░░░░ 29% (E/F)          │
-<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>│                                                                  │
-<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>│  🎨 Frontend (console/)  ████████░░░░░░░░░░░░ 33% (G/H)          │
-<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a>│                                                                  │
-<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a>│  🐳 DevOps (integration) ░░░░░░░░░░░░░░░░░░░░ 0% (I/J)           │
-<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>│                                                                  │
-<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a>│  Legend: ✅ Complete  🔄 In Progress  ⏳ Pending  🚫 Blocked     │
-<a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>└─────────────────────────────────────────────────────────────────┘
-</code></pre></div>
-<hr />
-<h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
-<h3 id="handling-blockers">Handling Blockers<a class="headerlink" href="#handling-blockers" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nt">scenario</span><span class="p">:</span><span class="w"> </span><span class="s">"Frontend</span><span class="nv"> </span><span class="s">blocked</span><span class="nv"> </span><span class="s">by</span><span class="nv"> </span><span class="s">Backend</span><span class="nv"> </span><span class="s">dependency"</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="nt">resolution_steps</span><span class="p">:</span>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">1. Frontend sends BLOCKING_ISSUE to Orchestrator</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">2. Orchestrator checks Backend progress</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">3. Options</span><span class="p p-Indicator">:</span>
-<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">a. If dependency near completion → Wait</span>
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">b. If dependency delayed → Request early spec sharing</span>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">c. If dependency blocked → Escalate and replan</span>
-<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>
-<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="nt">message_flow</span><span class="p">:</span>
-<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="w">  </span><span class="nt">frontend → orchestrator</span><span class="p">:</span><span class="w"> </span><span class="s">"BLOCKING_ISSUE:</span><span class="nv"> </span><span class="s">need</span><span class="nv"> </span><span class="s">dependency</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">backend"</span>
-<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span class="w">  </span><span class="nt">orchestrator → backend</span><span class="p">:</span><span class="w"> </span><span class="s">"SYNC_REQUEST:</span><span class="nv"> </span><span class="s">Share</span><span class="nv"> </span><span class="s">spec</span><span class="nv"> </span><span class="s">early"</span>
-<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="w">  </span><span class="nt">backend → frontend</span><span class="p">:</span><span class="w"> </span><span class="s">"DEPENDENCY_READY:</span><span class="nv"> </span><span class="s">Spec</span><span class="nv"> </span><span class="s">(partial)"</span>
-<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a><span class="w">  </span><span class="nt">frontend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Proceeds with partial spec, marks for later update</span>
-</code></pre></div>
-<h3 id="rollback-handling">Rollback Handling<a class="headerlink" href="#rollback-handling" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="nt">scenario</span><span class="p">:</span><span class="w"> </span><span class="s">"Integration</span><span class="nv"> </span><span class="s">test</span><span class="nv"> </span><span class="s">fails"</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="nt">resolution_steps</span><span class="p">:</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">1. DevOps reports BLOCKING_ISSUE with test results</span>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">2. Orchestrator analyzes failure root cause</span>
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">3. Assigns fix task to responsible agent</span>
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">4. Re-runs integration after fix</span>
-<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>
-<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="nt">message_flow</span><span class="p">:</span>
-<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="w">  </span><span class="nt">devops → orchestrator</span><span class="p">:</span><span class="w"> </span><span class="s">"BLOCKING_ISSUE:</span><span class="nv"> </span><span class="s">Integration</span><span class="nv"> </span><span class="s">failure</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">E2E"</span>
-<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">orchestrator → {responsible_agent}</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">"REVIEW_REQUEST:</span><span class="nv"> </span><span class="s">Fix</span><span class="nv"> </span><span class="s">issue"</span>
-<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a><span class="w">  </span><span class="p p-Indicator">{</span><span class="nv">responsible_agent</span><span class="p p-Indicator">}</span><span class="w"> </span><span class="nt">→ orchestrator</span><span class="p">:</span><span class="w"> </span><span class="s">"WORK_COMPLETE:</span><span class="nv"> </span><span class="s">Fix</span><span class="nv"> </span><span class="s">applied"</span>
-<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a><span class="w">  </span><span class="nt">orchestrator → devops</span><span class="p">:</span><span class="w"> </span><span class="s">"WORK_REQUEST:</span><span class="nv"> </span><span class="s">Re-run</span><span class="nv"> </span><span class="s">E2E</span><span class="nv"> </span><span class="s">tests"</span>
-</code></pre></div>
-<hr />
-<h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
-<h3 id="agent-module-mapping">Agent Module Mapping<a class="headerlink" href="#agent-module-mapping" title="Permanent link">&para;</a></h3>
+<h2 id="에이전트">에이전트<a class="headerlink" href="#에이전트" title="Permanent link">&para;</a></h2>
+<p>모든 에이전트 정의는 <code>.claude/agents/</code>에 있습니다. 에이전트에는 <code>tools:</code> 제한이 없으며 모든 도구를 상속합니다. 모델은 별칭(<code>opus</code>, <code>sonnet</code>)으로만 지정하므로 새 모델이 나와도 파일을 수정할 필요가 없습니다.</p>
 <table>
 <thead>
 <tr>
-<th>Agent</th>
-<th>Module</th>
-<th>Label</th>
-<th>Primary Focus</th>
+<th>에이전트</th>
+<th>담당</th>
+<th>모델</th>
+<th>레이블</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>🔧 Core</td>
-<td><code>platform/services/shared/</code></td>
+<td><code>orchestrator-agent</code></td>
+<td>요청의 진입점. 분석, 계획, 위임, 조율을 수행하며 코드를 작성하지 않습니다.</td>
+<td>opus</td>
+<td><code>agent:orchestrator</code></td>
+</tr>
+<tr>
+<td><code>core-agent</code></td>
+<td><code>platform/services/shared/</code>, <code>platform/services/mod-source-*/</code> (도메인 엔티티, 값 객체, 유스케이스, 포트/어댑터)</td>
+<td>opus</td>
 <td><code>agent:core</code></td>
-<td>Domain/Ports</td>
 </tr>
 <tr>
-<td>💻 CLI</td>
-<td><code>platform/services/cli/</code>, <code>scripts/</code></td>
+<td><code>cli-agent</code></td>
+<td><code>platform/services/cli/</code>, <code>platform/scripts/</code>, <code>templates/</code></td>
+<td>sonnet</td>
 <td><code>agent:cli</code></td>
-<td>Commands</td>
 </tr>
 <tr>
-<td>🖥️ Backend</td>
-<td><code>platform/services/mcctl-api/</code></td>
+<td><code>backend-agent</code></td>
+<td><code>platform/services/mcctl-api/</code> (Fastify, OpenAPI)</td>
+<td>sonnet</td>
 <td><code>agent:backend</code></td>
-<td>API Routes</td>
 </tr>
 <tr>
-<td>🎨 Frontend</td>
-<td><code>platform/services/mcctl-console/</code></td>
+<td><code>frontend-agent</code></td>
+<td><code>platform/services/mcctl-console/</code> (Next.js, React, MUI 5.x, Better Auth)</td>
+<td>sonnet</td>
 <td><code>agent:frontend</code></td>
-<td>UI Pages</td>
 </tr>
 <tr>
-<td>🐳 DevOps</td>
-<td><code>platform/</code>, <code>e2e/</code></td>
+<td><code>devops-agent</code></td>
+<td>Docker 관련 파일과 나머지 <code>platform/</code>, <code>e2e/</code>, <code>.github/workflows/</code>, <code>.claude/hooks/</code></td>
+<td>sonnet</td>
 <td><code>agent:devops</code></td>
-<td>Docker/E2E</td>
 </tr>
 <tr>
-<td>📝 Docs</td>
-<td><code>docs/</code></td>
+<td><code>technical-writer</code></td>
+<td><code>docs/</code>, <code>README*</code>, <code>CHANGELOG.md</code> (영어/한국어)</td>
+<td>sonnet</td>
 <td><code>agent:docs</code></td>
-<td>Documentation</td>
 </tr>
 <tr>
-<td>🚀 Release</td>
-<td>Git tags, releases</td>
+<td><code>release-manager</code></td>
+<td>버전 올리기, <code>v*</code> 태그, GitHub Release, 릴리즈 후 검증</td>
+<td>sonnet</td>
 <td><code>agent:release</code></td>
-<td>Releases</td>
 </tr>
 </tbody>
 </table>
-<h3 id="typical-dependency-flow">Typical Dependency Flow<a class="headerlink" href="#typical-dependency-flow" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Core (Foundation)
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>   ├─→ CLI (Commands, uses Core interfaces)
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>   ├─→ Backend (API, uses Core interfaces)
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>   │      └─→ Frontend (UI, uses Backend API)
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>   │              └─→ DevOps (Integration, uses all Dockerfiles)
-<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>   └─→ DevOps (Service scripts)
+<p><code>/plan-work</code>와 <code>/build-kb</code> 커맨드도 <code>opus</code>로 실행되며, <code>/work</code>, <code>/write-docs</code>, <code>/sync-docs</code>, <code>/update-docs</code>는 <code>sonnet</code>으로 실행됩니다.</p>
+<p>에이전트별 참고 사항입니다.</p>
+<ul>
+<li><code>mcctl-console</code>은 Docker가 아니라 PM2로 네이티브 실행됩니다.</li>
+<li><code>release-manager</code>는 Docker 이미지가 아니라 npm 패키지를 다룹니다. <code>v*</code> 태그를 push하면 <code>.github/workflows/release.yml</code>이 5개 패키지(<code>shared</code>, <code>mod-source-modrinth</code>, <code>mcctl-api</code>, <code>mcctl-console</code>, <code>mcctl</code>)를 발행하고 GitHub Release를 만듭니다.</li>
+<li>레이블 열의 <code>agent:*</code> 값은 각 에이전트 정의의 Identity 표에 선언된 레이블입니다.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Architect 에이전트는 이 저장소에 포함되어 있지 않습니다</p>
+<p><code>orchestrator-agent.md</code>와 <code>/plan-work</code>는 <code>system-architect</code>, <code>backend-architect</code>, <code>frontend-architect</code>, <code>devops-architect</code>, <code>quality-engineer</code>를 언급합니다. 이들은 <strong>선택 사항인 사용자 레벨 에이전트</strong>이며 <code>.claude/agents/</code>에 포함되어 있지 않습니다. 워크플로우는 이들에 의존하지 않습니다. 없으면 메인 세션이나 담당 에이전트가 설계 단계를 처리합니다.</p>
+</div>
+<h2 id="워크플로우">워크플로우<a class="headerlink" href="#워크플로우" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart LR
+    A[요청] --&gt; B[orchestrator-agent&lt;br/&gt;접수 및 분석]
+    B --&gt; C[GitHub Issue]
+    C --&gt; D["/plan-work&lt;br/&gt;계획만 수립"]
+    D --&gt; E{계획 승인?}
+    E -- 아니오 --&gt; D
+    E -- 예 --&gt; F["/work&lt;br/&gt;브랜치, TDD, PR, 리뷰, 머지"]
+    F --&gt; G[완료: Stop hook이 검증]</code></pre>
+<ol>
+<li><strong>접수.</strong> <code>CLAUDE.md</code>의 저장소 규칙에 따라 요청은 <code>orchestrator-agent</code>가 접수하고, 분석하여 전문 에이전트에게 분석을 위임합니다. 이 단계에서는 코드를 수정하지 않습니다.</li>
+<li><strong>이슈.</strong> 분석 결과를 GitHub Issue로 만듭니다(요약, 근본 원인 또는 요구사항, 계획, 수정 대상 파일, 브랜치 전략, 완료 조건).</li>
+<li><strong>계획.</strong> <code>/plan-work</code>가 작업 분해, 의존성, 병렬 그룹, 에이전트 배정, 실행 구성안(Teams 또는 순차 서브에이전트)을 만듭니다. 코드 수정이나 브랜치 생성은 하지 않습니다.</li>
+<li><strong>승인.</strong> 계획을 검토합니다.</li>
+<li><strong>실행.</strong> <code>/work</code>가 작업을 완료까지 진행합니다. <code>/work</code>를 호출하는 것이 브랜치 생성, 커밋, PR 생성, 리뷰, 머지에 대한 승인입니다.</li>
+</ol>
+<h3 id="plan-work"><code>/plan-work</code><a class="headerlink" href="#plan-work" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>/plan-work<span class="w">                           </span><span class="c1"># 대화 컨텍스트 기반 계획</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>/plan-work<span class="w"> </span>--issue<span class="w"> </span>&lt;N&gt;<span class="w">               </span><span class="c1"># 단일 이슈</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>/plan-work<span class="w"> </span>--milestone<span class="w"> </span>&lt;N&gt;<span class="w">           </span><span class="c1"># 마일스톤의 열린 이슈 전체</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>/plan-work<span class="w"> </span>--issues<span class="w"> </span>&lt;N1,N2,...&gt;<span class="w">      </span><span class="c1"># 복수 이슈</span>
 </code></pre></div>
-<h3 id="command-reference">Command Reference<a class="headerlink" href="#command-reference" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Orchestrator commands</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>/work<span class="w"> </span>--milestone<span class="w"> </span>N<span class="w">              </span><span class="c1"># Start milestone orchestration</span>
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>/work<span class="w"> </span>--issue<span class="w"> </span>XX<span class="w">                 </span><span class="c1"># Work on specific issue</span>
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="c1"># Agent-specific</span>
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>/work<span class="w"> </span>--agent<span class="w"> </span>core<span class="w"> </span>--issue<span class="w"> </span>XX<span class="w">    </span><span class="c1"># Assign to Core agent</span>
-<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>/work<span class="w"> </span>--agent<span class="w"> </span>backend<span class="w"> </span>--parallel<span class="w"> </span><span class="c1"># Run backend tasks in parallel</span>
-<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>
-<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="c1"># Status</span>
-<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>/status<span class="w"> </span>--milestone<span class="w"> </span>N<span class="w">            </span><span class="c1"># Show progress</span>
-<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>/status<span class="w"> </span>--agent<span class="w"> </span>core<span class="w">             </span><span class="c1"># Show agent status</span>
-<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a>/deps<span class="w"> </span>--issue<span class="w"> </span>XX<span class="w">                 </span><span class="c1"># Show dependencies for issue</span>
+<h3 id="계획-먼저의-적용-방식">"계획 먼저"의 적용 방식<a class="headerlink" href="#계획-먼저의-적용-방식" title="Permanent link">&para;</a></h3>
+<ul>
+<li>요청이 <code>orchestrator-agent</code>를 통해 접수되면 <code>/plan-work</code>로 계획을 먼저 세우고 그다음 <code>/work</code>를 실행합니다.</li>
+<li><code>/work</code> 안에서는 메인 세션이 티어(아래 참조)로 라우팅합니다. <code>/plan-work</code>를 직접 실행하는 것은 T4일 때뿐입니다. 더 낮은 티어는 이슈의 <code>Files to Modify</code>를 기준으로 바로 구현합니다.</li>
+</ul>
+<h2 id="work-모드와-라우팅"><code>/work</code> 모드와 라우팅<a class="headerlink" href="#work-모드와-라우팅" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>/work<span class="w">                         </span><span class="c1"># 컨텍스트 모드: 대화에서 이슈를 만들고 실행</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>/work<span class="w"> </span>--issue<span class="w"> </span>&lt;N&gt;<span class="w">             </span><span class="c1"># 단일 이슈</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>/work<span class="w"> </span>--milestone<span class="w"> </span>&lt;N&gt;<span class="w">         </span><span class="c1"># 마일스톤의 모든 이슈를 의존성 순서로 처리</span>
 </code></pre></div>
-<hr />
-<h2 id="agent-prompt-files">Agent Prompt Files<a class="headerlink" href="#agent-prompt-files" title="Permanent link">&para;</a></h2>
-<p>Each agent has its own prompt file in <code>.claude/agents/</code>:</p>
 <table>
 <thead>
 <tr>
-<th>Agent</th>
-<th>Prompt File</th>
+<th>옵션</th>
+<th>설명</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Orchestrator</td>
-<td><code>.claude/agents/orchestrator-agent.md</code></td>
+<td><code>--dry-run</code></td>
+<td>계획(이슈, 순서, 브랜치)만 출력하고 중단합니다. 상태 파일 생성과 변경이 없습니다.</td>
 </tr>
 <tr>
-<td>Core</td>
-<td><code>.claude/agents/core-agent.md</code></td>
+<td><code>--contributor</code></td>
+<td>Fork 모드. 머지하지 않습니다. 아래 "기여자 모드" 절을 참조하세요.</td>
 </tr>
 <tr>
-<td>CLI</td>
-<td><code>.claude/agents/cli-agent.md</code></td>
+<td><code>--skip-review</code></td>
+<td>코드 리뷰를 건너뜁니다(긴급 수정 전용). <code>REVIEW=skipped</code>로 기록됩니다.</td>
 </tr>
 <tr>
-<td>Backend</td>
-<td><code>.claude/agents/backend-agent.md</code></td>
-</tr>
-<tr>
-<td>Frontend</td>
-<td><code>.claude/agents/frontend-agent.md</code></td>
-</tr>
-<tr>
-<td>DevOps</td>
-<td><code>.claude/agents/devops-agent.md</code></td>
-</tr>
-<tr>
-<td>Technical Writer</td>
-<td><code>.claude/agents/technical-writer.md</code></td>
-</tr>
-<tr>
-<td>Release Manager</td>
-<td><code>.claude/agents/release-manager.md</code></td>
+<td><code>--parallel</code></td>
+<td>마일스톤 모드 전용. 독립적인 이슈를 동시에 실행하며, 각 Agent는 <code>isolation: "worktree"</code>를 사용합니다. 브랜치는 하나씩 병합하고 병합할 때마다 테스트를 다시 실행합니다.</td>
 </tr>
 </tbody>
 </table>
-<p>Use these prompts to spawn specialized agents for each domain.</p>
+<p>단일 이슈에 대해 <code>/work</code>는 다음을 수행합니다.</p>
+<ol>
+<li>이슈를 읽고 상태 파일을 기록합니다.</li>
+<li>최신 <code>develop</code>에서 <code>feature/&lt;N&gt;-&lt;description&gt;</code>(또는 <code>bugfix/...</code>) 브랜치를 만듭니다.</li>
+<li>작업을 라우팅(아래 참조)하고 TDD로 구현하며, 체크포인트마다 <code>&lt;type&gt;: &lt;description&gt; (#&lt;N&gt;)</code> 형식으로 커밋합니다.</li>
+<li>항목이 완료될 때마다 이슈 체크박스를 체크합니다.</li>
+<li>외부 동작이 새로 생기거나 바뀌면 E2E 테스트를 추가합니다(REST API는 <code>e2e/</code>의 Playwright, CLI는 <code>platform/services/cli/tests/e2e/</code>의 Vitest).</li>
+<li>PR을 만들고 <code>/code-review:code-review</code>를 실행해 모든 지적을 수정한 뒤 <code>REVIEW=done</code>으로 기록합니다.</li>
+<li>merge commit으로 머지하고 <code>develop</code>으로 돌아옵니다.</li>
+</ol>
+<p>마일스톤 모드에서는 각 이슈가 같은 단계를 거칩니다. 막힌 이슈는 <code>task.md</code>에 기록하고, 의존 이슈가 머지된 뒤 다시 처리합니다.</p>
+<h3 id="모듈-라우팅">모듈 라우팅<a class="headerlink" href="#모듈-라우팅" title="Permanent link">&para;</a></h3>
+<p>메인 세션이 오케스트레이터 역할을 합니다. 가장 구체적인 경로가 우선합니다.</p>
+<table>
+<thead>
+<tr>
+<th><code>Files to Modify</code>의 경로</th>
+<th>담당</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>platform/services/shared/**</code>, <code>platform/services/mod-source-*/**</code></td>
+<td>core-agent</td>
+</tr>
+<tr>
+<td><code>platform/services/cli/**</code>, <code>platform/scripts/**</code>, <code>templates/**</code></td>
+<td>cli-agent</td>
+</tr>
+<tr>
+<td><code>platform/services/mcctl-api/**</code></td>
+<td>backend-agent</td>
+</tr>
+<tr>
+<td><code>platform/services/mcctl-console/**</code></td>
+<td>frontend-agent</td>
+</tr>
+<tr>
+<td>나머지 <code>platform/**</code>, <code>e2e/**</code>, <code>.github/workflows/**</code>, <code>.claude/hooks/**</code></td>
+<td>devops-agent</td>
+</tr>
+<tr>
+<td><code>docs/**</code>, <code>README*</code>, <code>CHANGELOG.md</code></td>
+<td>technical-writer</td>
+</tr>
+<tr>
+<td><code>.claude/commands/**</code>, <code>.claude/agents/**</code>, <code>CLAUDE.md</code>, <code>DEVELOPMENT.md</code> (문서 내용만 변경)</td>
+<td>메인 세션이 직접 처리</td>
+</tr>
+</tbody>
+</table>
+<p>문서 파일이 로직 파일과 함께 바뀌면 로직 담당 에이전트가 둘 다 처리합니다.</p>
+<h3 id="라우팅-티어">라우팅 티어<a class="headerlink" href="#라우팅-티어" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>티어</th>
+<th>조건</th>
+<th>처리 방식</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T0 직접</td>
+<td>1개 모듈, 2개 파일 이하, 새 public 인터페이스 없음, 근본 원인 확정. 또는 오타/주석/지침 문서만 변경</td>
+<td>메인 세션. PR 본문에 직접 처리했다는 한 줄을 남깁니다.</td>
+</tr>
+<tr>
+<td>T1 단일</td>
+<td>1개 모듈, 3~8개 파일, 근본 원인 확정</td>
+<td>담당 에이전트 1개, 기본 모델</td>
+</tr>
+<tr>
+<td>T2 강화</td>
+<td>shared 도메인 변경, 근본 원인 미확정, <code>security</code> 레이블, 데이터 손실 위험, 9개 이상 파일</td>
+<td>담당 에이전트(원인이 미확정이면 분석 먼저), <code>model: opus</code>, <code>effort: high</code></td>
+</tr>
+<tr>
+<td>T3 다중 모듈</td>
+<td>2개 모듈</td>
+<td>모듈별로 위임하며 core를 먼저, 독립적인 부분은 병렬(worktree)</td>
+</tr>
+<tr>
+<td>T4 설계</td>
+<td>3개 이상 모듈 또는 아키텍처 변경</td>
+<td><code>/plan-work</code>와 (있다면) architect, 이후 T3</td>
+</tr>
+</tbody>
+</table>
+<p><code>model</code>과 <code>effort</code>는 티어가 에이전트 기본값과 다른 값을 지정할 때만 위임에 설정합니다.</p>
+<div class="admonition info">
+<p class="admonition-title">모든 작업이 에이전트에게 가는 것은 아닙니다</p>
+<p>T0 작업과 문서만 바뀌는 파일은 메인 세션이 처리합니다. 작은 코드 리뷰 지적도 직접 수정하고, 큰 지적은 같은 에이전트에게 다시 맡깁니다. 규칙은 "다른 에이전트의 파일을 건드리지 않는다"가 아니라 "표에 따라 라우팅하고, 실행 중인 에이전트가 맡은 파일은 수정하지 않는다"입니다.</p>
+</div>
+<h2 id="위임-계약">위임 계약<a class="headerlink" href="#위임-계약" title="Permanent link">&para;</a></h2>
+<p>위임 프롬프트에는 다음이 포함되어야 합니다.</p>
+<ul>
+<li>이슈 번호와 본문</li>
+<li>이미 체크아웃된 브랜치</li>
+<li>에이전트가 담당하는 파일</li>
+<li>TDD, 커밋 형식, Tidy First(구조 변경과 동작 변경은 별도 커밋)</li>
+<li>"체크포인트마다 커밋"</li>
+</ul>
+<p>에이전트가 <strong>하면 안 되는 일</strong>은 브랜치 전환, PR 생성 또는 머지, 이슈 본문 수정, <code>work-state</code> 파일 수정, <code>/work</code> 호출입니다.</p>
+<p>에이전트가 반환하는 것은 커밋 SHA, 테스트 결과, 완료 항목 목록입니다.</p>
+<p>위임된 에이전트는 백그라운드에서 실행됩니다. 에이전트가 실행 중일 때 Stop hook이 메인 세션을 막으면, 에이전트의 완료 알림을 기다리고 그 파일을 직접 수정하지 마세요.</p>
+<h2 id="병렬-작업">병렬 작업<a class="headerlink" href="#병렬-작업" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>방식</th>
+<th>사용 시점</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>단일 에이전트</td>
+<td>이슈의 담당자가 하나일 때</td>
+<td>feature 브랜치에서 직접 작업합니다. <strong>worktree를 쓰지 않습니다.</strong></td>
+</tr>
+<tr>
+<td><code>Agent</code> tool + <code>isolation: "worktree"</code></td>
+<td>병렬 위임(T3, 또는 마일스톤 모드의 <code>--parallel</code>)</td>
+<td>각 에이전트가 자신의 worktree를 갖습니다. PR 전에 브랜치를 feature 브랜치로 병합합니다.</td>
+</tr>
+<tr>
+<td>Claude Code Teams</td>
+<td>큰 규모의 병렬 계획</td>
+<td><code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1</code>이 필요합니다. <code>TeamCreate</code>, <code>TaskCreate</code>/<code>TaskUpdate</code>(의존성), <code>SendMessage</code>를 제공합니다.</td>
+</tr>
+</tbody>
+</table>
+<p>Teams 도구가 보이지 않으면 <code>Agent</code> tool과 worktree만으로 병렬 처리합니다.</p>
+<p>worktree는 모든 에이전트가 아니라 병렬 위임에만 사용합니다. 별개로, 동시에 실행되는 <code>/work</code> <strong>세션</strong>은 하나의 체크아웃에 있는 브랜치와 작업 트리를 공유하므로 별도의 <code>git worktree</code> 폴더에서 실행하세요.</p>
+<h2 id="완료-강제">완료 강제<a class="headerlink" href="#완료-강제" title="Permanent link">&para;</a></h2>
+<p><code>/work</code>는 frontmatter에 Stop hook <code>.claude/hooks/work-done-check.sh</code>를 선언합니다. <code>/work</code>가 시작되면(<code>--dry-run</code> 제외) <code>.claude/work-state.&lt;session_id&gt;</code>를 기록합니다. 이 파일은 gitignore 대상이며, 세션마다 하나씩 만들어져 동시 세션이 서로를 막지 않습니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># 이슈 모드</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">'MODE=issue\nISSUE=%s\nREVIEW=pending\n'</span><span class="w"> </span>&lt;N&gt;<span class="w"> </span>&gt;<span class="w"> </span>.claude/work-state.<span class="si">${</span><span class="nv">CLAUDE_SESSION_ID</span><span class="si">}</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># 마일스톤 모드</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">'MODE=milestone\nMILESTONE=%s\n'</span><span class="w"> </span>&lt;N&gt;<span class="w"> </span>&gt;<span class="w"> </span>.claude/work-state.<span class="si">${</span><span class="nv">CLAUDE_SESSION_ID</span><span class="si">}</span>
+</code></pre></div>
+<p>Claude가 멈추려 할 때마다 hook이 실제 GitHub와 git 상태를 확인하고, 조건이 충족되지 않으면 멈춤을 막고 남은 항목을 알려 줍니다.</p>
+<table>
+<thead>
+<tr>
+<th>모드</th>
+<th>완료 조건</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>이슈</td>
+<td>이슈 본문에 체크되지 않은 <code>- [ ]</code>가 없고, 이슈의 PR이 머지되었고, <code>REVIEW</code>가 <code>done</code> 또는 <code>skipped</code>이며, 커밋되지 않은 변경이 없음</td>
+</tr>
+<tr>
+<td>이슈, <code>ROLE=contributor</code></td>
+<td>닫히지 않은 이슈 PR이 존재하고, <code>REVIEW</code>가 <code>done</code> 또는 <code>skipped</code>이며, 커밋되지 않은 변경이 없음</td>
+</tr>
+<tr>
+<td>마일스톤</td>
+<td>마일스톤에 열린 이슈가 없고, 커밋되지 않은 변경이 없음</td>
+</tr>
+</tbody>
+</table>
+<p>안전장치는 다음과 같습니다.</p>
+<ul>
+<li>hook은 멈춤을 <strong>30</strong>번 막으면 포기합니다(<code>WORK_MAX_LOOPS</code>로 한도를 바꿀 수 있습니다).</li>
+<li><code>gh</code> 조회가 실패하면 검증을 건너뜁니다.</li>
+<li>해결할 수 없는 블로커를 만나면 세션이 이를 보고하고, 상태 파일을 삭제한 뒤 멈춥니다.</li>
+<li>상태 파일이 없으면 hook은 아무 동작도 하지 않습니다.</li>
+</ul>
+<h2 id="기여자-모드">기여자 모드<a class="headerlink" href="#기여자-모드" title="Permanent link">&para;</a></h2>
+<p>원본 저장소에 쓰기 권한이 없는 사람을 위한 모드입니다. <code>--contributor</code>를 지정하거나, <code>gh repo view --json viewerPermission</code>이 <code>WRITE</code>, <code>MAINTAIN</code>, <code>ADMIN</code>이 아닌 값을 반환하면 자동으로 켜집니다. 상태 파일에 <code>ROLE=contributor</code>가 기록되고 흐름이 다음과 같이 달라집니다.</p>
+<ul>
+<li>먼저 fork의 <code>develop</code>을 동기화한 뒤 브랜치를 만듭니다.</li>
+<li>이슈를 수정할 수 있을 때만 체크박스를 체크하고, 아니면 완료 항목을 PR 본문에 나열합니다.</li>
+<li>fork에 push하고 원본 저장소의 <code>develop</code>을 대상으로 PR을 엽니다.</li>
+<li>머지하지 않습니다. PR이 열리고 리뷰가 <code>done</code>이 되면 작업이 끝납니다.</li>
+</ul>
+<p>기여자용 절차는 저장소 루트의 <code>DEVELOPMENT.md</code>(7.6절)를 참조하세요.</p>
+<h2 id="핸드오프-규약">핸드오프 규약<a class="headerlink" href="#핸드오프-규약" title="Permanent link">&para;</a></h2>
+<p>일부 에이전트 프롬프트는 마크다운 제목을 핸드오프 규약으로 사용합니다. 이는 프롬프트 규약일 뿐 프로토콜이 아니며, 이를 파싱하는 코드는 없습니다.</p>
+<table>
+<thead>
+<tr>
+<th>규약</th>
+<th>사용하는 에이전트</th>
+<th>의미</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DEPENDENCY_NEEDED</code></td>
+<td>core, cli</td>
+<td>다른 에이전트의 산출물이 필요해 막힘</td>
+</tr>
+<tr>
+<td><code>DEPENDENCY_READY</code></td>
+<td>backend, orchestrator</td>
+<td>공유 산출물(타입, API 스펙)을 사용할 수 있음</td>
+</tr>
+<tr>
+<td><code>WORK_COMPLETE</code></td>
+<td>core, cli, frontend</td>
+<td>에이전트의 작업이 끝남</td>
+</tr>
+<tr>
+<td><code>BLOCKER_DETECTED</code></td>
+<td>orchestrator</td>
+<td>블로커와 선택한 해결 방안</td>
+</tr>
+<tr>
+<td><code>PROGRESS_REPORT</code></td>
+<td>orchestrator</td>
+<td>전체 및 에이전트별 진행 상황</td>
+</tr>
+<tr>
+<td><code>STATUS_REQUEST</code></td>
+<td>orchestrator</td>
+<td>응답 없는 에이전트에게 상태 요청</td>
+</tr>
+</tbody>
+</table>
+<p>완료 보고 예시입니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gu">## WORK_COMPLETE</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Task: Mod domain entities (#42)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>Commits: a1b2c3d, e4f5a6b
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>Tests: shared package, all passing
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>Ready for: cli-agent, backend-agent
+</code></pre></div>
+<h2 id="커맨드">커맨드<a class="headerlink" href="#커맨드" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>커맨드</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/plan-work</code></td>
+<td>시작 전 계획 수립(<code>--issue</code>, <code>--milestone</code>, <code>--issues</code>). 계획만 수립합니다.</td>
+</tr>
+<tr>
+<td><code>/work</code></td>
+<td>이슈나 마일스톤을 완료까지 진행: 브랜치, TDD, PR, 코드 리뷰, 머지.</td>
+</tr>
+<tr>
+<td><code>/write-docs</code></td>
+<td>이중 언어(영어/한국어) 기술 문서를 작성합니다.</td>
+</tr>
+<tr>
+<td><code>/sync-docs</code></td>
+<td><code>CLAUDE.md</code>, <code>README.md</code> 등의 문서를 코드와 동기화합니다.</td>
+</tr>
+<tr>
+<td><code>/update-docs</code></td>
+<td>공식 문서를 기준으로 <code>docs/itzg-reference/</code>를 갱신합니다.</td>
+</tr>
+<tr>
+<td><code>/build-kb</code></td>
+<td>소스를 깊이 분석해 LLM 지식 베이스를 만듭니다.</td>
+</tr>
+</tbody>
+</table>
+<p>커맨드 정의는 <code>.claude/commands/</code>에 있습니다. 기여자용 설명은 <code>DEVELOPMENT.md</code>(7절)에 있습니다. 개발 규칙 전반은 <a href="../">개발 가이드</a>를 참조하세요.</p>
+<h2 id="에이전트-프롬프트-파일">에이전트 프롬프트 파일<a class="headerlink" href="#에이전트-프롬프트-파일" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>파일</th>
+<th>에이전트</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.claude/agents/orchestrator-agent.md</code></td>
+<td>Orchestrator</td>
+</tr>
+<tr>
+<td><code>.claude/agents/core-agent.md</code></td>
+<td>Core</td>
+</tr>
+<tr>
+<td><code>.claude/agents/cli-agent.md</code></td>
+<td>CLI</td>
+</tr>
+<tr>
+<td><code>.claude/agents/backend-agent.md</code></td>
+<td>Backend</td>
+</tr>
+<tr>
+<td><code>.claude/agents/frontend-agent.md</code></td>
+<td>Frontend</td>
+</tr>
+<tr>
+<td><code>.claude/agents/devops-agent.md</code></td>
+<td>DevOps</td>
+</tr>
+<tr>
+<td><code>.claude/agents/technical-writer.md</code></td>
+<td>Technical Writer</td>
+</tr>
+<tr>
+<td><code>.claude/agents/release-manager.md</code></td>
+<td>Release Manager</td>
+</tr>
+</tbody>
+</table>
+<p>특정 영역을 한 에이전트에게 직접 맡기려면 대화에서 이름을 지정하세요. 예: "cli-agent를 사용해 <code>mcctl backup</code>에 <code>--dry-run</code> 옵션을 추가해 주세요 (이슈 #42)".</p>
 
 
 
@@ -4475,6 +3045,14 @@
     
     <a href="https://github.com/smallmiro/minecraft-server-manager" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://mcctl.mirolab.dev/" target="_blank" rel="noopener" title="Website" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
     </a>
   
 </div>

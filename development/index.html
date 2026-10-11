@@ -14,7 +14,7 @@
         <link rel="prev" href="../troubleshooting/">
       
       
-        <link rel="next" href="cli-architecture/">
+        <link rel="next" href="git-workflow/">
       
       
         
@@ -1909,6 +1909,8 @@
       
         
       
+        
+      
     
     
     
@@ -1964,6 +1966,34 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="git-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -2083,6 +2113,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        At a Glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2094,55 +2135,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-setup" class="md-nav__link">
+  <a href="#fork-and-set-up" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Setup
+        Fork and Set Up
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#project-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Project Structure
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Project Structure">
+    <nav class="md-nav" aria-label="Fork and Set Up">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#monorepo-packages" class="md-nav__link">
+  <a href="#running-the-cli-from-source" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Monorepo Packages
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#build-order" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Build Order
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#directory-layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Directory Layout
+        Running the CLI from Source
       
     </span>
   </a>
@@ -2155,15 +2163,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#available-scripts" class="md-nav__link">
+  <a href="#repository-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available Scripts
+        Repository Layout
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Available Scripts">
+    <nav class="md-nav" aria-label="Repository Layout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#packages-and-build-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packages and Build Order
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scripts">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2178,10 +2214,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#package-level" class="md-nav__link">
+  <a href="#build-and-test" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Package Level
+        Build and Test
       
     </span>
   </a>
@@ -2194,66 +2230,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#development-workflow" class="md-nav__link">
+  <a href="#contribution-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Development Workflow
+        Contribution Workflow
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Development Workflow">
+    <nav class="md-nav" aria-label="Contribution Workflow">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-create-a-feature-branch" class="md-nav__link">
+  <a href="#ci" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Create a Feature Branch
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-make-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Make Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-build-and-test" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Build and Test
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-commit-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Commit Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-create-pull-request" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Create Pull Request
+        CI
       
     </span>
   </a>
@@ -2262,6 +2254,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#developing-with-claude-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Developing with Claude Code
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2273,23 +2276,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Architecture Overview">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#key-concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Concepts
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2328,10 +2314,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#link-issues" class="md-nav__link">
+  <a href="#mcctl-not-found-after-linking" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Link Issues
+        mcctl Not Found After Linking
       
     </span>
   </a>
@@ -2339,10 +2325,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#docker-issues" class="md-nav__link">
+  <a href="#docker-permission-denied" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Docker Issues
+        Docker Permission Denied
       
     </span>
   </a>
@@ -2375,105 +2361,180 @@
 
 
 <h1 id="development-guide">Development Guide<a class="headerlink" href="#development-guide" title="Permanent link">&para;</a></h1>
-<p>This guide covers development setup, project structure, and contribution guidelines for the minecraft-docker project.</p>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<p>Before contributing, ensure you have the following installed:</p>
-<ul>
-<li><strong>Node.js</strong> &gt;= 18.0.0</li>
-<li><strong>pnpm</strong> &gt;= 8.0.0</li>
-<li><strong>Docker Engine</strong> 20.10+</li>
-<li><strong>Docker Compose</strong> v2.0+</li>
-<li><strong>Git</strong> for version control</li>
-</ul>
-<h2 id="quick-setup">Quick Setup<a class="headerlink" href="#quick-setup" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Clone the repository</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/smallmiro/minecraft-server-manager.git
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>minecraft-server-manager
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Install dependencies</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>pnpm<span class="w"> </span>install
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Build all packages</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pnpm<span class="w"> </span>build
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Link CLI globally for development</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nb">cd</span><span class="w"> </span>platform/services/cli
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>pnpm<span class="w"> </span>link<span class="w"> </span>--global
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># Verify installation</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>mcctl<span class="w"> </span>--version
+<p>This guide covers the development environment, repository layout, and contribution workflow for <code>minecraft-server-manager</code>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Contributor guide</p>
+<p>The canonical contributor guide is <a href="https://github.com/smallmiro/minecraft-server-manager/blob/develop/DEVELOPMENT.md"><code>DEVELOPMENT.md</code></a> in the repository root. This page summarizes it for the documentation site.</p>
+</div>
+<h2 id="at-a-glance">At a Glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Create issue in the original repo → Fork → Create branch → Tests first (TDD) → Implement → Open PR to the original repo → Address review → Merge
 </code></pre></div>
-<h2 id="project-structure">Project Structure<a class="headerlink" href="#project-structure" title="Permanent link">&para;</a></h2>
-<p>This project uses a <strong>pnpm monorepo</strong> with multiple packages.</p>
-<h3 id="monorepo-packages">Monorepo Packages<a class="headerlink" href="#monorepo-packages" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Package</th>
-<th>Name</th>
+<th>Rule</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unit of work</td>
+<td><strong>One issue = one branch = one PR</strong></td>
+</tr>
+<tr>
+<td>Where things live</td>
+<td>Issues live in the original repository. Work happens in your fork. The PR goes from your fork back to the original repository.</td>
+</tr>
+<tr>
+<td>Base branch</td>
+<td><code>develop</code> (branch from <code>develop</code>, and open the PR against <code>develop</code>)</td>
+</tr>
+<tr>
+<td>Method</td>
+<td>TDD (Red → Green → Refactor), Tidy First</td>
+</tr>
+<tr>
+<td>Architecture</td>
+<td>Hexagonal / Clean Architecture</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td>Keep English (<code>.md</code>) and Korean (<code>.ko.md</code>) versions together</td>
+</tr>
+</tbody>
+</table>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Version</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node.js</td>
+<td>18 or later (CI uses 20)</td>
+<td>All packages</td>
+</tr>
+<tr>
+<td>pnpm</td>
+<td>9 (pinned in <code>packageManager</code>)</td>
+<td>Monorepo management</td>
+</tr>
+<tr>
+<td>Docker / Docker Compose</td>
+<td>Engine 24+, Compose 2.20+</td>
+<td>Server containers, E2E</td>
+</tr>
+<tr>
+<td>Git, GitHub CLI (<code>gh</code>)</td>
+<td>Latest</td>
+<td>Fork, issues, PRs</td>
+</tr>
+</tbody>
+</table>
+<p>Supported operating systems are Linux and macOS, because the <code>mcctl</code> CLI depends on bash scripts. <code>better-sqlite3</code> (a dependency of mcctl-console) is a native module, so some environments need a build toolchain (gcc, make, python).</p>
+<h2 id="fork-and-set-up">Fork and Set Up<a class="headerlink" href="#fork-and-set-up" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 1) Fork smallmiro/minecraft-server-manager on GitHub, then:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/&lt;your-account&gt;/minecraft-server-manager.git
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">cd</span><span class="w"> </span>minecraft-server-manager
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># 2) Register the original repository as "upstream"</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>upstream<span class="w"> </span>https://github.com/smallmiro/minecraft-server-manager.git
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1"># 3) Make gh target the original repository for issues and PRs</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>gh<span class="w"> </span>repo<span class="w"> </span>set-default<span class="w"> </span>smallmiro/minecraft-server-manager
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># 4) Install dependencies and build</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>pnpm<span class="w"> </span>install
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>pnpm<span class="w"> </span>build
+</code></pre></div>
+<p>Before starting any work, bring <code>develop</code> up to date:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>develop
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>git<span class="w"> </span>fetch<span class="w"> </span>upstream
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>git<span class="w"> </span>merge<span class="w"> </span>--ff-only<span class="w"> </span>upstream/develop
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>develop
+</code></pre></div>
+<h3 id="running-the-cli-from-source">Running the CLI from Source<a class="headerlink" href="#running-the-cli-from-source" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Link the local build as the global mcctl command</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">cd</span><span class="w"> </span>platform/services/cli
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>pnpm<span class="w"> </span>link<span class="w"> </span>--global
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>mcctl<span class="w"> </span>--version
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Or run the build output directly</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>node<span class="w"> </span>platform/services/cli/dist/index.js<span class="w"> </span>--version
+</code></pre></div>
+<h2 id="repository-layout">Repository Layout<a class="headerlink" href="#repository-layout" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>platform/services/shared</code></td>
-<td><code>@minecraft-docker/shared</code></td>
-<td>Shared types, domain models, and utilities</td>
+<td><code>platform/services/shared/</code></td>
+<td><code>@minecraft-docker/shared</code>: domain entities, value objects, use cases, ports/adapters</td>
 </tr>
 <tr>
-<td><code>platform/services/mod-source-modrinth</code></td>
-<td><code>@minecraft-docker/mod-source-modrinth</code></td>
-<td>Modrinth mod source adapter</td>
+<td><code>platform/services/cli/</code></td>
+<td><code>@minecraft-docker/mcctl</code>: the CLI (Hexagonal Architecture)</td>
 </tr>
 <tr>
-<td><code>platform/services/cli</code></td>
-<td><code>@minecraft-docker/mcctl</code></td>
-<td>CLI tool (main user-facing package)</td>
+<td><code>platform/services/mcctl-api/</code></td>
+<td><code>@minecraft-docker/mcctl-api</code>: Fastify REST API (port 5001)</td>
 </tr>
 <tr>
-<td><code>platform/services/mcctl-api</code></td>
-<td><code>@minecraft-docker/mcctl-api</code></td>
-<td>REST API service</td>
+<td><code>platform/services/mcctl-console/</code></td>
+<td><code>@minecraft-docker/mcctl-console</code>: Next.js web UI (port 5000)</td>
 </tr>
 <tr>
-<td><code>platform/services/mcctl-console</code></td>
-<td><code>@minecraft-docker/mcctl-console</code></td>
-<td>Web console UI</td>
+<td><code>platform/services/mod-source-modrinth/</code></td>
+<td><code>@minecraft-docker/mod-source-modrinth</code>: Modrinth adapter</td>
+</tr>
+<tr>
+<td><code>platform/scripts/</code></td>
+<td>Bash management scripts (tests in <code>platform/scripts/tests/</code>)</td>
+</tr>
+<tr>
+<td><code>templates/</code></td>
+<td>Platform templates copied by <code>mcctl init</code></td>
+</tr>
+<tr>
+<td><code>e2e/</code></td>
+<td>Playwright E2E tests for the Management Console</td>
+</tr>
+<tr>
+<td><code>docs/</code></td>
+<td>MkDocs documentation (English/Korean)</td>
+</tr>
+<tr>
+<td><code>website/</code></td>
+<td>Project landing page</td>
+</tr>
+<tr>
+<td><code>.github/workflows/</code></td>
+<td>CI, release, and website deployment workflows</td>
+</tr>
+<tr>
+<td><code>.claude/</code></td>
+<td>Claude Code subagents, commands, and hooks</td>
 </tr>
 </tbody>
 </table>
-<h3 id="build-order">Build Order<a class="headerlink" href="#build-order" title="Permanent link">&para;</a></h3>
-<p>pnpm automatically builds packages in dependency order:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>1. @minecraft-docker/shared        (no dependencies)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2. @minecraft-docker/mod-source-modrinth  (depends on shared)
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>3. @minecraft-docker/mcctl         (depends on shared, mod-source-modrinth)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>4. @minecraft-docker/mcctl-api     (depends on shared)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>5. @minecraft-docker/mcctl-console (depends on shared)
+<h3 id="packages-and-build-order">Packages and Build Order<a class="headerlink" href="#packages-and-build-order" title="Permanent link">&para;</a></h3>
+<p><code>pnpm build</code> runs <code>pnpm -r build</code>, which builds the workspace packages in dependency order:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>1. @minecraft-docker/shared                (no workspace dependencies)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>2. @minecraft-docker/mod-source-modrinth   (shared)
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>3. @minecraft-docker/mcctl                 (shared, mod-source-modrinth)
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>   @minecraft-docker/mcctl-api             (shared, mod-source-modrinth)
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>   @minecraft-docker/mcctl-console         (shared)
 </code></pre></div>
-<h3 id="directory-layout">Directory Layout<a class="headerlink" href="#directory-layout" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>minecraft/
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>|-- package.json              # Root workspace
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>|-- pnpm-workspace.yaml       # pnpm workspace config
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>|-- tsconfig.base.json        # Shared TypeScript config
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>|
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>|-- platform/
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>|   |-- docker-compose.yml    # Main orchestration
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>|   |-- .env                  # Environment config
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>|   |
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>|   |-- services/
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>|   |   |-- shared/           # @minecraft-docker/shared
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>|   |   |-- mod-source-modrinth/  # @minecraft-docker/mod-source-modrinth
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>|   |   |-- cli/              # @minecraft-docker/mcctl
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>|   |   |-- mcctl-api/        # REST API
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>|   |   +-- mcctl-console/    # Web UI
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>|   |
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>|   +-- scripts/              # Bash management scripts
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>|
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>|-- docs/                     # MkDocs documentation
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>|-- e2e/                      # End-to-end tests
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>+-- templates/                # npm package templates
-</code></pre></div>
-<h2 id="available-scripts">Available Scripts<a class="headerlink" href="#available-scripts" title="Permanent link">&para;</a></h2>
+<p>All five packages are published to npm with the same version when a release tag is pushed. See <a href="git-workflow/#release-process">Git Workflow</a>.</p>
+<h2 id="scripts">Scripts<a class="headerlink" href="#scripts" title="Permanent link">&para;</a></h2>
 <h3 id="root-level">Root Level<a class="headerlink" href="#root-level" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2489,140 +2550,181 @@
 </tr>
 <tr>
 <td><code>pnpm build</code></td>
-<td>Build all packages (respects dependency order)</td>
+<td>Build all packages in dependency order</td>
 </tr>
 <tr>
-<td><code>pnpm clean</code></td>
-<td>Clean all build outputs</td>
+<td><code>pnpm dev</code></td>
+<td>Run every package's <code>dev</code> script in parallel (<code>tsc --watch</code> for shared/cli, <code>tsx watch</code> for mcctl-api, <code>next dev -p 5000</code> for mcctl-console)</td>
+</tr>
+<tr>
+<td><code>pnpm lint</code></td>
+<td>Lint all packages</td>
 </tr>
 <tr>
 <td><code>pnpm test</code></td>
-<td>Run all tests</td>
+<td>Run all unit tests</td>
+</tr>
+<tr>
+<td><code>pnpm clean</code></td>
+<td>Remove build outputs</td>
 </tr>
 <tr>
 <td><code>pnpm test:e2e</code></td>
-<td>Run E2E tests</td>
+<td>Run the Management Console E2E suite (Playwright, mcctl-api + mcctl-console)</td>
+</tr>
+<tr>
+<td><code>pnpm test:e2e:ui</code></td>
+<td>Run the same suite in Playwright UI mode</td>
 </tr>
 </tbody>
 </table>
-<h3 id="package-level">Package Level<a class="headerlink" href="#package-level" title="Permanent link">&para;</a></h3>
-<p>Navigate to any package directory and run:</p>
+<h3 id="build-and-test">Build and Test<a class="headerlink" href="#build-and-test" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pnpm<span class="w"> </span>build<span class="w">                                   </span><span class="c1"># build everything</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>pnpm<span class="w"> </span><span class="nb">test</span><span class="w">                                    </span><span class="c1"># all unit tests</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>pnpm<span class="w"> </span>lint<span class="w">                                    </span><span class="c1"># lint everything</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>pnpm<span class="w"> </span>--filter<span class="w"> </span>@minecraft-docker/shared<span class="w"> </span><span class="nb">test</span><span class="w">  </span><span class="c1"># a single package</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>pnpm<span class="w"> </span>--filter<span class="w"> </span>@minecraft-docker/mcctl<span class="w"> </span><span class="nb">test</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>pnpm<span class="w"> </span>test:e2e<span class="w">                                </span><span class="c1"># Management Console E2E (Playwright)</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nb">cd</span><span class="w"> </span>platform/services/cli<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>test:e2e<span class="w">    </span><span class="c1"># CLI E2E (Vitest)</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>bash<span class="w"> </span>platform/scripts/tests/&lt;name&gt;.test.sh<span class="w">   </span><span class="c1"># bash script tests</span>
+</code></pre></div>
+<p>Add E2E tests for new REST endpoints in <code>e2e/tests/api-*.spec.ts</code>, for console UI flows in <code>e2e/tests/*.spec.ts</code>, and for new CLI commands or options in <code>platform/services/cli/tests/e2e/cli-*.test.ts</code>.</p>
+<h2 id="contribution-workflow">Contribution Workflow<a class="headerlink" href="#contribution-workflow" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Create the issue first, in the original repository.</strong> Include Summary, Root Cause (bugs) or Requirements (features), Solution / Implementation Plan, Files to Modify, and Acceptance Criteria as a checkbox list. Trivial one-line changes such as typo fixes may skip the issue.</li>
+<li><strong>Branch from <code>develop</code> in your fork</strong>: <code>feature/&lt;issue&gt;-&lt;description&gt;</code> or <code>bugfix/&lt;issue&gt;-&lt;description&gt;</code>. Never work directly on <code>develop</code> or <code>main</code>.</li>
+<li><strong>TDD</strong>: write a failing test, make it pass with minimal code, then refactor. PRs without tests are not accepted, except for documentation-only changes and configuration changes with no logic.</li>
+<li><strong>Tidy First</strong>: never mix structural changes (refactoring) and behavioral changes (features, fixes) in one commit.</li>
+<li><strong>Commit</strong> as <code>&lt;type&gt;: &lt;description&gt; (#&lt;issue-number&gt;)</code>, where <code>type</code> is <code>feat</code>, <code>fix</code>, <code>docs</code>, <code>refactor</code>, <code>test</code>, or <code>chore</code>.</li>
+<li><strong>Open one PR per issue</strong> from your fork to <code>develop</code> of the original repository, with <code>Closes #&lt;issue&gt;</code> in the body.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span>feature/12-add-backup
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>gh<span class="w"> </span>pr<span class="w"> </span>create<span class="w"> </span>--repo<span class="w"> </span>smallmiro/minecraft-server-manager<span class="w"> </span>--base<span class="w"> </span>develop<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--head<span class="w"> </span>&lt;your-account&gt;:feature/12-add-backup<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--title<span class="w"> </span><span class="s2">"feat: add backup script (#12)"</span><span class="w"> </span>--body<span class="w"> </span><span class="s2">"Closes #12 ..."</span>
+</code></pre></div>
+<h3 id="ci">CI<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h3>
+<p>PR checks against <code>develop</code> must pass before merge. They are path-filtered:</p>
 <table>
 <thead>
 <tr>
-<th>Command</th>
-<th>Description</th>
+<th>Workflow</th>
+<th>Runs when</th>
+<th>What it does</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>pnpm build</code></td>
-<td>Build this package</td>
+<td><code>cli-test</code></td>
+<td>The PR touches <code>platform/services/cli/**</code> or <code>platform/services/shared/**</code></td>
+<td>Builds <code>mcctl</code> and its dependencies, runs the CLI tests</td>
 </tr>
 <tr>
-<td><code>pnpm dev</code></td>
-<td>Watch mode (rebuild on changes)</td>
+<td><code>shared-test</code></td>
+<td>The PR touches <code>platform/services/shared/**</code></td>
+<td>Runs the shared package tests</td>
 </tr>
 <tr>
-<td><code>pnpm test</code></td>
-<td>Run package tests</td>
-</tr>
-<tr>
-<td><code>pnpm clean</code></td>
-<td>Clean build output</td>
+<td><code>e2e</code></td>
+<td>Daily at 03:00 KST and on manual dispatch, <strong>not on PRs</strong></td>
+<td>Starts mcctl-api and mcctl-console, runs the Playwright suite</td>
 </tr>
 </tbody>
 </table>
-<h2 id="development-workflow">Development Workflow<a class="headerlink" href="#development-workflow" title="Permanent link">&para;</a></h2>
-<h3 id="1-create-a-feature-branch">1. Create a Feature Branch<a class="headerlink" href="#1-create-a-feature-branch" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>develop
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>develop
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/123-my-feature
-</code></pre></div>
-<h3 id="2-make-changes">2. Make Changes<a class="headerlink" href="#2-make-changes" title="Permanent link">&para;</a></h3>
-<p>Follow the TDD (Test-Driven Development) workflow:</p>
-<ol>
-<li><strong>Red</strong>: Write a failing test</li>
-<li><strong>Green</strong>: Write minimal code to pass</li>
-<li><strong>Refactor</strong>: Clean up while keeping tests green</li>
-</ol>
-<h3 id="3-build-and-test">3. Build and Test<a class="headerlink" href="#3-build-and-test" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Build all packages</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pnpm<span class="w"> </span>build
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Run tests</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>pnpm<span class="w"> </span><span class="nb">test</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Run E2E tests (requires Docker)</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>pnpm<span class="w"> </span>test:e2e
-</code></pre></div>
-<h3 id="4-commit-changes">4. Commit Changes<a class="headerlink" href="#4-commit-changes" title="Permanent link">&para;</a></h3>
-<p>Use conventional commit messages:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(cli): add new mod command (#123)"</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"fix(api): correct auth token validation"</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"docs: update installation guide"</span>
-</code></pre></div>
-<h3 id="5-create-pull-request">5. Create Pull Request<a class="headerlink" href="#5-create-pull-request" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>feature/123-my-feature
-</code></pre></div>
-<p>Then create a PR to <code>develop</code> branch on GitHub.</p>
+<p>Because <code>e2e</code> does not run on PRs, run <code>pnpm test:e2e</code> locally when you change API or console behavior. CI does not run <code>pnpm lint</code>, so run it yourself.</p>
+<p>Branch naming, commit rules, versioning, and the release process are described in <a href="git-workflow/">Git Workflow</a>.</p>
+<h2 id="developing-with-claude-code">Developing with Claude Code<a class="headerlink" href="#developing-with-claude-code" title="Permanent link">&para;</a></h2>
+<p>The repository ships Claude Code configuration. Run <code>claude</code> from the repository root and <code>CLAUDE.md</code> plus the subagents, commands, and hooks in <code>.claude/</code> are loaded automatically.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/plan-work</code></td>
+<td>Plan the work before starting (<code>--issue &lt;N&gt;</code>, <code>--milestone &lt;N&gt;</code>, <code>--issues &lt;N1,N2&gt;</code>). Plans only; does not execute.</td>
+</tr>
+<tr>
+<td><code>/work</code></td>
+<td>Run an issue or milestone through to completion: branch, TDD implementation, PR, and code review.</td>
+</tr>
+<tr>
+<td><code>/write-docs</code></td>
+<td>Write bilingual (English/Korean) technical documentation.</td>
+</tr>
+<tr>
+<td><code>/sync-docs</code></td>
+<td>Sync <code>CLAUDE.md</code>, <code>README.md</code>, and other docs with the code.</td>
+</tr>
+<tr>
+<td><code>/update-docs</code></td>
+<td>Refresh <code>docs/itzg-reference/</code> from the official documentation.</td>
+</tr>
+<tr>
+<td><code>/build-kb</code></td>
+<td>Analyze the source in depth and build an LLM knowledge base.</td>
+</tr>
+</tbody>
+</table>
+<p>A typical flow: describe the change, create an issue from the analysis, plan larger work with <code>/plan-work --issue &lt;N&gt;</code>, then run <code>/work --issue &lt;N&gt;</code>. See <a href="agent-collaboration/">Agent Collaboration</a> for the subagents, the <code>/work</code> routing, and how completion is enforced.</p>
 <h2 id="architecture-overview">Architecture Overview<a class="headerlink" href="#architecture-overview" title="Permanent link">&para;</a></h2>
-<p>The project follows <strong>Hexagonal Architecture</strong> (Ports &amp; Adapters) with <strong>Clean Architecture</strong> principles:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>+-------------------+
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>|    CLI Layer      |  Commands, argument parsing
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>+--------+----------+
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>         |
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>+--------v----------+
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>| Application Layer |  Use cases, business logic
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>+--------+----------+
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>         |
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>+--------v----------+
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>|   Domain Layer    |  Entities, value objects
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>+--------+----------+
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>         |
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>+--------v----------+
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>| Infrastructure    |  Adapters, external services
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>+-------------------+
+<p>TypeScript code follows <strong>Hexagonal Architecture</strong> (Ports &amp; Adapters) with <strong>Clean Architecture</strong> layering:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>+---------------------+
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>| Presentation Layer  |  CLI commands, API routes
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>+----------+----------+
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>           |
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>+----------v----------+
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>| Application Layer   |  Use cases, application services
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>+----------+----------+
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>           |
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>+----------v----------+
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>|    Domain Layer     |  Entities, value objects, ports
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>+----------+----------+
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>           |
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>+----------v----------+
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>| Infrastructure      |  Adapters: file system, Docker, external APIs
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>+---------------------+
 </code></pre></div>
-<h3 id="key-concepts">Key Concepts<a class="headerlink" href="#key-concepts" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Value Objects</strong>: Immutable, validated on construction (e.g., <code>ServerName.create("myserver")</code>)</li>
-<li><strong>Use Cases</strong>: Business logic with interactive and CLI modes</li>
-<li><strong>Ports</strong>: Interfaces for external dependencies</li>
-<li><strong>Adapters</strong>: Concrete implementations</li>
+<li>The domain layer has no external dependencies.</li>
+<li>All I/O goes through adapters, and dependencies are injected.</li>
 </ul>
-<p>See <a href="cli-architecture/">CLI Architecture</a> for detailed documentation.</p>
+<p>See <a href="cli-architecture/">CLI Architecture</a> for details.</p>
 <h2 id="related-documentation">Related Documentation<a class="headerlink" href="#related-documentation" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="cli-architecture/">CLI Architecture</a> - Detailed architecture of the CLI</li>
-<li><a href="agent-collaboration/">Agent Collaboration</a> - Multi-agent development workflow</li>
+<li><a href="https://github.com/smallmiro/minecraft-server-manager/blob/develop/DEVELOPMENT.md"><code>DEVELOPMENT.md</code></a> - Full contributor guide</li>
+<li><a href="git-workflow/">Git Workflow</a> - Branches, commits, versioning, and releases</li>
+<li><a href="cli-architecture/">CLI Architecture</a> - CLI layering and how to add commands</li>
+<li><a href="agent-collaboration/">Agent Collaboration</a> - Claude Code subagents and the <code>/work</code> workflow</li>
 <li><a href="../cli/commands/">CLI Commands</a> - Complete CLI reference</li>
 </ul>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="build-errors">Build Errors<a class="headerlink" href="#build-errors" title="Permanent link">&para;</a></h3>
-<p>If you encounter build errors:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Clean and rebuild</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pnpm<span class="w"> </span>clean
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>pnpm<span class="w"> </span>install
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>pnpm<span class="w"> </span>build
 </code></pre></div>
-<h3 id="link-issues">Link Issues<a class="headerlink" href="#link-issues" title="Permanent link">&para;</a></h3>
-<p>If <code>mcctl</code> command is not found after linking:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Check npm global bin path</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>npm<span class="w"> </span>config<span class="w"> </span>get<span class="w"> </span>prefix
+<h3 id="mcctl-not-found-after-linking"><code>mcctl</code> Not Found After Linking<a class="headerlink" href="#mcctl-not-found-after-linking" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Check the global bin directory used by pnpm</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>pnpm<span class="w"> </span>bin<span class="w"> </span>--global
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Add to PATH if needed</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">"</span><span class="nv">$PATH</span><span class="s2">:</span><span class="k">$(</span>npm<span class="w"> </span>config<span class="w"> </span>get<span class="w"> </span>prefix<span class="k">)</span><span class="s2">/bin"</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Add it to PATH if needed (pnpm setup does this for you)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>pnpm<span class="w"> </span>setup
 </code></pre></div>
-<h3 id="docker-issues">Docker Issues<a class="headerlink" href="#docker-issues" title="Permanent link">&para;</a></h3>
-<p>Ensure Docker is running and your user has permissions:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Check Docker status</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>docker<span class="w"> </span>--version
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>docker<span class="w"> </span>compose<span class="w"> </span>version
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># Add user to docker group (if permission denied)</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>newgrp<span class="w"> </span>docker
+<h3 id="docker-permission-denied">Docker Permission Denied<a class="headerlink" href="#docker-permission-denied" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>docker<span class="w"> </span>--version
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>version
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Add your user to the docker group</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>newgrp<span class="w"> </span>docker
 </code></pre></div>
 
 
@@ -2682,6 +2784,14 @@
     
     <a href="https://github.com/smallmiro/minecraft-server-manager" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://mcctl.mirolab.dev/" target="_blank" rel="noopener" title="Website" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
     </a>
   
 </div>

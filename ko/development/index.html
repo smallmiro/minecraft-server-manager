@@ -14,7 +14,7 @@
         <link rel="prev" href="../troubleshooting/">
       
       
-        <link rel="next" href="cli-architecture/">
+        <link rel="next" href="git-workflow/">
       
       
         
@@ -1909,6 +1909,8 @@
       
         
       
+        
+      
     
     
     
@@ -1964,6 +1966,34 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="git-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -2083,6 +2113,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#한눈에-보기" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        한눈에 보기
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#사전-요구-사항" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2094,55 +2135,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#빠른-설정" class="md-nav__link">
+  <a href="#fork-and-set-up" class="md-nav__link">
     <span class="md-ellipsis">
       
-        빠른 설정
+        포크와 로컬 설정
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#프로젝트-구조" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        프로젝트 구조
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="프로젝트 구조">
+    <nav class="md-nav" aria-label="포크와 로컬 설정">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#모노레포-패키지" class="md-nav__link">
+  <a href="#소스에서-cli-실행" class="md-nav__link">
     <span class="md-ellipsis">
       
-        모노레포 패키지
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#빌드-순서" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        빌드 순서
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#디렉토리-레이아웃" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        디렉토리 레이아웃
+        소스에서 CLI 실행
       
     </span>
   </a>
@@ -2155,33 +2163,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#사용-가능한-스크립트" class="md-nav__link">
+  <a href="#저장소-구조" class="md-nav__link">
     <span class="md-ellipsis">
       
-        사용 가능한 스크립트
+        저장소 구조
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="사용 가능한 스크립트">
+    <nav class="md-nav" aria-label="저장소 구조">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#루트-레벨" class="md-nav__link">
+  <a href="#패키지와-빌드-순서" class="md-nav__link">
     <span class="md-ellipsis">
       
-        루트 레벨
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#패키지-레벨" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        패키지 레벨
+        패키지와 빌드 순서
       
     </span>
   </a>
@@ -2194,22 +2191,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#개발-워크플로우" class="md-nav__link">
+  <a href="#스크립트" class="md-nav__link">
     <span class="md-ellipsis">
       
-        개발 워크플로우
+        스크립트
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="개발 워크플로우">
+    <nav class="md-nav" aria-label="스크립트">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-기능-브랜치-생성" class="md-nav__link">
+  <a href="#루트" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. 기능 브랜치 생성
+        루트
       
     </span>
   </a>
@@ -2217,43 +2214,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-변경-사항-구현" class="md-nav__link">
+  <a href="#build-and-test" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. 변경 사항 구현
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-빌드-및-테스트" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. 빌드 및 테스트
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-변경-사항-커밋" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. 변경 사항 커밋
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-pull-request-생성" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Pull Request 생성
+        빌드와 테스트
       
     </span>
   </a>
@@ -2262,6 +2226,45 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#기여-절차" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        기여 절차
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="기여 절차">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#claude-code로-개발하기" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Claude Code로 개발하기
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2273,23 +2276,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="아키텍처 개요">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#핵심-개념" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        핵심 개념
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2328,10 +2314,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#링크-문제" class="md-nav__link">
+  <a href="#링크-후-mcctl을-찾을-수-없음" class="md-nav__link">
     <span class="md-ellipsis">
       
-        링크 문제
+        링크 후 mcctl을 찾을 수 없음
       
     </span>
   </a>
@@ -2339,10 +2325,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#docker-문제" class="md-nav__link">
+  <a href="#docker-권한-거부" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Docker 문제
+        Docker 권한 거부
       
     </span>
   </a>
@@ -2375,110 +2361,185 @@
 
 
 <h1 id="개발-가이드">개발 가이드<a class="headerlink" href="#개발-가이드" title="Permanent link">&para;</a></h1>
-<p>minecraft-docker 프로젝트의 개발 환경 설정, 프로젝트 구조, 기여 가이드라인을 안내합니다.</p>
-<h2 id="사전-요구-사항">사전 요구 사항<a class="headerlink" href="#사전-요구-사항" title="Permanent link">&para;</a></h2>
-<p>기여하기 전에 다음 도구가 설치되어 있어야 합니다:</p>
-<ul>
-<li><strong>Node.js</strong> &gt;= 18.0.0</li>
-<li><strong>pnpm</strong> &gt;= 8.0.0</li>
-<li><strong>Docker Engine</strong> 20.10+</li>
-<li><strong>Docker Compose</strong> v2.0+</li>
-<li><strong>Git</strong> 버전 관리용</li>
-</ul>
-<h2 id="빠른-설정">빠른 설정<a class="headerlink" href="#빠른-설정" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 저장소 클론</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/smallmiro/minecraft-server-manager.git
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>minecraft-server-manager
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># 의존성 설치</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>pnpm<span class="w"> </span>install
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># 모든 패키지 빌드</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pnpm<span class="w"> </span>build
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># 개발용으로 CLI 전역 링크</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nb">cd</span><span class="w"> </span>platform/services/cli
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>pnpm<span class="w"> </span>link<span class="w"> </span>--global
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># 설치 확인</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>mcctl<span class="w"> </span>--version
+<p><code>minecraft-server-manager</code>의 개발 환경, 저장소 구조, 기여 절차를 안내합니다.</p>
+<div class="admonition tip">
+<p class="admonition-title">기여자 가이드</p>
+<p>기준 문서는 저장소 루트의 <a href="https://github.com/smallmiro/minecraft-server-manager/blob/develop/DEVELOPMENT.md"><code>DEVELOPMENT.md</code></a>입니다. 이 페이지는 문서 사이트용 요약입니다.</p>
+</div>
+<h2 id="한눈에-보기">한눈에 보기<a class="headerlink" href="#한눈에-보기" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>원본 저장소에 이슈 생성 → 포크 → 브랜치 생성 → 테스트 먼저 작성(TDD) → 구현 → 원본 저장소로 PR → 리뷰 반영 → 머지
 </code></pre></div>
-<h2 id="프로젝트-구조">프로젝트 구조<a class="headerlink" href="#프로젝트-구조" title="Permanent link">&para;</a></h2>
-<p>이 프로젝트는 <strong>pnpm 모노레포</strong> 구조를 사용합니다.</p>
-<h3 id="모노레포-패키지">모노레포 패키지<a class="headerlink" href="#모노레포-패키지" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>패키지</th>
-<th>이름</th>
+<th>규칙</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>작업 단위</td>
+<td><strong>이슈 1개 = 브랜치 1개 = PR 1개</strong></td>
+</tr>
+<tr>
+<td>위치</td>
+<td>이슈는 원본 저장소에 만듭니다. 작업은 포크에서 하고, PR은 포크에서 원본 저장소로 보냅니다.</td>
+</tr>
+<tr>
+<td>기준 브랜치</td>
+<td><code>develop</code> (<code>develop</code>에서 브랜치를 만들고 <code>develop</code>으로 PR)</td>
+</tr>
+<tr>
+<td>방법론</td>
+<td>TDD (Red → Green → Refactor), Tidy First</td>
+</tr>
+<tr>
+<td>아키텍처</td>
+<td>Hexagonal / Clean Architecture</td>
+</tr>
+<tr>
+<td>문서</td>
+<td>영어(<code>.md</code>)와 한국어(<code>.ko.md</code>)를 함께 유지</td>
+</tr>
+</tbody>
+</table>
+<h2 id="사전-요구-사항">사전 요구 사항<a class="headerlink" href="#사전-요구-사항" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>도구</th>
+<th>버전</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node.js</td>
+<td>18 이상 (CI는 20)</td>
+<td>모든 패키지</td>
+</tr>
+<tr>
+<td>pnpm</td>
+<td>9 (<code>packageManager</code>에 고정)</td>
+<td>모노레포 관리</td>
+</tr>
+<tr>
+<td>Docker / Docker Compose</td>
+<td>Engine 24+, Compose 2.20+</td>
+<td>서버 컨테이너, E2E</td>
+</tr>
+<tr>
+<td>Git, GitHub CLI (<code>gh</code>)</td>
+<td>최신</td>
+<td>포크, 이슈, PR</td>
+</tr>
+</tbody>
+</table>
+<p><code>mcctl</code> CLI가 bash 스크립트에 의존하므로 지원 OS는 Linux와 macOS입니다. mcctl-console이 사용하는 <code>better-sqlite3</code>는 네이티브 모듈이라 환경에 따라 빌드 도구(gcc, make, python)가 필요합니다.</p>
+<h2 id="fork-and-set-up">포크와 로컬 설정<a class="headerlink" href="#fork-and-set-up" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 1) GitHub에서 smallmiro/minecraft-server-manager를 포크한 뒤:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/&lt;your-account&gt;/minecraft-server-manager.git
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">cd</span><span class="w"> </span>minecraft-server-manager
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># 2) 원본 저장소를 "upstream"으로 등록</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>git<span class="w"> </span>remote<span class="w"> </span>add<span class="w"> </span>upstream<span class="w"> </span>https://github.com/smallmiro/minecraft-server-manager.git
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1"># 3) gh가 이슈와 PR에 원본 저장소를 사용하도록 설정</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>gh<span class="w"> </span>repo<span class="w"> </span>set-default<span class="w"> </span>smallmiro/minecraft-server-manager
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># 4) 의존성 설치 및 빌드</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>pnpm<span class="w"> </span>install
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>pnpm<span class="w"> </span>build
+</code></pre></div>
+<p>작업을 시작하기 전에 <code>develop</code>을 최신 상태로 맞춥니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>develop
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>git<span class="w"> </span>fetch<span class="w"> </span>upstream
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>git<span class="w"> </span>merge<span class="w"> </span>--ff-only<span class="w"> </span>upstream/develop
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>develop
+</code></pre></div>
+<h3 id="소스에서-cli-실행">소스에서 CLI 실행<a class="headerlink" href="#소스에서-cli-실행" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># 로컬 빌드를 전역 mcctl 명령으로 링크</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">cd</span><span class="w"> </span>platform/services/cli
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>pnpm<span class="w"> </span>link<span class="w"> </span>--global
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>mcctl<span class="w"> </span>--version
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># 또는 빌드 결과를 직접 실행</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>node<span class="w"> </span>platform/services/cli/dist/index.js<span class="w"> </span>--version
+</code></pre></div>
+<h2 id="저장소-구조">저장소 구조<a class="headerlink" href="#저장소-구조" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>경로</th>
 <th>설명</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>platform/services/shared</code></td>
-<td><code>@minecraft-docker/shared</code></td>
-<td>공유 타입, 도메인 모델, 유틸리티</td>
+<td><code>platform/services/shared/</code></td>
+<td><code>@minecraft-docker/shared</code>: 도메인 엔티티, 값 객체, 유스케이스, 포트/어댑터</td>
 </tr>
 <tr>
-<td><code>platform/services/mod-source-modrinth</code></td>
-<td><code>@minecraft-docker/mod-source-modrinth</code></td>
-<td>Modrinth 모드 소스 어댑터</td>
+<td><code>platform/services/cli/</code></td>
+<td><code>@minecraft-docker/mcctl</code>: CLI (Hexagonal Architecture)</td>
 </tr>
 <tr>
-<td><code>platform/services/cli</code></td>
-<td><code>@minecraft-docker/mcctl</code></td>
-<td>CLI 도구 (주요 사용자용 패키지)</td>
+<td><code>platform/services/mcctl-api/</code></td>
+<td><code>@minecraft-docker/mcctl-api</code>: Fastify REST API (포트 5001)</td>
 </tr>
 <tr>
-<td><code>platform/services/mcctl-api</code></td>
-<td><code>@minecraft-docker/mcctl-api</code></td>
-<td>REST API 서비스</td>
+<td><code>platform/services/mcctl-console/</code></td>
+<td><code>@minecraft-docker/mcctl-console</code>: Next.js 웹 UI (포트 5000)</td>
 </tr>
 <tr>
-<td><code>platform/services/mcctl-console</code></td>
-<td><code>@minecraft-docker/mcctl-console</code></td>
-<td>웹 콘솔 UI</td>
+<td><code>platform/services/mod-source-modrinth/</code></td>
+<td><code>@minecraft-docker/mod-source-modrinth</code>: Modrinth 어댑터</td>
+</tr>
+<tr>
+<td><code>platform/scripts/</code></td>
+<td>Bash 관리 스크립트 (테스트는 <code>platform/scripts/tests/</code>)</td>
+</tr>
+<tr>
+<td><code>templates/</code></td>
+<td><code>mcctl init</code>이 복사하는 플랫폼 템플릿</td>
+</tr>
+<tr>
+<td><code>e2e/</code></td>
+<td>Management Console용 Playwright E2E 테스트</td>
+</tr>
+<tr>
+<td><code>docs/</code></td>
+<td>MkDocs 문서 (영어/한국어)</td>
+</tr>
+<tr>
+<td><code>website/</code></td>
+<td>프로젝트 랜딩 페이지</td>
+</tr>
+<tr>
+<td><code>.github/workflows/</code></td>
+<td>CI, 릴리즈, 웹사이트 배포 워크플로우</td>
+</tr>
+<tr>
+<td><code>.claude/</code></td>
+<td>Claude Code 서브에이전트, 커맨드, 훅</td>
 </tr>
 </tbody>
 </table>
-<h3 id="빌드-순서">빌드 순서<a class="headerlink" href="#빌드-순서" title="Permanent link">&para;</a></h3>
-<p>pnpm은 의존성 순서에 따라 자동으로 패키지를 빌드합니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>1. @minecraft-docker/shared        (의존성 없음)
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>2. @minecraft-docker/mod-source-modrinth  (shared에 의존)
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>3. @minecraft-docker/mcctl         (shared, mod-source-modrinth에 의존)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>4. @minecraft-docker/mcctl-api     (shared에 의존)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>5. @minecraft-docker/mcctl-console (shared에 의존)
+<h3 id="패키지와-빌드-순서">패키지와 빌드 순서<a class="headerlink" href="#패키지와-빌드-순서" title="Permanent link">&para;</a></h3>
+<p><code>pnpm build</code>는 <code>pnpm -r build</code>를 실행하며, 워크스페이스 패키지를 의존성 순서대로 빌드합니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>1. @minecraft-docker/shared                (워크스페이스 의존성 없음)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>2. @minecraft-docker/mod-source-modrinth   (shared)
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>3. @minecraft-docker/mcctl                 (shared, mod-source-modrinth)
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>   @minecraft-docker/mcctl-api             (shared, mod-source-modrinth)
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>   @minecraft-docker/mcctl-console         (shared)
 </code></pre></div>
-<h3 id="디렉토리-레이아웃">디렉토리 레이아웃<a class="headerlink" href="#디렉토리-레이아웃" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>minecraft/
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>|-- package.json              # 루트 워크스페이스
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>|-- pnpm-workspace.yaml       # pnpm 워크스페이스 설정
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>|-- tsconfig.base.json        # 공유 TypeScript 설정
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>|
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>|-- platform/
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>|   |-- docker-compose.yml    # 메인 오케스트레이션
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>|   |-- .env                  # 환경 설정
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>|   |
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>|   |-- services/
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>|   |   |-- shared/           # @minecraft-docker/shared
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>|   |   |-- mod-source-modrinth/  # @minecraft-docker/mod-source-modrinth
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>|   |   |-- cli/              # @minecraft-docker/mcctl
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>|   |   |-- mcctl-api/        # REST API
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>|   |   +-- mcctl-console/    # 웹 UI
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>|   |
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>|   +-- scripts/              # Bash 관리 스크립트
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>|
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>|-- docs/                     # MkDocs 문서
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>|-- e2e/                      # E2E 테스트
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>+-- templates/                # npm 패키지 템플릿
-</code></pre></div>
-<h2 id="사용-가능한-스크립트">사용 가능한 스크립트<a class="headerlink" href="#사용-가능한-스크립트" title="Permanent link">&para;</a></h2>
-<h3 id="루트-레벨">루트 레벨<a class="headerlink" href="#루트-레벨" title="Permanent link">&para;</a></h3>
+<p>릴리즈 태그를 푸시하면 다섯 패키지가 같은 버전으로 npm에 발행됩니다. <a href="git-workflow/#release-process">Git 워크플로우</a>를 참고하세요.</p>
+<h2 id="스크립트">스크립트<a class="headerlink" href="#스크립트" title="Permanent link">&para;</a></h2>
+<h3 id="루트">루트<a class="headerlink" href="#루트" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>명령어</th>
+<th>명령</th>
 <th>설명</th>
 </tr>
 </thead>
@@ -2489,140 +2550,181 @@
 </tr>
 <tr>
 <td><code>pnpm build</code></td>
-<td>모든 패키지 빌드 (의존성 순서 준수)</td>
+<td>모든 패키지를 의존성 순서대로 빌드</td>
 </tr>
 <tr>
-<td><code>pnpm clean</code></td>
-<td>모든 빌드 출력 정리</td>
+<td><code>pnpm dev</code></td>
+<td>각 패키지의 <code>dev</code> 스크립트를 병렬 실행 (shared/cli는 <code>tsc --watch</code>, mcctl-api는 <code>tsx watch</code>, mcctl-console은 <code>next dev -p 5000</code>)</td>
+</tr>
+<tr>
+<td><code>pnpm lint</code></td>
+<td>모든 패키지 린트</td>
 </tr>
 <tr>
 <td><code>pnpm test</code></td>
-<td>모든 테스트 실행</td>
+<td>모든 단위 테스트 실행</td>
+</tr>
+<tr>
+<td><code>pnpm clean</code></td>
+<td>빌드 결과물 삭제</td>
 </tr>
 <tr>
 <td><code>pnpm test:e2e</code></td>
-<td>E2E 테스트 실행</td>
+<td>Management Console E2E 실행 (Playwright, mcctl-api + mcctl-console)</td>
+</tr>
+<tr>
+<td><code>pnpm test:e2e:ui</code></td>
+<td>같은 테스트를 Playwright UI 모드로 실행</td>
 </tr>
 </tbody>
 </table>
-<h3 id="패키지-레벨">패키지 레벨<a class="headerlink" href="#패키지-레벨" title="Permanent link">&para;</a></h3>
-<p>각 패키지 디렉토리에서 다음을 실행할 수 있습니다:</p>
+<h3 id="build-and-test">빌드와 테스트<a class="headerlink" href="#build-and-test" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pnpm<span class="w"> </span>build<span class="w">                                   </span><span class="c1"># 전체 빌드</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>pnpm<span class="w"> </span><span class="nb">test</span><span class="w">                                    </span><span class="c1"># 전체 단위 테스트</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>pnpm<span class="w"> </span>lint<span class="w">                                    </span><span class="c1"># 전체 린트</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>pnpm<span class="w"> </span>--filter<span class="w"> </span>@minecraft-docker/shared<span class="w"> </span><span class="nb">test</span><span class="w">  </span><span class="c1"># 특정 패키지만</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>pnpm<span class="w"> </span>--filter<span class="w"> </span>@minecraft-docker/mcctl<span class="w"> </span><span class="nb">test</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>pnpm<span class="w"> </span>test:e2e<span class="w">                                </span><span class="c1"># Management Console E2E (Playwright)</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nb">cd</span><span class="w"> </span>platform/services/cli<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>test:e2e<span class="w">    </span><span class="c1"># CLI E2E (Vitest)</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>bash<span class="w"> </span>platform/scripts/tests/&lt;name&gt;.test.sh<span class="w">   </span><span class="c1"># bash 스크립트 테스트</span>
+</code></pre></div>
+<p>새 REST 엔드포인트의 E2E 테스트는 <code>e2e/tests/api-*.spec.ts</code>에, 콘솔 UI 흐름은 <code>e2e/tests/*.spec.ts</code>에, 새 CLI 명령이나 옵션은 <code>platform/services/cli/tests/e2e/cli-*.test.ts</code>에 추가합니다.</p>
+<h2 id="기여-절차">기여 절차<a class="headerlink" href="#기여-절차" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>원본 저장소에 이슈를 먼저 만듭니다.</strong> Summary, Root Cause(버그) 또는 Requirements(기능), Solution / Implementation Plan, Files to Modify, 체크박스 목록 형태의 Acceptance Criteria를 포함합니다. 오타 수정 같은 1줄짜리 변경은 이슈를 생략할 수 있습니다.</li>
+<li><strong>포크에서 <code>develop</code> 기준으로 브랜치를 만듭니다</strong>: <code>feature/&lt;issue&gt;-&lt;description&gt;</code> 또는 <code>bugfix/&lt;issue&gt;-&lt;description&gt;</code>. <code>develop</code>이나 <code>main</code>에서 직접 작업하지 않습니다.</li>
+<li><strong>TDD</strong>: 실패하는 테스트를 먼저 쓰고, 최소한의 코드로 통과시킨 뒤 리팩터링합니다. 문서 전용 변경과 로직 없는 설정 변경을 제외하고, 테스트가 없는 PR은 받지 않습니다.</li>
+<li><strong>Tidy First</strong>: 구조 변경(리팩터링)과 동작 변경(기능, 수정)을 한 커밋에 섞지 않습니다.</li>
+<li><strong>커밋</strong> 형식은 <code>&lt;type&gt;: &lt;description&gt; (#&lt;issue-number&gt;)</code>이며, <code>type</code>은 <code>feat</code>, <code>fix</code>, <code>docs</code>, <code>refactor</code>, <code>test</code>, <code>chore</code> 중 하나입니다.</li>
+<li><strong>이슈마다 PR 1개</strong>를 포크에서 원본 저장소의 <code>develop</code>으로 엽니다. 본문에 <code>Closes #&lt;issue&gt;</code>를 넣습니다.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span>feature/12-add-backup
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>gh<span class="w"> </span>pr<span class="w"> </span>create<span class="w"> </span>--repo<span class="w"> </span>smallmiro/minecraft-server-manager<span class="w"> </span>--base<span class="w"> </span>develop<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--head<span class="w"> </span>&lt;your-account&gt;:feature/12-add-backup<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--title<span class="w"> </span><span class="s2">"feat: add backup script (#12)"</span><span class="w"> </span>--body<span class="w"> </span><span class="s2">"Closes #12 ..."</span>
+</code></pre></div>
+<h3 id="ci">CI<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h3>
+<p><code>develop</code>으로 향하는 PR의 검사는 머지 전에 통과해야 합니다. 경로 필터가 적용됩니다:</p>
 <table>
 <thead>
 <tr>
-<th>명령어</th>
-<th>설명</th>
+<th>워크플로우</th>
+<th>실행 조건</th>
+<th>내용</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>pnpm build</code></td>
-<td>이 패키지 빌드</td>
+<td><code>cli-test</code></td>
+<td>PR이 <code>platform/services/cli/**</code> 또는 <code>platform/services/shared/**</code>를 변경</td>
+<td><code>mcctl</code>과 의존 패키지 빌드, CLI 테스트 실행</td>
 </tr>
 <tr>
-<td><code>pnpm dev</code></td>
-<td>감시 모드 (변경 시 재빌드)</td>
+<td><code>shared-test</code></td>
+<td>PR이 <code>platform/services/shared/**</code>를 변경</td>
+<td>shared 패키지 테스트 실행</td>
 </tr>
 <tr>
-<td><code>pnpm test</code></td>
-<td>패키지 테스트 실행</td>
-</tr>
-<tr>
-<td><code>pnpm clean</code></td>
-<td>빌드 출력 정리</td>
+<td><code>e2e</code></td>
+<td>매일 03:00 KST와 수동 실행 시, <strong>PR에서는 실행 안 됨</strong></td>
+<td>mcctl-api와 mcctl-console을 띄우고 Playwright 테스트 실행</td>
 </tr>
 </tbody>
 </table>
-<h2 id="개발-워크플로우">개발 워크플로우<a class="headerlink" href="#개발-워크플로우" title="Permanent link">&para;</a></h2>
-<h3 id="1-기능-브랜치-생성">1. 기능 브랜치 생성<a class="headerlink" href="#1-기능-브랜치-생성" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>develop
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>develop
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/123-my-feature
-</code></pre></div>
-<h3 id="2-변경-사항-구현">2. 변경 사항 구현<a class="headerlink" href="#2-변경-사항-구현" title="Permanent link">&para;</a></h3>
-<p>TDD (테스트 주도 개발) 워크플로우를 따르세요:</p>
-<ol>
-<li><strong>Red</strong>: 실패하는 테스트 작성</li>
-<li><strong>Green</strong>: 테스트를 통과하는 최소한의 코드 작성</li>
-<li><strong>Refactor</strong>: 테스트가 통과하는 상태에서 코드 정리</li>
-</ol>
-<h3 id="3-빌드-및-테스트">3. 빌드 및 테스트<a class="headerlink" href="#3-빌드-및-테스트" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># 모든 패키지 빌드</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pnpm<span class="w"> </span>build
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># 테스트 실행</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>pnpm<span class="w"> </span><span class="nb">test</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># E2E 테스트 실행 (Docker 필요)</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>pnpm<span class="w"> </span>test:e2e
-</code></pre></div>
-<h3 id="4-변경-사항-커밋">4. 변경 사항 커밋<a class="headerlink" href="#4-변경-사항-커밋" title="Permanent link">&para;</a></h3>
-<p>컨벤셔널 커밋 메시지를 사용하세요:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(cli): add new mod command (#123)"</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"fix(api): correct auth token validation"</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"docs: update installation guide"</span>
-</code></pre></div>
-<h3 id="5-pull-request-생성">5. Pull Request 생성<a class="headerlink" href="#5-pull-request-생성" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>feature/123-my-feature
-</code></pre></div>
-<p>그런 다음 GitHub에서 <code>develop</code> 브랜치로 PR을 생성합니다.</p>
+<p><code>e2e</code>는 PR에서 돌지 않으므로 API나 콘솔 동작을 바꿨다면 로컬에서 <code>pnpm test:e2e</code>를 실행하세요. CI는 <code>pnpm lint</code>를 실행하지 않으므로 직접 확인해야 합니다.</p>
+<p>브랜치 이름, 커밋 규칙, 버전 관리, 릴리즈 절차는 <a href="git-workflow/">Git 워크플로우</a>에 있습니다.</p>
+<h2 id="claude-code로-개발하기">Claude Code로 개발하기<a class="headerlink" href="#claude-code로-개발하기" title="Permanent link">&para;</a></h2>
+<p>저장소에 Claude Code 설정이 포함되어 있습니다. 저장소 루트에서 <code>claude</code>를 실행하면 <code>CLAUDE.md</code>와 <code>.claude/</code>의 서브에이전트, 커맨드, 훅이 자동으로 로드됩니다.</p>
+<table>
+<thead>
+<tr>
+<th>커맨드</th>
+<th>용도</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/plan-work</code></td>
+<td>작업 착수 전 계획 수립 (<code>--issue &lt;N&gt;</code>, <code>--milestone &lt;N&gt;</code>, <code>--issues &lt;N1,N2&gt;</code>). 계획만 세우고 실행하지 않습니다.</td>
+</tr>
+<tr>
+<td><code>/work</code></td>
+<td>이슈나 마일스톤을 완료까지 실행: 브랜치, TDD 구현, PR, 코드 리뷰</td>
+</tr>
+<tr>
+<td><code>/write-docs</code></td>
+<td>영어/한국어 기술 문서 작성</td>
+</tr>
+<tr>
+<td><code>/sync-docs</code></td>
+<td><code>CLAUDE.md</code>, <code>README.md</code> 등 문서를 코드와 동기화</td>
+</tr>
+<tr>
+<td><code>/update-docs</code></td>
+<td>공식 문서로부터 <code>docs/itzg-reference/</code> 갱신</td>
+</tr>
+<tr>
+<td><code>/build-kb</code></td>
+<td>소스를 심층 분석해 LLM 지식 베이스 생성</td>
+</tr>
+</tbody>
+</table>
+<p>일반적인 흐름은 변경 내용을 설명하고, 분석 결과로 이슈를 만들고, 큰 작업은 <code>/plan-work --issue &lt;N&gt;</code>으로 계획한 뒤 <code>/work --issue &lt;N&gt;</code>을 실행하는 것입니다. 서브에이전트, <code>/work</code>의 라우팅, 완료 조건 강제 방식은 <a href="agent-collaboration/">에이전트 협업</a>을 참고하세요.</p>
 <h2 id="아키텍처-개요">아키텍처 개요<a class="headerlink" href="#아키텍처-개요" title="Permanent link">&para;</a></h2>
-<p>이 프로젝트는 <strong>Hexagonal Architecture</strong> (포트 &amp; 어댑터)와 <strong>Clean Architecture</strong> 원칙을 따릅니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>+-------------------+
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>|    CLI Layer      |  명령어, 인자 파싱
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>+--------+----------+
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>         |
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>+--------v----------+
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>| Application Layer |  유스케이스, 비즈니스 로직
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>+--------+----------+
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>         |
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>+--------v----------+
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>|   Domain Layer    |  엔티티, 값 객체
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>+--------+----------+
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>         |
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>+--------v----------+
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>| Infrastructure    |  어댑터, 외부 서비스
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>+-------------------+
+<p>TypeScript 코드는 <strong>Hexagonal Architecture</strong>(Ports &amp; Adapters)와 <strong>Clean Architecture</strong> 계층을 따릅니다:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>+---------------------+
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>| Presentation Layer  |  CLI 명령, API 라우트
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>+----------+----------+
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>           |
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>+----------v----------+
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>| Application Layer   |  유스케이스, 애플리케이션 서비스
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>+----------+----------+
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>           |
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>+----------v----------+
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>|    Domain Layer     |  엔티티, 값 객체, 포트
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>+----------+----------+
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>           |
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>+----------v----------+
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>| Infrastructure      |  어댑터: 파일 시스템, Docker, 외부 API
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>+---------------------+
 </code></pre></div>
-<h3 id="핵심-개념">핵심 개념<a class="headerlink" href="#핵심-개념" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Value Objects</strong>: 생성 시 유효성 검사되는 불변 객체 (예: <code>ServerName.create("myserver")</code>)</li>
-<li><strong>Use Cases</strong>: 인터랙티브 및 CLI 모드를 지원하는 비즈니스 로직</li>
-<li><strong>Ports</strong>: 외부 의존성을 위한 인터페이스</li>
-<li><strong>Adapters</strong>: 구체적인 구현체</li>
+<li>도메인 계층은 외부 의존성을 갖지 않습니다.</li>
+<li>모든 I/O는 어댑터를 거치며, 의존성은 주입합니다.</li>
 </ul>
-<p>자세한 내용은 <a href="cli-architecture/">CLI 아키텍처</a>를 참조하세요.</p>
+<p>자세한 내용은 <a href="cli-architecture/">CLI 아키텍처</a>를 참고하세요.</p>
 <h2 id="관련-문서">관련 문서<a class="headerlink" href="#관련-문서" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="cli-architecture/">CLI 아키텍처</a> - CLI의 상세 아키텍처</li>
-<li><a href="agent-collaboration/">에이전트 협업</a> - 멀티 에이전트 개발 워크플로우</li>
+<li><a href="https://github.com/smallmiro/minecraft-server-manager/blob/develop/DEVELOPMENT.md"><code>DEVELOPMENT.md</code></a> - 전체 기여자 가이드</li>
+<li><a href="git-workflow/">Git 워크플로우</a> - 브랜치, 커밋, 버전 관리, 릴리즈</li>
+<li><a href="cli-architecture/">CLI 아키텍처</a> - CLI 계층 구조와 명령 추가 방법</li>
+<li><a href="agent-collaboration/">에이전트 협업</a> - Claude Code 서브에이전트와 <code>/work</code> 워크플로우</li>
 <li><a href="../cli/commands/">CLI 명령어</a> - 전체 CLI 레퍼런스</li>
 </ul>
 <h2 id="문제-해결">문제 해결<a class="headerlink" href="#문제-해결" title="Permanent link">&para;</a></h2>
 <h3 id="빌드-오류">빌드 오류<a class="headerlink" href="#빌드-오류" title="Permanent link">&para;</a></h3>
-<p>빌드 오류가 발생하면:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># 정리 후 재빌드</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># 정리 후 다시 빌드</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pnpm<span class="w"> </span>clean
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>pnpm<span class="w"> </span>install
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>pnpm<span class="w"> </span>build
 </code></pre></div>
-<h3 id="링크-문제">링크 문제<a class="headerlink" href="#링크-문제" title="Permanent link">&para;</a></h3>
-<p>링크 후 <code>mcctl</code> 명령어를 찾을 수 없는 경우:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># npm 전역 bin 경로 확인</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>npm<span class="w"> </span>config<span class="w"> </span>get<span class="w"> </span>prefix
+<h3 id="링크-후-mcctl을-찾을-수-없음">링크 후 <code>mcctl</code>을 찾을 수 없음<a class="headerlink" href="#링크-후-mcctl을-찾을-수-없음" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># pnpm이 사용하는 전역 bin 디렉터리 확인</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>pnpm<span class="w"> </span>bin<span class="w"> </span>--global
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># 필요시 PATH에 추가</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">"</span><span class="nv">$PATH</span><span class="s2">:</span><span class="k">$(</span>npm<span class="w"> </span>config<span class="w"> </span>get<span class="w"> </span>prefix<span class="k">)</span><span class="s2">/bin"</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># 필요하면 PATH에 추가 (pnpm setup이 대신 설정해 줌)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>pnpm<span class="w"> </span>setup
 </code></pre></div>
-<h3 id="docker-문제">Docker 문제<a class="headerlink" href="#docker-문제" title="Permanent link">&para;</a></h3>
-<p>Docker가 실행 중이고 사용자에게 권한이 있는지 확인하세요:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Docker 상태 확인</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>docker<span class="w"> </span>--version
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>docker<span class="w"> </span>compose<span class="w"> </span>version
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># 권한 거부 시 사용자를 docker 그룹에 추가</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>newgrp<span class="w"> </span>docker
+<h3 id="docker-권한-거부">Docker 권한 거부<a class="headerlink" href="#docker-권한-거부" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>docker<span class="w"> </span>--version
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>version
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># 사용자를 docker 그룹에 추가</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>newgrp<span class="w"> </span>docker
 </code></pre></div>
 
 
@@ -2682,6 +2784,14 @@
     
     <a href="https://github.com/smallmiro/minecraft-server-manager" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://mcctl.mirolab.dev/" target="_blank" rel="noopener" title="Website" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
     </a>
   
 </div>

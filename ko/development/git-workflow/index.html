@@ -11,6 +11,10 @@
         <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/ko/development/git-workflow/">
       
       
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../cli-architecture/">
       
       
         
@@ -25,7 +29,7 @@
     
     
       
-        <title>Git Workflow Guide - Minecraft Docker Server Manager</title>
+        <title>Git Workflow - Minecraft Docker Server Manager</title>
       
     
     
@@ -76,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#git-workflow-guide" class="md-skip">
+        <a href="#git-워크플로우" class="md-skip">
           콘텐츠로 이동
         </a>
       
@@ -112,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Git Workflow Guide
+              Git Workflow
             
           </span>
         </div>
@@ -457,10 +461,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../" class="md-tabs__link">
           
   
@@ -1888,6 +1894,8 @@
       
   
   
+    
+  
   
   
     
@@ -1901,22 +1909,25 @@
       
         
       
+        
+      
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
         
           
           <div class="md-nav__link md-nav__container">
@@ -1938,13 +1949,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_11" id="__nav_11_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_11" id="__nav_11_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1955,6 +1966,197 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Workflow
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#branches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        브랜치
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#standard-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        기본 절차
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commit-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        커밋 메시지
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tdd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TDD
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tidy-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tidy First
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-checkpoint-taskmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        작업 체크포인트 (task.md)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#semantic-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Semantic Versioning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        릴리즈 절차
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="릴리즈 절차">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ci-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI 워크플로우
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        코드 품질
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
               
             
               
@@ -2074,116 +2276,43 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#git-flow-branching-strategy" class="md-nav__link">
+  <a href="#branches" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Git-Flow Branching Strategy
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Git-Flow Branching Strategy">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#branch-naming-convention" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Branch Naming Convention
+        브랜치
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#standard-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Standard Workflow
+        기본 절차
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#commit-message-format" class="md-nav__link">
+  <a href="#commit-messages" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Commit Message Format
+        커밋 메시지
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Commit Message Format">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#commit-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Commit Types
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#semantic-versioning" class="md-nav__link">
+  <a href="#tdd" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Semantic Versioning
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Semantic Versioning">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#key-rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Rules
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pre-release--build-metadata" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-release &amp; Build Metadata
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tdd-test-driven-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TDD (Test-Driven Development)
+        TDD
       
     </span>
   </a>
@@ -2199,41 +2328,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Tidy First">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#good-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Good Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bad-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bad Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
   <a href="#task-checkpoint-taskmd" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Task Checkpoint (task.md)
+        작업 체크포인트 (task.md)
       
     </span>
   </a>
@@ -2241,22 +2342,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#using-planmd" class="md-nav__link">
+  <a href="#semantic-versioning" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using plan.md
+        Semantic Versioning
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Using plan.md">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#release-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        릴리즈 절차
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="릴리즈 절차">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#workflow" class="md-nav__link">
+  <a href="#ci-workflows" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Workflow
+        CI 워크플로우
       
     </span>
   </a>
@@ -2269,10 +2381,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#code-quality-standards" class="md-nav__link">
+  <a href="#code-quality" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Code Quality Standards
+        코드 품질
       
     </span>
   </a>
@@ -2299,246 +2411,248 @@
   
 
 
-<h1 id="git-workflow-guide">Git Workflow Guide<a class="headerlink" href="#git-workflow-guide" title="Permanent link">&para;</a></h1>
-<p>This project follows Git-Flow branching strategy with strict conventions for commits, versioning, and development practices.</p>
-<h2 id="git-flow-branching-strategy">Git-Flow Branching Strategy<a class="headerlink" href="#git-flow-branching-strategy" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>main (production)
+<h1 id="git-워크플로우">Git 워크플로우<a class="headerlink" href="#git-워크플로우" title="Permanent link">&para;</a></h1>
+<p>이 프로젝트는 Git-Flow 브랜치 전략과 Semantic Versioning을 따릅니다. 모든 변경은 GitHub 이슈에서 시작해 PR을 통해 <code>develop</code>에 들어갑니다.</p>
+<h2 id="branches">브랜치<a class="headerlink" href="#branches" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>main      ← 릴리즈된 상태, 메인테이너가 develop에서 갱신
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  └── develop (integration)
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>        │
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        ├── feature/xxx (new features)
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        ├── bugfix/xxx (bug fixes)
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        └── release/x.x.x (release preparation)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>develop   ← 통합 브랜치, 모든 PR의 대상
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  │
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ├── feature/&lt;issue&gt;-&lt;description&gt;   새 기능, 개선, 리팩터링
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  ├── bugfix/&lt;issue&gt;-&lt;description&gt;    긴급하지 않은 버그 수정
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  ├── release/&lt;version&gt;               릴리즈 준비 (메인테이너)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  └── hotfix/&lt;version&gt;                운영 긴급 수정 (메인테이너)
 </code></pre></div>
-<h3 id="branch-naming-convention">Branch Naming Convention<a class="headerlink" href="#branch-naming-convention" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Branch Type</th>
-<th>Pattern</th>
-<th>Example</th>
+<th>유형</th>
+<th>패턴</th>
+<th>예시</th>
+<th>기준</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Feature</td>
-<td><code>feature/&lt;issue-number&gt;-&lt;description&gt;</code></td>
-<td><code>feature/12-add-backup-script</code></td>
+<td><code>feature/&lt;issue&gt;-&lt;description&gt;</code></td>
+<td><code>feature/12-add-backup</code></td>
+<td>새 기능, 개선, 리팩터링</td>
 </tr>
 <tr>
 <td>Bugfix</td>
-<td><code>bugfix/&lt;issue-number&gt;-&lt;description&gt;</code></td>
-<td><code>bugfix/15-fix-lock-release</code></td>
+<td><code>bugfix/&lt;issue&gt;-&lt;description&gt;</code></td>
+<td><code>bugfix/15-fix-lock</code></td>
+<td>일반 버그, 비긴급 수정</td>
 </tr>
 <tr>
 <td>Release</td>
 <td><code>release/&lt;version&gt;</code></td>
-<td><code>release/1.0.0</code></td>
+<td><code>release/2.30.0</code></td>
+<td>릴리즈 준비</td>
 </tr>
 <tr>
 <td>Hotfix</td>
-<td><code>hotfix/&lt;issue-number&gt;-&lt;description&gt;</code></td>
-<td><code>hotfix/20-critical-fix</code></td>
+<td><code>hotfix/&lt;version&gt;</code></td>
+<td><code>hotfix/2.30.1</code></td>
+<td>운영 장애, 긴급 버그, 데이터 손실 위험</td>
 </tr>
 </tbody>
 </table>
-<h3 id="standard-workflow">Standard Workflow<a class="headerlink" href="#standard-workflow" title="Permanent link">&para;</a></h3>
+<p><code>develop</code>이나 <code>main</code>에 직접 커밋하지 않습니다.</p>
+<h2 id="standard-workflow">기본 절차<a class="headerlink" href="#standard-workflow" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Create GitHub Issue for task</li>
-<li>Create feature branch from <code>develop</code></li>
-<li>Implement and commit with issue reference (<code>#issue-number</code>)</li>
-<li>Create PR to <code>develop</code></li>
-<li>Merge after review</li>
-<li>Delete feature branch</li>
+<li>원본 저장소(<code>smallmiro/minecraft-server-manager</code>)에 이슈를 만듭니다. Summary, Root Cause 또는 Requirements, Solution / Implementation Plan, Files to Modify, 체크박스 형태의 Acceptance Criteria를 포함합니다.</li>
+<li>포크에서 최신 <code>develop</code> 기준으로 이슈 번호를 넣은 브랜치를 만듭니다.</li>
+<li>TDD로 구현하고 이슈 번호(<code>#&lt;issue&gt;</code>)를 넣어 커밋합니다. 진행하면서 Acceptance Criteria를 체크합니다.</li>
+<li>이슈마다 PR 1개를 원본 저장소의 <code>develop</code>으로 엽니다. 본문에 <code>Closes #&lt;issue&gt;</code>를 넣습니다.</li>
+<li>리뷰 의견은 같은 브랜치에 커밋을 추가해 반영합니다.</li>
+<li>머지 후 로컬과 포크의 브랜치를 삭제합니다.</li>
 </ol>
-<hr />
-<h2 id="commit-message-format">Commit Message Format<a class="headerlink" href="#commit-message-format" title="Permanent link">&para;</a></h2>
+<p>포크와 <code>upstream</code> 원격 저장소 설정 명령은 <a href="../#fork-and-set-up">개발 가이드</a>에 있습니다.</p>
+<h2 id="commit-messages">커밋 메시지<a class="headerlink" href="#commit-messages" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&lt;type&gt;: &lt;description&gt; (#&lt;issue-number&gt;)
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>&lt;body&gt;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Co-Authored-By: Claude Opus 4.5 &lt;noreply@anthropic.com&gt;
 </code></pre></div>
-<h3 id="commit-types">Commit Types<a class="headerlink" href="#commit-types" title="Permanent link">&para;</a></h3>
+<p>스코프는 선택이며, 예를 들어 <code>feat(cli): add mod search (#123)</code>처럼 씁니다. Claude Code로 작성한 커밋은 끝에 <code>Co-Authored-By: Claude ... &lt;noreply@anthropic.com&gt;</code> 트레일러가 붙습니다.</p>
 <table>
 <thead>
 <tr>
-<th>Type</th>
-<th>Description</th>
-<th>Example</th>
+<th>타입</th>
+<th>설명</th>
+<th>예시</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>feat</code></td>
-<td>New feature</td>
+<td>새 기능</td>
 <td><code>feat: add world backup command (#12)</code></td>
 </tr>
 <tr>
 <td><code>fix</code></td>
-<td>Bug fix</td>
+<td>버그 수정</td>
 <td><code>fix: resolve lock file race condition (#15)</code></td>
 </tr>
 <tr>
 <td><code>docs</code></td>
-<td>Documentation</td>
+<td>문서</td>
 <td><code>docs: update CLI reference (#20)</code></td>
 </tr>
 <tr>
 <td><code>refactor</code></td>
-<td>Code refactoring</td>
+<td>동작 변경 없는 리팩터링</td>
 <td><code>refactor: extract validation logic (#25)</code></td>
 </tr>
 <tr>
 <td><code>test</code></td>
-<td>Tests</td>
+<td>테스트</td>
 <td><code>test: add world locking tests (#30)</code></td>
 </tr>
 <tr>
 <td><code>chore</code></td>
-<td>Maintenance</td>
-<td><code>chore: bump dependencies (#35)</code></td>
+<td>유지보수, 릴리즈</td>
+<td><code>chore(release): bump version to v2.30.0</code></td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="semantic-versioning">Semantic Versioning<a class="headerlink" href="#semantic-versioning" title="Permanent link">&para;</a></h2>
-<p>This project follows <a href="https://semver.org/">Semantic Versioning 2.0.0</a>.</p>
-<p><strong>Format</strong>: <code>MAJOR.MINOR.PATCH</code> (e.g., <code>1.2.3</code>)</p>
+<p>"fix", "update", "changes" 같은 모호한 메시지는 피합니다.</p>
+<h2 id="tdd">TDD<a class="headerlink" href="#tdd" title="Permanent link">&para;</a></h2>
+<p>모든 기능, 버그 수정, 개선은 <strong>Red → Green → Refactor</strong>를 따릅니다:</p>
+<ol>
+<li><strong>Red</strong>: 기대 동작을 정의하는 실패하는 테스트를 작성합니다.</li>
+<li><strong>Green</strong>: 테스트를 통과시키는 최소한의 코드를 작성합니다.</li>
+<li><strong>Refactor</strong>: 테스트가 통과하는 상태를 유지하며 정리합니다.</li>
+</ol>
+<p>문서 전용 변경과 로직 없는 설정 변경을 제외하고, 테스트가 없는 PR은 받지 않습니다. 테스트 위치는 <a href="../#build-and-test">개발 가이드</a>에 있습니다.</p>
+<h2 id="tidy-first">Tidy First<a class="headerlink" href="#tidy-first" title="Permanent link">&para;</a></h2>
+<p>구조 변경과 동작 변경을 한 커밋에 섞지 않습니다.</p>
 <table>
 <thead>
 <tr>
-<th>Version</th>
-<th>When to Increment</th>
-<th>Example</th>
+<th>변경 유형</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>구조 변경</td>
+<td>이름 변경, 함수 추출, 파일 이동</td>
+</tr>
+<tr>
+<td>동작 변경</td>
+<td>새 기능, 버그 수정, 로직 변경</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># 좋은 예: 커밋 2개로 분리</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"refactor: extract validate_world function (#7)"</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat: add world existence check (#7)"</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># 나쁜 예: 한 커밋에 섞음</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat: add validation with new helper function (#7)"</span>
+</code></pre></div>
+<h2 id="task-checkpoint-taskmd">작업 체크포인트 (<code>task.md</code>)<a class="headerlink" href="#task-checkpoint-taskmd" title="Permanent link">&para;</a></h2>
+<p>저장소 루트의 <code>task.md</code>는 git에서 제외된 파일로, 로컬 작업 메모에 씁니다. <code>/work</code>는 커밋할 때마다 여기에 체크포인트를 추가합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="gu">## Working On</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">- [ ]</span> Implementing lock.sh (#5)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="gu">## Context</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">-</span><span class="w"> </span>Branch: feature/5-world-locking
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="gu">## Notes</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="k">-</span><span class="w"> </span>lock file format: &lt;server&gt;:&lt;timestamp&gt;:&lt;pid&gt;
+</code></pre></div>
+<p>계획은 GitHub에서 관리합니다. 요구사항과 Acceptance Criteria는 이슈 본문에 두고, 큰 작업의 계획은 <code>/plan-work</code>로 만듭니다. 루트와 각 패키지의 <code>plan.md</code>는 초기 구축 당시의 로드맵 기록입니다.</p>
+<h2 id="semantic-versioning">Semantic Versioning<a class="headerlink" href="#semantic-versioning" title="Permanent link">&para;</a></h2>
+<p><a href="https://semver.org/">Semantic Versioning 2.0.0</a>을 따릅니다. npm 패키지 다섯 개(<code>@minecraft-docker/shared</code>, <code>mod-source-modrinth</code>, <code>mcctl</code>, <code>mcctl-api</code>, <code>mcctl-console</code>)와 루트 <code>package.json</code>은 같은 버전을 씁니다.</p>
+<table>
+<thead>
+<tr>
+<th>자리</th>
+<th>올리는 경우</th>
+<th>예시</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>MAJOR</strong></td>
-<td>Incompatible API/breaking changes</td>
-<td><code>1.0.0</code> → <code>2.0.0</code></td>
+<td>호환되지 않는 변경</td>
+<td><code>1.9.0</code> → <code>2.0.0</code></td>
 </tr>
 <tr>
 <td><strong>MINOR</strong></td>
-<td>New features (backward compatible)</td>
-<td><code>1.0.0</code> → <code>1.1.0</code></td>
+<td>하위 호환 새 기능</td>
+<td><code>2.29.1</code> → <code>2.30.0</code></td>
 </tr>
 <tr>
 <td><strong>PATCH</strong></td>
-<td>Bug fixes (backward compatible)</td>
-<td><code>1.0.0</code> → <code>1.0.1</code></td>
+<td>하위 호환 버그 수정</td>
+<td><code>2.29.0</code> → <code>2.29.1</code></td>
 </tr>
 </tbody>
 </table>
-<h3 id="key-rules">Key Rules<a class="headerlink" href="#key-rules" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>0.x.x</code>: Initial development, API may change anytime</li>
-<li><code>1.0.0</code>: First stable release, public API defined</li>
-<li>When MAJOR increments → reset MINOR and PATCH to 0</li>
-<li>When MINOR increments → reset PATCH to 0</li>
-</ul>
-<h3 id="pre-release--build-metadata">Pre-release &amp; Build Metadata<a class="headerlink" href="#pre-release--build-metadata" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>1.0.0-alpha      # Pre-release (lower precedence than 1.0.0)
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>1.0.0-alpha.1    # Pre-release with identifier
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>1.0.0-beta       # Beta release
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>1.0.0-rc.1       # Release candidate
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>1.0.0+20250117   # Build metadata (ignored in precedence)
-</code></pre></div>
-<p><strong>Version Precedence</strong>: <code>1.0.0-alpha</code> &lt; <code>1.0.0-alpha.1</code> &lt; <code>1.0.0-beta</code> &lt; <code>1.0.0-rc.1</code> &lt; <code>1.0.0</code></p>
-<hr />
-<h2 id="tdd-test-driven-development">TDD (Test-Driven Development)<a class="headerlink" href="#tdd-test-driven-development" title="Permanent link">&para;</a></h2>
-<p>Follow the <strong>Red → Green → Refactor</strong> cycle:</p>
+<p>MAJOR를 올리면 MINOR와 PATCH를 0으로, MINOR를 올리면 PATCH를 0으로 되돌립니다.</p>
+<h2 id="release-process">릴리즈 절차<a class="headerlink" href="#release-process" title="Permanent link">&para;</a></h2>
+<p>릴리즈는 메인테이너가 수행하며, 보통 <code>release-manager</code> 에이전트로 진행합니다.</p>
 <ol>
-<li><strong>Red</strong>: Write a failing test first</li>
-<li><strong>Green</strong>: Write minimal code to make the test pass</li>
-<li><strong>Refactor</strong>: Clean up while keeping tests green</li>
-</ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Example for Bash scripts</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># 1. Write test case in tests/test_lock.sh</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># 2. Run test - expect failure</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># 3. Implement in scripts/lock.sh</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># 4. Run test - expect success</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># 5. Refactor and verify tests still pass</span>
+<li><strong>브랜치</strong>: <code>develop</code>에서 <code>release/&lt;version&gt;</code>을 만듭니다.</li>
+<li><strong>준비</strong>: <code>chore(release): bump version to v&lt;version&gt;</code> 커밋 하나에서 루트와 패키지 다섯 개의 <code>package.json</code> 버전을 올리고, <code>CHANGELOG.md</code>에 새 버전을 추가해 <code>platform/services/cli/CHANGELOG.md</code>로 복사하고, <code>platform/services/cli/README.md</code>의 Changelog 섹션(npm 페이지에 표시됨)을 갱신하고, 필요하면 <code>README.md</code>와 <code>docs/documentforllmagent.md</code>도 갱신합니다.</li>
+<li>
+<p><strong>머지와 태그</strong>: 릴리즈 브랜치를 <code>develop</code>에 머지한 뒤 annotated 태그를 만들어 푸시합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v2.30.0<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Release v2.30.0"</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v2.30.0
 </code></pre></div>
-<hr />
-<h2 id="tidy-first">Tidy First<a class="headerlink" href="#tidy-first" title="Permanent link">&para;</a></h2>
-<p><strong>Never mix structural and behavioral changes in the same commit.</strong></p>
+</li>
+<li>
+<p><strong>CI</strong>: <code>v*</code> 태그가 <code>.github/workflows/release.yml</code>을 실행합니다. 워크스페이스를 빌드하고, 패키지 다섯 개를 npm에 발행하고, GitHub Release를 만들고, MkDocs 사이트를 GitHub Pages에 배포합니다.</p>
+</li>
+<li><strong>확인</strong>: 다섯 패키지 모두 <code>npm view &lt;package&gt; version</code>이 새 버전인지 확인합니다. CI가 커밋 목록으로 릴리즈 노트를 만들기 때문에, 직접 정리한 노트는 CI가 끝난 뒤에 적용합니다(<code>gh release edit v&lt;version&gt; --notes-file ...</code>).</li>
+</ol>
+<h3 id="ci-workflows">CI 워크플로우<a class="headerlink" href="#ci-workflows" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Change Type</th>
-<th>Examples</th>
-<th>Commit Separately</th>
+<th>워크플로우</th>
+<th>트리거</th>
+<th>용도</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Structural</td>
-<td>Rename, extract function, move file</td>
-<td>Yes</td>
+<td><code>cli-test.yml</code></td>
+<td><code>platform/services/cli/**</code> 또는 <code>platform/services/shared/**</code>를 변경하는 <code>develop</code>/<code>main</code> 대상 PR, <code>develop</code> 푸시</td>
+<td><code>mcctl</code> 빌드와 테스트</td>
 </tr>
 <tr>
-<td>Behavioral</td>
-<td>New feature, bug fix, logic change</td>
-<td>Yes</td>
+<td><code>shared-test.yml</code></td>
+<td><code>platform/services/shared/**</code>를 변경하는 <code>develop</code>/<code>main</code> 대상 PR, <code>develop</code> 푸시</td>
+<td>shared 패키지 테스트</td>
+</tr>
+<tr>
+<td><code>e2e.yml</code></td>
+<td>매일 03:00 KST, 수동 실행</td>
+<td>Management Console E2E (Playwright)</td>
+</tr>
+<tr>
+<td><code>release.yml</code></td>
+<td><code>v*</code> 태그 푸시</td>
+<td>npm 발행, GitHub Release, 문서 배포</td>
+</tr>
+<tr>
+<td><code>deploy-website.yml</code></td>
+<td><code>website/**</code>를 변경하는 <code>main</code> 푸시, 수동 실행</td>
+<td>랜딩 페이지 배포</td>
 </tr>
 </tbody>
 </table>
-<h3 id="good-example">Good Example<a class="headerlink" href="#good-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Two separate commits</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"refactor: extract validate_world function"</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat: add world existence check (#7)"</span>
-</code></pre></div>
-<h3 id="bad-example">Bad Example<a class="headerlink" href="#bad-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Mixed in one commit - AVOID THIS</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat: add validation with new helper function"</span>
-</code></pre></div>
-<hr />
-<h2 id="task-checkpoint-taskmd">Task Checkpoint (task.md)<a class="headerlink" href="#task-checkpoint-taskmd" title="Permanent link">&para;</a></h2>
-<p>During development, use <code>task.md</code> to track work-in-progress:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="gh"># Current Task</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="gu">## Working On</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">- [ ]</span> Implementing lock.sh (#5)
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="gu">## Context</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="k">-</span><span class="w"> </span>Started: 2025-01-17 14:00
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="k">-</span><span class="w"> </span>Branch: feature/5-world-locking
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="gu">## Notes</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="k">-</span><span class="w"> </span>lock file format decided: &lt;server&gt;:&lt;timestamp&gt;:&lt;pid&gt;
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="k">-</span><span class="w"> </span>Need to handle stale locks
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="gu">## Next Steps</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="k">- [ ]</span> Test concurrent lock attempts
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="k">- [ ]</span> Add to mcctl.sh
-</code></pre></div>
-<p><strong>Important</strong>: <code>task.md</code> is in <code>.gitignore</code> - for local tracking only, not committed.</p>
-<hr />
-<h2 id="using-planmd">Using plan.md<a class="headerlink" href="#using-planmd" title="Permanent link">&para;</a></h2>
-<p>The <code>plan.md</code> file serves as the implementation roadmap:</p>
-<ol>
-<li><strong>Before starting work</strong>: Read <code>plan.md</code> to understand the overall architecture</li>
-<li><strong>Check current phase</strong>: Find the next unmarked task in the current phase</li>
-<li><strong>Update as you go</strong>: Mark completed items, add discovered tasks</li>
-<li><strong>Sync with GitHub Issues</strong>: Each phase/task maps to GitHub Issues</li>
-</ol>
-<h3 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="m">1</span>.<span class="w"> </span>Read<span class="w"> </span>plan.md<span class="w"> </span>→<span class="w"> </span>Identify<span class="w"> </span>next<span class="w"> </span>task
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="m">2</span>.<span class="w"> </span>Create<span class="w"> </span>GitHub<span class="w"> </span>Issue<span class="w"> </span><span class="o">(</span><span class="k">if</span><span class="w"> </span>not<span class="w"> </span>exists<span class="o">)</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="m">3</span>.<span class="w"> </span>Create<span class="w"> </span>feature<span class="w"> </span>branch
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="m">4</span>.<span class="w"> </span>Implement<span class="w"> </span>following<span class="w"> </span>TDD
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="m">5</span>.<span class="w"> </span>Mark<span class="w"> </span>task<span class="w"> </span><span class="nb">complete</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>plan.md
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="m">6</span>.<span class="w"> </span>Commit<span class="w"> </span>and<span class="w"> </span>PR
-</code></pre></div>
-<hr />
-<h2 id="code-quality-standards">Code Quality Standards<a class="headerlink" href="#code-quality-standards" title="Permanent link">&para;</a></h2>
+<h2 id="code-quality">코드 품질<a class="headerlink" href="#code-quality" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Eliminate duplication</strong>: Extract common patterns into reusable functions</li>
-<li><strong>Clear naming</strong>: Variables and functions should be self-documenting</li>
-<li><strong>Single responsibility</strong>: Each function does one thing well</li>
-<li><strong>Small commits</strong>: Atomic changes that are easy to review and revert</li>
+<li>공통 로직을 추출해 중복을 없앱니다.</li>
+<li>의도가 드러나는 이름을 씁니다.</li>
+<li>함수 하나는 책임 하나만 갖게 합니다.</li>
+<li>리뷰와 되돌리기가 쉽도록 커밋을 작고 원자적으로 유지합니다.</li>
 </ul>
 
 
@@ -2598,6 +2712,14 @@
     
     <a href="https://github.com/smallmiro/minecraft-server-manager" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://mcctl.mirolab.dev/" target="_blank" rel="noopener" title="Website" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
     </a>
   
 </div>
