@@ -357,6 +357,8 @@ Overview 탭의 핵심은 **Console** 패널로, 서버의 실시간 로그 출�
 
 ### Activity 탭
 
+![서버 Activity](../images/server-activity.png)
+
 **Activity** 탭은 이 서버의 감사 기록을 [감사 로그](#감사-로그) 페이지와 같은 테이블로, Target 컬럼 없이 보여줍니다:
 
 - **Action** 드롭다운(**All Actions** 또는 특정 서버 액션)과 상태 토글(**ALL**, **SUCCESS**, **FAILURE**)
@@ -465,6 +467,8 @@ Files 탭은 서버 파일 시스템을 위한 완전한 기능의 파일 관리
 **Restore Configuration** 다이얼로그는 적용될 변경 사항을 나열하며, **Create safety snapshot before restoring (recommended)**가 기본으로 선택되어 있습니다. 서버가 실행 중이면 변경 사항을 적용하려면 재시작이 필요할 수 있다고 안내합니다.
 
 ### Backups 탭
+
+![서버 Backups](../images/server-backups.png)
 
 서버의 **Backups** 탭에는 두 개의 하위 탭이 있습니다:
 
@@ -692,8 +696,6 @@ Backups 페이지에서 월드 백업, 자동 백업 스케줄, 서버 구성 �
 **Backup History** 카드(백업 시스템이 구성된 경우 표시)는 과거 백업의 커밋 해시, 날짜, 메시지, 작성자를 보여줍니다. 행의 복원 버튼은 **Restore Backup**을 여는데, 선택한 백업으로 모든 월드가 복원되며 현재 월드 데이터를 덮어쓴다는 경고가 표시됩니다.
 
 ### Config Snapshots
-
-![Config Snapshots](../images/backup-config-snapshots.png)
 
 **Config Snapshots** 탭은 모든 서버의 구성 스냅샷을 한곳에서 관리합니다. 서버마다 카드가 하나씩 표시되며 다음을 보여줍니다:
 

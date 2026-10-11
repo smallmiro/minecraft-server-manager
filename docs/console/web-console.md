@@ -357,6 +357,8 @@ The **World** tab shows the world assigned to the server. If no world is assigne
 
 ### Activity Tab
 
+![Server Activity](../images/server-activity.png)
+
 The **Activity** tab shows the audit history of this server in the same table as the [Audit Log](#audit-log) page, without the Target column:
 
 - An **Action** dropdown (**All Actions** or a specific server action) and a status toggle (**ALL**, **SUCCESS**, **FAILURE**)
@@ -465,6 +467,8 @@ The **Config Diff** dialog shows **Snapshot A** vs. **Snapshot B** with a file t
 The **Restore Configuration** dialog lists the changes that will be applied and keeps **Create safety snapshot before restoring (recommended)** checked by default. If the server is running, it warns that a restart may be required for the changes to take effect.
 
 ### Backups Tab
+
+![Server Backups](../images/server-backups.png)
 
 The **Backups** tab of a server has two sub-tabs:
 
@@ -692,8 +696,6 @@ The **Backup Schedules** card manages automated cron-based backup scheduling:
 The **Backup History** card (visible when the backup system is configured) lists past backups with the commit hash, date, message, and author. The restore button on a row opens **Restore Backup**, which warns that all worlds will be restored from the selected backup and that current world data will be overwritten.
 
 ### Config Snapshots
-
-![Config Snapshots](../images/backup-config-snapshots.png)
 
 The **Config Snapshots** tab manages configuration snapshots for every server at once. It lists one card per server with:
 
