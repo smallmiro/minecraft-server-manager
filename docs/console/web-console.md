@@ -34,23 +34,40 @@ mcctl-console uses a Backend-for-Frontend (BFF) proxy pattern for secure API com
 
 ## Accessing the Console
 
-### First Time Login
+### Signing In
+
+![Login](../images/login.png)
 
 1. Start the Management Console services:
    ```bash
    mcctl console service start
    ```
 
-2. Open your browser and navigate to `http://localhost:5000`
+2. Open your browser and navigate to `http://localhost:5000`. You are redirected to the **Welcome Back** sign-in page.
 
 3. Enter your credentials:
-   - **Username:** The admin username created during `mcctl console init`
-   - **Password:** The admin password
+    - **Email:** The admin email you entered during `mcctl console init`
+    - **Password:** The admin password (use the eye icon to show or hide it)
 
-4. Click **Sign In**
+4. Click **Sign In**. After a successful login you land on the [Dashboard](#dashboard).
 
 !!! tip "Session Persistence"
-    Your session will persist for 24 hours by default. Refresh tokens are used to extend active sessions automatically. Click **Sign Out** in the user avatar menu (top-right corner) to end your session manually.
+    A session stays valid for 7 days and is extended automatically (at most once every 24 hours) while you keep using the console. Click **Logout** in the user avatar menu (top-right corner) to end your session manually.
+
+### Signing Up
+
+![Sign Up](../images/signup.png)
+
+If you do not have an account yet, click **Sign up** under the sign-in form ("Don't have an account? Sign up") to open the **Create Account** page:
+
+1. Enter your **Name** and **Email**
+2. Choose a **Password** (at least 8 characters) and type it again in **Confirm Password**
+3. Click **Sign Up**
+
+The account is created, you are signed in immediately, and you land on the Dashboard. Use **Sign in** under the form to go back to the sign-in page.
+
+!!! note "New accounts start with the User role"
+    New accounts get the **User** role. A User sees only the servers that an administrator or a server Owner has granted access to (see [Access Tab](#access-tab)), so the Servers page stays empty until access is granted. A server created by a User automatically gives that User the Owner permission on it. The sign-up page does not send a verification email.
 
 ---
 
@@ -62,7 +79,7 @@ The Dashboard is your command center -- it gives you an at-a-glance overview of 
 
 ### Status Hero
 
-Since v2.28.0, the Dashboard opens with a status hero that summarizes platform health: how many servers are online (with an online percentage), how many servers need attention (not running, or `unhealthy`), and a **Live** / **Reconnecting** chip that reflects the real-time (SSE) connection. When server data cannot be loaded, the hero says so instead of showing zero.
+Since v2.28.0, the Dashboard opens with a status hero that summarizes platform health: how many servers are online (for example, "2 of 3 servers online" with a progress bar), how many servers need attention (not running, or `unhealthy`), and a **Live** / **Reconnecting** chip that reflects the real-time (SSE) connection. When server data cannot be loaded, the hero says so instead of showing zero.
 
 ### Statistics Cards
 
@@ -70,27 +87,27 @@ Below the status hero, four statistics cards provide key metrics:
 
 | Card | Description |
 |------|-------------|
-| **Total Servers** | The total number of configured Minecraft servers across your platform |
+| **Total Servers** | The total number of configured Minecraft servers across your platform, with a running / stopped breakdown |
 | **Online Servers** | How many servers are currently in a `running` state (updated in real-time via SSE) |
 | **Total Players** | The aggregate player count across all running servers |
-| **Total Worlds** | The total number of available worlds in your world storage |
+| **Total Worlds** | The total number of available worlds in your world storage, with an assigned / free breakdown |
 
 ### Servers Panel
 
-The left side of the Dashboard displays a **Servers** panel listing each server with:
+The left side of the Dashboard displays a **Servers** panel listing up to five servers with:
 
 - **Server name** and hostname (e.g., `botagent.local`)
-- **Player count** badge showing how many players are connected
-- **Status badges** -- color-coded tags such as `running`, `starting`, `exited`, `unhealthy`, or `stopped`
+- **Status chip** -- color-coded, such as `running`, `exited`, or `stopped`
+- **Health chip** -- an outlined chip such as `healthy`, `unhealthy`, or `starting`, shown when the container reports a health state
 
-Click on any server name to navigate directly to its detail page.
+Click on any server to navigate directly to its detail page. When you have more than five servers, a **View All (N)** link in the panel header opens the full Servers page.
 
 ### External Access Card
 
 On the right side, the **External Access** card shows your playit.gg tunnel status:
 
 - How many servers have external domains configured (e.g., "1 / 3 servers")
-- Current agent status (`Running` or `Stopped`)
+- Current agent status (`Running` or `Stopped`), or a `Not configured` chip when playit.gg is not set up
 - A **Manage** link to navigate to the Routing page for detailed configuration
 
 ### Recent Activity Feed
@@ -102,7 +119,7 @@ The **Recent Activity** feed displays the latest management actions performed on
 - Configuration modifications
 - Player management actions
 
-Each entry shows the action type (with a color-coded badge), the target server or resource, who performed the action, and how long ago it occurred. Click **View All** to navigate to the full Audit Log page.
+Each entry shows the action type (with a color-coded badge), the target server or resource, who performed the action, and how long ago it occurred (hover to see the exact time). Failed actions carry an extra status badge. Click **View All** to navigate to the full Audit Log page.
 
 ### Recent Updates Feed
 
@@ -118,35 +135,40 @@ The Servers page is where you manage all your Minecraft servers.
 
 ### Server List
 
-A summary panel at the top of the page shows the total, running, and needs-attention server counts, a **Live** / **Reconnecting** indicator, and the **+ Create Server** button. Below it, the page displays all configured servers as cards in a grid layout. Each server card shows:
+A summary panel at the top of the page shows a **Live** / **Reconnecting** indicator and the **+ Create Server** button. Below it, three cards show **Total servers**, **Running servers**, and **Needs attention** (stopped or unhealthy servers). Then the page displays all configured servers as cards in a grid layout. Each server card shows:
 
 - **Server name** (e.g., `botagent`, `factory`, `wild-deity`)
-- **Status badge** -- `Running` (green) or `Stopped` (red)
-- **Hostname** with the number of configured hostnames (e.g., `botagent.local +2`)
+- **Status badge** -- `Running` (green), `Stopped` (red), or `Created` / `Not Created`
+- **Hostname** with the number of additional hostnames (e.g., `botagent.local +2`) -- click the `+2` chip to list all hostnames
 - **Container name** (e.g., `mc-botagent`)
-- **Quick action button** -- Play (start) or Stop button in the bottom-right corner
+- **Quick action button** -- Start (play) for stopped servers or Stop for running servers, in the bottom-right corner
 
 ### Filtering and Search
 
-At the top of the page, you can filter servers by status:
+Above the cards, you can filter servers by status:
 
 - **ALL** -- Show all servers
 - **RUNNING** -- Show only running servers
 - **STOPPED** -- Show only stopped servers
 
-A **Search** box on the right allows you to filter servers by name in real time.
+A **Search servers...** box on the right allows you to filter servers by name in real time. The number of matching servers is shown below the filters.
 
 ### Creating a New Server
 
-Click the **+ Create Server** button in the page header to open the server creation dialog. The dialog guides you through:
+![Create Server dialog](../images/server-create-dialog.png)
 
-1. **Server name** -- A unique identifier for your server
-2. **Server type** -- PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, etc.
-3. **Minecraft version** -- Select the desired game version
-4. **Memory allocation** -- How much RAM to assign
-5. **Additional options** -- World name, seed, and other configuration
+Click the **+ Create Server** button in the page header to open the **Create New Server** dialog. The dialog guides you through:
 
-The creation process uses Server-Sent Events to show real-time progress as the server container is being set up.
+1. **Server Name** -- A unique identifier (lowercase letters, numbers, and hyphens only)
+2. **Server Type** -- Choose a category with the toggle:
+    - **Standard Server** -- Pick a **Server Type** (VANILLA, PAPER, FABRIC, FORGE, or NEOFORGE) and a **Minecraft Version** (e.g., `1.21.1` or `latest`)
+    - **Modpack** -- Search Modrinth modpacks by name (or type a slug such as `cobblemon`), then choose a **Mod Loader** and a compatible **Minecraft Version**. Client-only mods that are detected are added to **Exclude mods (optional)** automatically; you can edit that comma-separated list
+3. **World Setup** -- **Default World**, **Seed** (enter a seed), or **Existing World** (pick an unassigned world)
+4. **Memory** -- How much RAM to assign (default `4G` for standard servers, `6G` for modpacks)
+5. **Sudo Password** -- Required for mDNS hostname registration (avahi)
+6. **Auto-start after creation** -- Start the server as soon as it is created
+
+Click **Create** to start. The dialog switches to a progress view (**Initializing**, **Creating**, **Configuring**, **Starting**) driven by Server-Sent Events, and ends with **Server Created Successfully** or **Creation Failed**.
 
 ### Server Detail Page
 
@@ -154,32 +176,36 @@ Click on any server card to open the detailed server management view. The detail
 
 #### Header Section
 
-- Server name, type, version, hostname, and uptime
-- **Stop** and **Restart** buttons for server lifecycle control
-- Status badge showing the current server state, a health badge (e.g., `Healthy`, `Unhealthy`), and a **Reconnecting** badge while the real-time connection is being restored
-
-#### Resource Monitoring
-
-Three stat cards display real-time resource usage:
-
-- **CPU Usage** -- Current CPU utilization percentage (with a circular progress indicator)
-- **Memory Usage** -- Current RAM consumption as a percentage of allocated memory
-- **World Size** -- The disk space used by the current world
+- An **All servers** button to go back to the list
+- Server name, `Minecraft <version> · <type>`, hostname, and uptime
+- A status badge showing the current server state, a health badge (e.g., `Healthy`, `Unhealthy`), and a **Reconnecting** badge while the real-time connection is being restored
+- **Start** for a stopped server, or **Stop** and **Restart** for a running server
+- A **⋮** menu with **Delete Server**. The confirmation dialog requires you to type the server name, and the deletion cannot be undone
 
 #### Navigation Tabs
 
-The server detail page is organized into the following tabs (main tabs shown):
+The server detail page is organized into ten tabs:
 
 | Tab | Description |
 |-----|-------------|
-| **Overview** | Server console with live log output and RCON command input |
+| **Overview** | Server console with live log output and RCON command input, plus server information, players, and connection details |
 | **Players** | Online + offline player roster with management actions and a per-player detail view (v2.27.0+) |
+| **World** | The assigned world's info, BlueMap web map, ore & block statistics, and player locations |
 | **Activity** | Per-server audit history showing all actions performed on this server |
 | **Mods** | Mod management -- search, install, and remove mods from Modrinth |
 | **Files** | Full file manager for browsing, editing, uploading, and downloading server files |
-| **Backups** | Server-specific backup information |
+| **Config History** | Timeline of server configuration snapshots with compare, restore, and delete |
+| **Backups** | Config Snapshots and World Backups for this server |
 | **Access** | User permission management -- grant, modify, or revoke access per user |
 | **Options** | Server configuration editor with hostname management and game settings |
+
+#### Resource Monitoring
+
+Below the tabs, three stat cards display real-time resource usage with linear progress bars:
+
+- **CPU usage** -- Current CPU utilization percentage
+- **Memory usage** -- Current RAM consumption as a percentage of allocated memory
+- **World size** -- The disk space used by the current world
 
 ### Overview Tab
 
@@ -191,16 +217,17 @@ The Overview tab is the default view when you open a server's detail page. It se
 
 The centerpiece of the Overview tab is the **Console** panel, which provides direct access to the server's live log output and command interface:
 
-- **Live Log Stream** -- The console displays server log messages in real time, including timestamped entries for server events such as world loading, player connections, RCON initialization, and game state changes. Each log line includes the timestamp and log level (e.g., `INFO`) for easy troubleshooting.
-- **Command Input** -- At the bottom of the console, the **"Send a command"** input field lets you execute any Minecraft server command directly via RCON. Type a command (e.g., `say Hello!`, `gamemode creative Player1`, `time set day`) and press Enter to send it to the server. The command output appears in the log stream above.
-- **Auto-Scroll** -- The console automatically scrolls to show the latest log entries as they arrive, so you always see the most recent server activity.
+- **Live Log Stream** -- The console displays server log messages in real time, including timestamped entries for server events such as world loading, player connections, and game state changes. Each log line includes the timestamp and log level (e.g., `INFO`) for easy troubleshooting. RCON housekeeping lines are filtered out, and the header shows a **Connected** / **Disconnected** indicator for the log stream.
+- **Command Input** -- At the bottom of the console, the **"Send a command"** input field lets you execute any Minecraft server command directly via RCON. Type a command (e.g., `say Hello!`, `gamemode creative Player1`, `time set day`) and press Enter to send it to the server. The command output appears in the log stream above. The field is disabled while the log stream is disconnected.
+- **Auto-Scroll** -- The console automatically scrolls to show the latest log entries as they arrive. If you scroll up to read older lines, a scroll-to-bottom button appears in the corner.
+- **Expanded Console** -- The expand button in the top-right corner of the console opens a full-screen **Console - `<server>`** dialog with a log level filter (**ALL**, **INFO**, **WARN**, **ERROR**), **Auto-scroll** and **Hide RCON** checkboxes, a clear-logs button, a **Reconnect** button when disconnected, **Quick** command buttons (`say`, `give`, `tp`, `gamemode`), and an **Enter command...** input with a **Send** button.
 
 !!! tip "Console Commands"
     The console supports all standard Minecraft server commands. You do not need to prefix commands with `/` -- simply type the command name and its arguments directly (e.g., `whitelist add Player1`).
 
 #### Server Information
 
-The **Server Information** panel on the bottom-left displays essential details about the server configuration and runtime status:
+The **Server Information** card below the console displays essential details about the server configuration and runtime status:
 
 | Field | Description |
 |-------|-------------|
@@ -214,11 +241,20 @@ The **Server Information** panel on the bottom-left displays essential details a
 
 #### Players
 
-The **Players** panel on the bottom-right shows the list of players currently connected to the server. When no players are online, it displays "Player information unavailable" or an empty state. When players are connected, their Minecraft usernames and avatars are shown here for quick reference.
+The **Players** card shows the `online / max` player count and the names of the players currently connected to the server. When the player list cannot be read, it displays "Player information unavailable".
+
+#### Connection
+
+The **Connection** card shows how clients can reach the server:
+
+- **LAN Address** -- The server hostname with port `25565`, with a copy button. A `+N` chip lists any additional hostnames
+- **External Address** -- The playit.gg domain assigned to this server (with a copy button), or `Not configured`. This row appears when playit.gg is enabled
 
 ### Players Tab
 
 *Available since v2.27.0.*
+
+![Server Players](../images/server-players.png)
 
 The **Players** tab lists every player known to the server, not just those currently online. It combines two sources:
 
@@ -251,9 +287,11 @@ Click the **⋮** menu on a row to manage the player. Only the actions that appl
 | **Add to Whitelist** / **Remove from Whitelist** | Not whitelisted / whitelisted | |
 
 !!! note "Players tab vs. Players page"
-    The Players tab manages the players of a single server from its detail page. The sidebar [Player Management](#player-management) page offers the same whitelist/ops/ban lists with a server selector.
+    The Players tab manages the players of a single server from its detail page. The [Player Management](#player-management) page, reached from the top navigation bar, offers the whitelist/ops/ban lists with a server selector.
 
 #### Player Detail Modal
+
+![Player Detail](../images/player-detail.png)
 
 Select **Details** in the action menu to open the player detail modal. The header shows the avatar, name, UUID, and the same badges as the list. The body has three sections:
 
@@ -289,6 +327,44 @@ While the player is online and the server is running, the position is read live 
 
     Until data is collected, the section shows "No sessions recorded yet (history is collected from server logs)."
 
+### World Tab
+
+![Server World](../images/server-world.png)
+
+The **World** tab shows the world assigned to the server. If no world is assigned, it shows "No world is assigned to this server." The same panel opens as **World Details** when you click a world card on the [Worlds](#worlds) page. It contains:
+
+- **Header** -- The world name with **Overworld**, **Nether**, and **End** chips. A chip is filled when the world contains that dimension
+- **Info cards** -- **Seed**, **Spawn**, **Game Mode**, **Difficulty** (with "(Hardcore)" when applicable), **Day**, **Version**, **Size**, **Border**, **Regions**, and **Weather**. Click the Seed or Spawn card to copy its value
+- **Map** -- The BlueMap web map (see below)
+- **Ore & Block Stats** -- Block statistics for the whole world (see below)
+- **Players** -- Each known player with an `online` / `offline` chip, name, coordinates (click to copy), and dimension. Online players use live positions; offline players use the last saved position, and a notice says so when nobody is online
+
+#### Map
+
+![World Map](../images/world-map.png)
+
+**Render map** generates a BlueMap web map of the world, and **Re-render** refreshes it. The map is embedded right below the buttons, with a progress bar while rendering. The map opens on the **Overworld** by default (Nether and End remain selectable in the viewer). Worlds rendered before v2.29.0 pick this up on **Re-render**. After a render, **Show structures** marks structures on the map; you can toggle the structure types in the BlueMap legend.
+
+#### Ore & Block Stats
+
+![World Stats](../images/world-stats.png)
+
+**Analyze** scans every chunk of the world (it can take minutes on large worlds; progress is shown) and caches the result, and **Re-analyze** refreshes it. The panel shows when the world was last analyzed, followed by:
+
+- **KPI cards**: total blocks, block types, regions scanned, analysis time, dimensions
+- **Ores**: a donut chart with a legend (count and share), highlight chips for rare ores (gold, diamond, emerald, ancient debris), and a **Merge stone/deepslate variants** toggle
+- **Top blocks**: a stacked bar by category (Stone, Earth, Wood, Fluid, Nether, Other) and a top-5 list that **Show all** expands
+
+### Activity Tab
+
+![Server Activity](../images/server-activity.png)
+
+The **Activity** tab shows the audit history of this server in the same table as the [Audit Log](#audit-log) page, without the Target column:
+
+- An **Action** dropdown (**All Actions** or a specific server action) and a status toggle (**ALL**, **SUCCESS**, **FAILURE**)
+- Rows per page of 25 or 50
+- A **View Full History** link that opens the Audit Log page already filtered to this server
+
 ### Mods Tab
 
 The Mods tab provides a complete mod management interface for servers running modded platforms (FORGE, NEOFORGE, FABRIC). This tab allows you to browse, install, and remove mods directly from the [Modrinth](https://modrinth.com/) repository without manual file management.
@@ -300,47 +376,49 @@ The Mods tab provides a complete mod management interface for servers running mo
 
 #### Installed Mods
 
-The **Installed Mods** section lists all mods currently installed on the server:
+The **Installed Mods** card lists the mods you added, grouped under their source (e.g., `Modrinth`). Each entry shows:
 
-- **Source badge** -- Indicates the mod source (e.g., `Modrinth`)
 - **Mod icon** -- The mod's thumbnail image from Modrinth
 - **Mod name** -- The display name of the mod (e.g., `Create`)
 - **Description** -- A brief summary of what the mod does (e.g., "Aesthetic Technology that empowers the Player")
 - **Download count** -- The total number of downloads on Modrinth (e.g., `12.6M`), indicating the mod's popularity
 - **Author** -- The mod creator's username (e.g., `simibubi`)
-- **Edit button** (external link icon) -- Opens the mod's page on Modrinth in a new tab for detailed information, changelogs, and documentation
-- **Delete button** (red trash icon) -- Removes the mod from the server after a confirmation prompt
+- **View on Modrinth** button (external link icon) -- Opens the mod's page on Modrinth in a new tab for detailed information, changelogs, and documentation
+- **Remove** button (red trash icon) -- Removes the mod from the server's mod list immediately, without a confirmation prompt
+
+When no mods have been added, the card says "No mods installed".
 
 #### Adding New Mods
 
-Click the **+ Add Mods** button in the top-right corner of the Installed Mods section to open the mod search dialog. The search interface lets you:
+Click the **+ Add Mods** button in the top-right corner of the Installed Mods card to open the **Search Mods** dialog:
 
-1. **Search** for mods by name or keyword on Modrinth
-2. **Filter** results by compatibility with your server's Minecraft version and mod loader
-3. **Preview** mod details including description, version history, and dependencies
-4. **Install** selected mods with a single click -- the system automatically downloads the correct version for your server
+1. Type a mod name or keyword in **Search Modrinth...** -- results appear as you type
+2. Review each result's icon, title, description, download count, and author
+3. Click **Add** to add the mod. Mods that are already on the server show **Installed**
+
+#### Installed Jar Files
+
+For servers created from a modpack, the **Installed Jar Files (from modpack)** card lists every `.jar` in the mods directory. Use the **Included** / **Excluded** switch on a row to exclude a mod from the next install -- handy for client-only mods that crash a dedicated server. Before the modpack is first installed, the card says "No jar files found in the mods directory."
 
 !!! warning "Server Restart Required"
-    After installing or removing mods, you need to restart the server for the changes to take effect. The UI will prompt you to restart when mod changes are detected.
+    After adding or removing mods, or changing the exclude list, you need to restart the server for the changes to take effect. The tab shows a "Restart the server to apply mod changes." notice when a change is made.
 
----
-
-## Server Files
+### Files Tab
 
 The Files tab provides a full-featured file manager for your server's file system.
 
 ![Server Files](../images/server-files.png)
 
-### File Browser
+#### File Browser
 
 The file browser displays the contents of the server's data directory in a familiar list layout:
 
 - **Breadcrumb navigation** at the top shows your current path (e.g., `root /`) and lets you click to jump to parent directories
-- **Search box** to filter files by name within the current directory
+- **Search files...** box to filter files by name within the current directory
 - Each file entry shows the file name, size, and last modified date
 - **Folders** are listed first, followed by files
 
-### File Operations
+#### File Operations
 
 The toolbar provides several actions:
 
@@ -350,84 +428,116 @@ The toolbar provides several actions:
 | **New Folder** | Create a new directory in the current path |
 | **Refresh** | Reload the file listing |
 
-Right-clicking or using the context menu on a file provides:
+The **⋮** menu at the end of each row provides:
 
+- **Open** -- Open a folder (folders only)
+- **Edit** -- Open an editable file in the editor (text files only)
+- **Download** -- Download the file to your local machine (files only)
 - **Rename** -- Change the file or folder name
-- **Delete** -- Remove the file with a confirmation dialog
-- **Download** -- Download the file to your local machine
+- **Delete** -- Remove the file or folder after a confirmation dialog. For critical files you must type the file name to confirm
 
-### Smart File Editors
+#### Smart File Editors
 
 The file manager includes intelligent editors that adapt to the file type:
 
-- **server.properties** -- Opens a specialized form-based editor with categorized settings (see Server Options section)
+- **server.properties** -- Opens a specialized editor with a **Form** view (categorized, searchable fields) and a **Raw** view (plain text)
 - **Player data files** (whitelist.json, ops.json, banned-players.json) -- Opens a dedicated player editor with Mojang API integration for username lookup
-- **Text files** (.txt, .json, .yml, .yaml, .properties, .cfg, .conf, .log, .toml) -- Opens a code editor with syntax awareness
+- **Text files** (.txt, .md, .json, .yml, .yaml, .properties, .cfg, .conf, .ini, .toml, .xml, .csv, .log, .sh, .bat) -- Opens a code editor with syntax awareness
 - **Other files** -- Available for download only
 
-!!! tip "Editing server.properties"
-    When you click on `server.properties` in the file browser, the system automatically opens the specialized properties editor with both a **FORM** mode (structured fields) and a **RAW** mode (plain text editing). This is the same editor available in the Options tab.
+!!! warning "Editing server.properties"
+    The `server.properties` editor changes the file of the running server directly. Those edits do not survive recreating the server container. For persistent settings, use the [Options tab](#options-tab).
 
----
+### Config History Tab
 
-## Server Options
+![Config History](../images/server-config-history.png)
+
+The **Config History** tab keeps a timeline of configuration snapshots for this server. A snapshot captures the server's configuration files (`server.properties`, `config.env`, etc.), so you can compare versions and roll back. The same snapshots are also available on the [Backups](#backups) page.
+
+- **Create Snapshot** -- Save the current configuration. Add an optional description such as "Before modpack update"
+- **Timeline** -- Snapshots are listed newest first and grouped by date. Each entry shows its time, a **Scheduled** chip if a schedule created it, its description (or "No description"), and its file count
+- **View diff** -- Compares a snapshot with the previous one
+- **Restore** -- Rolls the configuration back to that snapshot
+- **Delete** -- Click the trash button, then click **Confirm** within three seconds
+- **Compare** -- Appears once there are two or more snapshots. In compare mode, select any two snapshots and click **View Diff**
+- **Load More** -- Loads older snapshots when the list is long
+
+The **Config Diff** dialog shows **Snapshot A** vs. **Snapshot B** with a file tree on the left, a **Unified** / **Split** view switch, and a summary of modified, added, and deleted files. In this tab it also offers **Restore to Snapshot A**.
+
+The **Restore Configuration** dialog lists the changes that will be applied and keeps **Create safety snapshot before restoring (recommended)** checked by default. If the server is running, it warns that a restart may be required for the changes to take effect.
+
+### Backups Tab
+
+![Server Backups](../images/server-backups.png)
+
+The **Backups** tab of a server has two sub-tabs:
+
+- **Config Snapshots** (default) -- The snapshot summary card for this server (latest snapshot, file count, total snapshots, schedule status) with **View History**, **Create Snapshot**, and **View Diff** buttons. **Manage Schedules** opens the schedule panel described under [Config Snapshots](#config-snapshots)
+- **World Backups** -- The platform-wide world backup view: **Push Backup**, backup status, backup schedules, and backup history, exactly as on the [Backups](#backups) page
+
+### Access Tab
+
+![Server Access](../images/server-access.png)
+
+The **Access** tab controls which users can work with this server. Each row shows the user's avatar, name, email, and a permission badge:
+
+| Permission | Meaning (as described in the grant dialog) |
+|------------|--------------------------------------------|
+| **Viewer** | Can view server status and logs |
+| **Operator** | Can start, stop, and configure the server |
+| **Owner** | Full control including managing other users |
+
+- **Add User** opens the **Add User Access** dialog. Search by name or email (type at least 2 characters), choose a **Permission Level**, and click **Add User**
+- The **⋮** menu on a row offers **Change to Owner**, **Change to Operator**, **Change to Viewer**, and **Remove Access**. The last Owner of a server cannot be demoted or removed
+- Only platform admins and server Owners can manage access. Platform admins can see every server; other users see only the servers they have been granted
+
+### Options Tab
 
 The Options tab provides a comprehensive configuration editor for your server.
 
 ![Server Options](../images/server-options.png)
 
-### Hostnames / Domains
+#### Hostnames / Domains
 
-At the top of the Options tab, the **Hostnames / Domains** section shows all the hostnames configured for routing connections to this server:
+At the top of the Options tab, the **Hostnames / Domains** card shows all the hostnames configured for routing connections to this server:
 
-- **System Hostnames** -- Automatically generated hostnames (e.g., `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
-- **Custom Domains** -- User-defined custom domain names
-- **+ Add Domain** button to configure additional custom hostnames
-- A **Sync Hostnames** button to synchronize hostname configuration with the mc-router
+- **System Hostnames (read-only)** -- Automatically generated hostnames (e.g., `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
+- **Custom Domains** -- User-defined custom domain names, each with a remove button
+- **+ Add Domain** button to enter an additional custom hostname. Domains ending in `.local` or `.nip.io` are reserved for system hostnames
+- A **Save Hostnames** button to store the list. Hostname changes only take effect after the server container is recreated -- run `docker compose up -d` or restart the server from the web console
 
-### Gameplay Settings
+#### Settings Sections
 
-The **Gameplay** section lets you configure core game rules and player experience:
+Below the hostnames, the settings are grouped into cards. Each card shows its essential fields first; a **Show Advanced Settings (N)** toggle at the bottom of the card reveals its additional fields:
 
-| Setting | Description |
-|---------|-------------|
-| **Difficulty** | Normal, Easy, Hard, or Peaceful |
-| **Game Mode** | Survival, Creative, Adventure, or Spectator |
-| **Max Players** | Maximum number of concurrent players |
-| **Enable PvP** | Whether players can damage each other |
+| Section | Essential fields |
+|---------|------------------|
+| **Gameplay** | Difficulty (Peaceful, Easy, Normal, Hard), Game Mode (Survival, Creative, Adventure, Spectator), Max Players, Enable PvP |
+| **World** | MOTD (Message of the Day), World Name, Level Type (Default, Flat, Large Biomes, Amplified, Buffet), World Seed |
+| **Security** | Online Mode (Mojang Auth), Enable Whitelist |
+| **Performance & JVM** | Memory, Aikar's Flags, View Distance |
+| **Auto-pause / Auto-stop** | Enable Auto-pause, Pause Timeout |
+| **System** | Timezone, Resource Pack URL, Enable RCON |
+| **Remote Access** | Enable WebSocket Console, Enable SSH Console |
+| **Configuration Repositories** | Git repository URLs for `server.properties` and for the Paper, Pufferfish, and Purpur configs (applied at startup) |
 
-A **Show Advanced Settings** toggle reveals additional options like spawn protection radius, entity broadcasting range, and more.
+Advanced fields include, for example, Hardcore, Allow Flight, and Spawn Protection in Gameplay; Simulation Distance, Initial Heap, Max Heap, and JVM -XX Options in Performance & JVM; Enable Auto-stop in Auto-pause / Auto-stop; and RCON Password, RCON Port, UID, and GID in System.
 
-### World Settings
-
-The **World** section controls world generation and server identity:
-
-| Setting | Description |
-|---------|-------------|
-| **MOTD (Message of the Day)** | The welcome message shown in the Minecraft server browser |
-| **World Seed** | The seed used for world generation |
-| **World Name** | The name of the world directory |
-| **Level Type** | World generation type (Default, Flat, etc.) |
-
-### Additional Setting Categories
-
-Expanding the advanced settings reveals more configuration sections:
-
-- **JVM / Performance** -- Memory allocation, Aikar's flags, JVM options
-- **Network** -- Online mode, RCON settings, port configuration
-- **Advanced** -- Auto-pause, auto-stop, timezone, UID/GID settings
-
-### Save and Restart
+#### Save and Restart
 
 When you modify settings:
 
-1. A **sticky action bar** appears at the bottom of the page showing how many fields have changed
-2. Click **Save** to apply the changes
-3. If any changed setting requires a server restart (e.g., memory, online mode, world settings), a **Restart Confirmation Dialog** appears asking whether to restart now or later
-4. Click **Reset** to discard unsaved changes
+1. A **sticky action bar** appears at the bottom of the page showing "N unsaved changes" (and, if needed, which fields require a restart)
+2. Click **Save Changes (N)** to apply the changes
+3. If the server is running and any changed setting requires a restart (e.g., memory, online mode, world settings), a **Restart Required** dialog appears with **Save Only**, **Save & Restart**, and **Cancel**
+4. Click **Discard** to drop unsaved changes
 
 !!! warning "Restart Required"
     Some settings (like memory allocation, online mode, and world seed) require a server restart to take effect. The UI clearly indicates which settings need a restart after being changed.
+
+#### Danger Zone
+
+At the bottom of the Options tab, the **Danger Zone** card contains **Reset World**, which permanently deletes the current world and generates a new one. The button is disabled while the server is running ("Stop the server first"), and the confirmation dialog requires you to type `RESET`. This action cannot be undone.
 
 ---
 
@@ -439,7 +549,7 @@ The Players page provides comprehensive management of players across all your se
 
 ### Server Selector
 
-At the top of the page, a **Server** dropdown lets you select which server to manage. The selected server determines which player data is displayed in all tabs below.
+At the top of the page, a **Server** dropdown lets you select which server to manage. The selected server determines which data is displayed in the **Whitelist**, **Operators**, and **Ban List** tabs below. Two cards above it show the number of available and running servers.
 
 ### Tabs
 
@@ -447,7 +557,7 @@ The Player Management page is organized into four tabs:
 
 #### Online Players
 
-Shows players currently connected to the selected server. When the server is running, this displays real-time player information.
+Lists the players currently connected, grouped by server, with a **Kick** action (optional reason). This tab covers all servers and does not depend on the Server dropdown. Use the refresh button to reload the list.
 
 #### Whitelist
 
@@ -456,11 +566,11 @@ Manage which players are allowed to join your server:
 - **Whitelist toggle** -- Enable or disable the whitelist (shown as an ON/OFF switch)
 - **Player input field** -- Enter a Minecraft username to add to the whitelist
 - **Add button** -- Add a single player
-- **Bulk button** -- Add multiple players at once
-- **Player list** -- Shows all whitelisted players with their Minecraft avatar and a remove button
+- **Bulk button** -- Switch to a multi-line input (`player1, player2, player3`) and add several players at once with **Add All**
+- **Player list** -- Shows all whitelisted players with their Minecraft avatar and a remove button. A search box appears once the list has five or more players
 
 !!! info "Offline Server Data"
-    When a server is offline, the Players page reads data directly from the server's JSON files (whitelist.json, ops.json, banned-players.json). An informational banner indicates: "Server is offline. Showing data from whitelist.json. Changes will apply on next server start."
+    When a server is offline, the Players page reads data directly from the server's files (whitelist.json, ops.json, banned-players.json). An informational banner indicates: "Server is offline. Showing data from whitelist.json. Changes will apply on next server start."
 
 #### Operators
 
@@ -493,89 +603,112 @@ The Worlds page lets you manage all Minecraft worlds stored in your platform.
 
 ### World List
 
-Worlds are displayed as cards in a grid layout. Each world card shows:
+The page header shows the **+ Create World** button and three cards: **Total worlds**, **Assigned worlds**, and **Free worlds**. Worlds are displayed as cards in a grid layout. Each world card shows:
 
 - **World name** (e.g., `Wild-Deity`, `botagent`, `factory`)
 - **Status badge** -- `Available` (green) for unlocked worlds, `Locked` for worlds currently assigned to a server
-- **Size** -- Disk space used by the world (e.g., `610.2MB`, `20.5MB`)
-- **Date** -- When the world was created or last modified
+- **Size** -- Disk space used by the world (e.g., `610.2MB`, `20.5MB`), plus **Overworld** / **Nether** / **End** chips when the world has more than one dimension
+- **Servers** -- The servers using the world, or "No servers". A locked world also shows which server it is assigned to
+- **Date** -- When the world was last modified
 - **Action buttons**:
-    - **Link icon** -- Assign the world to a server
-    - **Delete icon** (red trash can) -- Delete the world
+    - **Assign** (link icon) -- Assign an available world to a server
+    - **Release** (unlink icon) -- Release a locked world from its server
+    - **Delete** (red trash can icon) -- Delete the world
+
+Click the body of a card to open **World Details**, which shows the same panel as the server [World tab](#world-tab) (info cards, map, ore & block stats, and player locations).
 
 ### Filtering and Search
 
-At the top of the page:
+At the top of the list:
 
 - **ALL** -- Show all worlds
 - **AVAILABLE** -- Show only available (unlocked) worlds
 - **LOCKED** -- Show only worlds currently assigned to a server
 
-A **Search** box lets you filter worlds by name.
+A **Search worlds...** box lets you filter worlds by name.
 
 ### Creating a New World
 
-Click **+ Create World** in the page header to open the creation dialog:
+![Create World dialog](../images/world-create-dialog.png)
 
-1. Enter a **World name**
-2. Optionally specify a **Seed** for world generation
+Click **+ Create World** in the page header to open the **Create New World** dialog:
+
+1. Enter a **World Name** (lowercase letters, numbers, and hyphens)
+2. Optionally specify a **Seed** (leave it empty for a random seed)
 3. Click **Create**
+
+To bring in an existing world instead, drop a `.zip` file on the **Upload world .zip (optional)** area (or click it to choose a file). The **Seed** field disappears and the button changes to **Import**. The **Server type** dropdown does not affect the result; it only changes the on-screen guidance for how to zip the world:
+
+- VANILLA, FORGE, NEOFORGE, FABRIC, QUILT -- Zip the world folder (it must contain `level.dat`; the Nether and End are inside it). Some modpacks store them as `<world-name>_nether` and `<world-name>_the_end`; if so, zip all three folders together
+- PAPER, SPIGOT, BUKKIT -- Zip `<world-name>`, `<world-name>_nether`, and `<world-name>_the_end` together; leaving one out loses that dimension
 
 ### Assigning a World to a Server
 
-Click the **link icon** on a world card to open the assignment dialog. Select a server from the list of available (non-running) servers and confirm the assignment. The world will be linked to that server and marked as `Locked`.
+Click the **Assign** (link) icon on an available world card to open the **Assign World** dialog. Select a server in **Select Server**; stopped servers are listed under **Available Servers**, and running servers appear under **Running Servers (not recommended)**. Click **Assign**. The world is linked to that server and marked as `Locked`.
+
+To undo an assignment, click the **Release** icon on the locked world's card.
 
 ### Deleting a World
 
-Click the **red trash can icon** on a world card. A confirmation dialog appears requiring you to type the exact world name to prevent accidental deletion. This action is irreversible.
+Click the **red trash can icon** on a world card. A **Delete World** dialog appears requiring you to type the exact world name to prevent accidental deletion. This action is irreversible.
 
 !!! warning "Data Loss"
     Deleting a world permanently removes all world data including terrain, player builds, and entities. Always create a backup before deleting a world.
-
-### World Info, Map & Stats
-
-The world info panel (also shown in a server's **World** tab) includes a **Map** section and an **Ore & Block Stats** section.
-
-- **Map** -- **Render map** generates a BlueMap web map and **Re-render** refreshes it. The map opens on the **Overworld** by default (Nether and End remain selectable in the viewer). Worlds rendered before v2.29.0 pick this up on **Re-render**. **Show structures** marks structures on the map.
-- **Ore & Block Stats** -- **Analyze** scans every chunk of the world (it can take minutes on large worlds; progress is shown) and caches the result, and **Re-analyze** refreshes it. The result shows:
-    - **KPI cards**: total blocks, block types, regions scanned, analysis time, dimensions
-    - **Ores**: a donut chart with a legend (count and share), highlight chips for rare ores (gold, diamond, emerald, ancient debris), and a **Merge stone/deepslate variants** toggle
-    - **Top blocks**: a stacked bar by category (Stone, Earth, Wood, Fluid, Nether, Other) and a top-5 list that **Show all** expands
 
 ---
 
 ## Backups
 
-The Backups page manages world backups and automated backup schedules.
+The Backups page manages world backups, automated backup schedules, and server configuration snapshots. A chip in the header shows whether backups are `Configured`.
 
 ![Backups](../images/backup.png)
 
-### Backup Status
+The page has two tabs: **World Backups** (default) and **Config Snapshots**. The selected tab is kept in the URL (`/backups?tab=config-snapshots`).
 
-The top section shows the current backup configuration:
+### World Backups
 
+#### Backup Status
+
+The **Backup Status** card shows the current backup configuration:
+
+- **Status** -- Whether the backup system is `Configured` (green checkmark) or `Not Configured`. When it is not configured, the card asks you to set `BACKUP_REPO_URL`
 - **Repository** -- The configured Git repository for backup storage (e.g., `smallmiro/minecraft-worlds-backup`)
-- **Status** -- Whether the backup system is `Configured` (green checkmark) or not
-- **Backup count** -- Number of existing backups
+- **Last Backup** -- When the last backup ran (e.g., "5 minutes ago"), or "No backups yet"
 
-### Push Backup
+#### Push Backup
 
-The **Push Backup** button in the page header triggers an immediate manual backup of all worlds to the configured Git repository.
+The **Push Backup** button in the page header triggers an immediate manual backup of all worlds to the configured Git repository. A dialog lets you enter an optional **Commit Message**, then click **Push**.
 
-### Backup Schedules
+#### Backup Schedules
 
-The **Backup Schedules** section manages automated cron-based backup scheduling:
+The **Backup Schedules** card manages automated cron-based backup scheduling:
 
-- Each schedule shows the **world name**, **frequency** (e.g., "Every hour"), and the cron expression
-- **Retention** badge -- indicates whether backup retention policies are configured
+- Each schedule shows its **name**, a human-readable frequency (e.g., "Every hour"), and the cron expression
+- A last-run chip (**OK** or **Failed**) -- hover for the time and message
+- **Retention** badge -- indicates whether backup retention policies (maximum count or age) are configured
 - **Toggle switch** -- Enable or disable individual schedules
 - **Edit button** (pencil icon) -- Modify the schedule
 - **Delete button** (trash icon) -- Remove the schedule
-- **+ Add Schedule** button to create new automated backup schedules
+- **+ Add Schedule** button to create new automated backup schedules (name, frequency preset or custom cron expression, maximum backup count, and maximum age in days)
 
-### Backup History
+#### Backup History
 
-The **Backup History** section (visible when the backup system is configured) shows a log of past backup operations, including timestamps, status, and any errors.
+The **Backup History** card (visible when the backup system is configured) lists past backups with the commit hash, date, message, and author. The restore button on a row opens **Restore Backup**, which warns that all worlds will be restored from the selected backup and that current world data will be overwritten.
+
+### Config Snapshots
+
+The **Config Snapshots** tab manages configuration snapshots for every server at once. It lists one card per server with:
+
+- The latest snapshot ("Latest: 2h ago"), its file count, and the total number of snapshots (or "No snapshots yet")
+- A schedule chip: **Schedule: Active**, **Schedule: Paused**, or **No schedule**
+- **View History** (needs at least two snapshots), **Create Snapshot**, and **View Diff** (shown when the server has two or more snapshots; compares the latest two)
+
+The header has two buttons:
+
+- **Create Snapshot** -- Opens **Create Config Snapshot**. Choose the **Server**, optionally add a description (e.g., "Before modpack update"), and click **Create Snapshot**
+- **Manage Schedules** -- Opens the **Config Snapshot Schedules** panel. Click **Add Schedule** and fill in **Server**, **Schedule Name**, **Cron Preset** (Every hour, Every 6 hours, Daily at midnight, Daily at 3 AM, Weekly, or Custom) or a **Cron Expression**, and **Retention Count** (the maximum number of scheduled snapshots kept per server). Existing schedules can be enabled or disabled with a switch, edited, or deleted
+
+To work with a single server's snapshot timeline -- compare, restore, delete -- use the server's [Config History tab](#config-history-tab).
 
 ---
 
@@ -590,7 +723,7 @@ The Audit Log page provides a comprehensive activity log for all management oper
 The Audit Log features a **Live** indicator in the page header showing the real-time SSE connection status:
 
 - **Green dot with "Live"** -- Connected and receiving real-time events
-- **Gray dot with "Offline"** -- SSE connection lost (auto-reconnects)
+- **Gray dot with "Disconnected"** -- SSE connection lost (auto-reconnects)
 
 When new audit events arrive while you are viewing the page, a notification banner appears: "X new logs available - Click to refresh."
 
@@ -607,14 +740,15 @@ Four statistics cards at the top provide summary metrics:
 
 ### Filters
 
-The Audit Log provides powerful filtering capabilities:
+The **Filters** panel can be collapsed, shows how many filters are active, and has a **Clear All** button. It provides:
 
-- **Date range picker** -- Filter by start and end dates
-- **Action filter** -- Filter by specific action types (e.g., `server.start`, `server.stop`, `backup.schedule.create`)
-- **Target type filter** -- Filter by target category: ALL, SERVER, PLAYER
-- **Status filter** -- ALL, SUCCESS, FAILURE
-- **Actor filter** -- Search by the name of the user who performed the action
-- **Export** button -- Export filtered audit data
+- **From** / **To** -- Filter by start and end dates
+- **Action** -- Filter by a specific action type (e.g., `server.start`, `server.stop`, `backup.schedule.create`). The list narrows to server or player actions when a target type is selected
+- **Target type** -- Filter by target category: ALL, SERVER, PLAYER
+- **Status** -- ALL, SUCCESS, FAILURE
+- **Target Name** -- Search by the name of the server, world, or player
+- **Actor** -- Search by the name of the user who performed the action (e.g., `api:admin`)
+- **Export** button -- Export the filtered audit data
 
 ### Log Table
 
@@ -622,29 +756,39 @@ The main table displays audit entries with the following columns:
 
 | Column | Description |
 |--------|-------------|
-| **Timestamp** | When the action was performed (relative time like "21m ago") |
+| **Timestamp** | When the action was performed (relative time like "21m ago"; hover for the exact time) |
 | **Action** | The action type with a color-coded badge |
 | **Actor** | Who performed the action (username) |
-| **Target** | The server, world, or resource affected |
+| **Target** | The server or player affected (links to that server or the Players page) |
 | **Status** | Success (green) or Failure (red) indicator |
 
-Click on any row to open a **Detail Drawer** with full information about the audit entry, including request metadata, IP address, and the complete action payload.
+Use the arrow at the start of a row to expand its details; failed entries start expanded and show the error message. Click on any row to open the **Audit Log Detail** drawer with the entry ID, timestamp, action, status, actor, target, error message, and the action's details, plus **Related Logs** (**Same Target** and **Same Actor**).
 
 ### Export
 
-Click the **Export** button to open the export dialog, which allows you to download audit data in various formats based on your current filter selection.
+Click the **Export** button to open the **Export Audit Logs** dialog. Choose **CSV** or **JSON**, review the applied filters and the estimated number of rows, then download the file. Exports are limited to 5,000 rows; narrow the filters if you need more.
 
 ---
 
 ## Routing
 
-The Routing page gives you full visibility and control over your network routing configuration.
+The Routing page gives you full visibility and control over your network routing configuration. The header shows the router status and the number of routes.
 
 ![Routing](../images/routing.png)
 
+### MC-Router Status
+
+The wide panel on the left shows the **MC-Router Status** with a live routing table:
+
+- Router status and health chips (e.g., `running`, `healthy`)
+- For each server, an expandable entry in the **Routing Table** shows:
+    - A status dot, the server name, and its type and Minecraft version
+    - Number of configured routes
+    - All hostname mappings (e.g., `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
+
 ### Platform Information
 
-The left panel shows **Platform Information** about your mc-router setup:
+The **Platform Information** card shows details about your mc-router setup:
 
 | Field | Description |
 |-------|-------------|
@@ -659,17 +803,8 @@ The **Network Settings** card displays:
 
 - **Listening Port** -- The port mc-router listens on
 - **Routing Mode** -- How hostnames are resolved (e.g., `Auto Discovery`)
-- **Active Routes** -- Number of active routing entries
-
-### MC Router Status
-
-The right panel shows the **MC Router Status** with a live routing table:
-
-- **Healthy** / **Unhealthy** status indicators
-- For each server, the routing table displays:
-    - Server name with its Minecraft version
-    - Number of configured routes
-    - All hostname mappings (e.g., `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
+- **Total Routes** -- Number of routing entries
+- **Active Routes** -- Routes whose server is running, shown as "x / y"
 
 ### mDNS (Avahi) Status
 
@@ -677,12 +812,14 @@ The **mDNS (Avahi)** card shows whether the Avahi mDNS daemon is active, enablin
 
 ### External Access (playit.gg)
 
-The **External Access** section manages playit.gg tunnel configuration for making your servers accessible from the internet without port forwarding:
+The **External Access (playit.gg)** card manages playit.gg tunnel configuration for making your servers accessible from the internet without port forwarding:
 
-- **Start Agent** / **Auto Dashboard** buttons for managing the playit agent
-- **Agent Status** -- Running or Stopped
-- **Server Domains** table showing which servers have external domains configured (e.g., `possible-tracks.gl.joinmc.link`)
-- Status information for servers without external domains
+- **Start Agent** / **Stop Agent** buttons for managing the playit agent, and a **View Dashboard** link to the playit.gg tunnels page
+- **Agent Status** -- Running or Stopped, with the agent uptime
+- **Server Domains** table showing which servers have external domains configured (e.g., `possible-tracks.gl.joinmc.link`), each with a copy button
+- A list of servers without external domains
+
+If playit.gg is not set up, the card shows "Not configured" and asks you to set `PLAYIT_SECRET`.
 
 ---
 
@@ -690,9 +827,11 @@ The **External Access** section manages playit.gg tunnel configuration for makin
 
 The top navigation bar is consistent across all pages and includes:
 
+![User menu](../images/navigation-user-menu.png)
+
 | Item | Description |
 |------|-------------|
-| **MINECRAFT CONSOLE** logo | Click to return to the Dashboard |
+| **Minecraft Console** logo | Click to return to the Dashboard |
 | **Dashboard** | Infrastructure overview |
 | **Servers** | Server management |
 | **Worlds** | World management |
@@ -700,9 +839,51 @@ The top navigation bar is consistent across all pages and includes:
 | **Audit** | Activity audit logs |
 | **Backups** | Backup management |
 | **Routing** | Network routing configuration |
-| **User avatar** (top-right) | Account settings, theme toggle, and sign out |
+| **User avatar** (top-right) | Opens the user menu |
 
 The currently active page is highlighted in the navigation bar.
+
+The user menu shows your name and email (with an **Admin** chip for administrators) and offers:
+
+| Menu item | Description |
+|-----------|-------------|
+| **Users** | [User Management](#user-management-admin) -- administrators only |
+| **Settings** | [Account Settings](#account-settings) |
+| **Logout** | End the session and return to the sign-in page |
+
+The console always uses its dark theme; there is no theme toggle.
+
+---
+
+## Account Settings
+
+![Account Settings](../images/settings.png)
+
+Open **Settings** from the user menu to manage your own account. The page has three cards:
+
+- **Profile** -- Edit your **Name** and click **Save Changes**. The **Email** is read-only ("Email cannot be changed"), and the **Role** (Admin or User) is shown for reference
+- **Account Information** -- Your **Account ID**, **Created** time, and **Last Updated** time
+- **Change Password** -- Enter your **Current Password**, a **New Password** (at least 8 characters, different from the current one), and **Confirm New Password**, then click **Change Password**. Other signed-in sessions are not signed out
+
+---
+
+## User Management (Admin)
+
+![User Management](../images/admin-users.png)
+
+Administrators see a **Users** item in the user menu that opens the **User Management** page (`/admin/users`). Other users who open this page are redirected to the Dashboard.
+
+- Three cards summarize **Total users**, **Administrators**, and **Banned users**
+- The user directory lists each account's **Email**, **Name**, **Role** (Admin or User), **Status** (Active or Banned), and **Created At**
+- Click a row to open **User Details** with the same fields plus the **User ID**
+
+The page is read-only. To add users, change roles, or reset passwords, use the CLI (see [CLI Commands](cli-commands.md)):
+
+```bash
+mcctl console user add user@example.com --role user --password "SecurePass123"
+mcctl console user update user@example.com --role admin
+mcctl console user reset-password user@example.com
+```
 
 ---
 
@@ -719,7 +900,7 @@ The currently active page is highlighted in the navigation bar.
 
 1. **Monitor the Dashboard** -- Check server health, player counts, and recent activity regularly
 2. **Graceful Shutdowns** -- Always use the Stop button instead of force-killing containers
-3. **Backup Before Changes** -- Push a backup before modifying server configuration or world data
+3. **Backup Before Changes** -- Push a backup before modifying world data, and create a config snapshot before changing server configuration
 4. **Use Scheduled Backups** -- Configure automated backup schedules for peace of mind
 
 ### Performance
@@ -751,14 +932,14 @@ The currently active page is highlighted in the navigation bar.
 
 ### Login Fails
 
-1. **Verify Credentials:**
+1. **Verify Credentials:** Sign in with the email shown in the **Email** column:
    ```bash
    mcctl console user list
    ```
 
-2. **Reset Password:**
+2. **Reset Password:** The sign-in page has no self-service reset, so use the CLI with the account's email:
    ```bash
-   mcctl console user reset-password admin
+   mcctl console user reset-password <email>
    ```
 
 ### Server Status Not Updating
@@ -796,4 +977,4 @@ The web console uses a responsive Material UI layout that adapts to different sc
 !!! tip "Mobile Tips"
     - Use landscape mode for better command input in the console
     - The navigation collapses into a hamburger menu on small screens
-    - All dialogs are full-screen on mobile for easier interaction
+    - Most dialogs are full-screen on mobile for easier interaction

@@ -41,14 +41,15 @@ mcctl console init
 
 이 대화형 명령은 다음을 묻습니다:
 
-1. **관리자 사용자명** (기본값: `admin`)
-2. **관리자 비밀번호** - 필수 조건:
-   - 최소 8자 이상
-   - 대문자 1개 이상
-   - 소문자 1개 이상
-   - 숫자 1개 이상
-3. **API 접근 모드** - 보안 요구 사항에 따라 선택
-4. **추가 구성** - 선택한 모드에 따른 추가 설정
+1. **관리자 이메일** - 웹 콘솔 로그인에 사용합니다 (예: `admin@example.com`)
+2. **관리자 이름** (기본값: `Administrator`)
+3. **관리자 비밀번호** - 필수 조건:
+    - 최소 8자 이상
+    - 대문자 1개 이상
+    - 소문자 1개 이상
+    - 숫자 1개 이상
+4. **API 접근 모드** - 보안 요구 사항에 따라 선택
+5. **추가 구성** - 선택한 모드에 따른 추가 설정
 
 예시 세션:
 
@@ -57,9 +58,9 @@ $ mcctl console init
 
 Initialize Management Console
 
-? Admin username? admin
+? Admin email? admin@example.com
+? Admin name? Administrator
 ? Admin password? ********
-? Confirm password? ********
 ? API access mode? internal - Docker network only (default, most secure)
 
 Creating admin user...  done
@@ -151,7 +152,7 @@ API_KEY=
 #### 3단계: 관리자 사용자 생성
 
 ```bash
-mcctl console user add admin --role admin --password "YourSecurePassword123"
+mcctl console user add admin@example.com --role admin --password "YourSecurePassword123"
 ```
 
 #### 4단계: Docker Compose로 시작
@@ -242,7 +243,7 @@ mcctl console api mode open --force
 mcctl console user add
 
 # CLI 모드
-mcctl console user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator@example.com --role user --password "SecurePass123"
 ```
 
 #### 사용자 목록 조회
@@ -256,10 +257,10 @@ mcctl console user list
 ```
 Users:
 
-Username            Role        Created
---------------------------------------------------
-admin               admin       2025-01-15
-operator1           viewer      2025-01-16
+Email                         Name                Role        Created
+---------------------------------------------------------------------------
+admin@example.com             Administrator       admin       2025-01-15
+operator@example.com          operator            user        2025-01-16
 
 Total: 2 user(s)
 ```
@@ -267,23 +268,23 @@ Total: 2 user(s)
 #### 사용자 역할 변경
 
 ```bash
-mcctl console user update operator1 --role admin
+mcctl console user update operator@example.com --role admin
 ```
 
 #### 비밀번호 재설정
 
 ```bash
 # 대화형
-mcctl console user reset-password operator1
+mcctl console user reset-password operator@example.com
 
 # CLI
-mcctl console user reset-password operator1 --password "NewSecurePass456"
+mcctl console user reset-password operator@example.com --password "NewSecurePass456"
 ```
 
 #### 사용자 삭제
 
 ```bash
-mcctl console user remove operator1
+mcctl console user remove operator@example.com
 ```
 
 !!! note "마지막 관리자 보호"
@@ -343,7 +344,7 @@ curl http://localhost:5001/health
 
 2. **비밀번호 재설정:**
    ```bash
-   mcctl console user reset-password admin
+   mcctl console user reset-password admin@example.com
    ```
 
 3. **NextAuth 구성 확인:**
