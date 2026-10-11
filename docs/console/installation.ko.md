@@ -44,10 +44,10 @@ mcctl console init
 1. **관리자 이메일** - 웹 콘솔 로그인에 사용합니다 (예: `admin@example.com`)
 2. **관리자 이름** (기본값: `Administrator`)
 3. **관리자 비밀번호** - 필수 조건:
-   - 최소 8자 이상
-   - 대문자 1개 이상
-   - 소문자 1개 이상
-   - 숫자 1개 이상
+    - 최소 8자 이상
+    - 대문자 1개 이상
+    - 소문자 1개 이상
+    - 숫자 1개 이상
 4. **API 접근 모드** - 보안 요구 사항에 따라 선택
 5. **추가 구성** - 선택한 모드에 따른 추가 설정
 
@@ -61,7 +61,6 @@ Initialize Management Console
 ? Admin email? admin@example.com
 ? Admin name? Administrator
 ? Admin password? ********
-? Confirm password? ********
 ? API access mode? internal - Docker network only (default, most secure)
 
 Creating admin user...  done

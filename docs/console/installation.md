@@ -49,14 +49,13 @@ This interactive command will prompt you for:
 1. **Admin email** - Used to sign in to the web console (e.g., `admin@example.com`)
 2. **Admin name** (default: `Administrator`)
 3. **Admin password** - Must contain:
-   - At least 8 characters
-   - At least one uppercase letter
-   - At least one lowercase letter
-   - At least one number
-4. **Confirm password** - Must match
-5. **API access mode** - Choose based on your security needs
-6. **Custom ports** (optional) - Configure API and console ports
-7. **Additional configuration** based on selected mode
+    - At least 8 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one number
+4. **API access mode** - Choose based on your security needs
+5. **Custom ports** (optional) - Configure API and console ports
+6. **Additional configuration** based on selected mode
 
 Example session:
 
@@ -71,7 +70,6 @@ Initialize Console Service
 ? Admin email? admin@example.com
 ? Admin name? Administrator
 ? Admin password? ********
-? Confirm password? ********
 ? API access mode? internal - Local network only (default, most secure)
 ? Configure custom ports? No
 
