@@ -69,6 +69,7 @@ const footerSections: FooterSection[] = [
         href: 'https://github.com/smallmiro/minecraft-server-manager/discussions/categories/ideas',
         external: true,
       },
+      { label: 'Sponsor', href: 'https://github.com/sponsors/smallmiro', external: true },
     ],
   },
   {

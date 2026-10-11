@@ -62,6 +62,15 @@ describe('Footer', () => {
     expect(ideasLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it('should render sponsor link to GitHub Sponsors', () => {
+    renderWithTheme(<Footer />);
+
+    const sponsorLink = screen.getByText('Sponsor').closest('a');
+    expect(sponsorLink).toHaveAttribute('href', 'https://github.com/sponsors/smallmiro');
+    expect(sponsorLink).toHaveAttribute('target', '_blank');
+    expect(sponsorLink).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
   it('should render about links', () => {
     renderWithTheme(<Footer />);
 
