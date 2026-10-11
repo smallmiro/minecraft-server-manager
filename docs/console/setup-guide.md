@@ -355,7 +355,7 @@ Resolving service script paths...  Using production node_modules paths
 Generating PM2 ecosystem config...  PM2 ecosystem config generated
 ```
 
-This creates `ecosystem.config.cjs` in the platform directory, which tells PM2 how to run the API and Console processes.
+This creates `ecosystem.config.cjs` in the data directory (`~/minecraft-servers` by default), which tells PM2 how to run the API and Console processes.
 
 ### Step 9: Configuration Save
 
@@ -375,7 +375,7 @@ Console Service initialized!
   Configuration:
     Config file: /home/user/minecraft-servers/.mcctl-admin.yml
     Console DB:  /home/user/minecraft-servers/data/mcctl.db
-    PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
+    PM2 config:  /home/user/minecraft-servers/ecosystem.config.cjs
     Access mode: internal
 
   Endpoints:
@@ -514,7 +514,7 @@ After completing the full setup, the following files exist in your data director
 | `docker-compose.yml` | `mcctl init` | Main Docker orchestration for mc-router |
 | `.mcctl-admin.yml` | `mcctl console init` | Console service configuration (access mode, ports) |
 | `data/mcctl.db` | `mcctl console init` | SQLite database for user accounts (Better Auth) |
-| `platform/ecosystem.config.cjs` | `mcctl console init` | PM2 process configuration for API and Console |
+| `ecosystem.config.cjs` | `mcctl console init` | PM2 process configuration for API and Console |
 
 ---
 

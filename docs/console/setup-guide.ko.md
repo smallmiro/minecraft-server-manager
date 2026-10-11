@@ -355,7 +355,7 @@ Resolving service script paths...  Using production node_modules paths
 Generating PM2 ecosystem config...  PM2 ecosystem config generated
 ```
 
-이 과정에서 platform 디렉토리에 `ecosystem.config.cjs`가 생성되며, PM2가 API와 Console 프로세스를 실행하는 방법을 정의합니다.
+이 과정에서 데이터 디렉토리(기본값 `~/minecraft-servers`)에 `ecosystem.config.cjs`가 생성되며, PM2가 API와 Console 프로세스를 실행하는 방법을 정의합니다.
 
 ### Step 9: 구성 저장
 
@@ -375,7 +375,7 @@ Console Service initialized!
   Configuration:
     Config file: /home/user/minecraft-servers/.mcctl-admin.yml
     Console DB:  /home/user/minecraft-servers/data/mcctl.db
-    PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
+    PM2 config:  /home/user/minecraft-servers/ecosystem.config.cjs
     Access mode: internal
 
   Endpoints:
@@ -514,7 +514,7 @@ curl http://localhost:5001/health  # API 상태 확인
 | `docker-compose.yml` | `mcctl init` | mc-router용 메인 Docker 오케스트레이션 |
 | `.mcctl-admin.yml` | `mcctl console init` | Console 서비스 구성 (접근 모드, 포트) |
 | `data/mcctl.db` | `mcctl console init` | 사용자 계정용 SQLite 데이터베이스 (Better Auth) |
-| `platform/ecosystem.config.cjs` | `mcctl console init` | API와 Console용 PM2 프로세스 구성 |
+| `ecosystem.config.cjs` | `mcctl console init` | API와 Console용 PM2 프로세스 구성 |
 
 ---
 
