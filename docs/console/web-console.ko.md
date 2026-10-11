@@ -46,8 +46,8 @@ mcctl-console은 안전한 API 통신을 위해 Backend-for-Frontend(BFF) 프록
 2. 브라우저를 열고 `http://localhost:5000`으로 이동합니다. **Welcome Back** 로그인 페이지로 이동합니다.
 
 3. 자격 증명을 입력합니다:
-   - **Email:** `mcctl console init` 과정에서 입력한 관리자 이메일
-   - **Password:** 관리자 비밀번호 (눈 아이콘으로 표시/숨김을 전환할 수 있습니다)
+    - **Email:** `mcctl console init` 과정에서 입력한 관리자 이메일
+    - **Password:** 관리자 비밀번호 (눈 아이콘으로 표시/숨김을 전환할 수 있습니다)
 
 4. **Sign In**을 클릭합니다. 로그인에 성공하면 [대시보드](#대시보드)로 이동합니다.
 

@@ -46,8 +46,8 @@ mcctl-console uses a Backend-for-Frontend (BFF) proxy pattern for secure API com
 2. Open your browser and navigate to `http://localhost:5000`. You are redirected to the **Welcome Back** sign-in page.
 
 3. Enter your credentials:
-   - **Email:** The admin email you entered during `mcctl console init`
-   - **Password:** The admin password (use the eye icon to show or hide it)
+    - **Email:** The admin email you entered during `mcctl console init`
+    - **Password:** The admin password (use the eye icon to show or hide it)
 
 4. Click **Sign In**. After a successful login you land on the [Dashboard](#dashboard).
 
