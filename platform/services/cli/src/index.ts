@@ -314,7 +314,7 @@ ${colors.cyan('Console Management:')}
   ${colors.bold('console api')} <action>         Manage API settings (status, config, key)
   ${colors.bold('console service')} <action>     Manage services via PM2 (start, stop, restart, status, logs)
     --force                      Kill PM2 daemon and restart fresh (stop, restart)
-  ${colors.bold('console remove')} [options]     Remove console service completely
+  ${colors.bold('console remove')} [options]     Remove console service (keeps user DB)
     --force                      Skip confirmation prompt
     --keep-config                Don't delete configuration files
   ${colors.dim('admin <cmd>                  (deprecated, use "console" instead)')}

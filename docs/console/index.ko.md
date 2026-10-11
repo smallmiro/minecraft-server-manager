@@ -78,11 +78,14 @@ Management Console는 다양한 인증 모드를 지원합니다:
 
 | 모드 | 설명 | 사용 사례 |
 |------|------|----------|
-| `internal` | Docker 네트워크 내부만 허용 (가장 안전) | 기본 프로덕션 |
+| `internal` | 내부 접근만 허용, 외부 노출 없음 (가장 안전) | 기본 프로덕션 |
 | `api-key` | X-API-Key 헤더로 외부 접근 | 자동화/스크립트 |
 | `ip-whitelist` | IP 기반 접근 제어 | 알려진 클라이언트 IP |
 | `api-key-ip` | API 키와 IP 모두 필요 | 고보안 환경 |
 | `open` | 인증 없음 | 개발 환경 전용 |
+
+!!! note
+    `internal`, `api-key-ip`, `open`은 아직 mcctl-api가 인식하는 `AUTH_MODE` 값 목록에 없으므로 설명대로 동작한다고 기대하지 마세요. `api-key`와 `ip-whitelist`는 인식됩니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 !!! warning "보안 경고"
     프로덕션 환경에서는 절대 `open` 모드를 사용하지 마세요. 모든 인증이 비활성화되어 서버가 무단 접근에 노출됩니다.
@@ -153,9 +156,9 @@ http://localhost:5000
 
 | 파일 | 설명 |
 |------|------|
-| `~/minecraft-servers/admin.yaml` | Management Console 설정 |
-| `~/minecraft-servers/users.yaml` | 사용자 자격 증명 (해시된 비밀번호) |
-| `~/minecraft-servers/api-config.json` | API 접근 설정 |
+| `~/minecraft-servers/.mcctl-admin.yml` | Management Console 설정 |
+| `~/minecraft-servers/data/mcctl.db` | 콘솔 사용자 데이터베이스 (SQLite, Better Auth, `mcctl-console`을 선택한 경우 생성) |
+| `~/minecraft-servers/ecosystem.config.cjs` | PM2 에코시스템 설정 |
 
 ## 다음 단계
 

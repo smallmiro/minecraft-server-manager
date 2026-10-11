@@ -80,11 +80,14 @@ Management Console supports multiple authentication modes:
 
 | Mode | Description | Use Case |
 |------|-------------|----------|
-| `internal` | Docker network only (most secure) | Default production |
+| `internal` | Internal access only, no external exposure (most secure) | Default production |
 | `api-key` | External access with X-API-Key header | Automation/scripts |
 | `ip-whitelist` | IP-based access control | Known client IPs |
 | `api-key-ip` | Both API key and IP required | High security |
 | `open` | No authentication | Development only |
+
+!!! note
+    `internal`, `api-key-ip` and `open` are not in mcctl-api's list of recognised `AUTH_MODE` values yet, so do not rely on them to behave as described. `api-key` and `ip-whitelist` are recognised. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 !!! warning "Security Warning"
     Never use `open` mode in production. It disables all authentication and exposes your servers to unauthorized access.
@@ -156,9 +159,9 @@ After initialization, the following files are created:
 
 | File | Description |
 |------|-------------|
-| `~/minecraft-servers/.mcctl-admin.yml` | Admin service configuration |
-| `~/minecraft-servers/users.yaml` | User credentials (hashed passwords) |
-| `~/minecraft-servers/platform/ecosystem.config.cjs` | PM2 ecosystem configuration |
+| `~/minecraft-servers/.mcctl-admin.yml` | Management Console configuration |
+| `~/minecraft-servers/data/mcctl.db` | Console user database (SQLite, Better Auth; created when `mcctl-console` is selected) |
+| `~/minecraft-servers/ecosystem.config.cjs` | PM2 ecosystem configuration |
 
 ## Next Steps
 

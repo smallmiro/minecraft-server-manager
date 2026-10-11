@@ -16,7 +16,7 @@ mcctl-api는 Docker Minecraft 서버를 관리하기 위한 RESTful 인터페이
 
 ### API 키 인증
 
-`api-key` 또는 `api-key-ip` 모드를 사용할 때, 요청 헤더에 API 키를 포함합니다:
+`api-key` 또는 `combined` 모드를 사용할 때, 요청 헤더에 API 키를 포함합니다:
 
 ```http
 X-API-Key: mctk_your_api_key_here

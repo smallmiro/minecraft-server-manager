@@ -307,6 +307,9 @@ Select the authentication mode for the REST API:
 | `api-key-ip` | Maximum | High-security environments requiring both |
 | `open` | None | Local development/testing only |
 
+!!! warning "Access modes"
+    `internal`, `api-key-ip` and `open` are not in mcctl-api's list of recognised `AUTH_MODE` values yet, so do not rely on them to behave as described. `api-key` and `ip-whitelist` are recognised. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+
 !!! danger "open Mode Warning"
     The `open` mode disables all authentication. If you select it, a confirmation prompt appears:
     ```
@@ -355,7 +358,7 @@ Resolving service script paths...  Using production node_modules paths
 Generating PM2 ecosystem config...  PM2 ecosystem config generated
 ```
 
-This creates `ecosystem.config.cjs` in the platform directory, which tells PM2 how to run the API and Console processes.
+This creates `ecosystem.config.cjs` in the data directory (`~/minecraft-servers` by default), which tells PM2 how to run the API and Console processes.
 
 ### Step 9: Configuration Save
 
@@ -375,7 +378,7 @@ Console Service initialized!
   Configuration:
     Config file: /home/user/minecraft-servers/.mcctl-admin.yml
     Console DB:  /home/user/minecraft-servers/data/mcctl.db
-    PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
+    PM2 config:  /home/user/minecraft-servers/ecosystem.config.cjs
     Access mode: internal
 
   Endpoints:
@@ -395,10 +398,7 @@ If you chose `api-key` or `api-key-ip` mode, the API key is also displayed:
 ```
 
 !!! warning "Save Your API Key"
-    The API key is only shown once during initialization. Copy and store it in a secure location. If you lose it, you can regenerate it with:
-    ```bash
-    mcctl console api key regenerate
-    ```
+    The API key is only shown once during initialization. Copy and store it in a secure location. The key the running API uses is `AUTH_API_KEY` in `ecosystem.config.cjs`; to get a new one, reinitialize with `mcctl console init --force`. `mcctl console api key regenerate` currently does not change that key (see the warning in [CLI Commands](cli-commands.md#mcctl-console-api)).
 
 ---
 
@@ -514,7 +514,7 @@ After completing the full setup, the following files exist in your data director
 | `docker-compose.yml` | `mcctl init` | Main Docker orchestration for mc-router |
 | `.mcctl-admin.yml` | `mcctl console init` | Console service configuration (access mode, ports) |
 | `data/mcctl.db` | `mcctl console init` | SQLite database for user accounts (Better Auth) |
-| `platform/ecosystem.config.cjs` | `mcctl console init` | PM2 process configuration for API and Console |
+| `ecosystem.config.cjs` | `mcctl console init` | PM2 process configuration for API and Console |
 
 ---
 

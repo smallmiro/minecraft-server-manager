@@ -17,7 +17,7 @@ mcctl console <subcommand> [options]
 | 명령어 | 설명 |
 |---------|-------------|
 | `mcctl console init` | Management Console 설정 초기화 |
-| `mcctl console remove` | Management Console 완전 제거 |
+| `mcctl console remove` | Management Console 프로세스와 설정 제거 (콘솔 데이터베이스는 유지) |
 | `mcctl console user` | 관리자 콘솔 사용자 관리 |
 | `mcctl console api` | API 설정 관리 |
 | `mcctl console service` | Management Console 수명주기 관리 |
@@ -39,7 +39,7 @@ mcctl console init [options]
 | 옵션 | 설명 |
 |--------|-------------|
 | `--root <path>` | 사용자 지정 데이터 디렉토리 |
-| `--force` | 이미 구성된 경우에도 재초기화 |
+| `--force` | 재초기화 확인을 건너뛰고, 같은 이메일의 기존 관리자 사용자를 교체 (아래 '재초기화' 참조) |
 | `--api-port <port>` | API 서버 포트 (기본값: 5001) |
 | `--console-port <port>` | 콘솔 서버 포트 (기본값: 5000) |
 
@@ -56,7 +56,7 @@ mcctl console init [options]
     - 소문자 1개 이상
     - 숫자 1개 이상
 5. **API 접근 모드** - 보안 수준 선택:
-    - `internal` - 로컬 네트워크만 (권장)
+    - `internal` - 내부 접근만 허용, 외부 노출 없음 (권장)
     - `api-key` - X-API-Key 헤더 필요
     - `ip-whitelist` - IP 기반 접근 제어
     - `api-key-ip` - API 키와 IP 모두 필요
@@ -64,6 +64,9 @@ mcctl console init [options]
 6. **추가 설정** - 선택한 모드에 따른 추가 설정
 
 관리자 이메일, 이름, 비밀번호는 `mcctl-console`을 선택한 경우에만 묻습니다. 관리자 계정은 `admin` 역할로 생성됩니다.
+
+!!! warning "접근 모드"
+    `internal`, `api-key-ip`, `open`은 아직 mcctl-api가 인식하는 `AUTH_MODE` 값 목록에 없으므로 설명대로 동작한다고 기대하지 마세요. `api-key`와 `ip-whitelist`는 인식됩니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 이 명령어는 포트를 묻지 않습니다. 기본값이 아닌 포트를 사용하려면 `--api-port`와 `--console-port`를 지정하세요 (아래 예제 참조).
 
@@ -83,7 +86,19 @@ mcctl console init --root /opt/minecraft
 mcctl console init --api-port 8001 --console-port 8000
 ```
 
+### 재초기화
+
+콘솔이 이미 초기화되어 있으면 재초기화할지 묻습니다. `--force`는 이 질문을 건너뜁니다. 재초기화하면 다음과 같이 동작합니다.
+
+- `mcctl-api`와 `mcctl-console` PM2 프로세스를 중지합니다.
+- `.mcctl-admin.yml`과 `ecosystem.config.cjs`를 삭제하므로, API 접근 모드를 다시 선택하고, api-key 계열 모드에서는 새 API 키가 생성되며, `--api-port`와 `--console-port`를 지정하지 않으면 포트는 기본값으로 돌아갑니다.
+- `data/mcctl.db`는 유지하므로 다른 사용자는 영향을 받지 않습니다.
+
+입력한 관리자 이메일이 `data/mcctl.db`에 이미 있으면 `User '<email>' already exists` 오류와 함께 `mcctl console init --force`를 안내하고 실패합니다. `--force`를 지정하면 해당 사용자를 (세션 포함) 삭제한 뒤 새 이름과 비밀번호로 다시 생성합니다.
+
 ### 출력 파일
+
+모든 경로는 데이터 디렉토리(`MCCTL_ROOT`, 기본값 `~/minecraft-servers`) 기준입니다.
 
 | 파일 | 설명 |
 |------|-------------|
@@ -95,7 +110,7 @@ mcctl console init --api-port 8001 --console-port 8000
 
 ## mcctl console remove
 
-PM2 프로세스와 설정 파일을 포함한 Management Console를 완전히 제거합니다.
+Management Console의 PM2 프로세스와 설정 파일을 제거합니다. 콘솔 데이터베이스(`data/mcctl.db`)는 의도적으로 유지됩니다.
 
 ### 사용법
 
@@ -117,8 +132,36 @@ mcctl console remove [options]
 |-----------|-------------|
 | PM2 프로세스 | mcctl-api, mcctl-console 프로세스가 중지되고 제거됨 |
 | `.mcctl-admin.yml` | 메인 설정 파일 |
-| `users.yaml` | 사용자 인증정보 파일 |
 | `ecosystem.config.cjs` | PM2 에코시스템 설정 |
+| `users.yaml` | 레거시 사용자 인증정보 파일 (존재하는 경우에만 삭제) |
+
+`--keep-config`를 지정하면 위 세 파일은 유지되고 PM2 프로세스만 제거됩니다.
+
+### 유지되는 항목
+
+| 구성 요소 | 설명 |
+|-----------|-------------|
+| `data/mcctl.db` | 콘솔 데이터베이스: 사용자, 세션, 사용자별 서버 권한. 재설치 후에도 계정이 남도록 의도적으로 삭제하지 않습니다 |
+| `.services/` | 설치된 `mcctl-api`, `mcctl-console` 패키지 |
+| `api-config.json` | `mcctl console api`가 기록한 설정 (있는 경우) |
+
+Minecraft 서버와 월드는 영향을 받지 않습니다.
+
+### 제거 후 재설치
+
+`data/mcctl.db`가 유지되므로, 같은 관리자 이메일로 `mcctl console init`을 다시 실행하면 `User '<email>' already exists` 오류로 실패합니다. 해당 사용자를 교체하려면 `mcctl console init --force`를 사용하거나 다른 이메일을 입력하세요.
+
+완전히 처음부터 시작하려면 데이터베이스를 직접 삭제합니다.
+
+!!! danger "되돌릴 수 없습니다"
+    데이터베이스를 삭제하면 모든 콘솔 사용자, 세션, 사용자별 서버 권한이 사라집니다.
+
+```bash
+# ~/minecraft-servers를 사용 중인 데이터 디렉토리(MCCTL_ROOT)로 바꾸세요
+rm -f ~/minecraft-servers/data/mcctl.db*
+```
+
+`*`는 데이터베이스 옆에 있는 SQLite `-wal`, `-shm` 파일도 함께 삭제합니다.
 
 ### 예제
 
@@ -144,12 +187,14 @@ mcctl console remove --keep-config
 ? Console Service를 제거하시겠습니까? Yes
 
 PM2 프로세스 중지 및 제거 중...  중지 및 제거됨: mcctl-api, mcctl-console
-설정 파일 제거 중...  설정 파일 3개 제거됨
+설정 파일 제거 중...  설정 파일 2개 제거됨
 
 Console Service가 성공적으로 제거되었습니다
 
   재설치하려면 실행: mcctl console init
 ```
+
+확인 프롬프트에는 여전히 `users.yaml`이 표시되지만 이 파일은 존재하는 경우에만 삭제되므로, 현재 설치에서는 2개 파일(`.mcctl-admin.yml`, `ecosystem.config.cjs`)이 제거됩니다.
 
 ---
 
@@ -370,6 +415,13 @@ mcctl console user reset-password operator@example.com --password "NewSecurePass
 
 API 설정 및 접근 제어를 관리합니다.
 
+이 명령어들은 데이터 디렉토리(`MCCTL_ROOT`, 기본값 `~/minecraft-servers`)의 `api-config.json`을 읽고 씁니다. 이 파일은 `mcctl console init`이 생성하는 `.mcctl-admin.yml`과는 별개의 파일입니다. 명령어가 변경 사항을 저장하기 전까지는 기본값(모드 `internal`, 포트 `5001`, 빈 IP 화이트리스트)이 사용됩니다.
+
+!!! warning "변경 사항이 실행 중인 mcctl-api에 반영되지 않습니다"
+    이 명령어들은 `api-config.json`만 변경합니다. 실행 중인 `mcctl-api`는 접근 모드, API 키, IP 화이트리스트를 `ecosystem.config.cjs`의 `env` 블록(`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`)에서 읽는데, 이 명령어들은 해당 파일을 건드리지 않습니다. 따라서 여기서 바꾼 값은 `mcctl console service restart`를 실행해도 API에 영향을 주지 않으며, `mcctl console api status`도 실행 중인 API가 사용하는 값이 아니라 `api-config.json`의 내용을 보여줍니다.
+
+    실제로 적용되는 모드와 키는 `mcctl console init` 때 정한 값입니다. 현재는 `mcctl console init --force`로 다시 초기화해야 바꿀 수 있습니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+
 ### 하위 명령어
 
 | 하위 명령어 | 설명 |
@@ -400,7 +452,7 @@ API Configuration
 
   Access Mode: api-key
   Port: 5001
-  API Key: mctk_abc1...xyz9
+  API Key: mctk_a1b...9f3c
 
   IP Whitelist: (비어있음)
 
@@ -426,11 +478,11 @@ mcctl console api key regenerate [options]
 ```bash
 mcctl console api key regenerate
 
-? API 키를 재생성하시겠습니까? Yes
+? API 키를 재생성하시겠습니까? 기존의 모든 클라이언트를 업데이트해야 합니다. Yes
 
 API 키가 성공적으로 재생성되었습니다.
 
-New API Key: mctk_1234567890abcdef1234567890abcdef
+New API Key: mctk_0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0
 
 새 API 키로 모든 클라이언트를 업데이트하세요.
 ```
@@ -447,7 +499,7 @@ mcctl console api mode [mode] [options]
 
 | 모드 | 설명 |
 |------|-------------|
-| `internal` | 로컬 네트워크만 (가장 안전) |
+| `internal` | 내부 접근만 허용, 외부 노출 없음 (가장 안전) |
 | `api-key` | X-API-Key 헤더를 통한 외부 접근 |
 | `ip-whitelist` | IP 기반 접근 제어 |
 | `api-key-ip` | API 키와 IP 모두 필요 |
@@ -457,7 +509,9 @@ mcctl console api mode [mode] [options]
 
 | 옵션 | 설명 |
 |--------|-------------|
-| `--force` | 위험한 모드에 대한 확인 건너뛰기 |
+| `--force` | `open` 모드로 전환할 때 표시되는 확인 건너뛰기 |
+
+성공하면 `Access mode changed to: <mode>`를 출력합니다.
 
 **예제:**
 
@@ -477,16 +531,16 @@ mcctl console api mode open --force
 ip-whitelist 및 api-key-ip 모드용 IP 화이트리스트를 관리합니다.
 
 ```bash
-mcctl console api whitelist <action> [ip] [options]
+mcctl console api whitelist [action] [ip] [options]
 ```
 
 **액션:**
 
 | 액션 | 설명 |
 |--------|-------------|
-| `list` | 화이트리스트된 IP 목록 |
-| `add <ip>` | IP 또는 CIDR 범위 추가 |
-| `remove <ip>` | 화이트리스트에서 IP 제거 |
+| `list` | 화이트리스트된 IP 목록 (`[action]`을 생략하면 기본값) |
+| `add <ip>` | IP 또는 CIDR 범위 추가 (IPv4만 지원, `<ip>`를 생략하면 값을 입력받음) |
+| `remove <ip>` | 화이트리스트에서 IP 제거 (`<ip>`를 생략하면 목록에서 선택) |
 
 **옵션:**
 
@@ -497,7 +551,7 @@ mcctl console api whitelist <action> [ip] [options]
 **예제:**
 
 ```bash
-# 화이트리스트 목록
+# 화이트리스트 목록 (액션 없이 "whitelist"만 실행해도 동일)
 mcctl console api whitelist list
 
 # 단일 IP 추가
@@ -538,20 +592,22 @@ mcctl console service start [options]
 
 | 옵션 | 설명 |
 |--------|-------------|
-| `--api-only` | mcctl-api만 시작 |
-| `--console-only` | mcctl-console만 시작 |
+| `--api` | mcctl-api만 시작 |
+| `--console` | mcctl-console 시작. 콘솔은 API에 의존하므로 mcctl-api도 함께 시작됨 |
+
+`--api`나 `--console`을 지정하지 않으면, 두 서비스가 모두 설치된 경우 "API only"와 "API + Console" 중 무엇을 시작할지 묻습니다.
 
 **예제:**
 
 ```bash
-# 모든 서비스 시작
+# 서비스 시작 (두 서비스가 모두 설치된 경우 어느 것을 시작할지 묻습니다)
 mcctl console service start
 
 # API만 시작
-mcctl console service start --api-only
+mcctl console service start --api
 
-# 콘솔만 시작
-mcctl console service start --console-only
+# 콘솔 시작 (API 함께 시작)
+mcctl console service start --console
 ```
 
 **출력 예시:**
@@ -596,17 +652,23 @@ mcctl console service stop [options]
 
 | 옵션 | 설명 |
 |--------|-------------|
-| `--api-only` | mcctl-api만 중지 |
-| `--console-only` | mcctl-console만 중지 |
+| `--api` | mcctl-api 중지. 콘솔은 API 없이 실행될 수 없으므로 mcctl-console도 함께 중지됨 |
+| `--console` | mcctl-console만 중지 |
+| `--force` | PM2 프로세스를 삭제하고 PM2 데몬을 종료 (mcctl 서비스뿐 아니라 PM2가 관리하는 모든 프로세스가 중지됨) |
+
+`--api`나 `--console`을 지정하지 않으면, 두 서비스가 모두 설치된 경우 "All services"와 "Console only" 중 무엇을 중지할지 묻습니다.
 
 **예제:**
 
 ```bash
-# 모든 서비스 중지
+# 서비스 중지 (두 서비스가 모두 설치된 경우 어느 것을 중지할지 묻습니다)
 mcctl console service stop
 
-# API만 중지
-mcctl console service stop --api-only
+# 콘솔만 중지
+mcctl console service stop --console
+
+# API 중지 (콘솔도 함께 중지됨)
+mcctl console service stop --api
 ```
 
 ### mcctl console service restart
@@ -621,17 +683,20 @@ mcctl console service restart [options]
 
 | 옵션 | 설명 |
 |--------|-------------|
-| `--api-only` | mcctl-api만 재시작 |
-| `--console-only` | mcctl-console만 재시작 |
+| `--api` | mcctl-api만 재시작 |
+| `--console` | mcctl-console 재시작. 콘솔은 API에 의존하므로 mcctl-api도 함께 재시작됨 |
+| `--force` | mcctl PM2 프로세스를 삭제하고 PM2 데몬을 종료한 뒤, 선택한 mcctl 서비스를 다시 시작하고 PM2 프로세스 목록을 저장 (`pm2 save`). PM2가 관리하던 나머지(다른 앱, 선택하지 않은 mcctl 서비스)는 데몬과 함께 중지되고 다시 시작되지 않으며 저장된 목록에서도 빠짐 |
+
+`--api`나 `--console`을 지정하지 않으면, 두 서비스가 모두 설치된 경우 "API only"와 "API + Console" 중 무엇을 재시작할지 묻습니다.
 
 **예제:**
 
 ```bash
-# 모든 서비스 재시작
+# 서비스 재시작 (두 서비스가 모두 설치된 경우 어느 것을 재시작할지 묻습니다)
 mcctl console service restart
 
 # API만 재시작
-mcctl console service restart --api-only
+mcctl console service restart --api
 ```
 
 ### mcctl console service status
@@ -713,8 +778,10 @@ mcctl console service logs [options]
 | 옵션 | 설명 |
 |--------|-------------|
 | `-f, --follow` | 로그 출력 추적 (스트리밍) |
-| `--api-only` | mcctl-api 로그만 표시 |
-| `--console-only` | mcctl-console 로그만 표시 |
+| `--api` | mcctl-api 로그만 표시 |
+| `--console` | mcctl-console 로그 표시 (mcctl-api 로그도 함께 표시됨) |
+
+CLI 도움말은 `--console`을 "Target console service only"로 설명하지만, `logs`의 현재 동작은 mcctl-api도 포함합니다 (`start`, `restart`와 같은 선택 방식).
 
 **예제:**
 
@@ -726,10 +793,10 @@ mcctl console service logs
 mcctl console service logs -f
 
 # API 로그만 보기
-mcctl console service logs --api-only
+mcctl console service logs --api
 
-# 콘솔 로그 추적
-mcctl console service logs --console-only -f
+# 콘솔 로그 추적 (API 로그 포함)
+mcctl console service logs --console -f
 ```
 
 로그 추적을 중지하려면 `Ctrl+C`를 누르세요.
@@ -756,24 +823,31 @@ mcctl console user add operator@example.com --role user --password "SecurePass12
 **API 키 모드로 전환:**
 
 ```bash
-mcctl console api mode api-key
-# 표시된 API 키 저장
+# API 접근 모드를 물을 때 "api-key" 선택
+mcctl console init --force
+# 마지막에 출력되는 API 키를 저장 (한 번만 표시됩니다)
+mcctl console service start
 ```
+
+`mcctl console api mode`와 `mcctl console api key regenerate`는 `api-config.json`만 변경하므로 실행 중인 API를 전환하지 못합니다 ([mcctl console api](#mcctl-console-api) 절의 경고 참조).
 
 **IP 화이트리스트 설정:**
 
 ```bash
-mcctl console api mode ip-whitelist
-mcctl console api whitelist add 192.168.1.0/24
-mcctl console api whitelist add 10.0.0.0/8
-mcctl console api whitelist list
+# "ip-whitelist"를 선택하고 허용할 IP를 쉼표로 구분해 입력
+mcctl console init --force
+mcctl console service start
 ```
+
+이 용도로 `api-key-ip`를 사용하지 마세요. mcctl-api가 아직 이 값을 인식하지 않아 IP 제한이 적용되지 않습니다 ([#633](https://github.com/smallmiro/minecraft-server-manager/issues/633)).
+
+`mcctl console api whitelist`도 현재는 `api-config.json`만 수정합니다.
 
 **서비스 상태 확인:**
 
 ```bash
 mcctl console service status
-mcctl console service logs --api-only
+mcctl console service logs --api
 ```
 
 **설정 변경 후 재시작:**
@@ -789,7 +863,7 @@ pm2 startup
 pm2 save
 ```
 
-**완전 제거:**
+**제거 (`data/mcctl.db`는 유지):**
 
 ```bash
 mcctl console remove

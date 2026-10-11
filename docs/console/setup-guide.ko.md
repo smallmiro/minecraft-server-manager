@@ -307,6 +307,9 @@ REST API의 인증 모드를 선택합니다:
 | `api-key-ip` | 최대 | API 키와 IP 모두 필요한 고보안 환경 |
 | `open` | 없음 | 로컬 개발/테스트 전용 |
 
+!!! warning "접근 모드"
+    `internal`, `api-key-ip`, `open`은 아직 mcctl-api가 인식하는 `AUTH_MODE` 값 목록에 없으므로 설명대로 동작한다고 기대하지 마세요. `api-key`와 `ip-whitelist`는 인식됩니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+
 !!! danger "open 모드 경고"
     `open` 모드는 모든 인증을 비활성화합니다. 선택하면 확인 프롬프트가 표시됩니다:
     ```
@@ -355,7 +358,7 @@ Resolving service script paths...  Using production node_modules paths
 Generating PM2 ecosystem config...  PM2 ecosystem config generated
 ```
 
-이 과정에서 platform 디렉토리에 `ecosystem.config.cjs`가 생성되며, PM2가 API와 Console 프로세스를 실행하는 방법을 정의합니다.
+이 과정에서 데이터 디렉토리(기본값 `~/minecraft-servers`)에 `ecosystem.config.cjs`가 생성되며, PM2가 API와 Console 프로세스를 실행하는 방법을 정의합니다.
 
 ### Step 9: 구성 저장
 
@@ -375,7 +378,7 @@ Console Service initialized!
   Configuration:
     Config file: /home/user/minecraft-servers/.mcctl-admin.yml
     Console DB:  /home/user/minecraft-servers/data/mcctl.db
-    PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
+    PM2 config:  /home/user/minecraft-servers/ecosystem.config.cjs
     Access mode: internal
 
   Endpoints:
@@ -395,10 +398,7 @@ Console Service initialized!
 ```
 
 !!! warning "API 키를 안전하게 보관하세요"
-    API 키는 초기화 시 한 번만 표시됩니다. 복사하여 안전한 곳에 저장하세요. 분실한 경우 다음 명령으로 재생성할 수 있습니다:
-    ```bash
-    mcctl console api key regenerate
-    ```
+    API 키는 초기화 시 한 번만 표시됩니다. 복사하여 안전한 곳에 저장하세요. 실행 중인 API가 사용하는 키는 `ecosystem.config.cjs`의 `AUTH_API_KEY`이며, 새 키가 필요하면 `mcctl console init --force`로 다시 초기화하세요. `mcctl console api key regenerate`는 현재 이 키를 바꾸지 않습니다 ([CLI 명령어](cli-commands.ko.md#mcctl-console-api)의 경고 참조).
 
 ---
 
@@ -514,7 +514,7 @@ curl http://localhost:5001/health  # API 상태 확인
 | `docker-compose.yml` | `mcctl init` | mc-router용 메인 Docker 오케스트레이션 |
 | `.mcctl-admin.yml` | `mcctl console init` | Console 서비스 구성 (접근 모드, 포트) |
 | `data/mcctl.db` | `mcctl console init` | 사용자 계정용 SQLite 데이터베이스 (Better Auth) |
-| `platform/ecosystem.config.cjs` | `mcctl console init` | API와 Console용 PM2 프로세스 구성 |
+| `ecosystem.config.cjs` | `mcctl console init` | API와 Console용 PM2 프로세스 구성 |
 
 ---
 
