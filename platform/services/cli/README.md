@@ -126,6 +126,7 @@ You can also use the [LLM Knowledge Base](https://minecraft-server-manager.readt
 
 ## Documentation
 
+- [Website](https://mcctl.mirolab.dev/)
 - [Full Documentation](https://minecraft-server-manager.readthedocs.io/)
 - [REST API Reference](https://minecraft-server-manager.readthedocs.io/en/latest/api/)
 - [GitHub Repository](https://github.com/smallmiro/minecraft-server-manager)

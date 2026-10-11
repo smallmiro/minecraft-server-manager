@@ -139,4 +139,7 @@ pnpm dev
 
 ## Documentation
 
+- [Website](https://mcctl.mirolab.dev/)
+- [Full Documentation](https://minecraft-server-manager.readthedocs.io/)
+
 API documentation is available at `/docs` when running in development mode or when `SWAGGER_ENABLED=true`.

@@ -130,5 +130,8 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/smallmiro/minecraft-server-manager
+    - icon: material/web
+      link: https://mcctl.mirolab.dev/
+      name: Website
 
 copyright: Copyright &copy; 2025 smallmiro
