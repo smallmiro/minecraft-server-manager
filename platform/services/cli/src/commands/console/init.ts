@@ -406,17 +406,20 @@ async function cleanupExistingConfig(
  * Execute console init command
  *
  * Interactive flow:
- * 1. Check Node.js version (>= 18)
- * 2. Check PM2 installation
- * 3. Check if already initialized
- * 4. If exists: prompt for reinitialize confirmation (unless --force)
- * 5. Cleanup existing config if reinitializing
- * 6. Prompt for admin username
- * 7. Prompt for admin password (with confirmation)
- * 8. Prompt for API access mode
- * 9. Generate API key if needed
- * 10. Generate ecosystem.config.cjs
- * 11. Save configuration and user
+ * 1. Check prerequisites (Node.js, Docker, Docker Compose, PM2)
+ * 2. Check if already initialized
+ * 3. If exists: prompt for reinitialize confirmation (unless --force)
+ * 4. Cleanup existing config if reinitializing (stop services, delete config files)
+ * 5. Prompt for services to install (mcctl-api, mcctl-console)
+ * 6. Console only: prompt for admin email, name and password (no confirmation)
+ * 7. Prompt for API access mode
+ * 8. Generate API key if needed, prompt for allowed IPs if needed,
+ *    confirm open mode
+ * 9. Console only: create the admin user in data/mcctl.db
+ *    (--force replaces an existing user with the same email)
+ * 10. Install service packages into .services/ if needed
+ * 11. Generate ecosystem.config.cjs
+ * 12. Save configuration
  */
 export async function consoleInitCommand(
   options: ConsoleInitOptions
