@@ -8,6 +8,7 @@ import {
   colors,
   checkConsolePrerequisites,
 } from '@minecraft-docker/shared';
+import { toApiAuthEnv } from '../../lib/api-auth-env.js';
 import { ConsoleDatabase } from '../../lib/console-db.js';
 import { getContainer } from '../../infrastructure/index.js';
 import {
@@ -277,15 +278,15 @@ function generateEcosystemConfig(
       `        PORT: ${apiPort},`,
       `        HOST: '0.0.0.0',`,
       `        MCCTL_ROOT: '${rootDir}',`,
-      `        AUTH_MODE: '${authConfig.accessMode}',`,
     ];
 
-    if (authConfig.apiKey) {
-      apiEnvVars.push(`        AUTH_API_KEY: '${authConfig.apiKey}',`);
-    }
-
-    if (authConfig.allowedIps.length > 0) {
-      apiEnvVars.push(`        AUTH_IP_WHITELIST: '${authConfig.allowedIps.join(',')}',`);
+    const authEnv = toApiAuthEnv(
+      authConfig.accessMode as ApiAccessMode,
+      authConfig.apiKey,
+      authConfig.allowedIps
+    );
+    for (const [key, value] of Object.entries(authEnv)) {
+      apiEnvVars.push(`        ${key}: '${value}',`);
     }
 
     apps.push(`    {

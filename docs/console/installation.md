@@ -218,13 +218,13 @@ module.exports = {
 ```
 
 !!! note "`AUTH_MODE` values"
-    `AUTH_MODE` receives the access mode you chose in `mcctl console init`. The values mcctl-api's authentication plugin recognises are `disabled`, `api-key`, `ip-whitelist`, `basic` and `combined`; `internal`, `api-key-ip` and `open`, which `mcctl console init` can write, are not in that list. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+    `mcctl console init` writes the access mode to `AUTH_MODE` as the value mcctl-api recognises: `internal` → `ip-whitelist` limited to loopback (127.0.0.1, ::1), `api-key-ip` → `combined`, `open` → `disabled`; `api-key` and `ip-whitelist` are written as is.
 
 Only the services you selected during `mcctl console init` appear in the file. Installations that predate the `.services/` directory keep their packages in `<root>/node_modules/`, and `mcctl console init` still uses that location when the packages are found there.
 
 ### Access Modes
 
-`mcctl console init` asks for the access mode during setup. The mode, API key and IP whitelist are written to the `env` block of `ecosystem.config.cjs` (`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`), which is what the running mcctl-api reads. The `mcctl console api` commands do not change those values yet (see the warning in [CLI Commands](cli-commands.md#mcctl-console-api), tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633)), so to switch modes, change the key or change the IP whitelist today, reinitialize with `mcctl console init --force`.
+`mcctl console init` asks for the access mode during setup. The mode, API key and IP whitelist are written to the `env` block of `ecosystem.config.cjs` (`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`), which is what the running mcctl-api reads. The `mcctl console api` commands do not change those values yet (see the warning in [CLI Commands](cli-commands.md#mcctl-console-api))), so to switch modes, change the key or change the IP whitelist today, reinitialize with `mcctl console init --force`.
 
 #### internal (Recommended for Production)
 
@@ -263,18 +263,14 @@ To change the allowed IPs, reinitialize with `mcctl console init --force` and en
 
 #### api-key-ip
 
-Meant to require both a valid API key AND a client IP from the whitelist.
+Requires both a valid API key AND a client IP from the whitelist.
 
-!!! warning "Not recognised by mcctl-api yet"
-    mcctl-api does not recognise `api-key-ip`, so selecting it currently applies no IP restriction. Use `ip-whitelist` if you need one. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 #### open (Development Only)
 
 !!! danger "Security Risk"
-    This mode is meant to disable all authentication. Never use in production!
+    This mode disables all authentication. Never use in production!
 
-!!! warning "Not recognised by mcctl-api yet"
-    mcctl-api does not recognise `open`, so selecting it does not reliably disable authentication. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 ### User Management
 

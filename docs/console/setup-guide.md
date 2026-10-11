@@ -307,8 +307,8 @@ Select the authentication mode for the REST API:
 | `api-key-ip` | Maximum | High-security environments requiring both |
 | `open` | None | Local development/testing only |
 
-!!! warning "Access modes"
-    `internal`, `api-key-ip` and `open` are not in mcctl-api's list of recognised `AUTH_MODE` values yet, so do not rely on them to behave as described. `api-key` and `ip-whitelist` are recognised. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+!!! note "Access modes"
+    `mcctl console init` writes the access mode to `AUTH_MODE` as the value mcctl-api recognises: `internal` → `ip-whitelist` limited to loopback (127.0.0.1, ::1), `api-key-ip` → `combined`, `open` → `disabled`; `api-key` and `ip-whitelist` are written as is.
 
 !!! danger "open Mode Warning"
     The `open` mode disables all authentication. If you select it, a confirmation prompt appears:

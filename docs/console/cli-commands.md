@@ -65,8 +65,8 @@ The command guides you through:
 
 The admin email, name, and password are asked only when `mcctl-console` is selected. The admin account is created with the `admin` role.
 
-!!! warning "Access modes"
-    `internal`, `api-key-ip` and `open` are not in mcctl-api's list of recognised `AUTH_MODE` values yet, so do not rely on them to behave as described. `api-key` and `ip-whitelist` are recognised. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+!!! note "Access modes"
+    `mcctl console init` writes the access mode to `AUTH_MODE` as the value mcctl-api recognises: `internal` → `ip-whitelist` limited to loopback (127.0.0.1, ::1), `api-key-ip` → `combined`, `open` → `disabled`; `api-key` and `ip-whitelist` are written as is.
 
 The command does not ask for ports. To use ports other than the defaults, pass `--api-port` and `--console-port` (see the examples below).
 
@@ -420,7 +420,7 @@ These commands read and write `api-config.json` in the data directory (`MCCTL_RO
 !!! warning "Changes do not reach the running mcctl-api"
     These commands only change `api-config.json`. The running `mcctl-api` takes its access mode, API key and IP whitelist from the `env` block of `ecosystem.config.cjs` (`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`), which they do not touch. A change made here therefore has no effect on the API, even after `mcctl console service restart`, and `mcctl console api status` shows the contents of `api-config.json`, not necessarily what the running API uses.
 
-    The mode and key in effect are the ones chosen during `mcctl console init`. For now, change them by reinitializing with `mcctl console init --force`. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+    The mode and key in effect are the ones chosen during `mcctl console init`. For now, change them by reinitializing with `mcctl console init --force`.
 
 ### Subcommands
 
@@ -838,8 +838,6 @@ mcctl console service start
 mcctl console init --force
 mcctl console service start
 ```
-
-Do not use `api-key-ip` for this: mcctl-api does not recognise it yet, so no IP restriction is applied ([#633](https://github.com/smallmiro/minecraft-server-manager/issues/633)).
 
 `mcctl console api whitelist` likewise only edits `api-config.json` for now.
 

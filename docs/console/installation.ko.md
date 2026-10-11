@@ -218,13 +218,13 @@ module.exports = {
 ```
 
 !!! note "`AUTH_MODE` 값"
-    `AUTH_MODE`에는 `mcctl console init`에서 선택한 접근 모드가 들어갑니다. mcctl-api 인증 플러그인이 인식하는 값은 `disabled`, `api-key`, `ip-whitelist`, `basic`, `combined`이며, `mcctl console init`이 기록할 수 있는 `internal`, `api-key-ip`, `open`은 이 목록에 없습니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+    `mcctl console init`은 접근 모드를 mcctl-api가 인식하는 값으로 변환해 `AUTH_MODE`에 기록합니다: `internal` → 루프백(127.0.0.1, ::1)만 허용하는 `ip-whitelist`, `api-key-ip` → `combined`, `open` → `disabled`. `api-key`와 `ip-whitelist`는 그대로 기록됩니다.
 
 파일에는 `mcctl console init`에서 선택한 서비스만 포함됩니다. `.services/` 디렉토리가 도입되기 이전에 설치한 환경은 패키지가 `<root>/node_modules/`에 있으며, 패키지가 그 위치에서 발견되면 `mcctl console init`은 계속 해당 위치를 사용합니다.
 
 ### 접근 모드
 
-`mcctl console init`은 설정 중에 접근 모드를 묻습니다. 모드, API 키, IP 화이트리스트는 `ecosystem.config.cjs`의 `env` 블록(`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`)에 기록되며, 실행 중인 mcctl-api가 읽는 값이 바로 이것입니다. `mcctl console api` 명령어는 아직 이 값을 바꾸지 않으므로([CLI 명령어](cli-commands.ko.md#mcctl-console-api)의 경고 참조, 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633)), 모드를 바꾸거나 API 키 또는 IP 화이트리스트를 변경하려면 현재는 `mcctl console init --force`로 다시 초기화해야 합니다.
+`mcctl console init`은 설정 중에 접근 모드를 묻습니다. 모드, API 키, IP 화이트리스트는 `ecosystem.config.cjs`의 `env` 블록(`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`)에 기록되며, 실행 중인 mcctl-api가 읽는 값이 바로 이것입니다. `mcctl console api` 명령어는 아직 이 값을 바꾸지 않으므로([CLI 명령어](cli-commands.ko.md#mcctl-console-api)의 경고 참조,), 모드를 바꾸거나 API 키 또는 IP 화이트리스트를 변경하려면 현재는 `mcctl console init --force`로 다시 초기화해야 합니다.
 
 #### internal (프로덕션 권장)
 
@@ -265,16 +265,12 @@ mcctl console init
 
 유효한 API 키와 화이트리스트에 등록된 클라이언트 IP를 모두 요구하려는 모드입니다.
 
-!!! warning "아직 mcctl-api가 인식하지 않습니다"
-    mcctl-api가 `api-key-ip`를 인식하지 않으므로, 선택해도 현재는 IP 제한이 적용되지 않습니다. IP 제한이 필요하면 `ip-whitelist`를 사용하세요. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 #### open (개발 환경 전용)
 
 !!! danger "보안 위험"
     이 모드는 모든 인증을 비활성화하려는 모드입니다. 프로덕션에서는 절대 사용하지 마세요!
 
-!!! warning "아직 mcctl-api가 인식하지 않습니다"
-    mcctl-api가 `open`을 인식하지 않으므로, 선택해도 인증이 확실히 비활성화되지는 않습니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 ### 사용자 관리
 

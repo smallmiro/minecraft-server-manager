@@ -74,6 +74,13 @@ function loadConfig(): ApiConfig {
 function saveConfig(config: ApiConfig): void {
   const configPath = getConfigPath();
   writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+  console.log(
+    colors.yellow(
+      `Note: saved to ${configPath} only. mcctl-api reads AUTH_* from ecosystem.config.cjs ` +
+        '(written by `mcctl console init`), so this does not change the running API. ' +
+        'Re-run `mcctl console init` to apply an access mode.'
+    )
+  );
 }
 
 /**
