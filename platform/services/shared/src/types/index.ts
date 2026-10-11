@@ -44,6 +44,10 @@ export interface McctlConfig {
   avahiEnabled: boolean;
   playitEnabled?: boolean;
   templateVersion?: string;
+  /** Anonymous per-install UUID used as the GA4 user_id by mcctl-console */
+  installId?: string;
+  /** Set to false to disable mcctl-console usage telemetry */
+  telemetry?: boolean;
 }
 
 export type ServerType = 'PAPER' | 'VANILLA' | 'FORGE' | 'FABRIC' | 'SPIGOT' | 'BUKKIT';
