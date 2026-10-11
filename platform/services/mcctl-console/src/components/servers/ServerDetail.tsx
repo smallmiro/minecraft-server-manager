@@ -38,6 +38,7 @@ import { ServerModsTab } from './ServerModsTab';
 import { ServerFilesTab } from './files/ServerFilesTab';
 import { ServerConfigHistoryTab } from './config-history';
 import { ServerBackupTab } from './ServerBackupTab';
+import { stripAnsi, parseLogLine } from '@/utils/log';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -52,48 +53,6 @@ type TabType = (typeof TABS)[number];
 const STAT_ICON_SIZE = 28;
 
 // Parse log line for console display
-interface ParsedLog {
-  time: string;
-  thread: string;
-  level: 'INFO' | 'WARN' | 'ERROR';
-  msg: string;
-}
-
-/**
- * Strip ANSI codes and control characters from log line
- */
-function stripAnsi(text: string): string {
-  return text
-    // ESC sequences with \x1b
-    .replace(/\x1b\[\?[\d;]*[a-zA-Z]/g, '')
-    .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-    .replace(/\x1b=/g, '')
-    // ESC sequences without \x1b (already stripped)
-    .replace(/\[\?[\d;]*[a-zA-Z]/g, '')
-    .replace(/\[[0-9;]*[a-zA-Z]/g, '')
-    .replace(/\[m/g, '')
-    // Control characters
-    .replace(/>\.\.\.\.\r?/g, '')
-    .replace(/\r/g, '')
-    .trim();
-}
-
-function parseLogLine(log: string): ParsedLog | null {
-  // Strip ANSI codes first
-  const cleanLog = stripAnsi(log);
-  // Format: [HH:MM:SS] [Thread/LEVEL]: Message
-  const match = cleanLog.match(/\[(\d{2}:\d{2}:\d{2})\]\s*\[([^/]+)\/(\w+)\]:\s*(.+)/);
-  if (match) {
-    return {
-      time: match[1],
-      thread: match[2],
-      level: (match[3] as 'INFO' | 'WARN' | 'ERROR') || 'INFO',
-      msg: match[4],
-    };
-  }
-  return null;
-}
-
 // Format uptime from seconds
 function formatUptime(seconds?: number): string {
   if (!seconds || seconds < 0) return '0s';
