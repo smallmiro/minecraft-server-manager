@@ -67,7 +67,8 @@ async function handleConsoleCommand(
   subCommand: string | undefined,
   positional: string[],
   flags: Record<string, string | boolean>,
-  rootDir: string | undefined
+  rootDir: string | undefined,
+  subCommandArgs: string[]
 ): Promise<number> {
   switch (subCommand) {
     case 'init':
@@ -91,18 +92,13 @@ async function handleConsoleCommand(
         noBuild: flags['no-build'] === true,
         force: flags['force'] === true,
       });
-    case 'user': {
-      // Use Commander-based command
-      const userCmd = consoleUserCommand();
-      userCmd.parse(['node', 'mcctl', ...positional], { from: 'node' });
+    case 'user':
+      // Commander-based: pass the raw args, since parseArgs already consumed the options
+      await consoleUserCommand().parseAsync(subCommandArgs, { from: 'user' });
       return 0;
-    }
-    case 'api': {
-      // Use Commander-based command
-      const apiCmd = consoleApiCommand();
-      apiCmd.parse(['node', 'mcctl', ...positional], { from: 'node' });
+    case 'api':
+      await consoleApiCommand().parseAsync(subCommandArgs, { from: 'user' });
       return 0;
-    }
     case 'remove':
       return consoleRemoveCommand({
         root: rootDir,
@@ -398,12 +394,14 @@ ${colors.cyan('Examples:')}
 function parseArgs(args: string[]): {
   command: string;
   subCommand?: string;
+  subCommandArgs: string[];
   positional: string[];
   flags: Record<string, string | boolean>;
 } {
   const result = {
     command: '',
     subCommand: undefined as string | undefined,
+    subCommandArgs: [] as string[],
     positional: [] as string[],
     flags: {} as Record<string, string | boolean>,
   };
@@ -472,6 +470,7 @@ function parseArgs(args: string[]): {
         result.command = arg;
       } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'console', 'admin', 'playit', 'config-snapshot'].includes(result.command)) {
         result.subCommand = arg;
+        result.subCommandArgs = args.slice(i + 1);
       } else {
         result.positional.push(arg);
       }
@@ -494,7 +493,7 @@ async function main(): Promise<void> {
   }
 
   const parsed = parseArgs(args);
-  const { command, subCommand, positional, flags } = parsed;
+  const { command, subCommand, subCommandArgs, positional, flags } = parsed;
 
   // Handle global flags
   if (flags['help'] || command === 'help') {
@@ -662,7 +661,7 @@ async function main(): Promise<void> {
         const consoleManagementSubCommands = ['init', 'service', 'user', 'api', 'remove'];
         if (subCommand && consoleManagementSubCommands.includes(subCommand)) {
           // Route to console management
-          exitCode = await handleConsoleCommand(subCommand, positional, flags, rootDir);
+          exitCode = await handleConsoleCommand(subCommand, positional, flags, rootDir, subCommandArgs);
           break;
         }
 
@@ -1001,7 +1000,7 @@ async function main(): Promise<void> {
         console.log(`  Example: ${colors.cyan('mcctl console init')} instead of ${colors.dim('mcctl admin init')}`);
         console.log('');
         // Route to console management handler
-        exitCode = await handleConsoleCommand(subCommand, positional, flags, rootDir);
+        exitCode = await handleConsoleCommand(subCommand, positional, flags, rootDir, subCommandArgs);
         break;
       }
 
