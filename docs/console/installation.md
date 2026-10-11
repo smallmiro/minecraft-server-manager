@@ -11,10 +11,16 @@ Before installing Management Console, ensure you have:
   node --version  # Should be v18.0.0 or higher
   ```
 
-- [x] **PM2 installed globally**
+- [x] **PM2 6 or higher installed globally**
   ```bash
   npm install -g pm2
-  pm2 --version
+  pm2 --version  # Should be 6.0.0 or higher
+  ```
+
+- [x] **Docker Engine 24+ and Docker Compose 2.20+**
+  ```bash
+  docker --version
+  docker compose version
   ```
 
 - [x] **mcctl installed and initialized**
@@ -46,16 +52,18 @@ mcctl console init
 
 This interactive command will prompt you for:
 
-1. **Admin email** - Used to sign in to the web console (e.g., `admin@example.com`)
-2. **Admin name** (default: `Administrator`)
-3. **Admin password** - Must contain:
+1. **Services to install** - `mcctl-api` is selected by default; also select `mcctl-console` to install the web console
+2. **Admin email** - Used to sign in to the web console (e.g., `admin@example.com`)
+3. **Admin name** (default: `Administrator`)
+4. **Admin password** - Must contain:
     - At least 8 characters
     - At least one uppercase letter
     - At least one lowercase letter
     - At least one number
-4. **API access mode** - Choose based on your security needs
-5. **Custom ports** (optional) - Configure API and console ports
+5. **API access mode** - Choose based on your security needs
 6. **Additional configuration** based on selected mode
+
+The admin email, name, and password are asked only when `mcctl-console` is selected. Ports are not asked; to change them, see [Method 2](#method-2-custom-port-configuration).
 
 Example session:
 
@@ -65,13 +73,18 @@ $ mcctl console init
 Initialize Console Service
 
   Node.js: v20.10.0
-  PM2: 5.3.0
+  PM2: 6.0.14
+
+? Select services to install: mcctl-api, mcctl-console
+
+  Selected services:
+    ✓ mcctl-api
+    ✓ mcctl-console
 
 ? Admin email? admin@example.com
 ? Admin name? Administrator
 ? Admin password? ********
 ? API access mode? internal - Local network only (default, most secure)
-? Configure custom ports? No
 
 Creating admin user...  done
 Generating PM2 ecosystem config...  done
@@ -81,16 +94,16 @@ Console Service initialized!
 
   Configuration:
     Config file: /home/user/minecraft-servers/.mcctl-admin.yml
-    Users file:  /home/user/minecraft-servers/users.yaml
+    Console DB:  /home/user/minecraft-servers/data/mcctl.db
     PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
     Access mode: internal
 
   Endpoints:
-    Console: http://localhost:5000
     API:     http://localhost:5001
+    Console: http://localhost:5000
 
   Next steps:
-    1. Start the console service: mcctl console service start
+    1. Start the service: mcctl console service start
     2. Access the console in your browser
 ```
 
@@ -138,14 +151,7 @@ For environments with port conflicts, specify custom ports during initialization
 mcctl console init --api-port 8001 --console-port 8000
 ```
 
-Or configure interactively:
-
-```bash
-mcctl console init
-
-# When prompted "Configure custom ports?" select Yes
-# Then enter your desired API and console ports
-```
+`mcctl console init` never asks for ports interactively; the `--api-port` and `--console-port` flags are the only way to set them. The defaults are `5001` for the API and `5000` for the console.
 
 ## Configuration
 
@@ -194,6 +200,8 @@ module.exports = {
 ```
 
 ### Access Modes
+
+`mcctl console init` asks for the access mode during setup. To switch modes later without reinitializing, use `mcctl console api mode <mode>` (see [CLI Commands](cli-commands.md#mcctl-console-api-mode)).
 
 #### internal (Recommended for Production)
 

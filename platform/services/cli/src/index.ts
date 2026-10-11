@@ -314,7 +314,7 @@ ${colors.cyan('Console Management:')}
     --force                      Reinitialize (delete existing config)
     --api-port <port>            API server port (default: 5001)
     --console-port <port>        Console server port (default: 5000)
-  ${colors.bold('console user')} <action> [name] Manage console users (list, add, remove, reset)
+  ${colors.bold('console user')} <action> [email] Manage console users (list, add, update, remove, reset-password)
   ${colors.bold('console api')} <action>         Manage API settings (status, config, key)
   ${colors.bold('console service')} <action>     Manage services via PM2 (start, stop, restart, status, logs)
     --force                      Kill PM2 daemon and restart fresh (stop, restart)

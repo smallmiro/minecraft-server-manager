@@ -41,27 +41,31 @@ mcctl console init [options]
 | `--root <path>` | Custom data directory |
 | `--force` | Reinitialize even if already configured |
 | `--api-port <port>` | API server port (default: 5001) |
-| `--console-port <port>` | Console server port (default: 3000) |
+| `--console-port <port>` | Console server port (default: 5000) |
 
 ### Interactive Flow
 
 The command guides you through:
 
-1. **Admin username** - Default: `admin`
-2. **Admin password** - Password requirements:
-   - Minimum 8 characters
-   - At least one uppercase letter
-   - At least one lowercase letter
-   - At least one number
-3. **Confirm password** - Must match
-4. **API access mode** - Choose security level:
-   - `internal` - Local network only (recommended)
-   - `api-key` - Requires X-API-Key header
-   - `ip-whitelist` - IP-based access control
-   - `api-key-ip` - Both API key and IP required
-   - `open` - No authentication (development only)
-5. **Custom ports** - Optional port configuration
+1. **Services to install** - `mcctl-api` is selected by default; also select `mcctl-console` to install the web console
+2. **Admin email** - Used to sign in to the web console (e.g., `admin@example.com`)
+3. **Admin name** - Default: `Administrator`
+4. **Admin password** - Password requirements:
+    - Minimum 8 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one number
+5. **API access mode** - Choose security level:
+    - `internal` - Local network only (recommended)
+    - `api-key` - Requires X-API-Key header
+    - `ip-whitelist` - IP-based access control
+    - `api-key-ip` - Both API key and IP required
+    - `open` - No authentication (development only)
 6. **Additional configuration** - Based on selected mode
+
+The admin email, name, and password are asked only when `mcctl-console` is selected. The admin account is created with the `admin` role.
+
+The command does not ask for ports. To use ports other than the defaults, pass `--api-port` and `--console-port` (see the examples below).
 
 ### Examples
 
@@ -84,7 +88,7 @@ mcctl console init --api-port 8001 --console-port 8000
 | File | Description |
 |------|-------------|
 | `.mcctl-admin.yml` | Main Management Console configuration |
-| `users.yaml` | User credentials with hashed passwords |
+| `data/mcctl.db` | Console user database (created only when `mcctl-console` is selected) |
 | `ecosystem.config.cjs` | PM2 process configuration |
 
 ---
@@ -182,10 +186,10 @@ mcctl console user list [options]
 ```
 Users:
 
-Username            Role        Created
---------------------------------------------------
-admin               admin       2025-01-15
-operator1           viewer      2025-01-16
+Email                         Name                Role        Created
+---------------------------------------------------------------------------
+operator@example.com          Operator            user        2025-01-16
+admin@example.com             Administrator       admin       2025-01-15
 
 Total: 2 user(s)
 ```
@@ -199,33 +203,41 @@ mcctl console user list --json
 ```json
 [
   {
-    "id": "usr_abc123",
-    "username": "admin",
-    "role": "admin",
-    "createdAt": "2025-01-15T10:00:00.000Z"
+    "id": "0f9e8d7c6b5a49382716f5e4d3c2b1a0",
+    "name": "Operator",
+    "email": "operator@example.com",
+    "role": "user",
+    "emailVerified": true,
+    "banned": false,
+    "createdAt": "2025-01-16T14:30:00.000Z",
+    "updatedAt": "2025-01-16T14:30:00.000Z"
   },
   {
-    "id": "usr_def456",
-    "username": "operator1",
-    "role": "viewer",
-    "createdAt": "2025-01-16T14:30:00.000Z"
+    "id": "a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    "name": "Administrator",
+    "email": "admin@example.com",
+    "role": "admin",
+    "emailVerified": true,
+    "banned": false,
+    "createdAt": "2025-01-15T10:00:00.000Z",
+    "updatedAt": "2025-01-15T10:00:00.000Z"
   }
 ]
 ```
 
 ### mcctl console user add
 
-Add a new user account.
+Add a new user account. Users are identified by their email address.
 
 ```bash
-mcctl console user add [username] [options]
+mcctl console user add [email] [options]
 ```
 
 **Options:**
 
 | Option | Description |
 |--------|-------------|
-| `--role <role>` | User role: `admin` or `viewer` |
+| `--role <role>` | User role: `admin` or `user` |
 | `--password <password>` | User password |
 
 **Interactive mode:**
@@ -233,33 +245,42 @@ mcctl console user add [username] [options]
 ```bash
 mcctl console user add
 
-? Username: operator1
-? Role: Viewer - Read-only access
+? Email: operator@example.com
+? Name: Operator
+? Role: User - Standard access
 ? Password: ********
 ? Confirm password: ********
 
-User 'operator1' created successfully!
+User 'operator@example.com' created successfully!
 ```
+
+The interactive password prompt requires at least 8 characters.
 
 **CLI mode:**
 
 ```bash
-mcctl console user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator@example.com --role user --password "SecurePass123"
 ```
+
+```json
+{"success":true,"email":"operator@example.com"}
+```
+
+CLI mode applies only when `[email]`, `--role`, and `--password` are all given; otherwise the interactive prompts are shown. The user's name is set to the part of the email before `@`, and the password given with `--password` is not checked against the 8-character minimum.
 
 **Roles:**
 
 | Role | Permissions |
 |------|-------------|
 | `admin` | Full access to all features |
-| `viewer` | Read-only access (status, logs) |
+| `user` | Standard access, limited to the servers granted to the account |
 
 ### mcctl console user remove
 
 Remove a user account.
 
 ```bash
-mcctl console user remove [username] [options]
+mcctl console user remove [email] [options]
 ```
 
 **Options:**
@@ -273,16 +294,16 @@ mcctl console user remove [username] [options]
 ```bash
 mcctl console user remove
 
-? Select user to remove: operator1 (viewer)
-? Are you sure you want to delete user 'operator1'? Yes
+? Select user to remove: operator@example.com (user)
+? Are you sure you want to delete user 'operator@example.com'? Yes
 
-User 'operator1' deleted successfully.
+User 'operator@example.com' deleted successfully.
 ```
 
 **CLI mode:**
 
 ```bash
-mcctl console user remove operator1 --force
+mcctl console user remove operator@example.com --force
 ```
 
 !!! note "Protection"
@@ -293,23 +314,23 @@ mcctl console user remove operator1 --force
 Update a user's role.
 
 ```bash
-mcctl console user update [username] [options]
+mcctl console user update [email] [options]
 ```
 
 **Options:**
 
 | Option | Description |
 |--------|-------------|
-| `--role <role>` | New role: `admin` or `viewer` |
+| `--role <role>` | New role: `admin` or `user` |
 
 **Example:**
 
 ```bash
 # Promote to admin
-mcctl console user update operator1 --role admin
+mcctl console user update operator@example.com --role admin
 
-# Demote to viewer
-mcctl console user update operator1 --role viewer
+# Demote to user
+mcctl console user update operator@example.com --role user
 ```
 
 ### mcctl console user reset-password
@@ -317,7 +338,7 @@ mcctl console user update operator1 --role viewer
 Reset a user's password.
 
 ```bash
-mcctl console user reset-password [username] [options]
+mcctl console user reset-password [email] [options]
 ```
 
 **Options:**
@@ -329,18 +350,18 @@ mcctl console user reset-password [username] [options]
 **Interactive mode:**
 
 ```bash
-mcctl console user reset-password operator1
+mcctl console user reset-password operator@example.com
 
 ? New password: ********
 ? Confirm password: ********
 
-Password for 'operator1' has been reset.
+Password for 'operator@example.com' has been reset.
 ```
 
 **CLI mode:**
 
 ```bash
-mcctl console user reset-password operator1 --password "NewSecurePass456"
+mcctl console user reset-password operator@example.com --password "NewSecurePass456"
 ```
 
 ---
@@ -729,7 +750,7 @@ mcctl console service start
 **Add Operator User:**
 
 ```bash
-mcctl console user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator@example.com --role user --password "SecurePass123"
 ```
 
 **Switch to API Key Mode:**
