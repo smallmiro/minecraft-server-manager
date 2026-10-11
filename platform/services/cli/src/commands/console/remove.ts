@@ -1,10 +1,14 @@
 /**
  * Console Remove Command
  *
- * Completely removes Console Service:
+ * Removes Console Service:
  * - Stop and remove PM2 processes
  * - Delete configuration files (optional)
  * - Delete ecosystem.config.cjs
+ *
+ * The console database (data/mcctl.db: users, sessions, per-user server
+ * permissions) is kept on purpose so accounts survive a reinstall (#629).
+ * Delete it manually to start from scratch.
  */
 
 import { join } from 'node:path';
@@ -118,7 +122,7 @@ function deleteConfigFiles(paths: Paths): { deleted: string[]; errors: string[] 
 /**
  * Execute console remove command
  *
- * Removes all Console Service components:
+ * Removes Console Service components (keeps data/mcctl.db):
  * 1. Stop and remove PM2 processes
  * 2. Delete configuration files (unless --keep-config)
  */
