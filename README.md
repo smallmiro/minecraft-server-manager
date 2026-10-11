@@ -1014,6 +1014,14 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.31.0] - 2026-10-11
+
+**Added:**
+- **Console usage analytics (GA4)**: anonymous per-install `installId` + normalized page path + console version; no hostname/IP, server/world names, query or account data. Opt out with `"telemetry": false` in `.mcctl.json` or `DO_NOT_TRACK=1` (#631)
+
+**Fixed:**
+- `mcctl console user/api` now honor `--role`, `--password`, `--json`, `--force` (#628)
+
 ### [2.30.0] - 2026-10-11
 
 No product behavior changes - documentation and development-workflow release.

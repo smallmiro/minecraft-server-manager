@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.31.0 (2026-10-11)
+- **feat(console)**: Anonymous usage analytics (GA4): per-install `installId`, normalized page path, console version only. Opt out with `"telemetry": false` in `.mcctl.json` or `DO_NOT_TRACK=1` (#631)
+- **fix(cli)**: `mcctl console user/api` no longer drop `--role`, `--password`, `--json`, `--force` (#628)
+
 ### v2.30.0 (2026-10-11)
 - **docs**: No product behavior changes. Upgrade runbook with post-upgrade verification (#577, #579); README refreshed (#581, #583); contributor guide `DEVELOPMENT.md` (#587)
 - **chore(dev)**: `/work` Stop hook (#585), contributor (fork) mode (#589), agent routing and difficulty tiers (#591), per-session work state (#593)
@@ -101,9 +105,6 @@ mcctl logs myserver
 - **feat(console)**: Server **Players** tab - merged online (RCON) + offline roster with avatars, badges, and kick/ban/op/whitelist actions; works while the server is stopped (#528, #550)
 - **feat(console)**: Player detail modal with statistics/advancements (#551), saved + live position and status from `playerdata` NBT (#552), and session/visit history collected from container logs into `data/players.db` (#553)
 - **feat(api)**: `GET /api/servers/:name/players` returns the full roster (no more `400` for stopped servers); new `GET /api/servers/:name/players/:uuid?include=stats,nbt,sessions` (#550–#553)
-
-### v2.26.3 (2026-06-28)
-- **fix(worlds)**: Maps, block statistics, and structure markers now support the latest Minecraft `dimensions/` world layout (#546, #547)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
