@@ -442,6 +442,7 @@ Expected response:
    cd ~/minecraft-servers/.services
    npm ls @minecraft-docker/mcctl-api @minecraft-docker/mcctl-console
    ```
+   Installations without a `.services/` directory keep the packages in `~/minecraft-servers/node_modules`; run `npm ls` in `~/minecraft-servers` instead.
 
 3. **Restart services:**
    ```bash
@@ -474,7 +475,7 @@ Now your services will automatically start when the system boots.
 mcctl update
 ```
 
-`mcctl update` updates the mcctl CLI and the services installed in `<root>/.services/` (`mcctl-api`, `mcctl-console` and the `shared` library) in one step. Each updated PM2 service is restarted automatically; if the output shows `Updated (restart manually)` for a service, run `mcctl console service restart`. The command also aligns the image tags of your Minecraft servers and pulls the Docker images.
+`mcctl update` updates the mcctl CLI and the services installed in `<root>/.services/` (`mcctl-api`, `mcctl-console` and the `shared` library) in one step. Each updated PM2 service is restarted automatically; if the output shows `Updated (restart manually)` for a service, run `mcctl console service restart`. Installations without a `.services/` directory keep the packages in `<root>/node_modules`, and `mcctl update` updates them there. When at least one service package is installed, the command also aligns the image tags of your Minecraft servers and pulls the Docker images; this is skipped with `--check` and `--cli-only`, and when no service package is installed.
 
 | Option | Description |
 |--------|-------------|
@@ -500,7 +501,7 @@ mcctl console service start
 
 ## Uninstallation
 
-To completely remove Management Console:
+To remove Management Console:
 
 ```bash
 # Remove console service (interactive)
@@ -525,7 +526,10 @@ This will:
 !!! note "Console database is kept"
     `data/mcctl.db` (console users, sessions and per-user server permissions) and the packages in `.services/` are not removed. This is intentional, so accounts survive a reinstall. To run `mcctl console init` again with the same admin email you need `--force`; without it the command fails with `User '<email>' already exists`.
 
-To start completely from scratch, also delete the database. This cannot be undone and removes every console user:
+To start completely from scratch, also delete the database:
+
+!!! danger "This cannot be undone"
+    Deleting the database removes every console user, session and per-user server permission.
 
 ```bash
 rm -f ~/minecraft-servers/data/mcctl.db*

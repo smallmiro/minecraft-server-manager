@@ -442,6 +442,7 @@ curl http://localhost:5001/health
    cd ~/minecraft-servers/.services
    npm ls @minecraft-docker/mcctl-api @minecraft-docker/mcctl-console
    ```
+   `.services/` 디렉토리가 없는 설치는 패키지가 `~/minecraft-servers/node_modules`에 있으므로, 대신 `~/minecraft-servers`에서 `npm ls`를 실행하세요.
 
 3. **서비스 재시작:**
    ```bash
@@ -474,7 +475,7 @@ pm2 save
 mcctl update
 ```
 
-`mcctl update`는 mcctl CLI와 `<root>/.services/`에 설치된 서비스(`mcctl-api`, `mcctl-console`, `shared` 라이브러리)를 한 번에 업데이트합니다. 업데이트된 PM2 서비스는 자동으로 재시작됩니다. 출력에 서비스별로 `Updated (restart manually)`가 표시되면 `mcctl console service restart`를 실행하세요. 또한 이 명령은 Minecraft 서버의 이미지 태그를 맞추고 Docker 이미지를 pull합니다.
+`mcctl update`는 mcctl CLI와 `<root>/.services/`에 설치된 서비스(`mcctl-api`, `mcctl-console`, `shared` 라이브러리)를 한 번에 업데이트합니다. 업데이트된 PM2 서비스는 자동으로 재시작됩니다. 출력에 서비스별로 `Updated (restart manually)`가 표시되면 `mcctl console service restart`를 실행하세요. `.services/` 디렉토리가 없는 설치는 패키지가 `<root>/node_modules`에 있으며, `mcctl update`는 그 위치의 패키지를 업데이트합니다. 서비스 패키지가 하나 이상 설치되어 있으면 이 명령은 Minecraft 서버의 이미지 태그를 맞추고 Docker 이미지를 pull하기도 합니다. `--check`, `--cli-only`를 지정하거나 설치된 서비스 패키지가 없으면 건너뜁니다.
 
 | 옵션 | 설명 |
 |--------|-------------|
@@ -500,7 +501,7 @@ mcctl console service start
 
 ## 제거
 
-Management Console를 완전히 제거하려면:
+Management Console를 제거하려면:
 
 ```bash
 # 콘솔 서비스 제거 (대화형)
@@ -525,7 +526,10 @@ mcctl console remove --keep-config
 !!! note "콘솔 데이터베이스는 유지됩니다"
     `data/mcctl.db`(콘솔 사용자, 세션, 사용자별 서버 권한)와 `.services/`의 패키지는 삭제되지 않습니다. 재설치 후에도 계정이 남도록 의도한 동작입니다. 같은 관리자 이메일로 `mcctl console init`을 다시 실행하려면 `--force`가 필요하며, 없으면 `User '<email>' already exists` 오류로 실패합니다.
 
-완전히 처음부터 시작하려면 데이터베이스도 함께 삭제하세요. 되돌릴 수 없으며 모든 콘솔 사용자가 삭제됩니다:
+완전히 처음부터 시작하려면 데이터베이스도 함께 삭제하세요:
+
+!!! danger "되돌릴 수 없습니다"
+    데이터베이스를 삭제하면 모든 콘솔 사용자, 세션, 사용자별 서버 권한이 사라집니다.
 
 ```bash
 rm -f ~/minecraft-servers/data/mcctl.db*
