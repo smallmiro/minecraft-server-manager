@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.30.0] - 2026-10-11
+
+> **No product behavior changes in this release.** v2.30.0 consists of documentation and contributor/development-workflow changes only; the CLI, API, console, and runtime are functionally identical to v2.29.1.
+
+### Added
+- **Upgrade runbook** - A release-common upgrade runbook with post-upgrade verification steps, linked from the Advanced docs index and CLI command docs (#577), and backup guidance moved out of `servers/` with `--non-interactive` usage (#579)
+- **`DEVELOPMENT.md`** - Contributor guide for open-source contributors: issues on the upstream repo, work on a fork, PRs back to upstream (#587)
+
+### Changed
+- **README refreshed to v2.29.1** and `create-server.sh` instructions replaced with `mcctl create` (#581, #583)
+- **Development workflow (`/work`)** - Completion conditions are enforced by a Stop hook (#585); new contributor (fork) mode that completes at PR creation and review (#589); responsible-agent routing and difficulty tiers for single-issue mode (#591); work state is stored per session so concurrent `/work` runs no longer collide (#593)
+
+### Internal
+- Claude configuration prompt audit; release-manager agent aligned with the actual release flow (#585)
+
 ## [2.29.1] - 2026-10-10
 
 ### Fixed

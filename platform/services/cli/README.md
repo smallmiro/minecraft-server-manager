@@ -77,6 +77,10 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.30.0 (2026-10-11)
+- **docs**: No product behavior changes. Upgrade runbook with post-upgrade verification (#577, #579); README refreshed (#581, #583); contributor guide `DEVELOPMENT.md` (#587)
+- **chore(dev)**: `/work` Stop hook (#585), contributor (fork) mode (#589), agent routing and difficulty tiers (#591), per-session work state (#593)
+
 ### v2.29.1 (2026-10-10)
 - **fix(map)**: Map render no longer fails with exit code 1 on worlds whose Nether/End has no region data; empty dimensions are skipped (#575, #576)
 - **fix(map)**: World map now opens on the Overworld (map list rewritten overworld → nether → end after render; apply with **Re-render**) (#575, #576)
@@ -100,9 +104,6 @@ mcctl logs myserver
 
 ### v2.26.3 (2026-06-28)
 - **fix(worlds)**: Maps, block statistics, and structure markers now support the latest Minecraft `dimensions/` world layout (#546, #547)
-
-### v2.26.2 (2026-06-28)
-- **fix(worlds)**: Nether/End maps and stats no longer read stale satellite folders on layout-switched worlds (#542–#545)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
