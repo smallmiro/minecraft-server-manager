@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Minecraft Server Manager</title>
+<title>Minecraft Server Manager — Run Many Java Servers on One Port</title>
 <meta name="description" content="Run every Minecraft Java server you host behind one port. Servers start when a player connects and stop when idle. CLI and web console.">
 <link rel="canonical" href="https://mcctl.mirolab.dev/">
 <meta property="og:type" content="website">
@@ -14,10 +14,152 @@
 <meta property="og:image" content="https://mcctl.mirolab.dev/assets/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="A lake and forest in a Minecraft world, rendered from above with BlueMap">
+<meta property="og:image:alt" content="Minecraft Server Manager: Run them in Docker. Wake them when players connect. Over a BlueMap render of a Minecraft world.">
 <meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://mcctl.mirolab.dev/#website",
+      "url": "https://mcctl.mirolab.dev/",
+      "name": "Minecraft Server Manager",
+      "inLanguage": [
+        "en",
+        "ko",
+        "ja"
+      ]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://mcctl.mirolab.dev/#software",
+      "name": "Minecraft Server Manager",
+      "alternateName": "mcctl",
+      "url": "https://mcctl.mirolab.dev/",
+      "image": "https://mcctl.mirolab.dev/assets/og-image.jpg",
+      "description": "Minecraft Server Manager (mcctl) is a free, open-source CLI and web console for running Minecraft Java Edition servers in Docker. All servers share one port (25565) through itzg/mc-router hostname routing. A server starts when the first player connects and stops after 10 idle minutes, so an empty host runs only the router, using about 40 MB of RAM.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Linux, macOS",
+      "softwareRequirements": "Node.js 18+, Docker Engine 24+, Docker Compose 2.20+",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "installUrl": "https://www.npmjs.com/package/@minecraft-docker/mcctl",
+      "author": {
+        "@type": "Person",
+        "name": "smallmiro",
+        "url": "https://github.com/smallmiro"
+      },
+      "sameAs": [
+        "https://github.com/smallmiro/minecraft-server-manager",
+        "https://www.npmjs.com/package/@minecraft-docker/mcctl",
+        "https://minecraft-server-manager.readthedocs.io/"
+      ],
+      "featureList": [
+        "Run multiple Minecraft Java Edition servers behind one port (25565) with hostname routing",
+        "Auto-start servers on player connect and auto-stop after an idle timeout",
+        "Connect with nip.io hostnames or mDNS (.local) without client setup",
+        "Paper, Vanilla, Forge, NeoForge, Fabric, Spigot, Bukkit, Purpur, and Quilt servers",
+        "Modrinth modpacks, and mods from Modrinth, CurseForge, and Spiget",
+        "Web console (port 5000) and REST API (port 5001)",
+        "Server file manager and server.properties editor",
+        "Player management with Mojang API integration",
+        "World management, world info panel, and BlueMap web map",
+        "World backup to private GitHub repositories with cron scheduling",
+        "External access without port forwarding through playit.gg",
+        "Audit logs stored in SQLite"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://mcctl.mirolab.dev/#faq",
+      "url": "https://mcctl.mirolab.dev/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Minecraft Server Manager (mcctl)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A free, open-source (Apache-2.0) CLI and web console for running Minecraft Java Edition servers in Docker. Each server runs in its own itzg/minecraft-server container, and itzg/mc-router puts them all behind port 25565."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I run multiple Minecraft servers on one port?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "mc-router listens on port 25565 and sends each player to a server based on the hostname they connect to, such as survival.192.168.1.100.nip.io or survival.local. Every server is its own container, so you don't open a port per server. Connecting with a bare IP doesn't work, because the router needs a hostname."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do idle servers keep using RAM?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. A server starts when the first player connects and stops after 10 minutes with no players (change it with AUTO_SCALE_DOWN_AFTER). When every server is stopped, only the router runs, using about 40 MB of RAM."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which server types and mods are supported?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Paper (the default), Vanilla, Forge, NeoForge, Fabric, Spigot, Bukkit, Purpur, and Quilt, plus Modrinth modpacks. You can search for mods and plugins and add them from Modrinth, CurseForge, and Spiget."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does it support Bedrock Edition?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. It supports Minecraft Java Edition only."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can friends outside my home network join without port forwarding?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. playit.gg tunneling gives your servers a public address without opening ports on your router. A VPN mesh such as Tailscale or ZeroTier also works."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a web interface?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. mcctl console init sets up the Management Console: a web UI on port 5000 and a REST API on port 5001. From a browser you can manage servers, worlds, players, and server files."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What do I need to run it?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Linux or macOS (Windows through WSL2) with Node.js 18+, Docker Engine 24+, and Docker Compose 2.20+. Install it with npm install -g @minecraft-docker/mcctl. Players only need their usual Minecraft Java client."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How are worlds backed up?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "mcctl can push worlds to a private GitHub repository, and backups can run on a cron schedule with retention policies. You only need a GitHub account for the GitHub backup feature."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <meta name="theme-color" content="#0c0e12">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 28 10 16 17 4 10Z' fill='%234de38a'/%3E%3Cpath d='M4 10 16 17V30L4 23Z' fill='%231bd96a'/%3E%3Cpath d='M28 10 16 17V30L28 23Z' fill='%23109a4b'/%3E%3C/svg%3E">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap">
@@ -397,6 +539,16 @@
   .community .ico svg { width: 20px; height: 20px; }
   .community .go { margin-top: 18px; display: inline-flex; align-items: center; gap: 6px; font: 600 14px/1 var(--sans); color: var(--text); }
   .community .card:hover .go { color: var(--green); }
+  .faq { display: grid; gap: 10px; max-width: 860px; }
+  .faq details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+  .faq details[open] { border-color: var(--line-2); }
+  .faq summary { position: relative; padding: 18px 52px 18px 20px; font-weight: 700; letter-spacing: -.01em; cursor: pointer; list-style: none; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font: 600 20px/1 var(--mono); color: var(--green); }
+  .faq details[open] summary::after { content: "\2212"; }
+  .faq summary:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 12px; }
+  .faq p { margin: 0; padding: 0 20px 18px; color: var(--muted); }
+  .faq p code { font-size: .92em; color: var(--text-2); }
   .community-foot { margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px 20px; font: 400 13px/1.6 var(--mono); color: var(--dim); }
   .community-foot a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
   .community-foot a:hover { color: var(--text); }
@@ -485,6 +637,7 @@
       <a href="#features"><span class="en">Features</span><span class="ko">기능</span><span class="ja">機能</span></a>
       <a href="#console"><span class="en">Web console</span><span class="ko">웹 콘솔</span><span class="ja">Web コンソール</span></a>
       <a href="#commands"><span class="en">Commands</span><span class="ko">명령어</span><span class="ja">コマンド</span></a>
+      <a href="#faq"><span class="en">FAQ</span><span class="ko">FAQ</span><span class="ja">FAQ</span></a>
       <a href="#about"><span class="en">About</span><span class="ko">소개</span><span class="ja">紹介</span></a>
       <a class="en ja" href="https://minecraft-server-manager.readthedocs.io/en/latest/"><span class="en">Docs ↗</span><span class="ja">ドキュメント ↗</span></a>
       <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/">문서 ↗</a>
@@ -991,12 +1144,62 @@ modded               <span class="g">running</span>      healthy    modded.local
     </div>
   </section>
 
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <span class="eyebrow">06 / <span class="en">FAQ</span><span class="ko">자주 묻는 질문</span><span class="ja">よくある質問</span></span>
+          <h2><span class="en">Questions before you install.</span><span class="ko">설치 전에 많이 묻는 질문.</span><span class="ja">インストール前によくある質問。</span></h2>
+        </div>
+      </div>
+      <div class="faq">
+        <details>
+          <summary><span class="en">What is Minecraft Server Manager (mcctl)?</span><span class="ko">Minecraft Server Manager(mcctl)는 무엇인가요?</span><span class="ja">Minecraft Server Manager (mcctl) とは何ですか?</span></summary>
+          <p><span class="en">A free, open-source (Apache-2.0) CLI and web console for running Minecraft Java Edition servers in Docker. Each server runs in its own <code>itzg/minecraft-server</code> container, and <code>itzg/mc-router</code> puts them all behind port 25565.</span><span class="ko">Docker로 마인크래프트 자바 에디션 서버를 운영하는 무료 오픈소스(Apache-2.0) CLI와 웹 콘솔입니다. 서버마다 <code>itzg/minecraft-server</code> 컨테이너가 따로 뜨고, <code>itzg/mc-router</code>가 모든 서버를 25565 포트 하나 뒤에 둡니다.</span><span class="ja">Docker で Minecraft Java Edition サーバーを運用するための、無料のオープンソース (Apache-2.0) CLI と Web コンソールです。サーバーごとに <code>itzg/minecraft-server</code> のコンテナが動き、<code>itzg/mc-router</code> がすべてのサーバーをポート 25565 の後ろにまとめます。</span></p>
+        </details>
+        <details>
+          <summary><span class="en">How do I run multiple Minecraft servers on one port?</span><span class="ko">포트 하나로 마인크래프트 서버 여러 개를 어떻게 돌리나요?</span><span class="ja">ひとつのポートで複数の Minecraft サーバーを動かすには?</span></summary>
+          <p><span class="en">mc-router listens on port 25565 and sends each player to a server based on the hostname they connect to, such as <code>survival.192.168.1.100.nip.io</code> or <code>survival.local</code>. Every server is its own container, so you don't open a port per server. Connecting with a bare IP doesn't work, because the router needs a hostname.</span><span class="ko">mc-router가 25565 포트에서 접속을 받아, 플레이어가 입력한 호스트 이름(예: <code>survival.192.168.1.100.nip.io</code>, <code>survival.local</code>)을 보고 해당 서버로 보냅니다. 서버마다 컨테이너가 따로라 서버별로 포트를 열 필요가 없습니다. 라우터가 호스트 이름으로 서버를 구분하기 때문에 IP만으로는 접속되지 않습니다.</span><span class="ja">mc-router がポート 25565 で待ち受け、プレイヤーが接続したホスト名 (例: <code>survival.192.168.1.100.nip.io</code>、<code>survival.local</code>) を見てサーバーに振り分けます。サーバーごとに別コンテナなので、サーバーごとにポートを開ける必要はありません。ルーターはホスト名で区別するため、IP だけでは接続できません。</span></p>
+        </details>
+        <details>
+          <summary><span class="en">Do idle servers keep using RAM?</span><span class="ko">아무도 없는 서버도 RAM을 계속 쓰나요?</span><span class="ja">誰もいないサーバーも RAM を使い続けますか?</span></summary>
+          <p><span class="en">No. A server starts when the first player connects and stops after 10 minutes with no players (change it with <code>AUTO_SCALE_DOWN_AFTER</code>). When every server is stopped, only the router runs, using about 40 MB of RAM.</span><span class="ko">아닙니다. 첫 플레이어가 접속하면 서버가 켜지고, 플레이어가 없는 상태로 10분이 지나면 꺼집니다(<code>AUTO_SCALE_DOWN_AFTER</code>로 변경 가능). 모든 서버가 꺼져 있으면 라우터만 남고, RAM은 약 40MB를 씁니다.</span><span class="ja">いいえ。最初のプレイヤーが接続するとサーバーが起動し、プレイヤーがいない状態が 10 分続くと停止します (<code>AUTO_SCALE_DOWN_AFTER</code> で変更可能)。すべてのサーバーが停止していれば動くのはルーターだけで、RAM は約 40MB です。</span></p>
+        </details>
+        <details>
+          <summary><span class="en">Which server types and mods are supported?</span><span class="ko">어떤 서버 종류와 모드를 지원하나요?</span><span class="ja">どのサーバーの種類と Mod に対応していますか?</span></summary>
+          <p><span class="en">Paper (the default), Vanilla, Forge, NeoForge, Fabric, Spigot, Bukkit, Purpur, and Quilt, plus Modrinth modpacks. You can search for mods and plugins and add them from Modrinth, CurseForge, and Spiget.</span><span class="ko">Paper(기본값), Vanilla, Forge, NeoForge, Fabric, Spigot, Bukkit, Purpur, Quilt와 Modrinth 모드팩을 지원합니다. 모드와 플러그인은 Modrinth, CurseForge, Spiget에서 검색해 추가할 수 있습니다.</span><span class="ja">Paper (デフォルト)、Vanilla、Forge、NeoForge、Fabric、Spigot、Bukkit、Purpur、Quilt と、Modrinth の Modpack に対応しています。Mod とプラグインは Modrinth、CurseForge、Spiget から検索して追加できます。</span></p>
+        </details>
+        <details>
+          <summary><span class="en">Does it support Bedrock Edition?</span><span class="ko">베드락 에디션도 지원하나요?</span><span class="ja">統合版 (Bedrock Edition) に対応していますか?</span></summary>
+          <p><span class="en">No. It supports Minecraft Java Edition only.</span><span class="ko">아니요. 마인크래프트 자바 에디션만 지원합니다.</span><span class="ja">いいえ。Minecraft Java Edition のみに対応しています。</span></p>
+        </details>
+        <details>
+          <summary><span class="en">Can friends outside my home network join without port forwarding?</span><span class="ko">포트 포워딩 없이 집 밖의 친구도 접속할 수 있나요?</span><span class="ja">ポート開放なしで、家の外の友だちも参加できますか?</span></summary>
+          <p><span class="en">Yes. playit.gg tunneling gives your servers a public address without opening ports on your router. A VPN mesh such as Tailscale or ZeroTier also works.</span><span class="ko">네. playit.gg 터널링을 쓰면 공유기 포트를 열지 않고도 외부에서 접속할 주소가 생깁니다. Tailscale이나 ZeroTier 같은 VPN 메시도 쓸 수 있습니다.</span><span class="ja">はい。playit.gg のトンネルを使えば、ルーターのポートを開けずに外部から接続できるアドレスが手に入ります。Tailscale や ZeroTier などの VPN メッシュも使えます。</span></p>
+        </details>
+        <details>
+          <summary><span class="en">Is there a web interface?</span><span class="ko">웹 화면도 있나요?</span><span class="ja">Web 画面はありますか?</span></summary>
+          <p><span class="en">Yes. <code>mcctl console init</code> sets up the Management Console: a web UI on port 5000 and a REST API on port 5001. From a browser you can manage servers, worlds, players, and server files.</span><span class="ko">네. <code>mcctl console init</code>으로 관리 콘솔을 설치하면 웹 UI(포트 5000)와 REST API(포트 5001)가 생깁니다. 브라우저에서 서버, 월드, 플레이어, 서버 파일을 관리할 수 있습니다.</span><span class="ja">はい。<code>mcctl console init</code> で管理コンソールをセットアップすると、Web UI (ポート 5000) と REST API (ポート 5001) が使えます。ブラウザからサーバー、ワールド、プレイヤー、サーバーファイルを管理できます。</span></p>
+        </details>
+        <details>
+          <summary><span class="en">What do I need to run it?</span><span class="ko">실행하려면 무엇이 필요한가요?</span><span class="ja">動かすには何が必要ですか?</span></summary>
+          <p><span class="en">Linux or macOS (Windows through WSL2) with Node.js 18+, Docker Engine 24+, and Docker Compose 2.20+. Install it with <code>npm install -g @minecraft-docker/mcctl</code>. Players only need their usual Minecraft Java client.</span><span class="ko">Linux 또는 macOS(Windows는 WSL2)에 Node.js 18+, Docker Engine 24+, Docker Compose 2.20+가 필요합니다. 설치는 <code>npm install -g @minecraft-docker/mcctl</code> 한 줄입니다. 플레이어는 평소 쓰던 마인크래프트 자바 클라이언트만 있으면 됩니다.</span><span class="ja">Linux または macOS (Windows は WSL2) に Node.js 18 以上、Docker Engine 24 以上、Docker Compose 2.20 以上が必要です。インストールは <code>npm install -g @minecraft-docker/mcctl</code> の 1 行です。プレイヤーは、いつもの Minecraft Java クライアントがあれば十分です。</span></p>
+        </details>
+        <details>
+          <summary><span class="en">How are worlds backed up?</span><span class="ko">월드 백업은 어떻게 하나요?</span><span class="ja">ワールドのバックアップはどうしますか?</span></summary>
+          <p><span class="en">mcctl can push worlds to a private GitHub repository, and backups can run on a cron schedule with retention policies. You only need a GitHub account for the GitHub backup feature.</span><span class="ko">월드를 비공개 GitHub 저장소에 백업할 수 있고, cron 일정과 보관 정책으로 자동 백업을 돌릴 수 있습니다. GitHub 계정은 GitHub 백업 기능을 쓸 때만 필요합니다.</span><span class="ja">ワールドを非公開の GitHub リポジトリにバックアップでき、cron スケジュールと保持ポリシーで自動化できます。GitHub アカウントが必要なのは、GitHub バックアップ機能を使うときだけです。</span></p>
+        </details>
+      </div>
+    </div>
+  </section>
+
   <!-- Community -->
   <section id="community" class="community">
     <div class="wrap">
       <div class="head">
         <div>
-          <span class="eyebrow">06 / <span class="en">Community</span><span class="ko">커뮤니티</span><span class="ja">コミュニティ</span></span>
+          <span class="eyebrow">07 / <span class="en">Community</span><span class="ko">커뮤니티</span><span class="ja">コミュニティ</span></span>
           <h2><span class="en">Ideas and questions welcome.</span><span class="ko">아이디어와 질문을 기다립니다.</span><span class="ja">アイデアと質問を歓迎します。</span></h2>
           <p class="sub"><span class="en">mcctl is built in the open. Join the conversation on GitHub Discussions.</span><span class="ko">mcctl은 공개적으로 개발됩니다. GitHub Discussions에서 함께 이야기해요.</span><span class="ja">mcctl はオープンに開発しています。GitHub Discussions で会話に参加してください。</span></p>
         </div>
@@ -1027,7 +1230,7 @@ modded               <span class="g">running</span>      healthy    modded.local
     <div class="wrap">
       <div class="head">
         <div>
-          <span class="eyebrow">07 / <span class="en">About</span><span class="ko">소개</span><span class="ja">紹介</span></span>
+          <span class="eyebrow">08 / <span class="en">About</span><span class="ko">소개</span><span class="ja">紹介</span></span>
           <h2><span class="en">Built by a dad, for two brothers.</span><span class="ko">두 형제를 위해, 아빠가 만들었습니다.</span><span class="ja">父が、ふたりの兄弟のために作りました。</span></h2>
         </div>
       </div>
