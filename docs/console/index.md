@@ -87,7 +87,7 @@ Management Console supports multiple authentication modes:
 | `open` | No authentication | Development only |
 
 !!! note
-    `internal`, `api-key-ip` and `open` are not in mcctl-api's list of recognised `AUTH_MODE` values yet, so do not rely on them to behave as described. `api-key` and `ip-whitelist` are recognised. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+    `mcctl console init` writes the access mode to `AUTH_MODE` as the value mcctl-api recognises: `internal` → `ip-whitelist` limited to loopback (127.0.0.1, ::1), `api-key-ip` → `combined`, `open` → `disabled`; `api-key` and `ip-whitelist` are written as is.
 
 !!! warning "Security Warning"
     Never use `open` mode in production. It disables all authentication and exposes your servers to unauthorized access.

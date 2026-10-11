@@ -65,8 +65,8 @@ mcctl console init [options]
 
 관리자 이메일, 이름, 비밀번호는 `mcctl-console`을 선택한 경우에만 묻습니다. 관리자 계정은 `admin` 역할로 생성됩니다.
 
-!!! warning "접근 모드"
-    `internal`, `api-key-ip`, `open`은 아직 mcctl-api가 인식하는 `AUTH_MODE` 값 목록에 없으므로 설명대로 동작한다고 기대하지 마세요. `api-key`와 `ip-whitelist`는 인식됩니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+!!! note "접근 모드"
+    `mcctl console init`은 접근 모드를 mcctl-api가 인식하는 값으로 변환해 `AUTH_MODE`에 기록합니다: `internal` → 루프백(127.0.0.1, ::1)만 허용하는 `ip-whitelist`, `api-key-ip` → `combined`, `open` → `disabled`. `api-key`와 `ip-whitelist`는 그대로 기록됩니다.
 
 이 명령어는 포트를 묻지 않습니다. 기본값이 아닌 포트를 사용하려면 `--api-port`와 `--console-port`를 지정하세요 (아래 예제 참조).
 
@@ -420,7 +420,7 @@ API 설정 및 접근 제어를 관리합니다.
 !!! warning "변경 사항이 실행 중인 mcctl-api에 반영되지 않습니다"
     이 명령어들은 `api-config.json`만 변경합니다. 실행 중인 `mcctl-api`는 접근 모드, API 키, IP 화이트리스트를 `ecosystem.config.cjs`의 `env` 블록(`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`)에서 읽는데, 이 명령어들은 해당 파일을 건드리지 않습니다. 따라서 여기서 바꾼 값은 `mcctl console service restart`를 실행해도 API에 영향을 주지 않으며, `mcctl console api status`도 실행 중인 API가 사용하는 값이 아니라 `api-config.json`의 내용을 보여줍니다.
 
-    실제로 적용되는 모드와 키는 `mcctl console init` 때 정한 값입니다. 현재는 `mcctl console init --force`로 다시 초기화해야 바꿀 수 있습니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+    실제로 적용되는 모드와 키는 `mcctl console init` 때 정한 값입니다. 현재는 `mcctl console init --force`로 다시 초기화해야 바꿀 수 있습니다.
 
 ### 하위 명령어
 
@@ -838,8 +838,6 @@ mcctl console service start
 mcctl console init --force
 mcctl console service start
 ```
-
-이 용도로 `api-key-ip`를 사용하지 마세요. mcctl-api가 아직 이 값을 인식하지 않아 IP 제한이 적용되지 않습니다 ([#633](https://github.com/smallmiro/minecraft-server-manager/issues/633)).
 
 `mcctl console api whitelist`도 현재는 `api-config.json`만 수정합니다.
 
