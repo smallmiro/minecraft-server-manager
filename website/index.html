@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mcctl · Docker Minecraft Server Manager</title>
+<title>Minecraft Server Manager</title>
 <meta name="description" content="Run every Minecraft Java server you host behind one port. Servers start when a player connects and stop when idle. CLI and web console.">
-<meta property="og:title" content="mcctl · Docker Minecraft Server Manager">
+<meta property="og:title" content="Minecraft Server Manager">
 <meta property="og:description" content="Run them in Docker. Wake them when players connect.">
 <meta name="theme-color" content="#0c0e12">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 28 10 16 17 4 10Z' fill='%234de38a'/%3E%3Cpath d='M4 10 16 17V30L4 23Z' fill='%231bd96a'/%3E%3Cpath d='M28 10 16 17V30L28 23Z' fill='%23109a4b'/%3E%3C/svg%3E">
@@ -81,6 +81,7 @@
   .top .wrap { height: 60px; display: flex; align-items: center; gap: 24px; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.02em; }
   .brand svg { width: 26px; height: 26px; }
+  @media (max-width: 560px) { .top .pill { display: none; } .top .brand { font-size: 15px; line-height: 1.15; max-width: 9.5em; } }
   .pill {
     font: 500 11px/1 var(--mono);
     padding: 5px 7px; border-radius: 4px;
@@ -319,9 +320,9 @@
 
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="#" aria-label="mcctl home">
+    <a class="brand" href="#" aria-label="Minecraft Server Manager home">
       <svg aria-hidden="true"><use href="#i-cube"/></svg>
-      mcctl
+      Minecraft Server Manager
       <span class="pill" data-version>v2.30.0</span>
     </a>
     <nav class="nav" aria-label="Primary">
@@ -728,7 +729,7 @@ modded               <span class="g">running</span>      healthy    modded.local
 <footer>
   <div class="wrap">
     <div class="foot-top">
-      <a class="brand" href="#"><svg aria-hidden="true"><use href="#i-cube"/></svg>mcctl <span class="pill" data-version>v2.30.0</span></a>
+      <a class="brand" href="#"><svg aria-hidden="true"><use href="#i-cube"/></svg>Minecraft Server Manager <span class="pill" data-version>v2.30.0</span></a>
       <nav class="foot-links" aria-label="Footer">
         <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/">docs</a>
         <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/">docs</a>
