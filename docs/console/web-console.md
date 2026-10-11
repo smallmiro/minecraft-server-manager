@@ -948,7 +948,7 @@ Console usage analytics is on (anonymous install ID and page paths, sent to Goog
 
 === "Option 1: .mcctl.json"
 
-    Set `telemetry` to `false` in `<root>/.mcctl.json`. It takes effect from the next page load, and no restart is needed.
+    Add `"telemetry": false` to `<root>/.mcctl.json` and keep the existing fields. It takes effect from the next page load, and no restart is needed.
 
     ```json
     {

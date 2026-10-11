@@ -948,7 +948,7 @@ Console usage analytics is on (anonymous install ID and page paths, sent to Goog
 
 === "방법 1: .mcctl.json"
 
-    `<root>/.mcctl.json`에 `telemetry`를 `false`로 설정합니다. 다음 페이지 로드부터 적용되며 재시작은 필요 없습니다.
+    `<root>/.mcctl.json`의 기존 필드는 그대로 두고 `"telemetry": false`를 추가합니다. 다음 페이지 로드부터 적용되며 재시작은 필요 없습니다.
 
     ```json
     {
