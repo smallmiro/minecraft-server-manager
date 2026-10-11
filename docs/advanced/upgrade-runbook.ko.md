@@ -85,6 +85,39 @@ mcctl console service restart --force
 cd $ROOT && npm rebuild better-sqlite3 && mcctl console service restart --force
 ```
 
+### 4-1. v2.31.1 이상으로 올릴 때: 콘솔 접근 모드 확인 (#633)
+
+v2.31.0 이하에서 v2.31.1 이상으로 올릴 때 한 번만 합니다. `mcctl console init`을 실행한 호스트에만 해당합니다.
+
+v2.31.0까지는 `mcctl console init`이 선택한 접근 모드를 `AUTH_MODE`에 그대로 썼습니다. mcctl-api는 `internal`, `api-key-ip`, `open`을 인식하지 못하고, `NODE_ENV=production`이면 `api-key`(그 외에는 `disabled`)로 동작합니다. v2.31.1부터는 `mcctl console init`이 mcctl-api가 인식하는 값으로 씁니다. `mcctl update`와 `mcctl upgrade`는 `ecosystem.config.cjs`를 다시 쓰지 않으므로, 기존 설치는 직접 바꾸기 전까지 옛 값이 남습니다.
+
+```bash
+grep -nE "AUTH_MODE|AUTH_IP_WHITELIST" $ROOT/ecosystem.config.cjs
+```
+
+| 현재 `AUTH_MODE` | 바꿀 값 | 영향 |
+|---|---|---|
+| `api-key`, `ip-whitelist`, `disabled`, `basic`, `combined` | 할 일 없음 | - |
+| `internal` | `ip-whitelist` + `AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1'` | 호스트 자신(Console)만 API를 호출할 수 있음 |
+| `api-key-ip` | `combined` (`AUTH_API_KEY`, `AUTH_IP_WHITELIST`는 유지) | IP 화이트리스트가 실제로 적용됨. 목록 밖 클라이언트는 403 |
+| `open` | `disabled` | 인증이 실제로 꺼짐. 개발 환경 전용 |
+
+```bash
+cd $ROOT
+cp ecosystem.config.cjs $B/ecosystem.config.cjs     # 롤백용(8단계)
+sed -i \
+  -e "s/^\( *\)AUTH_MODE: 'internal',/\1AUTH_MODE: 'ip-whitelist',\n\1AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1',/" \
+  -e "s/AUTH_MODE: 'api-key-ip',/AUTH_MODE: 'combined',/" \
+  -e "s/AUTH_MODE: 'open',/AUTH_MODE: 'disabled',/" \
+  ecosystem.config.cjs
+grep -nE "AUTH_MODE|AUTH_IP_WHITELIST" ecosystem.config.cjs
+mcctl console service restart --force               # 일반 restart는 옛 env를 그대로 씀
+```
+
+`sed`는 다른 모드는 건드리지 않습니다. 파일을 고치는 대신 `mcctl console init --force`를 다시 실행해도 되지만, 이 경우 파일 전체를 다시 쓰고 설정 질문을 모두 다시 묻습니다.
+
+**확인:** `AUTH_MODE`가 `disabled`, `api-key`, `ip-whitelist`, `basic`, `combined` 중 하나이고, API `/health`가 200이며 Console에서 서버 목록이 보임(7-6단계).
+
 ## 5. 서버 이미지 반영
 
 중지된 서버는 다음 기동 때 새 이미지가 적용됩니다. 실행 중인 서버는 사용자 영향이 없는 시간에 `mcctl stop <server> && mcctl start <server>`로 재기동합니다(월드는 보존).
@@ -156,6 +189,7 @@ docker ps --format '{{.Names}}\t{{.Image}}\t{{.Status}}'
 - [ ] API `/health` 200, Console 200, PM2 restarts 증가 없음
 - [ ] 중지된 서버가 접속으로 기동됨(auto-scale)
 - [ ] 화면 스모크 테스트 통과
+- [ ] (v2.31.0 이하 → v2.31.1 이상) `ecosystem.config.cjs`의 `AUTH_MODE`가 mcctl-api가 인식하는 값임(4-1단계)
 - [ ] 안정 확인 후 `$B`(`backups-pre-$NEW`) 삭제
 
 ## 8. 롤백
@@ -167,6 +201,7 @@ cp $B/.env .env
 cp $B/.mcctl.json .mcctl.json
 rm -rf servers/_template && cp -r $B/_template servers/_template
 docker compose up -d router
+[ -f $B/ecosystem.config.cjs ] && cp $B/ecosystem.config.cjs ecosystem.config.cjs   # 4-1단계에서 바꾼 경우
 # 패키지를 이전 버전 OLD로 (PM2 Node 셸에서)
 npm install -g @minecraft-docker/mcctl@$OLD
 npm install @minecraft-docker/mcctl-api@$OLD @minecraft-docker/mcctl-console@$OLD @minecraft-docker/shared@$OLD
