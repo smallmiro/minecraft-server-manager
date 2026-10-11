@@ -1,0 +1,32 @@
+# Minecraft Server Manager (mcctl)
+
+> mcctl puts every Minecraft Java Edition server you host behind a single port (25565). A server starts when the first player connects and stops after it goes idle, so an empty host runs only the router (about 40 MB of RAM). Servers run in Docker using itzg/minecraft-server, with itzg/mc-router for hostname routing. Manage everything from the CLI or a web console. Open source, Apache-2.0.
+
+- Install: `npm install -g @minecraft-docker/mcctl`, then `mcctl init`, `mcctl create`, `mcctl status`
+- Requirements: Node.js 18+, Docker Engine 24+, Docker Compose 2.20+; Linux or macOS (Windows via WSL2)
+- Connect by hostname: nip.io (`<server>.<host-ip>.nip.io:25565`), mDNS (`<server>.local`), or playit.gg for external access without port forwarding
+- Server types: Paper, Vanilla, Forge, NeoForge, Fabric; mods and modpacks from Modrinth, CurseForge, Spiget
+- Management Console: web UI (port 5000) and REST API (port 5001), set up with `mcctl console init`
+- Backups: world backup to private GitHub repositories, cron-based scheduling
+
+## Docs
+
+- [Installation](https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/installation/): install mcctl and prerequisites
+- [Quick Start](https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/quickstart/): create your first server
+- [CLI Commands](https://minecraft-server-manager.readthedocs.io/en/latest/cli/commands/): complete command reference
+- [Server Types](https://minecraft-server-manager.readthedocs.io/en/latest/configuration/server-types/): Paper, Forge, Fabric, NeoForge
+- [Console Setup Guide](https://minecraft-server-manager.readthedocs.io/en/latest/console/setup-guide/): install the web console and REST API
+- [External Access](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/external-access/): playit.gg tunneling
+- [REST API](https://minecraft-server-manager.readthedocs.io/en/latest/api/): API reference
+- [Troubleshooting](https://minecraft-server-manager.readthedocs.io/en/latest/troubleshooting/)
+
+## LLM reference
+
+- [LLM Knowledge Base](https://minecraft-server-manager.readthedocs.io/en/latest/documentforllmagent/): single-page reference written for AI assistants
+
+## Optional
+
+- [npm package](https://www.npmjs.com/package/@minecraft-docker/mcctl)
+- [GitHub repository](https://github.com/smallmiro/minecraft-server-manager)
+- [Releases](https://github.com/smallmiro/minecraft-server-manager/releases)
+- [Korean documentation](https://minecraft-server-manager.readthedocs.io/en/latest/ko/)
