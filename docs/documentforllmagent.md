@@ -223,14 +223,14 @@ After running `mcctl init`, the following directory structure is created:
 ~/minecraft-servers/                  # Platform root (MCCTL_ROOT)
 ├── .env                              # Global environment variables
 ├── .mcctl-admin.yml                  # Management Console config (after console init)
-├── users.yaml                        # Console user credentials (hashed)
+├── ecosystem.config.cjs              # PM2 process config (after console init)
 ├── audit.db                          # SQLite audit log database
 ├── data/
+│   ├── mcctl.db                      # Console users, sessions, per-user server permissions (Better Auth SQLite, after console init with mcctl-console)
 │   └── players.db                    # SQLite player session history (mcctl-api, v2.27.0+)
 │
 ├── platform/
 │   ├── docker-compose.yml            # Main orchestration (mc-router)
-│   ├── ecosystem.config.cjs          # PM2 process config (after console init)
 │   └── scripts/                      # Bash management scripts
 │
 ├── servers/
@@ -259,11 +259,12 @@ After running `mcctl init`, the following directory structure is created:
 │
 ├── backups/                          # Local backup storage
 │
-└── node_modules/                     # npm packages (after console init)
-    └── @minecraft-docker/
-        ├── mcctl-api/                # REST API package
-        ├── mcctl-console/            # Web Console package
-        └── shared/                   # Shared domain package
+└── .services/                        # Service packages installed by console init (older installs: node_modules/ in the platform root)
+    └── node_modules/
+        └── @minecraft-docker/
+            ├── mcctl-api/            # REST API package
+            ├── mcctl-console/        # Web Console package
+            └── shared/               # Shared domain package
 ```
 
 ### Connection Flow (LAN)
@@ -798,28 +799,32 @@ mcctl migrate worlds --backup     # Create backup before migration
 
 ```bash
 mcctl console init                # Initialize console service (interactive)
-mcctl console init --force        # Reinitialize (stops services, cleans config)
+mcctl console init --force        # Reinitialize (stops services, cleans config, replaces the admin with the same email)
 mcctl console init --api-port 8001 --console-port 8000  # Custom ports
 ```
+
+Before the prompts, init checks prerequisites (Node.js, Docker, Docker Compose, PM2). If the console is already initialized, it asks whether to reinitialize (skipped with `--force`); reinitializing stops the PM2 services and deletes `.mcctl-admin.yml` and `ecosystem.config.cjs`.
 
 **Interactive init flow:**
 
 1. Select services to install (mcctl-api, mcctl-console via multiselect)
-2. Admin username (required only if console selected)
-3. Admin password (min 8 chars, uppercase + lowercase + number)
-4. API access mode (internal / api-key / ip-whitelist / api-key-ip / open)
-5. API key generated (if api-key or api-key-ip mode)
-6. IP whitelist (if ip-whitelist or api-key-ip mode)
-7. Generates PM2 ecosystem.config.cjs
-8. Saves configuration (.mcctl-admin.yml)
+2. Admin email, name and password (asked only if mcctl-console is selected; password min 8 chars, uppercase + lowercase + number, asked once without confirmation)
+3. API access mode (internal / api-key / ip-whitelist / api-key-ip / open)
+4. API key generated (if api-key or api-key-ip mode)
+5. Allowed IPs (if ip-whitelist or api-key-ip mode); open mode asks for confirmation
+6. Creates the admin user in `data/mcctl.db` (only if mcctl-console is selected). If a user with the same email exists, init fails with `User '<email>' already exists` unless `--force` is given; with `--force` that user is deleted and created again
+7. Installs the service packages into `.services/` if they are missing
+8. Generates PM2 ecosystem.config.cjs
+9. Saves configuration (.mcctl-admin.yml)
 
 **Files created after init:**
 
 | File | Location | Description |
 |------|----------|-------------|
 | `.mcctl-admin.yml` | `~/minecraft-servers/` | Admin service configuration |
-| `users.yaml` | `~/minecraft-servers/` | User credentials (hashed) |
-| `ecosystem.config.cjs` | `~/minecraft-servers/platform/` | PM2 process config |
+| `data/mcctl.db` | `~/minecraft-servers/data/` | Console users, sessions, per-user server permissions (Better Auth SQLite; only if mcctl-console is selected) |
+| `ecosystem.config.cjs` | `~/minecraft-servers/` | PM2 process config |
+| `.services/` | `~/minecraft-servers/` | Installed mcctl-api / mcctl-console packages |
 
 #### Service Lifecycle (v1.13.0+ Interactive Selection)
 
@@ -833,7 +838,7 @@ mcctl console service start --console # Start API + Console (console needs API)
 mcctl console service stop            # Prompts: "All services" or "Console only"
 mcctl console service stop --api      # Stop ALL services (console depends on API)
 mcctl console service stop --console  # Stop console only
-mcctl console service stop --force    # Force kill PM2 processes
+mcctl console service stop --force    # Delete PM2 processes and kill the PM2 daemon
 
 # Restart services
 mcctl console service restart         # Interactive prompt
@@ -863,25 +868,27 @@ mcctl console service logs -f         # Follow logs in real-time
 #### User Management
 
 ```bash
-mcctl console user list                  # List console users
-mcctl console user add <name>            # Add user (interactive password prompt)
-mcctl console user add <name> --role viewer --password "Pass123"
-mcctl console user remove <name>         # Remove user
-mcctl console user reset-password <name> # Reset password
-mcctl console user update <name> --role admin  # Change role
+mcctl console user list [--json]         # List console users
+mcctl console user add [email]           # Add user (interactive prompts)
+mcctl console user add operator@example.com --role user --password "Pass123"  # Non-interactive (needs email, --role and --password)
+mcctl console user remove [email] [--force]    # Remove user (the last admin cannot be removed)
+mcctl console user reset-password [email] [--password <pw>]  # Reset password
+mcctl console user update [email] --role admin  # Change role
 ```
+
+Users are identified by email address. `--role` accepts `admin` or `user`.
 
 **User roles:**
 
 | Role | Permissions |
 |------|------------|
 | `admin` | Full access: manage servers, users, settings |
-| `viewer` | Read-only: view status, logs (no start/stop/create/delete) |
+| `user` | Standard access, limited to the servers granted to the account |
 
 #### API Key Management
 
 ```bash
-mcctl console api status               # Show API access mode and config
+mcctl console api status               # Show API access mode and config (stored in <root>/api-config.json)
 mcctl console api key regenerate       # Regenerate API key
 mcctl console api whitelist list       # List allowed IPs
 mcctl console api whitelist add <ip>   # Add IP to whitelist
@@ -894,8 +901,10 @@ mcctl console api mode <mode>          # Change access mode
 ```bash
 mcctl console remove                  # Interactive removal
 mcctl console remove --force          # Skip confirmation
-mcctl console remove --keep-config    # Keep config files
+mcctl console remove --keep-config    # Keep config files (PM2 processes are still removed)
 ```
+
+`console remove` stops and removes the PM2 processes and deletes `.mcctl-admin.yml`, `ecosystem.config.cjs`, and the legacy `users.yaml` if it exists. It intentionally keeps `data/mcctl.db` (console users, sessions, per-user server permissions), `.services/`, and `api-config.json`. Running `mcctl console init` again with the same admin email therefore needs `--force`. To start from scratch, delete the database yourself (irreversible): `rm -f ~/minecraft-servers/data/mcctl.db*`.
 
 ---
 
@@ -923,15 +932,15 @@ mcctl audit purge --force              # Skip confirmation
 ### Self Update
 
 ```bash
-mcctl update                    # Update CLI to latest version
-mcctl update --check            # Check for updates only
+mcctl update                    # Update CLI + all installed services (default)
+mcctl update --cli-only         # Update only the CLI binary
+mcctl update --check            # Check for updates only (CLI and services)
 mcctl update --force            # Force check (ignore cache)
 mcctl update --yes              # Auto-confirm update
-mcctl update --all              # Update CLI + all installed services
-mcctl update --check --all      # Check updates for CLI and services
+mcctl update --all              # Deprecated alias (same as the default)
 ```
 
-The `--all` flag updates mcctl-api, mcctl-console, and @minecraft-docker/shared via `npm install <pkg>@latest` and restarts their PM2 processes automatically.
+By default `mcctl update` also updates mcctl-api, mcctl-console, and @minecraft-docker/shared in `~/minecraft-servers/.services/` via `npm install <pkg>@latest`, restarts their PM2 processes automatically, aligns server image tags, and pulls Docker images. `--cli-only` skips all of that.
 
 ---
 
@@ -1774,7 +1783,7 @@ useAuditStats()                 // Audit log statistics
 | `MCCTL_API_URL` | mcctl-api URL (internal) | `http://localhost:5001` |
 | `MCCTL_API_KEY` | API key for authentication | Required |
 | `BETTER_AUTH_SECRET` | Session encryption secret | Auto-generated |
-| `BETTER_AUTH_URL` | Console URL for auth | `http://localhost:5000` |
+| `BETTER_AUTH_BASE_URL` | Console URL for auth | `http://localhost:5000` |
 | `PORT` | Console listening port | `5000` |
 | `HOSTNAME` | Console listening host | `0.0.0.0` |
 | `MCCTL_ROOT` | Platform root directory | `~/minecraft-servers` |
@@ -2239,7 +2248,7 @@ mcctl stop myserver && mcctl start myserver
 ```bash
 mcctl console init
 # Select: [mcctl-api, mcctl-console]
-# Enter admin username and password
+# Enter admin email, name, and password
 # Choose API access mode
 mcctl console service start
 # Select: "API + Console"
@@ -2279,13 +2288,11 @@ pm2 save
 ### 13. Updating Services
 
 ```bash
-# Update everything (CLI + API + Console)
-mcctl update --all --yes
+# Update everything (CLI + API + Console + shared)
+mcctl update --yes
 
-# Or update manually
-mcctl console service stop
-npm update -g @minecraft-docker/mcctl
-mcctl console service start
+# Or update only the CLI (services in .services/ stay as they are)
+mcctl update --cli-only --yes
 ```
 
 ### 14. Set Up External Access with playit.gg
@@ -2413,15 +2420,15 @@ mcctl world assign myworld mc-myserver
 
 - Check prerequisites: `mcctl console init` validates Node.js, PM2, Docker
 - Verify PM2: `pm2 --version`
-- Check ecosystem config: `ls ~/minecraft-servers/platform/ecosystem.config.cjs`
+- Check ecosystem config: `ls ~/minecraft-servers/ecosystem.config.cjs`
 - View PM2 logs: `pm2 logs mcctl-api` or `pm2 logs mcctl-console`
 - Check port conflicts: `netstat -tlnp | grep -E "5000|5001"`
 
 #### mcctl-console shows "not installed (skipping)"
 
-- Install console package: `npm install @minecraft-docker/mcctl-console` in `~/minecraft-servers/`
+- Install console package: `npm install @minecraft-docker/mcctl-console` in `~/minecraft-servers/.services/`
 - Or reinitialize: `mcctl console init --force` and select mcctl-console
-- Verify: `ls ~/minecraft-servers/node_modules/@minecraft-docker/mcctl-console/`
+- Verify: `ls ~/minecraft-servers/.services/node_modules/@minecraft-docker/mcctl-console/` (older installs: `~/minecraft-servers/node_modules/...`)
 
 #### API connection issues
 
@@ -2821,13 +2828,13 @@ A: `mcctl playit domain <server-name> <your-playit-domain>`. This updates the se
 ### Migration and Updates
 
 **Q: How do I update mcctl?**
-A: `mcctl update --yes` or `npm update -g @minecraft-docker/mcctl`.
+A: `mcctl update --yes` updates the CLI and the installed services. To update only the CLI, use `mcctl update --cli-only --yes` or `npm update -g @minecraft-docker/mcctl`.
 
 **Q: How do I update everything (CLI + services)?**
-A: `mcctl update --all --yes`. This updates mcctl, mcctl-api, mcctl-console, and shared packages.
+A: `mcctl update --yes`. This updates mcctl, mcctl-api, mcctl-console, and shared packages (and pulls Docker images). `--all` is a deprecated alias for this default behavior.
 
 **Q: Do I need to stop servers before updating?**
-A: No. Minecraft server containers are independent of mcctl. Only Management Console services are restarted during `--all` update.
+A: No. Minecraft server containers are independent of mcctl. Only Management Console services are restarted during a full update.
 
 **Q: How do I migrate from an old version?**
 A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix known issues.
