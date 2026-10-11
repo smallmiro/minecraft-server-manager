@@ -14,9 +14,9 @@ All endpoints require authentication. See [API Authentication](./api-reference.m
 
 Supported modes:
 - API Key (`X-API-Key` header)
-- Session Cookie (Better Auth)
+- IP whitelist
 - Basic Auth
-- mTLS
+- Combined (API key and IP whitelist)
 - Disabled (development only)
 
 ## Endpoints

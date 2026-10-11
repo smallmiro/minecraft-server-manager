@@ -14,9 +14,9 @@ http://localhost:5001/api
 
 지원되는 방식:
 - API 키 (`X-API-Key` 헤더)
-- 세션 쿠키 (Better Auth)
+- IP 화이트리스트
 - Basic Auth
-- mTLS
+- Combined (API 키 + IP 화이트리스트)
 - 비활성화 (개발 전용)
 
 ## 엔드포인트
