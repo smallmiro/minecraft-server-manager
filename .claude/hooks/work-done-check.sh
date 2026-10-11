@@ -21,7 +21,7 @@ MAX_LOOPS="${WORK_MAX_LOOPS:-30}"
 # State is per session (.claude/work-state.<session_id>) so concurrent /work
 # sessions in one checkout don't read, block on, or count loops for each other.
 # Without a session_id in the hook input, fall back to the legacy shared file.
-sid=$(sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+sid=$(jq -r '.session_id // empty' 2>/dev/null)  # top-level only; no jq = legacy shared file
 STATE="${WORK_STATE_FILE:-$ROOT/.claude/work-state${sid:+.$sid}}"
 [[ -f "$STATE" ]] || exit 0
 

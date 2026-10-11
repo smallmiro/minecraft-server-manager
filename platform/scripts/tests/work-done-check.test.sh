@@ -156,6 +156,9 @@ assert_contains "session A is still blocked by its own state" '"decision":"block
 assert_contains "A's LOOPS counted in its own file" "LOOPS=1" "$(cat "$PROJ/.claude/work-state.A")"
 run_as A > /dev/null
 assert_contains "A's LOOPS keeps counting" "LOOPS=2" "$(cat "$PROJ/.claude/work-state.A")"
+# a session_id-looking string inside another field must not hijack the lookup
+out=$(WORK_STATE_FILE= CLAUDE_PROJECT_DIR="$PROJ" bash "$HOOK" <<< '{"session_id":"A","last_assistant_message":"x \"session_id\": \"Z\" y"}')
+assert_contains "nested session_id text does not bypass the hook" '"decision":"block"' "$out"
 assert_file "no shared work-state file is created" "$PROJ/.claude/work-state" missing
 
 echo
