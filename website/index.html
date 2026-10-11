@@ -103,7 +103,10 @@
   .gh span { display: none; }
   @media (min-width: 480px) { .gh span { display: inline; } }
   .lang { display: flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
-  .lang button { font: 500 12px/1 var(--mono); padding: 8px 10px; color: var(--muted); }
+  .lang button { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1 var(--mono); padding: 7px 9px; color: var(--muted); }
+  .lang .flag { width: 18px; height: 12px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .18); }
+  .lang button:not([aria-pressed="true"]) .flag { opacity: .7; }
+  @media (max-width: 480px) { .lang .lang-code { display: none; } .lang button { padding: 8px; } }
   .lang button[aria-pressed="true"] { background: var(--hover); color: var(--text); }
 
   /* Hero */
@@ -411,6 +414,23 @@
   .timeline b { color: var(--text); font-weight: 600; }
   .timeline code { font-size: 12.5px; color: var(--text-2); }
 
+  /* About carousel (scroll-snap; buttons, dots and arrow keys move one slide) */
+  .car-view { position: relative; }
+  .slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .slides::-webkit-scrollbar { display: none; }
+  .slide { position: relative; flex: 0 0 100%; scroll-snap-align: start; }
+  .slide img { width: 100%; height: auto; }
+  .slide-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 32px 14px 10px; background: linear-gradient(transparent, rgba(0, 0, 0, .7)); font: 500 13.5px/1.4 var(--sans); color: #fff; }
+  .car-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: rgba(12, 14, 18, .72); border: 1px solid var(--line-2); color: var(--text); }
+  .car-btn:hover { background: rgba(38, 40, 46, .9); color: var(--green); }
+  .car-btn.prev { left: 10px; }
+  .car-btn.next { right: 10px; }
+  .car-dots { display: flex; justify-content: center; gap: 2px; padding: 8px 0 0; }
+  .car-dots button { width: 24px; height: 20px; display: grid; place-items: center; }
+  .car-dots button::before { content: ""; width: 8px; height: 8px; border-radius: 4px; background: var(--line-2); transition: width .2s, background .2s; }
+  .car-dots button[aria-current="true"]::before { width: 18px; background: var(--green); }
+  .story .closing .from { display: block; margin-top: 12px; font-size: 14.5px; color: var(--muted); }
+
   /* Footer */
   footer { border-top: 1px solid var(--line); padding: 36px 0 48px; color: var(--dim); font-size: 13px; }
   footer .wrap { display: grid; gap: 18px; }
@@ -435,6 +455,11 @@
   <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></symbol>
   <symbol id="i-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+  <symbol id="f-us" viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><path d="M0 0h30v1.54H0zm0 3.08h30v1.54H0zm0 3.07h30v1.54H0zm0 3.08h30v1.54H0zm0 3.08h30v1.54H0zm0 3.07h30v1.54H0zm0 3.08h30v1.54H0z" fill="#b22234"/><rect width="12" height="10.77" fill="#3c3b6e"/></symbol>
+  <symbol id="f-kr" viewBox="-72 -48 144 96"><path fill="#fff" d="M-72-48v96H72v-96z"/><g stroke="#000" stroke-width="4"><path transform="rotate(33.69006752598)" d="M-50-12v24m6 0v-24m6 0v24m76 0V1m0-2v-11m6 0v11m0 2v11m6 0V1m0-2v-11"/><path transform="rotate(-33.69006752598)" d="M-50-12v24m6 0V1m0-2v-11m6 0v24m76 0V1m0-2v-11m6 0v24m6 0V1m0-2v-11"/></g><g transform="rotate(33.69006752598)"><path fill="#cd2e3a" d="M12 0a18 18 0 11-36 0 24 24 0 1148 0"/><path fill="#0047a0" d="M-24 0a24 24 0 1048 0A12 12 0 100 0a12 12 0 11-24 0"/></g></symbol>
+  <symbol id="f-jp" viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
   <symbol id="i-cube" viewBox="0 0 32 32"><path d="M16 3 28 10 16 17 4 10Z" fill="#4de38a"/><path d="M4 10 16 17V30L4 23Z" fill="#1bd96a"/><path d="M28 10 16 17V30L28 23Z" fill="#109a4b"/></symbol>
 </svg>
 
@@ -458,9 +483,9 @@
         <svg class="i" aria-hidden="true"><use href="#i-gh"/></svg><span>GitHub</span>
       </a>
       <div class="lang" role="group" aria-label="Language">
-        <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
-        <button type="button" data-set-lang="ko" aria-pressed="false">KO</button>
-        <button type="button" data-set-lang="ja" aria-pressed="false">JA</button>
+        <button type="button" data-set-lang="en" aria-pressed="false" aria-label="English"><svg class="flag" aria-hidden="true"><use href="#f-us"/></svg><span class="lang-code">EN</span></button>
+        <button type="button" data-set-lang="ko" aria-pressed="false" aria-label="한국어"><svg class="flag" aria-hidden="true"><use href="#f-kr"/></svg><span class="lang-code">KR</span></button>
+        <button type="button" data-set-lang="ja" aria-pressed="false" aria-label="日本語"><svg class="flag" aria-hidden="true"><use href="#f-jp"/></svg><span class="lang-code">JP</span></button>
       </div>
     </div>
   </div>
@@ -997,20 +1022,43 @@ modded               <span class="g">running</span>      healthy    modded.local
       </div>
       <div class="about">
         <div class="story">
-          <p><span class="en">I'm a software developer and the dad of two boys. When they were little they loved Minecraft — and more than anything, they loved playing it together.</span><span class="ko">저는 아들 둘을 둔 소프트웨어 개발자입니다. 형제는 어릴 때부터 마인크래프트를 좋아했고, 무엇보다 같이 하는 걸 좋아했습니다.</span><span class="ja">私は息子ふたりを持つソフトウェア開発者です。兄弟は小さい頃から Minecraft が大好きで、何より一緒に遊ぶのが好きでした。</span></p>
+          <p><span class="en">I'm a software engineer and the dad of two boys. When they were little they loved Minecraft — and more than anything, they loved playing it together.</span><span class="ko">저는 아들 둘을 둔 소프트웨어 개발자입니다. 형제는 어릴 때부터 마인크래프트를 좋아했고, 무엇보다 같이 하는 걸 좋아했습니다.</span><span class="ja">私は息子ふたりを持つソフトウェアエンジニアです。兄弟は小さい頃から Minecraft が大好きで、何より一緒に遊ぶのが好きでした。</span></p>
           <p><span class="en">Then came 2020. COVID closed the schools and the playgrounds, and Minecraft became the one place my younger son could still meet his friends. I put a Bedrock server on the Google Cloud free tier for them and kept it running for a year.</span><span class="ko">그러다 2020년, 코로나로 학교도 놀이터도 닫혔습니다. 둘째가 친구들과 모여 놀 수 있는 곳은 마인크래프트뿐이었죠. 둘째와 친구들을 위해 GCP 무료 플랜에 베드락 서버를 올리고 1년 동안 운영했습니다.</span><span class="ja">そして 2020 年、コロナで学校も公園も閉ざされました。下の息子が友だちと集まって遊べる場所は Minecraft だけでした。息子と友だちのために Google Cloud の無料枠に Bedrock サーバーを立て、1 年間運用しました。</span></p>
           <p><span class="en">For a while I tried paid hosting too, but it was expensive, and the features and speed never felt right. In 2025 I installed Ubuntu on a Mac mini at home and started building servers for the boys with <code>itzg/minecraft-server</code>.</span><span class="ko">한동안 유료 호스팅도 써 봤지만, 비싼 데다 기능과 속도가 만족스럽지 않았습니다. 2025년에는 집에 있는 맥미니에 우분투를 설치하고 <code>itzg/minecraft-server</code>로 아이들 서버를 직접 만들어 주기 시작했습니다.</span><span class="ja">しばらく有料のホスティングも使ってみましたが、高いうえに機能も速度も満足できませんでした。2025 年には自宅の Mac mini に Ubuntu を入れ、<code>itzg/minecraft-server</code> で子どもたちのサーバーを自分で作り始めました。</span></p>
           <p><span class="en">Today the older one is in university and the younger one is in middle school, and they still play together now and then. The tools I wrote to run their servers grew into the mcctl CLI and the web console, and I've released them as open source.</span><span class="ko">지금은 대학생이 된 첫째와 중학생 둘째가 가끔 여전히 함께 게임을 합니다. 아이들 서버를 관리하려고 만든 도구가 mcctl CLI와 웹 콘솔로 자랐고, 이를 오픈소스로 공개했습니다.</span><span class="ja">大学生になった兄と中学生の弟は、今でもときどき一緒に遊んでいます。子どもたちのサーバーを管理するために作ったツールが mcctl CLI と Web コンソールに育ち、それをオープンソースとして公開しました。</span></p>
-          <p class="closing"><span class="en">If you run a world for the friends and family you play with, I hope this makes it a little easier.</span><span class="ko">친구, 가족과 함께할 서버를 운영하는 모든 분께 이 도구가 조금이나마 수고를 덜어 주길 바랍니다.</span><span class="ja">友だちや家族と遊ぶためのワールドを運用しているすべての方にとって、このツールが少しでも助けになればうれしいです。</span></p>
-          <div class="sign">—
-            <a href="https://github.com/smallmiro"><svg class="i" aria-hidden="true"><use href="#i-gh"/></svg>@smallmiro</a>
-            <span><span class="en">software developer, dad of two</span><span class="ko">소프트웨어 개발자, 두 아들의 아빠</span><span class="ja">ソフトウェア開発者、ふたりの息子の父</span></span>
-          </div>
+          <p class="closing"><span class="en">If you run a world for the friends and family you play with, I hope this makes it a little easier.<span class="from">— One day in 2026, from a software engineer dad</span></span><span class="ko">친구, 가족과 함께할 서버를 운영하는 모든 분께 이 도구가 조금이나마 수고를 덜어 주길 바랍니다.<span class="from">— 2026년 어느 날, 소프트웨어 개발자 아빠로부터</span></span><span class="ja">友だちや家族と遊ぶためのワールドを運用しているすべての方にとって、このツールが少しでも助けになればうれしいです。<span class="from">— 2026 年のある日、ソフトウェアエンジニアの父より</span></span></p>
+          <div class="sign"><a href="https://github.com/smallmiro"><svg class="i" aria-hidden="true"><use href="#i-gh"/></svg>@smallmiro</a></div>
         </div>
         <div>
-          <figure class="about-fig">
-            <img src="assets/about-world.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of the Wild-Deity world: badlands around a bay, beaches and a turquoise sea">
-            <figcaption><span class="en">Wild-Deity, one of the worlds the brothers play on — rendered with BlueMap.</span><span class="ko">Wild-Deity, 형제가 함께 노는 월드 중 하나 — BlueMap 렌더.</span><span class="ja">Wild-Deity、兄弟が一緒に遊ぶワールドのひとつ — BlueMap でレンダリング。</span></figcaption>
+          <figure class="about-fig carousel" role="region" aria-roledescription="carousel" aria-label="World renders">
+            <div class="car-view">
+              <div class="slides" tabindex="0">
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="1 / 5">
+                  <img src="assets/about-base.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of a hilltop base: houses on a flattened stone platform">
+                  <span class="slide-cap"><span class="en">A hilltop base on a stone platform</span><span class="ko">석재 대지 위의 언덕 기지</span><span class="ja">石の土台に建つ丘の上の拠点</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="2 / 5">
+                  <img src="assets/about-factory.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of a wooden base by a river in a modded world">
+                  <span class="slide-cap"><span class="en">A wooden base by the river (modded world)</span><span class="ko">강가의 나무 기지 (모드 월드)</span><span class="ja">川辺の木造の拠点(Mod ワールド)</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="3 / 5">
+                  <img src="assets/about-base-top.webp" width="1200" height="750" loading="lazy" alt="Top-down BlueMap render of the hilltop base and its crop fields">
+                  <span class="slide-cap"><span class="en">The hilltop base from above, with its farms</span><span class="ko">위에서 본 언덕 기지와 농장</span><span class="ja">上から見た丘の上の拠点と畑</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="4 / 5">
+                  <img src="assets/about-factory-river.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of the riverside base seen from a distance">
+                  <span class="slide-cap"><span class="en">The riverside base from afar</span><span class="ko">멀리서 본 강가 기지</span><span class="ja">遠くから見た川辺の拠点</span></span>
+                </div>
+                <div class="slide" role="group" aria-roledescription="slide" aria-label="5 / 5">
+                  <img src="assets/about-world.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of badlands around a bay, beaches and a turquoise sea">
+                  <span class="slide-cap"><span class="en">Badlands around a bay</span><span class="ko">만을 둘러싼 배드랜드</span><span class="ja">入り江を囲むバッドランド</span></span>
+                </div>
+              </div>
+              <button class="car-btn prev" type="button" aria-label="Previous image"><svg class="i" aria-hidden="true"><use href="#i-prev"/></svg></button>
+              <button class="car-btn next" type="button" aria-label="Next image"><svg class="i" aria-hidden="true"><use href="#i-next"/></svg></button>
+            </div>
+            <div class="car-dots"><button type="button" aria-label="Show image 1"></button><button type="button" aria-label="Show image 2"></button><button type="button" aria-label="Show image 3"></button><button type="button" aria-label="Show image 4"></button><button type="button" aria-label="Show image 5"></button></div>
+            <figcaption><span class="en">One of the worlds the brothers play on — rendered with BlueMap.</span><span class="ko">형제가 함께 노는 월드 중 하나 — BlueMap 렌더.</span><span class="ja">兄弟が一緒に遊ぶワールドのひとつ — BlueMap でレンダリング。</span></figcaption>
           </figure>
           <ol class="timeline">
             <li><time>2020</time><span class="t"><span class="en"><b>COVID.</b> A Bedrock server on the GCP free tier for my younger son and his friends, run for a year.</span><span class="ko"><b>코로나.</b> 둘째와 친구들을 위해 GCP 무료 플랜에 베드락 서버를 올려 1년간 운영.</span><span class="ja"><b>コロナ。</b>下の息子と友だちのために GCP の無料枠に Bedrock サーバーを立て、1 年間運用。</span></span></li>
@@ -1052,6 +1100,24 @@ modded               <span class="g">running</span>      healthy    modded.local
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.querySelectorAll('svg.arch').forEach(function (s) { s.pauseAnimations(); });
   }
+
+  // About carousel: prev/next wrap around, dots jump, arrow keys work when the track has focus
+  document.querySelectorAll('.carousel').forEach(function (c) {
+    var track = c.querySelector('.slides'), dots = c.querySelectorAll('.car-dots button'), n = dots.length;
+    var smooth = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var cur = function () { return Math.round(track.scrollLeft / track.clientWidth); };
+    var go = function (i) { track.scrollTo({ left: ((i + n) % n) * track.clientWidth, behavior: smooth ? 'smooth' : 'auto' }); };
+    var mark = function () { var i = cur(); dots.forEach(function (d, k) { d.setAttribute('aria-current', String(k === i)); }); };
+    c.querySelector('.prev').addEventListener('click', function () { go(cur() - 1); });
+    c.querySelector('.next').addEventListener('click', function () { go(cur() + 1); });
+    dots.forEach(function (d, i) { d.addEventListener('click', function () { go(i); }); });
+    track.addEventListener('scroll', mark, { passive: true });
+    track.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(cur() + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur() - 1); }
+    });
+    mark();
+  });
 
   // Language toggle
   function setLang(lang) {
