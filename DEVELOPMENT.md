@@ -154,7 +154,15 @@ PR checklist:
 - [ ] Documentation is updated in both English and Korean if users are affected
 - [ ] Structural and behavioral changes are in separate commits
 
-CI runs when the PR is opened against `develop` (`cli-test`, `shared-test`, `e2e`) and must pass before merge.
+CI checks on PRs against `develop` must pass before merge. They are path-filtered:
+
+| Workflow | Runs when | What it does |
+|----------|-----------|--------------|
+| `cli-test` | The PR touches `platform/services/cli/**` or `platform/services/shared/**` | Builds `mcctl` and its dependencies, runs the CLI tests |
+| `shared-test` | The PR touches `platform/services/shared/**` | Runs the shared package tests |
+| `e2e` | Daily at 03:00 KST and on manual dispatch, **not on PRs** | Starts mcctl-api and mcctl-console, runs the Playwright suite |
+
+Because `e2e` does not run on PRs, run `pnpm test:e2e` locally when you change API or console behavior. CI does not run `pnpm lint`, so run it yourself.
 
 ## 5. Build and Test
 
@@ -166,13 +174,13 @@ pnpm lint                                    # lint everything
 pnpm --filter @minecraft-docker/shared test  # a single package
 pnpm --filter @minecraft-docker/mcctl test
 
-pnpm test:e2e                                # API E2E (Playwright)
+pnpm test:e2e                                # Management Console E2E: mcctl-api + mcctl-console (Playwright)
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
 
 bash platform/scripts/tests/<name>.test.sh   # bash script tests
 ```
 
-Add E2E tests for new REST endpoints in `e2e/tests/api-*.spec.ts`, and for new CLI commands or options in `platform/services/cli/tests/e2e/cli-*.test.ts`.
+Add E2E tests for new REST endpoints in `e2e/tests/api-*.spec.ts`, for console UI flows in `e2e/tests/*.spec.ts`, and for new CLI commands or options in `platform/services/cli/tests/e2e/cli-*.test.ts`.
 
 ## 6. Documentation
 
