@@ -231,7 +231,7 @@ Specialized subagents are defined in `.claude/agents/`. Models are assigned by t
 
 1. Describe what you want in conversation. By this repository's rules, requests are first received by `orchestrator-agent`, which analyzes them and delegates to specialists. No code is modified at this stage.
 2. Create an issue from the analysis.
-3. For larger work, plan with `/plan-work --issue <N>` and review the plan.
+3. Plan with `/plan-work --issue <N>` and review the plan (`orchestrator-agent` runs it first on intake; inside `/work` it runs only for T4 work spanning 3+ modules).
 4. Once you agree with the plan, run `/work --issue <N>`.
 5. When the PR is open, read through the changes yourself and review them.
 

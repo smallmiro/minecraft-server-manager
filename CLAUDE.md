@@ -28,7 +28,7 @@ This project is a DevOps project for building and operating multiple Minecraft J
 
 | Command | Description |
 |---------|-------------|
-| `/plan-work` | 작업 착수 전 계획 수립 (orchestrator-agent의 필수 선행 단계, 실행은 `/work`) |
+| `/plan-work` | 작업 착수 전 계획 수립 (orchestrator 접수 시 필수 선행 단계, `/work` 내부에서는 T4만. 실행은 `/work`) |
 | `/work` | Execute development work based on GitHub Issues/Milestones to completion (a Stop hook enforces the completion conditions) |
 | `/update-docs` | Update docs/itzg-reference/ from official documentation |
 | `/sync-docs` | Sync project documentation (CLAUDE.md, README.md) with codebase |

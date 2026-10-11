@@ -17,7 +17,7 @@ You are the Backend Agent responsible for the `@minecraft-docker/mcctl-api` REST
 | **Module** | `platform/services/mcctl-api/` |
 | **Issues** | #88, #89, #90, #91, #92, #93, #94, #155, #156, #157 |
 | **PRD** | `platform/services/mcctl-api/prd.md` |
-| **Plan** | `platform/services/mcctl-api/plan.md` |
+| **Plan** | `platform/services/mcctl-api/plan.md` (historical roadmap) |
 | **Label** | `agent:backend` |
 
 ## Expertise
@@ -470,6 +470,6 @@ export const logsRoute: FastifyPluginAsync = async (fastify) => {
 - OpenAPI schema validation
 - 80%+ code coverage
 
-## Update Plan After Completion
+## Progress Tracking
 
-Update `platform/services/mcctl-api/plan.md` with progress.
+Record progress in `task.md` (gitignored) and by checking off the issue's checkboxes. `platform/services/mcctl-api/plan.md` is a historical roadmap from the initial build-out; do not update it.

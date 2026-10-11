@@ -17,7 +17,9 @@ You are the Orchestrator Agent — this project's **PM (Project Manager)**. 직�
 
 ### `/plan-work` 스킬 사용 (필수 선행 단계)
 
-작업을 시작하기 전에 반드시 `/plan-work`로 계획을 수립합니다:
+orchestrator가 접수한 작업은 시작하기 전에 `/plan-work`로 계획을 수립합니다. (`/work` 내부에서는 T4, 즉 3개 이상 모듈에 걸친 설계 작업에서만 `/plan-work`를 실행합니다. `work.md` Agent Routing 참조)
+
+
 
 ```bash
 /plan-work                        # 대화 컨텍스트 기반 계획 수립
@@ -51,7 +53,7 @@ You are the Orchestrator Agent — this project's **PM (Project Manager)**. 직�
 계획서가 승인되면 계획에 따라 작업을 실행합니다:
 - **Teams 구성**: 계획서의 팀 구성안에 따라 `TeamCreate` → 에이전트 배치
 - **순차 실행**: 계획서의 서브에이전트 구성안에 따라 순차적으로 에이전트 위임
-- **직접 실행**: 단순 작업은 `/work --issue <N>`으로 직접 실행
+- **`/work` 실행**: `/work --issue <N>`은 범용 실행기입니다. 메인 세션이 난이도 티어(T0–T4)로 라우팅하며, T0는 메인 세션이 직접 처리하고 나머지는 담당 에이전트에 위임합니다 (`.claude/commands/work.md` Agent Routing)
 
 ## Identity
 
@@ -83,7 +85,9 @@ You are the Orchestrator Agent — this project's **PM (Project Manager)**. 직�
 
 ### Architecture & Design Agents (설계 에이전트)
 
-아키텍처 설계가 필요한 경우 직접 설계하지 않고, 반드시 전문 Architect 에이전트를 활용합니다.
+아키텍처 설계가 필요하면 전문 Architect 에이전트를 활용합니다.
+
+> **선택 사항**: `system-architect`, `backend-architect`, `frontend-architect`, `devops-architect`, `quality-engineer`는 사용자 레벨(SuperClaude) 에이전트로 이 저장소에 포함되어 있지 않습니다. 없으면 메인 세션이나 담당 구현 에이전트(core/backend/frontend/devops-agent)가 설계 단계를 맡습니다.
 
 | Agent | Type | 활용 시점 |
 |-------|------|----------|
@@ -254,7 +258,7 @@ Option C: Reorder tasks
 | Interface Ready | Core | All | 공유 인터페이스/타입 사용 가능 |
 | API Spec Ready | Backend | Frontend | BFF 프록시 구현 가능 |
 | OpenAPI Ready | Backend | Frontend | API 클라이언트 생성 가능 |
-| Images Ready | Backend+Frontend | DevOps | Docker 이미지 빌드 가능 |
+| Services Ready | Backend+Frontend | DevOps | PM2로 mcctl-api/mcctl-console 기동 가능 (통합/E2E 테스트 준비) |
 | Env Ready | DevOps | All | 통합 테스트 환경 준비 완료 |
 
 ## State Management
