@@ -28,7 +28,7 @@ describe('mcctl console user/api options', () => {
     const result = await run(['user', 'add', 'a@example.com', '--role', 'user', '--password', '-secret123']);
 
     expect(result.exitCode).toBe(0);
-    expect(JSON.parse(result.stdout.trim())).toEqual({ success: true, email: 'a@example.com' });
+    expect(parseJsonOutput(result.stdout)).toEqual({ success: true, email: 'a@example.com' });
   });
 
   it('user list --json prints JSON', async () => {
