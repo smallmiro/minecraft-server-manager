@@ -533,6 +533,40 @@ export function getContainerUptime(container: string): { uptime: string; seconds
 }
 
 /**
+ * Parse `rcon-cli list` output into a player list.
+ * Strips ANSI escape codes (full and partial like `[0m`) and uses the first line only.
+ * Returns null when the output does not match the player-count format.
+ */
+export function parseRconPlayerList(raw: string): PlayerListResult | null {
+  // Strip ANSI escape codes and get first line only
+  const result = raw
+    .replace(/\x1b\[[0-9;]*m/g, '') // Remove ANSI codes
+    .replace(/\[\d*m/g, '')         // Remove partial ANSI codes like [0m
+    .split('\n')[0]                  // Get first line only
+    ?.trim() ?? '';
+
+  // Parse: "There are 3 of a max of 20 players online: Notch, Steve, Alex"
+  // Or: "There are 0 of a max of 20 players online:"
+  const countMatch = result.match(/There are (\d+)(?:\s+of a max of\s+|\/)(\d+) players? online/i);
+  if (!countMatch || !countMatch[1] || !countMatch[2]) return null;
+
+  const online = parseInt(countMatch[1], 10);
+  const max = parseInt(countMatch[2], 10);
+
+  // Extract player names after the colon
+  const playersMatch = result.match(/:\s*(.*)$/);
+  let players: string[] = [];
+  if (playersMatch && playersMatch[1]) {
+    players = playersMatch[1]
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  return { online, max, players };
+}
+
+/**
  * Get online players via RCON
  */
 export async function getOnlinePlayers(container: string): Promise<PlayerListResult | null> {
@@ -542,33 +576,7 @@ export async function getOnlinePlayers(container: string): Promise<PlayerListRes
       timeout: 5000,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
-
-    // Strip ANSI escape codes and get first line only
-    const result = rawResult
-      .replace(/\x1b\[[0-9;]*m/g, '') // Remove ANSI codes
-      .replace(/\[\d*m/g, '')         // Remove partial ANSI codes like [0m
-      .split('\n')[0]                  // Get first line only
-      ?.trim() ?? '';
-
-    // Parse: "There are 3 of a max of 20 players online: Notch, Steve, Alex"
-    // Or: "There are 0 of a max of 20 players online:"
-    const countMatch = result.match(/There are (\d+)(?:\s+of a max of\s+|\/)(\d+) players? online/i);
-    if (!countMatch || !countMatch[1] || !countMatch[2]) return null;
-
-    const online = parseInt(countMatch[1], 10);
-    const max = parseInt(countMatch[2], 10);
-
-    // Extract player names after the colon
-    const playersMatch = result.match(/:\s*(.*)$/);
-    let players: string[] = [];
-    if (playersMatch && playersMatch[1]) {
-      players = playersMatch[1]
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-    }
-
-    return { online, max, players };
+    return parseRconPlayerList(rawResult);
   } catch {
     return null;
   }
