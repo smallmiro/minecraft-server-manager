@@ -1,234 +1,247 @@
 # 개발 가이드
 
-minecraft-docker 프로젝트의 개발 환경 설정, 프로젝트 구조, 기여 가이드라인을 안내합니다.
+`minecraft-server-manager`의 개발 환경, 저장소 구조, 기여 절차를 안내합니다.
+
+!!! tip "기여자 가이드"
+    기준 문서는 저장소 루트의 [`DEVELOPMENT.md`](https://github.com/smallmiro/minecraft-server-manager/blob/develop/DEVELOPMENT.md)입니다. 이 페이지는 문서 사이트용 요약입니다.
+
+## 한눈에 보기
+
+```text
+원본 저장소에 이슈 생성 → 포크 → 브랜치 생성 → 테스트 먼저 작성(TDD) → 구현 → 원본 저장소로 PR → 리뷰 반영 → 머지
+```
+
+| 규칙 | 내용 |
+|------|------|
+| 작업 단위 | **이슈 1개 = 브랜치 1개 = PR 1개** |
+| 위치 | 이슈는 원본 저장소에 만듭니다. 작업은 포크에서 하고, PR은 포크에서 원본 저장소로 보냅니다. |
+| 기준 브랜치 | `develop` (`develop`에서 브랜치를 만들고 `develop`으로 PR) |
+| 방법론 | TDD (Red → Green → Refactor), Tidy First |
+| 아키텍처 | Hexagonal / Clean Architecture |
+| 문서 | 영어(`.md`)와 한국어(`.ko.md`)를 함께 유지 |
 
 ## 사전 요구 사항
 
-기여하기 전에 다음 도구가 설치되어 있어야 합니다:
+| 도구 | 버전 | 용도 |
+|------|------|------|
+| Node.js | 18 이상 (CI는 20) | 모든 패키지 |
+| pnpm | 9 (`packageManager`에 고정) | 모노레포 관리 |
+| Docker / Docker Compose | Engine 24+, Compose 2.20+ | 서버 컨테이너, E2E |
+| Git, GitHub CLI (`gh`) | 최신 | 포크, 이슈, PR |
 
-- **Node.js** >= 18.0.0
-- **pnpm** >= 8.0.0
-- **Docker Engine** 20.10+
-- **Docker Compose** v2.0+
-- **Git** 버전 관리용
+`mcctl` CLI가 bash 스크립트에 의존하므로 지원 OS는 Linux와 macOS입니다. mcctl-console이 사용하는 `better-sqlite3`는 네이티브 모듈이라 환경에 따라 빌드 도구(gcc, make, python)가 필요합니다.
 
-## 빠른 설정
+## 포크와 로컬 설정 {#fork-and-set-up}
 
 ```bash
-# 저장소 클론
-git clone https://github.com/smallmiro/minecraft-server-manager.git
+# 1) GitHub에서 smallmiro/minecraft-server-manager를 포크한 뒤:
+git clone https://github.com/<your-account>/minecraft-server-manager.git
 cd minecraft-server-manager
 
-# 의존성 설치
+# 2) 원본 저장소를 "upstream"으로 등록
+git remote add upstream https://github.com/smallmiro/minecraft-server-manager.git
+
+# 3) gh가 이슈와 PR에 원본 저장소를 사용하도록 설정
+gh repo set-default smallmiro/minecraft-server-manager
+
+# 4) 의존성 설치 및 빌드
 pnpm install
-
-# 모든 패키지 빌드
 pnpm build
-
-# 개발용으로 CLI 전역 링크
-cd platform/services/cli
-pnpm link --global
-
-# 설치 확인
-mcctl --version
 ```
 
-## 프로젝트 구조
-
-이 프로젝트는 **pnpm 모노레포** 구조를 사용합니다.
-
-### 모노레포 패키지
-
-| 패키지 | 이름 | 설명 |
-|--------|------|------|
-| `platform/services/shared` | `@minecraft-docker/shared` | 공유 타입, 도메인 모델, 유틸리티 |
-| `platform/services/mod-source-modrinth` | `@minecraft-docker/mod-source-modrinth` | Modrinth 모드 소스 어댑터 |
-| `platform/services/cli` | `@minecraft-docker/mcctl` | CLI 도구 (주요 사용자용 패키지) |
-| `platform/services/mcctl-api` | `@minecraft-docker/mcctl-api` | REST API 서비스 |
-| `platform/services/mcctl-console` | `@minecraft-docker/mcctl-console` | 웹 콘솔 UI |
-
-### 빌드 순서
-
-pnpm은 의존성 순서에 따라 자동으로 패키지를 빌드합니다:
-
-```text
-1. @minecraft-docker/shared        (의존성 없음)
-2. @minecraft-docker/mod-source-modrinth  (shared에 의존)
-3. @minecraft-docker/mcctl         (shared, mod-source-modrinth에 의존)
-4. @minecraft-docker/mcctl-api     (shared에 의존)
-5. @minecraft-docker/mcctl-console (shared에 의존)
-```
-
-### 디렉토리 레이아웃
-
-```text
-minecraft/
-|-- package.json              # 루트 워크스페이스
-|-- pnpm-workspace.yaml       # pnpm 워크스페이스 설정
-|-- tsconfig.base.json        # 공유 TypeScript 설정
-|
-|-- platform/
-|   |-- docker-compose.yml    # 메인 오케스트레이션
-|   |-- .env                  # 환경 설정
-|   |
-|   |-- services/
-|   |   |-- shared/           # @minecraft-docker/shared
-|   |   |-- mod-source-modrinth/  # @minecraft-docker/mod-source-modrinth
-|   |   |-- cli/              # @minecraft-docker/mcctl
-|   |   |-- mcctl-api/        # REST API
-|   |   +-- mcctl-console/    # 웹 UI
-|   |
-|   +-- scripts/              # Bash 관리 스크립트
-|
-|-- docs/                     # MkDocs 문서
-|-- e2e/                      # E2E 테스트
-+-- templates/                # npm 패키지 템플릿
-```
-
-## 사용 가능한 스크립트
-
-### 루트 레벨
-
-| 명령어 | 설명 |
-|--------|------|
-| `pnpm install` | 모든 의존성 설치 |
-| `pnpm build` | 모든 패키지 빌드 (의존성 순서 준수) |
-| `pnpm clean` | 모든 빌드 출력 정리 |
-| `pnpm test` | 모든 테스트 실행 |
-| `pnpm test:e2e` | E2E 테스트 실행 |
-
-### 패키지 레벨
-
-각 패키지 디렉토리에서 다음을 실행할 수 있습니다:
-
-| 명령어 | 설명 |
-|--------|------|
-| `pnpm build` | 이 패키지 빌드 |
-| `pnpm dev` | 감시 모드 (변경 시 재빌드) |
-| `pnpm test` | 패키지 테스트 실행 |
-| `pnpm clean` | 빌드 출력 정리 |
-
-## 개발 워크플로우
-
-### 1. 기능 브랜치 생성
+작업을 시작하기 전에 `develop`을 최신 상태로 맞춥니다:
 
 ```bash
 git checkout develop
-git pull origin develop
-git checkout -b feature/123-my-feature
+git fetch upstream
+git merge --ff-only upstream/develop
+git push origin develop
 ```
 
-### 2. 변경 사항 구현
-
-TDD (테스트 주도 개발) 워크플로우를 따르세요:
-
-1. **Red**: 실패하는 테스트 작성
-2. **Green**: 테스트를 통과하는 최소한의 코드 작성
-3. **Refactor**: 테스트가 통과하는 상태에서 코드 정리
-
-### 3. 빌드 및 테스트
+### 소스에서 CLI 실행
 
 ```bash
-# 모든 패키지 빌드
-pnpm build
+# 로컬 빌드를 전역 mcctl 명령으로 링크
+cd platform/services/cli
+pnpm link --global
+mcctl --version
 
-# 테스트 실행
-pnpm test
-
-# E2E 테스트 실행 (Docker 필요)
-pnpm test:e2e
+# 또는 빌드 결과를 직접 실행
+node platform/services/cli/dist/index.js --version
 ```
 
-### 4. 변경 사항 커밋
+## 저장소 구조
 
-컨벤셔널 커밋 메시지를 사용하세요:
+| 경로 | 설명 |
+|------|------|
+| `platform/services/shared/` | `@minecraft-docker/shared`: 도메인 엔티티, 값 객체, 유스케이스, 포트/어댑터 |
+| `platform/services/cli/` | `@minecraft-docker/mcctl`: CLI (Hexagonal Architecture) |
+| `platform/services/mcctl-api/` | `@minecraft-docker/mcctl-api`: Fastify REST API (포트 5001) |
+| `platform/services/mcctl-console/` | `@minecraft-docker/mcctl-console`: Next.js 웹 UI (포트 5000) |
+| `platform/services/mod-source-modrinth/` | `@minecraft-docker/mod-source-modrinth`: Modrinth 어댑터 |
+| `platform/scripts/` | Bash 관리 스크립트 (테스트는 `platform/scripts/tests/`) |
+| `templates/` | `mcctl init`이 복사하는 플랫폼 템플릿 |
+| `e2e/` | Management Console용 Playwright E2E 테스트 |
+| `docs/` | MkDocs 문서 (영어/한국어) |
+| `website/` | 프로젝트 랜딩 페이지 |
+| `.github/workflows/` | CI, 릴리즈, 웹사이트 배포 워크플로우 |
+| `.claude/` | Claude Code 서브에이전트, 커맨드, 훅 |
+
+### 패키지와 빌드 순서
+
+`pnpm build`는 `pnpm -r build`를 실행하며, 워크스페이스 패키지를 의존성 순서대로 빌드합니다:
+
+```text
+1. @minecraft-docker/shared                (워크스페이스 의존성 없음)
+2. @minecraft-docker/mod-source-modrinth   (shared)
+3. @minecraft-docker/mcctl                 (shared, mod-source-modrinth)
+   @minecraft-docker/mcctl-api             (shared, mod-source-modrinth)
+   @minecraft-docker/mcctl-console         (shared)
+```
+
+릴리즈 태그를 푸시하면 다섯 패키지가 같은 버전으로 npm에 발행됩니다. [Git 워크플로우](git-workflow.md#release-process)를 참고하세요.
+
+## 스크립트
+
+### 루트
+
+| 명령 | 설명 |
+|------|------|
+| `pnpm install` | 모든 의존성 설치 |
+| `pnpm build` | 모든 패키지를 의존성 순서대로 빌드 |
+| `pnpm dev` | 각 패키지의 `dev` 스크립트를 병렬 실행 (shared/cli는 `tsc --watch`, mcctl-api는 `tsx watch`, mcctl-console은 `next dev -p 5000`) |
+| `pnpm lint` | 모든 패키지 린트 |
+| `pnpm test` | 모든 단위 테스트 실행 |
+| `pnpm clean` | 빌드 결과물 삭제 |
+| `pnpm test:e2e` | Management Console E2E 실행 (Playwright, mcctl-api + mcctl-console) |
+| `pnpm test:e2e:ui` | 같은 테스트를 Playwright UI 모드로 실행 |
+
+### 빌드와 테스트 {#build-and-test}
 
 ```bash
-git commit -m "feat(cli): add new mod command (#123)"
-git commit -m "fix(api): correct auth token validation"
-git commit -m "docs: update installation guide"
+pnpm build                                   # 전체 빌드
+pnpm test                                    # 전체 단위 테스트
+pnpm lint                                    # 전체 린트
+
+pnpm --filter @minecraft-docker/shared test  # 특정 패키지만
+pnpm --filter @minecraft-docker/mcctl test
+
+pnpm test:e2e                                # Management Console E2E (Playwright)
+cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
+
+bash platform/scripts/tests/<name>.test.sh   # bash 스크립트 테스트
 ```
 
-### 5. Pull Request 생성
+새 REST 엔드포인트의 E2E 테스트는 `e2e/tests/api-*.spec.ts`에, 콘솔 UI 흐름은 `e2e/tests/*.spec.ts`에, 새 CLI 명령이나 옵션은 `platform/services/cli/tests/e2e/cli-*.test.ts`에 추가합니다.
+
+## 기여 절차
+
+1. **원본 저장소에 이슈를 먼저 만듭니다.** Summary, Root Cause(버그) 또는 Requirements(기능), Solution / Implementation Plan, Files to Modify, 체크박스 목록 형태의 Acceptance Criteria를 포함합니다. 오타 수정 같은 1줄짜리 변경은 이슈를 생략할 수 있습니다.
+2. **포크에서 `develop` 기준으로 브랜치를 만듭니다**: `feature/<issue>-<description>` 또는 `bugfix/<issue>-<description>`. `develop`이나 `main`에서 직접 작업하지 않습니다.
+3. **TDD**: 실패하는 테스트를 먼저 쓰고, 최소한의 코드로 통과시킨 뒤 리팩터링합니다. 문서 전용 변경과 로직 없는 설정 변경을 제외하고, 테스트가 없는 PR은 받지 않습니다.
+4. **Tidy First**: 구조 변경(리팩터링)과 동작 변경(기능, 수정)을 한 커밋에 섞지 않습니다.
+5. **커밋** 형식은 `<type>: <description> (#<issue-number>)`이며, `type`은 `feat`, `fix`, `docs`, `refactor`, `test`, `chore` 중 하나입니다.
+6. **이슈마다 PR 1개**를 포크에서 원본 저장소의 `develop`으로 엽니다. 본문에 `Closes #<issue>`를 넣습니다.
 
 ```bash
-git push origin feature/123-my-feature
+git push -u origin feature/12-add-backup
+gh pr create --repo smallmiro/minecraft-server-manager --base develop \
+  --head <your-account>:feature/12-add-backup \
+  --title "feat: add backup script (#12)" --body "Closes #12 ..."
 ```
 
-그런 다음 GitHub에서 `develop` 브랜치로 PR을 생성합니다.
+### CI
+
+`develop`으로 향하는 PR의 검사는 머지 전에 통과해야 합니다. 경로 필터가 적용됩니다:
+
+| 워크플로우 | 실행 조건 | 내용 |
+|------------|-----------|------|
+| `cli-test` | PR이 `platform/services/cli/**` 또는 `platform/services/shared/**`를 변경 | `mcctl`과 의존 패키지 빌드, CLI 테스트 실행 |
+| `shared-test` | PR이 `platform/services/shared/**`를 변경 | shared 패키지 테스트 실행 |
+| `e2e` | 매일 03:00 KST와 수동 실행 시, **PR에서는 실행 안 됨** | mcctl-api와 mcctl-console을 띄우고 Playwright 테스트 실행 |
+
+`e2e`는 PR에서 돌지 않으므로 API나 콘솔 동작을 바꿨다면 로컬에서 `pnpm test:e2e`를 실행하세요. CI는 `pnpm lint`를 실행하지 않으므로 직접 확인해야 합니다.
+
+브랜치 이름, 커밋 규칙, 버전 관리, 릴리즈 절차는 [Git 워크플로우](git-workflow.md)에 있습니다.
+
+## Claude Code로 개발하기
+
+저장소에 Claude Code 설정이 포함되어 있습니다. 저장소 루트에서 `claude`를 실행하면 `CLAUDE.md`와 `.claude/`의 서브에이전트, 커맨드, 훅이 자동으로 로드됩니다.
+
+| 커맨드 | 용도 |
+|--------|------|
+| `/plan-work` | 작업 착수 전 계획 수립 (`--issue <N>`, `--milestone <N>`, `--issues <N1,N2>`). 계획만 세우고 실행하지 않습니다. |
+| `/work` | 이슈나 마일스톤을 완료까지 실행: 브랜치, TDD 구현, PR, 코드 리뷰 |
+| `/write-docs` | 영어/한국어 기술 문서 작성 |
+| `/sync-docs` | `CLAUDE.md`, `README.md` 등 문서를 코드와 동기화 |
+| `/update-docs` | 공식 문서로부터 `docs/itzg-reference/` 갱신 |
+| `/build-kb` | 소스를 심층 분석해 LLM 지식 베이스 생성 |
+
+일반적인 흐름은 변경 내용을 설명하고, 분석 결과로 이슈를 만들고, 큰 작업은 `/plan-work --issue <N>`으로 계획한 뒤 `/work --issue <N>`을 실행하는 것입니다. 서브에이전트, `/work`의 라우팅, 완료 조건 강제 방식은 [에이전트 협업](agent-collaboration.md)을 참고하세요.
 
 ## 아키텍처 개요
 
-이 프로젝트는 **Hexagonal Architecture** (포트 & 어댑터)와 **Clean Architecture** 원칙을 따릅니다:
+TypeScript 코드는 **Hexagonal Architecture**(Ports & Adapters)와 **Clean Architecture** 계층을 따릅니다:
 
 ```text
-+-------------------+
-|    CLI Layer      |  명령어, 인자 파싱
-+--------+----------+
-         |
-+--------v----------+
-| Application Layer |  유스케이스, 비즈니스 로직
-+--------+----------+
-         |
-+--------v----------+
-|   Domain Layer    |  엔티티, 값 객체
-+--------+----------+
-         |
-+--------v----------+
-| Infrastructure    |  어댑터, 외부 서비스
-+-------------------+
++---------------------+
+| Presentation Layer  |  CLI 명령, API 라우트
++----------+----------+
+           |
++----------v----------+
+| Application Layer   |  유스케이스, 애플리케이션 서비스
++----------+----------+
+           |
++----------v----------+
+|    Domain Layer     |  엔티티, 값 객체, 포트
++----------+----------+
+           |
++----------v----------+
+| Infrastructure      |  어댑터: 파일 시스템, Docker, 외부 API
++---------------------+
 ```
 
-### 핵심 개념
+- 도메인 계층은 외부 의존성을 갖지 않습니다.
+- 모든 I/O는 어댑터를 거치며, 의존성은 주입합니다.
 
-- **Value Objects**: 생성 시 유효성 검사되는 불변 객체 (예: `ServerName.create("myserver")`)
-- **Use Cases**: 인터랙티브 및 CLI 모드를 지원하는 비즈니스 로직
-- **Ports**: 외부 의존성을 위한 인터페이스
-- **Adapters**: 구체적인 구현체
-
-자세한 내용은 [CLI 아키텍처](cli-architecture.md)를 참조하세요.
+자세한 내용은 [CLI 아키텍처](cli-architecture.md)를 참고하세요.
 
 ## 관련 문서
 
-- [CLI 아키텍처](cli-architecture.md) - CLI의 상세 아키텍처
-- [에이전트 협업](agent-collaboration.md) - 멀티 에이전트 개발 워크플로우
+- [`DEVELOPMENT.md`](https://github.com/smallmiro/minecraft-server-manager/blob/develop/DEVELOPMENT.md) - 전체 기여자 가이드
+- [Git 워크플로우](git-workflow.md) - 브랜치, 커밋, 버전 관리, 릴리즈
+- [CLI 아키텍처](cli-architecture.md) - CLI 계층 구조와 명령 추가 방법
+- [에이전트 협업](agent-collaboration.md) - Claude Code 서브에이전트와 `/work` 워크플로우
 - [CLI 명령어](../cli/commands.md) - 전체 CLI 레퍼런스
 
 ## 문제 해결
 
 ### 빌드 오류
 
-빌드 오류가 발생하면:
-
 ```bash
-# 정리 후 재빌드
+# 정리 후 다시 빌드
 pnpm clean
 pnpm install
 pnpm build
 ```
 
-### 링크 문제
-
-링크 후 `mcctl` 명령어를 찾을 수 없는 경우:
+### 링크 후 `mcctl`을 찾을 수 없음
 
 ```bash
-# npm 전역 bin 경로 확인
-npm config get prefix
+# pnpm이 사용하는 전역 bin 디렉터리 확인
+pnpm bin --global
 
-# 필요시 PATH에 추가
-export PATH="$PATH:$(npm config get prefix)/bin"
+# 필요하면 PATH에 추가 (pnpm setup이 대신 설정해 줌)
+pnpm setup
 ```
 
-### Docker 문제
-
-Docker가 실행 중이고 사용자에게 권한이 있는지 확인하세요:
+### Docker 권한 거부
 
 ```bash
-# Docker 상태 확인
 docker --version
 docker compose version
 
-# 권한 거부 시 사용자를 docker 그룹에 추가
+# 사용자를 docker 그룹에 추가
 sudo usermod -aG docker $USER
 newgrp docker
 ```
