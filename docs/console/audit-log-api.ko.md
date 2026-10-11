@@ -14,7 +14,7 @@ http://localhost:5001/api
 
 지원되는 방식:
 - API 키 (`X-API-Key` 헤더)
-- 세션 쿠키 (NextAuth.js)
+- 세션 쿠키 (Better Auth)
 - Basic Auth
 - mTLS
 - 비활성화 (개발 전용)

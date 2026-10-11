@@ -14,7 +14,7 @@ All endpoints require authentication. See [API Authentication](./api-reference.m
 
 Supported modes:
 - API Key (`X-API-Key` header)
-- Session Cookie (NextAuth.js)
+- Session Cookie (Better Auth)
 - Basic Auth
 - mTLS
 - Disabled (development only)
