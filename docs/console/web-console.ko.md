@@ -911,6 +911,61 @@ mcctl console user reset-password user@example.com
 
 ---
 
+## 사용 통계
+
+production 모드에서 웹 콘솔은 어떤 화면이 사용되는지 파악하기 위해 익명 사용 데이터를 Google Analytics 4(GA4)로 보냅니다. 개발 모드(`pnpm dev`)에서는 아무것도 보내지 않습니다.
+
+**보내는 항목:**
+
+- 설치마다 하나씩 만드는 익명 `installId`(무작위 UUID). GA `user_id`로 보냅니다. 계정이나 호스트명과는 관련이 없습니다.
+- 정규화한 페이지 경로. 예: `/dashboard`, `/servers/:name`, `/servers/:name/console`
+- mcctl 콘솔 버전(`mcctl_version`)
+
+**보내지 않는 항목:**
+
+- 콘솔의 호스트명·IP 주소 (페이지 URL을 `http://mcctl-console.invalid/...`로 바꿔서 보냅니다)
+- 서버 이름, 월드 이름, 쿼리스트링
+- 계정, 이메일
+
+!!! note
+    브라우저가 Google에 요청을 보내므로 Google은 접속 IP 주소를 받습니다. Google 문서에 따르면 GA4는 IP 주소를 기록하거나 저장하지 않습니다.
+
+### installId
+
+`installId`는 `<root>/.mcctl.json`의 `installId`에 저장됩니다. 한 번 만들어지면 바뀌지 않습니다.
+
+- 신규 설치: `mcctl init`에서 생성
+- 업그레이드: `mcctl upgrade`가 없을 때만 추가 (기존 값은 유지)
+- `mcctl update`로 패키지만 바꾼 경우: 콘솔의 첫 요청 때 생성하여 저장
+
+통계가 켜져 있으면 `mcctl console init`과 `mcctl update`가 다음 안내를 출력합니다.
+
+```
+Console usage analytics is on (anonymous install ID and page paths, sent to Google Analytics). To turn it off, set "telemetry": false in <root>/.mcctl.json.
+```
+
+### 끄는 방법
+
+=== "방법 1: .mcctl.json"
+
+    `<root>/.mcctl.json`에 `telemetry`를 `false`로 설정합니다. 다음 페이지 로드부터 적용되며 재시작은 필요 없습니다.
+
+    ```json
+    {
+      "telemetry": false
+    }
+    ```
+
+=== "방법 2: DO_NOT_TRACK"
+
+    PM2 `ecosystem.config.cjs`의 mcctl-console `env`에 `DO_NOT_TRACK=1`을 추가한 뒤 콘솔을 재시작합니다.
+
+    ```bash
+    mcctl console service restart
+    ```
+
+---
+
 ## 문제 해결
 
 ### 콘솔에 접근할 수 없음
