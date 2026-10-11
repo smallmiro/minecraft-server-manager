@@ -17,64 +17,127 @@ import {
 
 const DIFFICULTIES: Difficulty[] = ['peaceful', 'easy', 'normal', 'hard'];
 
+type NbtRecord = Record<string, unknown>;
+
 /** NBT byte booleans come through as 0/1. */
 function toBool(value: unknown): boolean {
   return toNumber(value) !== 0;
 }
 
+/** 26.x stores the difficulty name; <= 1.21 stores its 0-3 index. */
+function toDifficulty(value: unknown): Difficulty {
+  if (typeof value === 'string') {
+    return DIFFICULTIES.includes(value as Difficulty) ? (value as Difficulty) : 'normal';
+  }
+  return DIFFICULTIES[toNumber(value, 2)] ?? 'normal';
+}
+
+/**
+ * Read a 26.x `data/minecraft/*.dat` file and return its `data` compound.
+ * Missing or unreadable files yield `undefined` so callers fall back to the
+ * <= 1.21 `level.dat` keys (#601) — detection is by presence, not version.
+ */
+async function readDataCompound(file: string): Promise<nbt.Compound | undefined> {
+  try {
+    const { parsed } = await nbt.parse(await readFile(file));
+    const data = parsed.value.data;
+    return data?.type === 'compound' ? data : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function simplifyCompound(compound: nbt.Compound | undefined): NbtRecord | undefined {
+  return compound ? (nbt.simplify(compound) as NbtRecord) : undefined;
+}
+
+/**
+ * 26.x `game_rules.dat`: strip the `minecraft:` key prefix and render byte
+ * booleans as "true"/"false", matching the <= 1.21 `GameRules` strings.
+ */
+function toGameRules(compound: nbt.Compound): Record<string, string> {
+  const rules: Record<string, string> = {};
+  for (const [key, tag] of Object.entries(compound.value)) {
+    if (!tag) continue;
+    rules[key.replace(/^minecraft:/, '')] =
+      tag.type === 'byte' ? String(tag.value !== 0) : String(nbt.simplify(tag));
+  }
+  return rules;
+}
+
 /**
  * Prismarine-NBT based implementation of {@link IWorldDataReader}.
  *
- * Parses gzip-compressed `level.dat` / `playerdata/*.dat` (Minecraft NBT)
+ * Parses gzip-compressed `level.dat` / player `.dat` files (Minecraft NBT)
  * and inspects the world directory for dimension folders and region files.
+ * 26.x worlds move many `level.dat` fields to `data/minecraft/*.dat`; each
+ * field reads the new location first and falls back to the old one (#601).
  */
 export class PrismarineWorldDataReader implements IWorldDataReader {
   async readLevelData(worldPath: string): Promise<WorldLevelData> {
     const buf = await readFile(join(worldPath, 'level.dat'));
     const { parsed } = await nbt.parse(buf);
-    const root = nbt.simplify(parsed) as Record<string, unknown>;
-    const data = (root.Data ?? root) as Record<string, unknown>;
+    const root = nbt.simplify(parsed) as NbtRecord;
+    const data = (root.Data ?? root) as NbtRecord;
+
+    const dataDir = join(worldPath, 'data', 'minecraft');
+    const [genSettings, clocks, rulesCompound, weather, border] = await Promise.all([
+      readDataCompound(join(dataDir, 'world_gen_settings.dat')).then(simplifyCompound),
+      readDataCompound(join(dataDir, 'world_clocks.dat')).then(simplifyCompound),
+      readDataCompound(join(dataDir, 'game_rules.dat')),
+      readDataCompound(join(dataDir, 'weather.dat')).then(simplifyCompound),
+      readDataCompound(
+        join(worldPath, 'dimensions', 'minecraft', 'overworld', 'data', 'minecraft', 'world_border.dat')
+      ).then(simplifyCompound),
+    ]);
 
     const seedRaw =
-      (data.WorldGenSettings as Record<string, unknown> | undefined)?.seed ??
+      genSettings?.seed ??
+      (data.WorldGenSettings as NbtRecord | undefined)?.seed ??
       data.RandomSeed ??
       0;
-    const version = (data.Version ?? {}) as Record<string, unknown>;
-    const dayTime = toNumber(data.DayTime);
+    const version = (data.Version ?? {}) as NbtRecord;
+    const overworldClock = clocks?.['minecraft:overworld'] as NbtRecord | undefined;
+    const dayTime = toNumber(overworldClock?.total_ticks ?? data.DayTime);
 
-    const gameRulesRaw = data.GameRules as Record<string, unknown> | undefined;
-    const gameRules = gameRulesRaw
-      ? Object.fromEntries(
-          Object.entries(gameRulesRaw).map(([k, v]) => [k, String(v)])
-        )
-      : undefined;
+    const spawnPos = (data.spawn as NbtRecord | undefined)?.pos as unknown[] | undefined;
+    const spawn = spawnPos
+      ? { x: toNumber(spawnPos[0]), y: toNumber(spawnPos[1]), z: toNumber(spawnPos[2]) }
+      : { x: toNumber(data.SpawnX), y: toNumber(data.SpawnY), z: toNumber(data.SpawnZ) };
+
+    const difficultySettings = data.difficulty_settings as NbtRecord | undefined;
+
+    const gameRulesRaw = data.GameRules as NbtRecord | undefined;
+    const gameRules = rulesCompound
+      ? toGameRules(rulesCompound)
+      : gameRulesRaw
+        ? Object.fromEntries(
+            Object.entries(gameRulesRaw).map(([k, v]) => [k, String(v)])
+          )
+        : undefined;
 
     const dataPacks =
-      ((data.DataPacks as Record<string, unknown> | undefined)
+      ((data.DataPacks as NbtRecord | undefined)
         ?.Enabled as string[] | undefined) ?? [];
 
     return {
       levelName: String(data.LevelName ?? basename(worldPath)),
       seed: String(seedRaw),
-      spawn: {
-        x: toNumber(data.SpawnX),
-        y: toNumber(data.SpawnY),
-        z: toNumber(data.SpawnZ),
-      },
+      spawn,
       gameMode: GAME_MODES[toNumber(data.GameType)] ?? 'survival',
-      difficulty: DIFFICULTIES[toNumber(data.Difficulty, 2)] ?? 'normal',
-      hardcore: toBool(data.hardcore),
+      difficulty: toDifficulty(difficultySettings?.difficulty ?? data.Difficulty),
+      hardcore: toBool(difficultySettings?.hardcore ?? data.hardcore),
       dayTime,
       dayCount: Math.floor(dayTime / 24000),
-      raining: toBool(data.raining),
-      thundering: toBool(data.thundering),
+      raining: toBool(weather?.raining ?? data.raining),
+      thundering: toBool(weather?.thundering ?? data.thundering),
       versionName: String(version.Name ?? 'unknown'),
       dataVersion: toNumber(data.DataVersion),
       worldBorder: {
         // Vanilla default (59,999,968) is not persisted unless customized.
-        size: toNumber(data.BorderSize, 59999968),
-        centerX: toNumber(data.BorderCenterX),
-        centerZ: toNumber(data.BorderCenterZ),
+        size: toNumber(border?.size ?? data.BorderSize, 59999968),
+        centerX: toNumber(border?.center_x ?? data.BorderCenterX),
+        centerZ: toNumber(border?.center_z ?? data.BorderCenterZ),
       },
       dataPacks,
       gameRules,
@@ -116,7 +179,7 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
             online: false,
           });
         } catch {
-          // Skip corrupt playerdata files
+          // Skip corrupt player .dat files
         }
       }
     }
