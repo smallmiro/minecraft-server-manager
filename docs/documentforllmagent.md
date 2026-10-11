@@ -222,16 +222,13 @@ After running `mcctl init`, the following directory structure is created:
 ```
 ~/minecraft-servers/                  # Platform root (MCCTL_ROOT)
 ├── .env                              # Global environment variables
+├── docker-compose.yml                # Main orchestration (mc-router)
 ├── .mcctl-admin.yml                  # Management Console config (after console init)
 ├── ecosystem.config.cjs              # PM2 process config (after console init)
-├── audit.db                          # SQLite audit log database
 ├── data/
+│   ├── audit.db                      # SQLite audit log database
 │   ├── mcctl.db                      # Console users, sessions, per-user server permissions (Better Auth SQLite, after console init with mcctl-console)
 │   └── players.db                    # SQLite player session history (mcctl-api, v2.27.0+)
-│
-├── platform/
-│   ├── docker-compose.yml            # Main orchestration (mc-router)
-│   └── scripts/                      # Bash management scripts
 │
 ├── servers/
 │   ├── compose.yml                   # Auto-generated server include list
@@ -266,6 +263,8 @@ After running `mcctl init`, the following directory structure is created:
             ├── mcctl-console/        # Web Console package
             └── shared/               # Shared domain package
 ```
+
+The Bash management scripts are bundled inside the mcctl package (the location can be overridden with `MCCTL_SCRIPTS`); they are not part of the platform root.
 
 ### Connection Flow (LAN)
 
@@ -2773,7 +2772,7 @@ A: Set `AUDIT_RETENTION_DAYS` (default: 90) and `AUDIT_AUTO_CLEANUP` (default: t
 A: `server.create`, `server.delete`, `server.start`, `server.stop`, `server.restart`, `player.whitelist.add`, `player.whitelist.remove`, `player.ban.add`, `player.ban.remove`, `player.op.add`, `player.op.remove`, `player.kick`, `world.create`, `world.assign`, `world.release`, `world.delete`, `backup.push`, `backup.restore`, `console.init`, `console.user.add`, `console.user.remove`.
 
 **Q: Where is the audit database stored?**
-A: SQLite database at `~/minecraft-servers/audit.db` using WAL mode for concurrent read/write.
+A: SQLite database at `~/minecraft-servers/data/audit.db` using WAL mode for concurrent read/write.
 
 ### Docker / Infrastructure
 
