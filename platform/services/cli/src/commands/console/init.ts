@@ -21,6 +21,7 @@ import {
   PM2_SERVICE_NAMES,
   resolveServiceScriptPaths,
 } from '../../lib/pm2-utils.js';
+import { printTelemetryNotice } from '../../lib/telemetry-notice.js';
 import { displayPrerequisiteReport } from '../../lib/prerequisite-display.js';
 
 /**
@@ -864,6 +865,7 @@ export async function consoleInitCommand(
       console.log(colors.dim('    2. Access the console in your browser'));
     }
     console.log('');
+    printTelemetryNotice(paths.root, (n) => console.log(colors.dim(`  ${n}`)));
 
     return 0;
   } catch (error) {

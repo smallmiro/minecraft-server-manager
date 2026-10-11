@@ -135,6 +135,21 @@ describe('init command - playit.gg setup', () => {
     });
   });
 
+  describe('installId', () => {
+    it('should write a UUID installId to .mcctl.json', async () => {
+      const { selectHostIPs } = await import('../../../src/lib/prompts/ip-select.js');
+      vi.mocked(selectHostIPs).mockResolvedValueOnce('192.168.1.100');
+      vi.mocked(promptsModule.confirm).mockResolvedValueOnce(false);
+
+      await initCommand({ root: testRoot, skipValidation: true, skipDocker: true });
+
+      const config = JSON.parse(readFileSync(join(testRoot, '.mcctl.json'), 'utf-8'));
+      expect(config.installId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      );
+    });
+  });
+
   describe('interactive mode - playit disabled', () => {
     it('should skip playit setup when user declines', async () => {
       const { selectHostIPs } = await import('../../../src/lib/prompts/ip-select.js');

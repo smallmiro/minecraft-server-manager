@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { execSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { Paths, Config, log, colors, checkPlatformPrerequisites } from '@minecraft-docker/shared';
 import type { McctlConfig } from '@minecraft-docker/shared';
 import { selectHostIPs, getNetworkInterfaces } from '../lib/prompts/ip-select.js';
@@ -325,6 +326,7 @@ export async function initCommand(options: {
     autoStart: true,
     avahiEnabled: true,
     playitEnabled,
+    installId: randomUUID(),
   };
 
   config.save(mcctlConfig);

@@ -13,6 +13,7 @@ import { spawnSync } from 'child_process';
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import * as prompts from '@clack/prompts';
+import { printTelemetryNotice } from '../lib/telemetry-notice.js';
 
 const PACKAGE_NAME = '@minecraft-docker/mcctl';
 
@@ -664,6 +665,11 @@ export async function updateServices(
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(colors.dim(`  Completed in ${elapsed}s`));
   console.log('');
+
+  if (availability.console.available) {
+    printTelemetryNotice(rootDir, (n) => console.log(colors.dim(`  ${n}`)));
+    console.log('');
+  }
 
   const hasErrors = results.some((r) => r.error);
   return hasErrors ? 1 : 0;
