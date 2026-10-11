@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mcctl · Docker Minecraft Server Manager</title>
+<meta name="description" content="Run every Minecraft Java server you host behind one port. Servers start when a player connects and stop when idle. CLI and web console.">
+<meta property="og:title" content="mcctl · Docker Minecraft Server Manager">
+<meta property="og:description" content="Run them in Docker. Wake them when players connect.">
+<meta name="theme-color" content="#0c0e12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 28 10 16 17 4 10Z' fill='%234de38a'/%3E%3Cpath d='M4 10 16 17V30L4 23Z' fill='%231bd96a'/%3E%3Cpath d='M28 10 16 17V30L28 23Z' fill='%23109a4b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<script>
+  // Set language before first paint: saved choice > browser language > English
+  (function () {
+    var saved = null;
+    try { saved = localStorage.getItem('lang'); } catch (e) {}
+    document.documentElement.lang = saved || ((navigator.language || '').toLowerCase().indexOf('ko') === 0 ? 'ko' : 'en');
+  })();
+</script>
+<style>
+  :root {
+    --bg: #0c0e12;
+    --bg-2: #111317;
+    --card: #1a1d22;
+    --card-2: #16181c;
+    --hover: #26282e;
+    --line: #2e3035;
+    --line-2: #3a3d4e;
+    --text: #f3f4f6;
+    --text-2: #c9ccd3;
+    --muted: #9ca3af;
+    --dim: #767a8c;
+    --green: #1bd96a;
+    --green-2: #4de38a;
+    --violet: #c4a6ff;
+    --cyan: #00e5ff;
+    --amber: #ffd54f;
+    --red: #ff5252;
+    --term: #13141c;
+    --sans: Inter, "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 400 16px/1.6 var(--sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  html[lang="ko"] body { word-break: keep-all; }
+  html[lang="en"] .ko, html[lang="ko"] .en { display: none !important; }
+  a { color: inherit; text-decoration: none; }
+  code, pre, .mono { font-family: var(--mono); }
+  /* `font` shorthands below reset ligatures; keep `===`, `&&`, `->` literal in terminal text */
+  pre, code, pre *, code * { font-variant-ligatures: none !important; }
+  img { max-width: 100%; display: block; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 4px; }
+  ::selection { background: var(--green); color: #04130a; }
+  svg.i { width: 16px; height: 16px; flex: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+  @media (min-width: 768px) { .wrap { padding: 0 32px; } }
+
+  /* Header */
+  .top {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(12, 14, 18, .82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .top .wrap { height: 60px; display: flex; align-items: center; gap: 24px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.02em; }
+  .brand svg { width: 26px; height: 26px; }
+  .pill {
+    font: 500 11px/1 var(--mono);
+    padding: 5px 7px; border-radius: 4px;
+    color: var(--green); background: rgba(27, 217, 106, .1); border: 1px solid rgba(27, 217, 106, .25);
+  }
+  .nav { display: none; gap: 22px; font-size: 14px; color: var(--muted); }
+  .nav a:hover { color: var(--text); }
+  @media (min-width: 860px) { .nav { display: flex; } }
+  .top-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .gh {
+    display: flex; align-items: center; gap: 8px;
+    font: 500 12px/1 var(--mono); color: var(--text-2);
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--card-2);
+  }
+  .gh:hover { background: var(--hover); border-color: var(--line-2); }
+  .gh span { display: none; }
+  @media (min-width: 480px) { .gh span { display: inline; } }
+  .lang { display: flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .lang button { font: 500 12px/1 var(--mono); padding: 8px 10px; color: var(--muted); }
+  .lang button[aria-pressed="true"] { background: var(--hover); color: var(--text); }
+
+  /* Hero */
+  .hero { position: relative; padding: 64px 0 40px; }
+  .hero::before {
+    content: ""; position: absolute; inset: -60px 0 auto; height: 620px; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(600px 320px at 12% 20%, rgba(27, 217, 106, .13), transparent 70%),
+      radial-gradient(520px 300px at 85% 0%, rgba(124, 58, 237, .10), transparent 70%);
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 700 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--green);
+  }
+  .hero .eyebrow {
+    padding: 7px 11px; border-radius: 999px;
+    background: rgba(27, 217, 106, .08); border: 1px solid rgba(27, 217, 106, .22);
+  }
+  .led { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent), 0 0 10px currentColor; }
+  h1 {
+    margin: 22px 0 0; max-width: 15ch;
+    font-size: clamp(2.4rem, 7vw, 4.6rem); line-height: 1.02; font-weight: 800; letter-spacing: -.045em;
+  }
+  html[lang="ko"] h1 { max-width: 16ch; line-height: 1.12; letter-spacing: -.035em; }
+  h1 em {
+    font-style: normal; color: var(--green);
+    text-decoration: underline wavy rgba(27, 217, 106, .45); text-decoration-thickness: 3px; text-underline-offset: 10px;
+  }
+  .lead { margin: 22px 0 0; max-width: 620px; font-size: 18px; color: var(--muted); }
+  .lead b { color: var(--text-2); font-weight: 600; }
+
+  .install { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .cmd {
+    display: flex; align-items: center; gap: 12px; min-width: 0; max-width: 100%;
+    padding: 6px 6px 6px 16px; border-radius: 6px;
+    background: var(--term); border: 1px solid var(--line);
+    font: 400 14px/1.4 var(--mono);
+  }
+  .cmd code { overflow-x: auto; white-space: nowrap; scrollbar-width: none; padding: 8px 0; }
+  .cmd code::-webkit-scrollbar { display: none; }
+  .cmd .ps { color: var(--green); user-select: none; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: none;
+    font: 600 14px/1 var(--sans); padding: 11px 14px; border-radius: 4px;
+    background: var(--green); color: #04130a;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25); border-bottom: 2px solid rgba(0, 0, 0, .35);
+    transition: background .15s, box-shadow .15s;
+  }
+  .btn:hover { background: var(--green-2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 4px 14px rgba(27, 217, 106, .3); }
+  .btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--line); border-bottom-width: 2px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
+  .btn.ghost:hover { background: var(--hover); border-color: var(--line-2); }
+  .i-check { display: none; }
+  .copied .i-copy { display: none; }
+  .copied .i-check { display: inline; }
+  .meta { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 6px 14px; font: 400 12.5px/1.6 var(--mono); color: var(--dim); }
+  .meta a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
+  .meta a:hover { color: var(--text); }
+
+  .stats { margin-top: 48px; display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid var(--line); }
+  .stat { padding: 20px 16px 4px 0; }
+  .stat b { display: block; font: 800 clamp(26px, 4vw, 34px)/1.1 var(--mono); letter-spacing: -.04em; color: var(--text); }
+  .stat b small { font-size: .5em; color: var(--muted); letter-spacing: 0; margin-left: 4px; }
+  .stat span { display: block; margin-top: 6px; font-size: 13.5px; color: var(--muted); }
+  @media (min-width: 768px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+
+  /* Sections */
+  section { padding: 56px 0; }
+  @media (min-width: 768px) { section { padding: 64px 0; } }
+  .head { margin-bottom: 32px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+  h2 { margin: 12px 0 0; font-size: clamp(1.7rem, 3.6vw, 2.4rem); line-height: 1.15; font-weight: 800; letter-spacing: -.035em; }
+  .sub { margin: 12px 0 0; max-width: 620px; color: var(--muted); }
+  .hint { font: 400 12px/1.4 var(--mono); color: var(--dim); }
+
+  /* Terminal mock-up */
+  .demo { padding-top: 24px; }
+  .demo-cap { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 12px; font: 400 12.5px/1.4 var(--mono); color: var(--dim); }
+  .demo-cap b { color: var(--text-2); font-weight: 500; }
+  .window {
+    border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--term);
+    box-shadow: 0 30px 80px -30px rgba(0, 0, 0, .8), 0 0 0 1px rgba(255, 255, 255, .02) inset;
+  }
+  .bar { display: flex; align-items: center; gap: 8px; padding: 11px 14px; background: #171922; border-bottom: 1px solid var(--line); font: 500 12px/1 var(--mono); color: var(--muted); }
+  .dots { display: flex; gap: 6px; margin-right: 6px; }
+  .dots i { width: 11px; height: 11px; border-radius: 50%; background: #3a3d4e; }
+  .dots i:nth-child(1) { background: #ff5f57; }
+  .dots i:nth-child(2) { background: #febc2e; }
+  .dots i:nth-child(3) { background: #28c840; }
+  .bar .right { margin-left: auto; display: none; align-items: center; gap: 6px; color: var(--green); }
+  @media (min-width: 640px) { .bar .right { display: flex; } }
+  .term { display: grid; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .term { grid-template-columns: 240px 1fr; } }
+  .side { border-bottom: 1px solid var(--line); background: #11121a; padding: 12px; }
+  @media (min-width: 900px) { .side { border-bottom: 0; border-right: 1px solid var(--line); padding: 16px 12px; } }
+  .side h3 { margin: 4px 6px 10px; font: 700 10.5px/1 var(--mono); letter-spacing: .12em; color: var(--dim); }
+  .side [role="tablist"] { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .side [role="tablist"]::-webkit-scrollbar { display: none; }
+  @media (min-width: 900px) { .side [role="tablist"] { flex-direction: column; } }
+  .srv {
+    flex: none; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center;
+    padding: 9px 10px; border-radius: 6px; text-align: left; border: 1px solid transparent;
+    font: 500 13px/1.3 var(--mono); color: var(--text-2);
+  }
+  .srv:hover { background: #1a1c26; }
+  .srv[aria-selected="true"] { background: #1d1f2a; border-color: var(--line-2); color: var(--text); }
+  .srv .led { width: 7px; height: 7px; }
+  .srv small { grid-column: 2; font-size: 11px; color: var(--dim); }
+  .on { color: var(--green); }
+  .off { color: var(--amber); }
+  .boot { color: var(--cyan); }
+  .pane { min-width: 0; }
+  .pane pre {
+    margin: 0; padding: 18px 20px; min-height: 420px; overflow-x: auto;
+    font: 400 13px/1.7 var(--mono); color: #d5d8e0;
+  }
+  @media (max-width: 640px) { .pane pre { font-size: 11.5px; padding: 14px; min-height: 0; } .cmd code { white-space: normal; overflow-wrap: anywhere; } }
+  .pane pre::-webkit-scrollbar { height: 6px; }
+  .pane pre::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 6px; }
+  .g { color: var(--green); } .y { color: var(--amber); } .c { color: var(--cyan); } .r { color: var(--red); }
+  .v { color: var(--violet); } .d { color: var(--dim); } .b { color: #fff; font-weight: 700; }
+  .ps1 { color: var(--green); user-select: none; }
+  .demo-foot { margin-top: 12px; font: 400 12.5px/1.6 var(--mono); color: var(--dim); }
+
+  /* Features */
+  .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  .grid > *, .flow > *, .term > * { min-width: 0; }
+  @media (min-width: 680px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1000px) { .grid.three { grid-template-columns: repeat(3, 1fr); } .grid.four { grid-template-columns: repeat(4, 1fr); } }
+  .card {
+    display: flex; flex-direction: column; padding: 24px; border-radius: 8px;
+    background: var(--card); border: 1px solid var(--line);
+    transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
+  }
+  .card:hover { transform: translateY(-2px); background: #1f2228; border-color: var(--line-2); box-shadow: 0 10px 28px rgba(27, 217, 106, .07); }
+  .num { font: 700 12px/1 var(--mono); color: var(--green); letter-spacing: .08em; }
+  .card h3 { margin: 14px 0 0; font-size: 19px; line-height: 1.3; font-weight: 700; letter-spacing: -.02em; }
+  .card p { margin: 10px 0 0; font-size: 14.5px; color: var(--muted); }
+  .card p code { font-size: 13px; color: var(--text-2); }
+  .mini {
+    margin-top: auto; padding-top: 20px;
+    font: 400 12.5px/1.7 var(--mono); color: var(--text-2);
+  }
+  .mini > div { background: var(--term); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-wrap: anywhere; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; }
+  .row .led { width: 6px; height: 6px; }
+  .row .grow { flex: 1; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; white-space: normal !important; }
+  .chip { padding: 3px 8px; border-radius: 4px; border: 1px solid var(--line); background: var(--hover); font-size: 11.5px; }
+
+  /* Gallery */
+  .tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: none; padding: 10px 14px; font-size: 14px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--green); }
+  .browser { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--card-2); box-shadow: 0 30px 80px -30px rgba(0, 0, 0, .8); }
+  .url { flex: 1; max-width: 420px; margin: 0 auto; padding: 6px 12px; border-radius: 4px; background: var(--term); border: 1px solid var(--line); color: var(--muted); font-size: 12px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .shot img { width: 100%; height: auto; }
+  .shot figcaption { padding: 14px 18px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+
+  /* Architecture */
+  .flow { display: grid; gap: 12px; grid-template-columns: 1fr; align-items: stretch; }
+  @media (min-width: 1000px) { .flow { grid-template-columns: 1fr 28px 1fr 28px 1fr 28px 1fr; gap: 8px; } }
+  .node { padding: 20px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); }
+  .node.hl { border-color: rgba(27, 217, 106, .45); box-shadow: 0 0 0 1px rgba(27, 217, 106, .12), 0 10px 30px rgba(27, 217, 106, .08); }
+  .node .eyebrow { font-size: 10.5px; }
+  .node h3 { margin: 10px 0 0; font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
+  .node p { margin: 8px 0 0; font-size: 13.5px; color: var(--muted); }
+  .node ul { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font: 400 12px/1.4 var(--mono); }
+  .node li { padding: 6px 8px; border-radius: 4px; background: var(--term); border: 1px solid var(--line); overflow-wrap: anywhere; }
+  .arrow { display: flex; align-items: center; justify-content: center; color: var(--dim); font: 400 18px/1 var(--mono); transform: rotate(90deg); }
+  @media (min-width: 1000px) { .arrow { transform: none; } }
+
+  /* Commands */
+  .cmdcard { text-align: left; gap: 0; }
+  .cmdcard .top-line { display: flex; justify-content: space-between; align-items: center; }
+  .cmdcard .top-line svg { color: var(--dim); }
+  .cmdcard:hover .top-line svg { color: var(--green); }
+  .cmdcard.copied .top-line svg { color: var(--green); }
+  .cmdcard code { display: block; margin-top: 12px; font-size: 13px; line-height: 1.5; font-weight: 700; color: var(--text); overflow-wrap: break-word; }
+  .cmdcard p { font-size: 13.5px; }
+
+  /* CTA */
+  .cta {
+    position: relative; overflow: hidden; padding: 40px 24px; border-radius: 12px;
+    background: linear-gradient(180deg, #1a1d22, #14161a); border: 1px solid var(--line);
+  }
+  @media (min-width: 768px) { .cta { padding: 56px; } }
+  .cta::after {
+    content: ""; position: absolute; right: -120px; top: -120px; width: 420px; height: 420px; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(27, 217, 106, .14), transparent);
+  }
+  .cta pre {
+    margin: 0; padding: 18px 20px; border-radius: 8px; overflow-x: auto;
+    background: var(--term); border: 1px solid var(--line);
+    font: 400 14px/1.8 var(--mono); color: var(--text-2);
+  }
+  .cta-row { margin-top: 28px; display: grid; gap: 14px; grid-template-columns: 1fr; align-items: start; max-width: 720px; }
+  .links { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 10px; }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--line); padding: 36px 0 48px; color: var(--dim); font-size: 13px; }
+  footer .wrap { display: grid; gap: 18px; }
+  .foot-top { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; justify-content: space-between; }
+  .foot-links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .foot-links a:hover { color: var(--text); }
+  footer code { color: var(--text-2); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+  <symbol id="i-gh" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 32 32"><path d="M16 3 28 10 16 17 4 10Z" fill="#4de38a"/><path d="M4 10 16 17V30L4 23Z" fill="#1bd96a"/><path d="M28 10 16 17V30L28 23Z" fill="#109a4b"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#" aria-label="mcctl home">
+      <svg aria-hidden="true"><use href="#i-cube"/></svg>
+      mcctl
+      <span class="pill" data-version>v2.30.0</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#features"><span class="en">Features</span><span class="ko">기능</span></a>
+      <a href="#console"><span class="en">Web console</span><span class="ko">웹 콘솔</span></a>
+      <a href="#commands"><span class="en">Commands</span><span class="ko">명령어</span></a>
+      <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/">Docs ↗</a>
+      <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/">문서 ↗</a>
+    </nav>
+    <div class="top-right">
+      <a class="gh" href="https://github.com/smallmiro/minecraft-server-manager" aria-label="GitHub repository">
+        <svg class="i" aria-hidden="true"><use href="#i-gh"/></svg><span>GitHub</span>
+      </a>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+        <button type="button" data-set-lang="ko" aria-pressed="false">KO</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Hero -->
+  <div class="hero">
+    <div class="wrap">
+      <span class="eyebrow"><i class="led"></i><span class="en">Docker Minecraft server manager</span><span class="ko">Docker 마인크래프트 서버 매니저</span></span>
+      <h1>
+        <span class="en">Run them in Docker. <em>Wake them</em> when players connect.</span>
+        <span class="ko">Docker로 띄우고, 플레이어가 오면 <em>깨웁니다.</em></span>
+      </h1>
+      <p class="lead">
+        <span class="en">mcctl puts every Minecraft Java server you host behind <b>a single port</b>. A server starts when the first player connects and stops after it goes idle, so an empty host runs only the router — <b>about 40&nbsp;MB of RAM</b>. Manage it all from the CLI or the web console.</span>
+        <span class="ko">mcctl은 직접 운영하는 마인크래프트 자바 서버를 <b>포트 하나</b> 뒤에 모읍니다. 첫 플레이어가 접속하면 서버가 켜지고, 아무도 없으면 다시 꺼집니다. 그래서 빈 호스트에는 라우터만 남습니다(<b>RAM 약 40MB</b>). 관리는 CLI나 웹 콘솔에서 합니다.</span>
+      </p>
+
+      <div class="install" id="install">
+        <div class="cmd">
+          <span class="ps">$</span>
+          <code>npm install -g @minecraft-docker/mcctl</code>
+          <button class="btn" type="button" data-copy="npm install -g @minecraft-docker/mcctl" aria-label="Copy install command">
+            <svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg>
+            <svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg>
+            <span class="en">Copy</span><span class="ko">복사</span>
+          </button>
+        </div>
+      </div>
+      <div class="meta">
+        <span>Linux · macOS · Windows (WSL2)</span>
+        <span>Node.js ≥ 18 · Docker ≥ 24</span>
+        <span>Apache-2.0</span>
+        <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/quickstart/">Full install guide →</a>
+        <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/getting-started/quickstart/">설치 가이드 →</a>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><b>1</b><span class="en">port for every server (:25565)</span><span class="ko">모든 서버를 포트 하나로 (:25565)</span></div>
+        <div class="stat"><b>~40<small>MB</small></b><span class="en">RAM while every server sleeps</span><span class="ko">모든 서버가 쉴 때 RAM</span></div>
+        <div class="stat"><b>12</b><span class="en">server types, plus modpacks</span><span class="ko">서버 타입 + 모드팩</span></div>
+        <div class="stat"><b>3</b><span class="en">mod sources: Modrinth, CurseForge, Spiget</span><span class="ko">모드 소스: Modrinth, CurseForge, Spiget</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terminal mock-up -->
+  <section class="demo" aria-label="CLI demo">
+    <div class="wrap">
+      <div class="demo-cap">
+        <span><b class="en">your servers, from one terminal</b><b class="ko">서버 전체를 터미널 하나에서</b></span>
+        <span class="en">pick a server ↓</span><span class="ko">서버를 골라 보세요 ↓</span>
+      </div>
+      <div class="window">
+        <div class="bar">
+          <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>mcctl — ~/minecraft-servers</span>
+          <span class="right"><i class="led"></i> mc-router :25565</span>
+        </div>
+        <div class="term" data-tabs>
+          <div class="side">
+            <h3>SERVERS</h3>
+            <div role="tablist" aria-label="Servers">
+              <button class="srv" role="tab" type="button" id="t-status" aria-controls="p-status" aria-selected="true"><i class="led d"></i>all servers<small>mcctl status</small></button>
+              <button class="srv" role="tab" type="button" id="t-survival" aria-controls="p-survival" aria-selected="false"><i class="led on"></i>survival<small>running · 3/20</small></button>
+              <button class="srv" role="tab" type="button" id="t-creative" aria-controls="p-creative" aria-selected="false"><i class="led off"></i>creative<small>exited · wakes on join</small></button>
+              <button class="srv" role="tab" type="button" id="t-modded" aria-controls="p-modded" aria-selected="false"><i class="led on"></i>modded<small>running · Fabric</small></button>
+            </div>
+          </div>
+          <div class="pane">
+<pre role="tabpanel" id="p-status" aria-labelledby="t-status"><span class="ps1">$</span> mcctl status
+
+<span class="b">=== Server Status (mc-router Managed) ===</span>
+
+<span class="c">INFRASTRUCTURE</span>
+SERVICE              STATUS       HEALTH     PORT/INFO
+-------              ------       ------     ---------
+mc-router            <span class="g">running</span>      healthy    :25565 (hostname routing)
+avahi-daemon         <span class="g">running</span>      (system)   mDNS broadcast
+
+<span class="c">MINECRAFT SERVERS</span>
+SERVER               STATUS       HEALTH     HOSTNAME
+------               ------       ------     --------
+survival             <span class="g">running</span>      healthy    survival.local,survival.192.168.1.50.nip.io
+creative             <span class="y">exited</span>       unhealthy  creative.local,creative.192.168.1.50.nip.io
+modded               <span class="g">running</span>      healthy    modded.local,modded.192.168.1.50.nip.io
+</pre>
+<pre role="tabpanel" id="p-survival" aria-labelledby="t-survival" hidden><span class="ps1">$</span> mcctl player online survival
+
+<span class="b">Online Players for survival:</span>
+
+  Status: <span class="g">Running</span> (3/20)
+
+  <span class="c">Steve</span>
+  <span class="c">Alex</span>
+  <span class="c">builder_kim</span>
+
+<span class="ps1">$</span> mcctl logs survival -n 4
+<span class="d">[10:42:13 INFO]:</span> Done (5.912s)! For help, type "help"
+<span class="d">[10:44:51 INFO]:</span> <span class="y">Steve joined the game</span>
+<span class="d">[10:47:02 INFO]:</span> <span class="y">Alex joined the game</span>
+<span class="d">[10:51:30 INFO]:</span> <span class="y">builder_kim joined the game</span>
+</pre>
+<pre role="tabpanel" id="p-creative" aria-labelledby="t-creative" hidden><span class="ps1">$</span> mcctl create creative -t PAPER -v 1.21.1 --no-start
+
+<span class="g">✓ Server 'creative' created successfully!</span>
+  Container: <span class="c">mc-creative</span>
+  Type: Paper
+  Version: 1.21.1
+  Memory: 4G
+  Whitelist: <span class="g">enabled</span>
+
+  Connect via: <span class="c">creative.local:25565</span>
+
+<span class="d"># creative stays stopped until someone joins.
+# mc-router starts mc-creative on the first connection
+# and stops it again after the idle timeout.</span>
+</pre>
+<pre role="tabpanel" id="p-modded" aria-labelledby="t-modded" hidden><span class="ps1">$</span> mcctl mod add modded fabric-api lithium
+<span class="d">Validating mods on Modrinth...</span>
+  <span class="g">✓</span> Fabric API (fabric-api)
+  <span class="g">✓</span> Lithium (lithium)
+
+<span class="g">✓ Added 2 mod(s) to modded</span>
+
+  <span class="c">fabric-api</span>
+  <span class="c">lithium</span>
+
+<span class="d">Config: MODRINTH_PROJECTS=fabric-api,lithium</span>
+
+<span class="y">Restart the server to apply changes:</span>
+  mcctl stop modded &amp;&amp; mcctl start modded
+</pre>
+          </div>
+        </div>
+      </div>
+      <p class="demo-foot">
+        <span class="en">A mock-up built from real mcctl output. <span class="y">exited</span> isn't broken — the server is asleep, and mc-router starts it on the next connection.</span>
+        <span class="ko">실제 mcctl 출력으로 만든 목업입니다. <span class="y">exited</span>는 고장이 아니라 쉬는 상태이며, 다음 접속 때 mc-router가 다시 켭니다.</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <span class="eyebrow">01 / <span class="en">Features</span><span class="ko">기능</span></span>
+          <h2><span class="en">Built for people who host for friends.</span><span class="ko">친구들 서버를 직접 굴리는 사람을 위해.</span></h2>
+        </div>
+      </div>
+      <div class="grid three">
+        <article class="card">
+          <span class="num">01</span>
+          <h3><span class="en">One port, every server</span><span class="ko">포트 하나로 모든 서버</span></h3>
+          <p><span class="en">mc-router reads the hostname a player connects with and forwards them to the matching container. Use nip.io names with no client setup, <code>.local</code> names over mDNS, or a playit.gg tunnel for friends outside your network.</span><span class="ko">mc-router가 접속 주소의 호스트명을 보고 해당 컨테이너로 연결합니다. 클라이언트 설정이 필요 없는 nip.io 주소, mDNS(<code>.local</code>) 주소, 외부 친구용 playit.gg 터널을 지원합니다.</span></p>
+          <div class="mini"><div>
+            <div class="row"><span class="c">survival.192.168.1.50.nip.io</span><span class="d">→</span>mc-survival</div>
+            <div class="row"><span class="c">creative.local</span><span class="d">→</span>mc-creative</div>
+            <div class="row"><span class="c">xx-xx.craft.playit.gg</span><span class="d">→</span>mc-modded</div>
+          </div></div>
+        </article>
+        <article class="card">
+          <span class="num">02</span>
+          <h3><span class="en">Asleep until someone joins</span><span class="ko">누군가 들어올 때까지 잠들기</span></h3>
+          <p><span class="en">Servers start on the first connection and stop after an idle timeout. When nobody is playing, only the router and its helpers stay up.</span><span class="ko">첫 접속에 서버가 켜지고, 일정 시간 아무도 없으면 꺼집니다. 아무도 플레이하지 않을 때는 라우터와 보조 서비스만 남습니다.</span></p>
+          <div class="mini"><div>
+            <div class="row"><i class="led on"></i><span class="grow">survival</span><span class="g">running</span></div>
+            <div class="row"><i class="led boot"></i><span class="grow">modded</span><span class="c">starting</span></div>
+            <div class="row"><i class="led off"></i><span class="grow">creative</span><span class="y">exited</span></div>
+          </div></div>
+        </article>
+        <article class="card">
+          <span class="num">03</span>
+          <h3><span class="en">Mods and modpacks from the CLI</span><span class="ko">모드와 모드팩을 CLI로</span></h3>
+          <p><span class="en">Search and add mods from Modrinth, CurseForge, and Spiget. Create a server straight from a Modrinth modpack — the loader is detected and client-only mods are left out.</span><span class="ko">Modrinth, CurseForge, Spiget에서 모드를 찾아 추가합니다. Modrinth 모드팩으로 바로 서버를 만들면 로더를 자동으로 감지하고 클라이언트 전용 모드는 뺍니다.</span></p>
+          <div class="mini"><div><span class="ps1">$</span> mcctl create pack -t MODRINTH --modpack cobblemon</div></div>
+        </article>
+        <article class="card">
+          <span class="num">04</span>
+          <h3><span class="en">Worlds that move between servers</span><span class="ko">서버를 옮겨 다니는 월드</span></h3>
+          <p><span class="en">Worlds live in one shared directory. Assign a world to a server and it stays locked until released. Import worlds from ZIP, then browse dimensions, structures, players, and a BlueMap web map.</span><span class="ko">월드는 공용 디렉터리 한곳에 보관됩니다. 서버에 할당한 월드는 해제할 때까지 잠깁니다. ZIP으로 월드를 가져오고 차원·구조물·플레이어 정보와 BlueMap 웹 지도를 볼 수 있습니다.</span></p>
+          <div class="mini"><div><span class="ps1">$</span> mcctl world assign hardcore-01 survival</div></div>
+        </article>
+        <article class="card">
+          <span class="num">05</span>
+          <h3><span class="en">Backups to your GitHub</span><span class="ko">내 GitHub로 백업</span></h3>
+          <p><span class="en">Push world data to a private GitHub repository on demand or on a cron schedule with retention, and restore from any backup commit.</span><span class="ko">월드 데이터를 비공개 GitHub 저장소에 직접 또는 cron 일정으로 푸시하고 보관 정책을 적용합니다. 원하는 백업 커밋으로 복원할 수 있습니다.</span></p>
+          <div class="mini"><div><span class="ps1">$</span> mcctl backup schedule add --cron daily</div></div>
+        </article>
+        <article class="card">
+          <span class="num">06</span>
+          <h3><span class="en">A web console when you want one</span><span class="ko">필요할 땐 웹 콘솔</span></h3>
+          <p><span class="en"><code>mcctl console init</code> adds a Next.js console and a REST API: file manager, server.properties editor, player panels, audit logs, and an installable PWA.</span><span class="ko"><code>mcctl console init</code>으로 Next.js 콘솔과 REST API를 추가합니다. 파일 관리자, server.properties 편집기, 플레이어 패널, 감사 로그, 설치형 PWA를 제공합니다.</span></p>
+          <div class="mini"><div class="chips">
+            <span class="chip"><span class="g">:5000</span> web console</span>
+            <span class="chip"><span class="v">:5001</span> REST API</span>
+            <span class="chip">PM2</span>
+          </div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section id="console">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <span class="eyebrow">02 / <span class="en">Web console</span><span class="ko">웹 콘솔</span></span>
+          <h2><span class="en">Everything the CLI does, in a browser.</span><span class="ko">CLI로 하던 일을 브라우저에서.</span></h2>
+          <p class="sub"><span class="en">Captured from a running mcctl console. IP addresses, the tunnel domain, and player names were swapped for placeholders.</span><span class="ko">실행 중인 mcctl 콘솔에서 캡처한 화면입니다. IP 주소, 터널 도메인, 플레이어 이름은 예시 값으로 바꿨습니다.</span></p>
+        </div>
+      </div>
+      <div data-tabs>
+        <div class="tabs" role="tablist" aria-label="Console screens">
+          <button class="tab" role="tab" type="button" id="g-dashboard" aria-controls="s-dashboard" aria-selected="true"><span class="en">Dashboard</span><span class="ko">대시보드</span></button>
+          <button class="tab" role="tab" type="button" id="g-server" aria-controls="s-server" aria-selected="false"><span class="en">Server</span><span class="ko">서버</span></button>
+          <button class="tab" role="tab" type="button" id="g-world" aria-controls="s-world" aria-selected="false"><span class="en">World map</span><span class="ko">월드 지도</span></button>
+          <button class="tab" role="tab" type="button" id="g-stats" aria-controls="s-stats" aria-selected="false"><span class="en">Block stats</span><span class="ko">블록 통계</span></button>
+          <button class="tab" role="tab" type="button" id="g-worlds" aria-controls="s-worlds" aria-selected="false"><span class="en">Worlds</span><span class="ko">월드</span></button>
+          <button class="tab" role="tab" type="button" id="g-routing" aria-controls="s-routing" aria-selected="false"><span class="en">Routing</span><span class="ko">라우팅</span></button>
+        </div>
+        <div class="browser">
+          <div class="bar">
+            <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="url">localhost:5000</span>
+          </div>
+          <figure class="shot" role="tabpanel" id="s-dashboard" aria-labelledby="g-dashboard" style="margin:0">
+            <a href="assets/dashboard.webp" target="_blank" rel="noopener"><img src="assets/dashboard.webp" width="2160" height="1350" alt="mcctl console dashboard with server, player and world counts"></a>
+            <figcaption><span class="en">Servers, players, worlds, external access, and recent activity at a glance.</span><span class="ko">서버·플레이어·월드·외부 접속·최근 활동을 한 화면에서.</span></figcaption>
+          </figure>
+          <figure class="shot" role="tabpanel" id="s-server" aria-labelledby="g-server" style="margin:0" hidden>
+            <a href="assets/server.webp" target="_blank" rel="noopener"><img src="assets/server.webp" width="2160" height="1350" loading="lazy" alt="Server detail page with CPU, memory, world size and a live console"></a>
+            <figcaption><span class="en">Start, stop, and restart; CPU, memory, and world size; a live console that takes commands.</span><span class="ko">시작·중지·재시작, CPU·메모리·월드 크기, 명령을 보낼 수 있는 실시간 콘솔.</span></figcaption>
+          </figure>
+          <figure class="shot" role="tabpanel" id="s-world" aria-labelledby="g-world" style="margin:0" hidden>
+            <a href="assets/world.webp" target="_blank" rel="noopener"><img src="assets/world.webp" width="2160" height="1350" loading="lazy" alt="World info cards and a BlueMap web map of the world"></a>
+            <figcaption><span class="en">World details read from level.dat, and a BlueMap web map rendered from the world files.</span><span class="ko">level.dat에서 읽은 월드 정보와, 월드 파일로 렌더링한 BlueMap 웹 지도.</span></figcaption>
+          </figure>
+          <figure class="shot" role="tabpanel" id="s-stats" aria-labelledby="g-stats" style="margin:0" hidden>
+            <a href="assets/stats.webp" target="_blank" rel="noopener"><img src="assets/stats.webp" width="2160" height="1350" loading="lazy" alt="Ore and block statistics with last known player positions"></a>
+            <figcaption><span class="en">Ore and block counts across dimensions, plus where each player last stood.</span><span class="ko">차원별 광물·블록 통계와 플레이어별 마지막 위치.</span></figcaption>
+          </figure>
+          <figure class="shot" role="tabpanel" id="s-worlds" aria-labelledby="g-worlds" style="margin:0" hidden>
+            <a href="assets/worlds.webp" target="_blank" rel="noopener"><img src="assets/worlds.webp" width="2160" height="1350" loading="lazy" alt="World library with assignment status for each world"></a>
+            <figcaption><span class="en">One world library: assign, release, and create worlds — including from a ZIP upload.</span><span class="ko">월드 라이브러리 한곳에서 할당·해제·생성(ZIP 업로드 포함).</span></figcaption>
+          </figure>
+          <figure class="shot" role="tabpanel" id="s-routing" aria-labelledby="g-routing" style="margin:0" hidden>
+            <a href="assets/routing.webp" target="_blank" rel="noopener"><img src="assets/routing.webp" width="2160" height="1350" loading="lazy" alt="Routing page listing mc-router hostnames per server"></a>
+            <figcaption><span class="en">Every hostname mc-router knows, and where it points.</span><span class="ko">mc-router에 등록된 호스트명과 연결 대상.</span></figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section id="architecture">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <span class="eyebrow">03 / <span class="en">Architecture</span><span class="ko">아키텍처</span></span>
+          <h2><span class="en">One port in. One container per server.</span><span class="ko">들어오는 포트는 하나, 서버마다 컨테이너 하나.</span></h2>
+          <p class="sub"><span class="en">Built on <code>itzg/minecraft-server</code> and <code>itzg/mc-router</code>. No firewall rule per server, no port list to remember.</span><span class="ko"><code>itzg/minecraft-server</code>와 <code>itzg/mc-router</code> 기반. 서버마다 방화벽 규칙을 열거나 포트 번호를 외울 필요가 없습니다.</span></p>
+        </div>
+      </div>
+      <div class="flow">
+        <div class="node">
+          <span class="eyebrow" style="color:var(--cyan)"><span class="en">Players</span><span class="ko">플레이어</span></span>
+          <h3>Minecraft Java</h3>
+          <p><span class="en">Connect by hostname:</span><span class="ko">호스트명으로 접속:</span></p>
+          <ul><li class="c">&lt;server&gt;.&lt;ip&gt;.nip.io</li><li class="c">&lt;server&gt;.local</li><li class="c">*.craft.playit.gg</li></ul>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node hl">
+          <span class="eyebrow"><span class="en">Router</span><span class="ko">라우터</span></span>
+          <h3>mc-router <span class="g mono">:25565</span></h3>
+          <p><span class="en">Routes by hostname, starts a stopped server on connect, stops it after the idle timeout.</span><span class="ko">호스트명으로 라우팅하고, 접속하면 꺼진 서버를 켜고, 유휴 시간이 지나면 끕니다.</span></p>
+        </div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="node">
+          <span class="eyebrow" style="color:var(--amber)"><span class="en">Servers</span><span class="ko">서버</span></span>
+          <h3>itzg/minecraft-server</h3>
+          <p><span class="en">One container per server, sharing a worlds directory.</span><span class="ko">서버마다 컨테이너 하나, 월드 디렉터리는 공유.</span></p>
+          <ul><li>mc-survival · Paper</li><li>mc-modded · Fabric</li><li>mc-creative · Paper</li></ul>
+        </div>
+        <div class="arrow" aria-hidden="true">←</div>
+        <div class="node">
+          <span class="eyebrow" style="color:var(--violet)"><span class="en">Manage</span><span class="ko">관리</span></span>
+          <h3>mcctl</h3>
+          <p><span class="en">CLI, plus an optional Fastify REST API and Next.js console that read the Docker socket read-only.</span><span class="ko">CLI, 그리고 Docker 소켓을 읽기 전용으로 쓰는 Fastify REST API와 Next.js 콘솔(선택).</span></p>
+          <ul><li><span class="v">:5001</span> mcctl-api</li><li><span class="g">:5000</span> mcctl-console</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Commands -->
+  <section id="commands">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <span class="eyebrow">04 / <span class="en">Commands</span><span class="ko">명령어</span></span>
+          <h2><span class="en">One command per job.</span><span class="ko">작업 하나에 명령 하나.</span></h2>
+        </div>
+        <span class="hint"><span class="en">click a card to copy</span><span class="ko">카드를 누르면 복사됩니다</span></span>
+      </div>
+      <div class="grid four">
+        <button class="card cmdcard" type="button" data-copy="mcctl create survival -t PAPER -v 1.21.1">
+          <span class="top-line"><span class="num">CREATE</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
+          <code>mcctl create survival -t PAPER -v 1.21.1</code>
+          <p><span class="en">Create a Paper server and register its hostname with the router.</span><span class="ko">Paper 서버를 만들고 라우터에 호스트명을 등록합니다.</span></p>
+        </button>
+        <button class="card cmdcard" type="button" data-copy="mcctl create pack -t MODRINTH --modpack cobblemon">
+          <span class="top-line"><span class="num">MODPACK</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
+          <code>mcctl create pack -t MODRINTH --modpack cobblemon</code>
+          <p><span class="en">Build a server from a Modrinth modpack.</span><span class="ko">Modrinth 모드팩으로 서버를 만듭니다.</span></p>
+        </button>
+        <button class="card cmdcard" type="button" data-copy="mcctl mod add modded fabric-api lithium">
+          <span class="top-line"><span class="num">MODS</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
+          <code>mcctl mod add modded fabric-api lithium</code>
+          <p><span class="en">Add mods from Modrinth (default), CurseForge, or Spiget.</span><span class="ko">Modrinth(기본), CurseForge, Spiget에서 모드를 추가합니다.</span></p>
+        </button>
+        <button class="card cmdcard" type="button" data-copy="mcctl world assign hardcore-01 survival">
+          <span class="top-line"><span class="num">WORLD</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
+          <code>mcctl world assign hardcore-01 survival</code>
+          <p><span class="en">Lock a world to a server until you release it.</span><span class="ko">해제할 때까지 월드를 서버에 잠급니다.</span></p>
+        </button>
+        <button class="card cmdcard" type="button" data-copy="mcctl player online --all">
+          <span class="top-line"><span class="num">PLAYERS</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
+          <code>mcctl player online --all</code>
+          <p><span class="en">See who is online on every running server.</span><span class="ko">실행 중인 모든 서버의 접속자를 봅니다.</span></p>
+        </button>
+        <button class="card cmdcard" type="button" data-copy="mcctl backup push -m weekly">
+          <span class="top-line"><span class="num">BACKUP</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
+          <code>mcctl backup push -m weekly</code>
+          <p><span class="en">Commit world data to your GitHub backup repository.</span><span class="ko">월드 데이터를 GitHub 백업 저장소에 커밋합니다.</span></p>
+        </button>
+        <button class="card cmdcard" type="button" data-copy="mcctl playit setup">
+          <span class="top-line"><span class="num">EXTERNAL</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
+          <code>mcctl playit setup</code>
+          <p><span class="en">Let friends outside your network join — no port forwarding.</span><span class="ko">포트 포워딩 없이 외부 친구도 접속하게 합니다.</span></p>
+        </button>
+        <button class="card cmdcard" type="button" data-copy="mcctl console init">
+          <span class="top-line"><span class="num">CONSOLE</span><svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg></span>
+          <code>mcctl console init</code>
+          <p><span class="en">Set up the web console and REST API.</span><span class="ko">웹 콘솔과 REST API를 설정합니다.</span></p>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="start">
+    <div class="wrap">
+      <div class="cta">
+        <span class="eyebrow"><span class="en">Get started</span><span class="ko">시작하기</span></span>
+        <h2><span class="en">Your first server in four commands.</span><span class="ko">명령 네 줄이면 첫 서버가 뜹니다.</span></h2>
+        <p class="sub"><span class="en">Needs Node.js 18+ and Docker Engine 24+ on Linux or macOS. Your existing Minecraft client is all players need.</span><span class="ko">Linux 또는 macOS에 Node.js 18+, Docker Engine 24+가 필요합니다. 플레이어는 평소 쓰던 마인크래프트 클라이언트만 있으면 됩니다.</span></p>
+        <div class="cta-row">
+<pre><span class="ps1">$</span> npm install -g @minecraft-docker/mcctl
+<span class="ps1">$</span> mcctl init
+<span class="ps1">$</span> mcctl create myserver -t PAPER -v 1.21.1
+<span class="ps1">$</span> mcctl console init   <span class="d"># optional: web console</span></pre>
+          <div class="links" style="margin-top:0">
+            <button class="btn" type="button" data-copy="npm install -g @minecraft-docker/mcctl&#10;mcctl init&#10;mcctl create myserver -t PAPER -v 1.21.1&#10;mcctl console init">
+              <svg class="i i-copy" aria-hidden="true"><use href="#i-copy"/></svg>
+              <svg class="i i-check" aria-hidden="true"><use href="#i-check"/></svg>
+              <span class="en">Copy all</span><span class="ko">모두 복사</span>
+            </button>
+            <a class="btn ghost en" href="https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/quickstart/">Quickstart <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></a>
+            <a class="btn ghost ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/getting-started/quickstart/">빠른 시작 <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></a>
+            <a class="btn ghost" href="https://github.com/smallmiro/minecraft-server-manager"><svg class="i" aria-hidden="true"><use href="#i-gh"/></svg> GitHub</a>
+          </div>
+        </div>
+        <p class="meta" style="margin-top:20px">
+          <span class="en">Then connect to <code>myserver.&lt;HOST_IP&gt;.nip.io:25565</code></span>
+          <span class="ko">그다음 <code>myserver.&lt;HOST_IP&gt;.nip.io:25565</code>로 접속하세요</span>
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <a class="brand" href="#"><svg aria-hidden="true"><use href="#i-cube"/></svg>mcctl <span class="pill" data-version>v2.30.0</span></a>
+      <nav class="foot-links" aria-label="Footer">
+        <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/">docs</a>
+        <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/">docs</a>
+        <a href="https://www.npmjs.com/package/@minecraft-docker/mcctl">npm</a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager">github</a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/releases">releases</a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE">Apache-2.0</a>
+      </nav>
+    </div>
+    <p style="margin:0"><span class="en">Built on <code>itzg/minecraft-server</code> and <code>itzg/mc-router</code>.</span><span class="ko"><code>itzg/minecraft-server</code>와 <code>itzg/mc-router</code> 기반.</span></p>
+    <p style="margin:0"><span class="en">Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span><span class="ko">공식 마인크래프트 제품이 아니며, Mojang 또는 Microsoft의 승인을 받거나 제휴하지 않았습니다.</span></p>
+  </div>
+</footer>
+
+<script>
+  // Language toggle
+  function setLang(lang) {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-set-lang]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.setLang === lang));
+    });
+    try { localStorage.setItem('lang', lang); } catch (e) {}
+  }
+  document.querySelectorAll('[data-set-lang]').forEach(function (b) {
+    b.addEventListener('click', function () { setLang(b.dataset.setLang); });
+  });
+  setLang(document.documentElement.lang);
+
+  // Tabs (terminal mock-up and screenshot gallery)
+  document.querySelectorAll('[data-tabs]').forEach(function (group) {
+    var tabs = group.querySelectorAll('[role="tab"]');
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) {
+          var on = t === tab;
+          t.setAttribute('aria-selected', String(on));
+          document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+        });
+      });
+    });
+  });
+
+  // Copy buttons
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-copy]');
+    if (!btn) return;
+    var text = btn.dataset.copy;
+    var done = function () {
+      btn.classList.add('copied');
+      setTimeout(function () { btn.classList.remove('copied'); }, 1600);
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, fallback);
+    else fallback();
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (err) {}
+      ta.remove();
+    }
+  });
+
+  // Keep the version badge current without editing this file each release
+  fetch('https://registry.npmjs.org/@minecraft-docker/mcctl/latest')
+    .then(function (r) { return r.json(); })
+    .then(function (d) { document.querySelectorAll('[data-version]').forEach(function (el) { el.textContent = 'v' + d.version; }); })
+    .catch(function () {});
+</script>
+</body>
+</html>
