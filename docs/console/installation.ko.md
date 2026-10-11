@@ -11,10 +11,16 @@ Management Console를 설치하기 전에 다음을 확인하세요:
   node --version  # v18.0.0 이상이어야 합니다
   ```
 
-- [x] **PM2 전역 설치**
+- [x] **PM2 6 이상 전역 설치**
   ```bash
   npm install -g pm2
-  pm2 --version
+  pm2 --version  # 6.0.0 이상이어야 합니다
+  ```
+
+- [x] **Docker Engine 24 이상, Docker Compose 2.20 이상**
+  ```bash
+  docker --version
+  docker compose version
   ```
 
 - [x] **mcctl 설치 및 초기화 완료**
@@ -67,7 +73,7 @@ $ mcctl console init
 Initialize Console Service
 
   Node.js: v20.10.0
-  PM2: 5.3.0
+  PM2: 6.0.14
 
 ? Select services to install: mcctl-api, mcctl-console
 
@@ -194,6 +200,8 @@ module.exports = {
 ```
 
 ### 접근 모드
+
+`mcctl console init`은 설정 중에 접근 모드를 묻습니다. 재초기화 없이 나중에 모드를 바꾸려면 `mcctl console api mode <mode>`를 사용하세요 ([CLI 명령어](cli-commands.md#mcctl-console-api-mode) 참조).
 
 #### internal (프로덕션 권장)
 

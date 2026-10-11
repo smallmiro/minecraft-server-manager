@@ -11,10 +11,16 @@ Before installing Management Console, ensure you have:
   node --version  # Should be v18.0.0 or higher
   ```
 
-- [x] **PM2 installed globally**
+- [x] **PM2 6 or higher installed globally**
   ```bash
   npm install -g pm2
-  pm2 --version
+  pm2 --version  # Should be 6.0.0 or higher
+  ```
+
+- [x] **Docker Engine 24+ and Docker Compose 2.20+**
+  ```bash
+  docker --version
+  docker compose version
   ```
 
 - [x] **mcctl installed and initialized**
@@ -67,7 +73,7 @@ $ mcctl console init
 Initialize Console Service
 
   Node.js: v20.10.0
-  PM2: 5.3.0
+  PM2: 6.0.14
 
 ? Select services to install: mcctl-api, mcctl-console
 
@@ -194,6 +200,8 @@ module.exports = {
 ```
 
 ### Access Modes
+
+`mcctl console init` asks for the access mode during setup. To switch modes later without reinitializing, use `mcctl console api mode <mode>` (see [CLI Commands](cli-commands.md#mcctl-console-api-mode)).
 
 #### internal (Recommended for Production)
 
