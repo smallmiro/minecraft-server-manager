@@ -9,7 +9,7 @@ import type {
 
 const ABI_MISMATCH_HINT =
   'better-sqlite3 was built for a different Node.js version. ' +
-  'Run "npm rebuild -g @minecraft-docker/mcctl" or reinstall mcctl with the current Node.js.';
+  'Reinstall mcctl with the current Node.js: npm install -g @minecraft-docker/mcctl';
 
 // Process-wide so a recreated Container still warns only once
 let warned = false;

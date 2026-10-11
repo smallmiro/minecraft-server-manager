@@ -110,7 +110,7 @@ describe('BestEffortAuditLogAdapter', () => {
     expect(errorSpy).toHaveBeenCalledTimes(1);
     const output = errorSpy.mock.calls[0].join(' ');
     expect(output).toContain('better-sqlite3 was built for a different Node.js version');
-    expect(output).toContain('npm rebuild -g @minecraft-docker/mcctl');
+    expect(output).toContain('npm install -g @minecraft-docker/mcctl');
     expect(output).not.toContain('NODE_MODULE_VERSION');
   });
 
