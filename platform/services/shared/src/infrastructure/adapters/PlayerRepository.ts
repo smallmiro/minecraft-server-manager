@@ -2,7 +2,7 @@ import { readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
 import { Player, PlayerStats, PlayerData } from '../../domain/index.js';
-import { parsePlayerDat } from './playerDataNbt.js';
+import { PLAYER_DATA_DIRS, parsePlayerDat } from './playerDataNbt.js';
 import type {
   IPlayerRepository,
   UserCacheEntry,
@@ -29,8 +29,9 @@ interface PlayerRecord {
  *
  * Filesystem implementation of IPlayerRepository. Reads a server's
  * `usercache.json` / `ops.json` / `whitelist.json` / `banned-players.json`
- * (under `servers/<name>/data/`) and its world's `playerdata/*.dat` (mtime
- * as last-seen) to build the union of every known player (#528, Phase 1).
+ * (under `servers/<name>/data/`) and its world's player `.dat` files
+ * (`playerdata/` or 26.x `players/data/`, mtime as last-seen) to build the
+ * union of every known player (#528, Phase 1).
  */
 export class PlayerRepository implements IPlayerRepository {
   private readonly paths: Paths;
@@ -103,12 +104,16 @@ export class PlayerRepository implements IPlayerRepository {
 
     const level = await this.resolveWorldLevel(serverName);
     const worldDir = join(this.paths.root, 'worlds', level);
-    const statsJson = await this.readJsonFile(join(worldDir, 'stats', `${uuid}.json`));
+    const file = `${uuid}.json`;
+    // 26.x moved these under players/ (#601); fall back to the <= 1.21 layout.
+    const statsJson =
+      (await this.readJsonFile(join(worldDir, 'players', 'stats', file))) ??
+      (await this.readJsonFile(join(worldDir, 'stats', file)));
     if (statsJson === null) return null;
 
-    const advancementsJson = await this.readJsonFile(
-      join(worldDir, 'advancements', `${uuid}.json`)
-    );
+    const advancementsJson =
+      (await this.readJsonFile(join(worldDir, 'players', 'advancements', file))) ??
+      (await this.readJsonFile(join(worldDir, 'advancements', file)));
     try {
       return PlayerStats.fromMinecraftJson(statsJson, advancementsJson ?? undefined);
     } catch {
@@ -120,38 +125,48 @@ export class PlayerRepository implements IPlayerRepository {
     if (!UUID_PATTERN.test(uuid)) return null;
 
     const level = await this.resolveWorldLevel(serverName);
-    const datPath = join(this.paths.root, 'worlds', level, 'playerdata', `${uuid}.dat`);
-    try {
-      const buf = await readFile(datPath);
-      const parsed = await parsePlayerDat(buf);
-      return PlayerData.create(parsed);
-    } catch {
-      return null;
+    const worldDir = join(this.paths.root, 'worlds', level);
+    for (const sub of PLAYER_DATA_DIRS) {
+      let buf: Buffer;
+      try {
+        buf = await readFile(join(worldDir, sub, `${uuid}.dat`));
+      } catch {
+        continue; // Not in this layout; try the next one.
+      }
+      try {
+        return PlayerData.create(await parsePlayerDat(buf));
+      } catch {
+        return null;
+      }
     }
+    return null;
   }
 
-  /** Scan `worlds/<level>/playerdata/*.dat`, using file mtime as last-seen. */
+  /** Scan every player data dir's `*.dat`, using file mtime as last-seen. */
   private async scanPlayerDataMtimes(
     serverName: string
   ): Promise<Array<{ uuid: string; lastSeen: Date }>> {
     const level = await this.resolveWorldLevel(serverName);
-    const dir = join(this.paths.root, 'worlds', level, 'playerdata');
-
-    let entries: string[];
-    try {
-      entries = await readdir(dir);
-    } catch {
-      return [];
-    }
+    const worldDir = join(this.paths.root, 'worlds', level);
 
     const results: Array<{ uuid: string; lastSeen: Date }> = [];
-    for (const entry of entries) {
-      if (!entry.endsWith('.dat')) continue;
+    for (const sub of PLAYER_DATA_DIRS) {
+      const dir = join(worldDir, sub);
+      let entries: string[];
       try {
-        const fileStat = await stat(join(dir, entry));
-        results.push({ uuid: entry.slice(0, -4), lastSeen: fileStat.mtime });
+        entries = await readdir(dir);
       } catch {
-        // Skip files that disappear/fail mid-scan.
+        continue;
+      }
+
+      for (const entry of entries) {
+        if (!entry.endsWith('.dat')) continue;
+        try {
+          const fileStat = await stat(join(dir, entry));
+          results.push({ uuid: entry.slice(0, -4), lastSeen: fileStat.mtime });
+        } catch {
+          // Skip files that disappear/fail mid-scan.
+        }
       }
     }
     return results;
