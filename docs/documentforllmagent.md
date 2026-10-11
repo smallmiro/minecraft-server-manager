@@ -1318,6 +1318,8 @@ curl -u admin:password http://localhost:5001/api/servers
 | `api-key-ip` | Both API key AND IP required | Maximum security |
 | `open` | No authentication | Development only |
 
+> **Note**: `internal`, `api-key-ip` and `open` are not in mcctl-api's list of recognised `AUTH_MODE` values yet (it recognises `disabled`, `api-key`, `ip-whitelist`, `basic`, `combined`), so do not rely on them to behave as described. Use `api-key` or `ip-whitelist`. Tracked in #633.
+
 ### All Endpoints
 
 **Health:**
@@ -2725,7 +2727,7 @@ A: Lower overhead, faster startup, easier debugging, automatic process recovery.
 A: `mcctl console init` then `mcctl console service start`.
 
 **Q: What access modes are available?**
-A: `internal` (default), `api-key`, `ip-whitelist`, `api-key-ip`, `open`.
+A: `internal` (default), `api-key`, `ip-whitelist`, `api-key-ip`, `open`. Only `api-key` and `ip-whitelist` are recognised by mcctl-api today; see #633.
 
 **Q: Where is the API documentation?**
 A: `http://localhost:5001/docs` (Swagger/OpenAPI).

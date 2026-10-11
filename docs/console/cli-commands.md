@@ -65,6 +65,9 @@ The command guides you through:
 
 The admin email, name, and password are asked only when `mcctl-console` is selected. The admin account is created with the `admin` role.
 
+!!! warning "Access modes"
+    `internal`, `api-key-ip` and `open` are not in mcctl-api's list of recognised `AUTH_MODE` values yet, so do not rely on them to behave as described. `api-key` and `ip-whitelist` are recognised. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+
 The command does not ask for ports. To use ports other than the defaults, pass `--api-port` and `--console-port` (see the examples below).
 
 ### Examples
@@ -831,10 +834,12 @@ mcctl console service start
 **Configure IP Whitelist:**
 
 ```bash
-# Choose "ip-whitelist" (or "api-key-ip") and enter the allowed IPs, comma-separated
+# Choose "ip-whitelist" and enter the allowed IPs, comma-separated
 mcctl console init --force
 mcctl console service start
 ```
+
+Do not use `api-key-ip` for this: mcctl-api does not recognise it yet, so no IP restriction is applied ([#633](https://github.com/smallmiro/minecraft-server-manager/issues/633)).
 
 `mcctl console api whitelist` likewise only edits `api-config.json` for now.
 

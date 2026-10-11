@@ -84,6 +84,9 @@ Management Console는 다양한 인증 모드를 지원합니다:
 | `api-key-ip` | API 키와 IP 모두 필요 | 고보안 환경 |
 | `open` | 인증 없음 | 개발 환경 전용 |
 
+!!! note
+    `internal`, `api-key-ip`, `open`은 아직 mcctl-api가 인식하는 `AUTH_MODE` 값 목록에 없으므로 설명대로 동작한다고 기대하지 마세요. `api-key`와 `ip-whitelist`는 인식됩니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+
 !!! warning "보안 경고"
     프로덕션 환경에서는 절대 `open` 모드를 사용하지 마세요. 모든 인증이 비활성화되어 서버가 무단 접근에 노출됩니다.
 

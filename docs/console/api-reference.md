@@ -16,7 +16,7 @@ Authentication is based on the configured access mode.
 
 ### API Key Authentication
 
-When using `api-key` or `api-key-ip` mode, include the API key in the request header:
+When using `api-key` or `combined` mode, include the API key in the request header:
 
 ```http
 X-API-Key: mctk_your_api_key_here

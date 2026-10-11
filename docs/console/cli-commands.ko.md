@@ -65,6 +65,9 @@ mcctl console init [options]
 
 관리자 이메일, 이름, 비밀번호는 `mcctl-console`을 선택한 경우에만 묻습니다. 관리자 계정은 `admin` 역할로 생성됩니다.
 
+!!! warning "접근 모드"
+    `internal`, `api-key-ip`, `open`은 아직 mcctl-api가 인식하는 `AUTH_MODE` 값 목록에 없으므로 설명대로 동작한다고 기대하지 마세요. `api-key`와 `ip-whitelist`는 인식됩니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+
 이 명령어는 포트를 묻지 않습니다. 기본값이 아닌 포트를 사용하려면 `--api-port`와 `--console-port`를 지정하세요 (아래 예제 참조).
 
 ### 예제
@@ -831,10 +834,12 @@ mcctl console service start
 **IP 화이트리스트 설정:**
 
 ```bash
-# "ip-whitelist"(또는 "api-key-ip")를 선택하고 허용할 IP를 쉼표로 구분해 입력
+# "ip-whitelist"를 선택하고 허용할 IP를 쉼표로 구분해 입력
 mcctl console init --force
 mcctl console service start
 ```
+
+이 용도로 `api-key-ip`를 사용하지 마세요. mcctl-api가 아직 이 값을 인식하지 않아 IP 제한이 적용되지 않습니다 ([#633](https://github.com/smallmiro/minecraft-server-manager/issues/633)).
 
 `mcctl console api whitelist`도 현재는 `api-config.json`만 수정합니다.
 

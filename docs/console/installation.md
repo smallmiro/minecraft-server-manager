@@ -261,24 +261,20 @@ mcctl console init
 
 To change the allowed IPs, reinitialize with `mcctl console init --force` and enter the new list. `mcctl console api whitelist` currently does not change the whitelist the running API uses.
 
-#### api-key-ip (Highest Security)
+#### api-key-ip
 
-Requires both a valid API key AND the client IP must be in the whitelist.
+Meant to require both a valid API key AND a client IP from the whitelist.
 
-```bash
-mcctl console init
-# Select "api-key-ip" when prompted
-```
+!!! warning "Not recognised by mcctl-api yet"
+    mcctl-api does not recognise `api-key-ip`, so selecting it currently applies no IP restriction. Use `ip-whitelist` if you need one. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 #### open (Development Only)
 
 !!! danger "Security Risk"
-    This mode disables all authentication. Never use in production!
+    This mode is meant to disable all authentication. Never use in production!
 
-```bash
-mcctl console init
-# Select "open" when prompted (you are asked to confirm)
-```
+!!! warning "Not recognised by mcctl-api yet"
+    mcctl-api does not recognise `open`, so selecting it does not reliably disable authentication. Tracked in [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 ### User Management
 

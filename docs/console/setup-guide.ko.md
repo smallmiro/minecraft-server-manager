@@ -307,6 +307,9 @@ REST API의 인증 모드를 선택합니다:
 | `api-key-ip` | 최대 | API 키와 IP 모두 필요한 고보안 환경 |
 | `open` | 없음 | 로컬 개발/테스트 전용 |
 
+!!! warning "접근 모드"
+    `internal`, `api-key-ip`, `open`은 아직 mcctl-api가 인식하는 `AUTH_MODE` 값 목록에 없으므로 설명대로 동작한다고 기대하지 마세요. `api-key`와 `ip-whitelist`는 인식됩니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
+
 !!! danger "open 모드 경고"
     `open` 모드는 모든 인증을 비활성화합니다. 선택하면 확인 프롬프트가 표시됩니다:
     ```

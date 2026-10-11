@@ -261,24 +261,20 @@ mcctl console init
 
 허용 IP를 바꾸려면 `mcctl console init --force`로 다시 초기화하고 새 목록을 입력하세요. `mcctl console api whitelist`는 현재 실행 중인 API가 사용하는 화이트리스트를 바꾸지 않습니다.
 
-#### api-key-ip (최고 보안)
+#### api-key-ip
 
-유효한 API 키와 화이트리스트에 등록된 클라이언트 IP가 모두 필요합니다.
+유효한 API 키와 화이트리스트에 등록된 클라이언트 IP를 모두 요구하려는 모드입니다.
 
-```bash
-mcctl console init
-# 프롬프트에서 "api-key-ip" 선택
-```
+!!! warning "아직 mcctl-api가 인식하지 않습니다"
+    mcctl-api가 `api-key-ip`를 인식하지 않으므로, 선택해도 현재는 IP 제한이 적용되지 않습니다. IP 제한이 필요하면 `ip-whitelist`를 사용하세요. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 #### open (개발 환경 전용)
 
 !!! danger "보안 위험"
-    이 모드는 모든 인증을 비활성화합니다. 프로덕션에서는 절대 사용하지 마세요!
+    이 모드는 모든 인증을 비활성화하려는 모드입니다. 프로덕션에서는 절대 사용하지 마세요!
 
-```bash
-mcctl console init
-# 프롬프트에서 "open" 선택 (확인을 묻습니다)
-```
+!!! warning "아직 mcctl-api가 인식하지 않습니다"
+    mcctl-api가 `open`을 인식하지 않으므로, 선택해도 인증이 확실히 비활성화되지는 않습니다. 추적: [#633](https://github.com/smallmiro/minecraft-server-manager/issues/633).
 
 ### 사용자 관리
 
