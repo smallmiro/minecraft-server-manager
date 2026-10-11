@@ -73,7 +73,7 @@ mcctl upgrade --non-interactive   # 프롬프트 없이 기본값 적용(자동�
 
 - `.env`에 새 변수가 추가되고(`DOCKER_GID` 등), `docker-compose.yml.bak-<타임스탬프>`가 생성되며, router가 변경되면 `docker compose up -d router`가 자동 실행됩니다.
 - `servers/_template/*`가 덮어써지고 `.mcctl.json`의 `templateVersion`이 갱신됩니다.
-- `.mcctl.json`에 `installId`가 없으면 한 번 추가합니다 (기존 값은 유지). 웹 콘솔이 익명 사용 통계에 사용하며, 끄려면 `.mcctl.json`에 `"telemetry": false`를 설정합니다 ([사용 통계](../console/web-console.ko.md#사용-통계) 참고).
+- `.mcctl.json`에 `installId`가 없으면 한 번 추가합니다 (기존 값은 유지). 웹 콘솔이 익명 사용 통계에 사용하며, 끄려면 `.mcctl.json`에 `"telemetry": false`를 설정합니다 ([사용 통계](../console/web-console.ko.md) 참고).
 - **router 이미지가 태그 없는 `itzg/mc-router`이면 `mcctl upgrade`가 image를 올리지 않습니다.** `docker-compose.yml`의 `image:`를 릴리즈 노트가 지정한 버전으로 직접 고정한 뒤 `docker compose config -q && docker compose up -d router`를 실행합니다.
 
 ## 4. API / Console 재시작 (필요 시)
