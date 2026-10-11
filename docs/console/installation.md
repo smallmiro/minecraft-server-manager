@@ -46,16 +46,17 @@ mcctl console init
 
 This interactive command will prompt you for:
 
-1. **Admin username** (default: `admin`)
-2. **Admin password** - Must contain:
+1. **Admin email** - Used to sign in to the web console (e.g., `admin@example.com`)
+2. **Admin name** (default: `Administrator`)
+3. **Admin password** - Must contain:
    - At least 8 characters
    - At least one uppercase letter
    - At least one lowercase letter
    - At least one number
-3. **Confirm password** - Must match
-4. **API access mode** - Choose based on your security needs
-5. **Custom ports** (optional) - Configure API and console ports
-6. **Additional configuration** based on selected mode
+4. **Confirm password** - Must match
+5. **API access mode** - Choose based on your security needs
+6. **Custom ports** (optional) - Configure API and console ports
+7. **Additional configuration** based on selected mode
 
 Example session:
 
@@ -67,7 +68,8 @@ Initialize Console Service
   Node.js: v20.10.0
   PM2: 5.3.0
 
-? Admin username? admin
+? Admin email? admin@example.com
+? Admin name? Administrator
 ? Admin password? ********
 ? Confirm password? ********
 ? API access mode? internal - Local network only (default, most secure)
@@ -267,7 +269,7 @@ mcctl console api mode open --force
 mcctl console user add
 
 # CLI mode
-mcctl console user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator@example.com --role user --password "SecurePass123"
 ```
 
 #### List Users
@@ -281,10 +283,10 @@ Output:
 ```
 Users:
 
-Username            Role        Created
---------------------------------------------------
-admin               admin       2025-01-15
-operator1           viewer      2025-01-16
+Email                         Name                Role        Created
+---------------------------------------------------------------------------
+admin@example.com             Administrator       admin       2025-01-15
+operator@example.com          operator            user        2025-01-16
 
 Total: 2 user(s)
 ```
@@ -292,23 +294,23 @@ Total: 2 user(s)
 #### Update User Role
 
 ```bash
-mcctl console user update operator1 --role admin
+mcctl console user update operator@example.com --role admin
 ```
 
 #### Reset Password
 
 ```bash
 # Interactive
-mcctl console user reset-password operator1
+mcctl console user reset-password operator@example.com
 
 # CLI
-mcctl console user reset-password operator1 --password "NewSecurePass456"
+mcctl console user reset-password operator@example.com --password "NewSecurePass456"
 ```
 
 #### Remove User
 
 ```bash
-mcctl console user remove operator1
+mcctl console user remove operator@example.com
 ```
 
 !!! note "Last Admin Protection"
@@ -383,7 +385,7 @@ Expected response:
 
 2. **Reset password:**
    ```bash
-   mcctl console user reset-password admin
+   mcctl console user reset-password admin@example.com
    ```
 
 3. **Check configuration file:**

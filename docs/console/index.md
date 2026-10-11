@@ -108,7 +108,7 @@ Management Console supports multiple authentication modes:
 
 - Multiple user accounts with role-based access
 - Admin role: Full access to all features
-- Viewer role: Read-only access to status and logs
+- User role: Access limited to the servers granted to the account (Viewer, Operator, or Owner permission per server)
 
 ## Quick Start
 
@@ -123,7 +123,7 @@ mcctl console init
 Follow the interactive prompts to configure:
 
 1. Select services to install (mcctl-api, mcctl-console)
-2. Admin username (required if console selected)
+2. Admin email and name (required if console selected)
 3. Admin password (min 8 characters, requires uppercase, lowercase, number)
 4. API access mode (internal, api-key, ip-whitelist, api-key-ip, open)
 5. IP whitelist (if applicable)
