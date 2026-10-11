@@ -3,6 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-PXHEVYJHJR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-PXHEVYJHJR');
+</script>
 <title>Minecraft Server Manager — Run Many Java Servers on One Port</title>
 <meta name="description" content="Run every Minecraft Java server you host behind one port. Servers start when a player connects and stop when idle. CLI and web console.">
 <link rel="canonical" href="https://mcctl.mirolab.dev/">
@@ -1366,7 +1375,7 @@ modded               <span class="g">running</span>      healthy    modded.local
     try { localStorage.setItem('lang', lang); } catch (e) {}
   }
   document.querySelectorAll('[data-set-lang]').forEach(function (b) {
-    b.addEventListener('click', function () { setLang(b.dataset.setLang); });
+    b.addEventListener('click', function () { setLang(b.dataset.setLang); track('select_language', {}); });
   });
   setLang(document.documentElement.lang);
 
@@ -1375,6 +1384,7 @@ modded               <span class="g">running</span>      healthy    modded.local
     var tabs = group.querySelectorAll('[role="tab"]');
     tabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
+        track('select_tab', { tab: tab.id });
         tabs.forEach(function (t) {
           var on = t === tab;
           t.setAttribute('aria-selected', String(on));
@@ -1389,6 +1399,7 @@ modded               <span class="g">running</span>      healthy    modded.local
     var btn = e.target.closest('[data-copy]');
     if (!btn) return;
     var text = btn.dataset.copy;
+    track('copy_command', { command: text.split('\n')[0].slice(0, 100), section: sectionOf(btn) });
     var done = function () {
       btn.classList.add('copied');
       setTimeout(function () { btn.classList.remove('copied'); }, 1600);
@@ -1410,6 +1421,47 @@ modded               <span class="g">running</span>      healthy    modded.local
     .then(function (r) { return r.json(); })
     .then(function (d) { document.querySelectorAll('[data-version]').forEach(function (el) { el.textContent = 'v' + d.version; el.hidden = false; }); })
     .catch(function () {});
+
+  // Analytics events. page_view, scroll and outbound clicks also come from GA4 enhanced measurement.
+  function track(name, params) {
+    params.site_lang = document.documentElement.lang;
+    gtag('event', name, params);
+  }
+  function sectionOf(el) {
+    var s = el.closest('section[id], #install, header, footer');
+    return s ? (s.id || s.tagName.toLowerCase()) : 'hero';
+  }
+
+  // Link clicks with the section they came from (innerText skips the hidden languages)
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href]:not([href^="#"])');
+    if (!a) return;
+    var img = a.querySelector('img');
+    track('link_click', {
+      link_url: a.href,
+      link_text: (a.innerText.trim() || (img && img.alt) || '').slice(0, 100),
+      section: sectionOf(a)
+    });
+  });
+
+  // FAQ question opened
+  document.querySelectorAll('.faq details').forEach(function (d) {
+    d.addEventListener('toggle', function () {
+      if (d.open) track('faq_open', { question: d.querySelector('summary .en').textContent.slice(0, 100) });
+    });
+  });
+
+  // Section reached the upper half of the viewport, once per page load
+  if ('IntersectionObserver' in window) {
+    var seen = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        seen.unobserve(en.target);
+        track('section_view', { section: en.target.id });
+      });
+    }, { rootMargin: '0px 0px -50% 0px' });
+    document.querySelectorAll('main section[id]').forEach(function (s) { seen.observe(s); });
+  }
 </script>
 </body>
 </html>
