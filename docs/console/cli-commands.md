@@ -51,16 +51,16 @@ The command guides you through:
 2. **Admin email** - Used to sign in to the web console (e.g., `admin@example.com`)
 3. **Admin name** - Default: `Administrator`
 4. **Admin password** - Password requirements:
-   - Minimum 8 characters
-   - At least one uppercase letter
-   - At least one lowercase letter
-   - At least one number
+    - Minimum 8 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one number
 5. **API access mode** - Choose security level:
-   - `internal` - Local network only (recommended)
-   - `api-key` - Requires X-API-Key header
-   - `ip-whitelist` - IP-based access control
-   - `api-key-ip` - Both API key and IP required
-   - `open` - No authentication (development only)
+    - `internal` - Local network only (recommended)
+    - `api-key` - Requires X-API-Key header
+    - `ip-whitelist` - IP-based access control
+    - `api-key-ip` - Both API key and IP required
+    - `open` - No authentication (development only)
 6. **Additional configuration** - Based on selected mode
 
 The admin email, name, and password are asked only when `mcctl-console` is selected. The admin account is created with the `admin` role.

@@ -51,16 +51,16 @@ mcctl console init [options]
 2. **관리자 이메일** - 웹 콘솔 로그인에 사용합니다 (예: `admin@example.com`)
 3. **관리자 이름** - 기본값: `Administrator`
 4. **관리자 비밀번호** - 비밀번호 요구사항:
-   - 최소 8자
-   - 대문자 1개 이상
-   - 소문자 1개 이상
-   - 숫자 1개 이상
+    - 최소 8자
+    - 대문자 1개 이상
+    - 소문자 1개 이상
+    - 숫자 1개 이상
 5. **API 접근 모드** - 보안 수준 선택:
-   - `internal` - 로컬 네트워크만 (권장)
-   - `api-key` - X-API-Key 헤더 필요
-   - `ip-whitelist` - IP 기반 접근 제어
-   - `api-key-ip` - API 키와 IP 모두 필요
-   - `open` - 인증 없음 (개발 전용)
+    - `internal` - 로컬 네트워크만 (권장)
+    - `api-key` - X-API-Key 헤더 필요
+    - `ip-whitelist` - IP 기반 접근 제어
+    - `api-key-ip` - API 키와 IP 모두 필요
+    - `open` - 인증 없음 (개발 전용)
 6. **추가 설정** - 선택한 모드에 따른 추가 설정
 
 관리자 이메일, 이름, 비밀번호는 `mcctl-console`을 선택한 경우에만 묻습니다. 관리자 계정은 `admin` 역할로 생성됩니다.
