@@ -1312,7 +1312,7 @@ curl -u admin:password http://localhost:5001/api/servers
 
 | Mode | Description | Use Case |
 |------|-------------|----------|
-| `internal` | Local network only (default) | Home/local deployment |
+| `internal` | Internal access only, no external exposure (default) | Home/local deployment |
 | `api-key` | X-API-Key header required | Automation, scripts |
 | `ip-whitelist` | IP-based access control | Known client IPs |
 | `api-key-ip` | Both API key AND IP required | Maximum security |

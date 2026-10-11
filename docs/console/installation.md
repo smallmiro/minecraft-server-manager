@@ -228,7 +228,7 @@ Only the services you selected during `mcctl console init` appear in the file. I
 
 #### internal (Recommended for Production)
 
-Only allows access from the local network. The most secure option for home/local deployments.
+Internal access only, no external exposure. The most secure option for home/local deployments.
 
 ```bash
 mcctl console init

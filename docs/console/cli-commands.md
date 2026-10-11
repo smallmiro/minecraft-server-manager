@@ -56,7 +56,7 @@ The command guides you through:
     - At least one lowercase letter
     - At least one number
 5. **API access mode** - Choose security level:
-    - `internal` - Local network only (recommended)
+    - `internal` - Internal access only, no external exposure (recommended)
     - `api-key` - Requires X-API-Key header
     - `ip-whitelist` - IP-based access control
     - `api-key-ip` - Both API key and IP required
@@ -496,7 +496,7 @@ mcctl console api mode [mode] [options]
 
 | Mode | Description |
 |------|-------------|
-| `internal` | Docker network only (most secure) |
+| `internal` | Internal access only, no external exposure (most secure) |
 | `api-key` | External access with X-API-Key header |
 | `ip-whitelist` | IP-based access control |
 | `api-key-ip` | Both API key and IP required |

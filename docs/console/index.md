@@ -80,7 +80,7 @@ Management Console supports multiple authentication modes:
 
 | Mode | Description | Use Case |
 |------|-------------|----------|
-| `internal` | Docker network only (most secure) | Default production |
+| `internal` | Internal access only, no external exposure (most secure) | Default production |
 | `api-key` | External access with X-API-Key header | Automation/scripts |
 | `ip-whitelist` | IP-based access control | Known client IPs |
 | `api-key-ip` | Both API key and IP required | High security |

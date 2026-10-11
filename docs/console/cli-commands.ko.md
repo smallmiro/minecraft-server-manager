@@ -56,7 +56,7 @@ mcctl console init [options]
     - 소문자 1개 이상
     - 숫자 1개 이상
 5. **API 접근 모드** - 보안 수준 선택:
-    - `internal` - 로컬 네트워크만 (권장)
+    - `internal` - 내부 접근만 허용, 외부 노출 없음 (권장)
     - `api-key` - X-API-Key 헤더 필요
     - `ip-whitelist` - IP 기반 접근 제어
     - `api-key-ip` - API 키와 IP 모두 필요
@@ -496,7 +496,7 @@ mcctl console api mode [mode] [options]
 
 | 모드 | 설명 |
 |------|-------------|
-| `internal` | Docker 네트워크만 (가장 안전) |
+| `internal` | 내부 접근만 허용, 외부 노출 없음 (가장 안전) |
 | `api-key` | X-API-Key 헤더를 통한 외부 접근 |
 | `ip-whitelist` | IP 기반 접근 제어 |
 | `api-key-ip` | API 키와 IP 모두 필요 |
