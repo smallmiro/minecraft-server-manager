@@ -553,10 +553,10 @@ export function parseRconPlayerList(raw: string): PlayerListResult | null {
   const online = parseInt(countMatch[1], 10);
   const max = parseInt(countMatch[2], 10);
 
-  // Extract player names after the colon
+  // Extract player names after the colon (none when online is 0, so leftovers never become fake players)
   const playersMatch = result.match(/:\s*(.*)$/);
   let players: string[] = [];
-  if (playersMatch && playersMatch[1]) {
+  if (online > 0 && playersMatch && playersMatch[1]) {
     players = playersMatch[1]
       .split(',')
       .map((s) => s.trim())
