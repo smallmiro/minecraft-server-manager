@@ -5,7 +5,7 @@ import nbt from 'prismarine-nbt';
 import type { IWorldDataReader } from '../../application/ports/outbound/IWorldDataReader.js';
 import { parseStructuresFromRegion } from './AnvilStructureReader.js';
 import { resolveRegionDirs } from './dimensionRegions.js';
-import { GAME_MODES, toNumber, parsePlayerDat } from './playerDataNbt.js';
+import { GAME_MODES, PLAYER_DATA_DIRS, toNumber, parsePlayerDat } from './playerDataNbt.js';
 import {
   Dimension,
   type Structure,
@@ -82,37 +82,42 @@ export class PrismarineWorldDataReader implements IWorldDataReader {
   }
 
   async readPlayerData(worldPath: string): Promise<PlayerLocation[]> {
-    const dir = join(worldPath, 'playerdata');
-    let entries: string[];
-    try {
-      entries = await readdir(dir);
-    } catch {
-      return [];
-    }
-
     const names = await this.loadUserCache(worldPath);
 
     const result: PlayerLocation[] = [];
-    for (const entry of entries) {
-      if (!entry.endsWith('.dat')) continue;
+    const seen = new Set<string>();
+    for (const sub of PLAYER_DATA_DIRS) {
+      const dir = join(worldPath, sub);
+      let entries: string[];
       try {
-        const buf = await readFile(join(dir, entry));
-        const data = await parsePlayerDat(buf);
-        const uuid = entry.replace(/\.dat$/, '');
-        result.push({
-          uuid,
-          name: names.get(uuid.toLowerCase()),
-          x: data.x,
-          y: data.y,
-          z: data.z,
-          dimension: data.dimension,
-          health: data.health,
-          food: data.food,
-          xpLevel: data.xpLevel,
-          online: false,
-        });
+        entries = await readdir(dir);
       } catch {
-        // Skip corrupt playerdata files
+        continue;
+      }
+
+      for (const entry of entries) {
+        if (!entry.endsWith('.dat')) continue;
+        const uuid = entry.replace(/\.dat$/, '');
+        if (seen.has(uuid.toLowerCase())) continue;
+        try {
+          const buf = await readFile(join(dir, entry));
+          const data = await parsePlayerDat(buf);
+          seen.add(uuid.toLowerCase());
+          result.push({
+            uuid,
+            name: names.get(uuid.toLowerCase()),
+            x: data.x,
+            y: data.y,
+            z: data.z,
+            dimension: data.dimension,
+            health: data.health,
+            food: data.food,
+            xpLevel: data.xpLevel,
+            online: false,
+          });
+        } catch {
+          // Skip corrupt playerdata files
+        }
       }
     }
     return result;

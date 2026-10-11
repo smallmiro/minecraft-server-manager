@@ -25,6 +25,12 @@ export function toNumber(value: unknown, fallback = 0): number {
   return fallback;
 }
 
+/**
+ * World-relative directories holding `<uuid>.dat` player files, newest layout
+ * first. A uuid found in an earlier directory wins over later ones.
+ */
+export const PLAYER_DATA_DIRS: readonly string[] = ['playerdata'];
+
 /** Map a dimension id string to the normalized Dimension enum. */
 export function mapDimension(id: unknown): Dimension {
   switch (id) {

@@ -2,7 +2,7 @@ import { readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
 import { Player, PlayerStats, PlayerData } from '../../domain/index.js';
-import { parsePlayerDat } from './playerDataNbt.js';
+import { PLAYER_DATA_DIRS, parsePlayerDat } from './playerDataNbt.js';
 import type {
   IPlayerRepository,
   UserCacheEntry,
@@ -120,38 +120,48 @@ export class PlayerRepository implements IPlayerRepository {
     if (!UUID_PATTERN.test(uuid)) return null;
 
     const level = await this.resolveWorldLevel(serverName);
-    const datPath = join(this.paths.root, 'worlds', level, 'playerdata', `${uuid}.dat`);
-    try {
-      const buf = await readFile(datPath);
-      const parsed = await parsePlayerDat(buf);
-      return PlayerData.create(parsed);
-    } catch {
-      return null;
+    const worldDir = join(this.paths.root, 'worlds', level);
+    for (const sub of PLAYER_DATA_DIRS) {
+      let buf: Buffer;
+      try {
+        buf = await readFile(join(worldDir, sub, `${uuid}.dat`));
+      } catch {
+        continue; // Not in this layout; try the next one.
+      }
+      try {
+        return PlayerData.create(await parsePlayerDat(buf));
+      } catch {
+        return null;
+      }
     }
+    return null;
   }
 
-  /** Scan `worlds/<level>/playerdata/*.dat`, using file mtime as last-seen. */
+  /** Scan every player data dir's `*.dat`, using file mtime as last-seen. */
   private async scanPlayerDataMtimes(
     serverName: string
   ): Promise<Array<{ uuid: string; lastSeen: Date }>> {
     const level = await this.resolveWorldLevel(serverName);
-    const dir = join(this.paths.root, 'worlds', level, 'playerdata');
-
-    let entries: string[];
-    try {
-      entries = await readdir(dir);
-    } catch {
-      return [];
-    }
+    const worldDir = join(this.paths.root, 'worlds', level);
 
     const results: Array<{ uuid: string; lastSeen: Date }> = [];
-    for (const entry of entries) {
-      if (!entry.endsWith('.dat')) continue;
+    for (const sub of PLAYER_DATA_DIRS) {
+      const dir = join(worldDir, sub);
+      let entries: string[];
       try {
-        const fileStat = await stat(join(dir, entry));
-        results.push({ uuid: entry.slice(0, -4), lastSeen: fileStat.mtime });
+        entries = await readdir(dir);
       } catch {
-        // Skip files that disappear/fail mid-scan.
+        continue;
+      }
+
+      for (const entry of entries) {
+        if (!entry.endsWith('.dat')) continue;
+        try {
+          const fileStat = await stat(join(dir, entry));
+          results.push({ uuid: entry.slice(0, -4), lastSeen: fileStat.mtime });
+        } catch {
+          // Skip files that disappear/fail mid-scan.
+        }
       }
     }
     return results;
