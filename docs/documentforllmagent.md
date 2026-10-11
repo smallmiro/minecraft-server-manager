@@ -1,6 +1,6 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.30.0
+> **Version**: 2.31.0
 > **Last Updated**: 2026-10-11
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
@@ -2847,6 +2847,14 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.31.0 (2026-10-11) - Console Usage Analytics
+
+**Added:**
+- Anonymous GA4 `page_view` analytics in the web console (#631): `installId` (UUID in `.mcctl.json`, written by `mcctl init`/`mcctl upgrade` or on first console request), normalized page path, console version. Not sent: hostname/IP, server/world names, query, account. Opt out: `"telemetry": false` in `.mcctl.json` or `DO_NOT_TRACK=1`; disabled in dev mode.
+
+**Fixed:**
+- `mcctl console user/api` dropped `--role`, `--password`, `--json`, `--force` (#628)
 
 ### Version 2.30.0 (2026-10-11) - Docs & Development Workflow
 

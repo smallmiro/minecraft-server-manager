@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.31.0] - 2026-10-11
+
+### Added
+- **Anonymous usage analytics for the web console (GA4)** (#631) - The console sends a `page_view` for each page so the project can see which screens are used.
+  - **Sent**: a random per-installation `installId` (UUID, stored in `.mcctl.json`) used as the GA `user_id`; the normalized page path (e.g. `/servers/:name`); the console version.
+  - **Never sent**: hostname or IP, server or world names, query strings, account information.
+  - **Opt out**: add `"telemetry": false` to `.mcctl.json` (no restart needed) or set `DO_NOT_TRACK=1`. Nothing is sent in development mode.
+  - `installId` is written by `mcctl init`, added by `mcctl upgrade` when missing, or created on the console's first request if you only ran `mcctl update`. `mcctl console init` and `mcctl update` print a notice about it.
+  - Details: [Usage Analytics](https://minecraft-server-manager.readthedocs.io/en/latest/console/web-console/#usage-analytics)
+
+### Fixed
+- **`mcctl console user` / `mcctl console api` dropped options** (#628) - `--role`, `--password`, `--json` and `--force` were discarded before reaching Commander; they are now passed through.
+
 ## [2.30.0] - 2026-10-11
 
 > **No product behavior changes in this release.** v2.30.0 consists of documentation and contributor/development-workflow changes only; the CLI, API, console, and runtime are functionally identical to v2.29.1.
