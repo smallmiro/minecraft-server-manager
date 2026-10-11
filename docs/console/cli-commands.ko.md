@@ -41,27 +41,31 @@ mcctl console init [options]
 | `--root <path>` | 사용자 지정 데이터 디렉토리 |
 | `--force` | 이미 구성된 경우에도 재초기화 |
 | `--api-port <port>` | API 서버 포트 (기본값: 5001) |
-| `--console-port <port>` | 콘솔 서버 포트 (기본값: 3000) |
+| `--console-port <port>` | 콘솔 서버 포트 (기본값: 5000) |
 
 ### 대화형 흐름
 
 명령어가 안내하는 단계:
 
-1. **관리자 사용자명** - 기본값: `admin`
-2. **관리자 비밀번호** - 비밀번호 요구사항:
+1. **설치할 서비스** - `mcctl-api`가 기본으로 선택되어 있으며, 웹 콘솔을 설치하려면 `mcctl-console`도 선택합니다
+2. **관리자 이메일** - 웹 콘솔 로그인에 사용합니다 (예: `admin@example.com`)
+3. **관리자 이름** - 기본값: `Administrator`
+4. **관리자 비밀번호** - 비밀번호 요구사항:
    - 최소 8자
    - 대문자 1개 이상
    - 소문자 1개 이상
    - 숫자 1개 이상
-3. **비밀번호 확인** - 일치해야 함
-4. **API 접근 모드** - 보안 수준 선택:
+5. **API 접근 모드** - 보안 수준 선택:
    - `internal` - 로컬 네트워크만 (권장)
    - `api-key` - X-API-Key 헤더 필요
    - `ip-whitelist` - IP 기반 접근 제어
    - `api-key-ip` - API 키와 IP 모두 필요
    - `open` - 인증 없음 (개발 전용)
-5. **사용자 지정 포트** - 선택적 포트 설정
 6. **추가 설정** - 선택한 모드에 따른 추가 설정
+
+관리자 이메일, 이름, 비밀번호는 `mcctl-console`을 선택한 경우에만 묻습니다. 관리자 계정은 `admin` 역할로 생성됩니다.
+
+이 명령어는 포트를 묻지 않습니다. 기본값이 아닌 포트를 사용하려면 `--api-port`와 `--console-port`를 지정하세요 (아래 예제 참조).
 
 ### 예제
 
@@ -182,10 +186,10 @@ mcctl console user list [options]
 ```
 Users:
 
-Username            Role        Created
---------------------------------------------------
-admin               admin       2025-01-15
-operator1           viewer      2025-01-16
+Email                         Name                Role        Created
+---------------------------------------------------------------------------
+admin@example.com             Administrator       admin       2025-01-15
+operator@example.com          Operator            user        2025-01-16
 
 Total: 2 user(s)
 ```
@@ -199,33 +203,41 @@ mcctl console user list --json
 ```json
 [
   {
-    "id": "usr_abc123",
-    "username": "admin",
+    "id": "a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    "name": "Administrator",
+    "email": "admin@example.com",
     "role": "admin",
-    "createdAt": "2025-01-15T10:00:00.000Z"
+    "emailVerified": true,
+    "banned": false,
+    "createdAt": "2025-01-15T10:00:00.000Z",
+    "updatedAt": "2025-01-15T10:00:00.000Z"
   },
   {
-    "id": "usr_def456",
-    "username": "operator1",
-    "role": "viewer",
-    "createdAt": "2025-01-16T14:30:00.000Z"
+    "id": "0f9e8d7c6b5a49382716f5e4d3c2b1a0",
+    "name": "Operator",
+    "email": "operator@example.com",
+    "role": "user",
+    "emailVerified": true,
+    "banned": false,
+    "createdAt": "2025-01-16T14:30:00.000Z",
+    "updatedAt": "2025-01-16T14:30:00.000Z"
   }
 ]
 ```
 
 ### mcctl console user add
 
-새 사용자 계정을 추가합니다.
+새 사용자 계정을 추가합니다. 사용자는 이메일 주소로 식별합니다.
 
 ```bash
-mcctl console user add [username] [options]
+mcctl console user add [email] [options]
 ```
 
 **옵션:**
 
 | 옵션 | 설명 |
 |--------|-------------|
-| `--role <role>` | 사용자 역할: `admin` 또는 `viewer` |
+| `--role <role>` | 사용자 역할: `admin` 또는 `user` |
 | `--password <password>` | 사용자 비밀번호 |
 
 **대화형 모드:**
@@ -233,33 +245,42 @@ mcctl console user add [username] [options]
 ```bash
 mcctl console user add
 
-? Username: operator1
-? Role: Viewer - 읽기 전용 접근
+? Email: operator@example.com
+? Name: Operator
+? Role: User - 표준 접근
 ? Password: ********
 ? Confirm password: ********
 
-'operator1' 사용자가 성공적으로 생성되었습니다!
+'operator@example.com' 사용자가 성공적으로 생성되었습니다!
 ```
+
+대화형 비밀번호 입력은 최소 8자 이상이어야 합니다.
 
 **CLI 모드:**
 
 ```bash
-mcctl console user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator@example.com --role user --password "SecurePass123"
 ```
+
+```json
+{"success":true,"email":"operator@example.com"}
+```
+
+CLI 모드는 `[email]`, `--role`, `--password`를 모두 지정한 경우에만 적용되며, 하나라도 빠지면 대화형 프롬프트가 표시됩니다. 사용자 이름은 이메일의 `@` 앞부분으로 설정되고, `--password`로 지정한 비밀번호는 별도 검증 없이 그대로 사용됩니다.
 
 **역할:**
 
 | 역할 | 권한 |
 |------|-------------|
 | `admin` | 모든 기능에 대한 전체 접근 |
-| `viewer` | 읽기 전용 접근 (상태, 로그) |
+| `user` | 표준 접근, 계정에 부여된 서버로 제한됨 |
 
 ### mcctl console user remove
 
 사용자 계정을 제거합니다.
 
 ```bash
-mcctl console user remove [username] [options]
+mcctl console user remove [email] [options]
 ```
 
 **옵션:**
@@ -273,16 +294,16 @@ mcctl console user remove [username] [options]
 ```bash
 mcctl console user remove
 
-? 제거할 사용자 선택: operator1 (viewer)
-? 'operator1' 사용자를 삭제하시겠습니까? Yes
+? 제거할 사용자 선택: operator@example.com (user)
+? 'operator@example.com' 사용자를 삭제하시겠습니까? Yes
 
-'operator1' 사용자가 삭제되었습니다.
+'operator@example.com' 사용자가 삭제되었습니다.
 ```
 
 **CLI 모드:**
 
 ```bash
-mcctl console user remove operator1 --force
+mcctl console user remove operator@example.com --force
 ```
 
 !!! note "보호"
@@ -293,23 +314,23 @@ mcctl console user remove operator1 --force
 사용자의 역할을 업데이트합니다.
 
 ```bash
-mcctl console user update [username] [options]
+mcctl console user update [email] [options]
 ```
 
 **옵션:**
 
 | 옵션 | 설명 |
 |--------|-------------|
-| `--role <role>` | 새 역할: `admin` 또는 `viewer` |
+| `--role <role>` | 새 역할: `admin` 또는 `user` |
 
 **예제:**
 
 ```bash
 # 관리자로 승격
-mcctl console user update operator1 --role admin
+mcctl console user update operator@example.com --role admin
 
-# 뷰어로 강등
-mcctl console user update operator1 --role viewer
+# 일반 사용자로 강등
+mcctl console user update operator@example.com --role user
 ```
 
 ### mcctl console user reset-password
@@ -317,7 +338,7 @@ mcctl console user update operator1 --role viewer
 사용자의 비밀번호를 재설정합니다.
 
 ```bash
-mcctl console user reset-password [username] [options]
+mcctl console user reset-password [email] [options]
 ```
 
 **옵션:**
@@ -329,18 +350,18 @@ mcctl console user reset-password [username] [options]
 **대화형 모드:**
 
 ```bash
-mcctl console user reset-password operator1
+mcctl console user reset-password operator@example.com
 
 ? New password: ********
 ? Confirm password: ********
 
-'operator1'의 비밀번호가 재설정되었습니다.
+'operator@example.com'의 비밀번호가 재설정되었습니다.
 ```
 
 **CLI 모드:**
 
 ```bash
-mcctl console user reset-password operator1 --password "NewSecurePass456"
+mcctl console user reset-password operator@example.com --password "NewSecurePass456"
 ```
 
 ---
@@ -729,7 +750,7 @@ mcctl console service start
 **운영자 사용자 추가:**
 
 ```bash
-mcctl console user add operator1 --role viewer --password "SecurePass123"
+mcctl console user add operator@example.com --role user --password "SecurePass123"
 ```
 
 **API 키 모드로 전환:**
