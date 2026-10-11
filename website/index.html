@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mcctl · Docker Minecraft Server Manager</title>
+<title>Minecraft Server Manager</title>
 <meta name="description" content="Run every Minecraft Java server you host behind one port. Servers start when a player connects and stop when idle. CLI and web console.">
-<meta property="og:title" content="mcctl · Docker Minecraft Server Manager">
+<meta property="og:title" content="Minecraft Server Manager">
 <meta property="og:description" content="Run them in Docker. Wake them when players connect.">
 <meta name="theme-color" content="#0c0e12">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 28 10 16 17 4 10Z' fill='%234de38a'/%3E%3Cpath d='M4 10 16 17V30L4 23Z' fill='%231bd96a'/%3E%3Cpath d='M28 10 16 17V30L28 23Z' fill='%23109a4b'/%3E%3C/svg%3E">
@@ -81,6 +81,7 @@
   .top .wrap { height: 60px; display: flex; align-items: center; gap: 24px; }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -.02em; }
   .brand svg { width: 26px; height: 26px; }
+  @media (max-width: 560px) { .top .pill { display: none; } .top .brand { font-size: 15px; line-height: 1.15; max-width: 9.5em; } }
   .pill {
     font: 500 11px/1 var(--mono);
     padding: 5px 7px; border-radius: 4px;
@@ -110,6 +111,24 @@
       radial-gradient(600px 320px at 12% 20%, rgba(27, 217, 106, .13), transparent 70%),
       radial-gradient(520px 300px at 85% 0%, rgba(124, 58, 237, .10), transparent 70%);
   }
+  /* Hero background: BlueMap render of a real world, faded into the page on the left and bottom */
+  .hero { overflow: hidden; }
+  .hero > .wrap { position: relative; z-index: 1; }
+  .hero-bg {
+    position: absolute; top: 0; right: 0; bottom: 0; width: min(64%, 1100px); z-index: 0; pointer-events: none;
+    background: url("assets/hero-world.webp") center / cover no-repeat;
+    filter: brightness(.62) saturate(1.05);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 45%), linear-gradient(to bottom, #000 55%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to right, transparent 0%, #000 45%), linear-gradient(to bottom, #000 55%, transparent 100%);
+    mask-composite: intersect;
+  }
+  .hero-credit { position: absolute; right: 32px; top: 20px; z-index: 1; font: 400 11.5px/1.4 var(--mono); color: rgba(243, 244, 246, .55); }
+  @media (max-width: 860px) {
+    .hero-bg { width: 100%; opacity: .35; -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 90%); mask-image: linear-gradient(to bottom, #000 30%, transparent 90%); }
+    .hero-credit { display: none; }
+  }
+
   .eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
     font: 700 11px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--green);
@@ -157,6 +176,8 @@
   .meta { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 6px 14px; font: 400 12.5px/1.6 var(--mono); color: var(--dim); }
   .meta a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
   .meta a:hover { color: var(--text); }
+  .badges { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .badges img { height: 20px; width: auto; border-radius: 3px; }
 
   .stats { margin-top: 48px; display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid var(--line); }
   .stat { padding: 20px 16px 4px 0; }
@@ -272,6 +293,60 @@
   .arrow { display: flex; align-items: center; justify-content: center; color: var(--dim); font: 400 18px/1 var(--mono); transform: rotate(90deg); }
   @media (min-width: 1000px) { .arrow { transform: none; } }
 
+  /* External access */
+  .ext {
+    display: grid; gap: 28px; grid-template-columns: 1fr; padding: 28px 20px; border-radius: 12px;
+    border: 1px solid var(--line);
+    background: radial-gradient(520px 260px at 0% 0%, rgba(0, 229, 255, .08), transparent 70%), var(--card);
+  }
+  @media (min-width: 960px) { .ext { grid-template-columns: 1.15fr 1fr; gap: 48px; padding: 40px; } }
+  .ext .eyebrow { color: var(--cyan); }
+  .steps { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 16px; counter-reset: step; }
+  .steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 6px 12px; counter-increment: step; }
+  .steps li::before {
+    content: counter(step); grid-row: span 2; width: 28px; height: 28px; border-radius: 6px;
+    display: grid; place-items: center; font: 700 12px/1 var(--mono); color: var(--cyan);
+    background: rgba(0, 229, 255, .08); border: 1px solid rgba(0, 229, 255, .25);
+  }
+  .steps code { display: block; padding: 6px 10px; border-radius: 4px; background: var(--term); border: 1px solid var(--line); font-size: 12.5px; color: var(--text); overflow-wrap: anywhere; }
+  .steps p { margin: 0; font-size: 14px; color: var(--muted); }
+  .steps p code { display: inline; padding: 1px 5px; white-space: nowrap; }
+  .ext-note { margin: 22px 0 0; font-size: 13.5px; color: var(--muted); }
+  .tunnel { display: flex; flex-direction: column; justify-content: center; font: 400 12.5px/1.4 var(--mono); }
+  .tnode { display: flex; align-items: center; justify-content: space-between; gap: 6px 12px; flex-wrap: wrap; padding: 12px 14px; border-radius: 8px; background: var(--term); border: 1px solid var(--line); }
+  .tnode b { color: var(--text); }
+  .tnode > span { color: var(--dim); }
+  .tnode > span.c { color: var(--cyan); }
+  .tnode > span.g { color: var(--green); }
+  .tnode.friend { border-color: rgba(0, 229, 255, .4); }
+  .tline { height: 22px; margin-left: 22px; border-left: 2px dashed rgba(0, 229, 255, .45); }
+  .home { position: relative; padding: 26px 12px 12px; border: 1px dashed var(--line-2); border-radius: 10px; }
+  .home .lbl { position: absolute; top: -9px; left: 12px; padding: 0 8px; background: var(--card); font: 700 10.5px/1.6 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--green); }
+
+  /* Architecture diagram (SMIL animation, desktop + mobile variants) */
+  .arch-wrap { margin-bottom: 16px; padding: 24px; border-radius: 12px; border: 1px solid var(--line); background: var(--term); }
+  .arch { display: block; width: 100%; height: auto; }
+  .arch-m { display: none; max-width: 420px; margin: 0 auto; }
+  @media (max-width: 760px) { .arch-wrap { padding: 14px; } .arch-d { display: none; } .arch-m { display: block; } }
+  .arch .box { fill: var(--card); stroke: var(--line); stroke-width: 1.2; }
+  .arch .router { stroke: rgba(27, 217, 106, .55); filter: drop-shadow(0 0 14px rgba(27, 217, 106, .18)); }
+  .arch .mgbox { stroke: rgba(196, 166, 255, .45); }
+  .arch .wire { fill: none; stroke: var(--line-2); stroke-width: 1.5; }
+  .arch .mg { fill: none; stroke: var(--violet); stroke-width: 1.5; stroke-dasharray: 4 6; opacity: .7; animation: arch-dash 1.2s linear infinite; }
+  .arch .pkt { filter: drop-shadow(0 0 6px currentColor); }
+  .arch text { font-family: var(--mono); }
+  .arch .dg-name { font: 700 14px var(--sans); fill: var(--text); }
+  .arch .dg-name.sm { font-size: 12px; }
+  .arch .dg-name.xs { font-size: 10.5px; }
+  .arch .dg-big { font: 800 20px var(--sans); fill: var(--text); letter-spacing: -.02em; }
+  .arch .dg-mono { font-size: 11px; fill: var(--muted); }
+  .arch .dg-mono.xs { font-size: 9.5px; }
+  .arch .dg-tag { font-size: 10px; font-weight: 700; letter-spacing: .12em; fill: var(--dim); }
+  html[lang="en"] .arch tspan.ko, html[lang="ko"] .arch tspan.en { display: none; }
+  @keyframes arch-dash { to { stroke-dashoffset: -20; } }
+  @media (prefers-reduced-motion: reduce) { .arch .mg { animation: none; } }
+  .arch-cap { margin: 0 0 28px; font: 400 12.5px/1.6 var(--mono); color: var(--dim); }
+
   /* Commands */
   .cmdcard { text-align: left; gap: 0; }
   .cmdcard .top-line { display: flex; justify-content: space-between; align-items: center; }
@@ -304,6 +379,8 @@
   footer .wrap { display: grid; gap: 18px; }
   .foot-top { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; justify-content: space-between; }
   .foot-links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .foot-links a { display: inline-flex; align-items: center; gap: 6px; }
+  .foot-links a svg.i { width: 14px; height: 14px; }
   .foot-links a:hover { color: var(--text); }
   footer code { color: var(--text-2); }
 </style>
@@ -314,15 +391,20 @@
   <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="i-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></symbol>
   <symbol id="i-gh" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+  <symbol id="i-npm" viewBox="0 0 24 24" fill="currentColor"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></symbol>
   <symbol id="i-cube" viewBox="0 0 32 32"><path d="M16 3 28 10 16 17 4 10Z" fill="#4de38a"/><path d="M4 10 16 17V30L4 23Z" fill="#1bd96a"/><path d="M28 10 16 17V30L28 23Z" fill="#109a4b"/></symbol>
 </svg>
 
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="#" aria-label="mcctl home">
+    <a class="brand" href="#" aria-label="Minecraft Server Manager home">
       <svg aria-hidden="true"><use href="#i-cube"/></svg>
-      mcctl
-      <span class="pill" data-version>v2.30.0</span>
+      Minecraft Server Manager
+      <span class="pill" data-version hidden></span>
     </a>
     <nav class="nav" aria-label="Primary">
       <a href="#features"><span class="en">Features</span><span class="ko">기능</span></a>
@@ -346,6 +428,8 @@
 <main>
   <!-- Hero -->
   <div class="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <span class="hero-credit"><span class="en">Background: a BlueMap render of a world hosted with mcctl</span><span class="ko">배경: mcctl로 운영 중인 월드를 BlueMap으로 렌더링</span></span>
     <div class="wrap">
       <span class="eyebrow"><i class="led"></i><span class="en">Docker Minecraft server manager</span><span class="ko">Docker 마인크래프트 서버 매니저</span></span>
       <h1>
@@ -371,9 +455,15 @@
       <div class="meta">
         <span>Linux · macOS · Windows (WSL2)</span>
         <span>Node.js ≥ 18 · Docker ≥ 24</span>
-        <span>Apache-2.0</span>
         <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/getting-started/quickstart/">Full install guide →</a>
         <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/getting-started/quickstart/">설치 가이드 →</a>
+      </div>
+      <div class="badges">
+        <a href="https://www.npmjs.com/package/@minecraft-docker/mcctl"><img src="https://img.shields.io/npm/v/@minecraft-docker/mcctl?style=flat-square&amp;labelColor=1a1d22&amp;color=1bd96a" height="20" alt="npm version"></a>
+        <a href="https://www.npmjs.com/package/@minecraft-docker/mcctl"><img src="https://img.shields.io/npm/dm/@minecraft-docker/mcctl?style=flat-square&amp;labelColor=1a1d22&amp;color=1bd96a" height="20" alt="npm downloads"></a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/issues"><img src="https://img.shields.io/github/issues/smallmiro/minecraft-server-manager?style=flat-square&amp;labelColor=1a1d22&amp;color=1bd96a" height="20" alt="GitHub issues"></a>
+        <a href="https://minecraft-server-manager.readthedocs.io/"><img src="https://img.shields.io/readthedocs/minecraft-server-manager?style=flat-square&amp;labelColor=1a1d22&amp;color=1bd96a" height="20" alt="Documentation status"></a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE"><img src="https://img.shields.io/github/license/smallmiro/minecraft-server-manager?style=flat-square&amp;labelColor=1a1d22&amp;color=1bd96a" height="20" alt="License"></a>
       </div>
 
       <div class="stats">
@@ -607,6 +697,67 @@ modded               <span class="g">running</span>      healthy    modded.local
           <p class="sub"><span class="en">Built on <code>itzg/minecraft-server</code> and <code>itzg/mc-router</code>. No firewall rule per server, no port list to remember.</span><span class="ko"><code>itzg/minecraft-server</code>와 <code>itzg/mc-router</code> 기반. 서버마다 방화벽 규칙을 열거나 포트 번호를 외울 필요가 없습니다.</span></p>
         </div>
       </div>
+      <div class="arch-wrap">
+        <svg class="arch arch-d" viewBox="0 0 1120 460" role="img" aria-labelledby="arch-t"><title id="arch-t">Players connect by hostname to mc-router on port 25565, which forwards each one to its server container and starts sleeping servers. mcctl and Minecraft Server Manager manage the containers through Docker.</title>
+          <path class="wire" d="M250,61 C305,61 305,220 360,220"/>
+          <path class="wire" d="M250,167 C305,167 305,220 360,220"/>
+          <path class="wire" d="M250,273 C305,273 305,220 360,220"/>
+          <path class="wire" d="M250,379 C305,379 305,220 360,220"/>
+          <path class="wire" style="stroke:var(--cyan);opacity:.35" d="M540,220 C595,220 595,80 650,80"/>
+          <path class="wire" style="stroke:var(--amber);opacity:.35" d="M540,220 C595,220 595,220 650,220"/>
+          <path class="wire" style="stroke:var(--green);opacity:.35" d="M540,220 C595,220 595,360 650,360"/>
+          <path class="mg" d="M960,128 H915"/><path class="mg" d="M960,312 H915"/>
+          <path class="mg" d="M915,80 V360"/>
+          <path class="mg" d="M915,80 H870"/>
+          <path class="mg" d="M915,220 H870"/>
+          <path class="mg" d="M915,360 H870"/>
+          <text class="dg-tag" x="923" y="224" transform="rotate(-90 923 220)" text-anchor="middle">DOCKER</text>
+          <circle class="pkt" r="5" style="fill:var(--cyan);color:var(--cyan)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0;0.28;1" keyPoints="0;0;1;1" path="M250,61 C305,61 305,220 360,220 L540,220 C595,220 595,80 650,80"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0;0.005;0.275;0.28;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--amber);color:var(--amber)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.5;0.78;1" keyPoints="0;0;1;1" path="M250,167 C305,167 305,220 360,220 L540,220 C595,220 595,220 650,220"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.5;0.505;0.775;0.78;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--cyan);color:var(--cyan)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.3;0.58;1" keyPoints="0;0;1;1" path="M250,273 C305,273 305,220 360,220 L540,220 C595,220 595,80 650,80"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.3;0.305;0.575;0.58;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--green);color:var(--green)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.12;0.4;1" keyPoints="0;0;1;1" path="M250,379 C305,379 305,220 360,220 L540,220 C595,220 595,360 650,360"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.12;0.125;0.395;0.4;1" values="0;0;1;1;0;0"/></circle>
+          <g><rect class="box" x="0" y="30" width="250" height="62" rx="8"/><rect x="14" y="49" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="49" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="61" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="61" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="57"><tspan class="en">Steve</tspan><tspan class="ko">Steve</tspan></text><circle cx="54" cy="72" r="3.5" style="fill:var(--cyan)"/><text class="dg-mono" x="63" y="76">survival.192.168.1.50.nip.io</text></g>
+          <g><rect class="box" x="0" y="136" width="250" height="62" rx="8"/><rect x="14" y="155" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="155" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="167" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="167" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="163"><tspan class="en">Alex</tspan><tspan class="ko">Alex</tspan></text><circle cx="54" cy="178" r="3.5" style="fill:var(--amber)"/><text class="dg-mono" x="63" y="182">creative.local</text></g>
+          <g><rect class="box" x="0" y="242" width="250" height="62" rx="8"/><rect x="14" y="261" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="261" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="273" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="273" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="269"><tspan class="en">builder_kim</tspan><tspan class="ko">builder_kim</tspan></text><circle cx="54" cy="284" r="3.5" style="fill:var(--cyan)"/><text class="dg-mono" x="63" y="288">survival.192.168.1.50.nip.io</text></g>
+          <g><rect class="box" x="0" y="348" width="250" height="62" rx="8"/><rect x="14" y="367" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="14" y="367" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="19" y="379" width="4" height="4" style="fill:#3b5bdb"/><rect x="29" y="379" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name" x="50" y="375"><tspan class="en">Friend · via playit.gg</tspan><tspan class="ko">친구 · playit.gg 경유</tspan></text><circle cx="54" cy="390" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="63" y="394">xx-xx.craft.playit.gg</text></g>
+          <g><rect class="box router" x="360" y="150" width="180" height="140" rx="10"/><text class="dg-tag" x="378" y="178" style="fill:var(--green)">ROUTER</text><text class="dg-big" x="378" y="206">mc-router</text><text class="dg-mono" x="378" y="228" style="fill:var(--green)">:25565</text><text class="dg-mono" x="378" y="254"><tspan class="en">routes by hostname</tspan><tspan class="ko">호스트명으로 라우팅</tspan></text><text class="dg-mono" x="378" y="272"><tspan class="en">starts sleeping servers</tspan><tspan class="ko">잠든 서버를 깨움</tspan></text></g>
+          <g><rect class="box" x="650" y="40" width="220" height="80" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.28;0.29;0.4;0.58;0.59;0.7;1" values="#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035"/></rect><text class="dg-name" x="666" y="70">mc-survival</text><text class="dg-mono" x="666" y="90">Paper 1.21.1</text><circle cx="668" cy="106" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="678" y="110" style="fill:var(--green)">running</text></g>
+          <g><rect class="box" x="650" y="180" width="220" height="80" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.79;0.9;1" values="#2e3035;#2e3035;#ffd54f;#2e3035;#2e3035"/></rect><text class="dg-name" x="666" y="210">mc-creative</text><text class="dg-mono" x="666" y="230">Paper 1.21.1</text><g opacity="1"><circle cx="668" cy="246" r="3.5" style="fill:#ffd54f"/><text class="dg-mono" x="678" y="250" style="fill:#ffd54f">sleeping</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.98;0.982;1" values="1;1;0;0;1;1"/></g><g opacity="0"><circle cx="668" cy="246" r="3.5" style="fill:#00e5ff"/><text class="dg-mono" x="678" y="250" style="fill:#00e5ff">starting</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.86;0.862;1" values="0;0;1;1;0;0"/></g><g opacity="0"><circle cx="668" cy="246" r="3.5" style="fill:#1bd96a"/><text class="dg-mono" x="678" y="250" style="fill:#1bd96a">running</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.86;0.862;0.98;0.982;1" values="0;0;1;1;0;0"/></g></g>
+          <g><rect class="box" x="650" y="320" width="220" height="80" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.4;0.41;0.52;1" values="#2e3035;#2e3035;#1bd96a;#2e3035;#2e3035"/></rect><text class="dg-name" x="666" y="350">mc-modded</text><text class="dg-mono" x="666" y="370">Fabric 1.21.1</text><circle cx="668" cy="386" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="678" y="390" style="fill:var(--green)">running</text></g>
+          <g><rect class="box mgbox" x="960" y="80" width="160" height="96" rx="8"/><text class="dg-tag" x="976" y="104" style="fill:var(--violet)">CLI</text><text class="dg-name" x="976" y="128">mcctl</text><text class="dg-mono" x="976" y="152">create · start · stop</text></g>
+          <g><rect class="box mgbox" x="960" y="252" width="160" height="120" rx="8"/><text class="dg-tag" x="976" y="276" style="fill:var(--violet)">WEB</text><text class="dg-name" x="976" y="300">Minecraft Server</text><text class="dg-name" x="976" y="318">Manager</text><text class="dg-mono" x="976" y="342">:5000 console</text><text class="dg-mono" x="976" y="358">:5001 REST API</text></g>
+          </svg>
+        <svg class="arch arch-m" viewBox="0 0 300 470" role="img" aria-labelledby="arch-tm"><title id="arch-tm">Players connect by hostname to mc-router on port 25565, which forwards each one to its server container and starts sleeping servers. mcctl and Minecraft Server Manager manage the containers through Docker.</title>
+          <path class="wire" d="M35,66 C35,96 150,86 150,116"/>
+          <path class="wire" d="M111,66 C111,96 150,86 150,116"/>
+          <path class="wire" d="M187,66 C187,96 150,86 150,116"/>
+          <path class="wire" d="M263,66 C263,96 150,86 150,116"/>
+          <path class="wire" style="stroke:var(--cyan);opacity:.35" d="M150,190 C150,218 48,216 48,244"/>
+          <path class="wire" style="stroke:var(--amber);opacity:.35" d="M150,190 C150,218 150,216 150,244"/>
+          <path class="wire" style="stroke:var(--green);opacity:.35" d="M150,190 C150,218 252,216 252,244"/>
+          <path class="mg" d="M70,384 V352"/><path class="mg" d="M230,384 V352"/>
+          <path class="mg" d="M48,352 H252"/>
+          <path class="mg" d="M48,352 V318"/>
+          <path class="mg" d="M150,352 V318"/>
+          <path class="mg" d="M252,352 V318"/>
+          <text class="dg-tag" x="150" y="370" text-anchor="middle">DOCKER</text>
+          <circle class="pkt" r="5" style="fill:var(--cyan);color:var(--cyan)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0;0.28;1" keyPoints="0;0;1;1" path="M35,66 C35,96 150,86 150,116 L150,190 C150,218 48,216 48,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0;0.005;0.275;0.28;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--amber);color:var(--amber)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.5;0.78;1" keyPoints="0;0;1;1" path="M111,66 C111,96 150,86 150,116 L150,190 C150,218 150,216 150,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.5;0.505;0.775;0.78;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--cyan);color:var(--cyan)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.3;0.58;1" keyPoints="0;0;1;1" path="M187,66 C187,96 150,86 150,116 L150,190 C150,218 48,216 48,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.3;0.305;0.575;0.58;1" values="0;0;1;1;0;0"/></circle>
+          <circle class="pkt" r="5" style="fill:var(--green);color:var(--green)" opacity="0"><animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.12;0.4;1" keyPoints="0;0;1;1" path="M263,66 C263,96 150,86 150,116 L150,190 C150,218 252,216 252,244"/><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.12;0.125;0.395;0.4;1" values="0;0;1;1;0;0"/></circle>
+          <g><rect class="box" x="0" y="0" width="70" height="66" rx="8"/><rect x="23" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="23" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="28" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="38" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="35" y="48" text-anchor="middle"><tspan class="en">Steve</tspan><tspan class="ko">Steve</tspan></text><rect x="21" y="55" width="28" height="3" rx="1.5" style="fill:var(--cyan)"/></g>
+          <g><rect class="box" x="76" y="0" width="70" height="66" rx="8"/><rect x="99" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="99" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="104" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="114" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="111" y="48" text-anchor="middle"><tspan class="en">Alex</tspan><tspan class="ko">Alex</tspan></text><rect x="97" y="55" width="28" height="3" rx="1.5" style="fill:var(--amber)"/></g>
+          <g><rect class="box" x="152" y="0" width="70" height="66" rx="8"/><rect x="175" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="175" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="180" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="190" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="187" y="48" text-anchor="middle"><tspan class="en">builder_kim</tspan><tspan class="ko">builder_kim</tspan></text><rect x="173" y="55" width="28" height="3" rx="1.5" style="fill:var(--cyan)"/></g>
+          <g><rect class="box" x="228" y="0" width="70" height="66" rx="8"/><rect x="251" y="9" width="24" height="24" rx="3" style="fill:#c49a6c"/><rect x="251" y="9" width="24" height="9" rx="2" style="fill:#4a3324"/><rect x="256" y="21" width="4" height="4" style="fill:#3b5bdb"/><rect x="266" y="21" width="4" height="4" style="fill:#3b5bdb"/><text class="dg-name xs" x="263" y="48" text-anchor="middle"><tspan class="en">Friend</tspan><tspan class="ko">친구</tspan></text><rect x="249" y="55" width="28" height="3" rx="1.5" style="fill:var(--green)"/></g>
+          <g><rect class="box router" x="50" y="116" width="200" height="74" rx="10"/><text class="dg-big" x="150" y="146" text-anchor="middle">mc-router</text><text class="dg-mono" x="150" y="164" text-anchor="middle" style="fill:var(--green)">:25565</text><text class="dg-mono" x="150" y="180" text-anchor="middle"><tspan class="en">routes by hostname</tspan><tspan class="ko">호스트명으로 라우팅</tspan></text></g>
+          <g><rect class="box" x="0" y="244" width="96" height="74" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.28;0.29;0.4;0.58;0.59;0.7;1" values="#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035;#00e5ff;#2e3035;#2e3035"/></rect><text class="dg-name sm" x="10" y="266">mc-survival</text><text class="dg-mono xs" x="10" y="284">Paper 1.21.1</text><circle cx="13" cy="300" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="23" y="304" style="fill:var(--green)">running</text></g>
+          <g><rect class="box" x="102" y="244" width="96" height="74" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.79;0.9;1" values="#2e3035;#2e3035;#ffd54f;#2e3035;#2e3035"/></rect><text class="dg-name sm" x="112" y="266">mc-creative</text><text class="dg-mono xs" x="112" y="284">Paper 1.21.1</text><g opacity="1"><circle cx="115" cy="300" r="3.5" style="fill:#ffd54f"/><text class="dg-mono" x="125" y="304" style="fill:#ffd54f">sleeping</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.98;0.982;1" values="1;1;0;0;1;1"/></g><g opacity="0"><circle cx="115" cy="300" r="3.5" style="fill:#00e5ff"/><text class="dg-mono" x="125" y="304" style="fill:#00e5ff">starting</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.78;0.782;0.86;0.862;1" values="0;0;1;1;0;0"/></g><g opacity="0"><circle cx="115" cy="300" r="3.5" style="fill:#1bd96a"/><text class="dg-mono" x="125" y="304" style="fill:#1bd96a">running</text><animate attributeName="opacity" dur="8s" repeatCount="indefinite" keyTimes="0;0.86;0.862;0.98;0.982;1" values="0;0;1;1;0;0"/></g></g>
+          <g><rect class="box" x="204" y="244" width="96" height="74" rx="8"><animate attributeName="stroke" dur="8s" repeatCount="indefinite" keyTimes="0;0.4;0.41;0.52;1" values="#2e3035;#2e3035;#1bd96a;#2e3035;#2e3035"/></rect><text class="dg-name sm" x="214" y="266">mc-modded</text><text class="dg-mono xs" x="214" y="284">Fabric 1.21.1</text><circle cx="217" cy="300" r="3.5" style="fill:var(--green)"/><text class="dg-mono" x="227" y="304" style="fill:var(--green)">running</text></g>
+          <g><rect class="box mgbox" x="0" y="384" width="140" height="84" rx="8"/><text class="dg-tag" x="12" y="404" style="fill:var(--violet)">CLI</text><text class="dg-name" x="12" y="426">mcctl</text><text class="dg-mono xs" x="12" y="446">create · start · stop</text></g>
+          <g><rect class="box mgbox" x="160" y="384" width="140" height="84" rx="8"/><text class="dg-tag" x="172" y="404" style="fill:var(--violet)">WEB</text><text class="dg-name sm" x="172" y="424">Minecraft Server</text><text class="dg-name sm" x="172" y="440">Manager</text><text class="dg-mono xs" x="172" y="458">:5000 · :5001</text></g>
+          </svg>
+      </div>
+      <p class="arch-cap"><span class="en">Each colour is one hostname. mc-router reads it from the Minecraft handshake and forwards the player to that container — starting it first if it is asleep. mcctl and Minecraft Server Manager drive the containers through Docker.</span><span class="ko">색 하나가 호스트명 하나입니다. mc-router가 접속 패킷에서 호스트명을 읽어 해당 컨테이너로 보내고, 잠든 서버는 먼저 깨웁니다. mcctl과 Minecraft Server Manager는 Docker를 통해 컨테이너를 관리합니다.</span></p>
       <div class="flow">
         <div class="node">
           <span class="eyebrow" style="color:var(--cyan)"><span class="en">Players</span><span class="ko">플레이어</span></span>
@@ -638,12 +789,51 @@ modded               <span class="g">running</span>      healthy    modded.local
     </div>
   </section>
 
+  <!-- External access -->
+  <section id="external">
+    <div class="wrap">
+      <div class="ext">
+        <div>
+          <span class="eyebrow">04 / <span class="en">External access</span><span class="ko">외부 접속</span></span>
+          <h2><span class="en">Play with friends outside your home.</span><span class="ko">집 밖에 있는 친구와도 함께.</span></h2>
+          <p class="sub"><span class="en">By default your servers are reachable only on your home network. Turn on playit.gg and friends anywhere can join — no port forwarding, no router settings, no static IP. A free playit.gg account is enough.</span><span class="ko">기본적으로 서버는 우리 집 네트워크 안에서만 접속됩니다. playit.gg를 켜면 어디에 있는 친구든 들어올 수 있습니다. 포트 포워딩도, 공유기 설정도, 고정 IP도 필요 없고 무료 playit.gg 계정이면 충분합니다.</span></p>
+          <ol class="steps">
+            <li><code>mcctl playit setup</code><p><span class="en">Paste the agent SECRET_KEY from your playit.gg account.</span><span class="ko">playit.gg 계정에서 발급한 에이전트 SECRET_KEY를 입력합니다.</span></p></li>
+            <li><code>mcctl playit start</code><p><span class="en">Start the playit-agent container next to mc-router.</span><span class="ko">mc-router 옆에서 playit-agent 컨테이너를 실행합니다.</span></p></li>
+            <li><code>Minecraft Java → localhost:25565</code><p><span class="en">On playit.gg, add a Minecraft Java tunnel that points to <code>localhost:25565</code>.</span><span class="ko">playit.gg에서 <code>localhost:25565</code>로 향하는 Minecraft Java 터널을 추가합니다.</span></p></li>
+            <li><code>mcctl create myserver -t PAPER -v 1.21.1 --playit-domain xx-xx.craft.playit.gg</code><p><span class="en">Register the tunnel domain. Friends join <code>xx-xx.craft.playit.gg</code> — no port number.</span><span class="ko">터널 도메인을 서버에 등록합니다. 친구는 포트 번호 없이 <code>xx-xx.craft.playit.gg</code>로 접속합니다.</span></p></li>
+          </ol>
+          <p class="ext-note"><span class="en">The tunnel lands on mc-router, so a sleeping server still wakes when a friend joins. You can also start or stop the agent from the web console's Routing page. playit.gg is a separate third-party service.</span><span class="ko">터널은 mc-router로 들어오므로 친구가 접속해도 잠든 서버가 똑같이 깨어납니다. 에이전트는 웹 콘솔의 라우팅 화면에서도 켜고 끌 수 있습니다. playit.gg는 별도의 외부 서비스입니다.</span></p>
+          <div class="links">
+            <a class="btn ghost en" href="https://minecraft-server-manager.readthedocs.io/en/latest/advanced/external-access/">External access guide <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></a>
+            <a class="btn ghost ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/advanced/external-access/">외부 접속 가이드 <svg class="i" aria-hidden="true"><use href="#i-out"/></svg></a>
+            <a class="btn ghost" href="https://playit.gg/"><svg class="i" aria-hidden="true"><use href="#i-globe"/></svg> playit.gg</a>
+          </div>
+        </div>
+        <div class="tunnel" aria-label="Connection path through playit.gg">
+          <div class="tnode friend"><b><span class="en">Friend</span><span class="ko">친구</span></b><span class="c">xx-xx.craft.playit.gg</span></div>
+          <div class="tline" aria-hidden="true"></div>
+          <div class="tnode"><b>playit.gg</b><span><span class="en">TCP relay on the internet</span><span class="ko">인터넷의 TCP 중계</span></span></div>
+          <div class="tline" aria-hidden="true"></div>
+          <div class="home">
+            <span class="lbl"><span class="en">Your home network</span><span class="ko">우리 집 네트워크</span></span>
+            <div class="tnode"><b>playit-agent</b><span><span class="en">container on your host</span><span class="ko">호스트의 컨테이너</span></span></div>
+            <div class="tline" aria-hidden="true"></div>
+            <div class="tnode"><b>mc-router</b><span class="g">:25565</span></div>
+            <div class="tline" aria-hidden="true"></div>
+            <div class="tnode"><b>mc-myserver</b><span><span class="en">wakes on join</span><span class="ko">접속하면 깨어남</span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Commands -->
   <section id="commands">
     <div class="wrap">
       <div class="head">
         <div>
-          <span class="eyebrow">04 / <span class="en">Commands</span><span class="ko">명령어</span></span>
+          <span class="eyebrow">05 / <span class="en">Commands</span><span class="ko">명령어</span></span>
           <h2><span class="en">One command per job.</span><span class="ko">작업 하나에 명령 하나.</span></h2>
         </div>
         <span class="hint"><span class="en">click a card to copy</span><span class="ko">카드를 누르면 복사됩니다</span></span>
@@ -728,14 +918,15 @@ modded               <span class="g">running</span>      healthy    modded.local
 <footer>
   <div class="wrap">
     <div class="foot-top">
-      <a class="brand" href="#"><svg aria-hidden="true"><use href="#i-cube"/></svg>mcctl <span class="pill" data-version>v2.30.0</span></a>
+      <a class="brand" href="#"><svg aria-hidden="true"><use href="#i-cube"/></svg>Minecraft Server Manager <span class="pill" data-version hidden></span></a>
       <nav class="foot-links" aria-label="Footer">
-        <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/">docs</a>
-        <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/">docs</a>
-        <a href="https://www.npmjs.com/package/@minecraft-docker/mcctl">npm</a>
-        <a href="https://github.com/smallmiro/minecraft-server-manager">github</a>
-        <a href="https://github.com/smallmiro/minecraft-server-manager/releases">releases</a>
-        <a href="https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE">Apache-2.0</a>
+        <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg>docs</a>
+        <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg>docs</a>
+        <a href="https://www.npmjs.com/package/@minecraft-docker/mcctl"><svg class="i" aria-hidden="true"><use href="#i-npm"/></svg>npm</a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager"><svg class="i" aria-hidden="true"><use href="#i-gh"/></svg>github</a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/releases"><svg class="i" aria-hidden="true"><use href="#i-tag"/></svg>releases</a>
+        <a href="https://playit.gg/"><svg class="i" aria-hidden="true"><use href="#i-globe"/></svg>playit.gg</a>
+        <a href="https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE"><svg class="i" aria-hidden="true"><use href="#i-scale"/></svg>Apache-2.0</a>
       </nav>
     </div>
     <p style="margin:0"><span class="en">Built on <code>itzg/minecraft-server</code> and <code>itzg/mc-router</code>.</span><span class="ko"><code>itzg/minecraft-server</code>와 <code>itzg/mc-router</code> 기반.</span></p>
@@ -744,6 +935,11 @@ modded               <span class="g">running</span>      healthy    modded.local
 </footer>
 
 <script>
+  // Freeze the architecture diagram's SMIL animation for people who prefer reduced motion
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('svg.arch').forEach(function (s) { s.pauseAnimations(); });
+  }
+
   // Language toggle
   function setLang(lang) {
     document.documentElement.lang = lang;
@@ -792,10 +988,10 @@ modded               <span class="g">running</span>      healthy    modded.local
     }
   });
 
-  // Keep the version badge current without editing this file each release
+  // Version badge comes from npm only; it stays hidden if the registry is unreachable
   fetch('https://registry.npmjs.org/@minecraft-docker/mcctl/latest')
     .then(function (r) { return r.json(); })
-    .then(function (d) { document.querySelectorAll('[data-version]').forEach(function (el) { el.textContent = 'v' + d.version; }); })
+    .then(function (d) { document.querySelectorAll('[data-version]').forEach(function (el) { el.textContent = 'v' + d.version; el.hidden = false; }); })
     .catch(function () {});
 </script>
 </body>
