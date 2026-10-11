@@ -95,7 +95,7 @@ Console Service initialized!
   Configuration:
     Config file: /home/user/minecraft-servers/.mcctl-admin.yml
     Console DB:  /home/user/minecraft-servers/data/mcctl.db
-    PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
+    PM2 config:  /home/user/minecraft-servers/ecosystem.config.cjs
     Access mode: internal
 
   Endpoints:
@@ -164,11 +164,12 @@ mcctl console init --api-port 8001 --console-port 8000
 | `HOSTNAME` | Console server hostname | `0.0.0.0` |
 | `MCCTL_API_URL` | Internal API URL | `http://localhost:5001` |
 | `NODE_ENV` | Environment mode | `production` |
+| `LOG_LEVEL` | mcctl-api log level: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent` | `info` when `NODE_ENV=production`, otherwise `debug` |
 | `WORLD_UPLOAD_MAX_SIZE` | Max world ZIP size in bytes for `POST /api/worlds/upload` | `1073741824` (1 GB) |
 
 ### PM2 Ecosystem Configuration
 
-The `mcctl console init` command generates `ecosystem.config.cjs` in your platform directory:
+The `mcctl console init` command generates `ecosystem.config.cjs` in the data directory (`<root>/ecosystem.config.cjs`, where `<root>` is `MCCTL_ROOT`, default `~/minecraft-servers`). The service packages are installed under `<root>/.services/`, and the file points to them with absolute paths. The values below are an example for `<root>` = `/home/user/minecraft-servers`:
 
 ```javascript
 // ecosystem.config.cjs
@@ -176,13 +177,15 @@ module.exports = {
   apps: [
     {
       name: 'mcctl-api',
-      script: 'node_modules/@minecraft-docker/mcctl-api/dist/index.js',
-      cwd: process.env.MCCTL_ROOT || '.',
+      script: '/home/user/minecraft-servers/.services/node_modules/@minecraft-docker/mcctl-api/dist/index.js',
+      cwd: '/home/user/minecraft-servers',
       env: {
         NODE_ENV: 'production',
         PORT: 5001,
         HOST: '0.0.0.0',
-        MCCTL_ROOT: process.env.MCCTL_ROOT || '.',
+        MCCTL_ROOT: '/home/user/minecraft-servers',
+        AUTH_MODE: 'internal',
+        // AUTH_API_KEY and AUTH_IP_WHITELIST are added for the matching access modes
       },
       instances: 1,
       exec_mode: 'fork',
@@ -192,12 +195,29 @@ module.exports = {
     },
     {
       name: 'mcctl-console',
-      script: 'node_modules/@minecraft-docker/mcctl-console/.next/standalone/...',
-      // ... console configuration
+      script: '/home/user/minecraft-servers/.services/node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js',
+      cwd: '/home/user/minecraft-servers',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 5000,
+        HOSTNAME: '0.0.0.0',
+        MCCTL_API_URL: 'http://localhost:5001',
+        MCCTL_ROOT: '/home/user/minecraft-servers',
+        BETTER_AUTH_SECRET: '<generated secret>',
+        BETTER_AUTH_BASE_URL: 'http://localhost:5000',
+        // MCCTL_API_KEY is added for the api-key access modes
+      },
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      autorestart: true,
+      max_memory_restart: '500M',
     },
   ],
 };
 ```
+
+Only the services you selected during `mcctl console init` appear in the file. Installations that predate the `.services/` directory keep their packages in `<root>/node_modules/`, and `mcctl console init` still uses that location when the packages are found there.
 
 ### Access Modes
 
@@ -394,9 +414,9 @@ Expected response:
    mcctl console user reset-password admin@example.com
    ```
 
-3. **Check configuration file:**
+3. **Check configuration file** (it lives in the data directory, `~/minecraft-servers` by default):
    ```bash
-   cat ~/.mcctl-admin.yml
+   cat ~/minecraft-servers/.mcctl-admin.yml
    ```
 
 ### API Returns 401 Unauthorized
@@ -423,11 +443,10 @@ Expected response:
    pm2 logs mcctl-console --lines 100
    ```
 
-2. **Check if dependencies are installed:**
+2. **Check if the service packages are installed** (they are installed in the `.services/` directory of your data directory):
    ```bash
-   cd ~/minecraft-servers
-   npm ls @minecraft-docker/mcctl-api
-   npm ls @minecraft-docker/mcctl-console
+   cd ~/minecraft-servers/.services
+   npm ls @minecraft-docker/mcctl-api @minecraft-docker/mcctl-console
    ```
 
 3. **Restart services:**
@@ -458,30 +477,32 @@ Now your services will automatically start when the system boots.
 ### Update mcctl and Services
 
 ```bash
-# Stop services
-mcctl console service stop
-
-# Update mcctl globally
-npm update -g @minecraft-docker/mcctl
-
-# Start services
-mcctl console service start
+mcctl update
 ```
+
+`mcctl update` updates the mcctl CLI and the services installed in `<root>/.services/` (`mcctl-api`, `mcctl-console` and the `shared` library) in one step. Each updated PM2 service is restarted automatically; if the output shows `Updated (restart manually)` for a service, run `mcctl console service restart`. The command also aligns the image tags of your Minecraft servers and pulls the Docker images.
+
+| Option | Description |
+|--------|-------------|
+| `--check` | Only check for updates, install nothing |
+| `--cli-only` | Update only the CLI and leave the services as they are |
+| `--yes` | Skip the confirmation prompt |
+
+`npm update -g @minecraft-docker/mcctl` updates only the CLI package and does not touch the services in `.services/`. See the [mcctl update reference](../cli/commands.md#mcctl-update) for all options.
 
 ### Reinitialize After Major Update
 
 If there are breaking changes, reinitialize the console:
 
 ```bash
-# Stop services
-mcctl console service stop
-
-# Reinitialize (keeps user data)
+# Reinitialize: stops the services and deletes the console settings
 mcctl console init --force
 
 # Start services
 mcctl console service start
 ```
+
+`--force` does not preserve your settings. It stops the PM2 services and deletes `.mcctl-admin.yml` and `ecosystem.config.cjs`, so you choose the API access mode again, the ports return to the defaults unless you pass `--api-port` and `--console-port`, and a new API key is generated for the api-key modes. The console database `data/mcctl.db` is kept: other users stay as they are. If you enter the email of an existing admin, that user is deleted (including its sessions) and created again with the password you enter now. If you enter a different email, the existing admin stays and a new admin is added.
 
 ## Uninstallation
 
@@ -501,11 +522,22 @@ mcctl console remove --keep-config
 This will:
 
 - Stop and remove PM2 processes (mcctl-api, mcctl-console)
-- Delete configuration files (.mcctl-admin.yml, users.yaml)
-- Delete PM2 ecosystem config (ecosystem.config.cjs)
+- Delete configuration files (`.mcctl-admin.yml`, and the legacy `users.yaml` if it exists)
+- Delete PM2 ecosystem config (`ecosystem.config.cjs`)
 
 !!! warning "Data Preservation"
     Removing Management Console does not affect your Minecraft servers or world data.
+
+!!! note "Console database is kept"
+    `data/mcctl.db` (console users, sessions and per-user server permissions) and the packages in `.services/` are not removed. This is intentional, so accounts survive a reinstall. To run `mcctl console init` again with the same admin email you need `--force`; without it the command fails with `User '<email>' already exists`.
+
+To start completely from scratch, also delete the database. This cannot be undone and removes every console user:
+
+```bash
+rm -f ~/minecraft-servers/data/mcctl.db*
+```
+
+See [`mcctl console remove`](cli-commands.md#mcctl-console-remove) for the full list of removed and kept items.
 
 ### Clean Up PM2 (Optional)
 
