@@ -236,6 +236,25 @@ describe('Player roster API (#528)', () => {
       expect(steve.online).toBe(true);
     });
 
+    it('does not report an ANSI reset code as an online player when nobody is connected (#600)', async () => {
+      setupServer('test-server', { files: {} });
+      containerStatus = 'running';
+
+      const { execRconCommand } = await import('../src/lib/rcon.js');
+      vi.mocked(execRconCommand).mockResolvedValue(
+        'There are 0 of a max of 20 players online: \x1b[0m'
+      );
+
+      const response = await app.inject({ method: 'GET', url: '/api/servers/test-server/players' });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.online).toBe(0);
+      expect(body.max).toBe(20);
+      expect(body.players).toEqual([]);
+      expect(body.roster).toEqual([]);
+    });
+
     it('treats RCON failure as no online players instead of 500', async () => {
       setupServer('test-server', { files: {} });
       containerStatus = 'running';
