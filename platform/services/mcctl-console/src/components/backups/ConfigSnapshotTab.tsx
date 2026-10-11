@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useServers } from '@/hooks/useMcctl';
-import { useConfigSnapshots } from '@/hooks/useConfigSnapshots';
+import { configSnapshotsQueryOptions } from '@/hooks/useConfigSnapshots';
 import { useConfigSnapshotSchedules } from '@/hooks/useConfigSnapshotSchedules';
 import type { ConfigSnapshotItem } from '@/ports/api/IMcctlApiClient';
 import { ConfigSnapshotServerList } from './ConfigSnapshotServerList';
@@ -19,30 +20,24 @@ import { ConfigDiffDialog } from './diff';
  * Helper hook: fetch snapshots for multiple servers
  * Fetches the latest 5 snapshots per server for summary display
  */
-function useMultiServerSnapshots(serverNames: string[]) {
-  // We fetch snapshots for each server individually
-  // This is a limitation but works well for the summary view
-  const queries = serverNames.map((name) => ({
-    name,
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    query: useConfigSnapshots(name, 5, 0, { enabled: !!name }),
-  }));
+export function useMultiServerSnapshots(serverNames: string[]) {
+  const queries = useQueries({
+    queries: serverNames.map((name) => configSnapshotsQueryOptions(name, 5, 0)),
+  });
 
-  const isLoading = queries.some((q) => q.query.isLoading);
-  const error = queries.find((q) => q.query.error)?.query.error || null;
+  const isLoading = queries.some((q) => q.isLoading);
+  const error = queries.find((q) => q.error)?.error || null;
 
   const snapshotsByServer = useMemo(() => {
     const map = new Map<string, { snapshots: ConfigSnapshotItem[]; total: number }>();
-    for (const q of queries) {
-      if (q.query.data) {
-        map.set(q.name, {
-          snapshots: q.query.data.snapshots,
-          total: q.query.data.total,
-        });
+    queries.forEach((q, i) => {
+      if (q.data) {
+        map.set(serverNames[i], { snapshots: q.data.snapshots, total: q.data.total });
       }
-    }
+    });
     return map;
-  }, [queries]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queries.map((q) => q.dataUpdatedAt).join(','), serverNames.join(',')]);
 
   return { snapshotsByServer, isLoading, error };
 }

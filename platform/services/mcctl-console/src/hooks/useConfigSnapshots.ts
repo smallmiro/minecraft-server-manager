@@ -1,9 +1,29 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from './useApi';
 import type {
   ConfigSnapshotListResponse,
   ConfigSnapshotItem,
 } from '@/ports/api/IMcctlApiClient';
+
+/**
+ * Query options for a server's config snapshot list (shared by useQuery/useQueries)
+ */
+export function configSnapshotsQueryOptions(
+  serverName: string,
+  limit: number = 20,
+  offset: number = 0,
+  options?: { enabled?: boolean }
+) {
+  return queryOptions<ConfigSnapshotListResponse, Error>({
+    queryKey: ['config-snapshots', 'list', serverName, limit, offset],
+    queryFn: () =>
+      apiFetch<ConfigSnapshotListResponse>(
+        `/api/servers/${encodeURIComponent(serverName)}/config-snapshots?limit=${limit}&offset=${offset}`
+      ),
+    enabled: options?.enabled !== false && !!serverName,
+    refetchInterval: 60000,
+  });
+}
 
 /**
  * Hook to fetch config snapshots for a server
@@ -14,15 +34,7 @@ export function useConfigSnapshots(
   offset: number = 0,
   options?: { enabled?: boolean }
 ) {
-  return useQuery<ConfigSnapshotListResponse, Error>({
-    queryKey: ['config-snapshots', 'list', serverName, limit, offset],
-    queryFn: () =>
-      apiFetch<ConfigSnapshotListResponse>(
-        `/api/servers/${encodeURIComponent(serverName)}/config-snapshots?limit=${limit}&offset=${offset}`
-      ),
-    enabled: options?.enabled !== false && !!serverName,
-    refetchInterval: 60000,
-  });
+  return useQuery(configSnapshotsQueryOptions(serverName, limit, offset, options));
 }
 
 /**
