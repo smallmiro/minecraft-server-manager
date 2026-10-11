@@ -45,6 +45,7 @@ import {
 import { ModrinthAdapter } from '@minecraft-docker/mod-source-modrinth';
 // CLI-specific adapter
 import { ClackPromptAdapter } from '../adapters/ClackPromptAdapter.js';
+import { BestEffortAuditLogAdapter } from '../adapters/BestEffortAuditLogAdapter.js';
 
 export interface ContainerOptions {
   rootDir?: string;
@@ -131,7 +132,11 @@ export class Container {
   get auditLogPort(): IAuditLogPort {
     if (!this._auditLogPort) {
       const dbPath = join(this.paths.root, 'data', 'audit.db');
-      this._auditLogPort = new SqliteAuditLogRepository(dbPath);
+      // Audit logging is auxiliary: never let a repository failure (e.g. better-sqlite3
+      // ABI mismatch) turn a successful command into an error.
+      this._auditLogPort = new BestEffortAuditLogAdapter(
+        () => new SqliteAuditLogRepository(dbPath)
+      );
     }
     return this._auditLogPort;
   }
