@@ -384,6 +384,27 @@
   .community-foot a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
   .community-foot a:hover { color: var(--text); }
 
+  /* About */
+  .about { display: grid; gap: 32px; grid-template-columns: 1fr; align-items: start; }
+  @media (min-width: 960px) { .about { grid-template-columns: 1.1fr 1fr; gap: 56px; } }
+  .story p { margin: 0 0 16px; font-size: 16.5px; line-height: 1.75; color: var(--text-2); }
+  .story .closing { margin-top: 24px; padding-left: 16px; border-left: 2px solid var(--green); color: var(--text); }
+  .sign { margin-top: 20px; display: flex; align-items: center; gap: 10px; font: 400 13px/1.5 var(--mono); color: var(--muted); }
+  .sign a { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 700; }
+  .sign a:hover { color: var(--green); }
+  .about-fig { margin: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--term); }
+  .about-fig img { width: 100%; height: auto; }
+  .about-fig figcaption { padding: 10px 14px; font: 400 12px/1.5 var(--mono); color: var(--dim); }
+  .timeline { list-style: none; margin: 24px 0 0; padding: 0; }
+  .timeline li { position: relative; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 0 0 18px; }
+  .timeline li::before { content: ""; position: absolute; left: 100px; top: 8px; bottom: -2px; border-left: 1px dashed var(--line-2); }
+  .timeline li:last-child::before { display: none; }
+  .timeline time { font: 700 12.5px/1.6 var(--mono); color: var(--green); text-align: right; padding-right: 14px; }
+  .timeline time.soft { color: var(--dim); }
+  .timeline span.t { position: relative; padding-left: 14px; font-size: 14.5px; line-height: 1.6; color: var(--muted); }
+  .timeline span.t::before { content: ""; position: absolute; left: -16px; top: 7px; width: 9px; height: 9px; border-radius: 2px; background: var(--card); border: 2px solid var(--green); }
+  .timeline b { color: var(--text); font-weight: 600; }
+
   /* Footer */
   footer { border-top: 1px solid var(--line); padding: 36px 0 48px; color: var(--dim); font-size: 13px; }
   footer .wrap { display: grid; gap: 18px; }
@@ -422,6 +443,7 @@
       <a href="#features"><span class="en">Features</span><span class="ko">기능</span></a>
       <a href="#console"><span class="en">Web console</span><span class="ko">웹 콘솔</span></a>
       <a href="#commands"><span class="en">Commands</span><span class="ko">명령어</span></a>
+      <a href="#about"><span class="en">About</span><span class="ko">소개</span></a>
       <a class="en" href="https://minecraft-server-manager.readthedocs.io/en/latest/">Docs ↗</a>
       <a class="ko" href="https://minecraft-server-manager.readthedocs.io/en/latest/ko/">문서 ↗</a>
     </nav>
@@ -954,6 +976,44 @@ modded               <span class="g">running</span>      healthy    modded.local
         <a href="https://github.com/smallmiro/minecraft-server-manager/discussions"><span class="en">All discussions</span><span class="ko">전체 토론 보기</span></a>
         <span><span class="en">Found a bug?</span><span class="ko">버그를 발견했나요?</span> <a href="https://github.com/smallmiro/minecraft-server-manager/issues"><span class="en">Open an issue</span><span class="ko">이슈로 알려 주세요</span></a></span>
       </p>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about">
+    <div class="wrap">
+      <div class="head">
+        <div>
+          <span class="eyebrow">07 / <span class="en">About</span><span class="ko">소개</span></span>
+          <h2><span class="en">Built by a dad, for two brothers.</span><span class="ko">두 형제를 위해, 아빠가 만들었습니다.</span></h2>
+        </div>
+      </div>
+      <div class="about">
+        <div class="story">
+          <p><span class="en">I'm a software developer and the dad of two boys. When they were little they loved Minecraft — and more than anything, they loved playing it together.</span><span class="ko">저는 아들 둘을 둔 소프트웨어 개발자입니다. 형제는 어릴 때부터 마인크래프트를 좋아했고, 무엇보다 같이 하는 걸 좋아했습니다.</span></p>
+          <p><span class="en">Then came 2020. COVID closed the schools and the playgrounds, and Minecraft became the one place my younger son could still meet his friends. I put a Bedrock server on the Google Cloud free tier for them and kept it running for a year.</span><span class="ko">그러다 2020년, 코로나로 학교도 놀이터도 닫혔습니다. 둘째가 친구들과 모여 놀 수 있는 곳은 마인크래프트뿐이었죠. 둘째와 친구들을 위해 GCP 무료 플랜에 베드락 서버를 올리고 1년 동안 운영했습니다.</span></p>
+          <p><span class="en">For a while I tried paid hosting too, but it was expensive, and the features and speed never felt right. In 2025 I installed Ubuntu on a Mac mini at home and started building servers for the boys with <code>itzg/minecraft-server</code>.</span><span class="ko">한동안 유료 호스팅도 써 봤지만, 비싼 데다 기능과 속도가 만족스럽지 않았습니다. 2025년에는 집에 있는 맥미니에 우분투를 설치하고 <code>itzg/minecraft-server</code>로 아이들 서버를 직접 만들어 주기 시작했습니다.</span></p>
+          <p><span class="en">Today the older one is in university and the younger one is in middle school, and they still play together now and then. The tools I wrote to run their servers grew into the mcctl CLI and the web console, and I've released them as open source.</span><span class="ko">지금은 대학생이 된 첫째와 중학생 둘째가 가끔 여전히 함께 게임을 합니다. 아이들 서버를 관리하려고 만든 도구가 mcctl CLI와 웹 콘솔로 자랐고, 이를 오픈소스로 공개했습니다.</span></p>
+          <p class="closing"><span class="en">If you run a world for the friends and family you play with, I hope this makes it a little easier.</span><span class="ko">친구, 가족과 함께할 서버를 운영하는 모든 분께 이 도구가 조금이나마 수고를 덜어 주길 바랍니다.</span></p>
+          <div class="sign">—
+            <a href="https://github.com/smallmiro"><svg class="i" aria-hidden="true"><use href="#i-gh"/></svg>@smallmiro</a>
+            <span><span class="en">software developer, dad of two</span><span class="ko">소프트웨어 개발자, 두 아들의 아빠</span></span>
+          </div>
+        </div>
+        <div>
+          <figure class="about-fig">
+            <img src="assets/about-world.webp" width="1200" height="750" loading="lazy" alt="BlueMap render of the Wild-Deity world: badlands around a bay, beaches and a turquoise sea">
+            <figcaption><span class="en">Wild-Deity, one of the worlds the brothers play on — rendered with BlueMap.</span><span class="ko">Wild-Deity, 형제가 함께 노는 월드 중 하나 — BlueMap 렌더.</span></figcaption>
+          </figure>
+          <ol class="timeline">
+            <li><time>2020</time><span class="t"><span class="en"><b>COVID.</b> A Bedrock server on the GCP free tier for my younger son and his friends, run for a year.</span><span class="ko"><b>코로나.</b> 둘째와 친구들을 위해 GCP 무료 플랜에 베드락 서버를 올려 1년간 운영.</span></span></li>
+            <li><time class="soft"><span class="en">Before 2025</span><span class="ko">2025 이전</span></time><span class="t"><span class="en"><b>Paid hosting.</b> Expensive, and the features and speed fell short.</span><span class="ko"><b>유료 호스팅.</b> 비싸고 기능·속도가 아쉬웠음.</span></span></li>
+            <li><time>2025</time><span class="t"><span class="en"><b>Home server.</b> Ubuntu on a Mac mini, servers for the brothers with itzg/minecraft-server.</span><span class="ko"><b>홈 서버.</b> 맥미니에 우분투를 설치하고 itzg/minecraft-server로 형제의 서버를 호스팅.</span></span></li>
+            <li><time>2026.01</time><span class="t"><span class="en"><b>Open source.</b> mcctl published on GitHub and npm, and work on the web console begins.</span><span class="ko"><b>오픈소스 공개.</b> mcctl을 GitHub·npm에 공개하고 웹 콘솔 개발 시작.</span></span></li>
+            <li><time class="soft"><span class="en">Today</span><span class="ko">지금</span></time><span class="t"><span class="en"><b>Still playing.</b> A university student and a middle schooler, still logging in together.</span><span class="ko"><b>여전히 함께.</b> 대학생 형과 중학생 동생이 아직도 같이 접속합니다.</span></span></li>
+          </ol>
+        </div>
+      </div>
     </div>
   </section>
 </main>
