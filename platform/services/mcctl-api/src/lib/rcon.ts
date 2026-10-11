@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { parseRconPlayerList } from '@minecraft-docker/shared';
 
 /**
  * Result of an RCON command execution
@@ -95,25 +96,9 @@ export async function execRconCommand(serverName: string, command: string): Prom
 }
 
 /**
- * Parse player list from RCON response
- * Handles: "There are X of a max of Y players online: player1, player2"
+ * Parse player list from RCON response (delegates to the shared parser, which
+ * strips ANSI codes). Unparseable responses fall back to an empty 20-slot list.
  */
 export function parsePlayerList(response: string): { online: number; max: number; players: string[] } {
-  const match = response.match(/There are (\d+)(?:\s+of a max of\s+|\/)(\d+) players? online/i);
-
-  if (!match || !match[1] || !match[2]) {
-    return { online: 0, max: 20, players: [] };
-  }
-
-  const online = parseInt(match[1], 10);
-  const max = parseInt(match[2], 10);
-
-  // Extract player names after the colon
-  const playersMatch = response.match(/:\s*(.*)$/);
-  let players: string[] = [];
-  if (playersMatch && playersMatch[1]) {
-    players = playersMatch[1].split(',').map(s => s.trim()).filter(Boolean);
-  }
-
-  return { online, max, players };
+  return parseRconPlayerList(response) ?? { online: 0, max: 20, players: [] };
 }

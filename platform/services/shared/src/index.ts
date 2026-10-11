@@ -53,6 +53,7 @@ export {
   getContainerStats,
   getContainerUptime,
   getOnlinePlayers,
+  parseRconPlayerList,
   getDetailedServerInfo,
   getDetailedServerInfoWithPlayers,
   getRouterDetailInfo,
