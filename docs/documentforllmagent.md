@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.29.1
-> **Last Updated**: 2026-10-10
+> **Version**: 2.30.0
+> **Last Updated**: 2026-10-11
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -2847,6 +2847,18 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.30.0 (2026-10-11) - Docs & Development Workflow
+
+No product behavior changes; documentation and contributor workflow only.
+
+**Added:**
+- Upgrade runbook with post-upgrade verification (#577, #579)
+- `DEVELOPMENT.md` contributor guide (fork-based workflow) (#587)
+
+**Changed:**
+- README refreshed; `create-server.sh` instructions replaced with `mcctl create` (#581, #583)
+- `/work` dev workflow: Stop hook (#585), contributor mode (#589), agent routing and difficulty tiers (#591), per-session work state (#593)
 
 ### Version 2.29.1 (2026-10-10) - Map Render Fix
 

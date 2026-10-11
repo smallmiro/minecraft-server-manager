@@ -321,6 +321,7 @@ See [CLI Commands Reference](docs/cli/commands.md) for complete documentation.
 
 | Document | Description |
 |----------|-------------|
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Contributor guide: fork, issue-driven workflow, and PRs |
 | [CLI Architecture](docs/development/cli-architecture.md) | Hexagonal architecture and patterns |
 
 ---
@@ -1009,6 +1010,13 @@ cat /etc/avahi/hosts
 ---
 
 ## Changelog
+
+### [2.30.0] - 2026-10-11
+
+No product behavior changes - documentation and development-workflow release.
+
+- **Docs**: Upgrade runbook with post-upgrade verification (#577, #579); README refreshed (#581, #583); contributor guide `DEVELOPMENT.md` (#587)
+- **Dev workflow**: `/work` Stop hook (#585), contributor (fork) mode (#589), agent routing and difficulty tiers (#591), per-session work state (#593)
 
 ### [2.29.1] - 2026-10-10
 
