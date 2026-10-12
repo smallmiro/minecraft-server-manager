@@ -6,6 +6,7 @@
 > - 고위험 항목은 메인 세션이 코드에서 직접 다시 확인했다(§2의 ✔ 표시). 그 밖의 라인 번호는 감사 보고를 그대로 옮긴 것이다.
 > - 보안 관련 항목은 이 문서에 넣지 않고 별도 채널에서 관리한다.
 > - 2026-10-12 사용자 결정(D-1·D-2·D-3, §3)을 반영했다.
+> - 추적 이슈: 에픽 [#640](https://github.com/smallmiro/minecraft-server-manager/issues/640). 스토리별 이슈 번호는 [§15](#issue-mapping)에 있다.
 
 **경로 약어**
 
@@ -37,6 +38,8 @@
 
 ---
 
+<a id="findings"></a>
+
 ## 2. 핵심 발견 요약 (왜 지금 강건화가 필요한가)
 
 | # | 발견 | 대표 근거 | 확인 |
@@ -54,6 +57,8 @@
 | 11 | **런타임 경계가 없다.** (1) `docker.ts`에 포트 없는 자유 함수가 43개 있다. (2) CLI와 API가 `docker`를 직접 부르는 곳이 약 20군데다. (3) API에는 조립 지점(composition root)이 없다. (4) 서버 정의가 config.env, 서버별 compose, include 목록, `.env`, `.mcctl.json`, avahi, lock 파일에 흩어져 있고, 이를 쓰는 코드가 8곳 이상이다. | `api/routes/servers.ts:465-468,769-775`; `api/routes/worlds.ts:118-196` | ✔ / 보고 |
 
 ---
+
+<a id="decisions"></a>
 
 ## 3. 결정 사항 (2026-10-12 확정)
 
@@ -90,9 +95,13 @@
 
 ---
 
+<a id="wbs"></a>
+
 ## 4. 작업 분해 (WBS)
 
 각 행이 GitHub Issue 하나에 해당한다. 유형은 Git-Flow 브랜치 유형(bugfix/feature)과 성격(refactor/chore/docs)을 함께 적었다.
+
+<a id="track-a"></a>
 
 ### Track A — 데이터 안전성
 
@@ -107,6 +116,8 @@
 | A6 | **설정 쓰기의 원자성·동시성**: shared에 원자적 쓰기(tmp+rename)와 env 코덱 하나를 둔다. 현재 env 파서가 7개다. 스크립트에서는 compose.yml과 `.env`를 편집할 때 이식 가능한 잠금(macOS 호환)을 건다. API의 생성·삭제는 한 번에 하나만 실행되게 한다. | feature | shared, scripts, api | core-agent → cli-agent, backend-agent | M | B2 | `scripts/create-server.sh:444,613-638`; `scripts/delete-server.sh:174-200`; `api/services/HostnameService.ts:209`; `api/services/ConfigService.ts:324,339,451`; `docker.ts:846-882` |
 | A7 | **런타임 오류 시 fail-closed**: "확인할 수 없음"과 "없음"을 구분한다(`RuntimeUnavailableError`). API는 503을 반환하고 파괴적인 작업은 중단한다. | bugfix | shared, api | core-agent → backend-agent | M | D1 | `docker.ts:22-35,96-106`; `shared/infrastructure/adapters/ServerRepository.ts:119-121`; `WorldRepository.ts:309-312`; `api/routes/servers/config.ts:215-221` |
 
+<a id="track-b"></a>
+
 ### Track B — 단일 원천과 설정 일관성
 
 | ID | 스토리 | 유형 | 모듈 | 에이전트 | 규모 | 의존성 | 대표 근거 |
@@ -118,6 +129,8 @@
 | B5 | **라벨 기반 서버 발견**: `io.mcctl.server`와 `io.mcctl.role` 라벨을 붙인다. `down`은 compose가 관리하는 대상만 멈춘다. 기존 서버에는 라벨을 보강한다. | feature | templates, shared, cli, scripts | core-agent → devops-agent, cli-agent | M | B1, D1 | `docker.ts:195-233`; `scripts/lib/common.sh:180-187`; `cli/lib/shell.ts:296-299`; `cli/lib/prompts/server-select.ts:108-121` |
 | B6 | **이미지 태그 정책**: 서버를 만들 때 MC 버전에 맞는 Java 태그를 고른다(지금은 `update`에서만 적용됨). 릴리스마다 태그를 고정하고(digest), Renovate를 도입한다. | feature | templates, shared, cli | devops-agent, core-agent | M | B1 | 템플릿 `:30`의 `java25` 고정; `cli/commands/update.ts:60,654`; `shared/domain/value-objects/McVersion.ts:60-75`; `platform/docker/bluemap/Dockerfile:17` |
 | B7 | **이름·경로 규칙 단일화**: ServerName 규칙을 하나로 만든다(k8s DNS-1123 호환, `router` 같은 예약어 포함). `LEVEL`용 WorldName 값 객체를 만든다. 루트 경로(MCCTL_ROOT/PLATFORM_PATH)와 월드 이름 해석도 하나로 통일한다. | refactor (feature 브랜치) | shared, api, scripts | core-agent → backend-agent | S | — | `shared/domain/value-objects/ServerName.ts:28-61`(규칙 3종 중 하나); `api/config/index.ts:153-163`; `docker.ts:639` vs `:930` |
+
+<a id="track-c"></a>
 
 ### Track C — 운영 안정성
 
@@ -131,6 +144,8 @@
 | C6 | **서버 생성 진행 상황 계약**: 스크립트가 `##STAGE:` 또는 JSON 줄을 출력하게 한다. API는 성패를 종료 코드로 판단한다. 계약 테스트를 추가한다. 지금 API가 기다리는 진행 문자열 5개 중 4개는 스크립트가 출력하지 않는다. | bugfix | scripts, api | cli-agent → backend-agent | S | B2 | `api/routes/servers.ts:903-927,938,970-973`; `scripts/create-server.sh:443-664`; `platform/services/mcctl-api/tests/servers.test.ts:66-74` |
 | C7 | **macOS 이식성**(D-3): 기존 스크립트의 `sed -i`를 이식 가능한 헬퍼로 바꾸고, `flock`, `grep -P`, `ip route`를 없앤다. macOS에서 `create`, `delete`, `backup`, 월드 배정 흐름을 검증한다. | chore | scripts | cli-agent | M | B2, E2 | `scripts/lock.sh:194`; `create-server.sh` 등의 `sed -i` 20여 곳 |
 
+<a id="track-d"></a>
+
 ### Track D — 런타임 경계 (k8s 준비, Tidy First)
 
 | ID | 스토리 | 유형 | 모듈 | 에이전트 | 규모 | 의존성 | 대표 근거 |
@@ -141,6 +156,8 @@
 | D4 | **포트 경계 정리**: IShellPort에서 `exec`와 `execInteractive`를 뺀다. 저장소가 런타임 상태를 직접 조회하지 않게 한다. use case가 `Paths`에 의존하지 않게 한다. 도메인에 박힌 `mc-`와 `.local` 규칙을 어댑터로 옮긴다. | refactor (feature 브랜치) | shared | core-agent | M | D1 | `shared/application/ports/outbound/IShellPort.ts:128-133`; `shared/infrastructure/adapters/ServerRepository.ts:109-142`; `WorldRepository.ts:298-301`; `shared/application/use-cases/CreateServerUseCase.ts:36-42`; `shared/domain/value-objects/ServerName.ts:17-26` |
 | D5 | **ServerSpec 단일 모델**: 서버 정의를 `servers/<n>/server.yaml` 하나로 두고 원자적으로 쓴다. config.env, 서버 compose, include 목록은 여기서 생성한다. 기존 설정은 가져오기로 변환하고, 사람이 직접 고친 내용은 감지한다. `world.storage: universe\|data`를 둔다(§9.2). | feature | shared, cli, api, scripts | core-agent(설계·구현) + 전원 | L | A6, B1, B7, D1 | §2-11 (서버 정의가 7곳에 흩어져 있고, 쓰는 코드가 8곳 이상) |
 
+<a id="track-e"></a>
+
 ### Track E — 테스트·CI
 
 | ID | 스토리 | 유형 | 모듈 | 에이전트 | 규모 | 의존성 | 대표 근거 |
@@ -148,6 +165,8 @@
 | E1 | **PR CI 확장**: 모든 패키지에 lint, 타입 검사, 테스트를 돌린다. 템플릿·스크립트 드리프트 검사와 `docker compose config` 검증을 넣는다. 스크립트 테스트는 Linux와 macOS 러너에서 모두 돌린다(D-3). 릴리스는 이 검사를 통과해야 나가게 한다. e2e의 기본 API URL을 고친다(지금 :5000). | chore | CI | devops-agent | M | — | `.github/workflows/*.yml`; `DEVELOPMENT.md:180`; `e2e/tests/api-backup.spec.ts:3` |
 | E2 | **스크립트 테스트 기반**: bats를 도입하고, PATH에 호출만 기록하는 가짜 `docker`를 둔다. shellcheck를 추가한다. macOS에서도 같은 테스트가 돌도록 만든다(D-3). | chore | scripts, CI | devops-agent (+cli-agent) | M | — | `scripts/tests/*.test.sh`(수동 실행); 나머지 스크립트는 테스트 없음 |
 | E3 | **공유 테스트 더블과 포트 계약 테스트**: `shared/testing`(FakeRuntime, 메모리 저장소)을 만든다. 같은 계약 테스트를 Docker 어댑터와 (향후) k8s 어댑터에 적용한다. CLI mock을 타입 검사 대상에 넣는다. 실제 docker를 호출하는 테스트는 분리한다. | chore | shared, cli, api | core-agent | M | D1 | `platform/services/shared/prd.md:62`; `platform/services/cli/tests/mocks/MockShellAdapter.ts:1-7`; `platform/services/shared/tests/playit-docker.test.ts:74-106`; `platform/services/mcctl-api/tests/servers.test.ts:404-408` |
+
+<a id="track-f"></a>
 
 ### Track F — 문서 정합화
 
@@ -185,6 +204,8 @@ A6 ──┬──► B4
 ```
 
 ---
+
+<a id="parallel-groups"></a>
 
 ## 6. 병렬 실행 그룹
 
@@ -247,6 +268,8 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 
 ## 9. 설계 초안 (참고, core 감사 제안 요약)
 
+<a id="ports"></a>
+
 ### 9.1 런타임 포트
 
 | 포트 | 메서드 | 대체 대상 |
@@ -264,6 +287,8 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 - `execScript`는 Compose 어댑터 안으로 숨긴다.
 - `parseRconPlayerList`와 `formatBytes`는 순수 함수로 남긴다.
 - `getWorldDirectorySize`는 `WorldRepository`로 옮기고 비동기로 바꾼다.
+
+<a id="serverspec"></a>
 
 ### 9.2 ServerSpec
 
@@ -294,6 +319,8 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 
 ---
 
+<a id="milestones"></a>
+
 ## 11. 마일스톤(릴리스 묶음) 제안
 
 | 마일스톤 | 포함 | 완료 기준 |
@@ -304,6 +331,8 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 | **M4 ServerSpec** | D5, F1 | 서버 정의의 원천이 하나이고 compose는 생성물이다. 문서가 실제 동작과 맞다. |
 
 ---
+
+<a id="k8s-readiness"></a>
 
 ## 12. k8s 단계 진입 조건 (Definition of Ready)
 
@@ -319,6 +348,8 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 8. 백업과 복원이 일관되고 잠금으로 보호된다.
 
 ---
+
+<a id="unverified"></a>
 
 ## 13. 미확인 사항
 
@@ -338,5 +369,56 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 ## 14. 다음 단계
 
 1. ~~사용자가 D-1, D-2, D-3을 결정한다.~~ 2026-10-12 확정(§3).
-2. technical-writer가 스토리마다 GitHub Issue를 만든다(CLAUDE.md Phase 2 형식: Summary / Root Cause 또는 Requirements / Solution / Files / Branch Strategy / Acceptance Criteria). 마일스톤 M1~M4도 만든다.
-3. 승인되면 `/work --milestone <M1>` 또는 Teams 구성으로 P1부터 실행한다.
+2. ~~스토리마다 GitHub Issue를 만든다.~~ 2026-10-12 생성 완료(§15). 에픽 #640, 마일스톤 에픽 #642~#645, 스토리 #646~#676, k8s 후속 에픽 #641. GitHub Milestone 대신 하위 이슈(sub-issue) 계층으로 묶었다.
+3. 시작점 이슈(#646, #647, #648, #649, #650)부터 `/work --issue <N>`으로 실행한다. 마일스톤 단위로 진행하려면 마일스톤 에픽의 하위 이슈를 Teams로 나눠 실행한다.
+
+---
+
+<a id="issue-mapping"></a>
+
+## 15. GitHub 이슈 매핑 (2026-10-12 생성)
+
+| 구분 | 이슈 | 내용 |
+|------|------|------|
+| 전체 에픽 | [#640](https://github.com/smallmiro/minecraft-server-manager/issues/640) | Pre-k8s Hardening: 오늘 논의와 결정(D-1~D-3), 전체 매핑 |
+| 마일스톤 에픽 | [#642](https://github.com/smallmiro/minecraft-server-manager/issues/642) | M1 안전망 |
+| 마일스톤 에픽 | [#643](https://github.com/smallmiro/minecraft-server-manager/issues/643) | M2 런타임 경계 |
+| 마일스톤 에픽 | [#644](https://github.com/smallmiro/minecraft-server-manager/issues/644) | M3 월드·설정 정합성 |
+| 마일스톤 에픽 | [#645](https://github.com/smallmiro/minecraft-server-manager/issues/645) | M4 ServerSpec |
+| 후속 에픽 | [#641](https://github.com/smallmiro/minecraft-server-manager/issues/641) | k8s(k3s + Longhorn) 선택형 런타임 지원. `k8s-longhorn-assessment.md`와 연결 |
+
+| Track | ID | 이슈 | 스토리 | 마일스톤 |
+|-------|----|------|--------|----------|
+| A | A1 | [#652](https://github.com/smallmiro/minecraft-server-manager/issues/652) | 서버 삭제 시 월드 보존 | M1 안전망 (#642) |
+| A | A2 | [#661](https://github.com/smallmiro/minecraft-server-manager/issues/661) | 정지 유예 보장 | M1 안전망 (#642) |
+| A | A3a | [#653](https://github.com/smallmiro/minecraft-server-manager/issues/653) | backup.sh 일관성 | M1 안전망 (#642) |
+| A | A3b | [#664](https://github.com/smallmiro/minecraft-server-manager/issues/664) | API 백업 경로·스케줄러 | M1 안전망 (#642) |
+| A | A4 | [#670](https://github.com/smallmiro/minecraft-server-manager/issues/670) | 월드-서버 1:1 배정 구현 | M3 월드·설정 정합성 (#644) |
+| A | A5 | [#655](https://github.com/smallmiro/minecraft-server-manager/issues/655) | 서버 내부 월드 감지·이전 | M3 월드·설정 정합성 (#644) |
+| A | A6 | [#656](https://github.com/smallmiro/minecraft-server-manager/issues/656) | 설정 원자적 쓰기·동시성 | M3 월드·설정 정합성 (#644) |
+| A | A7 | [#669](https://github.com/smallmiro/minecraft-server-manager/issues/669) | 런타임 오류 fail-closed | M2 런타임 경계 (#643) |
+| B | B1 | [#651](https://github.com/smallmiro/minecraft-server-manager/issues/651) | 템플릿 단일화 + EXTRA_ARGS 회귀 복구 | M1 안전망 (#642) |
+| B | B2 | [#648](https://github.com/smallmiro/minecraft-server-manager/issues/648) | 스크립트 사본 단일화 | M1 안전망 (#642) |
+| B | B3 | [#660](https://github.com/smallmiro/minecraft-server-manager/issues/660) | 이름 정확 일치 | M1 안전망 (#642) |
+| B | B4 | [#671](https://github.com/smallmiro/minecraft-server-manager/issues/671) | 설정 편집 안전화 + 호스트명 적용 | M3 월드·설정 정합성 (#644) |
+| B | B5 | [#674](https://github.com/smallmiro/minecraft-server-manager/issues/674) | 라벨 기반 서버 발견 | M3 월드·설정 정합성 (#644) |
+| B | B6 | [#663](https://github.com/smallmiro/minecraft-server-manager/issues/663) | 이미지 태그 정책 | M3 월드·설정 정합성 (#644) |
+| B | B7 | [#649](https://github.com/smallmiro/minecraft-server-manager/issues/649) | 이름·경로 규칙 단일화 | M1 안전망 (#642) |
+| C | C1 | [#657](https://github.com/smallmiro/minecraft-server-manager/issues/657) | 조용한 실패 제거 | M2 런타임 경계 (#643) |
+| C | C2 | [#672](https://github.com/smallmiro/minecraft-server-manager/issues/672) | API 비동기화·타임아웃·SSE | M2 런타임 경계 (#643) |
+| C | C3 | [#662](https://github.com/smallmiro/minecraft-server-manager/issues/662) | 로그 회전·메모리 제한 | M1 안전망 (#642) |
+| C | C4 | [#650](https://github.com/smallmiro/minecraft-server-manager/issues/650) | 서비스 지속성·종료 처리 | M3 월드·설정 정합성 (#644) |
+| C | C5 | [#673](https://github.com/smallmiro/minecraft-server-manager/issues/673) | SQLite 견고화 | M2 런타임 경계 (#643) |
+| C | C6 | [#658](https://github.com/smallmiro/minecraft-server-manager/issues/658) | 생성 진행 상황 계약 | M2 런타임 경계 (#643) |
+| C | C7 | [#659](https://github.com/smallmiro/minecraft-server-manager/issues/659) | macOS 이식성 | M2 런타임 경계 (#643) |
+| D | D1 | [#654](https://github.com/smallmiro/minecraft-server-manager/issues/654) | 런타임 포트 + Docker 어댑터 | M2 런타임 경계 (#643) |
+| D | D2 | [#667](https://github.com/smallmiro/minecraft-server-manager/issues/667) | API composition root | M2 런타임 경계 (#643) |
+| D | D3 | [#668](https://github.com/smallmiro/minecraft-server-manager/issues/668) | CLI 직접 호출 → 포트 | M2 런타임 경계 (#643) |
+| D | D4 | [#665](https://github.com/smallmiro/minecraft-server-manager/issues/665) | 포트 경계 정리 | M2 런타임 경계 (#643) |
+| D | D5 | [#675](https://github.com/smallmiro/minecraft-server-manager/issues/675) | ServerSpec 단일 모델 | M4 ServerSpec (#645) |
+| E | E1 | [#646](https://github.com/smallmiro/minecraft-server-manager/issues/646) | PR CI 확장 | M1 안전망 (#642) |
+| E | E2 | [#647](https://github.com/smallmiro/minecraft-server-manager/issues/647) | 스크립트 테스트 기반 | M1 안전망 (#642) |
+| E | E3 | [#666](https://github.com/smallmiro/minecraft-server-manager/issues/666) | 공유 테스트 더블·계약 테스트 | M2 런타임 경계 (#643) |
+| F | F1 | [#676](https://github.com/smallmiro/minecraft-server-manager/issues/676) | 문서 정합화(EN/KO) | M4 ServerSpec (#645) |
+
+> 보안 관련 항목은 공개 저장소 특성상 이 문서와 공개 이슈에 포함하지 않았다.

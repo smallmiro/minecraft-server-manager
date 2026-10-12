@@ -3,6 +3,7 @@
 - 대상 저장소: `smallmiro/minecraft-server-manager` (작업 시점 HEAD, CLI `2.31.0`, `platform/services/cli/package.json:3`)
 - 목표 환경: 라즈베리파이(arm64) 여러 대의 k3s 단일 클러스터 + Longhorn(replica 2, 노드별 USB SSD), local-path 미사용
 - 작성일: 2026-10-12
+- 추적 이슈: [#641](https://github.com/smallmiro/minecraft-server-manager/issues/641)(k8s 선택형 런타임 지원), 선행 작업 [#640](https://github.com/smallmiro/minecraft-server-manager/issues/640)(Pre-k8s Hardening, 계획은 `pre-k8s-hardening-plan.md`)
 - 방식: 읽기 전용 분석. 코드 변경, 브랜치 생성, 커밋 없음. 이 문서만 새로 만들었음
 - 표기 규칙
   - 저장소 근거는 `경로:라인`으로 적었다.
@@ -11,6 +12,8 @@
   - 외부 문서 확인 방법: mc-router(main, 2026-10-04 커밋 3b9fb8f), docker-minecraft-server, minecraft-server-charts, longhorn/website(docs 1.13.0), k3s-io/docs, metallb, better-sqlite3, BlueMap, playit-agent 저장소를 clone해서 읽었다. longhorn.io, readthedocs, sqlite.org 사이트는 이 환경에서 접속되지 않았다. 그래서 같은 문서의 GitHub 원본 URL을 출처로 달았다.
 
 ---
+
+<a id="summary"></a>
 
 ## 1. 요약
 
@@ -34,6 +37,8 @@
 | 3 | **mcctl-api/console이 호스트 파일시스템 + PM2 + 로컬 SQLite를 전제함** | API가 각 서버의 `/data`와 월드 region 파일을 직접 읽고 쓴다(`routes/servers/files.ts:302`, `services/OpsJsonService.ts:16`, `routes/worlds.ts:145,163`). SQLite 파일은 CLI와 API가 함께 쓴다(`cli/src/infrastructure/di/container.ts:134`, `mcctl-api/src/services/audit-log-service.ts:36`). API/console용 Dockerfile도 없다(저장소의 Dockerfile은 `platform/docker/bluemap/Dockerfile`, `.devcontainer/Dockerfile` 둘뿐). SQLite는 NFS(RWX) 위에 두면 안 되므로, API/console을 한 Pod(또는 한 노드)에 묶어야 한다(§2, §5). |
 
 ---
+
+<a id="storage"></a>
 
 ## 2. 스토리지 경로 인벤토리와 RWO/RWX 판단
 
@@ -103,6 +108,8 @@
 
 ---
 
+<a id="worlds"></a>
+
 ## 3. 공유 `/worlds/` 구조의 영향
 
 ### 3.1 선택지 비교
@@ -145,6 +152,8 @@
   - 성능 저하(NFS + replica 동기 복제 + 1GbE)는 **추정**이다.
 
 ---
+
+<a id="docker-deps"></a>
 
 ## 4. Docker 의존성 목록
 
@@ -229,6 +238,8 @@
 
 ---
 
+<a id="mc-router"></a>
+
 ## 5. mc-router k8s 모드 대조표
 
 현재 고정 버전은 `itzg/mc-router:1.47.1`이다(`platform/docker-compose.yml:60`, `cli/templates/docker-compose.yml:54`). 아래 확인은 **main 브랜치(2026-10-04)** 기준이다. 1.47.1에서도 똑같이 동작하는지는 **미확인**이다.
@@ -267,6 +278,8 @@
 
 ---
 
+<a id="host-deps"></a>
+
 ## 6. 호스트 의존 기능별 대응 방안
 
 | 기능 | 현재 구현 (근거) | k8s에서의 문제 | 대응 방안 |
@@ -289,6 +302,8 @@
 | **kube-vip 등 기타** | 이번에 확인하지 않음 | VIP | **미확인** |
 
 ---
+
+<a id="arm64"></a>
 
 ## 7. arm64 호환성과 동시 실행 서버 수 추정
 
@@ -332,6 +347,8 @@
 
 ---
 
+<a id="roadmap"></a>
+
 ## 8. 권장 이전 방식과 단계별 로드맵
 
 ### 권장 아키텍처 (목표)
@@ -369,6 +386,8 @@ Job: world-backup / world-copy / bluemap-render (대상 서버를 scale 0으로 
 이 저장소의 규칙(CLAUDE.md "Issue-Driven Development Workflow")에 따라, 2단계부터는 각 단계를 GitHub Issue로 만들고 승인받은 뒤 `/work`로 진행해야 한다.
 
 ---
+
+<a id="unverified"></a>
 
 ## 9. 확인하지 못한 것 / 추측인 것
 
