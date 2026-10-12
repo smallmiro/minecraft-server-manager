@@ -5,6 +5,7 @@
 > - 근거는 두 가지다. 하나는 모듈별 읽기 전용 감사 4건(core/cli/backend/devops 에이전트, 2026-10-12)이고, 다른 하나는 `claudedocs/k8s-longhorn-assessment.md`이다.
 > - 고위험 항목은 메인 세션이 코드에서 직접 다시 확인했다(§2의 ✔ 표시). 그 밖의 라인 번호는 감사 보고를 그대로 옮긴 것이다.
 > - 보안 관련 항목은 이 문서에 넣지 않고 별도 채널에서 관리한다.
+> - 2026-10-12 사용자 결정(D-1·D-2·D-3, §3)을 반영했다.
 
 **경로 약어**
 
@@ -29,7 +30,7 @@
   2. 이후 k8s 런타임 어댑터를 "추가"만 하면 되도록 **런타임 경계(포트)와 서버 정의(ServerSpec)**를 정리한다. k8s 어댑터 자체는 범위 밖이다(YAGNI).
 - **영향 모듈**: shared, cli(+bash 스크립트), mcctl-api, 템플릿/플랫폼, CI, docs. mcctl-console은 일부 UI만 바뀐다.
 - **예상 실행 방식**: 마일스톤 4개를 순서대로 진행하고, 각 마일스톤 안에서는 Claude Code Teams로 모듈별 병렬 작업을 한다(Git Worktree 사용).
-- **규모**: 스토리 31개(S 9, M 19, L 3). 시간 추정은 하지 않았다. 규모는 상대값이다.
+- **규모**: 스토리 31개(S 8, M 20, L 3). 시간 추정은 하지 않았다. 규모는 상대값이다.
   - S: 작은 PR 1개
   - M: 파일 여러 개 또는 모듈 1~2개
   - L: 설계를 먼저 하고 PR 여러 개로 나눔
@@ -54,31 +55,38 @@
 
 ---
 
-## 3. 먼저 결정할 것 (P0)
+## 3. 결정 사항 (2026-10-12 확정)
 
-### D-1. 월드 저장 위치의 표준
-이 결정은 A1, A3a, A5, B1, D5에 영향을 준다.
+### D-1. 월드 저장 위치: a안 — `/worlds` 공유 구조를 표준으로 복원
 
-| 선택지 | 내용 | 장점 | 단점 |
-|--------|------|------|------|
-| **a. `/worlds` 공유 복원** (권장) | `CT/`에 `--universe /worlds/`를 다시 넣는다. 기존 설치본(`data/<LEVEL>`)은 감지해서 사용자가 원할 때만 이전한다(A5). | PRD FR-002, 문서, 월드 관리 UI, 백업 범위(`worlds/`)와 일치한다. #165의 원래 의도를 회복한다. | 혼재된 설치본을 계속 지원해야 한다. k8s 단계에서는 서버별 볼륨으로 다시 나눠야 한다. 단, ServerSpec의 `world.storage`로 흡수할 수 있다. |
-| b. `/data/<LEVEL>` 서버별 저장을 표준으로 | 현재 npm 설치본의 동작을 공식 표준으로 삼는다. | 마이그레이션이 필요 없다. k8s 평가 보고서 §3의 "옵션 C"와 같은 방향이다. | 공유 월드 기능(배정·새 월드), 백업, lock을 모두 이 구조에 맞게 다시 설계해야 한다. RT/PT 템플릿과 문서도 바꿔야 한다. |
+- 새 서버는 월드를 `worlds/<LEVEL>`에 둔다. 배포 템플릿(`CT/`)에 `EXTRA_ARGS=--universe /worlds/`를 다시 넣는다(B1).
+- 월드가 이미 서버 폴더(`servers/<n>/data/<LEVEL>`)에 있는 기존 서버("서버 내부 월드")는 그대로 동작하게 둔다.
+  - 감지해서 `status`와 월드 목록에 "이전 필요"로 표시하고, 고친 `mcctl migrate`로 사용자가 원할 때 `worlds/`로 옮긴다(A5).
+  - 이전하기 전까지는 백업에 포함하고(A3a), 서버를 삭제하면 월드를 `worlds/`로 옮겨 보존한다(A1).
+  - 이전하기 전에는 그 서버에 다른 월드를 배정하지 못하게 막는다(A4). 서버가 `/worlds`를 보지 않아서, 배정하면 빈 월드를 새로 만들기 때문이다.
+- k8s 단계의 월드 배치는 ServerSpec의 `world.storage`로 런타임마다 정한다(D5).
 
-> 어느 쪽을 고르든 A1과 A3a는 **두 배치를 모두 처리**해야 한다. 이미 혼재된 설치본이 있기 때문이다.
+### D-2. 월드-서버 매핑: 1:1 배정, 서로 독립된 수명
 
-### D-2. 월드 배타성을 보장하는 방식 (A4)
+| 규칙 | 내용 |
+|------|------|
+| R1 | 한 월드는 한 번에 한 서버에만 배정된다. 실행 여부와 관계없이 **설정(배정) 기준**이다. |
+| R2 | 한 서버는 한 월드를 쓴다(`LEVEL`). 한 월드를 여러 서버에 설정하는 구성은 지원하지 않는다. |
+| R3 | 월드는 서버와 독립적으로 존재한다. 서버를 삭제해도 월드는 남고 배정만 풀린다. |
+| R4 | 배정이 풀린 월드는 새로 만드는 서버(`mcctl create --world <월드>`)나 기존 서버(`world assign`)에 다시 배정할 수 있다. |
+| R5 | 배정의 원천은 각 서버의 `LEVEL`이다. 별도 lock 파일에 의존하지 않으므로, 서버를 삭제하면 배정이 자동으로 풀리고 오래된 lock 문제도 사라진다. |
+| R6 | 다른 서버에 배정된 월드는 가져올 수 없다. 원래 서버에 다른 월드를 배정하거나 원래 서버를 삭제한 뒤에 배정한다. |
+| R7 | 배정 상태를 판단할 수 없으면(설정이나 런타임 상태를 읽지 못하면) 배정 변경을 거부한다(fail-closed). |
 
-| 선택지 | 내용 | 평가 |
-|--------|------|------|
-| **a. 배정 시점 배타성** (권장) | "한 월드는 한 서버의 `LEVEL`에만 연결된다"는 불변식을 **쓰는 시점**(create/assign/config)에 강제한다. lock 상태는 `LEVEL`과 런타임 상태에서 파생하고, 판단할 수 없으면 거부(fail-closed)한다. | mc-router 자동 기동을 포함한 **모든 시작 경로가 자연스럽게 보호된다**. k8s에서는 같은 불변식이 PVC 소유로 이어진다. |
-| b. 컨테이너 안 `PRE_START_SCRIPT` 가드 | 컨테이너가 시작될 때 lock을 확인한다. | 보조 수단으로만 쓴다. 고정 태그(`java25`)에서 이 기능이 지원되는지는 미확인이다. |
-| c. 현행 lock 파일 유지 + 모든 시작 경로에서 검사 | — | 라우터 자동 기동 경로를 막을 수 없다. |
+- 차원 폴더(`<월드>_nether`, `<월드>_the_end`)는 같은 월드의 일부로 함께 다룬다.
+- mc-router 자동 기동을 포함한 모든 시작 경로가 R1로 보호된다. 두 서버가 같은 월드를 설정할 수 없기 때문이다.
+- A4에서 함께 정리할 것: 기존 설치본의 중복 배정 감지와 보고(자동 수정은 하지 않음), `mcctl world release`의 의미(폐기 또는 재정의), `worlds/.locks` 파일 처리(호환 기간 뒤 제거).
 
-### D-3. macOS 지원 범위 (C7)
-- **a. 유지**: C7과 macOS CI를 수행한다.
-- **b. Linux 전용으로 축소**: 문서와 `package.json`의 `os`를 고친다.
+### D-3. macOS 지원 유지
 
-CLAUDE.md와 NFR-004는 현재 macOS를 지원 대상으로 명시한다. 그런데 스크립트에는 GNU 전용 문법이 20곳 넘게 있고, macOS에는 `flock`이 없다.
+- 공식 지원 플랫폼(Linux, macOS)을 그대로 유지한다. C7은 필수 작업이 되고 M2로 앞당긴다.
+- 이번 계획에서 새로 쓰거나 고치는 스크립트는 GNU 전용 문법(접미사 없는 `sed -i`, `flock`, `grep -P`, `ip route`)을 쓰지 않는다. 잠금은 macOS에서도 동작하는 방식(예: `mkdir`의 원자성)으로 구현한다.
+- E1·E2에 macOS 러너를 추가해 스크립트 테스트를 Linux와 macOS 양쪽에서 돌린다.
 
 ---
 
@@ -90,20 +98,20 @@ CLAUDE.md와 NFR-004는 현재 macOS를 지원 대상으로 명시한다. 그런
 
 | ID | 스토리 | 유형 | 모듈 | 에이전트 | 규모 | 의존성 | 대표 근거 |
 |----|--------|------|------|---------|------|--------|-----------|
-| A1 | **서버 삭제 시 월드 보호**: `data/*/level.dat`가 있으면 `--delete-data` 없이는 거부한다. 정지에 실패하면 중단한다. 스크립트 안에서 이름을 검증한다. CLI에 확인 프롬프트를 넣고, 완료 메시지를 정확하게 고친다. | bugfix | scripts, cli, shared | cli-agent (+frontend-agent: 콘솔 삭제 대화상자) | S | B2, E2 | `scripts/delete-server.sh:154-160,246,265`; `cli/commands/delete.ts`; `docs/cli/commands.md:597-598` |
+| A1 | **서버 삭제 시 월드 보존**(D-2 R3): `worlds/`의 월드는 배정만 해제한다. 서버 내부 월드(`data/<LEVEL>`와 차원 폴더)는 `worlds/`로 옮긴 뒤 서버를 삭제하고, 이름이 겹치면 중단한다. 월드까지 지우려면 `--delete-world`를 명시해야 한다. 정지에 실패하면 중단한다. 스크립트 안에서 이름을 검증하고, CLI에 확인 프롬프트를 넣고, 완료 메시지를 정확하게 고친다. | bugfix | scripts, cli, shared | cli-agent (+frontend-agent: 콘솔 삭제 대화상자) | M | B2, E2 | `scripts/delete-server.sh:154-160,246,265`; `cli/commands/delete.ts`; `docs/cli/commands.md:597-598` |
 | A2 | **정지 유예 보장**: 템플릿에 `stop_grace_period`(≥ STOP_DURATION)를 넣는다. 기존 서버는 `mcctl upgrade`로 패치한다. Compose 값이 `docker stop`과 mc-router의 정지에도 적용되는지 먼저 확인하고, 적용되지 않으면 stop 경로마다 타임아웃 인자를 넘긴다. | bugfix | templates (+shared, api, cli) | devops-agent (→ core-agent) | S | B1 (코드 경로를 고쳐야 하면 D1) | `docs/itzg-reference/03-variables.md:118`; `scripts/mcctl.sh:464`; `docker.ts:325-332`; `api/utils/docker-compose.ts:83`; `cli/lib/shell.ts:298,348` |
-| A3a | **backup.sh 일관성**: 실행 중인 서버는 저장을 flush하거나 정지를 요구한다. 전역 잠금을 건다. 복원은 비대화형(`--yes`)으로 하고, 실행 중인 서버가 있으면 거부한다. `.locks`를 보존하고, checkout을 깨끗하게 해서 이전 커밋과 섞이지 않게 한다. `.bak`를 정리하고 원본이 비어 있으면 중단한다. `data/<LEVEL>` 월드도 백업에 포함한다. | bugfix | scripts | cli-agent | M | B2, E2, D-1 | `scripts/backup.sh:37,170-183,244-246,453,461-480` |
+| A3a | **backup.sh 일관성**: 실행 중인 서버는 저장을 flush하거나 정지를 요구한다. 전역 잠금(macOS 호환)을 건다. 복원은 비대화형(`--yes`)으로 하고, 실행 중인 서버가 있으면 거부한다. `.locks`를 지우지 않고, checkout을 깨끗하게 해서 이전 커밋과 섞이지 않게 한다. `.bak`를 정리하고 원본이 비어 있으면 중단한다. 서버 내부 월드(`data/<LEVEL>`)도 이전하기 전까지 백업에 포함한다. | bugfix | scripts | cli-agent | M | B2, E2 | `scripts/backup.sh:37,170-183,244-246,453,461-480` |
 | A3b | **API 백업 경로**: 번들 스크립트 해석(`resolveScriptPath`)을 쓰고 git 대체 경로는 없앤다. 종료 코드 2를 성공으로 처리한다. 스케줄러와 뮤텍스를 공유한다. 보존 정책의 이력 재작성을 안전하게 바꾼다(try/finally, `--force-with-lease`, 타임아웃, `maxAgeDays` 버그). `BackupUseCase`의 `exec('git')`이 항상 실패하는 문제도 고친다. | bugfix | api, shared | backend-agent | M | A3a | `api/routes/backup.ts:151-166,191-197`; `api/services/backup-scheduler.ts:192-273,474-498,531-541`; `shared/application/use-cases/BackupUseCase.ts:213-217` |
-| A4 | **월드 배타성 강제(FR-003 실제 구현)**: D-2 방식으로 bash와 TS의 규칙을 하나로 만들고 fail-closed로 동작하게 한다. 월드를 삭제하거나 초기화할 때 그 월드를 참조하는 모든 서버를 확인한다. `world release`가 오래된 lock을 풀지 못하는 문제와, 재배정할 때 서버 상태 확인이 실패하는 문제를 고친다. | feature | shared, scripts, api | core-agent(설계) → cli-agent, backend-agent | L | D-2, D1 | `prd.md:51-59`; `scripts/lock.sh:42,131-157,316-320`; `shared/application/use-cases/WorldManagementUseCase.ts:163-168,773-797`; `shared/infrastructure/adapters/WorldRepository.ts:254-278`; `api/routes/servers/config.ts:207-251` |
-| A5 | **`mcctl migrate` 안전화**: 원본을 `LEVEL` 기준으로 찾고, 없으면 중단한다. 이전하는 동안 라우터 자동 기동을 막는다. 런타임 오류가 나면 중단한다. 차원 디렉터리 이름을 최종 `LEVEL` 기준으로 맞춘다. | bugfix | cli | cli-agent | M | D-1, E2 | `cli/commands/migrate.ts:238,346,371-377,417-421,441-492,514-519,557` |
-| A6 | **설정 쓰기의 원자성·동시성**: shared에 원자적 쓰기(tmp+rename)와 env 코덱 하나를 둔다. 현재 env 파서가 7개다. 스크립트에서는 compose.yml과 `.env`를 편집할 때 `flock`을 건다. API의 생성·삭제는 한 번에 하나만 실행되게 한다. | feature | shared, scripts, api | core-agent → cli-agent, backend-agent | M | B2 | `scripts/create-server.sh:444,613-638`; `scripts/delete-server.sh:174-200`; `api/services/HostnameService.ts:209`; `api/services/ConfigService.ts:324,339,451`; `docker.ts:846-882` |
+| A4 | **월드-서버 1:1 배정 구현**(D-2 R1~R7): 배정 상태를 각 서버의 `LEVEL`에서 파생한다. create·assign·config 변경 시 R1을 검사하고, 판단할 수 없으면 거부한다. 월드를 삭제·초기화할 때 그 월드를 참조하는 서버를 확인한다. 서버 내부 월드를 가진 서버는 이전하기 전까지 다른 월드 배정을 막는다. 재배정 시 서버 상태 확인이 항상 실패하는 버그를 고친다. 기존 설치본의 중복 배정은 감지해 보고한다. `world release`와 `.locks`의 처리를 정리한다. | feature | shared, scripts, api | core-agent(설계) → cli-agent, backend-agent (+frontend-agent: 배정 오류 표시) | L | D1 | `prd.md:51-59`; `scripts/lock.sh:42,131-157,316-320`; `shared/application/use-cases/WorldManagementUseCase.ts:163-168,773-797`; `shared/infrastructure/adapters/WorldRepository.ts:254-278`; `api/routes/servers/config.ts:207-251`; 생성·삭제 경로에 배정 처리 없음(`scripts/create-server.sh`, `scripts/delete-server.sh`, `DeleteServerUseCase.ts`) |
+| A5 | **서버 내부 월드 감지·이전 (`mcctl migrate` 안전화)**: 서버 내부 월드를 가진 서버를 감지해 `status`와 월드 목록에 "이전 필요"로 표시한다. `migrate`는 원본을 `LEVEL` 기준으로 찾고(지금은 `data/world`만 찾음), 원본이 없으면 중단한다. 이전하는 동안 라우터 자동 기동을 막고, 런타임 오류가 나면 중단하며, 차원 폴더 이름을 최종 `LEVEL`에 맞춘다. | bugfix | cli, shared | cli-agent | M | E2 | `cli/commands/migrate.ts:238,346,371-377,408,417-421,441-492,514-519,557` |
+| A6 | **설정 쓰기의 원자성·동시성**: shared에 원자적 쓰기(tmp+rename)와 env 코덱 하나를 둔다. 현재 env 파서가 7개다. 스크립트에서는 compose.yml과 `.env`를 편집할 때 이식 가능한 잠금(macOS 호환)을 건다. API의 생성·삭제는 한 번에 하나만 실행되게 한다. | feature | shared, scripts, api | core-agent → cli-agent, backend-agent | M | B2 | `scripts/create-server.sh:444,613-638`; `scripts/delete-server.sh:174-200`; `api/services/HostnameService.ts:209`; `api/services/ConfigService.ts:324,339,451`; `docker.ts:846-882` |
 | A7 | **런타임 오류 시 fail-closed**: "확인할 수 없음"과 "없음"을 구분한다(`RuntimeUnavailableError`). API는 503을 반환하고 파괴적인 작업은 중단한다. | bugfix | shared, api | core-agent → backend-agent | M | D1 | `docker.ts:22-35,96-106`; `shared/infrastructure/adapters/ServerRepository.ts:119-121`; `WorldRepository.ts:309-312`; `api/routes/servers/config.ts:215-221` |
 
 ### Track B — 단일 원천과 설정 일관성
 
 | ID | 스토리 | 유형 | 모듈 | 에이전트 | 규모 | 의존성 | 대표 근거 |
 |----|--------|------|------|---------|------|--------|-----------|
-| B1 | **템플릿 단일화 + `EXTRA_ARGS` 회귀 복구**: `CT/`를 단일 원천으로 삼고 RT/PT는 생성하거나 삭제한다. CI에 드리프트 검사와 `docker compose config` 검증을 넣는다. `DOCKER_TIMEOUT`(`"120"` vs `"120s"`), `AUTO_SCALE_DOWN_AFTER`(1m vs 10m), 포트(3000/3001 vs 5000/5001), playit, `API_BINDING`, 네트워크 정의를 맞춘다. | bugfix | templates, CI | devops-agent | M | D-1, E1 | `CT/servers/_template/config.env:53` vs `RT/servers/_template/config.env:57`; `CT/docker-compose.yml:61-62` vs `platform/docker-compose.yml:67-69`; `shared/utils/index.ts:118-128`; #162, #165 |
+| B1 | **템플릿 단일화 + `EXTRA_ARGS` 회귀 복구**: `CT/`를 단일 원천으로 삼고 RT/PT는 생성하거나 삭제한다. CI에 드리프트 검사와 `docker compose config` 검증을 넣는다. `DOCKER_TIMEOUT`(`"120"` vs `"120s"`), `AUTO_SCALE_DOWN_AFTER`(1m vs 10m), 포트(3000/3001 vs 5000/5001), playit, `API_BINDING`, 네트워크 정의를 맞춘다. | bugfix | templates, CI | devops-agent | M | E1 | `CT/servers/_template/config.env:53` vs `RT/servers/_template/config.env:57`; `CT/docker-compose.yml:61-62` vs `platform/docker-compose.yml:67-69`; `shared/utils/index.ts:118-128`; #162, #165 |
 | B2 | **스크립트 사본 단일화**: `cli/scripts` 사본을 추적에서 빼고 빌드할 때 생성한다. `docker/bluemap`을 패키지에 포함한다. CI에 diff 검사를 넣는다. | chore | cli, CI | cli-agent | S | — | `diff -rq platform/scripts platform/services/cli/scripts`(5개 파일 차이, `render-map.sh` 누락); `shared/utils/index.ts:105-116`; `scripts/render-map.sh:47-49` |
 | B3 | **이름 정확 일치**: avahi 등록과 삭제, include 삭제에서 이름을 정확히 비교한다. | bugfix | scripts | cli-agent | S | B2, E2 | `scripts/create-server.sh:190`; `scripts/delete-server.sh:177-178,212-213` |
 | B4 | **설정 편집 안전화 + 호스트명 적용**: `update`와 `init --reconfigure`의 정규식 편집을 compose-router-patch 방식(재파싱+백업)으로 바꾼다. 호스트명 생성기를 하나로 합친다. 호스트명을 바꾼 뒤 컨테이너를 재생성(apply)하는 경로를 만든다. 지금은 `recreateRequired`만 반환한다. | bugfix | cli, api | cli-agent, backend-agent (+frontend-agent: 적용 버튼) | M | A6 | `cli/commands/update.ts:83-86,153,164-174`; `cli/commands/init.ts:696-753`; `api/services/HostnameService.ts:162-209`; `api/routes/servers/hostnames.ts:154` |
@@ -121,7 +129,7 @@ CLAUDE.md와 NFR-004는 현재 macOS를 지원 대상으로 명시한다. 그런
 | C4 | **서비스 지속성과 종료 처리**: `mcctl console service enable`(pm2 startup + save) 또는 systemd 유닛을 제공한다. PM2_HOME을 분리한다. API 종료에 타임아웃을 두고 진행 중인 작업을 마무리한다(drain). CLI로 만든 백업 스케줄도 API가 반영하게 한다. | feature | cli, api | cli-agent, backend-agent | M | — | `cli/commands/console/service.ts:315,350-374,445`; `cli/lib/pm2-utils.ts:50-57`; `api/app.ts:116-129` |
 | C5 | **SQLite 견고화**: 공통 open 헬퍼를 만든다(busy_timeout 명시, WAL). DB마다 핸들을 하나만 쓰고 지연 open한다. 감사 로그 보존 기간에 기본값을 둔다. | bugfix | shared, api | core-agent → backend-agent | S | D2 | `api/services/config-snapshot-service.ts:27` + `api/routes/config-snapshot-schedules.ts:66`(같은 DB를 두 번 open); `api/services/audit-log-service.ts:202,227` |
 | C6 | **서버 생성 진행 상황 계약**: 스크립트가 `##STAGE:` 또는 JSON 줄을 출력하게 한다. API는 성패를 종료 코드로 판단한다. 계약 테스트를 추가한다. 지금 API가 기다리는 진행 문자열 5개 중 4개는 스크립트가 출력하지 않는다. | bugfix | scripts, api | cli-agent → backend-agent | S | B2 | `api/routes/servers.ts:903-927,938,970-973`; `scripts/create-server.sh:443-664`; `platform/services/mcctl-api/tests/servers.test.ts:66-74` |
-| C7 | **macOS 이식성** (D-3이 a일 때): `sed -i`를 헬퍼로 감싸고, `flock` 대체 수단을 쓰고, `grep -P`와 `ip route`를 없앤다. macOS CI를 추가한다. | chore | scripts | cli-agent | M | D-3, E2 | `scripts/lock.sh:194`; `create-server.sh` 등의 `sed -i` 20여 곳 |
+| C7 | **macOS 이식성**(D-3): 기존 스크립트의 `sed -i`를 이식 가능한 헬퍼로 바꾸고, `flock`, `grep -P`, `ip route`를 없앤다. macOS에서 `create`, `delete`, `backup`, 월드 배정 흐름을 검증한다. | chore | scripts | cli-agent | M | B2, E2 | `scripts/lock.sh:194`; `create-server.sh` 등의 `sed -i` 20여 곳 |
 
 ### Track D — 런타임 경계 (k8s 준비, Tidy First)
 
@@ -137,8 +145,8 @@ CLAUDE.md와 NFR-004는 현재 macOS를 지원 대상으로 명시한다. 그런
 
 | ID | 스토리 | 유형 | 모듈 | 에이전트 | 규모 | 의존성 | 대표 근거 |
 |----|--------|------|------|---------|------|--------|-----------|
-| E1 | **PR CI 확장**: 모든 패키지에 lint, 타입 검사, 테스트를 돌린다. 템플릿·스크립트 드리프트 검사와 `docker compose config` 검증을 넣는다. 릴리스는 이 검사를 통과해야 나가게 한다. e2e의 기본 API URL을 고친다(지금 :5000). | chore | CI | devops-agent | M | — | `.github/workflows/*.yml`; `DEVELOPMENT.md:180`; `e2e/tests/api-backup.spec.ts:3` |
-| E2 | **스크립트 테스트 기반**: bats를 도입하고, PATH에 호출만 기록하는 가짜 `docker`를 둔다. shellcheck를 추가한다. | chore | scripts, CI | devops-agent (+cli-agent) | M | — | `scripts/tests/*.test.sh`(수동 실행); 나머지 스크립트는 테스트 없음 |
+| E1 | **PR CI 확장**: 모든 패키지에 lint, 타입 검사, 테스트를 돌린다. 템플릿·스크립트 드리프트 검사와 `docker compose config` 검증을 넣는다. 스크립트 테스트는 Linux와 macOS 러너에서 모두 돌린다(D-3). 릴리스는 이 검사를 통과해야 나가게 한다. e2e의 기본 API URL을 고친다(지금 :5000). | chore | CI | devops-agent | M | — | `.github/workflows/*.yml`; `DEVELOPMENT.md:180`; `e2e/tests/api-backup.spec.ts:3` |
+| E2 | **스크립트 테스트 기반**: bats를 도입하고, PATH에 호출만 기록하는 가짜 `docker`를 둔다. shellcheck를 추가한다. macOS에서도 같은 테스트가 돌도록 만든다(D-3). | chore | scripts, CI | devops-agent (+cli-agent) | M | — | `scripts/tests/*.test.sh`(수동 실행); 나머지 스크립트는 테스트 없음 |
 | E3 | **공유 테스트 더블과 포트 계약 테스트**: `shared/testing`(FakeRuntime, 메모리 저장소)을 만든다. 같은 계약 테스트를 Docker 어댑터와 (향후) k8s 어댑터에 적용한다. CLI mock을 타입 검사 대상에 넣는다. 실제 docker를 호출하는 테스트는 분리한다. | chore | shared, cli, api | core-agent | M | D1 | `platform/services/shared/prd.md:62`; `platform/services/cli/tests/mocks/MockShellAdapter.ts:1-7`; `platform/services/shared/tests/playit-docker.test.ts:74-106`; `platform/services/mcctl-api/tests/servers.test.ts:404-408` |
 
 ### Track F — 문서 정합화
@@ -151,20 +159,18 @@ CLAUDE.md와 NFR-004는 현재 macOS를 지원 대상으로 명시한다. 그런
 
 ## 5. 의존성 그래프
 
-```
-결정 D-1 ──┬─────────────────► B1 ──┬──► A2(템플릿)
-           │                        ├──► C3
-           │                        ├──► B5 ◄── D1
-           │                        └──► B6
-           ├──► A3a ──► A3b
-           ├──► A5
-           └──► D5
-결정 D-2 ─────────────────────────────► A4 ◄── D1
-결정 D-3 ─────────────────────────────► C7
+D-1·D-2·D-3은 2026-10-12에 확정되어 선행 조건에서 뺐다.
 
-E1 ──┐  (이후 모든 PR을 검증)
+```
+E1 ──┐  (이후 모든 PR을 검증, 스크립트 테스트는 Linux·macOS 양쪽)
 E2 ──┼──► A1, B3, A3a, A5, C1, C6, C7   (스크립트는 TDD: 실패하는 bats 테스트부터)
-B2 ──┘──► A1, B3, A3a, A6, C1, C6       (사본 정리 후 스크립트 수정 → #165 재발 방지)
+B2 ──┘──► A1, B3, A3a, A6, C1, C6, C7   (사본 정리 후 스크립트 수정 → #165 재발 방지)
+
+E1 ──► B1 ──┬──► A2(템플릿)
+            ├──► C3
+            ├──► B5 ◄── D1
+            └──► B6
+A3a ──► A3b
 
 B7 ──► D1 ──┬──► D2 ──┬──► C2
             │         └──► C5
@@ -184,11 +190,11 @@ A6 ──┬──► B4
 
 | Group | Tasks | 병렬 | 선행 조건 | 모듈별 배치 |
 |-------|-------|------|-----------|-------------|
-| P0 | D-1, D-2, D-3 결정 | — | 없음 | 사용자 결정 |
+| P0 | D-1, D-2, D-3 | — | — | 2026-10-12 확정(D-1 a안, D-2 1:1 배정, D-3 macOS 유지) |
 | P1 | E1, E2, B2, B7, C4 | Yes | 없음 | devops: E1, E2 / cli: B2, C4(CLI) / core: B7 / backend: C4(API) |
-| P2 | B1, A1 → B3 → A3a, D1 | Yes (모듈 간) | P1, D-1 | devops: B1 / cli: A1 → B3 → A3a(순차, 같은 스크립트) / core: D1 |
-| P3 | A2, C3, B6, A3b, D2, D3, A5, C1, C6, D4, A6, E3 | Yes (모듈 간) | P2 | devops: A2, C3, B6 / backend: A3b, D2 / cli: D3, A5, C1, C6 / core: D4, A6, E3 |
-| P4 | A7, C2, C5, A4, B5, B4, C7 | Yes (모듈 간) | P3, D-2, D-3 | core: A7, C2(어댑터), A4(설계), B5 / backend: C2(API), C5, B4(API) / cli: B4(CLI), C7, A4(스크립트) |
+| P2 | B1, A1 → B3 → A3a, D1 | Yes (모듈 간) | P1 | devops: B1 / cli: A1 → B3 → A3a(순차, 같은 스크립트) / core: D1 |
+| P3 | A2, C3, B6, A3b, D2, D3, A5, C1, C6, C7, D4, A6, E3 | Yes (모듈 간) | P2 | devops: A2, C3, B6 / backend: A3b, D2 / cli: D3, A5, C1, C6, C7 / core: D4, A6, E3 |
+| P4 | A7, C2, C5, A4, B5, B4 | Yes (모듈 간) | P3 | core: A7, C2(어댑터), A4(설계), B5 / backend: C2(API), C5, B4(API) / cli: B4(CLI), A4(스크립트) |
 | P5 | D5, F1 | — | P4 | core가 주도하고 전원이 참여(ServerSpec은 설계 리뷰 후 PR을 여러 단계로 나눔) / technical-writer: F1 |
 
 > 같은 모듈 안에서는 순서대로 진행한다. 특히 cli-agent 트랙은 `create-server.sh`, `delete-server.sh`, `backup.sh`를 여러 스토리가 함께 고치므로 순서를 지킨다.
@@ -213,7 +219,7 @@ A6 ──┬──► B4
 
 **Sync Points**
 
-1. **SYNC-0** D-1~D-3 결정 → B1, A3a, A5, A4, C7 착수
+1. **SYNC-0** D-1~D-3 확정(2026-10-12) ✔
 2. **SYNC-1** E1·E2 준비 → 스크립트 수정은 실패하는 bats 테스트부터 시작(TDD)
 3. **SYNC-2** B2 완료 → 모든 스크립트 수정 착수(사본을 이중으로 고치는 일 방지)
 4. **SYNC-3** D1 포트 인터페이스 확정 → D2, D3, D4, A7, C2, A4, B5
@@ -231,7 +237,7 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 ## 8. 설계 필요 사항
 
 - [ ] **D1 런타임 포트 인터페이스**: system-architect(없으면 core-agent). §9.1 초안이 출발점이다.
-- [ ] **A4 월드 배타성 규칙과 상태 모델**: system-architect → core-agent. D-2 결정을 반영한다.
+- [ ] **A4 월드-서버 1:1 배정 모델**(§3 D-2 R1~R7): system-architect → core-agent. 배정 상태 파생 방식, 중복 배정 처리, `world release`·`.locks`의 정리 방식을 정한다.
 - [ ] **D5 ServerSpec 스키마, 저장 방식, 마이그레이션**: system-architect → core-agent. §9.2 초안이 출발점이다.
 - [ ] **A3 백업 일관성 절차**(flush 또는 정지, 잠금, 복원 순서): devops-architect(없으면 devops-agent).
 - [ ] **B5 라벨 체계**: core-agent + devops-agent.
@@ -252,7 +258,7 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 | `IHostnameRegistrarPort` | `getStatus()`, `register(host, ip)`, `unregister(host)` | avahi 상태 조회와 스크립트 내 편집 |
 | `IRuntimeEnvironmentPort` | `check()` | `checkDocker` 등 |
 | `IServerSpecRepository` | `list/get/save/delete` | config.env·compose를 읽고 쓰는 흩어진 코드 |
-| `IWorldLockPort` | `acquire/release/get` | `lock.sh`, `WorldRepository.getLockStatus` |
+| `IWorldAssignmentPort` | `getAssignment(world)`, `listAssignments()`, `assign(world, server)`(R1 검사 포함) | `lock.sh`, `WorldRepository.getLockStatus`, `IShellPort.worldAssign/worldRelease` |
 
 포트로 만들지 않는 것도 있다.
 - `execScript`는 Compose 어댑터 안으로 숨긴다.
@@ -263,7 +269,7 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 
 - **필드**:
   - `specVersion`, `name`, `type`, `version`, `imageTag`, `memory`
-  - `world { level, storage: universe|data, source: new(seed)|existing|download(url) }`
+  - `world { level, storage: universe|data, source: new(seed)|existing|download(url) }` — Docker 기본값은 `universe`(D-1). `data`는 기존 서버 내부 월드와 이후 k8s용이다.
   - `routing { hostnames[], autoScale, motd }`
   - `playitDomain?`, `modpack?`, `whitelist`, `env`(검증된 통과값), `secretRefs`, `stopGraceSec`, `resources?`
 - **저장**: `servers/<n>/server.yaml`. 원자적으로 쓰고 서버별 잠금을 건다.
@@ -293,8 +299,8 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 | 마일스톤 | 포함 | 완료 기준 |
 |----------|------|-----------|
 | **M1 안전망** | E1, E2, B2, B7, B1, A1, B3, A2, C3, A3a, A3b | 삭제·백업·강제 종료로 데이터가 사라지는 경로를 막는다. 템플릿과 스크립트의 원천을 하나로 만든다. 모든 패키지가 PR CI를 거친다. |
-| **M2 런타임 경계** | D1, D4, E3, D2, D3, A7, C2, C5, C1, C6 | `docker` 호출이 어댑터 안에만 있다. API가 비동기로 동작하고 fail-closed다. 포트 계약 테스트가 있다. |
-| **M3 월드·설정 정합성** | A4, A5, A6, B4, B5, B6, C4, C7 | FR-003이 실제로 보장된다. 설정 쓰기가 원자적이다. 서버를 라벨로 발견한다. 재부팅 후에도 서비스가 살아난다. |
+| **M2 런타임 경계** | D1, D4, E3, D2, D3, A7, C2, C5, C1, C6, C7 | `docker` 호출이 어댑터 안에만 있다. API가 비동기로 동작하고 fail-closed다. 포트 계약 테스트가 있다. 스크립트가 macOS에서도 테스트를 통과한다. |
+| **M3 월드·설정 정합성** | A4, A5, A6, B4, B5, B6, C4 | 월드-서버 1:1 배정(D-2)이 실제로 보장된다. 설정 쓰기가 원자적이다. 서버를 라벨로 발견한다. 재부팅 후에도 서비스가 살아난다. |
 | **M4 ServerSpec** | D5, F1 | 서버 정의의 원천이 하나이고 compose는 생성물이다. 문서가 실제 동작과 맞다. |
 
 ---
@@ -306,7 +312,7 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 1. `child_process`와 `docker` 호출이 Docker 어댑터 안에만 있고, lint로 강제된다.
 2. 템플릿과 스크립트의 원천이 하나이고, CI가 드리프트를 검사한다.
 3. 서버 정의가 ServerSpec 하나이고, compose 파일은 생성물이다.
-4. 월드 배타성 규칙이 `IWorldLockPort` 뒤에 있고 fail-closed로 동작한다.
+4. 월드-서버 1:1 배정 규칙(D-2)이 `IWorldAssignmentPort` 뒤에 있고 fail-closed로 동작한다.
 5. 서버를 라벨로 발견하고, 서버 이름은 DNS-1123과 호환된다.
 6. API에 composition root가 있고, SQLite에 쓰는 주체는 API 하나다.
 7. 모든 패키지 테스트와 스크립트 테스트가 PR CI에서 돌고, 포트 계약 테스트가 있다.
@@ -320,10 +326,10 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 - Docker 기본 정지 유예 시간(10초)과 mc-router가 유휴 서버를 멈출 때 쓰는 타임아웃.
 - Compose의 `stop_grace_period`가 `docker stop`과 mc-router의 정지에도 적용되는지(A2의 범위를 정한다).
 - `DOCKER_TIMEOUT: "120"`이 mc-router 1.47.1에 실제로 어떤 영향을 주는지.
-- 고정 태그 `java25`에서 `PRE_START_SCRIPT`를 쓸 수 있는지(D-2의 b안).
+- 고정 태그 `java25`에서 `PRE_START_SCRIPT`를 쓸 수 있는지(A4의 보조 수단으로 쓸 경우).
 - `docker compose restart`가 라벨 변경을 반영하지 않는다는 점(B4의 근거, Docker 문서 기준).
 - better-sqlite3의 기본 busy timeout(5000ms).
-- macOS 동작: `flock` 부재, BSD `sed -i`.
+- macOS 동작: `flock` 부재, BSD `sed -i`. E1·E2의 macOS 러너로 확인한다.
 - 복원 시 overlay checkout으로 월드가 섞이는 현상, API 복원이 `read -p`에서 멈추는 현상, 깨끗한 npm 설치에서 API 백업이 대체 경로로 빠지는 현상. 셋 다 코드를 읽고 추론한 것이며 실행으로 재현하지는 않았다.
 - Docker `name` 필터에서 `^`로 앵커를 걸 수 있는지(B5가 끝나면 필요 없어짐).
 
@@ -331,6 +337,6 @@ devops(E1, E2) → cli(B2) → core(B7) → devops(B1) → cli(A1, B3, A3a) → 
 
 ## 14. 다음 단계
 
-1. 사용자가 D-1, D-2, D-3을 결정한다.
+1. ~~사용자가 D-1, D-2, D-3을 결정한다.~~ 2026-10-12 확정(§3).
 2. technical-writer가 스토리마다 GitHub Issue를 만든다(CLAUDE.md Phase 2 형식: Summary / Root Cause 또는 Requirements / Solution / Files / Branch Strategy / Acceptance Criteria). 마일스톤 M1~M4도 만든다.
 3. 승인되면 `/work --milestone <M1>` 또는 Teams 구성으로 P1부터 실행한다.
