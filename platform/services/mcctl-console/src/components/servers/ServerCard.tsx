@@ -75,7 +75,7 @@ export function ServerCard({ server, statusOverride, onClick, onStart, onStop, l
   };
 
   const isRunning = currentStatus === 'running';
-  const isStopped = currentStatus === 'stopped' || currentStatus === 'exited' || currentStatus === 'not_created';
+  const isStopped = currentStatus === 'stopped' || currentStatus === 'exited' || currentStatus === 'not_created' || currentStatus === 'created';
 
   return (
     <Card

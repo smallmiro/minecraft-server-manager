@@ -38,6 +38,8 @@ interface ServerConsoleProps {
    * Name of the server to connect to
    */
   serverName: string;
+  /** Current server status; a transition to 'running' restarts log streaming */
+  serverStatus?: string;
   onConnectionStateChange?: (state: { isConnected: boolean; retryCount: number }) => void;
 }
 
@@ -154,7 +156,7 @@ function getLogLevelColor(level: LogLevel): string {
 /**
  * ServerConsole - Real-time log streaming and command execution
  */
-export function ServerConsole({ serverName, onConnectionStateChange }: ServerConsoleProps) {
+export function ServerConsole({ serverName, serverStatus, onConnectionStateChange }: ServerConsoleProps) {
   const [command, setCommand] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -169,6 +171,7 @@ export function ServerConsole({ serverName, onConnectionStateChange }: ServerCon
   // Connect to server logs via SSE
   const { logs, isConnected, clearLogs, reconnect, retryCount } = useServerLogs({
     serverName,
+    serverStatus,
   });
 
   useEffect(() => {

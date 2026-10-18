@@ -618,7 +618,7 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
             </IconButton>
           </Box>
           <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
-            <ServerConsole serverName={server.name} />
+            <ServerConsole serverName={server.name} serverStatus={server.status} />
           </DialogContent>
         </Dialog>
       )}

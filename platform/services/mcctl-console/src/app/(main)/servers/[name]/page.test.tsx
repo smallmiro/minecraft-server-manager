@@ -123,6 +123,18 @@ describe('ServerDetailPage', () => {
     expect(screen.queryByRole('button', { name: 'Restart' })).not.toBeInTheDocument();
   });
 
+  it('shows the Start action for a created server', () => {
+    vi.mocked(useServerStatus).mockReturnValue({
+      status: 'created',
+      health: 'none',
+      isConnected: true,
+    } as never);
+
+    renderPage();
+
+    expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument();
+  });
+
   it('falls back to API status when a stale SSE value is disconnected', () => {
     vi.mocked(useServerStatus).mockReturnValue({
       status: 'stopped',

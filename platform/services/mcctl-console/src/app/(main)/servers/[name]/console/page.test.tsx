@@ -9,6 +9,14 @@ vi.mock('@/hooks/useAppRouter', () => ({
   useAppRouter: () => ({ push }),
 }));
 
+vi.mock('@/hooks/useMcctl', () => ({
+  useServer: () => ({ data: { server: { status: 'running' } } }),
+}));
+
+vi.mock('@/hooks/useServerStatus', () => ({
+  useServerStatus: () => ({ status: 'running', isConnected: true }),
+}));
+
 vi.mock('@/components/servers/ServerConsole', () => ({
   ServerConsole: ({
     onConnectionStateChange,
