@@ -28,6 +28,7 @@ export const SettingStatusSchema = Type.Union([
 
 export const SettingSourceSchema = Type.Union([
   Type.Literal('platform-env'),
+  Type.Literal('pm2-ecosystem'),
   Type.Literal('shadowed'),
   Type.Literal('legacy'),
   Type.Literal('unknown'),

@@ -48,6 +48,16 @@ function probeEcosystem(text: string | undefined, key: string): string | undefin
   return raw?.replace(/\\(.)/g, '$1');
 }
 
+const MANAGED_MESSAGE = 'Managed by ecosystem.config.cjs. Run mcctl upgrade to move it into .env.';
+
+/** Auth keys the ecosystem still defines: the console uses that value, so .env edits would be ignored (#699). */
+function ecosystemManagedKeys(eco: string | undefined): Set<string> {
+  const keys = new Set<string>();
+  if (probeEcosystem(eco, 'BETTER_AUTH_SECRET')) keys.add('BETTER_AUTH_SECRET');
+  if (probeEcosystem(eco, 'BETTER_AUTH_BASE_URL') !== undefined) keys.add('BETTER_AUTH_BASE_URL');
+  return keys;
+}
+
 export class PlatformSettingsService {
   private readonly envPath: string;
 
@@ -81,6 +91,7 @@ export class PlatformSettingsService {
     const eco = await this.readEcosystem();
     const { values } = parseEnvDocument(content);
     const settings: PlatformSetting[] = [];
+    const managed = ecosystemManagedKeys(eco);
 
     const build = (key: string): PlatformSetting => {
       const reg = REGISTRY[key];
@@ -99,6 +110,11 @@ export class PlatformSettingsService {
         secret,
         restartScope: reg ? reg.restartScope : 'servers',
       };
+      if (managed.has(key)) {
+        s.source = 'pm2-ecosystem';
+        s.editable = false;
+        s.description = 'Injected by ecosystem.config.cjs, which the console uses instead of this .env value. mcctl upgrade moves it into .env.';
+      }
       if (reg?.choices) s.choices = reg.choices;
       if (secret) s.configured = !!fileValue;
       else if (fileValue !== undefined) s.value = fileValue;
@@ -116,7 +132,7 @@ export class PlatformSettingsService {
     for (const key of [...values.keys()].filter((k) => !REGISTRY[k]).sort()) settings.push(build(key));
 
     const runtime: PlatformRuntimeItem[] = [];
-    // Older ecosystem files still inject these; a non-empty .env value wins (#686).
+    // Older ecosystem files still inject these; while they do, the ecosystem value wins over .env (#699). Once removed, .env is used (#686).
     const baseUrl = probeEcosystem(eco, 'BETTER_AUTH_BASE_URL');
     if (baseUrl !== undefined) runtime.push({ key: 'BETTER_AUTH_BASE_URL', source: 'pm2-ecosystem', value: baseUrl });
     if (probeEcosystem(eco, 'BETTER_AUTH_SECRET')) runtime.push({ key: 'BETTER_AUTH_SECRET', source: 'pm2-ecosystem', configured: true });
@@ -139,6 +155,7 @@ export class PlatformSettingsService {
     if (req.revision !== revision) throw new PlatformSettingsStaleError(revision);
 
     const { values } = parseEnvDocument(content);
+    const managed = ecosystemManagedKeys(await this.readEcosystem());
     const errors: Array<{ key: string; message: string }> = [];
     const set: Record<string, string> = {};
     const scopes = new Set<RestartScope>();
@@ -146,6 +163,7 @@ export class PlatformSettingsService {
     for (const [key, value] of Object.entries(req.set)) {
       const reg = REGISTRY[key];
       if (!ENV_KEY_RE.test(key)) { errors.push({ key, message: 'Invalid key name' }); continue; }
+      if (managed.has(key)) { errors.push({ key, message: MANAGED_MESSAGE }); continue; }
       if (req.remove.includes(key)) { errors.push({ key, message: 'Key is in both set and remove' }); continue; }
       if (reg && (reg.status === 'readonly' || reg.status === 'shadowed')) { errors.push({ key, message: 'Setting is read-only' }); continue; }
       const secret = reg ? !!reg.secret : SECRET_NAME_RE.test(key);
@@ -168,6 +186,7 @@ export class PlatformSettingsService {
     for (const key of req.remove) {
       const reg = REGISTRY[key];
       if (!ENV_KEY_RE.test(key)) { errors.push({ key, message: 'Invalid key name' }); continue; }
+      if (managed.has(key)) { errors.push({ key, message: MANAGED_MESSAGE }); continue; }
       if (reg?.status === 'readonly') { errors.push({ key, message: 'Setting is read-only' }); continue; }
       if (reg?.required) { errors.push({ key, message: 'Setting is required and cannot be removed' }); continue; }
       if (values.has(key)) {
