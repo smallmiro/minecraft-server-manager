@@ -247,8 +247,10 @@ The **Players** card shows the `online / max` player count and the names of the 
 
 The **Connection** card shows how clients can reach the server:
 
-- **LAN Address** -- The server hostname with port `25565`, with a copy button. A `+N` chip lists any additional hostnames
+- **Addresses** -- Every hostname of the server with port `25565` and a copy button, labeled by kind: **LAN**, **Tailscale / VPN**, **nip.io**, **External** (your own domain), or **mDNS** (`.local`). LAN addresses are listed first
 - **External Address** -- The playit.gg domain assigned to this server (with a copy button), or `Not configured`. This row appears when playit.gg is enabled
+
+Copy buttons also work when the console is opened over plain HTTP from another machine, and show a message if copying fails.
 
 ### Players Tab
 
@@ -871,6 +873,8 @@ Open **Settings** from the user menu to manage your own account. The page has th
 
 Administrators see an additional **Platform Settings** section on the **Settings** page, above the account cards. It edits the platform `.env` file. Non-admin users only see their own account cards and cannot read or change platform configuration; the API enforces this independently of the UI.
 
+![Platform Settings](../images/platform-settings.png)
+
 - **Bento cards** -- Settings are grouped into cards: Network & Routing, Server Runtime, RCON, Backup, External Access (playit.gg) and Console & Logging. Each field uses a typed control (text, switch, select, number, IP list) with field-level validation
 - **Secrets are write-only** -- Secret fields (`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`) show **Configured** or **Not configured**. The input is never pre-filled; typing a value marks the field changed
 - **Runtime (PM2)** -- A read-only card shows `AUTH_MODE` from `ecosystem.config.cjs`, plus `BETTER_AUTH_BASE_URL` / `BETTER_AUTH_SECRET` (configured only) while an older ecosystem file still injects them. Values set under **Console & Logging** win; re-run `mcctl console init` to move them to `.env`
@@ -882,7 +886,11 @@ Server-specific values stay in each server's **Options** tab. A server's `config
 
 ### Saving and Applying Changes
 
-A sticky bar with **Discard** and **Save Changes** appears when any field is changed. **Saving only writes `.env`; it never restarts anything.** After saving, a dialog lists what needs to be restarted, per scope:
+![Unsaved changes bar](../images/platform-settings-save-bar.png)
+
+A sticky bar with **Discard** and **Save Changes** appears when any field is changed, and a chip above the cards counts the unsaved fields. **Saving only writes `.env`; it never restarts anything.** After saving, a **Restart required** dialog lists what needs to be restarted, per scope:
+
+![Restart required dialog](../images/platform-settings-restart.png)
 
 | Scope | What to do |
 |-------|------------|

@@ -247,8 +247,10 @@ Overview 탭의 핵심은 **Console** 패널로, 서버의 실시간 로그 출�
 
 **Connection** 카드는 클라이언트가 서버에 접속하는 방법을 보여줍니다:
 
-- **LAN Address** -- 포트 `25565`가 붙은 서버 호스트명과 복사 버튼. 추가 호스트명이 있으면 `+N` 칩으로 목록을 확인할 수 있습니다
+- **Addresses** -- 포트 `25565`가 붙은 서버의 모든 호스트명과 복사 버튼. 각 주소에는 종류 라벨이 붙습니다: **LAN**, **Tailscale / VPN**, **nip.io**, **External**(직접 지정한 도메인), **mDNS**(`.local`). LAN 주소가 먼저 표시됩니다
 - **External Address** -- 이 서버에 할당된 playit.gg 도메인(복사 버튼 포함) 또는 `Not configured`. playit.gg가 활성화된 경우에 이 행이 표시됩니다
+
+복사 버튼은 다른 기기에서 일반 HTTP로 콘솔을 열었을 때도 동작하며, 복사에 실패하면 메시지를 표시합니다.
 
 ### Players 탭
 
@@ -871,6 +873,8 @@ playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시되�
 
 관리자에게는 **Settings** 페이지의 계정 카드 위에 **Platform Settings** 섹션이 추가로 표시됩니다. 이 섹션은 플랫폼 `.env` 파일을 편집합니다. 일반 사용자는 자신의 계정 카드만 볼 수 있으며 플랫폼 설정을 읽거나 변경할 수 없습니다. API가 UI와 별개로 이를 강제합니다.
 
+![Platform Settings](../images/platform-settings.png)
+
 - **Bento 카드** -- 설정은 Network & Routing, Server Runtime, RCON, Backup, External Access (playit.gg), Console & Logging 카드로 그룹화됩니다. 각 필드는 타입별 입력(텍스트, 스위치, 선택, 숫자, IP 목록)과 필드 단위 검증을 제공합니다
 - **시크릿은 쓰기 전용** -- 시크릿 필드(`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`)는 **Configured** 또는 **Not configured**만 표시합니다. 입력란은 미리 채워지지 않으며, 값을 입력하면 변경된 필드로 표시됩니다
 - **Runtime (PM2)** -- `ecosystem.config.cjs`의 `AUTH_MODE`와, 이전 버전 ecosystem 파일이 아직 주입하는 경우 `BETTER_AUTH_BASE_URL` / `BETTER_AUTH_SECRET`(configured 여부만)을 읽기 전용 카드로 보여줍니다. **Console & Logging**에서 설정한 값이 우선하며, `mcctl console init`을 다시 실행하면 `.env`로 옮겨집니다
@@ -882,7 +886,11 @@ playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시되�
 
 ### 변경 사항 저장 및 적용
 
-필드를 변경하면 **Discard**와 **Save Changes**가 있는 하단 고정 바가 나타납니다. **저장은 `.env`만 기록하며 아무것도 재시작하지 않습니다.** 저장 후 대화상자가 범위별로 재시작이 필요한 대상을 안내합니다:
+![저장하지 않은 변경 사항 바](../images/platform-settings-save-bar.png)
+
+필드를 변경하면 **Discard**와 **Save Changes**가 있는 하단 고정 바가 나타나고, 카드 위의 칩이 저장하지 않은 필드 수를 보여줍니다. **저장은 `.env`만 기록하며 아무것도 재시작하지 않습니다.** 저장 후 **Restart required** 대화상자가 범위별로 재시작이 필요한 대상을 안내합니다:
+
+![Restart required 대화상자](../images/platform-settings-restart.png)
 
 | 범위 | 해야 할 일 |
 |------|------------|
