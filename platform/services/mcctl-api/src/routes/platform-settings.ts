@@ -26,10 +26,7 @@ interface UpdateRoute {
 
 const KEY_NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
-/**
- * STRICT admin check: a missing X-Role header is rejected
- * (unlike the lenient pattern in audit-logs.ts).
- */
+/** STRICT admin check: a missing X-Role header is rejected. */
 function requireAdmin(request: FastifyRequest, reply: FastifyReply): boolean {
   if (request.headers['x-role'] === 'admin') return true;
   reply.code(403).send({ error: 'Forbidden', message: 'Administrator role required' });
