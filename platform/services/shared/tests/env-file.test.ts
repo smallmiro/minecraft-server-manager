@@ -1,9 +1,27 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import {
+  mkdtempSync, rmSync, writeFileSync, existsSync, readFileSync, readdirSync, statSync, lstatSync, symlinkSync, chmodSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { parseEnvDocument, applyEnvChanges, serializeEnvValue } from '../src/utils/index.js';
+import {
+  parseEnvDocument, applyEnvChanges, serializeEnvValue, writeFileAtomic, envRevision,
+} from '../src/utils/index.js';
+
+// Lets a test make the final rename fail to prove the original survives.
+const failRename = vi.hoisted(() => ({ on: false }));
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>();
+  return {
+    ...actual,
+    rename: async (...args: Parameters<typeof actual.rename>) => {
+      if (failRename.on) throw new Error('rename failed');
+      return actual.rename(...args);
+    },
+  };
+});
 
 const SAMPLE = [
   '# Header comment',
@@ -149,5 +167,62 @@ describe('serializeEnvValue bash source round-trip', () => {
     const out = execFileSync('bash', ['-c', 'set -a; source "$1"; printf %s "$K"', 'bash', envPath], { cwd: dir, encoding: 'utf-8' });
     expect(out).toBe(value);
     expect(existsSync(join(dir, 'pwned'))).toBe(false);
+  });
+});
+
+describe('writeFileAtomic', () => {
+  let dir: string;
+  let envPath: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'mcctl-atomic-'));
+    envPath = join(dir, '.env');
+    failRename.on = false;
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  test('replaces the file, tightens mode to 0600 and leaves no temp files', async () => {
+    writeFileSync(envPath, 'OLD=1\n');
+    chmodSync(envPath, 0o664);
+    await writeFileAtomic(envPath, 'NEW=2\n');
+    expect(readFileSync(envPath, 'utf-8')).toBe('NEW=2\n');
+    expect(statSync(envPath).mode & 0o777).toBe(0o600);
+    expect(readdirSync(dir)).toEqual(['.env']);
+  });
+
+  test('creates the file when missing', async () => {
+    await writeFileAtomic(envPath, 'A=1\n');
+    expect(readFileSync(envPath, 'utf-8')).toBe('A=1\n');
+    expect(statSync(envPath).mode & 0o777).toBe(0o600);
+  });
+
+  test('writes through a symlink without replacing the link', async () => {
+    const real = join(dir, 'real.env');
+    writeFileSync(real, 'OLD=1\n');
+    symlinkSync(real, envPath);
+    await writeFileAtomic(envPath, 'NEW=2\n');
+    expect(lstatSync(envPath).isSymbolicLink()).toBe(true);
+    expect(readFileSync(real, 'utf-8')).toBe('NEW=2\n');
+    expect(readdirSync(dir).sort()).toEqual(['.env', 'real.env']);
+  });
+
+  test('keeps the original intact and cleans up the temp file on failure', async () => {
+    writeFileSync(envPath, 'OLD=1\n');
+    failRename.on = true;
+    await expect(writeFileAtomic(envPath, 'NEW=2\n')).rejects.toThrow('rename failed');
+    expect(readFileSync(envPath, 'utf-8')).toBe('OLD=1\n');
+    expect(readdirSync(dir)).toEqual(['.env']);
+  });
+});
+
+describe('envRevision', () => {
+  test('is the sha256 hex of the bytes', () => {
+    const content = 'A=1\n# c\n';
+    expect(envRevision(content)).toBe(createHash('sha256').update(content).digest('hex'));
+    expect(envRevision(Buffer.from(content))).toBe(envRevision(content));
+    expect(envRevision('A=1\n')).not.toBe(envRevision('A=2\n'));
   });
 });
