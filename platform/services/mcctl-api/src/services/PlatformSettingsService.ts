@@ -115,15 +115,14 @@ export class PlatformSettingsService {
     }
     for (const key of [...values.keys()].filter((k) => !REGISTRY[k]).sort()) settings.push(build(key));
 
-    const runtime: PlatformRuntimeItem[] = [
-      { key: 'BETTER_AUTH_BASE_URL', source: 'pm2-ecosystem' },
-      { key: 'BETTER_AUTH_SECRET', source: 'pm2-ecosystem', configured: !!probeEcosystem(eco, 'BETTER_AUTH_SECRET') },
-      { key: 'AUTH_MODE', source: 'pm2-ecosystem' },
-    ];
+    const runtime: PlatformRuntimeItem[] = [];
+    // Older ecosystem files still inject these; a non-empty .env value wins (#686).
     const baseUrl = probeEcosystem(eco, 'BETTER_AUTH_BASE_URL');
-    if (baseUrl !== undefined) runtime[0]!.value = baseUrl;
-    const authMode = this.processEnv['AUTH_MODE'];
-    if (authMode !== undefined) runtime[2]!.value = authMode;
+    if (baseUrl !== undefined) runtime.push({ key: 'BETTER_AUTH_BASE_URL', source: 'pm2-ecosystem', value: baseUrl });
+    if (probeEcosystem(eco, 'BETTER_AUTH_SECRET')) runtime.push({ key: 'BETTER_AUTH_SECRET', source: 'pm2-ecosystem', configured: true });
+    const authMode: PlatformRuntimeItem = { key: 'AUTH_MODE', source: 'pm2-ecosystem' };
+    if (this.processEnv['AUTH_MODE'] !== undefined) authMode.value = this.processEnv['AUTH_MODE'];
+    runtime.push(authMode);
 
     return { revision: envRevision(content), settings, runtime };
   }
@@ -170,6 +169,7 @@ export class PlatformSettingsService {
       const reg = REGISTRY[key];
       if (!ENV_KEY_RE.test(key)) { errors.push({ key, message: 'Invalid key name' }); continue; }
       if (reg?.status === 'readonly') { errors.push({ key, message: 'Setting is read-only' }); continue; }
+      if (reg?.required) { errors.push({ key, message: 'Setting is required and cannot be removed' }); continue; }
       if (values.has(key)) {
         remove.push(key);
         scopes.add(reg ? reg.restartScope : 'servers');

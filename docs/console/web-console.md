@@ -873,9 +873,9 @@ Administrators see an additional **Platform Settings** section on the **Settings
 
 - **Bento cards** -- Settings are grouped into cards: Network & Routing, Server Runtime, RCON, Backup, External Access (playit.gg) and Console & Logging. Each field uses a typed control (text, switch, select, number, IP list) with field-level validation
 - **Secrets are write-only** -- Secret fields (`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`) show **Configured** or **Not configured**. The input is never pre-filled; typing a value marks the field changed
-- **Runtime (PM2)** -- A read-only card shows values injected by `ecosystem.config.cjs` (`BETTER_AUTH_BASE_URL`, `BETTER_AUTH_SECRET` as configured only, `AUTH_MODE`). To change them, re-run `mcctl console init`
+- **Runtime (PM2)** -- A read-only card shows `AUTH_MODE` from `ecosystem.config.cjs`, plus `BETTER_AUTH_BASE_URL` / `BETTER_AUTH_SECRET` (configured only) while an older ecosystem file still injects them. Values set under **Console & Logging** win; re-run `mcctl console init` to move them to `.env`
 - **Advanced Environment** -- Unknown keys as key/value rows (add, edit, remove). Servers receive one only if its name is listed in `servers/global.env`
-- **Legacy / Unused** -- Legacy and shadowed keys with warning styling (for example "Overridden by ecosystem.config.cjs; not applied"). Nothing is removed unless you remove it explicitly
+- **Legacy / Unused** -- Legacy keys with warning styling ("Not read by any current code."). Nothing is removed unless you remove it explicitly
 - **Read-only network identity** -- `MINECRAFT_NETWORK`, `MINECRAFT_SUBNET` and `COMPOSE_PROJECT_NAME` are displayed with CLI guidance only
 
 Server-specific values stay in each server's **Options** tab. A server's `config.env` overrides the platform value for that server, and the UI notes this on server-runtime keys. See [Environment Variables](../configuration/environment.md#setting-classification) for the full classification.

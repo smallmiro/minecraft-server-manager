@@ -813,7 +813,7 @@ Before the prompts, init checks prerequisites (Node.js, Docker, Docker Compose, 
 5. Allowed IPs (if ip-whitelist or api-key-ip mode); open mode asks for confirmation
 6. Creates the admin user in `data/mcctl.db` (only if mcctl-console is selected). If a user with the same email exists, init fails with `User '<email>' already exists` unless `--force` is given; with `--force` that user is deleted and created again
 7. Installs the service packages into `.services/` if they are missing
-8. Generates PM2 ecosystem.config.cjs
+8. Writes `BETTER_AUTH_SECRET` to `.env` if missing (an older ecosystem file's secret is moved over), then generates PM2 ecosystem.config.cjs (no auth secrets in it)
 9. Saves configuration (.mcctl-admin.yml)
 
 **Files created after init:**
@@ -1785,8 +1785,8 @@ useAuditStats()                 // Audit log statistics
 |----------|-------------|---------|
 | `MCCTL_API_URL` | mcctl-api URL (internal) | `http://localhost:5001` |
 | `MCCTL_API_KEY` | API key for authentication | Required |
-| `BETTER_AUTH_SECRET` | Session encryption secret | Auto-generated |
-| `BETTER_AUTH_BASE_URL` | Console URL for auth | `http://localhost:5000` |
+| `BETTER_AUTH_SECRET` | Session encryption secret, read from `<MCCTL_ROOT>/.env` (wins over the PM2 env) | Written by `mcctl console init` |
+| `BETTER_AUTH_BASE_URL` | Console URL for auth, read from `<MCCTL_ROOT>/.env` (wins over the PM2 env) | `http://localhost:<PORT>` |
 | `PORT` | Console listening port | `5000` |
 | `HOSTNAME` | Console listening host | `0.0.0.0` |
 | `MCCTL_ROOT` | Platform root directory | `~/minecraft-servers` |

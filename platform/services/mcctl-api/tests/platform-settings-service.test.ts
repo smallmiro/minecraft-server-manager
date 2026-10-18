@@ -59,8 +59,8 @@ describe('PlatformSettingsService', () => {
     expect(find(r, 'MINECRAFT_NETWORK')).toMatchObject({ status: 'readonly', editable: false, value: 'minecraft-net' });
     expect(find(r, 'DEFAULT_MEMORY')).toMatchObject({ status: 'legacy', source: 'legacy' });
     expect(find(r, 'DEFAULT_VERSION')).toMatchObject({ status: 'legacy' });
-    expect(find(r, 'BETTER_AUTH_SECRET')).toMatchObject({ status: 'shadowed', source: 'shadowed', differsFromEnv: true, secret: true });
-    expect(find(r, 'BETTER_AUTH_BASE_URL')).toMatchObject({ status: 'shadowed', differsFromEnv: true, value: 'http://old:5000' });
+    expect(find(r, 'BETTER_AUTH_SECRET')).toMatchObject({ status: 'supported', source: 'platform-env', editable: true, secret: true, configured: true, restartScope: 'console' });
+    expect(find(r, 'BETTER_AUTH_BASE_URL')).toMatchObject({ status: 'supported', editable: true, value: 'http://old:5000', restartScope: 'console' });
     expect(find(r, 'MY_CUSTOM')).toMatchObject({ status: 'unknown', source: 'unknown', editable: true, value: 'hello' });
     expect(find(r, 'EXTRA_ARGS').value).toBe('--forceUpgrade');
   });
@@ -101,6 +101,12 @@ describe('PlatformSettingsService', () => {
         { key: 'AUTH_MODE', source: 'pm2-ecosystem', value: 'api-key' },
       ]),
     );
+  });
+
+  it('lists auth keys under runtime only while the ecosystem still injects them (#686)', async () => {
+    writeFileSync(join(dir, 'ecosystem.config.cjs'), `module.exports = { apps: [ { name: 'mcctl-console', env: { PORT: 5000 } } ] };\n`);
+    const r = await svc.get();
+    expect(r.runtime).toEqual([{ key: 'AUTH_MODE', source: 'pm2-ecosystem', value: 'api-key' }]);
   });
 
   it('does not evaluate the ecosystem file', async () => {
@@ -189,12 +195,17 @@ describe('PlatformSettingsService', () => {
       expect(readFileSync(real, 'utf8')).toContain('TZ=UTC');
     });
 
-    it('removes shadowed legacy keys explicitly but set on shadowed is rejected', async () => {
+    it('sets auth keys with console scope; the secret cannot be removed (#686)', async () => {
       const { revision } = await svc.get();
-      const err = await svc.update({ revision, set: { BETTER_AUTH_SECRET: 'x' }, remove: [] }).catch((e) => e);
+      const bad = await svc.update({ revision, set: { BETTER_AUTH_BASE_URL: 'not a url' }, remove: [] }).catch((e) => e);
+      expect(bad).toBeInstanceOf(PlatformSettingsValidationError);
+      const r = await svc.update({ revision, set: { BETTER_AUTH_SECRET: 'newsecret', BETTER_AUTH_BASE_URL: 'https://mc.example.com' }, remove: [] });
+      expect(r.restartScopes).toEqual(['console']);
+      const err = await svc.update({ revision: r.revision, set: {}, remove: ['BETTER_AUTH_SECRET'] }).catch((e) => e);
       expect(err).toBeInstanceOf(PlatformSettingsValidationError);
-      const r = await svc.update({ revision, set: {}, remove: ['BETTER_AUTH_SECRET', 'DEFAULT_MEMORY'] });
-      expect(r.removedKeys.sort()).toEqual(['BETTER_AUTH_SECRET', 'DEFAULT_MEMORY']);
+      expect(err.errors).toEqual([{ key: 'BETTER_AUTH_SECRET', message: expect.stringMatching(/cannot be removed/) }]);
+      const r2 = await svc.update({ revision: r.revision, set: {}, remove: ['BETTER_AUTH_BASE_URL', 'DEFAULT_MEMORY'] });
+      expect(r2.removedKeys.sort()).toEqual(['BETTER_AUTH_BASE_URL', 'DEFAULT_MEMORY']);
     });
   });
 });

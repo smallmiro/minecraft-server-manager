@@ -9,6 +9,8 @@ export interface RegistryEntry {
   type: SettingType;
   status: 'supported' | 'readonly' | 'shadowed' | 'legacy';
   secret?: boolean;
+  /** Cannot be removed from .env (removal would fall back to a stale value). */
+  required?: boolean;
   choices?: string[];
   restartScope: RestartScope;
   /** Present for supported keys. Legacy keys accept any (bash-safe) value. */
@@ -36,6 +38,14 @@ const validTz: Validator = (v) => {
 
 const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'];
 
+const httpUrl: Validator = (v) => {
+  try {
+    return ['http:', 'https:'].includes(new URL(v).protocol) ? null : 'Must be an http(s) URL';
+  } catch {
+    return 'Must be an http(s) URL';
+  }
+};
+
 export const REGISTRY: Record<string, RegistryEntry> = {
   HOST_IP: { label: 'Host IP', description: 'Host IPv4 used for nip.io hostnames of newly created servers.', group: 'Network & Routing', type: 'ipv4', status: 'supported', restartScope: 'next-create', validate: (v) => (isIpv4(v) ? null : 'Must be an IPv4 address') },
   HOST_IPS: { label: 'Host IPs', description: 'Comma-separated host IPv4 list for multi-NIC hostnames of newly created servers.', group: 'Network & Routing', type: 'ipv4-list', status: 'supported', restartScope: 'next-create', validate: (v) => (v.length > 0 && v.split(',').every(isIpv4) ? null : 'Must be comma-separated IPv4 addresses (no spaces)') },
@@ -53,10 +63,9 @@ export const REGISTRY: Record<string, RegistryEntry> = {
   BACKUP_AUTO_ON_STOP: { label: 'Backup on stop', description: 'Run a backup automatically on mcctl stop.', group: 'Backup', type: 'boolean', status: 'supported', choices: ['true', 'false'], restartScope: 'none', validate: oneOf(['true', 'false']) },
   PLAYIT_SECRET_KEY: { label: 'playit.gg secret key', description: 'Secret key of the playit.gg agent.', group: 'External Access', type: 'secret', status: 'supported', secret: true, restartScope: 'playit', validate: nonEmpty },
   LOG_LEVEL: { label: 'API log level', description: 'Log level of mcctl-api.', group: 'Console & Logging', type: 'enum', status: 'supported', choices: LOG_LEVELS, restartScope: 'api', validate: oneOf(LOG_LEVELS) },
-
-  // Shadowed: overridden by ecosystem.config.cjs, not applied.
-  BETTER_AUTH_SECRET: { label: 'Better Auth secret', description: 'Overridden by ecosystem.config.cjs; not applied.', group: 'Legacy / Unused', type: 'secret', status: 'shadowed', secret: true, restartScope: 'none' },
-  BETTER_AUTH_BASE_URL: { label: 'Better Auth base URL', description: 'Overridden by ecosystem.config.cjs; not applied.', group: 'Legacy / Unused', type: 'string', status: 'shadowed', restartScope: 'none' },
+  // Read by mcctl-console from this .env, ahead of ecosystem.config.cjs (#686).
+  BETTER_AUTH_SECRET: { label: 'Console session secret', description: 'Signs console login sessions. Changing it signs everyone out.', group: 'Console & Logging', type: 'secret', status: 'supported', secret: true, required: true, restartScope: 'console', validate: nonEmpty },
+  BETTER_AUTH_BASE_URL: { label: 'Console base URL', description: 'Public URL of the console for auth callbacks. Unset: http://localhost:<console port>.', group: 'Console & Logging', type: 'string', status: 'supported', restartScope: 'console', validate: httpUrl },
 };
 
 const LEGACY: Array<[string, boolean]> = [

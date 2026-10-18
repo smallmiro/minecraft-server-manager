@@ -3,6 +3,9 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin } from 'better-auth/plugins';
 import { db } from './db';
 import * as schema from './schema';
+import { applyPlatformAuthEnv } from './platform-env';
+
+applyPlatformAuthEnv();
 
 const baseURL = process.env.BETTER_AUTH_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 const isHttps = baseURL.startsWith('https://');

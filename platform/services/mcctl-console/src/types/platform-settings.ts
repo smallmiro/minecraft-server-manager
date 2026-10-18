@@ -20,7 +20,7 @@ export type SettingStatus = 'supported' | 'readonly' | 'shadowed' | 'legacy' | '
 
 export type SettingSource = 'platform-env' | 'shadowed' | 'legacy' | 'unknown';
 
-export type RestartScope = 'none' | 'next-create' | 'router' | 'servers' | 'playit' | 'api';
+export type RestartScope = 'none' | 'next-create' | 'router' | 'servers' | 'playit' | 'api' | 'console';
 
 export interface PlatformSetting {
   key: string;

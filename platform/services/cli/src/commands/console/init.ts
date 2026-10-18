@@ -9,6 +9,7 @@ import {
   checkConsolePrerequisites,
 } from '@minecraft-docker/shared';
 import { toApiAuthEnv } from '../../lib/api-auth-env.js';
+import { readLegacyAuthSecret, ensureConsoleAuthSecret } from '../../lib/console-auth-secret.js';
 import { ConsoleDatabase } from '../../lib/console-db.js';
 import { getContainer } from '../../infrastructure/index.js';
 import {
@@ -260,7 +261,6 @@ function generateEcosystemConfig(
   apiScriptPath: string,
   consoleScriptPath: string,
   isDevelopment: boolean,
-  nextAuthSecret: string,
   serviceOptions: ServiceInstallOptions,
   authConfig: AuthConfig,
   rootDir: string
@@ -311,8 +311,6 @@ ${apiEnvVars.join('\n')}
       `        HOSTNAME: '0.0.0.0',`,
       `        MCCTL_API_URL: 'http://localhost:${apiPort}',`,
       `        MCCTL_ROOT: '${rootDir}',`,
-      `        BETTER_AUTH_SECRET: '${nextAuthSecret}',`,
-      `        BETTER_AUTH_BASE_URL: 'http://localhost:${consolePort}',`,
     ];
 
     if (authConfig.apiKey) {
@@ -445,6 +443,9 @@ export async function consoleInitCommand(
     log.error('Platform not initialized. Run: mcctl init');
     return 1;
   }
+
+  // Read before a reinitialize deletes the old ecosystem file (#686).
+  const legacyAuthSecret = readLegacyAuthSecret(join(paths.platform, ECOSYSTEM_CONFIG_FILE));
 
   const container = getContainer({ rootDir: options.root });
   const prompt = container.promptPort;
@@ -790,8 +791,10 @@ export async function consoleInitCommand(
 
     spinner.start('Generating PM2 ecosystem config...');
 
-    // Generate NextAuth secret for session encryption
-    const nextAuthSecret = AdminConfigManager.generateApiKey();
+    // The console session secret lives in .env, not in the ecosystem file (#686).
+    if (installConsole) {
+      await ensureConsoleAuthSecret(paths, legacyAuthSecret);
+    }
 
     const ecosystemPath = join(paths.platform, ECOSYSTEM_CONFIG_FILE);
     const ecosystemContent = generateEcosystemConfig(
@@ -800,7 +803,6 @@ export async function consoleInitCommand(
       scriptPaths.api,
       scriptPaths.console,
       scriptPaths.isDevelopment,
-      nextAuthSecret,
       serviceInstallOptions,
       { accessMode, apiKey, allowedIps },
       paths.root

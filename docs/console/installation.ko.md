@@ -203,9 +203,8 @@ module.exports = {
         HOSTNAME: '0.0.0.0',
         MCCTL_API_URL: 'http://localhost:5001',
         MCCTL_ROOT: '/home/user/minecraft-servers',
-        BETTER_AUTH_SECRET: '<생성된 시크릿>',
-        BETTER_AUTH_BASE_URL: 'http://localhost:5000',
         // api-key 계열 접근 모드에서는 MCCTL_API_KEY가 추가됩니다
+        // BETTER_AUTH_SECRET은 여기가 아니라 .env에 기록됩니다
       },
       instances: 1,
       exec_mode: 'fork',
