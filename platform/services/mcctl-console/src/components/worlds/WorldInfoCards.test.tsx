@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import { darkTheme } from '@/theme/muiTheme';
 import { WorldInfoCards, formatBytes } from './WorldInfoCards';
@@ -47,5 +47,17 @@ describe('WorldInfoCards', () => {
     expect(formatBytes(0)).toBe('0 B');
     expect(formatBytes(1024)).toBe('1.0 KB');
     expect(formatBytes(1288490188)).toBe('1.2 GB');
+  });
+
+  it('shows copy failure when clipboard is unavailable and execCommand fails', async () => {
+    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    document.execCommand = vi.fn().mockReturnValue(false);
+    render(
+      <ThemeProvider theme={darkTheme}>
+        <WorldInfoCards info={info} />
+      </ThemeProvider>
+    );
+    fireEvent.click(screen.getByTestId('world-stat-seed'));
+    await waitFor(() => expect(screen.getByLabelText('Copy failed')).toBeInTheDocument());
   });
 });

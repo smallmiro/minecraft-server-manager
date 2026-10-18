@@ -6,6 +6,7 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import { useCopy } from '@/hooks/useCopy';
 import type { PlayerLocation } from '@/ports/api/IMcctlApiClient';
 
 export interface PlayerLocationListProps {
@@ -13,12 +14,6 @@ export interface PlayerLocationListProps {
   offline: PlayerLocation[];
   /** Live (online) locations from RCON. Live entries take precedence. */
   live?: PlayerLocation[];
-}
-
-function copy(text: string): void {
-  if (typeof navigator !== 'undefined' && navigator.clipboard) {
-    void navigator.clipboard.writeText(text);
-  }
 }
 
 const DIMENSION_LABEL: Record<string, string> = {
@@ -41,13 +36,20 @@ export function mergePlayers(
   return [...live, ...offlineFiltered];
 }
 
+const COPY_TITLE = { idle: 'Click to copy', copied: 'Copied', failed: 'Copy failed' } as const;
+
 function CoordsCopy({ coords }: { coords: string }) {
+  const { status, copy } = useCopy();
   return (
-    <Tooltip title="Click to copy">
+    <Tooltip title={COPY_TITLE[status]}>
       <Box
         component="span"
-        onClick={() => copy(coords)}
-        sx={{ cursor: 'pointer', color: 'text.secondary', fontFamily: 'monospace' }}
+        onClick={() => void copy(coords)}
+        sx={{
+          cursor: 'pointer',
+          color: status === 'failed' ? 'error.main' : 'text.secondary',
+          fontFamily: 'monospace',
+        }}
       >
         {coords}
       </Box>
