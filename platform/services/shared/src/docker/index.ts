@@ -1117,6 +1117,22 @@ function swapRouterHost(hosts: string[], oldHost: string | null, newHost: string
 }
 
 /**
+ * Decide the PLAYIT_DOMAIN after the custom hostname list was edited (pure, no I/O).
+ * Current domain still listed → unchanged; otherwise exactly one newly added host
+ * becomes the domain; zero or 2+ added → null (remove). No current domain → null.
+ */
+export function resolvePlayitDomain(
+  currentDomain: string | null,
+  previousCustom: string[],
+  nextCustom: string[]
+): string | null {
+  if (!currentDomain) return null;
+  if (nextCustom.some((h) => sameHost(h, currentDomain))) return currentDomain;
+  const added = nextCustom.filter((h) => !previousCustom.some((p) => sameHost(h, p)));
+  return added.length === 1 ? added[0]! : null;
+}
+
+/**
  * Set or remove a server's playit.gg domain in config.env, and keep the
  * mc-router.host label in docker-compose.yml in sync (skipped if file/label absent)
  * @param domain - Domain string to set, or null to remove

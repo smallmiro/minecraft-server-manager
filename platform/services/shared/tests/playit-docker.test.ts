@@ -331,3 +331,33 @@ describe('setServerPlayitDomain docker-compose label sync', () => {
     expect(dockerHelpers.getServerPlayitDomain('survival', dir)).toBe('new.craft.playit.gg');
   });
 });
+
+describe('resolvePlayitDomain', () => {
+  const { resolvePlayitDomain } = dockerHelpers;
+
+  test('keeps current domain when it is still in the list', () => {
+    expect(resolvePlayitDomain('a.playit.gg', ['a.playit.gg'], ['a.playit.gg', 'x.example.com'])).toBe('a.playit.gg');
+  });
+
+  test('matches current domain case-insensitively', () => {
+    expect(resolvePlayitDomain('A.Playit.gg', ['a.playit.gg'], ['a.playit.gg'])).toBe('A.Playit.gg');
+  });
+
+  test('adopts the single newly added host when current was replaced', () => {
+    expect(resolvePlayitDomain('a.playit.gg', ['a.playit.gg', 'x.example.com'], ['x.example.com', 'b.playit.gg'])).toBe(
+      'b.playit.gg'
+    );
+  });
+
+  test('returns null when current was removed and nothing was added', () => {
+    expect(resolvePlayitDomain('a.playit.gg', ['a.playit.gg', 'x.example.com'], ['x.example.com'])).toBe(null);
+  });
+
+  test('returns null when current was removed and 2+ hosts were added', () => {
+    expect(resolvePlayitDomain('a.playit.gg', ['a.playit.gg'], ['b.playit.gg', 'c.playit.gg'])).toBe(null);
+  });
+
+  test('returns null when no domain was set (does not promote new custom hosts)', () => {
+    expect(resolvePlayitDomain(null, [], ['x.example.com'])).toBe(null);
+  });
+});
