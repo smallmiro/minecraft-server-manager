@@ -64,9 +64,7 @@ async function backupInit(
   const config = new Config(paths);
 
   // Set callback to save configuration to .env
-  useCase.setConfigSaveCallback((envConfig) => {
-    config.updateEnv(envConfig);
-  });
+  useCase.setConfigSaveCallback((envConfig) => config.updateEnv(envConfig));
 
   try {
     const result = await useCase.init(options.force);

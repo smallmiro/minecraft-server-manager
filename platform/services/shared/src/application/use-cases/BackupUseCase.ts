@@ -14,7 +14,7 @@ import type {
  * Manages world backups to GitHub
  */
 export class BackupUseCase implements IBackupUseCase {
-  private configSaveCallback?: (config: Record<string, string | boolean>) => void;
+  private configSaveCallback?: (config: Record<string, string | boolean>) => void | Promise<void>;
 
   constructor(
     private readonly prompt: IPromptPort,
@@ -24,7 +24,7 @@ export class BackupUseCase implements IBackupUseCase {
   /**
    * Set callback for saving configuration (called by CLI layer)
    */
-  setConfigSaveCallback(callback: (config: Record<string, string | boolean>) => void): void {
+  setConfigSaveCallback(callback: (config: Record<string, string | boolean>) => void | Promise<void>): void {
     this.configSaveCallback = callback;
   }
 
@@ -172,7 +172,7 @@ export class BackupUseCase implements IBackupUseCase {
       };
 
       if (this.configSaveCallback) {
-        this.configSaveCallback(config);
+        await this.configSaveCallback(config);
       }
 
       this.prompt.success('Backup setup complete!');

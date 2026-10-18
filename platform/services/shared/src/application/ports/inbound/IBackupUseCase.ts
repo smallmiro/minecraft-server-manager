@@ -6,7 +6,7 @@ export interface IBackupUseCase {
   /**
    * Set callback for saving configuration to .env
    */
-  setConfigSaveCallback(callback: (config: Record<string, string | boolean>) => void): void;
+  setConfigSaveCallback(callback: (config: Record<string, string | boolean>) => void | Promise<void>): void;
 
   /**
    * Interactive backup initialization

@@ -633,7 +633,12 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
 
   // Apply changes to .env file
   if (Object.keys(envUpdates).length > 0) {
-    config.updateEnv(envUpdates);
+    try {
+      await config.updateEnv(envUpdates);
+    } catch (error) {
+      log.error(`Failed to update .env: ${error instanceof Error ? error.message : String(error)}`);
+      return 1;
+    }
     console.log('');
     log.info('Updated .env file');
   }
