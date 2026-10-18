@@ -320,6 +320,26 @@ describe('mcctl playit subcommand', () => {
       expect(envContent).toContain('PLAYIT_SECRET_KEY=new-secret-key-456');
     });
 
+    it('should quote a SECRET_KEY that is unsafe for bash source (#688)', async () => {
+      createInitializedPlatform(true, 'old-key');
+
+      vi.mocked(shared.getPlayitAgentStatus).mockResolvedValueOnce({
+        enabled: true,
+        agentRunning: false,
+        secretKeyConfigured: true,
+        containerStatus: 'exited',
+      });
+
+      vi.mocked(promptsModule.password).mockResolvedValueOnce('k$(id) x');
+
+      const exitCode = await playitCommand({ root: testRoot, subCommand: 'setup' });
+
+      expect(exitCode).toBe(0);
+      const envContent = readFileSync(join(testRoot, '.env'), 'utf-8');
+      expect(envContent).toContain("PLAYIT_SECRET_KEY='k$(id) x'");
+      expect(envContent).not.toContain('old-key');
+    });
+
     it('should create .env if it does not exist', async () => {
       createInitializedPlatform(false); // No secret key
 

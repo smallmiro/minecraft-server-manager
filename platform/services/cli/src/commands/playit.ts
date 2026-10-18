@@ -1,4 +1,5 @@
 import {
+  Config,
   Paths,
   log,
   colors,
@@ -36,30 +37,6 @@ function isPlayitEnabled(paths: Paths): boolean {
   } catch {
     return false;
   }
-}
-
-/**
- * Update PLAYIT_SECRET_KEY in .env file
- */
-function updateSecretKey(paths: Paths, secretKey: string): void {
-  const envPath = join(paths.root, '.env');
-  let envContent = '';
-
-  if (existsSync(envPath)) {
-    envContent = readFileSync(envPath, 'utf-8');
-  }
-
-  // Replace or add PLAYIT_SECRET_KEY
-  if (envContent.includes('PLAYIT_SECRET_KEY=')) {
-    envContent = envContent.replace(
-      /^PLAYIT_SECRET_KEY=.*$/m,
-      `PLAYIT_SECRET_KEY=${secretKey}`
-    );
-  } else {
-    envContent += `\nPLAYIT_SECRET_KEY=${secretKey}\n`;
-  }
-
-  writeFileSync(envPath, envContent, 'utf-8');
 }
 
 /**
@@ -260,7 +237,12 @@ async function handleSetup(paths: Paths): Promise<number> {
   }
 
   // Update .env file
-  updateSecretKey(paths, secretKey as string);
+  try {
+    await new Config(paths).updateEnv({ PLAYIT_SECRET_KEY: secretKey as string });
+  } catch (error) {
+    p.cancel(`Failed to update .env: ${error instanceof Error ? error.message : String(error)}`);
+    return 1;
+  }
 
   // Update .mcctl.json to enable playit
   updatePlayitEnabled(paths, true);
