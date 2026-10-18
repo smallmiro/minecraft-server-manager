@@ -40,6 +40,7 @@ export const RestartScopeSchema = Type.Union([
   Type.Literal('servers'),
   Type.Literal('playit'),
   Type.Literal('api'),
+  Type.Literal('console'),
 ]);
 
 export const PlatformSettingSchema = Type.Object({
