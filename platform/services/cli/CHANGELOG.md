@@ -5,16 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.33.0] - 2026-10-18
+
+> **Upgrade notes.** Follow the [upgrade runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/): run `mcctl upgrade`, then `mcctl console service restart --console`. Coming from 2.31.x or earlier, this is the version to upgrade to: it includes all of 2.32.0 without the console sign-out (#699). If you are on 2.32.0 and were signed out, this restores the previous secret and base URL, so you are signed out once more.
+
+### Changed
+- **Create Server dialog** (#700) - Leaving **Sudo Password** empty now asks **Continue without a sudo password?** before creating (for hosts where sudo needs no password) instead of submitting silently; **Enter password** returns to the field. A whitespace-only password counts as empty. Server Type now defaults to **VANILLA** and Minecraft Version to **LATEST** (the CLI default); other types with `LATEST` show a hint to pin a version, because `LATEST` follows new Minecraft releases on every start.
+- **Routing table starts collapsed** - In **Routing → MC-Router Status → Routing Table**, each server's hostname list is collapsed by default; click a server to expand it.
+
+### Fixed
+- **Upgrading to 2.32.0 signed console users out** (#699) - On installs whose platform `.env` still held older `BETTER_AUTH_SECRET` / `BETTER_AUTH_BASE_URL` copies that differed from `ecosystem.config.cjs`, 2.32.0 switched to the `.env` values: every session became invalid and sign-in could fail (e.g. an old base URL). The console now uses the `.env` values only when `ecosystem.config.cjs` no longer defines the key; while it does, the ecosystem value wins and the console logs a warning if `.env` differs. `mcctl upgrade` moves both keys from `ecosystem.config.cjs` into `.env` (the secret is kept, so sessions stay valid), saves `ecosystem.config.cjs.bak-<timestamp>`, and tells you to run `mcctl console service restart --console`; `--dry-run` only shows it, and a second run changes nothing. Platform Settings shows these two keys read-only while the ecosystem defines them and rejects a change with a hint to run `mcctl upgrade`.
+- **`mcctl console init` kept a stale `.env` secret** (#699) - When `.env` held an older `BETTER_AUTH_SECRET` that differed from the one in `ecosystem.config.cjs`, re-running `mcctl console init` kept the `.env` copy and signed everyone out. It now moves the ecosystem secret (the one the running console uses) into `.env`.
+
 ## [2.32.0] - 2026-10-18
 
 > **Upgrade notes** (also includes the unreleased 2.31.1 hotfix). Follow the [upgrade runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/):
 > - Run `mcctl upgrade`, then **stop and start every server** (`mcctl stop <name> && mcctl start <name>`). This moves servers to `servers/global.env` so platform secrets no longer reach Minecraft containers (#685).
 > - Hosts that ran `mcctl console init` on v2.31.0 or earlier: check `AUTH_MODE` in `ecosystem.config.cjs` (runbook step 4-1, #633).
+> - Upgrading to 2.32.0 can sign console users out on hosts whose `.env` holds older `BETTER_AUTH_*` values; go straight to 2.33.0 (#699).
 > - If you created servers with a sudo password, check `/etc/avahi/hosts` for a plain-text password line ([Troubleshooting](https://minecraft-server-manager.readthedocs.io/en/latest/troubleshooting/), #682).
 
 ### Added
 - **Platform Settings in the Web Console** (#683) - Admins can view and edit the platform `.env` from **Settings**. Keys are grouped into typed cards; secrets are write-only and shown only as "configured"; legacy and unknown keys are listed with warnings; values injected by PM2 are shown read-only. Saving keeps comments and key order, writes the file atomically (mode `0600`), refuses to overwrite a file that changed since it was loaded (reload dialog), and tells you what to restart for each change. Changes are recorded in the audit log by key name only, never by value. Non-admins see only their account settings. Details: [Platform Settings](https://minecraft-server-manager.readthedocs.io/en/latest/console/web-console/#platform-settings-admin)
-- **Console auth settings live in the platform `.env`** (#686) - `BETTER_AUTH_SECRET` and `BETTER_AUTH_BASE_URL` are read from `<MCCTL_ROOT>/.env`, where a non-empty value wins over `ecosystem.config.cjs`. They can be edited in Platform Settings and applied with `mcctl console service restart --console`. `mcctl console init` now writes the secret to `.env` (keeping an existing value or moving the old ecosystem secret, so sessions stay valid) instead of into the ecosystem file. Existing installs keep working unchanged.
+- **Console auth settings live in the platform `.env`** (#686) - `BETTER_AUTH_SECRET` and `BETTER_AUTH_BASE_URL` are read from `<MCCTL_ROOT>/.env`, where a non-empty value wins over `ecosystem.config.cjs`. They can be edited in Platform Settings and applied with `mcctl console service restart --console`. `mcctl console init` now writes the secret to `.env` (keeping an existing value or moving the old ecosystem secret, so sessions stay valid) instead of into the ecosystem file. Installs whose `.env` held older `BETTER_AUTH_*` copies were switched to them (users signed out, sign-in possibly broken); fixed in 2.33.0 (#699).
 - **Random RCON password on `mcctl init`** (#680) - New installs get a random 24-character `RCON_PASSWORD` instead of `changeme`. Existing `.env` files are not changed.
 - **`mcctl create --enable-whitelist`** (#679) - Enables the whitelist without adding players.
 - **All connection addresses in the server Connection card** (#681) - Every address is listed with its kind (e.g. LAN, Tailscale / VPN, mDNS) and a copy button.

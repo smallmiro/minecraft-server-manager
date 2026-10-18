@@ -1,6 +1,6 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.32.0
+> **Version**: 2.33.0
 > **Last Updated**: 2026-10-18
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
@@ -2857,6 +2857,20 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.33.0 (2026-10-18) - Console Auth Upgrade Fix
+
+Upgrade: `mcctl upgrade`, then `mcctl console service restart --console`. From ≤2.31 go straight to 2.33.0.
+
+**Changed:**
+- Create Server dialog: empty sudo password asks for confirmation (whitespace = empty); defaults VANILLA / `LATEST`, hint to pin a version for other types (#700)
+- Routing table hostname lists collapsed by default
+
+**Fixed (#699):**
+- Console uses `.env` `BETTER_AUTH_SECRET` / `BETTER_AUTH_BASE_URL` only when `ecosystem.config.cjs` no longer defines the key; otherwise the PM2 value wins and a warning names the key
+- `mcctl upgrade` moves both keys from the ecosystem into `.env` (secret kept, `ecosystem.config.cjs.bak-<ts>`, dry-run aware, idempotent)
+- Platform Settings: these keys read-only (`source: pm2-ecosystem`) while the ecosystem defines them; PUT rejected with 400
+- `mcctl console init` replaces a stale `.env` secret with the ecosystem secret
 
 ### Version 2.32.0 (2026-10-18) - Platform Settings & Secret Isolation
 
