@@ -194,7 +194,7 @@ register_avahi_hostname() {
 
     # Add entry to /etc/avahi/hosts (requires sudo)
     echo -e "   Registering $hostname -> $ip with avahi-daemon..."
-    if echo "$ip $hostname" | run_with_sudo_stdin tee -a "$AVAHI_HOSTS" > /dev/null 2>&1; then
+    if echo "$ip $hostname" | run_with_sudo_stdin tee -a "$AVAHI_HOSTS" > /dev/null; then
         # Restart avahi-daemon to apply changes
         if run_with_sudo systemctl restart avahi-daemon 2>/dev/null; then
             echo -e "   ${GREEN}mDNS hostname registered: $hostname -> $ip${NC}"
