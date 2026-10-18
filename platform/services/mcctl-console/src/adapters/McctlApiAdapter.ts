@@ -69,6 +69,11 @@ import {
   UpdateConfigSnapshotScheduleRequest,
   ApiError,
 } from '../ports/api/IMcctlApiClient';
+import type {
+  PlatformSettingsResponse,
+  PlatformSettingsUpdateRequest,
+  PlatformSettingsUpdateResponse,
+} from '../types/platform-settings';
 
 /**
  * API Error class for mcctl-api errors
@@ -77,7 +82,9 @@ export class McctlApiError extends Error {
   constructor(
     public readonly statusCode: number,
     public readonly error: string,
-    message: string
+    message: string,
+    /** Full error response body (e.g. 400 field errors, 409 currentRevision) */
+    public readonly body?: unknown
   ) {
     super(message);
     this.name = 'McctlApiError';
@@ -158,7 +165,8 @@ export class McctlApiAdapter implements IMcctlApiClient {
       throw new McctlApiError(
         response.status,
         errorBody.error,
-        errorBody.message
+        errorBody.message,
+        errorBody
       );
     }
 
@@ -367,6 +375,23 @@ export class McctlApiAdapter implements IMcctlApiClient {
     return this.fetch<BackupRestoreResponse>('/api/backup/restore', {
       method: 'POST',
       body: JSON.stringify({ commitHash }),
+    });
+  }
+
+  // ============================================================
+  // Platform Settings Operations (#683)
+  // ============================================================
+
+  async getPlatformSettings(): Promise<PlatformSettingsResponse> {
+    return this.fetch<PlatformSettingsResponse>('/api/platform-settings');
+  }
+
+  async updatePlatformSettings(
+    request: PlatformSettingsUpdateRequest
+  ): Promise<PlatformSettingsUpdateResponse> {
+    return this.fetch<PlatformSettingsUpdateResponse>('/api/platform-settings', {
+      method: 'PUT',
+      body: JSON.stringify(request),
     });
   }
 

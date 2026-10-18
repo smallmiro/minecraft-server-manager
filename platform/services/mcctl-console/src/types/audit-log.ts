@@ -19,7 +19,8 @@ export type AuditAction =
   | 'player.op'
   | 'player.deop'
   | 'player.kick'
-  | 'audit.purge';
+  | 'audit.purge'
+  | 'platform.settings.update';
 
 /**
  * Audit log status
@@ -165,6 +166,7 @@ export const AUDIT_ACTION_COLORS: Record<string, 'success' | 'error' | 'info' | 
   'player.deop': 'warning',
   'player.kick': 'error',
   'audit.purge': 'default',
+  'platform.settings.update': 'warning',
 };
 
 /**
@@ -184,6 +186,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'player.deop': 'Deop',
   'player.kick': 'Kick',
   'audit.purge': 'Purge',
+  'platform.settings.update': 'Platform Settings',
 };
 
 /**
@@ -203,6 +206,7 @@ export const ALL_AUDIT_ACTIONS: AuditAction[] = [
   'player.deop',
   'player.kick',
   'audit.purge',
+  'platform.settings.update',
 ];
 
 /**
