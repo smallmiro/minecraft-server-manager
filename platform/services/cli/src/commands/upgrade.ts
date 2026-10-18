@@ -7,6 +7,7 @@ import type { McctlConfig } from '@minecraft-docker/shared';
 import { diffEnvFiles, applyEnvDiff } from '../lib/env-diff.js';
 import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import { patchRouterCompose } from '../lib/compose-router-patch.js';
+import { migrateServerEnv } from '../lib/server-env-migration.js';
 import * as prompts from '@clack/prompts';
 
 export interface UpgradeCommandOptions {
@@ -90,6 +91,21 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
 
   // --- Step 2: Update servers/_template files ---
   templateFilesUpdated = updateTemplateFiles(paths, options);
+
+  // --- Step 2b: servers get servers/global.env, not the whole .env (#685) ---
+  const serverEnv = migrateServerEnv(paths.root, paths.templates, !!options.dryRun);
+  if (serverEnv.createdGlobalEnv) {
+    prompts.log.success(`${options.dryRun ? 'Would create' : 'Created'} servers/global.env.`);
+  }
+  if (serverEnv.migrated.length > 0) {
+    prompts.log.success(
+      `${options.dryRun ? 'Would stop' : 'Stopped'} passing the platform .env to: ${serverEnv.migrated.join(', ')}`
+    );
+    prompts.log.warn(
+      'Existing containers keep the old environment until recreated:\n' +
+        serverEnv.migrated.map((name) => `  mcctl stop ${name} && mcctl start ${name}`).join('\n')
+    );
+  }
 
   // --- Step 3: Update templateVersion in config (and backfill installId) ---
   const addInstallId = !mcctlConfig?.installId;

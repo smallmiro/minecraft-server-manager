@@ -6,12 +6,14 @@ const mockReadFileSync = vi.fn();
 const mockWriteFileSync = vi.fn();
 const mockCopyFileSync = vi.fn();
 const mockMkdirSync = vi.fn();
+const mockReaddirSync = vi.fn().mockReturnValue([]);
 vi.mock('node:fs', () => ({
   existsSync: (...args: any[]) => mockExistsSync(...args),
   readFileSync: (...args: any[]) => mockReadFileSync(...args),
   writeFileSync: (...args: any[]) => mockWriteFileSync(...args),
   copyFileSync: (...args: any[]) => mockCopyFileSync(...args),
   mkdirSync: (...args: any[]) => mockMkdirSync(...args),
+  readdirSync: (...args: any[]) => mockReaddirSync(...args),
 }));
 
 // Mock child_process (docker compose up -d router)
