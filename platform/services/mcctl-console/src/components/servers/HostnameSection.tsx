@@ -200,7 +200,7 @@ export function HostnameSection({ serverName }: HostnameSectionProps) {
                     bgcolor: 'action.hover',
                   }}
                 >
-                  <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {domain}
                     {domain === playitDomain && <Chip label="playit" size="small" color="primary" />}
                   </Typography>
