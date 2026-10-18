@@ -86,6 +86,16 @@ describe('PUT /api/servers/:name/hostnames - playit domain sync', () => {
     expect(res.json().playitDomain).toBeNull();
   });
 
+  it('keeps a PLAYIT_DOMAIN that was never in the label when one host is added', async () => {
+    const { setServerPlayitDomain } = await import('@minecraft-docker/shared');
+
+    const res = await save([], ['mc.example.com'], 'legacy.gl.joinmc.link');
+
+    expect(res.statusCode).toBe(200);
+    expect(vi.mocked(setServerPlayitDomain)).not.toHaveBeenCalled();
+    expect(res.json().playitDomain).toBe('legacy.gl.joinmc.link');
+  });
+
   it('leaves PLAYIT_DOMAIN untouched when the playit host is kept', async () => {
     const { setServerPlayitDomain } = await import('@minecraft-docker/shared');
 

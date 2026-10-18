@@ -1120,6 +1120,8 @@ function swapRouterHost(hosts: string[], oldHost: string | null, newHost: string
  * Decide the PLAYIT_DOMAIN after the custom hostname list was edited (pure, no I/O).
  * Current domain still listed → unchanged; otherwise exactly one newly added host
  * becomes the domain; zero or 2+ added → null (remove). No current domain → null.
+ * Current domain absent from the previous list (set before label sync) → unchanged,
+ * since the edit could not have removed it.
  */
 export function resolvePlayitDomain(
   currentDomain: string | null,
@@ -1127,6 +1129,7 @@ export function resolvePlayitDomain(
   nextCustom: string[]
 ): string | null {
   if (!currentDomain) return null;
+  if (!previousCustom.some((h) => sameHost(h, currentDomain))) return currentDomain;
   if (nextCustom.some((h) => sameHost(h, currentDomain))) return currentDomain;
   const added = nextCustom.filter((h) => !previousCustom.some((p) => sameHost(h, p)));
   return added.length === 1 ? added[0]! : null;

@@ -357,6 +357,13 @@ describe('resolvePlayitDomain', () => {
     expect(resolvePlayitDomain('a.playit.gg', ['a.playit.gg'], ['b.playit.gg', 'c.playit.gg'])).toBe(null);
   });
 
+  test('keeps current domain that was never in the label (set before label sync)', () => {
+    // one unrelated host added
+    expect(resolvePlayitDomain('a.playit.gg', [], ['x.example.com'])).toBe('a.playit.gg');
+    // no-op save / removals only
+    expect(resolvePlayitDomain('a.playit.gg', ['x.example.com'], [])).toBe('a.playit.gg');
+  });
+
   test('returns null when no domain was set (does not promote new custom hosts)', () => {
     expect(resolvePlayitDomain(null, [], ['x.example.com'])).toBe(null);
   });
