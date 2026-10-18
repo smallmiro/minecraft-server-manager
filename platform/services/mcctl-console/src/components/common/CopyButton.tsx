@@ -1,42 +1,35 @@
 'use client';
 
-import { useState } from 'react';
 import IconButton from '@mui/material/IconButton';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { useCopy } from '@/hooks/useCopy';
 
 interface CopyButtonProps {
   text: string;
   size?: number;
 }
 
-export function CopyButton({ text, size = 14 }: CopyButtonProps) {
-  const [copied, setCopied] = useState(false);
+const LABEL = { idle: 'Copy to clipboard', copied: 'Copied', failed: 'Copy failed' } as const;
+const COLOR = { idle: 'text.secondary', copied: 'success.main', failed: 'error.main' } as const;
 
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard API may fail in insecure contexts
-    }
-  };
+export function CopyButton({ text, size = 14 }: CopyButtonProps) {
+  const { status, copy } = useCopy();
+  const Icon = status === 'copied' ? CheckIcon : status === 'failed' ? ErrorOutlineIcon : ContentCopyIcon;
 
   return (
     <IconButton
       size="small"
-      onClick={handleCopy}
-      sx={{
-        ml: 0.5,
-        p: 0.25,
-        color: copied ? 'success.main' : 'text.secondary',
-        '&:hover': { bgcolor: 'action.hover' },
+      title={LABEL[status]}
+      onClick={(e) => {
+        e.stopPropagation();
+        void copy(text);
       }}
-      aria-label={copied ? 'Copied' : 'Copy to clipboard'}
+      sx={{ ml: 0.5, p: 0.25, color: COLOR[status], '&:hover': { bgcolor: 'action.hover' } }}
+      aria-label={LABEL[status]}
     >
-      {copied ? <CheckIcon sx={{ fontSize: size }} /> : <ContentCopyIcon sx={{ fontSize: size }} />}
+      <Icon sx={{ fontSize: size }} />
     </IconButton>
   );
 }

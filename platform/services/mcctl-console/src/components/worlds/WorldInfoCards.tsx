@@ -6,6 +6,7 @@ import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
+import { useCopy } from '@/hooks/useCopy';
 import type { WorldInfo } from '@/ports/api/IMcctlApiClient';
 
 export interface WorldInfoCardsProps {
@@ -21,11 +22,7 @@ export function formatBytes(bytes: number): string {
   return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
-function copy(text: string): void {
-  if (typeof navigator !== 'undefined' && navigator.clipboard) {
-    void navigator.clipboard.writeText(text);
-  }
-}
+const COPY_TITLE = { idle: 'Click to copy', copied: 'Copied', failed: 'Copy failed' } as const;
 
 function StatCell({
   label,
@@ -37,10 +34,11 @@ function StatCell({
   copyValue?: string;
 }) {
   const clickable = Boolean(copyValue);
+  const { status, copy } = useCopy();
   const cell = (
     <Card
       data-testid={`world-stat-${label.toLowerCase().replace(/\s+/g, '-')}`}
-      onClick={clickable ? () => copy(copyValue!) : undefined}
+      onClick={clickable ? () => void copy(copyValue!) : undefined}
       sx={{
         p: 2,
         height: '100%',
@@ -59,7 +57,7 @@ function StatCell({
       </Typography>
     </Card>
   );
-  return clickable ? <Tooltip title="Click to copy">{cell}</Tooltip> : cell;
+  return clickable ? <Tooltip title={COPY_TITLE[status]}>{cell}</Tooltip> : cell;
 }
 
 /**

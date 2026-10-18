@@ -86,7 +86,7 @@ describe('ConnectionInfoCard', () => {
     renderComponent('survival', 'survival.10.0.0.1.nip.io');
 
     expect(screen.getByText('Connection')).toBeInTheDocument();
-    expect(screen.getByText('LAN Address')).toBeInTheDocument();
+    expect(screen.getByText('LAN')).toBeInTheDocument();
     expect(screen.getByText('survival.10.0.0.1.nip.io:25565')).toBeInTheDocument();
     expect(screen.queryByText('External Address')).not.toBeInTheDocument();
   });
@@ -100,7 +100,7 @@ describe('ConnectionInfoCard', () => {
 
     renderComponent('survival', 'survival.10.0.0.1.nip.io');
 
-    expect(screen.getByText('LAN Address')).toBeInTheDocument();
+    expect(screen.getByText('LAN')).toBeInTheDocument();
     expect(screen.getByText('survival.10.0.0.1.nip.io:25565')).toBeInTheDocument();
     expect(screen.getByText('External Address')).toBeInTheDocument();
     expect(screen.getByText('survival.example.playit.gg')).toBeInTheDocument();
@@ -212,5 +212,26 @@ describe('ConnectionInfoCard', () => {
 
     expect(screen.getByText('External Address')).toBeInTheDocument();
     expect(screen.getByText('Not configured')).toBeInTheDocument();
+  });
+
+  it('lists all addresses sorted LAN, VPN, mDNS with kind labels and copy buttons', () => {
+    vi.mocked(usePlayitHooks.usePlayitStatus).mockReturnValue({
+      data: { enabled: false, agentRunning: false, secretKeyConfigured: false, containerStatus: 'not_created', servers: [] },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    renderComponent('x', 'x.local,x.100.64.0.5.nip.io,x.192.168.1.10.nip.io');
+
+    const rows = screen.getAllByTestId('connection-address');
+    expect(rows.map((r) => r.textContent)).toEqual([
+      expect.stringContaining('x.192.168.1.10.nip.io:25565'),
+      expect.stringContaining('x.100.64.0.5.nip.io:25565'),
+      expect.stringContaining('x.local:25565'),
+    ]);
+    expect(screen.getByText('LAN')).toBeInTheDocument();
+    expect(screen.getByText('Tailscale / VPN')).toBeInTheDocument();
+    expect(screen.getByText('mDNS')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Copy to clipboard')).toHaveLength(3);
   });
 });
