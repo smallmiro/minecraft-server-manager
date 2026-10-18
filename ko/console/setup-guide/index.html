@@ -3711,6 +3711,10 @@ PM2는 <code>mcctl</code>의 의존성으로 함께 설치되기도 하지만, P
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">접근 모드</p>
+<p><code>mcctl console init</code>은 접근 모드를 mcctl-api가 인식하는 값으로 변환해 <code>AUTH_MODE</code>에 기록합니다: <code>internal</code> → 루프백(127.0.0.1, ::1)만 허용하는 <code>ip-whitelist</code>, <code>api-key-ip</code> → <code>combined</code>, <code>open</code> → <code>disabled</code>. <code>api-key</code>와 <code>ip-whitelist</code>는 그대로 기록됩니다.</p>
+</div>
 <div class="admonition danger">
 <p class="admonition-title">open 모드 경고</p>
 <p><code>open</code> 모드는 모든 인증을 비활성화합니다. 선택하면 확인 프롬프트가 표시됩니다:
@@ -3740,7 +3744,7 @@ PM2는 <code>mcctl</code>의 의존성으로 함께 설치되기도 하지만, P
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>Resolving service script paths...  Using production node_modules paths
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>Generating PM2 ecosystem config...  PM2 ecosystem config generated
 </code></pre></div>
-<p>이 과정에서 platform 디렉토리에 <code>ecosystem.config.cjs</code>가 생성되며, PM2가 API와 Console 프로세스를 실행하는 방법을 정의합니다.</p>
+<p>이 과정에서 데이터 디렉토리(기본값 <code>~/minecraft-servers</code>)에 <code>ecosystem.config.cjs</code>가 생성되며, PM2가 API와 Console 프로세스를 실행하는 방법을 정의합니다.</p>
 <h3 id="step-9-구성-저장">Step 9: 구성 저장<a class="headerlink" href="#step-9-구성-저장" title="Permanent link">&para;</a></h3>
 <p>관리자 구성이 저장됩니다:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Saving configuration...  Configuration saved
@@ -3752,7 +3756,7 @@ PM2는 <code>mcctl</code>의 의존성으로 함께 설치되기도 하지만, P
 <a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>  Configuration:
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>    Config file: /home/user/minecraft-servers/.mcctl-admin.yml
 <a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>    Console DB:  /home/user/minecraft-servers/data/mcctl.db
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>    PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>    PM2 config:  /home/user/minecraft-servers/ecosystem.config.cjs
 <a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>    Access mode: internal
 <a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>
 <a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>  Endpoints:
@@ -3769,51 +3773,49 @@ PM2는 <code>mcctl</code>의 의존성으로 함께 설치되기도 하지만, P
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">API 키를 안전하게 보관하세요</p>
-<p>API 키는 초기화 시 한 번만 표시됩니다. 복사하여 안전한 곳에 저장하세요. 분실한 경우 다음 명령으로 재생성할 수 있습니다:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>key<span class="w"> </span>regenerate
-</code></pre></div></p>
+<p>API 키는 초기화 시 한 번만 표시됩니다. 복사하여 안전한 곳에 저장하세요. 실행 중인 API가 사용하는 키는 <code>ecosystem.config.cjs</code>의 <code>AUTH_API_KEY</code>이며, 새 키가 필요하면 <code>mcctl console init --force</code>로 다시 초기화하세요. <code>mcctl console api key regenerate</code>는 현재 이 키를 바꾸지 않습니다 (<a href="../cli-commands/#mcctl-console-api">CLI 명령어</a>의 경고 참조).</p>
 </div>
 <hr />
 <h2 id="3단계-서비스-시작-mcctl-console-service-start">3단계: 서비스 시작 (<code>mcctl console service start</code>)<a class="headerlink" href="#3단계-서비스-시작-mcctl-console-service-start" title="Permanent link">&para;</a></h2>
 <p>모든 설정이 완료되었으니 서비스를 시작합니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
 </code></pre></div>
 <h3 id="서비스-시작">서비스 시작<a class="headerlink" href="#서비스-시작" title="Permanent link">&para;</a></h3>
 <p>PM2가 구성된 서비스를 시작합니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>Starting console services via PM2...
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>  Started mcctl-api
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>  Started mcctl-console
-<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>Console services started successfully
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>Starting console services via PM2...
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>  Started mcctl-api
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>  Started mcctl-console
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>Console services started successfully
 </code></pre></div>
 <h3 id="상태-확인">상태 확인<a class="headerlink" href="#상태-확인" title="Permanent link">&para;</a></h3>
 <p>시작 후 상태 보고서가 자동으로 표시됩니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>  Console Service Status (PM2)
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>  mcctl-api
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    Status: online
-<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>    PID: 12345
-<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>    CPU: 0%
-<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a>    Memory: 50.2 MB
-<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>    Uptime: 5s
-<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a>    Restarts: 0
-<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>
-<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>  mcctl-console
-<a id="__codelineno-32-12" name="__codelineno-32-12" href="#__codelineno-32-12"></a>    Status: online
-<a id="__codelineno-32-13" name="__codelineno-32-13" href="#__codelineno-32-13"></a>    PID: 12346
-<a id="__codelineno-32-14" name="__codelineno-32-14" href="#__codelineno-32-14"></a>    URL: http://localhost:5000
-<a id="__codelineno-32-15" name="__codelineno-32-15" href="#__codelineno-32-15"></a>    CPU: 0%
-<a id="__codelineno-32-16" name="__codelineno-32-16" href="#__codelineno-32-16"></a>    Memory: 80.5 MB
-<a id="__codelineno-32-17" name="__codelineno-32-17" href="#__codelineno-32-17"></a>    Uptime: 3s
-<a id="__codelineno-32-18" name="__codelineno-32-18" href="#__codelineno-32-18"></a>    Restarts: 0
-<a id="__codelineno-32-19" name="__codelineno-32-19" href="#__codelineno-32-19"></a>
-<a id="__codelineno-32-20" name="__codelineno-32-20" href="#__codelineno-32-20"></a>  All services healthy
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>  Console Service Status (PM2)
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>  mcctl-api
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>    Status: online
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>    PID: 12345
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>    CPU: 0%
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a>    Memory: 50.2 MB
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>    Uptime: 5s
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>    Restarts: 0
+<a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a>
+<a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a>  mcctl-console
+<a id="__codelineno-31-12" name="__codelineno-31-12" href="#__codelineno-31-12"></a>    Status: online
+<a id="__codelineno-31-13" name="__codelineno-31-13" href="#__codelineno-31-13"></a>    PID: 12346
+<a id="__codelineno-31-14" name="__codelineno-31-14" href="#__codelineno-31-14"></a>    URL: http://localhost:5000
+<a id="__codelineno-31-15" name="__codelineno-31-15" href="#__codelineno-31-15"></a>    CPU: 0%
+<a id="__codelineno-31-16" name="__codelineno-31-16" href="#__codelineno-31-16"></a>    Memory: 80.5 MB
+<a id="__codelineno-31-17" name="__codelineno-31-17" href="#__codelineno-31-17"></a>    Uptime: 3s
+<a id="__codelineno-31-18" name="__codelineno-31-18" href="#__codelineno-31-18"></a>    Restarts: 0
+<a id="__codelineno-31-19" name="__codelineno-31-19" href="#__codelineno-31-19"></a>
+<a id="__codelineno-31-20" name="__codelineno-31-20" href="#__codelineno-31-20"></a>  All services healthy
 </code></pre></div>
 <h3 id="api-상태-확인">API 상태 확인<a class="headerlink" href="#api-상태-확인" title="Permanent link">&para;</a></h3>
 <p>API 엔드포인트를 테스트합니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>curl<span class="w"> </span>http://localhost:5001/health
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>curl<span class="w"> </span>http://localhost:5001/health
 </code></pre></div>
 <p>예상 응답:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="s2">"healthy"</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="s2">"healthy"</span><span class="p">}</span>
 </code></pre></div>
 <h3 id="웹-콘솔-접속">웹 콘솔 접속<a class="headerlink" href="#웹-콘솔-접속" title="Permanent link">&para;</a></h3>
 <ol>
@@ -3824,30 +3826,30 @@ PM2는 <code>mcctl</code>의 의존성으로 함께 설치되기도 하지만, P
 <hr />
 <h2 id="전체-설치-예시">전체 설치 예시<a class="headerlink" href="#전체-설치-예시" title="Permanent link">&para;</a></h2>
 <p>처음부터 끝까지의 전체 설치 흐름입니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># 1단계: mcctl 설치</span>
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl
-<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>
-<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="c1"># 2단계: 플랫폼 초기화</span>
-<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>mcctl<span class="w"> </span>init
-<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a><span class="c1"># 대화형 프롬프트 따라하기 (IP 선택, playit.gg)</span>
-<a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a>
-<a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a><span class="c1"># 3단계: 첫 번째 마인크래프트 서버 생성</span>
-<a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a>
-<a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a><span class="c1"># 4단계: Management Console 초기화</span>
-<a id="__codelineno-35-12" name="__codelineno-35-12" href="#__codelineno-35-12"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
-<a id="__codelineno-35-13" name="__codelineno-35-13" href="#__codelineno-35-13"></a><span class="c1"># 서비스 선택 -&gt; 관리자 계정 생성 -&gt; 접근 모드 선택</span>
-<a id="__codelineno-35-14" name="__codelineno-35-14" href="#__codelineno-35-14"></a>
-<a id="__codelineno-35-15" name="__codelineno-35-15" href="#__codelineno-35-15"></a><span class="c1"># 5단계: Console 서비스 시작</span>
-<a id="__codelineno-35-16" name="__codelineno-35-16" href="#__codelineno-35-16"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
-<a id="__codelineno-35-17" name="__codelineno-35-17" href="#__codelineno-35-17"></a>
-<a id="__codelineno-35-18" name="__codelineno-35-18" href="#__codelineno-35-18"></a><span class="c1"># 6단계: 모든 것이 실행 중인지 확인</span>
-<a id="__codelineno-35-19" name="__codelineno-35-19" href="#__codelineno-35-19"></a>mcctl<span class="w"> </span>status<span class="w">                    </span><span class="c1"># 마인크래프트 서버 확인</span>
-<a id="__codelineno-35-20" name="__codelineno-35-20" href="#__codelineno-35-20"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status<span class="w">    </span><span class="c1"># Console 서비스 확인</span>
-<a id="__codelineno-35-21" name="__codelineno-35-21" href="#__codelineno-35-21"></a>curl<span class="w"> </span>http://localhost:5001/health<span class="w">  </span><span class="c1"># API 상태 확인</span>
-<a id="__codelineno-35-22" name="__codelineno-35-22" href="#__codelineno-35-22"></a>
-<a id="__codelineno-35-23" name="__codelineno-35-23" href="#__codelineno-35-23"></a><span class="c1"># 7단계: 웹 콘솔 열기</span>
-<a id="__codelineno-35-24" name="__codelineno-35-24" href="#__codelineno-35-24"></a><span class="c1"># 브라우저에서 http://localhost:5000 으로 이동</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># 1단계: mcctl 설치</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1"># 2단계: 플랫폼 초기화</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>mcctl<span class="w"> </span>init
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="c1"># 대화형 프롬프트 따라하기 (IP 선택, playit.gg)</span>
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a>
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a><span class="c1"># 3단계: 첫 번째 마인크래프트 서버 생성</span>
+<a id="__codelineno-34-9" name="__codelineno-34-9" href="#__codelineno-34-9"></a>mcctl<span class="w"> </span>create<span class="w"> </span>survival<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-34-10" name="__codelineno-34-10" href="#__codelineno-34-10"></a>
+<a id="__codelineno-34-11" name="__codelineno-34-11" href="#__codelineno-34-11"></a><span class="c1"># 4단계: Management Console 초기화</span>
+<a id="__codelineno-34-12" name="__codelineno-34-12" href="#__codelineno-34-12"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
+<a id="__codelineno-34-13" name="__codelineno-34-13" href="#__codelineno-34-13"></a><span class="c1"># 서비스 선택 -&gt; 관리자 계정 생성 -&gt; 접근 모드 선택</span>
+<a id="__codelineno-34-14" name="__codelineno-34-14" href="#__codelineno-34-14"></a>
+<a id="__codelineno-34-15" name="__codelineno-34-15" href="#__codelineno-34-15"></a><span class="c1"># 5단계: Console 서비스 시작</span>
+<a id="__codelineno-34-16" name="__codelineno-34-16" href="#__codelineno-34-16"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<a id="__codelineno-34-17" name="__codelineno-34-17" href="#__codelineno-34-17"></a>
+<a id="__codelineno-34-18" name="__codelineno-34-18" href="#__codelineno-34-18"></a><span class="c1"># 6단계: 모든 것이 실행 중인지 확인</span>
+<a id="__codelineno-34-19" name="__codelineno-34-19" href="#__codelineno-34-19"></a>mcctl<span class="w"> </span>status<span class="w">                    </span><span class="c1"># 마인크래프트 서버 확인</span>
+<a id="__codelineno-34-20" name="__codelineno-34-20" href="#__codelineno-34-20"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status<span class="w">    </span><span class="c1"># Console 서비스 확인</span>
+<a id="__codelineno-34-21" name="__codelineno-34-21" href="#__codelineno-34-21"></a>curl<span class="w"> </span>http://localhost:5001/health<span class="w">  </span><span class="c1"># API 상태 확인</span>
+<a id="__codelineno-34-22" name="__codelineno-34-22" href="#__codelineno-34-22"></a>
+<a id="__codelineno-34-23" name="__codelineno-34-23" href="#__codelineno-34-23"></a><span class="c1"># 7단계: 웹 콘솔 열기</span>
+<a id="__codelineno-34-24" name="__codelineno-34-24" href="#__codelineno-34-24"></a><span class="c1"># 브라우저에서 http://localhost:5000 으로 이동</span>
 </code></pre></div>
 <hr />
 <h2 id="구성-파일-참조">구성 파일 참조<a class="headerlink" href="#구성-파일-참조" title="Permanent link">&para;</a></h2>
@@ -3887,7 +3889,7 @@ PM2는 <code>mcctl</code>의 의존성으로 함께 설치되기도 하지만, P
 <td>사용자 계정용 SQLite 데이터베이스 (Better Auth)</td>
 </tr>
 <tr>
-<td><code>platform/ecosystem.config.cjs</code></td>
+<td><code>ecosystem.config.cjs</code></td>
 <td><code>mcctl console init</code></td>
 <td>API와 Console용 PM2 프로세스 구성</td>
 </tr>
@@ -3896,96 +3898,96 @@ PM2는 <code>mcctl</code>의 의존성으로 함께 설치되기도 하지만, P
 <hr />
 <h2 id="부팅-시-자동-시작-설정">부팅 시 자동 시작 설정<a class="headerlink" href="#부팅-시-자동-시작-설정" title="Permanent link">&para;</a></h2>
 <p>시스템 부팅 시 서비스가 자동으로 시작되도록 설정하려면:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># PM2 시작 스크립트 생성</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>pm2<span class="w"> </span>startup
-<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>
-<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="c1"># PM2가 표시하는 명령을 실행합니다 (예시):</span>
-<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a>sudo<span class="w"> </span>env<span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/bin<span class="w"> </span>pm2<span class="w"> </span>startup<span class="w"> </span>systemd<span class="w"> </span>-u<span class="w"> </span><span class="nv">$USER</span><span class="w"> </span>--hp<span class="w"> </span><span class="nv">$HOME</span>
-<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>
-<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="c1"># 현재 프로세스 목록 저장</span>
-<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a>pm2<span class="w"> </span>save
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># PM2 시작 스크립트 생성</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>pm2<span class="w"> </span>startup
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="c1"># PM2가 표시하는 명령을 실행합니다 (예시):</span>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>sudo<span class="w"> </span>env<span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/bin<span class="w"> </span>pm2<span class="w"> </span>startup<span class="w"> </span>systemd<span class="w"> </span>-u<span class="w"> </span><span class="nv">$USER</span><span class="w"> </span>--hp<span class="w"> </span><span class="nv">$HOME</span>
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>
+<a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a><span class="c1"># 현재 프로세스 목록 저장</span>
+<a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a>pm2<span class="w"> </span>save
 </code></pre></div>
 <hr />
 <h2 id="커스텀-포트-설정">커스텀 포트 설정<a class="headerlink" href="#커스텀-포트-설정" title="Permanent link">&para;</a></h2>
 <p>기본 포트(5000, 5001)가 다른 서비스와 충돌하는 경우 커스텀 포트를 지정하세요:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--api-port<span class="w"> </span><span class="m">8001</span><span class="w"> </span>--console-port<span class="w"> </span><span class="m">8000</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--api-port<span class="w"> </span><span class="m">8001</span><span class="w"> </span>--console-port<span class="w"> </span><span class="m">8000</span>
 </code></pre></div>
 <p>서비스 시작 시에도 커스텀 포트를 지정할 수 있습니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w"> </span>--api-port<span class="w"> </span><span class="m">8001</span><span class="w"> </span>--console-port<span class="w"> </span><span class="m">8000</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start<span class="w"> </span>--api-port<span class="w"> </span><span class="m">8001</span><span class="w"> </span>--console-port<span class="w"> </span><span class="m">8000</span>
 </code></pre></div>
 <hr />
 <h2 id="재초기화">재초기화<a class="headerlink" href="#재초기화" title="Permanent link">&para;</a></h2>
 <h3 id="플랫폼-설정-재구성">플랫폼 설정 재구성<a class="headerlink" href="#플랫폼-설정-재구성" title="Permanent link">&para;</a></h3>
 <p>완전한 재초기화 없이 플랫폼 설정(IP, 메모리, 시간대)을 변경하려면:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>mcctl<span class="w"> </span>init<span class="w"> </span>--reconfigure
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>mcctl<span class="w"> </span>init<span class="w"> </span>--reconfigure
 </code></pre></div>
 <h3 id="콘솔-재초기화">콘솔 재초기화<a class="headerlink" href="#콘솔-재초기화" title="Permanent link">&para;</a></h3>
 <p>Console 구성을 초기화하려면 (주요 업데이트 후 유용):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--force
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--force
 </code></pre></div>
 <p><code>--force</code> 플래그는 확인 프롬프트를 건너뛰고 기존 구성을 정리한 후 재초기화합니다.</p>
 <hr />
 <h2 id="문제-해결">문제 해결<a class="headerlink" href="#문제-해결" title="Permanent link">&para;</a></h2>
 <h3 id="플랫폼-초기화-문제">플랫폼 초기화 문제<a class="headerlink" href="#플랫폼-초기화-문제" title="Permanent link">&para;</a></h3>
 <h4 id="mcctl-init이-이미-초기화됨으로-표시"><code>mcctl init</code>이 "이미 초기화됨"으로 표시<a class="headerlink" href="#mcctl-init이-이미-초기화됨으로-표시" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>Platform is already initialized
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>Platform is already initialized
 </code></pre></div>
 <p><strong>해결 방법</strong>: <code>--reconfigure</code>를 사용하여 설정을 변경하거나, 데이터 디렉토리를 삭제하여 새로 시작하세요:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1"># 방법 1: 기존 설정 재구성</span>
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>mcctl<span class="w"> </span>init<span class="w"> </span>--reconfigure
-<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>
-<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="c1"># 방법 2: 전체 초기화 (주의: 모든 서버 데이터가 삭제됩니다)</span>
-<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>rm<span class="w"> </span>-rf<span class="w"> </span>~/minecraft-servers
-<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a>mcctl<span class="w"> </span>init
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># 방법 1: 기존 설정 재구성</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>mcctl<span class="w"> </span>init<span class="w"> </span>--reconfigure
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="c1"># 방법 2: 전체 초기화 (주의: 모든 서버 데이터가 삭제됩니다)</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>rm<span class="w"> </span>-rf<span class="w"> </span>~/minecraft-servers
+<a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a>mcctl<span class="w"> </span>init
 </code></pre></div>
 <h4 id="docker-네트워크-생성-실패">Docker 네트워크 생성 실패<a class="headerlink" href="#docker-네트워크-생성-실패" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>Failed to create Docker network
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>Failed to create Docker network
 </code></pre></div>
 <p><strong>해결 방법</strong>: 네트워크가 이미 존재할 수 있습니다. 다음으로 확인하세요:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>docker<span class="w"> </span>network<span class="w"> </span>ls<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>minecraft-net
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>docker<span class="w"> </span>network<span class="w"> </span>ls<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>minecraft-net
 </code></pre></div>
 <h3 id="콘솔-초기화-문제">콘솔 초기화 문제<a class="headerlink" href="#콘솔-초기화-문제" title="Permanent link">&para;</a></h3>
 <h4 id="platform-not-initialized-오류">"Platform not initialized" 오류<a class="headerlink" href="#platform-not-initialized-오류" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>Platform not initialized. Run: mcctl init
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a>Platform not initialized. Run: mcctl init
 </code></pre></div>
 <p><strong>해결 방법</strong>: <code>mcctl console init</code> 전에 먼저 <code>mcctl init</code>을 실행하세요.</p>
 <h4 id="pm2-미설치">PM2 미설치<a class="headerlink" href="#pm2-미설치" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>PM2 is not installed.
-<a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>Install PM2 globally with: npm install -g pm2
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>PM2 is not installed.
+<a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a>Install PM2 globally with: npm install -g pm2
 </code></pre></div>
 <p><strong>해결 방법</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>pm2
+<div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>pm2
 </code></pre></div>
 <h4 id="패키지-설치-실패">패키지 설치 실패<a class="headerlink" href="#패키지-설치-실패" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>Failed to install mcctl-api: ...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>Failed to install mcctl-api: ...
 </code></pre></div>
 <p><strong>해결 방법</strong>: 수동으로 설치해 보세요:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers/.services
-<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a>npm<span class="w"> </span>install<span class="w"> </span>@minecraft-docker/mcctl-api@latest
-<a id="__codelineno-49-3" name="__codelineno-49-3" href="#__codelineno-49-3"></a>npm<span class="w"> </span>install<span class="w"> </span>@minecraft-docker/mcctl-console@latest
+<div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers/.services
+<a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>npm<span class="w"> </span>install<span class="w"> </span>@minecraft-docker/mcctl-api@latest
+<a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a>npm<span class="w"> </span>install<span class="w"> </span>@minecraft-docker/mcctl-console@latest
 </code></pre></div>
 <h3 id="서비스-시작-문제">서비스 시작 문제<a class="headerlink" href="#서비스-시작-문제" title="Permanent link">&para;</a></h3>
 <h4 id="ecosystem-설정-파일-없음">Ecosystem 설정 파일 없음<a class="headerlink" href="#ecosystem-설정-파일-없음" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>Ecosystem config not found.
-<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>Please run 'mcctl console init' to initialize console services
+<div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>Ecosystem config not found.
+<a id="__codelineno-49-2" name="__codelineno-49-2" href="#__codelineno-49-2"></a>Please run 'mcctl console init' to initialize console services
 </code></pre></div>
 <p><strong>해결 방법</strong>: <code>mcctl console init</code>을 실행하여 ecosystem 구성을 생성하세요.</p>
 <h4 id="포트-사용-중">포트 사용 중<a class="headerlink" href="#포트-사용-중" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a><span class="c1"># 어떤 프로세스가 포트를 사용하고 있는지 확인</span>
-<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5000
-<a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5001
-<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a>
-<a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a><span class="c1"># 또는 netstat 사용</span>
-<a id="__codelineno-51-6" name="__codelineno-51-6" href="#__codelineno-51-6"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"5000|5001"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="c1"># 어떤 프로세스가 포트를 사용하고 있는지 확인</span>
+<a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5000
+<a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5001
+<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a>
+<a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a><span class="c1"># 또는 netstat 사용</span>
+<a id="__codelineno-50-6" name="__codelineno-50-6" href="#__codelineno-50-6"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"5000|5001"</span>
 </code></pre></div>
 <p><strong>해결 방법</strong>: 충돌하는 프로세스를 중지하거나 <code>--api-port</code>와 <code>--console-port</code>로 커스텀 포트를 사용하세요.</p>
 <h4 id="서비스가-계속-재시작됨">서비스가 계속 재시작됨<a class="headerlink" href="#서비스가-계속-재시작됨" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a><span class="c1"># 오류 로그 확인</span>
-<a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>-f
-<a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>
-<a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a><span class="c1"># 또는 PM2 로그 직접 확인</span>
-<a id="__codelineno-52-5" name="__codelineno-52-5" href="#__codelineno-52-5"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
-<a id="__codelineno-52-6" name="__codelineno-52-6" href="#__codelineno-52-6"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a><span class="c1"># 오류 로그 확인</span>
+<a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>-f
+<a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>
+<a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a><span class="c1"># 또는 PM2 로그 직접 확인</span>
+<a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
+<a id="__codelineno-51-6" name="__codelineno-51-6" href="#__codelineno-51-6"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
 </code></pre></div>
 <p>일반적인 원인:</p>
 <ul>
@@ -3998,17 +4000,17 @@ PM2는 <code>mcctl</code>의 의존성으로 함께 설치되기도 하지만, P
 <ol>
 <li>
 <p>관리자 계정이 생성되었는지 확인:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
 </code></pre></div></p>
 </li>
 <li>
 <p>관리자 비밀번호 재설정:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>admin@example.com
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>admin@example.com
 </code></pre></div></p>
 </li>
 <li>
 <p><code>mcctl-console</code>이 실행 중인지 확인:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status
 </code></pre></div></p>
 </li>
 </ol>

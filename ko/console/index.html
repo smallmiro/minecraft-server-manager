@@ -2437,7 +2437,7 @@
 <tbody>
 <tr>
 <td><code>internal</code></td>
-<td>Docker 네트워크 내부만 허용 (가장 안전)</td>
+<td>내부 접근만 허용, 외부 노출 없음 (가장 안전)</td>
 <td>기본 프로덕션</td>
 </tr>
 <tr>
@@ -2462,6 +2462,10 @@
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>mcctl console init</code>은 접근 모드를 mcctl-api가 인식하는 값으로 변환해 <code>AUTH_MODE</code>에 기록합니다: <code>internal</code> → 루프백(127.0.0.1, ::1)만 허용하는 <code>ip-whitelist</code>, <code>api-key-ip</code> → <code>combined</code>, <code>open</code> → <code>disabled</code>. <code>api-key</code>와 <code>ip-whitelist</code>는 그대로 기록됩니다.</p>
+</div>
 <div class="admonition warning">
 <p class="admonition-title">보안 경고</p>
 <p>프로덕션 환경에서는 절대 <code>open</code> 모드를 사용하지 마세요. 모든 인증이 비활성화되어 서버가 무단 접근에 노출됩니다.</p>
@@ -2525,16 +2529,16 @@
 </thead>
 <tbody>
 <tr>
-<td><code>~/minecraft-servers/admin.yaml</code></td>
+<td><code>~/minecraft-servers/.mcctl-admin.yml</code></td>
 <td>Management Console 설정</td>
 </tr>
 <tr>
-<td><code>~/minecraft-servers/users.yaml</code></td>
-<td>사용자 자격 증명 (해시된 비밀번호)</td>
+<td><code>~/minecraft-servers/data/mcctl.db</code></td>
+<td>콘솔 사용자 데이터베이스 (SQLite, Better Auth, <code>mcctl-console</code>을 선택한 경우 생성)</td>
 </tr>
 <tr>
-<td><code>~/minecraft-servers/api-config.json</code></td>
-<td>API 접근 설정</td>
+<td><code>~/minecraft-servers/ecosystem.config.cjs</code></td>
+<td>PM2 에코시스템 설정</td>
 </tr>
 </tbody>
 </table>

@@ -1719,10 +1719,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-key-ip-최고-보안" class="md-nav__link">
+  <a href="#api-key-ip" class="md-nav__link">
     <span class="md-ellipsis">
       
-        api-key-ip (최고 보안)
+        api-key-ip
       
     </span>
   </a>
@@ -2767,10 +2767,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-key-ip-최고-보안" class="md-nav__link">
+  <a href="#api-key-ip" class="md-nav__link">
     <span class="md-ellipsis">
       
-        api-key-ip (최고 보안)
+        api-key-ip
       
     </span>
   </a>
@@ -3168,7 +3168,7 @@
 <a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>  Configuration:
 <a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>    Config file: /home/user/minecraft-servers/.mcctl-admin.yml
 <a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>    Console DB:  /home/user/minecraft-servers/data/mcctl.db
-<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>    PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>    PM2 config:  /home/user/minecraft-servers/ecosystem.config.cjs
 <a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>    Access mode: internal
 <a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>
 <a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>  Endpoints:
@@ -3251,6 +3251,11 @@
 <td><code>production</code></td>
 </tr>
 <tr>
+<td><code>LOG_LEVEL</code></td>
+<td>mcctl-api 로그 레벨: <code>fatal</code>, <code>error</code>, <code>warn</code>, <code>info</code>, <code>debug</code>, <code>trace</code>, <code>silent</code></td>
+<td><code>NODE_ENV=production</code>이면 <code>info</code>, 그 외에는 <code>debug</code></td>
+</tr>
+<tr>
 <td><code>WORLD_UPLOAD_MAX_SIZE</code></td>
 <td>월드 ZIP 업로드 최대 크기 (바이트, <code>POST /api/worlds/upload</code>)</td>
 <td><code>1073741824</code> (1 GB)</td>
@@ -3258,38 +3263,59 @@
 </tbody>
 </table>
 <h3 id="pm2-에코시스템-구성">PM2 에코시스템 구성<a class="headerlink" href="#pm2-에코시스템-구성" title="Permanent link">&para;</a></h3>
-<p><code>mcctl console init</code> 명령은 플랫폼 디렉토리에 <code>ecosystem.config.cjs</code>를 생성합니다:</p>
+<p><code>mcctl console init</code> 명령은 데이터 디렉토리에 <code>ecosystem.config.cjs</code>를 생성합니다 (<code>&lt;root&gt;/ecosystem.config.cjs</code>, <code>&lt;root&gt;</code>는 <code>MCCTL_ROOT</code>이며 기본값은 <code>~/minecraft-servers</code>). 서비스 패키지는 <code>&lt;root&gt;/.services/</code> 아래에 설치되며, 이 파일은 절대 경로로 해당 패키지를 가리킵니다. 아래 값은 <code>&lt;root&gt;</code> = <code>/home/user/minecraft-servers</code>인 경우의 예시입니다:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">// ecosystem.config.cjs</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nx">apps</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="p">{</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'mcctl-api'</span><span class="p">,</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">'node_modules/@minecraft-docker/mcctl-api/dist/index.js'</span><span class="p">,</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nx">cwd</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MCCTL_ROOT</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'.'</span><span class="p">,</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers/.services/node_modules/@minecraft-docker/mcctl-api/dist/index.js'</span><span class="p">,</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nx">cwd</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers'</span><span class="p">,</span>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">      </span><span class="nx">env</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">        </span><span class="nx">NODE_ENV</span><span class="o">:</span><span class="w"> </span><span class="s1">'production'</span><span class="p">,</span>
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">        </span><span class="nx">PORT</span><span class="o">:</span><span class="w"> </span><span class="mf">5001</span><span class="p">,</span>
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">        </span><span class="nx">HOST</span><span class="o">:</span><span class="w"> </span><span class="s1">'0.0.0.0'</span><span class="p">,</span>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">        </span><span class="nx">MCCTL_ROOT</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MCCTL_ROOT</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'.'</span><span class="p">,</span>
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">      </span><span class="p">},</span>
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">      </span><span class="nx">instances</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">      </span><span class="nx">exec_mode</span><span class="o">:</span><span class="w"> </span><span class="s1">'fork'</span><span class="p">,</span>
-<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">      </span><span class="nx">watch</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">      </span><span class="nx">autorestart</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">      </span><span class="nx">max_memory_restart</span><span class="o">:</span><span class="w"> </span><span class="s1">'500M'</span><span class="p">,</span>
-<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'mcctl-console'</span><span class="p">,</span>
-<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">'node_modules/@minecraft-docker/mcctl-console/.next/standalone/...'</span><span class="p">,</span>
-<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">      </span><span class="c1">// ... 콘솔 구성</span>
-<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="p">};</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">        </span><span class="nx">MCCTL_ROOT</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers'</span><span class="p">,</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">        </span><span class="nx">AUTH_MODE</span><span class="o">:</span><span class="w"> </span><span class="s1">'internal'</span><span class="p">,</span><span class="w"> </span><span class="c1">// 예시 아래의 참고 사항 확인</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">        </span><span class="c1">// 해당 접근 모드에서는 AUTH_API_KEY, AUTH_IP_WHITELIST가 추가됩니다</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">      </span><span class="p">},</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">      </span><span class="nx">instances</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">      </span><span class="nx">exec_mode</span><span class="o">:</span><span class="w"> </span><span class="s1">'fork'</span><span class="p">,</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">      </span><span class="nx">watch</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">      </span><span class="nx">autorestart</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">      </span><span class="nx">max_memory_restart</span><span class="o">:</span><span class="w"> </span><span class="s1">'500M'</span><span class="p">,</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'mcctl-console'</span><span class="p">,</span>
+<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers/.services/node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'</span><span class="p">,</span>
+<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">      </span><span class="nx">cwd</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers'</span><span class="p">,</span>
+<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="w">      </span><span class="nx">env</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="w">        </span><span class="nx">NODE_ENV</span><span class="o">:</span><span class="w"> </span><span class="s1">'production'</span><span class="p">,</span>
+<a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="w">        </span><span class="nx">PORT</span><span class="o">:</span><span class="w"> </span><span class="mf">5000</span><span class="p">,</span>
+<a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a><span class="w">        </span><span class="nx">HOSTNAME</span><span class="o">:</span><span class="w"> </span><span class="s1">'0.0.0.0'</span><span class="p">,</span>
+<a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a><span class="w">        </span><span class="nx">MCCTL_API_URL</span><span class="o">:</span><span class="w"> </span><span class="s1">'http://localhost:5001'</span><span class="p">,</span>
+<a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a><span class="w">        </span><span class="nx">MCCTL_ROOT</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers'</span><span class="p">,</span>
+<a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a><span class="w">        </span><span class="c1">// api-key 계열 접근 모드에서는 MCCTL_API_KEY가 추가됩니다</span>
+<a id="__codelineno-10-33" name="__codelineno-10-33" href="#__codelineno-10-33"></a><span class="w">        </span><span class="c1">// BETTER_AUTH_SECRET은 여기가 아니라 .env에 기록됩니다</span>
+<a id="__codelineno-10-34" name="__codelineno-10-34" href="#__codelineno-10-34"></a><span class="w">      </span><span class="p">},</span>
+<a id="__codelineno-10-35" name="__codelineno-10-35" href="#__codelineno-10-35"></a><span class="w">      </span><span class="nx">instances</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<a id="__codelineno-10-36" name="__codelineno-10-36" href="#__codelineno-10-36"></a><span class="w">      </span><span class="nx">exec_mode</span><span class="o">:</span><span class="w"> </span><span class="s1">'fork'</span><span class="p">,</span>
+<a id="__codelineno-10-37" name="__codelineno-10-37" href="#__codelineno-10-37"></a><span class="w">      </span><span class="nx">watch</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-10-38" name="__codelineno-10-38" href="#__codelineno-10-38"></a><span class="w">      </span><span class="nx">autorestart</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a><span class="w">      </span><span class="nx">max_memory_restart</span><span class="o">:</span><span class="w"> </span><span class="s1">'500M'</span><span class="p">,</span>
+<a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-10-42" name="__codelineno-10-42" href="#__codelineno-10-42"></a><span class="p">};</span>
 </code></pre></div>
+<div class="admonition note">
+<p class="admonition-title"><code>AUTH_MODE</code> 값</p>
+<p><code>mcctl console init</code>은 접근 모드를 mcctl-api가 인식하는 값으로 변환해 <code>AUTH_MODE</code>에 기록합니다: <code>internal</code> → 루프백(127.0.0.1, ::1)만 허용하는 <code>ip-whitelist</code>, <code>api-key-ip</code> → <code>combined</code>, <code>open</code> → <code>disabled</code>. <code>api-key</code>와 <code>ip-whitelist</code>는 그대로 기록됩니다.</p>
+</div>
+<p>파일에는 <code>mcctl console init</code>에서 선택한 서비스만 포함됩니다. <code>.services/</code> 디렉토리가 도입되기 이전에 설치한 환경은 패키지가 <code>&lt;root&gt;/node_modules/</code>에 있으며, 패키지가 그 위치에서 발견되면 <code>mcctl console init</code>은 계속 해당 위치를 사용합니다.</p>
 <h3 id="접근-모드">접근 모드<a class="headerlink" href="#접근-모드" title="Permanent link">&para;</a></h3>
-<p><code>mcctl console init</code>은 설정 중에 접근 모드를 묻습니다. 재초기화 없이 나중에 모드를 바꾸려면 <code>mcctl console api mode &lt;mode&gt;</code>를 사용하세요 (<a href="../cli-commands/#mcctl-console-api-mode">CLI 명령어</a> 참조).</p>
+<p><code>mcctl console init</code>은 설정 중에 접근 모드를 묻습니다. 모드, API 키, IP 화이트리스트는 <code>ecosystem.config.cjs</code>의 <code>env</code> 블록(<code>AUTH_MODE</code>, <code>AUTH_API_KEY</code>, <code>AUTH_IP_WHITELIST</code>)에 기록되며, 실행 중인 mcctl-api가 읽는 값이 바로 이것입니다. <code>mcctl console api</code> 명령어는 아직 이 값을 바꾸지 않으므로(<a href="../cli-commands/#mcctl-console-api">CLI 명령어</a>의 경고 참조,), 모드를 바꾸거나 API 키 또는 IP 화이트리스트를 변경하려면 현재는 <code>mcctl console init --force</code>로 다시 초기화해야 합니다.</p>
 <h4 id="internal-프로덕션-권장">internal (프로덕션 권장)<a class="headerlink" href="#internal-프로덕션-권장" title="Permanent link">&para;</a></h4>
-<p>로컬 네트워크에서만 접근을 허용합니다. 가정/로컬 배포에서 가장 안전한 옵션입니다.</p>
+<p>내부 접근만 허용, 외부 노출 없음. 가정/로컬 배포에서 가장 안전한 옵션입니다.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># API 접근 모드를 묻는 프롬프트에서 "internal" 선택</span>
 </code></pre></div>
@@ -3300,65 +3326,54 @@
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1"># API 키가 생성되어 표시됩니다</span>
 </code></pre></div>
 <p>초기화 후 API 키가 표시됩니다. 안전하게 저장하세요.</p>
-<p>API 키를 재생성하려면:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>key<span class="w"> </span>regenerate
-</code></pre></div>
+<p>새 API 키가 필요하면 <code>mcctl console init --force</code>로 다시 초기화하세요. <code>mcctl console api key regenerate</code>는 현재 실행 중인 API가 사용하는 키를 바꾸지 않습니다.</p>
 <h4 id="ip-whitelist">ip-whitelist<a class="headerlink" href="#ip-whitelist" title="Permanent link">&para;</a></h4>
 <p>지정된 IP 주소나 CIDR 범위에서만 접근을 허용합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1"># 프롬프트에서 "ip-whitelist" 선택</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="c1"># 허용할 IP를 입력합니다 (쉼표로 구분)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># 프롬프트에서 "ip-whitelist" 선택</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># 허용할 IP를 입력합니다 (쉼표로 구분)</span>
 </code></pre></div>
-<p>초기화 후 화이트리스트를 관리합니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>whitelist<span class="w"> </span>add<span class="w"> </span><span class="m">192</span>.168.1.100
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>whitelist<span class="w"> </span>add<span class="w"> </span><span class="m">10</span>.0.0.0/8
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>whitelist<span class="w"> </span>list
-</code></pre></div>
-<h4 id="api-key-ip-최고-보안">api-key-ip (최고 보안)<a class="headerlink" href="#api-key-ip-최고-보안" title="Permanent link">&para;</a></h4>
-<p>유효한 API 키와 화이트리스트에 등록된 클라이언트 IP가 모두 필요합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># 프롬프트에서 "api-key-ip" 선택</span>
-</code></pre></div>
+<p>허용 IP를 바꾸려면 <code>mcctl console init --force</code>로 다시 초기화하고 새 목록을 입력하세요. <code>mcctl console api whitelist</code>는 현재 실행 중인 API가 사용하는 화이트리스트를 바꾸지 않습니다.</p>
+<h4 id="api-key-ip">api-key-ip<a class="headerlink" href="#api-key-ip" title="Permanent link">&para;</a></h4>
+<p>유효한 API 키와 화이트리스트에 등록된 클라이언트 IP를 모두 요구하려는 모드입니다.</p>
 <h4 id="open-개발-환경-전용">open (개발 환경 전용)<a class="headerlink" href="#open-개발-환경-전용" title="Permanent link">&para;</a></h4>
 <div class="admonition danger">
 <p class="admonition-title">보안 위험</p>
-<p>이 모드는 모든 인증을 비활성화합니다. 프로덕션에서는 절대 사용하지 마세요!</p>
+<p>이 모드는 모든 인증을 비활성화하려는 모드입니다. 프로덕션에서는 절대 사용하지 마세요!</p>
 </div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>mode<span class="w"> </span>open<span class="w"> </span>--force
-</code></pre></div>
 <h3 id="사용자-관리">사용자 관리<a class="headerlink" href="#사용자-관리" title="Permanent link">&para;</a></h3>
 <h4 id="사용자-추가">사용자 추가<a class="headerlink" href="#사용자-추가" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># 대화형 모드</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># CLI 모드</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>operator@example.com<span class="w"> </span>--role<span class="w"> </span>user<span class="w"> </span>--password<span class="w"> </span><span class="s2">"SecurePass123"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># 대화형 모드</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># CLI 모드</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>operator@example.com<span class="w"> </span>--role<span class="w"> </span>user<span class="w"> </span>--password<span class="w"> </span><span class="s2">"SecurePass123"</span>
 </code></pre></div>
 <h4 id="사용자-목록-조회">사용자 목록 조회<a class="headerlink" href="#사용자-목록-조회" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
 </code></pre></div>
 <p>출력:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Users:
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>Email                         Name                Role        Created
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>---------------------------------------------------------------------------
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>admin@example.com             Administrator       admin       2025-01-15
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>operator@example.com          operator            user        2025-01-16
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>Total: 2 user(s)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Users:
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>Email                         Name                Role        Created
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>---------------------------------------------------------------------------
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>admin@example.com             Administrator       admin       2025-01-15
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>operator@example.com          operator            user        2025-01-16
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>Total: 2 user(s)
 </code></pre></div>
 <h4 id="사용자-역할-변경">사용자 역할 변경<a class="headerlink" href="#사용자-역할-변경" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>operator@example.com<span class="w"> </span>--role<span class="w"> </span>admin
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>operator@example.com<span class="w"> </span>--role<span class="w"> </span>admin
 </code></pre></div>
 <h4 id="비밀번호-재설정">비밀번호 재설정<a class="headerlink" href="#비밀번호-재설정" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># 대화형</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator@example.com
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># CLI</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator@example.com<span class="w"> </span>--password<span class="w"> </span><span class="s2">"NewSecurePass456"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># 대화형</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator@example.com
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># CLI</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator@example.com<span class="w"> </span>--password<span class="w"> </span><span class="s2">"NewSecurePass456"</span>
 </code></pre></div>
 <h4 id="사용자-삭제">사용자 삭제<a class="headerlink" href="#사용자-삭제" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>remove<span class="w"> </span>operator@example.com
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>remove<span class="w"> </span>operator@example.com
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">마지막 관리자 보호</p>
@@ -3366,13 +3381,13 @@
 </div>
 <h2 id="검증">검증<a class="headerlink" href="#검증" title="Permanent link">&para;</a></h2>
 <h3 id="서비스-상태-확인">서비스 상태 확인<a class="headerlink" href="#서비스-상태-확인" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status
 </code></pre></div>
 <h3 id="api-상태-확인">API 상태 확인<a class="headerlink" href="#api-상태-확인" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>curl<span class="w"> </span>http://localhost:5001/health
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>curl<span class="w"> </span>http://localhost:5001/health
 </code></pre></div>
 <p>예상 응답:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="s2">"healthy"</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="s2">"healthy"</span><span class="p">}</span>
 </code></pre></div>
 <h3 id="웹-콘솔-접속">웹 콘솔 접속<a class="headerlink" href="#웹-콘솔-접속" title="Permanent link">&para;</a></h3>
 <ol>
@@ -3385,32 +3400,32 @@
 <ol>
 <li>
 <p><strong>Node.js 버전 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>node<span class="w"> </span>--version<span class="w">  </span><span class="c1"># v18.0.0 이상이어야 합니다</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>node<span class="w"> </span>--version<span class="w">  </span><span class="c1"># v18.0.0 이상이어야 합니다</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>PM2 설치 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>pm2<span class="w"> </span>--version
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>pm2<span class="w"> </span>--version
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>포트 충돌 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"5000|5001"</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="c1"># macOS의 경우</span>
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5000
-<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5001
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"5000|5001"</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="c1"># macOS의 경우</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5000
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5001
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>서비스 로그 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>-f
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>-f
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>PM2 프로세스 목록 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>pm2<span class="w"> </span>list
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>pm2<span class="w"> </span>list
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console
 </code></pre></div></p>
 </li>
 </ol>
@@ -3418,25 +3433,25 @@
 <ol>
 <li>
 <p><strong>사용자 존재 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>비밀번호 재설정:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>admin@example.com
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>admin@example.com
 </code></pre></div></p>
 </li>
 <li>
-<p><strong>설정 파일 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>cat<span class="w"> </span>~/.mcctl-admin.yml
+<p><strong>설정 파일 확인</strong> (데이터 디렉토리에 있으며 기본값은 <code>~/minecraft-servers</code>입니다):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>cat<span class="w"> </span>~/minecraft-servers/.mcctl-admin.yml
 </code></pre></div></p>
 </li>
 </ol>
 <h3 id="api에서-401-unauthorized-반환">API에서 401 Unauthorized 반환<a class="headerlink" href="#api에서-401-unauthorized-반환" title="Permanent link">&para;</a></h3>
 <ol>
 <li>
-<p><strong>접근 모드 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>status
+<p><strong>접근 모드 확인</strong> (실행 중인 API는 <code>ecosystem.config.cjs</code>에서 읽으며, <code>mcctl console api status</code>는 대신 <code>api-config.json</code>을 보여줍니다):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>grep<span class="w"> </span>AUTH_MODE<span class="w"> </span>~/minecraft-servers/ecosystem.config.cjs
 </code></pre></div></p>
 </li>
 <li>
@@ -3444,11 +3459,11 @@
 </li>
 <li>요청에 <code>X-API-Key</code> 헤더가 포함되어 있는지 확인</li>
 <li>
-<p>필요시 키 재생성: <code>mcctl console api key regenerate</code></p>
+<p>사용 중인 키는 <code>ecosystem.config.cjs</code>의 <code>AUTH_API_KEY</code>입니다. 새 키가 필요하면 <code>mcctl console init --force</code>로 다시 초기화하세요</p>
 </li>
 <li>
 <p><strong>IP 화이트리스트 확인 (ip-whitelist 모드 사용 시):</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>whitelist<span class="w"> </span>list
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>grep<span class="w"> </span>AUTH_IP_WHITELIST<span class="w"> </span>~/minecraft-servers/ecosystem.config.cjs
 </code></pre></div></p>
 </li>
 </ol>
@@ -3456,86 +3471,113 @@
 <ol>
 <li>
 <p><strong>로그에서 오류 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
 </code></pre></div></p>
 </li>
 <li>
-<p><strong>의존성 설치 여부 확인:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>npm<span class="w"> </span>ls<span class="w"> </span>@minecraft-docker/mcctl-api
-<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>npm<span class="w"> </span>ls<span class="w"> </span>@minecraft-docker/mcctl-console
-</code></pre></div></p>
+<p><strong>서비스 패키지 설치 여부 확인</strong> (패키지는 데이터 디렉토리의 <code>.services/</code> 디렉토리에 설치됩니다):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers/.services
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>npm<span class="w"> </span>ls<span class="w"> </span>@minecraft-docker/mcctl-api<span class="w"> </span>@minecraft-docker/mcctl-console
+</code></pre></div>
+   <code>.services/</code> 디렉토리가 없는 설치는 패키지가 <code>~/minecraft-servers/node_modules</code>에 있으므로, 대신 <code>~/minecraft-servers</code>에서 <code>npm ls</code>를 실행하세요.</p>
 </li>
 <li>
 <p><strong>서비스 재시작:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart
 </code></pre></div></p>
 </li>
 </ol>
 <h2 id="부팅-시-자동-시작">부팅 시 자동 시작<a class="headerlink" href="#부팅-시-자동-시작" title="Permanent link">&para;</a></h2>
 <p>시스템 부팅 시 서비스가 자동으로 시작되도록 PM2를 구성합니다:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># 시작 스크립트 생성</span>
-<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>pm2<span class="w"> </span>startup
-<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="c1"># 표시된 명령을 실행하라는 안내를 따릅니다</span>
-<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a><span class="c1"># 예시:</span>
-<a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a>sudo<span class="w"> </span>env<span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/bin<span class="w"> </span>pm2<span class="w"> </span>startup<span class="w"> </span>systemd<span class="w"> </span>-u<span class="w"> </span><span class="nv">$USER</span><span class="w"> </span>--hp<span class="w"> </span><span class="nv">$HOME</span>
-<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a>
-<a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a><span class="c1"># 현재 프로세스 목록 저장</span>
-<a id="__codelineno-40-9" name="__codelineno-40-9" href="#__codelineno-40-9"></a>pm2<span class="w"> </span>save
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># 시작 스크립트 생성</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>pm2<span class="w"> </span>startup
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="c1"># 표시된 명령을 실행하라는 안내를 따릅니다</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="c1"># 예시:</span>
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>sudo<span class="w"> </span>env<span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/bin<span class="w"> </span>pm2<span class="w"> </span>startup<span class="w"> </span>systemd<span class="w"> </span>-u<span class="w"> </span><span class="nv">$USER</span><span class="w"> </span>--hp<span class="w"> </span><span class="nv">$HOME</span>
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="c1"># 현재 프로세스 목록 저장</span>
+<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>pm2<span class="w"> </span>save
 </code></pre></div>
 <p>이제 시스템이 부팅될 때 서비스가 자동으로 시작됩니다.</p>
 <h2 id="업그레이드">업그레이드<a class="headerlink" href="#업그레이드" title="Permanent link">&para;</a></h2>
 <h3 id="mcctl-및-서비스-업데이트">mcctl 및 서비스 업데이트<a class="headerlink" href="#mcctl-및-서비스-업데이트" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># 서비스 중지</span>
-<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop
-<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>
-<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="c1"># mcctl 전역 업데이트</span>
-<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>npm<span class="w"> </span>update<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl
-<a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a>
-<a id="__codelineno-41-7" name="__codelineno-41-7" href="#__codelineno-41-7"></a><span class="c1"># 서비스 시작</span>
-<a id="__codelineno-41-8" name="__codelineno-41-8" href="#__codelineno-41-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>mcctl<span class="w"> </span>update
 </code></pre></div>
+<p><code>mcctl update</code>는 mcctl CLI와 <code>&lt;root&gt;/.services/</code>에 설치된 서비스(<code>mcctl-api</code>, <code>mcctl-console</code>, <code>shared</code> 라이브러리)를 한 번에 업데이트합니다. 업데이트된 PM2 서비스는 자동으로 재시작됩니다. 출력에 서비스별로 <code>Updated (restart manually)</code>가 표시되면 <code>mcctl console service restart</code>를 실행하세요. <code>.services/</code> 디렉토리가 없는 설치는 패키지가 <code>&lt;root&gt;/node_modules</code>에 있으며, <code>mcctl update</code>는 그 위치의 패키지를 업데이트합니다. 서비스 패키지가 하나 이상 설치되어 있으면 이 명령은 Minecraft 서버의 이미지 태그를 맞추고 Docker 이미지를 pull하기도 합니다. <code>--check</code>, <code>--cli-only</code>를 지정하거나 설치된 서비스 패키지가 없으면 건너뜁니다.</p>
+<table>
+<thead>
+<tr>
+<th>옵션</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--check</code></td>
+<td>업데이트 여부만 확인하고 설치하지 않음</td>
+</tr>
+<tr>
+<td><code>--cli-only</code></td>
+<td>CLI만 업데이트하고 서비스는 그대로 둠</td>
+</tr>
+<tr>
+<td><code>--yes</code></td>
+<td>확인 프롬프트 건너뛰기</td>
+</tr>
+</tbody>
+</table>
+<p><code>npm update -g @minecraft-docker/mcctl</code>은 CLI 패키지만 업데이트하며 <code>.services/</code>의 서비스는 건드리지 않습니다. 모든 옵션은 <a href="../../cli/commands/#mcctl-update">mcctl update 레퍼런스</a>를 참조하세요.</p>
 <h3 id="주요-업데이트-후-재초기화">주요 업데이트 후 재초기화<a class="headerlink" href="#주요-업데이트-후-재초기화" title="Permanent link">&para;</a></h3>
 <p>호환성을 깨는 변경 사항이 있는 경우 콘솔을 재초기화하세요:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1"># 서비스 중지</span>
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop
-<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>
-<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="c1"># 재초기화 (사용자 데이터 유지)</span>
-<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--force
-<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a>
-<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="c1"># 서비스 시작</span>
-<a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># 재초기화: 서비스를 중지하고 콘솔 설정을 삭제합니다</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--force
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="c1"># 서비스 시작</span>
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
 </code></pre></div>
+<p><code>--force</code>는 기존 설정을 보존하지 않습니다. PM2 서비스를 중지하고 <code>.mcctl-admin.yml</code>과 <code>ecosystem.config.cjs</code>를 삭제하므로, API 접근 모드를 다시 선택해야 하고, <code>--api-port</code>와 <code>--console-port</code>를 지정하지 않으면 포트는 기본값으로 돌아가며, api-key 계열 모드에서는 새 API 키가 생성됩니다. 콘솔 데이터베이스 <code>data/mcctl.db</code>는 유지되므로 다른 사용자는 그대로입니다. 기존 관리자의 이메일을 입력하면 해당 사용자는 (세션 포함) 삭제된 뒤 지금 입력한 비밀번호로 다시 생성됩니다. 다른 이메일을 입력하면 기존 관리자는 그대로 남고 새 관리자가 추가됩니다.</p>
 <h2 id="제거">제거<a class="headerlink" href="#제거" title="Permanent link">&para;</a></h2>
-<p>Management Console를 완전히 제거하려면:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="c1"># 콘솔 서비스 제거 (대화형)</span>
-<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove
-<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>
-<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a><span class="c1"># 또는 확인 없이 강제 제거</span>
-<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--force
-<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>
-<a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a><span class="c1"># 나중에 재설치할 수 있도록 설정 파일 유지</span>
-<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--keep-config
+<p>Management Console를 제거하려면:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># 콘솔 서비스 제거 (대화형)</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="c1"># 또는 확인 없이 강제 제거</span>
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--force
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>
+<a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a><span class="c1"># 나중에 재설치할 수 있도록 설정 파일 유지</span>
+<a id="__codelineno-39-8" name="__codelineno-39-8" href="#__codelineno-39-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--keep-config
 </code></pre></div>
 <p>다음 작업이 수행됩니다:</p>
 <ul>
 <li>PM2 프로세스 중지 및 제거 (mcctl-api, mcctl-console)</li>
-<li>설정 파일 삭제 (.mcctl-admin.yml, users.yaml)</li>
-<li>PM2 에코시스템 설정 삭제 (ecosystem.config.cjs)</li>
+<li>설정 파일 삭제 (<code>.mcctl-admin.yml</code>, 그리고 존재하는 경우 레거시 <code>users.yaml</code>)</li>
+<li>PM2 에코시스템 설정 삭제 (<code>ecosystem.config.cjs</code>)</li>
 </ul>
 <div class="admonition warning">
 <p class="admonition-title">데이터 보존</p>
 <p>Management Console를 제거해도 Minecraft 서버나 월드 데이터에는 영향이 없습니다.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">콘솔 데이터베이스는 유지됩니다</p>
+<p><code>data/mcctl.db</code>(콘솔 사용자, 세션, 사용자별 서버 권한)와 <code>.services/</code>의 패키지는 삭제되지 않습니다. 재설치 후에도 계정이 남도록 의도한 동작입니다. 같은 관리자 이메일로 <code>mcctl console init</code>을 다시 실행하려면 <code>--force</code>가 필요하며, 없으면 <code>User '&lt;email&gt;' already exists</code> 오류로 실패합니다.</p>
+</div>
+<p>완전히 처음부터 시작하려면 데이터베이스도 함께 삭제하세요:</p>
+<div class="admonition danger">
+<p class="admonition-title">되돌릴 수 없습니다</p>
+<p>데이터베이스를 삭제하면 모든 콘솔 사용자, 세션, 사용자별 서버 권한이 사라집니다.</p>
+</div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>rm<span class="w"> </span>-f<span class="w"> </span>~/minecraft-servers/data/mcctl.db*
+</code></pre></div>
+<p>삭제되는 항목과 유지되는 항목의 전체 목록은 <a href="../cli-commands/#mcctl-console-remove"><code>mcctl console remove</code></a>를 참조하세요.</p>
 <h3 id="pm2-정리-선택-사항">PM2 정리 (선택 사항)<a class="headerlink" href="#pm2-정리-선택-사항" title="Permanent link">&para;</a></h3>
 <p>PM2 구성을 완전히 제거하려면:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="c1"># 저장된 프로세스 목록 제거</span>
-<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>pm2<span class="w"> </span>unstartup
-<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a>
-<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="c1"># PM2 데몬 종료</span>
-<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a>pm2<span class="w"> </span><span class="nb">kill</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># 저장된 프로세스 목록 제거</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>pm2<span class="w"> </span>unstartup
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="c1"># PM2 데몬 종료</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>pm2<span class="w"> </span><span class="nb">kill</span>
 </code></pre></div>
 
 

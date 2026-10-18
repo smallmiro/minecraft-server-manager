@@ -4194,12 +4194,32 @@
 <td>생성만 하고 시작하지 않음</td>
 </tr>
 <tr>
+<td><code>--whitelist</code></td>
+<td></td>
+<td>화이트리스트 활성화 + 초기 플레이어 등록 (쉼표 구분, 예: <code>Steve,Alex</code>)</td>
+</tr>
+<tr>
+<td><code>--enable-whitelist</code></td>
+<td></td>
+<td>초기 플레이어 없이 화이트리스트 활성화</td>
+</tr>
+<tr>
+<td><code>--no-whitelist</code></td>
+<td></td>
+<td>화이트리스트 비활성화 (기본값, 위 두 옵션보다 우선)</td>
+</tr>
+<tr>
 <td><code>--sudo-password</code></td>
 <td></td>
 <td>mDNS 등록용 sudo 비밀번호 (자동화용)</td>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">화이트리스트는 기본 비활성입니다</p>
+<p>화이트리스트 옵션 없이 만든 서버는 화이트리스트가 <strong>꺼진 상태</strong>라서 정품(online-mode) 계정이면 누구나 접속할 수 있습니다. 접속을 제한하려면 <code>--whitelist</code> 또는 <code>--enable-whitelist</code>를 사용하거나, 나중에 <code>mcctl whitelist &lt;server&gt; on</code>으로 켜세요. 대화형 모드에서는 "Enable whitelist?"(기본 No)를 묻고, Yes를 선택한 경우에만 플레이어를 입력받습니다. 웹 콘솔에서 만든 서버도 화이트리스트가 꺼진 상태로 생성됩니다.</p>
+<p>정품 인증(<code>ONLINE_MODE=TRUE</code>)은 바뀌지 않고 계속 켜져 있습니다. 이 변경 이전에 만든 서버는 기존 화이트리스트 설정을 그대로 유지합니다.</p>
+</div>
 <div class="admonition tip">
 <p class="admonition-title">Sudo 비밀번호를 사용한 자동화</p>
 <p>CI/CD 파이프라인에서 서버 생성을 자동화할 때 mDNS 등록을 위한 sudo 비밀번호를 제공할 수 있습니다:</p>
@@ -4232,6 +4252,12 @@
 <a id="__codelineno-36-12" name="__codelineno-36-12" href="#__codelineno-36-12"></a>
 <a id="__codelineno-36-13" name="__codelineno-36-13" href="#__codelineno-36-13"></a><span class="c1"># 시작하지 않고 생성만</span>
 <a id="__codelineno-36-14" name="__codelineno-36-14" href="#__codelineno-36-14"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--no-start
+<a id="__codelineno-36-15" name="__codelineno-36-15" href="#__codelineno-36-15"></a>
+<a id="__codelineno-36-16" name="__codelineno-36-16" href="#__codelineno-36-16"></a><span class="c1"># 화이트리스트 활성화 + 초기 플레이어 등록</span>
+<a id="__codelineno-36-17" name="__codelineno-36-17" href="#__codelineno-36-17"></a>mcctl<span class="w"> </span>create<span class="w"> </span>private<span class="w"> </span>--whitelist<span class="w"> </span>Steve,Alex
+<a id="__codelineno-36-18" name="__codelineno-36-18" href="#__codelineno-36-18"></a>
+<a id="__codelineno-36-19" name="__codelineno-36-19" href="#__codelineno-36-19"></a><span class="c1"># 화이트리스트만 켜고 플레이어는 나중에 추가</span>
+<a id="__codelineno-36-20" name="__codelineno-36-20" href="#__codelineno-36-20"></a>mcctl<span class="w"> </span>create<span class="w"> </span>private<span class="w"> </span>--enable-whitelist
 </code></pre></div>
 </div>
 <div class="tabbed-block">

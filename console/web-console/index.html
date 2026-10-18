@@ -2639,6 +2639,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#platform-settings-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Settings (Admin)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Platform Settings (Admin)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#saving-and-applying-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saving and Applying Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-equivalents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Equivalents
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#user-management-admin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4374,6 +4413,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#platform-settings-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Settings (Admin)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Platform Settings (Admin)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#saving-and-applying-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saving and Applying Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cli-equivalents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Equivalents
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#user-management-admin" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5335,7 +5413,7 @@
 <h4 id="backup-status">Backup Status<a class="headerlink" href="#backup-status" title="Permanent link">&para;</a></h4>
 <p>The <strong>Backup Status</strong> card shows the current backup configuration:</p>
 <ul>
-<li><strong>Status</strong> -- Whether the backup system is <code>Configured</code> (green checkmark) or <code>Not Configured</code>. When it is not configured, the card asks you to set <code>BACKUP_REPO_URL</code></li>
+<li><strong>Status</strong> -- Whether the backup system is <code>Configured</code> (green checkmark) or <code>Not Configured</code>. When it is not configured, the card asks you to set <code>BACKUP_GITHUB_REPO</code> and <code>BACKUP_GITHUB_TOKEN</code></li>
 <li><strong>Repository</strong> -- The configured Git repository for backup storage (e.g., <code>smallmiro/minecraft-worlds-backup</code>)</li>
 <li><strong>Last Backup</strong> -- When the last backup ran (e.g., "5 minutes ago"), or "No backups yet"</li>
 </ul>
@@ -5513,7 +5591,7 @@
 <li><strong>Server Domains</strong> table showing which servers have external domains configured (e.g., <code>possible-tracks.gl.joinmc.link</code>), each with a copy button</li>
 <li>A list of servers without external domains</li>
 </ul>
-<p>If playit.gg is not set up, the card shows "Not configured" and asks you to set <code>PLAYIT_SECRET</code>.</p>
+<p>If playit.gg is not set up, the card shows "Not configured" and asks you to set <code>PLAYIT_SECRET_KEY</code>.</p>
 <hr />
 <h2 id="navigation">Navigation<a class="headerlink" href="#navigation" title="Permanent link">&para;</a></h2>
 <p>The top navigation bar is consistent across all pages and includes:</p>
@@ -5598,6 +5676,78 @@
 <li><strong>Account Information</strong> -- Your <strong>Account ID</strong>, <strong>Created</strong> time, and <strong>Last Updated</strong> time</li>
 <li><strong>Change Password</strong> -- Enter your <strong>Current Password</strong>, a <strong>New Password</strong> (at least 8 characters, different from the current one), and <strong>Confirm New Password</strong>, then click <strong>Change Password</strong>. Other signed-in sessions are not signed out</li>
 </ul>
+<hr />
+<h2 id="platform-settings-admin">Platform Settings (Admin)<a class="headerlink" href="#platform-settings-admin" title="Permanent link">&para;</a></h2>
+<p>Administrators see an additional <strong>Platform Settings</strong> section on the <strong>Settings</strong> page, above the account cards. It edits the platform <code>.env</code> file. Non-admin users only see their own account cards and cannot read or change platform configuration; the API enforces this independently of the UI.</p>
+<ul>
+<li><strong>Bento cards</strong> -- Settings are grouped into cards: Network &amp; Routing, Server Runtime, RCON, Backup, External Access (playit.gg) and Console &amp; Logging. Each field uses a typed control (text, switch, select, number, IP list) with field-level validation</li>
+<li><strong>Secrets are write-only</strong> -- Secret fields (<code>RCON_PASSWORD</code>, <code>BACKUP_GITHUB_TOKEN</code>, <code>PLAYIT_SECRET_KEY</code>) show <strong>Configured</strong> or <strong>Not configured</strong>. The input is never pre-filled; typing a value marks the field changed</li>
+<li><strong>Runtime (PM2)</strong> -- A read-only card shows <code>AUTH_MODE</code> from <code>ecosystem.config.cjs</code>, plus <code>BETTER_AUTH_BASE_URL</code> / <code>BETTER_AUTH_SECRET</code> (configured only) while an older ecosystem file still injects them. Values set under <strong>Console &amp; Logging</strong> win; re-run <code>mcctl console init</code> to move them to <code>.env</code></li>
+<li><strong>Advanced Environment</strong> -- Unknown keys as key/value rows (add, edit, remove). Servers receive one only if its name is listed in <code>servers/global.env</code></li>
+<li><strong>Legacy / Unused</strong> -- Legacy keys with warning styling ("Not read by any current code."). Nothing is removed unless you remove it explicitly</li>
+<li><strong>Read-only network identity</strong> -- <code>MINECRAFT_NETWORK</code>, <code>MINECRAFT_SUBNET</code> and <code>COMPOSE_PROJECT_NAME</code> are displayed with CLI guidance only</li>
+</ul>
+<p>Server-specific values stay in each server's <strong>Options</strong> tab. A server's <code>config.env</code> overrides the platform value for that server, and the UI notes this on server-runtime keys. See <a href="../../configuration/environment/#setting-classification">Environment Variables</a> for the full classification.</p>
+<h3 id="saving-and-applying-changes">Saving and Applying Changes<a class="headerlink" href="#saving-and-applying-changes" title="Permanent link">&para;</a></h3>
+<p>A sticky bar with <strong>Discard</strong> and <strong>Save Changes</strong> appears when any field is changed. <strong>Saving only writes <code>.env</code>; it never restarts anything.</strong> After saving, a dialog lists what needs to be restarted, per scope:</p>
+<table>
+<thead>
+<tr>
+<th>Scope</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Servers</td>
+<td><strong>Stop, then start</strong> each server (Servers page, or <code>mcctl stop &lt;name&gt; &amp;&amp; mcctl start &lt;name&gt;</code>). <strong>Restart does not reload <code>.env</code>.</strong> mc-router auto-scale wakes an existing container with its old environment, so a recreate through start is required</td>
+</tr>
+<tr>
+<td>Router</td>
+<td><code>mcctl router start</code> (not <code>restart</code>)</td>
+</tr>
+<tr>
+<td>playit</td>
+<td>Stop, then start the playit agent on the Routing page, or <code>mcctl playit stop &amp;&amp; mcctl playit start</code></td>
+</tr>
+<tr>
+<td>API</td>
+<td><code>mcctl console service restart --api</code>. Settings backed by mcctl-api show a "restart pending" chip until it restarts</td>
+</tr>
+<tr>
+<td>Next create</td>
+<td>Applies to servers created after this change. Existing server hostnames are unchanged</td>
+</tr>
+</tbody>
+</table>
+<p>If the file changed since you loaded the page (for example via the CLI), saving returns a <strong>409 conflict</strong> and a dialog asks you to reload. Your edits are never overwritten automatically.</p>
+<h3 id="cli-equivalents">CLI Equivalents<a class="headerlink" href="#cli-equivalents" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Card</th>
+<th>CLI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network &amp; Routing</td>
+<td><code>mcctl init --reconfigure</code></td>
+</tr>
+<tr>
+<td>Backup</td>
+<td><code>mcctl backup init</code></td>
+</tr>
+<tr>
+<td>External Access (playit.gg)</td>
+<td><code>mcctl playit setup</code></td>
+</tr>
+<tr>
+<td>Runtime (PM2)</td>
+<td><code>mcctl console init</code></td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="user-management-admin">User Management (Admin)<a class="headerlink" href="#user-management-admin" title="Permanent link">&para;</a></h2>
 <p><img alt="User Management" src="../../images/admin-users.png" /></p>

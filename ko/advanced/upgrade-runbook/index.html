@@ -1950,6 +1950,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="4. API / Console 재시작 (필요 시)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#4-1-v2320-이상으로-올릴-때-콘솔-접근-모드-확인-633" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4-1. v2.32.0 이상으로 올릴 때: 콘솔 접근 모드 확인 (#633)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2394,6 +2411,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="4. API / Console 재시작 (필요 시)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#4-1-v2320-이상으로-올릴-때-콘솔-접근-모드-확인-633" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4-1. v2.32.0 이상으로 올릴 때: 콘솔 접근 모드 확인 (#633)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2604,6 +2638,7 @@
 <ul>
 <li><code>.env</code>에 새 변수가 추가되고(<code>DOCKER_GID</code> 등), <code>docker-compose.yml.bak-&lt;타임스탬프&gt;</code>가 생성되며, router가 변경되면 <code>docker compose up -d router</code>가 자동 실행됩니다.</li>
 <li><code>servers/_template/*</code>가 덮어써지고 <code>.mcctl.json</code>의 <code>templateVersion</code>이 갱신됩니다.</li>
+<li>(v2.32.0 이상) <code>servers/global.env</code>가 없으면 만들고, 기존 서버의 <code>- ../../.env</code>를 <code>- ../global.env</code>로 바꿔 플랫폼 시크릿이 서버 컨테이너로 넘어가지 않게 합니다. 컨테이너는 다시 만들 때까지 옛 환경 변수를 유지하므로 5단계에서 서버마다 stop 후 start합니다. <a href="../../configuration/environment/">환경 변수</a> 참고.</li>
 <li><code>.mcctl.json</code>에 <code>installId</code>가 없으면 한 번 추가합니다 (기존 값은 유지). 웹 콘솔이 익명 사용 통계에 사용하며, 끄려면 <code>.mcctl.json</code>에 <code>"telemetry": false</code>를 설정합니다 (<a href="../../console/web-console/">사용 통계</a> 참고).</li>
 <li><strong>router 이미지가 태그 없는 <code>itzg/mc-router</code>이면 <code>mcctl upgrade</code>가 image를 올리지 않습니다.</strong> <code>docker-compose.yml</code>의 <code>image:</code>를 릴리즈 노트가 지정한 버전으로 직접 고정한 뒤 <code>docker compose config -q &amp;&amp; docker compose up -d router</code>를 실행합니다.</li>
 </ul>
@@ -2613,6 +2648,54 @@
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>rebuild<span class="w"> </span>better-sqlite3<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force
 </code></pre></div>
+<h3 id="4-1-v2320-이상으로-올릴-때-콘솔-접근-모드-확인-633">4-1. v2.32.0 이상으로 올릴 때: 콘솔 접근 모드 확인 (#633)<a class="headerlink" href="#4-1-v2320-이상으로-올릴-때-콘솔-접근-모드-확인-633" title="Permanent link">&para;</a></h3>
+<p>v2.31.0 이하에서 v2.32.0 이상으로 올릴 때 한 번만 합니다. <code>mcctl console init</code>을 실행한 호스트에만 해당합니다.</p>
+<p>v2.31.0까지는 <code>mcctl console init</code>이 선택한 접근 모드를 <code>AUTH_MODE</code>에 그대로 썼습니다. mcctl-api는 <code>internal</code>, <code>api-key-ip</code>, <code>open</code>을 인식하지 못하고, <code>NODE_ENV=production</code>이면 <code>api-key</code>(그 외에는 <code>disabled</code>)로 동작합니다. v2.32.0부터는 <code>mcctl console init</code>이 mcctl-api가 인식하는 값으로 씁니다. <code>mcctl update</code>와 <code>mcctl upgrade</code>는 <code>ecosystem.config.cjs</code>를 다시 쓰지 않으므로, 기존 설치는 직접 바꾸기 전까지 옛 값이 남습니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>grep<span class="w"> </span>-nE<span class="w"> </span><span class="s2">"AUTH_MODE|AUTH_IP_WHITELIST"</span><span class="w"> </span><span class="nv">$ROOT</span>/ecosystem.config.cjs
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>현재 <code>AUTH_MODE</code></th>
+<th>바꿀 값</th>
+<th>영향</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>api-key</code>, <code>ip-whitelist</code>, <code>disabled</code>, <code>basic</code>, <code>combined</code></td>
+<td>할 일 없음</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>internal</code></td>
+<td><code>ip-whitelist</code> + <code>AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1'</code></td>
+<td>호스트 자신(Console)만 API를 호출할 수 있음</td>
+</tr>
+<tr>
+<td><code>api-key-ip</code></td>
+<td><code>combined</code> (<code>AUTH_API_KEY</code>, <code>AUTH_IP_WHITELIST</code>는 유지)</td>
+<td>IP 화이트리스트가 실제로 적용됨. 목록 밖 클라이언트는 403</td>
+</tr>
+<tr>
+<td><code>open</code></td>
+<td><code>disabled</code></td>
+<td>인증이 실제로 꺼짐. 개발 환경 전용</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>cp<span class="w"> </span>ecosystem.config.cjs<span class="w"> </span><span class="nv">$B</span>/ecosystem.config.cjs<span class="w">     </span><span class="c1"># 롤백용(8단계)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>sed<span class="w"> </span>-i<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"s/^\( *\)AUTH_MODE: 'internal',/\1AUTH_MODE: 'ip-whitelist',\n\1AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1',/"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"s/AUTH_MODE: 'api-key-ip',/AUTH_MODE: 'combined',/"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"s/AUTH_MODE: 'open',/AUTH_MODE: 'disabled',/"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span>ecosystem.config.cjs
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>grep<span class="w"> </span>-nE<span class="w"> </span><span class="s2">"AUTH_MODE|AUTH_IP_WHITELIST"</span><span class="w"> </span>ecosystem.config.cjs
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force<span class="w">               </span><span class="c1"># 일반 restart는 옛 env를 그대로 씀</span>
+</code></pre></div>
+<p><code>sed</code>는 다른 모드는 건드리지 않습니다. 파일을 고치는 대신 <code>mcctl console init --force</code>를 다시 실행해도 되지만, 이 경우 파일 전체를 다시 쓰고 설정 질문을 모두 다시 묻습니다.</p>
+<p><strong>확인:</strong> <code>AUTH_MODE</code>가 <code>disabled</code>, <code>api-key</code>, <code>ip-whitelist</code>, <code>basic</code>, <code>combined</code> 중 하나이고, API <code>/health</code>가 200이며 Console에서 서버 목록이 보임(7-6단계).</p>
 <h2 id="5-서버-이미지-반영">5. 서버 이미지 반영<a class="headerlink" href="#5-서버-이미지-반영" title="Permanent link">&para;</a></h2>
 <p>중지된 서버는 다음 기동 때 새 이미지가 적용됩니다. 실행 중인 서버는 사용자 영향이 없는 시간에 <code>mcctl stop &lt;server&gt; &amp;&amp; mcctl start &lt;server&gt;</code>로 재기동합니다(월드는 보존).</p>
 <h2 id="6-지도bluemap-재렌더-릴리즈-노트에-지도-변경이-있을-때만">6. 지도(BlueMap) 재렌더 (릴리즈 노트에 지도 변경이 있을 때만)<a class="headerlink" href="#6-지도bluemap-재렌더-릴리즈-노트에-지도-변경이-있을-때만" title="Permanent link">&para;</a></h2>
@@ -2620,35 +2703,35 @@
 <h2 id="7-업그레이드-후-검증">7. 업그레이드 후 검증<a class="headerlink" href="#7-업그레이드-후-검증" title="Permanent link">&para;</a></h2>
 <p>모든 항목이 통과해야 완료입니다. 실패하면 8단계(롤백)로 갑니다.</p>
 <h3 id="7-1-버전">7-1. 버전<a class="headerlink" href="#7-1-버전" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">hash</span><span class="w"> </span>-r
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>mcctl<span class="w"> </span>--version<span class="w">                                   </span><span class="c1"># = $NEW</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>pm2<span class="w"> </span>jlist<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import sys,json;[print(p['name'],p['pm2_env']['version'],p['pm2_env']['status'],p['pm2_env']['node_version'],'restarts=',p['pm2_env']['restart_time']) for p in json.load(sys.stdin)]"</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># 기대: mcctl-api / mcctl-console 모두 $NEW, online, PM2 Node와 동일, restarts가 계속 증가하지 않음</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w">                              </span><span class="c1"># 더 올릴 패키지가 없어야 함(shared 포함)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">hash</span><span class="w"> </span>-r
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mcctl<span class="w"> </span>--version<span class="w">                                   </span><span class="c1"># = $NEW</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>pm2<span class="w"> </span>jlist<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import sys,json;[print(p['name'],p['pm2_env']['version'],p['pm2_env']['status'],p['pm2_env']['node_version'],'restarts=',p['pm2_env']['restart_time']) for p in json.load(sys.stdin)]"</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># 기대: mcctl-api / mcctl-console 모두 $NEW, online, PM2 Node와 동일, restarts가 계속 증가하지 않음</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w">                              </span><span class="c1"># 더 올릴 패키지가 없어야 함(shared 포함)</span>
 </code></pre></div>
 <h3 id="7-2-설정-파일">7-2. 설정 파일<a class="headerlink" href="#7-2-설정-파일" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import json;c=json.load(open('.mcctl.json'));print('templateVersion =',c.get('templateVersion'),'| installId present =','installId' in c)"</span><span class="w">   </span><span class="c1"># = $NEW 이하의 최신 템플릿 버전</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>diff<span class="w"> </span>&lt;<span class="o">(</span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'^[A-Z_]+='</span><span class="w"> </span>.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="o">)</span><span class="w"> </span>&lt;<span class="o">(</span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'^[A-Z_]+='</span><span class="w"> </span><span class="nv">$B</span>/.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="o">)</span><span class="w">   </span><span class="c1"># 추가된 변수만 보여야 함</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>docker<span class="w"> </span>compose<span class="w"> </span>config<span class="w"> </span>-q<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"compose OK"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import json;c=json.load(open('.mcctl.json'));print('templateVersion =',c.get('templateVersion'),'| installId present =','installId' in c)"</span><span class="w">   </span><span class="c1"># = $NEW 이하의 최신 템플릿 버전</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>diff<span class="w"> </span>&lt;<span class="o">(</span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'^[A-Z_]+='</span><span class="w"> </span>.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="o">)</span><span class="w"> </span>&lt;<span class="o">(</span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'^[A-Z_]+='</span><span class="w"> </span><span class="nv">$B</span>/.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="o">)</span><span class="w">   </span><span class="c1"># 추가된 변수만 보여야 함</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>docker<span class="w"> </span>compose<span class="w"> </span>config<span class="w"> </span>-q<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"compose OK"</span>
 </code></pre></div>
 <h3 id="7-3-router">7-3. router<a class="headerlink" href="#7-3-router" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>stat<span class="w"> </span>-c<span class="w"> </span>%g<span class="w"> </span>/var/run/docker.sock<span class="w">                   </span><span class="c1"># 소켓 GID</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>grep<span class="w"> </span><span class="s1">'^DOCKER_GID='</span><span class="w"> </span>.env<span class="w">                          </span><span class="c1"># 위와 같아야 함</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>docker<span class="w"> </span>inspect<span class="w"> </span>mc-router<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{.Config.Image}} {{.HostConfig.GroupAdd}}'</span><span class="w">   </span><span class="c1"># 기대 이미지 태그, GroupAdd에 위 GID</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">30</span><span class="w"> </span>mc-router<span class="w">                   </span><span class="c1"># "permission denied" 없음, 라우팅 시작 로그</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>stat<span class="w"> </span>-c<span class="w"> </span>%g<span class="w"> </span>/var/run/docker.sock<span class="w">                   </span><span class="c1"># 소켓 GID</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>grep<span class="w"> </span><span class="s1">'^DOCKER_GID='</span><span class="w"> </span>.env<span class="w">                          </span><span class="c1"># 위와 같아야 함</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>docker<span class="w"> </span>inspect<span class="w"> </span>mc-router<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{.Config.Image}} {{.HostConfig.GroupAdd}}'</span><span class="w">   </span><span class="c1"># 기대 이미지 태그, GroupAdd에 위 GID</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">30</span><span class="w"> </span>mc-router<span class="w">                   </span><span class="c1"># "permission denied" 없음, 라우팅 시작 로그</span>
 </code></pre></div>
 <h3 id="7-4-api--console">7-4. API / Console<a class="headerlink" href="#7-4-api--console" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'console %{http_code}\n'</span><span class="w"> </span>http://localhost:5000<span class="w">      </span><span class="c1"># 200 또는 3xx</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'api %{http_code}\n'</span><span class="w">     </span>http://localhost:5001/health<span class="w">   </span><span class="c1"># 200</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status<span class="w">                      </span><span class="c1"># 둘 다 online</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">30</span><span class="w"> </span>--nostream<span class="w">      </span><span class="c1"># better-sqlite3 / NODE_MODULE_VERSION 오류 없음</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'console %{http_code}\n'</span><span class="w"> </span>http://localhost:5000<span class="w">      </span><span class="c1"># 200 또는 3xx</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'api %{http_code}\n'</span><span class="w">     </span>http://localhost:5001/health<span class="w">   </span><span class="c1"># 200</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status<span class="w">                      </span><span class="c1"># 둘 다 online</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">30</span><span class="w"> </span>--nostream<span class="w">      </span><span class="c1"># better-sqlite3 / NODE_MODULE_VERSION 오류 없음</span>
 </code></pre></div>
 <h3 id="7-5-서버--auto-scale">7-5. 서버 / auto-scale<a class="headerlink" href="#7-5-서버--auto-scale" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>mcctl<span class="w"> </span>status
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># 중지된 서버로 접속(&lt;server&gt;.&lt;HOST_IP&gt;.nip.io:25565) → 서버가 기동되는지</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">30</span><span class="w"> </span>mc-router<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-iE<span class="w"> </span><span class="s2">"error|denied|scale"</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{.Names}}\t{{.Image}}\t{{.Status}}'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mcctl<span class="w"> </span>status
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># 중지된 서버로 접속(&lt;server&gt;.&lt;HOST_IP&gt;.nip.io:25565) → 서버가 기동되는지</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">30</span><span class="w"> </span>mc-router<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-iE<span class="w"> </span><span class="s2">"error|denied|scale"</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{.Names}}\t{{.Image}}\t{{.Status}}'</span>
 </code></pre></div>
 <h3 id="7-6-화면-스모크-테스트">7-6. 화면 스모크 테스트<a class="headerlink" href="#7-6-화면-스모크-테스트" title="Permanent link">&para;</a></h3>
 <p>브라우저(강력 새로고침)에서 <code>http://&lt;host&gt;:5000</code>: 로그인 → 서버 목록 → 월드 상세(정보/통계 패널) → 지도 패널(기본 뷰가 Overworld인지). 릴리즈 노트에 적힌 변경 화면이 있으면 그 화면도 확인합니다.</p>
@@ -2661,19 +2744,21 @@
 <li>[ ] API <code>/health</code> 200, Console 200, PM2 restarts 증가 없음</li>
 <li>[ ] 중지된 서버가 접속으로 기동됨(auto-scale)</li>
 <li>[ ] 화면 스모크 테스트 통과</li>
+<li>[ ] (v2.31.0 이하 → v2.32.0 이상) <code>ecosystem.config.cjs</code>의 <code>AUTH_MODE</code>가 mcctl-api가 인식하는 값임(4-1단계)</li>
 <li>[ ] 안정 확인 후 <code>$B</code>(<code>backups-pre-$NEW</code>) 삭제</li>
 </ul>
 <h2 id="8-롤백">8. 롤백<a class="headerlink" href="#8-롤백" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span><span class="p">;</span><span class="w"> </span><span class="nv">B</span><span class="o">=</span><span class="nv">$ROOT</span>/backups-pre-<span class="nv">$NEW</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>cp<span class="w"> </span><span class="nv">$B</span>/docker-compose.yml<span class="w"> </span>docker-compose.yml
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>cp<span class="w"> </span><span class="nv">$B</span>/.env<span class="w"> </span>.env
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>cp<span class="w"> </span><span class="nv">$B</span>/.mcctl.json<span class="w"> </span>.mcctl.json
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>rm<span class="w"> </span>-rf<span class="w"> </span>servers/_template<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>cp<span class="w"> </span>-r<span class="w"> </span><span class="nv">$B</span>/_template<span class="w"> </span>servers/_template
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>router
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># 패키지를 이전 버전 OLD로 (PM2 Node 셸에서)</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl@<span class="nv">$OLD</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>npm<span class="w"> </span>install<span class="w"> </span>@minecraft-docker/mcctl-api@<span class="nv">$OLD</span><span class="w"> </span>@minecraft-docker/mcctl-console@<span class="nv">$OLD</span><span class="w"> </span>@minecraft-docker/shared@<span class="nv">$OLD</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span><span class="p">;</span><span class="w"> </span><span class="nv">B</span><span class="o">=</span><span class="nv">$ROOT</span>/backups-pre-<span class="nv">$NEW</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>cp<span class="w"> </span><span class="nv">$B</span>/docker-compose.yml<span class="w"> </span>docker-compose.yml
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>cp<span class="w"> </span><span class="nv">$B</span>/.env<span class="w"> </span>.env
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>cp<span class="w"> </span><span class="nv">$B</span>/.mcctl.json<span class="w"> </span>.mcctl.json
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>rm<span class="w"> </span>-rf<span class="w"> </span>servers/_template<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>cp<span class="w"> </span>-r<span class="w"> </span><span class="nv">$B</span>/_template<span class="w"> </span>servers/_template
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>router
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="nv">$B</span>/ecosystem.config.cjs<span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>cp<span class="w"> </span><span class="nv">$B</span>/ecosystem.config.cjs<span class="w"> </span>ecosystem.config.cjs<span class="w">   </span><span class="c1"># 4-1단계에서 바꾼 경우</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="c1"># 패키지를 이전 버전 OLD로 (PM2 Node 셸에서)</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl@<span class="nv">$OLD</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>npm<span class="w"> </span>install<span class="w"> </span>@minecraft-docker/mcctl-api@<span class="nv">$OLD</span><span class="w"> </span>@minecraft-docker/mcctl-console@<span class="nv">$OLD</span><span class="w"> </span>@minecraft-docker/shared@<span class="nv">$OLD</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>

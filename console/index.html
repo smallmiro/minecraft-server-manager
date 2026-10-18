@@ -2439,7 +2439,7 @@
 <tbody>
 <tr>
 <td><code>internal</code></td>
-<td>Docker network only (most secure)</td>
+<td>Internal access only, no external exposure (most secure)</td>
 <td>Default production</td>
 </tr>
 <tr>
@@ -2464,6 +2464,10 @@
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>mcctl console init</code> writes the access mode to <code>AUTH_MODE</code> as the value mcctl-api recognises: <code>internal</code> → <code>ip-whitelist</code> limited to loopback (127.0.0.1, ::1), <code>api-key-ip</code> → <code>combined</code>, <code>open</code> → <code>disabled</code>; <code>api-key</code> and <code>ip-whitelist</code> are written as is.</p>
+</div>
 <div class="admonition warning">
 <p class="admonition-title">Security Warning</p>
 <p>Never use <code>open</code> mode in production. It disables all authentication and exposes your servers to unauthorized access.</p>
@@ -2529,14 +2533,14 @@
 <tbody>
 <tr>
 <td><code>~/minecraft-servers/.mcctl-admin.yml</code></td>
-<td>Admin service configuration</td>
+<td>Management Console configuration</td>
 </tr>
 <tr>
-<td><code>~/minecraft-servers/users.yaml</code></td>
-<td>User credentials (hashed passwords)</td>
+<td><code>~/minecraft-servers/data/mcctl.db</code></td>
+<td>Console user database (SQLite, Better Auth; created when <code>mcctl-console</code> is selected)</td>
 </tr>
 <tr>
-<td><code>~/minecraft-servers/platform/ecosystem.config.cjs</code></td>
+<td><code>~/minecraft-servers/ecosystem.config.cjs</code></td>
 <td>PM2 ecosystem configuration</td>
 </tr>
 </tbody>

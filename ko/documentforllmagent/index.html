@@ -4329,6 +4329,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-2320-2026-10-18---platform-settings--secret-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.32.0 (2026-10-18) - Platform Settings &amp; Secret Isolation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-2310-2026-10-11---console-usage-analytics" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4817,8 +4828,8 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.31.0
-<strong>Last Updated</strong>: 2026-10-11
+<p><strong>Version</strong>: 2.32.0
+<strong>Last Updated</strong>: 2026-10-18
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
 <hr />
@@ -5207,49 +5218,48 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <p>After running <code>mcctl init</code>, the following directory structure is created:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>~/minecraft-servers/                  # Platform root (MCCTL_ROOT)
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>├── .env                              # Global environment variables
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>├── .mcctl-admin.yml                  # Management Console config (after console init)
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>├── users.yaml                        # Console user credentials (hashed)
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>├── audit.db                          # SQLite audit log database
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>├── docker-compose.yml                # Main orchestration (mc-router)
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>├── .mcctl-admin.yml                  # Management Console config (after console init)
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>├── ecosystem.config.cjs              # PM2 process config (after console init)
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>├── data/
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>│   └── players.db                    # SQLite player session history (mcctl-api, v2.27.0+)
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>│
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>├── platform/
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>│   ├── docker-compose.yml            # Main orchestration (mc-router)
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>│   ├── ecosystem.config.cjs          # PM2 process config (after console init)
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>│   └── scripts/                      # Bash management scripts
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>│
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>├── servers/
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>│   ├── compose.yml                   # Auto-generated server include list
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>│   ├── _template/                    # Template for new servers
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>│   │   ├── docker-compose.yml
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>│   │   └── config.env
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>│   └── &lt;server-name&gt;/               # Per-server directory
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>│       ├── docker-compose.yml        # Server-specific compose
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>│       ├── config.env                # Server configuration
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>│       └── data/                     # Server container data mount
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>│
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>├── worlds/                           # Shared world storage
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>│   ├── .locks/                       # Lock files (server-world assignment)
-<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>│   │   └── &lt;world&gt;.lock              # Lock file content: server-name
-<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>│   └── &lt;world-name&gt;/                 # World directories
-<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>│       ├── .meta                     # World metadata (seed, createdAt)
-<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>│       ├── level.dat                 # Minecraft world data
-<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>│       ├── region/                   # Overworld chunks
-<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>│       ├── DIM-1/                    # Nether dimension
-<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>│       └── DIM1/                     # End dimension
-<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>│
-<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>├── shared/
-<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>│   ├── plugins/                      # Shared plugins (read-only mount)
-<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>│   └── mods/                         # Shared mods (read-only mount)
-<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>│
-<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>├── backups/                          # Local backup storage
-<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>│
-<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>└── node_modules/                     # npm packages (after console init)
-<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>    └── @minecraft-docker/
-<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>        ├── mcctl-api/                # REST API package
-<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a>        ├── mcctl-console/            # Web Console package
-<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a>        └── shared/                   # Shared domain package
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>│   ├── audit.db                      # SQLite audit log database
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>│   ├── mcctl.db                      # Console users, sessions, per-user server permissions (Better Auth SQLite, after console init with mcctl-console)
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>│   └── players.db                    # SQLite player session history (mcctl-api, v2.27.0+)
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>│
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>├── servers/
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>│   ├── compose.yml                   # Auto-generated server include list
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>│   ├── _template/                    # Template for new servers
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>│   │   ├── docker-compose.yml
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>│   │   └── config.env
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>│   └── &lt;server-name&gt;/               # Per-server directory
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>│       ├── docker-compose.yml        # Server-specific compose
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>│       ├── config.env                # Server configuration
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>│       └── data/                     # Server container data mount
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>│
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>├── worlds/                           # Shared world storage
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>│   ├── .locks/                       # Lock files (server-world assignment)
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>│   │   └── &lt;world&gt;.lock              # Lock file content: server-name
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>│   └── &lt;world-name&gt;/                 # World directories
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>│       ├── .meta                     # World metadata (seed, createdAt)
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>│       ├── level.dat                 # Minecraft world data
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>│       ├── region/                   # Overworld chunks
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>│       ├── DIM-1/                    # Nether dimension
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>│       └── DIM1/                     # End dimension
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>│
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>├── shared/
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>│   ├── plugins/                      # Shared plugins (read-only mount)
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>│   └── mods/                         # Shared mods (read-only mount)
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>│
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>├── backups/                          # Local backup storage
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>│
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>└── .services/                        # Service packages installed by console init (older installs: node_modules/ in the platform root)
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>    └── node_modules/
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>        └── @minecraft-docker/
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>            ├── mcctl-api/            # REST API package
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>            ├── mcctl-console/        # Web Console package
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>            └── shared/               # Shared domain package
 </code></pre></div>
+<p>The Bash management scripts are bundled inside the mcctl package (the location can be overridden with <code>MCCTL_SCRIPTS</code>); they are not part of the platform root.</p>
 <h3 id="connection-flow-lan">Connection Flow (LAN)<a class="headerlink" href="#connection-flow-lan" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>1. Player opens Minecraft → Add Server → survival.192.168.1.100.nip.io:25565
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>2. DNS: nip.io resolves to 192.168.1.100
@@ -5862,18 +5872,20 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h3 id="console-management-management-console">Console Management (Management Console)<a class="headerlink" href="#console-management-management-console" title="Permanent link">&para;</a></h3>
 <h4 id="initialization">Initialization<a class="headerlink" href="#initialization" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w">                </span><span class="c1"># Initialize console service (interactive)</span>
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--force<span class="w">        </span><span class="c1"># Reinitialize (stops services, cleans config)</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--force<span class="w">        </span><span class="c1"># Reinitialize (stops services, cleans config, replaces the admin with the same email)</span>
 <a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--api-port<span class="w"> </span><span class="m">8001</span><span class="w"> </span>--console-port<span class="w"> </span><span class="m">8000</span><span class="w">  </span><span class="c1"># Custom ports</span>
 </code></pre></div>
+<p>Before the prompts, init checks prerequisites (Node.js, Docker, Docker Compose, PM2). If the console is already initialized, it asks whether to reinitialize (skipped with <code>--force</code>); reinitializing stops the PM2 services and deletes <code>.mcctl-admin.yml</code> and <code>ecosystem.config.cjs</code>.</p>
 <p><strong>Interactive init flow:</strong></p>
 <ol>
 <li>Select services to install (mcctl-api, mcctl-console via multiselect)</li>
-<li>Admin username (required only if console selected)</li>
-<li>Admin password (min 8 chars, uppercase + lowercase + number)</li>
+<li>Admin email, name and password (asked only if mcctl-console is selected; password min 8 chars, uppercase + lowercase + number, asked once without confirmation)</li>
 <li>API access mode (internal / api-key / ip-whitelist / api-key-ip / open)</li>
 <li>API key generated (if api-key or api-key-ip mode)</li>
-<li>IP whitelist (if ip-whitelist or api-key-ip mode)</li>
-<li>Generates PM2 ecosystem.config.cjs</li>
+<li>Allowed IPs (if ip-whitelist or api-key-ip mode); open mode asks for confirmation</li>
+<li>Creates the admin user in <code>data/mcctl.db</code> (only if mcctl-console is selected). If a user with the same email exists, init fails with <code>User '&lt;email&gt;' already exists</code> unless <code>--force</code> is given; with <code>--force</code> that user is deleted and created again</li>
+<li>Installs the service packages into <code>.services/</code> if they are missing</li>
+<li>Writes <code>BETTER_AUTH_SECRET</code> to <code>.env</code> if missing (an older ecosystem file's secret is moved over), then generates PM2 ecosystem.config.cjs (no auth secrets in it)</li>
 <li>Saves configuration (.mcctl-admin.yml)</li>
 </ol>
 <p><strong>Files created after init:</strong></p>
@@ -5889,17 +5901,22 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <tr>
 <td><code>.mcctl-admin.yml</code></td>
 <td><code>~/minecraft-servers/</code></td>
-<td>Admin service configuration</td>
+<td>Management Console configuration</td>
 </tr>
 <tr>
-<td><code>users.yaml</code></td>
-<td><code>~/minecraft-servers/</code></td>
-<td>User credentials (hashed)</td>
+<td><code>data/mcctl.db</code></td>
+<td><code>~/minecraft-servers/data/</code></td>
+<td>Console users, sessions, per-user server permissions (Better Auth SQLite; only if mcctl-console is selected)</td>
 </tr>
 <tr>
 <td><code>ecosystem.config.cjs</code></td>
-<td><code>~/minecraft-servers/platform/</code></td>
+<td><code>~/minecraft-servers/</code></td>
 <td>PM2 process config</td>
+</tr>
+<tr>
+<td><code>.services/</code></td>
+<td><code>~/minecraft-servers/</code></td>
+<td>Installed mcctl-api / mcctl-console packages</td>
 </tr>
 </tbody>
 </table>
@@ -5913,7 +5930,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop<span class="w">            </span><span class="c1"># Prompts: "All services" or "Console only"</span>
 <a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop<span class="w"> </span>--api<span class="w">      </span><span class="c1"># Stop ALL services (console depends on API)</span>
 <a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop<span class="w"> </span>--console<span class="w">  </span><span class="c1"># Stop console only</span>
-<a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop<span class="w"> </span>--force<span class="w">    </span><span class="c1"># Force kill PM2 processes</span>
+<a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop<span class="w"> </span>--force<span class="w">    </span><span class="c1"># Delete PM2 processes and kill the PM2 daemon</span>
 <a id="__codelineno-38-11" name="__codelineno-38-11" href="#__codelineno-38-11"></a>
 <a id="__codelineno-38-12" name="__codelineno-38-12" href="#__codelineno-38-12"></a><span class="c1"># Restart services</span>
 <a id="__codelineno-38-13" name="__codelineno-38-13" href="#__codelineno-38-13"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w">         </span><span class="c1"># Interactive prompt</span>
@@ -5967,13 +5984,14 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 - Stopping API <strong>always stops</strong> Console too (dependency enforcement)
 - If only one service is installed, no prompt is shown</p>
 <h4 id="user-management">User Management<a class="headerlink" href="#user-management" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list<span class="w">                  </span><span class="c1"># List console users</span>
-<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>&lt;name&gt;<span class="w">            </span><span class="c1"># Add user (interactive password prompt)</span>
-<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--role<span class="w"> </span>viewer<span class="w"> </span>--password<span class="w"> </span><span class="s2">"Pass123"</span>
-<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>remove<span class="w"> </span>&lt;name&gt;<span class="w">         </span><span class="c1"># Remove user</span>
-<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="c1"># Reset password</span>
-<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--role<span class="w"> </span>admin<span class="w">  </span><span class="c1"># Change role</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>--json<span class="o">]</span><span class="w">         </span><span class="c1"># List console users</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span><span class="o">[</span>email<span class="o">]</span><span class="w">           </span><span class="c1"># Add user (interactive prompts)</span>
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>operator@example.com<span class="w"> </span>--role<span class="w"> </span>user<span class="w"> </span>--password<span class="w"> </span><span class="s2">"Pass123"</span><span class="w">  </span><span class="c1"># Non-interactive (needs email, --role and --password)</span>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>remove<span class="w"> </span><span class="o">[</span>email<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span><span class="w">    </span><span class="c1"># Remove user (the last admin cannot be removed)</span>
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span><span class="o">[</span>email<span class="o">]</span><span class="w"> </span><span class="o">[</span>--password<span class="w"> </span>&lt;pw&gt;<span class="o">]</span><span class="w">  </span><span class="c1"># Reset password</span>
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span><span class="o">[</span>email<span class="o">]</span><span class="w"> </span>--role<span class="w"> </span>admin<span class="w">  </span><span class="c1"># Change role</span>
 </code></pre></div>
+<p>Users are identified by email address. <code>--role</code> accepts <code>admin</code> or <code>user</code>.</p>
 <p><strong>User roles:</strong></p>
 <table>
 <thead>
@@ -5988,13 +6006,16 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <td>Full access: manage servers, users, settings</td>
 </tr>
 <tr>
-<td><code>viewer</code></td>
-<td>Read-only: view status, logs (no start/stop/create/delete)</td>
+<td><code>user</code></td>
+<td>Standard access, limited to the servers granted to the account</td>
 </tr>
 </tbody>
 </table>
 <h4 id="api-key-management">API Key Management<a class="headerlink" href="#api-key-management" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>status<span class="w">               </span><span class="c1"># Show API access mode and config</span>
+<blockquote>
+<p><strong>Warning</strong>: <code>mcctl console api ...</code> only reads and writes <code>&lt;root&gt;/api-config.json</code>. The running mcctl-api takes its mode, key and IP whitelist from the <code>env</code> block of <code>&lt;root&gt;/ecosystem.config.cjs</code> (<code>AUTH_MODE</code>, <code>AUTH_API_KEY</code>, <code>AUTH_IP_WHITELIST</code>), so changes made with these commands do not affect it, and <code>status</code> shows <code>api-config.json</code>, not necessarily what the API uses. The mode and key in effect are the ones chosen during <code>mcctl console init</code>; to change them for now, run <code>mcctl console init --force</code>. Tracked in #633.</p>
+</blockquote>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>status<span class="w">               </span><span class="c1"># Show api-config.json (access mode, port, masked key, whitelist)</span>
 <a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>key<span class="w"> </span>regenerate<span class="w">       </span><span class="c1"># Regenerate API key</span>
 <a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>whitelist<span class="w"> </span>list<span class="w">       </span><span class="c1"># List allowed IPs</span>
 <a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>whitelist<span class="w"> </span>add<span class="w"> </span>&lt;ip&gt;<span class="w">   </span><span class="c1"># Add IP to whitelist</span>
@@ -6004,8 +6025,9 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h4 id="remove-console">Remove Console<a class="headerlink" href="#remove-console" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w">                  </span><span class="c1"># Interactive removal</span>
 <a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--force<span class="w">          </span><span class="c1"># Skip confirmation</span>
-<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--keep-config<span class="w">    </span><span class="c1"># Keep config files</span>
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--keep-config<span class="w">    </span><span class="c1"># Keep config files (PM2 processes are still removed)</span>
 </code></pre></div>
+<p><code>console remove</code> stops and removes the PM2 processes and deletes <code>.mcctl-admin.yml</code>, <code>ecosystem.config.cjs</code>, and the legacy <code>users.yaml</code> if it exists. It intentionally keeps <code>data/mcctl.db</code> (console users, sessions, per-user server permissions), <code>.services/</code>, and <code>api-config.json</code>. Running <code>mcctl console init</code> again with the same admin email therefore needs <code>--force</code>. To start from scratch, delete the database yourself (irreversible): <code>rm -f ~/minecraft-servers/data/mcctl.db*</code>.</p>
 <hr />
 <h3 id="audit-log-management">Audit Log Management<a class="headerlink" href="#audit-log-management" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>mcctl<span class="w"> </span>audit<span class="w"> </span>list<span class="w">                       </span><span class="c1"># List recent 50 logs</span>
@@ -6025,14 +6047,14 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </code></pre></div>
 <hr />
 <h3 id="self-update">Self Update<a class="headerlink" href="#self-update" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>mcctl<span class="w"> </span>update<span class="w">                    </span><span class="c1"># Update CLI to latest version</span>
-<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w">            </span><span class="c1"># Check for updates only</span>
-<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--force<span class="w">            </span><span class="c1"># Force check (ignore cache)</span>
-<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--yes<span class="w">              </span><span class="c1"># Auto-confirm update</span>
-<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--all<span class="w">              </span><span class="c1"># Update CLI + all installed services</span>
-<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w"> </span>--all<span class="w">      </span><span class="c1"># Check updates for CLI and services</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>mcctl<span class="w"> </span>update<span class="w">                    </span><span class="c1"># Update CLI + all installed services (default)</span>
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--cli-only<span class="w">         </span><span class="c1"># Update only the CLI binary</span>
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w">            </span><span class="c1"># Check for updates only (CLI and services)</span>
+<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--force<span class="w">            </span><span class="c1"># Force check (ignore cache)</span>
+<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--yes<span class="w">              </span><span class="c1"># Auto-confirm update</span>
+<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--all<span class="w">              </span><span class="c1"># Deprecated alias (same as the default)</span>
 </code></pre></div>
-<p>The <code>--all</code> flag updates mcctl-api, mcctl-console, and @minecraft-docker/shared via <code>npm install &lt;pkg&gt;@latest</code> and restarts their PM2 processes automatically.</p>
+<p>By default <code>mcctl update</code> also updates mcctl-api, mcctl-console, and @minecraft-docker/shared in <code>~/minecraft-servers/.services/</code> via <code>npm install &lt;pkg&gt;@latest</code>, restarts their PM2 processes automatically, aligns server image tags, and pulls Docker images. <code>--cli-only</code> skips all of that.</p>
 <hr />
 <h2 id="6-server-types">6. Server Types<a class="headerlink" href="#6-server-types" title="Permanent link">&para;</a></h2>
 <h3 id="mcctl-supported-types-9-types">mcctl Supported Types (9 types)<a class="headerlink" href="#mcctl-supported-types-9-types" title="Permanent link">&para;</a></h3>
@@ -6403,7 +6425,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-44-8" name="__codelineno-44-8" href="#__codelineno-44-8"></a><span class="nv">DEFAULT_MEMORY</span><span class="o">=</span>4G
 <a id="__codelineno-44-9" name="__codelineno-44-9" href="#__codelineno-44-9"></a><span class="nv">DEFAULT_VERSION</span><span class="o">=</span>LATEST
 <a id="__codelineno-44-10" name="__codelineno-44-10" href="#__codelineno-44-10"></a><span class="nv">TZ</span><span class="o">=</span>UTC
-<a id="__codelineno-44-11" name="__codelineno-44-11" href="#__codelineno-44-11"></a><span class="nv">RCON_PASSWORD</span><span class="o">=</span>changeme
+<a id="__codelineno-44-11" name="__codelineno-44-11" href="#__codelineno-44-11"></a><span class="nv">RCON_PASSWORD</span><span class="o">=</span>&lt;random,<span class="w"> </span>generated<span class="w"> </span>by<span class="w"> </span>mcctl<span class="w"> </span>init&gt;
 <a id="__codelineno-44-12" name="__codelineno-44-12" href="#__codelineno-44-12"></a>
 <a id="__codelineno-44-13" name="__codelineno-44-13" href="#__codelineno-44-13"></a><span class="c1"># mc-router Settings</span>
 <a id="__codelineno-44-14" name="__codelineno-44-14" href="#__codelineno-44-14"></a><span class="nv">AUTO_SCALE_UP</span><span class="o">=</span><span class="nb">true</span><span class="w">                   </span><span class="c1"># Auto-start on connect</span>
@@ -7031,7 +7053,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <tbody>
 <tr>
 <td><code>internal</code></td>
-<td>Local network only (default)</td>
+<td>Internal access only, no external exposure (default)</td>
 <td>Home/local deployment</td>
 </tr>
 <tr>
@@ -7056,6 +7078,9 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p><strong>Note</strong>: <code>internal</code>, <code>api-key-ip</code> and <code>open</code> are not in mcctl-api's list of recognised <code>AUTH_MODE</code> values yet (it recognises <code>disabled</code>, <code>api-key</code>, <code>ip-whitelist</code>, <code>basic</code>, <code>combined</code>), so do not rely on them to behave as described. Use <code>api-key</code> or <code>ip-whitelist</code>. Tracked in #633.</p>
+</blockquote>
 <h3 id="all-endpoints">All Endpoints<a class="headerlink" href="#all-endpoints" title="Permanent link">&para;</a></h3>
 <p><strong>Health:</strong></p>
 <table>
@@ -8036,13 +8061,13 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </tr>
 <tr>
 <td><code>BETTER_AUTH_SECRET</code></td>
-<td>Session encryption secret</td>
-<td>Auto-generated</td>
+<td>Session encryption secret, read from <code>&lt;MCCTL_ROOT&gt;/.env</code> (wins over the PM2 env)</td>
+<td>Written by <code>mcctl console init</code></td>
 </tr>
 <tr>
-<td><code>BETTER_AUTH_URL</code></td>
-<td>Console URL for auth</td>
-<td><code>http://localhost:5000</code></td>
+<td><code>BETTER_AUTH_BASE_URL</code></td>
+<td>Console URL for auth, read from <code>&lt;MCCTL_ROOT&gt;/.env</code> (wins over the PM2 env)</td>
+<td><code>http://localhost:&lt;PORT&gt;</code></td>
 </tr>
 <tr>
 <td><code>PORT</code></td>
@@ -8823,7 +8848,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h3 id="9-set-up-management-console-api--web-console">9. Set Up Management Console (API + Web Console)<a class="headerlink" href="#9-set-up-management-console-api--web-console" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-81-1" name="__codelineno-81-1" href="#__codelineno-81-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
 <a id="__codelineno-81-2" name="__codelineno-81-2" href="#__codelineno-81-2"></a><span class="c1"># Select: [mcctl-api, mcctl-console]</span>
-<a id="__codelineno-81-3" name="__codelineno-81-3" href="#__codelineno-81-3"></a><span class="c1"># Enter admin username and password</span>
+<a id="__codelineno-81-3" name="__codelineno-81-3" href="#__codelineno-81-3"></a><span class="c1"># Enter admin email, name, and password</span>
 <a id="__codelineno-81-4" name="__codelineno-81-4" href="#__codelineno-81-4"></a><span class="c1"># Choose API access mode</span>
 <a id="__codelineno-81-5" name="__codelineno-81-5" href="#__codelineno-81-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
 <a id="__codelineno-81-6" name="__codelineno-81-6" href="#__codelineno-81-6"></a><span class="c1"># Select: "API + Console"</span>
@@ -8851,13 +8876,11 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-84-3" name="__codelineno-84-3" href="#__codelineno-84-3"></a>pm2<span class="w"> </span>save
 </code></pre></div>
 <h3 id="13-updating-services">13. Updating Services<a class="headerlink" href="#13-updating-services" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a><span class="c1"># Update everything (CLI + API + Console)</span>
-<a id="__codelineno-85-2" name="__codelineno-85-2" href="#__codelineno-85-2"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--all<span class="w"> </span>--yes
+<div class="highlight"><pre><span></span><code><a id="__codelineno-85-1" name="__codelineno-85-1" href="#__codelineno-85-1"></a><span class="c1"># Update everything (CLI + API + Console + shared)</span>
+<a id="__codelineno-85-2" name="__codelineno-85-2" href="#__codelineno-85-2"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--yes
 <a id="__codelineno-85-3" name="__codelineno-85-3" href="#__codelineno-85-3"></a>
-<a id="__codelineno-85-4" name="__codelineno-85-4" href="#__codelineno-85-4"></a><span class="c1"># Or update manually</span>
-<a id="__codelineno-85-5" name="__codelineno-85-5" href="#__codelineno-85-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop
-<a id="__codelineno-85-6" name="__codelineno-85-6" href="#__codelineno-85-6"></a>npm<span class="w"> </span>update<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl
-<a id="__codelineno-85-7" name="__codelineno-85-7" href="#__codelineno-85-7"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<a id="__codelineno-85-4" name="__codelineno-85-4" href="#__codelineno-85-4"></a><span class="c1"># Or update only the CLI (services in .services/ stay as they are)</span>
+<a id="__codelineno-85-5" name="__codelineno-85-5" href="#__codelineno-85-5"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--cli-only<span class="w"> </span>--yes
 </code></pre></div>
 <h3 id="14-set-up-external-access-with-playitgg">14. Set Up External Access with playit.gg<a class="headerlink" href="#14-set-up-external-access-with-playitgg" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a><span class="c1"># One-time setup</span>
@@ -9000,27 +9023,27 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <ul>
 <li>Check prerequisites: <code>mcctl console init</code> validates Node.js, PM2, Docker</li>
 <li>Verify PM2: <code>pm2 --version</code></li>
-<li>Check ecosystem config: <code>ls ~/minecraft-servers/platform/ecosystem.config.cjs</code></li>
+<li>Check ecosystem config: <code>ls ~/minecraft-servers/ecosystem.config.cjs</code></li>
 <li>View PM2 logs: <code>pm2 logs mcctl-api</code> or <code>pm2 logs mcctl-console</code></li>
 <li>Check port conflicts: <code>netstat -tlnp | grep -E "5000|5001"</code></li>
 </ul>
 <h4 id="mcctl-console-shows-not-installed-skipping">mcctl-console shows "not installed (skipping)"<a class="headerlink" href="#mcctl-console-shows-not-installed-skipping" title="Permanent link">&para;</a></h4>
 <ul>
-<li>Install console package: <code>npm install @minecraft-docker/mcctl-console</code> in <code>~/minecraft-servers/</code></li>
+<li>Install console package: <code>npm install @minecraft-docker/mcctl-console</code> in <code>~/minecraft-servers/.services/</code></li>
 <li>Or reinitialize: <code>mcctl console init --force</code> and select mcctl-console</li>
-<li>Verify: <code>ls ~/minecraft-servers/node_modules/@minecraft-docker/mcctl-console/</code></li>
+<li>Verify: <code>ls ~/minecraft-servers/.services/node_modules/@minecraft-docker/mcctl-console/</code> (older installs: <code>~/minecraft-servers/node_modules/...</code>)</li>
 </ul>
 <h4 id="api-connection-issues">API connection issues<a class="headerlink" href="#api-connection-issues" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Check service: <code>mcctl console service status</code></li>
 <li>Verify API key (shown only once during init)</li>
 <li>Test health: <code>curl http://localhost:5001/health</code></li>
-<li>Check access mode: <code>mcctl console api status</code></li>
+<li>Check access mode: <code>grep AUTH_MODE ~/minecraft-servers/ecosystem.config.cjs</code> (<code>mcctl console api status</code> shows <code>api-config.json</code>, not the running API's settings; see #633)</li>
 </ul>
 <h4 id="cant-log-in-to-web-console">Can't log in to Web Console<a class="headerlink" href="#cant-log-in-to-web-console" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Verify user: <code>mcctl console user list</code></li>
-<li>Reset password: <code>mcctl console user reset-password admin</code></li>
+<li>Reset password: <code>mcctl console user reset-password admin@example.com</code></li>
 <li>Check Better Auth config in ecosystem config</li>
 <li>View logs: <code>mcctl console service logs -f</code></li>
 </ul>
@@ -9301,7 +9324,7 @@ A: Lower overhead, faster startup, easier debugging, automatic process recovery.
 <p><strong>Q: How do I start the web console?</strong>
 A: <code>mcctl console init</code> then <code>mcctl console service start</code>.</p>
 <p><strong>Q: What access modes are available?</strong>
-A: <code>internal</code> (default), <code>api-key</code>, <code>ip-whitelist</code>, <code>api-key-ip</code>, <code>open</code>.</p>
+A: <code>internal</code> (default), <code>api-key</code>, <code>ip-whitelist</code>, <code>api-key-ip</code>, <code>open</code>. Only <code>api-key</code> and <code>ip-whitelist</code> are recognised by mcctl-api today; see #633.</p>
 <p><strong>Q: Where is the API documentation?</strong>
 A: <code>http://localhost:5001/docs</code> (Swagger/OpenAPI).</p>
 <p><strong>Q: Can I run just the API without the Web Console?</strong>
@@ -9331,7 +9354,7 @@ A: Set <code>AUDIT_RETENTION_DAYS</code> (default: 90) and <code>AUDIT_AUTO_CLEA
 <p><strong>Q: What actions are tracked?</strong>
 A: <code>server.create</code>, <code>server.delete</code>, <code>server.start</code>, <code>server.stop</code>, <code>server.restart</code>, <code>player.whitelist.add</code>, <code>player.whitelist.remove</code>, <code>player.ban.add</code>, <code>player.ban.remove</code>, <code>player.op.add</code>, <code>player.op.remove</code>, <code>player.kick</code>, <code>world.create</code>, <code>world.assign</code>, <code>world.release</code>, <code>world.delete</code>, <code>backup.push</code>, <code>backup.restore</code>, <code>console.init</code>, <code>console.user.add</code>, <code>console.user.remove</code>.</p>
 <p><strong>Q: Where is the audit database stored?</strong>
-A: SQLite database at <code>~/minecraft-servers/audit.db</code> using WAL mode for concurrent read/write.</p>
+A: SQLite database at <code>~/minecraft-servers/data/audit.db</code> using WAL mode for concurrent read/write.</p>
 <h3 id="docker--infrastructure">Docker / Infrastructure<a class="headerlink" href="#docker--infrastructure" title="Permanent link">&para;</a></h3>
 <p><strong>Q: Can I run mcctl on Windows?</strong>
 A: Only through WSL2 (Windows Subsystem for Linux). Native Windows is not supported.</p>
@@ -9369,11 +9392,11 @@ A: Yes, the basic plan is free and supports Minecraft Java tunneling. Premium pl
 A: <code>mcctl playit domain &lt;server-name&gt; &lt;your-playit-domain&gt;</code>. This updates the server's mc-router labels.</p>
 <h3 id="migration-and-updates">Migration and Updates<a class="headerlink" href="#migration-and-updates" title="Permanent link">&para;</a></h3>
 <p><strong>Q: How do I update mcctl?</strong>
-A: <code>mcctl update --yes</code> or <code>npm update -g @minecraft-docker/mcctl</code>.</p>
+A: <code>mcctl update --yes</code> updates the CLI and the installed services. To update only the CLI, use <code>mcctl update --cli-only --yes</code> or <code>npm update -g @minecraft-docker/mcctl</code>.</p>
 <p><strong>Q: How do I update everything (CLI + services)?</strong>
-A: <code>mcctl update --all --yes</code>. This updates mcctl, mcctl-api, mcctl-console, and shared packages.</p>
+A: <code>mcctl update --yes</code>. This updates mcctl, mcctl-api, mcctl-console, and shared packages (and pulls Docker images). <code>--all</code> is a deprecated alias for this default behavior.</p>
 <p><strong>Q: Do I need to stop servers before updating?</strong>
-A: No. Minecraft server containers are independent of mcctl. Only Management Console services are restarted during <code>--all</code> update.</p>
+A: No. Minecraft server containers are independent of mcctl. Only Management Console services are restarted during a full update.</p>
 <p><strong>Q: How do I migrate from an old version?</strong>
 A: <code>mcctl migrate status</code> to check, then <code>mcctl migrate worlds --all</code> to fix known issues.</p>
 <p><strong>Q: What is <code>mcctl upgrade</code>?</strong>
@@ -9386,6 +9409,20 @@ A: Yes. It only appends new <code>.env</code> variables and never modifies exist
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-2320-2026-10-18---platform-settings--secret-isolation">Version 2.32.0 (2026-10-18) - Platform Settings &amp; Secret Isolation<a class="headerlink" href="#version-2320-2026-10-18---platform-settings--secret-isolation" title="Permanent link">&para;</a></h3>
+<p>Includes the unreleased 2.31.1 hotfix. Upgrade: <code>mcctl upgrade</code>, then <code>mcctl stop &lt;name&gt; &amp;&amp; mcctl start &lt;name&gt;</code> for every server; hosts that ran <code>mcctl console init</code> on ≤2.31.0 check <code>AUTH_MODE</code> (runbook 4-1).</p>
+<p><strong>Added:</strong>
+- Console <strong>Platform Settings</strong> (admin, <code>/settings</code>): edit <code>&lt;MCCTL_ROOT&gt;/.env</code> via <code>GET/PUT /api/platform-settings</code>; keys classified editable / read-only / runtime (PM2) / legacy / unknown; secrets write-only; 409 on stale revision; atomic <code>0600</code> write; restart scope per key; audit action <code>platform.settings.update</code> (key names only) (#683)
+- <code>BETTER_AUTH_SECRET</code> / <code>BETTER_AUTH_BASE_URL</code> read from <code>.env</code> (non-empty value wins over ecosystem); <code>mcctl console init</code> writes the secret to <code>.env</code>; apply with <code>mcctl console service restart --console</code> (#686)
+- <code>mcctl init</code> generates a random 24-char <code>RCON_PASSWORD</code> (#680); <code>mcctl create --enable-whitelist</code> (#679)</p>
+<p><strong>Changed:</strong>
+- Whitelist off by default for new servers (#679); connection addresses sorted LAN → VPN → nip.io → external → <code>.local</code>, LAN is primary (#681)
+- <code>mcctl console init</code> maps <code>internal</code>→<code>ip-whitelist</code>, <code>api-key-ip</code>→<code>combined</code>, <code>open</code>→<code>disabled</code> (#633); legacy keys removed from <code>.env.example</code> (#687)</p>
+<p><strong>Fixed:</strong>
+- Servers load <code>servers/global.env</code> (<code>TZ</code>, <code>EXTRA_ARGS</code>, <code>RCON_PASSWORD</code>, <code>RCON_PORT</code> only) instead of the whole <code>.env</code> (#685)
+- sudo password no longer appended to <code>/etc/avahi/hosts</code>; first IPv4 of <code>HOST_IP</code> only (#682)
+- <code>DELETE /api/audit-logs</code> requires admin (#689); <code>Config.updateEnv</code> atomic and bash-safe (#688)
+- Copy on plain HTTP (#681), RCON ANSI fake player (#600), Minecraft 26.x world/player data (#601), CLI exit code when audit log fails (#602), <code>console service status</code> uptime/HTTP health (#677)</p>
 <h3 id="version-2310-2026-10-11---console-usage-analytics">Version 2.31.0 (2026-10-11) - Console Usage Analytics<a class="headerlink" href="#version-2310-2026-10-11---console-usage-analytics" title="Permanent link">&para;</a></h3>
 <p><strong>Added:</strong>
 - Anonymous GA4 <code>page_view</code> analytics in the web console (#631): <code>installId</code> (UUID in <code>.mcctl.json</code>, written by <code>mcctl init</code>/<code>mcctl upgrade</code> or on first console request), normalized page path, console version. Not sent: hostname/IP, server/world names, query, account. Opt out: <code>"telemetry": false</code> in <code>.mcctl.json</code> or <code>DO_NOT_TRACK=1</code>; disabled in dev mode.</p>

@@ -2007,6 +2007,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sudo-password-written-to-etcavahihosts-before-2320" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sudo Password Written to /etc/avahi/hosts (before 2.32.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2328,6 +2339,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sudo-password-written-to-etcavahihosts-before-2320" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sudo Password Written to /etc/avahi/hosts (before 2.32.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2567,6 +2589,26 @@
 </tr>
 </tbody>
 </table>
+<h3 id="sudo-password-written-to-etcavahihosts-before-2320">sudo Password Written to /etc/avahi/hosts (before 2.32.0)<a class="headerlink" href="#sudo-password-written-to-etcavahihosts-before-2320" title="Permanent link">&para;</a></h3>
+<p><strong>Affected:</strong> You created servers with mcctl earlier than 2.32.0 and supplied a sudo password through <code>MCCTL_SUDO_PASSWORD</code>, <code>--sudo-password</code>, or the web console's sudo password field.</p>
+<p>If sudo did not need to ask for the password at that moment (credentials cached from a recent <code>sudo</code>, or <code>NOPASSWD</code> in sudoers), the password line was appended to <code>/etc/avahi/hosts</code> in plain text. This file is readable by every user on the host. 2.32.0 fixes this; existing files are not changed automatically.</p>
+<p><strong>Check:</strong> list the lines that are not comments, blank lines, or a single <code>&lt;IPv4&gt; &lt;name&gt;.local</code> entry:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>grep<span class="w"> </span>-nvE<span class="w"> </span><span class="s1">'^[[:space:]]*(#|$)|^[0-9.]+[[:space:]]+[^[:space:]]+\.local[[:space:]]*$'</span><span class="w"> </span>/etc/avahi/hosts
+</code></pre></div>
+<p>No output means the file is clean. Each printed line starts with its line number. A line that is your password, or an entry with several IPs such as <code>192.168.1.10,100.64.0.5 myserver.local</code>, must be fixed.</p>
+<p><strong>Fix:</strong></p>
+<ol>
+<li>
+<p>Delete the bad line by its number (replace <code>&lt;N&gt;</code>) and restart avahi:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>sudo<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'&lt;N&gt;d'</span><span class="w"> </span>/etc/avahi/hosts
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>avahi-daemon
+</code></pre></div>
+</li>
+<li>
+<p>If a password line was there, change that account's password with <code>passwd</code>.</p>
+</li>
+<li>For a multi-IP entry, set <code>HOST_IP</code> in <code>.env</code> to one IPv4 address (or use <code>HOST_IPS</code> for several), then add the entry again: <code>echo '192.168.1.10 myserver.local' | sudo tee -a /etc/avahi/hosts</code>.</li>
+</ol>
 <hr />
 <h2 id="getting-help">Getting Help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
 <p>If your issue isn't covered here:</p>

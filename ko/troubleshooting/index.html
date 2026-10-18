@@ -2007,6 +2007,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sudo-비밀번호가-etcavahihosts에-기록됨-2320-이전" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sudo 비밀번호가 /etc/avahi/hosts에 기록됨 (2.32.0 이전)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2328,6 +2339,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sudo-비밀번호가-etcavahihosts에-기록됨-2320-이전" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sudo 비밀번호가 /etc/avahi/hosts에 기록됨 (2.32.0 이전)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2567,6 +2589,26 @@
 </tr>
 </tbody>
 </table>
+<h3 id="sudo-비밀번호가-etcavahihosts에-기록됨-2320-이전">sudo 비밀번호가 /etc/avahi/hosts에 기록됨 (2.32.0 이전)<a class="headerlink" href="#sudo-비밀번호가-etcavahihosts에-기록됨-2320-이전" title="Permanent link">&para;</a></h3>
+<p><strong>해당 대상:</strong> 2.32.0 이전 mcctl로 서버를 만들면서 <code>MCCTL_SUDO_PASSWORD</code>, <code>--sudo-password</code>, 또는 웹 콘솔의 sudo 비밀번호 입력란으로 sudo 비밀번호를 넘긴 경우.</p>
+<p>그 시점에 sudo가 비밀번호를 물을 필요가 없었다면(직전 <code>sudo</code> 인증이 캐시돼 있었거나 sudoers에 <code>NOPASSWD</code>가 설정된 경우) 비밀번호 줄이 평문으로 <code>/etc/avahi/hosts</code>에 추가됐습니다. 이 파일은 호스트의 모든 사용자가 읽을 수 있습니다. 2.32.0에서 수정됐지만 이미 기록된 파일은 자동으로 고치지 않습니다.</p>
+<p><strong>점검:</strong> 주석, 빈 줄, <code>&lt;IPv4&gt; &lt;이름&gt;.local</code> 한 개짜리 항목이 아닌 줄을 출력합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>grep<span class="w"> </span>-nvE<span class="w"> </span><span class="s1">'^[[:space:]]*(#|$)|^[0-9.]+[[:space:]]+[^[:space:]]+\.local[[:space:]]*$'</span><span class="w"> </span>/etc/avahi/hosts
+</code></pre></div>
+<p>아무것도 출력되지 않으면 정상입니다. 출력된 각 줄 앞에는 줄 번호가 붙습니다. 비밀번호인 줄, 또는 <code>192.168.1.10,100.64.0.5 myserver.local</code>처럼 IP가 여러 개인 항목은 고쳐야 합니다.</p>
+<p><strong>조치:</strong></p>
+<ol>
+<li>
+<p>문제 줄을 줄 번호로 삭제하고(<code>&lt;N&gt;</code>을 바꿔 입력) avahi를 재시작합니다.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>sudo<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'&lt;N&gt;d'</span><span class="w"> </span>/etc/avahi/hosts
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>avahi-daemon
+</code></pre></div>
+</li>
+<li>
+<p>비밀번호 줄이 있었다면 <code>passwd</code>로 해당 계정의 비밀번호를 바꿉니다.</p>
+</li>
+<li>IP가 여러 개인 항목은 <code>.env</code>의 <code>HOST_IP</code>를 IPv4 주소 하나로 설정하고(여러 IP는 <code>HOST_IPS</code> 사용) 항목을 다시 추가합니다: <code>echo '192.168.1.10 myserver.local' | sudo tee -a /etc/avahi/hosts</code>.</li>
+</ol>
 <hr />
 <h2 id="도움-받기">도움 받기<a class="headerlink" href="#도움-받기" title="Permanent link">&para;</a></h2>
 <p>여기서 문제를 찾을 수 없다면:</p>

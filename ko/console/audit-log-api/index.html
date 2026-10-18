@@ -2664,9 +2664,9 @@
 <p>모든 엔드포인트는 인증이 필요합니다. 자세한 내용은 <a href="../api-reference/#authentication">API 인증</a>을 참조하세요.</p>
 <p>지원되는 방식:
 - API 키 (<code>X-API-Key</code> 헤더)
-- 세션 쿠키 (NextAuth.js)
+- IP 화이트리스트
 - Basic Auth
-- mTLS
+- Combined (API 키 + IP 화이트리스트)
 - 비활성화 (개발 전용)</p>
 <h2 id="엔드포인트">엔드포인트<a class="headerlink" href="#엔드포인트" title="Permanent link">&para;</a></h2>
 <h3 id="get-audit-logs">GET /audit-logs<a class="headerlink" href="#get-audit-logs" title="Permanent link">&para;</a></h3>

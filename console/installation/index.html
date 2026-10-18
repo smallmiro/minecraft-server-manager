@@ -1719,10 +1719,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-key-ip-highest-security" class="md-nav__link">
+  <a href="#api-key-ip" class="md-nav__link">
     <span class="md-ellipsis">
       
-        api-key-ip (Highest Security)
+        api-key-ip
       
     </span>
   </a>
@@ -2767,10 +2767,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#api-key-ip-highest-security" class="md-nav__link">
+  <a href="#api-key-ip" class="md-nav__link">
     <span class="md-ellipsis">
       
-        api-key-ip (Highest Security)
+        api-key-ip
       
     </span>
   </a>
@@ -3168,7 +3168,7 @@
 <a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>  Configuration:
 <a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>    Config file: /home/user/minecraft-servers/.mcctl-admin.yml
 <a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>    Console DB:  /home/user/minecraft-servers/data/mcctl.db
-<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>    PM2 config:  /home/user/minecraft-servers/platform/ecosystem.config.cjs
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>    PM2 config:  /home/user/minecraft-servers/ecosystem.config.cjs
 <a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>    Access mode: internal
 <a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>
 <a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>  Endpoints:
@@ -3251,6 +3251,11 @@
 <td><code>production</code></td>
 </tr>
 <tr>
+<td><code>LOG_LEVEL</code></td>
+<td>mcctl-api log level: <code>fatal</code>, <code>error</code>, <code>warn</code>, <code>info</code>, <code>debug</code>, <code>trace</code>, <code>silent</code></td>
+<td><code>info</code> when <code>NODE_ENV=production</code>, otherwise <code>debug</code></td>
+</tr>
+<tr>
 <td><code>WORLD_UPLOAD_MAX_SIZE</code></td>
 <td>Max world ZIP size in bytes for <code>POST /api/worlds/upload</code></td>
 <td><code>1073741824</code> (1 GB)</td>
@@ -3258,38 +3263,59 @@
 </tbody>
 </table>
 <h3 id="pm2-ecosystem-configuration">PM2 Ecosystem Configuration<a class="headerlink" href="#pm2-ecosystem-configuration" title="Permanent link">&para;</a></h3>
-<p>The <code>mcctl console init</code> command generates <code>ecosystem.config.cjs</code> in your platform directory:</p>
+<p>The <code>mcctl console init</code> command generates <code>ecosystem.config.cjs</code> in the data directory (<code>&lt;root&gt;/ecosystem.config.cjs</code>, where <code>&lt;root&gt;</code> is <code>MCCTL_ROOT</code>, default <code>~/minecraft-servers</code>). The service packages are installed under <code>&lt;root&gt;/.services/</code>, and the file points to them with absolute paths. The values below are an example for <code>&lt;root&gt;</code> = <code>/home/user/minecraft-servers</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1">// ecosystem.config.cjs</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nx">apps</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="p">{</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'mcctl-api'</span><span class="p">,</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">'node_modules/@minecraft-docker/mcctl-api/dist/index.js'</span><span class="p">,</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nx">cwd</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MCCTL_ROOT</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'.'</span><span class="p">,</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers/.services/node_modules/@minecraft-docker/mcctl-api/dist/index.js'</span><span class="p">,</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nx">cwd</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers'</span><span class="p">,</span>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">      </span><span class="nx">env</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">        </span><span class="nx">NODE_ENV</span><span class="o">:</span><span class="w"> </span><span class="s1">'production'</span><span class="p">,</span>
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">        </span><span class="nx">PORT</span><span class="o">:</span><span class="w"> </span><span class="mf">5001</span><span class="p">,</span>
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">        </span><span class="nx">HOST</span><span class="o">:</span><span class="w"> </span><span class="s1">'0.0.0.0'</span><span class="p">,</span>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">        </span><span class="nx">MCCTL_ROOT</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MCCTL_ROOT</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">'.'</span><span class="p">,</span>
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">      </span><span class="p">},</span>
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">      </span><span class="nx">instances</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">      </span><span class="nx">exec_mode</span><span class="o">:</span><span class="w"> </span><span class="s1">'fork'</span><span class="p">,</span>
-<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">      </span><span class="nx">watch</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">      </span><span class="nx">autorestart</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">      </span><span class="nx">max_memory_restart</span><span class="o">:</span><span class="w"> </span><span class="s1">'500M'</span><span class="p">,</span>
-<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'mcctl-console'</span><span class="p">,</span>
-<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">'node_modules/@minecraft-docker/mcctl-console/.next/standalone/...'</span><span class="p">,</span>
-<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">      </span><span class="c1">// ... console configuration</span>
-<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="p">};</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">        </span><span class="nx">MCCTL_ROOT</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers'</span><span class="p">,</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">        </span><span class="nx">AUTH_MODE</span><span class="o">:</span><span class="w"> </span><span class="s1">'internal'</span><span class="p">,</span><span class="w"> </span><span class="c1">// see the note below the example</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">        </span><span class="c1">// AUTH_API_KEY and AUTH_IP_WHITELIST are added for the matching access modes</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">      </span><span class="p">},</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">      </span><span class="nx">instances</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">      </span><span class="nx">exec_mode</span><span class="o">:</span><span class="w"> </span><span class="s1">'fork'</span><span class="p">,</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">      </span><span class="nx">watch</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">      </span><span class="nx">autorestart</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">      </span><span class="nx">max_memory_restart</span><span class="o">:</span><span class="w"> </span><span class="s1">'500M'</span><span class="p">,</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'mcctl-console'</span><span class="p">,</span>
+<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">      </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers/.services/node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js'</span><span class="p">,</span>
+<a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">      </span><span class="nx">cwd</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers'</span><span class="p">,</span>
+<a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="w">      </span><span class="nx">env</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="w">        </span><span class="nx">NODE_ENV</span><span class="o">:</span><span class="w"> </span><span class="s1">'production'</span><span class="p">,</span>
+<a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="w">        </span><span class="nx">PORT</span><span class="o">:</span><span class="w"> </span><span class="mf">5000</span><span class="p">,</span>
+<a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a><span class="w">        </span><span class="nx">HOSTNAME</span><span class="o">:</span><span class="w"> </span><span class="s1">'0.0.0.0'</span><span class="p">,</span>
+<a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a><span class="w">        </span><span class="nx">MCCTL_API_URL</span><span class="o">:</span><span class="w"> </span><span class="s1">'http://localhost:5001'</span><span class="p">,</span>
+<a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a><span class="w">        </span><span class="nx">MCCTL_ROOT</span><span class="o">:</span><span class="w"> </span><span class="s1">'/home/user/minecraft-servers'</span><span class="p">,</span>
+<a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a><span class="w">        </span><span class="c1">// MCCTL_API_KEY is added for the api-key access modes</span>
+<a id="__codelineno-10-33" name="__codelineno-10-33" href="#__codelineno-10-33"></a><span class="w">        </span><span class="c1">// BETTER_AUTH_SECRET is written to .env, not here</span>
+<a id="__codelineno-10-34" name="__codelineno-10-34" href="#__codelineno-10-34"></a><span class="w">      </span><span class="p">},</span>
+<a id="__codelineno-10-35" name="__codelineno-10-35" href="#__codelineno-10-35"></a><span class="w">      </span><span class="nx">instances</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<a id="__codelineno-10-36" name="__codelineno-10-36" href="#__codelineno-10-36"></a><span class="w">      </span><span class="nx">exec_mode</span><span class="o">:</span><span class="w"> </span><span class="s1">'fork'</span><span class="p">,</span>
+<a id="__codelineno-10-37" name="__codelineno-10-37" href="#__codelineno-10-37"></a><span class="w">      </span><span class="nx">watch</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-10-38" name="__codelineno-10-38" href="#__codelineno-10-38"></a><span class="w">      </span><span class="nx">autorestart</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a><span class="w">      </span><span class="nx">max_memory_restart</span><span class="o">:</span><span class="w"> </span><span class="s1">'500M'</span><span class="p">,</span>
+<a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-10-42" name="__codelineno-10-42" href="#__codelineno-10-42"></a><span class="p">};</span>
 </code></pre></div>
+<div class="admonition note">
+<p class="admonition-title"><code>AUTH_MODE</code> values</p>
+<p><code>mcctl console init</code> writes the access mode to <code>AUTH_MODE</code> as the value mcctl-api recognises: <code>internal</code> → <code>ip-whitelist</code> limited to loopback (127.0.0.1, ::1), <code>api-key-ip</code> → <code>combined</code>, <code>open</code> → <code>disabled</code>; <code>api-key</code> and <code>ip-whitelist</code> are written as is.</p>
+</div>
+<p>Only the services you selected during <code>mcctl console init</code> appear in the file. Installations that predate the <code>.services/</code> directory keep their packages in <code>&lt;root&gt;/node_modules/</code>, and <code>mcctl console init</code> still uses that location when the packages are found there.</p>
 <h3 id="access-modes">Access Modes<a class="headerlink" href="#access-modes" title="Permanent link">&para;</a></h3>
-<p><code>mcctl console init</code> asks for the access mode during setup. To switch modes later without reinitializing, use <code>mcctl console api mode &lt;mode&gt;</code> (see <a href="../cli-commands/#mcctl-console-api-mode">CLI Commands</a>).</p>
+<p><code>mcctl console init</code> asks for the access mode during setup. The mode, API key and IP whitelist are written to the <code>env</code> block of <code>ecosystem.config.cjs</code> (<code>AUTH_MODE</code>, <code>AUTH_API_KEY</code>, <code>AUTH_IP_WHITELIST</code>), which is what the running mcctl-api reads. The <code>mcctl console api</code> commands do not change those values yet (see the warning in <a href="../cli-commands/#mcctl-console-api">CLI Commands</a>)), so to switch modes, change the key or change the IP whitelist today, reinitialize with <code>mcctl console init --force</code>.</p>
 <h4 id="internal-recommended-for-production">internal (Recommended for Production)<a class="headerlink" href="#internal-recommended-for-production" title="Permanent link">&para;</a></h4>
-<p>Only allows access from the local network. The most secure option for home/local deployments.</p>
+<p>Internal access only, no external exposure. The most secure option for home/local deployments.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Select "internal" when prompted for API access mode</span>
 </code></pre></div>
@@ -3300,65 +3326,54 @@
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1"># An API key will be generated and displayed</span>
 </code></pre></div>
 <p>After initialization, your API key will be displayed. Save it securely.</p>
-<p>To regenerate the API key:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>key<span class="w"> </span>regenerate
-</code></pre></div>
+<p>To get a new API key, reinitialize with <code>mcctl console init --force</code>. <code>mcctl console api key regenerate</code> currently does not change the key the running API uses.</p>
 <h4 id="ip-whitelist">ip-whitelist<a class="headerlink" href="#ip-whitelist" title="Permanent link">&para;</a></h4>
 <p>Only allows access from specified IP addresses or CIDR ranges.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="c1"># Select "ip-whitelist" when prompted</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="c1"># Enter allowed IPs when prompted (comma-separated)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="c1"># Select "ip-whitelist" when prompted</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># Enter allowed IPs when prompted (comma-separated)</span>
 </code></pre></div>
-<p>After initialization, manage the whitelist:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>whitelist<span class="w"> </span>add<span class="w"> </span><span class="m">192</span>.168.1.100
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>whitelist<span class="w"> </span>add<span class="w"> </span><span class="m">10</span>.0.0.0/8
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>whitelist<span class="w"> </span>list
-</code></pre></div>
-<h4 id="api-key-ip-highest-security">api-key-ip (Highest Security)<a class="headerlink" href="#api-key-ip-highest-security" title="Permanent link">&para;</a></h4>
-<p>Requires both a valid API key AND the client IP must be in the whitelist.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># Select "api-key-ip" when prompted</span>
-</code></pre></div>
+<p>To change the allowed IPs, reinitialize with <code>mcctl console init --force</code> and enter the new list. <code>mcctl console api whitelist</code> currently does not change the whitelist the running API uses.</p>
+<h4 id="api-key-ip">api-key-ip<a class="headerlink" href="#api-key-ip" title="Permanent link">&para;</a></h4>
+<p>Requires both a valid API key AND a client IP from the whitelist.</p>
 <h4 id="open-development-only">open (Development Only)<a class="headerlink" href="#open-development-only" title="Permanent link">&para;</a></h4>
 <div class="admonition danger">
 <p class="admonition-title">Security Risk</p>
 <p>This mode disables all authentication. Never use in production!</p>
 </div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>mode<span class="w"> </span>open<span class="w"> </span>--force
-</code></pre></div>
 <h3 id="user-management">User Management<a class="headerlink" href="#user-management" title="Permanent link">&para;</a></h3>
 <h4 id="add-users">Add Users<a class="headerlink" href="#add-users" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Interactive mode</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># CLI mode</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>operator@example.com<span class="w"> </span>--role<span class="w"> </span>user<span class="w"> </span>--password<span class="w"> </span><span class="s2">"SecurePass123"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Interactive mode</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># CLI mode</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>add<span class="w"> </span>operator@example.com<span class="w"> </span>--role<span class="w"> </span>user<span class="w"> </span>--password<span class="w"> </span><span class="s2">"SecurePass123"</span>
 </code></pre></div>
 <h4 id="list-users">List Users<a class="headerlink" href="#list-users" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
 </code></pre></div>
 <p>Output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Users:
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>Email                         Name                Role        Created
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>---------------------------------------------------------------------------
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>admin@example.com             Administrator       admin       2025-01-15
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>operator@example.com          operator            user        2025-01-16
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>Total: 2 user(s)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Users:
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>Email                         Name                Role        Created
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>---------------------------------------------------------------------------
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>admin@example.com             Administrator       admin       2025-01-15
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>operator@example.com          operator            user        2025-01-16
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>Total: 2 user(s)
 </code></pre></div>
 <h4 id="update-user-role">Update User Role<a class="headerlink" href="#update-user-role" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>operator@example.com<span class="w"> </span>--role<span class="w"> </span>admin
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>update<span class="w"> </span>operator@example.com<span class="w"> </span>--role<span class="w"> </span>admin
 </code></pre></div>
 <h4 id="reset-password">Reset Password<a class="headerlink" href="#reset-password" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Interactive</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator@example.com
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># CLI</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator@example.com<span class="w"> </span>--password<span class="w"> </span><span class="s2">"NewSecurePass456"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Interactive</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator@example.com
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># CLI</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>operator@example.com<span class="w"> </span>--password<span class="w"> </span><span class="s2">"NewSecurePass456"</span>
 </code></pre></div>
 <h4 id="remove-user">Remove User<a class="headerlink" href="#remove-user" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>remove<span class="w"> </span>operator@example.com
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>remove<span class="w"> </span>operator@example.com
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Last Admin Protection</p>
@@ -3366,13 +3381,13 @@
 </div>
 <h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
 <h3 id="check-service-status">Check Service Status<a class="headerlink" href="#check-service-status" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status
 </code></pre></div>
 <h3 id="verify-api-health">Verify API Health<a class="headerlink" href="#verify-api-health" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>curl<span class="w"> </span>http://localhost:5001/health
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>curl<span class="w"> </span>http://localhost:5001/health
 </code></pre></div>
 <p>Expected response:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="s2">"healthy"</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="s2">"healthy"</span><span class="p">}</span>
 </code></pre></div>
 <h3 id="access-web-console">Access Web Console<a class="headerlink" href="#access-web-console" title="Permanent link">&para;</a></h3>
 <ol>
@@ -3385,32 +3400,32 @@
 <ol>
 <li>
 <p><strong>Check Node.js version:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>node<span class="w"> </span>--version<span class="w">  </span><span class="c1"># Must be v18.0.0 or higher</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>node<span class="w"> </span>--version<span class="w">  </span><span class="c1"># Must be v18.0.0 or higher</span>
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Check PM2 is installed:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>pm2<span class="w"> </span>--version
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>pm2<span class="w"> </span>--version
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Check for port conflicts:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"5000|5001"</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="c1"># or on macOS</span>
-<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5000
-<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5001
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>netstat<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">"5000|5001"</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="c1"># or on macOS</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5000
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:5001
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>View service logs:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>-f
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>logs<span class="w"> </span>-f
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Check PM2 process list:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>pm2<span class="w"> </span>list
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>pm2<span class="w"> </span>list
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console
 </code></pre></div></p>
 </li>
 </ol>
@@ -3418,25 +3433,25 @@
 <ol>
 <li>
 <p><strong>Verify user exists:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>list
 </code></pre></div></p>
 </li>
 <li>
 <p><strong>Reset password:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>admin@example.com
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>user<span class="w"> </span>reset-password<span class="w"> </span>admin@example.com
 </code></pre></div></p>
 </li>
 <li>
-<p><strong>Check configuration file:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>cat<span class="w"> </span>~/.mcctl-admin.yml
+<p><strong>Check configuration file</strong> (it lives in the data directory, <code>~/minecraft-servers</code> by default):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>cat<span class="w"> </span>~/minecraft-servers/.mcctl-admin.yml
 </code></pre></div></p>
 </li>
 </ol>
 <h3 id="api-returns-401-unauthorized">API Returns 401 Unauthorized<a class="headerlink" href="#api-returns-401-unauthorized" title="Permanent link">&para;</a></h3>
 <ol>
 <li>
-<p><strong>Check access mode:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>status
+<p><strong>Check access mode</strong> (the running API reads it from <code>ecosystem.config.cjs</code>; <code>mcctl console api status</code> shows <code>api-config.json</code> instead):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>grep<span class="w"> </span>AUTH_MODE<span class="w"> </span>~/minecraft-servers/ecosystem.config.cjs
 </code></pre></div></p>
 </li>
 <li>
@@ -3444,11 +3459,11 @@
 </li>
 <li>Ensure <code>X-API-Key</code> header is included in requests</li>
 <li>
-<p>Regenerate key if needed: <code>mcctl console api key regenerate</code></p>
+<p>The key in use is <code>AUTH_API_KEY</code> in <code>ecosystem.config.cjs</code>. To get a new one, reinitialize with <code>mcctl console init --force</code></p>
 </li>
 <li>
 <p><strong>Check IP whitelist (if using ip-whitelist mode):</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>api<span class="w"> </span>whitelist<span class="w"> </span>list
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>grep<span class="w"> </span>AUTH_IP_WHITELIST<span class="w"> </span>~/minecraft-servers/ecosystem.config.cjs
 </code></pre></div></p>
 </li>
 </ol>
@@ -3456,86 +3471,113 @@
 <ol>
 <li>
 <p><strong>Check logs for errors:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-api<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">100</span>
 </code></pre></div></p>
 </li>
 <li>
-<p><strong>Check if dependencies are installed:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>npm<span class="w"> </span>ls<span class="w"> </span>@minecraft-docker/mcctl-api
-<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>npm<span class="w"> </span>ls<span class="w"> </span>@minecraft-docker/mcctl-console
-</code></pre></div></p>
+<p><strong>Check if the service packages are installed</strong> (they are installed in the <code>.services/</code> directory of your data directory):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers/.services
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>npm<span class="w"> </span>ls<span class="w"> </span>@minecraft-docker/mcctl-api<span class="w"> </span>@minecraft-docker/mcctl-console
+</code></pre></div>
+   Installations without a <code>.services/</code> directory keep the packages in <code>~/minecraft-servers/node_modules</code>; run <code>npm ls</code> in <code>~/minecraft-servers</code> instead.</p>
 </li>
 <li>
 <p><strong>Restart services:</strong>
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart
 </code></pre></div></p>
 </li>
 </ol>
 <h2 id="auto-start-on-boot">Auto-Start on Boot<a class="headerlink" href="#auto-start-on-boot" title="Permanent link">&para;</a></h2>
 <p>Configure PM2 to start services automatically on system boot:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Generate startup script</span>
-<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>pm2<span class="w"> </span>startup
-<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="c1"># Follow the instructions to run the displayed command</span>
-<a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a><span class="c1"># For example:</span>
-<a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a>sudo<span class="w"> </span>env<span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/bin<span class="w"> </span>pm2<span class="w"> </span>startup<span class="w"> </span>systemd<span class="w"> </span>-u<span class="w"> </span><span class="nv">$USER</span><span class="w"> </span>--hp<span class="w"> </span><span class="nv">$HOME</span>
-<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a>
-<a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a><span class="c1"># Save current process list</span>
-<a id="__codelineno-40-9" name="__codelineno-40-9" href="#__codelineno-40-9"></a>pm2<span class="w"> </span>save
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="c1"># Generate startup script</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>pm2<span class="w"> </span>startup
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="c1"># Follow the instructions to run the displayed command</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="c1"># For example:</span>
+<a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>sudo<span class="w"> </span>env<span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/bin<span class="w"> </span>pm2<span class="w"> </span>startup<span class="w"> </span>systemd<span class="w"> </span>-u<span class="w"> </span><span class="nv">$USER</span><span class="w"> </span>--hp<span class="w"> </span><span class="nv">$HOME</span>
+<a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a>
+<a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="c1"># Save current process list</span>
+<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>pm2<span class="w"> </span>save
 </code></pre></div>
 <p>Now your services will automatically start when the system boots.</p>
 <h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">&para;</a></h2>
 <h3 id="update-mcctl-and-services">Update mcctl and Services<a class="headerlink" href="#update-mcctl-and-services" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># Stop services</span>
-<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop
-<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>
-<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="c1"># Update mcctl globally</span>
-<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>npm<span class="w"> </span>update<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl
-<a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a>
-<a id="__codelineno-41-7" name="__codelineno-41-7" href="#__codelineno-41-7"></a><span class="c1"># Start services</span>
-<a id="__codelineno-41-8" name="__codelineno-41-8" href="#__codelineno-41-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>mcctl<span class="w"> </span>update
 </code></pre></div>
+<p><code>mcctl update</code> updates the mcctl CLI and the services installed in <code>&lt;root&gt;/.services/</code> (<code>mcctl-api</code>, <code>mcctl-console</code> and the <code>shared</code> library) in one step. Each updated PM2 service is restarted automatically; if the output shows <code>Updated (restart manually)</code> for a service, run <code>mcctl console service restart</code>. Installations without a <code>.services/</code> directory keep the packages in <code>&lt;root&gt;/node_modules</code>, and <code>mcctl update</code> updates them there. When at least one service package is installed, the command also aligns the image tags of your Minecraft servers and pulls the Docker images; this is skipped with <code>--check</code> and <code>--cli-only</code>, and when no service package is installed.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--check</code></td>
+<td>Only check for updates, install nothing</td>
+</tr>
+<tr>
+<td><code>--cli-only</code></td>
+<td>Update only the CLI and leave the services as they are</td>
+</tr>
+<tr>
+<td><code>--yes</code></td>
+<td>Skip the confirmation prompt</td>
+</tr>
+</tbody>
+</table>
+<p><code>npm update -g @minecraft-docker/mcctl</code> updates only the CLI package and does not touch the services in <code>.services/</code>. See the <a href="../../cli/commands/#mcctl-update">mcctl update reference</a> for all options.</p>
 <h3 id="reinitialize-after-major-update">Reinitialize After Major Update<a class="headerlink" href="#reinitialize-after-major-update" title="Permanent link">&para;</a></h3>
 <p>If there are breaking changes, reinitialize the console:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1"># Stop services</span>
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>stop
-<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>
-<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="c1"># Reinitialize (keeps user data)</span>
-<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--force
-<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a>
-<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="c1"># Start services</span>
-<a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="c1"># Reinitialize: stops the services and deletes the console settings</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>init<span class="w"> </span>--force
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="c1"># Start services</span>
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>start
 </code></pre></div>
+<p><code>--force</code> does not preserve your settings. It stops the PM2 services and deletes <code>.mcctl-admin.yml</code> and <code>ecosystem.config.cjs</code>, so you choose the API access mode again, the ports return to the defaults unless you pass <code>--api-port</code> and <code>--console-port</code>, and a new API key is generated for the api-key modes. The console database <code>data/mcctl.db</code> is kept: other users stay as they are. If you enter the email of an existing admin, that user is deleted (including its sessions) and created again with the password you enter now. If you enter a different email, the existing admin stays and a new admin is added.</p>
 <h2 id="uninstallation">Uninstallation<a class="headerlink" href="#uninstallation" title="Permanent link">&para;</a></h2>
-<p>To completely remove Management Console:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="c1"># Remove console service (interactive)</span>
-<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove
-<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>
-<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a><span class="c1"># Or force remove without confirmation</span>
-<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--force
-<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a>
-<a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a><span class="c1"># Keep configuration files for later reinstall</span>
-<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--keep-config
+<p>To remove Management Console:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># Remove console service (interactive)</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove
+<a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="c1"># Or force remove without confirmation</span>
+<a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--force
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>
+<a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a><span class="c1"># Keep configuration files for later reinstall</span>
+<a id="__codelineno-39-8" name="__codelineno-39-8" href="#__codelineno-39-8"></a>mcctl<span class="w"> </span>console<span class="w"> </span>remove<span class="w"> </span>--keep-config
 </code></pre></div>
 <p>This will:</p>
 <ul>
 <li>Stop and remove PM2 processes (mcctl-api, mcctl-console)</li>
-<li>Delete configuration files (.mcctl-admin.yml, users.yaml)</li>
-<li>Delete PM2 ecosystem config (ecosystem.config.cjs)</li>
+<li>Delete configuration files (<code>.mcctl-admin.yml</code>, and the legacy <code>users.yaml</code> if it exists)</li>
+<li>Delete PM2 ecosystem config (<code>ecosystem.config.cjs</code>)</li>
 </ul>
 <div class="admonition warning">
 <p class="admonition-title">Data Preservation</p>
 <p>Removing Management Console does not affect your Minecraft servers or world data.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Console database is kept</p>
+<p><code>data/mcctl.db</code> (console users, sessions and per-user server permissions) and the packages in <code>.services/</code> are not removed. This is intentional, so accounts survive a reinstall. To run <code>mcctl console init</code> again with the same admin email you need <code>--force</code>; without it the command fails with <code>User '&lt;email&gt;' already exists</code>.</p>
+</div>
+<p>To start completely from scratch, also delete the database:</p>
+<div class="admonition danger">
+<p class="admonition-title">This cannot be undone</p>
+<p>Deleting the database removes every console user, session and per-user server permission.</p>
+</div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>rm<span class="w"> </span>-f<span class="w"> </span>~/minecraft-servers/data/mcctl.db*
+</code></pre></div>
+<p>See <a href="../cli-commands/#mcctl-console-remove"><code>mcctl console remove</code></a> for the full list of removed and kept items.</p>
 <h3 id="clean-up-pm2-optional">Clean Up PM2 (Optional)<a class="headerlink" href="#clean-up-pm2-optional" title="Permanent link">&para;</a></h3>
 <p>If you want to completely remove PM2 configuration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="c1"># Remove saved process list</span>
-<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>pm2<span class="w"> </span>unstartup
-<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a>
-<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="c1"># Kill PM2 daemon</span>
-<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a>pm2<span class="w"> </span><span class="nb">kill</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="c1"># Remove saved process list</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>pm2<span class="w"> </span>unstartup
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a>
+<a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a><span class="c1"># Kill PM2 daemon</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>pm2<span class="w"> </span><span class="nb">kill</span>
 </code></pre></div>
 
 

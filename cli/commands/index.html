@@ -4194,12 +4194,32 @@ to update just the CLI binary.</p>
 <td>Create without starting</td>
 </tr>
 <tr>
+<td><code>--whitelist</code></td>
+<td></td>
+<td>Enable whitelist and add initial players (comma-separated, e.g. <code>Steve,Alex</code>)</td>
+</tr>
+<tr>
+<td><code>--enable-whitelist</code></td>
+<td></td>
+<td>Enable whitelist without initial players</td>
+</tr>
+<tr>
+<td><code>--no-whitelist</code></td>
+<td></td>
+<td>Disable whitelist (default; overrides the two options above)</td>
+</tr>
+<tr>
 <td><code>--sudo-password</code></td>
 <td></td>
 <td>Sudo password for mDNS registration (automation)</td>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="admonition-title">Whitelist is off by default</p>
+<p>Servers created without a whitelist option have the whitelist <strong>disabled</strong>, so anyone with a premium (online-mode) account can join. Use <code>--whitelist</code> or <code>--enable-whitelist</code> to restrict access, or turn it on later with <code>mcctl whitelist &lt;server&gt; on</code>. In interactive mode you are asked "Enable whitelist?" (default No) and only asked for players when you answer Yes. Servers created from the Web Console are also created with the whitelist off.</p>
+<p>Premium account authentication (<code>ONLINE_MODE=TRUE</code>) is unchanged and stays on. Servers created before this change keep their existing whitelist setting.</p>
+</div>
 <div class="admonition tip">
 <p class="admonition-title">Automation with Sudo Password</p>
 <p>When automating server creation in CI/CD pipelines, you can provide the sudo password for mDNS registration:</p>
@@ -4232,6 +4252,12 @@ to update just the CLI binary.</p>
 <a id="__codelineno-36-12" name="__codelineno-36-12" href="#__codelineno-36-12"></a>
 <a id="__codelineno-36-13" name="__codelineno-36-13" href="#__codelineno-36-13"></a><span class="c1"># Create without starting</span>
 <a id="__codelineno-36-14" name="__codelineno-36-14" href="#__codelineno-36-14"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--no-start
+<a id="__codelineno-36-15" name="__codelineno-36-15" href="#__codelineno-36-15"></a>
+<a id="__codelineno-36-16" name="__codelineno-36-16" href="#__codelineno-36-16"></a><span class="c1"># Whitelist on with initial players</span>
+<a id="__codelineno-36-17" name="__codelineno-36-17" href="#__codelineno-36-17"></a>mcctl<span class="w"> </span>create<span class="w"> </span>private<span class="w"> </span>--whitelist<span class="w"> </span>Steve,Alex
+<a id="__codelineno-36-18" name="__codelineno-36-18" href="#__codelineno-36-18"></a>
+<a id="__codelineno-36-19" name="__codelineno-36-19" href="#__codelineno-36-19"></a><span class="c1"># Whitelist on, add players later</span>
+<a id="__codelineno-36-20" name="__codelineno-36-20" href="#__codelineno-36-20"></a>mcctl<span class="w"> </span>create<span class="w"> </span>private<span class="w"> </span>--enable-whitelist
 </code></pre></div>
 </div>
 <div class="tabbed-block">
