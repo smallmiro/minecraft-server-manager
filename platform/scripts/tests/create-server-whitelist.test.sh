@@ -8,7 +8,8 @@
 # - --whitelist a,b      -> enabled + players
 # - --enable-whitelist   -> enabled, no players
 # - --no-whitelist       -> disabled (wins over --whitelist, any order)
-# Both templates (templates/ and platform/servers/) are checked.
+# All three templates are checked: templates/, platform/servers/ and the
+# npm-bundled platform/services/cli/templates/ (what mcctl actually uses).
 #
 # Runs the real script in a temp platform dir with fake docker/ip/hostname/sudo
 # on PATH. HOST_IP resolves to empty, so avahi registration is skipped and no
@@ -103,6 +104,7 @@ run_cases() {
 
 run_cases "templates/" "$REPO_DIR/templates" "t"
 run_cases "platform/servers/" "" "p"
+run_cases "cli/templates/" "$REPO_DIR/platform/services/cli/templates" "c"
 
 assert_eq "sudo never called" "no" "$([[ -f "$WORK/sudo.log" ]] && echo yes || echo no)"
 
