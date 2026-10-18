@@ -12,16 +12,18 @@ export function readLegacyAuthSecret(ecosystemPath: string): string | undefined 
 }
 
 /**
- * Keep the console session secret in the platform .env (#686): an existing
- * value stays, else the legacy ecosystem secret moves over (sessions survive),
- * else a new one is generated.
+ * Keep the console session secret in the platform .env (#686): the legacy
+ * ecosystem secret is the one the running console uses, so it moves over and
+ * replaces any stale .env copy (sessions survive, #699); else an existing .env
+ * value stays; else a new one is generated.
  */
 export async function ensureConsoleAuthSecret(
   paths: Paths,
   legacySecret: string | undefined
 ): Promise<'kept' | 'migrated' | 'generated'> {
   const config = new Config(paths);
-  if (config.loadEnv().BETTER_AUTH_SECRET) return 'kept';
+  const current = config.loadEnv().BETTER_AUTH_SECRET;
+  if (current && (!legacySecret || current === legacySecret)) return 'kept';
   await config.updateEnv({ BETTER_AUTH_SECRET: legacySecret ?? randomBytes(32).toString('hex') });
   return legacySecret ? 'migrated' : 'generated';
 }

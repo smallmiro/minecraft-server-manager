@@ -32,10 +32,16 @@ describe('console auth secret (#686)', () => {
     expect(readLegacyAuthSecret(join(root, 'missing.cjs'))).toBeUndefined();
   });
 
-  it('keeps an existing .env secret', async () => {
+  it('keeps an existing .env secret when no legacy secret is injected', async () => {
     writeFileSync(join(root, '.env'), 'BETTER_AUTH_SECRET=keepme\n');
-    expect(await ensureConsoleAuthSecret(paths, 'legacy0123456789')).toBe('kept');
+    expect(await ensureConsoleAuthSecret(paths, undefined)).toBe('kept');
     expect(env()).toBe('BETTER_AUTH_SECRET=keepme\n');
+  });
+
+  it('replaces a stale .env secret with the legacy one the running console uses (#699)', async () => {
+    writeFileSync(join(root, '.env'), 'BETTER_AUTH_SECRET=stale\n');
+    expect(await ensureConsoleAuthSecret(paths, 'legacy0123456789')).toBe('migrated');
+    expect(env()).toBe('BETTER_AUTH_SECRET=legacy0123456789\n');
   });
 
   it('moves the legacy ecosystem secret into .env so sessions survive', async () => {
