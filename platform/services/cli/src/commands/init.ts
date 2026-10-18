@@ -122,6 +122,7 @@ export async function initCommand(options: {
     { src: '.env.example', dest: '.env', transform: randomizeRconPassword },
     { src: 'gitignore.template', dest: '.gitignore' },
     { src: 'servers/compose.template.yml', dest: 'servers/compose.yml' },
+    { src: 'servers/global.env', dest: 'servers/global.env' },
     { src: 'servers/_template/docker-compose.yml', dest: 'servers/_template/docker-compose.yml' },
     { src: 'servers/_template/config.env', dest: 'servers/_template/config.env' },
   ];

@@ -32,8 +32,10 @@ services:
     restart: "no"
     tty: true
     stdin_open: true
+    # Platform keys listed in ../global.env, then this server's config.env
+    # (which wins). The whole platform .env is not passed: it holds secrets.
     env_file:
-      - ../../.env
+      - ../global.env
       - config.env
     environment:
       EULA: "TRUE"
