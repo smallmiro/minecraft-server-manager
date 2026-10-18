@@ -6,7 +6,13 @@ import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { BentoGrid, BentoPanel, PageHero } from '@/components/bento';
-import { ProfileSection, PasswordSection, AccountInfoSection } from '@/components/settings';
+import {
+  ProfileSection,
+  PasswordSection,
+  AccountInfoSection,
+  PlatformSettingsSection,
+} from '@/components/settings';
+import { useSession } from '@/lib/auth-client';
 
 const embeddedCardSx = {
   height: '100%',
@@ -20,6 +26,8 @@ const embeddedCardSx = {
 };
 
 export default function SettingsPage() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -51,6 +59,8 @@ export default function SettingsPage() {
         eyebrow="Account"
         icon={<SettingsIcon />}
       />
+
+      {isAdmin && <PlatformSettingsSection onSuccess={handleSuccess} onError={handleError} />}
 
       <BentoGrid aria-label="Account settings">
         <BentoPanel

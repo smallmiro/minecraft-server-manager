@@ -671,7 +671,7 @@ Backups 페이지에서 월드 백업, 자동 백업 스케줄, 서버 구성 �
 
 **Backup Status** 카드에 현재 백업 구성이 표시됩니다:
 
-- **Status** -- 백업 시스템이 `Configured`(녹색 체크마크)인지 `Not Configured`인지 여부. 구성되지 않았다면 카드가 `BACKUP_REPO_URL` 설정을 안내합니다
+- **Status** -- 백업 시스템이 `Configured`(녹색 체크마크)인지 `Not Configured`인지 여부. 구성되지 않았다면 카드가 `BACKUP_GITHUB_REPO`와 `BACKUP_GITHUB_TOKEN` 설정을 안내합니다
 - **Repository** -- 백업 저장소로 구성된 Git 리포지토리 (예: `smallmiro/minecraft-worlds-backup`)
 - **Last Backup** -- 마지막 백업이 실행된 시점 (예: "5 minutes ago") 또는 "No backups yet"
 
@@ -819,7 +819,7 @@ Routing 페이지에서 네트워크 라우팅 구성을 완전히 확인하고 
 - 외부 도메인이 구성된 서버를 보여주는 **Server Domains** 테이블 (예: `possible-tracks.gl.joinmc.link`), 각 도메인에 복사 버튼 포함
 - 외부 도메인이 없는 서버 목록
 
-playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시되며 `PLAYIT_SECRET` 설정을 안내합니다.
+playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시되며 `PLAYIT_SECRET_KEY` 설정을 안내합니다.
 
 ---
 
@@ -864,6 +864,44 @@ playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시되�
 - **Profile** -- **Name**을 수정하고 **Save Changes**를 클릭합니다. **Email**은 읽기 전용("Email cannot be changed")이며, 참고용으로 **Role**(Admin 또는 User)이 표시됩니다
 - **Account Information** -- 계정의 **Account ID**, **Created** 시각, **Last Updated** 시각
 - **Change Password** -- **Current Password**, **New Password**(8자 이상이며 현재 비밀번호와 달라야 함), **Confirm New Password**를 입력하고 **Change Password**를 클릭합니다. 다른 기기의 로그인 세션은 로그아웃되지 않습니다
+
+---
+
+## 플랫폼 설정 (관리자)
+
+관리자에게는 **Settings** 페이지의 계정 카드 위에 **Platform Settings** 섹션이 추가로 표시됩니다. 이 섹션은 플랫폼 `.env` 파일을 편집합니다. 일반 사용자는 자신의 계정 카드만 볼 수 있으며 플랫폼 설정을 읽거나 변경할 수 없습니다. API가 UI와 별개로 이를 강제합니다.
+
+- **Bento 카드** -- 설정은 Network & Routing, Server Runtime, RCON, Backup, External Access (playit.gg), Console & Logging 카드로 그룹화됩니다. 각 필드는 타입별 입력(텍스트, 스위치, 선택, 숫자, IP 목록)과 필드 단위 검증을 제공합니다
+- **시크릿은 쓰기 전용** -- 시크릿 필드(`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`)는 **Configured** 또는 **Not configured**만 표시합니다. 입력란은 미리 채워지지 않으며, 값을 입력하면 변경된 필드로 표시됩니다
+- **Runtime (PM2)** -- `ecosystem.config.cjs`가 주입한 값(`BETTER_AUTH_BASE_URL`, `BETTER_AUTH_SECRET`(configured 여부만), `AUTH_MODE`)을 읽기 전용 카드로 보여줍니다. 변경하려면 `mcctl console init`을 다시 실행하세요
+- **Advanced Environment** -- 알 수 없는 키를 key/value 행으로 추가, 편집, 삭제합니다. 이 키는 모든 서버 컨테이너에 전달됩니다
+- **Legacy / Unused** -- Legacy 및 Shadowed 키를 경고 스타일로 표시합니다(예: "Overridden by ecosystem.config.cjs; not applied"). 직접 삭제하지 않는 한 아무것도 제거되지 않습니다
+- **읽기 전용 네트워크 식별자** -- `MINECRAFT_NETWORK`, `MINECRAFT_SUBNET`, `COMPOSE_PROJECT_NAME`은 CLI 안내와 함께 표시만 됩니다
+
+서버별 값은 각 서버의 **Options** 탭에 그대로 있습니다. 서버의 `config.env`는 해당 서버에 한해 플랫폼 값을 덮어쓰며, UI는 서버 런타임 키에 이를 안내합니다. 전체 분류는 [환경 변수](../configuration/environment.md#설정-분류)를 참고하세요.
+
+### 변경 사항 저장 및 적용
+
+필드를 변경하면 **Discard**와 **Save Changes**가 있는 하단 고정 바가 나타납니다. **저장은 `.env`만 기록하며 아무것도 재시작하지 않습니다.** 저장 후 대화상자가 범위별로 재시작이 필요한 대상을 안내합니다:
+
+| 범위 | 해야 할 일 |
+|------|------------|
+| Servers | 각 서버를 **stop 후 start** (Servers 페이지 또는 `mcctl stop <name> && mcctl start <name>`). **Restart는 `.env`를 다시 읽지 않습니다.** mc-router auto-scale은 기존 컨테이너를 이전 환경 그대로 깨우므로, start를 통한 재생성이 필요합니다 |
+| Router | `mcctl router start` (`restart`가 아님) |
+| playit | Routing 페이지에서 playit 에이전트를 stop 후 start하거나 `mcctl playit stop && mcctl playit start` |
+| API | `mcctl console service restart --api`. mcctl-api가 사용하는 설정은 재시작 전까지 "restart pending" 칩이 표시됩니다 |
+| Next create | 이 변경 이후 생성하는 서버에 적용됩니다. 기존 서버의 호스트명은 바뀌지 않습니다 |
+
+페이지를 불러온 뒤 파일이 변경된 경우(예: CLI로 수정) 저장 시 **409 충돌**이 반환되고 대화상자가 새로고침을 안내합니다. 편집 내용은 자동으로 덮어써지지 않습니다.
+
+### 동일한 CLI 명령
+
+| 카드 | CLI |
+|------|-----|
+| Network & Routing | `mcctl init --reconfigure` |
+| Backup | `mcctl backup init` |
+| External Access (playit.gg) | `mcctl playit setup` |
+| Runtime (PM2) | `mcctl console init` |
 
 ---
 

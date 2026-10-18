@@ -6,3 +6,4 @@ export { ProfileSection } from './ProfileSection';
 export { PasswordSection } from './PasswordSection';
 export { AccountInfoSection } from './AccountInfoSection';
 export { PlayitSection } from './PlayitSection';
+export { PlatformSettingsSection } from './platform';

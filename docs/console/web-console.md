@@ -671,7 +671,7 @@ The page has two tabs: **World Backups** (default) and **Config Snapshots**. The
 
 The **Backup Status** card shows the current backup configuration:
 
-- **Status** -- Whether the backup system is `Configured` (green checkmark) or `Not Configured`. When it is not configured, the card asks you to set `BACKUP_REPO_URL`
+- **Status** -- Whether the backup system is `Configured` (green checkmark) or `Not Configured`. When it is not configured, the card asks you to set `BACKUP_GITHUB_REPO` and `BACKUP_GITHUB_TOKEN`
 - **Repository** -- The configured Git repository for backup storage (e.g., `smallmiro/minecraft-worlds-backup`)
 - **Last Backup** -- When the last backup ran (e.g., "5 minutes ago"), or "No backups yet"
 
@@ -819,7 +819,7 @@ The **External Access (playit.gg)** card manages playit.gg tunnel configuration 
 - **Server Domains** table showing which servers have external domains configured (e.g., `possible-tracks.gl.joinmc.link`), each with a copy button
 - A list of servers without external domains
 
-If playit.gg is not set up, the card shows "Not configured" and asks you to set `PLAYIT_SECRET`.
+If playit.gg is not set up, the card shows "Not configured" and asks you to set `PLAYIT_SECRET_KEY`.
 
 ---
 
@@ -864,6 +864,44 @@ Open **Settings** from the user menu to manage your own account. The page has th
 - **Profile** -- Edit your **Name** and click **Save Changes**. The **Email** is read-only ("Email cannot be changed"), and the **Role** (Admin or User) is shown for reference
 - **Account Information** -- Your **Account ID**, **Created** time, and **Last Updated** time
 - **Change Password** -- Enter your **Current Password**, a **New Password** (at least 8 characters, different from the current one), and **Confirm New Password**, then click **Change Password**. Other signed-in sessions are not signed out
+
+---
+
+## Platform Settings (Admin)
+
+Administrators see an additional **Platform Settings** section on the **Settings** page, above the account cards. It edits the platform `.env` file. Non-admin users only see their own account cards and cannot read or change platform configuration; the API enforces this independently of the UI.
+
+- **Bento cards** -- Settings are grouped into cards: Network & Routing, Server Runtime, RCON, Backup, External Access (playit.gg) and Console & Logging. Each field uses a typed control (text, switch, select, number, IP list) with field-level validation
+- **Secrets are write-only** -- Secret fields (`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`) show **Configured** or **Not configured**. The input is never pre-filled; typing a value marks the field changed
+- **Runtime (PM2)** -- A read-only card shows values injected by `ecosystem.config.cjs` (`BETTER_AUTH_BASE_URL`, `BETTER_AUTH_SECRET` as configured only, `AUTH_MODE`). To change them, re-run `mcctl console init`
+- **Advanced Environment** -- Unknown keys as key/value rows (add, edit, remove). They are passed to all server containers
+- **Legacy / Unused** -- Legacy and shadowed keys with warning styling (for example "Overridden by ecosystem.config.cjs; not applied"). Nothing is removed unless you remove it explicitly
+- **Read-only network identity** -- `MINECRAFT_NETWORK`, `MINECRAFT_SUBNET` and `COMPOSE_PROJECT_NAME` are displayed with CLI guidance only
+
+Server-specific values stay in each server's **Options** tab. A server's `config.env` overrides the platform value for that server, and the UI notes this on server-runtime keys. See [Environment Variables](../configuration/environment.md#setting-classification) for the full classification.
+
+### Saving and Applying Changes
+
+A sticky bar with **Discard** and **Save Changes** appears when any field is changed. **Saving only writes `.env`; it never restarts anything.** After saving, a dialog lists what needs to be restarted, per scope:
+
+| Scope | What to do |
+|-------|------------|
+| Servers | **Stop, then start** each server (Servers page, or `mcctl stop <name> && mcctl start <name>`). **Restart does not reload `.env`.** mc-router auto-scale wakes an existing container with its old environment, so a recreate through start is required |
+| Router | `mcctl router start` (not `restart`) |
+| playit | Stop, then start the playit agent on the Routing page, or `mcctl playit stop && mcctl playit start` |
+| API | `mcctl console service restart --api`. Settings backed by mcctl-api show a "restart pending" chip until it restarts |
+| Next create | Applies to servers created after this change. Existing server hostnames are unchanged |
+
+If the file changed since you loaded the page (for example via the CLI), saving returns a **409 conflict** and a dialog asks you to reload. Your edits are never overwritten automatically.
+
+### CLI Equivalents
+
+| Card | CLI |
+|------|-----|
+| Network & Routing | `mcctl init --reconfigure` |
+| Backup | `mcctl backup init` |
+| External Access (playit.gg) | `mcctl playit setup` |
+| Runtime (PM2) | `mcctl console init` |
 
 ---
 
