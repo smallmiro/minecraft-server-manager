@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.33.0 (2026-10-18)
+- **fix(console)**: upgrading to 2.32.0 signed users out when `.env` held older `BETTER_AUTH_*` values; the ecosystem value now wins until `mcctl upgrade` moves it into `.env`, and Platform Settings shows them read-only meanwhile (#699)
+- **fix(cli)**: `mcctl upgrade` moves `BETTER_AUTH_*` from `ecosystem.config.cjs` into `.env`; `mcctl console init` no longer keeps a stale `.env` secret (#699)
+- **feat(console)**: Create Server asks before creating with an empty sudo password; defaults VANILLA / `LATEST` (#700); routing table hostname lists start collapsed
+
 ### v2.32.0 (2026-10-18)
 - **feat(console)**: Platform Settings for admins - edit the platform `.env` with write-only secrets, conflict detection and restart guidance (#683); console auth settings read from `.env` (#686)
 - **feat(cli)**: random `RCON_PASSWORD` on `mcctl init` (#680); whitelist off by default, `mcctl create --enable-whitelist` (#679)
@@ -101,11 +106,6 @@ mcctl logs myserver
 - **feat(console)**: Ore & Block Stats shown as KPIs, a donut chart, and category bars (#567, #568)
 - **fix(map)**: World map opens on the Overworld instead of the End (#564)
 - **fix(cli)**: `CF_API_KEY` is optional on Java 17+ images; CLI messages and docs corrected (#561, #566)
-
-### v2.28.0 (2026-10-01)
-- **feat(console)**: Bento layout across every Web Console screen - page hero with key status, metrics, and primary action, followed by panels for detailed content; existing actions and permissions unchanged
-- **fix(console)**: Dashboard "needs attention" includes unhealthy servers and shows **Reconnecting** when SSE is down; pages show **Unavailable** instead of misleading zeros on load failure, and keep cached data on refetch errors
-- **fix(cli)**: `mcctl console user ...` / `mcctl console api ...` no longer fail with `unknown command 'node'` (#556, #557)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 

@@ -1014,6 +1014,18 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.33.0] - 2026-10-18
+
+**Upgrade:** run `mcctl upgrade`, then `mcctl console service restart --console`. From 2.31.x or earlier, upgrade straight to this version (#699).
+
+**Changed:**
+- Create Server dialog asks before creating with an empty sudo password; defaults are VANILLA / `LATEST` (#700)
+- Routing table hostname lists start collapsed
+
+**Fixed:**
+- Upgrading to 2.32.0 signed console users out when `.env` held older `BETTER_AUTH_*` values: the ecosystem value now wins until `mcctl upgrade` moves it into `.env`; Platform Settings shows these keys read-only meanwhile (#699)
+- `mcctl console init` no longer keeps a stale `.env` session secret (#699)
+
 ### [2.32.0] - 2026-10-18
 
 **Upgrade:** run `mcctl upgrade`, then stop and start every server so platform secrets leave the containers (#685). Includes the unreleased 2.31.1 hotfix.
