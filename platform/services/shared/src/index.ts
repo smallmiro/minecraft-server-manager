@@ -75,6 +75,9 @@ export {
   stopPlayitAgent,
   getServerPlayitDomain,
   setServerPlayitDomain,
+  parseRouterHosts,
+  replaceRouterHosts,
+  resolvePlayitDomain,
 } from './docker/index.js';
 
 // Re-export domain layer (Value Objects and Entities)

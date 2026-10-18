@@ -315,6 +315,7 @@ async function handleDomain(paths: Paths, args: string[], remove: boolean): Prom
   if (remove) {
     setServerPlayitDomain(serverName, null, serversDir);
     log.info(`Removed playit domain from '${serverName}'`);
+    log.info(`Apply with: mcctl stop ${serverName} && mcctl start ${serverName} (restart does not apply; container must be recreated)`);
   } else {
     if (!domain) {
       log.error('Usage: mcctl playit domain <server> <domain>');
@@ -322,6 +323,7 @@ async function handleDomain(paths: Paths, args: string[], remove: boolean): Prom
     }
     setServerPlayitDomain(serverName, domain, serversDir);
     log.info(`Set playit domain for '${serverName}': ${colors.cyan(domain)}`);
+    log.info(`Apply with: mcctl stop ${serverName} && mcctl start ${serverName} (restart does not apply; container must be recreated)`);
   }
 
   return 0;

@@ -20,7 +20,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import LanguageIcon from '@mui/icons-material/Language';
 import CloseIcon from '@mui/icons-material/Close';
+import { useQueryClient } from '@tanstack/react-query';
 import { useServerHostnames, useUpdateHostnames } from '@/hooks/useMcctl';
+import { usePlayitStatus } from '@/hooks/usePlayit';
 
 interface HostnameSectionProps {
   serverName: string;
@@ -29,6 +31,9 @@ interface HostnameSectionProps {
 export function HostnameSection({ serverName }: HostnameSectionProps) {
   const { data, isLoading } = useServerHostnames(serverName);
   const updateHostnames = useUpdateHostnames();
+  const queryClient = useQueryClient();
+  const { data: playitStatus } = usePlayitStatus();
+  const playitDomain = playitStatus?.servers.find((s) => s.serverName === serverName)?.playitDomain;
 
   const [customDomains, setCustomDomains] = useState<string[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
@@ -96,11 +101,13 @@ export function HostnameSection({ serverName }: HostnameSectionProps) {
         customHostnames: customDomains,
       });
 
+      // API syncs PLAYIT_DOMAIN server-side; refresh External address (ConnectionInfoCard)
+      queryClient.invalidateQueries({ queryKey: ['playit-status'] });
       setHasChanges(false);
       setSavedSuccess(true);
       setSnackbar({
         open: true,
-        message: 'Hostnames saved. Container recreation required to apply changes.',
+        message: 'Hostnames saved. Stop the server, then start it again to apply (restart does not apply).',
         severity: 'warning',
       });
     } catch (error) {
@@ -193,8 +200,9 @@ export function HostnameSection({ serverName }: HostnameSectionProps) {
                     bgcolor: 'action.hover',
                   }}
                 >
-                  <Typography variant="body2">
+                  <Typography variant="body2" component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     {domain}
+                    {domain === playitDomain && <Chip label="playit" size="small" color="primary" />}
                   </Typography>
                   <IconButton
                     size="small"
@@ -255,7 +263,8 @@ export function HostnameSection({ serverName }: HostnameSectionProps) {
           {savedSuccess && (
             <Alert severity="warning" sx={{ mb: 2 }}>
               Container recreation is required for hostname changes to take effect.
-              Run <code>docker compose up -d</code> or restart the server from the dashboard.
+              Stop the server, then start it again (a restart does not apply the changes),
+              or run <code>docker compose up -d</code>.
             </Alert>
           )}
 

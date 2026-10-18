@@ -1085,8 +1085,59 @@ export function getServerPlayitDomain(serverName: string, serversDir?: string): 
   return domain && domain.trim() ? domain.trim() : null;
 }
 
+/** mc-router.host label in a server docker-compose.yml (same regex as mcctl-api HostnameService) */
+const ROUTER_HOST_LABEL_REGEX = /(mc-router\.host:\s*["'])([^"']+)(["'])/;
+
+const sameHost = (a: string, b: string | null): boolean => b !== null && a.toLowerCase() === b.toLowerCase();
+
 /**
- * Set or remove a server's playit.gg domain in config.env
+ * Parse the mc-router.host label of a docker-compose.yml into a host list ([] if absent)
+ */
+export function parseRouterHosts(composeContent: string): string[] {
+  const value = composeContent.match(ROUTER_HOST_LABEL_REGEX)?.[2];
+  return value ? value.split(',').map((h) => h.trim()).filter(Boolean) : [];
+}
+
+/**
+ * Replace the mc-router.host label value with the given hosts (content unchanged if label absent)
+ */
+export function replaceRouterHosts(composeContent: string, hosts: string[]): string {
+  return composeContent.replace(ROUTER_HOST_LABEL_REGEX, (_m, open: string, _v: string, close: string) => `${open}${hosts.join(',')}${close}`);
+}
+
+/**
+ * Swap oldHost for newHost in a host list: keeps position, never duplicates,
+ * appends when oldHost is absent, removes oldHost when newHost is null.
+ */
+function swapRouterHost(hosts: string[], oldHost: string | null, newHost: string | null): string[] {
+  const kept = hosts.filter((h) => !sameHost(h, oldHost) || sameHost(h, newHost));
+  if (newHost === null || kept.some((h) => sameHost(h, newHost))) return kept;
+  const i = hosts.findIndex((h) => sameHost(h, oldHost));
+  return i === -1 ? [...kept, newHost] : [...kept.slice(0, i), newHost, ...kept.slice(i)];
+}
+
+/**
+ * Decide the PLAYIT_DOMAIN after the custom hostname list was edited (pure, no I/O).
+ * Current domain still listed → unchanged; otherwise exactly one newly added host
+ * becomes the domain; zero or 2+ added → null (remove). No current domain → null.
+ * Current domain absent from the previous list (set before label sync) → unchanged,
+ * since the edit could not have removed it.
+ */
+export function resolvePlayitDomain(
+  currentDomain: string | null,
+  previousCustom: string[],
+  nextCustom: string[]
+): string | null {
+  if (!currentDomain) return null;
+  if (!previousCustom.some((h) => sameHost(h, currentDomain))) return currentDomain;
+  if (nextCustom.some((h) => sameHost(h, currentDomain))) return currentDomain;
+  const added = nextCustom.filter((h) => !previousCustom.some((p) => sameHost(h, p)));
+  return added.length === 1 ? added[0]! : null;
+}
+
+/**
+ * Set or remove a server's playit.gg domain in config.env, and keep the
+ * mc-router.host label in docker-compose.yml in sync (skipped if file/label absent)
  * @param domain - Domain string to set, or null to remove
  * @throws Error if config.env does not exist
  */
@@ -1098,6 +1149,7 @@ export function setServerPlayitDomain(serverName: string, domain: string | null,
     throw new Error(`config.env not found for server '${serverName}': ${configPath}`);
   }
 
+  const previousDomain = getServerPlayitDomain(serverName, dir);
   let content = readFileSync(configPath, 'utf-8');
 
   if (domain === null) {
@@ -1114,4 +1166,14 @@ export function setServerPlayitDomain(serverName: string, domain: string | null,
   }
 
   writeFileSync(configPath, content, 'utf-8');
+
+  const composePath = join(dir, serverName, 'docker-compose.yml');
+  if (!existsSync(composePath)) return;
+  const compose = readFileSync(composePath, 'utf-8');
+  const hosts = parseRouterHosts(compose);
+  if (hosts.length === 0) return;
+  const nextHosts = swapRouterHost(hosts, previousDomain, domain);
+  if (nextHosts.join(',') !== hosts.join(',')) {
+    writeFileSync(composePath, replaceRouterHosts(compose, nextHosts), 'utf-8');
+  }
 }

@@ -721,15 +721,13 @@ async function updateServerHostnames(paths: Paths, newHostIPs: string): Promise<
     try {
       let content = readFileSync(composeFile, 'utf-8');
 
-      // Build new hostname list
-      const hostnames = buildHostnames(serverName, newHostIPs);
-
       // Replace mc-router.host label value
       // Match patterns like: mc-router.host: "server.local,server.ip.nip.io"
       const hostLabelRegex = /(mc-router\.host:\s*["'])([^"']+)(["'])/;
       const match = content.match(hostLabelRegex);
 
       if (match) {
+        const hostnames = mergeHostnames(serverName, newHostIPs, match[2] ?? '');
         content = content.replace(hostLabelRegex, `$1${hostnames}$3`);
         writeFileSync(composeFile, content, 'utf-8');
         updatedCount++;
@@ -756,4 +754,18 @@ function buildHostnames(serverName: string, hostIPs: string): string {
   }
 
   return hostnames;
+}
+
+/**
+ * Rebuild the system hostnames (<server>.local, <server>.<ip>.nip.io) and keep
+ * every other existing hostname (custom, playit domain) after them.
+ */
+export function mergeHostnames(serverName: string, hostIPs: string, existing: string): string {
+  const escaped = serverName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const systemRe = new RegExp(`^${escaped}\\.(local|\\d{1,3}(\\.\\d{1,3}){3}\\.nip\\.io)$`);
+  const merged = buildHostnames(serverName, hostIPs).split(',');
+  for (const h of existing.split(',').map((x) => x.trim())) {
+    if (h && !systemRe.test(h) && !merged.includes(h)) merged.push(h);
+  }
+  return merged.join(',');
 }
