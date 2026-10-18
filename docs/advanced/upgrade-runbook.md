@@ -72,6 +72,7 @@ mcctl upgrade --non-interactive   # apply defaults without prompting (automation
 
 - New `.env` variables are added (e.g. `DOCKER_GID`), `docker-compose.yml.bak-<timestamp>` is created, and `docker compose up -d router` runs automatically when the router changes.
 - `servers/_template/*` is overwritten and `templateVersion` in `.mcctl.json` is updated.
+- (v2.32.0+) If `servers/global.env` is missing, it is created and existing servers are repointed from `- ../../.env` to `- ../global.env`, so platform secrets stop reaching server containers. Containers keep the old environment until recreated: stop, then start each server in step 5. See [Environment Variables](../configuration/environment.md#setting-classification).
 - If `.mcctl.json` has no `installId`, it is added once (an existing value is kept). The web console uses it for anonymous usage analytics; to opt out, set `"telemetry": false` in `.mcctl.json` (see [Usage Analytics](../console/web-console.md#usage-analytics)).
 - **If the router image is the untagged `itzg/mc-router`, `mcctl upgrade` does not bump the image.** Pin `image:` in `docker-compose.yml` to the version named in the release notes, then run `docker compose config -q && docker compose up -d router`.
 
@@ -84,11 +85,11 @@ mcctl console service restart --force
 cd $ROOT && npm rebuild better-sqlite3 && mcctl console service restart --force
 ```
 
-### 4-1. Upgrading to v2.31.1 or later: check the console access mode (#633)
+### 4-1. Upgrading to v2.32.0 or later: check the console access mode (#633)
 
-Do this once when upgrading from v2.31.0 or earlier to v2.31.1 or later, and only on hosts where `mcctl console init` was run.
+Do this once when upgrading from v2.31.0 or earlier to v2.32.0 or later, and only on hosts where `mcctl console init` was run.
 
-Up to v2.31.0, `mcctl console init` wrote the chosen access mode to `AUTH_MODE` as is. mcctl-api does not recognise `internal`, `api-key-ip` or `open`, and falls back to `api-key` under `NODE_ENV=production` (`disabled` otherwise). From v2.31.1, `mcctl console init` writes a value mcctl-api recognises. `mcctl update` and `mcctl upgrade` do not rewrite `ecosystem.config.cjs`, so an existing install keeps the old value until you change it.
+Up to v2.31.0, `mcctl console init` wrote the chosen access mode to `AUTH_MODE` as is. mcctl-api does not recognise `internal`, `api-key-ip` or `open`, and falls back to `api-key` under `NODE_ENV=production` (`disabled` otherwise). From v2.32.0, `mcctl console init` writes a value mcctl-api recognises. `mcctl update` and `mcctl upgrade` do not rewrite `ecosystem.config.cjs`, so an existing install keeps the old value until you change it.
 
 ```bash
 grep -nE "AUTH_MODE|AUTH_IP_WHITELIST" $ROOT/ecosystem.config.cjs
@@ -188,7 +189,7 @@ In a browser (hard refresh) open `http://<host>:5000`: log in → server list �
 - [ ] API `/health` 200, Console 200, PM2 restarts not increasing
 - [ ] a stopped server starts on connect (auto-scale)
 - [ ] UI smoke test passes
-- [ ] (v2.31.0 or earlier → v2.31.1+) `AUTH_MODE` in `ecosystem.config.cjs` is a value mcctl-api recognises (step 4-1)
+- [ ] (v2.31.0 or earlier → v2.32.0+) `AUTH_MODE` in `ecosystem.config.cjs` is a value mcctl-api recognises (step 4-1)
 - [ ] once stable, delete `$B` (`backups-pre-$NEW`)
 
 ## 8. Rollback

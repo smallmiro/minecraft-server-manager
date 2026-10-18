@@ -73,6 +73,7 @@ mcctl upgrade --non-interactive   # 프롬프트 없이 기본값 적용(자동�
 
 - `.env`에 새 변수가 추가되고(`DOCKER_GID` 등), `docker-compose.yml.bak-<타임스탬프>`가 생성되며, router가 변경되면 `docker compose up -d router`가 자동 실행됩니다.
 - `servers/_template/*`가 덮어써지고 `.mcctl.json`의 `templateVersion`이 갱신됩니다.
+- (v2.32.0 이상) `servers/global.env`가 없으면 만들고, 기존 서버의 `- ../../.env`를 `- ../global.env`로 바꿔 플랫폼 시크릿이 서버 컨테이너로 넘어가지 않게 합니다. 컨테이너는 다시 만들 때까지 옛 환경 변수를 유지하므로 5단계에서 서버마다 stop 후 start합니다. [환경 변수](../configuration/environment.ko.md) 참고.
 - `.mcctl.json`에 `installId`가 없으면 한 번 추가합니다 (기존 값은 유지). 웹 콘솔이 익명 사용 통계에 사용하며, 끄려면 `.mcctl.json`에 `"telemetry": false`를 설정합니다 ([사용 통계](../console/web-console.ko.md) 참고).
 - **router 이미지가 태그 없는 `itzg/mc-router`이면 `mcctl upgrade`가 image를 올리지 않습니다.** `docker-compose.yml`의 `image:`를 릴리즈 노트가 지정한 버전으로 직접 고정한 뒤 `docker compose config -q && docker compose up -d router`를 실행합니다.
 
@@ -85,11 +86,11 @@ mcctl console service restart --force
 cd $ROOT && npm rebuild better-sqlite3 && mcctl console service restart --force
 ```
 
-### 4-1. v2.31.1 이상으로 올릴 때: 콘솔 접근 모드 확인 (#633)
+### 4-1. v2.32.0 이상으로 올릴 때: 콘솔 접근 모드 확인 (#633)
 
-v2.31.0 이하에서 v2.31.1 이상으로 올릴 때 한 번만 합니다. `mcctl console init`을 실행한 호스트에만 해당합니다.
+v2.31.0 이하에서 v2.32.0 이상으로 올릴 때 한 번만 합니다. `mcctl console init`을 실행한 호스트에만 해당합니다.
 
-v2.31.0까지는 `mcctl console init`이 선택한 접근 모드를 `AUTH_MODE`에 그대로 썼습니다. mcctl-api는 `internal`, `api-key-ip`, `open`을 인식하지 못하고, `NODE_ENV=production`이면 `api-key`(그 외에는 `disabled`)로 동작합니다. v2.31.1부터는 `mcctl console init`이 mcctl-api가 인식하는 값으로 씁니다. `mcctl update`와 `mcctl upgrade`는 `ecosystem.config.cjs`를 다시 쓰지 않으므로, 기존 설치는 직접 바꾸기 전까지 옛 값이 남습니다.
+v2.31.0까지는 `mcctl console init`이 선택한 접근 모드를 `AUTH_MODE`에 그대로 썼습니다. mcctl-api는 `internal`, `api-key-ip`, `open`을 인식하지 못하고, `NODE_ENV=production`이면 `api-key`(그 외에는 `disabled`)로 동작합니다. v2.32.0부터는 `mcctl console init`이 mcctl-api가 인식하는 값으로 씁니다. `mcctl update`와 `mcctl upgrade`는 `ecosystem.config.cjs`를 다시 쓰지 않으므로, 기존 설치는 직접 바꾸기 전까지 옛 값이 남습니다.
 
 ```bash
 grep -nE "AUTH_MODE|AUTH_IP_WHITELIST" $ROOT/ecosystem.config.cjs
@@ -189,7 +190,7 @@ docker ps --format '{{.Names}}\t{{.Image}}\t{{.Status}}'
 - [ ] API `/health` 200, Console 200, PM2 restarts 증가 없음
 - [ ] 중지된 서버가 접속으로 기동됨(auto-scale)
 - [ ] 화면 스모크 테스트 통과
-- [ ] (v2.31.0 이하 → v2.31.1 이상) `ecosystem.config.cjs`의 `AUTH_MODE`가 mcctl-api가 인식하는 값임(4-1단계)
+- [ ] (v2.31.0 이하 → v2.32.0 이상) `ecosystem.config.cjs`의 `AUTH_MODE`가 mcctl-api가 인식하는 값임(4-1단계)
 - [ ] 안정 확인 후 `$B`(`backups-pre-$NEW`) 삭제
 
 ## 8. 롤백
