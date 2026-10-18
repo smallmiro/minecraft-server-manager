@@ -23,8 +23,9 @@
 #   --exclude-files LIST Mods to exclude from modpack, comma-separated (optional)
 #   --mod-loader LOADER  Mod loader: fabric, forge, neoforge, quilt (optional)
 #   -m, --memory SIZE    Memory allocation (e.g., 1G, 2G, 4G)
-#   --no-whitelist       Disable whitelist (whitelist is enabled by default)
-#   --whitelist PLAYERS  Initial whitelist players (comma-separated)
+#   --whitelist PLAYERS  Enable whitelist with initial players (comma-separated)
+#   --enable-whitelist   Enable whitelist without initial players
+#   --no-whitelist       Disable whitelist (default; overrides the options above)
 #   --no-start           Don't start the server after creation
 #   --start              Start the server after creation (default)
 #   --playit-domain DOMAIN  Register playit.gg external domain (e.g., aa.example.com)
@@ -242,7 +243,8 @@ MODPACK_SLUG=""
 MODPACK_VERSION=""
 MOD_LOADER=""
 MODPACK_EXCLUDE_FILES=""
-ENABLE_WHITELIST="true"
+ENABLE_WHITELIST="false"
+NO_WHITELIST="false"
 WHITELIST_PLAYERS=""
 START_SERVER="true"
 PLAYIT_DOMAIN=""
@@ -266,8 +268,9 @@ show_usage() {
     echo "  --mod-loader LOADER  Mod loader: fabric, forge, neoforge, quilt (optional)"
     echo "  --exclude-files LIST Mods to exclude from modpack (comma-separated, e.g. client-only mods)"
     echo "  -m, --memory SIZE    Memory allocation (e.g., 1G, 2G, 4G)"
-    echo "  --no-whitelist       Disable whitelist (whitelist is enabled by default)"
-    echo "  --whitelist PLAYERS  Initial whitelist players (comma-separated)"
+    echo "  --whitelist PLAYERS  Enable whitelist with initial players (comma-separated)"
+    echo "  --enable-whitelist   Enable whitelist without initial players"
+    echo "  --no-whitelist       Disable whitelist (default; overrides the options above)"
     echo "  --no-start           Don't start the server after creation"
     echo "  --start              Start the server after creation (default)"
     echo "  --playit-domain DOMAIN  Register playit.gg external domain (e.g., aa.example.com)"
@@ -342,11 +345,16 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --no-whitelist)
-            ENABLE_WHITELIST="false"
+            NO_WHITELIST="true"
+            shift
+            ;;
+        --enable-whitelist)
+            ENABLE_WHITELIST="true"
             shift
             ;;
         --whitelist)
             WHITELIST_PLAYERS="$2"
+            ENABLE_WHITELIST="true"
             shift 2
             ;;
         --no-start)
@@ -383,6 +391,12 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# --no-whitelist wins over --whitelist/--enable-whitelist regardless of order
+if [ "$NO_WHITELIST" = "true" ]; then
+    ENABLE_WHITELIST="false"
+    WHITELIST_PLAYERS=""
+fi
 
 # Validate mutually exclusive world options
 WORLD_OPTIONS_COUNT=0
@@ -571,10 +585,11 @@ if [ -f "$CONFIG_FILE" ]; then
         fi
     fi
 
-    # Apply whitelist settings (enabled by default for security)
+    # Apply whitelist settings (disabled by default; the template has no
+    # ENABLE_WHITELIST line, so it is written exactly once here when enabled)
     if [ "$ENABLE_WHITELIST" = "true" ]; then
         echo "" >> "$CONFIG_FILE"
-        echo "# Whitelist (Secure by Default)" >> "$CONFIG_FILE"
+        echo "# Whitelist" >> "$CONFIG_FILE"
         echo "ENABLE_WHITELIST=TRUE" >> "$CONFIG_FILE"
         if [ -n "$WHITELIST_PLAYERS" ]; then
             echo "WHITELIST=$WHITELIST_PLAYERS" >> "$CONFIG_FILE"
