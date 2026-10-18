@@ -4,6 +4,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { McctlConfig, EnvConfig } from '../types/index.js';
+import { applyEnvChanges, writeFileAtomic } from './env-file.js';
 
 /**
  * Get the package root directory
@@ -319,60 +320,19 @@ export class Config {
     return config;
   }
 
-  /** Update specific keys in .env file (preserves comments and other settings) */
-  updateEnv(updates: Record<string, string | boolean>): void {
+  /**
+   * Update specific keys in .env (other lines kept byte-identical). Values are
+   * quoted so bash `source` reads them literally; the write is atomic.
+   * Throws on a value that cannot be represented safely (see serializeEnvValue).
+   */
+  async updateEnv(updates: Record<string, string | boolean>): Promise<void> {
     const envPath = this.paths.envFile;
-    let content = '';
+    const content = existsSync(envPath) ? readFileSync(envPath, 'utf-8') : '';
+    const set = Object.fromEntries(Object.entries(updates).map(([key, value]) => [key, String(value)]));
+    const next = applyEnvChanges(content, { set });
 
-    if (existsSync(envPath)) {
-      content = readFileSync(envPath, 'utf-8');
-    }
-
-    const lines = content.split('\n');
-    const updatedKeys = new Set<string>();
-
-    // Update existing keys
-    const updatedLines = lines.map((line) => {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) return line;
-
-      const eqIndex = trimmed.indexOf('=');
-      if (eqIndex === -1) return line;
-
-      const key = trimmed.slice(0, eqIndex).trim();
-
-      if (key in updates) {
-        updatedKeys.add(key);
-        const value = updates[key];
-        const strValue = typeof value === 'boolean' ? String(value) : value;
-        return `${key}=${strValue}`;
-      }
-
-      return line;
-    });
-
-    // Add new keys that weren't updated
-    const newKeys = Object.entries(updates).filter(([key]) => !updatedKeys.has(key));
-
-    if (newKeys.length > 0) {
-      // Add blank line before new section if file has content
-      if (updatedLines.length > 0 && updatedLines[updatedLines.length - 1]?.trim() !== '') {
-        updatedLines.push('');
-      }
-
-      for (const [key, value] of newKeys) {
-        const strValue = typeof value === 'boolean' ? String(value) : value;
-        updatedLines.push(`${key}=${strValue}`);
-      }
-    }
-
-    // Ensure directory exists
-    const dir = dirname(envPath);
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
-
-    writeFileSync(envPath, updatedLines.join('\n'), 'utf-8');
+    mkdirSync(dirname(envPath), { recursive: true });
+    await writeFileAtomic(envPath, next);
   }
 }
 
