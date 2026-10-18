@@ -89,7 +89,8 @@ export const PlatformSettingsUpdateResponseSchema = Type.Object({
 export const PlatformSettingsValidationErrorSchema = Type.Object({
   error: Type.String(),
   message: Type.String(),
-  errors: Type.Array(Type.Object({ key: Type.String(), message: Type.String() })),
+  // Absent when the request body itself is malformed (framework-level 400).
+  errors: Type.Optional(Type.Array(Type.Object({ key: Type.String(), message: Type.String() }))),
 });
 
 export const PlatformSettingsConflictSchema = Type.Object({

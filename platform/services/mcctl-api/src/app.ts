@@ -19,6 +19,7 @@ import backupRoutes from './routes/backup.js';
 import backupScheduleRoutes from './routes/backup-schedule.js';
 import auditLogsRoutes from './routes/audit-logs.js';
 import playitRoutes from './routes/playit.js';
+import platformSettingsRoutes from './routes/platform-settings.js';
 import configSnapshotsRoutes from './routes/servers/config-snapshots.js';
 import configSnapshotDiffRoutes from './routes/config-snapshot-diff.js';
 import configSnapshotSchedulesRoutes from './routes/config-snapshot-schedules.js';
@@ -88,6 +89,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   // Register playit routes
   await app.register(playitRoutes);
+
+  // Register platform settings routes
+  await app.register(platformSettingsRoutes);
 
   // Register config snapshot routes
   await app.register(configSnapshotsRoutes);
