@@ -175,7 +175,8 @@ export class ProcessInfo {
       pid: pm2Process.pid,
       cpu: monit.cpu,
       memory: monit.memory,
-      uptime: env.pm_uptime,
+      // pm_uptime is the process start timestamp, not a duration
+      uptime: env.pm_uptime ? Date.now() - env.pm_uptime : undefined,
       restarts: env.restart_time,
       createdAt: env.created_at ? new Date(env.created_at) : undefined,
       interpreter: env.exec_interpreter,

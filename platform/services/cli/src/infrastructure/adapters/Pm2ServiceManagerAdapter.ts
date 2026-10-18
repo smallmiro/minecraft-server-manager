@@ -329,7 +329,8 @@ export class Pm2ServiceManagerAdapter implements IServiceManagerPort {
           pid: p.pid,
           cpu: p.monit?.cpu,
           memory: p.monit?.memory,
-          uptime: p.pm2_env?.pm_uptime,
+          // pm_uptime is the process start timestamp, not a duration
+          uptime: p.pm2_env?.pm_uptime ? Date.now() - p.pm2_env.pm_uptime : undefined,
           restarts: p.pm2_env?.restart_time,
           interpreter: p.pm2_env?.exec_interpreter,
           scriptPath: p.pm2_env?.pm_exec_path,

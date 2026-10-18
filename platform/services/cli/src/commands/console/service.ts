@@ -22,6 +22,7 @@ import {
   getAvailableServices,
   checkServiceAvailability,
 } from '../../lib/pm2-utils.js';
+import { AdminConfigManager } from '../../lib/admin-config.js';
 
 /**
  * Console service command options
@@ -52,6 +53,8 @@ interface ServiceInfo {
   uptime?: string;
   restarts?: number;
   url?: string;
+  /** Why the HTTP health probe failed (e.g. 'HTTP 500', 'unreachable'); unset when healthy */
+  health?: string;
 }
 
 interface ConsoleServiceStatus {
@@ -62,6 +65,7 @@ interface ConsoleServiceStatus {
 
 const API_PORT_DEFAULT = 5001;
 const CONSOLE_PORT_DEFAULT = 5000;
+const HEALTH_RETRY_MS = 15000;
 
 /**
  * Check PM2 is installed
@@ -181,12 +185,49 @@ function toServiceInfo(process: ProcessInfo, port?: number): ServiceInfo {
 }
 
 /**
- * Get console service status via PM2
+ * HTTP health probe. Returns null when healthy, otherwise a short reason.
+ * API: /health must be 2xx. Console: /api/auth/get-session must not be 5xx.
+ */
+async function probeHealth(name: string, port: number, timeoutMs: number): Promise<string | null> {
+  const isApi = name === PM2_SERVICE_NAMES.API;
+  const path = isApi ? '/health' : '/api/auth/get-session';
+  try {
+    const res = await fetch(`http://localhost:${port}${path}`, {
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    const ok = isApi ? res.ok : res.status < 500;
+    return ok ? null : `HTTP ${res.status}`;
+  } catch {
+    return 'unreachable';
+  }
+}
+
+/**
+ * Probe a service, retrying every second until healthy or the deadline passes
+ * (services need a moment to bind their port after PM2 reports online).
+ */
+async function probeWithRetry(
+  name: string,
+  port: number,
+  deadline: number
+): Promise<string | null> {
+  let reason = await probeHealth(name, port, 2000);
+  while (reason && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    reason = await probeHealth(name, port, 2000);
+  }
+  return reason;
+}
+
+/**
+ * Get console service status via PM2 + HTTP health probe
  */
 async function getConsoleServiceStatus(
   pm2Adapter: Pm2ServiceManagerAdapter,
   apiPort?: number,
-  consolePort?: number
+  consolePort?: number,
+  retryMs: number = 0,
+  scope: string[] = [PM2_SERVICE_NAMES.API, PM2_SERVICE_NAMES.CONSOLE]
 ): Promise<ConsoleServiceStatus> {
   try {
     const processes = await pm2Adapter.status();
@@ -199,9 +240,24 @@ async function getConsoleServiceStatus(
       ? toServiceInfo(consoleProcess, consolePort ?? CONSOLE_PORT_DEFAULT)
       : null;
 
+    const deadline = Date.now() + retryMs; // shared so total wait stays ~retryMs
+    for (const [info, port] of [
+      [api, apiPort ?? API_PORT_DEFAULT],
+      [consoleInfo, consolePort ?? CONSOLE_PORT_DEFAULT],
+    ] as const) {
+      if (info?.status === ServiceStatusEnum.ONLINE) {
+        const reason = await probeWithRetry(info.name, port, deadline);
+        if (reason) info.health = reason;
+      }
+    }
+
+    // Only services in scope (started/installed) must be online and pass the probe
     const healthy =
-      api?.status === ServiceStatusEnum.ONLINE &&
-      consoleInfo?.status === ServiceStatusEnum.ONLINE;
+      scope.length > 0 &&
+      scope.every((name) => {
+        const info = name === PM2_SERVICE_NAMES.API ? api : consoleInfo;
+        return info?.status === ServiceStatusEnum.ONLINE && !info.health;
+      });
 
     return { api, console: consoleInfo, healthy };
   } catch {
@@ -228,6 +284,7 @@ function formatStatus(status: ConsoleServiceStatus, json: boolean): void {
       status.api.status === ServiceStatusEnum.ONLINE ? colors.green : colors.red;
     console.log(`  ${colors.cyan('mcctl-api')}`);
     console.log(`    Status: ${statusColor(status.api.status)}`);
+    if (status.api.health) console.log(`    Health: ${colors.red(status.api.health)}`);
     if (status.api.pid) console.log(`    PID: ${status.api.pid}`);
     if (status.api.cpu !== undefined) console.log(`    CPU: ${status.api.cpu}%`);
     if (status.api.memory) console.log(`    Memory: ${status.api.memory}`);
@@ -245,6 +302,7 @@ function formatStatus(status: ConsoleServiceStatus, json: boolean): void {
       status.console.status === ServiceStatusEnum.ONLINE ? colors.green : colors.red;
     console.log(`  ${colors.cyan('mcctl-console')}`);
     console.log(`    Status: ${statusColor(status.console.status)}`);
+    if (status.console.health) console.log(`    Health: ${colors.red(status.console.health)}`);
     if (status.console.pid) console.log(`    PID: ${status.console.pid}`);
     if (status.console.url && status.console.status === ServiceStatusEnum.ONLINE) {
       console.log(`    URL: ${colors.cyan(status.console.url)}`);
@@ -272,12 +330,39 @@ function formatStatus(status: ConsoleServiceStatus, json: boolean): void {
 }
 
 /**
+ * For unhealthy services, detect native-module ABI mismatch in the PM2 error log
+ * and tell the user how to fix it.
+ */
+async function printUnhealthyHint(
+  pm2Adapter: Pm2ServiceManagerAdapter,
+  status: ConsoleServiceStatus
+): Promise<void> {
+  for (const svc of [status.api, status.console]) {
+    if (!svc?.health) continue;
+    try {
+      const errLog = await pm2Adapter.logs(svc.name, { err: true, lines: 50 });
+      if (errLog.includes('ERR_DLOPEN_FAILED') || errLog.includes('NODE_MODULE_VERSION')) {
+        log.error(
+          `${svc.name}: a native module (e.g. better-sqlite3) was built for a different Node.js version than the one the PM2 daemon runs on.`
+        );
+        log.info('Fix: pm2 kill, switch to the Node.js version used to install mcctl (e.g. nvm use 22), then run: mcctl console service start');
+        return;
+      }
+    } catch {
+      // log unavailable - skip hint
+    }
+  }
+}
+
+/**
  * Start console services
  */
 async function startServices(
   paths: Paths,
   pm2Adapter: Pm2ServiceManagerAdapter,
-  options: ConsoleServiceOptions
+  options: ConsoleServiceOptions,
+  apiPort: number,
+  consolePort: number
 ): Promise<number> {
   if (!ecosystemConfigExists(paths)) {
     log.error('Ecosystem config not found.');
@@ -286,8 +371,6 @@ async function startServices(
   }
 
   const services = await getServiceNames(options, paths.root, 'start');
-  const apiPort = options.apiPort ?? API_PORT_DEFAULT;
-  const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
 
   if (services === null) {
     return 0; // User cancelled
@@ -317,10 +400,19 @@ async function startServices(
     log.info('Console services started successfully');
 
     // Show status after starting
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort);
+    const status = await getConsoleServiceStatus(
+      pm2Adapter,
+      apiPort,
+      consolePort,
+      HEALTH_RETRY_MS,
+      services
+    );
     formatStatus(status, false);
 
+    if (!status.healthy && (status.api || status.console)) {
+      await printUnhealthyHint(pm2Adapter, status);
+      return 1;
+    }
     return 0;
   } catch (error) {
     log.error(`Failed to start services: ${error instanceof Error ? error.message : error}`);
@@ -387,11 +479,11 @@ async function stopServices(
 async function restartServices(
   paths: Paths,
   pm2Adapter: Pm2ServiceManagerAdapter,
-  options: ConsoleServiceOptions
+  options: ConsoleServiceOptions,
+  apiPort: number,
+  consolePort: number
 ): Promise<number> {
   const services = await getServiceNames(options, paths.root, 'restart');
-  const apiPort = options.apiPort ?? API_PORT_DEFAULT;
-  const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
 
   if (services === null) {
     return 0; // User cancelled
@@ -453,10 +545,19 @@ async function restartServices(
     log.info('Console services restarted');
 
     // Show status after restarting
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort);
+    const status = await getConsoleServiceStatus(
+      pm2Adapter,
+      apiPort,
+      consolePort,
+      HEALTH_RETRY_MS,
+      services
+    );
     formatStatus(status, false);
 
+    if (!status.healthy && (status.api || status.console)) {
+      await printUnhealthyHint(pm2Adapter, status);
+      return 1;
+    }
     return 0;
   } catch (error) {
     log.error(`Failed to restart services: ${error instanceof Error ? error.message : error}`);
@@ -550,22 +651,26 @@ export async function consoleServiceCommand(options: ConsoleServiceOptions): Pro
   const pm2Adapter = new Pm2ServiceManagerAdapter(paths);
 
   try {
-    const apiPort = options.apiPort ?? API_PORT_DEFAULT;
-    const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
+    // Flags override the ports saved by `mcctl console init`
+    const adminConfig = await new AdminConfigManager(options.root).load();
+    const apiPort = options.apiPort ?? adminConfig?.api?.port ?? API_PORT_DEFAULT;
+    const consolePort = options.consolePort ?? adminConfig?.console?.port ?? CONSOLE_PORT_DEFAULT;
+    const installed = getAvailableServices(paths.root);
 
     switch (options.subCommand) {
       case 'start':
-        return await startServices(paths, pm2Adapter, options);
+        return await startServices(paths, pm2Adapter, options, apiPort, consolePort);
 
       case 'stop':
         return await stopServices(paths, pm2Adapter, options);
 
       case 'restart':
-        return await restartServices(paths, pm2Adapter, options);
+        return await restartServices(paths, pm2Adapter, options, apiPort, consolePort);
 
       case 'status': {
-        const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort);
+        const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort, 0, installed);
         formatStatus(status, options.json ?? false);
+        if (!status.healthy && !options.json) await printUnhealthyHint(pm2Adapter, status);
         return status.healthy || (!status.api && !status.console) ? 0 : 1;
       }
 
@@ -574,7 +679,7 @@ export async function consoleServiceCommand(options: ConsoleServiceOptions): Pro
 
       default: {
         // Default: show status
-        const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort);
+        const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort, 0, installed);
         formatStatus(status, options.json ?? false);
         return 0;
       }

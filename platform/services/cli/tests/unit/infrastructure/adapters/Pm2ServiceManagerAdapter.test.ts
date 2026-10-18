@@ -52,6 +52,18 @@ describe('Pm2ServiceManagerAdapter', () => {
     adapter = new Pm2ServiceManagerAdapter(new Paths('/tmp/test-root'));
   });
 
+  describe('status', () => {
+    it('converts pm_uptime start timestamp to elapsed ms', async () => {
+      const now = Date.now();
+      mockList.mockImplementationOnce((cb: any) =>
+        cb(undefined, [{ name: 'mcctl-api', pm_id: 0, pm2_env: { status: 'online', pm_uptime: now - 60_000 } }])
+      );
+      const [info] = await adapter.status();
+      expect(info.uptime).toBeGreaterThanOrEqual(60_000);
+      expect(info.uptime).toBeLessThan(65_000);
+    });
+  });
+
   describe('killDaemon', () => {
     it('should call pm2.killDaemon and mark as disconnected', async () => {
       await adapter.killDaemon();
