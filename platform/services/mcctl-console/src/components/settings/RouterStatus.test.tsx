@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { RouterStatus } from './RouterStatus';
 import type { RouterDetail } from '@/ports/api/IMcctlApiClient';
 
@@ -61,5 +61,21 @@ describe('RouterStatus', () => {
     render(<RouterStatus router={routerWithRoutes} />);
 
     expect(screen.getByText('survival')).toBeInTheDocument();
+  });
+
+  it('should collapse each server\'s hostname list by default', () => {
+    const routerWithRoutes = {
+      ...mockRouter,
+      routes: [
+        { hostname: 'survival.local', target: 'mc-survival:25565', serverStatus: 'running' as const },
+      ],
+    };
+    render(<RouterStatus router={routerWithRoutes} />);
+
+    const summary = screen.getByRole('button', { name: /survival/ });
+    expect(summary).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(summary);
+    expect(summary).toHaveAttribute('aria-expanded', 'true');
   });
 });

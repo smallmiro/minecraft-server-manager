@@ -154,7 +154,7 @@ export function RouterStatus({ router }: RouterStatusProps) {
         ) : (
           <Box sx={{ mt: 1 }}>
             {Array.from(serverGroups.entries()).map(([serverName, { status, hostnames, serverType, serverVersion }]) => (
-              <Accordion key={serverName} defaultExpanded disableGutters elevation={0} sx={{
+              <Accordion key={serverName} disableGutters elevation={0} sx={{
                 border: 1,
                 borderColor: 'divider',
                 '&:not(:last-child)': { borderBottom: 0 },
