@@ -24,11 +24,17 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 !!! tip "권장 접근 방식"
     표준 설정에는 `mcctl config`를 사용하세요. CLI에서 지원하지 않는 고급 옵션에 대해서만 설정 파일을 직접 편집합니다.
 
+## 웹 콘솔에서 설정
+
+관리자는 웹 콘솔의 **Settings** → **Platform Settings**에서 플랫폼 `.env`를 편집할 수 있습니다. 키는 카드별로 묶여 있고, 시크릿은 쓰기 전용이며, 저장은 `.env`만 기록합니다. 저장 후 대화상자가 재시작할 대상을 안내합니다. 서버별 값은 각 서버의 **Options** 탭에 그대로 있습니다. [플랫폼 설정](../console/web-console.md#플랫폼-설정-관리자)을 참고하세요.
+
+![Platform Settings](../images/platform-settings.png)
+
 ---
 
 ## 전역 변수 (.env)
 
-이 변수들은 `~/minecraft-servers/.env`에 설정되며 모든 서버에 적용됩니다.
+이 변수들은 `~/minecraft-servers/.env`에 설정됩니다. 서버 컨테이너에는 `servers/global.env`에 이름이 있는 키만 전달됩니다. 각 키를 누가 읽는지는 [설정 분류](#설정-분류)를 참고하세요.
 
 ### 네트워크 설정
 
@@ -55,21 +61,31 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 | `TZ` | 타임존 | `UTC` | 수동 |
 | `RCON_PASSWORD` | RCON 콘솔 비밀번호. `mcctl init`이 무작위로 생성하며, 변경 후에는 컨테이너를 재생성해야 합니다 (`mcctl down && mcctl up`) | 무작위 | `mcctl init` |
 | `RCON_PORT` | RCON 포트 | `25575` | 자동 |
+| `EXTRA_ARGS` | 모든 서버에 전달하는 추가 인자. 서버의 `config.env`가 이 값을 덮어쓰며, 새 서버는 그곳에 `EXTRA_ARGS=--universe /worlds/`를 설정합니다 | - | 수동 |
 
 ### 백업 설정
 
 | 변수 | 설명 | 기본값 | mcctl |
 |------|------|--------|-------|
-| `BACKUP_GITHUB_TOKEN` | GitHub Personal Access Token | - | 수동 |
-| `BACKUP_GITHUB_REPO` | 대상 저장소 | - | 수동 |
-| `BACKUP_GITHUB_BRANCH` | 대상 브랜치 | `main` | 수동 |
-| `BACKUP_AUTO_ON_STOP` | 서버 중지 시 자동 백업 | `false` | 수동 |
+| `BACKUP_GITHUB_TOKEN` | GitHub Personal Access Token | - | `mcctl backup init` |
+| `BACKUP_GITHUB_REPO` | 대상 저장소 | - | `mcctl backup init` |
+| `BACKUP_GITHUB_BRANCH` | 대상 브랜치 | `main` | `mcctl backup init` |
+| `BACKUP_AUTO_ON_STOP` | 서버 중지 시 자동 백업 | `false` | `mcctl backup init` |
 
 !!! info "백업 설정"
     백업 변수 설정 후 확인:
     ```bash
     mcctl backup status
     ```
+
+### 외부 접속 및 콘솔
+
+| 변수 | 설명 | 기본값 | mcctl |
+|------|------|--------|-------|
+| `PLAYIT_SECRET_KEY` | playit.gg 에이전트 시크릿 키 | - | `mcctl playit setup` |
+| `LOG_LEVEL` | mcctl-api 로그 레벨 | `info` | 수동 |
+| `BETTER_AUTH_SECRET` | 콘솔 로그인 세션 서명 키. 변경하면 모든 사용자가 로그아웃됩니다 | 무작위 | `mcctl console init` |
+| `BETTER_AUTH_BASE_URL` | 인증 콜백에 쓰는 콘솔 공개 URL | `http://localhost:<console port>` | 수동 |
 
 ### 설정 분류
 
