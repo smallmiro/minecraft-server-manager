@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.31.0
-> **Last Updated**: 2026-10-11
+> **Version**: 2.32.0
+> **Last Updated**: 2026-10-18
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -2857,6 +2857,25 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 2.32.0 (2026-10-18) - Platform Settings & Secret Isolation
+
+Includes the unreleased 2.31.1 hotfix. Upgrade: `mcctl upgrade`, then `mcctl stop <name> && mcctl start <name>` for every server; hosts that ran `mcctl console init` on ≤2.31.0 check `AUTH_MODE` (runbook 4-1).
+
+**Added:**
+- Console **Platform Settings** (admin, `/settings`): edit `<MCCTL_ROOT>/.env` via `GET/PUT /api/platform-settings`; keys classified editable / read-only / runtime (PM2) / legacy / unknown; secrets write-only; 409 on stale revision; atomic `0600` write; restart scope per key; audit action `platform.settings.update` (key names only) (#683)
+- `BETTER_AUTH_SECRET` / `BETTER_AUTH_BASE_URL` read from `.env` (non-empty value wins over ecosystem); `mcctl console init` writes the secret to `.env`; apply with `mcctl console service restart --console` (#686)
+- `mcctl init` generates a random 24-char `RCON_PASSWORD` (#680); `mcctl create --enable-whitelist` (#679)
+
+**Changed:**
+- Whitelist off by default for new servers (#679); connection addresses sorted LAN → VPN → nip.io → external → `.local`, LAN is primary (#681)
+- `mcctl console init` maps `internal`→`ip-whitelist`, `api-key-ip`→`combined`, `open`→`disabled` (#633); legacy keys removed from `.env.example` (#687)
+
+**Fixed:**
+- Servers load `servers/global.env` (`TZ`, `EXTRA_ARGS`, `RCON_PASSWORD`, `RCON_PORT` only) instead of the whole `.env` (#685)
+- sudo password no longer appended to `/etc/avahi/hosts`; first IPv4 of `HOST_IP` only (#682)
+- `DELETE /api/audit-logs` requires admin (#689); `Config.updateEnv` atomic and bash-safe (#688)
+- Copy on plain HTTP (#681), RCON ANSI fake player (#600), Minecraft 26.x world/player data (#601), CLI exit code when audit log fails (#602), `console service status` uptime/HTTP health (#677)
 
 ### Version 2.31.0 (2026-10-11) - Console Usage Analytics
 

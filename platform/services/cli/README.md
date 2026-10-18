@@ -77,6 +77,12 @@ mcctl logs myserver
 
 ## Changelog
 
+### v2.32.0 (2026-10-18)
+- **feat(console)**: Platform Settings for admins - edit the platform `.env` with write-only secrets, conflict detection and restart guidance (#683); console auth settings read from `.env` (#686)
+- **feat(cli)**: random `RCON_PASSWORD` on `mcctl init` (#680); whitelist off by default, `mcctl create --enable-whitelist` (#679)
+- **fix(security)**: platform secrets no longer reach server containers - run `mcctl upgrade`, then stop/start each server (#685); sudo password no longer written to `/etc/avahi/hosts` (#682); `DELETE /api/audit-logs` requires admin (#689)
+- **fix**: atomic `.env` writes (#688), LAN-first addresses and copy over HTTP (#681), Minecraft 26.x world info (#601), RCON player list (#600), audit log exit code (#602), console service status (#677), console init access modes (#633)
+
 ### v2.31.0 (2026-10-11)
 - **feat(console)**: Anonymous usage analytics (GA4): per-install `installId`, normalized page path, console version only. Opt out with `"telemetry": false` in `.mcctl.json` or `DO_NOT_TRACK=1` (#631)
 - **fix(cli)**: `mcctl console user/api` no longer drop `--role`, `--password`, `--json`, `--force` (#628)
@@ -100,11 +106,6 @@ mcctl logs myserver
 - **feat(console)**: Bento layout across every Web Console screen - page hero with key status, metrics, and primary action, followed by panels for detailed content; existing actions and permissions unchanged
 - **fix(console)**: Dashboard "needs attention" includes unhealthy servers and shows **Reconnecting** when SSE is down; pages show **Unavailable** instead of misleading zeros on load failure, and keep cached data on refetch errors
 - **fix(cli)**: `mcctl console user ...` / `mcctl console api ...` no longer fail with `unknown command 'node'` (#556, #557)
-
-### v2.27.0 (2026-09-27)
-- **feat(console)**: Server **Players** tab - merged online (RCON) + offline roster with avatars, badges, and kick/ban/op/whitelist actions; works while the server is stopped (#528, #550)
-- **feat(console)**: Player detail modal with statistics/advancements (#551), saved + live position and status from `playerdata` NBT (#552), and session/visit history collected from container logs into `data/players.db` (#553)
-- **feat(api)**: `GET /api/servers/:name/players` returns the full roster (no more `400` for stopped servers); new `GET /api/servers/:name/players/:uuid?include=stats,nbt,sessions` (#550–#553)
 
 [Full Changelog](https://github.com/smallmiro/minecraft-server-manager/releases)
 
