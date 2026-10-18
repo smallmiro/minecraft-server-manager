@@ -490,7 +490,15 @@ mcctl create [name] [options]
 | `--world` | `-w` | Use existing world from worlds/ directory |
 | `--modpack` | | Enable Modrinth modpack server creation (interactive search) |
 | `--no-start` | | Create without starting |
+| `--whitelist` | | Enable whitelist and add initial players (comma-separated, e.g. `Steve,Alex`) |
+| `--enable-whitelist` | | Enable whitelist without initial players |
+| `--no-whitelist` | | Disable whitelist (default; overrides the two options above) |
 | `--sudo-password` | | Sudo password for mDNS registration (automation) |
+
+!!! note "Whitelist is off by default"
+    Servers created without a whitelist option have the whitelist **disabled**, so anyone with a premium (online-mode) account can join. Use `--whitelist` or `--enable-whitelist` to restrict access, or turn it on later with `mcctl whitelist <server> on`. In interactive mode you are asked "Enable whitelist?" (default No) and only asked for players when you answer Yes. Servers created from the Web Console are also created with the whitelist off.
+
+    Premium account authentication (`ONLINE_MODE=TRUE`) is unchanged and stays on. Servers created before this change keep their existing whitelist setting.
 
 !!! tip "Automation with Sudo Password"
     When automating server creation in CI/CD pipelines, you can provide the sudo password for mDNS registration:
@@ -524,6 +532,12 @@ mcctl create [name] [options]
 
     # Create without starting
     mcctl create myserver --no-start
+
+    # Whitelist on with initial players
+    mcctl create private --whitelist Steve,Alex
+
+    # Whitelist on, add players later
+    mcctl create private --enable-whitelist
     ```
 
 === "Modpack (Modrinth)"
