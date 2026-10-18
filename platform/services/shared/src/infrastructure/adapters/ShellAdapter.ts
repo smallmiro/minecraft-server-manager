@@ -117,11 +117,13 @@ export class ShellAdapter implements IShellPort {
       args.push('--exclude-files', options.modpackExcludeFiles.join(','));
     }
 
+    // create-server.sh defaults to whitelist off
     if (options.enableWhitelist === false) {
       args.push('--no-whitelist');
-    }
-    if (options.whitelistPlayers && options.whitelistPlayers.length > 0) {
+    } else if (options.whitelistPlayers && options.whitelistPlayers.length > 0) {
       args.push('--whitelist', options.whitelistPlayers.join(','));
+    } else if (options.enableWhitelist) {
+      args.push('--enable-whitelist');
     }
 
     // Add playit domain options

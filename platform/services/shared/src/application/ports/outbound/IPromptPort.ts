@@ -99,7 +99,7 @@ export interface IPromptPort {
 
   /**
    * Prompt for initial whitelist players
-   * Whitelist is enabled by default for security (secure by default)
+   * Called only after the user chose to enable the whitelist (off by default)
    * @returns Array of player names to whitelist (empty array = whitelist enabled, no players)
    */
   promptWhitelistPlayers(): Promise<string[]>;

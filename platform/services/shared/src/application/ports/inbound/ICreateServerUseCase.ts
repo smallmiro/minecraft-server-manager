@@ -39,6 +39,7 @@ export interface CreateServerConfig {
    * dedicated server). Maps to MODRINTH_EXCLUDE_FILES / CF_EXCLUDE_MODS.
    */
   modpackExcludeFiles?: string[];
+  /** Off by default; on when true or whitelistPlayers is non-empty. false always wins. */
   enableWhitelist?: boolean;
   whitelistPlayers?: string[];
   playitDomain?: string;
