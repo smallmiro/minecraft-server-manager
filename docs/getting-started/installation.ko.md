@@ -213,8 +213,8 @@ DEFAULT_VERSION=1.20.4
 # 타임존
 TZ=Asia/Seoul
 
-# RCON 비밀번호 (운영 환경에서는 변경하세요!)
-RCON_PASSWORD=changeme
+# RCON 비밀번호 (`mcctl init`이 무작위로 생성; 변경 후 컨테이너 재생성 필요)
+RCON_PASSWORD=<mcctl init이 생성한 무작위 값>
 ```
 
 ## 설치 확인

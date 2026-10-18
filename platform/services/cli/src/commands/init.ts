@@ -7,6 +7,7 @@ import type { McctlConfig } from '@minecraft-docker/shared';
 import { selectHostIPs, getNetworkInterfaces } from '../lib/prompts/ip-select.js';
 import { multiselect, text, select, confirm, password, isCancel } from '@clack/prompts';
 import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
+import { randomizeRconPassword } from '../lib/rcon-password.js';
 import { displayPrerequisiteReport } from '../lib/prerequisite-display.js';
 import { printBanner, getGitHash, type UpdateCheckResult } from '../lib/banner.js';
 import {
@@ -118,7 +119,7 @@ export async function initCommand(options: {
 
   const templateFiles: Array<{ src: string; dest: string; transform?: (content: string) => string }> = [
     { src: 'docker-compose.yml', dest: 'docker-compose.yml' },
-    { src: '.env.example', dest: '.env' },
+    { src: '.env.example', dest: '.env', transform: randomizeRconPassword },
     { src: 'gitignore.template', dest: '.gitignore' },
     { src: 'servers/compose.template.yml', dest: 'servers/compose.yml' },
     { src: 'servers/_template/docker-compose.yml', dest: 'servers/_template/docker-compose.yml' },

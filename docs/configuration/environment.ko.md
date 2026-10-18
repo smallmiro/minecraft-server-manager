@@ -55,7 +55,7 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 | `DEFAULT_MEMORY` | 기본 메모리 할당 | `4G` | `mcctl init` |
 | `DEFAULT_VERSION` | 기본 Minecraft 버전 | `LATEST` | `mcctl init` |
 | `TZ` | 타임존 | `UTC` | 수동 |
-| `RCON_PASSWORD` | RCON 콘솔 비밀번호 | `changeme` | 수동 |
+| `RCON_PASSWORD` | RCON 콘솔 비밀번호. `mcctl init`이 무작위로 생성하며, 변경 후에는 컨테이너를 재생성해야 합니다 (`mcctl down && mcctl up`) | 무작위 | `mcctl init` |
 | `RCON_PORT` | RCON 포트 | `25575` | 자동 |
 
 ### 백업 설정
