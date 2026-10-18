@@ -13,7 +13,7 @@ describe('Config.updateEnv', () => {
   const read = () => readFileSync(envPath, 'utf-8');
   /** Value of `key` after `set -a; source .env` (how backup.sh loads it). */
   const sourced = (key: string) =>
-    execFileSync('bash', ['-c', `set -a; source "$1"; printf %s "\${${key}}"`, '_', envPath], { encoding: 'utf-8' });
+    execFileSync('bash', ['-c', `set -a; source "$1"; printf %s "\${${key}}"`, '_', envPath], { encoding: 'utf-8', cwd: dir });
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), 'mcctl-update-env-'));
