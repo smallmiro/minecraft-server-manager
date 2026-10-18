@@ -873,7 +873,7 @@ playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시되�
 
 - **Bento 카드** -- 설정은 Network & Routing, Server Runtime, RCON, Backup, External Access (playit.gg), Console & Logging 카드로 그룹화됩니다. 각 필드는 타입별 입력(텍스트, 스위치, 선택, 숫자, IP 목록)과 필드 단위 검증을 제공합니다
 - **시크릿은 쓰기 전용** -- 시크릿 필드(`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`)는 **Configured** 또는 **Not configured**만 표시합니다. 입력란은 미리 채워지지 않으며, 값을 입력하면 변경된 필드로 표시됩니다
-- **Runtime (PM2)** -- `ecosystem.config.cjs`의 `AUTH_MODE`와, 이전 버전 ecosystem 파일이 아직 주입하는 경우 `BETTER_AUTH_BASE_URL` / `BETTER_AUTH_SECRET`(configured 여부만)을 읽기 전용 카드로 보여줍니다. **Console & Logging**에서 설정한 값이 우선하며, `mcctl console init`을 다시 실행하면 `.env`로 옮겨집니다
+- **Runtime (PM2)** -- `ecosystem.config.cjs`의 `AUTH_MODE`와, 이전 버전 ecosystem 파일이 아직 주입하는 경우 `BETTER_AUTH_BASE_URL` / `BETTER_AUTH_SECRET`(configured 여부만)을 읽기 전용 카드로 보여줍니다. ecosystem에 정의돼 있는 동안은 `.env`보다 우선하며 여기서 바꿀 수 없습니다. `mcctl upgrade`를 실행하면 `.env`로 옮겨집니다
 - **Advanced Environment** -- 알 수 없는 키를 key/value 행으로 추가, 편집, 삭제합니다. 이 키는 이름이 `servers/global.env`에 있을 때만 서버에 전달됩니다
 - **Legacy / Unused** -- Legacy 키를 경고 스타일로 표시합니다("Not read by any current code."). 직접 삭제하지 않는 한 아무것도 제거되지 않습니다
 - **읽기 전용 네트워크 식별자** -- `MINECRAFT_NETWORK`, `MINECRAFT_SUBNET`, `COMPOSE_PROJECT_NAME`은 CLI 안내와 함께 표시만 됩니다

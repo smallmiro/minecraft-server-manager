@@ -74,6 +74,7 @@ mcctl upgrade --non-interactive   # 프롬프트 없이 기본값 적용(자동�
 - `.env`에 새 변수가 추가되고(`DOCKER_GID` 등), `docker-compose.yml.bak-<타임스탬프>`가 생성되며, router가 변경되면 `docker compose up -d router`가 자동 실행됩니다.
 - `servers/_template/*`가 덮어써지고 `.mcctl.json`의 `templateVersion`이 갱신됩니다.
 - (v2.32.0 이상) `servers/global.env`가 없으면 만들고, 기존 서버의 `- ../../.env`를 `- ../global.env`로 바꿔 플랫폼 시크릿이 서버 컨테이너로 넘어가지 않게 합니다. 컨테이너는 다시 만들 때까지 옛 환경 변수를 유지하므로 5단계에서 서버마다 stop 후 start합니다. [환경 변수](../configuration/environment.ko.md) 참고.
+- (v2.32.1 이상) `ecosystem.config.cjs`가 아직 `BETTER_AUTH_SECRET` / `BETTER_AUTH_BASE_URL`을 정의하고 있으면 두 값을 `.env`로 옮기고(시크릿은 그대로라 세션 유지), ecosystem 파일에서 키를 제거하며, 같은 위치에 `ecosystem.config.cjs.bak-<타임스탬프>`를 만듭니다. 4단계의 `mcctl console service restart --console`로 적용됩니다. `--dry-run`은 보여주기만 하고, 두 번째 실행은 아무것도 바꾸지 않습니다(#699).
 - `.mcctl.json`에 `installId`가 없으면 한 번 추가합니다 (기존 값은 유지). 웹 콘솔이 익명 사용 통계에 사용하며, 끄려면 `.mcctl.json`에 `"telemetry": false`를 설정합니다 ([사용 통계](../console/web-console.ko.md) 참고).
 - **router 이미지가 태그 없는 `itzg/mc-router`이면 `mcctl upgrade`가 image를 올리지 않습니다.** `docker-compose.yml`의 `image:`를 릴리즈 노트가 지정한 버전으로 직접 고정한 뒤 `docker compose config -q && docker compose up -d router`를 실행합니다.
 
@@ -203,6 +204,7 @@ cp $B/.mcctl.json .mcctl.json
 rm -rf servers/_template && cp -r $B/_template servers/_template
 docker compose up -d router
 [ -f $B/ecosystem.config.cjs ] && cp $B/ecosystem.config.cjs ecosystem.config.cjs   # 4-1단계에서 바꾼 경우
+[ -n "$(ls ecosystem.config.cjs.bak-* 2>/dev/null)" ] && echo "3단계에서 BETTER_AUTH_*를 옮겼다면 최신 ecosystem.config.cjs.bak-*를 복원"
 # 패키지를 이전 버전 OLD로 (PM2 Node 셸에서)
 npm install -g @minecraft-docker/mcctl@$OLD
 npm install @minecraft-docker/mcctl-api@$OLD @minecraft-docker/mcctl-console@$OLD @minecraft-docker/shared@$OLD

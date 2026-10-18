@@ -73,6 +73,7 @@ mcctl upgrade --non-interactive   # apply defaults without prompting (automation
 - New `.env` variables are added (e.g. `DOCKER_GID`), `docker-compose.yml.bak-<timestamp>` is created, and `docker compose up -d router` runs automatically when the router changes.
 - `servers/_template/*` is overwritten and `templateVersion` in `.mcctl.json` is updated.
 - (v2.32.0+) If `servers/global.env` is missing, it is created and existing servers are repointed from `- ../../.env` to `- ../global.env`, so platform secrets stop reaching server containers. Containers keep the old environment until recreated: stop, then start each server in step 5. See [Environment Variables](../configuration/environment.md#setting-classification).
+- (v2.32.1+) If `ecosystem.config.cjs` still defines `BETTER_AUTH_SECRET` / `BETTER_AUTH_BASE_URL`, they are moved into `.env` (the secret is kept, so sessions stay valid), the keys are removed from the ecosystem file, and `ecosystem.config.cjs.bak-<timestamp>` is written next to it. Step 4 (`mcctl console service restart --console`) applies it. `--dry-run` only shows it; a second run changes nothing (#699).
 - If `.mcctl.json` has no `installId`, it is added once (an existing value is kept). The web console uses it for anonymous usage analytics; to opt out, set `"telemetry": false` in `.mcctl.json` (see [Usage Analytics](../console/web-console.md#usage-analytics)).
 - **If the router image is the untagged `itzg/mc-router`, `mcctl upgrade` does not bump the image.** Pin `image:` in `docker-compose.yml` to the version named in the release notes, then run `docker compose config -q && docker compose up -d router`.
 
@@ -202,6 +203,7 @@ cp $B/.mcctl.json .mcctl.json
 rm -rf servers/_template && cp -r $B/_template servers/_template
 docker compose up -d router
 [ -f $B/ecosystem.config.cjs ] && cp $B/ecosystem.config.cjs ecosystem.config.cjs   # if changed in step 4-1
+[ -n "$(ls ecosystem.config.cjs.bak-* 2>/dev/null)" ] && echo "restore the latest ecosystem.config.cjs.bak-* if step 3 moved BETTER_AUTH_*"
 # packages back to $OLD (in the PM2-Node shell)
 npm install -g @minecraft-docker/mcctl@$OLD
 npm install @minecraft-docker/mcctl-api@$OLD @minecraft-docker/mcctl-console@$OLD @minecraft-docker/shared@$OLD
