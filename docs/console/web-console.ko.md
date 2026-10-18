@@ -161,11 +161,11 @@ v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 
 
 1. **Server Name** -- 서버의 고유 식별자 (소문자, 숫자, 하이픈만 사용 가능)
 2. **Server Type** -- 토글로 카테고리를 선택합니다:
-    - **Standard Server** -- **Server Type**(VANILLA, PAPER, FABRIC, FORGE, NEOFORGE)과 **Minecraft Version**(예: `1.21.1`, `latest`)을 선택합니다
+    - **Standard Server** -- **Server Type**(VANILLA, PAPER, FABRIC, FORGE, NEOFORGE)과 **Minecraft Version**(예: `1.21.1`, `LATEST`)을 선택합니다. 기본값은 VANILLA와 `LATEST`입니다. 다른 유형은 로더가 최신 Minecraft 릴리스를 아직 지원하지 않을 수 있으니, 그럴 때는 `1.21.1`처럼 버전을 지정하세요
     - **Modpack** -- Modrinth 모드팩을 이름으로 검색하거나(`cobblemon` 같은 slug를 직접 입력해도 됩니다) **Mod Loader**와 호환되는 **Minecraft Version**을 선택합니다. 감지된 클라이언트 전용 모드는 **Exclude mods (optional)**에 자동으로 추가되며, 쉼표로 구분된 이 목록은 직접 수정할 수 있습니다
 3. **World Setup** -- **Default World**, **Seed**(시드 입력), **Existing World**(할당되지 않은 월드 선택)
 4. **Memory** -- 할당할 RAM 용량 (기본값: 일반 서버 `4G`, 모드팩 `6G`)
-5. **Sudo Password** -- mDNS 호스트명 등록(avahi)에 필요합니다
+5. **Sudo Password** -- mDNS 호스트명 등록(avahi)에 필요합니다. 비워 두고 **Create**를 누르면 확인 창이 뜹니다. 호스트의 sudo가 비밀번호를 묻지 않으면 **Continue without password**를, 비밀번호를 입력하려면 **Enter password**를 선택하세요
 6. **Auto-start after creation** -- 생성 직후 서버를 시작합니다
 
 **Create**를 클릭하면 시작됩니다. 다이얼로그가 Server-Sent Events 기반의 진행 화면(**Initializing**, **Creating**, **Configuring**, **Starting**)으로 바뀌고, **Server Created Successfully** 또는 **Creation Failed**로 끝납니다.
