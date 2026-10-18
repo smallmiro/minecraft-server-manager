@@ -232,6 +232,10 @@ EOF
     fi
 }
 
+# Stop here when sourced (tests load the helper functions above without
+# running the create flow below).
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && return 0 2>/dev/null || true
+
 # Default values
 SERVER_TYPE="PAPER"
 MC_VERSION=""
