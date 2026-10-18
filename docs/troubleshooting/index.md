@@ -155,6 +155,32 @@ mcctl logs <server-name> | grep -i "mod\|plugin"
 | Missing dependencies | Install required dependency mods |
 | File permissions | Check file ownership in shared/ directory |
 
+### sudo Password Written to /etc/avahi/hosts (before 2.31.1)
+
+**Affected:** You created servers with mcctl earlier than 2.31.1 and supplied a sudo password through `MCCTL_SUDO_PASSWORD`, `--sudo-password`, or the web console's sudo password field.
+
+If sudo did not need to ask for the password at that moment (credentials cached from a recent `sudo`, or `NOPASSWD` in sudoers), the password line was appended to `/etc/avahi/hosts` in plain text. This file is readable by every user on the host. 2.31.1 fixes this; existing files are not changed automatically.
+
+**Check:** list the lines that are not comments, blank lines, or a single `<IPv4> <name>.local` entry:
+
+```bash
+grep -nvE '^[[:space:]]*(#|$)|^[0-9.]+[[:space:]]+[^[:space:]]+\.local[[:space:]]*$' /etc/avahi/hosts
+```
+
+No output means the file is clean. Each printed line starts with its line number. A line that is your password, or an entry with several IPs such as `192.168.1.10,100.64.0.5 myserver.local`, must be fixed.
+
+**Fix:**
+
+1. Delete the bad line by its number (replace `<N>`) and restart avahi:
+
+    ```bash
+    sudo sed -i '<N>d' /etc/avahi/hosts
+    sudo systemctl restart avahi-daemon
+    ```
+
+2. If a password line was there, change that account's password with `passwd`.
+3. For a multi-IP entry, set `HOST_IP` in `.env` to one IPv4 address (or use `HOST_IPS` for several), then add the entry again: `echo '192.168.1.10 myserver.local' | sudo tee -a /etc/avahi/hosts`.
+
 ---
 
 ## Getting Help

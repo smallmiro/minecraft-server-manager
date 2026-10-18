@@ -155,6 +155,32 @@ mcctl logs <server-name> | grep -i "mod\|plugin"
 | 누락된 의존성 | 필요한 의존성 모드 설치 |
 | 파일 권한 | shared/ 디렉토리의 파일 소유권 확인 |
 
+### sudo 비밀번호가 /etc/avahi/hosts에 기록됨 (2.31.1 이전)
+
+**해당 대상:** 2.31.1 이전 mcctl로 서버를 만들면서 `MCCTL_SUDO_PASSWORD`, `--sudo-password`, 또는 웹 콘솔의 sudo 비밀번호 입력란으로 sudo 비밀번호를 넘긴 경우.
+
+그 시점에 sudo가 비밀번호를 물을 필요가 없었다면(직전 `sudo` 인증이 캐시돼 있었거나 sudoers에 `NOPASSWD`가 설정된 경우) 비밀번호 줄이 평문으로 `/etc/avahi/hosts`에 추가됐습니다. 이 파일은 호스트의 모든 사용자가 읽을 수 있습니다. 2.31.1에서 수정됐지만 이미 기록된 파일은 자동으로 고치지 않습니다.
+
+**점검:** 주석, 빈 줄, `<IPv4> <이름>.local` 한 개짜리 항목이 아닌 줄을 출력합니다.
+
+```bash
+grep -nvE '^[[:space:]]*(#|$)|^[0-9.]+[[:space:]]+[^[:space:]]+\.local[[:space:]]*$' /etc/avahi/hosts
+```
+
+아무것도 출력되지 않으면 정상입니다. 출력된 각 줄 앞에는 줄 번호가 붙습니다. 비밀번호인 줄, 또는 `192.168.1.10,100.64.0.5 myserver.local`처럼 IP가 여러 개인 항목은 고쳐야 합니다.
+
+**조치:**
+
+1. 문제 줄을 줄 번호로 삭제하고(`<N>`을 바꿔 입력) avahi를 재시작합니다.
+
+    ```bash
+    sudo sed -i '<N>d' /etc/avahi/hosts
+    sudo systemctl restart avahi-daemon
+    ```
+
+2. 비밀번호 줄이 있었다면 `passwd`로 해당 계정의 비밀번호를 바꿉니다.
+3. IP가 여러 개인 항목은 `.env`의 `HOST_IP`를 IPv4 주소 하나로 설정하고(여러 IP는 `HOST_IPS` 사용) 항목을 다시 추가합니다: `echo '192.168.1.10 myserver.local' | sudo tee -a /etc/avahi/hosts`.
+
 ---
 
 ## 도움 받기
