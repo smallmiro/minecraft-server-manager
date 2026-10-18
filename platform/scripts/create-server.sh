@@ -94,7 +94,8 @@ get_host_ip() {
         local env_ip
         env_ip=$(grep "^HOST_IP=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 | tr -d '"' | tr -d "'")
         if [ -n "$env_ip" ]; then
-            echo "$env_ip"
+            # HOST_IP may also hold a comma-separated list; avahi needs one IP
+            echo "$env_ip" | cut -d',' -f1 | tr -d '[:space:]'
             return
         fi
     fi
@@ -169,6 +170,15 @@ build_hostnames() {
     echo "$hostnames"
 }
 
+# True if $1 is a dotted-quad IPv4 address (each octet 0-255)
+is_ipv4() {
+    local octet
+    [[ "$1" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || return 1
+    for octet in ${1//./ }; do
+        (( 10#$octet <= 255 )) || return 1
+    done
+}
+
 # Register hostname with avahi-daemon
 register_avahi_hostname() {
     local hostname="$1"
@@ -177,6 +187,12 @@ register_avahi_hostname() {
     if [ -z "$ip" ]; then
         echo -e "${YELLOW}   Warning: Could not determine HOST_IP, skipping avahi registration${NC}"
         echo "   Set HOST_IP in .env or add manually: sudo nano $AVAHI_HOSTS"
+        return 1
+    fi
+
+    if ! is_ipv4 "$ip"; then
+        echo -e "${YELLOW}   Warning: '$ip' is not a valid IPv4 address, skipping avahi registration${NC}"
+        echo "   Set HOST_IP in .env to a single IPv4 address (e.g., 192.168.1.10)"
         return 1
     fi
 
