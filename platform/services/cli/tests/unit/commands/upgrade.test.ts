@@ -82,6 +82,7 @@ vi.mock('@minecraft-docker/shared', () => ({
   })),
 }));
 
+import * as prompts from '@clack/prompts';
 import { upgradeCommand } from '../../../src/commands/upgrade.js';
 
 // Helper to set up filesystem mocks
@@ -218,6 +219,24 @@ describe('upgradeCommand', () => {
     expect(result).toBe(0);
     // Should still save a new config
     expect(mockConfigSave).toHaveBeenCalled();
+  });
+
+  it('creates servers/global.env and repoints legacy servers (#685)', async () => {
+    const baseExists = mockExistsSync.getMockImplementation()!;
+    const baseRead = mockReadFileSync.getMockImplementation()!;
+    mockExistsSync.mockImplementation((path: string) =>
+      String(path) === '/mock/root/servers/global.env' ? false : String(path).includes('/servers') || baseExists(path)
+    );
+    mockReadFileSync.mockImplementation((path: string) =>
+      String(path).endsWith('servers/a/docker-compose.yml') ? 'env_file:\n  - ../../.env\n' : baseRead(path)
+    );
+    mockReaddirSync.mockReturnValueOnce([{ name: 'a', isDirectory: () => true }]);
+
+    await upgradeCommand({ root: '/mock/root', nonInteractive: true });
+
+    expect(mockCopyFileSync).toHaveBeenCalledWith('/mock/templates/servers/global.env', '/mock/root/servers/global.env');
+    expect(mockWriteFileSync).toHaveBeenCalledWith('/mock/root/servers/a/docker-compose.yml', 'env_file:\n  - ../global.env\n', 'utf-8');
+    expect(prompts.log.warn).toHaveBeenCalledWith(expect.stringContaining('mcctl stop a && mcctl start a'));
   });
 
   it('should copy template files to servers/_template', async () => {
