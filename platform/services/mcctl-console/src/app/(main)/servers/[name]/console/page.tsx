@@ -16,6 +16,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import { ServerConsole } from '@/components/servers/ServerConsole';
 import { PageHero } from '@/components/bento';
+import { useServer } from '@/hooks/useMcctl';
+import { useServerStatus } from '@/hooks/useServerStatus';
 
 interface PageProps {
   params: { name: string };
@@ -25,6 +27,9 @@ export default function ConsolePage({ params }: PageProps) {
   const router = useAppRouter();
   const { name } = params;
   const serverName = decodeURIComponent(name);
+  const { data } = useServer(serverName);
+  const { status: sseStatus, isConnected: sseConnected } = useServerStatus({ serverName });
+  const serverStatus = sseConnected ? (sseStatus ?? data?.server?.status) : data?.server?.status;
   const [connectionState, setConnectionState] = useState({
     isConnected: false,
     retryCount: 0,
@@ -92,6 +97,7 @@ export default function ConsolePage({ params }: PageProps) {
       <Box sx={{ flex: 1, minHeight: { xs: 480, md: 'calc(100vh - 300px)' } }}>
         <ServerConsole
           serverName={serverName}
+          serverStatus={serverStatus}
           onConnectionStateChange={setConnectionState}
         />
       </Box>

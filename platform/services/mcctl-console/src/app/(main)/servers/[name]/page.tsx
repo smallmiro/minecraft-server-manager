@@ -90,7 +90,7 @@ export default function ServerDetailPage() {
   const currentStatus = isConnected ? (sseStatus ?? server?.status) : server?.status;
   const currentHealth = isConnected ? (sseHealth ?? server?.health) : server?.health;
   const isRunning = currentStatus === 'running';
-  const isStopped = ['stopped', 'exited', 'not_created'].includes(currentStatus ?? '');
+  const isStopped = ['stopped', 'exited', 'not_created', 'created'].includes(currentStatus ?? '');
   const isActionPending =
     startServer.isPending || stopServer.isPending || restartServer.isPending;
 
@@ -325,7 +325,7 @@ export default function ServerDetailPage() {
           </BentoPanel>
         ) : server ? (
           <Box sx={{ gridColumn: '1 / -1', minWidth: 0 }}>
-            <ServerDetail server={server} onSendCommand={handleSendCommand} />
+            <ServerDetail server={currentStatus ? { ...server, status: currentStatus } : server} onSendCommand={handleSendCommand} />
           </Box>
         ) : !error ? (
           <Alert severity="warning" sx={{ gridColumn: '1 / -1' }}>

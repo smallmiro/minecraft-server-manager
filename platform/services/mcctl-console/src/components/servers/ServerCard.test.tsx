@@ -40,6 +40,15 @@ describe('ServerCard', () => {
     expect(statusBadge).toBeInTheDocument();
   });
 
+  it('should show Start button for a created server', () => {
+    const onStart = vi.fn();
+    const createdServer = { ...mockServer, status: 'created' as const };
+    renderWithTheme(<ServerCard server={createdServer} onStart={onStart} />);
+    expect(screen.getByText('Created')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /start/i }));
+    expect(onStart).toHaveBeenCalledWith(mockServer.name);
+  });
+
   it('should display container name', () => {
     renderWithTheme(<ServerCard server={mockServer} />);
     expect(screen.getByText('mc-test-server')).toBeInTheDocument();

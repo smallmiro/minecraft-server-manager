@@ -35,6 +35,12 @@ export interface UseServerLogsOptions {
    * @default 3000
    */
   reconnectInterval?: number;
+
+  /**
+   * Current server status. When it becomes 'running' after the log stream
+   * ended, the stream is reconnected.
+   */
+  serverStatus?: string;
 }
 
 /**
@@ -92,18 +98,32 @@ export function useServerLogs(
     maxLines = 500,
     enabled = true,
     reconnectInterval = 3000,
+    serverStatus,
   } = options;
 
   const [logs, setLogs] = useState<string[]>([]);
+  // Set when the API ends the stream (container not running): stop reconnecting
+  const [streamEnded, setStreamEnded] = useState(false);
 
   // Clear logs when server name changes
   useEffect(() => {
     setLogs([]);
+    setStreamEnded(false);
   }, [serverName]);
+
+  // Resume streaming when the server (re)starts
+  useEffect(() => {
+    if (serverStatus === 'running') setStreamEnded(false);
+  }, [serverStatus]);
 
   // Handle incoming log messages
   const handleMessage = useCallback(
     (event: SSEEvent) => {
+      if (event.type === 'connection-closed') {
+        setStreamEnded(true);
+        return;
+      }
+
       let logLine: string | undefined;
 
       // Handle both formats:
@@ -134,12 +154,22 @@ export function useServerLogs(
   );
 
   // SSE connection
-  const { isConnected, reconnect, retryCount } = useSSE({
+  const { isConnected, reconnect: sseReconnect, retryCount } = useSSE({
     url: `/api/sse/servers/${encodeURIComponent(serverName)}/logs`,
     onMessage: handleMessage,
-    enabled,
+    enabled: enabled && !streamEnded,
     reconnectInterval,
   });
+
+  // The API replays the log tail on every connect: drop what we have
+  useEffect(() => {
+    if (isConnected) setLogs([]);
+  }, [isConnected]);
+
+  const reconnect = useCallback(() => {
+    setStreamEnded(false);
+    sseReconnect();
+  }, [sseReconnect]);
 
   // Clear logs callback
   const clearLogs = useCallback(() => {

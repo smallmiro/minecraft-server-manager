@@ -306,4 +306,71 @@ describe('useServerLogs Hook', () => {
       expect(mockEventSource.readyState).toBe(MockEventSource.CLOSED);
     });
   });
+
+  describe('Stream end and replay (#706)', () => {
+    const logMsg = (log: string) =>
+      JSON.stringify({ type: 'server-log', data: { log, timestamp: 't' } });
+    const closedMsg = JSON.stringify({
+      type: 'connection-closed',
+      data: { timestamp: 't' },
+    });
+
+    it('should stop reconnecting and keep logs after connection-closed', () => {
+      const { result } = renderHook(() => useServerLogs({ serverName: 's' }));
+      act(() => {
+        mockEventSource.simulateOpen();
+      });
+      act(() => {
+        mockEventSource.simulateMessage(logMsg('line1'));
+        mockEventSource.simulateMessage(closedMsg);
+      });
+      const calls = vi.mocked(EventSource).mock.calls.length;
+      expect(result.current.logs).toEqual(['line1']);
+      expect(mockEventSource.readyState).toBe(MockEventSource.CLOSED);
+
+      act(() => {
+        mockEventSource.simulateError();
+      });
+      expect(vi.mocked(EventSource).mock.calls.length).toBe(calls);
+      expect(result.current.logs).toEqual(['line1']);
+    });
+
+    it('should clear the replayed tail when a connection opens again', () => {
+      const { result } = renderHook(() => useServerLogs({ serverName: 's' }));
+      act(() => {
+        mockEventSource.simulateOpen();
+      });
+      act(() => {
+        mockEventSource.simulateMessage(logMsg('a'));
+      });
+      expect(result.current.logs).toEqual(['a']);
+
+      act(() => {
+        mockEventSource.simulateError();
+      });
+      act(() => {
+        mockEventSource.simulateOpen();
+      });
+      act(() => {
+        mockEventSource.simulateMessage(logMsg('a'));
+      });
+      expect(result.current.logs).toEqual(['a']);
+    });
+
+    it('should reconnect when the server becomes running after stream ended', () => {
+      const { rerender } = renderHook(
+        ({ serverStatus }) => useServerLogs({ serverName: 's', serverStatus }),
+        { initialProps: { serverStatus: 'created' } }
+      );
+      act(() => {
+        mockEventSource.simulateOpen();
+        mockEventSource.simulateMessage(closedMsg);
+      });
+      const calls = vi.mocked(EventSource).mock.calls.length;
+
+      rerender({ serverStatus: 'running' });
+
+      expect(vi.mocked(EventSource).mock.calls.length).toBe(calls + 1);
+    });
+  });
 });

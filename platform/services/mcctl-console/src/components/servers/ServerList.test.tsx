@@ -85,6 +85,19 @@ describe('ServerList', () => {
     expect(screen.getByText('vanilla-server')).toBeInTheDocument();
   });
 
+  it('should include created servers in the stopped filter', () => {
+    const servers = [
+      ...mockServers,
+      { name: 'new-server', container: 'mc-new-server', status: 'created', health: 'none', hostname: 'new-server.local' } as ServerSummary,
+    ];
+    renderWithTheme(<ServerList servers={servers} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /stopped/i }));
+
+    expect(screen.getByText('new-server')).toBeInTheDocument();
+    expect(screen.queryByText('paper-server')).not.toBeInTheDocument();
+  });
+
   it('should search servers by name', () => {
     renderWithTheme(<ServerList servers={mockServers} />);
 
