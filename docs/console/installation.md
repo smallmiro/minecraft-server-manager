@@ -203,9 +203,8 @@ module.exports = {
         HOSTNAME: '0.0.0.0',
         MCCTL_API_URL: 'http://localhost:5001',
         MCCTL_ROOT: '/home/user/minecraft-servers',
-        BETTER_AUTH_SECRET: '<generated secret>',
-        BETTER_AUTH_BASE_URL: 'http://localhost:5000',
         // MCCTL_API_KEY is added for the api-key access modes
+        // BETTER_AUTH_SECRET is written to .env, not here
       },
       instances: 1,
       exec_mode: 'fork',
