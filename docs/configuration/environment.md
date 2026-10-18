@@ -75,8 +75,11 @@ These variables are set in `~/minecraft-servers/.env` and apply to all servers.
 
 Every key in `.env` has exactly one status, decided by which code actually reads it, not by whether a template contains it. The Console **Settings** page (admin only) shows the same classification. See [Platform Settings](../console/web-console.md#platform-settings-admin).
 
-!!! warning "Every `.env` key reaches every server container"
-    All servers load `env_file: [../../.env, config.env]`, so every key in `.env` (including unknown ones and secrets) is passed to **all** Minecraft server containers, and also loaded into the `mcctl-api` environment at startup. A server's `config.env` overrides the platform value for that server only.
+!!! info "Which `.env` keys reach server containers"
+    Servers load `env_file: [../global.env, config.env]`. `servers/global.env` lists only key **names** (`TZ`, `EXTRA_ARGS`, `RCON_PASSWORD`, `RCON_PORT`); Docker Compose fills them from `.env`. Every other key, including secrets such as `BACKUP_GITHUB_TOKEN` and `PLAYIT_SECRET_KEY`, stays out of the containers. To pass another key to all servers, add its name to `servers/global.env`. A server's `config.env` overrides the platform value for that server only. All `.env` keys are still loaded into the `mcctl-api` environment at startup.
+
+!!! warning "Upgrading from an earlier version"
+    Servers created before this change load the whole `.env` (`- ../../.env`). `mcctl upgrade` creates `servers/global.env` and repoints existing servers to it. Containers keep their old environment until recreated, so run `mcctl stop <name> && mcctl start <name>` for each server afterwards. Keys you relied on being passed through `.env` (other than the four above) must be added to `servers/global.env`.
 
 | Status | Meaning | Editable in Console |
 |--------|---------|---------------------|
@@ -108,7 +111,7 @@ Every key in `.env` has exactly one status, decided by which code actually reads
 
 **Legacy:** `API_ACCESS_MODE`, `BETTER_AUTH_TRUSTED_ORIGINS`, `BETTER_AUTH_URL`, `MCCTL_API_IMAGE`, `MCCTL_CONSOLE_IMAGE`, `MCCTL_CONSOLE_PORT`, `MCCTL_CORS_ORIGIN`, `MCCTL_JWT_EXPIRY`, `MCCTL_JWT_SECRET`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `DEFAULT_MEMORY`, `DEFAULT_VERSION`. No create path reads `DEFAULT_MEMORY` or `DEFAULT_VERSION`.
 
-**Unknown:** Not recognized by mcctl. Passed to all Minecraft server containers and loaded by mcctl-api at startup; effect unknown.
+**Unknown:** Not recognized by mcctl. Loaded by mcctl-api at startup; Minecraft servers receive it only if its name is listed in `servers/global.env`.
 
 Legacy and unknown keys whose names match `SECRET`, `TOKEN`, `PASSWORD`, `PASSWD`, `CREDENTIAL`, `PRIVATE` or end in `_KEY` are treated as secrets and never displayed.
 

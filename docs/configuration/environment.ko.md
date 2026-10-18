@@ -75,8 +75,11 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 
 `.env`의 모든 키는 템플릿 포함 여부가 아니라 실제로 해당 키를 읽는 코드에 따라 정확히 하나의 상태로 분류됩니다. 콘솔 **Settings** 페이지(관리자 전용)에도 동일한 분류가 표시됩니다. [플랫폼 설정](../console/web-console.md#플랫폼-설정-관리자)을 참고하세요.
 
-!!! warning "`.env`의 모든 키는 모든 서버 컨테이너에 전달됩니다"
-    모든 서버는 `env_file: [../../.env, config.env]`를 로드하므로 `.env`의 모든 키(알 수 없는 키와 시크릿 포함)가 **모든** Minecraft 서버 컨테이너에 전달되며, 시작 시 `mcctl-api` 환경에도 로드됩니다. 서버의 `config.env`는 해당 서버에 한해 플랫폼 값을 덮어씁니다.
+!!! info "서버 컨테이너에 전달되는 `.env` 키"
+    서버는 `env_file: [../global.env, config.env]`를 로드합니다. `servers/global.env`에는 키 **이름**만 있으며(`TZ`, `EXTRA_ARGS`, `RCON_PASSWORD`, `RCON_PORT`), Docker Compose가 값을 `.env`에서 채웁니다. `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY` 같은 시크릿을 포함한 나머지 키는 컨테이너에 들어가지 않습니다. 다른 키를 모든 서버에 전달하려면 `servers/global.env`에 이름을 추가하세요. 서버의 `config.env`는 해당 서버에 한해 플랫폼 값을 덮어씁니다. `.env`의 모든 키는 여전히 시작 시 `mcctl-api` 환경에 로드됩니다.
+
+!!! warning "이전 버전에서 업그레이드하는 경우"
+    이 변경 전에 만든 서버는 `.env` 전체(`- ../../.env`)를 로드합니다. `mcctl upgrade`가 `servers/global.env`를 만들고 기존 서버가 이를 쓰도록 바꿉니다. 컨테이너는 다시 만들 때까지 이전 환경을 유지하므로, 이후 서버마다 `mcctl stop <name> && mcctl start <name>`을 실행하세요. 위 네 개 외에 `.env`로 전달되던 키에 의존했다면 `servers/global.env`에 이름을 추가해야 합니다.
 
 | 상태 | 의미 | 콘솔에서 편집 |
 |------|------|---------------|
@@ -108,7 +111,7 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 
 **Legacy:** `API_ACCESS_MODE`, `BETTER_AUTH_TRUSTED_ORIGINS`, `BETTER_AUTH_URL`, `MCCTL_API_IMAGE`, `MCCTL_CONSOLE_IMAGE`, `MCCTL_CONSOLE_PORT`, `MCCTL_CORS_ORIGIN`, `MCCTL_JWT_EXPIRY`, `MCCTL_JWT_SECRET`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `DEFAULT_MEMORY`, `DEFAULT_VERSION`. `DEFAULT_MEMORY`와 `DEFAULT_VERSION`은 어떤 생성 경로도 읽지 않습니다.
 
-**Unknown:** mcctl이 인식하지 못하는 키입니다. 모든 Minecraft 서버 컨테이너에 전달되고 시작 시 mcctl-api에 로드되며, 영향은 알 수 없습니다.
+**Unknown:** mcctl이 인식하지 못하는 키입니다. 시작 시 mcctl-api에 로드되며, 이름이 `servers/global.env`에 있을 때만 Minecraft 서버에 전달됩니다.
 
 이름이 `SECRET`, `TOKEN`, `PASSWORD`, `PASSWD`, `CREDENTIAL`, `PRIVATE`을 포함하거나 `_KEY`로 끝나는 Legacy/Unknown 키는 시크릿으로 처리되어 값이 표시되지 않습니다.
 

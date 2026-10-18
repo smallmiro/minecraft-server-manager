@@ -1225,7 +1225,7 @@ services:
     tty: true
     stdin_open: true
     env_file:
-      - ../../.env          # Platform-wide variables (RCON_PASSWORD, HOST_IP)
+      - ../global.env       # Platform keys filled from .env (TZ, EXTRA_ARGS, RCON_PASSWORD, RCON_PORT)
       - config.env           # Server-specific variables
     environment:
       EULA: "TRUE"

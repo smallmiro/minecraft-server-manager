@@ -53,7 +53,7 @@ import {
   type DeleteServerQuery,
 } from '../schemas/server.js';
 import { PlayerLocationsResponseSchema } from '../schemas/world-info.js';
-import { config } from '../config/index.js';
+import { config, childProcessEnv } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
 import { getContainerName } from '../lib/rcon.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
@@ -872,12 +872,11 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       // Spawn create-server.sh with spawn for real-time output
       const createProcess = spawn(command, commandArgs, {
         cwd: platformPath,
-        env: {
-          ...process.env,
+        env: childProcessEnv({
           MCCTL_ROOT: platformPath,
           ...(scriptsDir ? { MCCTL_SCRIPTS: scriptsDir } : {}),
           ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
-        },
+        }),
         stdio: ['ignore', 'pipe', 'pipe'],
       });
 
@@ -1011,12 +1010,11 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const { stdout, stderr } = await execPromise(`${command} ${commandArgs.map(a => `"${a}"`).join(' ')}`, {
         cwd: platformPath,
         timeout: 120000, // 2 minute timeout for server creation
-        env: {
-          ...process.env,
+        env: childProcessEnv({
           MCCTL_ROOT: platformPath,
           ...(scriptsDir ? { MCCTL_SCRIPTS: scriptsDir } : {}),
           ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
-        },
+        }),
       });
 
       fastify.log.info({ stdout, stderr }, 'Server created');
@@ -1130,11 +1128,10 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const { stdout, stderr } = await execPromise(command, {
         cwd: platformPath,
         timeout: 60000, // 1 minute timeout
-        env: {
-          ...process.env,
+        env: childProcessEnv({
           MCCTL_ROOT: platformPath,
           ...(resolvedScript ? { MCCTL_SCRIPTS: resolvedScript.scriptsDir } : {}),
-        },
+        }),
       });
 
       fastify.log.info({ stdout, stderr }, 'Server deleted');

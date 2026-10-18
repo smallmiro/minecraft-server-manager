@@ -48,6 +48,12 @@ describe('init command - RCON password', () => {
 
   afterEach(() => rmSync(testRoot, { recursive: true, force: true }));
 
+  it('copies servers/global.env so servers receive RCON_PASSWORD (#685)', async () => {
+    expect(await run()).toBe(0);
+    expect(readFileSync(join(testRoot, 'servers', 'global.env'), 'utf-8')).toMatch(/^RCON_PASSWORD$/m);
+    expect(readFileSync(join(testRoot, 'servers', '_template', 'docker-compose.yml'), 'utf-8')).toContain('- ../global.env');
+  });
+
   it('writes a random RCON_PASSWORD (>=16 chars, not changeme)', async () => {
     expect(await run()).toBe(0);
     const pw = rcon();
