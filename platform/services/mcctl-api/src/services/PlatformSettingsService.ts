@@ -90,7 +90,7 @@ export class PlatformSettingsService {
       const s: PlatformSetting = {
         key,
         label: reg?.label ?? key,
-        description: reg?.description ?? 'Not recognized by mcctl. Passed to all Minecraft server containers and loaded by mcctl-api at startup; effect unknown.',
+        description: reg?.description ?? 'Not recognized by mcctl. Loaded by mcctl-api at startup; Minecraft servers receive it only if its name is listed in servers/global.env.',
         group: reg?.group ?? 'Advanced Environment',
         type: secret ? 'secret' : (reg?.type ?? 'string'),
         status,

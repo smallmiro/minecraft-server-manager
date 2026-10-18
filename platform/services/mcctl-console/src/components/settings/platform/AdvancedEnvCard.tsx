@@ -83,8 +83,8 @@ export function AdvancedEnvCard({
         Advanced Environment
       </Typography>
       <Alert severity="warning" sx={{ my: 2 }}>
-        Not recognized by mcctl. Passed to all Minecraft server containers and loaded by mcctl-api at
-        startup; effect unknown.
+        Not recognized by mcctl. Loaded by mcctl-api at startup; Minecraft servers receive a key only
+        if its name is listed in servers/global.env.
       </Alert>
 
       <Stack spacing={2}>

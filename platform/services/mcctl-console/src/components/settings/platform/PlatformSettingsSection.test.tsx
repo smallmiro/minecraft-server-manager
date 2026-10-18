@@ -208,7 +208,7 @@ describe('PlatformSettingsSection', () => {
   it('adds, validates and removes advanced keys', () => {
     renderSection();
     const adv = screen.getByRole('region', { name: 'Advanced Environment' });
-    expect(within(adv).getByText(/Passed to all Minecraft server containers/)).toBeInTheDocument();
+    expect(within(adv).getByText(/listed in servers\/global\.env/)).toBeInTheDocument();
 
     fireEvent.change(within(adv).getByLabelText('New key'), { target: { value: '1bad' } });
     fireEvent.click(within(adv).getByRole('button', { name: 'Add' }));
