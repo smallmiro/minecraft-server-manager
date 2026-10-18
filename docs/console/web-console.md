@@ -161,11 +161,11 @@ Click the **+ Create Server** button in the page header to open the **Create New
 
 1. **Server Name** -- A unique identifier (lowercase letters, numbers, and hyphens only)
 2. **Server Type** -- Choose a category with the toggle:
-    - **Standard Server** -- Pick a **Server Type** (VANILLA, PAPER, FABRIC, FORGE, or NEOFORGE) and a **Minecraft Version** (e.g., `1.21.1` or `latest`)
+    - **Standard Server** -- Pick a **Server Type** (VANILLA, PAPER, FABRIC, FORGE, or NEOFORGE) and a **Minecraft Version** (e.g., `1.21.1` or `LATEST`). The defaults are VANILLA and `LATEST`. For other types, pin a version such as `1.21.1` if the loader doesn't support the newest Minecraft release yet
     - **Modpack** -- Search Modrinth modpacks by name (or type a slug such as `cobblemon`), then choose a **Mod Loader** and a compatible **Minecraft Version**. Client-only mods that are detected are added to **Exclude mods (optional)** automatically; you can edit that comma-separated list
 3. **World Setup** -- **Default World**, **Seed** (enter a seed), or **Existing World** (pick an unassigned world)
 4. **Memory** -- How much RAM to assign (default `4G` for standard servers, `6G` for modpacks)
-5. **Sudo Password** -- Required for mDNS hostname registration (avahi)
+5. **Sudo Password** -- Required for mDNS hostname registration (avahi). If you leave it empty, **Create** asks you to confirm: choose **Continue without password** when sudo on the host doesn't ask for one, or **Enter password** to go back to the field
 6. **Auto-start after creation** -- Start the server as soon as it is created
 
 Click **Create** to start. The dialog switches to a progress view (**Initializing**, **Creating**, **Configuring**, **Starting**) driven by Server-Sent Events, and ends with **Server Created Successfully** or **Creation Failed**.

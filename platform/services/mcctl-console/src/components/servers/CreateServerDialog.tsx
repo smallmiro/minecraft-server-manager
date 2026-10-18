@@ -59,8 +59,8 @@ type ServerCategory = 'standard' | 'modpack';
 
 const DEFAULT_FORM_VALUES: CreateServerRequest = {
   name: '',
-  type: 'PAPER',
-  version: '1.21.1',
+  type: 'VANILLA',
+  version: 'LATEST',
   memory: '4G',
   autoStart: false,
   sudoPassword: '',
@@ -91,6 +91,8 @@ export function CreateServerDialog({
   const [memoryTouched, setMemoryTouched] = useState(false);
   const [worldMode, setWorldMode] = useState<'none' | 'seed' | 'existingWorld'>('none');
   const [selectedWorldName, setSelectedWorldName] = useState('');
+  // Submission held back while asking whether an empty sudo password is intended
+  const [pendingSubmit, setPendingSubmit] = useState<CreateServerRequest | null>(null);
 
   // Modpack selection state
   const [modpackSlug, setModpackSlug] = useState('');
@@ -102,6 +104,7 @@ export function CreateServerDialog({
 
   // Refs for accessibility
   const firstModpackFieldRef = useRef<HTMLInputElement>(null);
+  const sudoPasswordRef = useRef<HTMLInputElement>(null);
   const liveRegionRef = useRef<HTMLDivElement>(null);
 
   // Determine active step based on status
@@ -209,6 +212,7 @@ export function CreateServerDialog({
       setMemoryTouched(false);
       setWorldMode('none');
       setSelectedWorldName('');
+      setPendingSubmit(null);
       setModpackSlug('');
       setModpackSearchInput('');
       setSelectedLoader('');
@@ -387,7 +391,12 @@ export function CreateServerDialog({
       submitData.worldName = selectedWorldName;
     }
 
-    // Submit
+    // An empty sudo password is only valid on hosts with passwordless sudo, so confirm it
+    if (!submitData.sudoPassword?.trim()) {
+      setPendingSubmit(submitData);
+      return;
+    }
+
     onSubmit(submitData);
   };
 
@@ -535,7 +544,11 @@ export function CreateServerDialog({
                       label="Minecraft Version"
                       value={formData.version}
                       onChange={handleChange('version')}
-                      helperText="e.g., 1.21.1, 1.20.4, latest"
+                      helperText={
+                        formData.type !== 'VANILLA' && formData.version?.toUpperCase() === 'LATEST'
+                          ? `${formData.type} may not support the newest Minecraft release yet. Pin a version (e.g., 1.21.1) if creation fails`
+                          : 'e.g., 1.21.1, 1.20.4, LATEST'
+                      }
                       fullWidth
                       disabled={isCreating}
                     />
@@ -846,7 +859,9 @@ export function CreateServerDialog({
                 type="password"
                 value={formData.sudoPassword || ''}
                 onChange={handleChange('sudoPassword')}
-                helperText="Required for mDNS hostname registration (avahi)"
+                inputRef={sudoPasswordRef}
+                error={!!errors.sudoPassword}
+                helperText={errors.sudoPassword || 'Required for mDNS hostname registration (avahi)'}
                 fullWidth
                 disabled={isCreating}
               />
@@ -886,6 +901,41 @@ export function CreateServerDialog({
           )}
         </DialogActions>
       </form>
+      <Dialog
+        open={!!pendingSubmit}
+        onClose={() => setPendingSubmit(null)}
+        maxWidth="xs"
+        disableRestoreFocus
+      >
+        <DialogTitle>Continue without a sudo password?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            The sudo password is needed to register the mDNS hostname (avahi). Continue only if
+            sudo on this host doesn&apos;t ask for a password.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setPendingSubmit(null);
+              setErrors((prev) => ({ ...prev, sudoPassword: 'Enter the sudo password for this host' }));
+              // Focus once the confirmation has closed and released its focus trap
+              setTimeout(() => sudoPasswordRef.current?.focus(), 0);
+            }}
+          >
+            Enter password
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              if (pendingSubmit) onSubmit(pendingSubmit);
+              setPendingSubmit(null);
+            }}
+          >
+            Continue without password
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }
