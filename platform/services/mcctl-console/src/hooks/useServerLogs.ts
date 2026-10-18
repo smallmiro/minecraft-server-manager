@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSSE } from './useSSE';
 import type { SSEEvent, ServerLogEvent } from '@/types/events';
 
@@ -104,6 +104,12 @@ export function useServerLogs(
   const [logs, setLogs] = useState<string[]>([]);
   // Set when the API ends the stream (container not running): stop reconnecting
   const [streamEnded, setStreamEnded] = useState(false);
+  // The API replays the log tail on every connect: the first line after a
+  // (re)connect replaces what we have. A ref, so lines arriving in the same
+  // tick as the open event are not wiped by a later effect.
+  const resetOnNextLog = useRef(true);
+  const serverStatusRef = useRef(serverStatus);
+  serverStatusRef.current = serverStatus;
 
   // Clear logs when server name changes
   useEffect(() => {
@@ -120,7 +126,9 @@ export function useServerLogs(
   const handleMessage = useCallback(
     (event: SSEEvent) => {
       if (event.type === 'connection-closed') {
-        setStreamEnded(true);
+        resetOnNextLog.current = true;
+        // While running (e.g. a restart), keep the adapter's auto-reconnect
+        if (serverStatusRef.current !== 'running') setStreamEnded(true);
         return;
       }
 
@@ -138,8 +146,10 @@ export function useServerLogs(
       }
 
       if (logLine) {
+        const reset = resetOnNextLog.current;
+        resetOnNextLog.current = false;
         setLogs((prevLogs) => {
-          const newLogs = [...prevLogs, logLine!];
+          const newLogs = [...(reset ? [] : prevLogs), logLine!];
 
           // Trim to maxLines
           if (newLogs.length > maxLines) {
@@ -161,9 +171,9 @@ export function useServerLogs(
     reconnectInterval,
   });
 
-  // The API replays the log tail on every connect: drop what we have
+  // Connection lost: the next connect replays the tail
   useEffect(() => {
-    if (isConnected) setLogs([]);
+    if (!isConnected) resetOnNextLog.current = true;
   }, [isConnected]);
 
   const reconnect = useCallback(() => {

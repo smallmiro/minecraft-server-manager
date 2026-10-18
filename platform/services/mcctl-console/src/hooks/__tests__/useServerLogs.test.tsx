@@ -372,5 +372,46 @@ describe('useServerLogs Hook', () => {
 
       expect(vi.mocked(EventSource).mock.calls.length).toBe(calls + 1);
     });
+
+    it('should keep reconnecting after connection-closed while the server is running (restart)', () => {
+      vi.useFakeTimers();
+      try {
+        renderHook(() => useServerLogs({ serverName: 's', serverStatus: 'running' }));
+        act(() => {
+          mockEventSource.simulateOpen();
+          mockEventSource.simulateMessage(closedMsg);
+          mockEventSource.simulateError();
+        });
+        const calls = vi.mocked(EventSource).mock.calls.length;
+
+        act(() => {
+          vi.advanceTimersByTime(3000);
+        });
+
+        expect(vi.mocked(EventSource).mock.calls.length).toBe(calls + 1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('should keep replayed lines that arrive in the same tick as open', () => {
+      const { result } = renderHook(() => useServerLogs({ serverName: 's' }));
+      act(() => {
+        mockEventSource.simulateOpen();
+        mockEventSource.simulateMessage(logMsg('a'));
+        mockEventSource.simulateMessage(logMsg('b'));
+      });
+      expect(result.current.logs).toEqual(['a', 'b']);
+
+      act(() => {
+        mockEventSource.simulateError();
+      });
+      act(() => {
+        mockEventSource.simulateOpen();
+        mockEventSource.simulateMessage(logMsg('a'));
+        mockEventSource.simulateMessage(logMsg('b'));
+      });
+      expect(result.current.logs).toEqual(['a', 'b']);
+    });
   });
 });
