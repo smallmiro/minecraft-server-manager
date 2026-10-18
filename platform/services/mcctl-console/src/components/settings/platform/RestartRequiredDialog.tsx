@@ -43,7 +43,7 @@ const GUIDANCE: Record<Exclude<RestartScope, 'none'>, Guidance> = {
   },
   console: {
     title: 'mcctl-console',
-    text: 'The console reads these values from .env at startup. Restart it from the CLI; this signs nobody out unless the session secret changed.',
+    text: 'The console reads these values from .env at startup. Restart it from the CLI (this also restarts mcctl-api); nobody is signed out unless the session secret changed.',
     cli: 'mcctl console service restart --console',
   },
   'next-create': {
