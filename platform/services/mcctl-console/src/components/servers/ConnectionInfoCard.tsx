@@ -7,7 +7,8 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Skeleton from '@mui/material/Skeleton';
 import { usePlayitStatus } from '@/hooks/usePlayit';
-import { CopyButton, HostnameDisplay } from '@/components/common';
+import { CopyButton } from '@/components/common';
+import { parseHostnames, sortHostnames, classifyHostname, HOSTNAME_KIND_LABEL } from '@/utils/hostname';
 
 interface ConnectionInfoCardProps {
   serverName: string;
@@ -65,6 +66,7 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
     );
   }
 
+  const addresses = sortHostnames(parseHostnames(hostname));
   const showExternalAddress = playitStatus?.enabled && playitStatus.servers.length > 0;
 
   // Find external domain for this server
@@ -80,28 +82,35 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
         </Typography>
         <Divider sx={{ mb: 2 }} />
 
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            py: 1,
-            gap: 1,
-          }}
-        >
-          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
-            LAN Address
+        <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+          Addresses
+        </Typography>
+        {addresses.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            Not configured
           </Typography>
-          {hostname ? (
-            <Box sx={{ minWidth: 0 }}>
-              <HostnameDisplay hostname={hostname} portSuffix={25565} color="text.primary" showCopyButton />
-            </Box>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              Not configured
-            </Typography>
-          )}
-        </Box>
+        ) : (
+          addresses.map((h) => {
+            const text = `${h}:25565`;
+            return (
+              <Box
+                key={h}
+                data-testid="connection-address"
+                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 0.5, gap: 1 }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="caption" color="text.secondary" component="div">
+                    {HOSTNAME_KIND_LABEL[classifyHostname(h)]}
+                  </Typography>
+                  <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
+                    {text}
+                  </Typography>
+                </Box>
+                <CopyButton text={text} size={16} />
+              </Box>
+            );
+          })
+        )}
 
         {showExternalAddress && (
           <InfoRow
