@@ -95,6 +95,12 @@ describe('AuditLog Entity', () => {
   });
 });
 
+describe('AuditActionEnum', () => {
+  test('has the platform settings update action', () => {
+    expect(AuditActionEnum.PLATFORM_SETTINGS_UPDATE).toBe('platform.settings.update');
+  });
+});
+
 describe('SqliteAuditLogRepository', () => {
   let testDir: string;
   let testDbPath: string;

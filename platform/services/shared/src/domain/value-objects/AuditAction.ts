@@ -34,6 +34,7 @@ export enum AuditActionEnum {
 
   // System
   AUDIT_PURGE = 'audit.purge',
+  PLATFORM_SETTINGS_UPDATE = 'platform.settings.update',
 
   // Mod management
   MOD_ADD = 'mod.add',
