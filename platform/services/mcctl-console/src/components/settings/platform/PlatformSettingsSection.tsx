@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -42,16 +42,14 @@ export function PlatformSettingsSection({ onSuccess, onError }: PlatformSettings
   const [restartScopes, setRestartScopes] = useState<RestartScope[] | null>(null);
 
   const settings = data?.settings ?? [];
-  const byKey = useMemo(() => new Map(settings.map((s) => [s.key, s])), [settings]);
+  const byKey = new Map(settings.map((s) => [s.key, s]));
 
-  const groups = useMemo(() => {
-    const map = new Map<string, PlatformSetting[]>();
-    for (const s of settings) {
-      if (s.status !== 'supported' && s.status !== 'readonly') continue;
-      map.set(s.group, [...(map.get(s.group) ?? []), s]);
-    }
-    return [...map.entries()];
-  }, [settings]);
+  const groupMap = new Map<string, PlatformSetting[]>();
+  for (const s of settings) {
+    if (s.status !== 'supported' && s.status !== 'readonly') continue;
+    groupMap.set(s.group, [...(groupMap.get(s.group) ?? []), s]);
+  }
+  const groups = Array.from(groupMap.entries());
   const unknown = settings.filter((s) => s.status === 'unknown');
   const legacy = settings.filter((s) => s.status === 'legacy' || s.status === 'shadowed');
 
@@ -92,7 +90,7 @@ export function PlatformSettingsSection({ onSuccess, onError }: PlatformSettings
   const handleSave = () => {
     if (!data) return;
     update.mutate(
-      { revision: data.revision, set: drafts, remove: [...removed] },
+      { revision: data.revision, set: drafts, remove: Array.from(removed) },
       {
         onSuccess: (result) => {
           reset();
@@ -153,7 +151,7 @@ export function PlatformSettingsSection({ onSuccess, onError }: PlatformSettings
         {data.runtime.length > 0 && <RuntimeInfoCard items={data.runtime} />}
         <AdvancedEnvCard
           settings={unknown}
-          existingKeys={new Set(byKey.keys())}
+          existingKeys={new Set(Array.from(byKey.keys()))}
           drafts={drafts}
           errors={errors}
           removed={removed}
