@@ -762,10 +762,10 @@ function buildHostnames(serverName: string, hostIPs: string): string {
  */
 export function mergeHostnames(serverName: string, hostIPs: string, existing: string): string {
   const escaped = serverName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const systemRe = new RegExp(`^${escaped}\\.(local|\\d{1,3}(\\.\\d{1,3}){3}\\.nip\\.io)$`);
+  const systemRe = new RegExp(`^${escaped}\\.(local|\\d{1,3}(\\.\\d{1,3}){3}\\.nip\\.io)$`, 'i');
   const merged = buildHostnames(serverName, hostIPs).split(',');
   for (const h of existing.split(',').map((x) => x.trim())) {
-    if (h && !systemRe.test(h) && !merged.includes(h)) merged.push(h);
+    if (h && !systemRe.test(h) && !merged.some((m) => m.toLowerCase() === h.toLowerCase())) merged.push(h);
   }
   return merged.join(',');
 }
