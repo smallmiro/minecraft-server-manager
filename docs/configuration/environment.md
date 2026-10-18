@@ -73,6 +73,50 @@ These variables are set in `~/minecraft-servers/.env` and apply to all servers.
     mcctl backup status
     ```
 
+### Setting Classification
+
+Every key in `.env` has exactly one status, decided by which code actually reads it, not by whether a template contains it. The Console **Settings** page (admin only) shows the same classification. See [Platform Settings](../console/web-console.md#platform-settings-admin).
+
+!!! warning "Every `.env` key reaches every server container"
+    All servers load `env_file: [../../.env, config.env]`, so every key in `.env` (including unknown ones and secrets) is passed to **all** Minecraft server containers, and also loaded into the `mcctl-api` environment at startup. A server's `config.env` overrides the platform value for that server only.
+
+| Status | Meaning | Editable in Console |
+|--------|---------|---------------------|
+| Editable | Supported, typed control | Yes |
+| Read-only | Supported, but unsafe to change from the UI | No (CLI only) |
+| Runtime-managed (PM2) | Injected by `ecosystem.config.cjs` | No (`mcctl console init`) |
+| Shadowed | In `.env` but overridden, not applied | Remove only |
+| Legacy | Not read by any current code | Remove only |
+| Unknown | Not recognized by mcctl | Advanced editor |
+
+**Editable keys**
+
+| Key | Consumer | Apply scope |
+|-----|----------|-------------|
+| `HOST_IP`, `HOST_IPS` | `create-server.sh`, `migrate-nip-io.sh` | `next-create`: used by the next `mcctl create`. Existing servers' hostnames do not change |
+| `DOCKER_GID` | compose `router.group_add` | `router`: `mcctl router start` (`mcctl router restart` does not apply it) |
+| `TZ`, `EXTRA_ARGS` | Every server container (`env_file`) | `servers`: stop, then start each server |
+| `RCON_PASSWORD` (secret), `RCON_PORT` | Every server container (`env_file`); CLI `rcon` | `servers` |
+| `BACKUP_GITHUB_TOKEN` (secret), `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH` | `backup.sh` (re-reads `.env` every run), mcctl-api backup routes (`process.env`) | `api`: `mcctl console service restart --api`. The CLI picks changes up immediately |
+| `BACKUP_AUTO_ON_STOP` | `mcctl stop` path | `none`: next `mcctl stop` |
+| `PLAYIT_SECRET_KEY` (secret) | compose `playit` service (`SECRET_KEY`) | `playit`: stop, then start playit |
+| `LOG_LEVEL` | **mcctl-api only** (dotenv, cwd = MCCTL_ROOT). mcctl-console never reads `.env` | `api` |
+
+**Read-only keys:** `MINECRAFT_NETWORK`, `MINECRAFT_SUBNET` (run `mcctl down`, edit `.env`, then `mcctl up`) and `COMPOSE_PROJECT_NAME` (changing it orphans existing containers and networks; CLI only).
+
+**Runtime-managed (PM2):** `BETTER_AUTH_BASE_URL`, `BETTER_AUTH_SECRET` (console) and `AUTH_MODE` (api) come from `ecosystem.config.cjs`. Re-run `mcctl console init` to change them.
+
+**Shadowed:** `BETTER_AUTH_SECRET` and `BETTER_AUTH_BASE_URL` in `.env` are not applied because the PM2 value wins and the console never loads this `.env`.
+
+**Legacy:** `API_ACCESS_MODE`, `BETTER_AUTH_TRUSTED_ORIGINS`, `BETTER_AUTH_URL`, `MCCTL_API_IMAGE`, `MCCTL_CONSOLE_IMAGE`, `MCCTL_CONSOLE_PORT`, `MCCTL_CORS_ORIGIN`, `MCCTL_JWT_EXPIRY`, `MCCTL_JWT_SECRET`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `DEFAULT_MEMORY`, `DEFAULT_VERSION`. No create path reads `DEFAULT_MEMORY` or `DEFAULT_VERSION`.
+
+**Unknown:** Not recognized by mcctl. Passed to all Minecraft server containers and loaded by mcctl-api at startup; effect unknown.
+
+Legacy and unknown keys whose names match `SECRET`, `TOKEN`, `PASSWORD`, `PASSWD`, `CREDENTIAL`, `PRIVATE` or end in `_KEY` are treated as secrets and never displayed.
+
+!!! note "Restart does not reload `.env`"
+    `docker compose restart` and `mcctl router restart` do not re-read `.env`. Use stop then start (or `mcctl router start`) so the container is recreated.
+
 ---
 
 ## Server Variables (config.env)

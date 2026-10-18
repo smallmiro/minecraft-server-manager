@@ -73,6 +73,50 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
     mcctl backup status
     ```
 
+### 설정 분류
+
+`.env`의 모든 키는 템플릿 포함 여부가 아니라 실제로 해당 키를 읽는 코드에 따라 정확히 하나의 상태로 분류됩니다. 콘솔 **Settings** 페이지(관리자 전용)에도 동일한 분류가 표시됩니다. [플랫폼 설정](../console/web-console.md#플랫폼-설정-관리자)을 참고하세요.
+
+!!! warning "`.env`의 모든 키는 모든 서버 컨테이너에 전달됩니다"
+    모든 서버는 `env_file: [../../.env, config.env]`를 로드하므로 `.env`의 모든 키(알 수 없는 키와 시크릿 포함)가 **모든** Minecraft 서버 컨테이너에 전달되며, 시작 시 `mcctl-api` 환경에도 로드됩니다. 서버의 `config.env`는 해당 서버에 한해 플랫폼 값을 덮어씁니다.
+
+| 상태 | 의미 | 콘솔에서 편집 |
+|------|------|---------------|
+| Editable | 지원되며 타입별 입력 제공 | 가능 |
+| Read-only | 지원되지만 UI에서 변경하기 위험 | 불가 (CLI 전용) |
+| Runtime-managed (PM2) | `ecosystem.config.cjs`가 주입 | 불가 (`mcctl console init`) |
+| Shadowed | `.env`에 있으나 덮어써져 적용되지 않음 | 삭제만 가능 |
+| Legacy | 현재 어떤 코드도 읽지 않음 | 삭제만 가능 |
+| Unknown | mcctl이 인식하지 못함 | Advanced 편집기 |
+
+**편집 가능한 키**
+
+| 키 | 사용처 | 적용 범위 |
+|----|--------|-----------|
+| `HOST_IP`, `HOST_IPS` | `create-server.sh`, `migrate-nip-io.sh` | `next-create`: 다음 `mcctl create`부터 사용. 기존 서버의 호스트명은 바뀌지 않습니다 |
+| `DOCKER_GID` | compose `router.group_add` | `router`: `mcctl router start` (`mcctl router restart`로는 적용되지 않습니다) |
+| `TZ`, `EXTRA_ARGS` | 모든 서버 컨테이너 (`env_file`) | `servers`: 각 서버를 stop 후 start |
+| `RCON_PASSWORD` (시크릿), `RCON_PORT` | 모든 서버 컨테이너 (`env_file`), CLI `rcon` | `servers` |
+| `BACKUP_GITHUB_TOKEN` (시크릿), `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH` | `backup.sh` (실행마다 `.env` 재읽기), mcctl-api 백업 라우트 (`process.env`) | `api`: `mcctl console service restart --api`. CLI는 즉시 반영됩니다 |
+| `BACKUP_AUTO_ON_STOP` | `mcctl stop` 경로 | `none`: 다음 `mcctl stop` |
+| `PLAYIT_SECRET_KEY` (시크릿) | compose `playit` 서비스 (`SECRET_KEY`) | `playit`: playit를 stop 후 start |
+| `LOG_LEVEL` | **mcctl-api 전용** (dotenv, cwd = MCCTL_ROOT). mcctl-console은 `.env`를 읽지 않습니다 | `api` |
+
+**읽기 전용 키:** `MINECRAFT_NETWORK`, `MINECRAFT_SUBNET` (`mcctl down` 후 `.env`를 수정하고 `mcctl up`), `COMPOSE_PROJECT_NAME` (변경하면 기존 컨테이너와 네트워크가 고아가 되므로 CLI 전용).
+
+**Runtime-managed (PM2):** `BETTER_AUTH_BASE_URL`, `BETTER_AUTH_SECRET`(콘솔)과 `AUTH_MODE`(api)는 `ecosystem.config.cjs`에서 옵니다. 변경하려면 `mcctl console init`을 다시 실행하세요.
+
+**Shadowed:** `.env`의 `BETTER_AUTH_SECRET`, `BETTER_AUTH_BASE_URL`은 PM2 값이 우선하고 콘솔이 이 `.env`를 로드하지 않으므로 적용되지 않습니다.
+
+**Legacy:** `API_ACCESS_MODE`, `BETTER_AUTH_TRUSTED_ORIGINS`, `BETTER_AUTH_URL`, `MCCTL_API_IMAGE`, `MCCTL_CONSOLE_IMAGE`, `MCCTL_CONSOLE_PORT`, `MCCTL_CORS_ORIGIN`, `MCCTL_JWT_EXPIRY`, `MCCTL_JWT_SECRET`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `DEFAULT_MEMORY`, `DEFAULT_VERSION`. `DEFAULT_MEMORY`와 `DEFAULT_VERSION`은 어떤 생성 경로도 읽지 않습니다.
+
+**Unknown:** mcctl이 인식하지 못하는 키입니다. 모든 Minecraft 서버 컨테이너에 전달되고 시작 시 mcctl-api에 로드되며, 영향은 알 수 없습니다.
+
+이름이 `SECRET`, `TOKEN`, `PASSWORD`, `PASSWD`, `CREDENTIAL`, `PRIVATE`을 포함하거나 `_KEY`로 끝나는 Legacy/Unknown 키는 시크릿으로 처리되어 값이 표시되지 않습니다.
+
+!!! note "Restart는 `.env`를 다시 읽지 않습니다"
+    `docker compose restart`와 `mcctl router restart`는 `.env`를 다시 읽지 않습니다. 컨테이너가 재생성되도록 stop 후 start(또는 `mcctl router start`)를 사용하세요.
+
 ---
 
 ## 서버 변수 (config.env)
