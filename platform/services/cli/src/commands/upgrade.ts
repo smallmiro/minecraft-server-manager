@@ -8,6 +8,7 @@ import { diffEnvFiles, applyEnvDiff } from '../lib/env-diff.js';
 import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import { patchRouterCompose } from '../lib/compose-router-patch.js';
 import { migrateServerEnv } from '../lib/server-env-migration.js';
+import { migrateConsoleAuthEnv } from '../lib/console-auth-migration.js';
 import * as prompts from '@clack/prompts';
 
 export interface UpgradeCommandOptions {
@@ -105,6 +106,20 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
       'Existing containers keep the old environment until recreated:\n' +
         serverEnv.migrated.map((name) => `  mcctl stop ${name} && mcctl start ${name}`).join('\n')
     );
+  }
+
+  // --- Step 2c: console auth keys move from ecosystem.config.cjs into .env (#699) ---
+  const authEnv = await migrateConsoleAuthEnv(paths, !!options.dryRun);
+  if (authEnv.moved.length > 0) {
+    prompts.log.success(
+      `${options.dryRun ? 'Would move' : 'Moved'} from ecosystem.config.cjs into .env: ${authEnv.moved.join(', ')}`
+    );
+    if (!options.dryRun) {
+      prompts.log.warn('Apply with: mcctl console service restart --console');
+    }
+  }
+  if (authEnv.skipped.length > 0) {
+    prompts.log.warn(`Left in ecosystem.config.cjs (value cannot be stored in .env safely): ${authEnv.skipped.join(', ')}`);
   }
 
   // --- Step 3: Update templateVersion in config (and backfill installId) ---
