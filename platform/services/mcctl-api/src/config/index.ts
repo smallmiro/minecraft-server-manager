@@ -2,8 +2,24 @@ import { config as loadEnv } from 'dotenv';
 import * as path from 'path';
 import * as os from 'os';
 
-// Load .env file
-loadEnv();
+// Load .env file, remembering which keys it actually set (not already in the environment)
+const presetKeys = new Set(Object.keys(process.env));
+const dotenvKeys = Object.keys(loadEnv().parsed ?? {}).filter((key) => !presetKeys.has(key));
+
+/**
+ * Environment for docker compose and platform scripts. Keys loaded from .env at
+ * startup are dropped so children read the current .env (compose interpolates
+ * servers/global.env from it) instead of values frozen when the API started.
+ */
+export function childProcessEnv(
+  extra: Record<string, string> = {},
+  env: NodeJS.ProcessEnv = process.env,
+  drop: string[] = dotenvKeys
+): NodeJS.ProcessEnv {
+  const result = { ...env };
+  for (const key of drop) delete result[key];
+  return { ...result, ...extra };
+}
 
 // ============================================================
 // Types

@@ -1,6 +1,6 @@
 import { exec, ExecOptions } from 'child_process';
 import { promisify } from 'util';
-import { config } from '../config/index.js';
+import { config, childProcessEnv } from '../config/index.js';
 
 const execPromise = promisify(exec);
 
@@ -95,11 +95,8 @@ export async function executeServerAction(
   const options: ExecOptions = {
     cwd: platformPath,
     timeout: 60000, // 60 second timeout
-    env: {
-      ...process.env,
-      // Ensure Docker Compose uses the correct compose file
-      COMPOSE_FILE: 'docker-compose.yml',
-    },
+    // Ensure Docker Compose uses the correct compose file
+    env: childProcessEnv({ COMPOSE_FILE: 'docker-compose.yml' }),
   };
 
   try {
