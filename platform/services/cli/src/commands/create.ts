@@ -20,6 +20,7 @@ export interface CreateCommandOptions {
   worldName?: string;
   noStart?: boolean;
   noWhitelist?: boolean;
+  enableWhitelist?: boolean;
   whitelist?: string;
   sudoPassword?: string;
   modpack?: string;
@@ -81,9 +82,16 @@ async function createWithArguments(
     }
 
     // Warn if conflicting whitelist flags are provided
-    if (options.noWhitelist && options.whitelist) {
-      log.warn('--whitelist is ignored when --no-whitelist is specified');
+    if (options.noWhitelist && (options.whitelist || options.enableWhitelist)) {
+      log.warn('--whitelist/--enable-whitelist is ignored when --no-whitelist is specified');
     }
+
+    const whitelistPlayers = options.whitelist
+      ? options.whitelist.split(',').map((p) => p.trim()).filter(Boolean)
+      : undefined;
+    // Off by default; on with --enable-whitelist or --whitelist; --no-whitelist wins
+    const enableWhitelist =
+      !options.noWhitelist && (options.enableWhitelist === true || (whitelistPlayers?.length ?? 0) > 0);
 
     const server = await useCase.executeWithConfig({
       name: options.name!,
@@ -99,10 +107,8 @@ async function createWithArguments(
       modpackExcludeFiles: options.excludeFiles
         ? options.excludeFiles.split(',').map((f) => f.trim()).filter(Boolean)
         : undefined,
-      enableWhitelist: !options.noWhitelist,
-      whitelistPlayers: options.whitelist
-        ? options.whitelist.split(',').map((p) => p.trim()).filter(Boolean)
-        : undefined,
+      enableWhitelist,
+      whitelistPlayers,
       playitDomain: options.playitDomain,
       noPlayitDomain: options.noPlayitDomain,
     });
@@ -129,9 +135,9 @@ async function createWithArguments(
     }
 
     console.log(`  Memory: ${server.memory.value}`);
-    console.log(`  Whitelist: ${options.noWhitelist ? 'disabled' : colors.green('enabled')}`);
-    if (options.whitelist && !options.noWhitelist) {
-      console.log(`  Whitelisted: ${options.whitelist}`);
+    console.log(`  Whitelist: ${enableWhitelist ? colors.green('enabled') : 'disabled'}`);
+    if (enableWhitelist && whitelistPlayers?.length) {
+      console.log(`  Whitelisted: ${whitelistPlayers.join(',')}`);
     }
     console.log('');
     console.log(`  Connect via: ${colors.cyan(server.name.hostname + ':25565')}`);

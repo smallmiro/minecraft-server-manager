@@ -34,6 +34,13 @@ describe('CLI Server Commands', () => {
 
       expect(result.stdout).toMatch(/memory|MEMORY/i);
     });
+
+    it('should show whitelist options (#679)', async () => {
+      const result = await runCli(['create', '--help']);
+
+      expect(result.stdout).toContain('--enable-whitelist');
+      expect(result.stdout).toContain('--no-whitelist');
+    });
   });
 
   describe('mcctl delete --help', () => {
