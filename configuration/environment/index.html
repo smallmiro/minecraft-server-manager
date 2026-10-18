@@ -1173,6 +1173,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#configure-from-the-web-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure from the Web Console
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#global-variables-env" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1211,6 +1222,17 @@
     <span class="md-ellipsis">
       
         Backup Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-access-and-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External Access and Console
       
     </span>
   </a>
@@ -2464,6 +2486,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#configure-from-the-web-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure from the Web Console
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#global-variables-env" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2502,6 +2535,17 @@
     <span class="md-ellipsis">
       
         Backup Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-access-and-console" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        External Access and Console
       
     </span>
   </a>
@@ -2786,9 +2830,12 @@
 <p class="admonition-title">Recommended Approach</p>
 <p>Use <code>mcctl config</code> for standard settings. Edit config files directly only for advanced options not supported by the CLI.</p>
 </div>
+<h2 id="configure-from-the-web-console">Configure from the Web Console<a class="headerlink" href="#configure-from-the-web-console" title="Permanent link">&para;</a></h2>
+<p>Administrators can edit the platform <code>.env</code> in the Web Console under <strong>Settings</strong> → <strong>Platform Settings</strong>. Keys are grouped into cards, secrets are write-only, and saving only writes <code>.env</code>. A dialog then lists what to restart. Per-server values stay in each server's <strong>Options</strong> tab. See <a href="../../console/web-console/#platform-settings-admin">Platform Settings</a>.</p>
+<p><img alt="Platform Settings" src="../../images/platform-settings.png" /></p>
 <hr />
 <h2 id="global-variables-env">Global Variables (.env)<a class="headerlink" href="#global-variables-env" title="Permanent link">&para;</a></h2>
-<p>These variables are set in <code>~/minecraft-servers/.env</code> and apply to all servers.</p>
+<p>These variables are set in <code>~/minecraft-servers/.env</code>. Only the keys listed in <code>servers/global.env</code> reach server containers. See <a href="#setting-classification">Setting Classification</a> for who reads each key.</p>
 <h3 id="network-configuration">Network Configuration<a class="headerlink" href="#network-configuration" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2869,6 +2916,12 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 <td><code>25575</code></td>
 <td>Auto</td>
 </tr>
+<tr>
+<td><code>EXTRA_ARGS</code></td>
+<td>Extra arguments for all servers. A server's <code>config.env</code> overrides it, and new servers set <code>EXTRA_ARGS=--universe /worlds/</code> there</td>
+<td>-</td>
+<td>Manual</td>
+</tr>
 </tbody>
 </table>
 <h3 id="backup-configuration">Backup Configuration<a class="headerlink" href="#backup-configuration" title="Permanent link">&para;</a></h3>
@@ -2886,25 +2939,25 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 <td><code>BACKUP_GITHUB_TOKEN</code></td>
 <td>GitHub Personal Access Token</td>
 <td>-</td>
-<td>Manual</td>
+<td><code>mcctl backup init</code></td>
 </tr>
 <tr>
 <td><code>BACKUP_GITHUB_REPO</code></td>
 <td>Target repository</td>
 <td>-</td>
-<td>Manual</td>
+<td><code>mcctl backup init</code></td>
 </tr>
 <tr>
 <td><code>BACKUP_GITHUB_BRANCH</code></td>
 <td>Target branch</td>
 <td><code>main</code></td>
-<td>Manual</td>
+<td><code>mcctl backup init</code></td>
 </tr>
 <tr>
 <td><code>BACKUP_AUTO_ON_STOP</code></td>
 <td>Auto-backup on server stop</td>
 <td><code>false</code></td>
-<td>Manual</td>
+<td><code>mcctl backup init</code></td>
 </tr>
 </tbody>
 </table>
@@ -2914,6 +2967,43 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>status
 </code></pre></div></p>
 </div>
+<h3 id="external-access-and-console">External Access and Console<a class="headerlink" href="#external-access-and-console" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Default</th>
+<th>mcctl</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PLAYIT_SECRET_KEY</code></td>
+<td>playit.gg agent secret key</td>
+<td>-</td>
+<td><code>mcctl playit setup</code></td>
+</tr>
+<tr>
+<td><code>LOG_LEVEL</code></td>
+<td>mcctl-api log level</td>
+<td><code>info</code></td>
+<td>Manual</td>
+</tr>
+<tr>
+<td><code>BETTER_AUTH_SECRET</code></td>
+<td>Signs console login sessions. Changing it signs everyone out</td>
+<td>random</td>
+<td><code>mcctl console init</code></td>
+</tr>
+<tr>
+<td><code>BETTER_AUTH_BASE_URL</code></td>
+<td>Public URL of the console for auth callbacks</td>
+<td><code>http://localhost:&lt;console port&gt;</code></td>
+<td>Manual</td>
+</tr>
+</tbody>
+</table>
 <h3 id="setting-classification">Setting Classification<a class="headerlink" href="#setting-classification" title="Permanent link">&para;</a></h3>
 <p>Every key in <code>.env</code> has exactly one status, decided by which code actually reads it, not by whether a template contains it. The Console <strong>Settings</strong> page (admin only) shows the same classification. See <a href="../../console/web-console/#platform-settings-admin">Platform Settings</a>.</p>
 <div class="admonition info">
@@ -3012,13 +3102,13 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 </tr>
 <tr>
 <td><code>BETTER_AUTH_SECRET</code> (secret, cannot be removed), <code>BETTER_AUTH_BASE_URL</code></td>
-<td>mcctl-console reads only these two from <code>.env</code> at startup; a non-empty value wins over <code>ecosystem.config.cjs</code>. Changing the secret signs everyone out. Unset base URL = <code>http://localhost:&lt;console port&gt;</code></td>
+<td>mcctl-console reads only these two from <code>.env</code> at startup, and a non-empty value is used only when <code>ecosystem.config.cjs</code> no longer defines that key (while it does, the ecosystem value wins and a warning is logged if <code>.env</code> differs). <code>mcctl upgrade</code> moves them into <code>.env</code>. Changing the secret signs everyone out. Unset base URL = <code>http://localhost:&lt;console port&gt;</code></td>
 <td><code>console</code>: <code>mcctl console service restart --console</code></td>
 </tr>
 </tbody>
 </table>
 <p><strong>Read-only keys:</strong> <code>MINECRAFT_NETWORK</code>, <code>MINECRAFT_SUBNET</code> (run <code>mcctl down</code>, edit <code>.env</code>, then <code>mcctl up</code>) and <code>COMPOSE_PROJECT_NAME</code> (changing it orphans existing containers and networks; CLI only).</p>
-<p><strong>Runtime-managed (PM2):</strong> <code>AUTH_MODE</code> (api) comes from <code>ecosystem.config.cjs</code>. Re-run <code>mcctl console init</code> to change it. Ecosystem files generated by earlier versions also inject <code>BETTER_AUTH_SECRET</code> and <code>BETTER_AUTH_BASE_URL</code>; a non-empty <code>.env</code> value wins over them, and re-running <code>mcctl console init</code> moves the existing secret into <code>.env</code> (sessions stay valid).</p>
+<p><strong>Runtime-managed (PM2):</strong> <code>AUTH_MODE</code> (api) comes from <code>ecosystem.config.cjs</code>. Re-run <code>mcctl console init</code> to change it. Ecosystem files generated by earlier versions also inject <code>BETTER_AUTH_SECRET</code> and <code>BETTER_AUTH_BASE_URL</code>; while they are defined there, the ecosystem value wins over <code>.env</code> and Platform Settings shows them read-only. Run <code>mcctl upgrade</code> to move both into <code>.env</code> (the secret is kept, so sessions stay valid; a backup <code>ecosystem.config.cjs.bak-&lt;timestamp&gt;</code> is written), then <code>mcctl console service restart --console</code>.</p>
 <p><strong>Legacy:</strong> <code>API_ACCESS_MODE</code>, <code>BETTER_AUTH_TRUSTED_ORIGINS</code>, <code>BETTER_AUTH_URL</code>, <code>MCCTL_API_IMAGE</code>, <code>MCCTL_CONSOLE_IMAGE</code>, <code>MCCTL_CONSOLE_PORT</code>, <code>MCCTL_CORS_ORIGIN</code>, <code>MCCTL_JWT_EXPIRY</code>, <code>MCCTL_JWT_SECRET</code>, <code>NEXTAUTH_SECRET</code>, <code>NEXTAUTH_URL</code>, <code>DEFAULT_MEMORY</code>, <code>DEFAULT_VERSION</code>. No create path reads <code>DEFAULT_MEMORY</code> or <code>DEFAULT_VERSION</code>.</p>
 <p><strong>Unknown:</strong> Not recognized by mcctl. Loaded by mcctl-api at startup; Minecraft servers receive it only if its name is listed in <code>servers/global.env</code>.</p>
 <p>Legacy and unknown keys whose names match <code>SECRET</code>, <code>TOKEN</code>, <code>PASSWORD</code>, <code>PASSWD</code>, <code>CREDENTIAL</code>, <code>PRIVATE</code> or end in <code>_KEY</code> are treated as secrets and never displayed.</p>

@@ -4795,13 +4795,13 @@
 <ol>
 <li><strong>Server Name</strong> -- A unique identifier (lowercase letters, numbers, and hyphens only)</li>
 <li><strong>Server Type</strong> -- Choose a category with the toggle:<ul>
-<li><strong>Standard Server</strong> -- Pick a <strong>Server Type</strong> (VANILLA, PAPER, FABRIC, FORGE, or NEOFORGE) and a <strong>Minecraft Version</strong> (e.g., <code>1.21.1</code> or <code>latest</code>)</li>
+<li><strong>Standard Server</strong> -- Pick a <strong>Server Type</strong> (VANILLA, PAPER, FABRIC, FORGE, or NEOFORGE) and a <strong>Minecraft Version</strong> (e.g., <code>1.21.1</code> or <code>LATEST</code>). The defaults are VANILLA and <code>LATEST</code>. For other types, pin a version such as <code>1.21.1</code> if the loader doesn't support the newest Minecraft release yet</li>
 <li><strong>Modpack</strong> -- Search Modrinth modpacks by name (or type a slug such as <code>cobblemon</code>), then choose a <strong>Mod Loader</strong> and a compatible <strong>Minecraft Version</strong>. Client-only mods that are detected are added to <strong>Exclude mods (optional)</strong> automatically; you can edit that comma-separated list</li>
 </ul>
 </li>
 <li><strong>World Setup</strong> -- <strong>Default World</strong>, <strong>Seed</strong> (enter a seed), or <strong>Existing World</strong> (pick an unassigned world)</li>
 <li><strong>Memory</strong> -- How much RAM to assign (default <code>4G</code> for standard servers, <code>6G</code> for modpacks)</li>
-<li><strong>Sudo Password</strong> -- Required for mDNS hostname registration (avahi)</li>
+<li><strong>Sudo Password</strong> -- Required for mDNS hostname registration (avahi). If you leave it empty, <strong>Create</strong> asks you to confirm: choose <strong>Continue without password</strong> when sudo on the host doesn't ask for one, or <strong>Enter password</strong> to go back to the field</li>
 <li><strong>Auto-start after creation</strong> -- Start the server as soon as it is created</li>
 </ol>
 <p>Click <strong>Create</strong> to start. The dialog switches to a progress view (<strong>Initializing</strong>, <strong>Creating</strong>, <strong>Configuring</strong>, <strong>Starting</strong>) driven by Server-Sent Events, and ends with <strong>Server Created Successfully</strong> or <strong>Creation Failed</strong>.</p>
@@ -4934,9 +4934,10 @@
 <h4 id="connection">Connection<a class="headerlink" href="#connection" title="Permanent link">&para;</a></h4>
 <p>The <strong>Connection</strong> card shows how clients can reach the server:</p>
 <ul>
-<li><strong>LAN Address</strong> -- The server hostname with port <code>25565</code>, with a copy button. A <code>+N</code> chip lists any additional hostnames</li>
+<li><strong>Addresses</strong> -- Every hostname of the server with port <code>25565</code> and a copy button, labeled by kind: <strong>LAN</strong>, <strong>Tailscale / VPN</strong>, <strong>nip.io</strong>, <strong>External</strong> (your own domain), or <strong>mDNS</strong> (<code>.local</code>). LAN addresses are listed first</li>
 <li><strong>External Address</strong> -- The playit.gg domain assigned to this server (with a copy button), or <code>Not configured</code>. This row appears when playit.gg is enabled</li>
 </ul>
+<p>Copy buttons also work when the console is opened over plain HTTP from another machine, and show a message if copying fails.</p>
 <h3 id="players-tab">Players Tab<a class="headerlink" href="#players-tab" title="Permanent link">&para;</a></h3>
 <p><em>Available since v2.27.0.</em></p>
 <p><img alt="Server Players" src="../../images/server-players.png" /></p>
@@ -5679,17 +5680,20 @@
 <hr />
 <h2 id="platform-settings-admin">Platform Settings (Admin)<a class="headerlink" href="#platform-settings-admin" title="Permanent link">&para;</a></h2>
 <p>Administrators see an additional <strong>Platform Settings</strong> section on the <strong>Settings</strong> page, above the account cards. It edits the platform <code>.env</code> file. Non-admin users only see their own account cards and cannot read or change platform configuration; the API enforces this independently of the UI.</p>
+<p><img alt="Platform Settings" src="../../images/platform-settings.png" /></p>
 <ul>
 <li><strong>Bento cards</strong> -- Settings are grouped into cards: Network &amp; Routing, Server Runtime, RCON, Backup, External Access (playit.gg) and Console &amp; Logging. Each field uses a typed control (text, switch, select, number, IP list) with field-level validation</li>
 <li><strong>Secrets are write-only</strong> -- Secret fields (<code>RCON_PASSWORD</code>, <code>BACKUP_GITHUB_TOKEN</code>, <code>PLAYIT_SECRET_KEY</code>) show <strong>Configured</strong> or <strong>Not configured</strong>. The input is never pre-filled; typing a value marks the field changed</li>
-<li><strong>Runtime (PM2)</strong> -- A read-only card shows <code>AUTH_MODE</code> from <code>ecosystem.config.cjs</code>, plus <code>BETTER_AUTH_BASE_URL</code> / <code>BETTER_AUTH_SECRET</code> (configured only) while an older ecosystem file still injects them. Values set under <strong>Console &amp; Logging</strong> win; re-run <code>mcctl console init</code> to move them to <code>.env</code></li>
+<li><strong>Runtime (PM2)</strong> -- A read-only card shows <code>AUTH_MODE</code> from <code>ecosystem.config.cjs</code>, plus <code>BETTER_AUTH_BASE_URL</code> / <code>BETTER_AUTH_SECRET</code> (configured only) while an older ecosystem file still injects them. While the ecosystem defines them they win over <code>.env</code> and cannot be changed here; run <code>mcctl upgrade</code> to move them to <code>.env</code></li>
 <li><strong>Advanced Environment</strong> -- Unknown keys as key/value rows (add, edit, remove). Servers receive one only if its name is listed in <code>servers/global.env</code></li>
 <li><strong>Legacy / Unused</strong> -- Legacy keys with warning styling ("Not read by any current code."). Nothing is removed unless you remove it explicitly</li>
 <li><strong>Read-only network identity</strong> -- <code>MINECRAFT_NETWORK</code>, <code>MINECRAFT_SUBNET</code> and <code>COMPOSE_PROJECT_NAME</code> are displayed with CLI guidance only</li>
 </ul>
 <p>Server-specific values stay in each server's <strong>Options</strong> tab. A server's <code>config.env</code> overrides the platform value for that server, and the UI notes this on server-runtime keys. See <a href="../../configuration/environment/#setting-classification">Environment Variables</a> for the full classification.</p>
 <h3 id="saving-and-applying-changes">Saving and Applying Changes<a class="headerlink" href="#saving-and-applying-changes" title="Permanent link">&para;</a></h3>
-<p>A sticky bar with <strong>Discard</strong> and <strong>Save Changes</strong> appears when any field is changed. <strong>Saving only writes <code>.env</code>; it never restarts anything.</strong> After saving, a dialog lists what needs to be restarted, per scope:</p>
+<p><img alt="Unsaved changes bar" src="../../images/platform-settings-save-bar.png" /></p>
+<p>A sticky bar with <strong>Discard</strong> and <strong>Save Changes</strong> appears when any field is changed, and a chip above the cards counts the unsaved fields. <strong>Saving only writes <code>.env</code>; it never restarts anything.</strong> After saving, a <strong>Restart required</strong> dialog lists what needs to be restarted, per scope:</p>
+<p><img alt="Restart required dialog" src="../../images/platform-settings-restart.png" /></p>
 <table>
 <thead>
 <tr>

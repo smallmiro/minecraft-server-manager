@@ -4329,6 +4329,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-2330-2026-10-18---console-auth-upgrade-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2.33.0 (2026-10-18) - Console Auth Upgrade Fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-2320-2026-10-18---platform-settings--secret-isolation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4828,7 +4839,7 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.32.0
+<p><strong>Version</strong>: 2.33.0
 <strong>Last Updated</strong>: 2026-10-18
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
@@ -9409,6 +9420,16 @@ A: Yes. It only appends new <code>.env</code> variables and never modifies exist
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-2330-2026-10-18---console-auth-upgrade-fix">Version 2.33.0 (2026-10-18) - Console Auth Upgrade Fix<a class="headerlink" href="#version-2330-2026-10-18---console-auth-upgrade-fix" title="Permanent link">&para;</a></h3>
+<p>Upgrade: <code>mcctl upgrade</code>, then <code>mcctl console service restart --console</code>. From ≤2.31 go straight to 2.33.0.</p>
+<p><strong>Changed:</strong>
+- Create Server dialog: empty sudo password asks for confirmation (whitespace = empty); defaults VANILLA / <code>LATEST</code>, hint to pin a version for other types (#700)
+- Routing table hostname lists collapsed by default</p>
+<p><strong>Fixed (#699):</strong>
+- Console uses <code>.env</code> <code>BETTER_AUTH_SECRET</code> / <code>BETTER_AUTH_BASE_URL</code> only when <code>ecosystem.config.cjs</code> no longer defines the key; otherwise the PM2 value wins and a warning names the key
+- <code>mcctl upgrade</code> moves both keys from the ecosystem into <code>.env</code> (secret kept, <code>ecosystem.config.cjs.bak-&lt;ts&gt;</code>, dry-run aware, idempotent)
+- Platform Settings: these keys read-only (<code>source: pm2-ecosystem</code>) while the ecosystem defines them; PUT rejected with 400
+- <code>mcctl console init</code> replaces a stale <code>.env</code> secret with the ecosystem secret</p>
 <h3 id="version-2320-2026-10-18---platform-settings--secret-isolation">Version 2.32.0 (2026-10-18) - Platform Settings &amp; Secret Isolation<a class="headerlink" href="#version-2320-2026-10-18---platform-settings--secret-isolation" title="Permanent link">&para;</a></h3>
 <p>Includes the unreleased 2.31.1 hotfix. Upgrade: <code>mcctl upgrade</code>, then <code>mcctl stop &lt;name&gt; &amp;&amp; mcctl start &lt;name&gt;</code> for every server; hosts that ran <code>mcctl console init</code> on ≤2.31.0 check <code>AUTH_MODE</code> (runbook 4-1).</p>
 <p><strong>Added:</strong>
