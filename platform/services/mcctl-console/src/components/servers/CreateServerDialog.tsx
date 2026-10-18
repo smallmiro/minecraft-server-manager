@@ -59,8 +59,8 @@ type ServerCategory = 'standard' | 'modpack';
 
 const DEFAULT_FORM_VALUES: CreateServerRequest = {
   name: '',
-  type: 'PAPER',
-  version: '1.21.1',
+  type: 'VANILLA',
+  version: 'LATEST',
   memory: '4G',
   autoStart: false,
   sudoPassword: '',
@@ -91,6 +91,8 @@ export function CreateServerDialog({
   const [memoryTouched, setMemoryTouched] = useState(false);
   const [worldMode, setWorldMode] = useState<'none' | 'seed' | 'existingWorld'>('none');
   const [selectedWorldName, setSelectedWorldName] = useState('');
+  // Submission held back while asking whether an empty sudo password is intended
+  const [pendingSubmit, setPendingSubmit] = useState<CreateServerRequest | null>(null);
 
   // Modpack selection state
   const [modpackSlug, setModpackSlug] = useState('');
@@ -209,6 +211,7 @@ export function CreateServerDialog({
       setMemoryTouched(false);
       setWorldMode('none');
       setSelectedWorldName('');
+      setPendingSubmit(null);
       setModpackSlug('');
       setModpackSearchInput('');
       setSelectedLoader('');
@@ -387,7 +390,12 @@ export function CreateServerDialog({
       submitData.worldName = selectedWorldName;
     }
 
-    // Submit
+    // An empty sudo password is only valid on hosts with passwordless sudo, so confirm it
+    if (!submitData.sudoPassword) {
+      setPendingSubmit(submitData);
+      return;
+    }
+
     onSubmit(submitData);
   };
 
@@ -846,7 +854,8 @@ export function CreateServerDialog({
                 type="password"
                 value={formData.sudoPassword || ''}
                 onChange={handleChange('sudoPassword')}
-                helperText="Required for mDNS hostname registration (avahi)"
+                error={!!errors.sudoPassword}
+                helperText={errors.sudoPassword || 'Required for mDNS hostname registration (avahi)'}
                 fullWidth
                 disabled={isCreating}
               />
@@ -886,6 +895,34 @@ export function CreateServerDialog({
           )}
         </DialogActions>
       </form>
+      <Dialog open={!!pendingSubmit} onClose={() => setPendingSubmit(null)} maxWidth="xs">
+        <DialogTitle>Continue without a sudo password?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            The sudo password is needed to register the mDNS hostname (avahi). Continue only if
+            sudo on this host doesn&apos;t ask for a password.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setPendingSubmit(null);
+              setErrors((prev) => ({ ...prev, sudoPassword: 'Sudo password is required' }));
+            }}
+          >
+            Enter password
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              if (pendingSubmit) onSubmit(pendingSubmit);
+              setPendingSubmit(null);
+            }}
+          >
+            Continue without password
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

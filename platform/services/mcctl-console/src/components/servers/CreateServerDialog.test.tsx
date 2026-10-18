@@ -60,6 +60,11 @@ const renderWithTheme = (component: React.ReactNode) => {
   return render(<ThemeProvider>{component}</ThemeProvider>);
 };
 
+// Submitting with an empty sudo password opens a confirmation popup first.
+const confirmNoSudoPassword = async () => {
+  fireEvent.click(await screen.findByRole('button', { name: /continue without password/i }));
+};
+
 describe('CreateServerDialog', () => {
   beforeEach(() => {
     mockUseModpackSearch.mockReturnValue({ data: undefined, isLoading: false });
@@ -143,6 +148,7 @@ describe('CreateServerDialog', () => {
     const createButton = screen.getByRole('button', { name: /create/i });
     fireEvent.click(createButton);
 
+    await confirmNoSudoPassword();
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
       expect(onSubmit).toHaveBeenCalledWith({
@@ -240,6 +246,7 @@ describe('CreateServerDialog', () => {
     const createButton = screen.getByRole('button', { name: /create/i });
     fireEvent.click(createButton);
 
+    await confirmNoSudoPassword();
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -281,6 +288,49 @@ describe('CreateServerDialog', () => {
 
     expect(screen.getByLabelText(/sudo password/i)).toBeInTheDocument();
     expect(screen.getByText(/required for mdns hostname registration/i)).toBeInTheDocument();
+  });
+
+  it('should ask before submitting with an empty sudo password', async () => {
+    const onSubmit = vi.fn();
+    renderWithTheme(
+      <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+    );
+
+    fireEvent.change(screen.getByLabelText(/server name/i), { target: { value: 'test-server' } });
+    fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+    expect(await screen.findByText(/continue without a sudo password/i)).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await confirmNoSudoPassword();
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ sudoPassword: '' }));
+    });
+  });
+
+  it('should require the sudo password when the user chooses to enter one', async () => {
+    const onSubmit = vi.fn();
+    renderWithTheme(
+      <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+    );
+
+    fireEvent.change(screen.getByLabelText(/server name/i), { target: { value: 'test-server' } });
+    fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /enter password/i }));
+
+    expect(await screen.findByText(/sudo password is required/i)).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('should default to VANILLA and the LATEST Minecraft version', () => {
+    renderWithTheme(
+      <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+    );
+
+    expect(screen.getByLabelText(/server type/i)).toHaveTextContent('VANILLA');
+    expect(screen.getByLabelText(/minecraft version/i)).toHaveValue('LATEST');
   });
 
   it('should reset form when dialog is closed', async () => {
@@ -487,6 +537,7 @@ describe('CreateServerDialog', () => {
       const createButton = screen.getByRole('button', { name: /^create$/i });
       fireEvent.click(createButton);
 
+      await confirmNoSudoPassword();
       await waitFor(() => {
         expect(onSubmit).toHaveBeenCalledTimes(1);
         const arg = onSubmit.mock.calls[0][0];
@@ -532,6 +583,7 @@ describe('CreateServerDialog', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
+      await confirmNoSudoPassword();
       await waitFor(() => {
         expect(onSubmit).toHaveBeenCalledTimes(1);
         const arg = onSubmit.mock.calls[0][0];
@@ -707,6 +759,7 @@ describe('CreateServerDialog', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
+      await confirmNoSudoPassword();
       await waitFor(() => {
         expect(onSubmit).toHaveBeenCalledTimes(1);
         const arg = onSubmit.mock.calls[0][0];
@@ -777,6 +830,7 @@ describe('CreateServerDialog', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
+      await confirmNoSudoPassword();
       await waitFor(() => {
         expect(onSubmit).toHaveBeenCalledTimes(1);
         const arg = onSubmit.mock.calls[0][0];
@@ -809,6 +863,7 @@ describe('CreateServerDialog', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
+      await confirmNoSudoPassword();
       await waitFor(() => {
         expect(onSubmit).toHaveBeenCalledTimes(1);
         const arg = onSubmit.mock.calls[0][0];
@@ -863,6 +918,7 @@ describe('CreateServerDialog', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
+      await confirmNoSudoPassword();
       await waitFor(() => {
         expect(onSubmit).toHaveBeenCalledTimes(1);
         const arg = onSubmit.mock.calls[0][0];
