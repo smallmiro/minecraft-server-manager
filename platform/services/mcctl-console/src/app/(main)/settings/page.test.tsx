@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SettingsPage from './page';
+import { useSession } from '@/lib/auth-client';
+
+vi.mock('@/lib/auth-client', () => ({ useSession: vi.fn() }));
 
 vi.mock('@/components/settings', () => ({
   ProfileSection: ({ onSuccess, onError }: any) => (
@@ -18,9 +21,18 @@ vi.mock('@/components/settings', () => ({
       <button onClick={() => onError('Password failed')}>Password error</button>
     </div>
   ),
+  PlatformSettingsSection: () => <div data-testid="platform-section">Platform content</div>,
 }));
 
+function asRole(role: string | undefined) {
+  vi.mocked(useSession).mockReturnValue({
+    data: role ? { user: { role } } : null,
+  } as never);
+}
+
 describe('SettingsPage', () => {
+  beforeEach(() => asRole('user'));
+
   it('renders one compact hero and three ordered settings panels', () => {
     render(<SettingsPage />);
 
@@ -32,6 +44,26 @@ describe('SettingsPage', () => {
     const password = screen.getByRole('region', { name: 'Password settings' });
     expect(profile.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(account.compareDocumentPosition(password) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('does not render the platform section for non-admins', () => {
+    render(<SettingsPage />);
+    expect(screen.queryByTestId('platform-section')).not.toBeInTheDocument();
+  });
+
+  it('does not render the platform section while the session is unresolved', () => {
+    asRole(undefined);
+    render(<SettingsPage />);
+    expect(screen.queryByTestId('platform-section')).not.toBeInTheDocument();
+  });
+
+  it('renders the platform section above the account panels for admins', () => {
+    asRole('admin');
+    render(<SettingsPage />);
+
+    const platform = screen.getByTestId('platform-section');
+    const profile = screen.getByRole('region', { name: 'Profile settings' });
+    expect(platform.compareDocumentPosition(profile) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('preserves success feedback from settings sections', () => {
