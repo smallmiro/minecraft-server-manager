@@ -22,6 +22,7 @@ import {
   getAvailableServices,
   checkServiceAvailability,
 } from '../../lib/pm2-utils.js';
+import { AdminConfigManager } from '../../lib/admin-config.js';
 
 /**
  * Console service command options
@@ -225,7 +226,8 @@ async function getConsoleServiceStatus(
   pm2Adapter: Pm2ServiceManagerAdapter,
   apiPort?: number,
   consolePort?: number,
-  retryMs: number = 0
+  retryMs: number = 0,
+  scope: string[] = [PM2_SERVICE_NAMES.API, PM2_SERVICE_NAMES.CONSOLE]
 ): Promise<ConsoleServiceStatus> {
   try {
     const processes = await pm2Adapter.status();
@@ -249,11 +251,13 @@ async function getConsoleServiceStatus(
       }
     }
 
+    // Only services in scope (started/installed) must be online and pass the probe
     const healthy =
-      api?.status === ServiceStatusEnum.ONLINE &&
-      consoleInfo?.status === ServiceStatusEnum.ONLINE &&
-      !api.health &&
-      !consoleInfo.health;
+      scope.length > 0 &&
+      scope.every((name) => {
+        const info = name === PM2_SERVICE_NAMES.API ? api : consoleInfo;
+        return info?.status === ServiceStatusEnum.ONLINE && !info.health;
+      });
 
     return { api, console: consoleInfo, healthy };
   } catch {
@@ -356,7 +360,9 @@ async function printUnhealthyHint(
 async function startServices(
   paths: Paths,
   pm2Adapter: Pm2ServiceManagerAdapter,
-  options: ConsoleServiceOptions
+  options: ConsoleServiceOptions,
+  apiPort: number,
+  consolePort: number
 ): Promise<number> {
   if (!ecosystemConfigExists(paths)) {
     log.error('Ecosystem config not found.');
@@ -365,8 +371,6 @@ async function startServices(
   }
 
   const services = await getServiceNames(options, paths.root, 'start');
-  const apiPort = options.apiPort ?? API_PORT_DEFAULT;
-  const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
 
   if (services === null) {
     return 0; // User cancelled
@@ -396,7 +400,13 @@ async function startServices(
     log.info('Console services started successfully');
 
     // Show status after starting
-    const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort, HEALTH_RETRY_MS);
+    const status = await getConsoleServiceStatus(
+      pm2Adapter,
+      apiPort,
+      consolePort,
+      HEALTH_RETRY_MS,
+      services
+    );
     formatStatus(status, false);
 
     if (!status.healthy && (status.api || status.console)) {
@@ -469,11 +479,11 @@ async function stopServices(
 async function restartServices(
   paths: Paths,
   pm2Adapter: Pm2ServiceManagerAdapter,
-  options: ConsoleServiceOptions
+  options: ConsoleServiceOptions,
+  apiPort: number,
+  consolePort: number
 ): Promise<number> {
   const services = await getServiceNames(options, paths.root, 'restart');
-  const apiPort = options.apiPort ?? API_PORT_DEFAULT;
-  const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
 
   if (services === null) {
     return 0; // User cancelled
@@ -535,7 +545,13 @@ async function restartServices(
     log.info('Console services restarted');
 
     // Show status after restarting
-    const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort, HEALTH_RETRY_MS);
+    const status = await getConsoleServiceStatus(
+      pm2Adapter,
+      apiPort,
+      consolePort,
+      HEALTH_RETRY_MS,
+      services
+    );
     formatStatus(status, false);
 
     if (!status.healthy && (status.api || status.console)) {
@@ -635,21 +651,24 @@ export async function consoleServiceCommand(options: ConsoleServiceOptions): Pro
   const pm2Adapter = new Pm2ServiceManagerAdapter(paths);
 
   try {
-    const apiPort = options.apiPort ?? API_PORT_DEFAULT;
-    const consolePort = options.consolePort ?? CONSOLE_PORT_DEFAULT;
+    // Flags override the ports saved by `mcctl console init`
+    const adminConfig = await new AdminConfigManager(options.root).load();
+    const apiPort = options.apiPort ?? adminConfig?.api?.port ?? API_PORT_DEFAULT;
+    const consolePort = options.consolePort ?? adminConfig?.console?.port ?? CONSOLE_PORT_DEFAULT;
+    const installed = getAvailableServices(paths.root);
 
     switch (options.subCommand) {
       case 'start':
-        return await startServices(paths, pm2Adapter, options);
+        return await startServices(paths, pm2Adapter, options, apiPort, consolePort);
 
       case 'stop':
         return await stopServices(paths, pm2Adapter, options);
 
       case 'restart':
-        return await restartServices(paths, pm2Adapter, options);
+        return await restartServices(paths, pm2Adapter, options, apiPort, consolePort);
 
       case 'status': {
-        const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort);
+        const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort, 0, installed);
         formatStatus(status, options.json ?? false);
         if (!status.healthy && !options.json) await printUnhealthyHint(pm2Adapter, status);
         return status.healthy || (!status.api && !status.console) ? 0 : 1;
@@ -660,7 +679,7 @@ export async function consoleServiceCommand(options: ConsoleServiceOptions): Pro
 
       default: {
         // Default: show status
-        const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort);
+        const status = await getConsoleServiceStatus(pm2Adapter, apiPort, consolePort, 0, installed);
         formatStatus(status, options.json ?? false);
         return 0;
       }

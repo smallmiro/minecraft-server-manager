@@ -71,6 +71,13 @@ vi.mock('../../../../src/lib/pm2-utils.js', () => ({
   }),
 }));
 
+// Mock admin config (ports persisted by `mcctl console init`)
+const mockAdminLoad = vi.fn().mockResolvedValue(null);
+vi.mock('../../../../src/lib/admin-config.js', () => ({
+  AdminConfigManager: vi.fn().mockImplementation(() => ({ load: mockAdminLoad })),
+}));
+
+import { getAvailableServices } from '../../../../src/lib/pm2-utils.js';
 import { consoleServiceCommand } from '../../../../src/commands/console/service.js';
 import { ProcessInfo, ServiceStatusEnum } from '@minecraft-docker/shared';
 
@@ -88,6 +95,8 @@ describe('consoleServiceCommand health probe', () => {
     mockIsInitialized.mockReturnValue(true);
     mockStatus.mockResolvedValue(procs());
     mockLogs.mockResolvedValue('');
+    mockAdminLoad.mockResolvedValue(null);
+    vi.mocked(getAvailableServices).mockReturnValue(['mcctl-api', 'mcctl-console']);
     mockFetch.mockResolvedValue({ ok: true, status: 200 });
     vi.stubGlobal('fetch', mockFetch);
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -151,5 +160,23 @@ describe('consoleServiceCommand health probe', () => {
     await vi.advanceTimersByTimeAsync(5000);
     expect(await p).toBe(0);
     vi.useRealTimers();
+  });
+
+  it('start --api: healthy API alone returns 0 even when console is not running', async () => {
+    mockStatus.mockResolvedValue([procs()[0]]);
+    expect(await consoleServiceCommand({ subCommand: 'start', apiOnly: true })).toBe(0);
+  });
+
+  it('status: API-only install is healthy when API is online', async () => {
+    vi.mocked(getAvailableServices).mockReturnValue(['mcctl-api']);
+    mockStatus.mockResolvedValue([procs()[0]]);
+    expect(await consoleServiceCommand({ subCommand: 'status' })).toBe(0);
+  });
+
+  it('status: probes ports saved by console init when no port flags are given', async () => {
+    mockAdminLoad.mockResolvedValue({ api: { port: 6001 }, console: { port: 6000 } });
+    expect(await consoleServiceCommand({ subCommand: 'status' })).toBe(0);
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:6001/health', expect.anything());
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:6000/api/auth/get-session', expect.anything());
   });
 });
