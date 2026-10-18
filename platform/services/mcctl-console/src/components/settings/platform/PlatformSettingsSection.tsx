@@ -123,6 +123,12 @@ export function PlatformSettingsSection({ onSuccess, onError }: PlatformSettings
     refetch();
   };
 
+  // Load the new revision but keep the drafts, so the next save applies only the keys the admin changed.
+  const handleKeepEditing = () => {
+    setConflict(false);
+    refetch();
+  };
+
   if (isLoading) return <CircularProgress aria-label="Loading platform settings" />;
   if (error || !data) {
     return <Alert severity="error">{error?.message ?? 'Failed to load platform settings'}</Alert>;
@@ -176,11 +182,12 @@ export function PlatformSettingsSection({ onSuccess, onError }: PlatformSettings
         <DialogContent>
           <DialogContentText>
             .env was modified after you loaded this page. Nothing was saved. Reload to see the current
-            values; your unsaved edits will be discarded.
+            values and discard your edits, or keep editing to load the latest version and save only the
+            keys you changed.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConflict(false)}>Keep editing</Button>
+          <Button onClick={handleKeepEditing}>Keep editing</Button>
           <Button variant="contained" onClick={handleReload}>
             Reload
           </Button>

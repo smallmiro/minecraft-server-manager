@@ -173,6 +173,23 @@ describe('PlatformSettingsSection', () => {
     expect(mutate).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps edits on 409 "Keep editing" and refetches so the next save uses the new revision', () => {
+    renderSection();
+    fireEvent.change(screen.getByLabelText('Host IP'), { target: { value: '10.0.0.2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    act(() =>
+      mutate.mock.calls[0][1].onError(
+        new hooks.PlatformSettingsError(409, 'stale', { currentRevision: 'rev9' })
+      )
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Settings changed elsewhere' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Keep editing' }));
+
+    expect(refetch).toHaveBeenCalled();
+    expect(screen.getByLabelText('Host IP')).toHaveValue('10.0.0.2');
+  });
+
   it('removes a legacy key explicitly', () => {
     renderSection();
     const legacy = screen.getByRole('region', { name: 'Legacy / Unused' });
