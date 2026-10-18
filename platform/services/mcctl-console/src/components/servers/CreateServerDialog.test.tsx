@@ -320,7 +320,24 @@ describe('CreateServerDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
     fireEvent.click(await screen.findByRole('button', { name: /enter password/i }));
 
-    expect(await screen.findByText(/sudo password is required/i)).toBeInTheDocument();
+    expect(await screen.findByText(/enter the sudo password/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText(/sudo password/i)).toHaveFocus();
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('should treat a whitespace-only sudo password as empty', async () => {
+    const onSubmit = vi.fn();
+    renderWithTheme(
+      <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={onSubmit} />
+    );
+
+    fireEvent.change(screen.getByLabelText(/server name/i), { target: { value: 'test-server' } });
+    fireEvent.change(screen.getByLabelText(/sudo password/i), { target: { value: '  ' } });
+    fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+    expect(await screen.findByText(/continue without a sudo password/i)).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -331,6 +348,19 @@ describe('CreateServerDialog', () => {
 
     expect(screen.getByLabelText(/server type/i)).toHaveTextContent('VANILLA');
     expect(screen.getByLabelText(/minecraft version/i)).toHaveValue('LATEST');
+  });
+
+  it('should warn that LATEST may not be supported yet by non-vanilla server types', async () => {
+    renderWithTheme(
+      <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+    );
+
+    expect(screen.queryByText(/may not support the newest/i)).not.toBeInTheDocument();
+
+    fireEvent.mouseDown(screen.getByLabelText(/server type/i));
+    fireEvent.click(await screen.findByRole('option', { name: 'FORGE' }));
+
+    expect(await screen.findByText(/FORGE may not support the newest/i)).toBeInTheDocument();
   });
 
   it('should reset form when dialog is closed', async () => {

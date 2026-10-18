@@ -104,6 +104,7 @@ export function CreateServerDialog({
 
   // Refs for accessibility
   const firstModpackFieldRef = useRef<HTMLInputElement>(null);
+  const sudoPasswordRef = useRef<HTMLInputElement>(null);
   const liveRegionRef = useRef<HTMLDivElement>(null);
 
   // Determine active step based on status
@@ -391,7 +392,7 @@ export function CreateServerDialog({
     }
 
     // An empty sudo password is only valid on hosts with passwordless sudo, so confirm it
-    if (!submitData.sudoPassword) {
+    if (!submitData.sudoPassword?.trim()) {
       setPendingSubmit(submitData);
       return;
     }
@@ -543,7 +544,11 @@ export function CreateServerDialog({
                       label="Minecraft Version"
                       value={formData.version}
                       onChange={handleChange('version')}
-                      helperText="e.g., 1.21.1, 1.20.4, latest"
+                      helperText={
+                        formData.type !== 'VANILLA' && formData.version?.toUpperCase() === 'LATEST'
+                          ? `${formData.type} may not support the newest Minecraft release yet. Pin a version (e.g., 1.21.1) if creation fails`
+                          : 'e.g., 1.21.1, 1.20.4, LATEST'
+                      }
                       fullWidth
                       disabled={isCreating}
                     />
@@ -854,6 +859,7 @@ export function CreateServerDialog({
                 type="password"
                 value={formData.sudoPassword || ''}
                 onChange={handleChange('sudoPassword')}
+                inputRef={sudoPasswordRef}
                 error={!!errors.sudoPassword}
                 helperText={errors.sudoPassword || 'Required for mDNS hostname registration (avahi)'}
                 fullWidth
@@ -895,7 +901,12 @@ export function CreateServerDialog({
           )}
         </DialogActions>
       </form>
-      <Dialog open={!!pendingSubmit} onClose={() => setPendingSubmit(null)} maxWidth="xs">
+      <Dialog
+        open={!!pendingSubmit}
+        onClose={() => setPendingSubmit(null)}
+        maxWidth="xs"
+        disableRestoreFocus
+      >
         <DialogTitle>Continue without a sudo password?</DialogTitle>
         <DialogContent>
           <Typography variant="body2">
@@ -907,7 +918,9 @@ export function CreateServerDialog({
           <Button
             onClick={() => {
               setPendingSubmit(null);
-              setErrors((prev) => ({ ...prev, sudoPassword: 'Sudo password is required' }));
+              setErrors((prev) => ({ ...prev, sudoPassword: 'Enter the sudo password for this host' }));
+              // Focus once the confirmation has closed and released its focus trap
+              setTimeout(() => sudoPasswordRef.current?.focus(), 0);
             }}
           >
             Enter password
