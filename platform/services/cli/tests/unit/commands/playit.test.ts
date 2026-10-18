@@ -472,6 +472,24 @@ describe('mcctl playit subcommand', () => {
       );
     });
 
+    it('should hint stop/start to apply the domain', async () => {
+      createInitializedPlatform(true, 'test-key');
+      mkdirSync(join(testRoot, 'servers', 'factory'), { recursive: true });
+      writeFileSync(join(testRoot, 'servers', 'factory', 'config.env'), 'TYPE=PAPER\n', 'utf-8');
+      vi.mocked(shared.getConfiguredServers).mockReturnValueOnce(['factory']);
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      await playitCommand({
+        root: testRoot,
+        subCommand: 'domain',
+        domainArgs: ['factory', 'a.gl.joinmc.link'],
+      });
+
+      const out = spy.mock.calls.flat().join('\n');
+      spy.mockRestore();
+      expect(out).toContain('mcctl stop factory && mcctl start factory');
+    });
+
     it('should remove playit domain with --remove flag', async () => {
       createInitializedPlatform(true, 'test-key');
 
