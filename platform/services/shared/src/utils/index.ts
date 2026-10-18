@@ -393,6 +393,8 @@ export function isTelemetryEnabled(
 // layer can use it without importing this I/O-bearing barrel).
 export { formatWorldBytes } from './format.js';
 
+export * from './env-file.js';
+
 /**
  * Console output utilities with colors
  */
