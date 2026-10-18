@@ -133,12 +133,13 @@ describe('PlatformSettingsSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
 
     const callbacks = mutate.mock.calls[0][1];
-    act(() => callbacks.onSuccess({ revision: 'rev2', changedKeys: ['HOST_IP'], removedKeys: [], restartScopes: ['next-create', 'servers'] }));
+    act(() => callbacks.onSuccess({ revision: 'rev2', changedKeys: ['HOST_IP'], removedKeys: [], restartScopes: ['next-create', 'servers', 'console'] }));
 
     expect(onSuccess).toHaveBeenCalled();
     const dialog = screen.getByRole('dialog', { name: 'Restart required' });
     expect(within(dialog).getByText(/Restart does not reload \.env/)).toBeInTheDocument();
     expect(within(dialog).getByText(/Existing server hostnames are unchanged/)).toBeInTheDocument();
+    expect(within(dialog).getByText('mcctl console service restart --console')).toBeInTheDocument();
   });
 
   it('maps 400 field errors onto fields', () => {

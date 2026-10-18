@@ -41,13 +41,18 @@ const GUIDANCE: Record<Exclude<RestartScope, 'none'>, Guidance> = {
     text: 'The API reads these values at startup. Restart it from the CLI; it never restarts itself during save.',
     cli: 'mcctl console service restart --api',
   },
+  console: {
+    title: 'mcctl-console',
+    text: 'The console reads these values from .env at startup. Restart it from the CLI; this signs nobody out unless the session secret changed.',
+    cli: 'mcctl console service restart --console',
+  },
   'next-create': {
     title: 'New servers',
     text: 'Applies to servers created after this change. Existing server hostnames are unchanged.',
   },
 };
 
-const ORDER: Exclude<RestartScope, 'none'>[] = ['servers', 'router', 'playit', 'api', 'next-create'];
+const ORDER: Exclude<RestartScope, 'none'>[] = ['servers', 'router', 'playit', 'api', 'console', 'next-create'];
 
 export interface RestartRequiredDialogProps {
   open: boolean;

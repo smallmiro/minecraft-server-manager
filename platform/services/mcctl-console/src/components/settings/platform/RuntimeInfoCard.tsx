@@ -19,8 +19,8 @@ export function RuntimeInfoCard({ items }: { items: PlatformRuntimeItem[] }) {
         Runtime (PM2)
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Injected by ecosystem.config.cjs and read-only here. To change them, re-run{' '}
-        <code>mcctl console init</code>.
+        Injected by ecosystem.config.cjs and read-only here. A BETTER_AUTH_* value set in Console &amp; Logging
+        above takes precedence; re-run <code>mcctl console init</code> to move them to .env.
       </Typography>
       <Stack spacing={1.5}>
         {items.map((item) => (
