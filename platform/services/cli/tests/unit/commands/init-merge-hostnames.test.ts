@@ -12,4 +12,11 @@ describe('mergeHostnames', () => {
   it('does not treat other servers hostnames as system', () => {
     expect(mergeHostnames('a', '', 'ab.local')).toBe('a.local,ab.local');
   });
+  it('treats system hostnames case-insensitively (hand-edited labels)', () => {
+    const r = mergeHostnames('factory', '10.0.0.2', 'Factory.local,Factory.1.2.3.4.nip.io,mc.example.com');
+    expect(r).toBe('factory.local,factory.10.0.0.2.nip.io,mc.example.com');
+  });
+  it('does not add a custom hostname differing only by case', () => {
+    expect(mergeHostnames('a', '', 'X.Example.com,x.example.com')).toBe('a.local,X.Example.com');
+  });
 });
