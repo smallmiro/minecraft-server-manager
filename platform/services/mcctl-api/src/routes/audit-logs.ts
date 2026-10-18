@@ -196,9 +196,8 @@ const auditLogsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
     },
   }, async (request: FastifyRequest<PurgeRoute>, reply: FastifyReply) => {
     try {
-      // Check admin role from headers (set by BFF or API key auth)
-      const role = request.headers['x-role'] as string | undefined;
-      if (role && role !== 'admin') {
+      // Strict: a missing X-Role header (set by the BFF) is rejected too.
+      if (request.headers['x-role'] !== 'admin') {
         return reply.code(403).send({
           error: 'Forbidden',
           message: 'Admin access required for audit log purge',
