@@ -1,12 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -20,43 +18,11 @@ import PublicIcon from '@mui/icons-material/Public';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CheckIcon from '@mui/icons-material/Check';
+import { CopyButton } from '@/components/common';
 import { usePlayitStatus, useStartPlayit, useStopPlayit } from '@/hooks/usePlayit';
 
 const cellLabelSx = { fontWeight: 500, color: 'text.secondary', border: 0, width: '40%', py: 1 } as const;
 const cellValueSx = { border: 0, py: 1 } as const;
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
-  return (
-    <IconButton
-      size="small"
-      onClick={handleCopy}
-      sx={{
-        ml: 1,
-        color: copied ? 'success.main' : 'text.secondary',
-        '&:hover': {
-          bgcolor: 'action.hover',
-        },
-      }}
-      aria-label={copied ? 'Copied' : 'Copy to clipboard'}
-    >
-      {copied ? <CheckIcon sx={{ fontSize: 16 }} /> : <ContentCopyIcon sx={{ fontSize: 16 }} />}
-    </IconButton>
-  );
-}
 
 export function PlayitSection() {
   const { data, isLoading, error } = usePlayitStatus();

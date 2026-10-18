@@ -41,6 +41,20 @@ export function mergePlayers(
   return [...live, ...offlineFiltered];
 }
 
+function CoordsCopy({ coords }: { coords: string }) {
+  return (
+    <Tooltip title="Click to copy">
+      <Box
+        component="span"
+        onClick={() => copy(coords)}
+        sx={{ cursor: 'pointer', color: 'text.secondary', fontFamily: 'monospace' }}
+      >
+        {coords}
+      </Box>
+    </Tooltip>
+  );
+}
+
 /**
  * Player location list with online/offline badges and copyable coordinates (#525).
  */
@@ -83,15 +97,7 @@ export function PlayerLocationList({ offline, live = [] }: PlayerLocationListPro
             <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', minWidth: 80 }}>
               {p.name ?? p.uuid.slice(0, 8)}
             </Typography>
-            <Tooltip title="Click to copy">
-              <Box
-                component="span"
-                onClick={() => copy(coords)}
-                sx={{ cursor: 'pointer', color: 'text.secondary', fontFamily: 'monospace' }}
-              >
-                {coords}
-              </Box>
-            </Tooltip>
+            <CoordsCopy coords={coords} />
             <Chip size="small" variant="outlined" label={DIMENSION_LABEL[p.dimension] ?? p.dimension} />
           </Card>
         );
