@@ -29,6 +29,7 @@ BETTER_AUTH_BASE_URL=http://old:5000
 MCCTL_SUDO_PASSWORD=sudopw
 MY_CUSTOM=hello
 `;
+const NO_AUTH_ECOSYSTEM = `module.exports = { apps: [ { name: 'mcctl-console', env: { PORT: 5000 } } ] };\n`;
 const ECOSYSTEM = `module.exports = { apps: [ { name: 'mcctl-console', env: {
   BETTER_AUTH_SECRET: 'ecosystemsecret',
   BETTER_AUTH_BASE_URL: 'http://localhost:5000',
@@ -54,6 +55,7 @@ describe('PlatformSettingsService', () => {
   const find = (r: { settings: any[] }, key: string) => r.settings.find((s) => s.key === key);
 
   it('classifies keys', async () => {
+    writeFileSync(join(dir, 'ecosystem.config.cjs'), NO_AUTH_ECOSYSTEM);
     const r = await svc.get();
     expect(find(r, 'HOST_IP')).toMatchObject({ status: 'supported', source: 'platform-env', editable: true, value: '192.168.1.10', restartScope: 'next-create' });
     expect(find(r, 'MINECRAFT_NETWORK')).toMatchObject({ status: 'readonly', editable: false, value: 'minecraft-net' });
@@ -90,6 +92,29 @@ describe('PlatformSettingsService', () => {
     expect(find(r, 'BACKUP_GITHUB_TOKEN').applied).toBe(false);
     expect(find(r, 'BACKUP_GITHUB_REPO').applied).toBe(true);
     expect(find(r, 'HOST_IP').applied).toBeUndefined();
+  });
+
+  it('shows auth keys read-only while the ecosystem defines them (#699)', async () => {
+    const r = await svc.get();
+    for (const k of ['BETTER_AUTH_SECRET', 'BETTER_AUTH_BASE_URL']) {
+      expect(find(r, k)).toMatchObject({ source: 'pm2-ecosystem', editable: false });
+      expect(find(r, k).description).toMatch(/ecosystem\.config\.cjs.*mcctl upgrade/);
+    }
+    expect(find(r, 'HOST_IP')).toMatchObject({ editable: true, source: 'platform-env' });
+    writeFileSync(join(dir, 'ecosystem.config.cjs'), NO_AUTH_ECOSYSTEM);
+    expect(find(await svc.get(), 'BETTER_AUTH_SECRET')).toMatchObject({ source: 'platform-env', editable: true });
+  });
+
+  it('rejects set/remove of ecosystem-managed auth keys without writing (#699)', async () => {
+    const { revision } = await svc.get();
+    const before = readFileSync(envPath, 'utf8');
+    const e1 = await svc.update({ revision, set: { BETTER_AUTH_BASE_URL: 'https://x.example.com', TZ: 'UTC' }, remove: [] }).catch((e) => e);
+    expect(e1).toBeInstanceOf(PlatformSettingsValidationError);
+    expect(e1.errors).toEqual([{ key: 'BETTER_AUTH_BASE_URL', message: expect.stringMatching(/ecosystem\.config\.cjs.*mcctl upgrade/) }]);
+    const e2 = await svc.update({ revision, set: {}, remove: ['BETTER_AUTH_SECRET'] }).catch((e) => e);
+    expect(e2).toBeInstanceOf(PlatformSettingsValidationError);
+    expect(e2.errors[0].key).toBe('BETTER_AUTH_SECRET');
+    expect(readFileSync(envPath, 'utf8')).toBe(before);
   });
 
   it('probes ecosystem by text parse and never returns secret', async () => {
@@ -196,6 +221,7 @@ describe('PlatformSettingsService', () => {
     });
 
     it('sets auth keys with console scope; the secret cannot be removed (#686)', async () => {
+      writeFileSync(join(dir, 'ecosystem.config.cjs'), NO_AUTH_ECOSYSTEM);
       const { revision } = await svc.get();
       const bad = await svc.update({ revision, set: { BETTER_AUTH_BASE_URL: 'not a url' }, remove: [] }).catch((e) => e);
       expect(bad).toBeInstanceOf(PlatformSettingsValidationError);

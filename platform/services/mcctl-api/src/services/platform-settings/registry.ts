@@ -63,7 +63,7 @@ export const REGISTRY: Record<string, RegistryEntry> = {
   BACKUP_AUTO_ON_STOP: { label: 'Backup on stop', description: 'Run a backup automatically on mcctl stop.', group: 'Backup', type: 'boolean', status: 'supported', choices: ['true', 'false'], restartScope: 'none', validate: oneOf(['true', 'false']) },
   PLAYIT_SECRET_KEY: { label: 'playit.gg secret key', description: 'Secret key of the playit.gg agent.', group: 'External Access', type: 'secret', status: 'supported', secret: true, restartScope: 'playit', validate: nonEmpty },
   LOG_LEVEL: { label: 'API log level', description: 'Log level of mcctl-api.', group: 'Console & Logging', type: 'enum', status: 'supported', choices: LOG_LEVELS, restartScope: 'api', validate: oneOf(LOG_LEVELS) },
-  // Read by mcctl-console from this .env, ahead of ecosystem.config.cjs (#686).
+  // Read by mcctl-console from this .env once ecosystem.config.cjs no longer defines it (#686, #699).
   BETTER_AUTH_SECRET: { label: 'Console session secret', description: 'Signs console login sessions. Changing it signs everyone out.', group: 'Console & Logging', type: 'secret', status: 'supported', secret: true, required: true, restartScope: 'console', validate: nonEmpty },
   BETTER_AUTH_BASE_URL: { label: 'Console base URL', description: 'Public URL of the console for auth callbacks. Unset: http://localhost:<console port>.', group: 'Console & Logging', type: 'string', status: 'supported', restartScope: 'console', validate: httpUrl },
 };

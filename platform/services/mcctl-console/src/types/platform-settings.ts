@@ -18,7 +18,7 @@ export type SettingType =
 
 export type SettingStatus = 'supported' | 'readonly' | 'shadowed' | 'legacy' | 'unknown';
 
-export type SettingSource = 'platform-env' | 'shadowed' | 'legacy' | 'unknown';
+export type SettingSource = 'platform-env' | 'shadowed' | 'legacy' | 'pm2-ecosystem' | 'unknown';
 
 export type RestartScope = 'none' | 'next-create' | 'router' | 'servers' | 'playit' | 'api' | 'console';
 

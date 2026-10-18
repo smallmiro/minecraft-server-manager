@@ -82,6 +82,13 @@ describe('PlatformSettingsSection', () => {
     expect(screen.getByLabelText('Host IP')).toHaveValue('10.0.0.1');
   });
 
+  it('runtime card explains ecosystem keys are read-only until mcctl upgrade', () => {
+    renderSection();
+    const runtime = screen.getByRole('region', { name: 'Runtime (PM2)' });
+    expect(within(runtime).getByText(/mcctl upgrade/)).toBeInTheDocument();
+    expect(within(runtime).queryByText(/takes precedence/)).not.toBeInTheDocument();
+  });
+
   it('renders read-only keys and the runtime card as non-editable', () => {
     renderSection();
     expect(screen.getByLabelText('Network')).toBeDisabled();
