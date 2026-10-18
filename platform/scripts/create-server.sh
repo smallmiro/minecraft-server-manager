@@ -585,8 +585,10 @@ if [ -f "$CONFIG_FILE" ]; then
         fi
     fi
 
-    # Apply whitelist settings (disabled by default; the template has no
-    # ENABLE_WHITELIST line, so it is written exactly once here when enabled)
+    # Apply whitelist settings (disabled by default). Drop any active
+    # ENABLE_WHITELIST/WHITELIST line from older deployed templates so the
+    # requested state is written exactly once, only when enabled.
+    sed -i '/^ENABLE_WHITELIST=/d; /^WHITELIST=/d' "$CONFIG_FILE"
     if [ "$ENABLE_WHITELIST" = "true" ]; then
         echo "" >> "$CONFIG_FILE"
         echo "# Whitelist" >> "$CONFIG_FILE"

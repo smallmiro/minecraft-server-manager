@@ -9,7 +9,8 @@
 # - --enable-whitelist   -> enabled, no players
 # - --no-whitelist       -> disabled (wins over --whitelist, any order)
 # All three templates are checked: templates/, platform/servers/ and the
-# npm-bundled platform/services/cli/templates/ (what mcctl actually uses).
+# npm-bundled platform/services/cli/templates/ (what mcctl actually uses),
+# plus a legacy template that still has ENABLE_WHITELIST=TRUE.
 #
 # Runs the real script in a temp platform dir with fake docker/ip/hostname/sudo
 # on PATH. HOST_IP resolves to empty, so avahi registration is skipped and no
@@ -105,6 +106,15 @@ run_cases() {
 run_cases "templates/" "$REPO_DIR/templates" "t"
 run_cases "platform/servers/" "" "p"
 run_cases "cli/templates/" "$REPO_DIR/platform/services/cli/templates" "c"
+
+# Legacy deployed template (pre-#679 installs keep ENABLE_WHITELIST=TRUE in
+# <MCCTL_ROOT>/servers/_template, which the Web Console path copies): the
+# script must still apply the requested state exactly once.
+LEGACY="$WORK/legacy-templates"
+mkdir -p "$LEGACY/servers"
+cp -r "$REPO_DIR/templates/servers/_template" "$LEGACY/servers/_template"
+printf '\nENABLE_WHITELIST=TRUE\n' >> "$LEGACY/servers/_template/config.env"
+run_cases "legacy template" "$LEGACY" "l"
 
 assert_eq "sudo never called" "no" "$([[ -f "$WORK/sudo.log" ]] && echo yes || echo no)"
 
