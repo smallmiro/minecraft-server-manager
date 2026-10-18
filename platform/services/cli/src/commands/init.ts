@@ -721,7 +721,6 @@ async function updateServerHostnames(paths: Paths, newHostIPs: string): Promise<
     try {
       let content = readFileSync(composeFile, 'utf-8');
 
-      // Build new hostname list
       // Replace mc-router.host label value
       // Match patterns like: mc-router.host: "server.local,server.ip.nip.io"
       const hostLabelRegex = /(mc-router\.host:\s*["'])([^"']+)(["'])/;
