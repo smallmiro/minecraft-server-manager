@@ -17,13 +17,16 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   ta.value = text;
   ta.setAttribute('readonly', '');
   ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
-  document.body.appendChild(ta);
+  // Inside a focus-trapping modal (MUI Popover/Dialog) the textarea must live in the
+  // trap, otherwise the trap steals focus back and execCommand('copy') fails.
+  const host = document.activeElement?.closest('[role=presentation],[role=dialog]') ?? document.body;
+  host.appendChild(ta);
   try {
     ta.select();
     return document.execCommand('copy');
   } catch {
     return false;
   } finally {
-    document.body.removeChild(ta);
+    ta.remove();
   }
 }

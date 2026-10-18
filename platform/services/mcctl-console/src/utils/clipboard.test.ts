@@ -44,4 +44,23 @@ describe('copyToClipboard', () => {
     expect(await copyToClipboard('x')).toBe(false);
     expect(document.querySelector('textarea')).toBeNull();
   });
+
+  it('attaches the fallback textarea inside the focused modal container and removes it', async () => {
+    setClipboard(undefined);
+    const modal = document.createElement('div');
+    modal.setAttribute('role', 'presentation');
+    const btn = document.createElement('button');
+    modal.appendChild(btn);
+    document.body.appendChild(modal);
+    btn.focus();
+    let parent: Element | null | undefined;
+    document.execCommand = vi.fn(() => {
+      parent = document.querySelector('textarea')?.parentElement;
+      return true;
+    });
+    expect(await copyToClipboard('x')).toBe(true);
+    expect(parent).toBe(modal);
+    expect(modal.querySelector('textarea')).toBeNull();
+    modal.remove();
+  });
 });
