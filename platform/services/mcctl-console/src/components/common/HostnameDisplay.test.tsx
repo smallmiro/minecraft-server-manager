@@ -51,9 +51,9 @@ describe('HostnameDisplay', () => {
   describe('multiple hostnames', () => {
     const multiHostname = 'server.local,server.192.168.1.1.nip.io,server.100.1.2.3.nip.io';
 
-    it('should render primary hostname (.local preferred)', () => {
+    it('should render primary hostname (LAN nip.io preferred over .local)', () => {
       renderWithTheme(<HostnameDisplay hostname={multiHostname} />);
-      expect(screen.getByText('server.local')).toBeInTheDocument();
+      expect(screen.getByText('server.192.168.1.1.nip.io')).toBeInTheDocument();
     });
 
     it('should render +N chip for additional hostnames', () => {
@@ -68,19 +68,19 @@ describe('HostnameDisplay', () => {
       fireEvent.click(chip);
 
       // All hostnames should be visible in popover
-      expect(screen.getByText('server.192.168.1.1.nip.io')).toBeInTheDocument();
+      expect(screen.getAllByText('server.192.168.1.1.nip.io').length).toBeGreaterThan(0);
       expect(screen.getByText('server.100.1.2.3.nip.io')).toBeInTheDocument();
     });
 
     it('should append port suffix to all hostnames in popover', () => {
       renderWithTheme(<HostnameDisplay hostname={multiHostname} portSuffix={25565} />);
 
-      expect(screen.getByText('server.local:25565')).toBeInTheDocument();
+      expect(screen.getByText('server.192.168.1.1.nip.io:25565')).toBeInTheDocument();
 
       const chip = screen.getByText('+2');
       fireEvent.click(chip);
 
-      expect(screen.getByText('server.192.168.1.1.nip.io:25565')).toBeInTheDocument();
+      expect(screen.getByText('server.local:25565')).toBeInTheDocument();
       expect(screen.getByText('server.100.1.2.3.nip.io:25565')).toBeInTheDocument();
     });
 

@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Popover from '@mui/material/Popover';
 import { CopyButton } from './CopyButton';
-import { parseHostnames, getPrimaryHostname } from '@/utils/hostname';
+import { parseHostnames, sortHostnames, getPrimaryHostname } from '@/utils/hostname';
 
 interface HostnameDisplayProps {
   hostname?: string;
@@ -25,7 +25,7 @@ export function HostnameDisplay({
 }: HostnameDisplayProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-  const hosts = parseHostnames(hostname);
+  const hosts = sortHostnames(parseHostnames(hostname));
   const primary = getPrimaryHostname(hostname);
 
   const formatHost = (h: string) => (portSuffix ? `${h}:${portSuffix}` : h);
