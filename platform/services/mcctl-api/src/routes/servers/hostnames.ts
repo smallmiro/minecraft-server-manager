@@ -1,6 +1,13 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { serverExists, AuditActionEnum } from '@minecraft-docker/shared';
+import { join } from 'path';
+import {
+  serverExists,
+  AuditActionEnum,
+  getServerPlayitDomain,
+  setServerPlayitDomain,
+  resolvePlayitDomain,
+} from '@minecraft-docker/shared';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
   HostnameResponseSchema,
@@ -128,6 +135,14 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
 
       const data = hostnameService.updateCustomHostnames(name, customHostnames);
 
+      // Keep PLAYIT_DOMAIN in config.env in step with the label (label already updated above)
+      const serversDir = join(config.platformPath, 'servers');
+      const currentPlayit = getServerPlayitDomain(name, serversDir);
+      const playitDomain = resolvePlayitDomain(currentPlayit, previousCustom, data.customHostnames);
+      if (playitDomain !== currentPlayit) {
+        setServerPlayitDomain(name, playitDomain, serversDir);
+      }
+
       await writeAuditLog({
         action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,
         actor: 'api:console',
@@ -152,6 +167,7 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         systemHostnames: data.systemHostnames,
         customHostnames: data.customHostnames,
         recreateRequired: true,
+        playitDomain,
       });
     } catch (error) {
       if (error instanceof Error && (

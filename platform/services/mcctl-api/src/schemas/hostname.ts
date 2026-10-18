@@ -65,6 +65,7 @@ export const UpdateHostnamesResponseSchema = Type.Object({
   systemHostnames: Type.Array(HostnameInfoSchema),
   customHostnames: Type.Array(Type.String()),
   recreateRequired: Type.Boolean({ description: 'Whether container recreation is needed' }),
+  playitDomain: Type.Union([Type.String(), Type.Null()], { description: 'playit.gg domain (PLAYIT_DOMAIN) after the update' }),
 });
 
 // ============================================================
