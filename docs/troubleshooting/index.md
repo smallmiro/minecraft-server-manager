@@ -155,11 +155,11 @@ mcctl logs <server-name> | grep -i "mod\|plugin"
 | Missing dependencies | Install required dependency mods |
 | File permissions | Check file ownership in shared/ directory |
 
-### sudo Password Written to /etc/avahi/hosts (before 2.31.1)
+### sudo Password Written to /etc/avahi/hosts (before 2.32.0)
 
-**Affected:** You created servers with mcctl earlier than 2.31.1 and supplied a sudo password through `MCCTL_SUDO_PASSWORD`, `--sudo-password`, or the web console's sudo password field.
+**Affected:** You created servers with mcctl earlier than 2.32.0 and supplied a sudo password through `MCCTL_SUDO_PASSWORD`, `--sudo-password`, or the web console's sudo password field.
 
-If sudo did not need to ask for the password at that moment (credentials cached from a recent `sudo`, or `NOPASSWD` in sudoers), the password line was appended to `/etc/avahi/hosts` in plain text. This file is readable by every user on the host. 2.31.1 fixes this; existing files are not changed automatically.
+If sudo did not need to ask for the password at that moment (credentials cached from a recent `sudo`, or `NOPASSWD` in sudoers), the password line was appended to `/etc/avahi/hosts` in plain text. This file is readable by every user on the host. 2.32.0 fixes this; existing files are not changed automatically.
 
 **Check:** list the lines that are not comments, blank lines, or a single `<IPv4> <name>.local` entry:
 

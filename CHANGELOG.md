@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.32.0] - 2026-10-18
+
+> **Upgrade notes** (also includes the unreleased 2.31.1 hotfix). Follow the [upgrade runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/):
+> - Run `mcctl upgrade`, then **stop and start every server** (`mcctl stop <name> && mcctl start <name>`). This moves servers to `servers/global.env` so platform secrets no longer reach Minecraft containers (#685).
+> - Hosts that ran `mcctl console init` on v2.31.0 or earlier: check `AUTH_MODE` in `ecosystem.config.cjs` (runbook step 4-1, #633).
+> - If you created servers with a sudo password, check `/etc/avahi/hosts` for a plain-text password line ([Troubleshooting](https://minecraft-server-manager.readthedocs.io/en/latest/troubleshooting/), #682).
+
+### Added
+- **Platform Settings in the Web Console** (#683) - Admins can view and edit the platform `.env` from **Settings**. Keys are grouped into typed cards; secrets are write-only and shown only as "configured"; legacy and unknown keys are listed with warnings; values injected by PM2 are shown read-only. Saving keeps comments and key order, writes the file atomically (mode `0600`), refuses to overwrite a file that changed since it was loaded (reload dialog), and tells you what to restart for each change. Changes are recorded in the audit log by key name only, never by value. Non-admins see only their account settings. Details: [Platform Settings](https://minecraft-server-manager.readthedocs.io/en/latest/console/web-console/#platform-settings-admin)
+- **Console auth settings live in the platform `.env`** (#686) - `BETTER_AUTH_SECRET` and `BETTER_AUTH_BASE_URL` are read from `<MCCTL_ROOT>/.env`, where a non-empty value wins over `ecosystem.config.cjs`. They can be edited in Platform Settings and applied with `mcctl console service restart --console`. `mcctl console init` now writes the secret to `.env` (keeping an existing value or moving the old ecosystem secret, so sessions stay valid) instead of into the ecosystem file. Existing installs keep working unchanged.
+- **Random RCON password on `mcctl init`** (#680) - New installs get a random 24-character `RCON_PASSWORD` instead of `changeme`. Existing `.env` files are not changed.
+- **`mcctl create --enable-whitelist`** (#679) - Enables the whitelist without adding players.
+- **All connection addresses in the server Connection card** (#681) - Every address is listed with its kind (e.g. LAN, Tailscale / VPN, mDNS) and a copy button.
+
+### Changed
+- **Whitelist is off by default for new servers** (#679) - Use `--whitelist a,b` or `--enable-whitelist`, or answer **Yes** to "Enable whitelist?" in interactive mode. Existing servers are not changed.
+- **LAN address first** (#681) - Connection addresses are ordered LAN nip.io → Tailscale/VPN → other nip.io → external domain → `.local`, and the LAN address is the primary address everywhere in the console.
+- **`mcctl console init` access modes** (#633) - The chosen mode is written as a value mcctl-api recognizes: `internal` → `ip-whitelist` (loopback only), `api-key-ip` → `combined`, `open` → `disabled`. Before, those three silently fell back to `api-key` in production. `mcctl console api` commands now say they only update `api-config.json`.
+- **`.env.example` cleanup** (#687) - Removed keys nothing reads (`API_ACCESS_MODE`, `MCCTL_*_IMAGE`, `MCCTL_JWT_*`, `NEXTAUTH_*`, `DEFAULT_MEMORY`, `DEFAULT_VERSION`, ...).
+
+### Fixed
+- **Platform secrets leaked into server containers** (#685) - Server compose files loaded the whole platform `.env`, so keys like `BACKUP_GITHUB_TOKEN` and `PLAYIT_SECRET_KEY` reached every Minecraft container. Servers now load `servers/global.env`, which passes only `TZ`, `EXTRA_ARGS`, `RCON_PASSWORD` and `RCON_PORT`. `mcctl upgrade` creates it and repoints existing servers; restart each server to apply. To pass another key to all servers, add its name to `servers/global.env`.
+- **sudo password written to `/etc/avahi/hosts`** (#682) - When sudo credentials were cached or `NOPASSWD` was set, the password supplied through `MCCTL_SUDO_PASSWORD` / `--sudo-password` / the console was appended to `/etc/avahi/hosts` in plain text. The password is now used only to authenticate. A comma-separated `HOST_IP` uses the first address, and a non-IPv4 value is skipped with a warning. Existing files are not cleaned automatically.
+- **`DELETE /api/audit-logs` without a role** (#689) - A request with no role header could purge audit logs; it now requires admin.
+- **`.env` writes from the CLI** (#688) - `mcctl init --reconfigure`, backup settings and `mcctl playit setup` now write `.env` atomically and quote values safely, so values with spaces or `$` no longer break `backup.sh`.
+- **Copy buttons over plain HTTP** (#681) - Copying failed silently when the console was opened as `http://<LAN IP>:5000`; it now works, or shows an error.
+- **Fake `[0m` player in the Players tab** (#600) - ANSI codes in the RCON `list` reply are stripped, and no names are reported when 0 players are online.
+- **Minecraft 26.x worlds** (#601) - The world info panel and player data read the new 26.x locations (seed, time, spawn, difficulty, game rules, weather, world border, `players/`), falling back to the old layout.
+- **CLI exit code when the audit log is unavailable** (#602) - A command that succeeded no longer exits with 1 because the audit log could not be written (e.g. `better-sqlite3` ABI mismatch); a one-time warning is printed instead.
+- **`mcctl console service status`** (#677) - Uptime is shown correctly (was e.g. `20744d`), health is checked over HTTP, and a native-module (`NODE_MODULE_VERSION`) failure prints recovery steps.
+
+### Docs
+- Console docs corrected where they differed from the source (#629); upgrade runbook step for `AUTH_MODE` (#633); environment page explains which `.env` keys reach servers and the setting classification (#683, #685)
+
 ## [2.31.0] - 2026-10-11
 
 ### Added

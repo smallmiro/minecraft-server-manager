@@ -155,11 +155,11 @@ mcctl logs <server-name> | grep -i "mod\|plugin"
 | 누락된 의존성 | 필요한 의존성 모드 설치 |
 | 파일 권한 | shared/ 디렉토리의 파일 소유권 확인 |
 
-### sudo 비밀번호가 /etc/avahi/hosts에 기록됨 (2.31.1 이전)
+### sudo 비밀번호가 /etc/avahi/hosts에 기록됨 (2.32.0 이전)
 
-**해당 대상:** 2.31.1 이전 mcctl로 서버를 만들면서 `MCCTL_SUDO_PASSWORD`, `--sudo-password`, 또는 웹 콘솔의 sudo 비밀번호 입력란으로 sudo 비밀번호를 넘긴 경우.
+**해당 대상:** 2.32.0 이전 mcctl로 서버를 만들면서 `MCCTL_SUDO_PASSWORD`, `--sudo-password`, 또는 웹 콘솔의 sudo 비밀번호 입력란으로 sudo 비밀번호를 넘긴 경우.
 
-그 시점에 sudo가 비밀번호를 물을 필요가 없었다면(직전 `sudo` 인증이 캐시돼 있었거나 sudoers에 `NOPASSWD`가 설정된 경우) 비밀번호 줄이 평문으로 `/etc/avahi/hosts`에 추가됐습니다. 이 파일은 호스트의 모든 사용자가 읽을 수 있습니다. 2.31.1에서 수정됐지만 이미 기록된 파일은 자동으로 고치지 않습니다.
+그 시점에 sudo가 비밀번호를 물을 필요가 없었다면(직전 `sudo` 인증이 캐시돼 있었거나 sudoers에 `NOPASSWD`가 설정된 경우) 비밀번호 줄이 평문으로 `/etc/avahi/hosts`에 추가됐습니다. 이 파일은 호스트의 모든 사용자가 읽을 수 있습니다. 2.32.0에서 수정됐지만 이미 기록된 파일은 자동으로 고치지 않습니다.
 
 **점검:** 주석, 빈 줄, `<IPv4> <이름>.local` 한 개짜리 항목이 아닌 줄을 출력합니다.
 

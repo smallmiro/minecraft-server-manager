@@ -1014,6 +1014,25 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [2.32.0] - 2026-10-18
+
+**Upgrade:** run `mcctl upgrade`, then stop and start every server so platform secrets leave the containers (#685). Includes the unreleased 2.31.1 hotfix.
+
+**Added:**
+- **Platform Settings (admin)**: view and edit the platform `.env` from the console Settings page; write-only secrets, conflict detection, restart guidance, audit log by key name (#683)
+- Console auth settings (`BETTER_AUTH_SECRET`, `BETTER_AUTH_BASE_URL`) read from the platform `.env` (#686)
+- Random `RCON_PASSWORD` on `mcctl init` (#680); `mcctl create --enable-whitelist` (#679); all connection addresses with copy buttons, LAN first (#681)
+
+**Changed:**
+- Whitelist is off by default for new servers (#679)
+- `mcctl console init` writes access modes mcctl-api recognizes (#633)
+
+**Fixed:**
+- Platform secrets no longer reach server containers (`servers/global.env`) (#685)
+- sudo password no longer written to `/etc/avahi/hosts` (#682)
+- `DELETE /api/audit-logs` requires admin (#689); atomic, bash-safe `.env` writes (#688)
+- Copy over plain HTTP (#681), fake `[0m` player (#600), Minecraft 26.x world info (#601), CLI exit code with broken audit log (#602), `mcctl console service status` uptime/health (#677)
+
 ### [2.31.0] - 2026-10-11
 
 **Added:**
