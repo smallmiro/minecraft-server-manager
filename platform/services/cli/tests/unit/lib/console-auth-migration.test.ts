@@ -88,4 +88,12 @@ describe('migrateConsoleAuthEnv (#699)', () => {
     expect(after).toContain('BETTER_AUTH_SECRET');
     expect(after).not.toContain('BETTER_AUTH_BASE_URL');
   });
+
+  it('leaves a line with trailing code untouched instead of cutting it (#699)', async () => {
+    const eco = "module.exports = { apps: [{ env: {\n  BETTER_AUTH_SECRET: 'abc' || process.env.X,\n} }] };\n";
+    writeFileSync(join(root, 'ecosystem.config.cjs'), eco);
+    const result = await migrateConsoleAuthEnv(paths, false);
+    expect(result.moved).toEqual([]);
+    expect(readFileSync(join(root, 'ecosystem.config.cjs'), 'utf-8')).toBe(eco);
+  });
 });

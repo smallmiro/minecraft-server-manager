@@ -7,7 +7,7 @@ import { ECOSYSTEM_CONFIG_FILE } from './pm2-utils.js';
 const KEYS = ['BETTER_AUTH_SECRET', 'BETTER_AUTH_BASE_URL'] as const;
 
 /** Whole `KEY: '<value>',` line as older `mcctl console init` generated it (text parse, never evaluated). */
-const lineRe = (key: string) => new RegExp(`^[ \\t]*${key}[ \\t]*:[ \\t]*'([^'\\\\\\n]+)'[ \\t]*,?[ \\t]*\\r?\\n?`, 'm');
+const lineRe = (key: string) => new RegExp(`^[ \\t]*${key}[ \\t]*:[ \\t]*'([^'\\\\\\n]+)'[ \\t]*,?[ \\t]*(?:\\r?\\n|$)`, 'm');
 
 export interface ConsoleAuthMigrationResult {
   /** Keys moved (dry-run: that would be moved) from ecosystem.config.cjs into .env. */
@@ -17,8 +17,8 @@ export interface ConsoleAuthMigrationResult {
 }
 
 /**
- * The console prefers a .env BETTER_AUTH_* value over the PM2 env (#686), so a
- * value still living in ecosystem.config.cjs must move into .env (#699). The
+ * The console uses a .env BETTER_AUTH_* value only once ecosystem.config.cjs
+ * stops defining the key (#699), so a value still living there moves into .env. The
  * ecosystem value is the one the running console uses, so it overwrites .env
  * and sessions stay valid. Values are never returned or logged.
  */
