@@ -288,8 +288,7 @@ export class ApiPromptAdapter implements IPromptPort {
   }
 
   async promptWhitelistPlayers(): Promise<string[]> {
-    // In API mode, whitelist is always enabled by default
-    // Return empty array (whitelist on, no initial players)
+    // No initial players in API mode
     return [];
   }
 

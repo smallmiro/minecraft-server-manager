@@ -490,7 +490,15 @@ mcctl create [name] [options]
 | `--world` | `-w` | worlds/ 디렉토리의 기존 월드 사용 |
 | `--modpack` | | Modrinth 모드팩 서버 생성 활성화 (대화형 검색) |
 | `--no-start` | | 생성만 하고 시작하지 않음 |
+| `--whitelist` | | 화이트리스트 활성화 + 초기 플레이어 등록 (쉼표 구분, 예: `Steve,Alex`) |
+| `--enable-whitelist` | | 초기 플레이어 없이 화이트리스트 활성화 |
+| `--no-whitelist` | | 화이트리스트 비활성화 (기본값, 위 두 옵션보다 우선) |
 | `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
+
+!!! note "화이트리스트는 기본 비활성입니다"
+    화이트리스트 옵션 없이 만든 서버는 화이트리스트가 **꺼진 상태**라서 정품(online-mode) 계정이면 누구나 접속할 수 있습니다. 접속을 제한하려면 `--whitelist` 또는 `--enable-whitelist`를 사용하거나, 나중에 `mcctl whitelist <server> on`으로 켜세요. 대화형 모드에서는 "Enable whitelist?"(기본 No)를 묻고, Yes를 선택한 경우에만 플레이어를 입력받습니다. 웹 콘솔에서 만든 서버도 화이트리스트가 꺼진 상태로 생성됩니다.
+
+    정품 인증(`ONLINE_MODE=TRUE`)은 바뀌지 않고 계속 켜져 있습니다. 이 변경 이전에 만든 서버는 기존 화이트리스트 설정을 그대로 유지합니다.
 
 !!! tip "Sudo 비밀번호를 사용한 자동화"
     CI/CD 파이프라인에서 서버 생성을 자동화할 때 mDNS 등록을 위한 sudo 비밀번호를 제공할 수 있습니다:
@@ -524,6 +532,12 @@ mcctl create [name] [options]
 
     # 시작하지 않고 생성만
     mcctl create myserver --no-start
+
+    # 화이트리스트 활성화 + 초기 플레이어 등록
+    mcctl create private --whitelist Steve,Alex
+
+    # 화이트리스트만 켜고 플레이어는 나중에 추가
+    mcctl create private --enable-whitelist
     ```
 
 === "모드팩 (Modrinth)"

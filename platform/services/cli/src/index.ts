@@ -333,8 +333,9 @@ ${colors.cyan('Create Options:')}
   -u, --world-url URL        Download world from ZIP URL
   -w, --world NAME           Use existing world (symlink)
   --no-start                 Create without starting
-  --no-whitelist             Disable whitelist (enabled by default)
-  --whitelist PLAYERS        Initial whitelist players (comma-separated)
+  --whitelist PLAYERS        Enable whitelist with initial players (comma-separated)
+  --enable-whitelist         Enable whitelist without initial players
+  --no-whitelist             Disable whitelist (default)
   --modpack SLUG             Modrinth modpack slug (required for MODRINTH type)
   --modpack-version VERSION  Modpack version (optional, default: latest)
   --mod-loader LOADER        Mod loader (auto/fabric/forge/quilt, default: auto)
@@ -417,7 +418,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'enable-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -574,6 +575,7 @@ async function main(): Promise<void> {
           worldName: flags['world'] as string | undefined,
           noStart: flags['no-start'] === true,
           noWhitelist: flags['no-whitelist'] === true,
+          enableWhitelist: flags['enable-whitelist'] === true,
           whitelist: flags['whitelist'] as string | undefined,
           sudoPassword,
           modpack: flags['modpack'] as string | undefined,

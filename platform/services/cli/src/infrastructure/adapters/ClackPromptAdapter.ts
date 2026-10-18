@@ -538,8 +538,6 @@ export class ClackPromptAdapter implements IPromptPort {
   }
 
   async promptWhitelistPlayers(): Promise<string[]> {
-    p.log.info(pc.cyan('Whitelist is enabled by default for security.'));
-
     const result = await p.text({
       message: 'Initial whitelist players (comma-separated, Enter to skip):',
       placeholder: 'player1,player2',

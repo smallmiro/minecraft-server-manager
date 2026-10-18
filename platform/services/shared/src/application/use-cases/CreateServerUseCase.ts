@@ -124,8 +124,14 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       // Prompt for memory (6G default for modpacks)
       const memory = await this.prompt.promptMemory(type.isModpack ? '6G' : '4G');
 
-      // Prompt for whitelist players (whitelist enabled by default)
-      const whitelistPlayers = await this.prompt.promptWhitelistPlayers();
+      // Whitelist is off by default; ask for players only when enabled
+      const enableWhitelist = await this.prompt.confirm({
+        message: 'Enable whitelist?',
+        initialValue: false,
+      });
+      const whitelistPlayers = enableWhitelist
+        ? await this.prompt.promptWhitelistPlayers()
+        : [];
 
       // Prompt for playit.gg external domain if playit is enabled
       let playitDomain: string | undefined;
@@ -191,7 +197,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         modpackVersion,
         modLoader,
         modpackExcludeFiles: modpackOptions?.excludeFiles,
-        enableWhitelist: true,
+        enableWhitelist,
         whitelistPlayers,
         playitDomain,
       });
@@ -222,7 +228,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
           type: type.value,
           version: version.value,
           memory: memory.value,
-          enableWhitelist: true,
+          enableWhitelist,
           whitelistPlayers: whitelistPlayers.length > 0 ? whitelistPlayers : undefined,
         },
         errorMessage: null,
@@ -230,9 +236,11 @@ export class CreateServerUseCase implements ICreateServerUseCase {
 
       this.prompt.success(`Server '${name.value}' created!`);
 
-      const whitelistInfo = whitelistPlayers.length > 0
-        ? `Whitelist: enabled (${whitelistPlayers.join(', ')})`
-        : 'Whitelist: enabled';
+      const whitelistInfo = !enableWhitelist
+        ? 'Whitelist: disabled'
+        : whitelistPlayers.length > 0
+          ? `Whitelist: enabled (${whitelistPlayers.join(', ')})`
+          : 'Whitelist: enabled';
       this.prompt.note(
         `Connect via: ${name.hostname}:25565\n${whitelistInfo}`,
         'Connection Info'
@@ -286,6 +294,11 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       worldOptions = WorldOptions.default();
     }
 
+    // Whitelist is off unless explicitly enabled or players are given;
+    // an explicit false always wins
+    const enableWhitelist =
+      config.enableWhitelist ?? (config.whitelistPlayers?.length ?? 0) > 0;
+
     // Check if server already exists
     if (await this.serverRepo.exists(name.value)) {
       throw new Error(`Server '${name.value}' already exists`);
@@ -322,7 +335,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       modpackVersion: config.modpackVersion,
       modLoader: config.modLoader,
       modpackExcludeFiles: modpackOptions?.excludeFiles,
-      enableWhitelist: config.enableWhitelist !== false,
+      enableWhitelist,
       whitelistPlayers: config.whitelistPlayers,
       playitDomain: config.playitDomain,
       noPlayitDomain: config.noPlayitDomain,
@@ -353,7 +366,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         type: type.value,
         version: version.value,
         memory: memory.value,
-        enableWhitelist: config.enableWhitelist !== false,
+        enableWhitelist,
         whitelistPlayers: config.whitelistPlayers,
       },
       errorMessage: null,

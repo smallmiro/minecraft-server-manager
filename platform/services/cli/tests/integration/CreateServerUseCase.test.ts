@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from 'vitest';
+import { describe, it, beforeEach, vi } from 'vitest';
 import assert from 'node:assert';
 import { CreateServerUseCase } from '@minecraft-docker/shared';
 import {
@@ -231,7 +231,7 @@ describe('CreateServerUseCase Integration', () => {
     });
   });
 
-  describe('whitelist default behavior (#282)', () => {
+  describe('whitelist default behavior (#282, #679)', () => {
     it('should call promptWhitelistPlayers in interactive mode', async () => {
       await useCase.execute();
 
@@ -259,14 +259,59 @@ describe('CreateServerUseCase Integration', () => {
       assert.deepStrictEqual(options.whitelistPlayers, ['player1', 'player2']);
     });
 
-    it('should enable whitelist by default in CLI mode', async () => {
+    it('should disable whitelist by default in CLI mode (#679)', async () => {
       await useCase.executeWithConfig({
         name: 'wlserver',
       });
 
       const log = shellAdapter.lastCommand;
       const options = log?.args[1] as any;
+      assert.strictEqual(options.enableWhitelist, false);
+    });
+
+    it('should enable whitelist without players when enableWhitelist is true (#679)', async () => {
+      await useCase.executeWithConfig({
+        name: 'wlonly',
+        enableWhitelist: true,
+      });
+
+      const options = shellAdapter.lastCommand?.args[1] as any;
       assert.strictEqual(options.enableWhitelist, true);
+      assert.strictEqual(options.whitelistPlayers, undefined);
+    });
+
+    it('should keep whitelist disabled when enableWhitelist is false even with players (#679)', async () => {
+      await useCase.executeWithConfig({
+        name: 'wloff',
+        enableWhitelist: false,
+        whitelistPlayers: ['steve'],
+      });
+
+      const options = shellAdapter.lastCommand?.args[1] as any;
+      assert.strictEqual(options.enableWhitelist, false);
+    });
+
+    it('should ask to enable whitelist with default No in interactive mode (#679)', async () => {
+      const confirmSpy = vi.spyOn(promptAdapter, 'confirm');
+
+      await useCase.execute();
+
+      const call = confirmSpy.mock.calls.find(([o]) => /whitelist/i.test(o.message));
+      assert.ok(call, 'expected a whitelist confirm prompt');
+      assert.strictEqual(call[0].initialValue, false);
+    });
+
+    it('should not prompt players and disable whitelist when user declines (#679)', async () => {
+      promptAdapter = new MockPromptAdapter({ confirm: false, whitelistPlayers: ['ignored'] });
+      const playersSpy = vi.spyOn(promptAdapter, 'promptWhitelistPlayers');
+      useCase = new CreateServerUseCase(promptAdapter, shellAdapter, serverRepo);
+
+      await useCase.execute();
+
+      const options = shellAdapter.lastCommand?.args[1] as any;
+      assert.strictEqual(playersSpy.mock.calls.length, 0);
+      assert.strictEqual(options.enableWhitelist, false);
+      assert.deepStrictEqual(options.whitelistPlayers ?? [], []);
     });
 
     it('should disable whitelist when enableWhitelist is false', async () => {
