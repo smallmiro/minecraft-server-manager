@@ -105,6 +105,8 @@ class RealSite(unittest.TestCase):
                 json.loads(m.group(1))
             self.assertEqual(p.count('hreflang="x-default"'), 1)
             self.assertNotRegex(p, r'(?:src|href)="assets/|url\("assets/')
+            # JS must not select elements the build stripped for this language
+            self.assertNotRegex(p, r"querySelector(?:All)?\(['\"][^'\"]*\.(?:%s)\b" % "|".join(others))
             for a in re.findall(r'(?:src|href)="(/assets/[^"?#]+)"|url\("(/assets/[^"]+)"\)', p):
                 f = a[0] or a[1]
                 self.assertTrue(os.path.exists(os.path.join(self.out, f.lstrip("/"))), f)

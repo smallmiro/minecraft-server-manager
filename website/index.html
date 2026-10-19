@@ -1431,7 +1431,7 @@ modded               <span class="g">running</span>      healthy    modded.local
   // FAQ question opened
   document.querySelectorAll('.faq details').forEach(function (d) {
     d.addEventListener('toggle', function () {
-      if (d.open) track('faq_open', { question: d.querySelector('summary .en').textContent.slice(0, 100) });
+      if (d.open) track('faq_open', { question: d.querySelector('summary').textContent.slice(0, 100) });
     });
   });
 
