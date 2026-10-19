@@ -1,9 +1,10 @@
 // Cloudflare Workers config for the landing page (static assets only).
-// Deployed by .github/workflows/deploy-website.yml on push to main.
+// `wrangler deploy`/`dev` runs website/build.py into _site/ first; deployed by .github/workflows/deploy-website.yml on push to main.
 {
   "$schema": "https://unpkg.com/wrangler@4.146.0/config-schema.json",
   "name": "restless-shape-98f4",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "." },
+  "build": { "command": "python3 build.py" },
+  "assets": { "directory": "./_site" },
   "routes": [{ "pattern": "mcctl.mirolab.dev", "custom_domain": true }]
 }
