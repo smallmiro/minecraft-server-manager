@@ -173,14 +173,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap">
-<script>
-  // Set language before first paint: the visitor's saved choice, otherwise English
-  (function () {
-    var saved = null;
-    try { saved = localStorage.getItem('lang'); } catch (e) {}
-    document.documentElement.lang = ['en', 'ko', 'ja'].indexOf(saved) >= 0 ? saved : 'en';
-  })();
-</script>
 <style>
   :root {
     --bg: #0c0e12;
@@ -264,11 +256,11 @@
   .gh span { display: none; }
   @media (min-width: 480px) { .gh span { display: inline; } }
   .lang { display: flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
-  .lang button { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1 var(--mono); padding: 7px 9px; color: var(--muted); }
+  .lang a { text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1 var(--mono); padding: 7px 9px; color: var(--muted); }
   .lang .flag { width: 18px; height: 12px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .18); }
-  .lang button:not([aria-pressed="true"]) .flag { opacity: .7; }
-  @media (max-width: 480px) { .lang .lang-code { display: none; } .lang button { padding: 8px; } }
-  .lang button[aria-pressed="true"] { background: var(--hover); color: var(--text); }
+  .lang a:not([aria-current="page"]) .flag { opacity: .7; }
+  @media (max-width: 480px) { .lang .lang-code { display: none; } .lang a { padding: 8px; } }
+  .lang a[aria-current="page"] { background: var(--hover); color: var(--text); }
 
   /* Hero */
   .hero { position: relative; padding: 64px 0 40px; }
@@ -657,9 +649,9 @@
         <svg class="i" aria-hidden="true"><use href="#i-gh"/></svg><span>GitHub</span>
       </a>
       <div class="lang" role="group" aria-label="Language">
-        <button type="button" data-set-lang="en" aria-pressed="false" aria-label="English"><svg class="flag" aria-hidden="true"><use href="#f-us"/></svg><span class="lang-code">US</span></button>
-        <button type="button" data-set-lang="ko" aria-pressed="false" aria-label="한국어"><svg class="flag" aria-hidden="true"><use href="#f-kr"/></svg><span class="lang-code">KR</span></button>
-        <button type="button" data-set-lang="ja" aria-pressed="false" aria-label="日本語"><svg class="flag" aria-hidden="true"><use href="#f-jp"/></svg><span class="lang-code">JP</span></button>
+        <a href="/" hreflang="en" data-set-lang="en" aria-current="page" aria-label="English"><svg class="flag" aria-hidden="true"><use href="#f-us"/></svg><span class="lang-code">US</span></a>
+        <a href="/ko/" hreflang="ko" data-set-lang="ko" aria-label="한국어"><svg class="flag" aria-hidden="true"><use href="#f-kr"/></svg><span class="lang-code">KR</span></a>
+        <a href="/ja/" hreflang="ja" data-set-lang="ja" aria-label="日本語"><svg class="flag" aria-hidden="true"><use href="#f-jp"/></svg><span class="lang-code">JP</span></a>
       </div>
     </div>
   </div>
@@ -1366,18 +1358,10 @@ modded               <span class="g">running</span>      healthy    modded.local
     mark();
   });
 
-  // Language toggle
-  function setLang(lang) {
-    document.documentElement.lang = lang;
-    document.querySelectorAll('[data-set-lang]').forEach(function (b) {
-      b.setAttribute('aria-pressed', String(b.dataset.setLang === lang));
-    });
-    try { localStorage.setItem('lang', lang); } catch (e) {}
-  }
-  document.querySelectorAll('[data-set-lang]').forEach(function (b) {
-    b.addEventListener('click', function () { setLang(b.dataset.setLang); track('select_language', {}); });
+  // Language links: each language is its own URL; just report the click
+  document.querySelectorAll('[data-set-lang]').forEach(function (a) {
+    a.addEventListener('click', function () { track('select_language', {}); });
   });
-  setLang(document.documentElement.lang);
 
   // Tabs (terminal mock-up and screenshot gallery)
   document.querySelectorAll('[data-tabs]').forEach(function (group) {

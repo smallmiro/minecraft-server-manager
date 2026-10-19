@@ -20,7 +20,7 @@ SRC = '''<!doctype html>
 <!-- c --> &amp; &#169;
 <div class="en ko">both<div>n</div></div><span class="x ko en">y</span>
 <img class="ko" src="a.png"><svg class="ja"><use href="#a"/></svg><br class="ko"/>
-<a href="/" aria-current="page" data-set-lang="en">en</a><a href="/ko/" data-set-lang="ko">ko</a><a href="/ja/" data-set-lang="ja">ja</a>
+<a href="/" data-set-lang="en" aria-current="page">en</a><a href="/ko/" data-set-lang="ko">ko</a><a href="/ja/" data-set-lang="ja">ja</a>
 </body>
 </html>
 '''
@@ -41,7 +41,6 @@ class T(unittest.TestCase):
         self.assertIn('<svg class="ja"><use href="#a"/></svg>', ja)
         self.assertNotIn('<br class="ko"/>', en)
         self.assertIn("both", en); self.assertIn("both", ko); self.assertNotIn("both", ja)
-        self.assertIn('class="x ko en">y', ja.replace('class="x ko en">y', 'class="x ko en">y')) if False else None
         self.assertNotIn(">y<", ja)
         for p in (en, ko, ja):
             self.assertIn("<!-- c --> &amp; &#169;", p)
@@ -58,11 +57,11 @@ class T(unittest.TestCase):
         self.assertIn('href="https://mcctl.mirolab.dev/ko/"', ko)
         self.assertIn('<meta property="og:url" content="https://mcctl.mirolab.dev/ko/">', ko)
         self.assertIn('content="%s"' % build.META["ko"]["description"], ko)
-        self.assertIn('aria-current="page" data-set-lang="ko"', ko)
-        self.assertNotIn('aria-current="page" data-set-lang="en"', ko)
+        self.assertIn('data-set-lang="ko" aria-current="page"', ko)
+        self.assertNotIn('data-set-lang="en" aria-current="page"', ko)
         en = self.page("en")
         self.assertIn("<title>T</title>", en)
-        self.assertIn('data-set-lang="en"', en)
+        self.assertIn('data-set-lang="en" aria-current="page"', en)
 
     def test_hreflang(self):
         for l in ("en", "ko", "ja"):
@@ -91,7 +90,8 @@ class RealSite(unittest.TestCase):
         build.build(cls.out)
 
     def read(self, rel):
-        return open(os.path.join(self.out, rel), encoding="utf-8").read()
+        with open(os.path.join(self.out, rel), encoding="utf-8") as f:
+            return f.read()
 
     def test_pages(self):
         for lang, rel in (("en", "index.html"), ("ko", "ko/index.html"), ("ja", "ja/index.html")):
