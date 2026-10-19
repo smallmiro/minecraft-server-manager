@@ -92,3 +92,6 @@ package-lock.json
 
 # Wrangler temp dir (website deploy)
 .wrangler/
+
+# Landing page build output
+website/_site/
