@@ -2,39 +2,6 @@ import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vites
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 
-// Mock child_process module first
-vi.mock('child_process', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('child_process')>();
-  const EventEmitter = require('events');
-  const { promisify } = require('util');
-
-  const mockExec = Object.assign(
-    vi.fn((cmd: any, opts: any, callback: any) => {
-      // Call callback asynchronously to simulate real exec behavior
-      // exec callback signature: (error, stdout, stderr)
-      process.nextTick(() => {
-        callback(null, 'Server created successfully', '');
-      });
-
-      // Return a mock ChildProcess
-      const mockProcess = new EventEmitter();
-      (mockProcess as any).kill = vi.fn();
-      return mockProcess;
-    }),
-    {
-      // Add custom promisify symbol to return { stdout, stderr }
-      [promisify.custom]: vi.fn((cmd: any, opts: any) => {
-        return Promise.resolve({ stdout: 'Server created successfully', stderr: '' });
-      }),
-    }
-  );
-
-  return {
-    ...actual,
-    exec: mockExec,
-  };
-});
-
 // Mock node:child_process for spawn
 vi.mock('node:child_process', async (importOriginal) => {
   const EventEmitter = require('events');
@@ -401,11 +368,6 @@ describe('POST /api/servers - Server Creation', () => {
   });
 
   describe('Standard JSON mode (follow=false)', () => {
-    it.skip('should create server and return success response', async () => {
-      // Skipped: Requires integration test with actual script execution
-      // TODO: Refactor to use dependency injection for testability
-    });
-
     it('should return 409 if server already exists', async () => {
       mockedServerExists.mockReturnValue(true);
 
@@ -436,9 +398,9 @@ describe('POST /api/servers - Server Creation', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    // Note: sudoPassword env tests for standard mode are covered by SSE mode tests below.
-    // Both paths use the same env construction logic. The standard mode uses promisify(exec)
-    // which bypasses the mock (see skipped test above), so we test via SSE spawn instead.
+    // Note: a successful standard-mode create runs a fake script in
+    // server-process-args.test.ts. sudoPassword env tests are covered by the
+    // SSE mode tests below (both paths build the same env).
   });
 
   describe('SSE streaming mode (follow=true)', () => {

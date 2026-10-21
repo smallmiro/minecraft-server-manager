@@ -58,10 +58,11 @@ import { resolveScriptPath } from '../lib/script-resolver.js';
 import { getContainerName } from '../lib/rcon.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 
-const execPromise = promisify(exec);
+// No shell: script arguments carry user input (#720)
+const execFilePromise = promisify(execFile);
 
 /**
  * Map Docker container status to SSE-compatible status
@@ -1007,7 +1008,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // Standard JSON response (non-streaming)
     try {
-      const { stdout, stderr } = await execPromise(`${command} ${commandArgs.map(a => `"${a}"`).join(' ')}`, {
+      const { stdout, stderr } = await execFilePromise(command, commandArgs, {
         cwd: mcctlRoot,
         timeout: 120000, // 2 minute timeout for server creation
         env: childProcessEnv({
@@ -1118,14 +1119,17 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       // Build command
       let command: string;
+      let commandArgs: string[];
       if (resolvedScript) {
-        command = `bash "${resolvedScript.scriptPath}" "${name}" --force`;
+        command = 'bash';
+        commandArgs = [resolvedScript.scriptPath, name, '--force'];
       } else {
         // Use mcctl CLI if script not found
-        command = `mcctl delete "${name}" --force`;
+        command = 'mcctl';
+        commandArgs = ['delete', name, '--force'];
       }
 
-      const { stdout, stderr } = await execPromise(command, {
+      const { stdout, stderr } = await execFilePromise(command, commandArgs, {
         cwd: mcctlRoot,
         timeout: 60000, // 1 minute timeout
         env: childProcessEnv({
