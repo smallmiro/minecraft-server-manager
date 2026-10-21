@@ -27,7 +27,7 @@ export class ConfigSnapshotScheduleUseCaseImpl
     retentionCount?: number
   ): Promise<ConfigSnapshotSchedule> {
     const schedule = ConfigSnapshotSchedule.create({
-      serverName: ServerName.create(serverName),
+      serverName: ServerName.fromExisting(serverName),
       name,
       cronExpression,
       retentionCount,

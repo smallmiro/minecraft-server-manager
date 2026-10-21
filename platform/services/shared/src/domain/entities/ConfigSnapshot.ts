@@ -110,7 +110,7 @@ export class ConfigSnapshot {
 
     return new ConfigSnapshot({
       id: row.id,
-      serverName: ServerName.create(row.server_name),
+      serverName: ServerName.fromExisting(row.server_name),
       createdAt: new Date(row.created_at),
       description: row.description,
       files,

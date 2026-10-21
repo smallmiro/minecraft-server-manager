@@ -32,7 +32,7 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
     description?: string,
     scheduleId?: string
   ): Promise<ConfigSnapshot> {
-    const server = ServerName.create(serverName);
+    const server = ServerName.fromExisting(serverName);
 
     // Collect file metadata from server directory
     const files = await this.collector.collectFiles(serverName);
