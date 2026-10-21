@@ -11,6 +11,7 @@
   "files": [
     "dist",
     "scripts",
+    "docker",
     "templates",
     "CHANGELOG.md"
   ],
@@ -28,8 +29,9 @@
     "test:e2e": "vitest run tests/e2e",
     "test:watch": "vitest",
     "start": "node dist/index.js",
-    "sync-scripts": "rm -rf scripts && cp -r ../../scripts . && rm -f scripts/.gitkeep",
-    "prepublishOnly": "npm run sync-scripts"
+    "sync-scripts": "rm -rf scripts docker && cp -r ../../scripts scripts && rm -rf scripts/tests scripts/.gitkeep && cp -r ../../docker docker",
+    "prepack": "npm run sync-scripts",
+    "verify:package": "node tools/verify-package.mjs"
   },
   "keywords": [
     "minecraft",

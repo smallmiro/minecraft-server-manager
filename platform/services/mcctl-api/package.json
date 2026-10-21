@@ -10,7 +10,8 @@
   },
   "files": [
     "dist",
-    "scripts"
+    "scripts",
+    "docker"
   ],
   "publishConfig": {
     "access": "public"
@@ -27,8 +28,8 @@
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "sync-scripts": "rm -rf scripts && cp -r ../../scripts . && rm -f scripts/.gitkeep",
-    "prepublishOnly": "npm run sync-scripts"
+    "sync-scripts": "rm -rf scripts docker && cp -r ../../scripts scripts && rm -rf scripts/tests scripts/.gitkeep && cp -r ../../docker docker",
+    "prepack": "npm run sync-scripts"
   },
   "keywords": [
     "minecraft",
