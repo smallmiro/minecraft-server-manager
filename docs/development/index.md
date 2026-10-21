@@ -129,7 +129,7 @@ pnpm --filter @minecraft-docker/mcctl test
 pnpm test:e2e                                # Management Console E2E (Playwright)
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
 
-bash platform/scripts/tests/<name>.test.sh   # bash script tests
+pnpm test:scripts                            # bash script tests (bats, *.bats)
 ```
 
 Add E2E tests for new REST endpoints in `e2e/tests/api-*.spec.ts`, for console UI flows in `e2e/tests/*.spec.ts`, and for new CLI commands or options in `platform/services/cli/tests/e2e/cli-*.test.ts`.

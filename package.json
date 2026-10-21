@@ -10,7 +10,9 @@
     "clean": "pnpm -r clean",
     "test": "pnpm -r test",
     "test:e2e": "pnpm --filter e2e test",
-    "test:e2e:ui": "pnpm --filter e2e test:ui"
+    "test:e2e:ui": "pnpm --filter e2e test:ui",
+    "test:scripts": "bats platform/scripts/tests",
+    "lint:scripts": "bash platform/scripts/tests/lint.sh"
   },
   "keywords": [
     "minecraft",
@@ -29,5 +31,8 @@
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "devDependencies": {
+    "bats": "^1.13.0"
+  }
 }
