@@ -48,9 +48,10 @@ export const WorldDetailSchema = Type.Object({
  * Name of a world that already exists (#720). Hand-made folders (e.g. a
  * legacy LEVEL like "My World") stay reachable; only names that are not one
  * safe path segment are rejected: path separators, control characters, and a
- * leading '.' ('.', '..', hidden dirs) or '-' (option-like script argument).
+ * leading '.' ('.', '..', hidden dirs). A leading '-' is allowed like in
+ * WORLD_NAME_PATTERN: scripts only take the name as a positional argument.
  */
-const EXISTING_WORLD_NAME_PATTERN = /^[^./\\\x00-\x1f\x7f-][^/\\\x00-\x1f\x7f]*$/;
+const EXISTING_WORLD_NAME_PATTERN = /^[^./\\\x00-\x1f\x7f][^/\\\x00-\x1f\x7f]*$/;
 
 /**
  * World name path parameter
