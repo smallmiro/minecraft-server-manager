@@ -19,6 +19,7 @@ import { resolveMcctlRoot } from '../utils/index.js';
 /**
  * Execute a command and return stdout
  * Uses spawnSync to properly handle arguments with special characters
+ * Docker helpers put '--' before container names so a name like '--help' is never read as an option
  */
 export function execCommand(command: string, args: string[]): string {
   try {
@@ -99,6 +100,7 @@ export function getContainerStatus(container: string): ContainerStatus {
     'inspect',
     '--format',
     '{{.State.Status}}',
+    '--',
     container,
   ]);
 
@@ -114,6 +116,7 @@ export function getContainerHealth(container: string): HealthStatus {
     'inspect',
     '--format',
     '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}',
+    '--',
     container,
   ]);
 
@@ -169,7 +172,7 @@ export function getRouterHealthViaApi(): HealthStatus {
  */
 export function containerExists(container: string): boolean {
   try {
-    execFileSync('docker', ['inspect', container], { stdio: 'pipe' });
+    execFileSync('docker', ['inspect', '--', container], { stdio: 'pipe' });
     return true;
   } catch {
     return false;
@@ -184,6 +187,7 @@ export function getContainerHostname(container: string): string {
     'inspect',
     '--format',
     '{{index .Config.Labels "mc-router.host"}}',
+    '--',
     container,
   ]);
 
@@ -313,7 +317,7 @@ export function getPlatformStatus(serversDir?: string): PlatformStatus {
  */
 export function startContainer(container: string): boolean {
   try {
-    execFileSync('docker', ['start', container], { stdio: 'pipe' });
+    execFileSync('docker', ['start', '--', container], { stdio: 'pipe' });
     return true;
   } catch {
     return false;
@@ -325,7 +329,7 @@ export function startContainer(container: string): boolean {
  */
 export function stopContainer(container: string): boolean {
   try {
-    execFileSync('docker', ['stop', container], { stdio: 'pipe' });
+    execFileSync('docker', ['stop', '--', container], { stdio: 'pipe' });
     return true;
   } catch {
     return false;
@@ -336,7 +340,7 @@ export function stopContainer(container: string): boolean {
  * Get container logs
  */
 export function getContainerLogs(container: string, lines: number = 50): string {
-  return execCommand('docker', ['logs', '--tail', String(lines), container]);
+  return execCommand('docker', ['logs', '--tail', String(lines), '--', container]);
 }
 
 /**
@@ -447,6 +451,7 @@ export function getContainerStats(container: string): ContainerStats | null {
     '--no-stream',
     '--format',
     '{{.MemUsage}},{{.CPUPerc}}',
+    '--',
     container,
   ]);
 
@@ -506,6 +511,7 @@ export function getContainerUptime(container: string): { uptime: string; seconds
     'inspect',
     '--format',
     '{{.State.StartedAt}}',
+    '--',
     container,
   ]);
 
@@ -572,7 +578,7 @@ export function parseRconPlayerList(raw: string): PlayerListResult | null {
  */
 export async function getOnlinePlayers(container: string): Promise<PlayerListResult | null> {
   try {
-    const rawResult = execFileSync('docker', ['exec', container, 'rcon-cli', 'list'], {
+    const rawResult = execFileSync('docker', ['exec', '--', container, 'rcon-cli', 'list'], {
       encoding: 'utf-8',
       timeout: 5000,
       stdio: ['pipe', 'pipe', 'pipe'],
