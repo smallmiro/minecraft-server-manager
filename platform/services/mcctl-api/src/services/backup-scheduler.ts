@@ -42,7 +42,7 @@ export class BackupSchedulerService {
 
   constructor(
     private readonly useCase: IBackupScheduleUseCase,
-    private readonly platformPath: string,
+    private readonly mcctlRoot: string,
     private readonly logger: FastifyBaseLogger,
     private readonly auditLogWriter?: AuditLogWriter
   ) {}
@@ -454,7 +454,7 @@ export class BackupSchedulerService {
     );
 
     try {
-      const worldsPath = join(this.platformPath, 'worlds');
+      const worldsPath = join(this.mcctlRoot, 'worlds');
       if (!existsSync(worldsPath)) {
         await this.useCase.recordRun(
           scheduleId,
@@ -465,19 +465,19 @@ export class BackupSchedulerService {
       }
 
       // The backup cache directory used by backup.sh as the git repository
-      const backupCacheDir = join(this.platformPath, 'backups', 'worlds');
+      const backupCacheDir = join(this.mcctlRoot, 'backups', 'worlds');
 
       // Build commit message (safe: passed as argument, not interpolated into shell)
       const commitMessage = `Scheduled backup: ${schedule.name} [${new Date().toISOString()}]`;
 
       // Run backup script or git commands using execFile (no shell injection)
-      const scriptPath = join(this.platformPath, 'scripts', 'backup.sh');
+      const scriptPath = join(this.mcctlRoot, 'scripts', 'backup.sh');
       const execOptions = {
-        cwd: this.platformPath,
+        cwd: this.mcctlRoot,
         timeout: 300000, // 5 minute timeout for scheduled backups
         env: {
           ...process.env,
-          MCCTL_ROOT: this.platformPath,
+          MCCTL_ROOT: this.mcctlRoot,
         },
       };
 

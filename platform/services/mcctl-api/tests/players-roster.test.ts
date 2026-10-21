@@ -8,7 +8,7 @@ import nbt from 'prismarine-nbt';
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-players-roster-test');
 // A deliberately wrong MCCTL_ROOT with no fixture data, used by the
 // regression test below. Routes must resolve PlayerRepository's Paths from
-// config.platformPath (the root resolved when config loads), never from the
+// config.mcctlRoot (the root resolved when config loads), never from the
 // live env var, or the roster/detail endpoints silently read nothing.
 const WRONG_MCCTL_ROOT = join(import.meta.dirname, '.tmp-players-roster-wrong-root');
 
@@ -55,9 +55,9 @@ vi.mock('../src/lib/rcon.js', async (importOriginal) => {
   };
 });
 
-/** Writes a synthetic worlds/<serverName>/playerdata/<uuid>.dat fixture (#528, Phase 3). */
-function writePlayerDat(serverName: string, uuid: string, fields: Record<string, unknown>) {
-  const dir = join(TEST_PLATFORM_PATH, 'worlds', serverName, 'playerdata');
+/** Writes a synthetic worlds/world/playerdata (the default world: no LEVEL)/<uuid>.dat fixture (#528, Phase 3). */
+function writePlayerDat(_serverName: string, uuid: string, fields: Record<string, unknown>) {
+  const dir = join(TEST_PLATFORM_PATH, 'worlds', 'world', 'playerdata');
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, `${uuid}.dat`), nbt.writeUncompressed(nbt.comp(fields)));
 }
@@ -151,7 +151,6 @@ describe('Player roster API (#528)', () => {
     mockGetEntityPosition.mockReset();
 
     const { config } = await import('../src/config/index.js');
-    (config as any).platformPath = TEST_PLATFORM_PATH;
     (config as any).mcctlRoot = TEST_PLATFORM_PATH;
 
     const { buildApp } = await import('../src/app.js');
@@ -279,7 +278,7 @@ describe('Player roster API (#528)', () => {
       });
       containerStatus = 'stopped';
 
-      // players.ts must build PlayerRepository's Paths from config.platformPath,
+      // players.ts must build PlayerRepository's Paths from config.mcctlRoot,
       // not from process.env.MCCTL_ROOT — prove it by pointing MCCTL_ROOT at an
       // empty directory and rebuilding the app around it.
       const previousMcctlRoot = process.env.MCCTL_ROOT;
@@ -420,7 +419,7 @@ describe('Player roster API (#528)', () => {
           'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
         },
       });
-      const worldDir = join(TEST_PLATFORM_PATH, 'worlds', 'test-server');
+      const worldDir = join(TEST_PLATFORM_PATH, 'worlds', 'world');
       mkdirSync(join(worldDir, 'stats'), { recursive: true });
       mkdirSync(join(worldDir, 'advancements'), { recursive: true });
       writeFileSync(

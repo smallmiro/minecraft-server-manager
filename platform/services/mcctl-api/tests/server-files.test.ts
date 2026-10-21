@@ -77,7 +77,7 @@ describe('Server Files API', () => {
     mkdirSync(TEST_PLATFORM_PATH, { recursive: true });
 
     const { config } = await import('../src/config/index.js');
-    (config as any).platformPath = TEST_PLATFORM_PATH;
+    (config as any).mcctlRoot = TEST_PLATFORM_PATH;
 
     const auditModule = await import('../src/services/audit-log-service.js');
     writeAuditLog = auditModule.writeAuditLog as ReturnType<typeof vi.fn>;

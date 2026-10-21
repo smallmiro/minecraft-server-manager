@@ -149,12 +149,12 @@ function createWorldInfoUseCase(): WorldInfoUseCase {
 
 /** Base directory for rendered web maps (kept out of worlds/ for lean backups). */
 function getMapsDir(): string {
-  return join(config.platformPath, 'maps');
+  return join(config.mcctlRoot, 'maps');
 }
 
 /** Cached block-stats result file for a world (#531). */
 function getStatsPath(name: string): string {
-  return join(config.platformPath, 'stats', `${name}.json`);
+  return join(config.mcctlRoot, 'stats', `${name}.json`);
 }
 
 /** Create the world block-stats use case (#531). */
@@ -181,14 +181,14 @@ function getWebroot(name: string): string {
  * build context.
  */
 function createMapRenderer(): BlueMapCliRenderer | null {
-  const resolved = resolveScriptPath('render-map.sh', config.platformPath);
+  const resolved = resolveScriptPath('render-map.sh', config.mcctlRoot);
   if (!resolved) return null;
   const dockerDir = join(resolved.scriptsDir, '..', 'docker');
   return new BlueMapCliRenderer(resolved.scriptPath, undefined, {
-    cwd: config.platformPath,
+    cwd: config.mcctlRoot,
     env: {
       ...process.env,
-      MCCTL_ROOT: config.platformPath,
+      MCCTL_ROOT: config.mcctlRoot,
       MCCTL_SCRIPTS: resolved.scriptsDir,
       MCCTL_DOCKER: dockerDir,
     },
@@ -712,7 +712,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // a second analyze) never reads a half-written stats file.
     const persist = async (result: unknown) => {
       const file = getStatsPath(name);
-      await mkdir(join(config.platformPath, 'stats'), { recursive: true });
+      await mkdir(join(config.mcctlRoot, 'stats'), { recursive: true });
       const tmp = `${file}.${process.pid}.tmp`;
       await writeFile(tmp, JSON.stringify(result), 'utf-8');
       await rename(tmp, file);

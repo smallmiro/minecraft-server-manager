@@ -22,10 +22,10 @@ export type ServerAction = 'start' | 'stop' | 'restart';
 // ============================================================
 
 /**
- * Platform directory path (config.platformPath, the mcctl root).
+ * Platform directory path (config.mcctlRoot, the mcctl root).
  */
 function getPlatformPath(): string {
-  return config.platformPath;
+  return config.mcctlRoot;
 }
 
 // ============================================================
@@ -53,7 +53,7 @@ export async function executeServerAction(
   serverName: string,
   action: ServerAction
 ): Promise<DockerComposeResult> {
-  const platformPath = getPlatformPath();
+  const mcctlRoot = getPlatformPath();
   const serviceName = `mc-${serverName}`;
 
   let command: string;
@@ -75,7 +75,7 @@ export async function executeServerAction(
   }
 
   const options: ExecOptions = {
-    cwd: platformPath,
+    cwd: mcctlRoot,
     timeout: 60000, // 60 second timeout
     // Ensure Docker Compose uses the correct compose file
     env: childProcessEnv({ COMPOSE_FILE: 'docker-compose.yml' }),

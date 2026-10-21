@@ -6,14 +6,14 @@ import { Operator, OpLevel } from '@minecraft-docker/shared';
  * Service for reading/writing ops.json with level support
  */
 export class OpsJsonService {
-  private readonly platformPath: string;
+  private readonly mcctlRoot: string;
 
-  constructor(platformPath: string) {
-    this.platformPath = platformPath;
+  constructor(mcctlRoot: string) {
+    this.mcctlRoot = mcctlRoot;
   }
 
   private getOpsJsonPath(serverName: string): string {
-    return join(this.platformPath, 'servers', serverName, 'data', 'ops.json');
+    return join(this.mcctlRoot, 'servers', serverName, 'data', 'ops.json');
   }
 
   /**
@@ -123,6 +123,6 @@ export class OpsJsonService {
   }
 }
 
-export function createOpsJsonService(platformPath: string): OpsJsonService {
-  return new OpsJsonService(platformPath);
+export function createOpsJsonService(mcctlRoot: string): OpsJsonService {
+  return new OpsJsonService(mcctlRoot);
 }

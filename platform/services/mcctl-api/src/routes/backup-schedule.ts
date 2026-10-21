@@ -55,7 +55,7 @@ const backupSchedulePlugin: FastifyPluginAsync = async (fastify: FastifyInstance
   // Initialize backup scheduler service
   const scheduler = new BackupSchedulerService(
     useCase,
-    config.platformPath,
+    config.mcctlRoot,
     fastify.log,
     writeAuditLog
   );

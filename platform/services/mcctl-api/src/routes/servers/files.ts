@@ -72,7 +72,7 @@ const MAX_UPLOAD_SIZE = 100 * 1024 * 1024; // 100MB for file upload
  * Get the base data directory for a server
  */
 function getServerDataDir(serverName: string): string {
-  return join(config.platformPath, 'servers', serverName, 'data');
+  return join(config.mcctlRoot, 'servers', serverName, 'data');
 }
 
 /**

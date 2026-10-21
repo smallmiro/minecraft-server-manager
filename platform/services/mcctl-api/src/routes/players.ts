@@ -137,8 +137,8 @@ async function lookupUuid(playerName: string): Promise<string> {
  * Player management routes plugin
  */
 const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  const playerFileService = new PlayerFileService(config.platformPath);
-  const opsJsonService = new OpsJsonService(config.platformPath);
+  const playerFileService = new PlayerFileService(config.mcctlRoot);
+  const opsJsonService = new OpsJsonService(config.mcctlRoot);
 
   // Session/visit history store (#528, Phase 4). Mirrors audit-log-service's
   // `audit.db` singleton pattern; closed via the onClose hook below.
@@ -147,7 +147,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const playerSessionUseCase = new PlayerSessionUseCase(playerSessionRepository);
 
   const playerManagementUseCase: IPlayerManagementUseCase = new PlayerManagementUseCase(
-    new PlayerRepository(new Paths(config.platformPath)),
+    new PlayerRepository(new Paths(config.mcctlRoot)),
     new RconCliAdapter(),
     playerSessionUseCase
   );
@@ -157,7 +157,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // `docker` calls / a lingering interval outside app.close().
   const sessionCollector = new PlayerSessionCollectorService(
     playerSessionUseCase,
-    () => getAllServers(join(config.platformPath, 'servers')),
+    () => getAllServers(join(config.mcctlRoot, 'servers')),
     getContainerStatus,
     undefined,
     fastify.log
@@ -185,7 +185,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // Use for read endpoints so a defined-but-not-running server can still be
   // served from its files instead of 404ing when no container exists.
   const checkServerDefined = (name: string, reply: FastifyReply): boolean => {
-    if (!serverExists(name, join(config.platformPath, 'servers'))) {
+    if (!serverExists(name, join(config.mcctlRoot, 'servers'))) {
       reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       return false;
     }

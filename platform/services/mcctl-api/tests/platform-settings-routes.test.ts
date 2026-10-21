@@ -26,7 +26,6 @@ describe('Platform settings routes', () => {
     mkdirSync(TEST_PATH, { recursive: true });
     writeFileSync(envPath, ENV);
     const { config } = await import('../src/config/index.js');
-    (config as any).platformPath = TEST_PATH;
     (config as any).mcctlRoot = TEST_PATH;
     writeAuditLog = (await import('../src/services/audit-log-service.js')).writeAuditLog as any;
     writeAuditLog.mockClear();

@@ -39,7 +39,7 @@ export function getConfigSnapshotUseCase(): IConfigSnapshotUseCase {
     const repository = new SqliteConfigSnapshotRepository(db);
     const storagePath = join(config.mcctlRoot, 'backups', 'meta', 'config-snapshot-storage');
     const storage = new FileSystemConfigSnapshotStorage(storagePath);
-    const serversDir = join(config.platformPath, 'servers');
+    const serversDir = join(config.mcctlRoot, 'servers');
     const collector = new FileSystemConfigFileCollector(serversDir);
     useCase = new ConfigSnapshotUseCaseImpl(repository, storage, collector);
   }
@@ -116,7 +116,7 @@ export async function restoreSnapshot(
  */
 export async function checkServerExists(serverName: string): Promise<boolean> {
   try {
-    return await serverExists(serverName, config.platformPath);
+    return await serverExists(serverName, config.mcctlRoot);
   } catch {
     return false;
   }

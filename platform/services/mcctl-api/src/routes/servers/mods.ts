@@ -62,7 +62,7 @@ interface ToggleModExcludeRoute {
 // ============================================================
 
 const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  const modConfigService = createModConfigService(config.platformPath);
+  const modConfigService = createModConfigService(config.mcctlRoot);
 
   /**
    * GET /api/servers/:name/mods

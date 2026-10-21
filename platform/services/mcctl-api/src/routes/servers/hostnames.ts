@@ -41,7 +41,7 @@ interface UpdateHostnamesRoute {
  * Provides REST API for hostname/domain management
  */
 const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  const hostnameService = createHostnameService(config.platformPath);
+  const hostnameService = createHostnameService(config.mcctlRoot);
 
   /**
    * GET /api/servers/:name/hostnames
@@ -136,7 +136,7 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
       const data = hostnameService.updateCustomHostnames(name, customHostnames);
 
       // Keep PLAYIT_DOMAIN in config.env in step with the label (label already updated above)
-      const serversDir = join(config.platformPath, 'servers');
+      const serversDir = join(config.mcctlRoot, 'servers');
       const currentPlayit = getServerPlayitDomain(name, serversDir);
       const playitDomain = resolvePlayitDomain(currentPlayit, previousCustom, data.customHostnames);
       if (playitDomain !== currentPlayit) {

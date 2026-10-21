@@ -78,7 +78,7 @@ describe('OP Level Management API', () => {
 
     // Import and override config
     const { config } = await import('../src/config/index.js');
-    (config as any).platformPath = TEST_PLATFORM_PATH;
+    (config as any).mcctlRoot = TEST_PLATFORM_PATH;
 
     // Import buildApp AFTER config override
     const { buildApp } = await import('../src/app.js');

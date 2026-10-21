@@ -78,13 +78,13 @@ describe('BackupSchedulerService', () => {
   let mockUseCase: IBackupScheduleUseCase;
   let mockLogger: ReturnType<typeof createMockLogger>;
 
-  const platformPath = '/tmp/test-platform';
+  const mcctlRoot = '/tmp/test-platform';
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseCase = createMockUseCase();
     mockLogger = createMockLogger();
-    service = new BackupSchedulerService(mockUseCase, platformPath, mockLogger);
+    service = new BackupSchedulerService(mockUseCase, mcctlRoot, mockLogger);
     mockedExistsSync.mockReturnValue(true);
   });
 

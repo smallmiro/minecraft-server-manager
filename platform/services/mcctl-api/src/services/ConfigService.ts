@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { resolveWorldName } from '@minecraft-docker/shared';
 import type { ServerConfig, UpdateServerConfigRequest } from '../schemas/config.js';
 
 /**
@@ -347,17 +348,17 @@ function updateEnvFile(content: string, updates: Map<string, string>): string {
  * ConfigService - Manages server configuration files
  */
 export class ConfigService {
-  private readonly platformPath: string;
+  private readonly mcctlRoot: string;
 
-  constructor(platformPath: string) {
-    this.platformPath = platformPath;
+  constructor(mcctlRoot: string) {
+    this.mcctlRoot = mcctlRoot;
   }
 
   /**
    * Get the path to a server's config.env file
    */
   private getConfigPath(serverName: string): string {
-    return join(this.platformPath, 'servers', serverName, 'config.env');
+    return join(this.mcctlRoot, 'servers', serverName, 'config.env');
   }
 
   /**
@@ -468,19 +469,18 @@ export class ConfigService {
     const configPath = this.getConfigPath(serverName);
 
     if (!existsSync(configPath)) {
-      return 'world'; // Default world name
+      return resolveWorldName({});
     }
 
     const content = readFileSync(configPath, 'utf-8');
-    const envMap = parseEnvFile(content);
 
-    return envMap.get('LEVEL') || 'world';
+    return resolveWorldName(Object.fromEntries(parseEnvFile(content)));
   }
 }
 
 /**
  * Create a ConfigService instance
  */
-export function createConfigService(platformPath: string): ConfigService {
-  return new ConfigService(platformPath);
+export function createConfigService(mcctlRoot: string): ConfigService {
+  return new ConfigService(mcctlRoot);
 }
