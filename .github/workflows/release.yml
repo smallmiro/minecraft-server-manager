@@ -79,7 +79,6 @@ jobs:
           echo "=== Modrinth dist ===" && ls -la platform/services/mod-source-modrinth/dist/
           echo "=== mcctl-api dist ===" && ls -la platform/services/mcctl-api/dist/
           echo "=== CLI dist ===" && ls -la platform/services/cli/dist/
-          echo "=== CLI scripts ===" && ls -la platform/services/cli/scripts/
           echo "=== CLI templates ===" && ls -la platform/services/cli/templates/
           echo "=== mcctl-console standalone ===" && ls -la platform/services/mcctl-console/.next/standalone/
           echo "=== mcctl-console static ===" && ls -la platform/services/mcctl-console/.next/static/
@@ -121,22 +120,6 @@ jobs:
           echo "Syncing root CHANGELOG.md to CLI package..."
           cp CHANGELOG.md platform/services/cli/CHANGELOG.md
           echo "CHANGELOG.md synced successfully"
-
-      - name: Sync scripts to CLI package
-        run: |
-          echo "Syncing scripts to CLI package..."
-          rm -rf platform/services/cli/scripts
-          cp -r platform/scripts platform/services/cli/scripts
-          ls -la platform/services/cli/scripts/
-          echo "Scripts synced successfully"
-
-      - name: Sync scripts to mcctl-api package
-        run: |
-          echo "Syncing scripts to mcctl-api package..."
-          rm -rf platform/services/mcctl-api/scripts
-          cp -r platform/scripts platform/services/mcctl-api/scripts
-          ls -la platform/services/mcctl-api/scripts/
-          echo "Scripts synced successfully"
 
       - name: Publish @minecraft-docker/mcctl-api
         run: |
