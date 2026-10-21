@@ -142,8 +142,27 @@ describe('PlayerRepository', () => {
       expect(players.map((p) => p.name)).toEqual(['Steve']);
     });
 
-    test('LEVEL이 없으면 world 디렉터리는 서버 이름을 사용한다', async () => {
-      const playerDataDir = join(root, 'worlds', 'myserver', 'playerdata');
+    test("LEVEL이 없으면 itzg 기본값 'world' 디렉터리를 사용한다 (#721)", async () => {
+      await mkdir(join(root, 'servers', 'myserver'), { recursive: true });
+      await writeFile(join(root, 'servers', 'myserver', 'config.env'), 'TYPE=PAPER\n', 'utf-8');
+      await mkdir(join(root, 'worlds', 'myserver', 'playerdata'), { recursive: true });
+      await writeFile(join(root, 'worlds', 'myserver', 'playerdata', 'uuid-steve.dat'), '');
+      const playerDataDir = join(root, 'worlds', 'world', 'playerdata');
+      await mkdir(playerDataDir, { recursive: true });
+      await writeFile(join(playerDataDir, 'uuid-alex.dat'), '');
+      await writeJson(join(root, 'servers', 'myserver', 'data', 'ops.json'), [
+        { uuid: 'uuid-alex', name: 'Alex', level: 4, bypassesPlayerLimit: false },
+        { uuid: 'uuid-steve', name: 'Steve', level: 4, bypassesPlayerLimit: false },
+      ]);
+
+      // ops.json names both; only the resolved world's playerdata sets lastSeen.
+      const players = await repo.listKnownPlayers('myserver');
+      const seen = Object.fromEntries(players.map((p) => [p.name, p.lastSeen !== null]));
+      expect(seen).toEqual({ Alex: true, Steve: false });
+    });
+
+    test("config.env가 없어도 'world' 디렉터리를 사용한다 (#721)", async () => {
+      const playerDataDir = join(root, 'worlds', 'world', 'playerdata');
       await mkdir(playerDataDir, { recursive: true });
       await writeFile(join(playerDataDir, 'uuid-alex.dat'), '');
       await writeJson(join(root, 'servers', 'myserver', 'data', 'ops.json'), [
@@ -151,7 +170,7 @@ describe('PlayerRepository', () => {
       ]);
 
       const players = await repo.listKnownPlayers('myserver');
-      expect(players.map((p) => p.name)).toEqual(['Alex']);
+      expect(players.map((p) => [p.name, p.lastSeen !== null])).toEqual([['Alex', true]]);
     });
 
     test('모든 파일이 없으면 빈 배열을 반환한다', async () => {
