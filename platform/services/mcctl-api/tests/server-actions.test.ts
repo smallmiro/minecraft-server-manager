@@ -7,18 +7,33 @@ vi.mock('../src/services/audit-log-service.js', () => ({
   writeAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock child_process module with both spawn and exec
+// Mock child_process so no real docker compose runs
 vi.mock('child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('child_process')>();
   return {
     ...actual,
     exec: vi.fn(),
+    execFile: vi.fn(),
   };
 });
 
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 
 const mockedExec = vi.mocked(exec);
+const mockedExecFile = vi.mocked(execFile);
+
+/** Answer docker compose calls (exec or execFile) through their callback. */
+function mockCompose(error: Error | null, stdout: string, stderr = '') {
+  const reply = (...args: unknown[]) => {
+    const callback = args[args.length - 1];
+    if (typeof callback === 'function') {
+      callback(error, stdout, stderr);
+    }
+    return {} as ReturnType<typeof exec>;
+  };
+  mockedExec.mockImplementation(reply as never);
+  mockedExecFile.mockImplementation(reply as never);
+}
 
 describe('Server Action Routes', () => {
   let app: FastifyInstance;
@@ -38,12 +53,7 @@ describe('Server Action Routes', () => {
   describe('POST /api/servers/:name/start', () => {
     it('should start a server successfully', async () => {
       // Mock successful docker compose up
-      mockedExec.mockImplementation((_cmd, _opts, callback) => {
-        if (typeof callback === 'function') {
-          callback(null, 'Starting mc-myserver...\nmc-myserver Started', '');
-        }
-        return {} as ReturnType<typeof exec>;
-      });
+      mockCompose(null, 'Starting mc-myserver...\nmc-myserver Started', '');
 
       const response = await app.inject({
         method: 'POST',
@@ -69,12 +79,7 @@ describe('Server Action Routes', () => {
     });
 
     it('should return 500 when docker compose fails', async () => {
-      mockedExec.mockImplementation((_cmd, _opts, callback) => {
-        if (typeof callback === 'function') {
-          callback(new Error('Container not found'), '', 'Error: No such container');
-        }
-        return {} as ReturnType<typeof exec>;
-      });
+      mockCompose(new Error('Container not found'), '', 'Error: No such container');
 
       const response = await app.inject({
         method: 'POST',
@@ -90,12 +95,7 @@ describe('Server Action Routes', () => {
 
   describe('POST /api/servers/:name/stop', () => {
     it('should stop a server successfully', async () => {
-      mockedExec.mockImplementation((_cmd, _opts, callback) => {
-        if (typeof callback === 'function') {
-          callback(null, 'Stopping mc-myserver...', '');
-        }
-        return {} as ReturnType<typeof exec>;
-      });
+      mockCompose(null, 'Stopping mc-myserver...', '');
 
       const response = await app.inject({
         method: 'POST',
@@ -110,12 +110,7 @@ describe('Server Action Routes', () => {
     });
 
     it('should return 500 when stop fails', async () => {
-      mockedExec.mockImplementation((_cmd, _opts, callback) => {
-        if (typeof callback === 'function') {
-          callback(new Error('Permission denied'), '', 'Error: Permission denied');
-        }
-        return {} as ReturnType<typeof exec>;
-      });
+      mockCompose(new Error('Permission denied'), '', 'Error: Permission denied');
 
       const response = await app.inject({
         method: 'POST',
@@ -130,12 +125,7 @@ describe('Server Action Routes', () => {
 
   describe('POST /api/servers/:name/restart', () => {
     it('should restart a server successfully', async () => {
-      mockedExec.mockImplementation((_cmd, _opts, callback) => {
-        if (typeof callback === 'function') {
-          callback(null, 'Restarting mc-myserver...', '');
-        }
-        return {} as ReturnType<typeof exec>;
-      });
+      mockCompose(null, 'Restarting mc-myserver...', '');
 
       const response = await app.inject({
         method: 'POST',
@@ -150,12 +140,7 @@ describe('Server Action Routes', () => {
     });
 
     it('should return 500 when restart fails', async () => {
-      mockedExec.mockImplementation((_cmd, _opts, callback) => {
-        if (typeof callback === 'function') {
-          callback(new Error('Docker daemon not running'), '', 'Cannot connect to Docker daemon');
-        }
-        return {} as ReturnType<typeof exec>;
-      });
+      mockCompose(new Error('Docker daemon not running'), '', 'Cannot connect to Docker daemon');
 
       const response = await app.inject({
         method: 'POST',
@@ -183,12 +168,7 @@ describe('Server Action Routes', () => {
     });
 
     it('should accept valid server names', async () => {
-      mockedExec.mockImplementation((_cmd, _opts, callback) => {
-        if (typeof callback === 'function') {
-          callback(null, 'Started', '');
-        }
-        return {} as ReturnType<typeof exec>;
-      });
+      mockCompose(null, 'Started', '');
 
       const validNames = ['myserver', 'my-server', 'server123', 'My_Server'];
 
@@ -217,12 +197,7 @@ describe('Server Action Routes - Response Format', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedExec.mockImplementation((_cmd, _opts, callback) => {
-      if (typeof callback === 'function') {
-        callback(null, 'Success', '');
-      }
-      return {} as ReturnType<typeof exec>;
-    });
+    mockCompose(null, 'Success', '');
   });
 
   it('should return JSON content type', async () => {
