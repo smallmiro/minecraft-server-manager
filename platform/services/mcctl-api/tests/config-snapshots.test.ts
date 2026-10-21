@@ -15,7 +15,6 @@ const TEST_DATA_DIR = join(TEST_PLATFORM_PATH, 'data');
 const TEST_SERVERS_DIR = join(TEST_PLATFORM_PATH, 'servers');
 
 // Set env vars BEFORE any imports
-process.env.PLATFORM_PATH = TEST_PLATFORM_PATH;
 process.env.MCCTL_ROOT = TEST_PLATFORM_PATH;
 process.env.AUTH_MODE = 'disabled';
 process.env.NODE_ENV = 'test';

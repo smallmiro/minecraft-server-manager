@@ -8,15 +8,13 @@ import nbt from 'prismarine-nbt';
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-players-roster-test');
 // A deliberately wrong MCCTL_ROOT with no fixture data, used by the
 // regression test below. Routes must resolve PlayerRepository's Paths from
-// config.platformPath (PLATFORM_PATH), never from this env var, or the
-// roster/detail endpoints silently read nothing.
+// config.platformPath (the root resolved when config loads), never from the
+// live env var, or the roster/detail endpoints silently read nothing.
 const WRONG_MCCTL_ROOT = join(import.meta.dirname, '.tmp-players-roster-wrong-root');
 
-// Set env vars BEFORE any imports. PlayerRepository (shared) resolves its data
-// root from MCCTL_ROOT, while mcctl-api config resolves from PLATFORM_PATH —
-// both must point at the same fixture dir (mirrors tests/world-info.test.ts).
+// Set env vars BEFORE any imports: mcctl-api config and shared Paths both
+// resolve the root from MCCTL_ROOT (#649).
 process.env.MCCTL_ROOT = TEST_PLATFORM_PATH;
-process.env.PLATFORM_PATH = TEST_PLATFORM_PATH;
 process.env.AUTH_ACCESS_MODE = 'open';
 process.env.AUTH_MODE = 'disabled';
 process.env.NODE_ENV = 'test';
@@ -271,7 +269,7 @@ describe('Player roster API (#528)', () => {
       expect(body.players).toEqual([]);
     });
 
-    it('reads the roster from PLATFORM_PATH even when MCCTL_ROOT points elsewhere (#528 regression)', async () => {
+    it('reads the roster from the configured root even when MCCTL_ROOT points elsewhere later (#528 regression)', async () => {
       setupServer('test-server', {
         files: {
           'usercache.json': [

@@ -19,7 +19,6 @@ const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-worlds-upload-test');
 
 // Set env BEFORE imports so config + Paths resolve to the fixture.
 process.env.MCCTL_ROOT = TEST_PLATFORM_PATH;
-process.env.PLATFORM_PATH = TEST_PLATFORM_PATH;
 process.env.AUTH_MODE = 'disabled';
 process.env.NODE_ENV = 'test';
 

@@ -1,7 +1,7 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
-import { Player, PlayerStats, PlayerData } from '../../domain/index.js';
+import { Player, PlayerStats, PlayerData, resolveWorldName } from '../../domain/index.js';
 import { PLAYER_DATA_DIRS, parsePlayerDat } from './playerDataNbt.js';
 import type {
   IPlayerRepository,
@@ -178,7 +178,7 @@ export class PlayerRepository implements IPlayerRepository {
     try {
       const content = await readFile(configPath, 'utf-8');
       const env = this.parseEnv(content);
-      return env.get('LEVEL')?.trim() || env.get('WORLD_NAME')?.trim() || serverName;
+      return resolveWorldName(Object.fromEntries(env), serverName);
     } catch {
       return serverName;
     }

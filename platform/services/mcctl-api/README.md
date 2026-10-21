@@ -74,7 +74,6 @@ docker run -d \
 | `NODE_ENV` | Environment (`development`, `production`, `test`) | `development` |
 | `LOG_LEVEL` | Log level (`fatal`, `error`, `warn`, `info`, `debug`, `trace`) | `debug` (dev) / `info` (prod) |
 | `MCCTL_ROOT` | Root directory for mcctl data | `~/minecraft-servers` |
-| `PLATFORM_PATH` | Platform directory with docker-compose.yml | Same as `MCCTL_ROOT` |
 | `AUTH_MODE` | Authentication mode | `disabled` (dev) / `api-key` (prod) |
 | `AUTH_API_KEY` | API key for authentication | - |
 | `AUTH_IP_WHITELIST` | Comma-separated IP whitelist | - |

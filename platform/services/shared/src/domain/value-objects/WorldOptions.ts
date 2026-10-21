@@ -1,3 +1,5 @@
+import { WorldName } from './WorldName.js';
+
 /**
  * WorldOptions Value Object
  * Represents world configuration options for server creation
@@ -101,22 +103,9 @@ export class WorldOptions {
    * Use existing world from worlds/ directory
    */
   static existingWorld(worldName: string): WorldOptions {
-    const trimmed = worldName.trim();
-
-    if (!trimmed) {
-      throw new Error('World name cannot be empty');
-    }
-
-    // World name validation: lowercase letters, numbers, hyphens, underscores
-    if (!/^[a-z0-9_-]+$/i.test(trimmed)) {
-      throw new Error(
-        'World name can only contain letters, numbers, hyphens, and underscores'
-      );
-    }
-
     return new WorldOptions({
       setupType: WorldSetupType.EXISTING,
-      worldName: trimmed,
+      worldName: WorldName.create(worldName).value,
     });
   }
 

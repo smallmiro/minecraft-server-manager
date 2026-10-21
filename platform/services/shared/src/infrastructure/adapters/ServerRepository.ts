@@ -11,6 +11,8 @@ import {
   McVersion,
   Memory,
   WorldOptions,
+  WORLD_NAME_PATTERN,
+  configuredWorldName,
 } from '../../domain/index.js';
 import type {
   IServerRepository,
@@ -57,7 +59,7 @@ export class ServerRepository implements IServerRepository {
     }
 
     try {
-      const serverName = ServerName.create(config.name);
+      const serverName = ServerName.fromExisting(config.name);
       const serverType = ServerType.create(config.type);
       const mcVersion = McVersion.create(config.version);
       const memory = config.memory ? Memory.create(config.memory) : Memory.default();
@@ -66,7 +68,8 @@ export class ServerRepository implements IServerRepository {
       let worldOptions: WorldOptions;
       if (config.worldUrl) {
         worldOptions = WorldOptions.downloadWorld(config.worldUrl);
-      } else if (config.worldName) {
+      } else if (config.worldName && WORLD_NAME_PATTERN.test(config.worldName)) {
+        // A legacy LEVEL that fails the rule must not hide the server
         worldOptions = WorldOptions.existingWorld(config.worldName);
       } else if (config.seed) {
         worldOptions = WorldOptions.newWorld(config.seed);
@@ -162,7 +165,7 @@ export class ServerRepository implements IServerRepository {
         memory: config['MEMORY'],
         rconPassword: config['RCON_PASSWORD'],
         seed: config['SEED'],
-        worldName: config['WORLD'],
+        worldName: configuredWorldName(config),
         worldUrl: config['WORLD_URL'],
         customEnv: config,
       };

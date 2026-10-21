@@ -154,20 +154,6 @@ export const commonSchemas = {
   },
 
   // Common parameters
-  serverNameParam: {
-    type: 'string',
-    description: 'Server name (without mc- prefix)',
-    pattern: '^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$',
-    examples: ['survival', 'creative', 'modded'],
-  },
-
-  worldNameParam: {
-    type: 'string',
-    description: 'World name',
-    pattern: '^[a-zA-Z0-9][a-zA-Z0-9_-]*$',
-    examples: ['world', 'survival_world', 'creative-world'],
-  },
-
   playerNameParam: {
     type: 'string',
     description: 'Minecraft player name',

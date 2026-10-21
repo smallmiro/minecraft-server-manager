@@ -159,3 +159,19 @@ describe('WorldManagementUseCase.assignWorldByName - superseded lock release (#4
     expect(result.success).toBe(true);
   });
 });
+
+describe('WorldManagementUseCase.assignWorldByName - LEVEL is a WorldName (#649)', () => {
+  test.each(['../escape', 'my world', 'world.old'])(
+    'rejects %s before locking or writing LEVEL',
+    async (worldName) => {
+      const { useCase, worldAssign, setServerConfig } = makeUseCase({});
+
+      const result = await useCase.assignWorldByName(worldName, 'srv');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/world name/i);
+      expect(worldAssign).not.toHaveBeenCalled();
+      expect(setServerConfig).not.toHaveBeenCalled();
+    }
+  );
+});

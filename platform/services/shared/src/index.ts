@@ -28,7 +28,7 @@ export {
 } from './types/index.js';
 
 // Re-export utilities
-export { Paths, Config, colors, log, getPackageRoot, formatWorldBytes, isTelemetryEnabled } from './utils/index.js';
+export { Paths, Config, colors, log, getPackageRoot, formatWorldBytes, isTelemetryEnabled, resolveMcctlRoot } from './utils/index.js';
 
 // Re-export docker utilities
 export {
@@ -84,6 +84,15 @@ export {
 export {
   // Value Objects
   ServerName,
+  SERVER_NAME_PATTERN,
+  SERVER_NAME_MIN_LENGTH,
+  SERVER_NAME_MAX_LENGTH,
+  RESERVED_SERVER_NAMES,
+  EXISTING_SERVER_NAME_PATTERN,
+  WorldName,
+  WORLD_NAME_PATTERN,
+  configuredWorldName,
+  resolveWorldName,
   ServerType,
   ServerTypeEnum,
   type ServerTypeInfo,

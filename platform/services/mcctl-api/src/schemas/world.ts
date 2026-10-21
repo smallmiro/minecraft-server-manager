@@ -1,4 +1,6 @@
 import { Type, Static } from '@sinclair/typebox';
+import { WORLD_NAME_PATTERN } from '@minecraft-docker/shared';
+import { ExistingServerNameSchema } from './server.js';
 
 // ========================================
 // World Schemas
@@ -53,9 +55,9 @@ export const WorldNameParamsSchema = Type.Object({
  * Create world request body
  */
 export const CreateWorldRequestSchema = Type.Object({
-  name: Type.String({ minLength: 1, pattern: '^[a-zA-Z0-9_-]+$' }),
+  name: Type.String({ minLength: 1, pattern: WORLD_NAME_PATTERN.source }),
   seed: Type.Optional(Type.String()),
-  serverName: Type.Optional(Type.String()),
+  serverName: Type.Optional(ExistingServerNameSchema),
   autoStart: Type.Optional(Type.Boolean({ default: false })),
 });
 
@@ -63,7 +65,7 @@ export const CreateWorldRequestSchema = Type.Object({
  * Assign world request body
  */
 export const AssignWorldRequestSchema = Type.Object({
-  serverName: Type.String({ minLength: 1 }),
+  serverName: ExistingServerNameSchema,
 });
 
 /**
@@ -77,7 +79,7 @@ export const DeleteWorldQuerySchema = Type.Object({
  * Upload world query parameters (multipart route)
  */
 export const UploadWorldQuerySchema = Type.Object({
-  name: Type.String({ minLength: 1, pattern: '^[a-zA-Z0-9_-]+$' }),
+  name: Type.String({ minLength: 1, pattern: WORLD_NAME_PATTERN.source }),
   seed: Type.Optional(Type.String()),
 });
 

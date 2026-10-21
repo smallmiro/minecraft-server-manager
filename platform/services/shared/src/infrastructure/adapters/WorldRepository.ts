@@ -16,7 +16,7 @@ import { randomUUID } from 'node:crypto';
 import * as unzipper from 'unzipper';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { Paths } from '../../utils/index.js';
-import { World } from '../../domain/index.js';
+import { World, WORLD_NAME_PATTERN } from '../../domain/index.js';
 import { getContainerStatus } from '../../docker/index.js';
 import type {
   IWorldRepository,
@@ -30,11 +30,9 @@ import type {
 // Exported pure helper — testable without real zips
 // ---------------------------------------------------------------------------
 
-/** Allowed world-name characters (defense-in-depth, independent of API schema). */
-const WORLD_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
-
 /**
- * Reject world names that could escape the worlds/ directory.
+ * Reject world names that could escape the worlds/ directory (defense-in-depth,
+ * independent of API schema).
  * This guards the repository boundary so traversal is impossible even if a
  * future caller forgets upstream validation.
  */

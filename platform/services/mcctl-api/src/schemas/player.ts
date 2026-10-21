@@ -1,5 +1,5 @@
 import { Type, Static } from '@sinclair/typebox';
-import { ErrorResponseSchema } from './server.js';
+import { ErrorResponseSchema, ExistingServerNameSchema } from './server.js';
 
 // Player info schema
 export const PlayerInfoSchema = Type.Object({
@@ -36,7 +36,7 @@ const UUID_PATTERN =
   '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';
 
 export const PlayerUuidParamsSchema = Type.Object({
-  name: Type.String(),
+  name: ExistingServerNameSchema,
   uuid: Type.String({ pattern: UUID_PATTERN }),
 });
 
@@ -217,7 +217,7 @@ export const PlayerActionResponseSchema = Type.Object({
 
 // Player params
 export const PlayerParamsSchema = Type.Object({
-  name: Type.String(),
+  name: ExistingServerNameSchema,
   player: Type.String(),
 });
 

@@ -163,6 +163,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     schema: {
       description: 'Remove a mod from a server',
       tags: ['servers', 'mods'],
+      params: ServerNameParamsSchema,
       response: {
         404: ErrorResponseSchema,
         500: ErrorResponseSchema,
