@@ -170,7 +170,7 @@ export function CreateWorldDialog({
               value={formData.name}
               onChange={handleChange('name')}
               error={!!errors.name}
-              helperText={errors.name || 'Only lowercase letters, numbers, and hyphens'}
+              helperText={errors.name || 'Letters, numbers, hyphens, and underscores'}
               fullWidth
               autoFocus
               disabled={loading}

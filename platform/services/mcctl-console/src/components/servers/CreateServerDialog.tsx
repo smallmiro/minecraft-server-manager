@@ -491,7 +491,7 @@ export function CreateServerDialog({
                 value={formData.name}
                 onChange={handleChange('name')}
                 error={!!errors.name}
-                helperText={errors.name || 'Only lowercase letters, numbers, and hyphens'}
+                helperText={errors.name || '2-32 characters: lowercase letters, numbers, and hyphens, starting with a letter'}
                 fullWidth
                 autoFocus
                 disabled={isCreating}
