@@ -109,7 +109,7 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 
 | 키 | 사용처 | 적용 범위 |
 |----|--------|-----------|
-| `HOST_IP`, `HOST_IPS` | `create-server.sh`, `migrate-nip-io.sh` | `next-create`: 다음 `mcctl create`부터 사용. 기존 서버의 호스트명은 바뀌지 않습니다 |
+| `HOST_IP`, `HOST_IPS` | `create-server.sh` | `next-create`: 다음 `mcctl create`부터 사용. 기존 서버의 호스트명은 바뀌지 않습니다 |
 | `DOCKER_GID` | compose `router.group_add` | `router`: `mcctl router start` (`mcctl router restart`로는 적용되지 않습니다) |
 | `TZ`, `EXTRA_ARGS` | 모든 서버 컨테이너 (`servers/global.env`) | `servers`: 각 서버를 stop 후 start |
 | `RCON_PASSWORD` (시크릿), `RCON_PORT` | 모든 서버 컨테이너 (`servers/global.env`), CLI `rcon` | `servers` |

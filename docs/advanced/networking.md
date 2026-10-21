@@ -298,9 +298,8 @@ HOST_IPS=192.168.1.100,100.64.0.5
 # New servers automatically get multiple hostnames
 mcctl create myserver
 
-# For existing servers, run migration script
-cd ~/minecraft-servers
-./scripts/migrate-nip-io.sh
+# For existing servers, update hostnames with the new IPs
+mcctl init --reconfigure
 ```
 
 #### 5. Client Connection
@@ -379,7 +378,7 @@ docker logs router 2>&1 | grep myserver
 ```
 
 !!! warning "When VPN IP Changes"
-    If your VPN IP changes, update `.env` and run `./scripts/migrate-nip-io.sh` again.
+    If your VPN IP changes, run `mcctl init --reconfigure`, enter the new IPs, and accept updating existing servers.
 
 ### Debug Mode
 
