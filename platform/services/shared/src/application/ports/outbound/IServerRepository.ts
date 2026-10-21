@@ -56,6 +56,7 @@ export interface ServerConfigData {
   memory?: string;
   rconPassword?: string;
   seed?: string;
+  /** World the server uses: LEVEL > WORLD_NAME > server name */
   worldName?: string;
   worldUrl?: string;
   customEnv?: Record<string, string>;

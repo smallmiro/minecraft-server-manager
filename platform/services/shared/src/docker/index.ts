@@ -927,7 +927,7 @@ export async function getDetailedServerInfoFromConfig(
   }
 
   // Get world name and size
-  const worldName = configEnv['WORLD_NAME'] || serverName;
+  const worldName = resolveWorldName(configEnv, serverName);
   const worldSize = await getWorldDirectorySize(worldName, worldsDir);
 
   return {
