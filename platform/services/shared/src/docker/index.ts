@@ -635,8 +635,7 @@ export async function getDetailedServerInfoWithPlayers(
   }
 
   // Get world name and size
-  const serverName = container.replace(/^mc-/, '');
-  const worldName = resolveWorldName(configEnv ?? {}, serverName);
+  const worldName = resolveWorldName(configEnv ?? {});
   detailed.worldName = worldName;
 
   // Calculate world size
@@ -918,7 +917,7 @@ export async function getDetailedServerInfoFromConfig(
   }
 
   // Get world name and size
-  const worldName = resolveWorldName(configEnv, serverName);
+  const worldName = resolveWorldName(configEnv);
   const worldSize = await getWorldDirectorySize(worldName, worldsDir);
 
   return {

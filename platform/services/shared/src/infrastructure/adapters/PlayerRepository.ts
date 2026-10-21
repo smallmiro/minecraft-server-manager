@@ -172,16 +172,11 @@ export class PlayerRepository implements IPlayerRepository {
     return results;
   }
 
-  /** LEVEL > WORLD_NAME > server name (mirrors WorldManagementUseCase). */
+  /** LEVEL > WORLD_NAME > 'world' (mirrors WorldManagementUseCase). */
   private async resolveWorldLevel(serverName: string): Promise<string> {
     const configPath = join(this.paths.root, 'servers', serverName, 'config.env');
-    try {
-      const content = await readFile(configPath, 'utf-8');
-      const env = this.parseEnv(content);
-      return resolveWorldName(Object.fromEntries(env), serverName);
-    } catch {
-      return serverName;
-    }
+    const content = await readFile(configPath, 'utf-8').catch(() => '');
+    return resolveWorldName(Object.fromEntries(this.parseEnv(content)));
   }
 
   private parseEnv(content: string): Map<string, string> {

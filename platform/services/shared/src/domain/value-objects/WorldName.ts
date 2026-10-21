@@ -47,7 +47,10 @@ export function configuredWorldName(env: ConfigEnv): string | undefined {
   return env['LEVEL']?.trim() || env['WORLD_NAME']?.trim() || undefined;
 }
 
-/** The world a server uses: its configured world, else the server name. */
-export function resolveWorldName(env: ConfigEnv, serverName: string): string {
-  return configuredWorldName(env) ?? serverName;
+/**
+ * The world a server uses: its configured world, else itzg's runtime default
+ * 'world' (with `--universe /worlds/`, that is worlds/world).
+ */
+export function resolveWorldName(env: ConfigEnv): string {
+  return configuredWorldName(env) ?? 'world';
 }

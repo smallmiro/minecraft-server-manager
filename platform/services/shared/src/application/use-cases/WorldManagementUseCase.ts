@@ -339,9 +339,8 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
    * Build a reverse map of world name -> server names that use it.
    *
    * A server's world directory is its LEVEL config value (or the WORLD_NAME
-   * alias); when neither is set the server owns worlds/<server-name>, so it
-   * defaults to the server name. This mirrors the world-name precedence used
-   * for detailed server info (LEVEL > WORLD_NAME > server name).
+   * alias); when neither is set itzg uses worlds/world. This mirrors the
+   * world-name precedence used for detailed server info (resolveWorldName).
    */
   private async getServersByWorld(): Promise<Map<string, string[]>> {
     const names = await this.serverRepo.listNames();
@@ -351,7 +350,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       const config = await this.serverRepo.getConfig(name);
       if (!config) continue;
 
-      const level = resolveWorldName(config.customEnv ?? {}, name);
+      const level = resolveWorldName(config.customEnv ?? {});
       const servers = map.get(level) ?? [];
       servers.push(name);
       map.set(level, servers);
