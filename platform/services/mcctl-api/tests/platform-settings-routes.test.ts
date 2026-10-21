@@ -5,7 +5,6 @@ import { join } from 'path';
 
 const TEST_PATH = join(import.meta.dirname, '.tmp-platform-settings-routes-test');
 
-process.env.PLATFORM_PATH = TEST_PATH;
 process.env.MCCTL_ROOT = TEST_PATH;
 process.env.AUTH_MODE = 'disabled';
 process.env.NODE_ENV = 'test';

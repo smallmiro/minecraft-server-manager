@@ -19,7 +19,6 @@ import { join } from 'path';
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-servers-world-test');
 
 process.env.MCCTL_ROOT = TEST_PLATFORM_PATH;
-process.env.PLATFORM_PATH = TEST_PLATFORM_PATH;
 process.env.AUTH_MODE = 'disabled';
 process.env.NODE_ENV = 'test';
 

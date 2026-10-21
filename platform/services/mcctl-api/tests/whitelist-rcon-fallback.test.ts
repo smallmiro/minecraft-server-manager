@@ -6,7 +6,7 @@ import { join } from 'path';
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-whitelist-rcon-fallback-test');
 
 // Set env vars BEFORE any imports
-process.env.PLATFORM_PATH = TEST_PLATFORM_PATH;
+process.env.MCCTL_ROOT = TEST_PLATFORM_PATH;
 process.env.AUTH_ACCESS_MODE = 'open';
 process.env.AUTH_MODE = 'disabled';
 process.env.NODE_ENV = 'test';

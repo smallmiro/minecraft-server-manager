@@ -7,7 +7,6 @@ const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-world-structures-test
 const FIXTURE = join(import.meta.dirname, 'fixtures', 'world-info', 'factory');
 
 process.env.MCCTL_ROOT = TEST_PLATFORM_PATH;
-process.env.PLATFORM_PATH = TEST_PLATFORM_PATH;
 process.env.AUTH_MODE = 'disabled';
 process.env.NODE_ENV = 'test';
 
