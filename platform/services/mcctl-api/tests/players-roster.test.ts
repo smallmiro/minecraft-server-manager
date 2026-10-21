@@ -420,7 +420,7 @@ describe('Player roster API (#528)', () => {
           'usercache.json': [{ uuid: NOTCH_UUID, name: 'Notch', expiresOn: '2099-01-01T00:00:00Z' }],
         },
       });
-      const worldDir = join(TEST_PLATFORM_PATH, 'worlds', 'test-server');
+      const worldDir = join(TEST_PLATFORM_PATH, 'worlds', 'world');
       mkdirSync(join(worldDir, 'stats'), { recursive: true });
       mkdirSync(join(worldDir, 'advancements'), { recursive: true });
       writeFileSync(
