@@ -439,9 +439,13 @@ if [[ "$SERVER_TYPE" =~ ^(MODRINTH|AUTO_CURSEFORGE)$ ]]; then
     fi
 fi
 
-# Validate server name (lowercase, alphanumeric, hyphens only)
-if [[ ! "$SERVER_NAME" =~ ^[a-z][a-z0-9-]*$ ]]; then
-    echo -e "${RED}Error: Server name must start with a letter and contain only lowercase letters, numbers, and hyphens${NC}"
+# Validate names with the shared rules (lib/common.sh, #649)
+if ! NAME_ERROR=$(validate_server_name "$SERVER_NAME"); then
+    echo -e "${RED}Error: $NAME_ERROR${NC}"
+    exit 1
+fi
+if [ -n "$WORLD_NAME" ] && ! NAME_ERROR=$(validate_world_name "$WORLD_NAME"); then
+    echo -e "${RED}Error: $NAME_ERROR${NC}"
     exit 1
 fi
 
