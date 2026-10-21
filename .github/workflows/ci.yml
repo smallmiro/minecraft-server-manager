@@ -28,7 +28,8 @@ jobs:
       - run: pnpm build
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test
+      # e2e needs live api/console; it runs in e2e.yml
+      - run: pnpm -r --filter '!e2e' test
       # drift check between platform/scripts and the cli package (#648)
       - run: pnpm --filter @minecraft-docker/mcctl run --if-present verify:package
 
