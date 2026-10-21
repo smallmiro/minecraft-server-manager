@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { join, resolve } from 'path';
+import { join } from 'path';
 import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
 import { serverExists, getContainerStatus, AuditActionEnum, WORLD_NAME_PATTERN } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../../services/audit-log-service.js';
@@ -13,6 +13,7 @@ import {
 } from '../../schemas/config.js';
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
 import { config } from '../../config/index.js';
+import { resolveInside } from '../../lib/safe-path.js';
 import { createConfigService } from '../../services/ConfigService.js';
 
 // ============================================================
@@ -236,9 +237,8 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const worldName = configService.getWorldName(name);
 
       // Validate world path to prevent path traversal
-      const worldsBase = resolve(config.mcctlRoot, 'worlds');
-      const worldPath = resolve(worldsBase, worldName);
-      if (!worldPath.startsWith(worldsBase + '/')) {
+      const worldPath = resolveInside(join(config.mcctlRoot, 'worlds'), worldName);
+      if (!worldPath) {
         return reply.code(400).send({
           error: 'BadRequest',
           message: 'Invalid world name in server configuration',
