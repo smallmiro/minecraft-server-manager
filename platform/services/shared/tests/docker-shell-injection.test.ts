@@ -7,6 +7,12 @@ import {
   startContainer,
   stopContainer,
   getOnlinePlayers,
+  getContainerStatus,
+  getContainerHealth,
+  getContainerHostname,
+  getContainerLogs,
+  getContainerStats,
+  getContainerUptime,
 } from '../src/docker/index.js';
 
 // A fake `docker` first on PATH records the argv it receives (NUL-separated).
@@ -18,16 +24,43 @@ printf '%s' "$FAKE_DOCKER_STDOUT"
 exit "\${FAKE_DOCKER_EXIT:-1}"
 `;
 
-const NAMES = ['a;id', '$(id)', 'a b', '`id`', 'a&&b', 'a|b'];
+// Names starting with `-` must not be read as docker options (argument injection).
+const NAMES = ['a;id', '$(id)', 'a b', '`id`', 'a&&b', 'a|b', '--help', '-q'];
 
 const HELPERS = [
-  { name: 'containerExists', run: (c: string) => containerExists(c), argv: (c: string) => ['inspect', c] },
-  { name: 'startContainer', run: (c: string) => startContainer(c), argv: (c: string) => ['start', c] },
-  { name: 'stopContainer', run: (c: string) => stopContainer(c), argv: (c: string) => ['stop', c] },
-  { name: 'getOnlinePlayers', run: (c: string) => getOnlinePlayers(c), argv: (c: string) => ['exec', c, 'rcon-cli', 'list'] },
+  { name: 'containerExists', run: (c: string) => containerExists(c), argv: (c: string) => ['inspect', '--', c] },
+  { name: 'startContainer', run: (c: string) => startContainer(c), argv: (c: string) => ['start', '--', c] },
+  { name: 'stopContainer', run: (c: string) => stopContainer(c), argv: (c: string) => ['stop', '--', c] },
+  { name: 'getOnlinePlayers', run: (c: string) => getOnlinePlayers(c), argv: (c: string) => ['exec', '--', c, 'rcon-cli', 'list'] },
+  {
+    name: 'getContainerStatus',
+    run: (c: string) => getContainerStatus(c),
+    argv: (c: string) => ['inspect', '--format', '{{.State.Status}}', '--', c],
+  },
+  {
+    name: 'getContainerHealth',
+    run: (c: string) => getContainerHealth(c),
+    argv: (c: string) => ['inspect', '--format', '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}', '--', c],
+  },
+  {
+    name: 'getContainerHostname',
+    run: (c: string) => getContainerHostname(c),
+    argv: (c: string) => ['inspect', '--format', '{{index .Config.Labels "mc-router.host"}}', '--', c],
+  },
+  { name: 'getContainerLogs', run: (c: string) => getContainerLogs(c, 20), argv: (c: string) => ['logs', '--tail', '20', '--', c] },
+  {
+    name: 'getContainerStats',
+    run: (c: string) => getContainerStats(c),
+    argv: (c: string) => ['stats', '--no-stream', '--format', '{{.MemUsage}},{{.CPUPerc}}', '--', c],
+  },
+  {
+    name: 'getContainerUptime',
+    run: (c: string) => getContainerUptime(c),
+    argv: (c: string) => ['inspect', '--format', '{{.State.StartedAt}}', '--', c],
+  },
 ];
 
-describe('docker helpers do not pass container names through a shell (#720)', () => {
+describe('docker helpers pass container names to docker verbatim (#720)', () => {
   let dir: string;
   let argsFile: string;
 
