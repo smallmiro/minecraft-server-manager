@@ -13,9 +13,11 @@ export const SERVER_NAME_MAX_LENGTH = 32;
 export const RESERVED_SERVER_NAMES: readonly string[] = ['router'];
 
 /** The whole new-name rule as one regex, for JSON schemas and clients. */
+// Plain string concatenation on purpose: Next's SWC minifier mangles the
+// template-literal form of this expression (drops ")$)") when it is bundled.
 export const SERVER_NAME_PATTERN = new RegExp(
-  `^(?!(?:${RESERVED_SERVER_NAMES.join('|')})$)` +
-    `(?=.{${SERVER_NAME_MIN_LENGTH},${SERVER_NAME_MAX_LENGTH}}$)` +
+  '^(?!(?:' + RESERVED_SERVER_NAMES.join('|') + ')$)' +
+    '(?=.{' + SERVER_NAME_MIN_LENGTH + ',' + SERVER_NAME_MAX_LENGTH + '}$)' +
     '[a-z](?:-?[a-z0-9])*$'
 );
 

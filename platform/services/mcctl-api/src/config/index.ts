@@ -50,11 +50,6 @@ export interface AppConfig {
    * (MCCTL_ROOT or ~/minecraft-servers) like every other package.
    */
   mcctlRoot: string;
-  /**
-   * Platform directory containing docker-compose.yml and server configurations.
-   * Always the same as mcctlRoot.
-   */
-  platformPath: string;
 }
 
 function getEnv(key: string, defaultValue: string): string {
@@ -156,7 +151,6 @@ export const config: AppConfig = {
   logLevel: getLogLevel(),
   auth: getAuthConfig(),
   mcctlRoot,
-  platformPath: mcctlRoot,
 };
 
 export default config;

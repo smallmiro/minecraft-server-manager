@@ -34,7 +34,6 @@ describe('POST /api/servers - world option validation', () => {
     mkdirSync(join(TEST_PLATFORM_PATH, 'servers'), { recursive: true });
 
     const { config } = await import('../src/config/index.js');
-    (config as Record<string, unknown>).platformPath = TEST_PLATFORM_PATH;
     (config as Record<string, unknown>).mcctlRoot = TEST_PLATFORM_PATH;
 
     const { buildApp } = await import('../src/app.js');

@@ -46,6 +46,18 @@ describe('world name resolution (#649)', () => {
     expect(info.worldName).toBe('shared-world');
   });
 
+  it("config-only server info falls back to itzg's default world without LEVEL (#721)", async () => {
+    await addServer('srv', 'TYPE=PAPER\n');
+
+    const info = await getDetailedServerInfoFromConfig(
+      'srv',
+      join(root, 'servers'),
+      join(root, 'worlds')
+    );
+
+    expect(info.worldName).toBe('world');
+  });
+
   it('ServerRepository reads the world from LEVEL, not the WORLD download URL', async () => {
     await addServer('dl', 'TYPE=PAPER\nLEVEL=dl\nWORLD=https://example.com/world.zip\n');
 

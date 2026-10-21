@@ -26,6 +26,10 @@
       "import": "./dist/domain/index.js",
       "types": "./dist/domain/index.d.ts"
     },
+    "./naming": {
+      "import": "./dist/naming/index.js",
+      "types": "./dist/naming/index.d.ts"
+    },
     "./application": {
       "import": "./dist/application/index.js",
       "types": "./dist/application/index.d.ts"

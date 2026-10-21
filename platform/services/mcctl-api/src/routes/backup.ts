@@ -40,8 +40,8 @@ interface BackupRestoreRoute {
  * Backup management routes plugin
  */
 const backupPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  const platformPath = config.platformPath;
-  const worldsPath = join(platformPath, 'worlds');
+  const mcctlRoot = config.mcctlRoot;
+  const worldsPath = join(mcctlRoot, 'worlds');
 
   // Helper to check if backup is configured
   const isBackupConfigured = (): { configured: boolean; repository?: string; branch?: string } => {
@@ -139,16 +139,16 @@ const backupPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
 
       const execOptions = {
-        cwd: platformPath,
+        cwd: mcctlRoot,
         timeout: 120000, // 2 minute timeout
         env: {
           ...process.env,
-          MCCTL_ROOT: platformPath,
+          MCCTL_ROOT: mcctlRoot,
         },
       };
 
       // Run backup script (safe from injection: args passed as array)
-      const scriptPath = join(platformPath, 'scripts', 'backup.sh');
+      const scriptPath = join(mcctlRoot, 'scripts', 'backup.sh');
 
       if (existsSync(scriptPath)) {
         // Use execFile with array args to prevent shell injection
@@ -300,16 +300,16 @@ const backupPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
 
       const execOptions = {
-        cwd: platformPath,
+        cwd: mcctlRoot,
         timeout: 120000,
         env: {
           ...process.env,
-          MCCTL_ROOT: platformPath,
+          MCCTL_ROOT: mcctlRoot,
         },
       };
 
       // Run backup restore script (safe from injection: args passed as array)
-      const scriptPath = join(platformPath, 'scripts', 'backup.sh');
+      const scriptPath = join(mcctlRoot, 'scripts', 'backup.sh');
 
       if (existsSync(scriptPath)) {
         // Use execFile with array args to prevent shell injection

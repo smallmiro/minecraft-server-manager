@@ -835,10 +835,10 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // Resolve create-server.sh: prefer the version-matched script bundled with
     // mcctl-api, fall back to the deployed platform copy, then the global mcctl CLI.
-    // The deployed copy under <platformPath>/scripts is not refreshed by
+    // The deployed copy under <mcctlRoot>/scripts is not refreshed by
     // 'mcctl update' and can be stale (missing newer options like --memory/--modpack).
-    const platformPath = config.platformPath;
-    const resolvedScript = resolveScriptPath('create-server.sh', platformPath);
+    const mcctlRoot = config.mcctlRoot;
+    const resolvedScript = resolveScriptPath('create-server.sh', mcctlRoot);
 
     let command: string;
     let commandArgs: string[];
@@ -871,9 +871,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       // Spawn create-server.sh with spawn for real-time output
       const createProcess = spawn(command, commandArgs, {
-        cwd: platformPath,
+        cwd: mcctlRoot,
         env: childProcessEnv({
-          MCCTL_ROOT: platformPath,
+          MCCTL_ROOT: mcctlRoot,
           ...(scriptsDir ? { MCCTL_SCRIPTS: scriptsDir } : {}),
           ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
         }),
@@ -1008,10 +1008,10 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // Standard JSON response (non-streaming)
     try {
       const { stdout, stderr } = await execPromise(`${command} ${commandArgs.map(a => `"${a}"`).join(' ')}`, {
-        cwd: platformPath,
+        cwd: mcctlRoot,
         timeout: 120000, // 2 minute timeout for server creation
         env: childProcessEnv({
-          MCCTL_ROOT: platformPath,
+          MCCTL_ROOT: mcctlRoot,
           ...(scriptsDir ? { MCCTL_SCRIPTS: scriptsDir } : {}),
           ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
         }),
@@ -1113,8 +1113,8 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       // Resolve delete-server.sh: prefer the bundled (version-matched) script,
       // fall back to the deployed platform copy, then the global mcctl CLI.
-      const platformPath = config.platformPath;
-      const resolvedScript = resolveScriptPath('delete-server.sh', platformPath);
+      const mcctlRoot = config.mcctlRoot;
+      const resolvedScript = resolveScriptPath('delete-server.sh', mcctlRoot);
 
       // Build command
       let command: string;
@@ -1126,10 +1126,10 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
 
       const { stdout, stderr } = await execPromise(command, {
-        cwd: platformPath,
+        cwd: mcctlRoot,
         timeout: 60000, // 1 minute timeout
         env: childProcessEnv({
-          MCCTL_ROOT: platformPath,
+          MCCTL_ROOT: mcctlRoot,
           ...(resolvedScript ? { MCCTL_SCRIPTS: resolvedScript.scriptsDir } : {}),
         }),
       });

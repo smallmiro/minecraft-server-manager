@@ -216,10 +216,35 @@ describe('CreateWorldDialog', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/only lowercase letters, numbers, and hyphens/i)
+        screen.getByText(/letters, numbers, hyphens, and underscores/i)
       ).toBeInTheDocument();
     });
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it.each(['..', 'my world'])('rejects world name %j', async (value) => {
+    const onSubmit = vi.fn();
+    renderWithTheme(<CreateWorldDialog {...defaultProps} onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(/world name/i), { target: { value } });
+    fireEvent.click(screen.getByRole('button', { name: /create/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/letters, numbers, hyphens, and underscores/i)
+      ).toBeInTheDocument();
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('accepts mixed-case and underscore world names', async () => {
+    const onSubmit = vi.fn();
+    renderWithTheme(<CreateWorldDialog {...defaultProps} onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(/world name/i), { target: { value: 'My_World-1' } });
+    fireEvent.click(screen.getByRole('button', { name: /create/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });
 
   // ----------------------------------------------------------------

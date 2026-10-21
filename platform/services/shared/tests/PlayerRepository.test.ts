@@ -93,7 +93,7 @@ describe('PlayerRepository', () => {
       ]);
 
       // playerdata for Steve, with a distinct mtime used as lastSeen.
-      const playerDataDir = join(root, 'worlds', 'myserver', 'playerdata');
+      const playerDataDir = join(root, 'worlds', 'world', 'playerdata');
       await mkdir(playerDataDir, { recursive: true });
       const steveDat = join(playerDataDir, 'uuid-steve.dat');
       await writeFile(steveDat, '');
@@ -142,8 +142,27 @@ describe('PlayerRepository', () => {
       expect(players.map((p) => p.name)).toEqual(['Steve']);
     });
 
-    test('LEVEL이 없으면 world 디렉터리는 서버 이름을 사용한다', async () => {
-      const playerDataDir = join(root, 'worlds', 'myserver', 'playerdata');
+    test("LEVEL이 없으면 itzg 기본값 'world' 디렉터리를 사용한다 (#721)", async () => {
+      await mkdir(join(root, 'servers', 'myserver'), { recursive: true });
+      await writeFile(join(root, 'servers', 'myserver', 'config.env'), 'TYPE=PAPER\n', 'utf-8');
+      await mkdir(join(root, 'worlds', 'myserver', 'playerdata'), { recursive: true });
+      await writeFile(join(root, 'worlds', 'myserver', 'playerdata', 'uuid-steve.dat'), '');
+      const playerDataDir = join(root, 'worlds', 'world', 'playerdata');
+      await mkdir(playerDataDir, { recursive: true });
+      await writeFile(join(playerDataDir, 'uuid-alex.dat'), '');
+      await writeJson(join(root, 'servers', 'myserver', 'data', 'ops.json'), [
+        { uuid: 'uuid-alex', name: 'Alex', level: 4, bypassesPlayerLimit: false },
+        { uuid: 'uuid-steve', name: 'Steve', level: 4, bypassesPlayerLimit: false },
+      ]);
+
+      // ops.json names both; only the resolved world's playerdata sets lastSeen.
+      const players = await repo.listKnownPlayers('myserver');
+      const seen = Object.fromEntries(players.map((p) => [p.name, p.lastSeen !== null]));
+      expect(seen).toEqual({ Alex: true, Steve: false });
+    });
+
+    test("config.env가 없어도 'world' 디렉터리를 사용한다 (#721)", async () => {
+      const playerDataDir = join(root, 'worlds', 'world', 'playerdata');
       await mkdir(playerDataDir, { recursive: true });
       await writeFile(join(playerDataDir, 'uuid-alex.dat'), '');
       await writeJson(join(root, 'servers', 'myserver', 'data', 'ops.json'), [
@@ -151,7 +170,7 @@ describe('PlayerRepository', () => {
       ]);
 
       const players = await repo.listKnownPlayers('myserver');
-      expect(players.map((p) => p.name)).toEqual(['Alex']);
+      expect(players.map((p) => [p.name, p.lastSeen !== null])).toEqual([['Alex', true]]);
     });
 
     test('모든 파일이 없으면 빈 배열을 반환한다', async () => {
@@ -162,7 +181,7 @@ describe('PlayerRepository', () => {
       await writeJson(join(root, 'servers', 'myserver', 'data', 'usercache.json'), [
         { name: 'Steve', uuid: 'uuid-steve' },
       ]);
-      const dir = join(root, 'worlds', 'myserver', 'players', 'data');
+      const dir = join(root, 'worlds', 'world', 'players', 'data');
       await mkdir(dir, { recursive: true });
       const dat = join(dir, 'uuid-steve.dat');
       await writeFile(dat, '');
@@ -178,7 +197,7 @@ describe('PlayerRepository', () => {
     const uuid = '069a79f4-44e9-4726-a5be-fca90e38aaf5';
 
     test('stats.json + advancements.json을 파싱한다', async () => {
-      const worldDir = join(root, 'worlds', 'myserver');
+      const worldDir = join(root, 'worlds', 'world');
       await writeJson(join(worldDir, 'stats', `${uuid}.json`), {
         stats: {
           'minecraft:custom': {
@@ -214,7 +233,7 @@ describe('PlayerRepository', () => {
     });
 
     test('advancements.json이 없으면 advancementsCompleted는 0이다', async () => {
-      await writeJson(join(root, 'worlds', 'myserver', 'stats', `${uuid}.json`), {
+      await writeJson(join(root, 'worlds', 'world', 'stats', `${uuid}.json`), {
         stats: { 'minecraft:custom': { 'minecraft:deaths': 1 } },
       });
 
@@ -228,7 +247,7 @@ describe('PlayerRepository', () => {
     });
 
     test('손상된 stats.json은 null을 반환한다', async () => {
-      const statsPath = join(root, 'worlds', 'myserver', 'stats', `${uuid}.json`);
+      const statsPath = join(root, 'worlds', 'world', 'stats', `${uuid}.json`);
       await mkdir(join(statsPath, '..'), { recursive: true });
       await writeFile(statsPath, '{not json', 'utf-8');
 
@@ -240,7 +259,7 @@ describe('PlayerRepository', () => {
     });
 
     test('26.x players/stats + players/advancements를 읽는다 (#601)', async () => {
-      const playersDir = join(root, 'worlds', 'myserver', 'players');
+      const playersDir = join(root, 'worlds', 'world', 'players');
       await writeJson(join(playersDir, 'stats', `${uuid}.json`), {
         stats: { 'minecraft:custom': { 'minecraft:deaths': 7 } },
       });
@@ -254,7 +273,7 @@ describe('PlayerRepository', () => {
     });
 
     test('fromMinecraftJson이 예외를 던지면 null을 반환한다', async () => {
-      await writeJson(join(root, 'worlds', 'myserver', 'stats', `${uuid}.json`), {
+      await writeJson(join(root, 'worlds', 'world', 'stats', `${uuid}.json`), {
         stats: { 'minecraft:custom': { 'minecraft:deaths': 1 } },
       });
       const spy = vi.spyOn(PlayerStats, 'fromMinecraftJson').mockImplementation(() => {
@@ -286,7 +305,7 @@ describe('PlayerRepository', () => {
           ),
         })
       );
-      const playerDataDir = join(root, 'worlds', 'myserver', 'playerdata');
+      const playerDataDir = join(root, 'worlds', 'world', 'playerdata');
       await mkdir(playerDataDir, { recursive: true });
       await writeFile(join(playerDataDir, `${uuid}.dat`), dat);
 
@@ -317,7 +336,7 @@ describe('PlayerRepository', () => {
           Dimension: nbt.string('minecraft:overworld'),
         })
       );
-      const dir = join(root, 'worlds', 'myserver', 'players', 'data');
+      const dir = join(root, 'worlds', 'world', 'players', 'data');
       await mkdir(dir, { recursive: true });
       await writeFile(join(dir, `${uuid}.dat`), dat);
 
@@ -327,7 +346,7 @@ describe('PlayerRepository', () => {
     });
 
     test('손상된 파일은 null을 반환한다', async () => {
-      const playerDataDir = join(root, 'worlds', 'myserver', 'playerdata');
+      const playerDataDir = join(root, 'worlds', 'world', 'playerdata');
       await mkdir(playerDataDir, { recursive: true });
       await writeFile(join(playerDataDir, `${uuid}.dat`), 'not nbt');
 

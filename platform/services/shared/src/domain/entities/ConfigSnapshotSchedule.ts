@@ -150,7 +150,7 @@ export class ConfigSnapshotSchedule {
   static fromRaw(row: ConfigSnapshotScheduleRow): ConfigSnapshotSchedule {
     return new ConfigSnapshotSchedule({
       id: row.id,
-      serverName: ServerName.create(row.server_name),
+      serverName: ServerName.fromExisting(row.server_name),
       name: row.name,
       cronExpression: CronExpression.create(row.cron_expression),
       enabled: row.enabled === 1,

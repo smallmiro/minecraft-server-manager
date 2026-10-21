@@ -20,11 +20,11 @@ const mockedExistsSync = vi.mocked(existsSync);
 
 describe('ConfigService', () => {
   let configService: ConfigService;
-  const platformPath = '/test/platform';
+  const mcctlRoot = '/test/platform';
 
   beforeEach(() => {
     vi.clearAllMocks();
-    configService = new ConfigService(platformPath);
+    configService = new ConfigService(mcctlRoot);
   });
 
   describe('configExists', () => {
@@ -445,6 +445,24 @@ TYPE=PAPER
       const worldName = configService.getWorldName('testserver');
 
       expect(worldName).toBe('world');
+    });
+
+    it('should fall back to the legacy WORLD_NAME alias when LEVEL is not set', () => {
+      mockedExistsSync.mockReturnValue(true);
+      mockedReadFileSync.mockReturnValue(`WORLD_NAME=legacy_world
+TYPE=PAPER
+`);
+
+      expect(configService.getWorldName('testserver')).toBe('legacy_world');
+    });
+
+    it('should prefer LEVEL over WORLD_NAME', () => {
+      mockedExistsSync.mockReturnValue(true);
+      mockedReadFileSync.mockReturnValue(`LEVEL=foo
+WORLD_NAME=legacy_world
+`);
+
+      expect(configService.getWorldName('testserver')).toBe('foo');
     });
 
     it('should handle LEVEL value with spaces', () => {

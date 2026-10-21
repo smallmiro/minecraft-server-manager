@@ -95,15 +95,16 @@ describe('WorldManagementUseCase.listWorlds - servers using each world', () => {
     expect(result.find((x) => x.name === 'name-world')?.servers).toEqual([]);
   });
 
-  test('defaults a server with no LEVEL to a world named after the server', async () => {
+  test("defaults a server with no LEVEL to itzg's default world (#721)", async () => {
     const serverRepo = makeServerRepo({
-      myserver: { TYPE: 'PAPER' }, // no LEVEL → owns worlds/myserver
+      myserver: { TYPE: 'PAPER' }, // no LEVEL → itzg uses worlds/world
     });
-    const useCase = makeUseCase(['myserver'], serverRepo);
+    const useCase = makeUseCase(['world', 'myserver'], serverRepo);
 
     const result = await useCase.listWorlds();
 
-    expect(result.find((x) => x.name === 'myserver')?.servers).toEqual(['myserver']);
+    expect(result.find((x) => x.name === 'world')?.servers).toEqual(['myserver']);
+    expect(result.find((x) => x.name === 'myserver')?.servers).toEqual([]);
   });
 
   test('returns an empty server list for a world that no server uses', async () => {
@@ -132,14 +133,13 @@ describe('WorldManagementUseCase.listUnmappedWorlds', () => {
     expect(names).not.toContain('mapped-world');
   });
 
-  test('a world whose name equals an unconfigured server name is considered mapped (fallback)', async () => {
-    // Server "myserver" with no LEVEL defaults to using worlds/myserver.
+  test("an unconfigured server maps the default 'world', not a world named after it (#721)", async () => {
     const serverRepo = makeServerRepo({ myserver: {} });
-    const useCase = makeUseCase(['myserver', 'free-world'], serverRepo);
+    const useCase = makeUseCase(['world', 'myserver', 'free-world'], serverRepo);
 
-    const names = (await useCase.listUnmappedWorlds()).map((w) => w.name);
+    const names = (await useCase.listUnmappedWorlds()).map((w) => w.name).sort();
 
-    expect(names).toEqual(['free-world']);
+    expect(names).toEqual(['free-world', 'myserver']);
   });
 
   test('all worlds are unmapped when there are no servers', async () => {

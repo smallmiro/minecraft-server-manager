@@ -47,7 +47,6 @@ describe('World Info API (#525)', () => {
     makeServer('survival', { TYPE: 'PAPER', LEVEL: 'factory' });
 
     const { config } = await import('../src/config/index.js');
-    (config as any).platformPath = TEST_PLATFORM_PATH;
     (config as any).mcctlRoot = TEST_PLATFORM_PATH;
 
     const { buildApp } = await import('../src/app.js');

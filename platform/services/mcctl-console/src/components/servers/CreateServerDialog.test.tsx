@@ -195,6 +195,27 @@ describe('CreateServerDialog', () => {
     });
   });
 
+  it.each([
+    ['MyServer', /only lowercase letters, numbers, and hyphens/i],
+    ['a', /at least 2 characters/i],
+    ['a'.repeat(33), /cannot exceed 32 characters/i],
+    ['a--b', /consecutive hyphens/i],
+    ['ab-', /end with a letter or number/i],
+    ['1abc', /start with a letter/i],
+    ['router', /reserved/i],
+  ])('should show a specific error for server name %s', async (value, message) => {
+    renderWithTheme(
+      <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />
+    );
+
+    fireEvent.change(screen.getByLabelText(/server name/i), { target: { value } });
+    fireEvent.click(screen.getByRole('button', { name: /create/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(message)).toBeInTheDocument();
+    });
+  });
+
   it('should render server type options', async () => {
     renderWithTheme(
       <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} />

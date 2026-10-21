@@ -41,7 +41,7 @@ interface WorldResetRoute {
  * Provides REST API for server configuration management
  */
 const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  const configService = createConfigService(config.platformPath);
+  const configService = createConfigService(config.mcctlRoot);
 
   /**
    * GET /api/servers/:name/config
@@ -236,7 +236,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const worldName = configService.getWorldName(name);
 
       // Validate world path to prevent path traversal
-      const worldsBase = resolve(config.platformPath, 'worlds');
+      const worldsBase = resolve(config.mcctlRoot, 'worlds');
       const worldPath = resolve(worldsBase, worldName);
       if (!worldPath.startsWith(worldsBase + '/')) {
         return reply.code(400).send({
