@@ -1,4 +1,5 @@
 import { Type, Static } from '@sinclair/typebox';
+import { ExistingServerNameSchema } from './server.js';
 
 // ============================================================
 // Config Snapshot Schemas
@@ -69,14 +70,14 @@ export const SnapshotDiffResponseSchema = Type.Object({
  * Server name params
  */
 export const ServerNameParamsSchema = Type.Object({
-  name: Type.String({ description: 'Server name' }),
+  name: ExistingServerNameSchema,
 });
 
 /**
  * Server name + snapshot ID params
  */
 export const ServerSnapshotParamsSchema = Type.Object({
-  name: Type.String({ description: 'Server name' }),
+  name: ExistingServerNameSchema,
   id: Type.String({ description: 'Snapshot ID' }),
 });
 

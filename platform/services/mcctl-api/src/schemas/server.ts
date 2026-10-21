@@ -1,4 +1,11 @@
 import { Type, Static } from '@sinclair/typebox';
+import {
+  SERVER_NAME_PATTERN,
+  SERVER_NAME_MIN_LENGTH,
+  SERVER_NAME_MAX_LENGTH,
+  EXISTING_SERVER_NAME_PATTERN,
+  WORLD_NAME_PATTERN,
+} from '@minecraft-docker/shared';
 
 // Container and Health Status
 export const ContainerStatusSchema = Type.Union([
@@ -131,13 +138,26 @@ export const ErrorResponseSchema = Type.Object({
   message: Type.String(),
 });
 
+/**
+ * Name of a server that already exists (#649). Names that predate the strict
+ * rule stay reachable; only path/shell-unsafe names are rejected.
+ */
+export const ExistingServerNameSchema = Type.String({
+  pattern: EXISTING_SERVER_NAME_PATTERN.source,
+  description: 'Server name',
+});
+
 export const ServerNameParamsSchema = Type.Object({
-  name: Type.String(),
+  name: ExistingServerNameSchema,
 });
 
 // Create Server Request Schema
 export const CreateServerRequestSchema = Type.Object({
-  name: Type.String({ minLength: 1, maxLength: 64, pattern: '^[a-z][a-z0-9-]*$' }),
+  name: Type.String({
+    minLength: SERVER_NAME_MIN_LENGTH,
+    maxLength: SERVER_NAME_MAX_LENGTH,
+    pattern: SERVER_NAME_PATTERN.source,
+  }),
   type: Type.Optional(Type.Union([
     Type.Literal('PAPER'),
     Type.Literal('VANILLA'),
@@ -152,7 +172,7 @@ export const CreateServerRequestSchema = Type.Object({
   memory: Type.Optional(Type.String({ pattern: '^\\d+[MG]$' })),
   seed: Type.Optional(Type.String()),
   worldUrl: Type.Optional(Type.String({ format: 'uri' })),
-  worldName: Type.Optional(Type.String()),
+  worldName: Type.Optional(Type.String({ pattern: WORLD_NAME_PATTERN.source })),
   autoStart: Type.Optional(Type.Boolean({ default: true })),
   sudoPassword: Type.Optional(Type.String({ writeOnly: true })),
   modpack: Type.Optional(Type.String({

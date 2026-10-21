@@ -1,4 +1,5 @@
 import { Type, Static } from '@sinclair/typebox';
+import { WORLD_NAME_PATTERN } from '@minecraft-docker/shared';
 import { DimensionSchema } from './world-info.js';
 
 // ========================================
@@ -7,7 +8,7 @@ import { DimensionSchema } from './world-info.js';
 
 /** Strict world-name params for map routes (path-traversal safe). */
 export const MapWorldNameParamsSchema = Type.Object({
-  name: Type.String({ minLength: 1, pattern: '^[a-zA-Z0-9_-]+$' }),
+  name: Type.String({ minLength: 1, pattern: WORLD_NAME_PATTERN.source }),
 });
 
 /** Render trigger request body. */

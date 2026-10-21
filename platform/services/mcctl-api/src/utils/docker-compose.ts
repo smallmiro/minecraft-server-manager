@@ -22,33 +22,15 @@ export type ServerAction = 'start' | 'stop' | 'restart';
 // ============================================================
 
 /**
- * Platform directory path.
- * Uses config.platformPath which is resolved from:
- *   1. PLATFORM_PATH environment variable
- *   2. MCCTL_ROOT environment variable
- *   3. ~/minecraft-servers (default)
+ * Platform directory path (config.platformPath, the mcctl root).
  */
 function getPlatformPath(): string {
   return config.platformPath;
 }
 
 // ============================================================
-// Server Name Validation
+// Server Name Handling
 // ============================================================
-
-/**
- * Server name validation regex.
- * Allows alphanumeric characters, hyphens, and underscores.
- * Must start with a letter or number.
- */
-const SERVER_NAME_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
-
-export function isValidServerName(name: string): boolean {
-  if (!name || name.length === 0 || name.length > 64) {
-    return false;
-  }
-  return SERVER_NAME_REGEX.test(name);
-}
 
 export function sanitizeServerName(name: string): string {
   // Decode URI component if encoded

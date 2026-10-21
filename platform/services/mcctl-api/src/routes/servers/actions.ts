@@ -1,13 +1,12 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import {
-  isValidServerName,
   sanitizeServerName,
   executeServerAction,
   ServerAction,
 } from '../../utils/docker-compose.js';
 import { writeAuditLog } from '../../services/audit-log-service.js';
-import { AuditActionEnum } from '@minecraft-docker/shared';
+import { AuditActionEnum, EXISTING_SERVER_NAME_PATTERN, ServerName } from '@minecraft-docker/shared';
 
 // ============================================================
 // Types
@@ -48,8 +47,9 @@ async function handleServerAction(
 ): Promise<ActionResponse> {
   const serverName = sanitizeServerName(request.params.name);
 
-  // Validate server name
-  if (!isValidServerName(serverName)) {
+  // Existing servers keep names that predate the naming rule (#649):
+  // reject only unsafe names, warn about the rest.
+  if (!EXISTING_SERVER_NAME_PATTERN.test(serverName)) {
     reply.code(400);
     return {
       success: false,
@@ -58,6 +58,10 @@ async function handleServerAction(
       timestamp: new Date().toISOString(),
       error: 'Invalid server name. Server name must start with a letter or number and contain only alphanumeric characters, hyphens, or underscores.',
     };
+  }
+  const ruleViolation = ServerName.validate(serverName);
+  if (ruleViolation) {
+    request.log.warn({ server: serverName }, `Server name does not follow the naming rule: ${ruleViolation}`);
   }
 
   // Execute the action

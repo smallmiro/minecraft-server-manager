@@ -1,5 +1,6 @@
 import { Type, Static } from '@sinclair/typebox';
 import { ErrorResponseSchema } from './config-snapshot.js';
+import { ExistingServerNameSchema } from './server.js';
 
 // ============================================================
 // Config Snapshot Schedule Schemas
@@ -53,7 +54,7 @@ export const ListSchedulesQuerySchema = Type.Object({
  * POST /api/config-snapshot-schedules request body
  */
 export const CreateConfigSnapshotScheduleRequestSchema = Type.Object({
-  serverName: Type.String({ minLength: 1, description: 'Server name' }),
+  serverName: ExistingServerNameSchema,
   name: Type.String({ minLength: 1, description: 'Schedule name' }),
   cronExpression: Type.String({
     minLength: 1,
