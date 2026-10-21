@@ -55,9 +55,9 @@ vi.mock('../src/lib/rcon.js', async (importOriginal) => {
   };
 });
 
-/** Writes a synthetic worlds/<serverName>/playerdata/<uuid>.dat fixture (#528, Phase 3). */
-function writePlayerDat(serverName: string, uuid: string, fields: Record<string, unknown>) {
-  const dir = join(TEST_PLATFORM_PATH, 'worlds', serverName, 'playerdata');
+/** Writes a synthetic worlds/world/playerdata (the default world: no LEVEL)/<uuid>.dat fixture (#528, Phase 3). */
+function writePlayerDat(_serverName: string, uuid: string, fields: Record<string, unknown>) {
+  const dir = join(TEST_PLATFORM_PATH, 'worlds', 'world', 'playerdata');
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, `${uuid}.dat`), nbt.writeUncompressed(nbt.comp(fields)));
 }
