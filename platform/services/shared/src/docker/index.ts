@@ -1,4 +1,4 @@
-import { spawn, execSync, spawnSync } from 'node:child_process';
+import { spawn, execSync, execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, statSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type {
@@ -169,7 +169,7 @@ export function getRouterHealthViaApi(): HealthStatus {
  */
 export function containerExists(container: string): boolean {
   try {
-    execSync(`docker inspect ${container}`, { stdio: 'pipe' });
+    execFileSync('docker', ['inspect', container], { stdio: 'pipe' });
     return true;
   } catch {
     return false;
@@ -313,7 +313,7 @@ export function getPlatformStatus(serversDir?: string): PlatformStatus {
  */
 export function startContainer(container: string): boolean {
   try {
-    execSync(`docker start ${container}`, { stdio: 'pipe' });
+    execFileSync('docker', ['start', container], { stdio: 'pipe' });
     return true;
   } catch {
     return false;
@@ -325,7 +325,7 @@ export function startContainer(container: string): boolean {
  */
 export function stopContainer(container: string): boolean {
   try {
-    execSync(`docker stop ${container}`, { stdio: 'pipe' });
+    execFileSync('docker', ['stop', container], { stdio: 'pipe' });
     return true;
   } catch {
     return false;
@@ -572,7 +572,7 @@ export function parseRconPlayerList(raw: string): PlayerListResult | null {
  */
 export async function getOnlinePlayers(container: string): Promise<PlayerListResult | null> {
   try {
-    const rawResult = execSync(`docker exec ${container} rcon-cli list`, {
+    const rawResult = execFileSync('docker', ['exec', container, 'rcon-cli', 'list'], {
       encoding: 'utf-8',
       timeout: 5000,
       stdio: ['pipe', 'pipe', 'pipe'],
