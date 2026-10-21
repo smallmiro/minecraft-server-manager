@@ -24,26 +24,36 @@ describe('WorldName (#649)', () => {
     }
   );
 
+  it('validate() reports why a name is invalid, with the message create() throws (#721)', () => {
+    expect(WorldName.validate('My_World')).toBeUndefined();
+    for (const name of ['', 'a/b', 'my world']) {
+      const error = WorldName.validate(name);
+      expect(error).toBeTypeOf('string');
+      expect(() => WorldName.create(name)).toThrow(error);
+    }
+  });
+
   it('WorldOptions.existingWorld uses the same rule', () => {
     expect(WorldOptions.existingWorld('My_World').worldName).toBe('My_World');
     expect(() => WorldOptions.existingWorld('../x')).toThrow();
   });
 });
 
-describe('resolveWorldName (#649)', () => {
-  it('prefers LEVEL, then WORLD_NAME, then the server name', () => {
-    expect(resolveWorldName({ LEVEL: 'lvl', WORLD_NAME: 'wn' }, 'srv')).toBe('lvl');
-    expect(resolveWorldName({ WORLD_NAME: 'wn' }, 'srv')).toBe('wn');
-    expect(resolveWorldName({}, 'srv')).toBe('srv');
+describe('resolveWorldName (#649, #721)', () => {
+  it("prefers LEVEL, then WORLD_NAME, then itzg's default 'world'", () => {
+    expect(resolveWorldName({ LEVEL: 'lvl', WORLD_NAME: 'wn' })).toBe('lvl');
+    expect(resolveWorldName({ WORLD_NAME: 'wn' })).toBe('wn');
+    expect(resolveWorldName({})).toBe('world');
   });
 
   it('trims values and treats blank values as unset', () => {
-    expect(resolveWorldName({ LEVEL: '  lvl ' }, 'srv')).toBe('lvl');
-    expect(resolveWorldName({ LEVEL: '  ', WORLD_NAME: 'wn' }, 'srv')).toBe('wn');
+    expect(resolveWorldName({ LEVEL: '  lvl ' })).toBe('lvl');
+    expect(resolveWorldName({ LEVEL: '  ', WORLD_NAME: 'wn' })).toBe('wn');
+    expect(resolveWorldName({ LEVEL: '  ' })).toBe('world');
   });
 
   it('ignores WORLD (a download URL, not a world name)', () => {
-    expect(resolveWorldName({ WORLD: 'https://example.com/w.zip' }, 'srv')).toBe('srv');
+    expect(resolveWorldName({ WORLD: 'https://example.com/w.zip' })).toBe('world');
   });
 
   it('configuredWorldName returns undefined when nothing is configured', () => {
@@ -53,6 +63,6 @@ describe('resolveWorldName (#649)', () => {
   });
 
   it('does not validate existing values (legacy LEVEL keeps working)', () => {
-    expect(resolveWorldName({ LEVEL: 'My World' }, 'srv')).toBe('My World');
+    expect(resolveWorldName({ LEVEL: 'My World' })).toBe('My World');
   });
 });

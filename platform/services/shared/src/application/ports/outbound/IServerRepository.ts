@@ -58,7 +58,7 @@ export interface ServerConfigData {
   seed?: string;
   /**
    * World set in config.env (LEVEL > WORLD_NAME), undefined when neither is
-   * set. The effective world falls back to the server name: resolveWorldName().
+   * set. The effective world falls back to 'world': resolveWorldName().
    */
   worldName?: string;
   worldUrl?: string;
