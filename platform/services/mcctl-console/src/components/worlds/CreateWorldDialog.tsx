@@ -1,5 +1,6 @@
 'use client';
 
+import { WorldName } from '@minecraft-docker/shared/naming';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -94,10 +95,7 @@ export function CreateWorldDialog({
     if (!name) {
       return 'World name is required';
     }
-    if (!/^[a-z0-9-]+$/.test(name)) {
-      return 'Only lowercase letters, numbers, and hyphens are allowed';
-    }
-    return null;
+    return WorldName.validate(name) ?? null;
   };
 
   const handleChange =
