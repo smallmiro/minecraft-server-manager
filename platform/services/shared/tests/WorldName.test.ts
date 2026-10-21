@@ -24,6 +24,15 @@ describe('WorldName (#649)', () => {
     }
   );
 
+  it('validate() reports why a name is invalid, with the message create() throws (#721)', () => {
+    expect(WorldName.validate('My_World')).toBeUndefined();
+    for (const name of ['', 'a/b', 'my world']) {
+      const error = WorldName.validate(name);
+      expect(error).toBeTypeOf('string');
+      expect(() => WorldName.create(name)).toThrow(error);
+    }
+  });
+
   it('WorldOptions.existingWorld uses the same rule', () => {
     expect(WorldOptions.existingWorld('My_World').worldName).toBe('My_World');
     expect(() => WorldOptions.existingWorld('../x')).toThrow();
