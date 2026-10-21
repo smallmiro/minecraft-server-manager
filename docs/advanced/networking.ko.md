@@ -298,9 +298,8 @@ HOST_IPS=192.168.1.100,100.64.0.5
 # 새 서버는 자동으로 다중 호스트네임 설정
 mcctl create myserver
 
-# 기존 서버는 마이그레이션 스크립트 실행
-cd ~/minecraft-servers
-./scripts/migrate-nip-io.sh
+# 기존 서버는 새 IP로 호스트네임 갱신
+mcctl init --reconfigure
 ```
 
 #### 5. 클라이언트 접속
@@ -379,7 +378,7 @@ docker logs router 2>&1 | grep myserver
 ```
 
 !!! warning "VPN IP 변경 시"
-    VPN IP가 변경되면 `.env`를 업데이트하고 `./scripts/migrate-nip-io.sh`를 다시 실행하세요.
+    VPN IP가 변경되면 `mcctl init --reconfigure`를 실행해 새 IP를 입력하고, 기존 서버 갱신을 승인하세요.
 
 ### 디버그 모드
 

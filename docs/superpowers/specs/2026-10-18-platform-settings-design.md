@@ -59,7 +59,7 @@ Every key in `.env` gets exactly one status. Status is decided by actual consume
 
 | Group | Key | Type / validation | Secret | Actual consumer | Apply (restart scope) |
 |---|---|---|---|---|---|
-| Network & Routing | `HOST_IP` | IPv4 | no | `create-server.sh`, `migrate-nip-io.sh` (grep the file at run time) | `next-create`: used by the next `mcctl create`. Existing servers' `mc-router.host` labels do not change. |
+| Network & Routing | `HOST_IP` | IPv4 | no | `create-server.sh` (grep the file at run time) | `next-create`: used by the next `mcctl create`. Existing servers' `mc-router.host` labels do not change. |
 | Network & Routing | `HOST_IPS` | comma-separated IPv4 list | no | `create-server.sh` | `next-create` (same caveat) |
 | Network & Routing | `DOCKER_GID` | integer 0–65535 | no | compose `router.group_add` | `router`: `mcctl router start` (compose `up -d` recreates). `mcctl router restart` does **not** apply it. |
 | Server runtime | `TZ` | IANA tz name | no | every MC server container via `env_file` | `servers`: stop, then start each server |
