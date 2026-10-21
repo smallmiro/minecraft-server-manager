@@ -500,6 +500,50 @@ GID=1000
       expect(body.restartRequired).toBe(false);
       expect(mockWriteFileSync).not.toHaveBeenCalled();
     });
+
+    describe('level (LEVEL) validation (#649)', () => {
+      it.each(['../escape', 'my world', 'world.old'])(
+        'rejects a new level %s that is not a valid world name',
+        async (level) => {
+          mockedServerExists.mockReturnValue(true);
+
+          const response = await app.inject({
+            method: 'PATCH',
+            url: '/api/servers/testserver/config',
+            payload: { level },
+          });
+
+          expect(response.statusCode).toBe(400);
+          expect(mockWriteFileSync).not.toHaveBeenCalled();
+        }
+      );
+
+      it('accepts a valid new level', async () => {
+        mockedServerExists.mockReturnValue(true);
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload: { level: 'new_world-2' },
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(JSON.parse(response.body).changedFields).toContain('level');
+      });
+
+      it('keeps saving when an existing legacy level is sent back unchanged', async () => {
+        mockedServerExists.mockReturnValue(true);
+        mockReadFileSync.mockReturnValue(sampleConfigContent.replace('LEVEL=world', 'LEVEL=My World'));
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload: { level: 'My World', motd: 'Updated MOTD' },
+        });
+
+        expect(response.statusCode).toBe(200);
+      });
+    });
   });
 
   describe('POST /api/servers/:name/world/reset', () => {
