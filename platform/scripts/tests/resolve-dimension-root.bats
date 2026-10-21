@@ -1,151 +1,102 @@
-#!/bin/bash
-# =============================================================================
-# Tests for render-map.sh resolve_dimension_root()
-# =============================================================================
-# Verifies that the active dimension layout is chosen correctly, especially
-# when a world migrated from Paper (split folders) to a single-folder server
-# type leaves a STALE satellite folder behind (issue #542).
-#
-# Run: bash platform/scripts/tests/resolve-dimension-root.test.sh
-# =============================================================================
+#!/usr/bin/env bats
+# render-map.sh resolve_dimension_root(): the active dimension layout is chosen
+# correctly, especially when a world migrated from Paper (split folders) to a
+# single-folder server type leaves a STALE satellite folder behind (#542).
 
-set -uo pipefail
+load helpers
 
-TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPTS_DIR="$(dirname "$TEST_DIR")"
-
-# Source the script under test (CLI flow is skipped via its source-guard).
-# shellcheck source=../render-map.sh
-source "$SCRIPTS_DIR/render-map.sh"
-set +eu  # keep the harness lenient regardless of the script's `set -euo`
-
-FAILED=0
-
-assert_eq() {
-    local desc="$1" expected="$2" actual="$3"
-    if [[ "$expected" == "$actual" ]]; then
-        echo "  ok   - $desc"
-    else
-        echo "  FAIL - $desc"
-        echo "         expected: '$expected'"
-        echo "         actual:   '$actual'"
-        FAILED=$((FAILED + 1))
-    fi
+setup() {
+    require_bash4
+    # Source the script under test (CLI flow is skipped via its source-guard).
+    # shellcheck source=../render-map.sh
+    source "$SCRIPTS_DIR/render-map.sh"
+    set +u  # the script sets -u; keep bats internals lenient
 }
 
-# Create a region dir holding one .mca file stamped at a given date.
+# mk_region <dir> <YYYYMMDDhhmm>: region dir holding one .mca stamped at that date.
 mk_region() {
-    local dir="$1" date="$2"
-    mkdir -p "$dir"
-    : > "$dir/r.0.0.mca"
-    touch -d "$date" "$dir/r.0.0.mca"
+    mkdir -p "$1"
+    : > "$1/r.0.0.mca"
+    touch -t "$2" "$1/r.0.0.mca"
 }
 
-WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+NEW=202606281200
+OLD=202602021200
+MID=202604041200
 
-# --- Nether ------------------------------------------------------------------
+@test "nether: stale satellite + newer single-folder -> single-folder (#542)" {
+    W="$BATS_TEST_TMPDIR/w"
+    mk_region "$W/DIM-1/region" $NEW
+    mk_region "${W}_nether/DIM-1/region" $OLD
+    [ "$(resolve_dimension_root "$W" nether)" = "$W" ]
+}
 
-# Stale split satellite (old) shadows the active single-folder data (new).
-# This is the issue #542 scenario: must pick the single-folder root.
-W="$WORK/w1"
-mk_region "$W/DIM-1/region" "2026-06-28 12:00:00"          # active (new)
-mk_region "${W}_nether/DIM-1/region" "2026-02-02 12:00:00" # stale satellite (old)
-assert_eq "nether: stale satellite + newer single-folder -> single-folder" \
-    "$W" "$(resolve_dimension_root "$W" nether)"
+@test "nether: only split satellite -> satellite" {
+    W="$BATS_TEST_TMPDIR/w"
+    mk_region "${W}_nether/DIM-1/region" $NEW
+    [ "$(resolve_dimension_root "$W" nether)" = "${W}_nether" ]
+}
 
-# Genuine Paper world: only the split satellite exists -> use it (no regression).
-W="$WORK/w2"
-mk_region "${W}_nether/DIM-1/region" "2026-06-28 12:00:00"
-assert_eq "nether: only split satellite -> satellite" \
-    "${W}_nether" "$(resolve_dimension_root "$W" nether)"
+@test "nether: only single-folder -> single-folder" {
+    W="$BATS_TEST_TMPDIR/w"
+    mk_region "$W/DIM-1/region" $NEW
+    [ "$(resolve_dimension_root "$W" nether)" = "$W" ]
+}
 
-# Single-folder only -> use it.
-W="$WORK/w3"
-mk_region "$W/DIM-1/region" "2026-06-28 12:00:00"
-assert_eq "nether: only single-folder -> single-folder" \
-    "$W" "$(resolve_dimension_root "$W" nether)"
+@test "nether: newer split satellite -> satellite" {
+    W="$BATS_TEST_TMPDIR/w"
+    mk_region "$W/DIM-1/region" $OLD
+    mk_region "${W}_nether/DIM-1/region" $NEW
+    [ "$(resolve_dimension_root "$W" nether)" = "${W}_nether" ]
+}
 
-# Both present but the split satellite is the newer one -> prefer satellite.
-W="$WORK/w4"
-mk_region "$W/DIM-1/region" "2026-02-02 12:00:00"
-mk_region "${W}_nether/DIM-1/region" "2026-06-28 12:00:00"
-assert_eq "nether: newer split satellite -> satellite" \
-    "${W}_nether" "$(resolve_dimension_root "$W" nether)"
+@test "nether: no region data -> empty" {
+    W="$BATS_TEST_TMPDIR/w"
+    mkdir -p "$W"
+    [ -z "$(resolve_dimension_root "$W" nether)" ]
+}
 
-# Neither present -> empty.
-W="$WORK/w5"
-mkdir -p "$W"
-assert_eq "nether: no region data -> empty" \
-    "" "$(resolve_dimension_root "$W" nether)"
+@test "end: stale satellite + newer single-folder -> single-folder" {
+    W="$BATS_TEST_TMPDIR/w"
+    mk_region "$W/DIM1/region" $NEW
+    mk_region "${W}_the_end/DIM1/region" $OLD
+    [ "$(resolve_dimension_root "$W" end)" = "$W" ]
+}
 
-# --- End ---------------------------------------------------------------------
+@test "overworld: region present -> world root" {
+    W="$BATS_TEST_TMPDIR/w"
+    mk_region "$W/region" $NEW
+    [ "$(resolve_dimension_root "$W" overworld)" = "$W" ]
+}
 
-# Stale _the_end satellite shadows active single-folder DIM1 data.
-W="$WORK/e1"
-mk_region "$W/DIM1/region" "2026-06-28 12:00:00"
-mk_region "${W}_the_end/DIM1/region" "2026-02-02 12:00:00"
-assert_eq "end: stale satellite + newer single-folder -> single-folder" \
-    "$W" "$(resolve_dimension_root "$W" end)"
+@test "dimensions/ layout resolves to world root for every dimension (#546)" {
+    W="$BATS_TEST_TMPDIR/w"
+    mk_region "$W/dimensions/minecraft/overworld/region" $NEW
+    mk_region "$W/dimensions/minecraft/the_nether/region" $NEW
+    mk_region "$W/dimensions/minecraft/the_end/region" $NEW
+    [ "$(resolve_dimension_root "$W" overworld)" = "$W" ]
+    [ "$(resolve_dimension_root "$W" nether)" = "$W" ]
+    [ "$(resolve_dimension_root "$W" end)" = "$W" ]
+}
 
-# --- Overworld ---------------------------------------------------------------
+@test "nether: dimensions/ (new) vs stale satellite -> world root" {
+    W="$BATS_TEST_TMPDIR/w"
+    mk_region "$W/dimensions/minecraft/the_nether/region" $NEW
+    mk_region "${W}_nether/DIM-1/region" $OLD
+    [ "$(resolve_dimension_root "$W" nether)" = "$W" ]
+}
 
-W="$WORK/o1"
-mk_region "$W/region" "2026-06-28 12:00:00"
-assert_eq "overworld: region present -> world root" \
-    "$W" "$(resolve_dimension_root "$W" overworld)"
+@test "nether: all three layouts, dimensions/ newest -> world root" {
+    W="$BATS_TEST_TMPDIR/w"
+    mk_region "$W/dimensions/minecraft/the_nether/region" $NEW
+    mk_region "${W}_nether/DIM-1/region" $MID
+    mk_region "$W/DIM-1/region" $OLD
+    [ "$(resolve_dimension_root "$W" nether)" = "$W" ]
+}
 
-# --- Latest Minecraft dimensions/ layout (issue #546) ------------------------
-
-# Every dimension (overworld included) under dimensions/minecraft/<dim>.
-W="$WORK/d1"
-mk_region "$W/dimensions/minecraft/overworld/region" "2026-06-28 12:00:00"
-assert_eq "overworld: dimensions/ layout -> world root" \
-    "$W" "$(resolve_dimension_root "$W" overworld)"
-
-W="$WORK/d2"
-mk_region "$W/dimensions/minecraft/the_nether/region" "2026-06-28 12:00:00"
-assert_eq "nether: dimensions/ layout -> world root" \
-    "$W" "$(resolve_dimension_root "$W" nether)"
-
-W="$WORK/d3"
-mk_region "$W/dimensions/minecraft/the_end/region" "2026-06-28 12:00:00"
-assert_eq "end: dimensions/ layout -> world root" \
-    "$W" "$(resolve_dimension_root "$W" end)"
-
-# Stale Paper satellite must NOT shadow a newer dimensions/ nether.
-W="$WORK/d4"
-mk_region "$W/dimensions/minecraft/the_nether/region" "2026-06-28 12:00:00"
-mk_region "${W}_nether/DIM-1/region" "2026-02-02 12:00:00"
-assert_eq "nether: dimensions/ (new) vs stale satellite -> world root" \
-    "$W" "$(resolve_dimension_root "$W" nether)"
-
-# All three layouts coexist (classic -> latest migration with a Paper satellite
-# left over). The active dimensions/ data is newest, even though the satellite
-# is newer than the old DIM-1 — must still resolve to the world root.
-W="$WORK/d5"
-mk_region "$W/dimensions/minecraft/the_nether/region" "2026-06-28 12:00:00" # active
-mk_region "${W}_nether/DIM-1/region" "2026-04-04 12:00:00"                  # stale satellite
-mk_region "$W/DIM-1/region" "2026-02-02 12:00:00"                           # stale classic
-assert_eq "nether: all three layouts, dimensions/ newest -> world root" \
-    "$W" "$(resolve_dimension_root "$W" nether)"
-
-# --- No region data (issue #575) ---------------------------------------------
-
-# render-map.sh runs under `set -e`; a dimension without region data must yield
-# an empty root (so the caller can skip it) instead of aborting the script.
-W="$WORK/e1"
-mkdir -p "$W/dimensions/minecraft/the_nether/region"
-out="$(set -e; root="$(resolve_dimension_root "$W" nether)"; echo "survived:[$root]")"
-assert_eq "nether: no region data under set -e -> empty root, no abort" \
-    "survived:[]" "$out"
-
-# -----------------------------------------------------------------------------
-echo ""
-if [[ $FAILED -eq 0 ]]; then
-    echo "All tests passed."
-    exit 0
-else
-    echo "$FAILED test(s) failed."
-    exit 1
-fi
+@test "no region data under set -e -> empty root, no abort (#575)" {
+    W="$BATS_TEST_TMPDIR/w"
+    mkdir -p "$W/dimensions/minecraft/the_nether/region"
+    out="$(set -e; root="$(resolve_dimension_root "$W" nether)"; echo "survived:[$root]")"
+    [ "$out" = "survived:[]" ]
+}
