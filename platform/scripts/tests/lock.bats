@@ -13,14 +13,14 @@ setup() {
 @test "lock: acquire writes <server>:<timestamp>:<pid>" {
     run bash "$SCRIPTS_DIR/lock.sh" lock survival alpha
     [ "$status" -eq 0 ]
-    [[ "$(cat "$LOCK")" == alpha:*:* ]]
+    [[ "$(cat "$LOCK")" == alpha:*:* ]] || return 1
 }
 
 @test "lock: a different server cannot take a held lock" {
     bash "$SCRIPTS_DIR/lock.sh" lock survival alpha
     run bash "$SCRIPTS_DIR/lock.sh" lock survival beta
     [ "$status" -eq 1 ]
-    [[ "$(cat "$LOCK")" == alpha:* ]]
+    [[ "$(cat "$LOCK")" == alpha:* ]] || return 1
 }
 
 @test "unlock: non-owner is refused, --force overrides, owner releases" {
@@ -40,9 +40,9 @@ setup() {
     echo "alpha:$(date +%s):1" > "$LOCK"
     run bash "$SCRIPTS_DIR/lock.sh" check survival
     [ "$status" -eq 0 ]
-    [[ "$output" == locked:alpha:* ]]
+    [[ "$output" == locked:alpha:* ]] || return 1
     echo "alpha:1000000000:1" > "$LOCK"
     run bash "$SCRIPTS_DIR/lock.sh" check survival
     [ "$status" -eq 2 ]
-    [[ "$output" == stale:alpha:* ]]
+    [[ "$output" == stale:alpha:* ]] || return 1
 }

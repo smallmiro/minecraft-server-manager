@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 # delete-server.sh against the fake docker (example for new tests).
 
+bats_require_minimum_version 1.5.0
 load helpers
 
 setup() {
@@ -27,7 +28,7 @@ setup() {
 @test "delete: only the exact container name is removed (no prefix match)" {
     FAKE_DOCKER_PS="mc-alpha2" run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
     [ "$status" -eq 0 ]
-    ! grep -q '^rm -f' "$FAKE_DOCKER_LOG"
+    run ! grep -q '^rm -f' "$FAKE_DOCKER_LOG"
 }
 
 @test "delete: drops the include entry from servers/compose.yml" {
@@ -35,7 +36,7 @@ setup() {
     printf 'include:\n  - alpha/docker-compose.yml\n  - beta/docker-compose.yml\n' > "$PLATFORM/servers/compose.yml"
     run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
     [ "$status" -eq 0 ]
-    ! grep -q alpha "$PLATFORM/servers/compose.yml"
+    run ! grep -q alpha "$PLATFORM/servers/compose.yml"
     grep -q beta "$PLATFORM/servers/compose.yml"
 }
 

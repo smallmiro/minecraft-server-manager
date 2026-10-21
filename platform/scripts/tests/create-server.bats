@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 # create-server.sh happy path against the fake docker (example for new tests).
 
+bats_require_minimum_version 1.5.0
 load helpers
 
 setup() {
@@ -19,7 +20,7 @@ setup() {
     grep -q '^VERSION=1.21.1$' "$PLATFORM/servers/alpha/config.env"
     grep -q 'alpha/docker-compose.yml' "$PLATFORM/servers/compose.yml"
     grep -q 'compose -f .*docker-compose.yml config' "$FAKE_DOCKER_LOG"
-    ! grep -q ' up ' "$FAKE_DOCKER_LOG"   # --no-start
+    run ! grep -q ' up ' "$FAKE_DOCKER_LOG"   # --no-start
 }
 
 @test "create: aborts and reports when docker compose config fails" {

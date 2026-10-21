@@ -62,6 +62,6 @@ exec "$@"'
         [ "$status" -ne 0 ]
         [ -z "$(cat "$AVAHI_HOSTS")" ]
         [ -z "$(cat "$FAKE_SUDO_CALLS")" ]
-        [[ "$output" == *"not a valid IPv4"* ]]
+        [[ "$output" == *"not a valid IPv4"* ]] || return 1
     done
 }

@@ -83,8 +83,8 @@ fake_sudo() {
     export MCCTL_SUDO_PASSWORD="wrong-password"
     err="$(echo "$ENTRY" | run_with_sudo_stdin tee -a "$hosts" 2>&1 > /dev/null)" || true
     [ -z "$(cat "$hosts")" ]
-    [[ "$err" == *"MCCTL_SUDO_PASSWORD"* ]]
-    [[ "$err" == *"incorrect password"* ]]
+    [[ "$err" == *"MCCTL_SUDO_PASSWORD"* ]] || return 1
+    [[ "$err" == *"incorrect password"* ]] || return 1
 }
 
 @test "wrong password: run_with_sudo fails and names the cause" {
@@ -92,7 +92,7 @@ fake_sudo() {
     export MCCTL_SUDO_PASSWORD="wrong-password"
     run run_with_sudo true
     [ "$status" -ne 0 ]
-    [[ "$output" == *"MCCTL_SUDO_PASSWORD"* ]]
+    [[ "$output" == *"MCCTL_SUDO_PASSWORD"* ]] || return 1
 }
 
 @test "password starting with '-n' is passed literally (printf, not echo)" {
@@ -109,7 +109,7 @@ fake_sudo() {
     echo "$ENTRY" | run_with_sudo_stdin tee -a "$FAKE_SUDO_DIR/hosts" > /dev/null
     ppid_v="$(grep -- ' -v' "$FAKE_SUDO_DIR/calls" | head -1 | cut -d' ' -f1)"
     ppid_n="$(grep -- ' -n ' "$FAKE_SUDO_DIR/calls" | head -1 | cut -d' ' -f1)"
-    [[ "$ppid_v" == ppid=* ]]
+    [[ "$ppid_v" == ppid=* ]] || return 1
     [ "$ppid_v" = "$ppid_n" ]
 }
 
