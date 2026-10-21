@@ -52,3 +52,12 @@ describe('@minecraft-docker/shared/naming (#721)', () => {
     }
   );
 });
+
+describe('SERVER_NAME_PATTERN source', () => {
+  // Next's SWC minifier once dropped ")$)" from this regex when the console bundled it (#721).
+  test('keeps the exact rule text', () => {
+    expect(naming.SERVER_NAME_PATTERN.source).toBe(
+      '^(?!(?:router)$)(?=.{2,32}$)[a-z](?:-?[a-z0-9])*$'
+    );
+  });
+});
