@@ -18,17 +18,26 @@ export class WorldName {
     return this._value;
   }
 
+  /**
+   * Why a world name is invalid, or undefined when it is valid.
+   * Checks the exact string; create() trims first.
+   */
+  static validate(value: string): string | undefined {
+    if (!value) {
+      return 'World name cannot be empty';
+    }
+    if (!WORLD_NAME_PATTERN.test(value)) {
+      return 'World name can only contain letters, numbers, hyphens, and underscores';
+    }
+    return undefined;
+  }
+
   static create(value: string): WorldName {
     const trimmed = value.trim();
-
-    if (!trimmed) {
-      throw new Error('World name cannot be empty');
+    const error = WorldName.validate(trimmed);
+    if (error) {
+      throw new Error(error);
     }
-
-    if (!WORLD_NAME_PATTERN.test(trimmed)) {
-      throw new Error('World name can only contain letters, numbers, hyphens, and underscores');
-    }
-
     return new WorldName(trimmed);
   }
 
