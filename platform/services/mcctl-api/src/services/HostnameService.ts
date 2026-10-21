@@ -21,17 +21,17 @@ const SYSTEM_NIPIO_PATTERN = /^[a-z0-9-]+\.\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\.n
  * Reads and writes mc-router.host labels in server docker-compose.yml files
  */
 export class HostnameService {
-  private readonly platformPath: string;
+  private readonly mcctlRoot: string;
 
-  constructor(platformPath: string) {
-    this.platformPath = platformPath;
+  constructor(mcctlRoot: string) {
+    this.mcctlRoot = mcctlRoot;
   }
 
   /**
    * Get the path to a server's docker-compose.yml file
    */
   private getComposePath(serverName: string): string {
-    return join(this.platformPath, 'servers', serverName, 'docker-compose.yml');
+    return join(this.mcctlRoot, 'servers', serverName, 'docker-compose.yml');
   }
 
   /**
@@ -216,6 +216,6 @@ export class HostnameService {
 /**
  * Create a HostnameService instance
  */
-export function createHostnameService(platformPath: string): HostnameService {
-  return new HostnameService(platformPath);
+export function createHostnameService(mcctlRoot: string): HostnameService {
+  return new HostnameService(mcctlRoot);
 }

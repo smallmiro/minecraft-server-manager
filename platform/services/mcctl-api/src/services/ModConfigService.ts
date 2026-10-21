@@ -76,17 +76,17 @@ function parseModList(value: string | undefined): string[] {
  * ModConfigService - Manages mod configuration in server config.env files
  */
 export class ModConfigService {
-  private readonly platformPath: string;
+  private readonly mcctlRoot: string;
 
-  constructor(platformPath: string) {
-    this.platformPath = platformPath;
+  constructor(mcctlRoot: string) {
+    this.mcctlRoot = mcctlRoot;
   }
 
   /**
    * Get the path to a server's config.env file
    */
   private getConfigPath(serverName: string): string {
-    return join(this.platformPath, 'servers', serverName, 'config.env');
+    return join(this.mcctlRoot, 'servers', serverName, 'config.env');
   }
 
   /**
@@ -151,7 +151,7 @@ export class ModConfigService {
    * Get the data directory for a server (where mods/*.jar reside)
    */
   private getServerDataDir(serverName: string): string {
-    return join(this.platformPath, 'servers', serverName, 'data');
+    return join(this.mcctlRoot, 'servers', serverName, 'data');
   }
 
   /**
@@ -249,6 +249,6 @@ export class ModConfigService {
 /**
  * Create a ModConfigService instance
  */
-export function createModConfigService(platformPath: string): ModConfigService {
-  return new ModConfigService(platformPath);
+export function createModConfigService(mcctlRoot: string): ModConfigService {
+  return new ModConfigService(mcctlRoot);
 }

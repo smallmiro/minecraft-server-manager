@@ -36,7 +36,7 @@ function requireAdmin(request: FastifyRequest, reply: FastifyReply): boolean {
 const platformSettingsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // Created per request so the root paths always reflect current config.
   const service = () =>
-    new PlatformSettingsService(config.platformPath, join(config.mcctlRoot, 'ecosystem.config.cjs'));
+    new PlatformSettingsService(config.mcctlRoot, join(config.mcctlRoot, 'ecosystem.config.cjs'));
 
   /** GET /api/platform-settings */
   fastify.get('/api/platform-settings', {

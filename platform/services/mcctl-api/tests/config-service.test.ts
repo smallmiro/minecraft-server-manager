@@ -20,11 +20,11 @@ const mockedExistsSync = vi.mocked(existsSync);
 
 describe('ConfigService', () => {
   let configService: ConfigService;
-  const platformPath = '/test/platform';
+  const mcctlRoot = '/test/platform';
 
   beforeEach(() => {
     vi.clearAllMocks();
-    configService = new ConfigService(platformPath);
+    configService = new ConfigService(mcctlRoot);
   });
 
   describe('configExists', () => {

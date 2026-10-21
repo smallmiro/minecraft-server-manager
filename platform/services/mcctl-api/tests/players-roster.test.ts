@@ -8,7 +8,7 @@ import nbt from 'prismarine-nbt';
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-players-roster-test');
 // A deliberately wrong MCCTL_ROOT with no fixture data, used by the
 // regression test below. Routes must resolve PlayerRepository's Paths from
-// config.platformPath (the root resolved when config loads), never from the
+// config.mcctlRoot (the root resolved when config loads), never from the
 // live env var, or the roster/detail endpoints silently read nothing.
 const WRONG_MCCTL_ROOT = join(import.meta.dirname, '.tmp-players-roster-wrong-root');
 
@@ -151,7 +151,6 @@ describe('Player roster API (#528)', () => {
     mockGetEntityPosition.mockReset();
 
     const { config } = await import('../src/config/index.js');
-    (config as any).platformPath = TEST_PLATFORM_PATH;
     (config as any).mcctlRoot = TEST_PLATFORM_PATH;
 
     const { buildApp } = await import('../src/app.js');
@@ -279,7 +278,7 @@ describe('Player roster API (#528)', () => {
       });
       containerStatus = 'stopped';
 
-      // players.ts must build PlayerRepository's Paths from config.platformPath,
+      // players.ts must build PlayerRepository's Paths from config.mcctlRoot,
       // not from process.env.MCCTL_ROOT — prove it by pointing MCCTL_ROOT at an
       // empty directory and rebuilding the app around it.
       const previousMcctlRoot = process.env.MCCTL_ROOT;

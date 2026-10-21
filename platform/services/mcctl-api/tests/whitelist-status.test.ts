@@ -63,7 +63,7 @@ describe('Whitelist Status API', () => {
     mkdirSync(TEST_PLATFORM_PATH, { recursive: true });
 
     const { config } = await import('../src/config/index.js');
-    (config as any).platformPath = TEST_PLATFORM_PATH;
+    (config as any).mcctlRoot = TEST_PLATFORM_PATH;
 
     const { buildApp } = await import('../src/app.js');
     app = await buildApp();

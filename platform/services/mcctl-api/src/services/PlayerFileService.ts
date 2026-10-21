@@ -59,18 +59,18 @@ interface BannedPlayerEntry {
  * Used as fallback when server is offline (RCON unavailable).
  */
 export class PlayerFileService {
-  private readonly platformPath: string;
+  private readonly mcctlRoot: string;
 
-  constructor(platformPath: string) {
-    this.platformPath = platformPath;
+  constructor(mcctlRoot: string) {
+    this.mcctlRoot = mcctlRoot;
   }
 
   getServerDataPath(serverName: string): string {
-    return join(this.platformPath, 'servers', serverName, 'data');
+    return join(this.mcctlRoot, 'servers', serverName, 'data');
   }
 
   private getConfigEnvPath(serverName: string): string {
-    return join(this.platformPath, 'servers', serverName, 'config.env');
+    return join(this.mcctlRoot, 'servers', serverName, 'config.env');
   }
 
   private readJsonFile<T>(filePath: string): T[] {
@@ -107,7 +107,7 @@ export class PlayerFileService {
 
   private writeConfigEnv(serverName: string, key: string, value: string): void {
     const configPath = this.getConfigEnvPath(serverName);
-    const serverDir = join(this.platformPath, 'servers', serverName);
+    const serverDir = join(this.mcctlRoot, 'servers', serverName);
     if (!existsSync(serverDir)) {
       mkdirSync(serverDir, { recursive: true });
     }
@@ -288,6 +288,6 @@ export class PlayerFileService {
   }
 }
 
-export function createPlayerFileService(platformPath: string): PlayerFileService {
-  return new PlayerFileService(platformPath);
+export function createPlayerFileService(mcctlRoot: string): PlayerFileService {
+  return new PlayerFileService(mcctlRoot);
 }

@@ -125,6 +125,5 @@ describe('API root path (#649)', () => {
 
     expect(config.mcctlRoot).toBe(resolveMcctlRoot());
     expect(config.mcctlRoot).toBe('/srv/mc');
-    expect(config.platformPath).toBe(config.mcctlRoot);
   });
 });

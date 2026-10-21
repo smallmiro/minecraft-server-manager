@@ -62,11 +62,11 @@ export class PlatformSettingsService {
   private readonly envPath: string;
 
   constructor(
-    platformPath: string,
+    mcctlRoot: string,
     private readonly ecosystemPath: string,
     private readonly processEnv: Record<string, string | undefined> = process.env,
   ) {
-    this.envPath = join(platformPath, '.env');
+    this.envPath = join(mcctlRoot, '.env');
   }
 
   private async readEnv(): Promise<string> {

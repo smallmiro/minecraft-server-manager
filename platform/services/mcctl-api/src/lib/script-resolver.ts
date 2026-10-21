@@ -55,14 +55,14 @@ export interface ResolvedScript {
  *
  * Resolution order:
  *   1. Bundled scripts shipped with mcctl-api (version-matched).
- *   2. Scripts deployed under `<platformPath>/scripts` (legacy / may be stale).
+ *   2. Scripts deployed under `<mcctlRoot>/scripts` (legacy / may be stale).
  *
  * Returns `null` when the script is found in neither location, signalling the
  * caller to fall back to the globally installed `mcctl` CLI.
  */
 export function resolveScriptPath(
   scriptName: string,
-  platformPath: string,
+  mcctlRoot: string,
   bundledScriptsDir: string = getBundledScriptsDir(),
 ): ResolvedScript | null {
   const bundled = join(bundledScriptsDir, scriptName);
@@ -70,7 +70,7 @@ export function resolveScriptPath(
     return { scriptPath: bundled, scriptsDir: bundledScriptsDir };
   }
 
-  const deployedDir = join(platformPath, 'scripts');
+  const deployedDir = join(mcctlRoot, 'scripts');
   const deployed = join(deployedDir, scriptName);
   if (existsSync(deployed)) {
     return { scriptPath: deployed, scriptsDir: deployedDir };
