@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { resolveWorldName } from '@minecraft-docker/shared';
 import type { ServerConfig, UpdateServerConfigRequest } from '../schemas/config.js';
 
 /**
@@ -468,13 +469,12 @@ export class ConfigService {
     const configPath = this.getConfigPath(serverName);
 
     if (!existsSync(configPath)) {
-      return 'world'; // Default world name
+      return resolveWorldName({});
     }
 
     const content = readFileSync(configPath, 'utf-8');
-    const envMap = parseEnvFile(content);
 
-    return envMap.get('LEVEL') || 'world';
+    return resolveWorldName(Object.fromEntries(parseEnvFile(content)));
   }
 }
 
