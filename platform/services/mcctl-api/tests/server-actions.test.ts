@@ -153,6 +153,33 @@ describe('Server Action Routes', () => {
     });
   });
 
+  describe('docker compose runs without a shell (#720)', () => {
+    it.each([
+      ['start', ['compose', 'up', '-d', 'mc-My_Server']],
+      ['stop', ['compose', 'stop', 'mc-My_Server']],
+      ['restart', ['compose', 'restart', 'mc-My_Server']],
+    ])('%s passes the service name as one argument', async (action, args) => {
+      mockCompose(null, 'ok', '');
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/api/servers/My_Server/${action}`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mockedExec).not.toHaveBeenCalled();
+      expect(mockedExecFile).toHaveBeenCalledWith(
+        'docker',
+        args,
+        expect.objectContaining({
+          timeout: 60000,
+          env: expect.objectContaining({ COMPOSE_FILE: 'docker-compose.yml' }),
+        }),
+        expect.any(Function)
+      );
+    });
+  });
+
   describe('Server name validation', () => {
     it('should reject names with special characters', async () => {
       const invalidNames = ['my server', 'server@test', 'server/name', 'server;cmd'];
