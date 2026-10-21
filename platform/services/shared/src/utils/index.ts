@@ -107,13 +107,13 @@ export class Paths {
     if (process.env['MCCTL_SCRIPTS']) {
       return process.env['MCCTL_SCRIPTS'];
     }
-    // Check CLI package's bundled scripts first
-    const cliScripts = join(this.cliPackageRoot, 'scripts');
-    if (existsSync(cliScripts)) {
-      return cliScripts;
+    // Monorepo: always run the original platform/scripts so a generated copy can't go stale
+    const repoScripts = join(this.packageRoot, '..', '..', 'scripts');
+    if (existsSync(repoScripts)) {
+      return repoScripts;
     }
-    // Fallback to development structure
-    return join(this.packageRoot, '..', '..', 'scripts');
+    // npm install: scripts bundled into the CLI package at pack time
+    return join(this.cliPackageRoot, 'scripts');
   }
 
   private resolveTemplatesPath(): string {
