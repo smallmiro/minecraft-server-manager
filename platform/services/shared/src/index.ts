@@ -91,6 +91,7 @@ export {
   EXISTING_SERVER_NAME_PATTERN,
   WorldName,
   WORLD_NAME_PATTERN,
+  configuredWorldName,
   resolveWorldName,
   ServerType,
   ServerTypeEnum,

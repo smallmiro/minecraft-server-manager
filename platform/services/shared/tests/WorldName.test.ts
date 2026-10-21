@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   WorldName,
   WORLD_NAME_PATTERN,
+  configuredWorldName,
   resolveWorldName,
 } from '../src/domain/value-objects/WorldName.js';
 import { WorldOptions } from '../src/domain/value-objects/WorldOptions.js';
@@ -45,9 +46,10 @@ describe('resolveWorldName (#649)', () => {
     expect(resolveWorldName({ WORLD: 'https://example.com/w.zip' }, 'srv')).toBe('srv');
   });
 
-  it('returns undefined without a server name when nothing is configured', () => {
-    expect(resolveWorldName({})).toBeUndefined();
-    expect(resolveWorldName({ LEVEL: 'lvl' })).toBe('lvl');
+  it('configuredWorldName returns undefined when nothing is configured', () => {
+    expect(configuredWorldName({})).toBeUndefined();
+    expect(configuredWorldName({ LEVEL: ' ' })).toBeUndefined();
+    expect(configuredWorldName({ LEVEL: 'lvl' })).toBe('lvl');
   });
 
   it('does not validate existing values (legacy LEVEL keeps working)', () => {

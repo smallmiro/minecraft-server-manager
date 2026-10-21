@@ -40,12 +40,14 @@ export class WorldName {
 type ConfigEnv = Readonly<Record<string, string | undefined>>;
 
 /**
- * The world a server uses, from its config.env: LEVEL, then the legacy
- * WORLD_NAME alias, then the server name (its default worlds/<server>).
- * Not validated, so existing configs keep working.
+ * The world set in a server's config.env: LEVEL, then the legacy WORLD_NAME
+ * alias. Not validated, so existing configs keep working.
  */
-export function resolveWorldName(env: ConfigEnv, serverName: string): string;
-export function resolveWorldName(env: ConfigEnv, serverName?: string): string | undefined;
-export function resolveWorldName(env: ConfigEnv, serverName?: string): string | undefined {
-  return env['LEVEL']?.trim() || env['WORLD_NAME']?.trim() || serverName;
+export function configuredWorldName(env: ConfigEnv): string | undefined {
+  return env['LEVEL']?.trim() || env['WORLD_NAME']?.trim() || undefined;
+}
+
+/** The world a server uses: its configured world, else the server name. */
+export function resolveWorldName(env: ConfigEnv, serverName: string): string {
+  return configuredWorldName(env) ?? serverName;
 }
