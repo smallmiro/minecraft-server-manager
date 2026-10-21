@@ -22,6 +22,7 @@
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },

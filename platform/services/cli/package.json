@@ -23,6 +23,7 @@
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "vitest run tests/e2e",

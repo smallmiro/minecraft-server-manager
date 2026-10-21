@@ -26,6 +26,7 @@
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "test:watch": "vitest",
     "sync-scripts": "rm -rf scripts && cp -r ../../scripts . && rm -f scripts/.gitkeep",
     "prepublishOnly": "npm run sync-scripts"
