@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { serverNameArg, legacyServerNameWarning } from './lib/legacy-server-name.js';
 import { Paths, log, colors, AuditActionEnum } from '@minecraft-docker/shared';
 import {
   initCommand,
@@ -514,6 +515,9 @@ async function main(): Promise<void> {
   const sudoPassword = flags['sudo-password'] as string | undefined;
   const paths = new Paths(rootDir);
   const shell = new ShellExecutor({ paths, sudoPassword });
+
+  const legacyWarning = legacyServerNameWarning(serverNameArg(command, subCommand, positional, flags));
+  if (legacyWarning) log.warn(legacyWarning);
 
   let exitCode = 0;
 
