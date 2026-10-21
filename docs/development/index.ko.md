@@ -129,7 +129,7 @@ pnpm --filter @minecraft-docker/mcctl test
 pnpm test:e2e                                # Management Console E2E (Playwright)
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
 
-bash platform/scripts/tests/<name>.test.sh   # bash 스크립트 테스트
+pnpm test:scripts                            # bash 스크립트 테스트 (bats, *.bats)
 ```
 
 새 REST 엔드포인트의 E2E 테스트는 `e2e/tests/api-*.spec.ts`에, 콘솔 UI 흐름은 `e2e/tests/*.spec.ts`에, 새 CLI 명령이나 옵션은 `platform/services/cli/tests/e2e/cli-*.test.ts`에 추가합니다.
@@ -152,15 +152,15 @@ gh pr create --repo smallmiro/minecraft-server-manager --base develop \
 
 ### CI
 
-`develop`으로 향하는 PR의 검사는 머지 전에 통과해야 합니다. 경로 필터가 적용됩니다:
+`develop`으로 향하는 PR의 검사는 머지 전에 통과해야 합니다. `ci.yml`이 경로 필터 없이 모든 PR에서 실행됩니다:
 
-| 워크플로우 | 실행 조건 | 내용 |
-|------------|-----------|------|
-| `cli-test` | PR이 `platform/services/cli/**` 또는 `platform/services/shared/**`를 변경 | `mcctl`과 의존 패키지 빌드, CLI 테스트 실행 |
-| `shared-test` | PR이 `platform/services/shared/**`를 변경 | shared 패키지 테스트 실행 |
-| `e2e` | 매일 03:00 KST와 수동 실행 시, **PR에서는 실행 안 됨** | mcctl-api와 mcctl-console을 띄우고 Playwright 테스트 실행 |
+| 잡 | 내용 |
+|----|------|
+| `lint, typecheck, test` | 모든 패키지를 빌드하고 `pnpm lint`, `pnpm typecheck`, `e2e`를 제외한 전 패키지 테스트, cli `verify:package` 드리프트 검사를 실행 |
+| `script tests` (ubuntu, macos) | `pnpm test:scripts`(bats)와 `pnpm lint:scripts`(shellcheck) |
+| `docker compose config` (platform, templates) | 두 compose 파일 검증 |
 
-`e2e`는 PR에서 돌지 않으므로 API나 콘솔 동작을 바꿨다면 로컬에서 `pnpm test:e2e`를 실행하세요. CI는 `pnpm lint`를 실행하지 않으므로 직접 확인해야 합니다.
+`e2e.yml`은 매일 03:00 KST와 수동 실행 시에만 돌고 **PR에서는 실행되지 않습니다**. mcctl-api와 mcctl-console을 띄우고 Playwright 테스트를 실행합니다. API나 콘솔 동작을 바꿨다면 로컬에서 `pnpm test:e2e`를 실행하세요.
 
 브랜치 이름, 커밋 규칙, 버전 관리, 릴리즈 절차는 [Git 워크플로우](git-workflow.md)에 있습니다.
 

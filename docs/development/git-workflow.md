@@ -133,10 +133,9 @@ Releases are run by maintainers, usually through the `release-manager` agent.
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `cli-test.yml` | PR to `develop`/`main` or push to `develop` touching `platform/services/cli/**` or `platform/services/shared/**` | Build `mcctl` and run its tests |
-| `shared-test.yml` | PR to `develop`/`main` or push to `develop` touching `platform/services/shared/**` | Run shared package tests |
+| `ci.yml` | Every PR to `develop`/`main`, push to `develop`, called by `release.yml` | Build, lint, typecheck and test all packages; script tests on Linux and macOS; compose validation |
 | `e2e.yml` | Daily at 03:00 KST, manual dispatch | Management Console E2E (Playwright) |
-| `release.yml` | Push of a `v*` tag | npm publish, GitHub Release, docs deploy |
+| `release.yml` | Push of a `v*` tag | Runs `ci.yml` first, then npm publish, GitHub Release, docs deploy |
 | `deploy-website.yml` | Push to `main` touching `website/**`, manual dispatch | Deploy the landing page |
 
 ## Code Quality

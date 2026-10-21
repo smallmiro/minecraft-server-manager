@@ -154,15 +154,15 @@ PR checklist:
 - [ ] Documentation is updated in both English and Korean if users are affected
 - [ ] Structural and behavioral changes are in separate commits
 
-CI checks on PRs against `develop` must pass before merge. They are path-filtered:
+CI checks on PRs against `develop` must pass before merge. `ci.yml` runs on every PR, with no path filter:
 
-| Workflow | Runs when | What it does |
-|----------|-----------|--------------|
-| `cli-test` | The PR touches `platform/services/cli/**` or `platform/services/shared/**` | Builds `mcctl` and its dependencies, runs the CLI tests |
-| `shared-test` | The PR touches `platform/services/shared/**` | Runs the shared package tests |
-| `e2e` | Daily at 03:00 KST and on manual dispatch, **not on PRs** | Starts mcctl-api and mcctl-console, runs the Playwright suite |
+| Job | What it does |
+|-----|--------------|
+| `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` drift check |
+| `script tests` (ubuntu, macos) | `pnpm test:scripts` (bats) and `pnpm lint:scripts` (shellcheck) |
+| `docker compose config` (platform, templates) | Validates both compose files |
 
-Because `e2e` does not run on PRs, run `pnpm test:e2e` locally when you change API or console behavior. CI does not run `pnpm lint`, so run it yourself.
+`e2e.yml` runs daily at 03:00 KST and on manual dispatch, **not on PRs**: it starts mcctl-api and mcctl-console and runs the Playwright suite. Run `pnpm test:e2e` locally when you change API or console behavior.
 
 ## 5. Build and Test
 
@@ -177,10 +177,30 @@ pnpm --filter @minecraft-docker/mcctl test
 pnpm test:e2e                                # Management Console E2E: mcctl-api + mcctl-console (Playwright)
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
 
-bash platform/scripts/tests/<name>.test.sh   # bash script tests
+pnpm test:scripts                            # bash script tests (bats, fake docker)
+pnpm lint:scripts                            # shellcheck on platform/scripts (needs shellcheck installed)
 ```
 
 Add E2E tests for new REST endpoints in `e2e/tests/api-*.spec.ts`, for console UI flows in `e2e/tests/*.spec.ts`, and for new CLI commands or options in `platform/services/cli/tests/e2e/cli-*.test.ts`.
+
+### 5.1 Bash script tests
+
+Tests for `platform/scripts/*.sh` live in `platform/scripts/tests/*.bats` and run on [bats-core](https://github.com/bats-core/bats-core) (npm `bats`, installed by `pnpm install`). No real Docker, sudo or system file is touched.
+
+```bash
+pnpm test:scripts                                         # all bats tests
+pnpm exec bats platform/scripts/tests/lock.bats           # one file
+pnpm exec bats -f "unlock" platform/scripts/tests         # tests matching a name
+```
+
+- `helpers.bash`: `use_fake_docker`, `fake_cmd <name> <body>` (stub on PATH), `make_platform` (temp `MCCTL_ROOT` with `servers/`, `worlds/`, `.env`, `docker-compose.yml`), `add_server <name>`, and `require_*` skips.
+- `fake-bin/docker`: records every call, one line of arguments, to `$FAKE_DOCKER_LOG`. Scenario knobs: `FAKE_DOCKER_PS` (stdout of `docker ps`), `FAKE_DOCKER_COMPOSE_PS` (stdout of `docker compose ps`), `FAKE_DOCKER_CONFIG_RC` (exit code of `docker compose config`). Everything else exits 0. Example: `FAKE_DOCKER_PS=mc-alpha run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi`, then `grep '^rm -f mc-alpha$' "$FAKE_DOCKER_LOG"`.
+- Always pass `--keep-avahi` when running `delete-server.sh` in a test; to test the avahi path, stub `sudo` with `fake_cmd` so the real `/etc/avahi/hosts` is never touched.
+- Examples to copy: `create-server.bats`, `delete-server.bats`, `lock.bats`.
+
+Write tests so they run on Linux and on macOS (bash 3.2, BSD userland): no GNU-only options (`touch -d`, `date -d`, `sed -i` without a suffix, `readlink -f`) in test code or fixtures. Some scripts are not macOS-portable yet (`sed -i` in `create-server.sh`/`delete-server.sh`, `flock` in `lock.sh`, `declare -A` in `render-map.sh`); their tests call `require_gnu_sed` / `require_flock` / `require_bash4` and skip with a reason instead of failing. Remove the skip when the script is fixed.
+
+`pnpm lint:scripts` runs shellcheck at `--severity=error` (config: `.shellcheckrc`, `platform/scripts/tests/lint.sh`). Baseline at shellcheck 0.11.0 over `platform/scripts/*.sh` and `lib/*.sh`: 0 errors, 11 warnings (SC1090 x3, SC2034 x6, SC2155 x2), 14 at info and above, 24 at style and above. The gate is errors only until the warnings are fixed; do not add new findings. See all of them with `shellcheck -x -S style platform/scripts/*.sh platform/scripts/lib/*.sh`.
 
 ## 6. Documentation
 

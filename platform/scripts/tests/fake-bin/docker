@@ -1,0 +1,18 @@
+#!/bin/bash
+# Fake docker for bats tests. Put tests/fake-bin first on PATH (use_fake_docker).
+# Every call is appended to $FAKE_DOCKER_LOG as one line of arguments.
+# Scenario knobs (environment variables, all optional):
+#   FAKE_DOCKER_PS          stdout of `docker ps ...` (container names, one per line)
+#   FAKE_DOCKER_COMPOSE_PS  stdout of `docker compose ... ps ...`
+#   FAKE_DOCKER_CONFIG_RC   exit code of `docker compose ... config ...` (default 0)
+# Every other subcommand succeeds silently.
+echo "$*" >> "${FAKE_DOCKER_LOG:?FAKE_DOCKER_LOG must be set (use_fake_docker)}"
+if [[ "$1" == compose ]]; then
+    case " $* " in
+        *" config "*) exit "${FAKE_DOCKER_CONFIG_RC:-0}" ;;
+        *" ps "*) printf '%s' "${FAKE_DOCKER_COMPOSE_PS:-}" ;;
+    esac
+elif [[ "$1" == ps ]]; then
+    printf '%s' "${FAKE_DOCKER_PS:-}"
+fi
+exit 0

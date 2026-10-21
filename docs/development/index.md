@@ -129,7 +129,7 @@ pnpm --filter @minecraft-docker/mcctl test
 pnpm test:e2e                                # Management Console E2E (Playwright)
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
 
-bash platform/scripts/tests/<name>.test.sh   # bash script tests
+pnpm test:scripts                            # bash script tests (bats, *.bats)
 ```
 
 Add E2E tests for new REST endpoints in `e2e/tests/api-*.spec.ts`, for console UI flows in `e2e/tests/*.spec.ts`, and for new CLI commands or options in `platform/services/cli/tests/e2e/cli-*.test.ts`.
@@ -152,15 +152,15 @@ gh pr create --repo smallmiro/minecraft-server-manager --base develop \
 
 ### CI
 
-PR checks against `develop` must pass before merge. They are path-filtered:
+PR checks against `develop` must pass before merge. `ci.yml` runs on every PR, with no path filter:
 
-| Workflow | Runs when | What it does |
-|----------|-----------|--------------|
-| `cli-test` | The PR touches `platform/services/cli/**` or `platform/services/shared/**` | Builds `mcctl` and its dependencies, runs the CLI tests |
-| `shared-test` | The PR touches `platform/services/shared/**` | Runs the shared package tests |
-| `e2e` | Daily at 03:00 KST and on manual dispatch, **not on PRs** | Starts mcctl-api and mcctl-console, runs the Playwright suite |
+| Job | What it does |
+|-----|--------------|
+| `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` drift check |
+| `script tests` (ubuntu, macos) | `pnpm test:scripts` (bats) and `pnpm lint:scripts` (shellcheck) |
+| `docker compose config` (platform, templates) | Validates both compose files |
 
-Because `e2e` does not run on PRs, run `pnpm test:e2e` locally when you change API or console behavior. CI does not run `pnpm lint`, so run it yourself.
+`e2e.yml` runs daily at 03:00 KST and on manual dispatch, **not on PRs**: it starts mcctl-api and mcctl-console and runs the Playwright suite. Run `pnpm test:e2e` locally when you change API or console behavior.
 
 Branch naming, commit rules, versioning, and the release process are described in [Git Workflow](git-workflow.md).
 

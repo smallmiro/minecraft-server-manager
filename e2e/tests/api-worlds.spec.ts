@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const API_BASE_URL = process.env.E2E_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.E2E_API_URL || 'http://localhost:5001';
 
 test.describe('Worlds API', () => {
   test.describe('GET /api/worlds - List Worlds', () => {
