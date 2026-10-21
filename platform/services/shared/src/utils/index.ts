@@ -1,5 +1,5 @@
 import { homedir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -96,7 +96,7 @@ export class Paths {
   constructor(dataDir?: string) {
     this.packageRoot = getPackageRoot();
     this.cliPackageRoot = getCliPackageRoot();
-    this.dataDir = dataDir ?? process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
+    this.dataDir = dataDir ?? resolveMcctlRoot();
 
     // Cache resolved paths at construction time
     this._scriptsPath = this.resolveScriptsPath();
@@ -223,6 +223,14 @@ export class Paths {
   lockFile(world: string): string {
     return join(this.locks, `${world}.lock`);
   }
+}
+
+/**
+ * The mcctl data root, resolved in one place for every package:
+ * MCCTL_ROOT (made absolute), else ~/minecraft-servers.
+ */
+export function resolveMcctlRoot(): string {
+  return resolve(process.env['MCCTL_ROOT'] || join(homedir(), 'minecraft-servers'));
 }
 
 /**

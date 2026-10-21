@@ -1,7 +1,6 @@
 import { spawn, execSync, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, statSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
 import type {
   ContainerStatus,
   HealthStatus,
@@ -15,6 +14,7 @@ import type {
   RouteInfo,
 } from '../types/index.js';
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
+import { resolveMcctlRoot } from '../utils/index.js';
 
 /**
  * Execute a command and return stdout
@@ -711,10 +711,7 @@ export function formatBytes(bytes: number): string {
  * Get the worlds directory path
  */
 export function getWorldsDir(): string {
-  return join(
-    process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers'),
-    'worlds'
-  );
+  return join(resolveMcctlRoot(), 'worlds');
 }
 
 /**
@@ -768,10 +765,7 @@ async function calculateDirectorySize(dirPath: string): Promise<number> {
  * Returns server names (not container names)
  */
 export function getConfiguredServers(serversDir?: string): string[] {
-  const dir = serversDir ?? join(
-    process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers'),
-    'servers'
-  );
+  const dir = serversDir ?? getServersDir();
 
   if (!existsSync(dir)) return [];
 
@@ -833,10 +827,7 @@ export function getAllServers(serversDir?: string): string[] {
  * Get the servers directory path
  */
 export function getServersDir(): string {
-  return join(
-    process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers'),
-    'servers'
-  );
+  return join(resolveMcctlRoot(), 'servers');
 }
 
 /**
@@ -976,7 +967,7 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
   const agentRunning = status === 'running';
 
   // Check if PLAYIT_SECRET_KEY is configured in platform .env
-  const platformRoot = process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
+  const platformRoot = resolveMcctlRoot();
   const envPath = join(platformRoot, '.env');
   let secretKeyConfigured = false;
 
@@ -1030,7 +1021,7 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
  * Uses docker compose with playit profile
  */
 export async function startPlayitAgent(): Promise<{ success: boolean; error?: string }> {
-  const platformRoot = process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
+  const platformRoot = resolveMcctlRoot();
 
   try {
     const result = await execCommandAsync('docker', [
@@ -1056,7 +1047,7 @@ export async function startPlayitAgent(): Promise<{ success: boolean; error?: st
  * Uses docker compose with playit profile
  */
 export async function stopPlayitAgent(): Promise<boolean> {
-  const platformRoot = process.env['MCCTL_ROOT'] ?? join(homedir(), 'minecraft-servers');
+  const platformRoot = resolveMcctlRoot();
 
   try {
     const result = await execCommandAsync('docker', [
