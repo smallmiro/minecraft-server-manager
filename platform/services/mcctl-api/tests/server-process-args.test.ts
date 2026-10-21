@@ -143,6 +143,49 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
     });
   });
 
+  describe('create option limits', () => {
+    const create = (payload: Record<string, unknown>) =>
+      app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'argv-test', ...payload } });
+
+    // create-server.sh writes these into config.env as KEY=value lines (and
+    // VERSION through sed), so a line break would add another setting.
+    it.each([
+      { version: '1.21"; id; "' },
+      { version: '1.21\nEULA=FALSE' },
+      { version: '1.21/x' },
+      { version: '-1.21' },
+      { version: '1'.repeat(65) },
+      { seed: '123\nRCON_PASSWORD=x' },
+      { seed: '123\r' },
+      { seed: 'x'.repeat(257) },
+      { type: 'MODRINTH', modpack: 'pack', modpackVersion: '1.0\nMODS=http://evil/x.jar' },
+      { type: 'MODRINTH', modpack: 'pack', modpackVersion: 'x'.repeat(129) },
+      { worldUrl: 'http://example.com/w.zip\nEULA=FALSE' },
+    ])('rejects %j', async (payload) => {
+      vi.mocked(serverExists).mockReturnValue(false);
+      const response = await create(payload);
+      expect(response.statusCode).toBe(400);
+      expect(execFile).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { version: '1.21.1' },
+      { version: 'LATEST' },
+      { version: '24w14a' },
+      { version: '1.20.5-rc1' },
+      { seed: '-123' },
+      { seed: '-9223372036854775808' },
+      { seed: 'a long text seed with spaces, commas & symbols! '.repeat(5) },
+      { type: 'MODRINTH', modpack: 'pack', modpackVersion: '0.5.1+1.20.1' },
+      { type: 'MODRINTH', modpack: 'pack', modpackVersion: 'Release 5 (beta)' },
+    ])('accepts %j', async (payload) => {
+      vi.mocked(serverExists).mockReturnValue(false);
+      const response = await create(payload);
+      expect(response.statusCode).toBe(201);
+      expect(recordedArgv()).toEqual(expect.arrayContaining(Object.values(payload)));
+    });
+  });
+
   describe('DELETE /api/servers/:name', () => {
     it('runs delete-server.sh with the name as one argument', async () => {
       vi.mocked(serverExists).mockReturnValue(true);
