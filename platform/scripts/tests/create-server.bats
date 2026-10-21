@@ -27,3 +27,18 @@ setup() {
     FAKE_DOCKER_CONFIG_RC=1 run bash "$SCRIPTS_DIR/create-server.sh" beta --no-start
     [ "$status" -ne 0 ]
 }
+
+@test "create: rejects a reserved server name before creating anything (#649)" {
+    run bash "$SCRIPTS_DIR/create-server.sh" router --no-start
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"reserved"* ]] || return 1
+    [ ! -e "$PLATFORM/servers/router" ]
+}
+
+@test "create: rejects a --world name that is not a valid world name (#649)" {
+    run bash "$SCRIPTS_DIR/create-server.sh" gamma --no-start -w ../escape
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"World name"* ]] || return 1
+    [ ! -e "$PLATFORM/servers/gamma" ]
+    run ! grep -q 'escape' "$PLATFORM/servers/_template/config.env"
+}
