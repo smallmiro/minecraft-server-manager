@@ -154,15 +154,15 @@ PR checklist:
 - [ ] Documentation is updated in both English and Korean if users are affected
 - [ ] Structural and behavioral changes are in separate commits
 
-CI checks on PRs against `develop` must pass before merge. They are path-filtered:
+CI checks on PRs against `develop` must pass before merge. `ci.yml` runs on every PR, with no path filter:
 
-| Workflow | Runs when | What it does |
-|----------|-----------|--------------|
-| `cli-test` | The PR touches `platform/services/cli/**` or `platform/services/shared/**` | Builds `mcctl` and its dependencies, runs the CLI tests |
-| `shared-test` | The PR touches `platform/services/shared/**` | Runs the shared package tests |
-| `e2e` | Daily at 03:00 KST and on manual dispatch, **not on PRs** | Starts mcctl-api and mcctl-console, runs the Playwright suite |
+| Job | What it does |
+|-----|--------------|
+| `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` drift check |
+| `script tests` (ubuntu, macos) | `pnpm test:scripts` (bats) and `pnpm lint:scripts` (shellcheck) |
+| `docker compose config` (platform, templates) | Validates both compose files |
 
-Because `e2e` does not run on PRs, run `pnpm test:e2e` locally when you change API or console behavior. CI does not run `pnpm lint`, so run it yourself.
+`e2e.yml` runs daily at 03:00 KST and on manual dispatch, **not on PRs**: it starts mcctl-api and mcctl-console and runs the Playwright suite. Run `pnpm test:e2e` locally when you change API or console behavior.
 
 ## 5. Build and Test
 

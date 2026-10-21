@@ -27,6 +27,7 @@
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "test:watch": "vitest",
     "sync-scripts": "rm -rf scripts docker && cp -r ../../scripts scripts && rm -rf scripts/tests scripts/.gitkeep && cp -r ../../docker docker",
     "prepack": "npm run sync-scripts"

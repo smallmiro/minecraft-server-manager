@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import JSZip from 'jszip';
 
-const API_BASE_URL = process.env.E2E_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.E2E_API_URL || 'http://localhost:5001';
 
 /**
  * Build a zip Buffer containing the given entries.

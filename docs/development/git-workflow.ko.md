@@ -133,10 +133,9 @@ MAJOR를 올리면 MINOR와 PATCH를 0으로, MINOR를 올리면 PATCH를 0으�
 
 | 워크플로우 | 트리거 | 용도 |
 |------------|--------|------|
-| `cli-test.yml` | `platform/services/cli/**` 또는 `platform/services/shared/**`를 변경하는 `develop`/`main` 대상 PR, `develop` 푸시 | `mcctl` 빌드와 테스트 |
-| `shared-test.yml` | `platform/services/shared/**`를 변경하는 `develop`/`main` 대상 PR, `develop` 푸시 | shared 패키지 테스트 |
+| `ci.yml` | `develop`/`main` 대상 모든 PR, `develop` 푸시, `release.yml`에서 호출 | 전 패키지 빌드·lint·타입 검사·테스트, Linux·macOS 스크립트 테스트, compose 검증 |
 | `e2e.yml` | 매일 03:00 KST, 수동 실행 | Management Console E2E (Playwright) |
-| `release.yml` | `v*` 태그 푸시 | npm 발행, GitHub Release, 문서 배포 |
+| `release.yml` | `v*` 태그 푸시 | `ci.yml` 통과 후 npm 발행, GitHub Release, 문서 배포 |
 | `deploy-website.yml` | `website/**`를 변경하는 `main` 푸시, 수동 실행 | 랜딩 페이지 배포 |
 
 ## 코드 품질 {#code-quality}
