@@ -151,6 +151,12 @@ export const ServerNameParamsSchema = Type.Object({
   name: ExistingServerNameSchema,
 });
 
+/**
+ * create-server.sh writes these values into config.env as KEY=value lines,
+ * so a line break would add another setting (#720).
+ */
+const SINGLE_LINE_PATTERN = '^[^\\x00-\\x1f\\x7f]*$';
+
 // Create Server Request Schema
 export const CreateServerRequestSchema = Type.Object({
   name: Type.String({
@@ -168,9 +174,14 @@ export const CreateServerRequestSchema = Type.Object({
     Type.Literal('MODRINTH'),
     Type.Literal('AUTO_CURSEFORGE'),
   ])),
-  version: Type.Optional(Type.String()),
+  version: Type.Optional(Type.String({
+    // Minecraft version (1.21.1, LATEST, 24w14a, 1.20.5-rc1); also a sed
+    // replacement in create-server.sh, so no '/', '&' or '\\'.
+    pattern: '^[A-Za-z0-9][A-Za-z0-9._-]*$',
+    maxLength: 64,
+  })),
   memory: Type.Optional(Type.String({ pattern: '^\\d+[MG]$' })),
-  seed: Type.Optional(Type.String()),
+  seed: Type.Optional(Type.String({ pattern: SINGLE_LINE_PATTERN, maxLength: 256 })),
   worldUrl: Type.Optional(Type.String({ format: 'uri' })),
   worldName: Type.Optional(Type.String({ pattern: WORLD_NAME_PATTERN.source })),
   autoStart: Type.Optional(Type.Boolean({ default: true })),
@@ -183,6 +194,9 @@ export const CreateServerRequestSchema = Type.Object({
     description: 'Modrinth modpack slug, ID, or URL (required for MODRINTH/AUTO_CURSEFORGE)',
   })),
   modpackVersion: Type.Optional(Type.String({
+    // Modrinth version numbers are free-form ("Release 5 (beta)")
+    pattern: SINGLE_LINE_PATTERN,
+    maxLength: 128,
     description: 'Specific modpack version ID',
   })),
   modLoader: Type.Optional(Type.Union([

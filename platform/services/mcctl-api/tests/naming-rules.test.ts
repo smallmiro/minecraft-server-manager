@@ -9,12 +9,19 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 
 vi.mock('child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('child_process')>();
-  return { ...actual, exec: vi.fn() };
+  return { ...actual, execFile: vi.fn() };
 });
 
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 
-const mockedExec = vi.mocked(exec);
+/** Answer docker compose calls with success. */
+function mockComposeSuccess() {
+  vi.mocked(execFile).mockImplementation(((...args: unknown[]) => {
+    const callback = args[args.length - 1];
+    if (typeof callback === 'function') callback(null, 'Started', '');
+    return {} as ReturnType<typeof execFile>;
+  }) as never);
+}
 
 describe('Unified naming rules in the API (#649)', () => {
   let app: FastifyInstance;
@@ -74,10 +81,7 @@ describe('Unified naming rules in the API (#649)', () => {
 
   describe('server actions accept existing names and only warn', () => {
     it('starts a legacy-named server and logs a warning', async () => {
-      mockedExec.mockImplementation((_cmd, _opts, callback) => {
-        if (typeof callback === 'function') callback(null, 'Started', '');
-        return {} as ReturnType<typeof exec>;
-      });
+      mockComposeSuccess();
       const warn = vi.spyOn(app.log, 'warn');
 
       const response = await app.inject({ method: 'POST', url: '/api/servers/My_Server/start' });
@@ -87,10 +91,7 @@ describe('Unified naming rules in the API (#649)', () => {
     });
 
     it('does not warn for a name that follows the rule', async () => {
-      mockedExec.mockImplementation((_cmd, _opts, callback) => {
-        if (typeof callback === 'function') callback(null, 'Started', '');
-        return {} as ReturnType<typeof exec>;
-      });
+      mockComposeSuccess();
       const warn = vi.spyOn(app.log, 'warn');
 
       await app.inject({ method: 'POST', url: '/api/servers/survival/start' });

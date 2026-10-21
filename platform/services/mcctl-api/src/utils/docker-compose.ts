@@ -1,8 +1,8 @@
-import { exec, ExecOptions } from 'child_process';
+import { execFile, ExecFileOptions } from 'child_process';
 import { promisify } from 'util';
 import { config, childProcessEnv } from '../config/index.js';
 
-const execPromise = promisify(exec);
+const execFilePromise = promisify(execFile);
 
 // ============================================================
 // Types
@@ -56,16 +56,16 @@ export async function executeServerAction(
   const mcctlRoot = getPlatformPath();
   const serviceName = `mc-${serverName}`;
 
-  let command: string;
+  let args: string[];
   switch (action) {
     case 'start':
-      command = `docker compose up -d ${serviceName}`;
+      args = ['compose', 'up', '-d', serviceName];
       break;
     case 'stop':
-      command = `docker compose stop ${serviceName}`;
+      args = ['compose', 'stop', serviceName];
       break;
     case 'restart':
-      command = `docker compose restart ${serviceName}`;
+      args = ['compose', 'restart', serviceName];
       break;
     default:
       return {
@@ -74,7 +74,7 @@ export async function executeServerAction(
       };
   }
 
-  const options: ExecOptions = {
+  const options: ExecFileOptions = {
     cwd: mcctlRoot,
     timeout: 60000, // 60 second timeout
     // Ensure Docker Compose uses the correct compose file
@@ -82,7 +82,7 @@ export async function executeServerAction(
   };
 
   try {
-    const { stdout, stderr } = await execPromise(command, options);
+    const { stdout, stderr } = await execFilePromise('docker', args, options);
     return {
       success: true,
       stdout: typeof stdout === 'string' ? stdout.trim() : stdout?.toString().trim(),
