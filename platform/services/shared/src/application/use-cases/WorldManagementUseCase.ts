@@ -14,7 +14,7 @@ import type {
   IServerRepository,
 } from '../ports/index.js';
 import { formatWorldBytes } from '../../utils/index.js';
-import { WORLD_NAME_PATTERN } from '../../domain/index.js';
+import { WORLD_NAME_PATTERN, resolveWorldName } from '../../domain/index.js';
 
 /**
  * World Management Use Case
@@ -351,10 +351,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       const config = await this.serverRepo.getConfig(name);
       if (!config) continue;
 
-      const level =
-        config.customEnv?.['LEVEL']?.trim() ||
-        config.customEnv?.['WORLD_NAME']?.trim() ||
-        name;
+      const level = resolveWorldName(config.customEnv ?? {}, name);
       const servers = map.get(level) ?? [];
       servers.push(name);
       map.set(level, servers);
@@ -556,11 +553,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
    */
   private async getServerLevel(serverName: string): Promise<string | undefined> {
     const config = await this.serverRepo.getConfig(serverName);
-    return (
-      config?.customEnv?.['LEVEL']?.trim() ||
-      config?.customEnv?.['WORLD_NAME']?.trim() ||
-      undefined
-    );
+    return resolveWorldName(config?.customEnv ?? {});
   }
 
   /**

@@ -14,6 +14,7 @@ import type {
   RouterDetailInfo,
   RouteInfo,
 } from '../types/index.js';
+import { resolveWorldName } from '../domain/value-objects/WorldName.js';
 
 /**
  * Execute a command and return stdout
@@ -634,9 +635,8 @@ export async function getDetailedServerInfoWithPlayers(
   }
 
   // Get world name and size
-  // World name priority: config LEVEL > WORLD_NAME > server name
   const serverName = container.replace(/^mc-/, '');
-  const worldName = configEnv?.['LEVEL'] || configEnv?.['WORLD_NAME'] || serverName;
+  const worldName = resolveWorldName(configEnv ?? {}, serverName);
   detailed.worldName = worldName;
 
   // Calculate world size
