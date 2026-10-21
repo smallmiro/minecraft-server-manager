@@ -69,6 +69,7 @@ import {
 import { mkdir, readFile as readFileAsync, writeFile, rename } from 'fs/promises';
 import { config } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
+import { resolveInside } from '../lib/safe-path.js';
 import { resolve as resolvePath, sep, extname } from 'node:path';
 import { existsSync, statSync, createReadStream } from 'node:fs';
 import { createGunzip } from 'node:zlib';
@@ -152,10 +153,18 @@ function getMapsDir(): string {
   return join(config.mcctlRoot, 'maps');
 }
 
-/** Cached block-stats result file for a world (#531). */
-function getStatsPath(name: string): string {
-  return join(config.mcctlRoot, 'stats', `${name}.json`);
+/** Cached block-stats result file for a world (#531), or null for an unsafe name. */
+function getStatsPath(name: string): string | null {
+  return resolveInside(join(config.mcctlRoot, 'stats'), `${name}.json`);
 }
+
+/** A world's directory under worlds/, or null for an unsafe name (#720). */
+function getWorldDir(name: string): string | null {
+  return resolveInside(new Paths().worlds, name);
+}
+
+/** 400 body when a world name would leave its base directory (#720). */
+const INVALID_WORLD_NAME = { error: 'BadRequest', message: 'Invalid world name' };
 
 /** Create the world block-stats use case (#531). */
 function createWorldStatsUseCase(): WorldStatsUseCase {
@@ -167,9 +176,10 @@ function createWorldStatsUseCase(): WorldStatsUseCase {
 const STATS_ANALYZE_TIMEOUT_MS =
   Number(process.env['STATS_ANALYZE_TIMEOUT_MS']) || 10 * 60 * 1000;
 
-/** Absolute webroot for a world's rendered map. */
-function getWebroot(name: string): string {
-  return join(getMapsDir(), name, 'web');
+/** Absolute webroot for a world's rendered map, or null for an unsafe name. */
+function getWebroot(name: string): string | null {
+  const mapDir = resolveInside(getMapsDir(), name);
+  return mapDir && join(mapDir, 'web');
 }
 
 /**
@@ -409,8 +419,11 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request, reply) => {
     const { name } = request.params;
+    const webroot = getWebroot(name);
+    if (!webroot) {
+      return reply.code(400).send(INVALID_WORLD_NAME);
+    }
     try {
-      const webroot = getWebroot(name);
       const indexFile = join(webroot, 'index.html');
       if (!existsSync(indexFile)) {
         return reply.send({ rendered: false, maps: [] });
@@ -456,7 +469,11 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { dimensions, force } = request.body ?? {};
     const { follow = false } = request.query;
 
-    if (!existsSync(join(new Paths().worlds, name))) {
+    const worldDir = getWorldDir(name);
+    if (!worldDir) {
+      return reply.code(400).send(INVALID_WORLD_NAME);
+    }
+    if (!existsSync(worldDir)) {
       return reply.code(404).send({
         error: 'NotFound',
         message: `World '${name}' not found`,
@@ -567,6 +584,9 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request, reply) => {
     const { name } = request.params;
     const webroot = getWebroot(name);
+    if (!webroot) {
+      return reply.code(400).send(INVALID_WORLD_NAME);
+    }
     const relRaw = request.params['*'] || 'index.html';
     const rel = relRaw === '' ? 'index.html' : relRaw;
 
@@ -620,11 +640,15 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request, reply) => {
     const { name } = request.params;
 
-    if (!existsSync(join(new Paths().worlds, name))) {
+    const worldDir = getWorldDir(name);
+    const webroot = getWebroot(name);
+    if (!worldDir || !webroot) {
+      return reply.code(400).send(INVALID_WORLD_NAME);
+    }
+    if (!existsSync(worldDir)) {
       return reply.code(404).send({ error: 'NotFound', message: `World '${name}' not found` });
     }
 
-    const webroot = getWebroot(name);
     if (!existsSync(join(webroot, 'index.html'))) {
       return reply.code(409).send({
         error: 'Conflict',
@@ -666,8 +690,12 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request, reply) => {
     const { name } = request.params;
+    const statsPath = getStatsPath(name);
+    if (!statsPath) {
+      return reply.code(400).send(INVALID_WORLD_NAME);
+    }
     try {
-      const raw = await readFileAsync(getStatsPath(name), 'utf-8');
+      const raw = await readFileAsync(statsPath, 'utf-8');
       return reply.send(JSON.parse(raw));
     } catch {
       return reply.code(404).send({
@@ -702,7 +730,12 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { name } = request.params;
     const { follow = false } = request.query;
 
-    if (!existsSync(join(new Paths().worlds, name))) {
+    const worldDir = getWorldDir(name);
+    const statsPath = getStatsPath(name);
+    if (!worldDir || !statsPath) {
+      return reply.code(400).send(INVALID_WORLD_NAME);
+    }
+    if (!existsSync(worldDir)) {
       return reply.code(404).send({ error: 'NotFound', message: `World '${name}' not found` });
     }
 
@@ -711,11 +744,10 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // Atomic write: stage to a temp file then rename, so a concurrent GET (or
     // a second analyze) never reads a half-written stats file.
     const persist = async (result: unknown) => {
-      const file = getStatsPath(name);
       await mkdir(join(config.mcctlRoot, 'stats'), { recursive: true });
-      const tmp = `${file}.${process.pid}.tmp`;
+      const tmp = `${statsPath}.${process.pid}.tmp`;
       await writeFile(tmp, JSON.stringify(result), 'utf-8');
-      await rename(tmp, file);
+      await rename(tmp, statsPath);
     };
 
     const controller = new AbortController();
