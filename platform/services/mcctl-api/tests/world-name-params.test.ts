@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { mkdirSync, mkdtempSync, rmSync } from 'fs';
+import { request as httpRequest } from 'http';
+import { AddressInfo } from 'net';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
@@ -15,9 +17,11 @@ process.env.MCCTL_ROOT = TEST_PLATFORM_PATH;
 process.env.AUTH_MODE = 'disabled';
 process.env.NODE_ENV = 'test';
 
-// [encoded URL segment, what the handler would see after decoding]
+// [raw URL segment, what the handler would see after decoding]
 const UNSAFE_NAMES: Array<[string, string]> = [
+  ['..', '..'],
   ['%2e%2e', '..'],
+  ['.', '.'],
   ['%2e', '.'],
   ['..%2Fservers', '../servers'],
   ['%2e%2e%2F%2e%2e%2Fetc', '../../etc'],
@@ -30,8 +34,37 @@ const UNSAFE_NAMES: Array<[string, string]> = [
   ['a%0Ab', 'newline'],
 ];
 
+interface Sent {
+  statusCode: number;
+  body: Record<string, any>;
+}
+
 describe('World name path params (#720)', () => {
   let app: FastifyInstance;
+  let port: number;
+
+  // A real socket, not app.inject(): inject normalizes '..' and '%2e%2e'
+  // segments away, while a raw HTTP request delivers them to :name.
+  const send = (method: string, path: string, payload?: object) =>
+    new Promise<Sent>((resolve, reject) => {
+      const body = payload ? JSON.stringify(payload) : undefined;
+      const req = httpRequest(
+        {
+          host: '127.0.0.1',
+          port,
+          method,
+          path,
+          headers: body ? { 'content-type': 'application/json' } : {},
+        },
+        (res) => {
+          let data = '';
+          res.on('data', (chunk) => (data += chunk));
+          res.on('end', () => resolve({ statusCode: res.statusCode!, body: JSON.parse(data) }));
+        }
+      );
+      req.on('error', reject);
+      req.end(body);
+    });
 
   beforeAll(async () => {
     mkdirSync(join(TEST_PLATFORM_PATH, 'backups', 'meta'), { recursive: true });
@@ -45,7 +78,8 @@ describe('World name path params (#720)', () => {
 
     const { buildApp } = await import('../src/app.js');
     app = await buildApp();
-    await app.ready();
+    await app.listen({ port: 0, host: '127.0.0.1' });
+    port = (app.server.address() as AddressInfo).port;
   });
 
   afterAll(async () => {
@@ -53,20 +87,20 @@ describe('World name path params (#720)', () => {
     rmSync(TEST_PLATFORM_PATH, { recursive: true, force: true });
   });
 
-  const requests = (segment: string) => [
-    { method: 'GET' as const, url: `/api/worlds/${segment}` },
-    { method: 'GET' as const, url: `/api/worlds/${segment}/info` },
-    { method: 'GET' as const, url: `/api/worlds/${segment}/players` },
-    { method: 'POST' as const, url: `/api/worlds/${segment}/assign`, payload: { serverName: 'survival' } },
-    { method: 'POST' as const, url: `/api/worlds/${segment}/release` },
-    { method: 'DELETE' as const, url: `/api/worlds/${segment}?force=true` },
+  const requests = (segment: string): Array<[string, string, object?]> => [
+    ['GET', `/api/worlds/${segment}`],
+    ['GET', `/api/worlds/${segment}/info`],
+    ['GET', `/api/worlds/${segment}/players`],
+    ['POST', `/api/worlds/${segment}/assign`, { serverName: 'survival' }],
+    ['POST', `/api/worlds/${segment}/release`],
+    ['DELETE', `/api/worlds/${segment}?force=true`],
   ];
 
   it.each(UNSAFE_NAMES)('rejects %s (%s) with 400 on every world route', async (segment) => {
-    for (const request of requests(segment)) {
-      const response = await app.inject(request);
-      expect(response.statusCode, `${request.method} ${request.url}`).toBe(400);
-      expect(response.json(), `${request.method} ${request.url}`).toMatchObject({
+    for (const [method, path, payload] of requests(segment)) {
+      const response = await send(method, path, payload);
+      expect(response.statusCode, `${method} ${path}`).toBe(400);
+      expect(response.body, `${method} ${path}`).toMatchObject({
         error: 'Bad Request',
         message: expect.stringContaining('params/name'),
       });
@@ -74,21 +108,21 @@ describe('World name path params (#720)', () => {
   });
 
   it('rejects an empty name', async () => {
-    const response = await app.inject({ method: 'GET', url: '/api/worlds//info' });
+    const response = await send('GET', '/api/worlds//info');
     expect(response.statusCode).toBe(400);
   });
 
   it.each(['world', 'My_World', 'survival-2'])('accepts %s', async (name) => {
-    const response = await app.inject({ method: 'GET', url: `/api/worlds/${name}` });
+    const response = await send('GET', `/api/worlds/${name}`);
     expect(response.statusCode).toBe(200);
-    expect(response.json().world.name).toBe(name);
+    expect(response.body.world.name).toBe(name);
   });
 
   // Hand-made folders (legacy LEVEL values such as "My World", #649) are still
   // listed by GET /api/worlds, so their detail must stay reachable.
   it.each(['My World', 'world.old'])('keeps the existing world %s reachable', async (name) => {
-    const response = await app.inject({ method: 'GET', url: `/api/worlds/${encodeURIComponent(name)}` });
+    const response = await send('GET', `/api/worlds/${encodeURIComponent(name)}`);
     expect(response.statusCode).toBe(200);
-    expect(response.json().world.name).toBe(name);
+    expect(response.body.world.name).toBe(name);
   });
 });
