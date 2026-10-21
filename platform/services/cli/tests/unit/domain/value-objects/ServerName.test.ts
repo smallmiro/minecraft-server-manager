@@ -64,6 +64,10 @@ describe('ServerName Value Object', () => {
     it('should reject special characters', () => {
       assert.throws(() => ServerName.create('my_server'), /lowercase letters, numbers, and hyphens/);
     });
+
+    it('should reject reserved names that collide with platform containers (#649)', () => {
+      assert.throws(() => ServerName.create('router'), /reserved/);
+    });
   });
 
   describe('derived properties', () => {
