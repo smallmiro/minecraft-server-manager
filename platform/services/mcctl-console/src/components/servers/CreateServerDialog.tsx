@@ -1,5 +1,6 @@
 'use client';
 
+import { ServerName } from '@minecraft-docker/shared/naming';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -226,10 +227,7 @@ export function CreateServerDialog({
     if (!name) {
       return 'Server name is required';
     }
-    if (!/^[a-z0-9-]+$/.test(name)) {
-      return 'Only lowercase letters, numbers, and hyphens are allowed';
-    }
-    return null;
+    return ServerName.validate(name) ?? null;
   };
 
   const validateModpackSlug = (slug: string): string | null => {

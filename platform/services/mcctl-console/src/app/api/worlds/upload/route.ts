@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, AuthError } from '@/lib/auth-utils';
 import { headers } from 'next/headers';
+import { WORLD_NAME_PATTERN } from '@minecraft-docker/shared/naming';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +17,6 @@ export const dynamic = 'force-dynamic';
 const WORLD_UPLOAD_MAX_SIZE =
   Number(process.env.WORLD_UPLOAD_MAX_SIZE) || 1024 * 1024 * 1024;
 const MAX_REQUEST_SIZE = Math.floor(WORLD_UPLOAD_MAX_SIZE * 1.1) + 1024 * 1024;
-
-const WORLD_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 export async function POST(request: NextRequest) {
   try {
