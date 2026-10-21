@@ -478,6 +478,16 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
     worldName: string,
     serverName: string
   ): Promise<WorldAssignResult> {
+    // The world name becomes the server's LEVEL (#649)
+    if (!WORLD_NAME_PATTERN.test(worldName)) {
+      return {
+        success: false,
+        worldName,
+        serverName,
+        error: `Invalid world name '${worldName}': only letters, numbers, hyphens, and underscores are allowed`,
+      };
+    }
+
     // Check world exists
     const world = await this.worldRepo.findByName(worldName);
     if (!world) {
