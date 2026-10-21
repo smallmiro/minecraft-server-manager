@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { mkdirSync, mkdtempSync, rmSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { request as httpRequest } from 'http';
 import { AddressInfo } from 'net';
 import { tmpdir } from 'os';
@@ -29,7 +29,6 @@ const UNSAFE_NAMES: Array<[string, string]> = [
   ['%2Fetc', '/etc'],
   ['a%5Cb', 'a\\b'],
   ['.locks', '.locks'],
-  ['-rf', '-rf'],
   ['a%00b', 'NUL byte'],
   ['a%0Ab', 'newline'],
 ];
@@ -69,7 +68,7 @@ describe('World name path params (#720)', () => {
   beforeAll(async () => {
     mkdirSync(join(TEST_PLATFORM_PATH, 'backups', 'meta'), { recursive: true });
     mkdirSync(join(TEST_PLATFORM_PATH, 'servers', 'survival'), { recursive: true });
-    for (const name of ['world', 'My_World', 'survival-2', 'My World', 'world.old']) {
+    for (const name of ['world', 'My_World', 'survival-2', 'My World', 'world.old', '-lobby', '-old']) {
       mkdirSync(join(TEST_PLATFORM_PATH, 'worlds', name), { recursive: true });
     }
 
@@ -124,5 +123,34 @@ describe('World name path params (#720)', () => {
     const response = await send('GET', `/api/worlds/${encodeURIComponent(name)}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.world.name).toBe(name);
+  });
+
+  // WORLD_NAME_PATTERN lets POST /api/worlds create '-lobby'. The world name
+  // only reaches scripts as a positional argument (mcctl.sh world release ->
+  // lock.sh), never as an option, so the world must stay manageable.
+  describe('a world name starting with "-"', () => {
+    it('is reachable', async () => {
+      const response = await send('GET', '/api/worlds/-lobby');
+      expect(response.statusCode).toBe(200);
+      expect(response.body.world.name).toBe('-lobby');
+    });
+
+    it('is released by the real lock scripts', async () => {
+      const lockFile = join(TEST_PLATFORM_PATH, 'worlds', '.locks', '-lobby.lock');
+      mkdirSync(join(TEST_PLATFORM_PATH, 'worlds', '.locks'), { recursive: true });
+      writeFileSync(lockFile, `survival:${Math.floor(Date.now() / 1000)}:1\n`);
+
+      const response = await send('POST', '/api/worlds/-lobby/release');
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toMatchObject({ success: true, worldName: '-lobby', previousServer: 'survival' });
+      expect(existsSync(lockFile)).toBe(false);
+    });
+
+    it('is deleted', async () => {
+      const response = await send('DELETE', '/api/worlds/-old?force=true');
+      expect(response.statusCode).toBe(200);
+      expect(existsSync(join(TEST_PLATFORM_PATH, 'worlds', '-old'))).toBe(false);
+    });
   });
 });
