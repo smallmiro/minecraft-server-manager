@@ -14,6 +14,7 @@ import type {
   IServerRepository,
 } from '../ports/index.js';
 import { formatWorldBytes } from '../../utils/index.js';
+import { WORLD_NAME_PATTERN } from '../../domain/index.js';
 
 /**
  * World Management Use Case
@@ -49,7 +50,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
             if (!value || value.trim() === '') {
               return 'World name is required';
             }
-            if (!/^[a-z0-9_-]+$/i.test(value)) {
+            if (!WORLD_NAME_PATTERN.test(value)) {
               return 'World name can only contain letters, numbers, hyphens, and underscores';
             }
             return undefined;
