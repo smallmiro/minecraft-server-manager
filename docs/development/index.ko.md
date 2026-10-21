@@ -129,7 +129,7 @@ pnpm --filter @minecraft-docker/mcctl test
 pnpm test:e2e                                # Management Console E2E (Playwright)
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
 
-bash platform/scripts/tests/<name>.test.sh   # bash 스크립트 테스트
+pnpm test:scripts                            # bash 스크립트 테스트 (bats, *.bats)
 ```
 
 새 REST 엔드포인트의 E2E 테스트는 `e2e/tests/api-*.spec.ts`에, 콘솔 UI 흐름은 `e2e/tests/*.spec.ts`에, 새 CLI 명령이나 옵션은 `platform/services/cli/tests/e2e/cli-*.test.ts`에 추가합니다.
