@@ -57,7 +57,7 @@ export class ServerRepository implements IServerRepository {
     }
 
     try {
-      const serverName = ServerName.create(config.name);
+      const serverName = ServerName.fromExisting(config.name);
       const serverType = ServerType.create(config.type);
       const mcVersion = McVersion.create(config.version);
       const memory = config.memory ? Memory.create(config.memory) : Memory.default();
