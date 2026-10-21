@@ -5,13 +5,13 @@
 # gh and git are replaced by stubs driven by files in a temp dir, so the hook's
 # decision logic runs without network access.
 #
-# Run: bash platform/scripts/tests/work-done-check.test.sh
+# Run: bash .claude/hooks/tests/work-done-check.test.sh
 # =============================================================================
 
 set -uo pipefail
 
 TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HOOK="$(cd "$TEST_DIR/../../.." && pwd)/.claude/hooks/work-done-check.sh"
+HOOK="$(cd "$TEST_DIR/.." && pwd)/work-done-check.sh"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
