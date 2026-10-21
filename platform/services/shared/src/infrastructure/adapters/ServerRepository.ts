@@ -12,7 +12,7 @@ import {
   Memory,
   WorldOptions,
   WORLD_NAME_PATTERN,
-  resolveWorldName,
+  configuredWorldName,
 } from '../../domain/index.js';
 import type {
   IServerRepository,
@@ -165,7 +165,7 @@ export class ServerRepository implements IServerRepository {
         memory: config['MEMORY'],
         rconPassword: config['RCON_PASSWORD'],
         seed: config['SEED'],
-        worldName: resolveWorldName(config, name),
+        worldName: configuredWorldName(config),
         worldUrl: config['WORLD_URL'],
         customEnv: config,
       };

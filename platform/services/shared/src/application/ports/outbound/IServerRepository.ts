@@ -56,7 +56,10 @@ export interface ServerConfigData {
   memory?: string;
   rconPassword?: string;
   seed?: string;
-  /** World the server uses: LEVEL > WORLD_NAME > server name */
+  /**
+   * World set in config.env (LEVEL > WORLD_NAME), undefined when neither is
+   * set. The effective world falls back to the server name: resolveWorldName().
+   */
   worldName?: string;
   worldUrl?: string;
   customEnv?: Record<string, string>;
