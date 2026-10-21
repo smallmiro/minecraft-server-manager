@@ -9,20 +9,18 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 
 vi.mock('child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('child_process')>();
-  return { ...actual, exec: vi.fn(), execFile: vi.fn() };
+  return { ...actual, execFile: vi.fn() };
 });
 
-import { exec, execFile } from 'child_process';
+import { execFile } from 'child_process';
 
-/** Answer docker compose calls (exec or execFile) with success. */
+/** Answer docker compose calls with success. */
 function mockComposeSuccess() {
-  const reply = (...args: unknown[]) => {
+  vi.mocked(execFile).mockImplementation(((...args: unknown[]) => {
     const callback = args[args.length - 1];
     if (typeof callback === 'function') callback(null, 'Started', '');
-    return {} as ReturnType<typeof exec>;
-  };
-  vi.mocked(exec).mockImplementation(reply as never);
-  vi.mocked(execFile).mockImplementation(reply as never);
+    return {} as ReturnType<typeof execFile>;
+  }) as never);
 }
 
 describe('Unified naming rules in the API (#649)', () => {

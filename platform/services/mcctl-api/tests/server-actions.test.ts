@@ -22,17 +22,15 @@ import { exec, execFile } from 'child_process';
 const mockedExec = vi.mocked(exec);
 const mockedExecFile = vi.mocked(execFile);
 
-/** Answer docker compose calls (exec or execFile) through their callback. */
+/** Answer docker compose calls through the execFile callback. */
 function mockCompose(error: Error | null, stdout: string, stderr = '') {
-  const reply = (...args: unknown[]) => {
+  mockedExecFile.mockImplementation(((...args: unknown[]) => {
     const callback = args[args.length - 1];
     if (typeof callback === 'function') {
       callback(error, stdout, stderr);
     }
-    return {} as ReturnType<typeof exec>;
-  };
-  mockedExec.mockImplementation(reply as never);
-  mockedExecFile.mockImplementation(reply as never);
+    return {} as ReturnType<typeof execFile>;
+  }) as never);
 }
 
 describe('Server Action Routes', () => {
