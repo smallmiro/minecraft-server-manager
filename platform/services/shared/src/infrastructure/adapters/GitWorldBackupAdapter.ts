@@ -203,6 +203,7 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
       await cleanStaging(this.root);
       if (await this.hasCache()) {
         await this.git.run(['worktree', 'prune'], { cwd: this.cache });
+        await this.normalizeRemote(this.url(cfg.repository));
         await this.git.run(['fetch', '-q', 'origin', this.refspec(cfg.branch)], { cwd: this.cache, token: cfg.token });
       } else {
         await this.prepareCache(cfg);
@@ -410,10 +411,7 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
       return warnings;
     }
 
-    // Normalize origin: one clean URL, no pushurl (scrubs legacy token URLs)
-    await this.git.run(['config', '--unset-all', 'remote.origin.pushurl'], { cwd: this.cache });
-    const setUrl = await this.git.run(['remote', 'set-url', 'origin', url], { cwd: this.cache });
-    if (setUrl.code !== 0) await this.mustGit(['remote', 'add', 'origin', url]);
+    await this.normalizeRemote(url);
 
     const heads = await this.git.run(['ls-remote', '--heads', 'origin', `refs/heads/${b}`], { cwd: this.cache, token: cfg.token });
     if (heads.code !== 0) fail(networkErrorCode(heads), `Cannot reach the backup repository: ${heads.stderr.trim()}`);
@@ -449,6 +447,13 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
     }
     await this.mustGit(['checkout', '-q', '-f', '-B', b, origin]);
     return warnings;
+  }
+
+  /** One clean origin URL and no pushurl (scrubs token URLs left by backup.sh). */
+  private async normalizeRemote(url: string): Promise<void> {
+    await this.git.run(['config', '--unset-all', 'remote.origin.pushurl'], { cwd: this.cache });
+    const setUrl = await this.git.run(['remote', 'set-url', 'origin', url], { cwd: this.cache });
+    if (setUrl.code !== 0) await this.mustGit(['remote', 'add', 'origin', url]);
   }
 
   /** World dirs tracked by HEAD: worlds/<w> and servers/<n>/<dir>. */
