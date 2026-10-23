@@ -31,7 +31,10 @@ source "$SCRIPT_DIR/lib/common.sh"
 ENV_FILE="$PLATFORM_DIR/.env"
 if [[ -f "$ENV_FILE" ]]; then
     set -a
-    source <(grep -v '^\s*#' "$ENV_FILE" | grep -v '^\s*$') 2>/dev/null || true
+    # bash 3.2 (macOS) reads nothing from `source <(...)`; bash itself skips
+    # comments and blank lines
+    # shellcheck disable=SC1090
+    . "$ENV_FILE" 2>/dev/null || true
     set +a
 fi
 
