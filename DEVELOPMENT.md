@@ -69,7 +69,7 @@ git push origin develop
 | `platform/services/mcctl-console/` | Next.js web UI (port 5000) |
 | `platform/services/mod-source-modrinth/` | Modrinth adapter |
 | `platform/scripts/` | Bash management scripts (tests in `platform/scripts/tests/`) |
-| `templates/` | npm package templates used by `mcctl init` |
+| `platform/services/cli/templates/` | Single source of the templates shipped by `mcctl init`; `platform/docker-compose.yml`, `platform/.env.example` and `platform/servers/{_template,global.env}` are symlinks to it (`pnpm --filter @minecraft-docker/mcctl check:templates` guards this) |
 | `e2e/` | Playwright E2E tests |
 | `docs/` | MkDocs documentation (English/Korean) |
 | `.claude/` | Claude Code subagents, commands, and hooks |
@@ -160,7 +160,8 @@ CI checks on PRs against `develop` must pass before merge. `ci.yml` runs on ever
 |-----|--------------|
 | `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` drift check |
 | `script tests` (ubuntu, macos) | `pnpm test:scripts` (bats) and `pnpm lint:scripts` (shellcheck) |
-| `docker compose config` (platform, templates) | Validates both compose files |
+| `docker compose config` (platform, cli templates) | Validates both compose files |
+| `template drift check` | `pnpm --filter @minecraft-docker/mcctl check:templates` (plus its `node --test` self-test): one template source, agreed default values read structurally |
 
 `e2e.yml` runs daily at 03:00 KST and on manual dispatch, **not on PRs**: it starts mcctl-api and mcctl-console and runs the Playwright suite. Run `pnpm test:e2e` locally when you change API or console behavior.
 

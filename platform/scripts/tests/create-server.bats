@@ -10,7 +10,7 @@ setup() {
     fake_cmd ip 'exit 0'
     fake_cmd hostname 'exit 0'
     make_platform
-    cp -r "$REPO_DIR/platform/servers/_template" "$PLATFORM/servers/_template"
+    cp -rL "$REPO_DIR/platform/servers/_template" "$PLATFORM/servers/_template"
 }
 
 @test "create: writes server dir, config and compose include; validates compose via docker" {
@@ -45,4 +45,24 @@ setup() {
     run bash "$SCRIPTS_DIR/create-server.sh" delta --no-start --seed 'a text seed & more'
     [ "$status" -eq 0 ]
     grep -qxF 'SEED=a text seed & more' "$PLATFORM/servers/delta/config.env"
+}
+
+# Dev mode: platform/servers/_template is a symlink to the single template source (#651).
+# Servers must be real copies: independent of each other, original untouched.
+@test "create: symlinked _template yields independent servers and an untouched source" {
+    rm -rf "$PLATFORM/servers/_template"
+    cp -rL "$REPO_DIR/platform/services/cli/templates/servers/_template" "$BATS_TEST_TMPDIR/tpl-src"
+    ln -s "$BATS_TEST_TMPDIR/tpl-src" "$PLATFORM/servers/_template"
+    before=$(cksum < "$BATS_TEST_TMPDIR/tpl-src/config.env")
+
+    run bash "$SCRIPTS_DIR/create-server.sh" one --no-start -t PAPER -v 1.21.1
+    [ "$status" -eq 0 ]
+    run bash "$SCRIPTS_DIR/create-server.sh" two --no-start -t FABRIC -v 1.21.1
+    [ "$status" -eq 0 ]
+
+    [ ! -L "$PLATFORM/servers/one" ]
+    [ ! -L "$PLATFORM/servers/two" ]
+    grep -q '^TYPE=PAPER$' "$PLATFORM/servers/one/config.env"
+    grep -q '^TYPE=FABRIC$' "$PLATFORM/servers/two/config.env"
+    [ "$before" = "$(cksum < "$BATS_TEST_TMPDIR/tpl-src/config.env")" ]
 }

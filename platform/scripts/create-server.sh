@@ -487,7 +487,7 @@ echo ""
 # Step 1: Copy template
 # =============================================================================
 echo -e "${BLUE}[1/6]${NC} Copying template..."
-cp -r "$TEMPLATE_DIR" "$SERVER_DIR"
+cp -RL "$TEMPLATE_DIR" "$SERVER_DIR"
 # The template reads platform keys from servers/global.env (#685); platforms
 # created before it existed get it from the same template set.
 if [ ! -f "$SERVERS_DIR/global.env" ] && [ -f "$TEMPLATE_DIR/../global.env" ]; then

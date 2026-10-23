@@ -210,7 +210,7 @@ services:
 # 자동 스케일링 설정
 AUTO_SCALE_UP=true       # 접속 시 서버 시작
 AUTO_SCALE_DOWN=false    # 유휴 서버 중지 (참고 사항 확인)
-DOCKER_TIMEOUT=120       # 서버 시작 대기 시간 (초)
+DOCKER_TIMEOUT=120s      # 서버 시작 대기 시간 (Go time.Duration: 120s, 2m)
 ```
 
 그런 다음 라우터를 재시작합니다:
@@ -516,7 +516,7 @@ sudo firewall-cmd --reload
 1. `.env`에서 Docker 타임아웃 확인:
    ```bash
    # ~/minecraft-servers/.env
-   DOCKER_TIMEOUT=180  # 서버 시작이 오래 걸리면 증가
+   DOCKER_TIMEOUT=180s # 서버 시작이 오래 걸리면 증가
    ```
 
 2. 서버 로그 확인:

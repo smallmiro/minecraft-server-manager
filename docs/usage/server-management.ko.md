@@ -258,7 +258,7 @@ AUTO_SCALE_DOWN=true
 AUTO_SCALE_DOWN_AFTER=10m
 
 # 컨테이너 시작 타임아웃 (초)
-DOCKER_TIMEOUT=120
+DOCKER_TIMEOUT=120s
 
 # 서버 시작 중 표시되는 커스텀 MOTD
 AUTO_SCALE_ASLEEP_MOTD=§e§lServer is sleeping§r\n§7Connect to wake up!

@@ -1262,7 +1262,7 @@ services:
       IN_DOCKER: "true"
       AUTO_SCALE_UP: "true"
       AUTO_SCALE_DOWN: "true"
-      AUTO_SCALE_DOWN_AFTER: "1m"
+      AUTO_SCALE_DOWN_AFTER: "10m"
       # Go time.Duration format required (e.g., "120s", "2m"). Bare integers fail to parse.
       DOCKER_TIMEOUT: "120s"
       API_BINDING: ":8080"

@@ -120,13 +120,8 @@ export class Paths {
     if (process.env['MCCTL_TEMPLATES']) {
       return process.env['MCCTL_TEMPLATES'];
     }
-    // Check CLI package's bundled templates first
-    const cliTemplates = join(this.cliPackageRoot, 'templates');
-    if (existsSync(cliTemplates)) {
-      return cliTemplates;
-    }
-    // Fallback to development structure
-    return join(this.packageRoot, '..', '..', '..', 'templates');
+    // Single source (#651): platform/services/cli/templates
+    return join(this.cliPackageRoot, 'templates');
   }
 
   /** User data directory (~/.minecraft-servers) */

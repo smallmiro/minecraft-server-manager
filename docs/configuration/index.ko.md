@@ -106,7 +106,7 @@ mcctl router restart
 AUTO_SCALE_UP=true              # 플레이어 접속 시 서버 자동 시작
 AUTO_SCALE_DOWN=true            # 유휴 서버 자동 중지
 AUTO_SCALE_DOWN_AFTER=10m       # 유휴 타임아웃
-DOCKER_TIMEOUT=120              # 서버 시작 타임아웃 (초)
+DOCKER_TIMEOUT=120s             # 서버 시작 타임아웃 (Go time.Duration: 120s, 2m)
 ```
 
 ### 서버 속성 변경

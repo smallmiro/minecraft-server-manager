@@ -80,7 +80,7 @@ node platform/services/cli/dist/index.js --version
 | `platform/services/mcctl-console/` | `@minecraft-docker/mcctl-console`: Next.js 웹 UI (포트 5000) |
 | `platform/services/mod-source-modrinth/` | `@minecraft-docker/mod-source-modrinth`: Modrinth 어댑터 |
 | `platform/scripts/` | Bash 관리 스크립트 (테스트는 `platform/scripts/tests/`) |
-| `templates/` | `mcctl init`이 복사하는 플랫폼 템플릿 |
+| `platform/services/cli/templates/` | `mcctl init`이 복사하는 플랫폼 템플릿의 단일 원천 (`platform/docker-compose.yml`, `platform/servers/_template`은 이를 가리키는 심볼릭 링크) |
 | `e2e/` | Management Console용 Playwright E2E 테스트 |
 | `docs/` | MkDocs 문서 (영어/한국어) |
 | `website/` | 프로젝트 랜딩 페이지 |

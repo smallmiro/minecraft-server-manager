@@ -6,8 +6,8 @@
 # - --whitelist a,b      -> enabled + players
 # - --enable-whitelist   -> enabled, no players
 # - --no-whitelist       -> disabled (wins over --whitelist, any order)
-# All three templates are checked: templates/, platform/servers/ and the
-# npm-bundled platform/services/cli/templates/ (what mcctl actually uses),
+# Both template entry points are checked: platform/servers/ (the script default)
+# and the npm-bundled platform/services/cli/templates/ (what mcctl actually uses),
 # plus a legacy template that still has ENABLE_WHITELIST=TRUE.
 #
 # Runs the real script in a temp platform dir with fake docker/ip/hostname/sudo
@@ -25,7 +25,7 @@ setup() {
     fake_cmd sudo 'echo "$*" >> "$BATS_TEST_TMPDIR/sudo.log"; exit 1'
     make_platform
     : > "$PLATFORM/docker-compose.yml"
-    cp -r "$REPO_DIR/platform/servers/_template" "$PLATFORM/servers/_template"
+    cp -rL "$REPO_DIR/platform/servers/_template" "$PLATFORM/servers/_template"
 }
 
 teardown() {
@@ -73,10 +73,6 @@ run_cases() {
     [ "$(count '^ENABLE_WHITELIST=' wlno)" = 0 ]
 }
 
-@test "whitelist: templates/" {
-    run_cases "$REPO_DIR/templates"
-}
-
 @test "whitelist: platform/servers/ (script default template)" {
     run_cases ""
 }
@@ -91,7 +87,7 @@ run_cases() {
 @test "whitelist: legacy template with ENABLE_WHITELIST=TRUE" {
     LEGACY="$BATS_TEST_TMPDIR/legacy-templates"
     mkdir -p "$LEGACY/servers"
-    cp -r "$REPO_DIR/templates/servers/_template" "$LEGACY/servers/_template"
+    cp -r "$REPO_DIR/platform/services/cli/templates/servers/_template" "$LEGACY/servers/_template"
     printf '\nENABLE_WHITELIST=TRUE\n' >> "$LEGACY/servers/_template/config.env"
     run_cases "$LEGACY"
 }

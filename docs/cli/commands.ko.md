@@ -125,7 +125,7 @@ mc-router 설정은 `.env` 파일의 환경 변수로 구성합니다:
 AUTO_SCALE_UP=true              # 플레이어 접속 시 서버 자동 시작
 AUTO_SCALE_DOWN=true            # 유휴 서버 자동 중지
 AUTO_SCALE_DOWN_AFTER=10m       # 유휴 타임아웃 (1m, 5m, 10m, 30m, 1h)
-DOCKER_TIMEOUT=120              # 컨테이너 시작 타임아웃 (초)
+DOCKER_TIMEOUT=120s             # 컨테이너 시작 타임아웃 (Go time.Duration: 120s, 2m)
 
 # 슬립 상태 서버의 커스텀 MOTD
 AUTO_SCALE_ASLEEP_MOTD=§e§l서버가 슬립 중§r\n§7접속하면 깨어납니다!
