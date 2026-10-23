@@ -1,8 +1,9 @@
 import type { Dirent } from 'node:fs';
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
-import { applyEnvChanges, parseEnvDocument, writeFileAtomic, type EnvDocument } from '../../utils/env-file.js';
+import { applyEnvChanges, parseEnvDocument, type EnvDocument } from '../../utils/env-file.js';
+import { atomicWriteFile } from '../../utils/atomic-write.js';
 import {
   EXISTING_WORLD_NAME_PATTERN,
   WorldAssignmentError,
@@ -196,7 +197,8 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
 
   private async writeLevel(server: string, world: string): Promise<void> {
     const file = this.configPath(server);
-    const [content, { mode }] = await Promise.all([readFile(file, 'utf-8'), stat(file)]);
-    await writeFileAtomic(file, applyEnvChanges(content, { set: { LEVEL: world } }), mode & 0o777);
+    const content = await readFile(file, 'utf-8');
+    // config.env is a Compose env_file: raw style (#656); atomicWriteFile keeps the mode
+    await atomicWriteFile(file, applyEnvChanges(content, { set: { LEVEL: world } }, { raw: true }));
   }
 }
