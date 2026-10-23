@@ -388,3 +388,74 @@ exec "$@"'
     [ "$status" -eq 0 ]
     [ "$(cat "$AVAHI_HOSTS")" = "$(printf '# wood.local note\n10.0.0.1 ironwood.local\n10.0.0.1 woodXlocal\n10.0.0.1 wood.localdomain')" ]
 }
+
+# --- #660 review: YAML forms, include block scope, failures -----------------------
+
+@test "delete: quoted and commented include entries are removed, others kept (#660)" {
+    add_server wood
+    printf 'include:\n  - "wood/docker-compose.yml" # managed server\n  - ironwood/docker-compose.yml\n  - '"'"'wood/docker-compose.yml'"'"'\n  - wood/docker-compose.yml # note\n' > "$PLATFORM/servers/compose.yml"
+    run bash "$SCRIPTS_DIR/delete-server.sh" wood --force --keep-avahi
+    [ "$status" -eq 0 ]
+    [ "$(cat "$PLATFORM/servers/compose.yml")" = "$(printf 'include:\n  - ironwood/docker-compose.yml')" ]
+}
+
+@test "delete: only the top-level include block is edited, other list items are kept (#660)" {
+    add_server wood
+    printf 'include:\n  - wood/docker-compose.yml\n  - ironwood/docker-compose.yml\nservices:\n  other:\n    command:\n      - wood/docker-compose.yml\n' > "$PLATFORM/servers/compose.yml"
+    run bash "$SCRIPTS_DIR/delete-server.sh" wood --force --keep-avahi
+    [ "$status" -eq 0 ]
+    [ "$(cat "$PLATFORM/servers/compose.yml")" = "$(printf 'include:\n  - ironwood/docker-compose.yml\nservices:\n  other:\n    command:\n      - wood/docker-compose.yml')" ]
+}
+
+@test "delete: a failed include rewrite aborts, keeps the backup and the server dir (#660)" {
+    add_server wood
+    printf 'include:\n  - wood/docker-compose.yml\n' > "$PLATFORM/servers/compose.yml"
+    fake_cmd awk 'exit 2'
+    run bash "$SCRIPTS_DIR/delete-server.sh" wood --force --keep-avahi
+    [ "$status" -eq 1 ]
+    [ -d "$PLATFORM/servers/wood" ]
+    [ -f "$PLATFORM/servers/compose.yml.bak" ]
+    grep -q wood "$PLATFORM/servers/compose.yml"
+}
+
+@test "delete: an include reference that cannot be removed aborts before deleting (#660)" {
+    add_server wood
+    printf 'include: [wood/docker-compose.yml]\n' > "$PLATFORM/servers/compose.yml"
+    run bash "$SCRIPTS_DIR/delete-server.sh" wood --force --keep-avahi
+    [ "$status" -eq 1 ]
+    [ -d "$PLATFORM/servers/wood" ]
+    grep -q wood "$PLATFORM/servers/compose.yml"
+}
+
+# avahi_sudo_setup: fake sudo that fails for the command named in $FAIL_SUDO_CMD
+avahi_sudo_setup() {
+    fake_cmd sudo 'while [[ "${1:-}" == -* ]]; do shift; done
+[ "$1" = "${FAIL_SUDO_CMD:-}" ] && exit 1
+exec "$@"'
+    fake_cmd systemctl 'exit 0'
+    export AVAHI_HOSTS="$BATS_TEST_TMPDIR/avahi-hosts"
+    printf '10.0.0.1 ironwood.local\n10.0.0.1 wood.local\n' > "$AVAHI_HOSTS"
+    chmod 640 "$AVAHI_HOSTS"
+}
+
+@test "delete: avahi is replaced atomically and keeps its mode (#660)" {
+    add_server wood
+    avahi_sudo_setup
+    run bash "$SCRIPTS_DIR/delete-server.sh" wood --force
+    [ "$status" -eq 0 ]
+    [ "$(cat "$AVAHI_HOSTS")" = "10.0.0.1 ironwood.local" ]
+    [ "$(ls -l "$AVAHI_HOSTS" | cut -c1-10)" = "-rw-r-----" ]
+    [ "$(ls "$BATS_TEST_TMPDIR" | grep -c 'avahi-hosts.')" -eq 0 ]
+}
+
+@test "delete: a failed avahi write leaves the original intact and no temp file (#660)" {
+    local cmd
+    for cmd in tee mv; do
+        add_server wood
+        avahi_sudo_setup
+        FAIL_SUDO_CMD=$cmd run bash "$SCRIPTS_DIR/delete-server.sh" wood --force
+        [ "$(cat "$AVAHI_HOSTS")" = "$(printf '10.0.0.1 ironwood.local\n10.0.0.1 wood.local')" ]
+        [ "$(ls "$BATS_TEST_TMPDIR" | grep -c 'avahi-hosts.')" -eq 0 ]
+        rm -rf "$PLATFORM/servers/wood"
+    done
+}
