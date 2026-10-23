@@ -77,7 +77,7 @@ export interface IShellPort {
   /**
    * List worlds
    *
-   * @deprecated Unused by the CLI, and fails since lock.sh was removed (#670). Use IWorldRepository /
+   * @deprecated lock.sh was removed (#670); always fails without running a script. Use IWorldRepository /
    * `mcctl world list`. Removed in v3.0.0 (#736).
    */
   worldList(json?: boolean): Promise<ShellResult>;
@@ -85,7 +85,7 @@ export interface IShellPort {
   /**
    * Assign world to server
    *
-   * @deprecated Writes a worlds/.locks file nothing reads (#670). Use
+   * @deprecated lock.sh was removed (#670); always fails without running a script. Use
    * IWorldAssignmentPort.assign (or WorldManagementUseCase.assignWorldByName).
    * Removed in v3.0.0 (#736).
    */
@@ -94,7 +94,7 @@ export interface IShellPort {
   /**
    * Release world lock
    *
-   * @deprecated Removes a worlds/.locks file nothing reads (#670). Use
+   * @deprecated lock.sh was removed (#670); always fails without running a script. Use
    * IWorldAssignmentPort.release (or WorldManagementUseCase.releaseWorldByName).
    * Removed in v3.0.0 (#736).
    */
