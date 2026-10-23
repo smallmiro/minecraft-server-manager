@@ -5,8 +5,8 @@
  * to refuse restores over running servers and to flush running servers before a copy.
  * Never import the docker facade or an adapter barrel from here (cycle, ADR-0001).
  */
-import { cp, lstat, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
-import { dirname, join, relative } from 'node:path';
+import { cp, lstat, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import { parseEnvDocument } from '../../utils/env-file.js';
 import { WorldName, resolveWorldName } from '../../domain/value-objects/WorldName.js';
 import type { BackupRetentionPolicy } from '../../domain/value-objects/BackupRetentionPolicy.js';
@@ -17,8 +17,6 @@ import type {
   IWorldBackupPort,
   LockOptions,
   WorldBackupCommit,
-  WorldBackupError,
-  WorldBackupErrorCode,
   WorldBackupPruneOutcome,
   WorldBackupPushOptions,
   WorldBackupPushOutcome,
@@ -27,6 +25,8 @@ import type {
   WorldBackupStatus,
 } from '../../application/ports/outbound/IWorldBackupPort.js';
 import { acquireBackupLock } from '../backup/lock.js';
+import { cleanStaging, incompleteSlots, rotateSlots, swapIntoPlace, type RestoreTarget } from '../backup/restore-slots.js';
+import { assertNoSymlinks, entries, fail, Fail, isMissing, listDirs, lstatOrNull } from '../backup/support.js';
 import { BACKUP_IDENTITY, GitRunner, networkErrorCode, type GitOptions, type GitResult } from '../backup/git.js';
 
 export interface GitWorldBackupAdapterOptions {
@@ -47,68 +47,12 @@ interface BackupConfig {
   autoOnStop: boolean;
 }
 
-/** A failure that ends the operation with this result. */
-class Fail extends Error {
-  constructor(readonly error: WorldBackupError) {
-    super(error.message);
-  }
-}
-
-const fail = (code: WorldBackupErrorCode, message: string, extra: Partial<WorldBackupError> = {}): never => {
-  throw new Fail({ code, message, ...extra });
-};
-
 const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const COMMIT_RE = /^[0-9a-f]{4,40}$/i;
-const LOCKS = '.locks';
-const KEEP_SLOTS = 3;
 const README = '# Minecraft Worlds Backup\n\nThis repository contains automated backups of Minecraft world data.\n\n**Do not edit manually.**\n';
 
 /** D1 ports use container names; results use server names (D4 moves this rule). */
 const serverNameOf = (container: string) => container.replace(/^mc-/, '');
-
-const isMissing = (e: unknown) => (e as NodeJS.ErrnoException).code === 'ENOENT';
-
-async function lstatOrNull(path: string) {
-  try {
-    return await lstat(path);
-  } catch (e) {
-    if (isMissing(e)) return null;
-    throw e;
-  }
-}
-
-async function listDirs(path: string): Promise<string[]> {
-  try {
-    return (await readdir(path, { withFileTypes: true }))
-      .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
-      .map((d) => d.name)
-      .sort();
-  } catch (e) {
-    if (isMissing(e)) return [];
-    throw e;
-  }
-}
-
-async function entries(path: string): Promise<string[]> {
-  try {
-    return (await readdir(path)).filter((n) => n !== LOCKS).sort();
-  } catch (e) {
-    if (isMissing(e)) return [];
-    throw e;
-  }
-}
-
-/** Throws unsupported_layout on the first symlink under `path` (inclusive). */
-async function assertNoSymlinks(path: string, skip: (p: string) => boolean = () => false): Promise<void> {
-  const st = await lstat(path);
-  if (st.isSymbolicLink()) fail('unsupported_layout', `Symbolic links are not supported: ${path}`, { paths: [path] });
-  if (!st.isDirectory()) return;
-  for (const name of await readdir(path)) {
-    const child = join(path, name);
-    if (!skip(child)) await assertNoSymlinks(child, skip);
-  }
-}
 
 /** A server's internal world: servers/<n>/data/<LEVEL>[ _nether | _the_end ]. */
 interface InternalWorld {
@@ -256,7 +200,7 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
       return { ok: false, error: { code: 'commit_not_found', message: `Invalid commit "${commit}"` } };
     }
     return this.locked('restore', options, async (cfg) => {
-      await this.cleanStaging();
+      await cleanStaging(this.root);
       if (await this.hasCache()) {
         await this.git.run(['worktree', 'prune'], { cwd: this.cache });
         await this.git.run(['fetch', '-q', 'origin', this.refspec(cfg.branch)], { cwd: this.cache, token: cfg.token });
@@ -271,8 +215,8 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
         await this.mustGit(['worktree', 'add', '-q', '--detach', staging, oid]);
         const { targets, skipped } = await this.planRestore(staging);
         this.assertNothingRunning(); // re-check right before the swap (K3, R1)
-        const previousDir = await this.swap(oid, targets);
-        await this.rotateSlots();
+        const previousDir = await swapIntoPlace(this.root, oid, targets, this.stamp());
+        await rotateSlots(this.root);
         return { commit: oid, previousDir, skipped };
       } finally {
         await this.git.run(['worktree', 'remove', '--force', staging], { cwd: this.cache });
@@ -388,7 +332,7 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
         fail('locked', h ? `Another backup operation is running (${h.op}, pid ${h.pid} on ${h.hostname}, since ${h.startedAt})` : 'The backup lock file is unreadable; remove backups/.backup.lock if no backup is running', lock.holder ? { holder: lock.holder } : {});
       }
       try {
-        const incomplete = await this.incompleteSlots();
+        const incomplete = await incompleteSlots(this.root);
         if (incomplete.length > 0) {
           fail('recovery_required', `A restore did not finish; recover manually from ${incomplete.join(', ')}`, { paths: incomplete });
         }
@@ -647,9 +591,9 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
 
   // ---------------------------------------------------------------- restore
 
-  private async planRestore(staging: string): Promise<{ targets: Array<{ live: string; staged: string | null }>; skipped: string[] }> {
+  private async planRestore(staging: string): Promise<{ targets: RestoreTarget[]; skipped: string[] }> {
     await assertNoSymlinks(staging, (p) => p === join(staging, '.git'));
-    const targets: Array<{ live: string; staged: string | null }> = [];
+    const targets: RestoreTarget[] = [];
     const skipped: string[] = [];
     const stagedWorlds = await entries(join(staging, 'worlds'));
     let payload = stagedWorlds.length > 0;
@@ -720,83 +664,6 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
     for (const d of dirs) if ((await stat(d)).dev !== backupsDev) other.push(d);
     if (other.length > 0) {
       fail('unsupported_layout', `Restore needs these on the same filesystem as backups/: ${other.join(', ')}`, { paths: other });
-    }
-  }
-
-  /** Moves live → slot and staged → live; rolls back in reverse on failure (K2, R4). */
-  private async swap(oid: string, targets: Array<{ live: string; staged: string | null }>): Promise<string> {
-    const slot = join(this.root, 'backups', 'restore-previous', this.stamp());
-    const marker = join(slot, 'INCOMPLETE');
-    const saved = (live: string) => join(slot, relative(this.root, live));
-    await mkdir(slot, { recursive: true });
-    await writeFile(
-      marker,
-      JSON.stringify({ commit: oid, targets: targets.map((t) => ({ live: t.live, previous: saved(t.live) })) }, null, 2)
-    );
-
-    const done: Array<{ kind: 'aside' | 'in'; live: string }> = [];
-    try {
-      for (const t of targets) {
-        if (await lstatOrNull(t.live)) {
-          await mkdir(dirname(saved(t.live)), { recursive: true });
-          await rename(t.live, saved(t.live));
-          done.push({ kind: 'aside', live: t.live });
-        }
-        if (t.staged) {
-          await mkdir(dirname(t.live), { recursive: true });
-          await rename(t.staged, t.live);
-          done.push({ kind: 'in', live: t.live });
-        }
-      }
-    } catch (e) {
-      let complete = true;
-      for (const step of done.reverse()) {
-        try {
-          if (step.kind === 'in') {
-            const parked = join(slot, '.new', relative(this.root, step.live));
-            await mkdir(dirname(parked), { recursive: true });
-            await rename(step.live, parked);
-          } else {
-            await rename(saved(step.live), step.live);
-          }
-        } catch {
-          complete = false;
-        }
-      }
-      if (complete) {
-        await rm(marker, { force: true });
-        fail('io_failed', `Restore failed and was rolled back: ${(e as Error).message}`);
-      }
-      fail('io_failed', `Restore failed and could not be fully rolled back; recover manually from ${slot}`, { paths: [slot] });
-    }
-    await rm(marker, { force: true });
-    return slot;
-  }
-
-  private async incompleteSlots(): Promise<string[]> {
-    const dir = join(this.root, 'backups', 'restore-previous');
-    const out: string[] = [];
-    for (const name of await listDirs(dir)) {
-      if (await lstatOrNull(join(dir, name, 'INCOMPLETE'))) out.push(join(dir, name));
-    }
-    return out;
-  }
-
-  private async rotateSlots(): Promise<void> {
-    const dir = join(this.root, 'backups', 'restore-previous');
-    const complete: string[] = [];
-    for (const name of await listDirs(dir)) {
-      if (!(await lstatOrNull(join(dir, name, 'INCOMPLETE')))) complete.push(name);
-    }
-    for (const name of complete.sort().slice(0, Math.max(0, complete.length - KEEP_SLOTS))) {
-      await rm(join(dir, name), { recursive: true, force: true });
-    }
-  }
-
-  private async cleanStaging(): Promise<void> {
-    const dir = join(this.root, 'backups');
-    for (const name of await entries(dir)) {
-      if (name.startsWith('.restore-')) await rm(join(dir, name), { recursive: true, force: true });
     }
   }
 
