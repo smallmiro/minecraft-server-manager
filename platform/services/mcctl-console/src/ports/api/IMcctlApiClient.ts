@@ -1001,7 +1001,7 @@ export interface IMcctlApiClient {
   getServers(): Promise<ServerListResponse>;
   getServer(name: string): Promise<ServerDetailResponse>;
   createServer(request: CreateServerRequest): Promise<CreateServerResponse>;
-  deleteServer(name: string, force?: boolean): Promise<DeleteServerResponse>;
+  deleteServer(name: string, force?: boolean, deleteWorld?: boolean): Promise<DeleteServerResponse>;
   startServer(name: string): Promise<ActionResponse>;
   stopServer(name: string): Promise<ActionResponse>;
   restartServer(name: string): Promise<ActionResponse>;

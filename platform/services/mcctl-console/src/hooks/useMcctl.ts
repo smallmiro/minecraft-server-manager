@@ -104,12 +104,17 @@ export function useCreateServer() {
 export function useDeleteServer() {
   const queryClient = useQueryClient();
 
-  return useMutation<DeleteServerResponse, Error, { name: string; force?: boolean }>({
-    mutationFn: ({ name, force }) =>
-      apiFetch<DeleteServerResponse>(
-        `/api/servers/${encodeURIComponent(name)}${force ? '?force=true' : ''}`,
+  return useMutation<DeleteServerResponse, Error, { name: string; force?: boolean; deleteWorld?: boolean }>({
+    mutationFn: ({ name, force, deleteWorld }) => {
+      const params = new URLSearchParams();
+      if (force) params.set('force', 'true');
+      if (deleteWorld) params.set('deleteWorld', 'true');
+      const qs = params.toString();
+      return apiFetch<DeleteServerResponse>(
+        `/api/servers/${encodeURIComponent(name)}${qs ? `?${qs}` : ''}`,
         { method: 'DELETE' }
-      ),
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
     },

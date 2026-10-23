@@ -66,8 +66,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
 
+    const deleteWorld = searchParams.get('deleteWorld') === 'true';
+
     const client = createMcctlApiClient(getUserContext(session));
-    const data = await client.deleteServer(name, force);
+    const data = await client.deleteServer(name, force, deleteWorld);
 
     return NextResponse.json(data);
   } catch (error) {
