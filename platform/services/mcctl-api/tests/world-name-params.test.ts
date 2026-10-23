@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { request as httpRequest } from 'http';
 import { AddressInfo } from 'net';
 import { tmpdir } from 'os';
@@ -125,9 +125,9 @@ describe('World name path params (#720)', () => {
     expect(response.body.world.name).toBe(name);
   });
 
-  // WORLD_NAME_PATTERN lets POST /api/worlds create '-lobby'. The world name
-  // only reaches scripts as a positional argument (mcctl.sh world release ->
-  // lock.sh), never as an option, so the world must stay manageable.
+  // WORLD_NAME_PATTERN lets POST /api/worlds create '-lobby', so the world
+  // must stay manageable. Release rewrites the holder's LEVEL (#670); no
+  // script or lock file is involved.
   describe('a world name starting with "-"', () => {
     it('is reachable', async () => {
       const response = await send('GET', '/api/worlds/-lobby');
@@ -135,16 +135,22 @@ describe('World name path params (#720)', () => {
       expect(response.body.world.name).toBe('-lobby');
     });
 
-    it('is released by the real lock scripts', async () => {
-      const lockFile = join(TEST_PLATFORM_PATH, 'worlds', '.locks', '-lobby.lock');
-      mkdirSync(join(TEST_PLATFORM_PATH, 'worlds', '.locks'), { recursive: true });
-      writeFileSync(lockFile, `survival:${Math.floor(Date.now() / 1000)}:1\n`);
+    it('is released from the server whose LEVEL points at it', async () => {
+      // A name no real host runs: the release checks mc-<server> through docker
+      const holder = 'mcctl-test-holder-670';
+      const configEnv = join(TEST_PLATFORM_PATH, 'servers', holder, 'config.env');
+      mkdirSync(join(TEST_PLATFORM_PATH, 'servers', holder), { recursive: true });
+      writeFileSync(configEnv, 'LEVEL=-lobby\nEXTRA_ARGS=--universe /worlds/\n');
 
-      const response = await send('POST', '/api/worlds/-lobby/release');
+      try {
+        const response = await send('POST', '/api/worlds/-lobby/release');
 
-      expect(response.statusCode).toBe(200);
-      expect(response.body).toMatchObject({ success: true, worldName: '-lobby', previousServer: 'survival' });
-      expect(existsSync(lockFile)).toBe(false);
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toMatchObject({ success: true, worldName: '-lobby', previousServer: holder });
+        expect(readFileSync(configEnv, 'utf-8')).toBe(`LEVEL=${holder}\nEXTRA_ARGS=--universe /worlds/\n`);
+      } finally {
+        rmSync(join(TEST_PLATFORM_PATH, 'servers', holder), { recursive: true });
+      }
     });
 
     it('is deleted', async () => {

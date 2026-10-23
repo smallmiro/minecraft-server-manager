@@ -63,9 +63,9 @@ mcctl create --help
 
 | Command | Description |
 |---------|-------------|
-| `mcctl world list` | List all worlds with lock status |
-| `mcctl world assign` | Lock a world to a server |
-| `mcctl world release` | Release a world lock |
+| `mcctl world list` | List all worlds with the servers they are assigned to |
+| `mcctl world assign` | Assign a world to a stopped server (one world, one server) |
+| `mcctl world release` | Switch a world's server back to its own default world |
 
 ### Server Backup/Restore
 

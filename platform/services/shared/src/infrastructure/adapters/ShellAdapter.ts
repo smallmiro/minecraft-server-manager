@@ -22,6 +22,11 @@ export interface ShellAdapterOptions {
   sudoPassword?: string;
 }
 
+/** Result of the deprecated lock.sh world methods: a failure, no script is run. */
+function worldLockRemoved(replacement: string): ShellResult {
+  return { code: 1, stdout: '', stderr: `lock.sh was removed (#670); use ${replacement}`, success: false };
+}
+
 /**
  * ShellAdapter
  * Implements IShellPort by executing bash scripts
@@ -173,6 +178,7 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('mcctl.sh', ['stop', serverName]);
   }
 
+  /** @deprecated Use IContainerRuntimePort.getStatus. Removed in v3.0.0 (#736). */
   async serverStatus(name: string): Promise<ShellResult> {
     return this.executeScript('mcctl.sh', ['status', name, '--json']);
   }
@@ -213,30 +219,28 @@ export class ShellAdapter implements IShellPort {
   // World Operations
   // ========================================
 
-  async worldList(json = false): Promise<ShellResult> {
-    const args: string[] = ['list'];
-    if (json) {
-      args.push('--json');
-    }
-    return this.executeScript('lock.sh', args);
+  /**
+   * @deprecated lock.sh was removed (#670); always fails. Use IWorldAssignmentPort /
+   * `mcctl world list`. Removed in v3.0.0 (#736).
+   */
+  async worldList(_json = false): Promise<ShellResult> {
+    return worldLockRemoved('IWorldAssignmentPort.snapshot / mcctl world list');
   }
 
-  async worldAssign(
-    worldName: string,
-    serverName: string,
-    force = false
-  ): Promise<ShellResult> {
-    // Use mcctl.sh world assign which delegates to lock.sh lock
-    const args: string[] = ['world', 'assign', worldName, serverName];
-    if (force) {
-      args.push('--force');
-    }
-    return this.executeScript('mcctl.sh', args);
+  /**
+   * @deprecated lock.sh was removed (#670); always fails. Use IWorldAssignmentPort.assign.
+   * Removed in v3.0.0 (#736).
+   */
+  async worldAssign(_worldName: string, _serverName: string, _force = false): Promise<ShellResult> {
+    return worldLockRemoved('IWorldAssignmentPort.assign / mcctl world assign');
   }
 
-  async worldRelease(worldName: string): Promise<ShellResult> {
-    // Use mcctl.sh world release which delegates to lock.sh unlock
-    return this.executeScript('mcctl.sh', ['world', 'release', worldName]);
+  /**
+   * @deprecated lock.sh was removed (#670); always fails. Use IWorldAssignmentPort.release.
+   * Removed in v3.0.0 (#736).
+   */
+  async worldRelease(_worldName: string): Promise<ShellResult> {
+    return worldLockRemoved('IWorldAssignmentPort.release / mcctl world release');
   }
 
   // ========================================

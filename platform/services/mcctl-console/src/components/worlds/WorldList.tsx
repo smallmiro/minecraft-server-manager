@@ -107,7 +107,7 @@ export function WorldList({
         >
           <ToggleButton value="all">All</ToggleButton>
           <ToggleButton value="available">Available</ToggleButton>
-          <ToggleButton value="locked">Locked</ToggleButton>
+          <ToggleButton value="locked">Assigned</ToggleButton>
         </ToggleButtonGroup>
 
         <TextField

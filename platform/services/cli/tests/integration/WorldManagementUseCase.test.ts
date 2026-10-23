@@ -6,6 +6,8 @@ import {
   MockShellAdapter,
   MockServerRepository,
   MockWorldRepository,
+  MockWorldAssignmentPort,
+  createMockContainerRuntime,
 } from '../mocks/index.js';
 
 describe('WorldManagementUseCase Integration', () => {
@@ -13,7 +15,19 @@ describe('WorldManagementUseCase Integration', () => {
   let shellAdapter: MockShellAdapter;
   let serverRepo: MockServerRepository;
   let worldRepo: MockWorldRepository;
+  let assignments: MockWorldAssignmentPort;
+  let runtime: ReturnType<typeof createMockContainerRuntime>;
   let useCase: WorldManagementUseCase;
+
+  const makeUseCase = () =>
+    new WorldManagementUseCase(
+      promptAdapter,
+      shellAdapter,
+      worldRepo,
+      serverRepo,
+      assignments,
+      runtime.runtime
+    );
 
   beforeEach(() => {
     promptAdapter = new MockPromptAdapter({
@@ -27,15 +41,13 @@ describe('WorldManagementUseCase Integration', () => {
     ]);
     worldRepo = new MockWorldRepository([
       { name: 'survival', isLocked: false },
-      { name: 'creative', isLocked: true, lockedBy: 'mc-server1' },
+      { name: 'creative', isLocked: true, lockedBy: 'server1' },
       { name: 'hardcore', isLocked: false },
     ]);
-    useCase = new WorldManagementUseCase(
-      promptAdapter,
-      shellAdapter,
-      worldRepo,
-      serverRepo
-    );
+    // A server's world is its LEVEL (#670): server1 uses 'creative'
+    assignments = new MockWorldAssignmentPort({ server1: 'creative', server2: 'server2' });
+    runtime = createMockContainerRuntime();
+    useCase = makeUseCase();
   });
 
   describe('createWorld (CLI mode)', () => {
@@ -76,25 +88,20 @@ describe('WorldManagementUseCase Integration', () => {
       assert.ok(result.error?.includes('not found'));
     });
 
-    it('should stop running server before configuring', async () => {
-      shellAdapter = new MockShellAdapter({
-        serverStatusResult: { success: true, stdout: 'Status: running' },
-      });
-      useCase = new WorldManagementUseCase(
-        promptAdapter,
-        shellAdapter,
-        worldRepo,
-        serverRepo
-      );
+    it('should refuse a running server without stopping it (#670)', async () => {
+      runtime = createMockContainerRuntime('running');
+      useCase = makeUseCase();
 
-      await useCase.createWorld({
+      const result = await useCase.createWorld({
         name: 'newworld',
         serverName: 'server1',
       });
 
-      assert.ok(shellAdapter.wasCommandCalled('serverStatus'));
-      assert.ok(shellAdapter.wasCommandCalled('stopServer'));
-      assert.ok(shellAdapter.wasCommandCalled('setServerConfig'));
+      assert.strictEqual(result.success, false);
+      assert.strictEqual(result.errorCode, 'server_running');
+      assert.ok(!shellAdapter.wasCommandCalled('stopServer'));
+      assert.ok(!assignments.wasCalled('assign'));
+      assert.strictEqual(await worldRepo.exists('newworld'), false);
     });
 
     it('should start server when autoStart is true', async () => {
@@ -106,7 +113,7 @@ describe('WorldManagementUseCase Integration', () => {
 
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.started, true);
-      assert.ok(shellAdapter.wasCommandCalled('startServer'));
+      assert.deepStrictEqual(runtime.started, ['mc-server1']);
     });
 
     it('should not start server when autoStart is false', async () => {
@@ -118,7 +125,7 @@ describe('WorldManagementUseCase Integration', () => {
 
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.started, false);
-      assert.ok(!shellAdapter.wasCommandCalled('startServer'));
+      assert.deepStrictEqual(runtime.started, []);
     });
 
     it('should return error when no servers available', async () => {
@@ -130,16 +137,8 @@ describe('WorldManagementUseCase Integration', () => {
       assert.ok(result.error?.includes('No servers'));
     });
 
-    it('should handle setServerConfig failure for LEVEL', async () => {
-      shellAdapter = new MockShellAdapter({
-        setServerConfigResult: { success: false, stderr: 'Config error' },
-      });
-      useCase = new WorldManagementUseCase(
-        promptAdapter,
-        shellAdapter,
-        worldRepo,
-        serverRepo
-      );
+    it('should handle a LEVEL write failure', async () => {
+      assignments.failNext = new Error('Config error');
 
       const result = await useCase.createWorld({
         name: 'newworld',
@@ -147,7 +146,8 @@ describe('WorldManagementUseCase Integration', () => {
       });
 
       assert.strictEqual(result.success, false);
-      assert.ok(result.error?.includes('Config error') || result.error?.includes('LEVEL'));
+      assert.ok(result.error?.includes('Config error'));
+      assert.ok(!shellAdapter.wasCommandCalled('setServerConfig'));
     });
   });
 
@@ -170,12 +170,7 @@ describe('WorldManagementUseCase Integration', () => {
       });
       promptAdapter.textValues = ['seedworld', '98765'];
 
-      useCase = new WorldManagementUseCase(
-        promptAdapter,
-        shellAdapter,
-        worldRepo,
-        serverRepo
-      );
+      useCase = makeUseCase();
 
       const result = await useCase.createWorld();
 
@@ -206,7 +201,7 @@ describe('WorldManagementUseCase Integration', () => {
       const creative = worlds.find((w) => w.name === 'creative');
       assert.ok(creative);
       assert.strictEqual(creative.isLocked, true);
-      assert.strictEqual(creative.lockedBy, 'mc-server1');
+      assert.strictEqual(creative.lockedBy, 'server1');
     });
 
     it('should return empty array when no worlds', async () => {
@@ -221,7 +216,8 @@ describe('WorldManagementUseCase Integration', () => {
       const result = await useCase.assignWorld();
 
       assert.strictEqual(result.success, true);
-      assert.ok(shellAdapter.wasCommandCalled('worldAssign'));
+      assert.deepStrictEqual(assignments.calls[0], { method: 'assign', args: ['survival', 'server1'] });
+      assert.ok(!shellAdapter.wasCommandCalled('worldAssign'));
     });
 
     it('should show intro message', async () => {
@@ -234,17 +230,12 @@ describe('WorldManagementUseCase Integration', () => {
         { name: 'locked1', isLocked: true, lockedBy: 'server1' },
         { name: 'locked2', isLocked: true, lockedBy: 'server2' },
       ]);
-      useCase = new WorldManagementUseCase(
-        promptAdapter,
-        shellAdapter,
-        worldRepo,
-        serverRepo
-      );
+      useCase = makeUseCase();
 
       const result = await useCase.assignWorld();
 
       assert.strictEqual(result.success, false);
-      assert.ok(result.error?.includes('No unlocked worlds'));
+      assert.ok(result.error?.includes('No unassigned worlds'));
     });
 
     it('should return error when no servers', async () => {
@@ -273,11 +264,12 @@ describe('WorldManagementUseCase Integration', () => {
       assert.ok(result.error?.includes('not found'));
     });
 
-    it('should return error when world is locked', async () => {
+    it('should return error when world is assigned to another server', async () => {
       const result = await useCase.assignWorldByName('creative', 'server2');
 
       assert.strictEqual(result.success, false);
-      assert.ok(result.error?.includes('already locked'));
+      assert.strictEqual(result.errorCode, 'conflict');
+      assert.ok(result.error?.includes("'server1'"));
     });
 
     it('should return error when server not found', async () => {
@@ -293,12 +285,13 @@ describe('WorldManagementUseCase Integration', () => {
       const result = await useCase.releaseWorld();
 
       assert.strictEqual(result.success, true);
-      assert.ok(shellAdapter.wasCommandCalled('worldRelease'));
+      assert.ok(assignments.wasCalled('release'));
+      assert.ok(!shellAdapter.wasCommandCalled('worldRelease'));
     });
 
     it('should show intro message', async () => {
       await useCase.releaseWorld();
-      assert.strictEqual(promptAdapter.introMessage, 'Release World Lock');
+      assert.strictEqual(promptAdapter.introMessage, 'Release World');
     });
 
     it('should return error when no locked worlds', async () => {
@@ -306,56 +299,41 @@ describe('WorldManagementUseCase Integration', () => {
         { name: 'unlocked1', isLocked: false },
         { name: 'unlocked2', isLocked: false },
       ]);
-      useCase = new WorldManagementUseCase(
-        promptAdapter,
-        shellAdapter,
-        worldRepo,
-        serverRepo
-      );
+      useCase = makeUseCase();
 
       const result = await useCase.releaseWorld();
 
       assert.strictEqual(result.success, false);
-      assert.ok(result.error?.includes('No locked worlds'));
+      assert.ok(result.error?.includes('No assigned worlds'));
     });
 
     it('should return error when user declines', async () => {
       promptAdapter = new MockPromptAdapter({ confirm: false });
-      useCase = new WorldManagementUseCase(
-        promptAdapter,
-        shellAdapter,
-        worldRepo,
-        serverRepo
-      );
+      useCase = makeUseCase();
 
       const result = await useCase.releaseWorld();
 
       assert.strictEqual(result.success, false);
-      assert.ok(!shellAdapter.wasCommandCalled('worldRelease'));
+      assert.ok(!assignments.wasCalled('release'));
     });
   });
 
   describe('releaseWorldByName', () => {
-    it('should release world lock by name', async () => {
+    it('should switch the holder back to its own world', async () => {
       const result = await useCase.releaseWorldByName('creative');
 
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.worldName, 'creative');
-      assert.strictEqual(result.previousServer, 'mc-server1');
+      assert.strictEqual(result.previousServer, 'server1');
+      assert.strictEqual(result.fallbackWorld, 'server1');
+      assert.strictEqual(assignments.levels.get('server1'), 'server1');
     });
 
-    it('should return error when world not found', async () => {
-      const result = await useCase.releaseWorldByName('nonexistent');
-
-      assert.strictEqual(result.success, false);
-      assert.ok(result.error?.includes('not found'));
-    });
-
-    it('should return error when world is not locked', async () => {
+    it('should return error when no server uses the world', async () => {
       const result = await useCase.releaseWorldByName('survival');
 
       assert.strictEqual(result.success, false);
-      assert.ok(result.error?.includes('not locked'));
+      assert.strictEqual(result.errorCode, 'not_assigned');
     });
   });
 

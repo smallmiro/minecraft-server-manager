@@ -49,7 +49,7 @@
 | **Management Console** | Web Console (port 5000) + REST API (port 5001) |
 | **Player Management** | Unified player command with Mojang API integration |
 | **Mod Management** | Search, add, remove mods from Modrinth, CurseForge, Spiget, direct URLs |
-| **World Management** | Shared world storage with locking, cross-server world sharing |
+| **World Management** | Shared world storage, world-server assignment via `LEVEL` (one world, one server) |
 | **GitHub Backup** | Automatic world backup to private GitHub repositories |
 | **Audit Logs** | Comprehensive activity tracking with SQLite storage and web UI |
 | **External Access** | playit.gg tunneling for internet access without port forwarding |
@@ -149,7 +149,6 @@ For external access via playit.gg, see `mcctl playit setup`.
 │   ├── compose.yml         # Server include list (auto-generated)
 │   └── _template/          # Template for new servers
 ├── worlds/                 # Shared world storage
-│   └── .locks/             # Lock files for world-server assignment
 ├── shared/                 # Shared resources
 │   ├── plugins/            # Shared plugins (read-only mount)
 │   └── mods/               # Shared mods (read-only mount)
@@ -241,8 +240,6 @@ After running `mcctl init`, the following directory structure is created:
 │       └── data/                     # Server container data mount
 │
 ├── worlds/                           # Shared world storage
-│   ├── .locks/                       # Lock files (server-world assignment)
-│   │   └── <world>.lock              # Lock file content: server-name
 │   └── <world-name>/                 # World directories
 │       ├── .meta                     # World metadata (seed, createdAt)
 │       ├── level.dat                 # Minecraft world data
@@ -719,17 +716,28 @@ mcctl player cache clear           # Clear cache
 ### World Management
 
 ```bash
-mcctl world list                              # List worlds with lock status
+mcctl world list                              # List worlds with assigned servers (and duplicate warnings)
 mcctl world new [name]                        # Create new world (interactive or CLI)
 mcctl world new <name> --seed 12345           # Create with seed
-mcctl world new <name> --server <srv>         # Create and assign to server
+mcctl world new <name> --server <srv>         # Create and assign to a stopped server
 mcctl world new <name> --server <srv> --no-start  # Don't auto-start server
-mcctl world assign [world] [server]           # Lock world to server
-mcctl world release [world]                   # Release lock
-mcctl world release [world] --force           # Force release
+mcctl world assign [world] [server]           # Assign world to a stopped server (sets LEVEL)
+mcctl world release [world]                   # Switch the world's server back to its own default world
+mcctl world release [world] --force           # --force is accepted and ignored
 mcctl world delete [world]                    # Delete world (with confirmation)
-mcctl world delete [world] --force            # Force delete
+mcctl world delete [world] --force            # Skip the prompt (does not delete a world a server uses)
 ```
+
+**World assignment rules** (#670):
+
+- A world is assigned to a server by the server's `LEVEL` in `servers/<name>/config.env` (legacy `WORLD_NAME` is read when `LEVEL` is unset; unset means itzg's default `world`). There is no lock file: `worlds/.locks` is no longer read, written or created (`mcctl init` does not create it), and `platform/scripts/lock.sh` was removed (`mcctl.sh world` only prints a removal message). An existing `worlds/.locks` directory is harmless; `rm -rf worlds/.locks` is safe.
+- **One world, one server (R1).** A world and its `<world>_nether` / `<world>_the_end` folders count as one world. A world used by another server cannot be assigned: `mcctl world assign`, `mcctl create --world`, a new server's default world `<name>`, `mcctl config <srv> LEVEL <w>`, API `POST /api/worlds/:name/assign`, `PATCH /api/servers/:name/config` with `level`, `POST /api/servers`, `POST /api/worlds` with `serverName`. Deleting a server frees its world for reuse.
+- **Stopped server only.** assign, release, `world new --server`, config `LEVEL` and PATCH `level` are refused when the container is running, paused, restarting or created. Nothing is stopped automatically (`world new --server` used to try to stop the server; it now refuses).
+- **Fail-closed.** If any server's `config.env` cannot be read, or its `LEVEL` cannot be interpreted safely (path separators, `.`/`..`, quotes, control characters, Compose interpolation like `${VAR}` outside single quotes, or an unsupported `--universe` location), every assignment change and world delete/reset is refused until it is fixed. Legacy names such as `My World` are still accepted as existing values; new names must be letters, digits, `-`, `_`.
+- **Release** switches the server using the world back to its own default world `<server>` (adopting an existing free `worlds/<server>`, otherwise created on next start). `--force` is accepted and ignored. Releasing a server from its own default world, a duplicated world, or a server whose world is inside `servers/<n>/data` is refused.
+- **Delete.** `mcctl world delete <w> --force` only skips the prompt; it never deletes a world a server uses. Servers keeping their world inside `servers/<n>/data` (no `EXTRA_ARGS=--universe /worlds/`) do not block deleting `worlds/<w>`. `POST /api/servers/:name/world/reset` is refused for such servers and when another server uses the same world.
+- **Duplicate assignments** from older installs are reported, not fixed: `mcctl world list` shows `assigned: a, b` and prints warnings; `GET /api/worlds` adds `assignmentWarnings: string[]`; the console worlds page shows a warning alert and the card shows "Assigned to N servers". `isLocked`/`lockedBy` remain in the API as aliases for "assigned".
+- **API status codes** for world assign/release/delete/create and config `level`: invalid world name 400, unknown server or world 404, everything else refused by these rules 409 (conflict, server running, undetermined config). Config snapshot restore answers 409 when the restored `config.env` would assign a world another server uses, or change the world of a running server (even with force), or when the restored `docker-compose.yml` sets world keys in `environment` or changes the `/worlds`/`/data` mapping. `mcctl config <srv> EXTRA_ARGS` that moves the world is checked the same way. `mcctl migrate worlds` refuses the same way before moving data.
 
 **World behavior**: `mcctl world new` creates a world directory with a `.meta` file (containing seed and creation timestamp). Actual Minecraft world files are generated when a server first uses the world.
 
@@ -1147,7 +1155,7 @@ USE_AIKAR_FLAGS=true
 | `MODE` / `GAMEMODE` | `survival` | `survival`, `creative`, `adventure`, `spectator` |
 | `MAX_PLAYERS` | `20` | Maximum concurrent players |
 | `PVP` | `true` | Enable PvP |
-| `LEVEL` | `world` | World save folder name |
+| `LEVEL` | `world` | World save folder name; this is the server's world assignment (stopped server only, one world per server) |
 | `SEED` | Random | World generation seed |
 | `VIEW_DISTANCE` | - | Server view distance (chunks) |
 | `SIMULATION_DISTANCE` | - | Simulation distance (chunks) |
@@ -1402,8 +1410,8 @@ curl -u admin:password http://localhost:5001/api/servers
 | POST | `/api/worlds` | Create world |
 | GET | `/api/worlds/:name` | Get world details |
 | DELETE | `/api/worlds/:name` | Delete world |
-| POST | `/api/worlds/:name/assign` | Assign world to server |
-| POST | `/api/worlds/:name/release` | Release world lock |
+| POST | `/api/worlds/:name/assign` | Assign world to a stopped server (409 if another server uses it) |
+| POST | `/api/worlds/:name/release` | Switch the world's server back to its own default world (response adds `fallbackWorld`, `fallbackExists`) |
 
 **Backup:**
 
@@ -1552,10 +1560,10 @@ curl -X POST -H "X-API-Key: mctk_xxx" \
 # Assign world to server
 curl -X POST -H "X-API-Key: mctk_xxx" \
   -H "Content-Type: application/json" \
-  -d '{"server": "survival"}' \
+  -d '{"serverName": "survival"}' \
   http://localhost:5001/api/worlds/newworld/assign
 
-# Release world lock
+# Release world (its server goes back to its own default world)
 curl -X POST -H "X-API-Key: mctk_xxx" \
   http://localhost:5001/api/worlds/newworld/release
 
@@ -1703,10 +1711,10 @@ mcctl-console is a Next.js web application providing a modern UI for managing Mi
 
 #### Worlds Page (`/worlds`)
 
-- World list with: name, size, lock status, assigned server
+- World list with: name, size, assignment status, assigned server(s); warning alert for duplicate assignments, "Assigned to N servers" chip on affected cards
 - Create new world with seed option
-- Assign world to server (shows non-running servers only)
-- Release world lock
+- Assign world to server (running servers are listed but cannot be selected)
+- Release world (the server goes back to its own default world)
 - Delete world with confirmation
 - World reset functionality with safety checks
 
@@ -2198,12 +2206,13 @@ mcctl config perf USE_AIKAR_FLAGS true
 mcctl stop perf && mcctl start perf
 ```
 
-### 4. Share World Between Servers
+### 4. Move a World to Another Server
 
 ```bash
 mcctl world list
 mcctl stop oldserver
 mcctl world release myworld
+mcctl stop newserver
 mcctl world assign myworld mc-newserver
 mcctl start newserver
 ```
@@ -2397,14 +2406,18 @@ sudo systemctl enable --now avahi-daemon
 
 **Fallback:** Use nip.io hostname instead of .local
 
-#### World Already Locked
+#### World Already Assigned
 
-**Error:** `World 'myworld' is already locked by 'mc-otherserver'`
+**Error:** `World 'myworld' is assigned to 'mc-otherserver'; assign another world to 'mc-otherserver' or delete it first` (API: 409)
 
 ```bash
-mcctl world release myworld --force
+mcctl stop otherserver
+mcctl world release myworld
+mcctl stop myserver
 mcctl world assign myworld mc-myserver
 ```
+
+If the error mentions an unreadable world assignment, fix the `LEVEL` line in that server's `config.env` (plain `LEVEL=<name>`); every assignment change is refused until then.
 
 #### Out of Memory
 
@@ -2463,8 +2476,9 @@ mcctl world assign myworld mc-myserver
 #### World management issues
 
 - Ensure server is stopped before world reset
-- Check world locks: `mcctl world list`
-- Release stuck locks: `mcctl world release <world>`
+- Check world assignments and warnings: `mcctl world list`
+- Free a world another server uses: stop that server, then `mcctl world release <world>`
+- Leftover `worlds/.locks` is unused and can be removed: `rm -rf worlds/.locks`
 
 ### Mod Issues
 
@@ -2703,7 +2717,7 @@ A: Only for the GitHub backup feature. Manual backups don't require it.
 ### World
 
 **Q: Can I share a world between servers?**
-A: Yes. Release the world lock and assign to another server.
+A: No. One world is used by one server. To move a world, stop both servers, run `mcctl world release <world>` (the old server goes back to its own default world), then `mcctl world assign <world> <server>`.
 
 **Q: What happens when I delete a server?**
 A: World data is preserved in the worlds/ directory.
@@ -3320,7 +3334,7 @@ No product behavior changes; documentation and contributor workflow only.
 | **CurseForge** | Popular mod hosting platform (CF_API_KEY optional on Java 17+ images) |
 | **Spiget** | API for SpigotMC plugin resources |
 | **Auto-scale** | mc-router feature that starts/stops servers based on player activity |
-| **World lock** | Mechanism preventing simultaneous server access to a world |
+| **World assignment** | A world belongs to the one server whose `LEVEL` in `config.env` names it; prevents simultaneous server access to a world (replaced the former lock files) |
 | **ecosystem.config.cjs** | PM2 configuration file generated by `mcctl console init` |
 | **Access Mode** | API authentication method (internal, api-key, ip-whitelist, api-key-ip, open) |
 | **BFF** | Backend-for-Frontend pattern used by mcctl-console to proxy mcctl-api |

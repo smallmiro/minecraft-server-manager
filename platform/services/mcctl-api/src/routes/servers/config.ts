@@ -2,7 +2,13 @@ import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } fro
 import fp from 'fastify-plugin';
 import { join } from 'path';
 import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
-import { serverExists, getContainerStatus, AuditActionEnum, WORLD_NAME_PATTERN } from '@minecraft-docker/shared';
+import {
+  serverExists,
+  getContainerStatus,
+  AuditActionEnum,
+  WORLD_NAME_PATTERN,
+  WorldAssignmentError,
+} from '@minecraft-docker/shared';
 import { EnvValueError } from '@minecraft-docker/shared/utils';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
@@ -16,6 +22,7 @@ import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } fr
 import { config } from '../../config/index.js';
 import { resolveInside } from '../../lib/safe-path.js';
 import { createConfigService } from '../../services/ConfigService.js';
+import { createWorldUseCase, worldFailure } from '../../lib/world-use-case.js';
 
 // ============================================================
 // Types
@@ -108,6 +115,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         200: UpdateServerConfigResponseSchema,
         400: ErrorResponseSchema,
         404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
@@ -145,7 +153,23 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      const result = configService.updateConfig(name, updates);
+      // A changed LEVEL is a world assignment (#670): checked and written by
+      // the assignment port (R1, R7, server must be stopped) before anything else
+      const levelChanged = level !== undefined && level !== previousConfig.level;
+      if (levelChanged) {
+        const assigned = await createWorldUseCase().assignWorldByName(level, name, { requireExisting: false });
+        if (!assigned.success) {
+          const failure = worldFailure(assigned, 'Failed to change level');
+          return reply.code(failure.status).send(failure.body);
+        }
+      }
+
+      const { level: _level, ...otherUpdates } = updates;
+      const result = configService.updateConfig(name, otherUpdates);
+      if (levelChanged) {
+        result.changedFields.unshift('level');
+        result.restartRequired = true;
+      }
 
       // Build before/after diff for changed fields
       const changes: Record<string, { before: unknown; after: unknown }> = {};
@@ -237,8 +261,14 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      // Get world name from configuration
-      const worldName = configService.getWorldName(name);
+      // Only the sole, non-internal user of worlds/<LEVEL> may wipe it, and the
+      // world name comes from the same parser as every assignment check (#670)
+      const plan = await createWorldUseCase().planWorldReset(name);
+      if (plan instanceof WorldAssignmentError) {
+        const failure = worldFailure({ error: plan.message, errorCode: plan.code }, 'World cannot be reset');
+        return reply.code(failure.status).send(failure.body);
+      }
+      const worldName = plan.world;
 
       // Validate world path to prevent path traversal
       const worldPath = resolveInside(join(config.mcctlRoot, 'worlds'), worldName);

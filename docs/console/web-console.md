@@ -608,13 +608,13 @@ The Worlds page lets you manage all Minecraft worlds stored in your platform.
 The page header shows the **+ Create World** button and three cards: **Total worlds**, **Assigned worlds**, and **Free worlds**. Worlds are displayed as cards in a grid layout. Each world card shows:
 
 - **World name** (e.g., `Wild-Deity`, `botagent`, `factory`)
-- **Status badge** -- `Available` (green) for unlocked worlds, `Locked` for worlds currently assigned to a server
+- **Status badge** -- `Available` (green) for unassigned worlds, `Assigned` for worlds currently assigned to a server. A red **Assigned to N servers** chip appears when an older install has several servers on the same world
 - **Size** -- Disk space used by the world (e.g., `610.2MB`, `20.5MB`), plus **Overworld** / **Nether** / **End** chips when the world has more than one dimension
-- **Servers** -- The servers using the world, or "No servers". A locked world also shows which server it is assigned to
+- **Servers** -- The servers using the world, or "No servers". An assigned world also shows which server it is assigned to
 - **Date** -- When the world was last modified
 - **Action buttons**:
     - **Assign** (link icon) -- Assign an available world to a server
-    - **Release** (unlink icon) -- Release a locked world from its server
+    - **Release** (unlink icon) -- Switch the server using the world back to its own default world (the world is kept in `worlds/`)
     - **Delete** (red trash can icon) -- Delete the world
 
 Click the body of a card to open **World Details**, which shows the same panel as the server [World tab](#world-tab) (info cards, map, ore & block stats, and player locations).
@@ -624,10 +624,14 @@ Click the body of a card to open **World Details**, which shows the same panel a
 At the top of the list:
 
 - **ALL** -- Show all worlds
-- **AVAILABLE** -- Show only available (unlocked) worlds
-- **LOCKED** -- Show only worlds currently assigned to a server
+- **AVAILABLE** -- Show only available (unassigned) worlds
+- **ASSIGNED** -- Show only worlds currently assigned to a server
 
 A **Search worlds...** box lets you filter worlds by name.
+
+### Assignment Warnings
+
+If an older install has two servers on the same world, or a server's `config.env` cannot be read, a warning alert at the top of the page lists each problem. Nothing is fixed automatically: assign another world to all but one of the servers. Until a server's `config.env` is fixed, assigning, releasing and deleting worlds are refused.
 
 ### Creating a New World
 
@@ -646,13 +650,13 @@ To bring in an existing world instead, drop a `.zip` file on the **Upload world 
 
 ### Assigning a World to a Server
 
-Click the **Assign** (link) icon on an available world card to open the **Assign World** dialog. Select a server in **Select Server**; stopped servers are listed under **Available Servers**, and running servers appear under **Running Servers (not recommended)**. Click **Assign**. The world is linked to that server and marked as `Locked`.
+Click the **Assign** (link) icon on an available world card to open the **Assign World** dialog. Select a server in **Select Server**; stopped servers are listed under **Available Servers**. Running servers appear under **Running Servers (stop them first)** and cannot be selected. Click **Assign**. The server's `LEVEL` is set to the world and the card is marked `Assigned`.
 
-To undo an assignment, click the **Release** icon on the locked world's card.
+A world can be used by one server only, and the server must be stopped. To switch a server back to its own default world, click the **Release** icon on the assigned world's card; the server must be stopped for this too.
 
 ### Deleting a World
 
-Click the **red trash can icon** on a world card. A **Delete World** dialog appears requiring you to type the exact world name to prevent accidental deletion. This action is irreversible.
+Click the **red trash can icon** on a world card. A **Delete World** dialog appears requiring you to type the exact world name to prevent accidental deletion. This action is irreversible. A world that a server uses cannot be deleted: assign another world to that server first.
 
 !!! warning "Data Loss"
     Deleting a world permanently removes all world data including terrain, player builds, and entities. Always create a backup before deleting a world.

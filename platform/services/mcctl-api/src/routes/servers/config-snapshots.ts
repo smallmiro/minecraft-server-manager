@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import { Type } from '@sinclair/typebox';
-import { AuditActionEnum } from '@minecraft-docker/shared';
+import { AuditActionEnum, WorldAssignmentError } from '@minecraft-docker/shared';
 import {
   ServerNameParamsSchema,
   ServerSnapshotParamsSchema,
@@ -362,6 +362,10 @@ const configSnapshotsPlugin: FastifyPluginAsync = async (fastify: FastifyInstanc
         status: 'failure',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
+      // The restored config.env would break a world assignment rule (#670)
+      if (error instanceof WorldAssignmentError) {
+        return reply.code(409).send({ error: 'Conflict', message: error.message });
+      }
       fastify.log.error(error, 'Failed to restore config snapshot');
       return reply.code(500).send({
         error: 'InternalServerError',

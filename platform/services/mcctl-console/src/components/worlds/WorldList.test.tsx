@@ -70,10 +70,10 @@ describe('WorldList', () => {
     expect(screen.queryByText('creative-world')).not.toBeInTheDocument();
   });
 
-  it('should filter worlds by locked status', () => {
+  it('should filter worlds by assigned status (#670)', () => {
     renderWithTheme(<WorldList worlds={mockWorlds} />);
 
-    const lockedFilter = screen.getByRole('button', { name: /locked/i });
+    const lockedFilter = screen.getByRole('button', { name: /^assigned$/i });
     fireEvent.click(lockedFilter);
 
     expect(screen.getByText('creative-world')).toBeInTheDocument();
@@ -145,7 +145,7 @@ describe('WorldList', () => {
   it('should use singular "world" for count of 1', () => {
     renderWithTheme(<WorldList worlds={mockWorlds} />);
 
-    const lockedFilter = screen.getByRole('button', { name: /locked/i });
+    const lockedFilter = screen.getByRole('button', { name: /^assigned$/i });
     fireEvent.click(lockedFilter);
 
     expect(screen.getByText(/1 world$/i)).toBeInTheDocument();

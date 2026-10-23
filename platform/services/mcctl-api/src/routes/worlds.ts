@@ -11,10 +11,7 @@ import {
   WorldInfoUseCase,
   PrismarineWorldDataReader,
   RconCliAdapter,
-  ApiPromptAdapter,
-  ShellAdapter,
   WorldRepository,
-  ServerRepository,
   Paths,
   AuditActionEnum,
   BlueMapCliRenderer,
@@ -22,6 +19,7 @@ import {
   WorldStatsUseCase,
   AnvilBlockScanner,
   AnalysisCancelledError,
+  formatAssignmentWarnings,
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import {
@@ -68,6 +66,7 @@ import {
 } from '../schemas/world-stats.js';
 import { mkdir, readFile as readFileAsync, writeFile, rename } from 'fs/promises';
 import { config } from '../config/index.js';
+import { createWorldUseCase, worldFailure } from '../lib/world-use-case.js';
 import { resolveBlueMapDockerDir } from '../lib/script-resolver.js';
 import { resolveInside } from '../lib/safe-path.js';
 import { resolve as resolvePath, sep, extname } from 'node:path';
@@ -111,29 +110,6 @@ interface MapRenderRoute {
 
 interface MapServeRoute {
   Params: MapWorldNameParams & { '*': string };
-}
-
-/**
- * Create WorldManagementUseCase instance with API adapters
- */
-function createWorldUseCase(options?: {
-  serverName?: string;
-  worldName?: string;
-  worldSeed?: string;
-  confirmValue?: boolean;
-}): WorldManagementUseCase {
-  const paths = new Paths();
-  const prompt = new ApiPromptAdapter({
-    serverName: options?.serverName,
-    worldName: options?.worldName,
-    worldSeed: options?.worldSeed,
-    confirmValue: options?.confirmValue ?? true,
-  });
-  const shell = new ShellAdapter({ paths });
-  const worldRepo = new WorldRepository(paths);
-  const serverRepo = new ServerRepository(paths);
-
-  return new WorldManagementUseCase(prompt, shell, worldRepo, serverRepo);
 }
 
 /**
@@ -239,6 +215,12 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     try {
       const useCase = createWorldUseCase();
       const worlds = await useCase.listWorlds();
+      // Duplicates and unreadable configs are reported, never fixed (#670)
+      const assignmentWarnings = await useCase
+        .getAssignmentReport()
+        .then(formatAssignmentWarnings, (error: unknown) => [
+          error instanceof Error ? error.message : String(error),
+        ]);
 
       return reply.send({
         worlds: worlds.map((world) => ({
@@ -252,6 +234,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           dimensions: world.dimensions,
         })),
         total: worlds.length,
+        assignmentWarnings,
       });
     } catch (error) {
       fastify.log.error(error, 'Failed to list worlds');
@@ -816,6 +799,8 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       response: {
         201: CreateWorldResponseSchema,
         400: WorldErrorResponseSchema,
+        404: WorldErrorResponseSchema,
+        409: WorldErrorResponseSchema,
         500: WorldErrorResponseSchema,
       },
     },
@@ -846,10 +831,8 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           status: 'failure',
           errorMessage: result.error || 'Failed to create world',
         });
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: result.error || 'Failed to create world',
-        });
+        const failure = worldFailure(result, 'Failed to create world');
+        return reply.code(failure.status).send(failure.body);
       }
 
       await writeAuditLog({
@@ -894,7 +877,9 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     schema: {
       tags: ['worlds'],
       summary: 'Assign world to server',
-      description: 'Assigns a world to a specific server. The world must not be already locked.',
+      description:
+        "Sets the server's LEVEL to this world. 409 when another server uses the world, " +
+        'the server is not stopped, or an assignment cannot be read.',
       params: WorldNameParamsSchema,
       body: AssignWorldRequestSchema,
       response: {
@@ -927,23 +912,8 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           status: 'failure',
           errorMessage: result.error || 'Failed to assign world',
         });
-        // Determine appropriate error code
-        if (result.error?.includes('not found')) {
-          return reply.code(404).send({
-            error: 'NotFound',
-            message: result.error,
-          });
-        }
-        if (result.error?.includes('locked')) {
-          return reply.code(409).send({
-            error: 'Conflict',
-            message: result.error,
-          });
-        }
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: result.error || 'Failed to assign world',
-        });
+        const failure = worldFailure(result, 'Failed to assign world');
+        return reply.code(failure.status).send(failure.body);
       }
 
       await writeAuditLog({
@@ -985,14 +955,17 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   fastify.post<ReleaseWorldRoute>('/api/worlds/:name/release', {
     schema: {
       tags: ['worlds'],
-      summary: 'Release world lock',
-      description: 'Releases the lock on a world. The world must be currently locked.',
+      summary: 'Release world',
+      description:
+        'The server using this world switches back to its own default world (<server>). ' +
+        'The server must be stopped; force is ignored.',
       params: WorldNameParamsSchema,
       querystring: ReleaseWorldQuerySchema,
       response: {
         200: ReleaseWorldResponseSchema,
         400: WorldErrorResponseSchema,
         404: WorldErrorResponseSchema,
+        409: WorldErrorResponseSchema,
         500: WorldErrorResponseSchema,
       },
     },
@@ -1017,16 +990,8 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           status: 'failure',
           errorMessage: result.error || 'Failed to release world',
         });
-        if (result.error?.includes('not found')) {
-          return reply.code(404).send({
-            error: 'NotFound',
-            message: result.error,
-          });
-        }
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: result.error || 'Failed to release world',
-        });
+        const failure = worldFailure(result, 'Failed to release world');
+        return reply.code(failure.status).send(failure.body);
       }
 
       await writeAuditLog({
@@ -1042,6 +1007,8 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         success: true,
         worldName: result.worldName,
         previousServer: result.previousServer,
+        fallbackWorld: result.fallbackWorld,
+        fallbackExists: result.fallbackExists,
       });
     } catch (error) {
       await writeAuditLog({
@@ -1069,7 +1036,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     schema: {
       tags: ['worlds'],
       summary: 'Delete a world',
-      description: 'Deletes a world. Locked worlds cannot be deleted unless force=true.',
+      description: 'Deletes a world. 409 while a server uses it; force no longer bypasses this.',
       params: WorldNameParamsSchema,
       querystring: DeleteWorldQuerySchema,
       response: {
@@ -1102,22 +1069,8 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           status: 'failure',
           errorMessage: result.error || 'Failed to delete world',
         });
-        if (result.error?.includes('not found')) {
-          return reply.code(404).send({
-            error: 'NotFound',
-            message: result.error,
-          });
-        }
-        if (result.error?.includes('locked')) {
-          return reply.code(409).send({
-            error: 'Conflict',
-            message: result.error,
-          });
-        }
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: result.error || 'Failed to delete world',
-        });
+        const failure = worldFailure(result, 'Failed to delete world');
+        return reply.code(failure.status).send(failure.body);
       }
 
       await writeAuditLog({

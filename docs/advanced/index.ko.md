@@ -11,7 +11,7 @@
 - **백업** - 월드 데이터 자동 GitHub 백업
 - **업그레이드 런북** - 릴리즈와 무관하게 전체 구성요소를 올리고 검증하는 절차
 - **RCON** - 서버 관리를 위한 원격 콘솔 프로토콜
-- **월드 관리** - 잠금 기능이 있는 멀티 서버 월드 공유
+- **월드 관리** - 서버에 월드 할당하기 (월드 하나는 서버 하나)
 - **자동 스케일링** - 플레이어 활동에 따른 서버 자동 시작/중지
 
 ## 기능 가이드
@@ -114,9 +114,9 @@ flowchart TB
     D --> G[플레이어 접속됨]
 ```
 
-### 월드 잠금
+### 월드 할당
 
-월드 잠금은 서버 간 월드 공유 시 데이터 손상을 방지합니다:
+월드는 `servers/<name>/config.env`의 `LEVEL`로 서버에 할당됩니다(`LEVEL`이 없으면 레거시 `WORLD_NAME`을 읽고, 둘 다 없으면 itzg 기본값 `world`). 한 월드는 한 서버만 사용하므로 동시 접근으로 인한 데이터 손상을 방지합니다. 월드와 그 `<world>_nether` / `<world>_the_end` 폴더는 하나의 월드로 취급합니다.
 
 ```mermaid
 sequenceDiagram
@@ -124,28 +124,35 @@ sequenceDiagram
     participant W as 월드
     participant B as 서버 B
 
-    A->>W: 월드 할당
-    Note over W: A에 잠김
+    A->>W: 월드 할당 (LEVEL=survival)
+    Note over W: A가 사용 중
     B->>W: 할당 시도
     W--xB: 거부됨
-    A->>W: 월드 해제
-    Note over W: 잠금 해제됨
-    B->>W: 월드 할당
-    Note over W: B에 잠김
+    A->>W: 월드 해제 (A 중지됨)
+    Note over W: 비어 있음, A는 자신의 월드 사용
+    B->>W: 월드 할당 (B 중지됨)
+    Note over W: B가 사용 중
 ```
 
-**mcctl로 월드 잠금 관리:**
+**mcctl로 월드 할당 관리:**
 
 ```bash
-# 모든 월드와 잠금 상태 목록
+# 모든 월드와 할당된 서버 목록
 mcctl world list
 
-# 월드를 서버에 할당 (잠금)
+# 월드를 중지된 서버에 할당 (서버의 LEVEL 설정)
 mcctl world assign survival mc-myserver
 
-# 월드 잠금 해제
+# 월드를 쓰던 서버를 자신의 기본 월드로 되돌리기
 mcctl world release survival
 ```
+
+- 잠금 파일은 없습니다. `worlds/.locks`는 더 이상 읽거나 쓰거나 만들지 않으며, 기존 디렉토리는 무해하고 `rm -rf worlds/.locks`로 지워도 안전합니다.
+- 할당과 해제에는 중지된 서버가 필요합니다. 서버를 자동으로 중지하지 않습니다.
+- 서버를 삭제하면 그 월드는 다시 쓸 수 있습니다. `mcctl world delete`는 `--force`를 써도 서버가 사용 중인 월드를 거부합니다.
+- 서버의 `config.env`를 읽을 수 없거나 `LEVEL`을 안전하게 해석할 수 없으면, 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다. 이전 설치의 중복 할당은 `mcctl world list`가 알려 줄 뿐 고치지 않습니다.
+
+전체 규칙은 [월드 할당 규칙](../cli/commands.ko.md#world-assignment-rules)을 참고하세요.
 
 ## 성능 튜닝
 
@@ -310,7 +317,7 @@ mcctl console myserver
 | 서버가 시작되지 않음 | `mcctl logs myserver` | Java 버전, 메모리 확인 |
 | 연결할 수 없음 | `mcctl status router` | mc-router 실행 확인 |
 | 느린 성능 | `mcctl status --detail` | 메모리 확인, Aikar 플래그 활성화 |
-| 월드 손상 | `mcctl world list` | 잠금 상태 확인 |
+| 월드 손상 | `mcctl world list` | 월드 할당 확인 |
 
 자세한 내용은 [문제 해결 가이드](../troubleshooting/index.ko.md)를 참조하세요.
 

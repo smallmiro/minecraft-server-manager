@@ -6,6 +6,17 @@
 export const WORLD_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
 /**
+ * A LEVEL that already exists in a config.env (legacy names such as
+ * `My World` predate WORLD_NAME_PATTERN, #649). It is read, never written:
+ * any value that names exactly one directory under worlds/ is accepted, and
+ * only values that cannot be interpreted safely are rejected (path
+ * separators, `.`/`..`, quotes, control characters). Writing a LEVEL still
+ * requires WORLD_NAME_PATTERN.
+ */
+// eslint-disable-next-line no-control-regex
+export const EXISTING_WORLD_NAME_PATTERN = /^(?!\.\.?$)[^/\\'"\x00-\x1f\x7f]+$/;
+
+/**
  * WorldName Value Object
  * A validated world directory name, used as a server's LEVEL
  */

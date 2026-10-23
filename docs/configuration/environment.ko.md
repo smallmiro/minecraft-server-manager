@@ -61,7 +61,7 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 | `TZ` | 타임존 | `UTC` | 수동 |
 | `RCON_PASSWORD` | RCON 콘솔 비밀번호. `mcctl init`이 무작위로 생성하며, 변경 후에는 컨테이너를 재생성해야 합니다 (`mcctl down && mcctl up`) | 무작위 | `mcctl init` |
 | `RCON_PORT` | RCON 포트 | `25575` | 자동 |
-| `EXTRA_ARGS` | 모든 서버에 전달하는 추가 인자. 서버의 `config.env`가 이 값을 덮어쓰며, 새 서버는 그곳에 `EXTRA_ARGS=--universe /worlds/`를 설정합니다 | - | 수동 |
+| `EXTRA_ARGS` | 모든 서버에 전달하는 추가 인자. 서버의 `config.env`가 이 값을 덮어쓰며, 새 서버는 그곳에 `EXTRA_ARGS=--universe /worlds/`를 설정합니다. 이 값을 상속하는 실행 중 서버의 월드 위치를 바꾸거나, 상속 서버를 다른 서버가 쓰는 월드에 놓게 되면 콘솔 저장이 거부됩니다(409, 해당 서버 목록 포함) | - | 수동 |
 
 ### 백업 설정
 

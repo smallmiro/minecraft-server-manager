@@ -1062,7 +1062,15 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     collector.addFile('server.properties', 'server-port=25565');
     collector.addFile('config.env', 'TYPE=PAPER');
 
-    const useCase = new ConfigSnapshotUseCaseImpl(repo, storageAdapter, collector);
+    // config.env is checked against the world assignments (#670); unchanged here
+    const unchanged = { assignments: [{ server: 'myserver', world: 'world', internal: false }], undetermined: [] };
+    const assignments = {
+      snapshot: async () => unchanged,
+      preview: async () => unchanged,
+      assign: async () => {},
+      release: async () => ({ server: '', fallback: '' }),
+    };
+    const useCase = new ConfigSnapshotUseCaseImpl(repo, storageAdapter, collector, assignments);
     const snapshot = await useCase.create('myserver', 'Restore test');
 
     // Restore the snapshot

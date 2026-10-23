@@ -34,6 +34,9 @@ export interface IShellPort {
 
   /**
    * Get server status
+   *
+   * @deprecated `mcctl.sh status` ignores the name, so this never reported one
+   * server. Use IContainerRuntimePort.getStatus. Removed in v3.0.0 (#736).
    */
   serverStatus(name: string): Promise<ShellResult>;
 
@@ -74,17 +77,26 @@ export interface IShellPort {
   /**
    * List worlds
    *
-   * @deprecated Unused by the CLI. Use IWorldRepository / `mcctl world list`. Removed in v3.0.0 (#736).
+   * @deprecated lock.sh was removed (#670); always fails without running a script. Use IWorldRepository /
+   * `mcctl world list`. Removed in v3.0.0 (#736).
    */
   worldList(json?: boolean): Promise<ShellResult>;
 
   /**
    * Assign world to server
+   *
+   * @deprecated lock.sh was removed (#670); always fails without running a script. Use
+   * IWorldAssignmentPort.assign (or WorldManagementUseCase.assignWorldByName).
+   * Removed in v3.0.0 (#736).
    */
   worldAssign(worldName: string, serverName: string, force?: boolean): Promise<ShellResult>;
 
   /**
    * Release world lock
+   *
+   * @deprecated lock.sh was removed (#670); always fails without running a script. Use
+   * IWorldAssignmentPort.release (or WorldManagementUseCase.releaseWorldByName).
+   * Removed in v3.0.0 (#736).
    */
   worldRelease(worldName: string): Promise<ShellResult>;
 

@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Proposed (2026-10-23) |
 | **Issue** | [#654](https://github.com/smallmiro/minecraft-server-manager/issues/654) (Hardening D1), milestone M2 (#643), epic #640 |
-| **Follow-ups that change this ADR** | #665 (D4), #669 (A7), C2, #675 (D5), #641 (k8s adapter), #732 (S3, [backup port](#backup-port-732-s3)) |
+| **Follow-ups that change this ADR** | #665 (D4), #669 (A7), C2, #675 (D5), #641 (k8s adapter), #732 (S3, [backup port](#backup-port-732-s3)), #670 (A4: `IWorldAssignmentPort` final, [ADR-0002](0002-world-server-assignment.md)) |
 | **Consumers** | #667 (D2, API), #668 (D3, CLI), #666 (E3, contract tests), #715 (script removal) |
 
 ## Context
@@ -20,7 +20,7 @@ This issue is a **structural change only (Tidy First)**. Runtime behaviour, argv
 
 1. **Six runtime ports in D1**: `IContainerRuntimePort`, `IServerConsolePort`, `IRouterStatusPort`, `IPlayitAgentPort`, `IHostnameRegistrarPort`, `IRuntimeEnvironmentPort`.
 2. **Method rule**: a method goes into a port only if a current call site will move to it: a function in `docker/index.ts`, or a direct `docker` call in the CLI or API that D2/D3 will migrate. Methods needed only by future k8s or #715 work are deferred. D1 fixes the port surface so that D2 and D3 can work in parallel without editing shared (SYNC-3).
-3. **`IServerSpecRepository` and `IWorldAssignmentPort` are reserved as type-only files.** The issue asks for them "interface only", so D1 creates them with the sketched signatures, marked provisional. They have no implementation and no caller in D1. Their shapes depend on designs that are still open (ServerSpec schema, §9.2; the A4 assignment model), so D5 and A4 may rewrite them. See [Reserved ports](#reserved-ports).
+3. **`IServerSpecRepository` and `IWorldAssignmentPort` are reserved as type-only files.** The issue asks for them "interface only", so D1 creates them with the sketched signatures, marked provisional. They have no implementation and no caller in D1. Their shapes depend on designs that are still open (ServerSpec schema, §9.2; the A4 assignment model), so D5 and A4 may rewrite them. See [Reserved ports](#reserved-ports). A4 has done so (2026-10-23, [ADR-0002](0002-world-server-assignment.md)); `IServerSpecRepository` stays reserved.
 4. **Contracts are provisional until a second adapter exists.** Until #641 adds the k8s adapter, D4, A7, C2, and D5 may change signatures. The TypeScript compiler finds every call site. Each change updates this ADR.
 5. **Synchronous where the code is synchronous today.** Methods backed by `execSync`/`spawnSync`/`execFileSync` stay synchronous. Methods that are async today stay async. C2 converts the port to `Promise` everywhere.
 6. **Error model is unchanged**: sentinels (`'not_found'`, `'unknown'`, `''`, `null`, `false`, `'-'`) and result objects that never throw, exactly as today. "Cannot tell" and "absent" stay conflated until A7 adds `RuntimeUnavailableError`.
@@ -138,7 +138,33 @@ Created in D1 as type-only files with the sketch from the hardening plan §9.1, 
 | Port | Owner | D1 signature | Why provisional |
 |------|-------|--------------|-----------------|
 | `IServerSpecRepository` | D5 (#675) | `list(): Promise<ServerSpec[]>`, `get(name): Promise<ServerSpec \| null>`, `save(spec): Promise<void>`, `delete(name): Promise<void>`; `ServerSpec` is a placeholder `{ name: string }` | The real `ServerSpec` schema is a D5 design item (§8, §9.2). D5 replaces the placeholder type. |
-| `IWorldAssignmentPort` | A4 (#670) | `getAssignment(world): Promise<string \| null>`, `listAssignments(): Promise<WorldAssignment[]>` (`{ world, server }`), `assign(world, server): Promise<void>` (rejects on an R1 violation) | A4 may derive assignments from each server's `LEVEL` as a domain service, so this may stop being a port. |
+| `IWorldAssignmentPort` | A4 (#670) | `getAssignment(world): Promise<string \| null>`, `listAssignments(): Promise<WorldAssignment[]>` (`{ world, server }`), `assign(world, server): Promise<void>` (rejects on an R1 violation) | **Superseded, final below.** |
+
+**`IWorldAssignmentPort`, final (#670, [ADR-0002](0002-world-server-assignment.md))**. Assignments are derived from each server's `LEVEL` in `config.env`; there is no separate record. It stays a port (#715: no new ports), and the rules live in pure domain functions (`shared/src/domain/services/worldAssignment.ts`) that adapters reuse.
+
+```ts
+interface WorldAssignment { world: string; server: string; internal?: boolean } // internal: world in servers/<n>/data (D-1); optional keeps the v2 shape
+interface WorldAssignmentSnapshot { assignments: WorldAssignment[]; undetermined: string[] }
+
+export interface IWorldAssignmentPort {
+  /** @deprecated (v2) The holder of the world's folders, or null. Use snapshot() + holdersOf. */
+  getAssignment(world: string): Promise<string | null>;
+  /** v2 shape: the readable assignments. */
+  listAssignments(): Promise<WorldAssignment[]>;
+  /** Rejects only when servers/ cannot be listed. An unreadable config or invalid LEVEL goes to `undetermined`. */
+  snapshot(): Promise<WorldAssignmentSnapshot>;
+  /** The snapshot with one server's config.env replaced (snapshot restore, migrate). Writes nothing. */
+  preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot>;
+  /** The snapshot with the platform .env replaced (platform settings EXTRA_ARGS). Writes nothing. */
+  previewPlatformEnv(dotenv: string): Promise<WorldAssignmentSnapshot>;
+  /** Writes LEVEL=<world>. Rejects WorldAssignmentError (conflict, undetermined, internal_world, ...); fail-closed (R7). */
+  assign(world: string, server: string): Promise<void>;
+  /** Unassign (#715): the holder's LEVEL falls back to its own default world `<server>`. Rejects WorldAssignmentError. */
+  release(world: string): Promise<{ server: string; fallback: string }>;
+}
+```
+
+The v2 members `getAssignment` (now deprecated) and `listAssignments` (`WorldAssignment[]`) keep their shape (#715, #736); `snapshot`, `preview` and `release` were added. Adapter: `ConfigEnvWorldAssignmentAdapter` (`infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.ts`), built by the CLI `Container` and, until D2, by the API routes.
 
 ## Adapters and the Legacy Facade
 
@@ -307,7 +333,7 @@ Config files: `platform/services/{shared,cli,mcctl-api}/.eslintrc.json` (ESLint 
 | `logs.sh` (removed in #731) | tail, follow, `--since`, `--timestamps` | `getLogs`, `followLogs({ tail, follow })`, `readLogs` | `--file`/`--json` formatting is CLI presentation, not a port. The avahi `journalctl` view was dropped; run `journalctl -u avahi-daemon` directly. `followLogs` gained optional `tail` (default 0) and `follow` (default true), so existing callers are unchanged. "Last N lines, then follow" is one stream, and `follow: false` prints the last N lines from stdout and stderr, and `onExit` lets a caller turn a failed `docker logs` into a non-zero exit code |
 | `mcctl.sh` | start/stop/status, `docker exec -i rcon-cli` console | `start`, `stop`, `getStatus`; console via `getEndpoint` + the existing TCP client (`rcon-client`) | an interactive `attach()` with TTY passthrough; use TCP instead |
 | `delete-server.sh` | stop, remove container, remove compose include, avahi unregister, keep world (D-2) | `stop` | `remove({ purgeData })`, `IHostnameRegistrarPort.unregister`, `IServerSpecRepository.delete`. No TS caller yet; D5/#715 |
-| `lock.sh` | world locks | — | `IWorldAssignmentPort` (A4) |
+| `lock.sh` | world locks | — | replaced by `IWorldAssignmentPort.assign`/`release` derived from `LEVEL`; `lock.sh` removed in #670 ([ADR-0002](0002-world-server-assignment.md)) |
 | `player.sh` | Mojang API lookup | — | removed in #730 (`mcctl player info` covers it) |
 | `backup.sh` | git backup of worlds | flush via `console.command`: `save-off`, `save-all flush`, `save-on` | git storage is `IWorldBackupPort`, not runtime ([Backup Port](#backup-port-732-s3)) |
 | `render-map.sh` (removed in #733) | `docker image build`, `docker run --rm` BlueMap | — | moved into the Docker `IMapRenderer` adapter, `BlueMapCliRenderer` (k8s: Job) |
@@ -340,7 +366,7 @@ Review checklist: `git grep -n "docker/index" src/infrastructure/adapters/Docker
 
 ## Open Questions
 
-1. **Reserved ports** (resolved 2026-10-23): created as two type-only files with the sketched signatures and a placeholder `ServerSpec` that D5 will replace (decision 3).
+1. **Reserved ports** (resolved 2026-10-23): created as two type-only files with the sketched signatures and a placeholder `ServerSpec` that D5 will replace (decision 3). `IWorldAssignmentPort` was finalized by #670 (ADR-0002).
 2. **API stop semantics**: moving `executeServerAction('stop')` (`docker compose stop`) to `runtime.stop` (`docker stop`) is a small behaviour change. The two differ only for containers that are not in the compose project. Option A (recommended): accept it in D2 as a separate, labelled commit. Option B: make `stop` compose-based and change `mcctl.sh`-parity callers instead.
 3. **Owner of the composites**: none of D2, D4, or #667 names the 12 facade composites. D2's acceptance criterion "route tests with a fake container" needs them injectable. Recommendation: add "turn the composites into an application query service built from ports" to D4 (shared, core-agent), and land it before D2's route migration.
 4. **Order of signature changes**: D2, D3, and D4 run in parallel (P3), but D4 changes port parameters to `ServerName`. Option A (recommended): land D4's signature change first, then D2/D3. Option B: run them in parallel and let the compiler-driven fix-ups happen at merge.

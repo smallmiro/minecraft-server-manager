@@ -7,6 +7,11 @@ import { ServerName } from '../../domain/value-objects/ServerName.js';
 import { SnapshotDiff } from '../../domain/value-objects/SnapshotDiff.js';
 import { FileDiff } from '../../domain/value-objects/FileDiff.js';
 import type { ConfigSnapshotFile } from '../../domain/value-objects/ConfigSnapshotFile.js';
+import type { IWorldAssignmentPort } from '../ports/outbound/IWorldAssignmentPort.js';
+import type { IContainerRuntimePort } from '../ports/outbound/IContainerRuntimePort.js';
+import { checkConfigEnvChange } from './checkServerStopped.js';
+import { composeRestoreRefusal } from './composeRestoreCheck.js';
+import { WorldAssignmentError } from '../../domain/services/worldAssignment.js';
 
 /**
  * ConfigSnapshotUseCaseImpl
@@ -17,8 +22,39 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
   constructor(
     private readonly repository: IConfigSnapshotRepository,
     private readonly storage: IConfigSnapshotStorage,
-    private readonly collector: IConfigFileCollector
+    private readonly collector: IConfigFileCollector,
+    private readonly assignments?: IWorldAssignmentPort,
+    private readonly runtime?: IContainerRuntimePort
   ) {}
+
+  /**
+   * A restored docker-compose.yml may not move the world either: compose
+   * `environment` overrides config.env, the /worlds and /data mappings
+   * decide which directories the server opens, and the env_file order decides
+   * which EXTRA_ARGS wins (#670).
+   */
+  private async checkRestoredCompose(server: string, compose: string): Promise<void> {
+    const current = await this.collector.readFileContent(server, 'docker-compose.yml').catch(() => '');
+    const reason = composeRestoreRefusal(current, compose);
+    if (reason) {
+      throw new WorldAssignmentError(
+        'undetermined',
+        `Cannot restore docker-compose.yml of '${server}': ${reason}`,
+        [server]
+      );
+    }
+  }
+
+  /**
+   * A restored config.env may not bypass the world assignment rules (#670):
+   * the result must pass checkProposed (R1, R7), and an assignment change
+   * needs a stopped server, whatever `force` says. Without an assignment
+   * port a config.env restore fails closed.
+   */
+  private async checkRestoredAssignment(server: string, configEnv: string): Promise<void> {
+    const refused = await checkConfigEnvChange(this.assignments, this.runtime, server, configEnv);
+    if (refused) throw refused;
+  }
 
   /**
    * Create a new config snapshot for a server
@@ -183,7 +219,8 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
 
   /**
    * Restore server configuration from a snapshot
-   * Retrieves file contents from storage and writes them to the server directory
+   * Retrieves file contents from storage and writes them to the server directory.
+   * `force` (the caller's running check) does not bypass the world assignment check.
    */
   async restore(snapshotId: string, _force?: boolean): Promise<void> {
     const snapshot = await this.repository.findById(snapshotId);
@@ -198,6 +235,15 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
 
     if (files.size === 0) {
       throw new Error(`No files found for snapshot: ${snapshotId}`);
+    }
+
+    const configEnv = files.get('config.env');
+    if (configEnv !== undefined) {
+      await this.checkRestoredAssignment(snapshot.serverName.value, configEnv);
+    }
+    const compose = files.get('docker-compose.yml');
+    if (compose !== undefined) {
+      await this.checkRestoredCompose(snapshot.serverName.value, compose);
     }
 
     // Write each file back to the server directory

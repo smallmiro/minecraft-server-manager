@@ -395,6 +395,8 @@ Create a new Minecraft server.
 }
 ```
 
+`409` is also returned when the world the server would use (`worldName`, else its default world `<name>`) is assigned to another server, or when another server's `config.env` cannot be interpreted (#670). See [World Assignment Rules](../cli/commands.md#world-assignment-rules).
+
 ---
 
 #### DELETE /api/servers/:name

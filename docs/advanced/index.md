@@ -11,7 +11,7 @@ The platform provides several advanced features for production deployments and c
 - **Backup** - Automatic GitHub backup for world data
 - **Upgrade Runbook** - Release-independent procedure to upgrade every component, with post-upgrade verification
 - **RCON** - Remote console protocol for server administration
-- **World Management** - Multi-server world sharing with locking
+- **World Management** - Assigning worlds to servers (one world, one server)
 - **Auto-scaling** - Automatic server start/stop based on player activity
 
 ## Feature Guides
@@ -114,9 +114,9 @@ flowchart TB
     D --> G[Player connected]
 ```
 
-### World Locking
+### World Assignment
 
-World locking prevents data corruption when sharing worlds between servers:
+A world is assigned to a server by the server's `LEVEL` in `servers/<name>/config.env` (legacy `WORLD_NAME` is read when `LEVEL` is unset; unset means itzg's default `world`). One world is used by one server, which prevents data corruption from simultaneous access. A world and its `<world>_nether` / `<world>_the_end` folders count as one world.
 
 ```mermaid
 sequenceDiagram
@@ -124,28 +124,35 @@ sequenceDiagram
     participant W as World
     participant B as Server B
 
-    A->>W: assign world
-    Note over W: Locked to A
+    A->>W: assign world (LEVEL=survival)
+    Note over W: Used by A
     B->>W: try assign
     W--xB: DENIED
-    A->>W: release world
-    Note over W: Unlocked
-    B->>W: assign world
-    Note over W: Locked to B
+    A->>W: release (A stopped)
+    Note over W: Free, A uses its own world
+    B->>W: assign world (B stopped)
+    Note over W: Used by B
 ```
 
-**Manage world locks with mcctl:**
+**Manage world assignments with mcctl:**
 
 ```bash
-# List all worlds with lock status
+# List all worlds with the servers they are assigned to
 mcctl world list
 
-# Assign a world to a server (locks it)
+# Assign a world to a stopped server (sets its LEVEL)
 mcctl world assign survival mc-myserver
 
-# Release a world lock
+# Switch the server using the world back to its own default world
 mcctl world release survival
 ```
+
+- There is no lock file. `worlds/.locks` is no longer read, written or created; an existing directory is harmless and `rm -rf worlds/.locks` is safe.
+- Assign and release need a stopped server. Nothing is stopped automatically.
+- Deleting a server frees its world for reuse. `mcctl world delete` refuses a world a server uses, even with `--force`.
+- If a server's `config.env` cannot be read or its `LEVEL` cannot be interpreted safely, every assignment change and world delete/reset is refused until it is fixed. Duplicate assignments from older installs are reported by `mcctl world list`, not fixed.
+
+See [World Assignment Rules](../cli/commands.md#world-assignment-rules) for the full rules.
 
 ## Performance Tuning
 
@@ -310,7 +317,7 @@ mcctl console myserver
 | Server won't start | `mcctl logs myserver` | Check Java version, memory |
 | Can't connect | `mcctl status router` | Verify mc-router is running |
 | Slow performance | `mcctl status --detail` | Check memory, enable Aikar flags |
-| World corruption | `mcctl world list` | Check lock status |
+| World corruption | `mcctl world list` | Check world assignments |
 
 See the [Troubleshooting Guide](../troubleshooting/index.md) for more details.
 

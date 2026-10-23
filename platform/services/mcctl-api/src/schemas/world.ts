@@ -111,6 +111,8 @@ export const ReleaseWorldQuerySchema = Type.Object({
 export const WorldListResponseSchema = Type.Object({
   worlds: Type.Array(WorldSummarySchema),
   total: Type.Number(),
+  /** Duplicate assignments and unreadable server configs (#670); reported, never fixed. */
+  assignmentWarnings: Type.Optional(Type.Array(Type.String())),
 });
 
 /**
@@ -149,6 +151,10 @@ export const ReleaseWorldResponseSchema = Type.Object({
   success: Type.Boolean(),
   worldName: Type.String(),
   previousServer: Type.Optional(Type.String()),
+  /** The world the previous holder now uses: its own name (#670). */
+  fallbackWorld: Type.Optional(Type.String()),
+  /** True when worlds/<fallbackWorld> already exists; otherwise it is created on next start. */
+  fallbackExists: Type.Optional(Type.Boolean()),
   error: Type.Optional(Type.String()),
 });
 

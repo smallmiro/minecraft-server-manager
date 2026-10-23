@@ -85,8 +85,18 @@ export function WorldCard({ world, onAssign, onRelease, onDelete, onViewInfo, lo
           >
             {world.name}
           </Typography>
+          {(world.servers?.length ?? 0) > 1 && (
+            <Tooltip title={`Only one server may use a world: ${world.servers!.join(', ')}`} arrow>
+              <Chip
+                label={`Assigned to ${world.servers!.length} servers`}
+                size="small"
+                color="error"
+                sx={{ fontWeight: 500, mr: 1 }}
+              />
+            </Tooltip>
+          )}
           <Chip
-            label={world.isLocked ? 'Locked' : 'Available'}
+            label={world.isLocked ? 'Assigned' : 'Available'}
             size="small"
             color={world.isLocked ? 'warning' : 'success'}
             sx={{ fontWeight: 500, minWidth: 80 }}

@@ -117,4 +117,5 @@ export type {
   WorldBackupPushOutcome,
   WorldBackupRestoreOutcome,
   WorldBackupPruneOutcome,
+  WorldAssignmentSnapshot,
 } from './outbound/index.js';

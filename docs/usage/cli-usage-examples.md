@@ -333,20 +333,22 @@ mcctl world list --json
 Worlds:
 
   survival
-    Status: locked: mc-myserver
+    Status: assigned: mc-myserver
     Size: 1.2 GB
     Path: /minecraft-servers/worlds/survival
 
   creative
-    Status: unlocked
+    Status: unassigned
     Size: 856 MB
     Path: /minecraft-servers/worlds/creative
 
   adventure
-    Status: unlocked
+    Status: unassigned
     Size: 2.1 GB
     Path: /minecraft-servers/worlds/adventure
 ```
+
+월드 하나는 서버 하나만 사용할 수 있습니다. 오래된 설치에서 두 서버가 같은 월드를 쓰고 있으면 `Status: assigned: a, b`로 표시되고 경고가 출력됩니다. 자동으로 고치지 않으므로 한 서버만 남기고 나머지 서버에는 다른 월드를 할당하세요.
 
 ### 월드 할당 (Interactive Mode)
 
@@ -359,8 +361,8 @@ mcctl world assign
 ◆ Assign World to Server
 
 ◇ Select world:
-│ ● creative (unlocked)
-│ ○ adventure (unlocked)
+│ ● creative
+│ ○ adventure
 
 ◇ Select server:
 │ ● mc-myserver
@@ -368,11 +370,11 @@ mcctl world assign
 │ ○ mc-modded
 
 ◆ Assigning world...
-  ✓ Created symlink
-  ✓ Updated lock file
 
 ◇ World 'creative' assigned to 'mc-myserver'
 ```
+
+할당은 서버의 `config.env`에 `LEVEL=creative`를 기록합니다. 대상 서버는 중지되어 있어야 하며, 다른 서버가 쓰는 월드는 할당할 수 없습니다(거부되고 서버는 자동으로 중지되지 않습니다).
 
 ### 월드 할당 (CLI Mode)
 
@@ -385,7 +387,7 @@ mcctl world assign creative mc-myserver
 ✓ World 'creative' assigned to 'mc-myserver'
 ```
 
-### 월드 잠금 해제 (Interactive Mode)
+### 월드 해제 (Interactive Mode)
 
 ```bash
 mcctl world release
@@ -393,35 +395,32 @@ mcctl world release
 
 **대화형 프롬프트 예시:**
 ```
-◆ Release World Lock
+◆ Release World
 
-◇ Select locked world:
-│ ● survival (locked: mc-myserver)
-│ ○ creative (locked: mc-creative)
+◇ Select assigned world:
+│ ● survival (assigned: mc-myserver)
+│ ○ creative (assigned: mc-creative)
 
-◇ Are you sure you want to release the lock?
+◇ Release 'survival' from 'mc-myserver'? 'mc-myserver' switches to its own world 'mc-myserver'.
 │ ● Yes
 │ ○ No
 
-◇ World 'survival' lock released
-  Previously locked by: mc-myserver
+◇ World 'survival' released from 'mc-myserver'; 'mc-myserver' now uses world 'mc-myserver' (created on next start)
 ```
 
-### 월드 잠금 해제 (CLI Mode)
+### 월드 해제 (CLI Mode)
 
 ```bash
-# 일반 해제
 mcctl world release survival
-
-# 강제 해제 (서버가 실행 중이어도)
-mcctl world release survival --force
 ```
 
 **출력 예시:**
 ```
-✓ World 'survival' lock released
-  Previously locked by: mc-myserver
+✓ World 'survival' released from 'mc-myserver'
+  'mc-myserver' now uses world 'mc-myserver' (created on next start)
 ```
+
+해제하면 월드를 쓰던 서버가 자신의 기본 월드 `<server>`로 돌아갑니다. 월드는 `worlds/`에 그대로 남습니다. 서버가 실행 중이면 해제는 거부되며, `--force`는 받아들이지만 무시됩니다.
 
 ---
 
@@ -621,10 +620,11 @@ mcctl status
 # 월드 목록 확인
 mcctl world list
 
-# 기존 서버에서 월드 잠금 해제
+# 기존 서버를 중지한 뒤 월드 해제
+mcctl stop myserver
 mcctl world release survival
 
-# 새 서버에 월드 할당
+# 새 서버(중지 상태)에 월드 할당
 mcctl world assign survival mc-newserver
 ```
 
@@ -689,15 +689,16 @@ sudo systemctl enable --now avahi-daemon
 echo "192.168.1.100 myserver.local" | sudo tee -a /etc/hosts
 ```
 
-### 월드가 이미 잠김
+### 월드가 이미 다른 서버에 할당됨
 
 ```
-Error: World 'survival' is already locked by 'mc-otherserver'
+Error: World 'survival' is assigned to 'mc-otherserver'; assign another world to 'mc-otherserver' or delete it first
 ```
 
 해결:
 ```bash
-# 잠금 해제 후 재할당
-mcctl world release survival --force
+# 기존 서버를 중지하고 월드를 해제한 뒤 재할당
+mcctl stop otherserver
+mcctl world release survival
 mcctl world assign survival mc-myserver
 ```

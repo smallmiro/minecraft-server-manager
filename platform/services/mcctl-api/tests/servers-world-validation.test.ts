@@ -5,6 +5,7 @@
  *  - seed + worldName together → 400 (mutual exclusion, previously a 500 from bash)
  *  - worldName that does not exist → 400
  *  - worldName already mapped to a server → 409
+ *  - default world <name> used by another server, or an unreadable config → 409 (#670)
  *
  * Uses the real app + a temp platform dir (servers.test.ts mocks shared, which
  * is unrelated and currently broken). Only the validation paths that return
@@ -87,5 +88,33 @@ describe('POST /api/servers - world option validation', () => {
 
     expect(response.statusCode).toBe(409);
     expect(response.json<{ error: string }>().error).toBe('Conflict');
+  });
+
+  it('returns 409 when the default world <name> is used by another server (#670)', async () => {
+    mkdirSync(join(TEST_PLATFORM_PATH, 'servers', 'owner-srv'), { recursive: true });
+    writeFileSync(join(TEST_PLATFORM_PATH, 'servers', 'owner-srv', 'config.env'), 'LEVEL=test-srv\n');
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/servers',
+      payload: { name: 'test-srv', type: 'PAPER', version: '1.21.1' },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ message: string }>().message).toContain("'owner-srv'");
+  });
+
+  it('returns 409 while another server config cannot be interpreted (#670)', async () => {
+    mkdirSync(join(TEST_PLATFORM_PATH, 'servers', 'broken'), { recursive: true });
+    writeFileSync(join(TEST_PLATFORM_PATH, 'servers', 'broken', 'config.env'), 'LEVEL=../x\n');
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/servers',
+      payload: { name: 'test-srv', type: 'PAPER', version: '1.21.1' },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ message: string }>().message).toContain("'broken'");
   });
 });

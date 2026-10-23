@@ -81,12 +81,14 @@ const mockWorlds = [
   },
 ];
 
-const setupMocks = (overrides: { worldsLoading?: boolean; worldsError?: Error; worlds?: typeof mockWorlds } = {}) => {
+const setupMocks = (
+  overrides: { worldsLoading?: boolean; worldsError?: Error; worlds?: typeof mockWorlds; assignmentWarnings?: string[] } = {}
+) => {
   const worlds = overrides.worlds ?? mockWorlds;
   vi.mocked(useWorlds).mockReturnValue({
     data: overrides.worldsLoading || overrides.worldsError
       ? undefined
-      : { worlds, total: worlds.length },
+      : { worlds, total: worlds.length, assignmentWarnings: overrides.assignmentWarnings },
     isLoading: overrides.worldsLoading ?? false,
     error: overrides.worldsError ?? null,
   } as any);
@@ -110,6 +112,27 @@ const setupMocks = (overrides: { worldsLoading?: boolean; worldsError?: Error; w
 };
 
 describe('WorldsPage', () => {
+  it('shows assignment warnings from the API in one warning alert (#670)', () => {
+    setupMocks({
+      assignmentWarnings: [
+        "World 'shared' is assigned to 'a', 'b'; only one server may use a world: assign another world to all but one",
+        "Cannot read the world assignment of 'x'; assignment changes are refused until its config.env is fixed",
+      ],
+    });
+    renderWithProviders(<WorldsPage />);
+
+    const alert = screen.getByRole('alert', { name: /world assignment warnings/i });
+    expect(alert).toHaveTextContent("World 'shared' is assigned to 'a', 'b'");
+    expect(alert).toHaveTextContent("Cannot read the world assignment of 'x'");
+  });
+
+  it('shows no assignment alert without warnings', () => {
+    setupMocks({ assignmentWarnings: [] });
+    renderWithProviders(<WorldsPage />);
+
+    expect(screen.queryByRole('alert', { name: /world assignment warnings/i })).not.toBeInTheDocument();
+  });
+
   it('renders one Bento hero heading with the create action', () => {
     setupMocks();
     renderWithProviders(<WorldsPage />);

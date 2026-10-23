@@ -36,6 +36,26 @@ export class PlatformSettingsValidationError extends Error {
   }
 }
 
+/** The new .env would move servers' worlds past the assignment rules (#670). */
+export class PlatformSettingsWorldLocationError extends Error {
+  constructor(
+    message: string,
+    public readonly servers: string[],
+    public readonly currentRevision: string,
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * Checks a proposed .env against the world assignments; returns why it is
+ * refused (and which servers), or null.
+ */
+export type WorldLocationCheck = (nextEnv: string) => Promise<{ message: string; servers: string[] } | null>;
+
+/** Keys whose value servers inherit and that decide where their worlds live. */
+const WORLD_LOCATION_KEYS = ['EXTRA_ARGS'];
+
 /** Process-wide: one writer at a time. */
 // ponytail: in-process mutex + hash check; file lock if CLI/API concurrent writes become real
 let writeChain: Promise<unknown> = Promise.resolve();
@@ -65,6 +85,7 @@ export class PlatformSettingsService {
     mcctlRoot: string,
     private readonly ecosystemPath: string,
     private readonly processEnv: Record<string, string | undefined> = process.env,
+    private readonly worldLocationCheck?: WorldLocationCheck,
   ) {
     this.envPath = join(mcctlRoot, '.env');
   }
@@ -199,6 +220,11 @@ export class PlatformSettingsService {
     let newRevision = revision;
     if (Object.keys(set).length || remove.length) {
       const next = applyEnvChanges(content, { set, remove });
+      // EXTRA_ARGS reaches servers that inherit it: their worlds may move (#670)
+      if (this.worldLocationCheck && WORLD_LOCATION_KEYS.some((k) => k in set || remove.includes(k))) {
+        const refused = await this.worldLocationCheck(next);
+        if (refused) throw new PlatformSettingsWorldLocationError(refused.message, refused.servers, revision);
+      }
       // Re-read right before writing: narrows the window against external writers (mcctl init, backup init, ...).
       const latest = envRevision(await this.readEnv());
       if (latest !== revision) throw new PlatformSettingsStaleError(latest);

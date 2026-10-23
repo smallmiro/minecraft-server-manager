@@ -4,9 +4,10 @@ import {
   // Infrastructure adapters from shared
   ShellAdapter,
   DockerServerConsoleAdapter,
-  DockerComposeRuntimeAdapter,
   ServerRepository,
   WorldRepository,
+  ConfigEnvWorldAssignmentAdapter,
+  DockerComposeRuntimeAdapter,
   DocsAdapter,
   SqliteAuditLogRepository,
   SqliteBackupScheduleRepository,
@@ -32,12 +33,12 @@ import {
   type IWorldBackupPort,
   type IServerRepository,
   type IWorldRepository,
+  type IWorldAssignmentPort,
   type IDocProvider,
   type IAuditLogPort,
   type IModSourcePort,
   type ICreateServerUseCase,
   type IDeleteServerUseCase,
-  type IWorldManagementUseCase,
   type IBackupUseCase,
   type IBackupScheduleUseCase,
   type IBackupScheduleRepository,
@@ -65,10 +66,11 @@ export class Container {
   // Adapters (singleton)
   private _promptPort?: IPromptPort;
   private _shellPort?: IShellPort;
-  private _runtimePort?: IContainerRuntimePort;
   private _worldBackupPort?: IWorldBackupPort;
   private _serverRepo?: IServerRepository;
   private _worldRepo?: IWorldRepository;
+  private _worldAssignmentPort?: IWorldAssignmentPort;
+  private _containerRuntime?: IContainerRuntimePort;
   private _docProvider?: IDocProvider;
   private _auditLogPort?: IAuditLogPort;
   private _modSourcePort?: IModSourcePort;
@@ -112,11 +114,9 @@ export class Container {
     return this._shellPort;
   }
 
+  /** Same adapter as {@link containerRuntime} (kept for the logs command). */
   get runtimePort(): IContainerRuntimePort {
-    if (!this._runtimePort) {
-      this._runtimePort = new DockerComposeRuntimeAdapter();
-    }
-    return this._runtimePort;
+    return this.containerRuntime;
   }
 
   get serverRepository(): IServerRepository {
@@ -128,9 +128,23 @@ export class Container {
 
   get worldRepository(): IWorldRepository {
     if (!this._worldRepo) {
-      this._worldRepo = new WorldRepository(this.paths);
+      this._worldRepo = new WorldRepository(this.paths, this.worldAssignmentPort);
     }
     return this._worldRepo;
+  }
+
+  get worldAssignmentPort(): IWorldAssignmentPort {
+    if (!this._worldAssignmentPort) {
+      this._worldAssignmentPort = new ConfigEnvWorldAssignmentAdapter(this.paths);
+    }
+    return this._worldAssignmentPort;
+  }
+
+  get containerRuntime(): IContainerRuntimePort {
+    if (!this._containerRuntime) {
+      this._containerRuntime = new DockerComposeRuntimeAdapter({ root: this.paths.root });
+    }
+    return this._containerRuntime;
   }
 
   get docProvider(): IDocProvider {
@@ -191,7 +205,9 @@ export class Container {
       this._configSnapshotUseCase = new ConfigSnapshotUseCaseImpl(
         repository,
         storage,
-        collector
+        collector,
+        this.worldAssignmentPort,
+        this.containerRuntime
       );
     }
     return this._configSnapshotUseCase;
@@ -220,7 +236,8 @@ export class Container {
       this.paths,
       this.worldRepository,
       this.auditLogPort,
-      this.modSourcePort
+      this.modSourcePort,
+      this.worldAssignmentPort
     );
   }
 
@@ -234,12 +251,14 @@ export class Container {
     );
   }
 
-  get worldManagementUseCase(): IWorldManagementUseCase {
+  get worldManagementUseCase(): WorldManagementUseCase {
     return new WorldManagementUseCase(
       this.promptPort,
       this.shellPort,
       this.worldRepository,
-      this.serverRepository
+      this.serverRepository,
+      this.worldAssignmentPort,
+      this.containerRuntime
     );
   }
 
