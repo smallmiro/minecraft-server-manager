@@ -18,6 +18,28 @@ export const fail = (code: WorldBackupErrorCode, message: string, extra: Partial
   throw new Fail({ code, message, ...extra });
 };
 
+/**
+ * Run `main`, then `cleanup`. A cleanup error never hides the main error (ADR B5.9):
+ * it is appended to the main message, keeping its code and paths. After a successful
+ * `main`, a cleanup error is ignored (the next run cleans up again).
+ */
+export async function withCleanup<T>(main: () => Promise<T>, cleanup: () => Promise<void>): Promise<T> {
+  let value: T;
+  try {
+    value = await main();
+  } catch (e) {
+    const cleanupError = await cleanup().then(
+      () => undefined,
+      (c: unknown) => (c as Error).message
+    );
+    if (cleanupError === undefined) throw e;
+    const base: WorldBackupError = e instanceof Fail ? e.error : { code: 'io_failed', message: (e as Error).message };
+    throw new Fail({ ...base, message: `${base.message} (cleanup failed: ${cleanupError})` });
+  }
+  await cleanup().catch(() => undefined);
+  return value;
+}
+
 export const isMissing = (e: unknown) => (e as NodeJS.ErrnoException).code === 'ENOENT';
 
 export async function lstatOrNull(path: string) {

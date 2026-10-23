@@ -27,7 +27,7 @@ import type {
 } from '../../application/ports/outbound/IWorldBackupPort.js';
 import { acquireBackupLock } from '../backup/lock.js';
 import { cleanStaging, incompleteSlots, rotateSlots, swapIntoPlace, type RestoreTarget } from '../backup/restore-slots.js';
-import { assertNoSymlinks, entries, fail, Fail, isMissing, listDirs, lstatOrNull } from '../backup/support.js';
+import { assertNoSymlinks, entries, fail, Fail, isMissing, listDirs, lstatOrNull, withCleanup } from '../backup/support.js';
 import { BACKUP_IDENTITY, GitRunner, networkErrorCode, type GitOptions, type GitResult } from '../backup/git.js';
 
 export interface GitWorldBackupAdapterOptions {
@@ -214,17 +214,20 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
 
       this.assertNothingRunning();
       const staging = join(this.root, 'backups', `.restore-${this.stamp()}`);
-      try {
-        await this.mustGit(['worktree', 'add', '-q', '--detach', staging, oid]);
-        const { targets, skipped } = await this.planRestore(staging);
-        this.assertNothingRunning(); // re-check right before the swap (K3, R1)
-        const previousDir = await swapIntoPlace(this.root, oid, targets, this.stamp());
-        await rotateSlots(this.root);
-        return { commit: oid, previousDir, skipped };
-      } finally {
-        await this.git.run(['worktree', 'remove', '--force', staging], { cwd: this.cache });
-        await rm(staging, { recursive: true, force: true });
-      }
+      return withCleanup(
+        async () => {
+          await this.mustGit(['worktree', 'add', '-q', '--detach', staging, oid]);
+          const { targets, skipped } = await this.planRestore(staging);
+          this.assertNothingRunning(); // re-check right before the swap (K3, R1)
+          const previousDir = await swapIntoPlace(this.root, oid, targets, this.stamp());
+          await rotateSlots(this.root);
+          return { commit: oid, previousDir, skipped };
+        },
+        async () => {
+          await this.git.run(['worktree', 'remove', '--force', staging], { cwd: this.cache });
+          await rm(staging, { recursive: true, force: true });
+        }
+      );
     });
   }
 
