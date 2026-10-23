@@ -65,6 +65,7 @@
 | 메서드 | 동작 |
 |--------|------|
 | `listAssignments(): Promise<WorldAssignmentSnapshot>` | `{ assignments: { world, server, internal }[], undetermined: string[] }`. `servers/`를 읽지 못할 때만 reject한다 |
+| `preview(server, configEnv): Promise<WorldAssignmentSnapshot>` | 한 서버의 `config.env`를 바꿨을 때의 스냅숏(스냅숏 복원, migrate). 아무것도 쓰지 않는다 |
 | `assign(world, server): Promise<void>` | `LEVEL=<world>`를 쓴다. 위반하거나 판단할 수 없으면 `WorldAssignmentError`로 reject한다(R7) |
 | `release(world): Promise<{ server, fallback }>` | 배정 해제(#715). 가진 서버의 `LEVEL`을 그 서버의 기본 월드 `<서버이름>`으로 바꾼다 |
 

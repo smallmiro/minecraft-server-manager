@@ -149,6 +149,8 @@ interface WorldAssignmentSnapshot { assignments: WorldAssignment[]; undetermined
 export interface IWorldAssignmentPort {
   /** Rejects only when servers/ cannot be listed. An unreadable config or invalid LEVEL goes to `undetermined`. */
   listAssignments(): Promise<WorldAssignmentSnapshot>;
+  /** The snapshot with one server's config.env replaced (snapshot restore, migrate). Writes nothing. */
+  preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot>;
   /** Writes LEVEL=<world>. Rejects WorldAssignmentError (conflict, undetermined, internal_world, ...); fail-closed (R7). */
   assign(world: string, server: string): Promise<void>;
   /** Unassign (#715): the holder's LEVEL falls back to its own default world `<server>`. Rejects WorldAssignmentError. */

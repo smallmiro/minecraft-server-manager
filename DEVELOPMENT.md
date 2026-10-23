@@ -190,16 +190,16 @@ Tests for `platform/scripts/*.sh` live in `platform/scripts/tests/*.bats` and ru
 
 ```bash
 pnpm test:scripts                                         # all bats tests
-pnpm exec bats platform/scripts/tests/lock.bats           # one file
-pnpm exec bats -f "unlock" platform/scripts/tests         # tests matching a name
+pnpm exec bats platform/scripts/tests/delete-server.bats  # one file
+pnpm exec bats -f "delete" platform/scripts/tests         # tests matching a name
 ```
 
 - `helpers.bash`: `use_fake_docker`, `fake_cmd <name> <body>` (stub on PATH), `make_platform` (temp `MCCTL_ROOT` with `servers/`, `worlds/`, `.env`, `docker-compose.yml`), `add_server <name>`, and `require_*` skips.
 - `fake-bin/docker`: records every call, one line of arguments, to `$FAKE_DOCKER_LOG`. Scenario knobs: `FAKE_DOCKER_PS` (stdout of `docker ps`), `FAKE_DOCKER_COMPOSE_PS` (stdout of `docker compose ps`), `FAKE_DOCKER_CONFIG_RC` (exit code of `docker compose config`). Everything else exits 0. Example: `FAKE_DOCKER_PS=mc-alpha run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi`, then `grep '^rm -f mc-alpha$' "$FAKE_DOCKER_LOG"`.
 - Always pass `--keep-avahi` when running `delete-server.sh` in a test; to test the avahi path, stub `sudo` with `fake_cmd` so the real `/etc/avahi/hosts` is never touched.
-- Examples to copy: `create-server.bats`, `delete-server.bats`, `lock.bats`.
+- Examples to copy: `create-server.bats`, `delete-server.bats`.
 
-Write tests so they run on Linux and on macOS (bash 3.2, BSD userland): no GNU-only options (`touch -d`, `date -d`, `sed -i` without a suffix, `readlink -f`) in test code or fixtures. Some scripts are not macOS-portable yet (`sed -i` in `create-server.sh`/`delete-server.sh`, `flock` in `lock.sh`); their tests call `require_gnu_sed` / `require_flock` and skip with a reason instead of failing. Remove the skip when the script is fixed.
+Write tests so they run on Linux and on macOS (bash 3.2, BSD userland): no GNU-only options (`touch -d`, `date -d`, `sed -i` without a suffix, `readlink -f`) in test code or fixtures. Some scripts are not macOS-portable yet (`sed -i` in `create-server.sh`/`delete-server.sh`); their tests call `require_gnu_sed` and skip with a reason instead of failing. Remove the skip when the script is fixed.
 
 `pnpm lint:scripts` runs shellcheck at `--severity=error` (config: `.shellcheckrc`, `platform/scripts/tests/lint.sh`). Baseline at shellcheck 0.11.0 over `platform/scripts/*.sh` and `lib/*.sh`: 0 errors, 11 warnings (SC1090 x3, SC2034 x6, SC2155 x2), 14 at info and above, 24 at style and above. The gate is errors only until the warnings are fixed; do not add new findings. See all of them with `shellcheck -x -S style platform/scripts/*.sh platform/scripts/lib/*.sh`.
 

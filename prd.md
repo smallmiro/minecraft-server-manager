@@ -48,15 +48,15 @@ This document defines the requirements for a Docker-based multi-server Minecraft
   - [x] World metadata stored in `.meta` file (name, seed, createdAt)
   - [x] `mcctl world new` creates world directory even without server assignment
 
-#### FR-003: World Locking Mechanism
+#### FR-003: World Assignment (one world, one server)
 - **Priority**: High
-- **Description**: Prevent multiple servers from using the same world simultaneously
+- **Description**: A world is assigned to at most one server; the assignment is the server's `LEVEL` (decision D-2, #670, [ADR-0002](docs/development/adr/0002-world-server-assignment.md)). The former lock files (`lock.sh`, `worlds/.locks`) were removed.
 - **Acceptance Criteria**:
-  - [x] Only one server can use a world at a time
-  - [x] Lock is acquired before server starts
-  - [x] Lock is released when server stops
-  - [x] Lock status is queryable
-  - [x] Stale locks can be manually cleared
+  - [x] A world (with its `_nether`/`_the_end` folders) cannot be assigned to a second server (CLI, API, console)
+  - [x] Deleting a server frees its world for another server
+  - [x] Assignment changes are refused when an assignment cannot be determined (fail-closed)
+  - [x] A world a server uses cannot be deleted or reset
+  - [x] Existing duplicate assignments are reported
 
 #### FR-004: Per-Server Logging
 - **Priority**: Medium
