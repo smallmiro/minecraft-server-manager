@@ -23,7 +23,7 @@ function templateServer(name: string, opts: { hosts?: string[]; config?: (c: str
   const hosts = opts.hosts ?? [`${name}.local`, `${name}.${IP}.nip.io`];
   let compose = readFileSync(join(TEMPLATE, 'docker-compose.yml'), 'utf-8')
     .replace(/mc-template/g, `mc-${name}`)
-    .replace('template.local', hosts.join(','));
+    .replace('mc-router.host: "template.local"', `mc-router.host: "${hosts.join(',')}"`);
   let config = readFileSync(join(TEMPLATE, 'config.env'), 'utf-8')
     .replace(/^LEVEL=.*$/m, `LEVEL=${name}`)
     .replace(/^MOTD=.*$/m, `MOTD=Welcome to ${name}! Your adventure begins here.`);
@@ -33,7 +33,7 @@ function templateServer(name: string, opts: { hosts?: string[]; config?: (c: str
   writeFileSync(join(dir, 'config.env'), config);
 }
 
-const setLine = (key: string, line: string) => (c: string) => c.replace(new RegExp(`^${key}=.*$`, 'm'), line);
+const setLine = (key: string, line: string) => (c: string) => c.replace(new RegExp(`^${key}=.*$`, 'm'), () => line);
 const imp = (name: string, hostIps: string[] = [IP]) => importDockerServer(name, { paths, hostIps });
 
 beforeEach(() => {
@@ -226,7 +226,7 @@ describe('importDockerServer: interpolation fails closed (R7)', () => {
 
   it('reads a single-quoted $ literally', async () => {
     templateServer('s', { config: setLine('VERSION', "VERSION='1.21$'") });
-    expect((await imp('s')).status).toBe('imported');
+    expect(await imp('s')).toMatchObject({ status: 'imported' });
   });
 
   it('refuses an interpolated inherited EXTRA_ARGS', async () => {
@@ -238,11 +238,11 @@ describe('importDockerServer: interpolation fails closed (R7)', () => {
 
 describe('importDockerServer: compose', () => {
   it('classifies system and custom router hosts and lowercases custom ones', async () => {
-    templateServer('s', {
-      hosts: ['s.local', `s.${IP}.nip.io`, 'aa.example.com', 'MC.Example.com', 'other.local'],
+    templateServer('srv', {
+      hosts: ['srv.local', `srv.${IP}.nip.io`, 'aa.example.com', 'MC.Example.com', 'other.local'],
       config: (c) => c + 'PLAYIT_DOMAIN=aa.example.com\n',
     });
-    const { document, warnings } = await imp('s');
+    const { document, warnings } = await imp('srv');
     expect(document!.routing.playitDomain).toBe('aa.example.com');
     expect(document!.routing.customHostnames).toEqual(['mc.example.com', 'other.local']);
     expect(warnings).toEqual([]);
