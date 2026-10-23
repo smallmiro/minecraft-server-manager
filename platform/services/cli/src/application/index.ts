@@ -4,7 +4,6 @@ export {
   type ICreateServerUseCase,
   type CreateServerConfig,
   type IDeleteServerUseCase,
-  type IServerStatusUseCase,
   type IWorldManagementUseCase,
   type IBackupUseCase,
   type IPlayerLookupUseCase,
@@ -26,7 +25,6 @@ export {
   // Use Cases
   CreateServerUseCase,
   DeleteServerUseCase,
-  ServerStatusUseCase,
   WorldManagementUseCase,
   BackupUseCase,
   PlayerLookupUseCase,

@@ -44,11 +44,15 @@ export interface IShellPort {
 
   /**
    * Get server logs
+   *
+   * @deprecated Unused by the CLI. Use `mcctl logs` (docker compose logs) directly. Removed in v3.0.0 (#736).
    */
   logs(name: ServerName, options?: LogsOptions): Promise<ShellResult>;
 
   /**
    * Connect to RCON console
+   *
+   * @deprecated Unused by the CLI. Use `mcctl console`/RCON via the runtime port. Removed in v3.0.0 (#736).
    */
   console(name: ServerName): Promise<ShellResult>;
 
@@ -58,6 +62,8 @@ export interface IShellPort {
 
   /**
    * Get status of all servers
+   *
+   * @deprecated Unused by the CLI. Use `mcctl status`. Removed in v3.0.0 (#736).
    */
   status(json?: boolean): Promise<ShellResult>;
 
@@ -67,6 +73,8 @@ export interface IShellPort {
 
   /**
    * List worlds
+   *
+   * @deprecated Unused by the CLI. Use IWorldRepository / `mcctl world list`. Removed in v3.0.0 (#736).
    */
   worldList(json?: boolean): Promise<ShellResult>;
 

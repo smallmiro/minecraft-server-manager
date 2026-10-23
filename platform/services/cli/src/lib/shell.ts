@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
-import { Paths, execScript, execScriptInteractive, log } from '@minecraft-docker/shared';
+import { Paths, execScriptInteractive, log } from '@minecraft-docker/shared';
 
 export interface ShellExecutorOptions {
   paths?: Paths;
@@ -61,17 +61,6 @@ export class ShellExecutor {
   }
 
   /**
-   * Execute a script and return the result
-   */
-  async exec(script: string, args: string[] = []): Promise<number> {
-    const scriptPath = this.getScriptPath(script);
-    if (!scriptPath) return 1;
-
-    const result = await execScript(scriptPath, args, this.env);
-    return result.code;
-  }
-
-  /**
    * Execute a script interactively (with inherited stdio)
    */
   async execInteractive(script: string, args: string[] = []): Promise<number> {
@@ -89,52 +78,10 @@ export class ShellExecutor {
   }
 
   /**
-   * Create a new server
-   */
-  async createServer(name: string, options: string[] = []): Promise<number> {
-    return this.execInteractive('create-server.sh', [name, ...options]);
-  }
-
-  /**
-   * Delete a server
-   */
-  async deleteServer(name: string, options: string[] = []): Promise<number> {
-    return this.execInteractive('delete-server.sh', [name, ...options]);
-  }
-
-  /**
-   * View logs
-   */
-  async logs(server: string, options: string[] = []): Promise<number> {
-    return this.execInteractive('logs.sh', [server, ...options]);
-  }
-
-  /**
-   * Lock operations
-   */
-  async lock(args: string[]): Promise<number> {
-    return this.execInteractive('lock.sh', args);
-  }
-
-  /**
    * Player lookup
    */
   async player(args: string[]): Promise<number> {
     return this.execInteractive('player.sh', args);
-  }
-
-  /**
-   * Backup operations
-   */
-  async backup(args: string[]): Promise<number> {
-    return this.execInteractive('backup.sh', args);
-  }
-
-  /**
-   * Run init.sh (for Docker/network setup)
-   */
-  async initPlatform(options: string[] = []): Promise<number> {
-    return this.execInteractive('init.sh', options);
   }
 
   /**
