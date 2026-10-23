@@ -98,8 +98,10 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
   /**
    * Execute server deletion with provided name
    */
-  async executeWithName(name: string, options: DeleteServerOptions = {}): Promise<boolean> {
-    const { force = false, yes = false, deleteWorld = false } = options;
+  async executeWithName(name: string, options: DeleteServerOptions | boolean = {}): Promise<boolean> {
+    // Deprecated boolean `force` form: it never asked before (#715)
+    const opts = typeof options === 'boolean' ? { force: options, yes: true } : options;
+    const { force = false, yes = false, deleteWorld = false } = opts;
     // Check if server exists
     const server = await this.serverRepo.findByName(name);
 
