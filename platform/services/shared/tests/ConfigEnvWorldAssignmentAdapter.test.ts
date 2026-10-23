@@ -262,6 +262,22 @@ describe('internal detection follows the compose env_file order (Codex #4)', () 
     expect((await adapter.snapshot()).assignments).toEqual([{ server: 'a', world: 'a', internal: false }]);
   });
 
+  it('marks a server undetermined when the inherited .env value is interpolated', async () => {
+    globalEnv('EXTRA_ARGS\n');
+    writeFileSync(join(root, '.env'), 'ARGS=--universe /worlds/\nEXTRA_ARGS=${ARGS}\n');
+    server('a', 'LEVEL=a\n');
+
+    expect(await adapter.snapshot()).toEqual({ assignments: [], undetermined: ['a'] });
+  });
+
+  it("keeps a single-quoted inherited .env value literal", async () => {
+    globalEnv('EXTRA_ARGS\n');
+    writeFileSync(join(root, '.env'), "EXTRA_ARGS='--universe /worlds/'\n");
+    server('a', 'LEVEL=a\n');
+
+    expect((await adapter.snapshot()).assignments[0]?.internal).toBe(false);
+  });
+
   it('takes a value written in global.env itself', async () => {
     globalEnv('EXTRA_ARGS=--universe=/worlds\n');
     server('a', 'LEVEL=a\n');

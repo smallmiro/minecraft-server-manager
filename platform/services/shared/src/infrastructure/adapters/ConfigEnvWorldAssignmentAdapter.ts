@@ -174,7 +174,10 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
       if (!/^\s*EXTRA_ARGS\s*$/m.test(global)) return undefined;
       const dotenv = await read(this.paths.envFile);
       // A bare key with no platform value leaves the variable unset.
-      return dotenv === undefined ? undefined : parseEnvDocument(dotenv).values.get('EXTRA_ARGS');
+      if (dotenv === undefined) return undefined;
+      const dotenvDoc = parseEnvDocument(dotenv);
+      // Compose interpolates .env values too: such a value has no fixed location (R7)
+      return isInterpolated(dotenvDoc, 'EXTRA_ARGS') ? new Error('interpolated') : dotenvDoc.values.get('EXTRA_ARGS');
     } catch (err) {
       return err as Error;
     }
