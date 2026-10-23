@@ -21,7 +21,7 @@
 | # | 결정 |
 |---|------|
 | 1 | **배정의 원천은 `LEVEL` 하나다(R5).** 서버의 월드는 `resolveWorldName(env)`이다(`LEVEL` → 레거시 `WORLD_NAME` → itzg 기본값 `world`). 서버의 `config.env`가 사라지면 배정도 풀린다(R3). |
-| 2 | `IWorldAssignmentPort`는 포트로 남긴다. 비동기 메서드는 `listAssignments`, `preview`, `assign`, `release`(#715가 요구한 배정 해제) 네 개다. `getAssignment`는 빼고 `holdersOf`를 쓴다. |
+| 2 | `IWorldAssignmentPort`는 포트로 남긴다(#715: 새 포트 금지, 메서드 추가는 허용). v2 계약인 `getAssignment`(deprecated)와 `listAssignments`(`WorldAssignment[]`, `internal`은 선택)는 유지하고, #670이 `snapshot`(판단 불가 서버 포함), `preview`, `release`(#715가 요구한 배정 해제)를 추가한다. 호출처는 `snapshot`과 `holdersOf`를 쓴다. |
 | 3 | 규칙은 도메인 순수 함수로 둔다. 어댑터는 `config.env`를 읽고 쓰기만 하며, 쓰기 직전에 새로 읽은 스냅숏으로 `checkAssign`을 실행한다. |
 | 4 | **fail-closed(R7).** `config.env`를 읽지 못하거나, 월드 이름이 `EXISTING_WORLD_NAME_PATTERN`에 맞지 않거나, 월드·`EXTRA_ARGS` 값이 Compose 보간 대상이거나, `--universe`가 지원하지 않는 위치인 서버는 판단 불가(undetermined)다. 하나라도 있으면 배정 변경과 월드 삭제·초기화를 모두 거부한다. 목록 조회는 경고와 함께 동작한다. |
 | 5 | **월드는 정지된 서버에서만 바꾼다.** assign, release, `world new --server`, `config LEVEL\|WORLD_NAME`, PATCH `level`, 스냅숏 복원, migrate는 상태가 `running`, `paused`, `restarting`, `created`이면 거부한다. 자동으로 정지하지 않고, `force`로도 우회하지 않는다. |
@@ -34,23 +34,26 @@
 
 ## 배정 모델
 
-- **월드 계열**: `<w>_nether`, `<w>_the_end`는 `<w>`에 속한다(`worldFamily`). 조회, 삭제, 초기화, 중복 보고가 양방향으로 계열을 비교한다. 그래서 쓰이는 `w`의 `w_nether`를 지우려 하면 거부되고, 레거시 `LEVEL=w_nether` 서버는 `w`를 가진 서버와 충돌한다. `_nether`나 `_the_end`로 끝나는 이름은 배정할 수 없다.
+- **월드 폴더**: 월드 이름 하나는 `<w>`, `<w>_nether`, `<w>_the_end` 세 폴더를 덮는다(월드 삭제는 셋을 모두 지운다). 보유자는 `LEVEL`과 `LEVEL_nether`/`LEVEL_the_end`를 덮고, 두 이름이 폴더를 하나라도 공유하면 충돌한다. 조회, 삭제, 초기화, `listWorlds().servers`, 중복 보고가 이 규칙 하나를 쓴다. 그래서 쓰이는 `w`의 `w_nether` 삭제, `LEVEL=w_nether`가 쓰이는 동안 `w` 삭제, 레거시 `LEVEL=w_nether`의 `w_nether_nether` 삭제가 모두 거부된다. `_nether`나 `_the_end`로 끝나는 이름은 배정할 수 없다.
 - **레거시 이름**: 기존 값은 `EXISTING_WORLD_NAME_PATTERN`(`/`, `\`, `.`/`..`, 따옴표, 제어문자 금지)으로 검사하므로 `My World`, `world.old`는 계속 동작한다. 새로 쓰는 `LEVEL`은 `WORLD_NAME_PATTERN`을 따라야 한다.
 - **보간**: Compose는 따옴표가 없거나 큰따옴표인 값을 보간하고 홑따옴표 값은 그대로 둔다. `LEVEL=${MC_WORLD:-x}`는 판단 불가이고, `LEVEL='cash$world'`는 리터럴 이름이다.
-- **서버 내부 월드(D-1)**: 유효한 `EXTRA_ARGS`는 템플릿 `env_file` 순서를 따른다. 서버 `config.env` 값이 이기고(빈 값도), 없으면 `servers/global.env`를 쓴다(값 없는 `EXTRA_ARGS` 줄은 플랫폼 `.env` 값을 받는다). `--universe /worlds`는 `worlds/`, `--universe`가 없거나 `/data`·`.`이면 `servers/<n>/data/<LEVEL>`(`internal: true`), 그 밖의 위치는 판단 불가다. 내부 월드 서버는 이름을 예약하고, #655로 이전하기 전에는 `assign`/`release`를 거부하며, `worlds/<w>` 삭제·초기화에서는 세지 않는다.
+- **서버 내부 월드(D-1)**: 유효한 `EXTRA_ARGS`는 템플릿 `env_file` 순서를 따른다. 서버 `config.env` 값이 이기고(빈 값도), 없으면 `servers/global.env`를 쓴다(값 없는 `EXTRA_ARGS` 줄은 플랫폼 `.env` 값을 받고, 그 값도 같은 보간 검사를 거친다). `--universe /worlds`는 `worlds/`, `--universe`가 없거나 `/data`·`.`이면 `servers/<n>/data/<LEVEL>`(`internal: true`), 그 밖의 위치는 판단 불가다. 내부 월드 서버는 이름을 예약하고, #655로 이전하기 전에는 `assign`/`release`를 거부하며, `worlds/<w>` 삭제·초기화에서는 세지 않는다.
 
 ## 포트와 어댑터
 
 ```ts
 interface IWorldAssignmentPort {
-  listAssignments(): Promise<WorldAssignmentSnapshot>;        // servers/를 읽지 못할 때만 reject
-  preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot>; // 쓰지 않음
-  assign(world: string, server: string): Promise<void>;       // 위반 시 WorldAssignmentError
+  /** @deprecated v2: holder of the world's folders or null; rejects undetermined instead of null. */
+  getAssignment(world: string): Promise<string | null>;
+  listAssignments(): Promise<WorldAssignment[]>;              // v2 shape: readable servers only
+  snapshot(): Promise<WorldAssignmentSnapshot>;               // + undetermined; rejects only when servers/ cannot be listed
+  preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot>; // writes nothing
+  assign(world: string, server: string): Promise<void>;       // checkAssign on a fresh snapshot; no-op if held
   release(world: string): Promise<{ server: string; fallback: string }>;
 }
 ```
 
-- 도메인 함수: `worldFamily`, `holdersOf`, `checkAssign`(선택 인자 `newServer`), `planRelease`, `checkRemoval`(삭제), `checkReset`(초기화), `checkProposed`(복원·migrate), `findDuplicates`, `formatAssignmentWarnings`.
+- 도메인 함수: `holdersOf`, `checkAssign`(선택 인자 `newServer`), `planRelease`, `checkRemoval`(삭제), `checkReset`(초기화), `checkProposed`(복원·migrate), `findDuplicates`, `formatAssignmentWarnings`.
 - 어댑터 `ConfigEnvWorldAssignmentAdapter`는 `parseEnvDocument`로 읽고 `applyEnvChanges` + `writeFileAtomic`으로 `LEVEL`만 쓰며 파일 권한을 유지한다.
 - API 초기화 라우트는 `planWorldReset`이 돌려준 월드를 지우고, `listWorlds().servers`도 같은 스냅숏에서 만든다. 그래서 따옴표나 주석이 있는 `LEVEL`을 검사와 실행이 같게 읽는다. API `ConfigService` 표시용 파서는 #656까지 그대로 둔다.
 
@@ -59,7 +62,7 @@ interface IWorldAssignmentPort {
 - 생성자에는 선택 인자만 뒤에 추가했다: `WorldManagementUseCase(…, assignments?, runtime?)`, `CreateServerUseCase(…, assignments?)`, `ConfigSnapshotUseCaseImpl(…, assignments?, runtime?)`, `WorldRepository(paths?, assignments?)`. 배정 포트가 없으면 배정 변경, 월드 삭제, 서버 생성, `config.env` 복원을 거부한다(`undetermined`). 런타임 포트가 없으면 월드 변경을 거부한다.
 - `assignWorldByName`에 선택 인자 `{ requireExisting }`, 결과 객체에 `errorCode`, `WorldReleaseResult`에 `fallbackWorld`·`fallbackExists`를 추가했다. 유스케이스에 `planWorldReset`, `getAssignmentReport`를 추가했다.
 - `isLocked`/`lockedBy`의 뜻은 "배정됨"이다. `findAllWithServerStatus`는 컨테이너가 없으면 `stopped`로 분류한다.
-- `@deprecated`(삭제는 #736): `IShellPort`/`ShellAdapter`의 `worldAssign`, `worldRelease`, `worldList`, `serverStatus`(월드 메서드는 `lock.sh`가 없어 실패한다), `WorldRepository.getLockStatus`, `WorldLockData`, `Paths.locks`, `Paths.lockFile`.
+- `@deprecated`(삭제는 #736): `IWorldAssignmentPort.getAssignment`, `IShellPort`/`ShellAdapter`의 `worldAssign`, `worldRelease`, `worldList`(스크립트를 실행하지 않고 대체 경로를 알리는 실패 결과를 돌려준다), `serverStatus`, `WorldRepository.getLockStatus`, `WorldLockData`, `Paths.locks`, `Paths.lockFile`.
 
 ## 검사 위치
 
@@ -68,12 +71,13 @@ interface IWorldAssignmentPort {
 | `mcctl create [--world W]`, 대화형 생성, API `POST /api/servers` | `checkAssign(W ?? <이름>, <이름>, { newServer: true })` |
 | `world assign`, API assign | `checkAssign` → 런타임 확인 → `assignments.assign` |
 | `mcctl config <서버> LEVEL\|WORLD_NAME <v>` | 유효 월드(`LEVEL`, 없으면 `WORLD_NAME`)가 바뀔 때만 `assignWorldByName`. `LEVEL`이 있으면 `WORLD_NAME`은 그대로 쓴다 |
+| `mcctl config <서버> EXTRA_ARGS <v>` | `checkConfigChange`: 새 `config.env`가 월드나 위치(`--universe`)를 바꾸면 `checkProposed`와 정지 상태가 필요하다. API PATCH에는 `EXTRA_ARGS` 필드가 없다 |
 | API PATCH `level` | 다른 필드를 쓰기 전에 `assignWorldByName(level, 이름, { requireExisting: false })`. 다른 필드로 `LEVEL` 줄을 넣을 수 없다(#726) |
 | `world new --server`, API `POST /api/worlds`(serverName) | 디렉터리를 만들기 전에 상태와 `checkAssign` 확인 |
 | `world release`, API release | `planRelease` → 가진 서버의 상태 확인 → `assignments.release` |
 | `world delete`, API delete | `checkRemoval`. `--force`로도 우회하지 못한다 |
 | API `POST /api/servers/:name/world/reset` | `planWorldReset`(`checkReset`)이 돌려준 월드만 지운다 |
-| 설정 스냅숏 복원(CLI, API) | `config.env`가 있으면 `preview` + `checkProposed`, 배정이 바뀌면 `force`와 상관없이 상태 확인. API는 409 |
+| 설정 스냅숏 복원(CLI, API) | `config.env`: `preview` + `checkProposed`, 배정이 바뀌면 `force`와 상관없이 상태 확인. `docker-compose.yml`(js-yaml로 파싱): `environment`에 `LEVEL`/`WORLD_NAME`/`EXTRA_ARGS`가 있거나 `/worlds`·`/data` 매핑이 현재와 다르거나 파싱할 수 없으면 거부. API는 409 |
 | `mcctl migrate worlds` | 새 `config.env`를 먼저 만들어 `preview` + `checkProposed`로 확인한 뒤 데이터를 옮긴다 |
 
 - 상태 확인은 `checkServerStopped`가 `runtime.getStatus('mc-<서버>')`로 한다. **알려진 한계**: D1에서는 `not_found`가 "런타임에 연결할 수 없음"도 뜻하므로 통과한다. 예외는 판단 불가로 처리한다. 후속: #732의 엄격한 조회로 교체(A7, #669).

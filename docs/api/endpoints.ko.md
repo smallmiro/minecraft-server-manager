@@ -244,7 +244,7 @@ data: {"event": "closed"}
 - **중지된 서버만.** 컨테이너가 running, paused, restarting, created 상태이면 assign, release, `serverName`을 넣은 `POST /api/worlds`, `level`을 넣은 `PATCH /api/servers/:name/config`는 거부됩니다. 서버를 자동으로 중지하지 않습니다.
 - **안전 우선(fail-closed).** 어떤 서버의 `config.env`를 읽을 수 없거나 `LEVEL`을 안전하게 해석할 수 없으면(경로 구분자, `.`/`..`, 따옴표, 제어 문자, 작은따옴표 밖의 `${VAR}` 같은 Compose 보간, 지원하지 않는 `--universe` 위치), 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다. `My World` 같은 레거시 이름은 기존 값으로는 계속 허용되며, 새 이름은 영문자, 숫자, `-`, `_`만 쓸 수 있습니다.
 - **상태 코드**(월드 assign/release/delete/create와 config `level`): 잘못된 월드 이름 `400`, 없는 서버나 월드 `404`, 이 규칙으로 거부되는 나머지 모든 경우 `409`(충돌, 서버 실행 중, 확인할 수 없는 설정).
-- **설정 스냅샷 복원**은 복원할 `config.env`가 다른 서버가 쓰는 월드를 할당하거나 실행 중인 서버의 월드를 바꾸게 되면(force를 써도) `409`로 응답합니다.
+- **설정 스냅샷 복원**은 복원할 `config.env`가 다른 서버가 쓰는 월드를 할당하거나 실행 중인 서버의 월드를 바꾸게 되면(force를 써도), 그리고 복원할 `docker-compose.yml`의 `environment`에 `LEVEL`, `WORLD_NAME`, `EXTRA_ARGS`가 있거나 `/worlds`·`/data` 볼륨 매핑이 바뀌면 `409`로 응답합니다.
 - **월드 초기화.** `POST /api/servers/:name/world/reset`은 월드를 `servers/<name>/data` 안에 두는 서버와, 다른 서버가 같은 월드를 쓰는 경우 거부됩니다.
 
 ---

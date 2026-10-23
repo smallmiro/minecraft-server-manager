@@ -256,7 +256,7 @@ A world is assigned to a server by the server's `LEVEL` in `servers/<name>/confi
 - **Stopped server only.** Assign, release, `POST /api/worlds` with `serverName` and `PATCH /api/servers/:name/config` with `level` are refused while the container is running, paused, restarting or created. Nothing is stopped automatically.
 - **Fail-closed.** If any server's `config.env` cannot be read, or its `LEVEL` cannot be interpreted safely (path separators, `.`/`..`, quotes, control characters, Compose interpolation such as `${VAR}` outside single quotes, or an unsupported `--universe` location), every assignment change and world delete/reset is refused until it is fixed. Legacy names such as `My World` are still accepted as existing values; new names must be letters, digits, `-` or `_`.
 - **Status codes** for world assign/release/delete/create and config `level`: invalid world name `400`, unknown server or world `404`, everything else refused by these rules `409` (conflict, server running, undetermined config).
-- **Config snapshot restore** answers `409` when the restored `config.env` would assign a world another server uses, or change the world of a running server (even with force).
+- **Config snapshot restore** answers `409` when the restored `config.env` would assign a world another server uses, or change the world of a running server (even with force), and when the restored `docker-compose.yml` sets `LEVEL`, `WORLD_NAME` or `EXTRA_ARGS` in `environment` or changes the `/worlds` or `/data` volume mapping.
 - **World reset.** `POST /api/servers/:name/world/reset` is refused for servers that keep their world inside `servers/<name>/data` and when another server uses the same world.
 
 ---

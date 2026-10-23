@@ -921,7 +921,7 @@ mcctl config <server> [key] [value] [options]
     일부 설정 변경은 적용을 위해 서버 재시작이 필요합니다.
 
 !!! warning "`LEVEL` 변경"
-    `LEVEL`은 서버가 사용하는 월드입니다([월드 할당 규칙](#world-assignment-rules) 참고). 서버가 실행 중이거나 다른 서버가 `<world>`를 사용 중이면 `mcctl config <server> LEVEL <world>`는 거부됩니다.
+    `LEVEL`은 서버가 사용하는 월드입니다([월드 할당 규칙](#world-assignment-rules) 참고). 서버가 실행 중이거나 다른 서버가 `<world>`를 사용 중이면 `mcctl config <server> LEVEL <world>`는 거부됩니다. 새 `EXTRA_ARGS` 값이 월드 위치를 `worlds/`와 `servers/<server>/data` 사이에서 바꾸는 경우(`--universe`)에도 같습니다.
 
 ---
 

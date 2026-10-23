@@ -143,12 +143,16 @@ Created in D1 as type-only files with the sketch from the hardening plan §9.1, 
 **`IWorldAssignmentPort`, final (#670, [ADR-0002](0002-world-server-assignment.md))**. Assignments are derived from each server's `LEVEL` in `config.env`; there is no separate record. It stays a port (#715: no new ports), and the rules live in pure domain functions (`shared/src/domain/services/worldAssignment.ts`) that adapters reuse.
 
 ```ts
-interface WorldAssignment { world: string; server: string; internal: boolean } // internal: world in servers/<n>/data (D-1)
+interface WorldAssignment { world: string; server: string; internal?: boolean } // internal: world in servers/<n>/data (D-1); optional keeps the v2 shape
 interface WorldAssignmentSnapshot { assignments: WorldAssignment[]; undetermined: string[] }
 
 export interface IWorldAssignmentPort {
+  /** @deprecated (v2) The holder of the world's folders, or null. Use snapshot() + holdersOf. */
+  getAssignment(world: string): Promise<string | null>;
+  /** v2 shape: the readable assignments. */
+  listAssignments(): Promise<WorldAssignment[]>;
   /** Rejects only when servers/ cannot be listed. An unreadable config or invalid LEVEL goes to `undetermined`. */
-  listAssignments(): Promise<WorldAssignmentSnapshot>;
+  snapshot(): Promise<WorldAssignmentSnapshot>;
   /** The snapshot with one server's config.env replaced (snapshot restore, migrate). Writes nothing. */
   preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot>;
   /** Writes LEVEL=<world>. Rejects WorldAssignmentError (conflict, undetermined, internal_world, ...); fail-closed (R7). */
@@ -158,7 +162,7 @@ export interface IWorldAssignmentPort {
 }
 ```
 
-`getAssignment` was dropped (callers use the pure `holdersOf`). Adapter: `ConfigEnvWorldAssignmentAdapter` (`infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.ts`), built by the CLI `Container` and, until D2, by the API routes.
+The v2 members `getAssignment` (now deprecated) and `listAssignments` (`WorldAssignment[]`) keep their shape (#715, #736); `snapshot`, `preview` and `release` were added. Adapter: `ConfigEnvWorldAssignmentAdapter` (`infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.ts`), built by the CLI `Container` and, until D2, by the API routes.
 
 ## Adapters and the Legacy Facade
 

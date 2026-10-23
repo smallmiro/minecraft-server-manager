@@ -17,7 +17,7 @@
 ## Decision
 
 1. **`LEVEL` is the only source of truth (R5).** A server's world is `resolveWorldName(env)` (`LEVEL`, then the legacy `WORLD_NAME`, else itzg's `world`). There is no other record. Deleting a server's `config.env` releases its world (R3).
-2. **`IWorldAssignmentPort` stays a port** (#715: no new ports) with four async methods: `listAssignments`, `preview`, `assign`, and `release` (the unassign method #715 asked for). `getAssignment` is dropped; callers use `holdersOf`.
+2. **`IWorldAssignmentPort` stays a port** (#715: no new ports, methods may be added). The v2 contract stays: `getAssignment` (deprecated) and `listAssignments` (`WorldAssignment[]`, `internal` optional). #670 adds `snapshot` (with undetermined servers), `preview`, and `release` (the unassign method #715 asked for). Callers use `snapshot` with `holdersOf`.
 3. **The rules are pure domain functions** (`shared/src/domain/services/worldAssignment.ts`), so a future adapter (k8s, `IServerSpecRepository`) reuses them. The adapter only reads and writes `config.env` and runs `checkAssign` on a fresh snapshot right before it writes.
 4. **Fail-closed (R7).** A server is *undetermined* when its `config.env` cannot be read, its resolved world fails `EXISTING_WORLD_NAME_PATTERN`, the world or `EXTRA_ARGS` value would be interpolated by Compose, or its `--universe` points somewhere unsupported. While any server is undetermined, every assignment change and every world delete/reset is refused. Listings still work and show a warning.
 5. **A world changes only on a stopped server.** Assign, release, `world new --server`, `config LEVEL|WORLD_NAME`, PATCH `level`, snapshot restore and migrate refuse when the runtime status is `running`, `paused`, `restarting`, or `created`. Nothing stops a server automatically, and `force` never bypasses this.
@@ -33,35 +33,37 @@
 | Case | Rule |
 |------|------|
 | Normal server | Holds `resolveWorldName(env)`. `LEVEL` unset means it holds `world`. |
-| World family | `<w>_nether` and `<w>_the_end` belong to `<w>` (`worldFamily`). `holdersOf`, delete, reset and duplicate reports compare families in both directions, so deleting `w_nether` of a used `w` is refused and a legacy `LEVEL=w_nether` server conflicts with the holder of `w`. `assign` rejects a name ending in `_nether` or `_the_end` (`invalid_world`). |
+| World folders | A world name covers three folders: `<w>`, `<w>_nether`, `<w>_the_end` (world delete removes all three). A holder covers its `LEVEL` and `LEVEL_nether`/`LEVEL_the_end`; two names conflict when they share a folder. `holdersOf`, delete, reset, `listWorlds().servers` and duplicate reports use this one rule, so deleting `w_nether` of a used `w`, deleting `w` while `LEVEL=w_nether` is used, and deleting `w_nether_nether` of a legacy `LEVEL=w_nether` are refused. `assign` rejects a name ending in `_nether` or `_the_end` (`invalid_world`). |
 | Legacy names | `WORLD_NAME` is read as today and never written by the port. Existing values are checked with `EXISTING_WORLD_NAME_PATTERN` (no `/`, `\`, `.`/`..`, quotes, control characters), so names such as `My World` or `world.old` keep working. A new `LEVEL` must match `WORLD_NAME_PATTERN`. |
 | Interpolation | Compose interpolates unquoted and double-quoted env_file values, not single-quoted ones. `LEVEL=${MC_WORLD:-x}` or `LEVEL="$W"` is undetermined; `LEVEL='cash$world'` is the literal name. |
-| Server-internal world (D-1) | The effective `EXTRA_ARGS` follows the template `env_file` order: the server's `config.env` wins (even an empty value), else `servers/global.env` (a bare `EXTRA_ARGS` line takes the platform `.env` value). `--universe /worlds` (with or without a trailing slash or `=`) means `worlds/`; no `--universe`, `/data` or `.` means the world lives in `servers/<n>/data/<LEVEL>` (`internal: true`); any other location is undetermined. An internal server **reserves** its name, `assign`/`release` refuse it (`internal_world`) until #655 migrates it, and delete/reset of `worlds/<w>` ignore it. |
+| Server-internal world (D-1) | The effective `EXTRA_ARGS` follows the template `env_file` order: the server's `config.env` wins (even an empty value), else `servers/global.env` (a bare `EXTRA_ARGS` line takes the platform `.env` value, which gets the same interpolation check). `--universe /worlds` (with or without a trailing slash or `=`) means `worlds/`; no `--universe`, `/data` or `.` means the world lives in `servers/<n>/data/<LEVEL>` (`internal: true`); any other location is undetermined. An internal server **reserves** its name, `assign`/`release` refuse it (`internal_world`) until #655 migrates it, and delete/reset of `worlds/<w>` ignore it. |
 | Server dirs | Same filter as `ServerRepository.listNames`: directories not starting with `_` that contain `config.env`. |
 
 ## Port and Adapter
 
 ```ts
 // shared/src/domain/services/worldAssignment.ts  (pure, no I/O)
-interface WorldAssignment { world: string; server: string; internal: boolean }
+interface WorldAssignment { world: string; server: string; internal?: boolean } // absent = false (v2 shape)
 interface WorldAssignmentSnapshot { assignments: WorldAssignment[]; undetermined: string[] }
 type WorldAssignmentErrorCode = 'invalid_world' | 'server_not_found' | 'conflict' | 'undetermined'
   | 'internal_world' | 'not_assigned' | 'default_world' | 'server_running';
 class WorldAssignmentError extends Error { code; servers: string[] }
 
-worldFamily(world): string
 holdersOf(s, world, { includeInternal = true }): string[]
 checkAssign(s, world, server, { newServer = false }): WorldAssignmentError | null
 planRelease(s, world): { server; fallback } | WorldAssignmentError
 checkRemoval(s, world): WorldAssignmentError | null      // world delete
 checkReset(s, server): WorldAssignmentError | null       // API world reset
 checkProposed(s, server): WorldAssignmentError | null    // snapshot restore, migrate
-findDuplicates(s): { world; servers }[]
+findDuplicates(s): { world; servers }[]                  // groups of servers sharing a folder
 formatAssignmentWarnings({ duplicates, undetermined }): string[]
 
 // shared/src/application/ports/outbound/IWorldAssignmentPort.ts
 interface IWorldAssignmentPort {
-  listAssignments(): Promise<WorldAssignmentSnapshot>;        // rejects only when servers/ cannot be listed
+  /** @deprecated v2: holder of the world's folders or null; rejects undetermined instead of null. */
+  getAssignment(world: string): Promise<string | null>;
+  listAssignments(): Promise<WorldAssignment[]>;              // v2 shape: readable servers only
+  snapshot(): Promise<WorldAssignmentSnapshot>;               // + undetermined; rejects only when servers/ cannot be listed
   preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot>; // writes nothing
   assign(world: string, server: string): Promise<void>;       // checkAssign on a fresh snapshot; no-op if held
   release(world: string): Promise<{ server: string; fallback: string }>;
@@ -79,7 +81,7 @@ interface IWorldAssignmentPort {
 - Constructors only gain optional trailing parameters: `WorldManagementUseCase(…, assignments?, runtime?)`, `CreateServerUseCase(…, modSource?, assignments?)`, `ConfigSnapshotUseCaseImpl(…, collector, assignments?, runtime?)`, `WorldRepository(paths?, assignments?)` (default: the config.env adapter). Without the assignment port every assignment change, world delete, server create and `config.env` restore is refused (`undetermined`); without the runtime port a world change is refused.
 - `IWorldManagementUseCase.assignWorldByName` gains an optional `{ requireExisting }` (default `true`). Results gain `errorCode`; `WorldReleaseResult` gains `fallbackWorld` and `fallbackExists`. `WorldManagementUseCase` adds `planWorldReset` and `getAssignmentReport`.
 - `isLocked`/`lockedBy` now mean "assigned" (`WorldRepository` fills `World.lockTo()` from one snapshot per call). `findAllWithServerStatus` maps a missing container to `stopped`, not `available`.
-- Deprecated, removal in #736: `IShellPort`/`ShellAdapter` `worldAssign`, `worldRelease`, `worldList`, `serverStatus` (the world methods now fail because `lock.sh` is gone); `WorldRepository.getLockStatus` (derived, `pid` undefined), `WorldLockData`, `Paths.locks`, `Paths.lockFile`.
+- Deprecated, removal in #736: `IWorldAssignmentPort.getAssignment`; `IShellPort`/`ShellAdapter` `worldAssign`, `worldRelease`, `worldList` (they return a failed result naming the replacement and run no script), `serverStatus`; `WorldRepository.getLockStatus` (derived, `pid` undefined), `WorldLockData`, `Paths.locks`, `Paths.lockFile`.
 
 ### Composition roots
 
@@ -96,12 +98,13 @@ interface IWorldAssignmentPort {
 | API `POST /api/servers` | Same check (replaces the `listWorlds()` block and its `ShellAdapter`). |
 | `mcctl world assign`, API `POST /api/worlds/:name/assign` | `assignWorldByName`: `checkAssign` → runtime check → `assignments.assign`. The world must exist in `worlds/`. |
 | `mcctl config <srv> LEVEL\|WORLD_NAME <v>` | Only when the effective world (`LEVEL`, else `WORLD_NAME`) changes: `assignWorldByName(newWorld, srv, { requireExisting: false })`. A `WORLD_NAME` under a set `LEVEL` changes nothing and is written as before. |
+| `mcctl config <srv> EXTRA_ARGS <v>` | `checkConfigChange` (`checkConfigEnvChange`): when the proposed `config.env` changes the server's world or location (`--universe`), `checkProposed` and a stopped server are required. The API PATCH config has no `EXTRA_ARGS` field. |
 | API PATCH `/api/servers/:name/config` with a changed `level` | `assignWorldByName(level, name, { requireExisting: false })` before any other field is written; `level` is then dropped from the config update. Other fields cannot inject a `LEVEL` line (#726). |
 | `mcctl world new --server`, API `POST /api/worlds` with `serverName` | Runtime check and `checkAssign` **before** creating the directory, then `assignments.assign`; `start` uses `runtime.start`. `SEED` stays on `shell.setServerConfig` until #734/#726. |
 | `mcctl world release`, API `POST /api/worlds/:name/release` | `planRelease` → runtime check on the holder → `assignments.release`. |
-| `mcctl world delete`, API `DELETE /api/worlds/:name` | `checkRemoval`: refused while a non-internal server uses the world family or anything is undetermined; `--force`/`?force` no longer bypasses this. |
+| `mcctl world delete`, API `DELETE /api/worlds/:name` | `checkRemoval`: refused while a non-internal server uses one of its folders or anything is undetermined; `--force`/`?force` no longer bypasses this. |
 | API `POST /api/servers/:name/world/reset` | `planWorldReset` (`checkReset`), and the route wipes the world it returns. |
-| Config snapshot restore (CLI, API `POST …/config-snapshots/:id/restore`) | When the snapshot contains `config.env`: `preview` + `checkProposed`, and a runtime check when the server's assignment changes, whatever `force` says. API answers 409. |
+| Config snapshot restore (CLI, API `POST …/config-snapshots/:id/restore`) | `config.env`: `checkConfigEnvChange` (`preview` + `checkProposed`, and a runtime check when the assignment changes, whatever `force` says). `docker-compose.yml` (parsed with js-yaml): refused when its `environment` sets `LEVEL`, `WORLD_NAME` or `EXTRA_ARGS`, when its `/worlds` or `/data` mapping differs from the current file, or when it cannot be parsed. API answers 409. |
 | `mcctl migrate worlds` | The new `config.env` is built first and checked with `preview` + `checkProposed` before any world data moves. |
 
 - **Runtime check**: `checkServerStopped(runtime, server)` calls `runtime.getStatus('mc-<server>')` (D1 naming; D4 switches to `ServerName`). **Known limit**: in D1, `not_found` also means "runtime unreachable", so that case passes and a running server can be changed when Docker cannot be queried. A throw is mapped to `undetermined`. Follow-up: replace the call with #732's strict runtime lookup once it is merged (A7, #669).

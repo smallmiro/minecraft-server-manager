@@ -64,12 +64,14 @@
 
 | 메서드 | 동작 |
 |--------|------|
-| `listAssignments(): Promise<WorldAssignmentSnapshot>` | `{ assignments: { world, server, internal }[], undetermined: string[] }`. `servers/`를 읽지 못할 때만 reject한다 |
+| `getAssignment(world): Promise<string \| null>` | v2, deprecated. 월드 폴더를 가진 서버 또는 null. 판단 불가 서버가 있으면 null 대신 reject한다 |
+| `listAssignments(): Promise<WorldAssignment[]>` | v2 형태. 읽을 수 있는 서버의 배정(`internal`은 선택 필드) |
+| `snapshot(): Promise<WorldAssignmentSnapshot>` | `{ assignments, undetermined }`. `servers/`를 읽지 못할 때만 reject한다 |
 | `preview(server, configEnv): Promise<WorldAssignmentSnapshot>` | 한 서버의 `config.env`를 바꿨을 때의 스냅숏(스냅숏 복원, migrate). 아무것도 쓰지 않는다 |
 | `assign(world, server): Promise<void>` | `LEVEL=<world>`를 쓴다. 위반하거나 판단할 수 없으면 `WorldAssignmentError`로 reject한다(R7) |
 | `release(world): Promise<{ server, fallback }>` | 배정 해제(#715). 가진 서버의 `LEVEL`을 그 서버의 기본 월드 `<서버이름>`으로 바꾼다 |
 
-`getAssignment`는 뺐다(순수 함수 `holdersOf`로 대체). 어댑터는 `ConfigEnvWorldAssignmentAdapter`이고, CLI `Container`와 D2 전까지는 API 라우트가 만든다.
+v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유지하고(#715, #736), `snapshot`, `preview`, `release`를 추가했다. 어댑터는 `ConfigEnvWorldAssignmentAdapter`이고, CLI `Container`와 D2 전까지는 API 라우트가 만든다.
 
 ## 48개 함수 분류
 
