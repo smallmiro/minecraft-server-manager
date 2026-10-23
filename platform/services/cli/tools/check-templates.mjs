@@ -17,6 +17,8 @@ if (existsSync(resolve(repoRoot, 'templates'))) {
 const links = {
   'platform/docker-compose.yml': 'docker-compose.yml',
   'platform/servers/_template': 'servers/_template',
+  'platform/servers/global.env': 'servers/global.env',
+  'platform/.env.example': '.env.example',
 };
 for (const [dev, source] of Object.entries(links)) {
   const p = resolve(repoRoot, dev);
