@@ -495,6 +495,9 @@ mcctl create [name] [options]
 | `--no-whitelist` | | 화이트리스트 비활성화 (기본값, 위 두 옵션보다 우선) |
 | `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
 
+!!! info "create가 쓰는 파일"
+    `mcctl create`는 `servers/<이름>/server.yaml`을 쓰고, 그 파일에서 `config.env`, `docker-compose.yml`, `servers/compose.yml` 항목을 만듭니다([서버 정의](../configuration/server-yaml.md)). 서버가 만들어지기 전에 실패하면 아무것도 남기지 않으므로 같은 명령을 다시 실행하면 됩니다. 서버는 만들어졌지만 시작하지 못하면 서버는 그대로 두고 원인과 함께 종료 코드 1로 끝납니다. `mcctl start <이름>`으로 시작하세요.
+
 !!! info "월드 하나는 서버 하나"
     다른 서버가 이미 사용 중인 월드는 `--world`(그리고 새 서버의 기본 월드 `<name>`)로 지정할 수 없습니다. [월드 할당 규칙](#world-assignment-rules)을 참고하세요.
 
@@ -1980,6 +1983,30 @@ mcctl migrate worlds [options]
 !!! info "월드 저장 경로 변경"
     `mcctl create`로 생성된 새 서버는 이미 `/worlds/` 디렉토리 구조를 사용합니다.
     이 마이그레이션 명령어는 이 변경 이전에 생성된 기존 서버를 위한 것입니다.
+
+---
+
+### mcctl migrate spec
+
+서버를 정의 파일 `servers/<이름>/server.yaml`로 가져오고, 그 파일에서 만드는 파일(`config.env`, `docker-compose.yml`, `servers/compose.yml` 항목)을 씁니다. [서버 정의](../configuration/server-yaml.md)를 참고하세요.
+
+```bash
+mcctl migrate spec <서버> [옵션]
+mcctl migrate spec --all [옵션]
+```
+
+**옵션:**
+
+| 옵션 | 설명 |
+|------|------|
+| `--all` | 모든 서버 |
+| `--dry-run` | 가져올 내용만 보고하고 쓰지 않음 |
+| `--force` | 생성 파일의 손수정을 무시하고 `server.yaml`에서 다시 만듦(`.bak` 사본을 남김) |
+| `--json` | 서버별 보고서를 JSON으로 출력 |
+
+다시 실행해도 안전합니다. 동기화된 서버는 `synced`로 보고하고 아무것도 다시 쓰지 않습니다. 월드나 이미지를 정할 수 없는 서버(예: `config.env`의 `${...}` 값)는 `refused`이고 종료 코드는 1입니다. `world.level`을 바꾸면 [월드 할당 규칙](#world-assignment-rules)으로 검사하며 서버가 정지돼 있어야 합니다.
+
+꼭 실행할 필요는 없습니다. `server.yaml`이 없는 서버는 mcctl이 처음 바꿀 때 가져오고, `mcctl upgrade`가 아직 가져오지 않은 서버를 알려 줍니다.
 
 ---
 

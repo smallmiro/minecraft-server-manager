@@ -109,7 +109,7 @@ Every key in `.env` has exactly one status, decided by which code actually reads
 
 | Key | Consumer | Apply scope |
 |-----|----------|-------------|
-| `HOST_IP`, `HOST_IPS` | `create-server.sh` | `next-create`: used by the next `mcctl create`. Existing servers' hostnames do not change |
+| `HOST_IP`, `HOST_IPS` | `mcctl create`, `mcctl init --reconfigure` | `next-create`: used by the next `mcctl create`. `mcctl init --reconfigure` re-renders existing servers so their nip.io hostnames follow |
 | `DOCKER_GID` | compose `router.group_add` | `router`: `mcctl router start` (`mcctl router restart` does not apply it) |
 | `TZ`, `EXTRA_ARGS` | Every server container (`servers/global.env`) | `servers`: stop, then start each server |
 | `RCON_PASSWORD` (secret), `RCON_PORT` | Every server container (`servers/global.env`); CLI `rcon` | `servers` |
