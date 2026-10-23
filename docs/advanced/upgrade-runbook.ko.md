@@ -126,7 +126,7 @@ mcctl console service restart --force               # 일반 restart는 옛 env�
 
 ## 6. 지도(BlueMap) 재렌더 (릴리즈 노트에 지도 변경이 있을 때만)
 
-지도를 만든 월드는 Console의 월드 상세에서 **Render map**을 다시 실행합니다. 렌더 스크립트(`render-map.sh`)가 매번 설정을 새로 생성하므로 보통 `--force`는 필요 없습니다.
+지도를 만든 월드는 Console의 월드 상세에서 **Render map**을 다시 실행합니다. 렌더러가 매번 지도 설정을 새로 생성하므로 보통 `--force`는 필요 없습니다.
 
 ## 7. 업그레이드 후 검증
 

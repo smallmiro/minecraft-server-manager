@@ -125,7 +125,7 @@ Stopped servers get the new image on next start. Restart running servers at a qu
 
 ## 6. Re-render maps (BlueMap) — only if the release notes mention map changes
 
-For worlds that have a map, run **Render map** again from the world detail page in the Console. `render-map.sh` regenerates the map config on every render, so `--force` is usually not needed.
+For worlds that have a map, run **Render map** again from the world detail page in the Console. The renderer regenerates the map config on every render, so `--force` is usually not needed.
 
 ## 7. Post-upgrade verification
 

@@ -345,7 +345,7 @@ The **World** tab shows the world assigned to the server. If no world is assigne
 
 ![World Map](../images/world-map.png)
 
-**Render map** generates a BlueMap web map of the world, and **Re-render** refreshes it. The map is embedded right below the buttons, with a progress bar while rendering. The map opens on the **Overworld** by default (Nether and End remain selectable in the viewer). Worlds rendered before v2.29.0 pick this up on **Re-render**. After a render, **Show structures** marks structures on the map; you can toggle the structure types in the BlueMap legend.
+**Render map** generates a BlueMap web map of the world, and **Re-render** refreshes it. The render runs in a Docker container limited to 2 GB of memory; the first render also builds the BlueMap image. The map is embedded right below the buttons, with a progress bar while rendering. The map opens on the **Overworld** by default (Nether and End remain selectable in the viewer). Worlds rendered before v2.29.0 pick this up on **Re-render**. After a render, **Show structures** marks structures on the map; you can toggle the structure types in the BlueMap legend.
 
 #### Ore & Block Stats
 

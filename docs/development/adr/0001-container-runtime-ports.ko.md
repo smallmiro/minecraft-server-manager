@@ -97,7 +97,7 @@
 | `create-server.sh` | `start` | `apply(spec)`, `register`, `save`(D5) |
 | `backup.sh` | `command(['save-all'])`로 flush, 또는 `stop` | git 저장소는 백업 어댑터가 맡는다 |
 | `lock.sh` | — | `IWorldAssignmentPort`(A4) |
-| `render-map.sh` | — | Docker `IMapRenderer` 어댑터 안에 둔다(k8s에서는 Job) |
+| `render-map.sh`(#733에서 제거) | — | Docker `IMapRenderer` 어댑터 `BlueMapCliRenderer`로 옮겼다(k8s에서는 Job) |
 | `player.sh` | — | #730에서 제거했다 (`mcctl player info`가 대체) (`init.sh`는 #729에서 제거했다) |
 
 지금 포트에 추가해야 할 메서드는 없습니다. 미룬 메서드는 모두 지금 TS 호출처가 없습니다.
