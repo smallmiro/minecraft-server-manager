@@ -69,6 +69,67 @@ describe('parseEnvDocument', () => {
   });
 });
 
+// How Docker Compose (compose-go dotenv) reads each line of an env_file (#656).
+// Every TS reader of .env / config.env goes through parseEnvDocument, so this
+// table is the single parsing rule.
+const COMPOSE_COMPAT: Array<[line: string, key: string, value: string | undefined]> = [
+  ['A=plain', 'A', 'plain'],
+  ['A=  padded  ', 'A', 'padded'],
+  ['A = spaced', 'A', 'spaced'],
+  ['  A=indented', 'A', 'indented'],
+  ['export A=exported', 'A', 'exported'],
+  ['A=', 'A', ''],
+  ['A=x=y', 'A', 'x=y'],
+  ['A=value # comment', 'A', 'value'],
+  ['A=value#hash', 'A', 'value#hash'],
+  ['A="double quoted"', 'A', 'double quoted'],
+  ["A='single quoted'", 'A', 'single quoted'],
+  ['A="quoted" # comment', 'A', 'quoted'],
+  ['A="has # hash"', 'A', 'has # hash'],
+  ['A="a\\"b"', 'A', 'a"b'],
+  ['A="line\\nbreak"', 'A', 'line\nbreak'],
+  ['A="back\\\\slash"', 'A', 'back\\slash'],
+  ["A='no \\n escape'", 'A', 'no \\n escape'],
+  ['A=§aMOTD §lbold', 'A', '§aMOTD §lbold'],
+  ['# A=commented', 'A', undefined],
+  ['not a setting', 'A', undefined],
+];
+
+describe('parseEnvDocument Compose compatibility', () => {
+  test.each(COMPOSE_COMPAT)('%s', (line, key, value) => {
+    expect(parseEnvDocument(`${line}\n`).values.get(key)).toBe(value);
+  });
+
+  test('an unterminated quote is read literally (Compose rejects the file)', () => {
+    expect(parseEnvDocument('A="open\n').values.get('A')).toBe('"open');
+  });
+});
+
+describe('codec round-trip', () => {
+  const values = ['plain', 'a b c', '$(id)', 'x=y', 'semi;colon', '§aMOTD', '', 'p@ss:w/rd', 'with "double" inside'];
+
+  test.each(values)('quoted style: %j reads back unchanged', (value) => {
+    const out = applyEnvChanges('', { set: { K: value } });
+    expect(parseEnvDocument(out).values.get('K')).toBe(value);
+  });
+
+  test.each(values)('raw style (config.env): %j reads back unchanged', (value) => {
+    const out = applyEnvChanges('', { set: { K: value } }, { raw: true });
+    expect(out).toBe(`K=${value}\n`);
+    expect(parseEnvDocument(out).values.get('K')).toBe(value);
+  });
+
+  test('raw style rejects values that are not one env_file setting', () => {
+    expect(() => applyEnvChanges('', { set: { K: 'a\nB=1' } }, { raw: true })).toThrow(EnvValueError);
+    expect(() => applyEnvChanges('', { set: { K: '"" B=1' } }, { raw: true })).toThrow(EnvValueError);
+  });
+
+  test('raw style keeps untouched lines and rewrites an export line in place', () => {
+    const src = '# c\nexport A=1\nB=2\n';
+    expect(applyEnvChanges(src, { set: { A: 'x y' } }, { raw: true })).toBe('# c\nA=x y\nB=2\n');
+  });
+});
+
 describe('applyEnvChanges', () => {
   test('no changes returns the content unchanged', () => {
     expect(applyEnvChanges(SAMPLE, {})).toBe(SAMPLE);
