@@ -1091,7 +1091,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<DeleteServerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    const { force } = request.query;
+    const { force, deleteWorld } = request.query;
     const containerName = `mc-${name}`;
 
     try {
@@ -1117,16 +1117,17 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const mcctlRoot = config.mcctlRoot;
       const resolvedScript = resolveScriptPath('delete-server.sh', mcctlRoot);
 
-      // Build command
+      // Build command (the world is moved to worlds/ unless deleteWorld)
+      const deleteArgs = [name, '--force', ...(deleteWorld ? ['--delete-world'] : [])];
       let command: string;
       let commandArgs: string[];
       if (resolvedScript) {
         command = 'bash';
-        commandArgs = [resolvedScript.scriptPath, name, '--force'];
+        commandArgs = [resolvedScript.scriptPath, ...deleteArgs];
       } else {
         // Use mcctl CLI if script not found
         command = 'mcctl';
-        commandArgs = ['delete', name, '--force'];
+        commandArgs = ['delete', ...deleteArgs];
       }
 
       const { stdout, stderr } = await execFilePromise(command, commandArgs, {
@@ -1146,7 +1147,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         targetType: 'server',
         targetName: name,
         status: 'success',
-        details: { force: force ?? false },
+        details: { force: force ?? false, deleteWorld: deleteWorld ?? false },
         errorMessage: null,
       });
 
