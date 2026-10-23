@@ -699,7 +699,7 @@ mcctl stop myserver
 mcctl stop --all
 ```
 
-`mcctl stop <name>` exits with code 2 and a warning when the server is not running.
+`mcctl stop <name>` exits with code 2 and a warning when the server is not running. `start` and `stop` exit with code 1 when Docker cannot be queried.
 
 With `BACKUP_AUTO_ON_STOP=true` and a configured backup, `mcctl stop <name>` backs up the worlds after the server has stopped, the same way as [`mcctl backup push --auto`](#mcctl-backup-push): it never prompts and waits up to 10 minutes for a running backup. A failed backup prints a warning; the stop still succeeds (exit code 0). Stopping from the web console or the API (`POST /api/servers/<name>/stop`) runs the same backup in the background. `mcctl stop --all` does not back up.
 
@@ -764,7 +764,7 @@ mcctl console <name>
 ```
 
 !!! note "Changed in this release: TCP RCON instead of `docker exec`"
-    `mcctl console` connects to the server's RCON port over TCP (the container address, `RCON_PORT` and `RCON_PASSWORD`), like `mcctl rcon`. It used to run `docker exec -i mc-<name> rcon-cli`. The server must be running and its RCON port reachable from the host running `mcctl`. Type `exit` or `quit`, or press `Ctrl+C`/`Ctrl+D`, to leave.
+    `mcctl console` connects to the server's RCON port over TCP (the container address, `RCON_PORT` and `RCON_PASSWORD`), like `mcctl rcon`. It used to run `docker exec -i mc-<name> rcon-cli`. The server must be running and its RCON port reachable from the host running `mcctl`. Type `exit` or `quit`, or press `Ctrl+C`/`Ctrl+D`, to leave. Piped input runs line by line (`printf 'list\n' | mcctl console myserver`). The session ends when the server closes the connection (for example after `stop`); a connection error exits with code 1.
 
 **Example:**
 

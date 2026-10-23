@@ -699,7 +699,7 @@ mcctl stop myserver
 mcctl stop --all
 ```
 
-`mcctl stop <name>`은 서버가 실행 중이 아니면 경고와 함께 종료 코드 2로 끝납니다.
+`mcctl stop <name>`은 서버가 실행 중이 아니면 경고와 함께 종료 코드 2로 끝납니다. Docker를 조회할 수 없으면 `start`와 `stop`은 종료 코드 1로 끝납니다.
 
 `BACKUP_AUTO_ON_STOP=true`이고 백업이 설정되어 있으면 `mcctl stop <name>`은 서버가 멈춘 뒤 월드를 백업합니다. 방식은 [`mcctl backup push --auto`](#mcctl-backup-push)와 같습니다. 입력을 묻지 않고, 다른 백업이 실행 중이면 최대 10분 기다립니다. 백업이 실패하면 경고만 출력하고 정지는 성공합니다(종료 코드 0). 웹 콘솔이나 API(`POST /api/servers/<name>/stop`)로 정지해도 같은 백업을 백그라운드에서 실행합니다. `mcctl stop --all`은 백업하지 않습니다.
 
@@ -764,7 +764,7 @@ mcctl console <name>
 ```
 
 !!! note "이번 릴리스 변경: `docker exec` 대신 TCP RCON"
-    `mcctl console`은 `mcctl rcon`처럼 서버의 RCON 포트에 TCP로 연결합니다(컨테이너 주소, `RCON_PORT`, `RCON_PASSWORD`). 예전에는 `docker exec -i mc-<name> rcon-cli`를 실행했습니다. 서버가 실행 중이어야 하고, `mcctl`을 실행하는 호스트에서 RCON 포트에 닿아야 합니다. `exit`나 `quit`을 입력하거나 `Ctrl+C`/`Ctrl+D`를 누르면 끝납니다.
+    `mcctl console`은 `mcctl rcon`처럼 서버의 RCON 포트에 TCP로 연결합니다(컨테이너 주소, `RCON_PORT`, `RCON_PASSWORD`). 예전에는 `docker exec -i mc-<name> rcon-cli`를 실행했습니다. 서버가 실행 중이어야 하고, `mcctl`을 실행하는 호스트에서 RCON 포트에 닿아야 합니다. `exit`나 `quit`을 입력하거나 `Ctrl+C`/`Ctrl+D`를 누르면 끝납니다. 파이프 입력은 한 줄씩 실행합니다(`printf 'list\n' | mcctl console myserver`). 서버가 연결을 끊으면(예: `stop` 뒤) 세션이 끝나고, 연결 오류는 종료 코드 1로 끝납니다.
 
 **예제:**
 
