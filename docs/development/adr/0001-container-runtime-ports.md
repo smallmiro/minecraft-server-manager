@@ -20,7 +20,7 @@ This issue is a **structural change only (Tidy First)**. Runtime behaviour, argv
 
 1. **Six runtime ports in D1**: `IContainerRuntimePort`, `IServerConsolePort`, `IRouterStatusPort`, `IPlayitAgentPort`, `IHostnameRegistrarPort`, `IRuntimeEnvironmentPort`.
 2. **Method rule**: a method goes into a port only if a current call site will move to it: a function in `docker/index.ts`, or a direct `docker` call in the CLI or API that D2/D3 will migrate. Methods needed only by future k8s or #715 work are deferred. D1 fixes the port surface so that D2 and D3 can work in parallel without editing shared (SYNC-3).
-3. **`IServerSpecRepository` and `IWorldAssignmentPort` are reserved in this ADR, not created as code.** They have no implementation and no caller in D1. Their shapes depend on designs that are still open (ServerSpec schema, §9.2; the A4 assignment model). See [Reserved ports](#reserved-ports).
+3. **`IServerSpecRepository` and `IWorldAssignmentPort` are reserved as type-only files.** The issue asks for them "interface only", so D1 creates them with the sketched signatures, marked provisional. They have no implementation and no caller in D1. Their shapes depend on designs that are still open (ServerSpec schema, §9.2; the A4 assignment model), so D5 and A4 may rewrite them. See [Reserved ports](#reserved-ports).
 4. **Contracts are provisional until a second adapter exists.** Until #641 adds the k8s adapter, D4, A7, C2, and D5 may change signatures. The TypeScript compiler finds every call site. Each change updates this ADR.
 5. **Synchronous where the code is synchronous today.** Methods backed by `execSync`/`spawnSync`/`execFileSync` stay synchronous. Methods that are async today stay async. C2 converts the port to `Promise` everywhere.
 6. **Error model is unchanged**: sentinels (`'not_found'`, `'unknown'`, `''`, `null`, `false`, `'-'`) and result objects that never throw, exactly as today. "Cannot tell" and "absent" stay conflated until A7 adds `RuntimeUnavailableError`.
@@ -131,12 +131,12 @@ export interface IRuntimeEnvironmentPort {
 
 ### Reserved ports
 
-Not created in D1. The signatures below are a non-normative sketch from the hardening plan §9.1.
+Created in D1 as type-only files with the sketch from the hardening plan §9.1, each with a "provisional" JSDoc. They are async (new code, no synchronous caller to preserve) and import nothing from infrastructure.
 
-| Port | Owner | Sketch | Why not now |
-|------|-------|--------|-------------|
-| `IServerSpecRepository` | D5 (#675) | `list()`, `get(name)`, `save(spec)`, `delete(name)` | The `ServerSpec` type does not exist yet; its schema is a D5 design item (§8, §9.2). A placeholder type would be rewritten. |
-| `IWorldAssignmentPort` | A4 (#670) | `getAssignment(world)`, `listAssignments()`, `assign(world, server)` (R1 check) | A4 may derive assignments from each server's `LEVEL` as a domain service, so this may never be a port. |
+| Port | Owner | D1 signature | Why provisional |
+|------|-------|--------------|-----------------|
+| `IServerSpecRepository` | D5 (#675) | `list(): Promise<ServerSpec[]>`, `get(name): Promise<ServerSpec \| null>`, `save(spec): Promise<void>`, `delete(name): Promise<void>`; `ServerSpec` is a placeholder `{ name: string }` | The real `ServerSpec` schema is a D5 design item (§8, §9.2). D5 replaces the placeholder type. |
+| `IWorldAssignmentPort` | A4 (#670) | `getAssignment(world): Promise<string \| null>`, `listAssignments(): Promise<WorldAssignment[]>` (`{ world, server }`), `assign(world, server): Promise<void>` (rejects on an R1 violation) | A4 may derive assignments from each server's `LEVEL` as a domain service, so this may stop being a port. |
 
 ## Adapters and the Legacy Facade
 
@@ -338,7 +338,7 @@ Review checklist: `git grep -n "docker/index" src/infrastructure/adapters/Docker
 
 ## Open Questions
 
-1. **Reserved ports**: the issue asks for `IServerSpecRepository` and `IWorldAssignmentPort` "interface only". This ADR proposes ADR-only reservation (decision 3). If code is still wanted, it is two type-only files with the sketched signatures and a placeholder `ServerSpec` that D5 will replace.
+1. **Reserved ports** (resolved 2026-10-23): created as two type-only files with the sketched signatures and a placeholder `ServerSpec` that D5 will replace (decision 3).
 2. **API stop semantics**: moving `executeServerAction('stop')` (`docker compose stop`) to `runtime.stop` (`docker stop`) is a small behaviour change. The two differ only for containers that are not in the compose project. Option A (recommended): accept it in D2 as a separate, labelled commit. Option B: make `stop` compose-based and change `mcctl.sh`-parity callers instead.
 3. **Owner of the composites**: none of D2, D4, or #667 names the 12 facade composites. D2's acceptance criterion "route tests with a fake container" needs them injectable. Recommendation: add "turn the composites into an application query service built from ports" to D4 (shared, core-agent), and land it before D2's route migration.
 4. **Order of signature changes**: D2, D3, and D4 run in parallel (P3), but D4 changes port parameters to `ServerName`. Option A (recommended): land D4's signature change first, then D2/D3. Option B: run them in parallel and let the compiler-driven fix-ups happen at merge.
