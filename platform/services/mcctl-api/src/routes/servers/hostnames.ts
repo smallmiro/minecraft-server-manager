@@ -166,27 +166,6 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         playitDomain,
       });
     } catch (error) {
-      if (error instanceof Error && (
-        error.message.includes('Duplicate') ||
-        error.message.includes('Invalid') ||
-        error.message.includes('Cannot use') ||
-        error.message.includes('must be between')
-      )) {
-        await writeAuditLog({
-          action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,
-          actor: 'api:console',
-          targetType: 'server',
-          targetName: name,
-          details: { customHostnames },
-          status: 'failure',
-          errorMessage: error.message,
-        });
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: error.message,
-        });
-      }
-
       await writeAuditLog({
         action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,
         actor: 'api:console',
@@ -196,6 +175,18 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         status: 'failure',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
+      if (error instanceof Error && (
+        error.message.includes('Duplicate') ||
+        error.message.includes('Invalid') ||
+        error.message.includes('Cannot use') ||
+        error.message.includes('must be between')
+      )) {
+        return reply.code(400).send({
+          error: 'BadRequest',
+          message: error.message,
+        });
+      }
+
       fastify.log.error(error, 'Failed to update server hostnames');
       return reply.code(500).send({
         error: 'InternalServerError',
