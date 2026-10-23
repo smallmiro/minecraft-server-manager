@@ -2,6 +2,7 @@
  * #665 widened the runtime, console, router and RCON ports to `ServerName | string`
  * and deprecated members instead of removing them (#715: v2.x never breaks a
  * shared export or signature). This compiles v2 consumer code against src.
+ * The runtime contract of the released IRconPort is in rconPort-v2-contract.test.ts.
  */
 import { describe, it, expect } from 'vitest';
 import { writeFileSync, rmSync } from 'node:fs';
@@ -12,38 +13,18 @@ import ts from 'typescript';
 const V2_CONSUMER = `
 import type {
   IContainerRuntimePort, IServerConsolePort, IRouterStatusPort, IRconPort, IShellPort,
-  IPromptPort, IServerRepository, ContainerStatus, HealthStatus, ContainerStats,
-  PlayerListResult, RuntimeActionResult, ConsoleCommandResult, ConsoleEndpoint, ShellResult,
+  IPromptPort, IServerRepository, ContainerStatus,
+  PlayerListResult, RuntimeActionResult, ShellResult,
 } from '../src/index.js';
 import {
   ServerName, Server, Paths, ServerRepository, WorldRepository, CreateServerUseCase,
   DockerComposeRuntimeAdapter, DockerServerConsoleAdapter, RconCliAdapter, ConfigEnvWorldAssignmentAdapter,
 } from '../src/index.js';
 
-// v2 implementations, declared with container-name strings, still satisfy the ports
-export class V2Runtime implements IContainerRuntimePort {
-  getStatus(name: string): ContainerStatus { return name ? 'running' : 'not_found'; }
-  getHealth(name: string): HealthStatus { return name ? 'none' : 'unknown'; }
-  exists(name: string): boolean { return !!name; }
-  list(options?: { running?: boolean }): string[] { return options ? [] : []; }
-  getLogs(name: string, lines?: number): string { return name + lines; }
-  getStats(name: string): ContainerStats | null { return name ? null : null; }
-  getUptime(name: string): { uptime: string; seconds: number } | null { return name ? null : null; }
-  async start(name: string): Promise<RuntimeActionResult> { return { success: !!name }; }
-  async stop(name: string): Promise<RuntimeActionResult> { return { success: !!name }; }
-  async restart(name: string): Promise<RuntimeActionResult> { return { success: !!name }; }
-  async readLogs(name: string, options: { since: string; tail: number }): Promise<string[]> { return [name, options.since]; }
-  async followLogs(name: string, onChunk: (chunk: string) => void, signal: AbortSignal): Promise<void> { if (!signal.aborted) onChunk(name); }
-}
-export class V2Console implements IServerConsolePort {
-  async listPlayers(name: string): Promise<PlayerListResult | null> { return name ? null : null; }
-  async command(name: string, args: string[]): Promise<ConsoleCommandResult> { return { exitCode: 0, stdout: name + args.join(' '), stderr: '' }; }
-  async getEndpoint(name: string): Promise<ConsoleEndpoint | null> { return name ? null : null; }
-}
-export class V2Router implements IRouterStatusPort {
-  getHealth(): HealthStatus { return 'unknown'; }
-  getHostnames(name: string): string { return name; }
-}
+// IRconPort shipped in v2.33.0: an implementation declared with a container-name
+// string still satisfies it. IContainerRuntimePort, IServerConsolePort and
+// IRouterStatusPort were added after v2.33.0 (#654), so no released code
+// implements them and they are only exercised as callers below.
 export class V2Rcon implements IRconPort {
   async getEntityPosition(container: string, player: string) { return container && player ? null : null; }
 }
