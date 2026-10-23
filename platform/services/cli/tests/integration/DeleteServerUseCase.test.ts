@@ -121,6 +121,26 @@ describe('DeleteServerUseCase Integration', () => {
 
       assert.strictEqual(result, true);
     });
+
+    // v2.x keeps the boolean form as deprecated (#715 release policy)
+    it('still accepts the deprecated boolean force without asking', async () => {
+      serverRepo = new MockServerRepository([
+        { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
+      ]);
+      promptAdapter = new MockPromptAdapter({ confirm: false });
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+
+      assert.strictEqual(await useCase.executeWithName('busy', true), true);
+    });
+
+    it('keeps the players guard for the deprecated boolean false', async () => {
+      serverRepo = new MockServerRepository([
+        { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
+      ]);
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+
+      await assert.rejects(useCase.executeWithName('busy', false), /5 player\(s\) online/);
+    });
   });
 
   // #652: the guard, confirmation and world option
