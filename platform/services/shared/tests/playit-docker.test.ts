@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, mkdtempSync, chmodSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import type {
   PlayitAgentStatus,
   PlayitServerInfo,
@@ -70,6 +71,33 @@ describe('PlayitServerInfo interface', () => {
 });
 
 describe('Docker helper functions for playit.gg', () => {
+  // These helpers run docker against the platform root. Point both at a temp
+  // root and a fake `docker` that only records its argv and cwd, so the tests
+  // never start or stop the host's real playit-agent (#756).
+  let root: string;
+  let calls: string;
+  const savedEnv = { root: process.env['MCCTL_ROOT'], path: process.env['PATH'] };
+  const dockerCalls = (): string[] =>
+    existsSync(calls) ? readFileSync(calls, 'utf8').split('\n').filter(Boolean) : [];
+
+  beforeEach(() => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), 'playit-root-')));
+    const bin = join(root, 'bin');
+    mkdirSync(bin);
+    calls = join(root, 'docker-calls.log');
+    writeFileSync(join(bin, 'docker'), `#!/bin/sh\necho "$PWD :: $*" >> "${calls}"\nexit 0\n`);
+    chmodSync(join(bin, 'docker'), 0o755);
+    process.env['MCCTL_ROOT'] = root;
+    process.env['PATH'] = `${bin}:${savedEnv.path}`;
+  });
+
+  afterEach(() => {
+    if (savedEnv.root === undefined) delete process.env['MCCTL_ROOT'];
+    else process.env['MCCTL_ROOT'] = savedEnv.root;
+    process.env['PATH'] = savedEnv.path;
+    rmSync(root, { recursive: true, force: true });
+  });
+
   describe('getPlayitAgentStatus', () => {
     test('should return status when playit-agent container is running', async () => {
       // This test will validate the function exists and returns the correct type
@@ -94,6 +122,7 @@ describe('Docker helper functions for playit.gg', () => {
       expect(typeof result).toBe('object');
       expect('success' in result).toBeTruthy();
       expect(typeof result.success).toBe('boolean');
+      expect(dockerCalls()).toContain(`${root} :: compose --profile playit up -d playit`);
     });
   });
 
@@ -102,6 +131,7 @@ describe('Docker helper functions for playit.gg', () => {
       // This test validates the function exists and returns a boolean
       const result = await dockerHelpers.stopPlayitAgent();
       expect(typeof result).toBe('boolean');
+      expect(dockerCalls()).toContain(`${root} :: compose --profile playit stop playit`);
     });
   });
 
