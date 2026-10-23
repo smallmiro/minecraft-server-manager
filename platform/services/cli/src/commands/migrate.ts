@@ -1,7 +1,14 @@
-import { Paths, log, colors, checkProposed, type IWorldAssignmentPort } from '@minecraft-docker/shared';
+import {
+  Paths,
+  log,
+  colors,
+  checkProposed,
+  type IContainerRuntimePort,
+  type IWorldAssignmentPort,
+} from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
 import { migrateSpec } from './migrate-spec.js';
-import { isContainerRunning } from '../lib/rcon.js';
+import { isContainerRunning, serverOfContainer } from '../lib/rcon.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
@@ -272,7 +279,7 @@ async function migrateWorlds(
       // Stop running servers
       for (const name of runningServers) {
         console.log(`Stopping ${name}...`);
-        await stopContainer(`mc-${name}`);
+        await stopServer(container.containerRuntime, name);
       }
     }
 
@@ -577,28 +584,13 @@ function findExistingWorldName(
 }
 
 /**
- * Stop a Docker container
+ * Stop a server through the runtime port
  */
-async function stopContainer(containerName: string): Promise<void> {
-  const { spawn } = await import('node:child_process');
-
-  return new Promise((resolve, reject) => {
-    const child = spawn('docker', ['stop', containerName], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`Failed to stop container ${containerName}`));
-      }
-    });
-
-    child.on('error', (err) => {
-      reject(err);
-    });
-  });
+async function stopServer(runtime: IContainerRuntimePort, name: string): Promise<void> {
+  const result = await runtime.stop(serverOfContainer(`mc-${name}`));
+  if (!result.success) {
+    throw new Error(`Failed to stop container mc-${name}`);
+  }
 }
 
 /**
