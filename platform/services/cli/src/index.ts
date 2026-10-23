@@ -233,10 +233,10 @@ ${colors.cyan('Server Backup/Restore:')}
 
 ${colors.cyan('World Backup:')}
   ${colors.bold('backup init')} [--force]      Setup GitHub backup (interactive)
-  ${colors.bold('backup push')} [--message]    Backup worlds to GitHub
+  ${colors.bold('backup push')} [--message] [--auto] [--allow-missing]  Backup worlds to GitHub
   ${colors.bold('backup status')}              Show backup configuration
   ${colors.bold('backup history')} [--json]    Show backup history
-  ${colors.bold('backup restore')} <commit>    Restore from commit
+  ${colors.bold('backup restore')} <commit> [--force]  Restore from commit (all servers stopped)
 
 ${colors.cyan('Backup Scheduling:')}
   ${colors.bold('backup schedule list')}        List all backup schedules
@@ -514,6 +514,10 @@ async function main(): Promise<void> {
 
   const rootDir = flags['root'] as string | undefined;
   const sudoPassword = flags['sudo-password'] as string | undefined;
+
+  // mcctl.sh calls back into this CLI for backups (#732): same node, same entry point
+  process.env.MCCTL_NODE = process.execPath;
+  if (process.argv[1]) process.env.MCCTL_CLI = process.argv[1];
   const paths = new Paths(rootDir);
   const shell = new ShellExecutor({ paths, sudoPassword });
 
@@ -821,6 +825,7 @@ async function main(): Promise<void> {
           json: flags['json'] === true,
           auto: flags['auto'] === true,
           force: flags['force'] === true,
+          allowMissing: flags['allow-missing'] === true,
         });
         break;
       }

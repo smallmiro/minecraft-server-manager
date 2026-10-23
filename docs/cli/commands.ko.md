@@ -1556,6 +1556,10 @@ mcctl backup push [options]
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
 | `--message` | `-m` | 커밋 메시지 |
+| `--auto` | | 묻지 않고 시각 메시지로 백업합니다. 다른 백업이 실행 중이면 최대 10분 기다립니다(정지 시 자동 백업이 사용) |
+| `--allow-missing` | | 일부러 지운 월드를 백업에서도 지웁니다([백업 가이드](../advanced/backup.md#삭제한-월드) 참조) |
+
+실행 중인 서버는 복사 전에 디스크에 기록합니다(`save-off`, `save-all flush`, `save-on`). 변경이 없으면 성공입니다.
 
 **예제:**
 
@@ -1610,14 +1614,14 @@ mcctl backup history [options]
 
     **출력:**
     ```json
-    {
-      "history": [
-        {"commit": "fd8633b", "date": "2026-01-20 21:06:35 +0900", "message": "Backup: 2026-01-20 21:06:30"},
-        {"commit": "19a7a4d", "date": "2026-01-20 20:21:08 +0900", "message": "Backup: 2026-01-20 20:21:06"},
-        {"commit": "7c2ad14", "date": "2026-01-19 22:50:42 +0900", "message": "Manual backup"},
-        {"commit": "ddeda27", "date": "2026-01-17 23:43:24 +0900", "message": "Initial backup"}
-      ]
-    }
+    [
+      {
+        "commitHash": "fd8633b2c1e4a7d9b0f3e6a5c8d1b4e7f0a3c6d9",
+        "message": "Backup: 2026-01-20 21:06:30",
+        "date": "2026-01-20T12:06:35.000Z",
+        "author": "Minecraft Backup"
+      }
+    ]
     ```
 
 ---
@@ -1627,7 +1631,7 @@ mcctl backup history [options]
 백업에서 월드 데이터를 복원합니다.
 
 ```bash
-mcctl backup restore [commit]
+mcctl backup restore [commit] [--force]
 ```
 
 **인자:**
@@ -1635,6 +1639,9 @@ mcctl backup restore [commit]
 | 인자 | 설명 |
 |----------|-------------|
 | `commit` | 커밋 해시 (선택사항, 제공하지 않으면 목록 표시) |
+| `--force` | 확인을 묻지 않습니다 |
+
+모든 서버가 중지되어 있어야 합니다. 결과는 그 커밋과 정확히 같고, `worlds/.locks`는 남으며, 교체된 데이터는 `backups/restore-previous/<시각>/`에 남습니다. [백업 가이드](../advanced/backup.md#백업에서-복원)를 참조하세요.
 
 **예제:**
 

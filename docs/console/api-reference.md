@@ -861,9 +861,12 @@ Push worlds backup to GitHub.
 
 ```json
 {
-  "message": "Before server upgrade"
+  "message": "Before server upgrade",
+  "allowMissing": false
 }
 ```
+
+`allowMissing` (optional): consent to drop worlds that are in the last backup but missing now; without it such a push is refused with `400`. "No changes" succeeds with `"message": "No changes to backup"`. A backup that is already running answers `409`.
 
 **Response:**
 
@@ -925,6 +928,8 @@ Restore worlds from a backup commit.
   "commitHash": "abc1234"
 }
 ```
+
+All servers must be stopped. Status codes: `409` servers running, another backup running, unfinished restore, or LEVEL conflict; `404` unknown commit; `503` Docker cannot be queried. The request never waits for input.
 
 **Response:**
 

@@ -8,6 +8,7 @@ import {
 } from '@minecraft-docker/shared';
 import { config } from '../config/index.js';
 import { BackupSchedulerService } from '../services/backup-scheduler.js';
+import { createWorldBackupPort } from '../lib/world-backup.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 import {
@@ -55,7 +56,7 @@ const backupSchedulePlugin: FastifyPluginAsync = async (fastify: FastifyInstance
   // Initialize backup scheduler service
   const scheduler = new BackupSchedulerService(
     useCase,
-    config.mcctlRoot,
+    createWorldBackupPort(config.mcctlRoot),
     fastify.log,
     writeAuditLog
   );

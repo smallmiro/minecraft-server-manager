@@ -21,7 +21,7 @@ export interface IBackupUseCase {
   /**
    * Push backup with message
    */
-  pushWithMessage(message: string): Promise<BackupPushResult>;
+  pushWithMessage(message: string, options?: BackupPushOptions): Promise<BackupPushResult>;
 
   /**
    * Get backup status
@@ -45,6 +45,16 @@ export interface IBackupUseCase {
 }
 
 /**
+ * Options for a non-interactive push (ignored by the deprecated IShellPort path)
+ */
+export interface BackupPushOptions {
+  /** Consent to drop worlds that are in the last backup but missing now. */
+  allowMissing?: boolean;
+  /** Wait this long for another backup operation (default 0). */
+  lockWaitMs?: number;
+}
+
+/**
  * Backup push result
  */
 export interface BackupPushResult {
@@ -53,6 +63,11 @@ export interface BackupPushResult {
   message?: string;
   worldsBackedUp?: string[];
   error?: string;
+  /** IWorldBackupPort error code, when the port path failed. */
+  errorCode?: string;
+  /** The backup succeeded without a new commit. */
+  noChanges?: boolean;
+  warnings?: string[];
 }
 
 /**
@@ -84,6 +99,10 @@ export interface BackupRestoreResult {
   commitHash: string;
   worldsRestored?: string[];
   error?: string;
+  /** IWorldBackupPort error code, when the port path failed. */
+  errorCode?: string;
+  /** Where the replaced data was kept. */
+  previousDir?: string;
 }
 
 /**

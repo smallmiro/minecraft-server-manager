@@ -74,3 +74,15 @@ describe('Container.auditLogPort', () => {
     expect(mockRepoCtor).toHaveBeenCalledWith('/tmp/mcctl-test-root/data/audit.db');
   });
 });
+
+describe('Container.worldBackupPort (#732)', () => {
+  it('builds a GitWorldBackupAdapter and the backup use case runs on it', async () => {
+    const { GitWorldBackupAdapter } = await import('@minecraft-docker/shared');
+    const container = new Container('/tmp/mcctl-test-root');
+    expect(container.worldBackupPort).toBeInstanceOf(GitWorldBackupAdapter);
+    expect(container.worldBackupPort).toBe(container.worldBackupPort);
+    // status goes through the port: an empty root is "not configured", not a shell failure
+    const status = await container.backupUseCase.status();
+    expect(status.configured).toBe(false);
+  });
+});

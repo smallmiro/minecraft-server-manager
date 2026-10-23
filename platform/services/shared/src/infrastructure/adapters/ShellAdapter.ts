@@ -10,6 +10,13 @@ import type {
   ShellResult,
 } from '../../application/ports/outbound/IShellPort.js';
 
+const BACKUP_REMOVED: ShellResult = {
+  code: 1,
+  stdout: '',
+  stderr: 'backup.sh was removed; use IWorldBackupPort (GitWorldBackupAdapter)',
+  success: false,
+};
+
 export interface ShellAdapterOptions {
   paths?: Paths;
   sudoPassword?: string;
@@ -254,28 +261,24 @@ export class ShellAdapter implements IShellPort {
   // Backup Operations
   // ========================================
 
-  async backupPush(message?: string): Promise<ShellResult> {
-    const args: string[] = ['push'];
-    if (message) {
-      args.push('-m', message);
-    }
-    return this.executeScript('backup.sh', args);
+  /** @deprecated backup.sh was removed (#732). Use IWorldBackupPort. Removed in #736. */
+  async backupPush(_message?: string): Promise<ShellResult> {
+    return BACKUP_REMOVED;
   }
 
+  /** @deprecated backup.sh was removed (#732). Use IWorldBackupPort. Removed in #736. */
   async backupStatus(): Promise<ShellResult> {
-    return this.executeScript('backup.sh', ['status']);
+    return BACKUP_REMOVED;
   }
 
-  async backupHistory(json = false): Promise<ShellResult> {
-    const args: string[] = ['history'];
-    if (json) {
-      args.push('--json');
-    }
-    return this.executeScript('backup.sh', args);
+  /** @deprecated backup.sh was removed (#732). Use IWorldBackupPort. Removed in #736. */
+  async backupHistory(_json = false): Promise<ShellResult> {
+    return BACKUP_REMOVED;
   }
 
-  async backupRestore(commitHash: string): Promise<ShellResult> {
-    return this.executeScript('backup.sh', ['restore', commitHash]);
+  /** @deprecated backup.sh was removed (#732). Use IWorldBackupPort. Removed in #736. */
+  async backupRestore(_commitHash: string): Promise<ShellResult> {
+    return BACKUP_REMOVED;
   }
 
   // ========================================

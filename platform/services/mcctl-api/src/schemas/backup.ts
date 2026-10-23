@@ -12,6 +12,8 @@ export const BackupStatusResponseSchema = Type.Object({
 // Backup push request
 export const BackupPushRequestSchema = Type.Object({
   message: Type.Optional(Type.String()),
+  /** Consent to drop worlds that are in the last backup but missing now (#732). */
+  allowMissing: Type.Optional(Type.Boolean()),
 });
 
 // Backup push response

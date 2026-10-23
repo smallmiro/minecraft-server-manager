@@ -43,7 +43,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await rm(base, { recursive: true, force: true });
+  await rm(base, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
 });
 
 beforeEach(async () => {

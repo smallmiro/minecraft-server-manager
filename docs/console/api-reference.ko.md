@@ -861,9 +861,12 @@ Mojang API에서 플레이어 정보를 조회합니다.
 
 ```json
 {
-  "message": "Before server upgrade"
+  "message": "Before server upgrade",
+  "allowMissing": false
 }
 ```
+
+`allowMissing`(선택): 마지막 백업에 있지만 지금은 없는 월드를 백업에서도 지우는 데 동의합니다. 없으면 `400`으로 거부합니다. 변경이 없으면 `"message": "No changes to backup"`으로 성공합니다. 다른 백업이 실행 중이면 `409`입니다.
 
 **응답:**
 
@@ -925,6 +928,8 @@ Mojang API에서 플레이어 정보를 조회합니다.
   "commitHash": "abc1234"
 }
 ```
+
+모든 서버가 중지되어 있어야 합니다. 응답 코드: `409` 서버 실행 중, 다른 백업 실행 중, 완료되지 않은 복원, LEVEL 충돌 / `404` 커밋 없음 / `503` Docker 조회 불가. 입력을 기다리지 않습니다.
 
 **응답:**
 

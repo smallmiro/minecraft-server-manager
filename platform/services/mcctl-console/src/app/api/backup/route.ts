@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const message = body.message;
 
     const client = createMcctlApiClient(getUserContext(session));
-    const data = await client.pushBackup(message);
+    const data = await client.pushBackup(message, { allowMissing: body.allowMissing === true });
 
     return NextResponse.json(data);
   } catch (error) {

@@ -31,7 +31,10 @@ source "$SCRIPT_DIR/lib/common.sh"
 ENV_FILE="$PLATFORM_DIR/.env"
 if [[ -f "$ENV_FILE" ]]; then
     set -a
-    source <(grep -v '^\s*#' "$ENV_FILE" | grep -v '^\s*$') 2>/dev/null || true
+    # bash 3.2 (macOS) reads nothing from `source <(...)`; bash itself skips
+    # comments and blank lines
+    # shellcheck disable=SC1090
+    . "$ENV_FILE" 2>/dev/null || true
     set +a
 fi
 
@@ -55,11 +58,11 @@ World Management:
   world assign <world> <srv>   Lock world and assign to server
   world release <world>        Force release world lock
 
-Backup (requires .env configuration):
+Backup (runs 'mcctl backup ...'; requires .env configuration):
   backup push [--message "m"]  Backup worlds to GitHub
   backup status                Show backup configuration
   backup history [--json]      Show backup history
-  backup restore <commit>      Restore from specific commit
+  backup restore <commit> [--force]  Restore from a commit (servers stopped)
 
 Options:
   --json                       Output in JSON format
@@ -451,7 +454,7 @@ cmd_stop() {
     if [[ "${BACKUP_AUTO_ON_STOP:-false}" == "true" ]]; then
         if [[ -n "${BACKUP_GITHUB_TOKEN:-}" && -n "${BACKUP_GITHUB_REPO:-}" ]]; then
             info "Auto-backup triggered..."
-            "$SCRIPT_DIR/backup.sh" push --auto || warn "Auto-backup failed (non-critical)"
+            run_mcctl backup push --auto || warn "Auto-backup failed (non-critical)"
         fi
     fi
 }
@@ -460,14 +463,21 @@ cmd_stop() {
 # Backup Command
 # =============================================================================
 
-cmd_backup() {
-    # Delegate to backup.sh
-    if [[ -x "$SCRIPT_DIR/backup.sh" ]]; then
-        "$SCRIPT_DIR/backup.sh" "$@"
+# Run the TypeScript CLI (#732; backup.sh is gone): the node and entry point of
+# the mcctl that called this script (MCCTL_NODE/MCCTL_CLI), else mcctl on PATH.
+run_mcctl() {
+    if [[ -n "${MCCTL_NODE:-}" && -n "${MCCTL_CLI:-}" ]]; then
+        "$MCCTL_NODE" "$MCCTL_CLI" "$@" --root "$PLATFORM_DIR"
+    elif command -v mcctl > /dev/null 2>&1; then
+        mcctl "$@" --root "$PLATFORM_DIR"
     else
-        error "backup.sh not found"
+        error "mcctl not found: backups run in the mcctl CLI (npm install -g @minecraft-docker/mcctl)"
         return 1
     fi
+}
+
+cmd_backup() {
+    run_mcctl backup "$@"
 }
 
 # =============================================================================

@@ -113,7 +113,7 @@ Every key in `.env` has exactly one status, decided by which code actually reads
 | `DOCKER_GID` | compose `router.group_add` | `router`: `mcctl router start` (`mcctl router restart` does not apply it) |
 | `TZ`, `EXTRA_ARGS` | Every server container (`servers/global.env`) | `servers`: stop, then start each server |
 | `RCON_PASSWORD` (secret), `RCON_PORT` | Every server container (`servers/global.env`); CLI `rcon` | `servers` |
-| `BACKUP_GITHUB_TOKEN` (secret), `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH` | `backup.sh` (re-reads `.env` every run), mcctl-api backup routes (`process.env`) | `api`: `mcctl console service restart --api`. The CLI picks changes up immediately |
+| `BACKUP_GITHUB_TOKEN` (secret), `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH` | CLI and mcctl-api backups (`GitWorldBackupAdapter` re-reads `.env` on every operation) | `none`: the next backup operation |
 | `BACKUP_AUTO_ON_STOP` | `mcctl stop` path | `none`: next `mcctl stop` |
 | `PLAYIT_SECRET_KEY` (secret) | compose `playit` service (`SECRET_KEY`) | `playit`: stop, then start playit |
 | `LOG_LEVEL` | **mcctl-api only** (dotenv, cwd = MCCTL_ROOT) | `api` |

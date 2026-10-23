@@ -12,6 +12,39 @@ export interface BackupCommandOptions {
   json?: boolean;
   auto?: boolean;
   force?: boolean;
+  /** Consent to drop worlds that are in the last backup but missing now. */
+  allowMissing?: boolean;
+}
+
+/** How long `push --auto` (auto-on-stop) waits for another backup operation. */
+const AUTO_LOCK_WAIT_MS = 600_000;
+
+/** Next step for a failed backup operation, by IWorldBackupPort error code. */
+export function backupHint(code: string | undefined, root: string): string | undefined {
+  switch (code) {
+    case 'missing_worlds':
+      return 'If you deleted these worlds on purpose, run: mcctl backup push --allow-missing';
+    case 'locked':
+      return `If no backup is running, remove the stale lock: ${root}/backups/.backup.lock`;
+    case 'servers_running':
+      return 'Stop the running servers (mcctl stop <server>), then retry the restore.';
+    case 'recovery_required':
+      return 'A restore did not finish. Recover the paths listed in the INCOMPLETE file, then delete that file (see the backup docs).';
+    case 'runtime_unavailable':
+      return 'Docker is not reachable; check `docker info`.';
+    case 'not_configured':
+      return 'Run: mcctl backup init';
+    case 'git_too_old':
+      return 'Install git 2.31 or newer.';
+    default:
+      return undefined;
+  }
+}
+
+function printFailure(error: string | undefined, code: string | undefined, root: string, fallback: string): void {
+  log.error(error || fallback);
+  const hint = backupHint(code, root);
+  if (hint) console.log(colors.dim(`  ${hint}`));
 }
 
 /**
@@ -37,13 +70,13 @@ export async function backupCommand(options: BackupCommandOptions): Promise<numb
       return backupStatus(container, options);
 
     case 'push':
-      return backupPush(container, options);
+      return backupPush(container, options, paths.root);
 
     case 'history':
       return backupHistory(container, options);
 
     case 'restore':
-      return backupRestore(container, options);
+      return backupRestore(container, options, paths.root);
 
     default:
       log.error(`Unknown backup subcommand: ${subCommand}`);
@@ -142,27 +175,30 @@ async function backupStatus(
  */
 async function backupPush(
   container: ReturnType<typeof getContainer>,
-  options: BackupCommandOptions
+  options: BackupCommandOptions,
+  root: string
 ): Promise<number> {
   const useCase = container.backupUseCase;
 
   try {
-    // If message provided, use direct push
-    if (options.message) {
-      const result = await useCase.pushWithMessage(options.message);
+    // Non-interactive: a message, --auto (auto-on-stop) or --allow-missing
+    if (options.message || options.auto || options.allowMissing) {
+      const result = await useCase.pushWithMessage(options.message ?? '', {
+        allowMissing: options.allowMissing === true,
+        lockWaitMs: options.auto ? AUTO_LOCK_WAIT_MS : 0,
+      });
 
       if (result.success) {
         console.log('');
-        console.log(colors.green('✓ Backup complete!'));
+        console.log(colors.green(result.noChanges ? '✓ No changes to backup' : '✓ Backup complete!'));
         if (result.commitHash) {
-          console.log(`  Commit: ${colors.cyan(result.commitHash)}`);
+          console.log(`  Commit: ${colors.cyan(result.commitHash.substring(0, 7))}`);
         }
         console.log('');
         return 0;
-      } else {
-        log.error(result.error || 'Backup failed');
-        return 1;
       }
+      printFailure(result.error, result.errorCode, root, 'Backup failed');
+      return 1;
     }
 
     // Interactive mode
@@ -230,25 +266,36 @@ async function backupHistory(
  */
 async function backupRestore(
   container: ReturnType<typeof getContainer>,
-  options: BackupCommandOptions
+  options: BackupCommandOptions,
+  root: string
 ): Promise<number> {
   const useCase = container.backupUseCase;
 
   try {
-    // If commit hash provided, use direct restore
+    // If commit hash provided, use direct restore (confirm unless --force)
     if (options.commitHash) {
+      if (!options.force) {
+        const confirmed = await container.promptPort.confirm({
+          message: `Replace the current worlds with backup ${options.commitHash}? All servers must be stopped.`,
+          initialValue: false,
+        });
+        if (container.promptPort.isCancel(confirmed) || !confirmed) {
+          console.log('Restore cancelled');
+          return 0;
+        }
+      }
       const result = await useCase.restoreFromCommit(options.commitHash);
 
       if (result.success) {
         console.log('');
         console.log(colors.green('✓ Restore complete!'));
         console.log(`  Restored from: ${colors.cyan(result.commitHash.substring(0, 7))}`);
+        if (result.previousDir) console.log(`  Previous data: ${result.previousDir}`);
         console.log('');
         return 0;
-      } else {
-        log.error(result.error || 'Restore failed');
-        return 1;
       }
+      printFailure(result.error, result.errorCode, root, 'Restore failed');
+      return 1;
     }
 
     // Interactive mode

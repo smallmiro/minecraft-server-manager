@@ -174,7 +174,19 @@ describe('Backup BFF Routes - Permission Wiring', () => {
       const res = await POST(req);
 
       expect(res.status).toBe(200);
-      expect(mockPushBackup).toHaveBeenCalledWith('manual backup');
+      expect(mockPushBackup).toHaveBeenCalledWith('manual backup', { allowMissing: false });
+    });
+
+    it('forwards allowMissing (#732)', async () => {
+      const { POST } = await import('../route');
+      const req = makePostRequest('http://localhost:5000/api/backup', {
+        message: 'after deleting a world',
+        allowMissing: true,
+      });
+
+      await POST(req);
+
+      expect(mockPushBackup).toHaveBeenCalledWith('after deleting a world', { allowMissing: true });
     });
   });
 

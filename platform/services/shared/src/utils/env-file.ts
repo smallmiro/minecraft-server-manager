@@ -2,7 +2,7 @@
  * Format-preserving `.env` helpers.
  *
  * The platform `.env` is read by docker compose, dotenv and bash
- * (`backup.sh` runs `set -a; source .env`), so every value we write must be
+ * (`mcctl.sh` runs `set -a; source .env`), so every value we write must be
  * literal in all three. Untouched lines are kept byte-identical.
  */
 import { createHash, randomUUID } from 'node:crypto';

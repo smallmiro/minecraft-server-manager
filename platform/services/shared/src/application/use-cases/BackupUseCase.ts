@@ -5,8 +5,10 @@ import type {
   BackupStatusResult,
   BackupHistoryResult,
   BackupRestoreResult,
+  BackupPushOptions,
   IPromptPort,
   IShellPort,
+  IWorldBackupPort,
 } from '../ports/index.js';
 
 /**
@@ -15,11 +17,21 @@ import type {
  */
 export class BackupUseCase implements IBackupUseCase {
   private configSaveCallback?: (config: Record<string, string | boolean>) => void | Promise<void>;
+  /** @deprecated path, removed with IShellPort.backup* in #736 */
+  private readonly shell?: IShellPort;
+  private readonly port?: IWorldBackupPort;
 
+  /**
+   * @param backend IWorldBackupPort (#732). An IShellPort keeps the legacy
+   *   backup.sh path, which fails once the script is gone; narrowed in #736.
+   */
   constructor(
     private readonly prompt: IPromptPort,
-    private readonly shell: IShellPort
-  ) {}
+    backend: IWorldBackupPort | IShellPort
+  ) {
+    if ('backupPush' in backend) this.shell = backend;
+    else this.port = backend;
+  }
 
   /**
    * Set callback for saving configuration (called by CLI layer)
@@ -209,8 +221,13 @@ export class BackupUseCase implements IBackupUseCase {
     token: string,
     repository: string
   ): Promise<{ success: boolean; error?: string }> {
+    if (this.port) {
+      const r = await this.port.testConnection({ token, repository });
+      return r.ok ? { success: true } : { success: false, error: r.error.message };
+    }
+
     // Use git ls-remote to test connection
-    const result = await this.shell.exec('git', [
+    const result = await this.shell!.exec('git', [
       'ls-remote',
       '--heads',
       `https://${token}@github.com/${repository}.git`,
@@ -295,11 +312,26 @@ export class BackupUseCase implements IBackupUseCase {
   /**
    * Push backup with message
    */
-  async pushWithMessage(message: string): Promise<BackupPushResult> {
+  async pushWithMessage(message: string, options: BackupPushOptions = {}): Promise<BackupPushResult> {
     const spinner = this.prompt.spinner();
     spinner.start('Backing up worlds...');
 
-    const result = await this.shell.backupPush(message);
+    if (this.port) {
+      const r = await this.port.push({ message, ...options });
+      if (!r.ok) {
+        spinner.stop('Backup failed');
+        this.prompt.error(r.error.message);
+        return { success: false, message, error: r.error.message, errorCode: r.error.code };
+      }
+      const { changed, commit, warnings } = r.value;
+      spinner.stop(changed ? 'Backup complete' : 'No changes to backup');
+      for (const w of warnings) this.prompt.warn(w);
+      if (commit) this.prompt.note(`Commit: ${commit.substring(0, 7)}`, 'Backup Info');
+      this.prompt.outro('Backup complete');
+      return { success: true, commitHash: commit, message, noChanges: !changed, warnings };
+    }
+
+    const result = await this.shell!.backupPush(message);
 
     if (!result.success) {
       spinner.stop('Backup failed');
@@ -335,7 +367,19 @@ export class BackupUseCase implements IBackupUseCase {
    * Get backup status
    */
   async status(): Promise<BackupStatusResult> {
-    const result = await this.shell.backupStatus();
+    if (this.port) {
+      const r = await this.port.status();
+      if (!r.ok || !r.value.configured) return { configured: false };
+      return {
+        configured: true,
+        repository: r.value.repository,
+        branch: r.value.branch,
+        lastBackup: r.value.lastBackup?.date,
+        autoBackupEnabled: r.value.autoOnStop,
+      };
+    }
+
+    const result = await this.shell!.backupStatus();
 
     if (!result.success) {
       return {
@@ -368,7 +412,13 @@ export class BackupUseCase implements IBackupUseCase {
    * Get backup history
    */
   async history(): Promise<BackupHistoryResult[]> {
-    const result = await this.shell.backupHistory(true);
+    if (this.port) {
+      const r = await this.port.history();
+      if (!r.ok) return [];
+      return r.value.map((c) => ({ commitHash: c.hash, message: c.message, date: c.date, author: c.author }));
+    }
+
+    const result = await this.shell!.backupHistory(true);
 
     if (!result.success) {
       return [];
@@ -463,7 +513,22 @@ export class BackupUseCase implements IBackupUseCase {
     const spinner = this.prompt.spinner();
     spinner.start('Restoring from backup...');
 
-    const result = await this.shell.backupRestore(commitHash);
+    if (this.port) {
+      const r = await this.port.restore(commitHash);
+      if (!r.ok) {
+        spinner.stop('Restore failed');
+        this.prompt.error(r.error.message);
+        return { success: false, commitHash, error: r.error.message, errorCode: r.error.code };
+      }
+      spinner.stop('Restore complete');
+      for (const s of r.value.skipped) this.prompt.warn(`Skipped ${s}`);
+      this.prompt.success(`Restored from ${r.value.commit.substring(0, 7)}`);
+      this.prompt.note(`Previous data kept in ${r.value.previousDir}`, 'Restore Info');
+      this.prompt.outro('Restore complete');
+      return { success: true, commitHash: r.value.commit, previousDir: r.value.previousDir };
+    }
+
+    const result = await this.shell!.backupRestore(commitHash);
 
     if (!result.success) {
       spinner.stop('Restore failed');

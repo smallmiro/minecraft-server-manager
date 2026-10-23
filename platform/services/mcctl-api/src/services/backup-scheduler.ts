@@ -1,15 +1,8 @@
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { existsSync } from 'fs';
-import { join } from 'path';
 import type { FastifyBaseLogger } from 'fastify';
-import type {
-  IBackupScheduleUseCase,
-} from '@minecraft-docker/shared';
+import type { IBackupScheduleUseCase, IWorldBackupPort } from '@minecraft-docker/shared';
 import type { BackupSchedule } from '@minecraft-docker/shared';
 import { AuditActionEnum, type AuditLogData } from '@minecraft-docker/shared';
-
-const execFilePromise = promisify(execFile);
+import { SCHEDULED_LOCK_WAIT_MS, shortHash } from '../lib/world-backup.js';
 
 // node-cron types (manual declaration to avoid build issues if @types not installed)
 interface CronTask {
@@ -42,7 +35,7 @@ export class BackupSchedulerService {
 
   constructor(
     private readonly useCase: IBackupScheduleUseCase,
-    private readonly mcctlRoot: string,
+    private readonly backup: IWorldBackupPort,
     private readonly logger: FastifyBaseLogger,
     private readonly auditLogWriter?: AuditLogWriter
   ) {}
@@ -128,276 +121,55 @@ export class BackupSchedulerService {
   }
 
   /**
-   * Extract stdout string from execFilePromise result.
-   * Handles both real execFile (returns {stdout, stderr}) and
-   * test mocks that may resolve with a plain string.
+   * Run one scheduled backup through the world backup port (#732), then apply
+   * the schedule's retention policy. A prune failure never fails the backup.
    */
-  private extractStdout(result: unknown): string {
-    if (typeof result === 'string') return result;
-    if (result !== null && typeof result === 'object' && 'stdout' in result) {
-      return String((result as { stdout: unknown }).stdout ?? '');
-    }
-    return '';
-  }
-
-  /**
-   * Get the commit count in the git repository at the given directory.
-   * Uses execFile to prevent shell injection.
-   */
-  private async getCommitCount(repoDir: string): Promise<number> {
-    const result = await execFilePromise(
-      'git',
-      ['rev-list', '--count', 'HEAD'],
-      { cwd: repoDir }
-    );
-    const stdout = this.extractStdout(result);
-    return parseInt(stdout.trim(), 10);
-  }
-
-  /**
-   * Get the date of the oldest commit in the git repository.
-   * Returns null if there are no commits.
-   */
-  private async getOldestCommitDate(repoDir: string): Promise<Date | null> {
-    const result = await execFilePromise(
-      'git',
-      ['log', '--reverse', '--format=%aI', '-1'],
-      { cwd: repoDir }
-    );
-    const stdout = this.extractStdout(result);
-    const timestamp = stdout.trim();
-    if (!timestamp) return null;
-    return new Date(timestamp);
-  }
-
-  /**
-   * Truncate git history by keeping only the last `keepCount` commits.
-   * Uses orphan branch rewrite strategy which is safe for linear histories.
-   * The orphan branch discards all history before the target commit.
-   *
-   * Strategy:
-   *   1. Find the SHA of the Nth commit from HEAD (where N = keepCount)
-   *   2. Create an orphan branch starting at that commit (no parent)
-   *   3. Cherry-pick remaining commits from keepCount back to HEAD
-   *   4. Replace the main branch with the orphan branch
-   *   5. Force-push to remote
-   */
-  private async truncateHistory(
-    repoDir: string,
-    keepCount: number
-  ): Promise<void> {
-    const currentBranch = await this.getCurrentBranch(repoDir);
-    const tempBranch = `_prune-temp-${Date.now()}`;
-
-    if (keepCount === 1) {
-      // Special case: keep only HEAD commit.
-      // Cherry-picking is not needed - just create an orphan root from HEAD's tree directly.
-      // This preserves HEAD's tree content without losing the commit message.
-      await execFilePromise(
-        'git',
-        ['checkout', '--orphan', tempBranch, 'HEAD'],
-        { cwd: repoDir }
-      );
-      await execFilePromise(
-        'git',
-        ['commit', '--allow-empty', '-m', 'Retention prune root'],
-        { cwd: repoDir }
-      );
-      await execFilePromise(
-        'git',
-        ['checkout', '-B', currentBranch, tempBranch],
-        { cwd: repoDir }
-      );
-      await execFilePromise('git', ['branch', '-D', tempBranch], { cwd: repoDir }).catch(() => {});
-      await execFilePromise('git', ['push', '--force', 'origin', currentBranch], { cwd: repoDir });
+  private async executeBackup(scheduleId: string): Promise<void> {
+    const schedule = await this.useCase.findById(scheduleId);
+    if (!schedule || !schedule.enabled) {
+      this.logger.warn(`Skipping disabled/missing schedule: ${scheduleId}`);
       return;
     }
 
-    // Find the SHA of the commit at position keepCount from HEAD (1-indexed from tip)
-    const revListResult = await execFilePromise(
-      'git',
-      ['rev-list', '--ancestry-path', `HEAD~${keepCount}..HEAD`],
-      { cwd: repoDir }
-    );
-    const revListOut = this.extractStdout(revListResult);
+    this.logger.info(`Executing scheduled backup: ${schedule.name}`);
 
-    // rev-list returns newest-first; we want the oldest kept commit (last line)
-    const keptCommits = revListOut.trim().split('\n').filter(Boolean);
-    if (keptCommits.length === 0) {
-      // Nothing to truncate
+    const pushed = await this.backup.push({
+      message: `Scheduled backup: ${schedule.name} [${new Date().toISOString()}]`,
+      lockWaitMs: SCHEDULED_LOCK_WAIT_MS,
+    });
+    if (!pushed.ok) {
+      const hint =
+        pushed.error.code === 'missing_worlds'
+          ? ' If they were deleted on purpose, run: mcctl backup push --allow-missing'
+          : '';
+      this.logger.error(`Scheduled backup failed: ${schedule.name} - ${pushed.error.message}`);
+      await this.useCase.recordRun(scheduleId, 'failure', `${pushed.error.message}${hint}`);
       return;
     }
-
-    // The root commit to start orphan from is the oldest kept commit
-    const oldestKeptSha = keptCommits[keptCommits.length - 1]!;
-
-    // Create orphan branch with the same tree as oldestKeptSha
-    await execFilePromise(
-      'git',
-      ['checkout', '--orphan', tempBranch, oldestKeptSha],
-      { cwd: repoDir }
-    );
-
-    // Commit the tree to establish root
-    await execFilePromise(
-      'git',
-      ['commit', '--allow-empty', '-m', 'Retention prune root'],
-      { cwd: repoDir }
-    );
-
-    // Cherry-pick commits from after oldest kept commit to HEAD (newest first, so reverse)
-    const commitsToReplay = keptCommits.slice(0, -1).reverse();
-    for (const sha of commitsToReplay) {
-      try {
-        await execFilePromise('git', ['cherry-pick', sha], { cwd: repoDir });
-      } catch {
-        // If cherry-pick fails, abort and restore original branch
-        await execFilePromise('git', ['cherry-pick', '--abort'], { cwd: repoDir }).catch(() => {});
-        await execFilePromise('git', ['checkout', currentBranch], { cwd: repoDir }).catch(() => {});
-        await execFilePromise('git', ['branch', '-D', tempBranch], { cwd: repoDir }).catch(() => {});
-        throw new Error(`Cherry-pick failed during retention pruning at commit ${sha}`);
-      }
+    for (const w of [...pushed.value.warnings, ...pushed.value.skipped]) {
+      this.logger.warn(`Scheduled backup ${schedule.name}: ${w}`);
     }
 
-    // Replace main branch with orphan branch
-    await execFilePromise(
-      'git',
-      ['checkout', '-B', currentBranch, tempBranch],
-      { cwd: repoDir }
-    );
+    await this.applyRetentionPolicy(schedule);
 
-    // Delete temp branch
-    await execFilePromise('git', ['branch', '-D', tempBranch], { cwd: repoDir }).catch(() => {});
-
-    // Force-push to sync remote
-    await execFilePromise('git', ['push', '--force', 'origin', currentBranch], { cwd: repoDir });
+    const hash = shortHash(pushed.value.commit);
+    const message = pushed.value.changed ? `Backup complete${hash ? ` (${hash})` : ''}` : 'No changes to backup';
+    await this.useCase.recordRun(scheduleId, 'success', message);
+    this.logger.info(`Scheduled backup ${schedule.name}: ${message}`);
   }
 
-  /**
-   * Get the current git branch name.
-   */
-  private async getCurrentBranch(repoDir: string): Promise<string> {
-    const result = await execFilePromise(
-      'git',
-      ['rev-parse', '--abbrev-ref', 'HEAD'],
-      { cwd: repoDir }
-    );
-    const stdout = this.extractStdout(result);
-    return stdout.trim() || 'main';
-  }
-
-  /**
-   * Apply the retention policy from a BackupSchedule to the git history.
-   *
-   * Algorithm:
-   *   1. Count commits (git rev-list --count HEAD)
-   *   2. If maxCount is set: check if count > maxCount; if so, prune to maxCount
-   *   3. Re-count after maxCount prune to avoid using stale count for maxAgeDays
-   *   4. If maxAgeDays is set: get oldest commit date, check age; if too old, prune
-   *   5. Force-push after any truncation
-   *
-   * Pruning errors do NOT fail the backup itself - they are logged as warnings.
-   */
-  async applyRetentionPolicy(
-    schedule: BackupSchedule,
-    repoDir: string
-  ): Promise<void> {
-    const policy = schedule.retentionPolicy;
-    const maxCount = policy.maxCount;
-    const maxAgeDays = policy.maxAgeDays;
-
-    // Check if repository exists
-    let commitCount: number;
-    try {
-      commitCount = await this.getCommitCount(repoDir);
-    } catch {
-      // No commits yet or repo doesn't exist - nothing to prune
+  /** Prune through the port (#9); failures are logged and audited only. */
+  private async applyRetentionPolicy(schedule: BackupSchedule): Promise<void> {
+    const pruned = await this.backup.prune(schedule.retentionPolicy, { lockWaitMs: SCHEDULED_LOCK_WAIT_MS });
+    if (!pruned.ok) {
+      this.logger.warn(`Retention prune failed (backup still succeeded): ${pruned.error.message}`);
+      await this.writeRetentionAuditLog(schedule, 'failure', 0, pruned.error.message);
       return;
     }
-
-    if (commitCount === 0) return;
-
-    // Step 1: Apply maxCount pruning
-    if (maxCount !== undefined) {
-      const needsCountPrune = commitCount > maxCount;
-
-      if (needsCountPrune) {
-        this.logger.info(
-          `Applying retention prune by maxCount: keeping ${maxCount} of ${commitCount} commits for schedule "${schedule.name}"`
-        );
-        try {
-          await this.truncateHistory(repoDir, maxCount);
-          // Re-count after pruning to get accurate count for next check
-          // This prevents double-truncation if maxAgeDays is also configured
-          commitCount = await this.getCommitCount(repoDir);
-          // Write audit log for successful maxCount prune
-          await this.writeRetentionAuditLog(schedule, 'maxCount', maxCount, 'success');
-        } catch (pruneError) {
-          const errMsg = (pruneError as Error).message ?? String(pruneError);
-          this.logger.warn(
-            `Retention prune by maxCount failed (backup still succeeded): ${errMsg}`
-          );
-          await this.writeRetentionAuditLog(schedule, 'maxCount', maxCount, 'failure', errMsg);
-          // Re-count even if truncation failed (might be partially done)
-          try {
-            commitCount = await this.getCommitCount(repoDir);
-          } catch {
-            // Ignore re-count failure
-          }
-          return; // Stop further pruning to avoid compounding issues
-        }
-      }
-    }
-
-    // Step 2: Apply maxAgeDays pruning using the freshly counted commitCount
-    if (maxAgeDays !== undefined) {
-      let oldestDate: Date | null;
-      try {
-        oldestDate = await this.getOldestCommitDate(repoDir);
-      } catch {
-        oldestDate = null;
-      }
-
-      if (oldestDate !== null) {
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - maxAgeDays);
-
-        if (oldestDate < cutoff) {
-          // Calculate how many commits fall within the age window
-          // We need to keep commits newer than cutoff
-          // For simplicity: count commits newer than cutoff and keep that many
-          let keepCount: number;
-          try {
-            const cutoffIso = cutoff.toISOString();
-            const newerCountResult = await execFilePromise(
-              'git',
-              ['rev-list', '--count', '--after', cutoffIso, 'HEAD'],
-              { cwd: repoDir }
-            );
-            const newerCountOut = this.extractStdout(newerCountResult);
-            keepCount = parseInt(newerCountOut.trim(), 10);
-          } catch {
-            keepCount = 1; // Keep at least 1 commit
-          }
-
-          if (keepCount < 1) keepCount = 1;
-
-          this.logger.info(
-            `Applying retention prune by maxAgeDays: keeping ${keepCount} commits (max age ${maxAgeDays} days) for schedule "${schedule.name}"`
-          );
-
-          try {
-            await this.truncateHistory(repoDir, keepCount);
-            await this.writeRetentionAuditLog(schedule, 'maxAgeDays', maxAgeDays, 'success');
-          } catch (pruneError) {
-            const errMsg = (pruneError as Error).message ?? String(pruneError);
-            this.logger.warn(
-              `Retention prune by maxAgeDays failed (backup still succeeded): ${errMsg}`
-            );
-            await this.writeRetentionAuditLog(schedule, 'maxAgeDays', maxAgeDays, 'failure', errMsg);
-          }
-        }
-      }
+    for (const w of pruned.value.warnings) this.logger.warn(`Retention prune for ${schedule.name}: ${w}`);
+    if (pruned.value.removed > 0) {
+      this.logger.info(`Retention prune removed ${pruned.value.removed} backup(s) for schedule "${schedule.name}"`);
+      await this.writeRetentionAuditLog(schedule, 'success', pruned.value.removed);
     }
   }
 
@@ -407,13 +179,11 @@ export class BackupSchedulerService {
    */
   private async writeRetentionAuditLog(
     schedule: BackupSchedule,
-    pruneType: 'maxCount' | 'maxAgeDays',
-    limit: number,
     status: 'success' | 'failure',
+    removed: number,
     errorMessage?: string
   ): Promise<void> {
     if (!this.auditLogWriter) return;
-
     try {
       await this.auditLogWriter({
         action: AuditActionEnum.BACKUP_SCHEDULE_RUN,
@@ -422,8 +192,9 @@ export class BackupSchedulerService {
         targetName: schedule.name,
         details: {
           operation: 'retention-prune',
-          pruneType,
-          limit,
+          removed,
+          maxCount: schedule.retentionPolicy.maxCount,
+          maxAgeDays: schedule.retentionPolicy.maxAgeDays,
           scheduleId: schedule.id,
         },
         status,
@@ -431,122 +202,6 @@ export class BackupSchedulerService {
       });
     } catch {
       // Audit log failures must not affect backup operation
-    }
-  }
-
-  /**
-   * Execute a backup for a given schedule.
-   * Uses execFile with array arguments to prevent shell injection.
-   * Runs git commands against $HOME/.minecraft-backup (the actual git repo),
-   * NOT platform/worlds/ which is only the source data directory.
-   */
-  private async executeBackup(scheduleId: string): Promise<void> {
-    const schedule = await this.useCase.findById(scheduleId);
-    if (!schedule || !schedule.enabled) {
-      this.logger.warn(
-        `Skipping disabled/missing schedule: ${scheduleId}`
-      );
-      return;
-    }
-
-    this.logger.info(
-      `Executing scheduled backup: ${schedule.name}`
-    );
-
-    try {
-      const worldsPath = join(this.mcctlRoot, 'worlds');
-      if (!existsSync(worldsPath)) {
-        await this.useCase.recordRun(
-          scheduleId,
-          'failure',
-          'Worlds directory not found'
-        );
-        return;
-      }
-
-      // The backup cache directory used by backup.sh as the git repository
-      const backupCacheDir = join(this.mcctlRoot, 'backups', 'worlds');
-
-      // Build commit message (safe: passed as argument, not interpolated into shell)
-      const commitMessage = `Scheduled backup: ${schedule.name} [${new Date().toISOString()}]`;
-
-      // Run backup script or git commands using execFile (no shell injection)
-      const scriptPath = join(this.mcctlRoot, 'scripts', 'backup.sh');
-      const execOptions = {
-        cwd: this.mcctlRoot,
-        timeout: 300000, // 5 minute timeout for scheduled backups
-        env: {
-          ...process.env,
-          MCCTL_ROOT: this.mcctlRoot,
-        },
-      };
-
-      if (existsSync(scriptPath)) {
-        // Use execFile with array args to prevent shell injection
-        await execFilePromise(
-          'bash',
-          [scriptPath, 'push', '--message', commitMessage],
-          execOptions
-        );
-      } else {
-        // Fallback: run git commands against the backup cache directory
-        // (not worlds/ which is not a git repository)
-        const gitOptions = { ...execOptions, cwd: backupCacheDir };
-        await execFilePromise('git', ['add', '-A'], gitOptions);
-        await execFilePromise('git', ['commit', '-m', commitMessage], gitOptions);
-        await execFilePromise('git', ['push'], gitOptions);
-      }
-
-      // Apply retention policy after successful backup
-      // Pruning errors must NOT fail the backup itself
-      await this.applyRetentionPolicy(schedule, backupCacheDir);
-
-      // Get commit hash from the backup cache directory
-      let commitHash: string | undefined;
-      try {
-        const hashResult = await execFilePromise(
-          'git',
-          ['rev-parse', '--short', 'HEAD'],
-          { cwd: backupCacheDir }
-        );
-        const hashOut = this.extractStdout(hashResult);
-        commitHash = hashOut.trim() || undefined;
-      } catch {
-        // Ignore
-      }
-
-      await this.useCase.recordRun(
-        scheduleId,
-        'success',
-        `Backup complete${commitHash ? ` (${commitHash})` : ''}`
-      );
-
-      this.logger.info(
-        `Scheduled backup complete: ${schedule.name}${commitHash ? ` [${commitHash}]` : ''}`
-      );
-
-    } catch (error) {
-      const execError = error as { stderr?: string; message?: string };
-
-      // "nothing to commit" is not an error
-      if (
-        execError.stderr?.includes('nothing to commit') ||
-        execError.message?.includes('nothing to commit')
-      ) {
-        await this.useCase.recordRun(
-          scheduleId,
-          'success',
-          'No changes to backup'
-        );
-        return;
-      }
-
-      const errorMsg =
-        execError.stderr || execError.message || 'Unknown error';
-      this.logger.error(
-        `Scheduled backup failed: ${schedule.name} - ${errorMsg}`
-      );
-      await this.useCase.recordRun(scheduleId, 'failure', errorMsg);
     }
   }
 

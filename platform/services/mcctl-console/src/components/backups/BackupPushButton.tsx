@@ -9,6 +9,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import BackupIcon from '@mui/icons-material/Backup';
 import { usePushBackup } from '@/hooks/useMcctl';
 
@@ -19,6 +21,7 @@ interface BackupPushButtonProps {
 export function BackupPushButton({ disabled }: BackupPushButtonProps) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
+  const [allowMissing, setAllowMissing] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const { mutate: pushBackup, isPending } = usePushBackup();
@@ -28,6 +31,7 @@ export function BackupPushButton({ disabled }: BackupPushButtonProps) {
     setSuccessMessage('');
     setErrorMessage('');
     setMessage(`Backup ${new Date().toISOString().split('T')[0]}`);
+    setAllowMissing(false);
   };
 
   const handleClose = () => {
@@ -44,7 +48,7 @@ export function BackupPushButton({ disabled }: BackupPushButtonProps) {
     setErrorMessage('');
 
     pushBackup(
-      { message: message || undefined },
+      { message: message || undefined, allowMissing },
       {
         onSuccess: (data) => {
           setSuccessMessage(
@@ -99,6 +103,16 @@ export function BackupPushButton({ disabled }: BackupPushButtonProps) {
             onChange={(e) => setMessage(e.target.value)}
             disabled={isPending}
             helperText="Optional message describing this backup"
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={allowMissing}
+                onChange={(e) => setAllowMissing(e.target.checked)}
+                disabled={isPending}
+              />
+            }
+            label="Remove worlds I deleted on purpose from the backup"
           />
         </DialogContent>
         <DialogActions>

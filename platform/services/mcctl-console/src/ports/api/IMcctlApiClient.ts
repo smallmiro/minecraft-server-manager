@@ -1026,7 +1026,7 @@ export interface IMcctlApiClient {
 
   // Backup operations
   getBackupStatus(): Promise<BackupStatusResponse>;
-  pushBackup(message?: string): Promise<BackupPushResponse>;
+  pushBackup(message?: string, options?: { allowMissing?: boolean }): Promise<BackupPushResponse>;
   getBackupHistory(limit?: number): Promise<BackupHistoryResponse>;
   restoreBackup(commitHash: string): Promise<BackupRestoreResponse>;
 

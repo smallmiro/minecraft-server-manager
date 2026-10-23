@@ -15,6 +15,8 @@ import {
   SqliteConfigSnapshotScheduleRepository,
   FileSystemConfigSnapshotStorage,
   FileSystemConfigFileCollector,
+  GitWorldBackupAdapter,
+  DockerRuntimeEnvironmentAdapter,
   // Use cases from shared
   CreateServerUseCase,
   DeleteServerUseCase,
@@ -27,6 +29,7 @@ import {
   type IPromptPort,
   type IShellPort,
   type IContainerRuntimePort,
+  type IWorldBackupPort,
   type IServerRepository,
   type IWorldRepository,
   type IDocProvider,
@@ -63,6 +66,7 @@ export class Container {
   private _promptPort?: IPromptPort;
   private _shellPort?: IShellPort;
   private _runtimePort?: IContainerRuntimePort;
+  private _worldBackupPort?: IWorldBackupPort;
   private _serverRepo?: IServerRepository;
   private _worldRepo?: IWorldRepository;
   private _docProvider?: IDocProvider;
@@ -239,8 +243,22 @@ export class Container {
     );
   }
 
+  /** Git world backup (ADR-0001 "Backup Port", #732) */
+  get worldBackupPort(): IWorldBackupPort {
+    if (!this._worldBackupPort) {
+      const root = this.paths.root;
+      this._worldBackupPort = new GitWorldBackupAdapter({
+        root,
+        runtime: new DockerComposeRuntimeAdapter({ root }),
+        environment: new DockerRuntimeEnvironmentAdapter(),
+        console: new DockerServerConsoleAdapter(),
+      });
+    }
+    return this._worldBackupPort;
+  }
+
   get backupUseCase(): IBackupUseCase {
-    return new BackupUseCase(this.promptPort, this.shellPort);
+    return new BackupUseCase(this.promptPort, this.worldBackupPort);
   }
 
   get backupScheduleUseCase(): IBackupScheduleUseCase {
