@@ -746,7 +746,8 @@ export function setServerPlayitDomain(serverName: string, domain: string | null,
     content = content.replace(/^PLAYIT_DOMAIN=.*\n?/m, '');
   } else if (content.match(/^PLAYIT_DOMAIN=/m)) {
     // Update existing
-    content = content.replace(/^PLAYIT_DOMAIN=.*$/m, `PLAYIT_DOMAIN=${domain}`);
+    // Callback, so '$`', "$'" and '$&' in the domain stay literal (#726)
+    content = content.replace(/^PLAYIT_DOMAIN=.*$/m, () => `PLAYIT_DOMAIN=${domain}`);
   } else {
     // Append new
     const suffix = content.endsWith('\n') ? '' : '\n';
