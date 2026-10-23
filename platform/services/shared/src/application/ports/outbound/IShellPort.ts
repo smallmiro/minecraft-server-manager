@@ -77,7 +77,8 @@ export interface IShellPort {
   /**
    * List worlds
    *
-   * @deprecated Unused by the CLI. Use IWorldRepository / `mcctl world list`. Removed in v3.0.0 (#736).
+   * @deprecated Unused by the CLI, and fails since lock.sh was removed (#670). Use IWorldRepository /
+   * `mcctl world list`. Removed in v3.0.0 (#736).
    */
   worldList(json?: boolean): Promise<ShellResult>;
 

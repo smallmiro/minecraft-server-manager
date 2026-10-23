@@ -222,13 +222,15 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('lock.sh', args);
   }
 
-  /** @deprecated Use IWorldAssignmentPort.assign (#670). Removed in v3.0.0 (#736). */
+  /**
+   * @deprecated Fails since lock.sh was removed (#670): `mcctl.sh world` only prints an error.
+   * Use IWorldAssignmentPort.assign. Removed in v3.0.0 (#736).
+   */
   async worldAssign(
     worldName: string,
     serverName: string,
     force = false
   ): Promise<ShellResult> {
-    // Use mcctl.sh world assign which delegates to lock.sh lock
     const args: string[] = ['world', 'assign', worldName, serverName];
     if (force) {
       args.push('--force');
@@ -236,9 +238,11 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('mcctl.sh', args);
   }
 
-  /** @deprecated Use IWorldAssignmentPort.release (#670). Removed in v3.0.0 (#736). */
+  /**
+   * @deprecated Fails since lock.sh was removed (#670): `mcctl.sh world` only prints an error.
+   * Use IWorldAssignmentPort.release. Removed in v3.0.0 (#736).
+   */
   async worldRelease(worldName: string): Promise<ShellResult> {
-    // Use mcctl.sh world release which delegates to lock.sh unlock
     return this.executeScript('mcctl.sh', ['world', 'release', worldName]);
   }
 

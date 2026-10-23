@@ -101,7 +101,6 @@ export async function initCommand(options: {
     paths.servers,
     paths.serverTemplate,
     paths.worlds,
-    paths.locks,
     join(paths.root, 'shared', 'plugins'),
     join(paths.root, 'shared', 'mods'),
     paths.backups,

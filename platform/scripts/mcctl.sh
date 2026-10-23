@@ -8,9 +8,6 @@
 #   mcctl.sh status [--json]              Show all server status
 #   mcctl.sh logs <server> [lines]        View server logs
 #   mcctl.sh console <server>             Connect to RCON console
-#   mcctl.sh world list [--json]          List worlds and locks
-#   mcctl.sh world assign <world> <srv>   Assign world to server
-#   mcctl.sh world release <world>        Force release world lock
 #   mcctl.sh start <server>               Start server (bypass auto-scale)
 #   mcctl.sh stop <server>                Stop server
 #
@@ -53,11 +50,6 @@ Server Management:
   start <server>               Start a specific server
   stop <server>                Stop a specific server
 
-World Management:
-  world list [--json]          List worlds and their lock status
-  world assign <world> <srv>   Lock world and assign to server
-  world release <world>        Force release world lock
-
 Backup (runs 'mcctl backup ...'; requires .env configuration):
   backup push [--message "m"]  Backup worlds to GitHub
   backup status                Show backup configuration
@@ -73,8 +65,6 @@ Examples:
   $(basename "$0") status --json
   $(basename "$0") logs ironwood 100
   $(basename "$0") console ironwood
-  $(basename "$0") world list
-  $(basename "$0") world assign survival mc-ironwood
   $(basename "$0") start ironwood
   $(basename "$0") stop ironwood
 EOF
@@ -293,84 +283,10 @@ cmd_console() {
 # =============================================================================
 
 cmd_world() {
-    local subcmd="${1:-}"
-    shift || true
-
-    case "$subcmd" in
-        list)
-            cmd_world_list "$@"
-            ;;
-        assign)
-            cmd_world_assign "$@"
-            ;;
-        release)
-            cmd_world_release "$@"
-            ;;
-        "")
-            error "Usage: world <list|assign|release> [options]"
-            return 1
-            ;;
-        *)
-            error "Unknown world subcommand: $subcmd"
-            return 1
-            ;;
-    esac
-}
-
-cmd_world_list() {
-    # Delegate to lock.sh
-    if [[ -x "$SCRIPT_DIR/lock.sh" ]]; then
-        "$SCRIPT_DIR/lock.sh" list "$@"
-    else
-        error "lock.sh not found"
-        return 1
-    fi
-}
-
-cmd_world_assign() {
-    local world="$1"
-    local server="$2"
-
-    if [[ -z "$world" || -z "$server" ]]; then
-        error "Usage: world assign <world> <server>"
-        return 1
-    fi
-
-    # Delegate to lock.sh
-    if [[ -x "$SCRIPT_DIR/lock.sh" ]]; then
-        "$SCRIPT_DIR/lock.sh" lock "$world" "$server"
-    else
-        error "lock.sh not found"
-        return 1
-    fi
-}
-
-cmd_world_release() {
-    local world="$1"
-
-    if [[ -z "$world" ]]; then
-        error "Usage: world release <world>"
-        return 1
-    fi
-
-    # Get current holder from lock.sh check
-    if [[ -x "$SCRIPT_DIR/lock.sh" ]]; then
-        local lock_status
-        lock_status=$("$SCRIPT_DIR/lock.sh" check "$world")
-
-        if [[ "$lock_status" == "unlocked" ]]; then
-            warn "World '$world' is not locked"
-            return 2
-        fi
-
-        local holder
-        holder=$(echo "$lock_status" | cut -d: -f2)
-
-        "$SCRIPT_DIR/lock.sh" unlock "$world" "$holder" --force
-    else
-        error "lock.sh not found"
-        return 1
-    fi
+    # World assignment moved to the TypeScript CLI with lock.sh's removal (#670):
+    # a server's world is its LEVEL. This subcommand goes away in #734.
+    error "mcctl.sh world was removed with lock.sh (#670); use 'mcctl world list|assign|release'"
+    return 1
 }
 
 # =============================================================================
@@ -484,8 +400,7 @@ cmd_backup() {
 # Config
 # =============================================================================
 
-# Set a key=value in a server's config.env (used by world assign to keep LEVEL
-# in sync, and by other callers via ShellAdapter.setServerConfig).
+# Set a key=value in a server's config.env (callers: ShellAdapter.setServerConfig).
 cmd_config() {
     local server="$1"
     local key="$2"
