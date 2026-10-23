@@ -17,6 +17,7 @@ import type {
   IWorldBackupPort,
   LockOptions,
   WorldBackupCommit,
+  WorldBackupError,
   WorldBackupPruneOutcome,
   WorldBackupPushOptions,
   WorldBackupPushOutcome,
@@ -592,6 +593,7 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
       });
       return r.exitCode === 0 ? undefined : r.stderr.trim() || r.stdout.trim() || `exit ${r.exitCode}`;
     };
+    let mainError: unknown;
     try {
       for (const c of running) {
         cleanup.push(c); // before sending, so save-on follows even if save-off hangs
@@ -603,13 +605,28 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
         if (err) fail('flush_failed', `save-all flush failed for ${serverNameOf(c)}: ${err}`, { servers: [serverNameOf(c)] });
       }
       await copy();
-    } finally {
-      for (const c of cleanup) {
-        const err = await rcon(c, ['save-on']).catch((e: Error) => e.message);
-        if (err) warnings.push(`save-on failed for ${serverNameOf(c)}: ${err}`);
-      }
+    } catch (e) {
+      mainError = e;
     }
-    return cleanup.map(serverNameOf);
+    // save-on for every server, independently, even after a failure
+    const saveOnFailures: Array<{ server: string; message: string }> = [];
+    for (const c of cleanup) {
+      const err = await rcon(c, ['save-on']).catch((e: Error) => e.message);
+      if (err) saveOnFailures.push({ server: serverNameOf(c), message: `save-on failed for ${serverNameOf(c)}: ${err}` });
+    }
+    if (mainError === undefined) {
+      warnings.push(...saveOnFailures.map((f) => f.message));
+      return cleanup.map(serverNameOf);
+    }
+    if (saveOnFailures.length === 0) throw mainError;
+    // Keep the servers left with autosave off in the failure result (P2)
+    const base: WorldBackupError =
+      mainError instanceof Fail ? mainError.error : { code: 'io_failed', message: (mainError as Error).message };
+    throw new Fail({
+      ...base,
+      message: [base.message, ...saveOnFailures.map((f) => f.message)].join('; '),
+      servers: [...new Set([...(base.servers ?? []), ...saveOnFailures.map((f) => f.server)])],
+    });
   }
 
   // ---------------------------------------------------------------- restore
