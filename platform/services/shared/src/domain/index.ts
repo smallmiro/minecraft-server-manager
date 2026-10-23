@@ -89,6 +89,7 @@ export {
   checkReset,
   planRelease,
   findDuplicates,
+  formatAssignmentWarnings,
   type WorldAssignment,
   type WorldAssignmentSnapshot,
   type WorldAssignmentErrorCode,

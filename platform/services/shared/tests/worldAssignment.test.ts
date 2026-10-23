@@ -8,6 +8,7 @@ import {
   checkRemoval,
   checkReset,
   findDuplicates,
+  formatAssignmentWarnings,
   holdersOf,
   planRelease,
   type WorldAssignment,
@@ -221,5 +222,20 @@ describe('checkReset (order: undetermined, server_not_found, internal_world, con
 
   it('rejects a world another server also uses (duplicate)', () => {
     expectError(checkReset(snap([['a', 'w'], ['b', 'w']]), 'a'), 'conflict', ['b']);
+  });
+});
+
+describe('formatAssignmentWarnings', () => {
+  it('writes one line per duplicate world and per undetermined server', () => {
+    expect(
+      formatAssignmentWarnings({ duplicates: [{ world: 'w', servers: ['a', 'b'] }], undetermined: ['x'] })
+    ).toEqual([
+      "World 'w' is assigned to 'a', 'b'; only one server may use a world: assign another world to all but one",
+      "Cannot read the world assignment of 'x'; assignment changes are refused until its config.env is fixed",
+    ]);
+  });
+
+  it('is empty for a clean report', () => {
+    expect(formatAssignmentWarnings({ duplicates: [], undetermined: [] })).toEqual([]);
   });
 });

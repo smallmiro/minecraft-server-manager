@@ -201,3 +201,22 @@ export function findDuplicates(s: WorldAssignmentSnapshot): { world: string; ser
     .map(([world, servers]) => ({ world, servers: servers.sort() }))
     .sort((a, b) => a.world.localeCompare(b.world));
 }
+
+/** One human-readable line per duplicate world and per undetermined server (CLI, API, console). */
+export function formatAssignmentWarnings(report: {
+  duplicates: { world: string; servers: string[] }[];
+  undetermined: string[];
+}): string[] {
+  return [
+    ...report.duplicates.map(
+      (d) =>
+        `World '${d.world}' is assigned to ${list(d.servers)}; ` +
+        'only one server may use a world: assign another world to all but one'
+    ),
+    ...report.undetermined.map(
+      (server) =>
+        `Cannot read the world assignment of '${server}'; ` +
+        'assignment changes are refused until its config.env is fixed'
+    ),
+  ];
+}
