@@ -373,10 +373,11 @@ export class DockerServerConsoleAdapter implements IServerConsolePort {
   }
 
   /** Copied from mcctl-api execRcon / cli execRconWithOutput */
-  command(container: string, args: string[]): Promise<ConsoleCommandResult> {
+  command(container: string, args: string[], options?: { signal?: AbortSignal }): Promise<ConsoleCommandResult> {
     return new Promise((resolve) => {
       const child = spawn('docker', ['exec', '--', container, 'rcon-cli', ...args], {
         stdio: ['pipe', 'pipe', 'pipe'],
+        ...(options?.signal ? { signal: options.signal } : {}),
       });
 
       let stdout = '';
