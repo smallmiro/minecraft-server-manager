@@ -16,7 +16,6 @@ import {
   // Use cases from shared
   CreateServerUseCase,
   DeleteServerUseCase,
-  ServerStatusUseCase,
   WorldManagementUseCase,
   BackupUseCase,
   PlayerLookupUseCase,
@@ -33,7 +32,6 @@ import {
   type IModSourcePort,
   type ICreateServerUseCase,
   type IDeleteServerUseCase,
-  type IServerStatusUseCase,
   type IWorldManagementUseCase,
   type IBackupUseCase,
   type IPlayerLookupUseCase,
@@ -219,14 +217,6 @@ export class Container {
       this.shellPort,
       this.serverRepository,
       this.auditLogPort
-    );
-  }
-
-  get serverStatusUseCase(): IServerStatusUseCase {
-    return new ServerStatusUseCase(
-      this.promptPort,
-      this.shellPort,
-      this.serverRepository
     );
   }
 
