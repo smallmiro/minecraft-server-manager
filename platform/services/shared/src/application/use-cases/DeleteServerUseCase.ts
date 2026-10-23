@@ -2,10 +2,12 @@ import { Server, ServerStatus } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import type {
   IDeleteServerUseCase,
+  DeleteServerOptions,
   IPromptPort,
   IShellPort,
   IServerRepository,
   IAuditLogPort,
+  IServerConsolePort,
 } from '../ports/index.js';
 
 /**
@@ -17,13 +19,28 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
     private readonly prompt: IPromptPort,
     private readonly shell: IShellPort,
     private readonly serverRepo: IServerRepository,
-    private readonly auditLog?: IAuditLogPort
+    private readonly auditLog?: IAuditLogPort,
+    private readonly serverConsole?: IServerConsolePort
   ) {}
+
+  /** Fill in who is online (the repository does not); unknown stays 0. */
+  private async loadPlayerCount(server: Server): Promise<void> {
+    if (!server.isRunning || !this.serverConsole) return;
+    const players = await this.serverConsole.listPlayers(server.containerName);
+    if (players) server.setPlayerCount(players.online);
+  }
+
+  private confirmMessage(deleteWorld: boolean): string {
+    return deleteWorld
+      ? 'Delete this server AND the world inside it? This cannot be undone.'
+      : 'Delete this server? Its world will be kept in worlds/.';
+  }
 
   /**
    * Execute interactive server deletion
    */
-  async execute(): Promise<boolean> {
+  async execute(options: Pick<DeleteServerOptions, 'deleteWorld'> = {}): Promise<boolean> {
+    const deleteWorld = options.deleteWorld ?? false;
     this.prompt.intro('Delete Minecraft Server');
 
     try {
@@ -38,6 +55,7 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
 
       // Prompt for server selection
       const server = await this.prompt.promptServerSelection(servers);
+      await this.loadPlayerCount(server);
 
       // Show server info
       this.prompt.note(
@@ -57,7 +75,7 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
 
       // Confirm deletion
       const confirmed = await this.prompt.confirm({
-        message: 'Are you sure you want to delete this server?',
+        message: this.confirmMessage(deleteWorld),
         initialValue: false,
       });
 
@@ -67,7 +85,7 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
       }
 
       // Execute deletion
-      return await this.performDeletion(server);
+      return await this.performDeletion(server, deleteWorld);
     } catch (error) {
       if (this.prompt.isCancel(error)) {
         this.prompt.outro('Deletion cancelled');
@@ -80,13 +98,15 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
   /**
    * Execute server deletion with provided name
    */
-  async executeWithName(name: string, force = false): Promise<boolean> {
+  async executeWithName(name: string, options: DeleteServerOptions = {}): Promise<boolean> {
+    const { force = false, yes = false, deleteWorld = false } = options;
     // Check if server exists
     const server = await this.serverRepo.findByName(name);
 
     if (!server) {
       throw new Error(`Server '${name}' not found`);
     }
+    await this.loadPlayerCount(server);
 
     // If not force mode and server has players, throw error
     if (!force && server.isRunning && server.hasPlayers) {
@@ -105,13 +125,24 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
       );
     }
 
-    return await this.performDeletion(server, force);
+    if (!yes) {
+      const confirmed = await this.prompt.confirm({
+        message: this.confirmMessage(deleteWorld),
+        initialValue: false,
+      });
+      if (!confirmed) {
+        this.prompt.outro('Deletion cancelled');
+        return false;
+      }
+    }
+
+    return await this.performDeletion(server, deleteWorld);
   }
 
   /**
    * Perform the actual deletion
    */
-  private async performDeletion(server: Server, force = false): Promise<boolean> {
+  private async performDeletion(server: Server, deleteWorld: boolean): Promise<boolean> {
     const spinner = this.prompt.spinner();
 
     try {
@@ -127,7 +158,7 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
       spinner.start('Removing server...');
       spinner.stop('Running delete script...');
 
-      const result = await this.shell.deleteServer(server.name, true);
+      const result = await this.shell.deleteServer(server.name, true, deleteWorld);
 
       if (!result.success) {
         this.prompt.error(result.stderr || 'Unknown error occurred');
@@ -155,15 +186,8 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
         errorMessage: null,
       });
 
+      // The script's summary already says what happened to the world.
       this.prompt.success(`Server '${server.name.value}' deleted`);
-
-      // Note about world preservation
-      if (server.worldOptions.isExistingWorld) {
-        this.prompt.note(
-          `World data preserved in worlds/${server.worldOptions.worldName}/`,
-          'World Data'
-        );
-      }
 
       this.prompt.outro('Server removed successfully');
       return true;

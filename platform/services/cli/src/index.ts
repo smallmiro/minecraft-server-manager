@@ -131,7 +131,10 @@ ${colors.cyan('Commands:')}
   ${colors.bold('down')}                       Stop all infrastructure
   ${colors.bold('router')} <start|stop|restart>  Manage mc-router only
   ${colors.bold('create')} <name> [options]    Create a new server
-  ${colors.bold('delete')} <name> [--force]    Delete a server (preserves world data)
+  ${colors.bold('delete')} <name> [options]    Delete a server (asks first; its world is kept in worlds/)
+    -y, --yes                 Skip confirmation
+    --force                   Delete even if players are online (implies --yes)
+    --delete-world            Delete the world inside the server instead of moving it
   ${colors.bold('status')} [options]            Show status of all servers
   ${colors.bold('status')} <server>             Show detailed status of a server
   ${colors.bold('status')} router               Show mc-router status with routes
@@ -415,7 +418,7 @@ function parseArgs(args: string[]): {
       const nextArg = args[i + 1];
 
       // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'enable-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade'];
+      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'delete-world', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'enable-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade'];
 
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
@@ -594,7 +597,9 @@ async function main(): Promise<void> {
         exitCode = await deleteCommand({
           root: rootDir,
           name: positional[0],
-          force: flags['force'] === true || flags['yes'] === true,
+          force: flags['force'] === true,
+          yes: flags['yes'] === true,
+          deleteWorld: flags['delete-world'] === true,
           sudoPassword,
         });
         break;

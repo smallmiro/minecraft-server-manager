@@ -4,6 +4,7 @@ export type {
   CreateServerConfig,
   IDeleteServerUseCase,
   DeleteServerResult,
+  DeleteServerOptions,
   IServerStatusUseCase,
   ServerStatusResult,
   IWorldManagementUseCase,
