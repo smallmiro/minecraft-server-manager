@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Proposed (2026-10-23) |
 | **Issue** | [#654](https://github.com/smallmiro/minecraft-server-manager/issues/654) (Hardening D1), milestone M2 (#643), epic #640 |
-| **Follow-ups that change this ADR** | #665 (D4), #669 (A7), C2, #675 (D5), #641 (k8s adapter), #732 (S3, [backup port](#backup-port-732-s3)), [ADR-0002](0002-world-server-assignment.md)) |
+| **Follow-ups that change this ADR** | #665 (D4), #669 (A7), C2, #675 (D5), #641 (k8s adapter), #732 (S3, [backup port](#backup-port-732-s3)), #670 (A4: `IWorldAssignmentPort` final, [ADR-0002](0002-world-server-assignment.md)) |
 | **Consumers** | #667 (D2, API), #668 (D3, CLI), #666 (E3, contract tests), #715 (script removal) |
 
 ## Context
