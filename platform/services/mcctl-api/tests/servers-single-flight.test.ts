@@ -2,29 +2,41 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vites
 import { EventEmitter } from 'node:events';
 import type { FastifyInstance } from 'fastify';
 
-// Server create and delete run one at a time (#656). Each fake script call
-// stays pending until the test finishes it.
-const calls = vi.hoisted(() => ({
-  exec: [] as Array<{ args: string[]; done: () => void; fail: (err: Error) => void }>,
-  spawned: [] as Array<{ pid: number; options: { detached?: boolean }; emit: (event: string, ...args: unknown[]) => boolean }>,
-}));
+// Server create and delete run one at a time (#656). Every script runs through
+// spawn; each fake script stays running until the test finishes it.
+type FakeScript = EventEmitter & {
+  pid: number;
+  args: string[];
+  options: { detached?: boolean };
+  stdout: EventEmitter;
+  stderr: EventEmitter;
+  done: () => void;
+  fail: (stderr: string) => void;
+};
+const calls = vi.hoisted(() => ({ scripts: [] as FakeScript[] }));
 
 // 'child_process' and 'node:child_process' are one module to vitest, so one mock.
 vi.mock('node:child_process', async (importOriginal) => ({
   ...(await importOriginal<typeof import('node:child_process')>()),
-  execFile: vi.fn((_cmd: string, args: string[], _opts: unknown, cb: (e: Error | null, r?: object) => void) => {
-    calls.exec.push({ args, done: () => cb(null, { stdout: '', stderr: '' }), fail: (err) => cb(err) });
+  execFile: vi.fn(() => {
+    throw new Error('create/delete scripts must run through spawn (process group)');
   }),
-  spawn: vi.fn((_cmd: string, _args: string[], options: { detached?: boolean }) => {
-    const proc = Object.assign(new EventEmitter(), {
+  spawn: vi.fn((_cmd: string, args: string[], options: { detached?: boolean }) => {
+    const script = Object.assign(new EventEmitter(), {
       pid: 4242,
+      args,
       options,
       stdout: new EventEmitter(),
       stderr: new EventEmitter(),
       kill: vi.fn(),
-    });
-    calls.spawned.push(proc);
-    return proc;
+    }) as unknown as FakeScript;
+    script.done = () => { script.emit('close', 0); };
+    script.fail = (stderr: string) => {
+      script.stderr.emit('data', Buffer.from(stderr));
+      script.emit('close', 1);
+    };
+    calls.scripts.push(script);
+    return script;
   }),
 }));
 
@@ -54,6 +66,9 @@ import { lifecycleLimits } from '../src/routes/servers.js';
 /** Let pending handlers run until they block on the lock or a script. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
 
+/** Script names in start order. */
+const scripts = () => calls.scripts.map((s) => s.args[0]!.split('/').pop());
+
 describe('server create/delete single-flight (#656)', () => {
   let app: FastifyInstance;
 
@@ -72,8 +87,7 @@ describe('server create/delete single-flight (#656)', () => {
   });
 
   beforeEach(() => {
-    calls.exec.length = 0;
-    calls.spawned.length = 0;
+    calls.scripts.length = 0;
     vi.restoreAllMocks();
     vi.mocked(serverExists).mockImplementation((name: string) => name === 'old');
     Object.assign(lifecycleLimits, defaults);
@@ -84,15 +98,14 @@ describe('server create/delete single-flight (#656)', () => {
     await settle();
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
     await settle();
+    expect(scripts()).toEqual(['create-server.sh']);
 
-    expect(calls.exec.map((c) => c.args[0])).toEqual(['/scripts/create-server.sh']);
-
-    calls.exec[0]!.done();
+    calls.scripts[0]!.done();
     expect((await create).statusCode).toBe(201);
     await settle();
 
-    expect(calls.exec.map((c) => c.args[0])).toEqual(['/scripts/create-server.sh', '/scripts/delete-server.sh']);
-    calls.exec[1]!.done();
+    expect(scripts()).toEqual(['create-server.sh', 'delete-server.sh']);
+    calls.scripts[1]!.done();
     expect((await remove).statusCode).toBe(200);
   });
 
@@ -101,59 +114,64 @@ describe('server create/delete single-flight (#656)', () => {
     await settle();
     const second = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'twin', type: 'PAPER' } });
     await settle();
-    expect(calls.exec).toHaveLength(1);
+    expect(scripts()).toHaveLength(1);
 
     vi.mocked(serverExists).mockImplementation((name: string) => name === 'twin');
-    calls.exec[0]!.done();
+    calls.scripts[0]!.done();
     expect((await first).statusCode).toBe(201);
     expect((await second).statusCode).toBe(409);
-    expect(calls.exec).toHaveLength(1);
+    expect(scripts()).toHaveLength(1);
   });
 
   it('holds the lock for a streaming create until the script exits', async () => {
     const create = app.inject({ method: 'POST', url: '/api/servers?follow=true', payload: { name: 'stream', type: 'PAPER' } });
     await settle();
-    expect(calls.spawned).toHaveLength(1);
-
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
     await settle();
-    expect(calls.exec).toHaveLength(0);
+    expect(scripts()).toEqual(['create-server.sh']);
 
-    calls.spawned[0]!.emit('close', 0);
+    calls.scripts[0]!.done();
     await create;
     await settle();
-    expect(calls.exec.map((c) => c.args[0])).toEqual(['/scripts/delete-server.sh']);
-    calls.exec[0]!.done();
+    expect(scripts()).toEqual(['create-server.sh', 'delete-server.sh']);
+    calls.scripts[1]!.done();
     expect((await remove).statusCode).toBe(200);
   });
 
-  it('releases the lock when a create fails', async () => {
+  it('releases the lock when a create fails, and reports the script error', async () => {
     const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'broken', type: 'PAPER' } });
     await settle();
-    calls.exec[0]!.fail(Object.assign(new Error('boom'), { stderr: 'boom' }));
-    expect((await create).statusCode).toBe(500);
+    calls.scripts[0]!.fail('boom');
+    const response = await create;
+    expect(response.statusCode).toBe(500);
+    expect(response.json().message).toContain('boom');
 
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
     await settle();
-    expect(calls.exec.map((c) => c.args[0])).toEqual(['/scripts/create-server.sh', '/scripts/delete-server.sh']);
-    calls.exec[1]!.done();
+    expect(scripts()).toEqual(['create-server.sh', 'delete-server.sh']);
+    calls.scripts[1]!.done();
     expect((await remove).statusCode).toBe(200);
   });
 
-  describe('the queue is released when a create hangs (#656 review)', () => {
+  describe('a hung script cannot hold the queue (#656 review)', () => {
     const kills = () => vi.mocked(process.kill).mock.calls.map(([pid, sig]) => `${pid}:${sig}`);
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
     beforeEach(() => {
       vi.spyOn(process, 'kill').mockImplementation(() => true);
-      Object.assign(lifecycleLimits, { sseCreateTimeoutMs: 40, createTimeoutMs: 40, killGraceMs: 40 });
+      Object.assign(lifecycleLimits, { sseCreateTimeoutMs: 40, createTimeoutMs: 40, deleteTimeoutMs: 40, killGraceMs: 40 });
     });
 
-    it('starts the streaming script in its own process group', async () => {
-      const create = app.inject({ method: 'POST', url: '/api/servers?follow=true', payload: { name: 'group', type: 'PAPER' } });
+    it.each([
+      ['streaming create', 'POST', '/api/servers?follow=true', { name: 'group', type: 'PAPER' }],
+      ['JSON create', 'POST', '/api/servers', { name: 'group', type: 'PAPER' }],
+      ['delete', 'DELETE', '/api/servers/old', undefined],
+    ] as const)('runs the %s script in its own process group', async (_label, method, url, payload) => {
+      const request = app.inject({ method, url, ...(payload ? { payload } : {}) });
       await settle();
-      expect(calls.spawned[0]!.options.detached).toBe(true);
-      calls.spawned[0]!.emit('close', 0);
-      await create;
+      expect(calls.scripts[0]!.options.detached).toBe(true);
+      calls.scripts[0]!.done();
+      await request;
     });
 
     it('a stalled streaming create times out: TERM then KILL to the group, then the next request runs', async () => {
@@ -161,15 +179,15 @@ describe('server create/delete single-flight (#656)', () => {
       await settle();
       const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
       await settle();
-      expect(calls.exec).toHaveLength(0);
+      expect(scripts()).toEqual(['create-server.sh']);
 
       // The script never exits, even after SIGKILL (a child still holds the pipes).
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await wait(250);
       expect(kills()).toEqual(['-4242:SIGTERM', '-4242:SIGKILL']);
       expect((await create).body).toContain('timed out');
 
-      expect(calls.exec.map((c) => c.args[0])).toEqual(['/scripts/delete-server.sh']);
-      calls.exec[0]!.done();
+      expect(scripts()).toEqual(['create-server.sh', 'delete-server.sh']);
+      calls.scripts[1]!.done();
       expect((await remove).statusCode).toBe(200);
     });
 
@@ -184,26 +202,49 @@ describe('server create/delete single-flight (#656)', () => {
       await create.catch(() => undefined);
       await settle();
       expect(kills()).toEqual(['-4242:SIGTERM']);
-      expect(calls.exec).toHaveLength(0);
+      expect(scripts()).toEqual(['create-server.sh']);
 
-      calls.spawned[0]!.emit('close', null);
+      calls.scripts[0]!.emit('close', null);
       await settle();
-      expect(calls.exec.map((c) => c.args[0])).toEqual(['/scripts/delete-server.sh']);
-      calls.exec[0]!.done();
+      expect(scripts()).toEqual(['create-server.sh', 'delete-server.sh']);
+      calls.scripts[1]!.done();
       expect((await remove).statusCode).toBe(200);
     });
 
-    it('a JSON create whose script never returns frees the queue after its timeout', async () => {
+    it('a stalled JSON create: TERM, then KILL to the group, and the next request starts only after that', async () => {
       const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'hang', type: 'PAPER' } });
       await settle();
       const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-      await new Promise((resolve) => setTimeout(resolve, 200));
 
-      expect(calls.exec.map((c) => c.args[0])).toEqual(['/scripts/create-server.sh', '/scripts/delete-server.sh']);
-      calls.exec[1]!.done();
+      await wait(60); // past the timeout, inside the grace period
+      expect(kills()).toEqual(['-4242:SIGTERM']);
+      expect(scripts()).toEqual(['create-server.sh']);
+
+      const response = await create; // the script never exits
+      expect(kills()).toEqual(['-4242:SIGTERM', '-4242:SIGKILL']);
+      expect(response.statusCode).toBe(500);
+      expect(response.json().message).toContain('timed out');
+
+      await settle();
+      expect(scripts()).toEqual(['create-server.sh', 'delete-server.sh']);
+      calls.scripts[1]!.done();
       expect((await remove).statusCode).toBe(200);
-      calls.exec[0]!.done();
-      await create;
+    });
+
+    it('a JSON create that exits on SIGTERM frees the queue right away', async () => {
+      lifecycleLimits.killGraceMs = 60_000;
+      const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'term', type: 'PAPER' } });
+      await settle();
+      const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
+      await wait(60);
+      expect(kills()).toEqual(['-4242:SIGTERM']);
+
+      calls.scripts[0]!.emit('close', null);
+      expect((await create).statusCode).toBe(500);
+      await settle();
+      expect(scripts()).toEqual(['create-server.sh', 'delete-server.sh']);
+      calls.scripts[1]!.done();
+      expect((await remove).statusCode).toBe(200);
     });
   });
 });

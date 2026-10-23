@@ -7,8 +7,11 @@ import { tmpdir } from 'node:os';
 import { atomicWriteFile, atomicWriteFileSync } from '../src/utils/index.js';
 
 // Lets a test fail the write, the chown or the final rename midway (#656).
-const fail = vi.hoisted(() => ({ rename: false, write: false, chown: false }));
+const fail = vi.hoisted(() => ({ rename: false, write: false, chown: false, tempOpen: false }));
 const eperm = () => Object.assign(new Error('chown failed'), { code: 'EPERM' });
+// The directory is not writable: creating the temp file fails, the file itself is writable.
+const eacces = () => Object.assign(new Error('open failed'), { code: 'EACCES' });
+const isTemp = (p: unknown) => typeof p === 'string' && p.endsWith('.tmp');
 vi.mock('node:fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs')>();
   return {
@@ -20,6 +23,10 @@ vi.mock('node:fs', async (importOriginal) => {
     writeFileSync: (...args: Parameters<typeof actual.writeFileSync>) => {
       if (fail.write && typeof args[0] === 'number') throw new Error('write failed');
       return actual.writeFileSync(...args);
+    },
+    openSync: (...args: Parameters<typeof actual.openSync>) => {
+      if (fail.tempOpen && isTemp(args[0])) throw eacces();
+      return actual.openSync(...args);
     },
     fchownSync: (...args: Parameters<typeof actual.fchownSync>) => {
       if (fail.chown) throw eperm();
@@ -36,6 +43,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       return actual.rename(...args);
     },
     open: async (...args: Parameters<typeof actual.open>) => {
+      if (fail.tempOpen && isTemp(args[0])) throw eacces();
       const handle = await actual.open(...args);
       if (!fail.write && !fail.chown) return handle;
       return new Proxy(handle, {
@@ -65,6 +73,7 @@ describe.each(variants)('%s', (_name, write) => {
     fail.rename = false;
     fail.write = false;
     fail.chown = false;
+    fail.tempOpen = false;
   });
 
   afterEach(() => {
@@ -131,6 +140,15 @@ describe.each(variants)('%s', (_name, write) => {
     writeFileSync(file, 'old\n');
     const inode = statSync(file).ino;
     fail.chown = true;
+    await write(file, 'new\n');
+    expect(readFileSync(file, 'utf-8')).toBe('new\n');
+    expect(statSync(file).ino).toBe(inode);
+    expect(readdirSync(dir)).toEqual(['docker-compose.yml']);
+  });
+  test('writes in place when the temp file cannot be created (directory not writable)', async () => {
+    writeFileSync(file, 'old\n');
+    const inode = statSync(file).ino;
+    fail.tempOpen = true;
     await write(file, 'new\n');
     expect(readFileSync(file, 'utf-8')).toBe('new\n');
     expect(statSync(file).ino).toBe(inode);
