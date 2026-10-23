@@ -125,4 +125,66 @@ describe('logsCommand', () => {
     expect(await logsCommand({ serverName: 'myserver', follow: true, json: true, runtime, write })).toBe(1);
     expect(runtime.followLogs).not.toHaveBeenCalled();
   });
+
+  it('returns 1 when docker logs exits non-zero (non-follow)', async () => {
+    const runtime = fakeRuntime({
+      followLogs: vi.fn(async (_n, _c, _s, o) => o?.onExit?.(1, undefined)) as never,
+    });
+    expect(await logsCommand({ serverName: 'myserver', runtime, write })).toBe(1);
+    expect(out).toEqual([]);
+  });
+
+  it('returns 1 on a spawn error (follow)', async () => {
+    const runtime = fakeRuntime({
+      followLogs: vi.fn(async (_n, _c, _s, o) => o?.onExit?.(null, new Error('ENOENT'))) as never,
+    });
+    expect(await logsCommand({ serverName: 'myserver', follow: true, runtime, write })).toBe(1);
+  });
+
+  it('returns 0 when follow is ended by abort even if docker reports a signal', async () => {
+    const controller = new AbortController();
+    const followLogs = vi.fn(
+      (_n: string, _c: unknown, signal: AbortSignal, o?: { onExit?: (c: number | null) => void }) =>
+        new Promise<void>((resolve) =>
+          signal.addEventListener('abort', () => {
+            o?.onExit?.(null);
+            resolve();
+          })
+        )
+    );
+    const runtime = fakeRuntime({ followLogs: followLogs as never });
+    const done = logsCommand({ serverName: 'myserver', follow: true, runtime, write, signal: controller.signal });
+    controller.abort();
+    expect(await done).toBe(0);
+  });
+
+  it('waits for the output write to finish before returning (pipe truncation)', async () => {
+    const big = 'x'.repeat(1000) + '\n';
+    const runtime = fakeRuntime({
+      followLogs: vi.fn(async (_n: string, onChunk: (c: string) => void) => onChunk(big)) as never,
+    });
+    let finish!: () => void;
+    const write = vi.fn(() => new Promise<void>((r) => (finish = r)));
+    let returned = false;
+    const done = logsCommand({ serverName: 'myserver', runtime, write }).then((c) => {
+      returned = true;
+      return c;
+    });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(returned).toBe(false);
+    finish();
+    expect(await done).toBe(0);
+  });
+
+  it.each([[true], [undefined as unknown as string, 'missing'], ['-1'], ['0'], ['abc'], ['1.5'], ['']])(
+    'rejects invalid --lines %s',
+    async (lines) => {
+      const runtime = fakeRuntime();
+      const opts = lines === undefined ? {} : { lines: lines as never };
+      // undefined means the flag is absent (valid); every other value must be rejected
+      const code = await logsCommand({ serverName: 'myserver', runtime, write, ...opts });
+      expect(code).toBe(lines === undefined ? 0 : 1);
+    }
+  );
 });

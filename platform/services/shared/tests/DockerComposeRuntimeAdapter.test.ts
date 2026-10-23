@@ -326,6 +326,30 @@ describe('DockerComposeRuntimeAdapter.followLogs', () => {
     });
   });
 
+  it('reports the exit code through onExit while still resolving', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const onExit = vi.fn();
+    const done = runtime.followLogs('mc-a', () => {}, new AbortController().signal, { onExit });
+    child.emit('close', 1);
+    await expect(done).resolves.toBeUndefined();
+    expect(onExit).toHaveBeenCalledTimes(1);
+    expect(onExit).toHaveBeenCalledWith(1, undefined);
+  });
+
+  it('reports a spawn error through onExit once (error then close)', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const onExit = vi.fn();
+    const done = runtime.followLogs('mc-a', () => {}, new AbortController().signal, { onExit });
+    const err = new Error('spawn docker ENOENT');
+    child.emit('error', err);
+    child.emit('close', null);
+    await done;
+    expect(onExit).toHaveBeenCalledTimes(1);
+    expect(onExit).toHaveBeenCalledWith(null, err);
+  });
+
   it('resolves on a spawn error', async () => {
     const child = bareChild();
     vi.mocked(spawn).mockReturnValue(child as never);
