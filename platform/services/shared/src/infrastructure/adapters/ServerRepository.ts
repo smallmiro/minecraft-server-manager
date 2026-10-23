@@ -2,7 +2,6 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { Paths, parseEnvDocument } from '../../utils/index.js';
-import { execCommandAsync } from '../../docker/index.js';
 import {
   Server,
   ServerStatus,
@@ -18,6 +17,9 @@ import type {
   IServerRepository,
   ServerConfigData,
 } from '../../application/ports/outbound/IServerRepository.js';
+import type { IContainerRuntimePort } from '../../application/ports/outbound/IContainerRuntimePort.js';
+// By file path, not the facade or the barrel (ADR-0001 dependency rules)
+import { DockerComposeRuntimeAdapter } from './DockerComposeRuntimeAdapter.js';
 
 /**
  * ServerRepository
@@ -26,10 +28,16 @@ import type {
 export class ServerRepository implements IServerRepository {
   private readonly paths: Paths;
   private readonly serversDir: string;
+  private readonly runtime: IContainerRuntimePort;
 
-  constructor(paths?: Paths) {
+  /**
+   * @param runtime Runtime status of the servers (#665). Defaults to the
+   *   Docker adapter.
+   */
+  constructor(paths?: Paths, runtime?: IContainerRuntimePort) {
     this.paths = paths ?? new Paths();
     this.serversDir = join(this.paths.root, 'servers');
+    this.runtime = runtime ?? new DockerComposeRuntimeAdapter();
   }
 
   /**
@@ -107,29 +115,17 @@ export class ServerRepository implements IServerRepository {
   }
 
   /**
-   * Get server status
+   * Get server status from the runtime port. A failed query ('not_found')
+   * counts as stopped, as before; a name no server can have is UNKNOWN.
    */
   async getStatus(name: string): Promise<ServerStatus> {
     try {
-      const containerName = `mc-${name}`;
-      const result = await execCommandAsync('docker', [
-        'inspect',
-        '-f',
-        '{{.State.Status}}',
-        containerName,
-      ]);
-
-      if (result.code !== 0) {
-        return ServerStatus.STOPPED;
-      }
-
-      const status = result.stdout.trim().toLowerCase();
-
-      switch (status) {
+      switch (this.runtime.getStatus(ServerName.fromExisting(name))) {
         case 'running':
           return ServerStatus.RUNNING;
         case 'exited':
         case 'dead':
+        case 'not_found':
           return ServerStatus.STOPPED;
         case 'created':
         case 'restarting':

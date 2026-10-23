@@ -15,6 +15,9 @@ vi.mock('../src/docker/index.js', async (importOriginal) => {
 import { getDetailedServerInfoFromConfig } from '../src/docker/index.js';
 import { ServerRepository } from '../src/infrastructure/adapters/ServerRepository.js';
 import { Paths } from '../src/utils/index.js';
+import type { IContainerRuntimePort } from '../src/application/ports/index.js';
+
+const runtime = { getStatus: () => 'not_found' } as unknown as IContainerRuntimePort;
 import { WorldOptions } from '../src/domain/value-objects/WorldOptions.js';
 
 describe('world name resolution (#649)', () => {
@@ -61,7 +64,7 @@ describe('world name resolution (#649)', () => {
   it('ServerRepository reads the world from LEVEL, not the WORLD download URL', async () => {
     await addServer('dl', 'TYPE=PAPER\nLEVEL=dl\nWORLD=https://example.com/world.zip\n');
 
-    const repo = new ServerRepository(new Paths(root));
+    const repo = new ServerRepository(new Paths(root), runtime);
     expect((await repo.getConfig('dl'))?.worldName).toBe('dl');
 
     const server = await repo.findByName('dl');
@@ -74,7 +77,7 @@ describe('world name resolution (#649)', () => {
     await addServer('wn', 'TYPE=PAPER\nWORLD_NAME=legacy\n');
     await addServer('plain', 'TYPE=PAPER\n');
 
-    const repo = new ServerRepository(new Paths(root));
+    const repo = new ServerRepository(new Paths(root), runtime);
     expect((await repo.getConfig('lvl'))?.worldName).toBe('dl');
     expect((await repo.getConfig('wn'))?.worldName).toBe('legacy');
     expect((await repo.getConfig('plain'))?.worldName).toBeUndefined();
@@ -83,28 +86,28 @@ describe('world name resolution (#649)', () => {
   it('ServerRepository reports a SEED-only server as a new world with that seed', async () => {
     await addServer('seeded', 'TYPE=PAPER\nSEED=12345\n');
 
-    const server = await new ServerRepository(new Paths(root)).findByName('seeded');
+    const server = await new ServerRepository(new Paths(root), runtime).findByName('seeded');
     expect(server?.worldOptions.equals(WorldOptions.newWorld('12345'))).toBe(true);
   });
 
   it('ServerRepository falls back to default world options without SEED or LEVEL', async () => {
     await addServer('plain', 'TYPE=PAPER\n');
 
-    const server = await new ServerRepository(new Paths(root)).findByName('plain');
+    const server = await new ServerRepository(new Paths(root), runtime).findByName('plain');
     expect(server?.worldOptions.equals(WorldOptions.default())).toBe(true);
   });
 
   it('ServerRepository reports LEVEL as an existing world', async () => {
     await addServer('lvl', 'TYPE=PAPER\nLEVEL=dl\nSEED=12345\n');
 
-    const server = await new ServerRepository(new Paths(root)).findByName('lvl');
+    const server = await new ServerRepository(new Paths(root), runtime).findByName('lvl');
     expect(server?.worldOptions.equals(WorldOptions.existingWorld('dl'))).toBe(true);
   });
 
   it('ServerRepository keeps servers whose LEVEL is not a valid new world name', async () => {
     await addServer('legacy-level', 'TYPE=PAPER\nLEVEL=My World\n');
 
-    const server = await new ServerRepository(new Paths(root)).findByName('legacy-level');
+    const server = await new ServerRepository(new Paths(root), runtime).findByName('legacy-level');
     expect(server).not.toBeNull();
   });
 
@@ -112,7 +115,7 @@ describe('world name resolution (#649)', () => {
     await addServer('a', 'TYPE=PAPER\n');
     await addServer('router', 'TYPE=PAPER\n');
 
-    const repo = new ServerRepository(new Paths(root));
+    const repo = new ServerRepository(new Paths(root), runtime);
     expect((await repo.findByName('a'))?.name.value).toBe('a');
     expect((await repo.findByName('router'))?.name.value).toBe('router');
   });

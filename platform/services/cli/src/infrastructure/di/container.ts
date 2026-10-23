@@ -121,14 +121,14 @@ export class Container {
 
   get serverRepository(): IServerRepository {
     if (!this._serverRepo) {
-      this._serverRepo = new ServerRepository(this.paths);
+      this._serverRepo = new ServerRepository(this.paths, this.containerRuntime);
     }
     return this._serverRepo;
   }
 
   get worldRepository(): IWorldRepository {
     if (!this._worldRepo) {
-      this._worldRepo = new WorldRepository(this.paths, this.worldAssignmentPort);
+      this._worldRepo = new WorldRepository(this.paths, this.worldAssignmentPort, this.containerRuntime);
     }
     return this._worldRepo;
   }
