@@ -378,6 +378,7 @@ exec /bin/mv "$@"'
 }
 
 @test "delete: wood removes only wood.local from avahi hosts (#660)" {
+    require_gnu_sed  # avahi removal is GNU sed -i (#751); avahi is Linux-only
     add_server wood
     fake_cmd sudo 'while [[ "${1:-}" == -* ]]; do shift; done
 exec "$@"'
@@ -427,35 +428,44 @@ exec "$@"'
     grep -q wood "$PLATFORM/servers/compose.yml"
 }
 
-# avahi_sudo_setup: fake sudo that fails for the command named in $FAIL_SUDO_CMD
+# avahi_sudo_setup: fake sudo that, like the README sudoers rule (#751), only runs
+# `tee -a <hosts>`, `sed -i <expr> <hosts>` and `systemctl restart avahi-daemon`.
+# Every allowed call is logged; $FAIL_SUDO_CMD makes that command fail.
 avahi_sudo_setup() {
+    require_gnu_sed  # avahi is Linux-only; the sudoers rule names GNU sed -i
+    export AVAHI_HOSTS="$BATS_TEST_TMPDIR/avahi-hosts"
+    export SUDO_LOG="$BATS_TEST_TMPDIR/sudo.log"
+    : > "$SUDO_LOG"
     fake_cmd sudo 'while [[ "${1:-}" == -* ]]; do shift; done
+echo "$*" >> "$SUDO_LOG"
 [ "$1" = "${FAIL_SUDO_CMD:-}" ] && exit 1
+case "$*" in
+    "tee -a $AVAHI_HOSTS"|"systemctl restart avahi-daemon") ;;
+    "sed -i "*" $AVAHI_HOSTS") [ $# -eq 4 ] || { echo "sudoers: denied: $*" >&2; exit 1; } ;;
+    *) echo "sudoers: denied: $*" >&2; exit 1 ;;
+esac
 exec "$@"'
     fake_cmd systemctl 'exit 0'
-    export AVAHI_HOSTS="$BATS_TEST_TMPDIR/avahi-hosts"
-    printf '10.0.0.1 ironwood.local\n10.0.0.1 wood.local\n' > "$AVAHI_HOSTS"
+    printf '# wood.local note\n10.0.0.1 ironwood.local\n10.0.0.1 wood.local\n10.0.0.1 woodXlocal\n10.0.0.2 other # wood.local\n' > "$AVAHI_HOSTS"
     chmod 640 "$AVAHI_HOSTS"
 }
 
-@test "delete: avahi is replaced atomically and keeps its mode (#660)" {
+@test "delete: avahi removal uses only the README sudoers command shape (#751)" {
     add_server wood
     avahi_sudo_setup
     run bash "$SCRIPTS_DIR/delete-server.sh" wood --force
     [ "$status" -eq 0 ]
-    [ "$(cat "$AVAHI_HOSTS")" = "10.0.0.1 ironwood.local" ]
+    [ "$(cat "$AVAHI_HOSTS")" = "$(printf '# wood.local note\n10.0.0.1 ironwood.local\n10.0.0.1 woodXlocal\n10.0.0.2 other # wood.local')" ]
     [ "$(ls -l "$AVAHI_HOSTS" | cut -c1-10)" = "-rw-r-----" ]
-    [ "$(ls "$BATS_TEST_TMPDIR" | grep -c 'avahi-hosts.')" -eq 0 ]
+    ! grep -q "denied" <<< "$output"
+    [ "$(grep -c '^sed -i ' "$SUDO_LOG")" -eq 1 ]
+    ! grep -qE '^(cp|mv|tee [^-])' "$SUDO_LOG"
 }
 
-@test "delete: a failed avahi write leaves the original intact and no temp file (#660)" {
-    local cmd
-    for cmd in tee mv; do
-        add_server wood
-        avahi_sudo_setup
-        FAIL_SUDO_CMD=$cmd run bash "$SCRIPTS_DIR/delete-server.sh" wood --force
-        [ "$(cat "$AVAHI_HOSTS")" = "$(printf '10.0.0.1 ironwood.local\n10.0.0.1 wood.local')" ]
-        [ "$(ls "$BATS_TEST_TMPDIR" | grep -c 'avahi-hosts.')" -eq 0 ]
-        rm -rf "$PLATFORM/servers/wood"
-    done
+@test "delete: a failed avahi sed leaves the hosts file intact (#751)" {
+    add_server wood
+    avahi_sudo_setup
+    FAIL_SUDO_CMD=sed run bash "$SCRIPTS_DIR/delete-server.sh" wood --force
+    grep -qx '10.0.0.1 wood.local' "$AVAHI_HOSTS"
+    grep -qx '10.0.0.1 ironwood.local' "$AVAHI_HOSTS"
 }
