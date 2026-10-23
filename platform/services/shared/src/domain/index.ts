@@ -104,6 +104,7 @@ export {
   validateServerSpecDocument,
   assertServerSpecDocument,
   validateHostname,
+  routerHosts,
   type ServerSpecDocument,
   type ServerSpecErrorCode,
   type ServerSpecIssue,

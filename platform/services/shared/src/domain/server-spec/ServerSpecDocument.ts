@@ -316,3 +316,24 @@ export function assertServerSpecDocument(
   }
   return value as unknown as ServerSpecDocument;
 }
+
+/**
+ * The mc-router hosts of a server (ADR-0003 §3): `<n>.local`, `<n>.<ip>.nip.io`
+ * per host address, the playit domain, then the custom hosts; deduplicated
+ * case-insensitively, first occurrence kept.
+ */
+export function routerHosts(doc: ServerSpecDocument, hostIps: string[]): string[] {
+  const all = [
+    `${doc.name}.local`,
+    ...hostIps.map((ip) => `${doc.name}.${ip}.nip.io`),
+    ...(doc.routing.playitDomain ? [doc.routing.playitDomain] : []),
+    ...doc.routing.customHostnames,
+  ];
+  const seen = new Set<string>();
+  return all.filter((h) => {
+    const key = h.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
