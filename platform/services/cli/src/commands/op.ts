@@ -267,19 +267,19 @@ async function addOp(
     actor: 'cli:local',
     targetType: 'player',
     targetName: playerName,
-    status: 'success',
+    status: configSuccess ? 'success' : 'failure',
     details: {
       server: options.serverName,
       level: opLevel.value,
       role: opLevel.label,
     },
-    errorMessage: null,
+    errorMessage: configSuccess ? null : 'config.env could not be written',
   });
 
   if (options.json) {
     console.log(
       JSON.stringify({
-        success: true,
+        success: configSuccess,
         player: playerName,
         level: opLevel.value,
         role: opLevel.label,
@@ -315,7 +315,7 @@ async function addOp(
     }
   }
 
-  return 0;
+  return configSuccess ? 0 : 1;
 }
 
 /**
@@ -388,15 +388,15 @@ async function removeOp(
     actor: 'cli:local',
     targetType: 'player',
     targetName: playerName,
-    status: 'success',
+    status: configSuccess ? 'success' : 'failure',
     details: { server: options.serverName },
-    errorMessage: null,
+    errorMessage: configSuccess ? null : 'config.env could not be written',
   });
 
   if (options.json) {
     console.log(
       JSON.stringify({
-        success: true,
+        success: configSuccess,
         player: playerName,
         server: options.serverName,
         rcon: isRunning ? { success: rconSuccess, message: rconMessage } : null,
@@ -420,7 +420,7 @@ async function removeOp(
     }
   }
 
-  return 0;
+  return configSuccess ? 0 : 1;
 }
 
 /**
