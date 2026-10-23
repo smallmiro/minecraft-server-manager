@@ -185,6 +185,20 @@ describe('Docker helper functions for playit.gg', () => {
       }
     );
 
+    // The domain must not be read as replace() tokens: $` repeats the text
+    // before the match, LF included, which would add lines (#726)
+    test.each(['x$`y.example.com', "x$'y.example.com", 'x$&y.example.com', 'x$1y.example.com'])(
+      'should write %j literally when updating PLAYIT_DOMAIN',
+      (domain) => {
+        const configPath = join(testServersDir, 'survival', 'config.env');
+        writeFileSync(configPath, 'TYPE=PAPER\nPLAYIT_DOMAIN=old\nMEMORY=4G\n', 'utf-8');
+
+        dockerHelpers.setServerPlayitDomain('survival', domain, testServersDir);
+
+        expect(readFileSync(configPath, 'utf-8')).toBe(`TYPE=PAPER\nPLAYIT_DOMAIN=${domain}\nMEMORY=4G\n`);
+      }
+    );
+
     test('should throw when server config.env does not exist', () => {
       expect(() => {
         dockerHelpers.setServerPlayitDomain('nonexistent', 'test.domain.com', testServersDir);
