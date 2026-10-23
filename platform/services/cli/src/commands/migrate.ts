@@ -11,7 +11,8 @@ import { migrateSpec } from './migrate-spec.js';
 import { isContainerRunning, serverOfContainer } from '../lib/rcon.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { writeServerConfig } from '../lib/server-config.js';
 
 /**
  * Migrate command options
@@ -484,10 +485,16 @@ async function migrateServer(
     }
   }
 
-  // Step 3: Update config.env
+  // Step 3: Update the ServerSpec (#675): world.storage universe, LEVEL; config.env is rendered
   console.log(`  Updating config.env`);
   console.log(`  Setting LEVEL=${newLevelValue}`);
-  atomicWriteFileSync(configPath, newConfig);
+  const proposed = parseEnvDocument(newConfig).values;
+  await writeServerConfig(
+    paths,
+    server.name,
+    { set: { LEVEL: newLevelValue, EXTRA_ARGS: proposed.get('EXTRA_ARGS') ?? '--universe /worlds/' } },
+    { allowStorageChange: true }
+  );
 }
 
 /**

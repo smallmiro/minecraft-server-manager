@@ -2,7 +2,8 @@ import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { Paths, log } from '@minecraft-docker/shared';
-import { applyEnvChanges, assertEnvFileValue, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { assertEnvFileValue, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { writeServerConfig } from '../lib/server-config.js';
 
 export interface ShellExecutorOptions {
   paths?: Paths;
@@ -116,26 +117,25 @@ export class ShellExecutor {
   }
 
   /**
-   * Write a config value to server's config.env
-   * Preserves comments and formatting
+   * Set a config value of a server through its ServerSpec (#675): server.yaml
+   * is updated and config.env is rendered from it (comments kept).
+   * A world-location key (EXTRA_ARGS) may move the world; callers check that first.
    */
-  writeConfigValue(server: string, key: string, value: string): boolean {
-    // config.env is an env_file: the key and value must stay one setting (#726)
-    const configPath = this.getConfigPath(server);
-    if (!existsSync(configPath)) {
-      log.error(`Config file not found: ${configPath}`);
+  async writeConfigValue(server: string, key: string, value: string): Promise<boolean> {
+    const serverName = server.startsWith('mc-') ? server.slice(3) : server;
+    if (!existsSync(this.getConfigPath(server))) {
+      log.error(`Config file not found: ${this.getConfigPath(server)}`);
       return false;
     }
-    let next: string;
     try {
+      // config.env is an env_file: the key and value must stay one setting (#726)
       assertEnvFileValue(key, value);
-      next = applyEnvChanges(readFileSync(configPath, 'utf-8'), { set: { [key]: value } }, { raw: true });
+      await writeServerConfig(this.paths, serverName, { set: { [key]: value } }, { allowStorageChange: key === 'EXTRA_ARGS' });
+      return true;
     } catch (error) {
       log.error((error as Error).message);
       return false;
     }
-    atomicWriteFileSync(configPath, next);
-    return true;
   }
 
   /**

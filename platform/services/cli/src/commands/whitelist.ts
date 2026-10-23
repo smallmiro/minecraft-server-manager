@@ -221,7 +221,7 @@ async function addToWhitelist(
     : [];
   if (!currentConfigList.some((n) => n.toLowerCase() === playerName.toLowerCase())) {
     const newList = [...currentConfigList, playerName].join(',');
-    shell.writeConfigValue(options.serverName!, 'WHITELIST', newList);
+    await shell.writeConfigValue(options.serverName!, 'WHITELIST', newList);
   }
 
   // Log audit
@@ -291,7 +291,7 @@ async function removeFromWhitelist(
   const newConfigList = currentConfigList.filter(
     (n) => n.toLowerCase() !== playerName.toLowerCase()
   );
-  shell.writeConfigValue(options.serverName!, 'WHITELIST', newConfigList.join(','));
+  await shell.writeConfigValue(options.serverName!, 'WHITELIST', newConfigList.join(','));
 
   // Log audit
   const container = getContainer({ rootDir: options.root });
@@ -349,7 +349,7 @@ async function enableWhitelist(
   }
 
   // Update config.env
-  shell.writeConfigValue(options.serverName!, 'ENABLE_WHITELIST', 'true');
+  await shell.writeConfigValue(options.serverName!, 'ENABLE_WHITELIST', 'true');
 
   if (options.json) {
     console.log(
@@ -392,7 +392,7 @@ async function disableWhitelist(
   }
 
   // Update config.env
-  shell.writeConfigValue(options.serverName!, 'ENABLE_WHITELIST', 'false');
+  await shell.writeConfigValue(options.serverName!, 'ENABLE_WHITELIST', 'false');
 
   if (options.json) {
     console.log(

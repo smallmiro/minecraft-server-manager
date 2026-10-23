@@ -3,10 +3,17 @@
  * runtime port (#668, ADR-0001 row 14) instead of `docker inspect` / `docker stop`.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { ConfigEnvWorldAssignmentAdapter, Paths, ServerName } from '@minecraft-docker/shared';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  ConfigEnvWorldAssignmentAdapter,
+  FileServerSpecRepository,
+  Paths,
+  ServerName,
+  type IContainerRuntimePort,
+} from '@minecraft-docker/shared';
 
 const runtime = {
   getStatusAsync: vi.fn(),
@@ -23,12 +30,25 @@ vi.mock('../../../src/infrastructure/index.js', () => ({
 }));
 
 import { migrateCommand } from '../../../src/commands/migrate.js';
+import { serverSpecRepositories } from '../../../src/lib/server-config.js';
+
+const TEMPLATE_COMPOSE = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../../templates/servers/_template/docker-compose.yml'),
+  'utf-8'
+);
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'mcctl-migrate-'));
   writeFileSync(join(root, 'docker-compose.yml'), 'services: {}\n');
   mkdirSync(join(root, 'servers', 'alpha', 'data', 'world'), { recursive: true });
   writeFileSync(join(root, 'servers', 'alpha', 'config.env'), 'TYPE=PAPER\n');
+  // The spec write (#675) needs the server's compose and a runtime that reports it stopped
+  writeFileSync(
+    join(root, 'servers', 'alpha', 'docker-compose.yml'),
+    TEMPLATE_COMPOSE.replace(/mc-template/g, 'mc-alpha').replace('mc-router.host: "template.local"', 'mc-router.host: "alpha.local"')
+  );
+  const stopped = { getStatus: () => 'exited' } as unknown as IContainerRuntimePort;
+  serverSpecRepositories.create = (p) => new FileServerSpecRepository(p, undefined, stopped, () => []);
   writeFileSync(join(root, 'servers', 'alpha', 'data', 'world', 'level.dat'), 'x');
   runtime.getStatusAsync.mockReset();
   runtime.stop.mockReset();

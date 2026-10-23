@@ -258,7 +258,7 @@ async function addOp(
 
   // Update config.env
   const newOps = [...currentOps, playerName].join(',');
-  const configSuccess = shell.writeConfigValue(options.serverName!, 'OPS', newOps);
+  const configSuccess = await shell.writeConfigValue(options.serverName!, 'OPS', newOps);
 
   // Log audit
   const container = getContainer({ rootDir: options.root });
@@ -378,8 +378,8 @@ async function removeOp(
   currentOps.splice(opIndex, 1);
   const newOps = currentOps.join(',');
   const configSuccess = newOps
-    ? shell.writeConfigValue(options.serverName!, 'OPS', newOps)
-    : shell.writeConfigValue(options.serverName!, 'OPS', '');
+    ? await shell.writeConfigValue(options.serverName!, 'OPS', newOps)
+    : await shell.writeConfigValue(options.serverName!, 'OPS', '');
 
   // Log audit
   const container = getContainer({ rootDir: options.root });

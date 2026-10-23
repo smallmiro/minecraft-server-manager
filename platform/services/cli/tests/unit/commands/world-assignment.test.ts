@@ -6,7 +6,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   Paths,
   WorldManagementUseCase,
@@ -14,6 +15,7 @@ import {
   ServerRepository,
   ConfigEnvWorldAssignmentAdapter,
   ShellAdapter,
+  FileServerSpecRepository,
   type IContainerRuntimePort,
   type IPromptPort,
 } from '@minecraft-docker/shared';
@@ -27,15 +29,26 @@ vi.mock('../../../src/lib/rcon.js', () => ({ isContainerRunning: async () => fal
 import { configCommand } from '../../../src/commands/config.js';
 import { worldCommand } from '../../../src/commands/world.js';
 import { migrateCommand } from '../../../src/commands/migrate.js';
+import { serverSpecRepositories } from '../../../src/lib/server-config.js';
 
 const UNIVERSE = 'EXTRA_ARGS=--universe /worlds/\n';
 let root: string;
 let output: string[];
 
+const TEMPLATE_COMPOSE = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../../templates/servers/_template/docker-compose.yml'),
+  'utf-8'
+);
+
+/** A server: its config.env and a compose from the bundled template (#675 writes go through server.yaml). */
 function server(name: string, configEnv: string): string {
   mkdirSync(join(root, 'servers', name), { recursive: true });
   const file = join(root, 'servers', name, 'config.env');
   writeFileSync(file, configEnv);
+  writeFileSync(
+    join(root, 'servers', name, 'docker-compose.yml'),
+    TEMPLATE_COMPOSE.replace(/mc-template/g, `mc-${name}`).replace('mc-router.host: "template.local"', `mc-router.host: "${name}.local"`)
+  );
   return file;
 }
 
@@ -52,6 +65,7 @@ beforeEach(() => {
   const assignments = new ConfigEnvWorldAssignmentAdapter(paths);
   const runtime = { getStatus: () => state.status, start: async () => ({ success: true }) };
   const prompt = { isCancel: () => false } as unknown as IPromptPort;
+  serverSpecRepositories.create = (p) => new FileServerSpecRepository(p, undefined, runtime as unknown as IContainerRuntimePort, () => []);
   state.container = {
     promptPort: prompt,
     worldAssignmentPort: assignments,
@@ -155,7 +169,9 @@ describe('mcctl config <server> EXTRA_ARGS (world location, Codex PR #750)', () 
     const file = server('alpha', `LEVEL=alpha\n${UNIVERSE}`);
 
     expect(await configCommand({ root, serverName: 'alpha', key: 'EXTRA_ARGS', value: '--universe /data' })).toBe(0);
-    expect(readFileSync(file, 'utf-8')).toContain('/data');
+    // ServerSpec (#675): /data is world.storage 'data', rendered as an empty EXTRA_ARGS (the same location)
+    expect(readFileSync(join(root, 'servers', 'alpha', 'server.yaml'), 'utf-8')).toContain('storage: data');
+    expect(readFileSync(file, 'utf-8')).toMatch(/^EXTRA_ARGS=$/m);
   });
 });
 
