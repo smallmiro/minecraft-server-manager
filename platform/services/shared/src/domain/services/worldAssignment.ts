@@ -59,24 +59,31 @@ const conflictError = (world: string, holders: string[]) =>
     holders
   );
 
-/**
- * The world a name belongs to: `<w>_nether` and `<w>_the_end` are part of
- * `<w>`. Lookups, delete, reset and duplicate reports all compare families.
- */
-export function worldFamily(world: string): string {
-  return world.replace(DIMENSION_SUFFIX, '');
+/** The folders a world name covers on disk: the world and its two dimension folders. */
+function folders(world: string): string[] {
+  return [world, `${world}_nether`, `${world}_the_end`];
 }
 
-/** Servers using `world`'s family (the world or a dimension folder), in snapshot order. */
+/** Whether two world names share a folder (deleting or using one touches the other). */
+function overlaps(a: string, b: string): boolean {
+  const fa = folders(a);
+  return folders(b).some((f) => fa.includes(f));
+}
+
+/**
+ * Servers whose world shares a folder with `world`, in snapshot order. A
+ * holder covers its LEVEL and LEVEL_nether/LEVEL_the_end; the queried name
+ * covers the same three (world delete removes all three), so `w_nether` of
+ * a used `w`, and `w_nether_nether` of a legacy `LEVEL=w_nether`, are held.
+ */
 export function holdersOf(
   s: WorldAssignmentSnapshot,
   world: string,
   opts: { includeInternal?: boolean } = {}
 ): string[] {
   const includeInternal = opts.includeInternal ?? true;
-  const family = worldFamily(world);
   return s.assignments
-    .filter((a) => worldFamily(a.world) === family && (includeInternal || !a.internal))
+    .filter((a) => overlaps(a.world, world) && (includeInternal || !a.internal))
     .map((a) => a.server);
 }
 
@@ -213,16 +220,24 @@ export function planRelease(
   return fallbackError ?? { server, fallback: server };
 }
 
-/** Worlds (dimension folders folded in) held by more than one server, sorted by world. */
+/**
+ * Groups of servers whose worlds share a folder, sorted by world. Each group
+ * is named after its shortest world name.
+ */
 export function findDuplicates(s: WorldAssignmentSnapshot): { world: string; servers: string[] }[] {
-  const byWorld = new Map<string, string[]>();
+  const groups: WorldAssignment[][] = [];
   for (const a of s.assignments) {
-    const world = worldFamily(a.world);
-    byWorld.set(world, [...(byWorld.get(world) ?? []), a.server]);
+    const touching = groups.filter((g) => g.some((b) => overlaps(a.world, b.world)));
+    const merged = [...touching.flat(), a];
+    for (const g of touching) groups.splice(groups.indexOf(g), 1);
+    groups.push(merged);
   }
-  return [...byWorld]
-    .filter(([, servers]) => servers.length > 1)
-    .map(([world, servers]) => ({ world, servers: servers.sort() }))
+  return groups
+    .filter((g) => g.length > 1)
+    .map((g) => ({
+      world: g.map((a) => a.world).sort((x, y) => x.length - y.length || x.localeCompare(y))[0]!,
+      servers: g.map((a) => a.server).sort(),
+    }))
     .sort((a, b) => a.world.localeCompare(b.world));
 }
 

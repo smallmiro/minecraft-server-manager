@@ -21,12 +21,12 @@ import {
   WORLD_NAME_PATTERN,
   WorldAssignmentError,
   checkAssign,
+  holdersOf,
   checkRemoval,
   checkReset,
   findDuplicates,
   planRelease,
   resolveWorldName,
-  worldFamily,
   type WorldAssignmentErrorCode,
   type WorldAssignmentSnapshot,
 } from '../../domain/index.js';
@@ -323,9 +323,12 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
    */
   async listWorlds(): Promise<WorldListResult[]> {
     const allWorlds = await this.worldRepo.findAll();
-    const serversByWorld = await this.getServersByWorld();
+    // Same parser and folder rule as the assignment checks (#670)
+    const read = this.assignments ? await this.snapshot() : undefined;
+    const snapshot = read instanceof WorldAssignmentError ? { assignments: [], undetermined: [] } : read;
+    const serversByWorld = snapshot ? new Map<string, string[]>() : await this.getServersByWorld();
     const serversOf = (name: string) =>
-      (this.assignments ? serversByWorld.get(worldFamily(name)) : serversByWorld.get(name)) ?? [];
+      (snapshot ? holdersOf(snapshot, name) : serversByWorld.get(name)) ?? [];
 
     // Build a set of all world names for O(1) satellite detection
     const allNames = new Set(allWorlds.map((w) => w.name));
@@ -401,18 +404,6 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
    * world-name precedence used for detailed server info (resolveWorldName).
    */
   private async getServersByWorld(): Promise<Map<string, string[]>> {
-    // Same parser and resolution as the assignment checks, keyed by world family (#670)
-    if (this.assignments) {
-      const snapshot = await this.snapshot();
-      const map = new Map<string, string[]>();
-      if (snapshot instanceof WorldAssignmentError) return map;
-      for (const a of snapshot.assignments) {
-        const family = worldFamily(a.world);
-        map.set(family, [...(map.get(family) ?? []), a.server]);
-      }
-      return map;
-    }
-
     const names = await this.serverRepo.listNames();
     const map = new Map<string, string[]>();
 

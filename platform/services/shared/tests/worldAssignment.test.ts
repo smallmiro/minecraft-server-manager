@@ -12,7 +12,6 @@ import {
   formatAssignmentWarnings,
   holdersOf,
   planRelease,
-  worldFamily,
   type WorldAssignment,
   type WorldAssignmentSnapshot,
 } from '../src/domain/services/worldAssignment.js';
@@ -243,15 +242,27 @@ describe('formatAssignmentWarnings', () => {
 });
 
 describe('world family: a world and its dimension folders are one unit (Codex #1)', () => {
-  it('worldFamily strips one dimension suffix', () => {
-    expect(worldFamily('w')).toBe('w');
-    expect(worldFamily('w_nether')).toBe('w');
-    expect(worldFamily('w_the_end')).toBe('w');
+  it('a legacy LEVEL=w_nether holds its own dimension folders w_nether_nether and w_nether_the_end', () => {
+    const s = snap([['a', 'w_nether']]);
+    expect(holdersOf(s, 'w_nether_nether')).toEqual(['a']);
+    expect(holdersOf(s, 'w_nether_the_end')).toEqual(['a']);
+    expectError(checkRemoval(s, 'w_nether_nether'), 'conflict', ['a']);
+  });
+
+  it('deleting w (which also deletes w_nether) is refused while LEVEL=w_nether is used', () => {
+    expectError(checkRemoval(snap([['a', 'w_nether']]), 'w'), 'conflict', ['a']);
+  });
+
+  it('unrelated names stay free', () => {
+    const s = snap([['a', 'w']]);
+    expect(holdersOf(s, 'w2')).toEqual([]);
+    expect(holdersOf(s, 'w_nether_nether')).toEqual([]);
   });
 
   it('holdersOf a dimension folder finds the holder of the parent world', () => {
     expect(holdersOf(snap([['a', 'w']]), 'w_nether')).toEqual(['a']);
-    expect(holdersOf(snap([['a', 'w_the_end']]), 'w_nether')).toEqual(['a']);
+    // w_the_end and w_nether share no folder: deleting one never touches the other
+    expect(holdersOf(snap([['a', 'w_the_end']]), 'w_nether')).toEqual([]);
   });
 
   it('deleting a dimension folder of a used world is refused', () => {
@@ -274,5 +285,17 @@ describe('checkProposed (snapshot restore, migrate)', () => {
 
   it('refuses while anything is undetermined', () => {
     expectError(checkProposed(snap([['a', 'w']], ['a']), 'a'), 'undetermined', ['a']);
+  });
+});
+
+describe('findDuplicates with overlapping world folders', () => {
+  it('groups LEVEL=w_nether with the holder of w', () => {
+    expect(findDuplicates(snap([['a', 'w'], ['b', 'w_nether']]))).toEqual([{ world: 'w', servers: ['a', 'b'] }]);
+  });
+
+  it('groups LEVEL=w_nether with LEVEL=w_nether_nether', () => {
+    expect(findDuplicates(snap([['a', 'w_nether'], ['b', 'w_nether_nether']]))).toEqual([
+      { world: 'w_nether', servers: ['a', 'b'] },
+    ]);
   });
 });

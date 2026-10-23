@@ -122,7 +122,6 @@ export {
   planRelease,
   findDuplicates,
   formatAssignmentWarnings,
-  worldFamily,
   type WorldAssignment,
   type WorldAssignmentSnapshot,
   type WorldAssignmentErrorCode,
