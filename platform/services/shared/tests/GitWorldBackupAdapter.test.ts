@@ -131,7 +131,14 @@ async function internalServer(root: string, name: string, level: string, opts: {
   if (opts.satellites) await writeWorld(join(sdir, 'data', `${level}_nether`), `${name}-nether`);
 }
 
-const remoteFiles = (bare: string) => git(bare, ['ls-tree', '-r', '--name-only', 'main']).split('\n').filter(Boolean);
+/** Files on the remote main branch; [] while nothing was ever published. */
+const remoteFiles = (bare: string) => {
+  try {
+    return git(bare, ['ls-tree', '-r', '--name-only', 'main']).split('\n').filter(Boolean);
+  } catch {
+    return [];
+  }
+};
 const remoteFile = (bare: string, path: string) => git(bare, ['show', `main:${path}`]);
 const remoteCount = (bare: string) => Number(git(bare, ['rev-list', '--count', 'main']));
 const remoteTip = (bare: string) => git(bare, ['rev-parse', 'main']);
@@ -219,7 +226,7 @@ describe('push', () => {
     expect(errCode(r)).toBe('flush_failed');
     expect(ctx.console.calls.filter((c) => c.endsWith('save-on'))).toEqual(['mc-a save-on', 'mc-b save-on']);
     expect(existsSync(join(ctx.cache, 'worlds', 'alpha'))).toBe(false);
-    expect(remoteFiles(ctx.bare)).toEqual(['README.md']);
+    expect(remoteFiles(ctx.bare)).toEqual([]); // nothing published
   });
 
   it('aborts a flush that exceeds the timeout through the signal', async () => {
@@ -257,14 +264,22 @@ describe('push', () => {
     expect(ctx.console.calls).toEqual([]);
   });
 
-  it('refuses a symlink inside a world and still sends save-on', async () => {
+  it('refuses a symlink inside worlds/ before flushing', async () => {
     await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
     await symlink('/etc/hostname', join(ctx.root, 'worlds', 'alpha', 'link'));
     ctx.runtime.running = ['mc-a'];
-    const r = await ctx.adapter.push();
-    expect(errCode(r)).toBe('unsupported_layout');
+    expect(errCode(await ctx.adapter.push())).toBe('unsupported_layout');
+    expect(ctx.console.calls).toEqual([]);
+    expect(remoteFiles(ctx.bare)).toEqual([]); // nothing published
+  });
+
+  it('still sends save-on when the copy fails (symlink inside an internal world)', async () => {
+    await internalServer(ctx.root, 'surv', 'w');
+    await symlink('/etc/hostname', join(ctx.root, 'servers', 'surv', 'data', 'w', 'link'));
+    ctx.runtime.running = ['mc-a'];
+    expect(errCode(await ctx.adapter.push())).toBe('unsupported_layout');
     expect(ctx.console.calls).toContain('mc-a save-on');
-    expect(remoteFiles(ctx.bare)).toEqual(['README.md']);
+    expect(remoteFiles(ctx.bare)).toEqual([]); // nothing published
   });
 
   it('backs up server-internal worlds with satellites (#6)', async () => {

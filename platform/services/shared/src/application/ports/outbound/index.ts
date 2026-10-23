@@ -92,3 +92,19 @@ export type { IHostnameRegistrarPort, HostnameRegistrarStatus } from './IHostnam
 export type { IRuntimeEnvironmentPort, ToolVersion } from './IRuntimeEnvironmentPort.js';
 export type { IServerSpecRepository, ServerSpec } from './IServerSpecRepository.js';
 export type { IWorldAssignmentPort, WorldAssignment } from './IWorldAssignmentPort.js';
+
+// Backup port (ADR-0001, #732)
+export type {
+  IWorldBackupPort,
+  WorldBackupErrorCode,
+  WorldBackupError,
+  WorldBackupResult,
+  BackupLockHolder,
+  LockOptions,
+  WorldBackupStatus,
+  WorldBackupCommit,
+  WorldBackupPushOptions,
+  WorldBackupPushOutcome,
+  WorldBackupRestoreOutcome,
+  WorldBackupPruneOutcome,
+} from './IWorldBackupPort.js';
