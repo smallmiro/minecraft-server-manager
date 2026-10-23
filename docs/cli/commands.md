@@ -1804,6 +1804,7 @@ Online Players for myserver:
 
 !!! note "Removed"
     `mcctl player lookup` and `mcctl player uuid` were removed. Use `mcctl player info <name>` (add `--offline` for the offline UUID).
+    The old `player.sh` computed a wrong offline UUID for some names (for example Steve and Alex) because of a variant-bit bug; `mcctl player info --offline` matches Minecraft.
 
 ---
 

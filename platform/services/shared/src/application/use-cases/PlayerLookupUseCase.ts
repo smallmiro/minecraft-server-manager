@@ -74,8 +74,8 @@ export class PlayerLookupUseCase implements IPlayerLookupUseCase {
     if (!result.success) {
       spinner.stop('Lookup failed');
 
-      // Check if player not found
-      if (result.stderr?.includes('not found') || result.code === 1) {
+      // Check if player not found (a removal hint from the adapter is passed through below)
+      if (!result.stderr?.includes('was removed') && (result.stderr?.includes('not found') || result.code === 1)) {
         this.prompt.warn(`Player '${name}' not found`);
         this.prompt.outro('Player does not exist');
         return {

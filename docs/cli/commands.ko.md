@@ -1804,6 +1804,7 @@ Online Players for myserver:
 
 !!! note "제거됨"
     `mcctl player lookup`과 `mcctl player uuid`는 제거되었습니다. `mcctl player info <name>`을 사용하세요(오프라인 UUID는 `--offline`).
+    기존 `player.sh`는 variant 비트 버그 때문에 일부 이름(예: Steve, Alex)의 오프라인 UUID를 잘못 계산했습니다. `mcctl player info --offline`은 Minecraft와 같은 값을 출력합니다.
 
 ---
 

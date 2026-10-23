@@ -40,6 +40,11 @@ export interface PlayerCommandOptions {
  * Execute player management command
  */
 export async function playerCommand(options: PlayerCommandOptions): Promise<number> {
+  // Offline UUIDs are pure computation; they work without an initialized platform.
+  if (options.subCommand === 'info' && options.offline && options.playerName) {
+    return handleInfoCommand(options);
+  }
+
   const paths = new Paths(options.root);
 
   if (!paths.isInitialized()) {
@@ -72,7 +77,8 @@ async function handleInfoCommand(options: PlayerCommandOptions): Promise<number>
     return 1;
   }
 
-  const s = spinner();
+  // Keep stdout clean for --json consumers
+  const s = json ? { start: () => {}, stop: () => {} } : spinner();
   s.start(`Looking up ${playerName}...`);
 
   try {

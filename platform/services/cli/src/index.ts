@@ -779,9 +779,9 @@ async function main(): Promise<void> {
             cacheAction: positional[0] as 'clear' | 'stats',
             json: flags['json'] === true,
           });
-        } else if (subCommand === 'lookup' || subCommand === 'uuid') {
+        } else if (subCommand && ['lookup', 'uuid'].includes(subCommand.toLowerCase())) {
           // Removed in #730 - fail explicitly instead of treating it as a server name
-          console.error(`'mcctl player ${subCommand}' was removed. Use: mcctl player info <name> [--offline]`);
+          console.error(`'mcctl player ${subCommand.toLowerCase()}' was removed. Use: mcctl player info <name> [--offline]`);
           exitCode = 1;
         } else if (!subCommand || subCommand) {
           // Interactive mode: player [server]
