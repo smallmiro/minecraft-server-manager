@@ -2,10 +2,9 @@
  * Map Renderer Port - Outbound Port
  *
  * Abstraction over offline web-map generation for a world. The default
- * adapter ({@link BlueMapCliRenderer}) shells out to the BlueMap CLI
- * (`scripts/render-map.sh` running BlueMap in Docker), which renders all
- * present dimensions to a static, pan/zoom-able webroot. BlueMap runs
- * standalone (no Minecraft server required), so this is safe to use
+ * adapter ({@link BlueMapCliRenderer}) runs the BlueMap CLI in Docker, which
+ * renders all present dimensions to a static, pan/zoom-able webroot. BlueMap
+ * runs standalone (no Minecraft server required), so this is safe to use
  * alongside mc-router auto-scaling.
  */
 

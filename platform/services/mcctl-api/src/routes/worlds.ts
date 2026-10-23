@@ -68,7 +68,7 @@ import {
 } from '../schemas/world-stats.js';
 import { mkdir, readFile as readFileAsync, writeFile, rename } from 'fs/promises';
 import { config } from '../config/index.js';
-import { resolveScriptPath } from '../lib/script-resolver.js';
+import { resolveBlueMapDockerDir } from '../lib/script-resolver.js';
 import { resolveInside } from '../lib/safe-path.js';
 import { resolve as resolvePath, sep, extname } from 'node:path';
 import { existsSync, statSync, createReadStream } from 'node:fs';
@@ -182,26 +182,12 @@ function getWebroot(name: string): string | null {
   return mapDir && join(mapDir, 'web');
 }
 
-/**
- * Create the BlueMap-backed map renderer (#529).
- * Returns null when render-map.sh cannot be resolved.
- *
- * The script needs MCCTL_ROOT/MCCTL_SCRIPTS so it resolves the deployed data
- * dir (not the bundled package dir), plus MCCTL_DOCKER for the renderer image
- * build context.
- */
-function createMapRenderer(): BlueMapCliRenderer | null {
-  const resolved = resolveScriptPath('render-map.sh', config.mcctlRoot);
-  if (!resolved) return null;
-  const dockerDir = join(resolved.scriptsDir, '..', 'docker');
-  return new BlueMapCliRenderer(resolved.scriptPath, undefined, {
-    cwd: config.mcctlRoot,
-    env: {
-      ...process.env,
-      MCCTL_ROOT: config.mcctlRoot,
-      MCCTL_SCRIPTS: resolved.scriptsDir,
-      MCCTL_DOCKER: dockerDir,
-    },
+/** Create the BlueMap-backed map renderer (#529, #733). */
+function createMapRenderer(): BlueMapCliRenderer {
+  return new BlueMapCliRenderer({
+    worldsDir: new Paths().worlds,
+    mapsDir: getMapsDir(),
+    dockerDir: resolveBlueMapDockerDir(config.mcctlRoot),
   });
 }
 
@@ -481,12 +467,6 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     }
 
     const renderer = createMapRenderer();
-    if (!renderer) {
-      return reply.code(500).send({
-        error: 'InternalServerError',
-        message: 'render-map.sh script not found',
-      });
-    }
 
     // SSE streaming mode
     if (follow) {

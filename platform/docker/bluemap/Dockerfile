@@ -2,7 +2,7 @@
 # =============================================================================
 # BlueMap CLI renderer
 # =============================================================================
-# Offline world-map renderer used by scripts/render-map.sh. BlueMap runs as a
+# Offline world-map renderer used by BlueMapCliRenderer (shared). BlueMap runs as a
 # standalone CLI (no Minecraft server required), so it is safe to use alongside
 # mc-router auto-scaling.
 #
@@ -10,7 +10,7 @@
 # base image MUST be a Java 25 runtime. Earlier JREs fail with
 # UnsupportedClassVersionError.
 #
-# The image is built on demand by render-map.sh (idempotent). Run it as the
+# The renderer builds the image on demand (only when missing). Run it as the
 # host user so generated files stay owned by the caller:
 #   docker run --rm --user "$(id -u):$(id -g)" mcctl-bluemap:<ver> -c /work/config -r -g
 # =============================================================================

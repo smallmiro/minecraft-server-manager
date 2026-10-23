@@ -1,5 +1,5 @@
 // Packs the CLI and checks the tarball ships the same scripts as platform/scripts (minus tests/),
-// plus the BlueMap Dockerfile render-map.sh needs. Exits non-zero on any mismatch.
+// plus the BlueMap Dockerfile the map renderer builds from. Exits non-zero on any mismatch.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -17,9 +17,7 @@ try {
   const pkg = join(tmp, 'package');
 
   if (existsSync(join(pkg, 'scripts', 'tests'))) errors.push('package contains scripts/tests/');
-  for (const f of ['scripts/render-map.sh', 'docker/bluemap/Dockerfile']) {
-    if (!existsSync(join(pkg, f))) errors.push(`package is missing ${f}`);
-  }
+  if (!existsSync(join(pkg, 'docker/bluemap/Dockerfile'))) errors.push('package is missing docker/bluemap/Dockerfile');
   try {
     execFileSync('diff', ['-r', '-x', 'tests', '-x', '.gitkeep', platformScripts, join(pkg, 'scripts')], { encoding: 'utf8' });
   } catch (e) {
