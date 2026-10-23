@@ -178,7 +178,7 @@ export interface IServerSpecRepository {
   write(doc: ServerSpecDocument, options?: WriteServerSpecOptions): Promise<void>;
 }
 // Errors: ServerSpecError (domain) with code 'invalid_spec' | 'not_found' | 'already_exists' | 'conflict'
-//   | 'edit_conflict' | 'compose_edited' | 'undetermined' | 'storage_change' | 'unsupported_spec_version';
+//   | 'edit_conflict' | 'compose_edited' | 'undetermined' | 'storage_change' | 'locked' | 'unsupported_spec_version';
 //   the world guard rethrows ADR-0002's WorldAssignmentError. API: invalid_spec → 400, not_found → 404, others → 409.
 ```
 

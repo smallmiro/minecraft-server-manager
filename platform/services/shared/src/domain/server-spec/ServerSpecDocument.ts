@@ -70,6 +70,7 @@ export type ServerSpecErrorCode =
   | 'compose_edited'
   | 'undetermined'
   | 'storage_change'
+  | 'locked'
   | 'unsupported_spec_version';
 
 export interface ServerSpecIssue {

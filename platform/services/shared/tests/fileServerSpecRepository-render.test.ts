@@ -328,7 +328,7 @@ describe('servers/compose.yml read-back', () => {
   it('retries once when the entry is missing after the write', async () => {
     templateServer('survival');
     const doc = (await repo.load('survival'))!.document;
-    await new FileServerSpecRepository(new Paths(root), new DroppingRenderer(1)).write(doc);
+    await new FileServerSpecRepository(new Paths(root), new DroppingRenderer(2)).write(doc);
     expect(read('compose.yml')).toContain('survival/docker-compose.yml');
   });
 

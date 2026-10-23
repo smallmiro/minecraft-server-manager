@@ -66,7 +66,7 @@
 - **포트**(전문은 ADR-0001): v2 메서드 `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, v3.0.0에서 삭제), `save(spec)`(전체 문서인지 검사 후 `write`), `delete`(#735)는 그대로 둔다. #675가 `load(name)` → `{ document, revision, warnings }`와 `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`를 추가한다.
 - `servers/<n>/server.yaml`, 고정 키 순서, `atomicWriteFile`(#749).
 - **생성**: `mkdir servers/<n>`(재귀 아님)이 선점이다. `EEXIST`는 `already_exists`.
-- **수정**: `load`가 읽은 바이트의 sha256을 `revision`으로 돌려주고, `write`는 rename 직전에 다시 읽어 비교한다. 다르면 `conflict`이고 `updateServerSpec`이 한 번 재시도한다. `ponytail:` 비교와 rename 사이 마이크로초 창은 남는다.
+- **수정**: `load`가 읽은 바이트의 sha256을 `revision`으로 돌려주고, `write`는 시작할 때와 첫 쓰기 직전(호스트 주소, 가져오기, 월드 스냅샷 같은 await 검사가 모두 끝난 뒤)에 비교하고, 계획의 기준이 된 생성 파일도 그 시점에 다시 읽는다. 다르면 `conflict`이고 `updateServerSpec`이 한 번 재시도한다. `ponytail:` 남는 창은 `atomicWriteFile`의 임시 파일 쓰기와 fsync(밀리초)다. 갱신 유실이 실제로 보이면 서버별 잠금을 추가한다.
 - **월드 보호(R1, R7)**: 렌더링한 `LEVEL`이나 저장 위치가 현재 `config.env`와 다르면 `write`가 ADR-0002의 순수 함수 `checkProposed`를 렌더링한 `config.env`를 넣은 스냅샷으로 실행한다. `IWorldAssignmentPort.preview`와 같은 스냅샷 리더를 직접 쓴다(배정 어댑터가 이 저장소로 쓰므로 포트를 거치면 순환). 저장 위치 변경은 `allowStorageChange` 없이는 거부한다(`storage_change`). 이 옵션은 `mcctl migrate worlds`만 쓴다. 같은 쓰기에서 정지되지 않은 서버도 거부한다(어댑터에 넘긴 런타임으로 `checkServerStopped`, 런타임이 없거나 상태를 읽지 못하면 판단 불가). 그래서 `mcctl migrate spec`이 손으로 고친 `world.level`을 렌더링해도 ADR-0002 결정 5를 우회하지 못한다. 유스케이스의 정지 검사는 그대로 둔다.
 - **저장 순서**: `server.yaml` 먼저, 그다음 생성물. 중간에 죽으면 생성물의 해시는 맞고 `spec=`만 이전 값이므로(§3), 다음 쓰기나 `mcctl migrate spec`이 다시 렌더링해 마무리한다.
 
@@ -78,7 +78,7 @@
 |------|------|-----------|
 | `config.env` | 현재 내용(생성 시 번들 템플릿)에 `applyEnvChanges(..., { raw: true })`. 값이 다른 키만 바꾸고 스펙에 없는 키는 지운다. 손대지 않은 줄은 바이트 그대로 | 예 |
 | `docker-compose.yml` | 번들 `_template/docker-compose.yml`을 `js-yaml`로 읽어 서비스 키·`container_name`, `image`, 라우터 라벨을 설정하고 `dump` | 예 |
-| `servers/compose.yml` | `js-yaml`로 읽어 같은 항목이 없으면 추가, 다른 항목은 유지. 쓴 뒤 다시 읽어 확인하고 다르면 한 번 재시도. 읽지 못한 파일은 덮어쓰지 않고 아무것도 쓰기 전에 오류로 멈춘다 | 아니오(병합) |
+| `servers/compose.yml` | `js-yaml`로 읽어 같은 항목이 없으면 추가, 다른 항목은 유지. CLI와 API 프로세스가 같은 파일에 서버를 추가하므로 읽기-병합-쓰기 전체를 `servers/.compose.yml.lock`(`acquireFileLock`, 백업 잠금과 같은 구현: link 기반, 이 호스트에서 죽은 것이 확실한 보유자는 인계, 약 10초 대기 뒤 `locked`) 안에서 한다. 잠금 안에서 파일을 새로 읽어 쓰고, 다시 읽어 원래 있던 항목과 새 항목이 모두 있는지 확인하며, 다르면 한 번 재시도. 읽지 못한 파일은 덮어쓰지 않고 아무것도 쓰기 전에 오류로 멈춘다 | 아니오(병합) |
 | `data/`, `logs/`, `servers/global.env` | `mkdir -p`, `global.env`가 없으면 템플릿에서 복사 | — |
 
 - **env 투영**: `TYPE`, `VERSION`(없으면 생략), `MEMORY`, `LEVEL`, `PLAYIT_DOMAIN`, `EXTRA_ARGS`, 그다음 `env`. `universe`면 `EXTRA_ARGS` = `--universe /worlds/` + `env.EXTRA_ARGS`, `data`면 `env.EXTRA_ARGS ?? ''`.

@@ -95,15 +95,20 @@ function renderCompose(doc: ServerSpecDocument, hostIps: string[], templateText:
 const includePaths = (e: unknown): unknown[] =>
   typeof e === 'string' ? [e] : isMapping(e) ? [e['path']].flat() : [];
 
-/** Whether servers/compose.yml text has an include entry for `<name>/docker-compose.yml`. */
-export function hasIncludeEntry(text: string | undefined, name: string): boolean {
-  if (text === undefined) return false;
+/** The compose files servers/compose.yml text includes ([] when missing or unreadable). */
+export function includeEntries(text: string | undefined): string[] {
+  if (text === undefined) return [];
   try {
     const list = (yaml.load(text) as { include?: unknown } | null)?.include;
-    return Array.isArray(list) && list.some((e) => includePaths(e).includes(`${name}/docker-compose.yml`));
+    return Array.isArray(list) ? list.flatMap(includePaths).filter((p): p is string => typeof p === 'string') : [];
   } catch {
-    return false;
+    return [];
   }
+}
+
+/** Whether servers/compose.yml text has an include entry for `<name>/docker-compose.yml`. */
+export function hasIncludeEntry(text: string | undefined, name: string): boolean {
+  return includeEntries(text).includes(`${name}/docker-compose.yml`);
 }
 
 /** Add `<name>/docker-compose.yml` unless an entry already names it; never rewrite a file it cannot read. */

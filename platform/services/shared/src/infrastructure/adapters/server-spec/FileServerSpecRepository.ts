@@ -20,13 +20,14 @@ import type {
 import { absorbCompose, absorbConfigEnv, importDockerServer, type ServerSpecImport } from './importDockerServer.js';
 import {
   DockerComposeRenderer,
-  hasIncludeEntry,
+  includeEntries,
   type RenderContext,
   type RenderedFile,
   type ServerSpecRenderer,
 } from './DockerComposeRenderer.js';
 import { composeOutsideEdits } from './composeEdits.js';
 import { readWorldAssignmentSnapshot } from '../effectiveExtraArgs.js';
+import { acquireFileLock } from '../../backup/lock.js';
 import { checkProposed, type WorldAssignmentSnapshot } from '../../../domain/services/worldAssignment.js';
 import { checkServerStopped } from '../../../application/use-cases/checkServerStopped.js';
 import type { IContainerRuntimePort } from '../../../application/ports/outbound/IContainerRuntimePort.js';
@@ -100,6 +101,16 @@ function dumpServerSpec(doc: ServerSpecDocument): string {
   };
   return yaml.dump(ordered, { lineWidth: -1, noRefs: true, quotingType: '"' });
 }
+
+/** Points where tests step in to interleave another writer; no behaviour in production. */
+export const serverSpecTestHooks = {
+  /** After every check, right before the re-check that precedes the first write. */
+  beforeWrite: async (): Promise<void> => {},
+  /** Inside the servers/compose.yml lock, after the fresh read, before the write. */
+  beforeIncludeWrite: async (): Promise<void> => {},
+  /** How long to wait for another process holding servers/compose.yml. */
+  includeLockWaitMs: 10_000,
+};
 
 const editConflict = (name: string) =>
   new ServerSpecError(
@@ -240,8 +251,6 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     const specPath = join(dir, SPEC_FILE);
     const currentYaml = await readOptional(specPath);
     const revision = currentYaml === undefined ? null : envRevision(currentYaml);
-    // ponytail: compare-then-rename leaves a microsecond window (ADR-0003 §2);
-    // add a mkdir lock only if lost updates are ever observed.
     if (options.expectedRevision !== undefined && revision !== options.expectedRevision) {
       throw new ServerSpecError(
         'conflict',
@@ -264,7 +273,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     const nextYaml = dumpServerSpec(doc);
     const nextRevision = envRevision(nextYaml);
     const ctx = this.renderContext(hostIps);
-    const plan: Array<{ path: string; content: string; backup?: string }> = [];
+    const plan: Array<{ path: string; content: string; before?: string; backup?: string }> = [];
     let include: RenderedFile | undefined;
     for (const file of this.renderer.render(doc, ctx)) {
       const current = readOptionalSync(file.path);
@@ -276,18 +285,18 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       if (current === content) continue;
       const header = current === undefined ? undefined : readHeader(current);
       if (!header || header.hashOk) {
-        plan.push({ path: file.path, content });
+        plan.push({ path: file.path, content, before: current });
       } else if (basename(file.path) === 'config.env') {
         // Hand edits are absorbed by load(); both edited (a stale spec= with a bad hash) is a conflict.
         const bothEdited = revision !== null && header.spec !== undefined && header.spec !== revision.slice(0, 12);
         if (bothEdited && !options.force) throw editConflict(name);
-        plan.push({ path: file.path, content, ...(bothEdited && { backup: current }) });
+        plan.push({ path: file.path, content, before: current, ...(bothEdited && { backup: current }) });
       } else {
         const outside = composeOutsideEdits(name, header.body, file.content, revision === null);
         if (outside.length === 0) {
-          plan.push({ path: file.path, content });
+          plan.push({ path: file.path, content, before: current });
         } else if (options.force) {
-          plan.push({ path: file.path, content, backup: current });
+          plan.push({ path: file.path, content, before: current, backup: current });
         } else {
           const before = previous && this.renderer.render(previous, this.withoutInclude(ctx)).find((f) => f.path === file.path);
           if (before?.content === file.content) continue; // this write does not change the compose: leave the edits alone
@@ -304,6 +313,29 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     const config = plan.find((step) => basename(step.path) === 'config.env');
     if (config) await this.checkWorldChange(name, readHeader(config.content).body);
 
+    // Everything above awaited (host addresses, import, world snapshot): re-read what
+    // the plan was built on right before the first write, so a writer that came in
+    // meanwhile is not overwritten. ponytail: what remains is the temp-file write and
+    // fsync of atomicWriteFile (milliseconds); add a per-server lock if lost updates
+    // are ever observed.
+    await serverSpecTestHooks.beforeWrite();
+    if ((await readOptional(specPath)) !== currentYaml) {
+      throw new ServerSpecError(
+        'conflict',
+        `servers/${name}/${SPEC_FILE} changed while this write was checked; load it again and retry`,
+        name
+      );
+    }
+    for (const step of plan) {
+      if ((await readOptional(step.path)) !== step.before) {
+        throw new ServerSpecError(
+          'conflict',
+          `servers/${name}/${basename(step.path)} changed while this write was checked; load it again and retry`,
+          name
+        );
+      }
+    }
+
     if (currentYaml !== nextYaml) {
       const mode = currentYaml === undefined ? await this.fileMode(join(dir, 'config.env')) : undefined;
       await atomicWriteFile(specPath, nextYaml, mode === undefined ? {} : { mode });
@@ -315,7 +347,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       }
       await atomicWriteFile(step.path, step.content);
     }
-    if (include) await this.writeInclude(name, include, doc, ctx);
+    if (include) await this.writeInclude(name, doc, ctx);
   }
 
   /**
@@ -367,21 +399,46 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     );
   }
 
-  /** Write servers/compose.yml, read it back, retry once when the entry is missing (another writer). */
-  private async writeInclude(name: string, rendered: RenderedFile, doc: ServerSpecDocument, ctx: RenderContext): Promise<void> {
-    let file = rendered;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      if (attempt > 0) file = this.renderer.render(doc, ctx).find((f) => !f.guarded)!;
-      if (readOptionalSync(file.path) !== file.content) await atomicWriteFile(file.path, file.content);
-      if (hasIncludeEntry(readOptionalSync(file.path), name)) return;
+  /**
+   * Add the server's servers/compose.yml entry. The file is shared by every
+   * server and by CLI and API processes, so the whole read-merge-write runs
+   * under servers/.compose.yml.lock: inside it the file is read fresh,
+   * merged, written, read back and checked for every entry it had plus ours
+   * (one retry for a writer that ignores the lock).
+   */
+  private async writeInclude(name: string, doc: ServerSpecDocument, ctx: RenderContext): Promise<void> {
+    const lock = await acquireFileLock(join(this.paths.servers, '.compose.yml.lock'), 'compose-include', {
+      waitMs: serverSpecTestHooks.includeLockWaitMs,
+      pollMs: 50,
+    });
+    if (!lock.ok) {
+      const who = lock.holder ? ` by pid ${lock.holder.pid} since ${lock.holder.startedAt}` : '';
+      throw new ServerSpecError(
+        'locked',
+        `servers/compose.yml is locked${who} (another mcctl process is adding a server); retry in a moment`,
+        name
+      );
+    }
+    try {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const file = this.renderer.render(doc, ctx).find((f) => !f.guarded)!; // reads the file fresh
+        const expected = [...includeEntries(readOptionalSync(file.path)), `${name}/docker-compose.yml`];
+        await serverSpecTestHooks.beforeIncludeWrite();
+        if (readOptionalSync(file.path) !== file.content) await atomicWriteFile(file.path, file.content);
+        const written = includeEntries(readOptionalSync(file.path));
+        if (expected.every((entry) => written.includes(entry))) return;
+      }
+    } finally {
+      await lock.release();
     }
     throw new ServerSpecError(
       'conflict',
-      `servers/compose.yml still lacks ${name}/docker-compose.yml after a retry (another process may be writing it); ` +
+      `servers/compose.yml lost entries after a retry (a process that does not take servers/.compose.yml.lock is writing it); ` +
         `run mcctl migrate spec ${name}`,
       name
     );
   }
+
 
   private protectedWarnings(doc: ServerSpecDocument, compose: string, environmentMoved: boolean, hostIps: string[]): string[] {
     const path = join(this.paths.serverDir(doc.name), 'docker-compose.yml');
