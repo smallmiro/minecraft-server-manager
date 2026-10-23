@@ -417,7 +417,7 @@ export interface IWorldBackupPort {
 | Acquire | Write the holder JSON (with a random `nonce` and `bootTime = Date.now() − os.uptime()·1000`) to `.backup.lock.<nonce>.tmp`, then `link(tmp, lock)` and unlink the tmp. `link` fails with `EEXIST` atomically, and the lock file is never partially written |
 | Stale | **Only** when `hostname` matches and either `bootTime` differs by more than 60 s (the host rebooted) or `process.kill(pid, 0)` throws `ESRCH`. `EPERM` counts as alive. Time is never used (R3). A different host, a live pid, or unparseable content → `locked` with `holder`. The manual fix ("delete the file after checking the holder process") is in the docs |
 | Takeover | `rename(lock, lock.<myNonce>.stale)`, then read the renamed file. If its nonce equals the stale holder's, unlink it and acquire. Otherwise another contender already took over: `link` it back to `lock` and report `locked` |
-| Release | If the lock holds our nonce, unlink it. Otherwise a late contender may have moved it aside and will put it back: delete any `.stale` aside copy holding our nonce (the put-back `link` then fails), then re-read the lock and unlink it if the put-back already happened. No polling or timing window (PR #745 review) |
+| Release | If the lock holds our nonce and the unlink succeeds, done. Otherwise (not ours, or the unlink lost to a takeover) a late contender may have moved it aside and will put it back: delete any `.stale` aside copy holding our nonce (the put-back `link` then fails), then re-read the lock and unlink it if the put-back already happened. No polling or timing window (PR #745 review) |
 | Waiting | Interactive CLI, API manual push and restore: `lockWaitMs: 0` (API → 409 with the holder). `push --auto` (auto-on-stop) and the scheduler (push and prune): 10 min, polling every 1 s |
 | Reads | `status`/`history` do not lock. During the first clone they see "no cache" |
 
@@ -472,7 +472,7 @@ A server has an internal world when `servers/<n>/data/<LEVEL>/level.dat` is a re
    - Add each server to the cleanup list **before** sending `save-off`.
    - Send `save-off`, then `save-all flush`, each with `signal: AbortSignal.timeout(60_000)`. A non-zero exit or an abort → `flush_failed`, and nothing is copied.
    - Copy: `fs.rm` + `fs.cp(src, dst, { recursive: true, filter })`. `.locks` is never copied, and a symlink → `unsupported_layout` with no commit. `worlds/` is scanned for symlinks before any RCON; internal worlds are checked by the copy filter.
-   - **`finally`**: send `save-on` to each server in the cleanup list, independently. If the push succeeds, a failure goes to `warnings` with the server name. If the flush or copy already failed, the save-on failures are appended to the error message and their servers are added to `servers`.
+   - **`finally`**: send `save-on` to each server in the cleanup list, independently. If the push succeeds, a failure goes to `warnings` with the server name. If the flush, the copy or a later git step (commit, push) fails, the save-on failures are appended to the error message and their servers are added to `servers`.
 6. **Commit and push**:
    - `add -A`. If `diff --cached --quiet` exits 0 → `{ changed: false }`, which is success (#8).
    - Otherwise `commit -m <message>` (default `Backup: YYYY-MM-DD HH:MM:SS`), then `push origin <b>:refs/heads/<b>` with no force.
