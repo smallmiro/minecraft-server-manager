@@ -1,4 +1,4 @@
-import { Paths, log, colors } from '@minecraft-docker/shared';
+import { Paths, log, colors, containerNameOf, serverHostnameOf } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
 import { promptSudoPasswordIfNeeded } from '../lib/sudo-utils.js';
 
@@ -115,7 +115,7 @@ async function createWithArguments(
 
     console.log('');
     console.log(colors.green(`✓ Server '${server.name.value}' created successfully!`));
-    console.log(`  Container: ${colors.cyan(server.containerName)}`);
+    console.log(`  Container: ${colors.cyan(containerNameOf(server.name))}`);
     console.log(`  Type: ${server.type.label}`);
 
     // Show modpack info if it's a modpack server
@@ -140,7 +140,7 @@ async function createWithArguments(
       console.log(`  Whitelisted: ${whitelistPlayers.join(',')}`);
     }
     console.log('');
-    console.log(`  Connect via: ${colors.cyan(server.name.hostname + ':25565')}`);
+    console.log(`  Connect via: ${colors.cyan(serverHostnameOf(server.name) + ':25565')}`);
     console.log('');
 
     return 0;

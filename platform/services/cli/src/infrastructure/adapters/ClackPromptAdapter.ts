@@ -1,6 +1,7 @@
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
 import {
+  containerNameOf,
   ServerName,
   ServerType,
   McVersion,
@@ -359,7 +360,7 @@ export class ClackPromptAdapter implements IPromptPort {
       message: 'Select server:',
       options: servers.map((s) => ({
         value: s.name.value,
-        label: s.containerName,
+        label: containerNameOf(s.name),
         hint: `${s.type.label} ${s.version.value} (${s.status}${s.hasPlayers ? `, ${s.playerCount} players` : ''})`,
       })),
     });

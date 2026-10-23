@@ -1,4 +1,4 @@
-import { Paths, ServerName, log, type IContainerRuntimePort } from '@minecraft-docker/shared';
+import { Paths, ServerName, log, workloadNameOf, type IContainerRuntimePort } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
 
 export interface LogsCommandOptions {
@@ -49,12 +49,13 @@ export async function logsCommand(options: LogsCommandOptions): Promise<number> 
     return 1;
   }
 
-  let workload: string;
+  // A server by name (the adapter picks its container); the router by its container name
+  let workload: ServerName | string;
   if (options.serverName === 'router' || options.serverName === ROUTER) {
     workload = ROUTER;
   } else {
     try {
-      workload = ServerName.fromExisting(options.serverName).containerName;
+      workload = ServerName.fromExisting(options.serverName);
     } catch (e) {
       log.error(e instanceof Error ? e.message : String(e));
       return 1;
@@ -63,7 +64,7 @@ export async function logsCommand(options: LogsCommandOptions): Promise<number> 
 
   const runtime = options.runtime ?? getContainer(options.root).runtimePort;
   if (!runtime.exists(workload)) {
-    log.error(`'${options.serverName}' (container: ${workload}) not found`);
+    log.error(`'${options.serverName}' (container: ${workloadNameOf(workload)}) not found`);
     return 1;
   }
 
