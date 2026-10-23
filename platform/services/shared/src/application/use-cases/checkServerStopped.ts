@@ -1,6 +1,7 @@
 import type { IContainerRuntimePort } from '../ports/outbound/IContainerRuntimePort.js';
 import type { IWorldAssignmentPort } from '../ports/outbound/IWorldAssignmentPort.js';
 import type { ContainerStatus } from '../../types/index.js';
+import { ServerName } from '../../domain/value-objects/ServerName.js';
 import {
   WorldAssignmentError,
   checkProposed,
@@ -13,7 +14,8 @@ const ACTIVE_STATES: ReadonlySet<ContainerStatus> = new Set(['running', 'paused'
 /**
  * Refuse a world assignment change on a server that is not stopped (#670).
  * Nothing is stopped automatically. Known limit: in D1 'not_found' also means
- * "runtime unreachable" and passes; a throw (or no runtime) is undetermined.
+ * "runtime unreachable" and passes; a throw (or no runtime) is undetermined,
+ * and so is a name no server can have (ServerName.fromExisting rejects it).
  */
 export function checkServerStopped(
   runtime: IContainerRuntimePort | undefined,
@@ -22,7 +24,7 @@ export function checkServerStopped(
   let status: ContainerStatus;
   try {
     if (!runtime) throw new Error('no runtime configured');
-    status = runtime.getStatus(`mc-${server}`);
+    status = runtime.getStatus(ServerName.fromExisting(server));
   } catch (error) {
     return new WorldAssignmentError(
       'undetermined',

@@ -18,6 +18,7 @@ import type {
 import { checkConfigEnvChange, checkPlatformEnvChange, checkServerStopped } from './checkServerStopped.js';
 import { formatWorldBytes } from '../../utils/index.js';
 import {
+  ServerName,
   WORLD_NAME_PATTERN,
   WorldAssignmentError,
   checkAssign,
@@ -273,7 +274,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
         const startSpinner = isInteractive ? this.prompt.spinner() : null;
         startSpinner?.start('Starting server...');
 
-        const startResult = await this.runtime!.start(`mc-${serverName}`);
+        const startResult = await this.runtime!.start(ServerName.fromExisting(serverName));
         if (startResult.success) {
           started = true;
           startSpinner?.stop('Server started');

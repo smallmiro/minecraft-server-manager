@@ -14,6 +14,7 @@ import type {
   IServerRepository,
 } from '../src/application/ports/index.js';
 import type { ContainerStatus } from '../src/types/index.js';
+import { ServerName } from '../src/domain/value-objects/ServerName.js';
 
 interface Setup {
   /** server -> LEVEL */
@@ -123,7 +124,7 @@ describe('assignWorldByName', () => {
 
     expect(result).toEqual({ success: true, worldName: 'free', serverName: 'srv' });
     expect(port.assign).toHaveBeenCalledWith('free', 'srv');
-    expect(runtime.getStatus).toHaveBeenCalledWith('mc-srv');
+    expect(runtime.getStatus).toHaveBeenCalledWith(ServerName.fromExisting('srv'));
     expect(levels.get('srv')).toBe('free');
     expectNoShellWorldCalls(shell);
   });
@@ -313,7 +314,7 @@ describe('createWorld with a server', () => {
     expect(port.assign).toHaveBeenCalledWith('fresh', 'srv');
     expect(levels.get('srv')).toBe('fresh');
     expect(shell.setServerConfig).toHaveBeenCalledWith('srv', 'SEED', '42');
-    expect(runtime.start).toHaveBeenCalledWith('mc-srv');
+    expect(runtime.start).toHaveBeenCalledWith(ServerName.fromExisting('srv'));
     expect(shell.startServer).not.toHaveBeenCalled();
     expect(shell.stopServer).not.toHaveBeenCalled();
     expectNoShellWorldCalls(shell);
