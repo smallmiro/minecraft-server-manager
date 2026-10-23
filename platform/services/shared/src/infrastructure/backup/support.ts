@@ -29,10 +29,11 @@ export async function lstatOrNull(path: string) {
   }
 }
 
-export async function listDirs(path: string): Promise<string[]> {
+/** Directory names under `path` (no dot entries); `withLinks` also returns symlinks. */
+export async function listDirs(path: string, options: { withLinks?: boolean } = {}): Promise<string[]> {
   try {
     return (await readdir(path, { withFileTypes: true }))
-      .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
+      .filter((d) => (d.isDirectory() || (options.withLinks === true && d.isSymbolicLink())) && !d.name.startsWith('.'))
       .map((d) => d.name)
       .sort();
   } catch (e) {

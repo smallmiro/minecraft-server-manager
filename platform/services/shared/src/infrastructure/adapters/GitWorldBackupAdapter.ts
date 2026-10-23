@@ -129,6 +129,7 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
   async push(options: WorldBackupPushOptions = {}): Promise<WorldBackupResult<WorldBackupPushOutcome>> {
     return this.locked('push', options, async (cfg) => {
       const warnings = await this.prepareCache(cfg);
+      await this.assertNotLinked(join(this.root, 'worlds'), join(this.root, 'servers'));
       const internals = await this.scanInternalWorlds();
       const worldNames = await entries(join(this.root, 'worlds'));
       for (const name of worldNames) await assertNoSymlinks(join(this.root, 'worlds', name));
@@ -491,8 +492,12 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
     const worlds: InternalWorld[] = [];
     const skipped: string[] = [];
     const serversDir = join(this.root, 'servers');
-    for (const server of await listDirs(serversDir)) {
+    for (const server of await listDirs(serversDir, { withLinks: true })) {
       if (server === '_template') continue;
+      if ((await lstat(join(serversDir, server))).isSymbolicLink()) {
+        skipped.push(`${server}: server directory is a symbolic link`);
+        continue;
+      }
       const r = await this.internalWorld(server);
       if (typeof r === 'string') skipped.push(`${server}: ${r}`);
       else if (r) worlds.push(r);
@@ -602,6 +607,7 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
 
   private async planRestore(staging: string): Promise<{ targets: RestoreTarget[]; skipped: string[] }> {
     await assertNoSymlinks(staging, (p) => p === join(staging, '.git'));
+    await this.assertNotLinked(join(this.root, 'worlds'), join(this.root, 'servers'));
     const targets: RestoreTarget[] = [];
     const skipped: string[] = [];
     const stagedWorlds = await entries(join(staging, 'worlds'));
@@ -638,8 +644,6 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
     }
     if (!payload) fail('empty_source', 'The backup commit holds no restorable world');
 
-    await this.assertSameDevice(plannedServers.map((s) => join(this.root, 'servers', s.server)), stagedWorlds.length > 0);
-
     if (stagedWorlds.length > 0) {
       const liveWorlds = await entries(join(this.root, 'worlds'));
       for (const name of [...new Set([...liveWorlds, ...stagedWorlds])].sort()) {
@@ -658,21 +662,42 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
         });
       }
     }
+    await this.assertMovable(targets);
     return { targets, skipped };
   }
 
-  /** Renames only: worlds/, servers/<n>/ and backups/ must share one filesystem (S2). */
-  private async assertSameDevice(serverDirs: string[], withWorlds: boolean): Promise<void> {
-    const backupsDev = (await stat(join(this.root, 'backups'))).dev;
-    const dirs = [...serverDirs];
-    if (withWorlds) {
-      await mkdir(join(this.root, 'worlds'), { recursive: true });
-      dirs.push(join(this.root, 'worlds'));
+  /** The managed roots must be real directories (or absent), never links. */
+  private async assertNotLinked(...paths: string[]): Promise<void> {
+    for (const p of paths) {
+      if ((await lstatOrNull(p))?.isSymbolicLink()) {
+        fail('unsupported_layout', `Symbolic links are not supported: ${p}`, { paths: [p] });
+      }
     }
-    const other = [];
-    for (const d of dirs) if ((await stat(d)).dev !== backupsDev) other.push(d);
-    if (other.length > 0) {
-      fail('unsupported_layout', `Restore needs these on the same filesystem as backups/: ${other.join(', ')}`, { paths: other });
+  }
+
+  /**
+   * Before the first rename (P1): no live target or managed parent may be a link, and
+   * every one must be on the filesystem of backups/, because the swap only renames (S2).
+   */
+  private async assertMovable(targets: RestoreTarget[]): Promise<void> {
+    const backupsDev = (await stat(join(this.root, 'backups'))).dev;
+    const paths = new Set<string>();
+    for (const t of targets) {
+      paths.add(t.live);
+      // managed parents up to the root: worlds/, or servers/<n>/data/ and servers/<n>/
+      for (let p = dirname(t.live); p.length > this.root.length; p = dirname(p)) paths.add(p);
+    }
+    const otherDevice: string[] = [];
+    for (const p of [...paths].sort()) {
+      const st = await lstatOrNull(p);
+      if (!st) continue; // created inside an existing parent during the swap
+      if (st.isSymbolicLink()) fail('unsupported_layout', `Symbolic links are not supported: ${p}`, { paths: [p] });
+      if (st.dev !== backupsDev) otherDevice.push(p);
+    }
+    if (otherDevice.length > 0) {
+      fail('unsupported_layout', `Restore needs these on the same filesystem as backups/: ${otherDevice.join(', ')}`, {
+        paths: otherDevice,
+      });
     }
   }
 
