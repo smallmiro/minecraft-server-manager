@@ -347,7 +347,7 @@ Review checklist: `git grep -n "docker/index" src/infrastructure/adapters/Docker
 
 ## Backup Port (#732, S3)
 
-Status: Proposed (2026-10-23). Revised after the system-architect review (APPROVE WITH CHANGES) and the Codex review (R1–R14, S1–S5). Absorbs #653, #664, #727. The issue fixed these points, and this section does not reopen them:
+Status: Proposed (2026-10-23). Revised after the system-architect review (APPROVE WITH CHANGES) and the Codex review (R1–R14, S1–S5), then simplified after the architect's re-review of `a5d246a` (S1–S5). Absorbs #653, #664, #727. The issue fixed these points, and this section does not reopen them:
 
 - `IShellPort.backup*` splits into one backup port; no new feature port.
 - RCON is used only for the flush.
@@ -367,7 +367,7 @@ import type { BackupRetentionPolicy } from '../../../domain/index.js';
 export type WorldBackupErrorCode =
   | 'not_configured' | 'locked' | 'recovery_required'   // B2, B5 step 6
   | 'runtime_unavailable' | 'servers_running' | 'flush_failed'
-  | 'missing_worlds'      // B4 step 3: a world in HEAD is missing from the source
+  | 'missing_worlds'      // B4 step 3: a world in HEAD is missing from the source (server dir still present)
   | 'unsupported_layout'  // symlink, path escape, cross-device, invalid LEVEL
   | 'restore_conflict'    // the commit's world dir for a server ≠ its current LEVEL
   | 'commit_not_found' | 'empty_source'
@@ -381,7 +381,7 @@ export interface LockOptions { lockWaitMs?: number }   // default 0 = fail fast
 export interface WorldBackupStatus {
   configured: boolean;           // token AND repo non-empty (#13)
   repository?: string; branch: string; autoOnStop: boolean;
-  lastBackup?: { commit: string; date: Date };   // local cache tip (may be unpublished after a failed push)
+  lastBackup?: { commit: string; date: Date };   // local cache tip (may be unpushed after a failed push)
 }
 export interface WorldBackupCommit { hash: string; date: Date; author: string; message: string }  // full hash
 export interface PushOutcome { changed: boolean; commit?: string; flushed: string[]; skipped: string[]; warnings: string[] }
@@ -404,9 +404,9 @@ export interface IWorldBackupPort {
 | Names | Ports take container names (`mc-<server>`, D1). Results report server names. One private `serverNameOf()`/`containerNameOf()` pair does the conversion, and D4 moves it |
 | CLI root | `Container.worldBackupPort` (built from the Docker adapters); `backupUseCase = new BackupUseCase(promptPort, worldBackupPort)` |
 | API root | `routes/backup.ts` and `routes/backup-schedule.ts` each build one instance (runtime `env: () => childProcessEnv()`). `BackupSchedulerService` takes the port instead of `mcctlRoot` and loses its git and retention code. These move to the D2 `container` plugin when it exists. Two instances are fine because the lock is a file |
-| `BackupUseCase` (K1) | Parameter 2 widens to `IWorldBackupPort \| IShellPort`, with the guard `'backupPush' in x`. The `IShellPort` branch parses the `backup.sh` output contract below, with the #12/#13 parsing fixed. #736 narrows the type. Prompts stay in the use case; the port never prompts |
-| Deprecated (S3) | `IShellPort.backupPush/Status/History/Restore` and the same `ShellAdapter` methods get `@deprecated`. The `ShellAdapter` methods **delegate to `GitWorldBackupAdapter`** (built lazily from `paths.root`) and emit the `backup.sh` contract: exit 0/1/2 (2 = no changes), push stdout `Commit: <hash>`, status labels `Repository:`/`Branch:`/`Auto on stop:`/`Last commit:`/`Last date:`, history `--json` `{"history":[{commit,date,message}]}`, and restore non-interactive. They keep working after `backup.sh` is deleted |
-| `IServerConsolePort` | `command(name, args, options?: { signal?: AbortSignal })`. The optional signal is passed to `spawn`, which kills the child on abort (R9). Backward compatible |
+| `BackupUseCase` (K1) | Parameter 2 widens to `IWorldBackupPort \| IShellPort`, with the guard `'backupPush' in x`. An `IShellPort` keeps today's code path unchanged; there is no new parsing. #736 narrows the type. Prompts stay in the use case; the port never prompts |
+| Deprecated | `IShellPort.backupPush/Status/History/Restore` and the same `ShellAdapter` methods get `@deprecated`. They are not delegated. In the PR that deletes `backup.sh`, they return a clear failure (`code: 1`, `stderr: 'backup.sh was removed; use IWorldBackupPort (GitWorldBackupAdapter)'`). The release policy forbids removing exports and changing signatures, not changing behaviour |
+| `IServerConsolePort` | `command(name, args, options?: { signal?: AbortSignal })`. The optional signal is passed to `spawn`, which kills the local `docker exec` child on abort (R9). Killing the docker CLI does not necessarily stop `rcon-cli` inside the container. Backward compatible |
 
 ### B2. Lock (push, restore, prune; all four callers)
 
@@ -424,7 +424,7 @@ export interface IWorldBackupPort {
 
 ### B3. Git environment and token
 
-- One helper builds every git child env. It starts from `process.env`, **removes every `GIT_*` variable** (`GIT_DIR`, `GIT_INDEX_FILE`, inherited `GIT_CONFIG_*`), and adds `GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`, `LC_ALL=C`, and the backup identity (`GIT_AUTHOR_*`/`GIT_COMMITTER_*` = `Minecraft Backup <minecraft-backup@localhost>`) for **every** commit, the README init commit included.
+- One helper builds every git child env. It starts from `process.env` and removes the repository-local variables (the list printed by `git rev-parse --local-env-vars`: `GIT_DIR`, `GIT_INDEX_FILE`, `GIT_WORK_TREE`, …) plus every `GIT_CONFIG_*`. User settings such as proxy and CA variables are kept. Then it adds `GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`, `LC_ALL=C`, and the backup identity (`GIT_AUTHOR_*`/`GIT_COMMITTER_*` = `Minecraft Backup <minecraft-backup@localhost>`) for **every** commit, the README init commit included.
 - Network commands (`ls-remote`, `clone`, `fetch`, `push`) also get `GIT_CONFIG_COUNT=3`:
   - `http.<remoteBase>.extraHeader=` (an empty value resets the multi-valued list, R14)
   - `http.<remoteBase>.extraHeader=Authorization: Basic <base64("x-access-token:"+token)>`
@@ -455,15 +455,16 @@ A server has an internal world when `servers/<n>/data/<LEVEL>/level.dat` is a re
 1. **Preconditions**: config (`not_configured`), lock, no `INCOMPLETE` restore slot (`recovery_required`), git version and branch check.
 2. **Cache** `<root>/backups/worlds`:
    - **No `.git`**: run `ls-remote --heads origin refs/heads/<b>`. Exit ≠ 0 → `auth_failed`/`repo_not_found`/`git_failed`; a network failure is never treated as "branch absent" (R10).
-     - Branch present: `clone --branch <b>`. There is no `--depth`: new caches get full history (R5).
+     - Branch present: `clone --depth 50 --branch <b>` (as today). Full history is fetched (`--unshallow`) only by prune and by a restore whose commit is missing (R5).
      - Branch absent: `init` + `checkout -b <b>` + README commit.
    - **`.git` exists**: `fetch origin +refs/heads/<b>:refs/remotes/origin/<b>` (an explicit refspec, so a changed branch works, R10).
-     - If local `<b>` has commits not in `origin/<b>`, save its tip to `refs/mcctl/unpublished/<ISO-ts>` and add a warning (R11).
-     - Then `checkout -f -B <b> refs/remotes/origin/<b>`.
+     - (a) `origin/<b>` is an ancestor of local `<b>` (a failed push left commits): keep local; this push sends them as a fast-forward (R11).
+     - (b) Otherwise, if `local^{tree} == origin^{tree}` (a crash after a prune push, before `update-ref`): `checkout -f -B <b> origin/<b>` silently.
+     - (c) Any other divergence: add a warning, then `checkout -f -B <b> origin/<b>`.
 3. **Missing-world guard (R7)**, before any cache change:
    - `tracked` = world dirs in `HEAD` (`worlds/*`, `servers/*/*`); `source` = the scan above.
-   - Any `tracked − source` → `missing_worlds` with `paths` and nothing changed, unless `allowMissing: true`.
-   - Consent comes from CLI `--allow-missing` and an API body flag. The scheduler and auto-on-stop never pass it.
+   - Any `tracked − source` → `missing_worlds` with `paths` and nothing changed, unless `allowMissing: true`. A server whose whole `servers/<n>/` dir is gone counts as an intentional deletion and is excluded. A missing `servers/` or an empty `worlds/` still blocks.
+   - Consent comes from CLI `--allow-missing` and API body `allowMissing`. The scheduler and auto-on-stop never pass it. The scheduler's failure message names the fix (`mcctl backup push --allow-missing`).
    - An empty source with an empty `HEAD` → `empty_source`.
 4. **Runtime gate (K3)**: `environment.isAvailable()` false → `runtime_unavailable`. Then `running = runtime.list({ running: true })`.
 5. **Flush and copy**:
@@ -496,13 +497,13 @@ A server has an internal world when `servers/<n>/data/<LEVEL>/level.dat` is a re
      - Servers not in the commit are untouched. A server whose `servers/<n>/` is gone, or whose path is a symlink, goes to `skipped`.
 5. **Re-check the runtime gate** immediately before the first move (K3, R1).
 6. **Swap**:
-   - Create the slot `backups/restore-previous/<ISO-ts>/` containing `INCOMPLETE` and `journal.json`.
-   - For each target, (a) `rename` live → slot (when it exists), then (b) `rename` staging → live. Append each completed step to the journal before the next one.
+   - Create the slot `backups/restore-previous/<ISO-ts>/`. Write the planned target list into its `INCOMPLETE` file once, before the first move; that is the manual recovery record.
+   - For each target, (a) `rename` live → slot (when it exists), then (b) `rename` staging → live. Completed steps are kept in memory.
    - `.locks` is never moved.
-7. **On failure, roll back the journal in reverse**:
+7. **On failure, roll back the in-memory steps in reverse**:
    - Each (b): move live → `slot/.new/…`. New data is set aside, not deleted.
    - Each (a): move slot → live.
-   - Full rollback → remove `INCOMPLETE` and return the original error. Partial rollback → keep `INCOMPLETE` and return `io_failed` with the slot path. Every later push or restore then returns `recovery_required` until a human recovers from the journal (documented).
+   - Full rollback → remove `INCOMPLETE` and return the original error. Partial rollback → keep `INCOMPLETE` and return `io_failed` with the slot path. Every later push or restore then returns `recovery_required` until a human recovers by following the target list in `INCOMPLETE` (documented; no `--recover` command in S3).
 8. **On success**: remove `INCOMPLETE`, then rotate. Keep the 3 newest complete slots and delete older complete ones. An `INCOMPLETE` slot is never deleted, and nothing is deleted before the swap succeeds (K2).
 9. **`finally`**: `worktree remove --force`, then release the lock. A cleanup error never hides the main error.
 
@@ -521,22 +522,21 @@ The port never prompts (#4). `mcctl backup restore <commit>` confirms unless `--
 
 `prune(policy)` replaces `truncateHistory`/`applyRetentionPolicy`. The scheduler runs it after a push. A prune failure is audited (lease conflicts separately) and does not fail the run.
 
-1. **Preconditions**: lock and config. If `.prune-state.json` exists, converge first (step 6).
-2. **Full history**: `fetch` (B4 refspec). If `rev-parse --is-shallow-repository` is true, `fetch --unshallow`; if that fails → no prune (R5). Then pin `oldTip = rev-parse refs/heads/<b>` (it equals `origin/<b>` after `checkout -B`).
+1. **Preconditions**: lock and config. `fetch` (B4 refspec). If local `<b>` ≠ `origin/<b>`, skip with a warning (the next push reconciles, B4 step 2).
+2. **Full history**: if `rev-parse --is-shallow-repository` is true, `fetch --unshallow`; if that fails → no prune (R5). Pin `oldTip = origin/<b>`.
 3. **Keep set**: walk `rev-list --first-parent oldTip` in chain order.
    - **The tip is always kept** (R6, K5).
    - Older commits are kept if they are within the newest `maxCount` and, separately, have author date ≥ `now − maxAgeDays × 86 400 000 ms`. This fixes `--reverse -1` returning the newest commit.
    - Nothing dropped → `{ removed: 0 }`.
 4. **Rebuild** in the original chain order: `commit-tree <c>^{tree} [-p <prev>] -m <full message>`, with the original author/committer name, email and `%aI`/`%cI` dates in env. Invariant before pushing: `newTip^{tree} == oldTip^{tree}` (R6). No ref, index or work tree changes.
 5. **Publish**:
-   - Write `.prune-state.json` `{ branch, oldTip, newTip }`.
    - `push --force-with-lease=refs/heads/<b>:<oldTip> origin <newTip>:refs/heads/<b>`.
    - On success: `update-ref refs/heads/<b> <newTip> <oldTip>`, then delete the state file. The index stays valid because the trees are equal.
 6. **Uncertain outcome (R12)**: on any push error or timeout, `ls-remote origin refs/heads/<b>`.
    - `= newTip` → `update-ref` and success.
    - `= oldTip` → failure, nothing changed.
    - Anything else → `lease_conflict`.
-   - The remote is always a complete old or new history, never partial. There is no compensating force push. A crash between push and `update-ref` is resolved on the next run from `.prune-state.json`.
+   - The remote is always a complete old or new history, never partial. There is no compensating force push. A crash between push and `update-ref` is resolved by the next push (B4 step 2, case b: equal trees).
 
 ### B8. Bug → design → proving test
 
@@ -553,22 +553,22 @@ The port never prompts (#4). `mcctl backup restore <commit>` confirms unless `--
 | 7 | npm install: commit without sync | B1 | **I**: root without `scripts/` → push commits world content; API and scheduler have no `scripts/backup.sh` lookup |
 | 8 | "no changes" = failure | B4.6 | repo: second push → `changed: false`; route 200; scheduler success; prune after a no-change push works |
 | 9 | unsafe retention rewrite | B7 | **H**: 60+ commits cloned shallow (assert shallow), age-only, count > 50, combined → kept trees match; tip with an old author date is kept; tree invariant holds. **U**: lease conflict, hook reject, timeout after remote applied → converges to new; crash before `update-ref` → fixed next run |
-| 10 | connection test fails; token in argv | B6, B3 | fake `git` on `PATH` records argv/env: no token in argv, header in env, inherited `GIT_*` stripped; exit/stderr mapping; `BackupUseCase` init succeeds |
+| 10 | connection test fails; token in argv | B6, B3 | fake `git` on `PATH` records argv/env: no token in argv, header in env, inherited `GIT_DIR`/`GIT_CONFIG_*` stripped, proxy vars kept; exit/stderr mapping; `BackupUseCase` init succeeds |
 | 11 | token in the `backup.sh` URL | B3 | `PATH` wrapper over real git through clone/fetch/push: token in no argv; `.git/config` has no token, no stale `extraHeader` effect, no `pushurl` |
-| 12 | history always empty | B6 | repo: messages with `\|` and `"` → exact entries, newest first; legacy `IShellPort` branch parses `{history:[…]}` |
+| 12 | history always empty | B6 | repo: messages with `\|` and `"` → exact entries, newest first; `BackupUseCase` maps them (PR2) |
 | 13 | status labels/`configured` | B6 | `.env` without keys → `configured: false`; with keys → real values; unreadable `.env` → `{ ok: false }` |
 
-Bundle **R** also covers the review cases: the N-th rename fails → original bytes recoverable; partial rollback → `INCOMPLETE` blocks the next push and restore; rotation keeps 3 slots; push R7 (one world missing → `missing_worlds`, remote unchanged); R11 (failed push → recovery ref holds the exact tree).
+Bundle **R** also covers the review cases: the N-th rename fails → original bytes recoverable; partial rollback → `INCOMPLETE` blocks the next push and restore; rotation keeps 3 slots; push R7 (one world missing → `missing_worlds`, remote unchanged); a deleted `servers/<n>/` is not `missing_worlds`; R11 (failed push → the next push sends the kept commit as a fast-forward); a crash before `update-ref` → case (b).
 
 ### B9. Test plan and PR split
 
 - Behaviour is tested with real git and a bare remote. A fake `git` on `PATH` is used only where argv and env must be observed. Characterize the kept behaviour first: cache path, default branch, README init, message format, identity, `.locks` exclusion.
-- **PR1 (core)**: port, adapter, helpers, the `IServerConsolePort` signal option, `ShellAdapter` delegation, the widened `BackupUseCase`, bundles L/H/U/R. Additive only.
+- **PR1 (core)**: port, adapter, helpers, the `IServerConsolePort` signal option (with the Docker adapter), bundles L/H/U/R and the adapter rows of B8. Additive only; no call site changes.
 - **PR2 (cli + backend)**:
-  - CLI `Container`; `mcctl backup push --auto` becomes non-interactive with a 10 min wait (today `--auto` is ignored); `--allow-missing`; restore confirmation.
+  - The widened `BackupUseCase`; CLI `Container`; `mcctl backup push --auto` becomes non-interactive with a 10 min wait (today `--auto` is ignored); `--allow-missing`; restore confirmation.
   - API route (codes → 400/404/409/500, 7-character hash kept) and scheduler.
   - `mcctl.sh`: both auto-on-stop and `cmd_backup` call `"${MCCTL_NODE:-node}" "$MCCTL_CLI" backup …` when `ShellAdapter` exported those two vars (`process.execPath`, `process.argv[1]`); otherwise `mcctl` on `PATH`; otherwise a warning. After PR2 no lockless `backup.sh` writer is reachable from `mcctl.sh` (S3).
-- **PR3**: delete `backup.sh` and the unused CLI `lib/shell.ts backup()`; fix the `env-file.ts` comment and the EN/KO docs (restore preconditions, manual lock removal, recovery from a slot journal); `test:scripts` and `verify:package` pass. **PR2 and PR3 ship in the same release.**
+- **PR3**: delete `backup.sh` and the unused CLI `lib/shell.ts backup()`; deprecated `ShellAdapter.backup*` return the clear failure; fix the `env-file.ts` comment and the EN/KO docs (restore preconditions, manual lock removal, manual recovery from an `INCOMPLETE` slot); `test:scripts` and `verify:package` pass. **PR2 and PR3 ship in the same release.**
 
 ### B10. Decisions and open questions
 
@@ -586,7 +586,4 @@ Bundle **R** also covers the review cases: the N-th rename fails → original by
 
 Not adopted: `Promise.race` for RCON (an `AbortSignal` actually kills the child, R9); `core.checkStat=minimal` (can miss changes) and `verbatimSymlinks` (symlinks are refused); `reflog expire` after prune (local disk is not an acceptance criterion; auto gc handles it); stopping mc-router or locking start paths (outside S3, R1).
 
-Still open:
-
-1. **`allowMissing` surface**: CLI `--allow-missing` and an API body flag are new options, added only so that intentional world deletions can reach the backup. Confirm the names.
-2. **Recovery from an `INCOMPLETE` slot** is manual (documented journal). Confirm that no `--recover` command is wanted in S3.
+Settled at re-review: option names CLI `--allow-missing` / API `allowMissing`; `INCOMPLETE` recovery is manual in S3; the two known limits (auto-start during restore, three lock contenders) are accepted.
