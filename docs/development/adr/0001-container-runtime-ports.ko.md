@@ -4,7 +4,7 @@
 |---|---|
 | **상태** | 제안됨 (2026-10-23) |
 | **이슈** | [#654](https://github.com/smallmiro/minecraft-server-manager/issues/654) (Hardening D1), 마일스톤 M2(#643), 에픽 #640 |
-| **이 ADR을 바꾸는 후속 이슈** | #665(D4), #669(A7), C2, #675(D5), #641(k8s 어댑터) |
+| **이 ADR을 바꾸는 후속 이슈** | #665(D4), #669(A7), C2, #675(D5), #641(k8s 어댑터), #732(S3, [백업 포트](#백업-포트732-s3)) |
 | **사용하는 이슈** | #667(D2, API), #668(D3, CLI), #666(E3, 계약 테스트), #715(스크립트 제거) |
 
 이 문서는 영어판의 요약입니다. 포트 시그니처 전체, 48개 함수 매핑, 호출 지점 표, 구현 단계는 [영어판](0001-container-runtime-ports.md)에 있습니다.
@@ -95,7 +95,7 @@
 | `mcctl.sh` | `start`, `stop`, `getStatus`. 콘솔은 `getEndpoint`와 기존 TCP 클라이언트로 처리한다 | TTY를 넘기는 `attach()`는 만들지 않는다 |
 | `delete-server.sh` | `stop` | `remove`, `unregister`, `IServerSpecRepository.delete`(아직 TS 호출처가 없다) |
 | `create-server.sh` | `start` | `apply(spec)`, `register`, `save`(D5) |
-| `backup.sh` | `command(['save-all'])`로 flush, 또는 `stop` | git 저장소는 백업 어댑터가 맡는다 |
+| `backup.sh` | `console.command`로 `save-off`, `save-all flush`, `save-on` | git 저장소는 `IWorldBackupPort`가 맡는다([백업 포트](#백업-포트732-s3)) |
 | `lock.sh` | — | `IWorldAssignmentPort`(A4) |
 | `render-map.sh`(#733에서 제거) | — | Docker `IMapRenderer` 어댑터 `BlueMapCliRenderer`로 옮겼다(k8s에서는 Job) |
 | `player.sh` | — | #730에서 제거했다 (`mcctl player info`가 대체) (`init.sh`는 #729에서 제거했다) |
@@ -119,3 +119,53 @@
 3. **합성 함수 담당**: 합성 함수 12개를 맡은 이슈가 없다. D2의 "가짜 컨테이너로 라우트 테스트"를 하려면 주입할 수 있어야 한다. D4에 넣고 D2보다 먼저 끝내는 안을 권장한다.
 4. **시그니처 변경 순서**: D4가 포트 인자를 `ServerName`으로 바꾼다. D4를 먼저 하고 D2·D3을 하는 안을 권장한다.
 5. **error 전환 범위**: 스크립트·git·npm·pm2 실행 위치를 옮기는 일이 D2·D3·D4 범위인지 확인이 필요하다.
+
+## 백업 포트(#732, S3)
+
+상태: 제안됨(2026-10-23). system-architect 리뷰(APPROVE WITH CHANGES)와 Codex 리뷰(R1~R14, S1~S5)를 반영해 고쳤고, `a5d246a`에 대한 architect 재검토(S1~S5)에 따라 단순화했다. #653, #664, #727을 흡수한다. 시그니처, 절차, 버그별 테스트 표 전체는 [영어판](0001-container-runtime-ports.md#backup-port-732-s3)에 있습니다.
+
+**지원 범위**: 로컬 단일 호스트에서만 동작한다. `worlds/`, `servers/<n>/data/`, `backups/`는 같은 파일시스템에 있어야 하고, 일반 파일과 디렉터리만 다룬다. 이 조건에 맞지 않으면 아무것도 바꾸기 전에 거부한다.
+
+| # | 결정 |
+|---|------|
+| 1 | **포트**: `IWorldBackupPort`(`status`, `history`, `push`, `restore`, `prune`, `testConnection`)를 둔다. 모든 메서드는 비동기이고 reject하지 않는다. `status`도 결과 타입 `{ ok, value } \| { ok: false, error: { code, ... } }`로 돌려준다 |
+| 2 | **어댑터**: `GitWorldBackupAdapter({ root, runtime, environment, console, remoteBase? })`다. 설정은 호출할 때마다 `.env`를 env 코덱으로 읽는다. 잠금, flush, 실행 중 확인도 어댑터가 맡는다(B-Q1, S1) |
+| 3 | **호환(K1·S3)**: `BackupUseCase`의 두 번째 인자는 `IWorldBackupPort \| IShellPort`로 넓히고, 타입 가드는 `'backupPush' in x`로 한다. 좁히는 일은 #736에서 한다. `IShellPort`가 들어오면 지금 코드를 그대로 쓴다. deprecated된 `ShellAdapter.backup*`은 위임하지 않는다. `backup.sh`를 지우는 PR부터는 "use IWorldBackupPort" 취지의 명확한 실패 결과를 돌려준다. 릴리스 정책은 export 제거와 시그니처 변경을 막을 뿐 동작 변화는 막지 않는다. `IServerConsolePort.command`에는 선택 인자 `signal`을 추가한다. 이 signal로 docker CLI를 죽여도 컨테이너 안의 rcon-cli가 반드시 멈추지는 않는다 |
+| 4 | **잠금**: 파일은 `<root>/backups/.backup.lock`이다. 먼저 `mkdir -p`를 하고, 보유자 정보를 완전히 쓴 임시 파일을 `link`로 건다. 보유자가 죽었다고 보는 경우는 **같은 호스트에서 재부팅했거나 pid가 `ESRCH`일 때뿐**이다. `EPERM`은 살아 있는 것으로 본다. 경과 시간으로는 인계하지 않는다. 인계는 rename한 뒤 nonce를 확인하고, nonce가 다르면 되돌린다. 다른 호스트이거나 pid가 살아 있으면 `locked`로 실패하고, 수동 해제 방법은 문서에 적는다. 경쟁자가 셋일 때 남는 한계는 `ponytail:`로 적는다 |
+| 5 | **git 환경과 토큰**: `git rev-parse --local-env-vars` 목록과 `GIT_CONFIG_*`만 지운다. 프록시, CA 같은 사용자 설정은 보존한다. `GIT_CONFIG_COUNT=3`으로 extraHeader를 초기화한 뒤 Authorization을 넣고 `credential.helper`를 비운다. `pushurl`을 지운 다음 `set-url`을 한다. 네트워크가 느리면 중단한다(`GIT_HTTP_LOW_SPEED_LIMIT=1000`, `GIT_HTTP_LOW_SPEED_TIME=300`). 모든 git 실행에는 벽시계 상한 4시간을 둔다. git 2.31 이상이 필요하다 |
+| 6 | **push 절차**: <br>• 새 clone은 지금처럼 `--depth 50`으로 받는다. <br>• refspec을 명시해 fetch한 뒤 다음처럼 판정한다. (a) `origin`이 로컬의 조상이면 로컬을 그대로 두고 이번 push에서 fast-forward로 함께 올린다. (b) 트리가 같으면 조용히 `checkout -f -B`한다. (c) 그 밖의 분기는 경고를 남기고 `checkout -f -B`한다. <br>• 이전 커밋에 있던 월드가 원본에서 사라졌으면 `missing_worlds`로 실패한다. `--allow-missing`(API `allowMissing`)을 주면 진행한다(R7). `servers/<n>/` 디렉터리 자체가 없어진 서버는 의도한 삭제로 보고 검사에서 뺀다. 스케줄러의 실패 기록 메시지에는 해결 명령을 넣는다. <br>• `isAvailable()`이 false이면 `runtime_unavailable`로 실패한다(K3). <br>• `save-off`와 `flush`는 `AbortSignal.timeout(60s)`로 실행한다. `save-on`은 서버마다 따로 실행하고, 실패하면 경고에 서버 이름을 남긴다. <br>• symlink를 만나면 `unsupported_layout`으로 실패한다. 변경이 없으면 성공이다 |
+| 7 | **restore 절차**: <br>• 시작할 때 남은 staging을 정리하고 `worktree prune`을 실행한다. 캐시가 없으면 push의 캐시 준비 단계를 그대로 쓴다. <br>• 실행 중인 서버가 하나라도 있으면 거부한다. 교체 직전에 런타임을 **다시 확인한다**. <br>• 복원할 월드가 하나 이상 있어야 한다. 내부 월드만 있는 커밋도 복원할 수 있다. <br>• 서버의 현재 LEVEL과 커밋의 월드 디렉터리 이름이 다르면 `restore_conflict`로 거부한다. 파일시스템이 다르면 거부한다. <br>• 이전 상태는 시각별 슬롯 `restore-previous/<ISO-ts>/`에 옮긴다. 교체 전에 계획한 대상 목록을 `INCOMPLETE`에 한 번 적어 둔다. 실패하면 메모리에 남긴 단계의 역순으로 되돌린다. <br>• 일부만 되돌려졌으면 `INCOMPLETE`를 남기고, 이후 push와 restore는 `recovery_required`로 막는다. 복구는 수동이다. <br>• 성공하면 완료된 슬롯을 최근 3개만 남긴다. 슬롯은 교체가 성공하기 전에는 지우지 않는다(K2) |
+| 8 | **보존 정책**: <br>• 로컬과 origin이 같을 때만 돌리고, 다르면 경고를 남기고 건너뛴다. <br>• 얕은 clone이면 `fetch --unshallow`를 하고, 실패하면 정리하지 않는다. <br>• **tip은 항상 남기고**, 원래 체인 순서대로 `commit-tree`로 다시 만든다. push 전에 `newTip^{tree} == oldTip^{tree}`를 확인한다. <br>• `--force-with-lease`로 push한다. 결과가 불확실하면 `ls-remote`로 원격 상태를 보고 맞춘다. push와 `update-ref` 사이에 죽으면 다음 push가 (b)로 정리한다 |
+| 9 | **diff**: 사용자 진입점이 없다(`mcctl backup`, API, 콘솔, 문서 어디에도 없다). 그래서 옮기지 않고, 이를 명시적인 범위 변경으로 기록한다(S4) |
+| 10 | **PR 구성**: <br>• PR1: shared(포트, 어댑터, 호환 계층, 테스트) <br>• PR2: CLI와 API. `mcctl.sh`의 auto-on-stop과 `cmd_backup`은 `MCCTL_NODE`/`MCCTL_CLI` 또는 `mcctl`을 거쳐 TS 경로로 보낸다. <br>• PR3: `backup.sh` 삭제와 문서 수정. <br>• **PR2와 PR3는 같은 릴리스로 낸다** |
+
+**B-Q 결정**:
+
+| 쟁점 | 결정 |
+|------|------|
+| Q1 | 정책은 어댑터에 둔다 |
+| Q2 | 생성자 인자를 넓힌다(K1) |
+| Q3 | git 2.31 이상을 요구한다 |
+| Q4 | diff는 옮기지 않는다 |
+| Q5 | `worlds.bak`은 남기고 문서로 안내한다 |
+| Q6 | flush가 하나라도 실패하면 push 전체를 실패시킨다 |
+| Q7 | 문서로 안내하고 교체 직전에 다시 확인한다. 남는 경쟁 구간은 알려진 한계로 둔다 |
+| Q8 | 받아들이고 문서화한다 |
+| Q9 | #734가 맡는다 |
+
+**PR #745 리뷰 반영**(2026-10-23):
+
+- `IContainerRuntimePort.list`에 `strict` 옵션을 추가했다. 조회에 실패하면 `[]` 대신 throw한다. 기존 호출자는 D1 계약을 그대로 쓴다.
+- 백업의 flush, 복원 확인, 교체 직전 재확인은 strict로 조회하고, 실패하면 `runtime_unavailable`로 아무것도 바꾸기 전에 중단한다.
+- 첫 rename 전에 live 대상과 관리 대상 상위 경로(`worlds/`, `servers/<n>/`, `servers/<n>/data/`)를 `lstat`으로 검사한다. symlink이거나 장치가 `backups/`와 다르면 `unsupported_layout`이다. push도 `worlds/`나 `servers/` 루트가 링크이면 거부한다.
+- prune은 원격 정규화와 fetch만 하고, 건드리지 않은 로컬 tip을 origin과 비교한다. 다르면 checkout이나 ref 변경 없이 건너뛴다.
+- 잠금 해제는 잠금이 자기 것이 아니거나 unlink가 인계에 밀려 실패하면, 자기 nonce가 든 `.stale` 사본을 지운 뒤 잠금을 다시 읽는다. 늦은 인계자가 해제된 잠금을 되돌려 놓는 일을 막는다.
+- `save-on`이 실패한 뒤 flush, 복사, git commit·push 중 하나가 실패하면, 그 서버와 원인을 실패 결과(메시지, `servers`)에 남긴다.
+- 복원 정리(cleanup) 오류는 주 오류를 덮지 않고 메시지에 덧붙는다.
+- 완전히 롤백된 슬롯은 바로 지워서 회전 개수에 들어가지 않는다.
+
+**재검토에서 확정한 것**:
+
+- 옵션 이름은 CLI `--allow-missing`, API `allowMissing`이다.
+- `INCOMPLETE` 슬롯은 S3에서 수동 복구로 안내한다.
+- 알려진 한계 두 가지(복원 중 자동 기동 경쟁, 잠금 경쟁자 셋)는 받아들인다.

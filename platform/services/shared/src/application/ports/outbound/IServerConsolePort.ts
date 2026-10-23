@@ -20,8 +20,12 @@ export interface ConsoleEndpoint {
 export interface IServerConsolePort {
   /** `list` via RCON. null when offline or unparseable. */
   listPlayers(name: string): Promise<PlayerListResult | null>;
-  /** Runs one RCON command. Never rejects (spawn error → exitCode 1, stderr = message). */
-  command(name: string, args: string[]): Promise<ConsoleCommandResult>;
+  /**
+   * Runs one RCON command. Never rejects (spawn error → exitCode 1, stderr = message).
+   * `signal` aborts the local process (#732). For Docker that kills the `docker exec`
+   * client; rcon-cli inside the container does not necessarily stop.
+   */
+  command(name: string, args: string[], options?: { signal?: AbortSignal }): Promise<ConsoleCommandResult>;
   /** Address and credentials for a direct RCON TCP session (`mcctl rcon`). null when unknown. */
   getEndpoint(name: string): Promise<ConsoleEndpoint | null>;
 }

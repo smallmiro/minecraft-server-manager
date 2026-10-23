@@ -1,0 +1,85 @@
+/**
+ * Shared helpers for the world backup adapter (ADR-0001 "Backup Port").
+ */
+import { lstat, readdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import type { WorldBackupError, WorldBackupErrorCode } from '../../application/ports/outbound/IWorldBackupPort.js';
+
+export const LOCKS = '.locks';
+
+/** A failure that ends the operation with this result. */
+export class Fail extends Error {
+  constructor(readonly error: WorldBackupError) {
+    super(error.message);
+  }
+}
+
+export const fail = (code: WorldBackupErrorCode, message: string, extra: Partial<WorldBackupError> = {}): never => {
+  throw new Fail({ code, message, ...extra });
+};
+
+/**
+ * Run `main`, then `cleanup`. A cleanup error never hides the main error (ADR B5.9):
+ * it is appended to the main message, keeping its code and paths. After a successful
+ * `main`, a cleanup error is ignored (the next run cleans up again).
+ */
+export async function withCleanup<T>(main: () => Promise<T>, cleanup: () => Promise<void>): Promise<T> {
+  let value: T;
+  try {
+    value = await main();
+  } catch (e) {
+    const cleanupError = await cleanup().then(
+      () => undefined,
+      (c: unknown) => (c as Error).message
+    );
+    if (cleanupError === undefined) throw e;
+    const base: WorldBackupError = e instanceof Fail ? e.error : { code: 'io_failed', message: (e as Error).message };
+    throw new Fail({ ...base, message: `${base.message} (cleanup failed: ${cleanupError})` });
+  }
+  await cleanup().catch(() => undefined);
+  return value;
+}
+
+export const isMissing = (e: unknown) => (e as NodeJS.ErrnoException).code === 'ENOENT';
+
+export async function lstatOrNull(path: string) {
+  try {
+    return await lstat(path);
+  } catch (e) {
+    if (isMissing(e)) return null;
+    throw e;
+  }
+}
+
+/** Directory names under `path` (no dot entries); `withLinks` also returns symlinks. */
+export async function listDirs(path: string, options: { withLinks?: boolean } = {}): Promise<string[]> {
+  try {
+    return (await readdir(path, { withFileTypes: true }))
+      .filter((d) => (d.isDirectory() || (options.withLinks === true && d.isSymbolicLink())) && !d.name.startsWith('.'))
+      .map((d) => d.name)
+      .sort();
+  } catch (e) {
+    if (isMissing(e)) return [];
+    throw e;
+  }
+}
+
+export async function entries(path: string): Promise<string[]> {
+  try {
+    return (await readdir(path)).filter((n) => n !== LOCKS).sort();
+  } catch (e) {
+    if (isMissing(e)) return [];
+    throw e;
+  }
+}
+
+/** Throws unsupported_layout on the first symlink under `path` (inclusive). */
+export async function assertNoSymlinks(path: string, skip: (p: string) => boolean = () => false): Promise<void> {
+  const st = await lstat(path);
+  if (st.isSymbolicLink()) fail('unsupported_layout', `Symbolic links are not supported: ${path}`, { paths: [path] });
+  if (!st.isDirectory()) return;
+  for (const name of await readdir(path)) {
+    const child = join(path, name);
+    if (!skip(child)) await assertNoSymlinks(child, skip);
+  }
+}

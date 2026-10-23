@@ -113,25 +113,20 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   /**
    * Get minecraft server containers (mc-* except mc-router), all or running only
    */
-  list(options?: { running?: boolean }): string[] {
-    const result = options?.running
-      ? execCommand('docker', [
-          'ps',
-          '--filter',
-          'name=mc-',
-          '--filter',
-          'status=running',
-          '--format',
-          '{{.Names}}',
-        ])
-      : execCommand('docker', [
-          'ps',
-          '-a',
-          '--filter',
-          'name=mc-',
-          '--format',
-          '{{.Names}}',
-        ]);
+  list(options?: { running?: boolean; strict?: boolean }): string[] {
+    const args = options?.running
+      ? ['ps', '--filter', 'name=mc-', '--filter', 'status=running', '--format', '{{.Names}}']
+      : ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}'];
+    let result: string;
+    if (options?.strict) {
+      const r = spawnSync('docker', args, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
+      if (r.error || r.status !== 0) {
+        throw new Error(`docker ps failed: ${r.error?.message ?? (r.stderr || `exit ${r.status}`).trim()}`);
+      }
+      result = (r.stdout ?? '').trim();
+    } else {
+      result = execCommand('docker', args);
+    }
 
     if (!result) return [];
 
@@ -397,10 +392,11 @@ export class DockerServerConsoleAdapter implements IServerConsolePort {
   }
 
   /** Copied from mcctl-api execRcon / cli execRconWithOutput */
-  command(container: string, args: string[]): Promise<ConsoleCommandResult> {
+  command(container: string, args: string[], options?: { signal?: AbortSignal }): Promise<ConsoleCommandResult> {
     return new Promise((resolve) => {
       const child = spawn('docker', ['exec', '--', container, 'rcon-cli', ...args], {
         stdio: ['pipe', 'pipe', 'pipe'],
+        ...(options?.signal ? { signal: options.signal } : {}),
       });
 
       let stdout = '';
