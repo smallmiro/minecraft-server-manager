@@ -1,4 +1,4 @@
-import { Paths, log, colors } from '@minecraft-docker/shared';
+import { Paths, log, colors, formatAssignmentWarnings } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
 
 /**
@@ -119,14 +119,23 @@ async function worldList(
 
   try {
     const worlds = await useCase.listWorlds();
-
-    if (worlds.length === 0) {
-      console.log('No worlds found in worlds/ directory');
-      return 0;
-    }
+    // Duplicates and unreadable configs are reported, never fixed (#670)
+    const warnings = await useCase
+      .getAssignmentReport()
+      .then(formatAssignmentWarnings, (error: unknown) => [
+        error instanceof Error ? error.message : String(error),
+      ]);
+    const printWarnings = () => warnings.forEach((warning) => log.warn(warning));
 
     if (options.json) {
       console.log(JSON.stringify(worlds, null, 2));
+      printWarnings();
+      return 0;
+    }
+
+    if (worlds.length === 0) {
+      console.log('No worlds found in worlds/ directory');
+      printWarnings();
       return 0;
     }
 
@@ -135,9 +144,10 @@ async function worldList(
     console.log('');
 
     for (const world of worlds) {
-      const lockStatus = world.isLocked
-        ? colors.yellow(`locked: ${world.lockedBy}`)
-        : colors.green('unlocked');
+      const lockStatus =
+        world.servers.length > 0
+          ? colors.yellow(`assigned: ${world.servers.join(', ')}`)
+          : colors.green('unassigned');
 
       console.log(`  ${colors.cyan(world.name)}`);
       console.log(`    Status: ${lockStatus}`);
@@ -146,6 +156,7 @@ async function worldList(
       console.log('');
     }
 
+    printWarnings();
     return 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -220,14 +231,17 @@ async function worldRelease(
 
       if (result.success) {
         console.log('');
-        console.log(colors.green(`✓ World '${result.worldName}' lock released`));
-        if (result.previousServer) {
-          console.log(colors.dim(`  Previously locked by: ${result.previousServer}`));
-        }
+        console.log(colors.green(`✓ World '${result.worldName}' released from '${result.previousServer}'`));
+        console.log(
+          colors.dim(
+            `  '${result.previousServer}' now uses world '${result.fallbackWorld}'` +
+              (result.fallbackExists ? ' (existing world)' : ' (created on next start)')
+          )
+        );
         console.log('');
         return 0;
       } else {
-        log.error(result.error || 'Failed to release world lock');
+        log.error(result.error || 'Failed to release world');
         return 1;
       }
     }

@@ -1,4 +1,4 @@
-import { Paths, log, colors } from '@minecraft-docker/shared';
+import { Paths, log, colors, checkProposed, type IWorldAssignmentPort } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
 import { isContainerRunning } from '../lib/rcon.js';
 import * as fs from 'fs';
@@ -281,7 +281,7 @@ async function migrateWorlds(
       console.log(colors.bold(`Migrating: ${server.name}`));
 
       try {
-        await migrateServer(paths, server, options.backup ?? false);
+        await migrateServer(paths, server, options.backup ?? false, container.worldAssignmentPort);
         console.log(colors.green(`  ✓ Migration complete`));
         successCount++;
       } catch (error) {
@@ -398,7 +398,8 @@ async function scanServers(paths: Paths): Promise<ServerMigrationInfo[]> {
 async function migrateServer(
   paths: Paths,
   server: ServerMigrationInfo,
-  createBackup: boolean
+  createBackup: boolean,
+  assignments: IWorldAssignmentPort
 ): Promise<void> {
   const serversDir = paths.servers;
   const worldsDir = paths.worlds;
@@ -407,6 +408,25 @@ async function migrateServer(
   const configPath = path.join(serverDir, 'config.env');
   const sourceWorldDir = path.join(serverDir, 'data', 'world');
   const targetWorldDir = path.join(worldsDir, server.name);
+
+  // Decide the new config.env first and check it against the world
+  // assignments (#670) before anything is moved or written.
+  const willMoveWorld =
+    fs.existsSync(sourceWorldDir) &&
+    fs.statSync(sourceWorldDir).isDirectory() &&
+    !fs.lstatSync(sourceWorldDir).isSymbolicLink();
+  const keepsLevel =
+    !!server.levelValue && server.levelValue !== 'world' && fs.existsSync(path.join(worldsDir, server.levelValue));
+  const newLevelValue = keepsLevel
+    ? server.levelValue!
+    : willMoveWorld
+      ? server.name
+      : findExistingWorldName(worldsDir, server.levelValue, server.name);
+  const newConfig = proposeConfig(fs.readFileSync(configPath, 'utf-8'), newLevelValue);
+  const refused = checkProposed(await assignments.preview(server.name, newConfig), server.name);
+  if (refused) {
+    throw refused;
+  }
 
   // Ensure worlds directory exists
   if (!fs.existsSync(worldsDir)) {
@@ -455,7 +475,16 @@ async function migrateServer(
 
   // Step 3: Update config.env
   console.log(`  Updating config.env`);
-  let configContent = fs.readFileSync(configPath, 'utf-8');
+  console.log(`  Setting LEVEL=${newLevelValue}`);
+  atomicWriteFileSync(configPath, newConfig);
+}
+
+/**
+ * config.env after migration: EXTRA_ARGS puts the universe at /worlds/ and
+ * LEVEL names the world there.
+ */
+function proposeConfig(content: string, newLevelValue: string): string {
+  let configContent = content;
 
   // Add or update EXTRA_ARGS
   if (!configContent.includes('EXTRA_ARGS=')) {
@@ -477,10 +506,6 @@ async function migrateServer(
     );
   }
 
-  // Determine the correct LEVEL value
-  const newLevelValue = findExistingWorldName(worldsDir, server.levelValue, server.name);
-  console.log(`  Setting LEVEL=${newLevelValue}`);
-
   // Update LEVEL
   if (configContent.match(/^LEVEL=.*$/m)) {
     configContent = configContent.replace(
@@ -491,7 +516,7 @@ async function migrateServer(
     configContent += `\nLEVEL=${newLevelValue}\n`;
   }
 
-  atomicWriteFileSync(configPath, configContent);
+  return configContent;
 }
 
 /**

@@ -1,5 +1,6 @@
 import { Paths, log, colors } from '@minecraft-docker/shared';
 import { ShellExecutor } from '../lib/shell.js';
+import { getContainer } from '../infrastructure/index.js';
 
 export interface ConfigCommandOptions {
   root?: string;
@@ -99,7 +100,17 @@ export async function configCommand(options: ConfigCommandOptions): Promise<numb
 
   // Set config value
   const oldValue = config[options.key];
-  const success = shell.writeConfigValue(options.serverName, options.key, options.value);
+
+  // LEVEL (or WORLD_NAME when no LEVEL is set) is a world assignment (#670)
+  let success: boolean;
+  const world = await assignIfWorldChanges(options, config);
+  if (world === 'refused') {
+    return 1;
+  } else if (world === 'assigned' && options.key === 'LEVEL') {
+    success = true; // the assignment port wrote LEVEL
+  } else {
+    success = shell.writeConfigValue(options.serverName, options.key, options.value);
+  }
 
   if (success) {
     if (options.json) {
@@ -121,5 +132,39 @@ export async function configCommand(options: ConfigCommandOptions): Promise<numb
   } else {
     log.error(`Failed to update ${options.key}`);
     return 1;
+  }
+}
+
+/**
+ * Route a LEVEL/WORLD_NAME change that changes the server's effective world
+ * (LEVEL, else WORLD_NAME) through the assignment rules: R1, R7 and a
+ * stopped server. A WORLD_NAME under a set LEVEL changes nothing and is
+ * written as before.
+ */
+async function assignIfWorldChanges(
+  options: ConfigCommandOptions,
+  config: Record<string, string>
+): Promise<'unchanged' | 'assigned' | 'refused'> {
+  const { key, value, serverName } = options;
+  if ((key !== 'LEVEL' && key !== 'WORLD_NAME') || !value || !serverName) return 'unchanged';
+
+  const container = getContainer(options.root);
+  try {
+    const snapshot = await container.worldAssignmentPort.listAssignments();
+    const before = snapshot.assignments.find((a) => a.server === serverName)?.world;
+    const after = key === 'LEVEL' ? value : config['LEVEL']?.trim() || value;
+    if (before === after) return 'unchanged';
+
+    const result = await container.worldManagementUseCase.assignWorldByName(after, serverName, {
+      requireExisting: false,
+    });
+    if (!result.success) {
+      log.error(result.error || 'Failed to change the world');
+      return 'refused';
+    }
+    return 'assigned';
+  } catch (error) {
+    log.error(error instanceof Error ? error.message : String(error));
+    return 'refused';
   }
 }

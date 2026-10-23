@@ -41,7 +41,6 @@ import {
   type IModSourcePort,
   type ICreateServerUseCase,
   type IDeleteServerUseCase,
-  type IWorldManagementUseCase,
   type IBackupUseCase,
   type IBackupScheduleUseCase,
   type IBackupScheduleRepository,
@@ -257,7 +256,7 @@ export class Container {
     );
   }
 
-  get worldManagementUseCase(): IWorldManagementUseCase {
+  get worldManagementUseCase(): WorldManagementUseCase {
     return new WorldManagementUseCase(
       this.promptPort,
       this.shellPort,
