@@ -296,6 +296,19 @@ describe('DockerComposeRuntimeAdapter.followLogs', () => {
     });
   });
 
+  it('emits the last N lines first when tail is given (one stream, -- before the name)', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const controller = new AbortController();
+    const done = runtime.followLogs('mc-a', () => {}, controller.signal, { tail: 25 });
+    child.emit('close', 0);
+    await done;
+    expect(spawn).toHaveBeenCalledWith('docker', ['logs', '-f', '--tail', '25', '--', 'mc-a'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      signal: controller.signal,
+    });
+  });
+
   it('resolves on a spawn error', async () => {
     const child = bareChild();
     vi.mocked(spawn).mockReturnValue(child as never);
