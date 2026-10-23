@@ -28,15 +28,10 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
   ) {}
 
   /**
-   * A restored config.env may not bypass the world assignment rules (#670):
-   * the result must pass checkProposed (R1, R7), and an assignment change
-   * needs a stopped server, whatever `force` says. Without an assignment
-   * port a config.env restore fails closed.
-   */
-  /**
    * A restored docker-compose.yml may not move the world either: compose
-   * `environment` overrides config.env, and the /worlds and /data mappings
-   * decide which directories the server opens (#670).
+   * `environment` overrides config.env, the /worlds and /data mappings
+   * decide which directories the server opens, and the env_file order decides
+   * which EXTRA_ARGS wins (#670).
    */
   private async checkRestoredCompose(server: string, compose: string): Promise<void> {
     const current = await this.collector.readFileContent(server, 'docker-compose.yml').catch(() => '');
@@ -50,6 +45,12 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
     }
   }
 
+  /**
+   * A restored config.env may not bypass the world assignment rules (#670):
+   * the result must pass checkProposed (R1, R7), and an assignment change
+   * needs a stopped server, whatever `force` says. Without an assignment
+   * port a config.env restore fails closed.
+   */
   private async checkRestoredAssignment(server: string, configEnv: string): Promise<void> {
     const refused = await checkConfigEnvChange(this.assignments, this.runtime, server, configEnv);
     if (refused) throw refused;
