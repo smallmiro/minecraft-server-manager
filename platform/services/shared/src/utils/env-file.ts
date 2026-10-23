@@ -26,9 +26,12 @@
  * byte-identical in both:
  * - quoted (default, platform `.env`, also `source`d by bash): bare when
  *   bare-safe, otherwise single-quoted (serializeEnvValue).
- * - raw (`config.env`): `KEY=value` unquoted, after assertEnvFileValue (#726).
- *   Note Compose cuts a raw value at ` #` and trims it, so such values do not
- *   round-trip.
+ * - raw (`config.env`): `KEY=value` unquoted when that reads back as the same
+ *   value. A value raw cannot carry (` #`, leading/trailing blanks, a leading
+ *   quote) is single-quoted; one that cannot be quoted either (contains `'`)
+ *   or has a control character throws EnvValueError. Every written value
+ *   reads back unchanged. Rejecting user input that starts with a quote
+ *   (#726) is the caller's job (assertEnvFileValue), not the serializer's.
  */
 import { createHash } from 'node:crypto';
 
@@ -86,7 +89,7 @@ export interface EnvChanges {
 }
 
 export interface ApplyEnvOptions {
-  /** Write `KEY=value` unquoted after assertEnvFileValue (server config.env, #726). */
+  /** Server config.env style: unquoted when possible (see the module header). */
   raw?: boolean;
 }
 
@@ -116,6 +119,16 @@ export function parseEnvDocument(content: string): EnvDocument {
   return { lines, values };
 }
 
+const CONTROL_CHAR_RE = /[\x00-\x1f\x7f-\x9f\u2028\u2029]/;
+
+/** Raw-style value for `KEY=<here>` in config.env (see the module header). */
+function serializeRawEnvValue(key: string, value: string): string {
+  if (CONTROL_CHAR_RE.test(value)) throw new EnvValueError(key);
+  if (!/^["'`]/.test(value) && decodeValue(value) === value) return value;
+  if (!value.includes("'")) return `'${value}'`;
+  throw new EnvValueError(key);
+}
+
 /**
  * Serialize a value for `KEY=<here>`: bare when bare-safe, otherwise
  * single-quoted (literal in bash, compose v2 and dotenv). A single quote,
@@ -141,11 +154,8 @@ export function applyEnvChanges(content: string, changes: EnvChanges, options: A
     if (!ENV_KEY_RE.test(key)) throw new Error(`Invalid key name: ${JSON.stringify(key)}`);
     if (set.has(key) && remove.has(key)) throw new Error(`Key ${key} is both set and removed`);
   }
-  const serialize = (key: string, value: string): string => {
-    if (!options.raw) return serializeEnvValue(value);
-    assertEnvFileValue(key, value);
-    return value;
-  };
+  const serialize = (key: string, value: string): string =>
+    options.raw ? serializeRawEnvValue(key, value) : serializeEnvValue(value);
   const replacements = new Map([...set].map(([key, value]) => [key, `${key}=${serialize(key, value)}`]));
 
   const trailingNewline = content.endsWith('\n');

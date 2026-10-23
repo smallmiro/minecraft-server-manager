@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { Paths, execScriptInteractive, log } from '@minecraft-docker/shared';
-import { applyEnvChanges, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { applyEnvChanges, assertEnvFileValue, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 
 export interface ShellExecutorOptions {
   paths?: Paths;
@@ -155,6 +155,7 @@ export class ShellExecutor {
     }
     let next: string;
     try {
+      assertEnvFileValue(key, value);
       next = applyEnvChanges(readFileSync(configPath, 'utf-8'), { set: { [key]: value } }, { raw: true });
     } catch (error) {
       log.error((error as Error).message);

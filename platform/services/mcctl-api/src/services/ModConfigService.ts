@@ -166,6 +166,8 @@ export class ModConfigService {
 
     let updated: string[];
     if (excluded) {
+      // The filename may become the first entry of the list (#726)
+      assertEnvFileValue(excludeKey, filename);
       // Add if not present
       updated = current.includes(filename) ? current : [...current, filename];
     } else {

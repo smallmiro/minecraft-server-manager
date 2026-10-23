@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { resolveWorldName } from '@minecraft-docker/shared';
-import { applyEnvChanges, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { applyEnvChanges, assertEnvFileValue, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 import type { ServerConfig, UpdateServerConfigRequest } from '../schemas/config.js';
 
 /**
@@ -379,7 +379,8 @@ export class ConfigService {
 
     // Only write if there are changes
     if (changedFields.length > 0) {
-      // Throws EnvValueError for a value with a line break or control character
+      // User input: one line, no control character, no leading quote (#726)
+      for (const [envKey, value] of envUpdates) assertEnvFileValue(envKey, value);
       const updatedContent = applyEnvChanges(content, { set: Object.fromEntries(envUpdates) }, { raw: true });
       atomicWriteFileSync(configPath, updatedContent);
     }
