@@ -412,6 +412,9 @@ Delete a Minecraft server.
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `force` | boolean | false | Force delete even if running |
+| `deleteWorld` | boolean | false | Delete the world inside the server (`servers/<name>/data/<LEVEL>`) instead of moving it to `worlds/`. Worlds in `worlds/` are never deleted |
+
+By default the world inside the server is moved to `worlds/<LEVEL>`. If `worlds/` already has that name, or the container cannot be stopped, the request fails with `500` and nothing is deleted.
 
 **Example:**
 

@@ -597,11 +597,20 @@ mcctl delete [name] [options]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--force` | `-y` | Skip confirmation |
+| `--yes` | `-y` | Skip confirmation |
+| `--force` | | Delete even if players are online (implies `--yes`) |
+| `--delete-world` | | Delete the world inside the server instead of moving it to `worlds/` |
 | `--sudo-password` | | Sudo password for mDNS deregistration (automation) |
 
-!!! warning "World Data Preserved"
-    `mcctl delete` removes the server configuration but preserves world data in the `worlds/` directory.
+`mcctl delete` asks for confirmation. Without a terminal (scripts, CI) it refuses to delete unless you pass `--yes` or `--force`.
+
+!!! info "Worlds outlive their server"
+    - A world in `worlds/` is kept. It is only no longer assigned to the deleted server.
+    - A world inside the server (`servers/<name>/data/<LEVEL>`, plus `<LEVEL>_nether` and `<LEVEL>_the_end`) is moved to `worlds/<LEVEL>` before the server directory is removed. You can assign it to another server afterwards.
+    - If `worlds/` already has a folder with the same name, the delete stops and nothing is removed. Rename the folder in `worlds/`, or pass `--delete-world`.
+    - `--delete-world` deletes the world inside the server. It never deletes worlds in `worlds/`; use [`mcctl world delete`](#mcctl-world-delete) for those.
+
+If the server's container cannot be stopped, the delete stops and nothing is removed.
 
 **Examples:**
 
@@ -612,11 +621,14 @@ mcctl delete
 # Delete specific server with confirmation
 mcctl delete myserver
 
-# Force delete without confirmation
-mcctl delete myserver --force
+# Delete without confirmation
+mcctl delete myserver --yes
+
+# Delete the server and the world inside it
+mcctl delete myserver --yes --delete-world
 
 # Automation with sudo password
-MCCTL_SUDO_PASSWORD="your-password" mcctl delete myserver --force
+MCCTL_SUDO_PASSWORD="your-password" mcctl delete myserver --yes
 ```
 
 ---
