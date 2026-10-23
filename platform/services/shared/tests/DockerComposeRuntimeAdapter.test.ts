@@ -10,7 +10,7 @@ vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
 }));
 
-import { spawnSync, execFileSync, execSync, spawn } from 'node:child_process';
+import { spawnSync, execFileSync, execSync, spawn, execFile } from 'node:child_process';
 import {
   DockerComposeRuntimeAdapter,
   DockerServerConsoleAdapter,
@@ -24,13 +24,18 @@ const PIPE = { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] };
 /** spawnSync result as execCommand sees it */
 const exited = (status: number, stdout = '') => ({ status, stdout, stderr: '', error: undefined }) as never;
 
-/** Fake ChildProcess that exits on the next tick with the given output */
-function fakeChild(code: number, stdout = '', stderr = '') {
-  const child = Object.assign(new EventEmitter(), {
+/** Fake ChildProcess that emits nothing on its own */
+function bareChild() {
+  return Object.assign(new EventEmitter(), {
     stdout: new PassThrough(),
     stderr: new PassThrough(),
     kill: vi.fn(),
   });
+}
+
+/** Fake ChildProcess that exits on the next tick with the given output */
+function fakeChild(code: number | null, stdout = '', stderr = '') {
+  const child = bareChild();
   setImmediate(() => {
     if (stdout) child.stdout.emit('data', Buffer.from(stdout));
     if (stderr) child.stderr.emit('data', Buffer.from(stderr));
@@ -41,6 +46,17 @@ function fakeChild(code: number, stdout = '', stderr = '') {
 
 const throws = () => {
   throw new Error('exit 1');
+};
+
+/** promisify(execFile) on the mock: the callback is the last argument */
+const execFileCalls = (...results: Array<{ stdout?: string; stderr?: string } | Error>) => {
+  for (const result of results) {
+    vi.mocked(execFile).mockImplementationOnce(((...args: unknown[]) => {
+      const callback = args[args.length - 1] as (err: Error | null, value?: unknown) => void;
+      if (result instanceof Error) callback(result);
+      else callback(null, { stdout: result.stdout ?? '', stderr: result.stderr ?? '' });
+    }) as never);
+  }
 };
 
 beforeEach(() => {
@@ -184,6 +200,197 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
     vi.mocked(execFileSync).mockImplementation(throws);
     expect(runtime.startContainer('mc-a')).toBe(false);
     expect(runtime.stopContainer('mc-a')).toBe(false);
+  });
+});
+
+describe('DockerComposeRuntimeAdapter lifecycle', () => {
+  const env = () => ({ PATH: '/bin', SECRET: 'x' });
+  const runtime = new DockerComposeRuntimeAdapter({ root: '/srv/mc', env });
+  const COMPOSE = { cwd: '/srv/mc', timeout: 60000, env: { PATH: '/bin', SECRET: 'x', COMPOSE_FILE: 'docker-compose.yml' } };
+  const failure = () => Object.assign(new Error('Command failed'), { stdout: ' o \n', stderr: ' e \n' });
+
+  it('start runs compose up -d in the root with COMPOSE_FILE', async () => {
+    execFileCalls({ stdout: 'up\n', stderr: ' Container mc-a Started \n' });
+    expect(await runtime.start('mc-a')).toEqual({ success: true, stdout: 'up', stderr: 'Container mc-a Started' });
+    expect(execFile).toHaveBeenCalledWith('docker', ['compose', 'up', '-d', 'mc-a'], COMPOSE, expect.any(Function));
+  });
+
+  it('restart runs compose restart in the root with COMPOSE_FILE', async () => {
+    execFileCalls({});
+    expect(await runtime.restart('mc-a')).toEqual({ success: true, stdout: '', stderr: '' });
+    expect(execFile).toHaveBeenCalledWith('docker', ['compose', 'restart', 'mc-a'], COMPOSE, expect.any(Function));
+  });
+
+  it('stop runs docker stop -- <name> with env and no timeout', async () => {
+    execFileCalls({});
+    expect(await runtime.stop('mc-a')).toEqual({ success: true, stdout: '', stderr: '' });
+    expect(execFile).toHaveBeenCalledWith('docker', ['stop', '--', 'mc-a'], { env: env() }, expect.any(Function));
+  });
+
+  it('never rejects: failures become success false with trimmed output', async () => {
+    execFileCalls(failure(), failure(), failure());
+    const failed = { success: false, stdout: 'o', stderr: 'e', error: 'Command failed' };
+    expect(await runtime.start('mc-a')).toEqual(failed);
+    expect(await runtime.stop('mc-a')).toEqual(failed);
+    expect(await runtime.restart('mc-a')).toEqual(failed);
+  });
+
+  it('defaults root to MCCTL_ROOT at call time and env to process.env', async () => {
+    vi.stubEnv('MCCTL_ROOT', '/opt/mcctl');
+    execFileCalls({}, {});
+    const defaults = new DockerComposeRuntimeAdapter();
+    await defaults.start('mc-a');
+    expect(execFile).toHaveBeenLastCalledWith(
+      'docker',
+      ['compose', 'up', '-d', 'mc-a'],
+      { cwd: '/opt/mcctl', timeout: 60000, env: { ...process.env, COMPOSE_FILE: 'docker-compose.yml' } },
+      expect.any(Function)
+    );
+    await defaults.stop('mc-a');
+    expect(execFile).toHaveBeenLastCalledWith('docker', ['stop', '--', 'mc-a'], { env: process.env }, expect.any(Function));
+  });
+});
+
+describe('DockerComposeRuntimeAdapter.readLogs', () => {
+  const runtime = new DockerComposeRuntimeAdapter();
+
+  it('returns non-empty timestamped lines', async () => {
+    execFileCalls({ stdout: '2026-10-23T00:00:00Z a\n\n2026-10-23T00:00:01Z b\n' });
+    expect(await runtime.readLogs('mc-a', { since: '24h', tail: 10000 })).toEqual([
+      '2026-10-23T00:00:00Z a',
+      '2026-10-23T00:00:01Z b',
+    ]);
+    expect(execFile).toHaveBeenCalledWith(
+      'docker',
+      ['logs', '--timestamps', '--since', '24h', '--tail', '10000', '--', 'mc-a'],
+      { timeout: 10000, maxBuffer: 10 * 1024 * 1024 },
+      expect.any(Function)
+    );
+  });
+
+  it('rejects when docker logs fails', async () => {
+    execFileCalls(new Error('boom'));
+    await expect(runtime.readLogs('mc-a', { since: '24h', tail: 10 })).rejects.toThrow('boom');
+  });
+});
+
+describe('DockerComposeRuntimeAdapter.followLogs', () => {
+  const runtime = new DockerComposeRuntimeAdapter();
+
+  it('forwards stdout and stderr chunks and resolves on close', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const chunks: string[] = [];
+    const controller = new AbortController();
+
+    const done = runtime.followLogs('mc-a', (c) => chunks.push(c), controller.signal);
+    child.stdout.emit('data', Buffer.from('out\n'));
+    child.stderr.emit('data', Buffer.from('err\n'));
+    child.emit('close', 0);
+    await done;
+
+    expect(chunks).toEqual(['out\n', 'err\n']);
+    expect(spawn).toHaveBeenCalledWith('docker', ['logs', '-f', '--tail', '0', '--', 'mc-a'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      signal: controller.signal,
+    });
+  });
+
+  it('resolves on a spawn error', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const done = runtime.followLogs('mc-a', () => {}, new AbortController().signal);
+    child.emit('error', new Error('spawn docker ENOENT'));
+    await expect(done).resolves.toBeUndefined();
+  });
+
+  it('stops forwarding once aborted', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const chunks: string[] = [];
+    const controller = new AbortController();
+    const done = runtime.followLogs('mc-a', (c) => chunks.push(c), controller.signal);
+    controller.abort();
+    child.stdout.emit('data', Buffer.from('late\n'));
+    child.emit('close', null);
+    await done;
+    expect(chunks).toEqual([]);
+  });
+
+  it('abort kills the child and resolves', async () => {
+    const real = await vi.importActual<typeof import('node:child_process')>('node:child_process');
+    let pid: number | undefined;
+    vi.mocked(spawn).mockImplementation(((_file: string, _args: string[], options: object) => {
+      const child = real.spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], options);
+      pid = child.pid;
+      return child;
+    }) as never);
+    const controller = new AbortController();
+    const done = runtime.followLogs('mc-a', () => {}, controller.signal);
+    controller.abort();
+    await done;
+    await new Promise((r) => setTimeout(r, 100));
+    expect(pid).toBeDefined();
+    expect(() => process.kill(pid!, 0)).toThrow();
+  });
+});
+
+describe('DockerServerConsoleAdapter.command', () => {
+  const rcon = new DockerServerConsoleAdapter();
+
+  it('runs rcon-cli in the container with the args after --', async () => {
+    vi.mocked(spawn).mockImplementation(() => fakeChild(0, 'Saved the game\n'));
+    expect(await rcon.command('mc-a', ['save-all', 'flush'])).toEqual({
+      exitCode: 0,
+      stdout: 'Saved the game\n',
+      stderr: '',
+    });
+    expect(spawn).toHaveBeenCalledWith('docker', ['exec', '--', 'mc-a', 'rcon-cli', 'save-all', 'flush'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+  });
+
+  it('keeps the exit code and stderr of a failed command', async () => {
+    vi.mocked(spawn).mockImplementation(() => fakeChild(2, '', 'bad'));
+    expect(await rcon.command('mc-a', ['x'])).toEqual({ exitCode: 2, stdout: '', stderr: 'bad' });
+    vi.mocked(spawn).mockImplementation(() => fakeChild(null));
+    expect((await rcon.command('mc-a', ['x'])).exitCode).toBe(1);
+  });
+
+  it('never rejects: a spawn error becomes exitCode 1 with the message', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const result = rcon.command('mc-a', ['list']);
+    child.emit('error', new Error('spawn docker ENOENT'));
+    expect(await result).toEqual({ exitCode: 1, stdout: '', stderr: 'spawn docker ENOENT' });
+  });
+});
+
+describe('DockerServerConsoleAdapter.getEndpoint', () => {
+  const rcon = new DockerServerConsoleAdapter();
+  const IP = ['inspect', '--format', '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}', '--', 'mc-a'];
+  const ENV = ['inspect', '--format', '{{range .Config.Env}}{{println .}}{{end}}', '--', 'mc-a'];
+
+  it('reads the container IP and RCON settings', async () => {
+    execFileCalls({ stdout: '172.18.0.5\n' }, { stdout: 'PATH=/bin\nRCON_PORT=25576\nRCON_PASSWORD=a=b\n' });
+    expect(await rcon.getEndpoint('mc-a')).toEqual({ host: '172.18.0.5', port: 25576, password: 'a=b' });
+    expect(execFile).toHaveBeenNthCalledWith(1, 'docker', IP, expect.any(Function));
+    expect(execFile).toHaveBeenNthCalledWith(2, 'docker', ENV, expect.any(Function));
+  });
+
+  it('defaults the port to 25575 and the password to empty', async () => {
+    execFileCalls({ stdout: '172.18.0.5\n' }, { stdout: 'PATH=/bin\n' });
+    expect(await rcon.getEndpoint('mc-a')).toEqual({ host: '172.18.0.5', port: 25575, password: '' });
+  });
+
+  it('returns null without an IP or when inspect fails', async () => {
+    execFileCalls({ stdout: '\n' });
+    expect(await rcon.getEndpoint('mc-a')).toBeNull();
+    expect(execFile).toHaveBeenCalledTimes(1);
+    execFileCalls(new Error('No such object'));
+    expect(await rcon.getEndpoint('mc-a')).toBeNull();
+    execFileCalls({ stdout: '172.18.0.5\n' }, new Error('No such object'));
+    expect(await rcon.getEndpoint('mc-a')).toBeNull();
   });
 });
 
