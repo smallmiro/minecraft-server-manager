@@ -141,6 +141,17 @@ interface StatusRoute {
  * Provides REST API for Minecraft server management
  */
 const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  // Server create and delete run one at a time (#656): a request queues behind
+  // the running one, then does its own existence check, so concurrent clients
+  // get the normal 201/200/404/409 answers instead of racing on servers/.
+  // ponytail: in-process queue; a second API process would need a file lock.
+  let lifecycleTail: Promise<unknown> = Promise.resolve();
+  const runSerial = <T>(task: () => Promise<T>): Promise<T> => {
+    const run = lifecycleTail.then(task);
+    lifecycleTail = run.catch(() => undefined);
+    return run;
+  };
+
   /**
    * GET /api/servers
    * List all Minecraft servers
@@ -691,7 +702,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
    */
   fastify.post<CreateServerRoute>('/api/servers', {
     schema: {
-      description: 'Create a new Minecraft server (supports SSE streaming)',
+      description: 'Create a new Minecraft server (supports SSE streaming). Create and delete requests run one at a time; a request waits for the running one.',
       tags: ['servers'],
       body: CreateServerRequestSchema,
       querystring: CreateServerQuerySchema,
@@ -702,7 +713,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         500: ErrorResponseSchema,
       },
     },
-  }, async (request: FastifyRequest<CreateServerRoute>, reply: FastifyReply) => {
+  }, (request: FastifyRequest<CreateServerRoute>, reply: FastifyReply) => runSerial(async () => {
     const { name, type, version, memory, seed, worldUrl, worldName, autoStart, sudoPassword, modpack, modpackVersion, modLoader, excludeFiles } = request.body;
     const { follow = false } = request.query;
 
@@ -1003,6 +1014,8 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         reply.raw.end();
       });
 
+      // Hold the create/delete queue until the script exits
+      await new Promise<void>((resolve) => createProcess.on('close', () => resolve()));
       return;
     }
 
@@ -1071,7 +1084,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         message: errorMessage,
       });
     }
-  });
+  }));
 
   /**
    * DELETE /api/servers/:name
@@ -1079,7 +1092,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
    */
   fastify.delete<DeleteServerRoute>('/api/servers/:name', {
     schema: {
-      description: 'Delete a Minecraft server',
+      description: 'Delete a Minecraft server. Create and delete requests run one at a time; a request waits for the running one.',
       tags: ['servers'],
       params: ServerNameParamsSchema,
       querystring: DeleteServerQuerySchema,
@@ -1089,7 +1102,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         500: ErrorResponseSchema,
       },
     },
-  }, async (request: FastifyRequest<DeleteServerRoute>, reply: FastifyReply) => {
+  }, (request: FastifyRequest<DeleteServerRoute>, reply: FastifyReply) => runSerial(async () => {
     const { name } = request.params;
     const { force, deleteWorld } = request.query;
     const containerName = `mc-${name}`;
@@ -1176,7 +1189,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         message: errorMessage,
       });
     }
-  });
+  }));
 };
 
 export default fp(serversPlugin, {
