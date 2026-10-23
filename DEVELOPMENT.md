@@ -198,7 +198,7 @@ pnpm exec bats -f "unlock" platform/scripts/tests         # tests matching a nam
 - Always pass `--keep-avahi` when running `delete-server.sh` in a test; to test the avahi path, stub `sudo` with `fake_cmd` so the real `/etc/avahi/hosts` is never touched.
 - Examples to copy: `create-server.bats`, `delete-server.bats`, `lock.bats`.
 
-Write tests so they run on Linux and on macOS (bash 3.2, BSD userland): no GNU-only options (`touch -d`, `date -d`, `sed -i` without a suffix, `readlink -f`) in test code or fixtures. Some scripts are not macOS-portable yet (`sed -i` in `create-server.sh`/`delete-server.sh`, `flock` in `lock.sh`, `declare -A` in `render-map.sh`); their tests call `require_gnu_sed` / `require_flock` / `require_bash4` and skip with a reason instead of failing. Remove the skip when the script is fixed.
+Write tests so they run on Linux and on macOS (bash 3.2, BSD userland): no GNU-only options (`touch -d`, `date -d`, `sed -i` without a suffix, `readlink -f`) in test code or fixtures. Some scripts are not macOS-portable yet (`sed -i` in `create-server.sh`/`delete-server.sh`, `flock` in `lock.sh`); their tests call `require_gnu_sed` / `require_flock` and skip with a reason instead of failing. Remove the skip when the script is fixed.
 
 `pnpm lint:scripts` runs shellcheck at `--severity=error` (config: `.shellcheckrc`, `platform/scripts/tests/lint.sh`). Baseline at shellcheck 0.11.0 over `platform/scripts/*.sh` and `lib/*.sh`: 0 errors, 11 warnings (SC1090 x3, SC2034 x6, SC2155 x2), 14 at info and above, 24 at style and above. The gate is errors only until the warnings are fixed; do not add new findings. See all of them with `shellcheck -x -S style platform/scripts/*.sh platform/scripts/lib/*.sh`.
 

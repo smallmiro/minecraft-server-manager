@@ -40,4 +40,3 @@ add_server() {
 # Skips for scripts that are not yet macOS-portable (decision D-3 gaps).
 require_gnu_sed() { sed --version > /dev/null 2>&1 || skip "script uses GNU 'sed -i' (not macOS-portable yet)"; }
 require_flock() { command -v flock > /dev/null || skip "flock not installed (lock.sh needs it; absent on stock macOS)"; }
-require_bash4() { [ "${BASH_VERSINFO[0]}" -ge 4 ] || skip "script needs bash >= 4 (declare -A); running ${BASH_VERSION}"; }
