@@ -65,6 +65,9 @@ async function takeOver(lockPath: string, stale: BackupLockHolder, nonce: string
   await unlink(aside).catch(() => undefined);
 }
 
+/** Unlink of the lock file in release(); tests replace it to interleave a takeover. */
+export const lockFsOps = { unlink };
+
 /**
  * Remove our lock. A late contender may have moved it aside (takeOver) and will put
  * it back when it sees our nonce; that would resurrect a released lock. So we also
@@ -74,7 +77,7 @@ async function takeOver(lockPath: string, stale: BackupLockHolder, nonce: string
 async function release(lockPath: string, nonce: string): Promise<void> {
   const ours = async () => parseHolder((await readText(lockPath)) ?? '')?.nonce === nonce;
   if (await ours()) {
-    await unlink(lockPath).catch(() => undefined);
+    await lockFsOps.unlink(lockPath).catch(() => undefined);
     return;
   }
   const dir = dirname(lockPath);
