@@ -40,6 +40,10 @@ function worldLockRemoved(replacement: string): ShellResult {
 export const CREATE_SERVER_SCRIPT_REMOVED =
   'create-server.sh was removed in #675; pass specRepo / use ServerSpec provision';
 
+/** Why the shell delete path fails since #735. */
+const DELETE_SERVER_SCRIPT_REMOVED =
+  'delete-server.sh was removed in #735; use DeleteServerUseCase with ServerSpec deprovision';
+
 export class ShellAdapter implements IShellPort {
   private readonly paths: Paths;
   private readonly env: Record<string, string>;
@@ -120,15 +124,12 @@ export class ShellAdapter implements IShellPort {
     throw new Error(CREATE_SERVER_SCRIPT_REMOVED);
   }
 
-  async deleteServer(name: ServerName, force = false, deleteWorld = false): Promise<ShellResult> {
-    const args: string[] = [name.value];
-    if (force) {
-      args.push('--force');
-    }
-    if (deleteWorld) {
-      args.push('--delete-world');
-    }
-    return this.executeScript('delete-server.sh', args);
+  /**
+   * @deprecated delete-server.sh was removed in #735: use DeleteServerUseCase
+   * with ServerSpec deprovision. Rejects without running anything; removed in v3.0.0 (#736).
+   */
+  async deleteServer(_name: ServerName, _force = false, _deleteWorld = false): Promise<ShellResult> {
+    throw new Error(DELETE_SERVER_SCRIPT_REMOVED);
   }
 
   /**
