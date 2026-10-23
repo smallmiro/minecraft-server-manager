@@ -135,7 +135,7 @@ const container = getContainer(options.root);   // ContainerOptions | rootDir st
 const useCase = container.configSnapshotUseCase; // created on first access
 ```
 
-사용 가능한 getter: `promptPort`, `shellPort`, `serverRepository`, `worldRepository`, `docProvider`, `auditLogPort`, `modSourcePort`, `createServerUseCase`, `deleteServerUseCase`, `serverStatusUseCase`, `worldManagementUseCase`, `backupUseCase`, `playerLookupUseCase`, `backupScheduleUseCase`, `configSnapshotUseCase`, `configSnapshotScheduleUseCase`.
+사용 가능한 getter: `promptPort`, `shellPort`, `serverRepository`, `worldRepository`, `docProvider`, `auditLogPort`, `modSourcePort`, `createServerUseCase`, `deleteServerUseCase`, `worldManagementUseCase`, `backupUseCase`, `playerLookupUseCase`, `backupScheduleUseCase`, `configSnapshotUseCase`, `configSnapshotScheduleUseCase`.
 
 관련 헬퍼:
 
