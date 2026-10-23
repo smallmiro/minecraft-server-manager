@@ -258,6 +258,13 @@ describe('releaseWorldByName', () => {
     expect(await useCase.releaseWorldByName('held')).toMatchObject({ success: true, fallbackExists: true });
   });
 
+  test('reports a world that neither exists nor is assigned as not found', async () => {
+    const { useCase } = setup({ levels: { alpha: 'alpha' }, worlds: [] });
+    const result = await useCase.releaseWorldByName('ghost');
+    expect(result).toMatchObject({ success: false, error: "World 'ghost' not found" });
+    expect(result.errorCode).toBeUndefined();
+  });
+
   test('releases a world whose directory does not exist yet', async () => {
     const { useCase } = setup({ levels: { alpha: 'later' }, worlds: [] });
     expect((await useCase.releaseWorldByName('later')).success).toBe(true);

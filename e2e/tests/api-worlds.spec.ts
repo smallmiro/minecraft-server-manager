@@ -14,6 +14,8 @@ test.describe('Worlds API', () => {
       expect(body).toHaveProperty('total');
       expect(Array.isArray(body.worlds)).toBe(true);
       expect(typeof body.total).toBe('number');
+      // Duplicate and unreadable assignments are reported here (#670)
+      expect(Array.isArray(body.assignmentWarnings)).toBe(true);
     });
 
     test('should return worlds with required fields', async ({ request }) => {
@@ -26,6 +28,7 @@ test.describe('Worlds API', () => {
         expect(world).toHaveProperty('path');
         expect(world).toHaveProperty('isLocked');
         expect(typeof world.isLocked).toBe('boolean');
+        expect(Array.isArray(world.servers)).toBe(true);
       }
     });
 
@@ -170,16 +173,16 @@ test.describe('Worlds API', () => {
       expect(body).toHaveProperty('error', 'NotFound');
     });
 
-    test('should prevent deleting locked world without force', async ({ request }) => {
+    test('should prevent deleting an assigned world, even with force (#670)', async ({ request }) => {
       const listResponse = await request.get(`${API_BASE_URL}/api/worlds`);
       const listBody = await listResponse.json();
 
-      // Find a locked world
-      const lockedWorld = listBody.worlds.find((w: { isLocked: boolean }) => w.isLocked);
+      // Find a world a server uses (internal-world servers do not block deletion)
+      const lockedWorld = listBody.worlds.find((w: { servers: string[] }) => w.servers.length > 0);
 
       if (lockedWorld) {
         const response = await request.delete(
-          `${API_BASE_URL}/api/worlds/${lockedWorld.name}`
+          `${API_BASE_URL}/api/worlds/${lockedWorld.name}?force=true`
         );
 
         expect(response.status()).toBe(409); // Conflict
@@ -306,7 +309,7 @@ test.describe('Worlds API', () => {
       expect(response.status()).toBe(404);
     });
 
-    test('should return error for unlocked world', async ({ request }) => {
+    test('should return 409 for a world no server uses (#670)', async ({ request }) => {
       const listResponse = await request.get(`${API_BASE_URL}/api/worlds`);
       const listBody = await listResponse.json();
 
@@ -318,7 +321,7 @@ test.describe('Worlds API', () => {
           `${API_BASE_URL}/api/worlds/${unlockedWorld.name}/release`
         );
 
-        expect(response.status()).toBe(400);
+        expect(response.status()).toBe(409);
       }
     });
 
@@ -338,6 +341,9 @@ test.describe('Worlds API', () => {
           const body = await response.json();
           expect(body).toHaveProperty('success', true);
           expect(body).toHaveProperty('worldName', lockedWorld.name);
+          // The previous holder falls back to its own world (#670)
+          expect(body).toHaveProperty('fallbackWorld', body.previousServer);
+          expect(typeof body.fallbackExists).toBe('boolean');
         }
       }
     });

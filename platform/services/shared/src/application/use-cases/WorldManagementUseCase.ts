@@ -631,7 +631,12 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
     const snapshot = await this.snapshot();
     if (snapshot instanceof WorldAssignmentError) return fail(snapshot);
     const plan = planRelease(snapshot, worldName);
-    if (plan instanceof WorldAssignmentError) return fail(plan);
+    if (plan instanceof WorldAssignmentError) {
+      if (plan.code === 'not_assigned' && !(await this.worldRepo.exists(worldName))) {
+        return fail(new Error(`World '${worldName}' not found`));
+      }
+      return fail(plan);
+    }
 
     const running = this.checkStopped(plan.server);
     if (running) return fail(running, plan.server);

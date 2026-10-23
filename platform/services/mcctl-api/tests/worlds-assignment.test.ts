@@ -180,6 +180,10 @@ describe('World routes - assignment rules (#670)', () => {
       expect((await app.inject({ method: 'POST', url: '/api/worlds/held/release?force=true' })).statusCode).toBe(409);
     });
 
+    it('returns 404 for a world that does not exist', async () => {
+      expect((await app.inject({ method: 'POST', url: '/api/worlds/ghost/release' })).statusCode).toBe(404);
+    });
+
     it('returns 409 for a world no server uses', async () => {
       world('free');
       expect((await app.inject({ method: 'POST', url: '/api/worlds/free/release' })).statusCode).toBe(409);
