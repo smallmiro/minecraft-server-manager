@@ -11,7 +11,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import { Paths, parseEnvDocument } from '../src/utils/index.js';
-import { FileServerSpecRepository } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
+import {
+  FileServerSpecRepository,
+  serverSpecTestHooks,
+} from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import {
   DockerComposeRenderer,
   type RenderContext,
@@ -406,5 +409,84 @@ describe('world assignment guard on a changed LEVEL (ADR-0003 R4, ADR-0002)', ()
     writeFileSync(file('beta', 'server.yaml'), read('beta', 'server.yaml').replace('memory: 4G', 'memory: 6G'));
     await migrate('beta');
     expect(parseEnvDocument(read('beta', 'config.env')).values.get('MEMORY')).toBe('6G');
+  });
+});
+
+describe('concurrent writers (another process)', () => {
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const defaults = { ...serverSpecTestHooks };
+
+  afterEach(() => {
+    Object.assign(serverSpecTestHooks, defaults);
+  });
+
+  it('keeps every include entry when two servers are written at the same time', async () => {
+    templateServer('alpha');
+    templateServer('beta');
+    const loaded = [(await repo.load('alpha'))!, (await repo.load('beta'))!];
+    // Let both writers reach the include write together; the lock keeps the second one out, so give up after 300 ms.
+    let arrived = 0;
+    serverSpecTestHooks.beforeIncludeWrite = async () => {
+      arrived++;
+      const start = Date.now();
+      while (arrived < 2 && Date.now() - start < 300) await sleep(10);
+    };
+    await Promise.all(
+      loaded.map((l) => new FileServerSpecRepository(new Paths(root)).write(l.document, { expectedRevision: l.revision }))
+    );
+    expect((yaml.load(read('compose.yml')) as { include: string[] }).include.sort()).toEqual([
+      'alpha/docker-compose.yml',
+      'beta/docker-compose.yml',
+      'other/docker-compose.yml',
+    ]);
+    expect(existsSync(file('.compose.yml.lock'))).toBe(false);
+  });
+
+  it("refuses with 'locked' while another live process holds servers/compose.yml", async () => {
+    templateServer('alpha');
+    const holder = {
+      pid: process.pid,
+      hostname: (await import('node:os')).hostname(),
+      bootTime: Math.round(Date.now() - (await import('node:os')).uptime() * 1000),
+      nonce: 'someone-else',
+      op: 'compose-include',
+      startedAt: new Date().toISOString(),
+    };
+    writeFileSync(file('.compose.yml.lock'), JSON.stringify(holder));
+    serverSpecTestHooks.includeLockWaitMs = 100;
+    const loaded = (await repo.load('alpha'))!;
+    const error = await rejection(repo.write(loaded.document, { expectedRevision: loaded.revision }));
+    expect(error.code).toBe('locked');
+    expect(error.message).toContain(String(process.pid));
+    expect(read('compose.yml')).not.toContain('alpha/docker-compose.yml');
+  });
+
+  it("refuses with 'conflict' when server.yaml changes after the checks, writing nothing", async () => {
+    templateServer('alpha');
+    await migrate('alpha');
+    const loaded = (await repo.load('alpha'))!;
+    const configBefore = read('alpha', 'config.env');
+    serverSpecTestHooks.beforeWrite = async () => {
+      writeFileSync(file('alpha', 'server.yaml'), read('alpha', 'server.yaml').replace('memory: 4G', 'memory: 8G'));
+    };
+    const error = await rejection(repo.write({ ...loaded.document, memory: '6G' }, { expectedRevision: loaded.revision }));
+    expect(error.code).toBe('conflict');
+    expect(read('alpha', 'server.yaml')).toContain('memory: 8G');
+    expect(read('alpha', 'config.env')).toBe(configBefore);
+  });
+
+  it("refuses with 'conflict' when a generated file changes after the checks, writing nothing", async () => {
+    templateServer('alpha');
+    await migrate('alpha');
+    const loaded = (await repo.load('alpha'))!;
+    const yamlBefore = read('alpha', 'server.yaml');
+    serverSpecTestHooks.beforeWrite = async () => {
+      writeFileSync(file('alpha', 'config.env'), read('alpha', 'config.env').replace('PVP=true', 'PVP=false'));
+    };
+    const error = await rejection(repo.write({ ...loaded.document, memory: '6G' }, { expectedRevision: loaded.revision }));
+    expect(error.code).toBe('conflict');
+    expect(error.message).toContain('config.env');
+    expect(read('alpha', 'server.yaml')).toBe(yamlBefore);
+    expect(read('alpha', 'config.env')).toContain('PVP=false');
   });
 });
