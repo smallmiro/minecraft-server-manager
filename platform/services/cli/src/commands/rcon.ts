@@ -14,6 +14,8 @@ import { getContainer } from '../infrastructure/index.js';
 export interface RconSession {
   send(command: string): Promise<string>;
   end(): Promise<unknown>;
+  /** rcon-client emits 'end' when the server closes the connection and 'error' on a reset. */
+  on(event: 'end' | 'error', listener: (error?: Error) => void): unknown;
 }
 
 export interface RconCommandOptions {
@@ -162,48 +164,63 @@ export async function rconCommand(options: RconCommandOptions): Promise<number> 
     prompt: '> ',
   });
 
-  rl.prompt();
-
   return new Promise((resolve) => {
-    rl.on('line', async (line) => {
-      const cmd = line.trim();
+    let done = false;
+    // Lines run one at a time, in order; EOF waits for the queue (piped input)
+    let queue: Promise<void> = Promise.resolve();
 
-      if (cmd === 'exit' || cmd === 'quit') {
-        rl.close();
-        return;
-      }
-
-      if (!cmd) {
-        rl.prompt();
-        return;
-      }
-
-      try {
-        const response = await rcon.send(cmd);
-        if (response) {
-          output.write(formatRconResponse(response) + '\n');
-        }
-      } catch (err) {
-        log.error(`Command failed: ${(err as Error).message}`);
-      }
-
-      rl.prompt();
-    });
-
-    rl.on('close', async () => {
-      output.write('\n');
-      log.info('Disconnecting from RCON...');
-      try {
-        await rcon.end();
-      } catch {
-        // Ignore disconnect errors
-      }
-      resolve(0);
-    });
-
-    // Handle Ctrl+C
-    rl.on('SIGINT', () => {
+    const finish = async (code: number, connectionOpen = true) => {
+      if (done) return;
+      done = true;
       rl.close();
+      output.write('\n');
+      if (connectionOpen) {
+        log.info('Disconnecting from RCON...');
+        try {
+          await rcon.end();
+        } catch {
+          // Ignore disconnect errors
+        }
+      }
+      resolve(code);
+    };
+
+    const run = async (line: string) => {
+      if (done) return;
+      const cmd = line.trim();
+      if (cmd === 'exit' || cmd === 'quit') return finish(0);
+      if (cmd) {
+        try {
+          const response = await rcon.send(cmd);
+          if (response) output.write(formatRconResponse(response) + '\n');
+        } catch (err) {
+          log.error(`Command failed: ${(err as Error).message}`);
+        }
+      }
+      if (!done) rl.prompt();
+    };
+
+    rl.on('line', (line) => {
+      queue = queue.then(() => run(line));
     });
+    // EOF (Ctrl+D, end of a pipe): finish the queued commands first
+    rl.on('close', () => {
+      void queue.then(() => finish(0));
+    });
+    // Ctrl+C: leave now
+    rl.on('SIGINT', () => void finish(0));
+
+    rcon.on('end', () => {
+      if (done) return;
+      log.info('RCON connection closed by the server.');
+      void finish(0, false);
+    });
+    rcon.on('error', (error) => {
+      if (done) return;
+      log.error(`RCON connection error: ${error?.message ?? 'unknown error'}`);
+      void finish(1, false);
+    });
+
+    rl.prompt();
   });
 }
