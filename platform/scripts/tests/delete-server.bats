@@ -151,7 +151,7 @@ mk_world() {
 
 @test "delete: aborts and keeps the server when the container fails to stop (#652)" {
     mk_world "$PLATFORM/servers/alpha/data/alpha"
-    FAKE_DOCKER_COMPOSE_PS="mc-alpha" FAKE_DOCKER_STOP_RC=1 \
+    FAKE_DOCKER_PS="mc-alpha" FAKE_DOCKER_COMPOSE_PS="mc-alpha" FAKE_DOCKER_STOP_RC=1 \
         run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
     [ "$status" -eq 1 ]
     [ -f "$PLATFORM/servers/alpha/data/alpha/level.dat" ]
@@ -164,4 +164,140 @@ mk_world() {
     [ "$status" -eq 0 ]
     [[ "$output" != *"preserved"* ]]
     [[ "$output" == *"No world data found"* ]]
+}
+
+# --- #652 review (PR #741): no world is lost when its location is unclear ---
+
+# expect_abort_keeping <path>: the delete failed, touched no container, kept <path>.
+expect_abort_keeping() {
+    [ "$status" -eq 1 ]
+    [ -e "$1" ]
+    [ -d "$PLATFORM/servers/alpha" ]
+    run ! grep -qE '(^| )(stop|rm)( |$)' "$FAKE_DOCKER_LOG"
+}
+
+@test "delete: LEVEL with an inline comment is not guessed (#652)" {
+    echo "LEVEL=alpha # world name" > "$PLATFORM/servers/alpha/config.env"
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/data/alpha/level.dat"
+    [[ "$output" == *"LEVEL"* ]]
+}
+
+@test "delete: 'LEVEL = alpha' (spaces) is not read as unset (#652)" {
+    echo "LEVEL = alpha" > "$PLATFORM/servers/alpha/config.env"
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/data/alpha/level.dat"
+}
+
+@test "delete: quoted LEVEL values are not rewritten (#652)" {
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    for line in 'LEVEL="alpha"' "LEVEL='alpha'" "LEVEL=\"al'pha\""; do
+        echo "$line" > "$PLATFORM/servers/alpha/config.env"
+        run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+        expect_abort_keeping "$PLATFORM/servers/alpha/data/alpha/level.dat"
+    done
+}
+
+@test "delete: LEVEL defined twice is ambiguous (#652)" {
+    printf 'LEVEL=alpha\nLEVEL=beta\n' > "$PLATFORM/servers/alpha/config.env"
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/data/alpha/level.dat"
+}
+
+@test "delete: an invalid LEVEL aborts even when only its dimension folder exists (#652)" {
+    echo "LEVEL=my.world" > "$PLATFORM/servers/alpha/config.env"
+    mk_world "$PLATFORM/servers/alpha/data/my.world_nether"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/data/my.world_nether/level.dat"
+}
+
+@test "delete: an absolute LEVEL path aborts (#652)" {
+    echo "LEVEL=/data/alpha" > "$PLATFORM/servers/alpha/config.env"
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/data/alpha/level.dat"
+}
+
+@test "delete: dimension folders without their base world abort (#652)" {
+    mk_world "$PLATFORM/servers/alpha/data/alpha_nether"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/data/alpha_nether/level.dat"
+}
+
+@test "delete: a symlink to a world inside the server aborts and names the world (#652)" {
+    mk_world "$PLATFORM/servers/alpha/data/realworld"
+    ln -s realworld "$PLATFORM/servers/alpha/data/alpha"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/data/realworld/level.dat"
+    [[ "$output" == *"data/realworld"* ]]
+}
+
+@test "delete: a world under another name (old LEVEL) aborts and names it (#652)" {
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    mk_world "$PLATFORM/servers/alpha/data/world"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/data/world/level.dat"
+    [ -f "$PLATFORM/servers/alpha/data/alpha/level.dat" ]
+    [[ "$output" == *"data/world"* ]]
+}
+
+@test "delete: a symlinked data/ aborts and leaves its target alone (#652)" {
+    mk_world "$BATS_TEST_TMPDIR/external-data/alpha"
+    ln -s "$BATS_TEST_TMPDIR/external-data" "$PLATFORM/servers/alpha/data"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$BATS_TEST_TMPDIR/external-data/alpha/level.dat"
+    [ ! -e "$PLATFORM/worlds/alpha" ]
+}
+
+@test "delete: --delete-world still deletes when the world cannot be located (#652)" {
+    echo "LEVEL=alpha # world name" > "$PLATFORM/servers/alpha/config.env"
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi --delete-world
+    [ "$status" -eq 0 ]
+    [ ! -d "$PLATFORM/servers/alpha" ]
+}
+
+@test "delete: a dimension created while the server stops is moved too (#652)" {
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    FAKE_DOCKER_PS="mc-alpha" FAKE_DOCKER_COMPOSE_PS="mc-alpha" \
+        FAKE_DOCKER_STOP_HOOK='mkdir -p "$MCCTL_ROOT/servers/alpha/data/alpha_nether" && echo n > "$MCCTL_ROOT/servers/alpha/data/alpha_nether/level.dat"' \
+        run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    [ "$status" -eq 0 ]
+    [ -f "$PLATFORM/worlds/alpha/level.dat" ]
+    [ -f "$PLATFORM/worlds/alpha_nether/level.dat" ]
+}
+
+@test "delete: a destination created while the server stops aborts before deleting (#652)" {
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    FAKE_DOCKER_PS="mc-alpha" FAKE_DOCKER_COMPOSE_PS="mc-alpha" \
+        FAKE_DOCKER_STOP_HOOK='mkdir -p "$MCCTL_ROOT/worlds/alpha"' \
+        run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    [ "$status" -eq 1 ]
+    [ -f "$PLATFORM/servers/alpha/data/alpha/level.dat" ]
+    [ ! -e "$PLATFORM/worlds/alpha/alpha" ]
+}
+
+@test "delete: a failed Docker query is not 'no container' (#652)" {
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    FAKE_DOCKER_PS_RC=1 run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    [ "$status" -eq 1 ]
+    [ -f "$PLATFORM/servers/alpha/data/alpha/level.dat" ]
+    [ ! -e "$PLATFORM/worlds/alpha" ]
+}
+
+@test "delete: a destination appearing between moves stops and reports what moved (#652)" {
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    mk_world "$PLATFORM/servers/alpha/data/alpha_nether"
+    # Another process creates worlds/alpha_nether while alpha is being moved.
+    fake_cmd mv 'case "$1" in */data/alpha) mkdir -p "$(dirname "$2")/alpha_nether" ;; esac
+exec /bin/mv "$@"'
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    [ "$status" -eq 1 ]
+    [ -f "$PLATFORM/worlds/alpha/level.dat" ]
+    [ -f "$PLATFORM/servers/alpha/data/alpha_nether/level.dat" ]
+    [ ! -e "$PLATFORM/worlds/alpha_nether/alpha_nether" ]
+    [[ "$output" == *"worlds/alpha"* ]]
 }

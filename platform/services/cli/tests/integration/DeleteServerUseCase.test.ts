@@ -164,10 +164,56 @@ describe('DeleteServerUseCase Integration', () => {
       assert.strictEqual(await useCase.executeWithName('server1', { yes: true }), true);
     });
 
+    it('refuses an unknown player count (RCON failed) even with yes (#652 review)', async () => {
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(null));
+
+      await assert.rejects(useCase.executeWithName('server1', { yes: true }), /RCON/);
+      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+    });
+
+    it('deletes with an unknown player count when forced (#652 review)', async () => {
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(null));
+
+      assert.strictEqual(await useCase.executeWithName('server1', { force: true, yes: true }), true);
+    });
+
     it('does not query RCON for a stopped server', async () => {
       useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(3));
 
       assert.strictEqual(await useCase.executeWithName('server2', { yes: true }), true);
+    });
+  });
+
+  // v2.x: only an explicit options object opts into the new confirmation (#715)
+  describe('second-argument compatibility (#652 review)', () => {
+    beforeEach(() => {
+      promptAdapter = new MockPromptAdapter({ confirm: false });
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+    });
+
+    it.each([
+      ['omitted', [] as unknown[]],
+      ['undefined', [undefined]],
+      ['false', [false]],
+      ['true', [true]],
+    ])('%s deletes without asking, as before', async (_label, rest) => {
+      const call = useCase.executeWithName as (name: string, ...rest: unknown[]) => Promise<boolean>;
+      assert.strictEqual(await call.call(useCase, 'server2', ...rest), true);
+      assert.ok(shellAdapter.wasCommandCalled('deleteServer'));
+    });
+
+    it('{} asks (declined here) and keeps the server', async () => {
+      assert.strictEqual(await useCase.executeWithName('server2', {}), false);
+      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+    });
+
+    it('omitted still applies the players guard', async () => {
+      serverRepo = new MockServerRepository([
+        { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
+      ]);
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+
+      await assert.rejects(useCase.executeWithName('busy'), /5 player\(s\) online/);
     });
   });
 
@@ -176,7 +222,7 @@ describe('DeleteServerUseCase Integration', () => {
       promptAdapter = new MockPromptAdapter({ confirm: false });
       useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
 
-      assert.strictEqual(await useCase.executeWithName('server2'), false);
+      assert.strictEqual(await useCase.executeWithName('server2', {}), false);
       assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
     });
 
