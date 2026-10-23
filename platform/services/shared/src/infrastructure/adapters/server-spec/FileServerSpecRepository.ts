@@ -3,7 +3,8 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import yaml from 'js-yaml';
 import { Paths } from '../../../utils/index.js';
-import { parseEnvDocument, envRevision } from '../../../utils/env-file.js';
+import { envRevision } from '../../../utils/env-file.js';
+import { resolveHostIps } from '../../hostIps.js';
 import { atomicWriteFile } from '../../../utils/atomic-write.js';
 import { EXISTING_SERVER_NAME_PATTERN } from '../../../domain/value-objects/ServerName.js';
 import {
@@ -128,11 +129,15 @@ const editConflict = (name: string) =>
  * A server without server.yaml is imported in memory from those files.
  */
 export class FileServerSpecRepository implements IServerSpecRepository {
-  /** `runtime`: asked whether a server is stopped before its world changes; without it such writes are refused (R7). */
+  /**
+   * @param runtime asked whether a server is stopped before its world changes; without it such writes are refused (R7).
+   * @param hostIps the host addresses for nip.io router hosts (default: resolveHostIps).
+   */
   constructor(
     private readonly paths: Paths = new Paths(),
     private readonly renderer: ServerSpecRenderer = new DockerComposeRenderer(),
-    private readonly runtime?: IContainerRuntimePort
+    private readonly runtime?: IContainerRuntimePort,
+    private readonly resolveIps: () => string[] = () => resolveHostIps(paths)
   ) {}
 
   async list(): Promise<ServerSpec[]> {
@@ -504,12 +509,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     }
   }
 
-  /** HOST_IPS, else HOST_IP (comma lists) from the platform .env. */
   private async hostIps(): Promise<string[]> {
-    const text = await readOptional(this.paths.envFile);
-    if (text === undefined) return [];
-    const values = parseEnvDocument(text).values;
-    const list = values.get('HOST_IPS')?.trim() || values.get('HOST_IP') || '';
-    return list.split(',').map((ip) => ip.trim()).filter(Boolean);
+    return this.resolveIps();
   }
 }
