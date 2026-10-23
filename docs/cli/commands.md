@@ -614,9 +614,9 @@ Without `--delete-world`, the delete also stops before removing anything when th
 
 - `config.env` has a `LEVEL` line other than one plain `LEVEL=<name>` (letters, digits, `-`, `_`): for example a comment, quotes, spaces around `=`, a path, or two `LEVEL` lines. Without any `LEVEL` line the world is `world`.
 - `servers/<name>/` or its `data/` is a symlink, or only `<LEVEL>_nether`/`<LEVEL>_the_end` exist without `data/<LEVEL>`.
-- Another folder with a `level.dat` (an old world from a previous `LEVEL`, or the target of a symlink inside the server) would be deleted. The message lists them.
+- Another world folder (one with `level.dat`, `level.dat_old`, `region/` or `*.mca` files, such as an old world from a previous `LEVEL`) would be deleted, or a symlink inside the server points to something inside the server. The message lists them.
 
-If the server's container cannot be stopped, or Docker cannot be queried, the delete stops and nothing is removed. If the server is running and its online players cannot be read over RCON, `mcctl delete <name>` refuses unless you pass `--force`.
+If `worlds/` resolves to a folder inside the server (for example a symlink into `servers/<name>/`), the delete stops even with `--delete-world`. If the server's container cannot be stopped, or Docker cannot be queried, the delete stops and nothing is removed. If the server is running and its online players cannot be read over RCON, `mcctl delete <name>` refuses unless you pass `--force`.
 
 **Examples:**
 

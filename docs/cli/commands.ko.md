@@ -614,9 +614,9 @@ mcctl delete [name] [options]
 
 - `config.env`의 `LEVEL` 줄이 `LEVEL=<이름>`(영문자, 숫자, `-`, `_`) 한 줄이 아닌 경우: 주석, 따옴표, `=` 앞뒤 공백, 경로, `LEVEL` 줄이 둘 이상인 경우 등. `LEVEL` 줄이 아예 없으면 월드는 `world`로 봅니다.
 - `servers/<name>/`나 그 안의 `data/`가 심볼릭 링크이거나, `data/<LEVEL>` 없이 `<LEVEL>_nether`·`<LEVEL>_the_end`만 있는 경우.
-- `level.dat`가 있는 다른 폴더(이전 `LEVEL`의 옛 월드, 서버 안을 가리키는 심볼릭 링크의 대상)가 함께 지워지게 되는 경우. 메시지에 그 경로를 보여 줍니다.
+- 다른 월드 폴더(`level.dat`, `level.dat_old`, `region/`, `*.mca` 중 하나가 있는 폴더. 예: 이전 `LEVEL`의 옛 월드)가 함께 지워지게 되거나, 서버 안의 심볼릭 링크가 서버 안을 가리키는 경우. 메시지에 그 경로를 보여 줍니다.
 
-서버 컨테이너를 정지하지 못하거나 Docker를 조회하지 못하면 삭제를 중단하고 아무것도 지우지 않습니다. 실행 중인 서버의 접속자 수를 RCON으로 읽지 못하면 `mcctl delete <name>`은 `--force` 없이는 삭제를 거부합니다.
+`worlds/`의 실제 경로가 서버 안(예: `servers/<name>/`을 가리키는 심볼릭 링크)이면 `--delete-world`를 줘도 중단합니다. 서버 컨테이너를 정지하지 못하거나 Docker를 조회하지 못하면 삭제를 중단하고 아무것도 지우지 않습니다. 실행 중인 서버의 접속자 수를 RCON으로 읽지 못하면 `mcctl delete <name>`은 `--force` 없이는 삭제를 거부합니다.
 
 **예제:**
 
