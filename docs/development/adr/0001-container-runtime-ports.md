@@ -56,6 +56,8 @@ export interface RuntimeActionResult {
 export interface IContainerRuntimePort {
   /** 'not_found' when absent or when the runtime cannot be queried. */
   getStatus(name: ServerName | string): ContainerStatus;
+  /** Added by #665: getStatus as an awaited child process, for request paths. */
+  getStatusAsync(name: ServerName | string): Promise<ContainerStatus>;
   /** 'none' without a healthcheck, 'unknown' on failure. */
   getHealth(name: ServerName | string): HealthStatus;
   exists(name: ServerName | string): boolean;
@@ -394,7 +396,7 @@ The module has no runtime imports, so `@minecraft-docker/shared/naming` stays br
 
 | Port | Before (D1) | After (#665) |
 |------|-------------|--------------|
-| `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `getLogs`, `getStats`, `getUptime`, `start`, `stop`, `restart`, `readLogs`, `followLogs` take `name: string` | `name: ServerName \| string`. `list()` is unchanged and still returns container names |
+| `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `getLogs`, `getStats`, `getUptime`, `start`, `stop`, `restart`, `readLogs`, `followLogs` take `name: string` | `name: ServerName \| string`. `list()` is unchanged and still returns container names. Added `getStatusAsync(name): Promise<ContainerStatus>` (see repositories below) |
 | `IServerConsolePort` | `listPlayers`, `command`, `getEndpoint` take `name: string` | `name: ServerName \| string` |
 | `IRouterStatusPort` | `getHostnames(name: string)` | `getHostnames(name: ServerName \| string)` |
 | `IRconPort` | `getEntityPosition(container: string, player)` | `getEntityPosition(server: ServerName \| string, player)` |
@@ -402,14 +404,15 @@ The module has no runtime imports, so `@minecraft-docker/shared/naming` stays br
 | `IPlatformSettingsPort` (new) | — | `load(): McctlConfig \| null` |
 
 - **Meaning**: a ServerName is the server and the adapter picks the workload (`workloadNameOf`). A string is the workload name itself, as in D1. The string form is deprecated for servers; the router and playit agent keep their container names until the k8s adapter (#641) gives them their own methods.
-- **Why a union, not overloads**: method parameters are bivariant, so a v2 implementation declared with `(name: string)` still satisfies `(name: ServerName | string)`. An overload pair `(name: ServerName)` + `(name: string)` would reject it. `tests/runtimePorts-v2-compat.test.ts` compiles v2 implementations and callers to hold this.
-- **Effect on v2 implementations**: shared now passes a ServerName to injected ports (`checkServerStopped`, `WorldManagementUseCase` start after create, `DeleteServerUseCase` online players, `ServerRepository.getStatus`). An implementation that keys by container name must map with `workloadNameOf(name)`; the test fakes in cli and mcctl-api were changed this way. Shared's own adapters already do.
+- **Why a union, not overloads**: method parameters are bivariant, so a v2 implementation declared with `(name: string)` still satisfies `(name: ServerName | string)`. An overload pair `(name: ServerName)` + `(name: string)` would reject it. `tests/runtimePorts-v2-compat.test.ts` compiles a v2 `IRconPort` implementation and v2 callers to hold this.
+- **Released and unreleased ports** (#753 review): of the widened ports only `IRconPort` shipped in v2.33.0 (npm). `IContainerRuntimePort`, `IServerConsolePort`, `IRouterStatusPort` and `IHostnameRegistrarPort` were added by #654 after v2.33.0, so no released implementation exists and passing a ServerName to them is not a breaking change. Shared does so (`checkServerStopped`, `WorldManagementUseCase` start after create, `DeleteServerUseCase` online players, `ServerRepository.getStatus`); the cli and mcctl-api test fakes map it with `workloadNameOf(name)`.
+- **`IRconPort` keeps the v2 runtime contract**: its callers (`WorldInfoUseCase.getLivePlayerLocations`, `PlayerManagementUseCase` `options.container`, fed by the API) keep passing the container name string `mc-<server>`, so a v2 implementation receives exactly what it did before. Only `RconCliAdapter` accepts both forms. `tests/rconPort-v2-contract.test.ts` pins this with a recording v2 implementation. New code that computes the name in infrastructure or the API uses `containerNameOf`.
 
 ### Repositories take a runtime port
 
 `new ServerRepository(paths?, runtime?)` and `new WorldRepository(paths?, assignments?, runtime?)`. The default is `new DockerComposeRuntimeAdapter()`, the instance the facade delegated to; the CLI `Container` passes its runtime. Neither repository imports the facade any more.
 
-- `ServerRepository.getStatus` asks `runtime.getStatus(ServerName.fromExisting(name))` and keeps the old mapping (`not_found`, the failed-query sentinel, is `STOPPED`). The call is now synchronous (`spawnSync`, ADR decision 5) instead of an awaited `spawn`, and the argv gains `--`. A name that `fromExisting` rejects returns `UNKNOWN` instead of `STOPPED`; `findByName` never reaches that, because it rejects such names first.
+- `ServerRepository.getStatus` awaits `runtime.getStatusAsync(ServerName.fromExisting(name))` and keeps the old mapping (`not_found`, the failed-query sentinel, is `STOPPED`). `getStatusAsync` was added to `IContainerRuntimePort` because the synchronous `getStatus` (`spawnSync`, no timeout) blocked the API event loop once per server in `findAll()` (#753 review). The Docker adapter runs the pre-#665 query through `execCommandAsync` (`docker inspect -f {{.State.Status}} -- <container>`; a non-zero exit is `not_found`, the state is lower-cased); the only argv change is the `--` of the #720 rule. A new method was simpler than making `getStatus` async, which is C2's change across every caller. A name that `fromExisting` rejects returns `UNKNOWN` instead of `STOPPED`; `findByName` never reaches that, because it rejects such names first.
 - `WorldRepository.findAllWithServerStatus` passes the container-name string it used before, including the pre-#670 branch that takes a holder starting with `mc-` as a container name. Changing that would be a behaviour change; #736 removes it when the port is narrowed.
 
 ### Platform settings port (`CreateServerUseCase`)

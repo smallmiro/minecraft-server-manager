@@ -40,6 +40,7 @@
 | 포트 | 메서드 | 동기 여부 |
 |------|--------|-----------|
 | `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `list({running?})`, `getLogs`, `getStats`, `getUptime` (docker/index.ts 리프) | 동기 |
+| | `getStatusAsync(name)` (#665, 요청 경로용 `getStatus`) | 비동기 |
 | | `start`, `stop`, `restart` → `RuntimeActionResult` (API `executeServerAction`, `mcctl.sh`) | 비동기, reject하지 않음 |
 | | `readLogs(name, {since, tail})` (API 세션 수집기), `followLogs(name, onChunk, signal, {tail?, follow?, onExit?})` (API SSE 로그) | 비동기 |
 | `IServerConsolePort` | `listPlayers` (`getOnlinePlayers`), `command(name, args)` (rcon-cli 호출 4곳), `getEndpoint` (CLI `mcctl rcon`) | 비동기 |
@@ -158,7 +159,7 @@ v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유�
 
 | 포트 | 이전(D1) | 이후(#665) |
 |------|----------|-----------|
-| `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `getLogs`, `getStats`, `getUptime`, `start`, `stop`, `restart`, `readLogs`, `followLogs`가 `name: string`을 받음 | `name: ServerName \| string`. `list()`는 그대로이고 여전히 컨테이너 이름을 돌려준다 |
+| `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `getLogs`, `getStats`, `getUptime`, `start`, `stop`, `restart`, `readLogs`, `followLogs`가 `name: string`을 받음 | `name: ServerName \| string`. `list()`는 그대로이고 여전히 컨테이너 이름을 돌려준다. `getStatusAsync(name): Promise<ContainerStatus>`를 추가했다(아래 저장소 항목) |
 | `IServerConsolePort` | `listPlayers`, `command`, `getEndpoint`가 `name: string`을 받음 | `name: ServerName \| string` |
 | `IRouterStatusPort` | `getHostnames(name: string)` | `getHostnames(name: ServerName \| string)` |
 | `IRconPort` | `getEntityPosition(container: string, player)` | `getEntityPosition(server: ServerName \| string, player)` |
@@ -166,14 +167,15 @@ v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유�
 | `IPlatformSettingsPort`(신규) | — | `load(): McctlConfig \| null` |
 
 - **의미**: ServerName은 서버이고, 워크로드는 어댑터가 고른다(`workloadNameOf`). 문자열은 D1처럼 워크로드 이름 자체다. 서버에 문자열을 넘기는 형태는 deprecated다. 라우터와 playit 에이전트는 k8s 어댑터(#641)가 전용 메서드를 줄 때까지 컨테이너 이름을 쓴다.
-- **overload가 아니라 union인 이유**: 메서드 인자는 bivariant라서 `(name: string)`으로 선언한 v2 구현도 `(name: ServerName | string)`을 만족한다. `(name: ServerName)`과 `(name: string)` overload 쌍은 이 구현을 거부한다. `tests/runtimePorts-v2-compat.test.ts`가 v2 구현과 호출 코드를 컴파일해서 이를 지킨다.
-- **v2 구현에 주는 영향**: 이제 shared가 주입받은 포트에 ServerName을 넘긴다(`checkServerStopped`, 생성 후 시작하는 `WorldManagementUseCase`, 접속자를 세는 `DeleteServerUseCase`, `ServerRepository.getStatus`). 컨테이너 이름으로 키를 잡는 구현은 `workloadNameOf(name)`으로 바꿔야 한다. cli와 mcctl-api의 테스트 fake를 이렇게 고쳤다. shared의 어댑터는 이미 그렇게 한다.
+- **overload가 아니라 union인 이유**: 메서드 인자는 bivariant라서 `(name: string)`으로 선언한 v2 구현도 `(name: ServerName | string)`을 만족한다. `(name: ServerName)`과 `(name: string)` overload 쌍은 이 구현을 거부한다. `tests/runtimePorts-v2-compat.test.ts`가 v2 `IRconPort` 구현과 v2 호출 코드를 컴파일해서 이를 지킨다.
+- **배포된 포트와 미배포 포트**(#753 리뷰): 넓힌 포트 가운데 v2.33.0(npm)에 들어간 것은 `IRconPort`뿐이다. `IContainerRuntimePort`, `IServerConsolePort`, `IRouterStatusPort`, `IHostnameRegistrarPort`는 v2.33.0 이후 #654에서 추가돼 배포된 구현체가 없다. 그래서 여기에 ServerName을 넘겨도 breaking change가 아니다. shared는 그렇게 한다(`checkServerStopped`, 생성 후 시작하는 `WorldManagementUseCase`, 접속자를 세는 `DeleteServerUseCase`, `ServerRepository.getStatus`). cli와 mcctl-api의 테스트 fake는 `workloadNameOf(name)`으로 바꾼다.
+- **`IRconPort`는 v2 런타임 계약을 지킨다**: 호출처(`WorldInfoUseCase.getLivePlayerLocations`, `PlayerManagementUseCase`의 `options.container`, 둘 다 API가 값을 넣음)는 계속 컨테이너 이름 문자열 `mc-<server>`를 넘긴다. v2 구현은 이전과 똑같은 값을 받는다. 두 형태를 모두 받는 것은 `RconCliAdapter`뿐이다. `tests/rconPort-v2-contract.test.ts`가 기록용 v2 구현으로 이를 고정한다. 인프라나 API에서 이름을 새로 계산하는 코드는 `containerNameOf`를 쓴다.
 
 ### 저장소는 런타임 포트를 받음
 
 `new ServerRepository(paths?, runtime?)`, `new WorldRepository(paths?, assignments?, runtime?)`. 기본값은 퍼사드가 위임하던 것과 같은 `new DockerComposeRuntimeAdapter()`이고, CLI `Container`는 자기 런타임을 넘긴다. 두 저장소 모두 퍼사드를 import하지 않는다.
 
-- `ServerRepository.getStatus`는 `runtime.getStatus(ServerName.fromExisting(name))`을 묻고, 이전 매핑을 그대로 쓴다(조회 실패 sentinel인 `not_found`는 `STOPPED`). 호출은 기다리던 `spawn`에서 동기 `spawnSync`로 바뀌었고(결정 5), argv에 `--`가 붙는다. `fromExisting`이 거부하는 이름이면 `STOPPED` 대신 `UNKNOWN`이다. `findByName`은 그런 이름을 먼저 거르므로 이 경로에 오지 않는다.
+- `ServerRepository.getStatus`는 `runtime.getStatusAsync(ServerName.fromExisting(name))`을 기다리고, 이전 매핑을 그대로 쓴다(조회 실패 sentinel인 `not_found`는 `STOPPED`). 동기 `getStatus`(`spawnSync`, 타임아웃 없음)를 쓰면 API의 `findAll()`이 서버마다 이벤트 루프를 막아서(#753 리뷰) `IContainerRuntimePort`에 `getStatusAsync`를 추가했다. Docker 어댑터는 #665 이전 조회를 `execCommandAsync`로 그대로 실행한다(`docker inspect -f {{.State.Status}} -- <container>`, 0이 아닌 종료 코드는 `not_found`, 상태는 소문자로). argv에서 바뀐 것은 #720 규칙의 `--`뿐이다. `getStatus` 자체를 비동기로 바꾸는 일은 모든 호출처를 함께 고치는 C2의 몫이라, 메서드를 추가하는 쪽이 더 단순했다. `fromExisting`이 거부하는 이름이면 `STOPPED` 대신 `UNKNOWN`이다. `findByName`은 그런 이름을 먼저 거르므로 이 경로에 오지 않는다.
 - `WorldRepository.findAllWithServerStatus`는 이전과 같은 컨테이너 이름 문자열을 넘긴다. `mc-`로 시작하는 배정 서버를 컨테이너 이름으로 보는 #670 이전 분기도 그대로다. 바꾸면 동작이 바뀐다. 포트를 좁히는 #736에서 지운다.
 
 ### 플랫폼 설정 포트(`CreateServerUseCase`)
