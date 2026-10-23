@@ -120,7 +120,7 @@ Applies to Single Issue Mode step 3 (Milestone Mode inherits it per issue). Most
 | Paths in `Files to Modify` | Owner |
 |----------------------------|-------|
 | `platform/services/shared/**`, `platform/services/mod-source-*/**` | core-agent |
-| `platform/services/cli/**`, `platform/scripts/**`, `templates/**` | cli-agent |
+| `platform/services/cli/**`, `platform/scripts/**` | cli-agent |
 | `platform/services/mcctl-api/**` | backend-agent |
 | `platform/services/mcctl-console/**` | frontend-agent |
 | rest of `platform/**`, `e2e/**`, `.github/workflows/**`, `.claude/hooks/**` (hook logic and its tests) | devops-agent |

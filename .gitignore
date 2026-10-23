@@ -66,7 +66,7 @@ docker-compose.*.yml
 
 # PM2
 ecosystem.config.js
-!templates/ecosystem.config.js
+!platform/services/cli/templates/ecosystem.config.js
 .pm2/
 logs/
 pids/
