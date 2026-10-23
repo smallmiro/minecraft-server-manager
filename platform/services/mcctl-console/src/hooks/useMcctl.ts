@@ -704,11 +704,11 @@ export function useBackupHistory(limit: number = 20) {
 export function usePushBackup() {
   const queryClient = useQueryClient();
 
-  return useMutation<BackupPushResponse, Error, { message?: string }>({
-    mutationFn: ({ message }) =>
+  return useMutation<BackupPushResponse, Error, { message?: string; allowMissing?: boolean }>({
+    mutationFn: ({ message, allowMissing }) =>
       apiFetch<BackupPushResponse>('/api/backup', {
         method: 'POST',
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, allowMissing }),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backup-status'] });

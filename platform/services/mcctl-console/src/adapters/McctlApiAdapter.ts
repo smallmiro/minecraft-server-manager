@@ -361,8 +361,12 @@ export class McctlApiAdapter implements IMcctlApiClient {
     return this.fetch<BackupStatusResponse>('/api/backup/status');
   }
 
-  async pushBackup(message?: string): Promise<BackupPushResponse> {
-    const body = message ? JSON.stringify({ message }) : undefined;
+  async pushBackup(message?: string, options: { allowMissing?: boolean } = {}): Promise<BackupPushResponse> {
+    const payload = {
+      ...(message ? { message } : {}),
+      ...(options.allowMissing ? { allowMissing: true } : {}),
+    };
+    const body = Object.keys(payload).length > 0 ? JSON.stringify(payload) : undefined;
     return this.fetch<BackupPushResponse>('/api/backup/push', {
       method: 'POST',
       body,
