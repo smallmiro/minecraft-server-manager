@@ -135,7 +135,7 @@ const container = getContainer(options.root);   // ContainerOptions | rootDir st
 const useCase = container.configSnapshotUseCase; // created on first access
 ```
 
-Available getters include `promptPort`, `shellPort`, `serverRepository`, `worldRepository`, `docProvider`, `auditLogPort`, `modSourcePort`, `createServerUseCase`, `deleteServerUseCase`, `worldManagementUseCase`, `backupUseCase`, `playerLookupUseCase`, `backupScheduleUseCase`, `configSnapshotUseCase` and `configSnapshotScheduleUseCase`.
+Available getters include `promptPort`, `shellPort`, `serverRepository`, `worldRepository`, `docProvider`, `auditLogPort`, `modSourcePort`, `createServerUseCase`, `deleteServerUseCase`, `worldManagementUseCase`, `backupUseCase`, `backupScheduleUseCase`, `configSnapshotUseCase` and `configSnapshotScheduleUseCase`.
 
 Related helpers:
 

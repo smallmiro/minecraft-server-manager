@@ -1,5 +1,7 @@
 /**
  * Player Lookup Use Case - Inbound Port
+ *
+ * @deprecated Use `mcctl player info <name> [--offline]` (CLI, mojang-api.ts). player.sh was removed in #730. Removed in v3.0.0 (#736).
  * Looks up Minecraft player information
  */
 export interface IPlayerLookupUseCase {

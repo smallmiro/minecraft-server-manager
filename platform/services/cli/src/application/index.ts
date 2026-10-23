@@ -6,7 +6,6 @@ export {
   type IDeleteServerUseCase,
   type IWorldManagementUseCase,
   type IBackupUseCase,
-  type IPlayerLookupUseCase,
   // Ports - Outbound
   type IPromptPort,
   type IShellPort,
@@ -27,5 +26,4 @@ export {
   DeleteServerUseCase,
   WorldManagementUseCase,
   BackupUseCase,
-  PlayerLookupUseCase,
 } from '@minecraft-docker/shared';

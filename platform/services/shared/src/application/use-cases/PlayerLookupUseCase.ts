@@ -8,6 +8,8 @@ import type {
 
 /**
  * Player Lookup Use Case
+ *
+ * @deprecated Use `mcctl player info <name> [--offline]` (CLI, mojang-api.ts). player.sh was removed in #730. Removed in v3.0.0 (#736).
  * Looks up Minecraft player information
  */
 export class PlayerLookupUseCase implements IPlayerLookupUseCase {
@@ -72,8 +74,8 @@ export class PlayerLookupUseCase implements IPlayerLookupUseCase {
     if (!result.success) {
       spinner.stop('Lookup failed');
 
-      // Check if player not found
-      if (result.stderr?.includes('not found') || result.code === 1) {
+      // Check if player not found (a removal hint from the adapter is passed through below)
+      if (!result.stderr?.includes('was removed') && (result.stderr?.includes('not found') || result.code === 1)) {
         this.prompt.warn(`Player '${name}' not found`);
         this.prompt.outro('Player does not exist');
         return {

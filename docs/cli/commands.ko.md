@@ -1802,58 +1802,9 @@ Online Players for myserver:
 
 ---
 
-### mcctl player lookup (레거시)
-
-!!! note "지원 중단 예정"
-    `mcctl player info`를 대신 사용하세요. 이 명령어는 하위 호환성을 위해 유지됩니다.
-
-Mojang API에서 플레이어 정보를 조회합니다.
-
-```bash
-mcctl player lookup <name> [options]
-```
-
-**옵션:**
-
-| 옵션 | 설명 |
-|--------|-------------|
-| `--json` | JSON 형식으로 출력 |
-
-**예제:**
-
-```bash
-mcctl player lookup Notch
-```
-
----
-
-### mcctl player uuid (레거시)
-
-!!! note "지원 중단 예정"
-    `mcctl player info` 또는 `mcctl player info --offline`을 대신 사용하세요.
-
-플레이어 UUID를 가져옵니다.
-
-```bash
-mcctl player uuid <name> [options]
-```
-
-**옵션:**
-
-| 옵션 | 설명 |
-|--------|-------------|
-| `--offline` | 오프라인 UUID 생성 |
-| `--json` | JSON 형식으로 출력 |
-
-**예제:**
-
-```bash
-# 온라인 UUID (Mojang에서)
-mcctl player uuid Notch
-
-# 오프라인 UUID (오프라인 모드 서버용)
-mcctl player uuid Steve --offline
-```
+!!! note "제거됨"
+    `mcctl player lookup`과 `mcctl player uuid`는 제거되었습니다. `mcctl player info <name>`을 사용하세요(오프라인 UUID는 `--offline`).
+    기존 `player.sh`는 variant 비트 버그 때문에 일부 이름(예: Steve, Alex)의 오프라인 UUID를 잘못 계산했습니다. `mcctl player info --offline`은 Minecraft와 같은 값을 출력합니다.
 
 ---
 

@@ -222,10 +222,6 @@ ${colors.cyan('Player Management (Interactive):')}
   ${colors.bold('player cache')} clear         Clear player info cache
   ${colors.bold('player cache')} stats         Show cache statistics
 
-${colors.cyan('Player Lookup (Legacy):')}
-  ${colors.bold('player lookup')} <name>       Look up player info
-  ${colors.bold('player uuid')} <name>         Get player UUID
-
 ${colors.cyan('Server Backup/Restore:')}
   ${colors.bold('server-backup')} <server> [-m msg]  Backup server configuration
   ${colors.bold('server-backup')} <server> --list   List all backups
@@ -783,12 +779,10 @@ async function main(): Promise<void> {
             cacheAction: positional[0] as 'clear' | 'stats',
             json: flags['json'] === true,
           });
-        } else if (subCommand === 'lookup' || subCommand === 'uuid') {
-          // Legacy lookup commands via shell.player
-          const playerArgs = [subCommand, ...positional];
-          if (flags['json']) playerArgs.push('--json');
-          if (flags['offline']) playerArgs.push('--offline');
-          exitCode = await shell.player(playerArgs);
+        } else if (subCommand && ['lookup', 'uuid'].includes(subCommand.toLowerCase())) {
+          // Removed in #730 - fail explicitly instead of treating it as a server name
+          console.error(`'mcctl player ${subCommand.toLowerCase()}' was removed. Use: mcctl player info <name> [--offline]`);
+          exitCode = 1;
         } else if (!subCommand || subCommand) {
           // Interactive mode: player [server]
           // If subCommand is provided but not a known command, treat it as server name

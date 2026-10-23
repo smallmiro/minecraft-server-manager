@@ -232,16 +232,18 @@ export class ShellAdapter implements IShellPort {
   // Player Operations
   // ========================================
 
-  async playerLookup(name: string): Promise<ShellResult> {
-    return this.executeScript('player.sh', ['lookup', name]);
+  /**
+    * @deprecated Use `mcctl player info <name> [--offline]` (CLI, mojang-api.ts). player.sh was removed in #730. Removed in v3.0.0 (#736).
+   */
+  async playerLookup(_name: string): Promise<ShellResult> {
+    return removedPlayerScript();
   }
 
-  async playerUuid(name: string, offline = false): Promise<ShellResult> {
-    const args: string[] = ['uuid', name];
-    if (offline) {
-      args.push('--offline');
-    }
-    return this.executeScript('player.sh', args);
+  /**
+    * @deprecated Use `mcctl player info <name> [--offline]` (CLI, mojang-api.ts). player.sh was removed in #730. Removed in v3.0.0 (#736).
+   */
+  async playerUuid(_name: string, _offline = false): Promise<ShellResult> {
+    return removedPlayerScript();
   }
 
   // ========================================
@@ -287,4 +289,10 @@ export class ShellAdapter implements IShellPort {
     }
     return execScriptInteractive(scriptPath, args, this.env);
   }
+}
+
+/** player.sh was removed (#730); fail clearly instead of running a missing script. */
+function removedPlayerScript(): ShellResult {
+  const stderr = 'player.sh was removed. Use `mcctl player info <name> [--offline]` instead.';
+  return { code: 1, stdout: '', stderr, success: false };
 }

@@ -306,7 +306,7 @@ Config files: `platform/services/{shared,cli,mcctl-api}/.eslintrc.json` (ESLint 
 | `mcctl.sh` | start/stop/status, `docker exec -i rcon-cli` console | `start`, `stop`, `getStatus`; console via `getEndpoint` + the existing TCP client (`rcon-client`) | an interactive `attach()` with TTY passthrough; use TCP instead |
 | `delete-server.sh` | stop, remove container, remove compose include, avahi unregister, keep world (D-2) | `stop` | `remove({ purgeData })`, `IHostnameRegistrarPort.unregister`, `IServerSpecRepository.delete`. No TS caller yet; D5/#715 |
 | `lock.sh` | world locks | — | `IWorldAssignmentPort` (A4) |
-| `player.sh` | Mojang API lookup | — | runtime-independent TS service, no port |
+| `player.sh` | Mojang API lookup | — | removed in #730 (`mcctl player info` covers it) |
 | `backup.sh` | git backup of worlds | flush via `command(['save-all'])`, or `stop` | git storage is a backup adapter, not runtime |
 | `render-map.sh` | `docker image build`, `docker run --rm` BlueMap | — | stays inside the Docker `IMapRenderer` adapter (k8s: Job) |
 | `create-server.sh` | compose generation, include, avahi register, `compose up` | `start` | `apply(spec)`, `IHostnameRegistrarPort.register`, `IServerSpecRepository.save` (D5) |
