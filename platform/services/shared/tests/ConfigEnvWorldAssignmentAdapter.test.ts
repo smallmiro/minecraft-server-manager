@@ -247,3 +247,96 @@ describe('release', () => {
     expect(existsSync(join(root, 'worlds', '.locks'))).toBe(false);
   });
 });
+
+describe('internal detection follows the compose env_file order (Codex #4)', () => {
+  function globalEnv(content: string) {
+    mkdirSync(join(root, 'servers'), { recursive: true });
+    writeFileSync(join(root, 'servers', 'global.env'), content);
+  }
+
+  it('inherits EXTRA_ARGS from the platform .env when global.env lists the key', async () => {
+    globalEnv('# keys\nTZ\nEXTRA_ARGS\n');
+    writeFileSync(join(root, '.env'), 'EXTRA_ARGS=--universe /worlds/\n');
+    server('a', 'LEVEL=a\n');
+
+    expect((await adapter.listAssignments()).assignments).toEqual([{ server: 'a', world: 'a', internal: false }]);
+  });
+
+  it('takes a value written in global.env itself', async () => {
+    globalEnv('EXTRA_ARGS=--universe=/worlds\n');
+    server('a', 'LEVEL=a\n');
+
+    expect((await adapter.listAssignments()).assignments[0]?.internal).toBe(false);
+  });
+
+  it("lets the server's own EXTRA_ARGS win, even when empty", async () => {
+    globalEnv('EXTRA_ARGS\n');
+    writeFileSync(join(root, '.env'), 'EXTRA_ARGS=--universe /worlds/\n');
+    server('a', 'LEVEL=a\nEXTRA_ARGS=\n');
+
+    expect((await adapter.listAssignments()).assignments[0]?.internal).toBe(true);
+  });
+
+  it('is internal when nothing sets --universe', async () => {
+    globalEnv('EXTRA_ARGS\n');
+    server('a', 'LEVEL=a\n');
+
+    expect((await adapter.listAssignments()).assignments[0]?.internal).toBe(true);
+  });
+
+  it.each(['--universe /worlds', '--universe=/worlds/', '-Dx=1 --universe /worlds/ --nogui'])(
+    'accepts %s as worlds/',
+    async (args) => {
+      server('a', `LEVEL=a\nEXTRA_ARGS=${args}\n`);
+      expect((await adapter.listAssignments()).assignments[0]?.internal).toBe(false);
+    }
+  );
+
+  it.each(['--universe /data', '--universe .', '--universe=/data/'])('treats %s as server-internal', async (args) => {
+    server('a', `LEVEL=a\nEXTRA_ARGS=${args}\n`);
+    expect((await adapter.listAssignments()).assignments[0]?.internal).toBe(true);
+  });
+
+  it.each(['--universe /srv/elsewhere', '--universe', '--universe ${WORLD_DIR}'])(
+    'marks an unsupported location %s as undetermined',
+    async (args) => {
+      server('a', `LEVEL=a\nEXTRA_ARGS=${args}\n`);
+      expect((await adapter.listAssignments()).undetermined).toEqual(['a']);
+    }
+  );
+});
+
+describe('Compose interpolation in LEVEL (Codex #5)', () => {
+  it.each(['LEVEL=${MC_WORLD:-shared}', 'LEVEL="$WORLD"', 'WORLD_NAME=${W}'])(
+    'marks %s as undetermined',
+    async (line) => {
+      server('a', `${line}\n${UNIVERSE}`);
+      expect((await adapter.listAssignments()).undetermined).toEqual(['a']);
+    }
+  );
+
+  it('keeps a single-quoted $ literal', async () => {
+    server('a', `LEVEL='cash$world'\n${UNIVERSE}`);
+    expect((await adapter.listAssignments()).assignments[0]?.world).toBe('cash$world');
+  });
+});
+
+describe('preview (snapshot restore, migrate)', () => {
+  it('returns the snapshot as if the server config.env were replaced, writing nothing', async () => {
+    const file = server('a', `LEVEL=a\n${UNIVERSE}`);
+    server('b', `LEVEL=held\n${UNIVERSE}`);
+
+    const next = await adapter.preview('a', `LEVEL=held\n${UNIVERSE}`);
+
+    expect(next.assignments).toEqual([
+      { server: 'a', world: 'held', internal: false },
+      { server: 'b', world: 'held', internal: false },
+    ]);
+    expect(readFileSync(file, 'utf-8')).toBe(`LEVEL=a\n${UNIVERSE}`);
+  });
+
+  it('includes a server that has no directory yet', async () => {
+    const next = await adapter.preview('new', `LEVEL=n\n${UNIVERSE}`);
+    expect(next.assignments).toEqual([{ server: 'new', world: 'n', internal: false }]);
+  });
+});

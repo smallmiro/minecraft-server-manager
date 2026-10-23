@@ -56,16 +56,24 @@ const conflictError = (world: string, holders: string[]) =>
     holders
   );
 
-/** Servers holding `world` or one of its dimension folders, in snapshot order. */
+/**
+ * The world a name belongs to: `<w>_nether` and `<w>_the_end` are part of
+ * `<w>`. Lookups, delete, reset and duplicate reports all compare families.
+ */
+export function worldFamily(world: string): string {
+  return world.replace(DIMENSION_SUFFIX, '');
+}
+
+/** Servers using `world`'s family (the world or a dimension folder), in snapshot order. */
 export function holdersOf(
   s: WorldAssignmentSnapshot,
   world: string,
   opts: { includeInternal?: boolean } = {}
 ): string[] {
   const includeInternal = opts.includeInternal ?? true;
-  const names = new Set([world, `${world}_nether`, `${world}_the_end`]);
+  const family = worldFamily(world);
   return s.assignments
-    .filter((a) => names.has(a.world) && (includeInternal || !a.internal))
+    .filter((a) => worldFamily(a.world) === family && (includeInternal || !a.internal))
     .map((a) => a.server);
 }
 
@@ -127,6 +135,19 @@ export function checkRemoval(s: WorldAssignmentSnapshot, world: string): WorldAs
   if (undetermined) return undetermined;
   const holders = holdersOf(s, world, { includeInternal: false });
   return holders.length > 0 ? conflictError(world, holders) : null;
+}
+
+/**
+ * Why a proposed snapshot (a restored or migrated config.env already applied)
+ * is not acceptable for `server`, or null: R7, then R1 for its world.
+ */
+export function checkProposed(s: WorldAssignmentSnapshot, server: string): WorldAssignmentError | null {
+  const undetermined = undeterminedError(s);
+  if (undetermined) return undetermined;
+  const target = s.assignments.find((a) => a.server === server);
+  if (!target) return null;
+  const others = holdersOf(s, target.world).filter((h) => h !== server);
+  return others.length > 0 ? conflictError(target.world, others) : null;
 }
 
 /** Why `server`'s world (worlds/<LEVEL>) may not be wiped, or null. */
@@ -193,7 +214,7 @@ export function planRelease(
 export function findDuplicates(s: WorldAssignmentSnapshot): { world: string; servers: string[] }[] {
   const byWorld = new Map<string, string[]>();
   for (const a of s.assignments) {
-    const world = a.world.replace(DIMENSION_SUFFIX, '');
+    const world = worldFamily(a.world);
     byWorld.set(world, [...(byWorld.get(world) ?? []), a.server]);
   }
   return [...byWorld]

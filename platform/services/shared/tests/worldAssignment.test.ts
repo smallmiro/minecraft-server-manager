@@ -5,12 +5,14 @@ import { describe, it, expect } from 'vitest';
 import {
   WorldAssignmentError,
   checkAssign,
+  checkProposed,
   checkRemoval,
   checkReset,
   findDuplicates,
   formatAssignmentWarnings,
   holdersOf,
   planRelease,
+  worldFamily,
   type WorldAssignment,
   type WorldAssignmentSnapshot,
 } from '../src/domain/services/worldAssignment.js';
@@ -237,5 +239,40 @@ describe('formatAssignmentWarnings', () => {
 
   it('is empty for a clean report', () => {
     expect(formatAssignmentWarnings({ duplicates: [], undetermined: [] })).toEqual([]);
+  });
+});
+
+describe('world family: a world and its dimension folders are one unit (Codex #1)', () => {
+  it('worldFamily strips one dimension suffix', () => {
+    expect(worldFamily('w')).toBe('w');
+    expect(worldFamily('w_nether')).toBe('w');
+    expect(worldFamily('w_the_end')).toBe('w');
+  });
+
+  it('holdersOf a dimension folder finds the holder of the parent world', () => {
+    expect(holdersOf(snap([['a', 'w']]), 'w_nether')).toEqual(['a']);
+    expect(holdersOf(snap([['a', 'w_the_end']]), 'w_nether')).toEqual(['a']);
+  });
+
+  it('deleting a dimension folder of a used world is refused', () => {
+    expectError(checkRemoval(snap([['a', 'w']]), 'w_nether'), 'conflict', ['a']);
+  });
+
+  it('resetting a legacy LEVEL=w_nether server sees the holder of w', () => {
+    expectError(checkReset(snap([['a', 'w_nether'], ['b', 'w']]), 'a'), 'conflict', ['b']);
+  });
+});
+
+describe('checkProposed (snapshot restore, migrate)', () => {
+  it('allows a server that alone uses its world', () => {
+    expect(checkProposed(snap([['a', 'w'], ['b', 'b']]), 'a')).toBeNull();
+  });
+
+  it('refuses a world another server already uses', () => {
+    expectError(checkProposed(snap([['a', 'w'], ['b', 'w_nether']]), 'a'), 'conflict', ['b']);
+  });
+
+  it('refuses while anything is undetermined', () => {
+    expectError(checkProposed(snap([['a', 'w']], ['a']), 'a'), 'undetermined', ['a']);
   });
 });
