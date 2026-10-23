@@ -3,13 +3,15 @@
  * Real git against a local bare remote (file://) and a temporary platform root.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, chmod, readdir } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, chmod, readdir, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { GitWorldBackupAdapter } from '../src/infrastructure/adapters/GitWorldBackupAdapter.js';
 import { BackupRetentionPolicy } from '../src/domain/index.js';
+import { fsOps } from '../src/infrastructure/backup/restore-slots.js';
+import { vi } from 'vitest';
 import type { IContainerRuntimePort } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 import type { IRuntimeEnvironmentPort } from '../src/application/ports/outbound/IRuntimeEnvironmentPort.js';
 import type {
@@ -39,11 +41,18 @@ function git(cwd: string, args: string[], env: Record<string, string> = {}): str
 
 class FakeRuntime {
   running: string[] = [];
-  /** Optional sequence of answers for list({ running: true }). */
-  answers: string[][] = [];
-  list(options?: { running?: boolean }): string[] {
-    if (options?.running && this.answers.length > 0) return this.answers.shift()!;
-    return [...this.running];
+  /** Optional sequence of answers for list({ running: true }); an Error is a failed query. */
+  answers: Array<string[] | Error> = [];
+  /** `docker ps` fails: [] without strict (the D1 contract), a throw with strict. */
+  failList = false;
+  list(options?: { running?: boolean; strict?: boolean }): string[] {
+    const answer = options?.running && this.answers.length > 0 ? this.answers.shift()! : undefined;
+    const failed = answer instanceof Error || this.failList;
+    if (failed) {
+      if (options?.strict) throw answer instanceof Error ? answer : new Error('docker ps failed');
+      return [];
+    }
+    return answer ? [...(answer as string[])] : [...this.running];
   }
 }
 
@@ -262,6 +271,47 @@ describe('push', () => {
     ctx.environment.available = false;
     expect(errCode(await ctx.adapter.push())).toBe('runtime_unavailable');
     expect(ctx.console.calls).toEqual([]);
+  });
+
+  it('refuses when listing running servers fails although Docker answers info (P1)', async () => {
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    ctx.runtime.failList = true;
+    expect(errCode(await ctx.adapter.push())).toBe('runtime_unavailable');
+    expect(ctx.console.calls).toEqual([]);
+    expect(remoteFiles(ctx.bare)).toEqual([]);
+  });
+
+  it('refuses a symlinked worlds/ root (P1)', async () => {
+    await writeWorld(join(ctx.base, 'elsewhere', 'alpha'), 'A1');
+    await rm(join(ctx.root, 'worlds'), { recursive: true });
+    await symlink(join(ctx.base, 'elsewhere'), join(ctx.root, 'worlds'));
+    expect(errCode(await ctx.adapter.push())).toBe('unsupported_layout');
+  });
+
+  it('reports a symlinked servers/<n>/ as skipped instead of ignoring it', async () => {
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    await internalServer(ctx.base, 'real', 'w');
+    await mkdir(join(ctx.root, 'servers'), { recursive: true });
+    await symlink(join(ctx.base, 'servers', 'real'), join(ctx.root, 'servers', 'linked'));
+    const out = ok(await ctx.adapter.push());
+    expect(out.skipped.join('\n')).toContain('linked');
+  });
+
+  it('keeps save-on failures in the error when the flush also failed (P2)', async () => {
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    ctx.runtime.running = ['mc-a', 'mc-b'];
+    ctx.console.handler = (name, args) => {
+      if (name === 'mc-b' && args[0] === 'save-all') return { exitCode: 1, stdout: '', stderr: 'flush boom' };
+      if (name === 'mc-a' && args[0] === 'save-on') return { exitCode: 1, stdout: '', stderr: 'rcon down' };
+      return { exitCode: 0, stdout: '', stderr: '' };
+    };
+    const r = await ctx.adapter.push();
+    expect(errCode(r)).toBe('flush_failed');
+    if (!r.ok) {
+      expect(r.error.message).toContain('save-on failed for a: rcon down');
+      expect(r.error.servers).toEqual(expect.arrayContaining(['a', 'b']));
+    }
+    expect(ctx.console.calls).toContain('mc-b save-on');
   });
 
   it('refuses a symlink inside worlds/ before flushing', async () => {
@@ -492,6 +542,41 @@ describe('restore', () => {
     expect(existsSync(join(ctx.root, 'worlds', 'beta'))).toBe(true);
   });
 
+  it('refuses when listing running servers fails, at the first check or the re-check (P1)', async () => {
+    const { a } = await twoCommits();
+    ctx.runtime.answers = [new Error('docker ps failed')];
+    expect(errCode(await ctx.adapter.restore(a))).toBe('runtime_unavailable');
+    ctx.runtime.answers = [[], new Error('docker ps failed')];
+    expect(errCode(await ctx.adapter.restore(a))).toBe('runtime_unavailable');
+    expect(existsSync(join(ctx.root, 'worlds', 'beta'))).toBe(true);
+    expect(await readFile(join(ctx.root, 'worlds', 'alpha', 'level.dat'), 'utf8')).toBe('A2');
+  });
+
+  it('refuses a symlinked worlds/ root and leaves the link target alone (P1)', async () => {
+    const { a } = await twoCommits();
+    await rename(join(ctx.root, 'worlds'), join(ctx.base, 'real-worlds'));
+    await symlink(join(ctx.base, 'real-worlds'), join(ctx.root, 'worlds'));
+    expect(errCode(await ctx.adapter.restore(a))).toBe('unsupported_layout');
+    expect(existsSync(join(ctx.base, 'real-worlds', 'beta', 'level.dat'))).toBe(true);
+  });
+
+  it('refuses a symlinked live world target (P1)', async () => {
+    await internalServer(ctx.root, 'surv', 'w');
+    const c = ok(await ctx.adapter.push()).commit!;
+    await rename(join(ctx.root, 'servers', 'surv', 'data', 'w'), join(ctx.base, 'w-real'));
+    await symlink(join(ctx.base, 'w-real'), join(ctx.root, 'servers', 'surv', 'data', 'w'));
+    expect(errCode(await ctx.adapter.restore(c))).toBe('unsupported_layout');
+    expect(existsSync(join(ctx.base, 'w-real', 'level.dat'))).toBe(true);
+  });
+
+  it('refuses a symlinked servers/ root (P1)', async () => {
+    await internalServer(ctx.root, 'surv', 'w');
+    const c = ok(await ctx.adapter.push()).commit!;
+    await rename(join(ctx.root, 'servers'), join(ctx.base, 'real-servers'));
+    await symlink(join(ctx.base, 'real-servers'), join(ctx.root, 'servers'));
+    expect(errCode(await ctx.adapter.restore(c))).toBe('unsupported_layout');
+  });
+
   it('refuses when the runtime cannot be queried (K3)', async () => {
     const { a } = await twoCommits();
     ctx.environment.available = false;
@@ -573,6 +658,49 @@ describe('restore', () => {
       expect(existsSync(join(ctx.root, 'backups', 'restore-previous', s, 'INCOMPLETE'))).toBe(false);
     }
     expect(ok(await ctx.adapter.push()).changed).toBe(false); // nothing blocks afterwards
+  });
+
+  it('a failed rollback leaves INCOMPLETE, which blocks the next push and restore (P2)', async () => {
+    const { a } = await twoCommits();
+    const real = fsOps.rename;
+    let calls = 0;
+    const spy = vi.spyOn(fsOps, 'rename').mockImplementation(async (from, to) => {
+      calls += 1;
+      if (calls === 3 || calls === 4) throw new Error(`injected rename failure ${calls}`); // swap, then rollback
+      return real(from, to);
+    });
+    try {
+      const r = await ctx.adapter.restore(a);
+      expect(errCode(r)).toBe('io_failed');
+      if (!r.ok) expect(r.error.paths?.[0]).toContain('restore-previous');
+    } finally {
+      spy.mockRestore();
+    }
+    expect(errCode(await ctx.adapter.push())).toBe('recovery_required');
+    expect(errCode(await ctx.adapter.restore(a))).toBe('recovery_required');
+  });
+
+  it('rolled-back slots do not push successful slots out of the rotation (P2)', async () => {
+    if (isRoot) return;
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    await internalServer(ctx.root, 'surv', 'w');
+    const c = ok(await ctx.adapter.push()).commit!;
+    for (let i = 0; i < 3; i++) ok(await ctx.adapter.restore(c));
+    const slotsDir = join(ctx.root, 'backups', 'restore-previous');
+    const before = (await readdir(slotsDir)).sort();
+    const dataDir = join(ctx.root, 'servers', 'surv', 'data');
+    await chmod(dataDir, 0o555);
+    try {
+      for (let i = 0; i < 2; i++) expect(errCode(await ctx.adapter.restore(c))).toBe('io_failed');
+    } finally {
+      await chmod(dataDir, 0o755);
+    }
+    expect((await readdir(slotsDir)).sort()).toEqual(before); // rolled-back slots are removed
+    ok(await ctx.adapter.restore(c));
+    const after = (await readdir(slotsDir)).sort();
+    expect(after).toHaveLength(3);
+    expect(after).toEqual(expect.arrayContaining([before[1], before[2]]));
+    expect(await readFile(join(slotsDir, before[1]!, 'worlds', 'alpha', 'level.dat'), 'utf8')).toBe('A1');
   });
 
   it('blocks while a slot is INCOMPLETE', async () => {
@@ -695,6 +823,25 @@ describe('prune (#9)', () => {
     expect(out.warnings.length).toBe(1);
   });
 
+  it('skips without touching history when local has an unpushed commit and the remote moved (P1)', async () => {
+    await pushN(2);
+    git(ctx.cache, ['commit', '-q', '--allow-empty', '-m', 'local A'], {
+      GIT_AUTHOR_NAME: 'x', GIT_AUTHOR_EMAIL: 'x@x', GIT_COMMITTER_NAME: 'x', GIT_COMMITTER_EMAIL: 'x@x',
+    });
+    const localA = git(ctx.cache, ['rev-parse', 'main']);
+    const work = join(ctx.base, 'other-writer');
+    git(ctx.base, ['clone', '-q', ctx.bare, work]);
+    git(work, ['commit', '-q', '--allow-empty', '-m', 'remote B']);
+    git(work, ['push', '-q', 'origin', 'HEAD:main']);
+    const remoteB = remoteTip(ctx.bare);
+
+    const out = ok(await ctx.adapter.prune(BackupRetentionPolicy.create({ maxCount: 1 })));
+    expect(out.removed).toBe(0);
+    expect(out.warnings).toHaveLength(1);
+    expect(git(ctx.cache, ['rev-parse', 'main'])).toBe(localA);
+    expect(remoteTip(ctx.bare)).toBe(remoteB);
+  });
+
   it('a crash between push and update-ref is reconciled silently by the next push', async () => {
     await pushN(3);
     const before = git(ctx.cache, ['rev-parse', 'main']);
@@ -704,5 +851,64 @@ describe('prune (#9)', () => {
     const out = ok(await ctx.adapter.push({ message: 'v4' }));
     expect(out.warnings).toEqual([]);
     expect(git(ctx.bare, ['log', '--format=%s', 'main']).split('\n')).toEqual(['v4', 'v3']);
+  });
+});
+
+describe('prune against a remote that changes under it (#9, R12)', () => {
+  const REAL_GIT = execFileSync('sh', ['-c', 'command -v git'], { encoding: 'utf8' }).trim();
+  const savedPath = process.env.PATH;
+  const WRAPPER = `#!/bin/sh
+case " $* " in
+  *" --force-with-lease="*)
+    if [ "$FAKE_PRUNE_MODE" = lease ]; then "${REAL_GIT}" -C "$EXTERNAL_CLONE" push -q origin HEAD:main > /dev/null 2>&1; fi
+    if [ "$FAKE_PRUNE_MODE" = ack-fail ]; then "${REAL_GIT}" "$@"; echo "fatal: the remote end hung up unexpectedly" >&2; exit 1; fi
+    ;;
+esac
+exec "${REAL_GIT}" "$@"
+`;
+
+  beforeEach(async () => {
+    await mkdir(join(ctx.base, 'bin'), { recursive: true });
+    await writeFile(join(ctx.base, 'bin', 'git'), WRAPPER);
+    await chmod(join(ctx.base, 'bin', 'git'), 0o755);
+    process.env.PATH = `${join(ctx.base, 'bin')}:${savedPath}`;
+  });
+
+  afterEach(() => {
+    process.env.PATH = savedPath;
+    delete process.env.FAKE_PRUNE_MODE;
+    delete process.env.EXTERNAL_CLONE;
+  });
+
+  async function pushN(n: number) {
+    for (let i = 1; i <= n; i++) {
+      await writeWorld(join(ctx.root, 'worlds', 'alpha'), `v${i}`);
+      ok(await ctx.adapter.push({ message: `v${i}` }));
+    }
+  }
+
+  it('an external writer that moves the remote mid-prune is a lease conflict; nothing is rewritten', async () => {
+    await pushN(3);
+    const external = join(ctx.base, 'external');
+    git(ctx.base, ['clone', '-q', ctx.bare, external]);
+    git(external, ['commit', '-q', '--allow-empty', '-m', 'external']);
+    const externalTip = git(external, ['rev-parse', 'HEAD']);
+    const localTip = git(ctx.cache, ['rev-parse', 'main']);
+    process.env.FAKE_PRUNE_MODE = 'lease';
+    process.env.EXTERNAL_CLONE = external;
+
+    const r = await ctx.adapter.prune(BackupRetentionPolicy.create({ maxCount: 1 }));
+    expect(errCode(r)).toBe('lease_conflict');
+    expect(remoteTip(ctx.bare)).toBe(externalTip);
+    expect(git(ctx.cache, ['rev-parse', 'main'])).toBe(localTip);
+  });
+
+  it('a push that reached the remote but reported failure converges to the new history', async () => {
+    await pushN(3);
+    process.env.FAKE_PRUNE_MODE = 'ack-fail';
+    const out = ok(await ctx.adapter.prune(BackupRetentionPolicy.create({ maxCount: 1 })));
+    expect(out.removed).toBeGreaterThan(0);
+    expect(remoteCount(ctx.bare)).toBe(1);
+    expect(git(ctx.cache, ['rev-parse', 'main'])).toBe(remoteTip(ctx.bare));
   });
 });

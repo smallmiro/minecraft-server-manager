@@ -139,3 +139,37 @@ describe('backup lock (#732 B2)', () => {
     expect(existsSync(lockPath)).toBe(true);
   });
 });
+
+describe('backup lock release race (#732 review P2)', () => {
+  let root: string;
+  let lockPath: string;
+
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), 'wb-lock-race-'));
+    lockPath = join(root, 'backups', '.backup.lock');
+  });
+
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it('a lock moved aside by a late contender and put back after release does not survive', async () => {
+    const { rename, link, unlink } = await import('node:fs/promises');
+    const a = await acquireBackupLock(root, 'push');
+    if (!a.ok) throw new Error('lock failed');
+    // B read the previous (stale) holder before A took the lock, then moves A's lock aside
+    const aside = `${lockPath}.b.stale`;
+    await rename(lockPath, aside);
+    // A finishes while its lock is aside
+    const released = a.release();
+    await new Promise((r) => setTimeout(r, 100));
+    // B sees a nonce that is not the stale one and puts the file back
+    await link(aside, lockPath);
+    await unlink(aside);
+    await released;
+    expect(existsSync(lockPath)).toBe(false);
+    const next = await acquireBackupLock(root, 'push');
+    expect(next.ok).toBe(true);
+    if (next.ok) await next.release();
+  });
+});

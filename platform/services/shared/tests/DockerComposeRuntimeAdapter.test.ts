@@ -135,6 +135,15 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
     expect(runtime.list({ running: true })).toEqual([]);
   });
 
+  it('list({ strict: true }) throws when docker fails, so "none running" and "cannot tell" differ (#732)', () => {
+    vi.mocked(spawnSync).mockReturnValue(exited(1));
+    expect(() => runtime.list({ running: true, strict: true })).toThrow();
+    vi.mocked(spawnSync).mockReturnValue(exited(0, ''));
+    expect(runtime.list({ running: true, strict: true })).toEqual([]);
+    vi.mocked(spawnSync).mockReturnValue(exited(0, 'mc-b\nmc-router\nmc-a\n'));
+    expect(runtime.list({ strict: true })).toEqual(['mc-a', 'mc-b']);
+  });
+
   it('getLogs tails 50 lines by default and returns "" on failure', () => {
     vi.mocked(spawnSync).mockReturnValue(exited(0, 'line1\nline2\n'));
     expect(runtime.getLogs('mc-a')).toBe('line1\nline2');
