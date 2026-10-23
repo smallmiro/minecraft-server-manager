@@ -34,6 +34,22 @@ describe('PlayerFileService', () => {
     }
   });
 
+  // ==================== env codec (#656) ====================
+
+  describe('config.env codec', () => {
+    it('reads values the way Compose does (quotes, inline comment)', () => {
+      setupConfigEnv('codec', 'ENABLE_WHITELIST="TRUE" # on\n');
+      expect(service.readWhitelistEnabled('codec')).toBe(true);
+    });
+
+    it('rewrites an existing key in place and keeps the trailing newline', () => {
+      setupConfigEnv('codec', '# c\nENABLE_WHITELIST=TRUE\nTYPE=PAPER\n');
+      service.setWhitelistEnabled('codec', false);
+      const content = readFileSync(join(TEST_PLATFORM_PATH, 'servers', 'codec', 'config.env'), 'utf-8');
+      expect(content).toBe('# c\nENABLE_WHITELIST=FALSE\nTYPE=PAPER\n');
+    });
+  });
+
   // ==================== getServerDataPath ====================
 
   describe('getServerDataPath', () => {

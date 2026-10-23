@@ -1078,3 +1078,14 @@ MAX_PLAYERS=20
     });
   });
 });
+
+describe('ConfigService env codec (#656)', () => {
+  it('reads quoted values and drops inline comments like Compose', () => {
+    vi.mocked(existsSync).mockReturnValue(true);
+    vi.mocked(readFileSync).mockReturnValue('MOTD="Hello World" # greeting\nMEMORY=4G # heap\nexport DIFFICULTY=hard\n');
+    const config = new ConfigService('/test/platform').getConfig('alpha');
+    expect(config.motd).toBe('Hello World');
+    expect(config.memory).toBe('4G');
+    expect(config.difficulty).toBe('hard');
+  });
+});
