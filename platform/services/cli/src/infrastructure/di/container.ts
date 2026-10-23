@@ -4,6 +4,7 @@ import {
   // Infrastructure adapters from shared
   ShellAdapter,
   DockerServerConsoleAdapter,
+  DockerComposeRuntimeAdapter,
   ServerRepository,
   WorldRepository,
   DocsAdapter,
@@ -25,6 +26,7 @@ import {
   // Port types from shared
   type IPromptPort,
   type IShellPort,
+  type IContainerRuntimePort,
   type IServerRepository,
   type IWorldRepository,
   type IDocProvider,
@@ -60,6 +62,7 @@ export class Container {
   // Adapters (singleton)
   private _promptPort?: IPromptPort;
   private _shellPort?: IShellPort;
+  private _runtimePort?: IContainerRuntimePort;
   private _serverRepo?: IServerRepository;
   private _worldRepo?: IWorldRepository;
   private _docProvider?: IDocProvider;
@@ -103,6 +106,13 @@ export class Container {
       });
     }
     return this._shellPort;
+  }
+
+  get runtimePort(): IContainerRuntimePort {
+    if (!this._runtimePort) {
+      this._runtimePort = new DockerComposeRuntimeAdapter();
+    }
+    return this._runtimePort;
   }
 
   get serverRepository(): IServerRepository {
