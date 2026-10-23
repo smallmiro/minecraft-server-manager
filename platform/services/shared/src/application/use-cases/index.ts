@@ -18,3 +18,4 @@ export {
   API_PM2_KILL_TIMEOUT_MS,
   type AutoBackupOnStopResult,
 } from './autoBackupOnStop.js';
+export { updateServerSpec } from './updateServerSpec.js';
