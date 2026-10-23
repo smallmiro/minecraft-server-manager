@@ -204,7 +204,7 @@ register_avahi_hostname() {
     fi
 
     # Check if entry already exists
-    if grep -q "^[^#]*$hostname" "$AVAHI_HOSTS" 2>/dev/null; then
+    if avahi_host_registered "$AVAHI_HOSTS" "$hostname"; then
         echo -e "${YELLOW}   Hostname $hostname already registered in avahi${NC}"
         return 0
     fi

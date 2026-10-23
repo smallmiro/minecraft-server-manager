@@ -55,7 +55,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 SERVERS_DIR="$PLATFORM_DIR/servers"
 SERVERS_COMPOSE="$SERVERS_DIR/compose.yml"
 MAIN_COMPOSE="$PLATFORM_DIR/docker-compose.yml"
-AVAHI_HOSTS="/etc/avahi/hosts"
+AVAHI_HOSTS="${AVAHI_HOSTS:-/etc/avahi/hosts}"
 
 # Default values
 FORCE_DELETE="false"
@@ -382,15 +382,8 @@ if [ -f "$SERVERS_COMPOSE" ]; then
     cp "$SERVERS_COMPOSE" "$SERVERS_COMPOSE.bak"
 
     # Remove include entry
-    if grep -q "$SERVER_NAME/docker-compose.yml" "$SERVERS_COMPOSE"; then
-        sed -i "\|$SERVER_NAME/docker-compose.yml|d" "$SERVERS_COMPOSE"
+    if remove_include_entry "$SERVERS_COMPOSE" "$SERVER_NAME"; then
         echo "   Removed from include section"
-
-        # If no more includes, remove the include: line
-        if ! grep -q "^  - " "$SERVERS_COMPOSE"; then
-            sed -i '/^include:/d' "$SERVERS_COMPOSE"
-            echo "   Removed empty include section"
-        fi
     else
         echo "   Server not found in compose.yml"
     fi
@@ -417,8 +410,11 @@ echo -e "${BLUE}[3/4]${NC} Removing mDNS hostname..."
 if [ "$KEEP_AVAHI" = "true" ]; then
     echo "   Skipped (--keep-avahi specified)"
 elif [ -f "$AVAHI_HOSTS" ]; then
-    if grep -q "$SERVER_NAME.local" "$AVAHI_HOSTS" 2>/dev/null; then
-        if run_with_sudo sed -i "/$SERVER_NAME\.local/d" "$AVAHI_HOSTS" 2>/dev/null; then
+    if avahi_host_registered "$AVAHI_HOSTS" "$SERVER_NAME.local"; then
+        # tee into the existing file keeps its owner/mode (it is root-owned)
+        # filtered content is built first so a failed awk never truncates the file
+        if new_hosts=$(avahi_hosts_without "$AVAHI_HOSTS" "$SERVER_NAME.local") \
+            && printf '%s\n' "$new_hosts" | run_with_sudo_stdin tee "$AVAHI_HOSTS" > /dev/null 2>&1; then
             run_with_sudo systemctl restart avahi-daemon 2>/dev/null || true
             echo -e "   ${GREEN}Removed $SERVER_NAME.local from avahi${NC}"
         else
@@ -426,7 +422,7 @@ elif [ -f "$AVAHI_HOSTS" ]; then
             if has_sudo_password; then
                 echo "   Check if MCCTL_SUDO_PASSWORD is correct"
             else
-                echo "   Set MCCTL_SUDO_PASSWORD env var or remove manually: sudo sed -i '/$SERVER_NAME.local/d' $AVAHI_HOSTS"
+                echo "   Set MCCTL_SUDO_PASSWORD env var or remove the $SERVER_NAME.local line from $AVAHI_HOSTS manually"
             fi
         fi
     else

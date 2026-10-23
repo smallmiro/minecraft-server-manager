@@ -117,6 +117,48 @@ run_with_sudo_stdin() {
     run_with_sudo "$@"
 }
 
+# --- Exact-name matching (#660) ----------------------------------------------
+# Names go to awk through ENVIRON and are compared as plain strings, never
+# built into a regex. No GNU-only flags: works with BSD awk/mv/cp (macOS).
+
+# avahi_host_registered <hosts-file> <hostname>
+# True when an uncommented line lists exactly <hostname> as a host field.
+avahi_host_registered() {
+    MCCTL_MATCH="$2" awk '
+        /^[ \t]*#/ { next }
+        { for (i = 2; i <= NF; i++) { if ($i ~ /^#/) break; if ($i == ENVIRON["MCCTL_MATCH"]) found = 1 } }
+        END { exit !found }' "$1" 2> /dev/null
+}
+
+# avahi_hosts_without <hosts-file> <hostname>: file content minus the lines
+# that list exactly <hostname>.
+avahi_hosts_without() {
+    MCCTL_MATCH="$2" awk '
+        /^[ \t]*#/ { print; next }
+        { for (i = 2; i <= NF; i++) { if ($i ~ /^#/) break; if ($i == ENVIRON["MCCTL_MATCH"]) next } print }' "$1"
+}
+
+# remove_include_entry <compose-file> <server>: drops the line that is exactly
+# "- <server>/docker-compose.yml" (indent/trailing blanks ignored), then the
+# "include:" line if no entries remain. Rewrites through a temp file + mv with
+# the original mode/owner (cp -p). Returns 1 and leaves the file untouched when
+# the entry is absent.
+remove_include_entry() {
+    local file="$1" tmp
+    tmp=$(mktemp "$file.XXXXXX") || return 2
+    cp -p "$file" "$tmp" || { rm -f "$tmp"; return 2; }
+    MCCTL_MATCH="- $2/docker-compose.yml" awk '
+        { l = $0; sub(/^[ \t]+/, "", l); sub(/[ \t\r]+$/, "", l) }
+        l == ENVIRON["MCCTL_MATCH"] { removed = 1; next }
+        { lines[++n] = $0; if (l ~ /^- /) entries++ }
+        END {
+            for (i = 1; i <= n; i++) if (entries || lines[i] !~ /^include:/) print lines[i]
+            exit !removed
+        }' "$file" > "$tmp"
+    if [ $? -ne 0 ]; then rm -f "$tmp"; return 1; fi
+    mv "$tmp" "$file"
+}
+
 # Check if sudo password is configured for automation
 has_sudo_password() {
     [[ -n "${MCCTL_SUDO_PASSWORD:-}" ]]
