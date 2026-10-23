@@ -122,19 +122,38 @@
 
 ## 백업 포트(#732, S3)
 
-상태: 제안됨(2026-10-23), system-architect 리뷰 전. #653, #664, #727을 흡수한다. 시그니처, 절차, 버그별 테스트 표 전체는 [영어판](0001-container-runtime-ports.md#backup-port-732-s3)에 있습니다.
+상태: 제안됨(2026-10-23). system-architect 리뷰(APPROVE WITH CHANGES)와 Codex 리뷰(R1~R14, S1~S5)를 반영해 고쳤다. #653, #664, #727을 흡수한다. 시그니처, 절차, 버그별 테스트 표 전체는 [영어판](0001-container-runtime-ports.md#backup-port-732-s3)에 있습니다.
+
+**지원 범위**: 로컬 단일 호스트에서만 동작한다. `worlds/`, `servers/<n>/data/`, `backups/`는 같은 파일시스템에 있어야 하고, 일반 파일과 디렉터리만 다룬다. 이 조건에 맞지 않으면 아무것도 바꾸기 전에 거부한다.
 
 | # | 결정 |
 |---|------|
-| 1 | 포트 `IWorldBackupPort`(`status`, `history`, `push`, `restore`, `prune`, `testConnection`)를 둔다. 비동기이고 reject하지 않는다. 결과는 `{ ok: true, value } \| { ok: false, error: { code, message } }`이고, 코드는 `not_configured`, `locked`, `servers_running`, `flush_failed`, `commit_not_found`, `empty_source`, `auth_failed`, `repo_not_found`, `git_too_old`, `timeout`, `git_failed`, `io_failed`다 |
-| 2 | 어댑터는 `GitWorldBackupAdapter({ root, runtime, console, remoteBase? })`다. 설정은 호출할 때마다 `<root>/.env`를 env 코덱으로 읽는다(없는 키만 `process.env`). 잠금, flush, 실행 중 확인도 어댑터가 한다. 호출처 네 곳이 모두 이 어댑터를 거치고, API에는 아직 use case 계층이 없기 때문이다(B-Q1) |
-| 3 | composition root: CLI `Container.worldBackupPort`, API `routes/backup.ts`와 `routes/backup-schedule.ts`(D2의 `container` 플러그인이 생기면 그리로 옮긴다). `BackupUseCase`의 두 번째 인자를 `IWorldBackupPort`로 바꾼다(B-Q2). `IShellPort`와 `ShellAdapter`의 `backup*` 4개에는 `@deprecated`만 붙이고, #736에서 지운다 |
-| 4 | 잠금 파일은 `<root>/backups/.backup.lock`이다. `open(..., 'wx')`(O_EXCL)로 만들고 `{pid, hostname, op, startedAt}`를 쓴다. 같은 호스트에서 pid가 죽었거나 6시간이 지났으면 오래된 잠금으로 보고 가져온다. 대화형 CLI, API 수동 백업, 복원은 기다리지 않는다(API는 409). `--auto`(정지 시 자동 백업)와 스케줄러는 최대 10분 기다린다 |
-| 5 | 토큰은 환경 변수로만 넘긴다: `GIT_CONFIG_COUNT/KEY_0/VALUE_0`로 github.com에만 `http.extraHeader: Authorization: Basic …`을 건다. 원격 URL에는 토큰을 넣지 않고, 기존 캐시의 토큰 URL은 `remote set-url`로 지운다. `GIT_TERMINAL_PROMPT=0`을 쓴다. git 2.31 이상이 필요하다(B-Q3) |
-| 6 | push: 저장소 구조는 `worlds/…`와 `servers/<n>/<LEVEL>{,_nether,_the_end}`다. 실행 중인 서버마다 `save-off` → `save-all flush` → 복사(`fs.rm` + `fs.cp`, `.locks` 제외) → `finally`에서 `save-on`을 실행한다. 원본이 비어 있으면 커밋하지 않는다. 변경이 없으면 `{ changed: false }`(성공)다. `--force`는 쓰지 않는다 |
-| 7 | 복원: **실행 중인 서버가 하나라도 있으면 거부한다**(#670 전까지 월드와 서버의 대응을 믿을 수 없다). `git worktree add --detach`로 그 커밋의 트리를 정확히 꺼낸다. `worlds/`가 비어 있으면 중단한다. `.locks`는 옮기지 않는다. 이전 상태는 `backups/restore-previous/` 한 칸에만 두므로 `.bak`이 쌓이지 않는다. 커밋에 있는 서버의 내부 월드만 바꾼다. 포트는 입력을 기다리지 않고, CLI `restore <commit>`은 `--force`가 없으면 확인한다 |
-| 8 | history는 NUL로 구분한 `git log`로 읽고(#12), status는 env 키와 캐시의 마지막 커밋으로 판단한다(#13). `diff`는 TS 호출처가 없어 옮기지 않는다(B-Q4). 연결 테스트는 실제 `git ls-remote`를 실행한다(#10) |
-| 9 | 보존 정책: 잠금 안에서 작성 시각 기준으로 남길 커밋을 고른다(`--reverse -1` 버그 수정). `commit-tree`로 원래 날짜를 유지한 채 새 이력을 만들고(ref, 작업 트리, index는 그대로), `push --force-with-lease=<b>:<oldTip>`가 성공한 뒤에만 `update-ref`한다. 중간에 실패하거나 타임아웃이 나도 로컬과 원격이 깨지지 않는다 |
-| 10 | 테스트: 동작은 로컬 bare 저장소와 실제 git으로, argv와 env 확인(#10, #11)만 `PATH`의 가짜 git으로 검증한다. PR1은 포트, 어댑터, 잠금, 테스트다. PR2는 호출처(use case, CLI, API, 스케줄러, `mcctl.sh`의 `mcctl backup push --auto`)를 바꾼다. PR3는 `backup.sh`를 지우고 문서를 고친다 |
+| 1 | **포트**: `IWorldBackupPort`(`status`, `history`, `push`, `restore`, `prune`, `testConnection`)를 둔다. 모든 메서드는 비동기이고 reject하지 않는다. `status`도 결과 타입 `{ ok, value } \| { ok: false, error: { code, ... } }`로 돌려준다 |
+| 2 | **어댑터**: `GitWorldBackupAdapter({ root, runtime, environment, console, remoteBase? })`다. 설정은 호출할 때마다 `.env`를 env 코덱으로 읽는다. 잠금, flush, 실행 중 확인도 어댑터가 맡는다(B-Q1, S1) |
+| 3 | **호환(K1·S3)**: `BackupUseCase`의 두 번째 인자는 `IWorldBackupPort \| IShellPort`로 넓히고, 타입 가드는 `'backupPush' in x`로 한다. 좁히는 일은 #736에서 한다. deprecated된 `ShellAdapter.backup*`은 새 어댑터에 위임하고 `backup.sh`의 출력 계약(종료 코드 0/1/2, 라벨, `{history:[…]}`)을 그대로 지킨다. `IServerConsolePort.command`에는 선택 인자 `signal`을 추가한다 |
+| 4 | **잠금**: 파일은 `<root>/backups/.backup.lock`이다. 먼저 `mkdir -p`를 하고, 보유자 정보를 완전히 쓴 임시 파일을 `link`로 건다. 보유자가 죽었다고 보는 경우는 **같은 호스트에서 재부팅했거나 pid가 `ESRCH`일 때뿐**이다. `EPERM`은 살아 있는 것으로 본다. 경과 시간으로는 인계하지 않는다. 인계는 rename한 뒤 nonce를 확인하고, nonce가 다르면 되돌린다. 다른 호스트이거나 pid가 살아 있으면 `locked`로 실패하고, 수동 해제 방법은 문서에 적는다. 경쟁자가 셋일 때 남는 한계는 `ponytail:`로 적는다 |
+| 5 | **git 환경과 토큰**: 상속된 `GIT_*`를 모두 지운다. `GIT_CONFIG_COUNT=3`으로 extraHeader를 초기화한 뒤 Authorization을 넣고 `credential.helper`를 비운다. `pushurl`을 지운 다음 `set-url`을 한다. 네트워크가 느리면 중단한다(`GIT_HTTP_LOW_SPEED_LIMIT=1000`, `GIT_HTTP_LOW_SPEED_TIME=300`). 모든 git 실행에는 벽시계 상한 4시간을 둔다. git 2.31 이상이 필요하다 |
+| 6 | **push 절차**: <br>• 캐시는 refspec을 명시해 fetch하고 `checkout -f -B`한다. 새 clone은 얕게 받지 않는다. <br>• push되지 않은 로컬 tip은 `refs/mcctl/unpublished/<ts>`에 남긴다(R11). <br>• 이전 커밋에 있던 월드가 원본에서 사라졌으면 `missing_worlds`로 실패한다. `--allow-missing`을 주면 진행한다(R7). <br>• `isAvailable()`이 false이면 `runtime_unavailable`로 실패한다(K3). <br>• `save-off`와 `flush`는 `AbortSignal.timeout(60s)`로 실행한다. `save-on`은 서버마다 따로 실행하고, 실패하면 경고에 서버 이름을 남긴다. <br>• symlink를 만나면 `unsupported_layout`으로 실패한다. 변경이 없으면 성공이다 |
+| 7 | **restore 절차**: <br>• 시작할 때 남은 staging을 정리하고 `worktree prune`을 실행한다. 캐시가 없으면 push의 캐시 준비 단계를 그대로 쓴다. <br>• 실행 중인 서버가 하나라도 있으면 거부한다. 교체 직전에 런타임을 **다시 확인한다**. <br>• 복원할 월드가 하나 이상 있어야 한다. 내부 월드만 있는 커밋도 복원할 수 있다. <br>• 서버의 현재 LEVEL과 커밋의 월드 디렉터리 이름이 다르면 `restore_conflict`로 거부한다. 파일시스템이 다르면 거부한다. <br>• 이전 상태는 시각별 슬롯 `restore-previous/<ISO-ts>/`에 옮기고 journal에 기록한다. 실패하면 journal의 역순으로 되돌린다. <br>• 일부만 되돌려졌으면 `INCOMPLETE` 표시를 남기고, 이후 push와 restore는 `recovery_required`로 막는다. <br>• 성공하면 완료된 슬롯을 최근 3개만 남긴다. 슬롯은 교체가 성공하기 전에는 지우지 않는다(K2) |
+| 8 | **보존 정책**: <br>• 얕은 clone이면 `fetch --unshallow`를 하고, 실패하면 정리하지 않는다. <br>• **tip은 항상 남기고**, 원래 체인 순서대로 `commit-tree`로 다시 만든다. push 전에 `newTip^{tree} == oldTip^{tree}`를 확인한다. <br>• `--force-with-lease`로 push한다. 결과가 불확실하면 `ls-remote`로 원격 상태를 보고 맞춘다. `.prune-state.json`은 push와 `update-ref` 사이에 죽은 경우를 복구하는 데 쓴다 |
+| 9 | **diff**: 사용자 진입점이 없다(`mcctl backup`, API, 콘솔, 문서 어디에도 없다). 그래서 옮기지 않고, 이를 명시적인 범위 변경으로 기록한다(S4) |
+| 10 | **PR 구성**: <br>• PR1: shared(포트, 어댑터, 호환 계층, 테스트) <br>• PR2: CLI와 API. `mcctl.sh`의 auto-on-stop과 `cmd_backup`은 `MCCTL_NODE`/`MCCTL_CLI` 또는 `mcctl`을 거쳐 TS 경로로 보낸다. <br>• PR3: `backup.sh` 삭제와 문서 수정. <br>• **PR2와 PR3는 같은 릴리스로 낸다** |
 
-**확인이 필요한 쟁점**(영어판 B10): B-Q1 정책 위치, B-Q2 `BackupUseCase` 생성자 변경, B-Q3 git 2.31 요구, B-Q4 `diff` 제거, B-Q5 기존 `worlds.bak.*` 처리, B-Q6 flush 실패 시 전체 실패 여부, B-Q7 복원 중 auto-scale 기동, B-Q8 프로세스가 죽어 `save-off`가 남는 경우, B-Q9 API 정지 경로의 자동 백업.
+**B-Q 결정**:
+
+| 쟁점 | 결정 |
+|------|------|
+| Q1 | 정책은 어댑터에 둔다 |
+| Q2 | 생성자 인자를 넓힌다(K1) |
+| Q3 | git 2.31 이상을 요구한다 |
+| Q4 | diff는 옮기지 않는다 |
+| Q5 | `worlds.bak`은 남기고 문서로 안내한다 |
+| Q6 | flush가 하나라도 실패하면 push 전체를 실패시킨다 |
+| Q7 | 문서로 안내하고 교체 직전에 다시 확인한다. 남는 경쟁 구간은 알려진 한계로 둔다 |
+| Q8 | 받아들이고 문서화한다 |
+| Q9 | #734가 맡는다 |
+
+**남은 쟁점**:
+
+- `--allow-missing`과 API 플래그의 이름을 확정해야 한다.
+- `INCOMPLETE` 슬롯은 journal을 보고 사람이 복구한다. S3에서 이렇게 수동으로만 복구할지 확인이 필요하다.

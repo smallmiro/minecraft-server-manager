@@ -86,8 +86,9 @@ export interface ConsoleEndpoint { host: string; port: number; password: string;
 export interface IServerConsolePort {
   /** `list` via RCON. null when offline or unparseable. */
   listPlayers(name: string): Promise<PlayerListResult | null>;
-  /** Runs one RCON command. Never rejects (spawn error → exitCode 1, stderr = message). */
-  command(name: string, args: string[]): Promise<ConsoleCommandResult>;
+  /** Runs one RCON command. Never rejects (spawn error → exitCode 1, stderr = message).
+   *  `signal` (added by #732) is passed to spawn; abort kills the child. */
+  command(name: string, args: string[], options?: { signal?: AbortSignal }): Promise<ConsoleCommandResult>;
   /** Address and credentials for a direct RCON TCP session (`mcctl rcon`). null when unknown. */
   getEndpoint(name: string): Promise<ConsoleEndpoint | null>;
 }
@@ -346,163 +347,246 @@ Review checklist: `git grep -n "docker/index" src/infrastructure/adapters/Docker
 
 ## Backup Port (#732, S3)
 
-Status: Proposed (2026-10-23), awaiting system-architect review. Absorbs #653, #664, #727. Fixed by the issue (not reopened here): split `IShellPort.backup*` into one backup port (no new feature port); RCON is used only for the flush; git runs through `execFile` argv arrays, copies through `fs.cp`, config through the env codec (`utils/env-file.ts`); the token never appears in any argv; `mcctl.sh` calls `mcctl backup push` until #734.
+Status: Proposed (2026-10-23). Revised after the system-architect review (APPROVE WITH CHANGES) and the Codex review (R1–R14, S1–S5). Absorbs #653, #664, #727. The issue fixed these points, and this section does not reopen them:
+
+- `IShellPort.backup*` splits into one backup port; no new feature port.
+- RCON is used only for the flush.
+- git runs through `execFile` argv arrays, copies use `fs.cp`, and config is read through the env codec.
+- The token never appears in any argv.
+- `mcctl.sh` calls `mcctl backup` until #734.
+
+**Supported scope**: a single local host. `worlds/`, `servers/<n>/data/` and `backups/` must be on one filesystem. Regular files and directories only. Anything else is refused before the first change.
 
 ### B1. Port, adapter, composition
 
-File `application/ports/outbound/IWorldBackupPort.ts`. New code, so it is async and **never rejects**: every failure is a result (unexpected exceptions map to `git_failed`/`io_failed`).
+File `application/ports/outbound/IWorldBackupPort.ts`. Every method is async and **never rejects**. Every failure is a result, including `status` (S5); unexpected exceptions map to `git_failed`/`io_failed`.
 
 ```ts
 import type { BackupRetentionPolicy } from '../../../domain/index.js';
 
 export type WorldBackupErrorCode =
-  | 'not_configured'   // BACKUP_GITHUB_TOKEN or BACKUP_GITHUB_REPO empty
-  | 'locked'           // another backup/restore/prune holds the lock (after lockWaitMs)
-  | 'servers_running'  // restore refused; `servers` lists them
-  | 'flush_failed'     // save-off / save-all flush failed; nothing was copied
-  | 'commit_not_found'
-  | 'empty_source'     // the copy source is empty (push: no worlds; restore: commit has no worlds/)
-  | 'auth_failed' | 'repo_not_found' | 'git_too_old' | 'timeout'
+  | 'not_configured' | 'locked' | 'recovery_required'   // B2, B5 step 6
+  | 'runtime_unavailable' | 'servers_running' | 'flush_failed'
+  | 'missing_worlds'      // B4 step 3: a world in HEAD is missing from the source
+  | 'unsupported_layout'  // symlink, path escape, cross-device, invalid LEVEL
+  | 'restore_conflict'    // the commit's world dir for a server ≠ its current LEVEL
+  | 'commit_not_found' | 'empty_source'
+  | 'auth_failed' | 'repo_not_found' | 'git_too_old' | 'timeout' | 'lease_conflict'
   | 'git_failed' | 'io_failed';
-export interface WorldBackupError { code: WorldBackupErrorCode; message: string; servers?: string[]; holder?: BackupLockHolder }
+export interface WorldBackupError { code: WorldBackupErrorCode; message: string; paths?: string[]; servers?: string[]; holder?: BackupLockHolder }
 export type WorldBackupResult<T> = { ok: true; value: T } | { ok: false; error: WorldBackupError };
-export interface BackupLockHolder { pid: number; hostname: string; op: 'push' | 'restore' | 'prune'; startedAt: string }
-export interface LockOptions { lockWaitMs?: number }  // default 0 = fail fast
+export interface BackupLockHolder { pid: number; hostname: string; bootTime: number; nonce: string; op: 'push' | 'restore' | 'prune'; startedAt: string }
+export interface LockOptions { lockWaitMs?: number }   // default 0 = fail fast
 
 export interface WorldBackupStatus {
-  configured: boolean;        // token AND repo non-empty (fixes #13)
-  repository?: string;
-  branch: string;             // BACKUP_GITHUB_BRANCH || 'main'
-  autoOnStop: boolean;        // BACKUP_AUTO_ON_STOP === 'true'
-  lastBackup?: { commit: string; date: Date };  // tip of the local cache, if any
+  configured: boolean;           // token AND repo non-empty (#13)
+  repository?: string; branch: string; autoOnStop: boolean;
+  lastBackup?: { commit: string; date: Date };   // local cache tip (may be unpublished after a failed push)
 }
-export interface WorldBackupCommit { hash: string; date: Date; author: string; message: string }
+export interface WorldBackupCommit { hash: string; date: Date; author: string; message: string }  // full hash
+export interface PushOutcome { changed: boolean; commit?: string; flushed: string[]; skipped: string[]; warnings: string[] }
 
 export interface IWorldBackupPort {
-  status(): Promise<WorldBackupStatus>;
-  /** Newest first, at most `limit` (default 20). [] when the cache does not exist. */
-  history(limit?: number): Promise<WorldBackupResult<WorldBackupCommit[]>>;
-  /** "No changes" is ok: { changed: false }. `flushed` = servers that got save-off/flush/save-on. */
-  push(options?: { message?: string } & LockOptions): Promise<WorldBackupResult<{ changed: boolean; commit?: string; flushed: string[] }>>;
+  status(): Promise<WorldBackupResult<WorldBackupStatus>>;
+  history(limit?: number): Promise<WorldBackupResult<WorldBackupCommit[]>>;   // newest first, default 20; [] without a cache
+  push(options?: { message?: string; allowMissing?: boolean } & LockOptions): Promise<WorldBackupResult<PushOutcome>>;
   restore(commit: string, options?: LockOptions): Promise<WorldBackupResult<{ commit: string; previousDir: string; skipped: string[] }>>;
   prune(policy: BackupRetentionPolicy, options?: LockOptions): Promise<WorldBackupResult<{ removed: number }>>;
-  /** Does not read .env and does not lock. */
-  testConnection(credentials: { token: string; repository: string }): Promise<WorldBackupResult<void>>;
+  testConnection(credentials: { token: string; repository: string }): Promise<WorldBackupResult<void>>;  // no .env, no lock
 }
 ```
 
-- **Adapter**: `infrastructure/adapters/GitWorldBackupAdapter.ts`, `class GitWorldBackupAdapter implements IWorldBackupPort`, constructor `{ root: string; runtime: IContainerRuntimePort; console: IServerConsolePort; remoteBase?: string /* 'https://github.com/'; tests pass a file:// dir */ }`. The lock helper lives next to it (`infrastructure/backup-lock.ts`, not exported). Config is read from `<root>/.env` with `parseEnvDocument` **on every call**, falling back to `process.env` for keys the file lacks. This fixes the API reading a stale `process.env` after `mcctl backup init`.
-- **Why the policy (lock, flush, running check) sits in the adapter**: four callers must share it, and the API has no use-case layer yet (D2). The adapter is the one place every caller routes through. Runtime and console are injected ports, so the policy is testable with fakes. Moving it to an application service is open question B-Q1.
-- **Composition roots** (construct with `new`; no singleton, decision 10):
-  - CLI `Container.worldBackupPort` → `new GitWorldBackupAdapter({ root: paths.root, runtime: new DockerComposeRuntimeAdapter({ root }), console: new DockerServerConsoleAdapter() })`. `backupUseCase` becomes `new BackupUseCase(promptPort, worldBackupPort)`.
-  - API: `routes/backup.ts` and `routes/backup-schedule.ts` each build one (runtime gets `env: () => childProcessEnv()`). `BackupSchedulerService` takes `IWorldBackupPort` instead of `mcctlRoot`. Both move to the D2 `container` plugin when it exists. Two instances are fine because the lock is a file.
-- **`BackupUseCase`**: its second constructor parameter changes from `IShellPort` to `IWorldBackupPort` (only caller: CLI `Container`; see B-Q2). `status`/`history`/`pushWithMessage`/`restoreFromCommit`/`testGitHubConnection` map the port results to the existing inbound types (`hash → commitHash`, `autoOnStop → autoBackupEnabled`). Prompts stay in the use case. The port never prompts.
-- **Deprecated, not deleted (until #736)**: `IShellPort.backupPush`, `backupStatus`, `backupHistory`, `backupRestore`, and the same four `ShellAdapter` methods. After PR3 they return `Script not found: backup.sh`. They have no caller left. `exec`/`execInteractive` are #665's; S3 only stops using `exec('git', …)`. The adapter takes a plain `root`, so #665's `Paths` replacement does not touch it.
+| Item | Decision |
+|------|----------|
+| Adapter | `infrastructure/adapters/GitWorldBackupAdapter.ts`, `new GitWorldBackupAdapter({ root, runtime: IContainerRuntimePort, environment: IRuntimeEnvironmentPort, console: IServerConsolePort, remoteBase? = 'https://github.com/' })`. Private helpers (not exported): `infrastructure/backup/lock.ts`, `git-env.ts`, `restore-plan.ts`. The adapter may import domain types (`BackupRetentionPolicy`, the world-name validator) |
+| Policy location (B-Q1) | Lock, flush and running checks live in the adapter. Every caller routes through it, and the injected ports make it testable with fakes. No later split is promised (S1) |
+| Config | `<root>/.env` through `parseEnvDocument` **on every call**, falling back to `process.env` for keys the file lacks. The API no longer reads a stale `process.env` after `backup init` |
+| Names | Ports take container names (`mc-<server>`, D1). Results report server names. One private `serverNameOf()`/`containerNameOf()` pair does the conversion, and D4 moves it |
+| CLI root | `Container.worldBackupPort` (built from the Docker adapters); `backupUseCase = new BackupUseCase(promptPort, worldBackupPort)` |
+| API root | `routes/backup.ts` and `routes/backup-schedule.ts` each build one instance (runtime `env: () => childProcessEnv()`). `BackupSchedulerService` takes the port instead of `mcctlRoot` and loses its git and retention code. These move to the D2 `container` plugin when it exists. Two instances are fine because the lock is a file |
+| `BackupUseCase` (K1) | Parameter 2 widens to `IWorldBackupPort \| IShellPort`, with the guard `'backupPush' in x`. The `IShellPort` branch parses the `backup.sh` output contract below, with the #12/#13 parsing fixed. #736 narrows the type. Prompts stay in the use case; the port never prompts |
+| Deprecated (S3) | `IShellPort.backupPush/Status/History/Restore` and the same `ShellAdapter` methods get `@deprecated`. The `ShellAdapter` methods **delegate to `GitWorldBackupAdapter`** (built lazily from `paths.root`) and emit the `backup.sh` contract: exit 0/1/2 (2 = no changes), push stdout `Commit: <hash>`, status labels `Repository:`/`Branch:`/`Auto on stop:`/`Last commit:`/`Last date:`, history `--json` `{"history":[{commit,date,message}]}`, and restore non-interactive. They keep working after `backup.sh` is deleted |
+| `IServerConsolePort` | `command(name, args, options?: { signal?: AbortSignal })`. The optional signal is passed to `spawn`, which kills the child on abort (R9). Backward compatible |
 
-### B2. Lock (push, restore, prune; CLI, API manual, API scheduled, auto-on-stop)
+### B2. Lock (push, restore, prune; all four callers)
 
-- File `<root>/backups/.backup.lock`. It sits outside the cache work tree (`backups/worlds/`) and outside `worlds/.locks`.
-- **Acquire**: `open(path, 'wx', 0o600)` (O_CREAT|O_EXCL, works on macOS), then write `BackupLockHolder` as JSON. On `EEXIST`, read the holder. It is **stale** if (same `hostname` and `process.kill(pid, 0)` throws `ESRCH`), or `startedAt` is older than 6 h (longer than every timeout; covers pid reuse and other hosts), or the content does not parse and the mtime is older than 60 s. A stale lock is unlinked and the open is retried once. Otherwise poll every 1 s until `lockWaitMs`, then return `locked` with `holder`.
-- **Release**: in `finally`, unlink only if the file still holds our `pid` and `startedAt`.
-- **Who waits**: interactive CLI, API manual push, restore → `lockWaitMs: 0` (API answers 409 with the holder). `mcctl backup push --auto` (auto-on-stop) and the scheduler (push and prune) → 10 min. Otherwise, servers stopped in sequence would skip each other's backups.
-- `status` and `history` do not lock (read-only git).
-- `ponytail:` two processes taking over the same stale lock within the same millisecond can both win. Accepted for a single-host tool. Upgrade path: a lease that renews the mtime.
+| Step | Rule |
+|------|------|
+| Path | `<root>/backups/.backup.lock`, after `mkdir -p backups`. It is outside the cache tree and outside `worlds/.locks` |
+| Acquire | Write the holder JSON (with a random `nonce` and `bootTime = Date.now() − os.uptime()·1000`) to `.backup.lock.<nonce>.tmp`, then `link(tmp, lock)` and unlink the tmp. `link` fails with `EEXIST` atomically, and the lock file is never partially written |
+| Stale | **Only** when `hostname` matches and either `bootTime` differs by more than 60 s (the host rebooted) or `process.kill(pid, 0)` throws `ESRCH`. `EPERM` counts as alive. Time is never used (R3). A different host, a live pid, or unparseable content → `locked` with `holder`. The manual fix ("delete the file after checking the holder process") is in the docs |
+| Takeover | `rename(lock, lock.<myNonce>.stale)`, then read the renamed file. If its nonce equals the stale holder's, unlink it and acquire. Otherwise another contender already took over: `link` it back to `lock` and report `locked` |
+| Release | Read the lock, check the nonce is ours, unlink. A live holder is never taken over, so nobody can replace our lock in between (the R2 release race) |
+| Waiting | Interactive CLI, API manual push and restore: `lockWaitMs: 0` (API → 409 with the holder). `push --auto` (auto-on-stop) and the scheduler (push and prune): 10 min, polling every 1 s |
+| Reads | `status`/`history` do not lock. During the first clone they see "no cache" |
 
-### B3. Token passing
+`ponytail:` takeover is safe for two contenders. With three contenders on one stale lock, the put-back `link` can fail with `EEXIST` after a third process acquired the lock, and then two writers exist. Upgrade path: an OS advisory lock (flock through a native binding) if this ever happens.
 
-- The remote URL is always `https://github.com/<repo>.git` with no credentials. Every run sets `git remote set-url origin <url>`, which also scrubs tokens that `backup.sh` left in `backups/worlds/.git/config`.
-- Network commands (`ls-remote`, `clone`, `fetch`, `push`) get the token through the **environment only**: `GIT_CONFIG_COUNT=1`, `GIT_CONFIG_KEY_0=http.https://github.com/.extraHeader`, `GIT_CONFIG_VALUE_0=Authorization: Basic <base64("x-access-token:" + token)>`. The key is scoped to github.com. Local commands get no token.
-- Every git child also gets `GIT_TERMINAL_PROMPT=0` and `GCM_INTERACTIVE=never` (no prompt can block the API), and `LC_ALL=C` (stderr matching).
-- `GIT_CONFIG_COUNT` needs git ≥ 2.31. The adapter checks `git --version` once and returns `git_too_old` otherwise (B-Q3). `GIT_ASKPASS` was rejected because it needs a helper file on disk.
-- `repository` must match `^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$` before any call.
+### B3. Git environment and token
+
+- One helper builds every git child env. It starts from `process.env`, **removes every `GIT_*` variable** (`GIT_DIR`, `GIT_INDEX_FILE`, inherited `GIT_CONFIG_*`), and adds `GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`, `LC_ALL=C`, and the backup identity (`GIT_AUTHOR_*`/`GIT_COMMITTER_*` = `Minecraft Backup <minecraft-backup@localhost>`) for **every** commit, the README init commit included.
+- Network commands (`ls-remote`, `clone`, `fetch`, `push`) also get `GIT_CONFIG_COUNT=3`:
+  - `http.<remoteBase>.extraHeader=` (an empty value resets the multi-valued list, R14)
+  - `http.<remoteBase>.extraHeader=Authorization: Basic <base64("x-access-token:"+token)>`
+  - `credential.helper=` (empty)
+- Remote normalization on each run: `git config --unset-all remote.origin.pushurl` (exit 5 is ignored), then `git remote set-url origin <remoteBase><repo>.git`. This also scrubs the token URL that `backup.sh` left behind.
+- Git ≥ 2.31 is required (B-Q3). The version is checked once; older git → `git_too_old`.
+- `repository` must match `^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$`. `branch` must pass `git check-ref-format --branch <b>`.
+- Errors carry git's stderr only, never the env.
+- **Timeouts** (replace the fixed 15 min):
+
+  | Commands | Limit |
+  |----------|-------|
+  | network | `GIT_HTTP_LOW_SPEED_LIMIT=1000`, `GIT_HTTP_LOW_SPEED_TIME=300` (abort below 1 KB/s for 5 min) |
+  | every git child | 4 h wall-clock cap |
+  | `ls-remote` for `testConnection` | 60 s |
 
 ### B4. Push
 
-Scope and layout of the backup repository (existing repositories hold only `worlds/`, so they stay compatible):
+Repository layout (old repositories hold only `worlds/` and stay compatible):
 
 ```
-README.md                      created on first init (as backup.sh)
-worlds/<world>/…               mirror of <root>/worlds/, excluding .locks
-servers/<server>/<LEVEL>/…     server-internal world, plus <LEVEL>_nether and <LEVEL>_the_end when present
+README.md                    worlds/<world>/…  (mirror of <root>/worlds, without .locks)
+servers/<n>/<LEVEL>/…        plus <LEVEL>_nether, <LEVEL>_the_end when present
 ```
 
-A server has an internal world when `servers/<n>/data/<LEVEL>/level.dat` is a regular file and `data/<LEVEL>` is not a symlink. `LEVEL` comes from `servers/<n>/config.env` through `resolveWorldName` and the env codec. `_template` is skipped.
+A server has an internal world when `servers/<n>/data/<LEVEL>/level.dat` is a regular file. `LEVEL` comes from `config.env` (env codec) and must pass the world-name validator: no `/`, `..` or empty value. `servers/<n>`, `data` and `data/<LEVEL>` must not be symlinks. A server that fails these checks is reported in `skipped` and never dropped silently. `_template` is skipped.
 
-1. Check the config (`not_configured`), then acquire the lock.
-2. **Prepare the cache** `<root>/backups/worlds`. No `.git`: run `ls-remote --heads <url> <branch>` (auth or 404 errors map to `auth_failed`/`repo_not_found`). If the branch exists, `clone --depth 50 --branch <b>` (as today). If not, `init` + `checkout -b <b>` + README commit + `remote add`. If `.git` exists: `remote set-url`, `fetch origin <b>`, `reset --hard origin/<b>` when the remote branch exists. Local commits that were never pushed are dropped; the tree is rebuilt from the source in the next step anyway.
-3. **Flush and copy**: `running = runtime.list({ running: true })`. For each server, `console.command(name, ['save-off'])`, then `['save-all', 'flush']` (60 s timeout each; non-zero exit → `flush_failed`, no copy). Then, for `worlds/` and `servers/`, `fs.rm(cacheDir, { recursive: true, force: true })` + `fs.cp(src, cacheDir, { recursive: true, filter: skip .locks })`. **`finally`**: `save-on` for every server that was sent `save-off`, even on failure. git work happens after `save-on`, so servers resume as soon as the copy ends.
-4. **Empty-source guard**: if nothing was copied while `HEAD` still tracks `worlds/` or `servers/`, return `empty_source` before `git add`. A missing mount must not commit "delete everything".
-5. `add -A`. If `diff --cached --quiet` exits 0, return `{ changed: false }` (**"no changes" = success**, fixes #8). Otherwise `commit -m <message>` (default `Backup: YYYY-MM-DD HH:MM:SS`; author `Minecraft Backup <minecraft-backup@localhost>` via `GIT_AUTHOR_*`/`GIT_COMMITTER_*`), then `push origin HEAD:refs/heads/<b>` (never `--force`).
-6. Timeouts: local git 2 min; `ls-remote` 30 s; clone/fetch/push 15 min. A timeout returns `timeout`.
+1. **Preconditions**: config (`not_configured`), lock, no `INCOMPLETE` restore slot (`recovery_required`), git version and branch check.
+2. **Cache** `<root>/backups/worlds`:
+   - **No `.git`**: run `ls-remote --heads origin refs/heads/<b>`. Exit ≠ 0 → `auth_failed`/`repo_not_found`/`git_failed`; a network failure is never treated as "branch absent" (R10).
+     - Branch present: `clone --branch <b>`. There is no `--depth`: new caches get full history (R5).
+     - Branch absent: `init` + `checkout -b <b>` + README commit.
+   - **`.git` exists**: `fetch origin +refs/heads/<b>:refs/remotes/origin/<b>` (an explicit refspec, so a changed branch works, R10).
+     - If local `<b>` has commits not in `origin/<b>`, save its tip to `refs/mcctl/unpublished/<ISO-ts>` and add a warning (R11).
+     - Then `checkout -f -B <b> refs/remotes/origin/<b>`.
+3. **Missing-world guard (R7)**, before any cache change:
+   - `tracked` = world dirs in `HEAD` (`worlds/*`, `servers/*/*`); `source` = the scan above.
+   - Any `tracked − source` → `missing_worlds` with `paths` and nothing changed, unless `allowMissing: true`.
+   - Consent comes from CLI `--allow-missing` and an API body flag. The scheduler and auto-on-stop never pass it.
+   - An empty source with an empty `HEAD` → `empty_source`.
+4. **Runtime gate (K3)**: `environment.isAvailable()` false → `runtime_unavailable`. Then `running = runtime.list({ running: true })`.
+5. **Flush and copy**:
+   - Add each server to the cleanup list **before** sending `save-off`.
+   - Send `save-off`, then `save-all flush`, each with `signal: AbortSignal.timeout(60_000)`. A non-zero exit or an abort → `flush_failed`, and nothing is copied.
+   - Copy: `fs.rm` + `fs.cp(src, dst, { recursive: true, filter })`. The filter skips `.locks` and throws on any symlink → `unsupported_layout`, no commit.
+   - **`finally`**: send `save-on` to each server in the cleanup list, independently. A failure goes to `warnings` with the server name; the push itself still succeeds.
+6. **Commit and push**:
+   - `add -A`. If `diff --cached --quiet` exits 0 → `{ changed: false }`, which is success (#8).
+   - Otherwise `commit -m <message>` (default `Backup: YYYY-MM-DD HH:MM:SS`), then `push origin <b>:refs/heads/<b>` with no force.
+   - A failed push keeps the local commit; step 2 of the next run saves it as a recovery ref.
 
-`ponytail:` rm + cp rewrites every file, so git re-hashes the whole tree on each backup. Correct but slow on very large worlds. Upgrade path: skip files whose size and mtime are unchanged.
+`ponytail:` rm + cp rewrites every file, so git re-hashes the whole tree each run. This is correct but slow on very large worlds. Size/mtime shortcuts (`core.checkStat=minimal`) were rejected because they can miss changes (S2).
 
 ### B5. Restore
 
-1. Acquire the lock (`lockWaitMs: 0`). Validate `commit` against `^[0-9a-f]{4,40}$`. `fetch` (offline is fine; the local cache is used). `rev-parse --verify <c>^{commit}` → `commit_not_found`.
-2. **Refuse when any server is running** (`runtime.list({ running: true })` non-empty → `servers_running`). The check covers every server, not only those using affected worlds. A restore replaces all of `worlds/` plus the internal worlds in the commit, and the world → server map is not reliable until #670. The rule is simple and fails safe.
-3. `worktree add --detach <root>/backups/.restore-staging <c>`. This is an exact tree of the commit: no files from other commits, and the cache's own `HEAD`, index and work tree stay untouched (fixes #3). Then check that staging has a non-empty `worlds/`; otherwise return `empty_source` and change nothing.
-4. **Swap** (`rename`; on `EXDEV`, `cp` + `rm`):
-   - Delete the previous slot `<root>/backups/restore-previous/`. Only one slot is kept, so `.bak` copies do not pile up.
-   - Move every entry of `worlds/` **except `.locks`** into `restore-previous/worlds/`, then move staging `worlds/*` into `worlds/`. `.locks` is never moved or deleted.
-   - For each `servers/<n>/` **present in the commit**: move that server's current `data/<LEVEL>{,_nether,_the_end}` aside and move the commit's ones in. Servers not in the commit are untouched (old `worlds/`-only commits do not wipe internal worlds). If `servers/<n>/` no longer exists, the server is reported in `skipped`.
-   - If any move fails, move `restore-previous` back (best effort) and return `io_failed` with the path.
-5. `finally`: `worktree remove --force` + `worktree prune`, then release the lock.
-6. **Never prompts.** Confirmation is a CLI concern: `BackupUseCase.restore()` (interactive) confirms as today, and `mcctl backup restore <commit>` now confirms unless `--force`. Without the script's `read -p`, a direct CLI restore would otherwise lose its confirmation. Legacy `worlds.bak.<ts>` directories are not deleted (B-Q5).
+1. **Preconditions**: lock (`lockWaitMs: 0`); no `INCOMPLETE` slot (`recovery_required`); delete leftover `backups/.restore-*` staging dirs, then `worktree prune`; no cache → run B4 step 2 (needs config).
+2. **Commit**: `commit` must match `^[0-9a-f]{4,40}$`. `fetch`. `rev-parse --verify <c>^{commit}` gives the full OID, which every later command uses. If the commit is missing and the cache is shallow, run `fetch --unshallow` and retry. Otherwise → `commit_not_found`.
+3. **Runtime gate**: `isAvailable()` false → `runtime_unavailable`. Any running server → `servers_running`. The check covers every server, not only those using affected worlds, because the world → server map is unreliable until #670.
+4. **Stage and plan**, without touching live data:
+   - `worktree add --detach backups/.restore-<ts> <oid>`. This gives the exact tree of the commit (#3) and leaves the cache's HEAD, index and work tree alone.
+   - Validate:
+     - There must be at least one restorable payload: a non-empty `worlds/`, or a `servers/<n>/<dir>/level.dat` → otherwise `empty_source` (R8).
+     - Any symlink in staging → `unsupported_layout`. `.locks` entries in the commit are ignored.
+     - The commit's main world dir for server n ≠ its current valid `LEVEL` → `restore_conflict` (R8).
+     - `worlds/`, the target `data/` dirs and `backups/` on different devices → `unsupported_layout`. There is no copy fallback (S2).
+   - Targets:
+     - `worlds/` (every entry except `.locks`), only if the commit has `worlds/`. Old internal-only snapshots leave live `worlds/` alone.
+     - For each `servers/<n>/` in the commit: `data/<dir>` for each dir name in the commit, plus the live `<LEVEL>{,_nether,_the_end}`.
+     - Servers not in the commit are untouched. A server whose `servers/<n>/` is gone, or whose path is a symlink, goes to `skipped`.
+5. **Re-check the runtime gate** immediately before the first move (K3, R1).
+6. **Swap**:
+   - Create the slot `backups/restore-previous/<ISO-ts>/` containing `INCOMPLETE` and `journal.json`.
+   - For each target, (a) `rename` live → slot (when it exists), then (b) `rename` staging → live. Append each completed step to the journal before the next one.
+   - `.locks` is never moved.
+7. **On failure, roll back the journal in reverse**:
+   - Each (b): move live → `slot/.new/…`. New data is set aside, not deleted.
+   - Each (a): move slot → live.
+   - Full rollback → remove `INCOMPLETE` and return the original error. Partial rollback → keep `INCOMPLETE` and return `io_failed` with the slot path. Every later push or restore then returns `recovery_required` until a human recovers from the journal (documented).
+8. **On success**: remove `INCOMPLETE`, then rotate. Keep the 3 newest complete slots and delete older complete ones. An `INCOMPLETE` slot is never deleted, and nothing is deleted before the swap succeeds (K2).
+9. **`finally`**: `worktree remove --force`, then release the lock. A cleanup error never hides the main error.
+
+The port never prompts (#4). `mcctl backup restore <commit>` confirms unless `--force`, and the interactive `BackupUseCase.restore()` is unchanged. Legacy `worlds.bak.<ts>` dirs are left in place, and the docs explain how to remove them (B-Q5).
+
+**Known limit (R1, B-Q7)**: mc-router auto-scale, or a start from the CLI or API, can launch a server between step 5 and the last rename. S3 does not stop mc-router or lock start paths. The docs say: "stop mc-router or disable auto-scale before restoring".
 
 ### B6. History, status, diff, connection test
 
-- `history`: `git log -n <limit> --format=%H%x00%aI%x00%an%x00%s%x1e`, split on NUL/RS, so `|` and `"` in messages are safe. Hashes are returned in full; callers shorten them for display. The use case maps this list. Today it parses `{history:[…]}` as an array and always gets `[]` (#12).
-- `status`: read from the env codec and `git log -1 --format=%H%x00%aI` in the cache. `configured` comes from the keys, not from a process exit code (#13). No label parsing.
-- `diff`: **not ported.** It has no TypeScript caller and is reachable only through `mcctl.sh backup diff`, which #734 removes (B-Q4). If it is kept, the contract is `diff(commit = 'HEAD', LockOptions): WorldBackupResult<{ status: 'A'|'M'|'D'; path: string }[]>`, computed under the lock with a temporary `GIT_INDEX_FILE`.
-- `testConnection` (#10): `git ls-remote --heads https://github.com/<repo>.git` with B3's env, 30 s. Exit 0 → ok. stderr `Repository not found`/`404` → `repo_not_found`; `Authentication failed`/`401`/`403` → `auth_failed`. It runs the real `git` binary, not a `<scripts>/git` lookup through `ShellAdapter.exec`.
+- `history`: `git log -n <limit> --format=%H%x00%aI%x00%an%x00%s%x1e`. `|` and `"` in messages are safe. It returns full hashes; the API route keeps its 7-character `hash` field (#12).
+- `status`: env codec plus `git log -1 --format=%H%x00%aI`. `configured` comes from the keys, not from an exit code (#13). An unreadable `.env` or a git error is `{ ok: false }`, not `configured: false` (S5).
+- `diff`: **not ported. This is an explicit scope change (S4).** It has no user entry point: `mcctl backup` has `init|status|push|history|restore` only (`diff` in `cli/src/index.ts` is `config-snapshot diff`); the API and console have no diff route; the docs do not mention it. It is reachable only by running the repository's `mcctl.sh`/`backup.sh` directly.
+- `testConnection` (#10): `ls-remote --heads <remoteBase><repo>.git` with the B3 env. Exit 0 → ok. stderr `Repository not found`/`404` → `repo_not_found`; `Authentication failed`/`401`/`403` → `auth_failed`.
 
 ### B7. Retention rewrite (#9)
 
-`prune(policy)` replaces `BackupSchedulerService.truncateHistory`/`applyRetentionPolicy`. The scheduler calls it after a successful push. A prune failure is audited but does not fail the run (as today).
+`prune(policy)` replaces `truncateHistory`/`applyRetentionPolicy`. The scheduler runs it after a push. A prune failure is audited (lease conflicts separately) and does not fail the run.
 
-1. Acquire the lock and check config.
-2. `log --first-parent --format=%H%x00%aI` on the local branch. Keep the newest `maxCount` and, separately, commits with author date ≥ `now − maxAgeDays × 86 400 000 ms`. The kept set is the intersection, with at least 1 commit. If nothing would be dropped, return `{ removed: 0 }`. This fixes the `--reverse -1` "oldest" bug (it returns the newest commit). Author dates are used because the commits are rebuilt below with their original author and committer dates, so ages stay correct after a prune. Cherry-pick resets committer dates to "now".
-3. **Rebuild without touching any ref, index or work tree**: oldest kept → newest, `commit-tree <c>^{tree} [-p <prev>] -m <msg>` with the original `GIT_AUTHOR_*`/`GIT_COMMITTER_*` (name, email, date). Snapshots are trees, so this cannot conflict.
-4. `push --force-with-lease=refs/heads/<b>:<oldTip> origin <newTip>:refs/heads/<b>` (15 min timeout). On success, `update-ref refs/heads/<b> <newTip> <oldTip>`.
-5. **Failure safety**: before step 4 succeeds, nothing visible has changed. The new commits are unreachable objects (removed by gc), the local ref is untouched, and the lease refuses to overwrite a remote that moved. If step 4 times out, the remote is either old or new, never partial. The next push runs `fetch` + `reset --hard origin/<b>` and converges either way.
+1. **Preconditions**: lock and config. If `.prune-state.json` exists, converge first (step 6).
+2. **Full history**: `fetch` (B4 refspec). If `rev-parse --is-shallow-repository` is true, `fetch --unshallow`; if that fails → no prune (R5). Then pin `oldTip = rev-parse refs/heads/<b>` (it equals `origin/<b>` after `checkout -B`).
+3. **Keep set**: walk `rev-list --first-parent oldTip` in chain order.
+   - **The tip is always kept** (R6, K5).
+   - Older commits are kept if they are within the newest `maxCount` and, separately, have author date ≥ `now − maxAgeDays × 86 400 000 ms`. This fixes `--reverse -1` returning the newest commit.
+   - Nothing dropped → `{ removed: 0 }`.
+4. **Rebuild** in the original chain order: `commit-tree <c>^{tree} [-p <prev>] -m <full message>`, with the original author/committer name, email and `%aI`/`%cI` dates in env. Invariant before pushing: `newTip^{tree} == oldTip^{tree}` (R6). No ref, index or work tree changes.
+5. **Publish**:
+   - Write `.prune-state.json` `{ branch, oldTip, newTip }`.
+   - `push --force-with-lease=refs/heads/<b>:<oldTip> origin <newTip>:refs/heads/<b>`.
+   - On success: `update-ref refs/heads/<b> <newTip> <oldTip>`, then delete the state file. The index stays valid because the trees are equal.
+6. **Uncertain outcome (R12)**: on any push error or timeout, `ls-remote origin refs/heads/<b>`.
+   - `= newTip` → `update-ref` and success.
+   - `= oldTip` → failure, nothing changed.
+   - Anything else → `lease_conflict`.
+   - The remote is always a complete old or new history, never partial. There is no compensating force push. A crash between push and `update-ref` is resolved on the next run from `.prune-state.json`.
 
 ### B8. Bug → design → proving test
 
-Test files are under `platform/services/<pkg>/tests/`. "repo" means a real git with a local bare remote (`remoteBase` = `file://…`) and a temporary `<root>`.
+"repo" means real git, a local bare remote (`remoteBase = file://…`), and a temporary `<root>`. Tests are grouped in five bundles (Codex): **R** restore failure injection, **L** real-process lock, **H** real git history, **U** uncertain remote outcome, **I** integration and transition.
 
-| # | Bug | Fixed by | Test (red first) |
-|---|-----|----------|------------------|
-| 1 | copy without flush | B4.3 | `GitWorldBackupAdapter.flush.test.ts` (fake runtime/console, fake copy): order `save-off`×n → `save-all flush`×n → copy → `save-on`×n. `save-on` is still sent when flush fails or the copy throws; `flush_failed` → no commit |
-| 2 | restore over running servers; `.locks` deleted | B5.2, B5.4 | repo: running fake → `servers_running`, tree unchanged; after a restore, `worlds/.locks/*` is byte-identical |
-| 3 | mixed-commit restore | B5.3 | repo: commit A {x}, commit B {x, y}; restore A → `y` absent, `x` = A's bytes |
-| 4 | restore waits on stdin | B5.6, B3 | the port has no prompt dependency; every spawned git env has `GIT_TERMINAL_PROMPT=0`; API `backup-routes.test.ts` restore resolves |
-| 5 | no lock | B2 | `backup-lock.test.ts`: two adapters on one root → one gets `locked`; a child process holding the lock → `locked`; a dead pid or > 6 h → taken over; `lockWaitMs` waits and then succeeds |
-| 6 | internal worlds missing | B4 layout | repo: `servers/a/data/w/level.dat` + `w_nether` → in `servers/a/w*`; restore puts them back; a `worlds/`-only commit leaves them alone |
-| 7 | npm install: commit without sync | B1 (no script path) | repo: root without `scripts/` → the push commits world content; API route and scheduler tests use a fake port, and the code has no `scripts/backup.sh` lookup |
-| 8 | "no changes" = failure | B4.5 | repo: second push → `{ ok: true, changed: false }`; route 200 "No changes"; scheduler `recordRun('success', 'No changes to backup')` |
-| 9 | unsafe retention rewrite | B7, B2 | repo with set author dates: maxAgeDays keeps the right count; a pre-receive hook that rejects or sleeps past the timeout → local ref and remote tip unchanged; lock held → `locked` |
-| 10 | connection test always fails; token in argv | B6, B3 | `GitWorldBackupAdapter.auth.test.ts`: fake `git` on `PATH` records argv and env → argv has no token, env has the header; exit/stderr mapping; `BackupUseCase.test.ts` init succeeds |
-| 11 | token in the backup.sh URL | B3 | a `PATH` wrapper logs argv and then runs the real git through clone/fetch/push → no argv contains the token; cache `.git/config` has no token (legacy URL scrubbed) |
-| 12 | history always empty | B6 | repo: 2 commits with `\|` and `"` in messages → 2 entries, newest first; `BackupUseCase.history` maps them |
-| 13 | status labels/`configured` | B6 | `.env` without keys → `configured: false`; with keys → repository, branch `main`, `autoOnStop`, `lastBackup` from the cache |
+| # | Bug | Fixed by | Proving test (red first) |
+|---|-----|----------|--------------------------|
+| 1 | copy without flush | B4.4–5 | fake runtime/console: `save-off`×n → `flush`×n → copy → `save-on`×n; `save-on` is sent even when flush aborts (child killed) or the copy throws; `isAvailable()` false → `runtime_unavailable`, no copy |
+| 2 | restore over running servers; `.locks` lost | B5.3, B5.5, B5.6 | repo: running → refused; a server that starts after the first check is caught by the re-check; `.locks` byte-identical; `.locks` in the commit ignored |
+| 3 | mixed-commit restore | B5.4 | repo: A {x}, B {x, y}; restore A → `y` absent, `x` = A's bytes |
+| 4 | restore waits on stdin | B5, B3 | every git env has `GIT_TERMINAL_PROMPT=0`; API restore resolves |
+| 5 | no lock | B2 | **L**: two child processes, one holding → `locked`; dead pid → taken over; `EPERM`, other host, old `startedAt` with a live pid → `locked`; two contenders on one stale lock (barrier) → exactly one wins; wait then success |
+| 6 | internal worlds missing | B4 layout, B5.4 | repo: `servers/a/data/w` + `w_nether` backed up and restored; internal-only commit restorable; old `worlds/`-only commit leaves them alone; LEVEL change → `restore_conflict`; symlinked `data` → `skipped` |
+| 7 | npm install: commit without sync | B1 | **I**: root without `scripts/` → push commits world content; API and scheduler have no `scripts/backup.sh` lookup |
+| 8 | "no changes" = failure | B4.6 | repo: second push → `changed: false`; route 200; scheduler success; prune after a no-change push works |
+| 9 | unsafe retention rewrite | B7 | **H**: 60+ commits cloned shallow (assert shallow), age-only, count > 50, combined → kept trees match; tip with an old author date is kept; tree invariant holds. **U**: lease conflict, hook reject, timeout after remote applied → converges to new; crash before `update-ref` → fixed next run |
+| 10 | connection test fails; token in argv | B6, B3 | fake `git` on `PATH` records argv/env: no token in argv, header in env, inherited `GIT_*` stripped; exit/stderr mapping; `BackupUseCase` init succeeds |
+| 11 | token in the `backup.sh` URL | B3 | `PATH` wrapper over real git through clone/fetch/push: token in no argv; `.git/config` has no token, no stale `extraHeader` effect, no `pushurl` |
+| 12 | history always empty | B6 | repo: messages with `\|` and `"` → exact entries, newest first; legacy `IShellPort` branch parses `{history:[…]}` |
+| 13 | status labels/`configured` | B6 | `.env` without keys → `configured: false`; with keys → real values; unreadable `.env` → `{ ok: false }` |
+
+Bundle **R** also covers the review cases: the N-th rename fails → original bytes recoverable; partial rollback → `INCOMPLETE` blocks the next push and restore; rotation keeps 3 slots; push R7 (one world missing → `missing_worlds`, remote unchanged); R11 (failed push → recovery ref holds the exact tree).
 
 ### B9. Test plan and PR split
 
-- **Real git, not a fake git, for behaviour**: a local bare repository proves exact trees, history, rewrite and push outcomes, which a fake would only assert. A fake `git` on `PATH` is used only where argv and env must be observed (#10, #11). CI runners and macOS ship git ≥ 2.31.
-- Characterize the kept behaviour first: cache path `backups/worlds`, default branch `main`, README on first init, default message format, author identity, `.locks` excluded, `--depth 50` clone.
-- **PR1 (core)**: port, adapter, lock, all shared tests above, deprecations, ADR. No call sites change, so the public API grows only.
-- **PR2 (core + cli + backend; CLI and API can be parallel commits)**: `BackupUseCase` on the port; CLI `Container`, `mcctl backup push --auto` becomes non-interactive with a 10 min lock wait (today `--auto` is ignored and falls into the prompt), restore confirmation; API route (error code → 400/404/409/500) and scheduler on the port (its git and retention code deleted); `mcctl.sh` auto-on-stop runs `mcctl backup push --auto --root "$PLATFORM_DIR"` when `command -v mcctl` succeeds, else it warns.
-- **PR3**: delete `backup.sh`, `mcctl.sh cmd_backup`, the unused CLI `lib/shell.ts backup()`; fix the `env-file.ts` comment and the EN/KO docs; `test:scripts` and `verify:package` pass.
+- Behaviour is tested with real git and a bare remote. A fake `git` on `PATH` is used only where argv and env must be observed. Characterize the kept behaviour first: cache path, default branch, README init, message format, identity, `.locks` exclusion.
+- **PR1 (core)**: port, adapter, helpers, the `IServerConsolePort` signal option, `ShellAdapter` delegation, the widened `BackupUseCase`, bundles L/H/U/R. Additive only.
+- **PR2 (cli + backend)**:
+  - CLI `Container`; `mcctl backup push --auto` becomes non-interactive with a 10 min wait (today `--auto` is ignored); `--allow-missing`; restore confirmation.
+  - API route (codes → 400/404/409/500, 7-character hash kept) and scheduler.
+  - `mcctl.sh`: both auto-on-stop and `cmd_backup` call `"${MCCTL_NODE:-node}" "$MCCTL_CLI" backup …` when `ShellAdapter` exported those two vars (`process.execPath`, `process.argv[1]`); otherwise `mcctl` on `PATH`; otherwise a warning. After PR2 no lockless `backup.sh` writer is reachable from `mcctl.sh` (S3).
+- **PR3**: delete `backup.sh` and the unused CLI `lib/shell.ts backup()`; fix the `env-file.ts` comment and the EN/KO docs (restore preconditions, manual lock removal, recovery from a slot journal); `test:scripts` and `verify:package` pass. **PR2 and PR3 ship in the same release.**
 
-### B10. Open questions
+### B10. Decisions and open questions
 
-1. **B-Q1 Policy location**: lock, flush and running check sit in the adapter (B1). Alternative: an application `WorldBackupService` over a storage-only port, introduced when D2 gives the API a use-case layer. Recommendation: adapter now, revisit in D2.
-2. **B-Q2 `BackupUseCase` constructor**: changing parameter 2 to `IWorldBackupPort` breaks external constructors of a published export. The only known caller is the CLI. Recommendation: accept it in v2.x and note it in the CHANGELOG. Alternative: accept both until #736.
-3. **B-Q3 git ≥ 2.31**: required by `GIT_CONFIG_COUNT`. Hosts with older git get `git_too_old`. Alternative: `GIT_ASKPASS` with a 0700 helper script that echoes an env var (works on any git, but needs a file).
-4. **B-Q4 `diff`**: drop it (recommended; no TypeScript caller), or port it with the B6 contract.
-5. **B-Q5 Legacy `worlds.bak.<ts>`**: leave them and document manual removal (recommended), or delete them on the first TS restore.
-6. **B-Q6 Flush failure**: B4.3 fails the whole push when one running server's RCON fails, for example while it is starting. The alternative is to back up and report that server as unflushed. Choose consistency (recommended) or availability.
-7. **B-Q7 Auto-scale during restore**: mc-router can wake a server mid-restore. The B5.2 check runs once. Options: document "disable auto-scale or stop mc-router first" (recommended for S3), or have restore stop mc-router and restart it in `finally`.
-8. **B-Q8 Stuck `save-off`**: if the process dies between `save-off` and `save-on`, autosave stays off until that server's next flushed push or a restart. Recommendation: accept and document it.
-9. **B-Q9 API stop path**: `BACKUP_AUTO_ON_STOP` fires only from `mcctl.sh stop`. API and console stops never back up, before and after S3. Confirm that #734 owns this.
+| | Decision (2026-10-23) |
+|---|---|
+| B-Q1 | Policy in the adapter, single port (S1) |
+| B-Q2 | Widen to `IWorldBackupPort \| IShellPort`; narrow in #736 (K1) |
+| B-Q3 | git ≥ 2.31 |
+| B-Q4 | `diff` not ported; explicit scope change, no entry point (S4) |
+| B-Q5 | Keep `worlds.bak.*`; document removal |
+| B-Q6 | One flush failure fails the push |
+| B-Q7 | Docs + `isAvailable` + re-check before the swap; the race is a known limit |
+| B-Q8 | A stuck `save-off` after a crash: accept and document |
+| B-Q9 | API/console stops never auto-backup; #734 owns it |
+
+Not adopted: `Promise.race` for RCON (an `AbortSignal` actually kills the child, R9); `core.checkStat=minimal` (can miss changes) and `verbatimSymlinks` (symlinks are refused); `reflog expire` after prune (local disk is not an acceptance criterion; auto gc handles it); stopping mc-router or locking start paths (outside S3, R1).
+
+Still open:
+
+1. **`allowMissing` surface**: CLI `--allow-missing` and an API body flag are new options, added only so that intentional world deletions can reach the backup. Confirm the names.
+2. **Recovery from an `INCOMPLETE` slot** is manual (documented journal). Confirm that no `--recover` command is wanted in S3.
