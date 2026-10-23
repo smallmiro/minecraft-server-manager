@@ -1,10 +1,12 @@
-import { Paths, log } from '@minecraft-docker/shared';
-import { ShellExecutor } from '../lib/shell.js';
+import { Paths, log, type IServerConsolePort } from '@minecraft-docker/shared';
+import { getContainer } from '../infrastructure/index.js';
+import { getContainerName, serverOfContainer } from '../lib/rcon.js';
 
 export interface ExecCommandOptions {
   root?: string;
   serverName?: string;
   command?: string[];
+  console?: Pick<IServerConsolePort, 'command'>;
 }
 
 /**
@@ -34,6 +36,9 @@ export async function execCommand(options: ExecCommandOptions): Promise<number> 
     return 1;
   }
 
-  const shell = new ShellExecutor(paths);
-  return shell.execRcon(options.serverName, options.command);
+  const consolePort = options.console ?? getContainer(options.root).serverConsolePort;
+  const result = await consolePort.command(serverOfContainer(getContainerName(options.serverName)), options.command);
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  return result.exitCode;
 }
