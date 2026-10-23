@@ -10,7 +10,7 @@
  */
 
 import { Paths, colors, log, ProcessInfo, ServiceStatusEnum } from '@minecraft-docker/shared';
-import { spawn } from 'node:child_process';
+import { followPm2Logs } from '../../infrastructure/pm2-cli.js';
 import { existsSync } from 'node:fs';
 import { select, isCancel } from '@clack/prompts';
 import { Pm2ServiceManagerAdapter } from '../../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
@@ -586,22 +586,7 @@ async function showLogs(
 
   if (options.follow) {
     // Use pm2 logs command for follow mode
-    return new Promise((resolve) => {
-      const args = ['logs', ...services];
-
-      const proc = spawn('pm2', args, {
-        stdio: 'inherit',
-      });
-
-      proc.on('close', (code) => {
-        resolve(code ?? 0);
-      });
-
-      // Handle Ctrl+C gracefully
-      process.on('SIGINT', () => {
-        proc.kill('SIGINT');
-      });
-    });
+    return followPm2Logs(services);
   }
 
   // Non-follow mode: read from adapter

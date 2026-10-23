@@ -7,7 +7,6 @@
  * - Ecosystem config path resolution
  */
 
-import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Paths } from '@minecraft-docker/shared';
@@ -25,41 +24,8 @@ export const PM2_SERVICE_NAMES = {
   CONSOLE: 'mcctl-console',
 } as const;
 
-/**
- * Check if PM2 is installed (globally or as a dependency)
- * @returns Object with installation status and version
- */
-export function checkPm2Installation(): { installed: boolean; path?: string; version?: string } {
-  // First check if pm2 is available in PATH (global installation)
-  const globalResult = spawnSync('which', ['pm2'], {
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
-
-  if (globalResult.status === 0 && globalResult.stdout) {
-    const pm2Path = globalResult.stdout.trim();
-
-    // Get version
-    const versionResult = spawnSync('pm2', ['--version'], {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-
-    return {
-      installed: true,
-      path: pm2Path,
-      version: versionResult.status === 0 ? versionResult.stdout.trim() : undefined,
-    };
-  }
-
-  // Check if pm2 module can be imported (local installation via npm).
-  // The pm2 programmatic API works without global installation, and pm2 is a
-  // declared dependency, so it's always available via the API.
-  return {
-    installed: true,
-    version: 'local',
-  };
-}
+// The pm2 probe lives in infrastructure (ADR-0001 row 16, #668).
+export { checkPm2Installation } from '../infrastructure/pm2-cli.js';
 
 /**
  * Get the ecosystem config path for the given platform
