@@ -17,6 +17,23 @@ vi.mock('child_process', async (importOriginal) => {
   };
 });
 
+// BACKUP_AUTO_ON_STOP (#734, #732 B-Q9): a fake backup port
+const backupPort = {
+  status: vi.fn(),
+  push: vi.fn(),
+};
+vi.mock('../src/lib/world-backup.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/lib/world-backup.js')>();
+  return { ...actual, createWorldBackupPort: vi.fn(() => backupPort) };
+});
+
+function autoOnStop(enabled: boolean) {
+  backupPort.status.mockResolvedValue({
+    ok: true,
+    value: { configured: true, branch: 'main', autoOnStop: enabled },
+  });
+}
+
 import { exec, execFile } from 'child_process';
 
 const mockedExec = vi.mocked(exec);
@@ -46,6 +63,11 @@ describe('Server Action Routes', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    autoOnStop(false);
+    backupPort.push.mockResolvedValue({
+      ok: true,
+      value: { changed: true, commit: 'abc1234', flushed: [], skipped: [], warnings: [] },
+    });
   });
 
   describe('POST /api/servers/:name/start', () => {
@@ -63,6 +85,7 @@ describe('Server Action Routes', () => {
       expect(body.success).toBe(true);
       expect(body.server).toBe('myserver');
       expect(body.action).toBe('start');
+      expect(backupPort.status).not.toHaveBeenCalled(); // only a stop backs up
     });
 
     it('should return 400 for invalid server name', async () => {
@@ -118,6 +141,50 @@ describe('Server Action Routes', () => {
       expect(response.statusCode).toBe(500);
       const body = JSON.parse(response.body);
       expect(body.success).toBe(false);
+    });
+
+    it('runs the auto-backup after a stop when BACKUP_AUTO_ON_STOP=true (#734)', async () => {
+      mockCompose(null, 'Stopping mc-myserver...', '');
+      autoOnStop(true);
+
+      const response = await app.inject({ method: 'POST', url: '/api/servers/myserver/stop' });
+
+      expect(response.statusCode).toBe(200);
+      await vi.waitFor(() =>
+        expect(backupPort.push).toHaveBeenCalledWith(expect.objectContaining({ lockWaitMs: 600_000 }))
+      );
+    });
+
+    it('does not back up when BACKUP_AUTO_ON_STOP is off', async () => {
+      mockCompose(null, 'Stopping mc-myserver...', '');
+
+      const response = await app.inject({ method: 'POST', url: '/api/servers/myserver/stop' });
+
+      expect(response.statusCode).toBe(200);
+      await vi.waitFor(() => expect(backupPort.status).toHaveBeenCalled());
+      expect(backupPort.push).not.toHaveBeenCalled();
+    });
+
+    it('a failed auto-backup does not fail the stop', async () => {
+      mockCompose(null, 'Stopping mc-myserver...', '');
+      autoOnStop(true);
+      backupPort.push.mockResolvedValue({ ok: false, error: { code: 'auth_failed', message: 'bad token' } });
+
+      const response = await app.inject({ method: 'POST', url: '/api/servers/myserver/stop' });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json().success).toBe(true);
+      await vi.waitFor(() => expect(backupPort.push).toHaveBeenCalled());
+    });
+
+    it('does not back up when the stop failed', async () => {
+      mockCompose(new Error('Permission denied'), '', 'Error: Permission denied');
+      autoOnStop(true);
+
+      await app.inject({ method: 'POST', url: '/api/servers/myserver/stop' });
+
+      expect(backupPort.status).not.toHaveBeenCalled();
+      expect(backupPort.push).not.toHaveBeenCalled();
     });
   });
 

@@ -26,6 +26,10 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
     getStatus(name: Parameters<typeof actual.workloadNameOf>[0]) {
       return runtime.status.get(actual.workloadNameOf(name)) ?? 'not_found';
     }
+    // 'not_found' counts as stopped only when a strict list succeeds (#734)
+    list() {
+      return [];
+    }
     async start(name: Parameters<typeof actual.workloadNameOf>[0]) {
       runtime.started.push(actual.workloadNameOf(name));
       return { success: true };
@@ -237,6 +241,19 @@ describe('World routes - assignment rules (#670)', () => {
 
       expect(response.statusCode).toBe(201);
       expect(readFileSync(file, 'utf-8')).toBe(`LEVEL=fresh\n${UNIVERSE}`);
+    });
+
+    it('writes LEVEL and SEED to config.env without mcctl.sh (#734)', async () => {
+      const file = server('alpha', `LEVEL=alpha\nSEED=1\n${UNIVERSE}`);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/worlds',
+        payload: { name: 'fresh', serverName: 'alpha', seed: '-42 a text seed' },
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(readFileSync(file, 'utf-8')).toBe(`LEVEL=fresh\nSEED=-42 a text seed\n${UNIVERSE}`);
     });
   });
 });
