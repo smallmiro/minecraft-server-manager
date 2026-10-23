@@ -78,3 +78,17 @@ export type {
   BlockScanOutcome,
   BlockScanOptions,
 } from './IBlockScanner.js';
+
+// Runtime ports (ADR-0001)
+export type { IContainerRuntimePort, RuntimeActionResult } from './IContainerRuntimePort.js';
+export type {
+  IServerConsolePort,
+  ConsoleCommandResult,
+  ConsoleEndpoint,
+} from './IServerConsolePort.js';
+export type { IRouterStatusPort } from './IRouterStatusPort.js';
+export type { IPlayitAgentPort } from './IPlayitAgentPort.js';
+export type { IHostnameRegistrarPort, HostnameRegistrarStatus } from './IHostnameRegistrarPort.js';
+export type { IRuntimeEnvironmentPort, ToolVersion } from './IRuntimeEnvironmentPort.js';
+export type { IServerSpecRepository, ServerSpec } from './IServerSpecRepository.js';
+export type { IWorldAssignmentPort, WorldAssignment } from './IWorldAssignmentPort.js';
