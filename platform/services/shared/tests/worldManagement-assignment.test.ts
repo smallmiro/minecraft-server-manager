@@ -39,7 +39,7 @@ function setup(opts: Setup = {}) {
     undetermined: [...undetermined],
   });
   const port = {
-    listAssignments: vi.fn(list),
+    snapshot: vi.fn(list),
     assign: vi.fn(async (world: string, server: string) => {
       const error = checkAssign(await list(), world, server);
       if (error) throw error;

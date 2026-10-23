@@ -63,7 +63,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       return new WorldAssignmentError('undetermined', 'World assignments cannot be read: no assignment port configured');
     }
     try {
-      return await this.assignments.listAssignments();
+      return await this.assignments.snapshot();
     } catch (error) {
       return new WorldAssignmentError('undetermined', `Cannot read world assignments: ${toFailure(error).error}`);
     }

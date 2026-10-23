@@ -12,8 +12,11 @@ export interface WorldAssignment {
   /** resolveWorldName(config.env) */
   world: string;
   server: string;
-  /** No `--universe` in EXTRA_ARGS: the world lives in servers/<n>/data (D-1). */
-  internal: boolean;
+  /**
+   * The world lives in servers/<n>/data, not worlds/ (D-1). Optional for the
+   * v2 `{ world, server }` shape; adapters always set it, and absent means false.
+   */
+  internal?: boolean;
 }
 
 export interface WorldAssignmentSnapshot {

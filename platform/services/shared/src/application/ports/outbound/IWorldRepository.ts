@@ -64,7 +64,7 @@ export interface IWorldRepository {
    * Get lock status for a world
    *
    * @deprecated Derived from the LEVEL assignments since #670 (`pid` is always
-   * undefined). Use IWorldAssignmentPort.listAssignments with holdersOf.
+   * undefined). Use IWorldAssignmentPort.snapshot with holdersOf.
    * Removed in v3.0.0 (#736).
    */
   getLockStatus(name: string): Promise<WorldLockData | null>;

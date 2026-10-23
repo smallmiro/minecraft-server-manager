@@ -182,7 +182,7 @@ export class WorldRepository implements IWorldRepository {
    */
   private async snapshot(): Promise<WorldAssignmentSnapshot> {
     try {
-      return await this.assignments.listAssignments();
+      return await this.assignments.snapshot();
     } catch {
       return { assignments: [], undetermined: [] };
     }
@@ -270,7 +270,7 @@ export class WorldRepository implements IWorldRepository {
    * The server a world is assigned to, derived from the assignments.
    * `timestamp` is the time of the read; `pid` is always undefined.
    *
-   * @deprecated Lock files are gone (#670). Use IWorldAssignmentPort.listAssignments
+   * @deprecated Lock files are gone (#670). Use IWorldAssignmentPort.snapshot
    * with holdersOf. Removed in v3.0.0 (#736).
    */
   async getLockStatus(name: string): Promise<WorldLockData | null> {

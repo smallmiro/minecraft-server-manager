@@ -32,7 +32,7 @@ function setup(opts: {
     undetermined: opts.undetermined ?? [],
   });
   const port: IWorldAssignmentPort = {
-    listAssignments: vi.fn(async () => snapshotOf(opts.levels)),
+    snapshot: vi.fn(async () => snapshotOf(opts.levels)),
     preview: vi.fn(async (server: string, content: string) =>
       snapshotOf({ ...opts.levels, [server]: /^LEVEL=(.*)$/m.exec(content)?.[1] ?? 'world' })
     ),

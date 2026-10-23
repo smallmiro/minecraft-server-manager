@@ -150,7 +150,7 @@ async function assignIfWorldChanges(
 
   const container = getContainer(options.root);
   try {
-    const snapshot = await container.worldAssignmentPort.listAssignments();
+    const snapshot = await container.worldAssignmentPort.snapshot();
     const before = snapshot.assignments.find((a) => a.server === serverName)?.world;
     const after = key === 'LEVEL' ? value : config['LEVEL']?.trim() || value;
     if (before === after) return 'unchanged';

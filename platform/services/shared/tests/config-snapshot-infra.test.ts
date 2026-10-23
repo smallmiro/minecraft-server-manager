@@ -1065,7 +1065,7 @@ describe('ConfigSnapshotUseCaseImpl', () => {
     // config.env is checked against the world assignments (#670); unchanged here
     const unchanged = { assignments: [{ server: 'myserver', world: 'world', internal: false }], undetermined: [] };
     const assignments = {
-      listAssignments: async () => unchanged,
+      snapshot: async () => unchanged,
       preview: async () => unchanged,
       assign: async () => {},
       release: async () => ({ server: '', fallback: '' }),

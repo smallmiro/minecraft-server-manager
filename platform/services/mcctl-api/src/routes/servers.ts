@@ -808,7 +808,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           message: `World '${worldName}' not found`,
         });
       }
-      const snapshot = await new ConfigEnvWorldAssignmentAdapter(paths).listAssignments();
+      const snapshot = await new ConfigEnvWorldAssignmentAdapter(paths).snapshot();
       const refused = checkAssign(snapshot, worldName ?? name, name, { newServer: true });
       if (refused) {
         const failure = worldFailure({ error: refused.message, errorCode: refused.code }, 'World is not available');

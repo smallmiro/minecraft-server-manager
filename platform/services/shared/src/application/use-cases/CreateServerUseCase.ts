@@ -60,7 +60,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     if (!this.assignments) {
       throw new WorldAssignmentError('undetermined', 'World assignments cannot be read: no assignment port configured');
     }
-    const refused = checkAssign(await this.assignments.listAssignments(), world, name.value, { newServer: true });
+    const refused = checkAssign(await this.assignments.snapshot(), world, name.value, { newServer: true });
     if (refused) throw refused;
   }
 

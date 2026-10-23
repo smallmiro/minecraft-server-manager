@@ -42,9 +42,9 @@ afterEach(() => {
   rmSync(root, { recursive: true, force: true });
 });
 
-describe('listAssignments', () => {
+describe('snapshot', () => {
   it('returns an empty snapshot when servers/ does not exist', async () => {
-    expect(await adapter.listAssignments()).toEqual({ assignments: [], undetermined: [] });
+    expect(await adapter.snapshot()).toEqual({ assignments: [], undetermined: [] });
   });
 
   it('reads LEVEL, the legacy WORLD_NAME, and falls back to "world"', async () => {
@@ -53,7 +53,7 @@ describe('listAssignments', () => {
     server('b', `WORLD_NAME=legacy\n${UNIVERSE}`);
     server('d', `LEVEL=wins\nWORLD_NAME=loses\n${UNIVERSE}`);
 
-    expect(await adapter.listAssignments()).toEqual({
+    expect(await adapter.snapshot()).toEqual({
       assignments: [
         { server: 'a', world: 'alpha', internal: false },
         { server: 'b', world: 'legacy', internal: false },
@@ -69,7 +69,7 @@ describe('listAssignments', () => {
     mkdirSync(join(root, 'servers', 'empty'), { recursive: true });
     server('a', `LEVEL=a\n${UNIVERSE}`);
 
-    const snapshot = await adapter.listAssignments();
+    const snapshot = await adapter.snapshot();
     expect(snapshot.assignments.map((a) => a.server)).toEqual(['a']);
     expect(snapshot.undetermined).toEqual([]);
   });
@@ -78,7 +78,7 @@ describe('listAssignments', () => {
     server('a', `LEVEL="My World"\n${UNIVERSE}`);
     server('b', `LEVEL=world.old\n${UNIVERSE}`);
 
-    const snapshot = await adapter.listAssignments();
+    const snapshot = await adapter.snapshot();
     expect(snapshot.assignments.map((a) => a.world)).toEqual(['My World', 'world.old']);
     expect(snapshot.undetermined).toEqual([]);
   });
@@ -89,7 +89,7 @@ describe('listAssignments', () => {
       server('bad', `${line}\n${UNIVERSE}`);
       server('ok', `LEVEL=ok\n${UNIVERSE}`);
 
-      const snapshot = await adapter.listAssignments();
+      const snapshot = await adapter.snapshot();
       expect(snapshot.undetermined).toEqual(['bad']);
       expect(snapshot.assignments.map((a) => a.server)).toEqual(['ok']);
     }
@@ -98,14 +98,14 @@ describe('listAssignments', () => {
   it('marks an unreadable config.env (a directory) as undetermined', async () => {
     mkdirSync(join(root, 'servers', 'broken', 'config.env'), { recursive: true });
 
-    expect(await adapter.listAssignments()).toEqual({ assignments: [], undetermined: ['broken'] });
+    expect(await adapter.snapshot()).toEqual({ assignments: [], undetermined: ['broken'] });
   });
 
   it('detects a server-internal world (no --universe)', async () => {
     server('old', 'LEVEL=old\nEXTRA_ARGS=-Dfoo=bar\n');
     server('none', 'LEVEL=none\n');
 
-    const snapshot = await adapter.listAssignments();
+    const snapshot = await adapter.snapshot();
     expect(snapshot.assignments.map((a) => a.internal)).toEqual([true, true]);
   });
 
@@ -114,7 +114,7 @@ describe('listAssignments', () => {
     mkdirSync(join(root, 'worlds', '.locks'), { recursive: true });
     writeFileSync(join(root, 'worlds', '.locks', 'shared.lock'), 'a:1700000000:1\n');
 
-    expect(await adapter.listAssignments()).toEqual({
+    expect(await adapter.snapshot()).toEqual({
       assignments: [{ server: 'a', world: 'a', internal: false }],
       undetermined: [],
     });
@@ -185,7 +185,7 @@ describe('assign', () => {
   it('re-reads config.env before writing (no stale snapshot)', async () => {
     server('a', `LEVEL=a\n${UNIVERSE}`);
     server('b', `LEVEL=b\n${UNIVERSE}`);
-    await adapter.listAssignments();
+    await adapter.snapshot();
     server('a', `LEVEL=target\n${UNIVERSE}`); // changed by another process
 
     expect((await rejection(adapter.assign('target', 'b'))).code).toBe('conflict');
@@ -259,14 +259,14 @@ describe('internal detection follows the compose env_file order (Codex #4)', () 
     writeFileSync(join(root, '.env'), 'EXTRA_ARGS=--universe /worlds/\n');
     server('a', 'LEVEL=a\n');
 
-    expect((await adapter.listAssignments()).assignments).toEqual([{ server: 'a', world: 'a', internal: false }]);
+    expect((await adapter.snapshot()).assignments).toEqual([{ server: 'a', world: 'a', internal: false }]);
   });
 
   it('takes a value written in global.env itself', async () => {
     globalEnv('EXTRA_ARGS=--universe=/worlds\n');
     server('a', 'LEVEL=a\n');
 
-    expect((await adapter.listAssignments()).assignments[0]?.internal).toBe(false);
+    expect((await adapter.snapshot()).assignments[0]?.internal).toBe(false);
   });
 
   it("lets the server's own EXTRA_ARGS win, even when empty", async () => {
@@ -274,34 +274,34 @@ describe('internal detection follows the compose env_file order (Codex #4)', () 
     writeFileSync(join(root, '.env'), 'EXTRA_ARGS=--universe /worlds/\n');
     server('a', 'LEVEL=a\nEXTRA_ARGS=\n');
 
-    expect((await adapter.listAssignments()).assignments[0]?.internal).toBe(true);
+    expect((await adapter.snapshot()).assignments[0]?.internal).toBe(true);
   });
 
   it('is internal when nothing sets --universe', async () => {
     globalEnv('EXTRA_ARGS\n');
     server('a', 'LEVEL=a\n');
 
-    expect((await adapter.listAssignments()).assignments[0]?.internal).toBe(true);
+    expect((await adapter.snapshot()).assignments[0]?.internal).toBe(true);
   });
 
   it.each(['--universe /worlds', '--universe=/worlds/', '-Dx=1 --universe /worlds/ --nogui'])(
     'accepts %s as worlds/',
     async (args) => {
       server('a', `LEVEL=a\nEXTRA_ARGS=${args}\n`);
-      expect((await adapter.listAssignments()).assignments[0]?.internal).toBe(false);
+      expect((await adapter.snapshot()).assignments[0]?.internal).toBe(false);
     }
   );
 
   it.each(['--universe /data', '--universe .', '--universe=/data/'])('treats %s as server-internal', async (args) => {
     server('a', `LEVEL=a\nEXTRA_ARGS=${args}\n`);
-    expect((await adapter.listAssignments()).assignments[0]?.internal).toBe(true);
+    expect((await adapter.snapshot()).assignments[0]?.internal).toBe(true);
   });
 
   it.each(['--universe /srv/elsewhere', '--universe', '--universe ${WORLD_DIR}'])(
     'marks an unsupported location %s as undetermined',
     async (args) => {
       server('a', `LEVEL=a\nEXTRA_ARGS=${args}\n`);
-      expect((await adapter.listAssignments()).undetermined).toEqual(['a']);
+      expect((await adapter.snapshot()).undetermined).toEqual(['a']);
     }
   );
 });
@@ -311,13 +311,13 @@ describe('Compose interpolation in LEVEL (Codex #5)', () => {
     'marks %s as undetermined',
     async (line) => {
       server('a', `${line}\n${UNIVERSE}`);
-      expect((await adapter.listAssignments()).undetermined).toEqual(['a']);
+      expect((await adapter.snapshot()).undetermined).toEqual(['a']);
     }
   );
 
   it('keeps a single-quoted $ literal', async () => {
     server('a', `LEVEL='cash$world'\n${UNIVERSE}`);
-    expect((await adapter.listAssignments()).assignments[0]?.world).toBe('cash$world');
+    expect((await adapter.snapshot()).assignments[0]?.world).toBe('cash$world');
   });
 });
 

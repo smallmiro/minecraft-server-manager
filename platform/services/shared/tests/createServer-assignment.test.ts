@@ -17,7 +17,7 @@ import type {
 
 function setup(levels: Record<string, string>, opts: { undetermined?: string[]; noPort?: boolean } = {}) {
   const port: IWorldAssignmentPort = {
-    listAssignments: vi.fn(async () => ({
+    snapshot: vi.fn(async () => ({
       assignments: Object.entries(levels).map(([server, world]) => ({ server, world, internal: false })),
       undetermined: opts.undetermined ?? [],
     })),

@@ -77,7 +77,7 @@ describe('WorldRepository assignment hydration', () => {
     world('a');
     world('b');
     const port: IWorldAssignmentPort = {
-      listAssignments: vi.fn().mockResolvedValue({
+      snapshot: vi.fn().mockResolvedValue({
         assignments: [{ world: 'a', server: 'srv', internal: false }],
         undetermined: [],
       }),
@@ -88,7 +88,7 @@ describe('WorldRepository assignment hydration', () => {
 
     const worlds = await repo.findAll();
 
-    expect(port.listAssignments).toHaveBeenCalledTimes(1);
+    expect(port.snapshot).toHaveBeenCalledTimes(1);
     expect(worlds.map((w) => [w.name, w.lockedBy])).toEqual(
       expect.arrayContaining([
         ['a', 'srv'],
@@ -100,7 +100,7 @@ describe('WorldRepository assignment hydration', () => {
   it('lists worlds as unassigned when servers/ cannot be read', async () => {
     world('a');
     const port: IWorldAssignmentPort = {
-      listAssignments: vi.fn().mockRejectedValue(new Error('EACCES')),
+      snapshot: vi.fn().mockRejectedValue(new Error('EACCES')),
       assign: vi.fn(),
       release: vi.fn(),
     };

@@ -1,5 +1,5 @@
-import type { IWorldAssignmentPort, WorldAssignmentSnapshot } from '@minecraft-docker/shared';
-import { WorldAssignmentError, checkAssign, planRelease } from '@minecraft-docker/shared';
+import type { IWorldAssignmentPort, WorldAssignment, WorldAssignmentSnapshot } from '@minecraft-docker/shared';
+import { WorldAssignmentError, checkAssign, holdersOf, planRelease } from '@minecraft-docker/shared';
 
 /**
  * In-memory IWorldAssignmentPort: server -> LEVEL, enforcing the shared domain rules.
@@ -15,7 +15,15 @@ export class MockWorldAssignmentPort implements IWorldAssignmentPort {
     this.levels = new Map(Object.entries(levels));
   }
 
-  async listAssignments(): Promise<WorldAssignmentSnapshot> {
+  async getAssignment(world: string): Promise<string | null> {
+    return holdersOf(await this.snapshot(), world)[0] ?? null;
+  }
+
+  async listAssignments(): Promise<WorldAssignment[]> {
+    return (await this.snapshot()).assignments;
+  }
+
+  async snapshot(): Promise<WorldAssignmentSnapshot> {
     return {
       assignments: [...this.levels]
         .sort(([a], [b]) => a.localeCompare(b))
@@ -39,7 +47,7 @@ export class MockWorldAssignmentPort implements IWorldAssignmentPort {
   async assign(world: string, server: string): Promise<void> {
     this.calls.push({ method: 'assign', args: [world, server] });
     this.throwPending();
-    const error = checkAssign(await this.listAssignments(), world, server);
+    const error = checkAssign(await this.snapshot(), world, server);
     if (error) throw error;
     this.levels.set(server, world);
   }
@@ -47,7 +55,7 @@ export class MockWorldAssignmentPort implements IWorldAssignmentPort {
   async release(world: string): Promise<{ server: string; fallback: string }> {
     this.calls.push({ method: 'release', args: [world] });
     this.throwPending();
-    const plan = planRelease(await this.listAssignments(), world);
+    const plan = planRelease(await this.snapshot(), world);
     if (plan instanceof WorldAssignmentError) throw plan;
     this.levels.set(plan.server, plan.fallback);
     return plan;

@@ -7,6 +7,8 @@ import {
   EXISTING_WORLD_NAME_PATTERN,
   WorldAssignmentError,
   checkAssign,
+  checkRemoval,
+  holdersOf,
   planRelease,
   resolveWorldName,
   type WorldAssignment,
@@ -58,19 +60,33 @@ function universeLocation(extraArgs: string): 'worlds' | 'internal' | undefined 
 export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
   constructor(private readonly paths: Paths = new Paths()) {}
 
-  listAssignments(): Promise<WorldAssignmentSnapshot> {
-    return this.snapshot();
+  /** @deprecated Use snapshot() with holdersOf. Removed in v3.0.0 (#736). */
+  async getAssignment(world: string): Promise<string | null> {
+    const snapshot = await this.read();
+    const holder = holdersOf(snapshot, world)[0];
+    if (holder) return holder;
+    const undetermined = checkRemoval(snapshot, world);
+    if (undetermined) throw undetermined;
+    return null;
+  }
+
+  async listAssignments(): Promise<WorldAssignment[]> {
+    return (await this.read()).assignments;
+  }
+
+  snapshot(): Promise<WorldAssignmentSnapshot> {
+    return this.read();
   }
 
   preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot> {
-    return this.snapshot({ server, content: configEnv });
+    return this.read({ server, content: configEnv });
   }
 
   // ponytail: check-then-write race between CLI and API processes is accepted
   // (human-driven, findDuplicates reports the result); add an open(..., 'wx')
   // mutex file if a duplicate is ever seen.
   async assign(world: string, server: string): Promise<void> {
-    const snapshot = await this.snapshot();
+    const snapshot = await this.read();
     const error = checkAssign(snapshot, world, server);
     if (error) throw error;
     if (snapshot.assignments.find((a) => a.server === server)?.world === world) return;
@@ -78,13 +94,13 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
   }
 
   async release(world: string): Promise<{ server: string; fallback: string }> {
-    const plan = planRelease(await this.snapshot(), world);
+    const plan = planRelease(await this.read(), world);
     if (plan instanceof WorldAssignmentError) throw plan;
     await this.writeLevel(plan.server, plan.fallback);
     return plan;
   }
 
-  private async snapshot(override?: { server: string; content: string }): Promise<WorldAssignmentSnapshot> {
+  private async read(override?: { server: string; content: string }): Promise<WorldAssignmentSnapshot> {
     let entries: Dirent[] = [];
     try {
       entries = await readdir(this.paths.servers, { withFileTypes: true });

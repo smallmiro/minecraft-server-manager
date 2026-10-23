@@ -40,7 +40,7 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
       );
     }
     const [current, next] = await Promise.all([
-      this.assignments.listAssignments(),
+      this.assignments.snapshot(),
       this.assignments.preview(server, configEnv),
     ]);
     const before = current.assignments.find((a) => a.server === server);
