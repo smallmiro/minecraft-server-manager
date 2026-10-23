@@ -4,6 +4,7 @@ import { McVersion } from '../value-objects/McVersion.js';
 import { Memory } from '../value-objects/Memory.js';
 import { WorldOptions } from '../value-objects/WorldOptions.js';
 import { ModpackOptions } from '../value-objects/ModpackOptions.js';
+import { containerNameOf, serverHostnameOf } from '../../infrastructure/adapters/workloadNames.js';
 
 /**
  * Server status enumeration
@@ -114,16 +115,22 @@ export class Server {
 
   /**
    * Container name for Docker
+   *
+   * @deprecated A runtime rule (#665). Pass `server.name` to the runtime ports;
+   * adapters use `containerNameOf`. Removed in v3.0.0 (#736).
    */
   get containerName(): string {
-    return this._config.name.containerName;
+    return containerNameOf(this._config.name);
   }
 
   /**
    * Hostname for mc-router connection
+   *
+   * @deprecated A runtime rule (#665). Use `serverHostnameOf` (infrastructure).
+   * Removed in v3.0.0 (#736).
    */
   get hostname(): string {
-    return this._config.name.hostname;
+    return serverHostnameOf(this._config.name);
   }
 
   /**

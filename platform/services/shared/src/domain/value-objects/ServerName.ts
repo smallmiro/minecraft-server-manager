@@ -1,15 +1,18 @@
+import { containerNameOf, serverHostnameOf } from '../../infrastructure/adapters/workloadNames.js';
+
 /**
  * Server name rules: the single source for the CLI, API, console and scripts
  * (platform/scripts/lib/common.sh mirrors them in bash).
  *
- * New names are DNS-1123 labels that start with a letter, so `mc-<name>`
- * stays a valid container and Kubernetes resource name (<= 63 chars, with
- * room for pod/StatefulSet suffixes).
+ * New names are DNS-1123 labels that start with a letter, so the runtime's
+ * workload name (infrastructure/adapters/workloadNames.ts) stays a valid
+ * container and Kubernetes resource name (<= 63 chars, with room for
+ * pod/StatefulSet suffixes).
  */
 export const SERVER_NAME_MIN_LENGTH = 2;
 export const SERVER_NAME_MAX_LENGTH = 32;
 
-/** Names whose `mc-<name>` container collides with a platform service. */
+/** Names whose runtime workload collides with a platform service. */
 export const RESERVED_SERVER_NAMES: readonly string[] = ['router'];
 
 /** The whole new-name rule as one regex, for JSON schemas and clients. */
@@ -42,17 +45,23 @@ export class ServerName {
   }
 
   /**
-   * Server name with mc- prefix for Docker container/service naming
+   * Docker container/service name of this server.
+   *
+   * @deprecated A runtime rule, not a domain one (#665). Pass the ServerName to
+   * the runtime ports instead; adapters use `containerNameOf`. Removed in v3.0.0 (#736).
    */
   get containerName(): string {
-    return `mc-${this._value}`;
+    return containerNameOf(this._value);
   }
 
   /**
-   * Server hostname for mc-router (e.g., myserver.local)
+   * Server hostname for mc-router.
+   *
+   * @deprecated A runtime rule, not a domain one (#665). Use `serverHostnameOf`
+   * (infrastructure). Removed in v3.0.0 (#736).
    */
   get hostname(): string {
-    return `${this._value}.local`;
+    return serverHostnameOf(this._value);
   }
 
   /**
@@ -77,7 +86,7 @@ export class ServerName {
       return 'Server name cannot contain consecutive hyphens';
     }
     if (RESERVED_SERVER_NAMES.includes(value)) {
-      return `Server name '${value}' is reserved (conflicts with the mc-${value} container)`;
+      return `Server name '${value}' is reserved (conflicts with the ${containerNameOf(value)} container)`;
     }
     return undefined;
   }
