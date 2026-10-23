@@ -5,12 +5,12 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 
 /**
- * User input reaches servers as data, never shell text (#720). Delete runs
- * the real child process against a fake script that records its argv, so a
- * value a shell would interpret shows up as a side effect. Create provisions
- * in TypeScript (#675): the real use case and ServerSpec repository write the
- * files under a temp root (no runtime, no avahi), and the values must land in
- * config.env as given.
+ * User input reaches servers as data, never shell text (#720). Create
+ * provisions in TypeScript (#675): the real use case and ServerSpec
+ * repository write the files under a temp root (no runtime, no avahi), and
+ * the values must land in config.env as given. Delete deprovisions in
+ * TypeScript (#735): the name reaches the use case as given and no process
+ * runs from the route.
  */
 
 const ROOT = mkdtempSync(join(tmpdir(), 'mcctl-api-process-args-'));
@@ -58,6 +58,7 @@ import {
 } from '@minecraft-docker/shared';
 import { parseEnvDocument } from '@minecraft-docker/shared/utils';
 import { serverProvision } from '../src/routes/servers.js';
+import { fakeDelete } from './fake-provision.js';
 
 /** The real provisioning on ROOT, without runtime or avahi. */
 function fileProvision(): void {
@@ -84,11 +85,6 @@ function configEnv(): Map<string, string> {
 
 const ARGV_FILE = join(ROOT, 'argv');
 
-/** argv the fake script received, one entry per argument. */
-function recordedArgv(): string[] {
-  return readFileSync(ARGV_FILE, 'utf-8').split('\0').slice(0, -1);
-}
-
 const pwned = (tag: string) => existsSync(join(ROOT, `pwned-${tag}`));
 
 describe('Server scripts receive user input as argv, not shell text (#720)', () => {
@@ -97,7 +93,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
   beforeAll(async () => {
     mkdirSync(join(ROOT, 'backups', 'meta'), { recursive: true });
     mkdirSync(SCRIPTS, { recursive: true });
-    for (const name of ['create-server.sh', 'delete-server.sh']) {
+    for (const name of ['create-server.sh']) {
       const script = join(SCRIPTS, name);
       writeFileSync(script, `#!/bin/bash\nprintf '%s\\0' "$@" > "${ARGV_FILE}"\n`);
       chmodSync(script, 0o755);
@@ -221,31 +217,25 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
   });
 
   describe('DELETE /api/servers/:name', () => {
-    it('runs delete-server.sh with the name as one argument', async () => {
+    it('hands the name to the deprovision as one value and runs no process (#735)', async () => {
       vi.mocked(serverExists).mockReturnValue(true);
+      const calls = fakeDelete();
 
       const response = await app.inject({ method: 'DELETE', url: '/api/servers/My_Server' });
 
       expect(response.statusCode).toBe(200);
-      expect(recordedArgv()).toEqual(['My_Server', '--force']);
+      expect(calls).toEqual([{ name: 'My_Server', deleteWorld: false, sudoPassword: undefined }]);
       expect(exec).not.toHaveBeenCalled();
-      expect(spawn).toHaveBeenCalledWith(
-        'bash',
-        [join(SCRIPTS, 'delete-server.sh'), 'My_Server', '--force'],
-        expect.objectContaining({ cwd: ROOT, detached: true })
-      );
+      expect(spawn).not.toHaveBeenCalled();
     });
 
-    it('passes --delete-world only when deleteWorld=true (#652)', async () => {
+    it('passes deleteWorld only when deleteWorld=true (#652)', async () => {
       vi.mocked(serverExists).mockReturnValue(true);
+      const calls = fakeDelete();
 
-      const keep = await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=false' });
-      expect(keep.statusCode).toBe(200);
-      expect(recordedArgv()).toEqual(['alpha', '--force']);
-
-      const drop = await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=true' });
-      expect(drop.statusCode).toBe(200);
-      expect(recordedArgv()).toEqual(['alpha', '--force', '--delete-world']);
+      expect((await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=false' })).statusCode).toBe(200);
+      expect((await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=true' })).statusCode).toBe(200);
+      expect(calls.map((c) => c.deleteWorld)).toEqual([false, true]);
     });
   });
 });

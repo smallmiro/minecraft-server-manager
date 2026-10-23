@@ -1,18 +1,58 @@
-import { describe, it, beforeEach } from 'vitest';
+import { describe, it, beforeEach, vi } from 'vitest';
 import assert from 'node:assert';
-import { DeleteServerUseCase, ServerName, ServerStatus } from '@minecraft-docker/shared';
-import type { IContainerRuntimePort, IServerConsolePort } from '@minecraft-docker/shared';
+import { DeleteServerUseCase, ServerStatus } from '@minecraft-docker/shared';
+import type {
+  HostnameChangeResult,
+  IAuditLogPort,
+  IContainerRuntimePort,
+  IHostnameRegistrarPort,
+  IServerConsolePort,
+  IServerSpecRepository,
+  ServerSpecDeleteResult,
+} from '@minecraft-docker/shared';
 import {
   MockPromptAdapter,
   MockShellAdapter,
   MockServerRepository,
 } from '../mocks/index.js';
 
+/** Fake deprovision ports (#735): records remove, delete and unregister calls. */
+function fakeDeprovision() {
+  const state = {
+    removed: [] as string[],
+    deletes: [] as Array<{ name: string; deleteWorld?: boolean; dryRun?: boolean }>,
+    result: { level: 'server1', movedWorlds: [], deletedWorlds: [] } as ServerSpecDeleteResult,
+    deleteError: undefined as Error | undefined,
+    hostname: { status: 'changed' } as HostnameChangeResult,
+  };
+  const runtime = {
+    remove: async (name: { value: string }) => {
+      state.removed.push(name.value);
+      return { success: true };
+    },
+  } as unknown as IContainerRuntimePort;
+  const specRepo = {
+    delete: async (name: string, options: { deleteWorld?: boolean; dryRun?: boolean } = {}) => {
+      state.deletes.push({ name, ...options });
+      if (!options.dryRun && state.deleteError) throw state.deleteError;
+      return state.result;
+    },
+  } as unknown as IServerSpecRepository;
+  const hostnames = { unregister: async () => state.hostname } as unknown as IHostnameRegistrarPort;
+  return { state, runtime, deps: { specRepo, hostnames } };
+}
+
 describe('DeleteServerUseCase Integration', () => {
   let promptAdapter: MockPromptAdapter;
   let shellAdapter: MockShellAdapter;
   let serverRepo: MockServerRepository;
+  let fake: ReturnType<typeof fakeDeprovision>;
   let useCase: DeleteServerUseCase;
+
+  const build = (opts: { console?: IServerConsolePort; audit?: IAuditLogPort } = {}) =>
+    new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, opts.audit, opts.console, fake.runtime, fake.deps);
+  /** Servers whose files were deleted (the real, not the dry-run, delete). */
+  const deleted = () => fake.state.deletes.filter((d) => !d.dryRun).map((d) => d.name);
 
   beforeEach(() => {
     promptAdapter = new MockPromptAdapter({
@@ -24,7 +64,8 @@ describe('DeleteServerUseCase Integration', () => {
       { name: 'server1', status: ServerStatus.RUNNING, playerCount: 0 },
       { name: 'server2', status: ServerStatus.STOPPED },
     ]);
-    useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+    fake = fakeDeprovision();
+    useCase = build();
   });
 
   describe('execute (interactive)', () => {
@@ -32,7 +73,7 @@ describe('DeleteServerUseCase Integration', () => {
       const result = await useCase.execute();
 
       assert.strictEqual(result, true);
-      assert.ok(shellAdapter.wasCommandCalled('deleteServer'));
+      assert.deepStrictEqual(deleted(), ['server1']);
     });
 
     it('should show intro message', async () => {
@@ -41,40 +82,28 @@ describe('DeleteServerUseCase Integration', () => {
       assert.strictEqual(promptAdapter.introMessage, 'Delete Minecraft Server');
     });
 
-    it('should stop running server before deletion', async () => {
+    it('plans, then removes the container, then deletes the files (#735)', async () => {
       await useCase.execute();
 
-      assert.ok(shellAdapter.wasCommandCalled('stopServer'));
-      assert.ok(shellAdapter.wasCommandCalled('deleteServer'));
-    });
-
-    it('stops through the runtime port when one is given (mcctl.sh is gone, #734)', async () => {
-      const stopped: unknown[] = [];
-      const runtime = {
-        stop: async (name: unknown) => {
-          stopped.push(name);
-          return { success: true };
-        },
-      } as unknown as IContainerRuntimePort;
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, undefined, runtime);
-
-      await useCase.execute();
-
-      assert.deepStrictEqual(stopped, [ServerName.fromExisting('server1')]);
+      assert.deepStrictEqual(fake.state.removed, ['server1']);
+      assert.deepStrictEqual(
+        fake.state.deletes.map((d) => d.dryRun === true),
+        [true, false]
+      );
       assert.ok(!shellAdapter.wasCommandCalled('stopServer'));
-      assert.ok(shellAdapter.wasCommandCalled('deleteServer'));
+      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
     });
 
-    it('should not stop already stopped server', async () => {
+    it('removes the container of a stopped server too (an absent one is fine)', async () => {
       serverRepo = new MockServerRepository([
         { name: 'stopped', status: ServerStatus.STOPPED },
       ]);
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = build();
 
       await useCase.execute();
 
-      assert.ok(!shellAdapter.wasCommandCalled('stopServer'));
-      assert.ok(shellAdapter.wasCommandCalled('deleteServer'));
+      assert.deepStrictEqual(fake.state.removed, ['stopped']);
+      assert.deepStrictEqual(deleted(), ['stopped']);
     });
 
     it('should return false when no servers found', async () => {
@@ -88,12 +117,13 @@ describe('DeleteServerUseCase Integration', () => {
 
     it('should return false when user cancels', async () => {
       promptAdapter = new MockPromptAdapter({ confirm: false });
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = build();
 
       const result = await useCase.execute();
 
       assert.strictEqual(result, false);
-      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+      assert.deepStrictEqual(fake.state.deletes, []);
+      assert.deepStrictEqual(fake.state.removed, []);
     });
   });
 
@@ -102,7 +132,7 @@ describe('DeleteServerUseCase Integration', () => {
       const result = await useCase.executeWithName('server1');
 
       assert.strictEqual(result, true);
-      assert.ok(shellAdapter.wasCommandCalled('deleteServer'));
+      assert.deepStrictEqual(deleted(), ['server1']);
     });
 
     it('should throw when server not found', async () => {
@@ -118,7 +148,7 @@ describe('DeleteServerUseCase Integration', () => {
       serverRepo = new MockServerRepository([
         { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
       ]);
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = build();
 
       await assert.rejects(
         async () => {
@@ -132,7 +162,7 @@ describe('DeleteServerUseCase Integration', () => {
       serverRepo = new MockServerRepository([
         { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
       ]);
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = build();
 
       const result = await useCase.executeWithName('busy', { force: true });
 
@@ -145,7 +175,7 @@ describe('DeleteServerUseCase Integration', () => {
         { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
       ]);
       promptAdapter = new MockPromptAdapter({ confirm: false });
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = build();
 
       assert.strictEqual(await useCase.executeWithName('busy', true), true);
     });
@@ -154,7 +184,7 @@ describe('DeleteServerUseCase Integration', () => {
       serverRepo = new MockServerRepository([
         { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
       ]);
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = build();
 
       await assert.rejects(useCase.executeWithName('busy', false), /5 player\(s\) online/);
     });
@@ -169,33 +199,33 @@ describe('DeleteServerUseCase Integration', () => {
     });
 
     it('reads the player count over RCON and refuses without force', async () => {
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(3));
+      useCase = build({ console: consoleWith(3) });
 
       await assert.rejects(useCase.executeWithName('server1', { yes: true }), /3 player\(s\) online/);
-      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+      assert.deepStrictEqual(deleted(), []);
     });
 
     it('deletes when nobody is online', async () => {
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(0));
+      useCase = build({ console: consoleWith(0) });
 
       assert.strictEqual(await useCase.executeWithName('server1', { yes: true }), true);
     });
 
     it('refuses an unknown player count (RCON failed) even with yes (#652 review)', async () => {
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(null));
+      useCase = build({ console: consoleWith(null) });
 
       await assert.rejects(useCase.executeWithName('server1', { yes: true }), /RCON/);
-      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+      assert.deepStrictEqual(deleted(), []);
     });
 
     it('deletes with an unknown player count when forced (#652 review)', async () => {
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(null));
+      useCase = build({ console: consoleWith(null) });
 
       assert.strictEqual(await useCase.executeWithName('server1', { force: true, yes: true }), true);
     });
 
     it('does not query RCON for a stopped server', async () => {
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(3));
+      useCase = build({ console: consoleWith(3) });
 
       assert.strictEqual(await useCase.executeWithName('server2', { yes: true }), true);
     });
@@ -205,7 +235,7 @@ describe('DeleteServerUseCase Integration', () => {
   describe('second-argument compatibility (#652 review)', () => {
     beforeEach(() => {
       promptAdapter = new MockPromptAdapter({ confirm: false });
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = build();
     });
 
     it.each([
@@ -216,19 +246,19 @@ describe('DeleteServerUseCase Integration', () => {
     ])('%s deletes without asking, as before', async (_label, rest) => {
       const call = useCase.executeWithName as (name: string, ...rest: unknown[]) => Promise<boolean>;
       assert.strictEqual(await call.call(useCase, 'server2', ...rest), true);
-      assert.ok(shellAdapter.wasCommandCalled('deleteServer'));
+      assert.deepStrictEqual(deleted(), ['server2']);
     });
 
     it('{} asks (declined here) and keeps the server', async () => {
       assert.strictEqual(await useCase.executeWithName('server2', {}), false);
-      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+      assert.deepStrictEqual(deleted(), []);
     });
 
     it('omitted still applies the players guard', async () => {
       serverRepo = new MockServerRepository([
         { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
       ]);
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = build();
 
       await assert.rejects(useCase.executeWithName('busy'), /5 player\(s\) online/);
     });
@@ -237,56 +267,89 @@ describe('DeleteServerUseCase Integration', () => {
   describe('confirmation (#652)', () => {
     it('asks before deleting and keeps the server when declined', async () => {
       promptAdapter = new MockPromptAdapter({ confirm: false });
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = build();
 
       assert.strictEqual(await useCase.executeWithName('server2', {}), false);
-      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+      assert.deepStrictEqual(deleted(), []);
     });
 
     it('skips the question with yes', async () => {
       promptAdapter = new MockPromptAdapter({ confirm: false });
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = build();
 
       assert.strictEqual(await useCase.executeWithName('server2', { yes: true }), true);
     });
   });
 
   describe('world option (#652)', () => {
-    const deleteArgs = () =>
-      shellAdapter.commandLog.find((c) => c.command === 'deleteServer')!.args[1] as {
-        deleteWorld?: boolean;
-      };
+    const deleteWorldOf = () => fake.state.deletes.find((d) => !d.dryRun)!.deleteWorld;
 
     it('keeps the world by default', async () => {
       await useCase.executeWithName('server2', { yes: true });
-      assert.strictEqual(deleteArgs().deleteWorld, false);
+      assert.strictEqual(deleteWorldOf(), false);
     });
 
-    it('passes deleteWorld to the shell (by name)', async () => {
+    it('passes deleteWorld to the deprovision (by name)', async () => {
       await useCase.executeWithName('server2', { yes: true, deleteWorld: true });
-      assert.strictEqual(deleteArgs().deleteWorld, true);
+      assert.strictEqual(deleteWorldOf(), true);
     });
 
-    it('passes deleteWorld to the shell (interactive)', async () => {
+    it('passes deleteWorld to the deprovision (interactive)', async () => {
       await useCase.execute({ deleteWorld: true });
-      assert.strictEqual(deleteArgs().deleteWorld, true);
+      assert.strictEqual(deleteWorldOf(), true);
     });
   });
 
-  describe('shell failure handling', () => {
-    it('should return false when shell fails', async () => {
-      shellAdapter = new MockShellAdapter({
-        deleteServerResult: {
-          success: false,
-          stderr: 'Deletion failed',
-        },
-      });
-      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+  // #652: the completion message says what actually happened
+  describe('completion message (#652)', () => {
+    const info = () => promptAdapter.messages.filter((m) => m.startsWith('info:'));
+
+    it('a moved world', async () => {
+      fake.state.result = { level: 'server2', movedWorlds: ['server2', 'server2_nether'], deletedWorlds: [] };
+      await useCase.executeWithName('server2', { yes: true });
+      assert.deepStrictEqual(info(), ['info: World moved to worlds/server2; it can be assigned to another server.']);
+    });
+
+    it('a world in worlds/ that stays', async () => {
+      fake.state.result = { level: 'server2', movedWorlds: [], deletedWorlds: [], keptWorld: 'server2' };
+      await useCase.executeWithName('server2', { yes: true });
+      assert.deepStrictEqual(info(), ['info: World worlds/server2 was kept; it is no longer assigned to this server.']);
+    });
+
+    it('no world at all', async () => {
+      fake.state.result = { level: 'server2', movedWorlds: [], deletedWorlds: [] };
+      await useCase.executeWithName('server2', { yes: true });
+      assert.deepStrictEqual(info(), ["info: No world data found for LEVEL 'server2'."]);
+      assert.ok(!promptAdapter.messages.some((m) => m.includes('preserved')));
+    });
+
+    it('deleteWorld, with a world in worlds/ that stays', async () => {
+      fake.state.result = { level: 'server2', movedWorlds: [], deletedWorlds: ['server2'], keptWorld: 'server2' };
+      await useCase.executeWithName('server2', { yes: true, deleteWorld: true });
+      assert.deepStrictEqual(info(), [
+        'info: World data inside the server was deleted with it (--delete-world).',
+        'info: World worlds/server2 was kept; it is no longer assigned to this server.',
+      ]);
+    });
+
+    it('warns when the mDNS hostname could not be removed', async () => {
+      fake.state.hostname = { status: 'skipped', reason: 'sudo authentication failed; check the sudo password' };
+      assert.strictEqual(await useCase.executeWithName('server2', { yes: true }), true);
+      assert.ok(promptAdapter.messages.includes('warn: mDNS hostname server2.local was not removed: sudo authentication failed; check the sudo password'));
+    });
+  });
+
+  describe('deprovision failure handling', () => {
+    it('returns false, shows the error and audits the failure', async () => {
+      const audit = { log: vi.fn(async () => undefined) } as unknown as IAuditLogPort;
+      fake.state.deleteError = new Error('worlds/server1 appeared before data/server1 could be moved');
+      useCase = build({ audit });
 
       const result = await useCase.execute();
 
       assert.strictEqual(result, false);
-      assert.ok(promptAdapter.messages.some((m) => m.includes('error:')));
+      assert.ok(promptAdapter.messages.some((m) => m.startsWith('error:') && m.includes('worlds/server1 appeared')));
+      assert.deepStrictEqual(vi.mocked(audit.log).mock.calls.map((c) => (c[0] as { status: string }).status), ['failure']);
     });
   });
 

@@ -33,3 +33,25 @@ export function fakeProvision(behaviour: ProvisionBehaviour = reportStages): Pro
   });
   return calls;
 }
+
+export interface DeleteCall {
+  name: string;
+  deleteWorld?: boolean;
+  sudoPassword?: string;
+}
+
+/**
+ * A fake DELETE /api/servers/:name deprovision (#735), the delete twin of
+ * fakeProvision: no docker, sudo or file changes. Returns the recorded calls.
+ */
+export function fakeDelete(behaviour: (name: string) => Promise<void> = async () => {}): DeleteCall[] {
+  const calls: DeleteCall[] = [];
+  serverProvision.deleteUseCase = ({ sudoPassword }) => ({
+    deprovision: async (name: string, options: { deleteWorld?: boolean } = {}) => {
+      calls.push({ name, deleteWorld: options.deleteWorld, sudoPassword });
+      await behaviour(name);
+      return { movedWorlds: [], deletedWorlds: [] };
+    },
+  });
+  return calls;
+}
