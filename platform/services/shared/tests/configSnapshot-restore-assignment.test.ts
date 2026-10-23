@@ -187,6 +187,23 @@ describe('ConfigSnapshotUseCase.restore - docker-compose.yml (#670, Codex PR #75
     }
   });
 
+  test('refuses a compose file whose env_file list or order differs from the current one', async () => {
+    for (const restored of [
+      COMPOSE.replace('      - ../global.env\n      - config.env\n', '      - config.env\n      - ../global.env\n'),
+      COMPOSE.replace('      - ../global.env\n', ''),
+      COMPOSE.replace('      - config.env\n', '      - config.env\n      - extra.env\n'),
+    ]) {
+      const { useCase, collector, snapshotId } = setup({
+        levels: { alpha: 'alpha' },
+        files: { 'docker-compose.yml': restored },
+        currentCompose: COMPOSE,
+      });
+
+      await expect(useCase.restore(snapshotId)).rejects.toThrow(/env_file/);
+      expect(collector.writeFileContent).not.toHaveBeenCalled();
+    }
+  });
+
   test('restores a compose file with the same world mappings and no world keys', async () => {
     const { useCase, collector, snapshotId } = setup({
       levels: { alpha: 'alpha' },
