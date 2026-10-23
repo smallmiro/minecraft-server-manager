@@ -553,7 +553,11 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
     if (!this.options.environment.isAvailable()) {
       fail('runtime_unavailable', 'Cannot query the container runtime; refusing to continue');
     }
-    return this.options.runtime.list({ running: true });
+    try {
+      return this.options.runtime.list({ running: true, strict: true });
+    } catch (e) {
+      return fail('runtime_unavailable', `Cannot list running servers; refusing to continue: ${(e as Error).message}`);
+    }
   }
 
   private assertNothingRunning(): void {

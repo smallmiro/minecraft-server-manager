@@ -23,7 +23,11 @@ export interface IContainerRuntimePort {
   getHealth(name: string): HealthStatus;
   exists(name: string): boolean;
   /** Server workloads (mc-* except mc-router), sorted. [] on failure. */
-  list(options?: { running?: boolean }): string[];
+  /**
+   * With `strict: true` (#732) a failed query throws instead of returning [], so
+   * "none running" and "cannot tell" differ. Default callers keep the D1 contract.
+   */
+  list(options?: { running?: boolean; strict?: boolean }): string[];
   /** Last `lines` lines (default 50). '' on failure. */
   getLogs(name: string, lines?: number): string;
   getStats(name: string): ContainerStats | null;
