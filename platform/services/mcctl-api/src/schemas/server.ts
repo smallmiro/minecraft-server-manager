@@ -6,6 +6,7 @@ import {
   EXISTING_SERVER_NAME_PATTERN,
   WORLD_NAME_PATTERN,
 } from '@minecraft-docker/shared';
+import { SINGLE_LINE_RE } from '@minecraft-docker/shared/utils';
 
 // Container and Health Status
 export const ContainerStatusSchema = Type.Union([
@@ -151,12 +152,6 @@ export const ServerNameParamsSchema = Type.Object({
   name: ExistingServerNameSchema,
 });
 
-/**
- * create-server.sh writes these values into config.env as KEY=value lines,
- * so a line break would add another setting (#720).
- */
-const SINGLE_LINE_PATTERN = '^[^\\x00-\\x1f\\x7f]*$';
-
 // Create Server Request Schema
 export const CreateServerRequestSchema = Type.Object({
   name: Type.String({
@@ -181,7 +176,7 @@ export const CreateServerRequestSchema = Type.Object({
     maxLength: 64,
   })),
   memory: Type.Optional(Type.String({ pattern: '^\\d+[MG]$' })),
-  seed: Type.Optional(Type.String({ pattern: SINGLE_LINE_PATTERN, maxLength: 256 })),
+  seed: Type.Optional(Type.String({ pattern: SINGLE_LINE_RE.source, maxLength: 256 })),
   worldUrl: Type.Optional(Type.String({ format: 'uri' })),
   worldName: Type.Optional(Type.String({ pattern: WORLD_NAME_PATTERN.source })),
   autoStart: Type.Optional(Type.Boolean({ default: true })),
@@ -195,7 +190,7 @@ export const CreateServerRequestSchema = Type.Object({
   })),
   modpackVersion: Type.Optional(Type.String({
     // Modrinth version numbers are free-form ("Release 5 (beta)")
-    pattern: SINGLE_LINE_PATTERN,
+    pattern: SINGLE_LINE_RE.source,
     maxLength: 128,
     description: 'Specific modpack version ID',
   })),

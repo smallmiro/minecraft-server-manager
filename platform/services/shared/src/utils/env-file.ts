@@ -12,6 +12,12 @@ import { basename, dirname, join } from 'node:path';
 /** Valid env key name (POSIX shell variable name). */
 export const ENV_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
+/**
+ * No line break or other control character: a `KEY=value` line in an env
+ * file stays one line (#720).
+ */
+export const SINGLE_LINE_RE = /^[^\x00-\x1f\x7f]*$/;
+
 /** Values matching this are literal in bash, compose and dotenv without quotes. */
 const BARE_SAFE_RE = /^[A-Za-z0-9_./:,@%+=-]*$/;
 
