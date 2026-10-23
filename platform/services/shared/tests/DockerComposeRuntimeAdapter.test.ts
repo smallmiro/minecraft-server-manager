@@ -357,6 +357,16 @@ describe('DockerServerConsoleAdapter.command', () => {
     expect((await rcon.command('mc-a', ['x'])).exitCode).toBe(1);
   });
 
+  it('passes an abort signal to spawn (#732)', async () => {
+    vi.mocked(spawn).mockImplementation(() => fakeChild(0));
+    const signal = new AbortController().signal;
+    await rcon.command('mc-a', ['save-off'], { signal });
+    expect(spawn).toHaveBeenCalledWith('docker', ['exec', '--', 'mc-a', 'rcon-cli', 'save-off'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      signal,
+    });
+  });
+
   it('never rejects: a spawn error becomes exitCode 1 with the message', async () => {
     const child = bareChild();
     vi.mocked(spawn).mockReturnValue(child as never);
