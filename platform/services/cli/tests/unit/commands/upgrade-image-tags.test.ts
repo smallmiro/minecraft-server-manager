@@ -54,6 +54,8 @@ vi.mock('../../../src/infrastructure/adapters/Pm2ServiceManagerAdapter.js', () =
 }));
 
 import { upgradeServerImageTags } from '../../../src/commands/update.js';
+import { serverSpecRepositories } from '../../../src/lib/server-config.js';
+import { FileServerSpecRepository } from '@minecraft-docker/shared';
 
 const TEMPLATE = join(dirname(fileURLToPath(import.meta.url)), '../../../templates/servers/_template');
 let root: string;
@@ -82,6 +84,7 @@ beforeEach(() => {
   mkdirSync(servers());
   writeFileSync(join(servers(), 'compose.yml'), 'include: []\n');
   writeFileSync(join(root, '.env'), 'HOST_IPS=10.0.0.2\n');
+  serverSpecRepositories.create = (p) => new FileServerSpecRepository(p); // no runtime: no world changes here
 });
 
 afterEach(() => {

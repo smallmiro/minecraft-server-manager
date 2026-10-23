@@ -63,3 +63,33 @@ export async function rerenderServers(paths: Paths): Promise<{ updated: string[]
   }
   return { updated, failed };
 }
+
+export interface ServerSpecStatus {
+  server: string;
+  /** imported: has server.yaml; pending: imports cleanly on the next write; refused: cannot be imported. */
+  status: 'imported' | 'pending' | 'refused';
+  reason?: string;
+  warnings: string[];
+}
+
+/**
+ * Which servers have no server.yaml yet and what their import would report
+ * (`mcctl upgrade`, ADR-0003 decision 4). Reads only: never imports.
+ */
+export async function serverSpecReport(paths: Paths): Promise<ServerSpecStatus[]> {
+  const repo = serverSpecRepository(paths);
+  const report: ServerSpecStatus[] = [];
+  for (const { name } of await repo.list()) {
+    try {
+      if (await repo.loadFile(name)) {
+        report.push({ server: name, status: 'imported', warnings: [] });
+        continue;
+      }
+      const loaded = await repo.load(name);
+      report.push({ server: name, status: 'pending', warnings: loaded?.warnings ?? [] });
+    } catch (error) {
+      report.push({ server: name, status: 'refused', reason: error instanceof Error ? error.message : String(error), warnings: [] });
+    }
+  }
+  return report;
+}

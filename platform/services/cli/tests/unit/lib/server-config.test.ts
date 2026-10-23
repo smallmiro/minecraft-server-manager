@@ -3,13 +3,13 @@
  * writes go through server.yaml, and init --reconfigure re-renders hosts.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Paths } from '@minecraft-docker/shared';
+import { FileServerSpecRepository, Paths } from '@minecraft-docker/shared';
 import { parseEnvDocument } from '@minecraft-docker/shared/utils';
-import { rerenderServers, writeServerConfig } from '../../../src/lib/server-config.js';
+import { rerenderServers, serverSpecRepositories, writeServerConfig } from '../../../src/lib/server-config.js';
 
 const TEMPLATE = join(dirname(fileURLToPath(import.meta.url)), '../../../templates/servers/_template');
 let root: string;
@@ -38,6 +38,8 @@ beforeEach(() => {
   mkdirSync(join(root, 'servers'));
   writeFileSync(join(root, 'servers', 'compose.yml'), 'include: []\n');
   writeFileSync(join(root, '.env'), 'HOST_IPS=10.0.0.2\n');
+  // No runtime: none of these writes changes a world (no docker is ever asked)
+  serverSpecRepositories.create = (p) => new FileServerSpecRepository(p);
 });
 
 afterEach(() => {
@@ -73,5 +75,24 @@ describe('rerenderServers (init --reconfigure)', () => {
     const result = await rerenderServers(paths);
     expect(result.updated).toEqual(['good']);
     expect(result.failed.map((f) => f.server)).toEqual(['bad']);
+  });
+});
+
+describe('serverSpecReport (mcctl upgrade)', () => {
+  it('lists imported, pending and refused servers without writing', async () => {
+    const { serverSpecReport } = await import('../../../src/lib/server-config.js');
+    server('done', 'done.local');
+    await writeServerConfig(paths, 'done', { set: { MOTD: 'x' } });
+    server('fresh', 'fresh.local');
+    server('broken', 'broken.local');
+    writeFileSync(join(root, 'servers', 'broken', 'config.env'), 'MEMORY=${MEM}\n');
+
+    const report = await serverSpecReport(paths);
+    expect(report.map((r) => [r.server, r.status])).toEqual([
+      ['broken', 'refused'],
+      ['done', 'imported'],
+      ['fresh', 'pending'],
+    ]);
+    expect(existsSync(join(root, 'servers', 'fresh', 'server.yaml'))).toBe(false);
   });
 });
