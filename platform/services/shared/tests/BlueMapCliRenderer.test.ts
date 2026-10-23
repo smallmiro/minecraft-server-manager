@@ -1,10 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  readdirSync,
+  existsSync,
+  rmSync,
+} from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import {
   BlueMapCliRenderer,
   MapRenderError,
   parseProgressLine,
-  parseResultJson,
-  type RenderSpawn,
 } from '../src/infrastructure/adapters/BlueMapCliRenderer.js';
 
 describe('parseProgressLine', () => {
@@ -26,120 +35,237 @@ describe('parseProgressLine', () => {
   });
 });
 
-describe('parseResultJson', () => {
-  it('extracts the JSON summary even when log lines precede it', () => {
-    const stdout = [
-      '[INFO] Rendering map for \'survival\'...',
-      '[INFO] Map rendered: /p/maps/survival/web/index.html',
-      '{',
-      '  "world": "survival",',
-      '  "maps": ["overworld","nether"],',
-      '  "webroot": "/p/maps/survival/web",',
-      '  "entry": "/p/maps/survival/web/index.html"',
-      '}',
-    ].join('\n');
-    expect(parseResultJson(stdout)).toEqual({
-      world: 'survival',
-      maps: ['overworld', 'nether'],
-      webroot: '/p/maps/survival/web',
-      entry: '/p/maps/survival/web/index.html',
-    });
-  });
-
-  it('throws when no JSON object is present', () => {
-    expect(() => parseResultJson('no json here')).toThrow();
-  });
-});
+// A fake `docker` first on PATH (a Node script, so the renderer's real spawn
+// path runs) logs each argv as a JSON line and plays BlueMap's part:
+// `image inspect` succeeds only with FAKE_IMAGE_PRESENT=1, the config scaffold
+// run writes BlueMap's default config, and the render run streams progress on
+// stdout and stderr and writes the webroot (#733).
+const FAKE_DOCKER = `#!/usr/bin/env node
+const fs = require('node:fs');
+const path = require('node:path');
+const args = process.argv.slice(2);
+fs.appendFileSync(process.env.FAKE_DOCKER_LOG, JSON.stringify(args) + '\\n');
+const mount = (target) => {
+  const v = args.find((a) => a.endsWith(':' + target));
+  return v && v.slice(0, -(target.length + 1));
+};
+if (args[0] === 'image') process.exit(process.env.FAKE_IMAGE_PRESENT === '1' ? 0 : 1);
+if (args[0] === 'run') {
+  const web = mount('/work/web');
+  const config = mount('/work/config');
+  if (web) {
+    if (process.env.FAKE_RENDER_EXIT) {
+      console.error('[ERROR] render exploded');
+      process.exit(Number(process.env.FAKE_RENDER_EXIT));
+    }
+    console.log("[INFO] updating map 'overworld': 50% (ETA: 3 seconds)");
+    console.error("[INFO] updating map 'overworld': 100%");
+    const maps = args[args.indexOf('-m') + 1].split(',').sort();
+    fs.writeFileSync(path.join(web, 'index.html'), '<html></html>');
+    fs.writeFileSync(path.join(web, 'settings.json'), JSON.stringify({ version: '5.22', maps }));
+  } else {
+    fs.writeFileSync(path.join(config, 'core.conf'), 'accept-download: false\\nmetrics: true\\ndata: "data"\\n');
+    fs.mkdirSync(path.join(config, 'maps'), { recursive: true });
+    for (const id of ['overworld', 'nether', 'end']) {
+      fs.writeFileSync(path.join(config, 'maps', id + '.conf'), 'default');
+    }
+  }
+}
+`;
 
 describe('BlueMapCliRenderer', () => {
-  const okResult = (world: string, maps: string[]) =>
-    JSON.stringify({
-      world,
-      maps,
-      webroot: `/p/maps/${world}/web`,
-      entry: `/p/maps/${world}/web/index.html`,
-    });
+  const IMAGE = 'mcctl-bluemap:5.22';
+  const user = `${process.getuid!()}:${process.getgid!()}`;
+  // Every BlueMap container runs as the host user with a memory ceiling (#662).
+  const runPrefix = [
+    'run', '--rm', '--user', user, '--memory', '2g',
+    '-e', 'JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75',
+  ];
 
-  it('invokes the script with --json and returns the parsed result', async () => {
-    let captured: { file: string; args: string[] } | null = null;
-    const spawn: RenderSpawn = async (file, args) => {
-      captured = { file, args };
-      return { code: 0, stdout: okResult('survival', ['overworld']), stderr: '' };
-    };
-    const renderer = new BlueMapCliRenderer('/scripts/render-map.sh', spawn);
+  let tmp: string;
+  let worldsDir: string;
+  let mapsDir: string;
+  let dockerDir: string;
+  let log: string;
 
-    const result = await renderer.renderWorld('survival');
-
-    expect(captured).toEqual({
-      file: '/scripts/render-map.sh',
-      args: ['survival', '--json'],
-    });
-    expect(result.world).toBe('survival');
-    expect(result.maps).toEqual(['overworld']);
-    expect(result.entry).toBe('/p/maps/survival/web/index.html');
+  beforeEach(() => {
+    tmp = mkdtempSync(join(tmpdir(), 'bluemap-renderer-'));
+    worldsDir = join(tmp, 'worlds');
+    mapsDir = join(tmp, 'maps');
+    dockerDir = join(tmp, 'docker', 'bluemap');
+    log = join(tmp, 'docker.log');
+    mkdirSync(join(tmp, 'bin'));
+    writeFileSync(join(tmp, 'bin', 'docker'), FAKE_DOCKER, { mode: 0o755 });
+    mkdirSync(dockerDir, { recursive: true });
+    writeFileSync(join(dockerDir, 'Dockerfile'), 'FROM scratch\n');
+    vi.stubEnv('PATH', `${join(tmp, 'bin')}:${process.env.PATH}`);
+    vi.stubEnv('FAKE_DOCKER_LOG', log);
+    vi.stubEnv('FAKE_IMAGE_PRESENT', '1');
+    vi.stubEnv('FAKE_RENDER_EXIT', '');
   });
 
-  it('forwards --force and --dimensions options', async () => {
-    let args: string[] = [];
-    const spawn: RenderSpawn = async (_file, a) => {
-      args = a;
-      return { code: 0, stdout: okResult('w', ['overworld', 'nether']), stderr: '' };
-    };
-    const renderer = new BlueMapCliRenderer('/s.sh', spawn);
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    rmSync(tmp, { recursive: true, force: true });
+  });
 
-    await renderer.renderWorld('w', { force: true, dimensions: ['overworld', 'nether'] });
+  const calls = (): string[][] =>
+    existsSync(log)
+      ? readFileSync(log, 'utf-8').trim().split('\n').map((l) => JSON.parse(l) as string[])
+      : [];
+  const renderCall = (): string[] | undefined => calls().find((a) => a.includes('-r'));
+  const mkRegion = (dir: string): void => {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'r.0.0.mca'), '');
+  };
+  const renderer = (): BlueMapCliRenderer =>
+    new BlueMapCliRenderer({ worldsDir, mapsDir, dockerDir });
 
-    expect(args).toEqual([
-      'w',
-      '--json',
-      '--force',
-      '--dimensions',
-      'overworld,nether',
+  it('renders a world named "-lobby": the name only appears inside mount paths, after no option (#728)', async () => {
+    mkRegion(join(worldsDir, '-lobby', 'region'));
+    mkRegion(join(worldsDir, '-lobby_nether', 'DIM-1', 'region'));
+
+    const result = await renderer().renderWorld('-lobby');
+
+    const web = join(mapsDir, '-lobby', 'web');
+    expect(result).toEqual({
+      world: '-lobby',
+      maps: ['overworld', 'nether'],
+      webroot: web,
+      entry: join(web, 'index.html'),
+    });
+    expect(renderCall()).toEqual([
+      ...runPrefix,
+      '-v', `${join(mapsDir, '-lobby', 'config')}:/work/config`,
+      '-v', `${join(mapsDir, '.bluemap-data')}:/work/data`,
+      '-v', `${web}:/work/web`,
+      '-v', `${join(worldsDir, '-lobby')}:/worlds/overworld:ro`,
+      '-v', `${join(worldsDir, '-lobby_nether')}:/worlds/nether:ro`,
+      '--', IMAGE, '-c', '/work/config', '-r', '-g', '-m', 'overworld,nether',
     ]);
   });
 
-  it('streams progress events parsed from stderr', async () => {
-    const spawn: RenderSpawn = async (_file, _args, onStderr) => {
-      onStderr("[INFO] updating map 'overworld': 25% (ETA: 30 seconds)");
-      onStderr('[INFO] Loading resources...');
-      onStderr("[INFO] updating map 'overworld': 100%");
-      return { code: 0, stdout: okResult('w', ['overworld']), stderr: '' };
-    };
-    const renderer = new BlueMapCliRenderer('/s.sh', spawn);
+  it('builds the image only when it is missing', async () => {
+    mkRegion(join(worldsDir, 'w', 'region'));
 
-    const events: number[] = [];
-    await renderer.renderWorld('w', undefined, (p) => events.push(p.percent));
+    await renderer().renderWorld('w');
+    expect(calls()[0]).toEqual(['image', 'inspect', '--', IMAGE]);
+    expect(calls().filter((a) => a[0] === 'build')).toEqual([]);
 
-    expect(events).toEqual([25, 100]);
+    rmSync(log);
+    vi.stubEnv('FAKE_IMAGE_PRESENT', '0');
+    await renderer().renderWorld('w');
+    expect(calls().slice(0, 2)).toEqual([
+      ['image', 'inspect', '--', IMAGE],
+      ['build', '-t', IMAGE, '--', dockerDir],
+    ]);
   });
 
-  it('passes cwd/env spawn options through to a custom runner', async () => {
-    let seen: { cwd?: string; env?: NodeJS.ProcessEnv } | undefined;
-    const spawn: RenderSpawn = async (_file, _args, _onStderr, opts) => {
-      seen = opts;
-      return { code: 0, stdout: okResult('w', ['overworld']), stderr: '' };
-    };
-    const renderer = new BlueMapCliRenderer('/s.sh', spawn, {
-      cwd: '/platform',
-      env: { MCCTL_ROOT: '/platform' },
-    });
+  it('fails with a clear error when the image is missing and there is no Dockerfile', async () => {
+    mkRegion(join(worldsDir, 'w', 'region'));
+    vi.stubEnv('FAKE_IMAGE_PRESENT', '0');
+    rmSync(join(dockerDir, 'Dockerfile'));
 
-    await renderer.renderWorld('w');
-
-    expect(seen?.cwd).toBe('/platform');
-    expect(seen?.env?.['MCCTL_ROOT']).toBe('/platform');
+    await expect(renderer().renderWorld('w')).rejects.toThrow(/Dockerfile not found/);
+    expect(calls().filter((a) => a[0] !== 'image')).toEqual([]);
   });
 
-  it('throws MapRenderError on a non-zero exit', async () => {
-    const spawn: RenderSpawn = async () => ({
-      code: 1,
-      stdout: '',
-      stderr: '[ERROR] World not found',
-    });
-    const renderer = new BlueMapCliRenderer('/s.sh', spawn);
+  it('scaffolds the BlueMap config once, accepts the download, disables metrics and keeps only the rendered maps', async () => {
+    mkRegion(join(worldsDir, 'w', 'region'));
+    mkRegion(join(worldsDir, 'w', 'DIM1', 'region'));
+    const config = join(mapsDir, 'w', 'config');
 
-    await expect(renderer.renderWorld('missing')).rejects.toBeInstanceOf(
-      MapRenderError
+    await renderer().renderWorld('w');
+
+    expect(calls().filter((a) => a[0] === 'run' && !a.includes('-r'))).toEqual([
+      [
+        ...runPrefix,
+        '-v', `${config}:/work/config`,
+        '-v', `${join(mapsDir, '.bluemap-data')}:/work/data`,
+        '--', IMAGE, '-c', '/work/config',
+      ],
+    ]);
+    expect(readFileSync(join(config, 'core.conf'), 'utf-8')).toBe(
+      'accept-download: true\nmetrics: false\ndata: "data"\n'
     );
+    expect(readdirSync(join(config, 'maps')).sort()).toEqual(['end.conf', 'overworld.conf']);
+    expect(readFileSync(join(config, 'maps', 'end.conf'), 'utf-8')).toBe(
+      'world: "/worlds/end"\ndimension: "minecraft:the_end"\nname: "End"\nstorage: "file"\nsorting: 2\n'
+    );
+
+    rmSync(log);
+    await renderer().renderWorld('w');
+    expect(calls().filter((a) => a[0] === 'run')).toHaveLength(1);
+  });
+
+  it('force regenerates the config, keeps the previous web output and passes -f', async () => {
+    mkRegion(join(worldsDir, 'w', 'region'));
+    await renderer().renderWorld('w');
+    const keep = join(mapsDir, 'w', 'web', 'maps', 'overworld', 'tile.png');
+    mkdirSync(join(keep, '..'), { recursive: true });
+    writeFileSync(keep, 'tile');
+
+    rmSync(log);
+    await renderer().renderWorld('w', { force: true });
+
+    expect(calls().filter((a) => a[0] === 'run' && !a.includes('-r'))).toHaveLength(1);
+    expect(renderCall()?.slice(-2)).toEqual(['overworld', '-f']);
+    expect(existsSync(keep)).toBe(true);
+  });
+
+  it('renders only the requested dimensions, skipping those without region data', async () => {
+    mkRegion(join(worldsDir, 'w', 'region'));
+    mkdirSync(join(worldsDir, 'w', 'DIM-1', 'region'), { recursive: true });
+
+    const result = await renderer().renderWorld('w', { dimensions: [' Overworld', 'nether'] });
+
+    expect(result.maps).toEqual(['overworld']);
+    expect(renderCall()?.slice(-1)).toEqual(['overworld']);
+  });
+
+  it('rejects an unknown dimension before running docker', async () => {
+    mkRegion(join(worldsDir, 'w', 'region'));
+    await expect(renderer().renderWorld('w', { dimensions: ['moon'] })).rejects.toThrow(
+      /Unknown dimension: 'moon'/
+    );
+    expect(calls()).toEqual([]);
+  });
+
+  it('rejects a missing world, a world without region data, and names outside worlds/', async () => {
+    mkdirSync(join(worldsDir, 'empty'), { recursive: true });
+    for (const name of ['ghost', 'empty', '..', '.', 'a/b', '']) {
+      await expect(renderer().renderWorld(name)).rejects.toBeInstanceOf(MapRenderError);
+    }
+    expect(calls()).toEqual([]);
+  });
+
+  it('streams progress parsed from both stdout and stderr', async () => {
+    mkRegion(join(worldsDir, 'w', 'region'));
+    const events: number[] = [];
+
+    await renderer().renderWorld('w', undefined, (p) => events.push(p.percent));
+
+    expect(events).toEqual([50, 100]);
+  });
+
+  it('rewrites settings.json so the viewer opens on the overworld (#564, #575)', async () => {
+    mkRegion(join(worldsDir, 'w', 'region'));
+    mkRegion(join(worldsDir, 'w', 'DIM-1', 'region'));
+    mkRegion(join(worldsDir, 'w', 'DIM1', 'region'));
+
+    await renderer().renderWorld('w');
+
+    const settings = JSON.parse(readFileSync(join(mapsDir, 'w', 'web', 'settings.json'), 'utf-8'));
+    expect(settings).toEqual({ version: '5.22', maps: ['overworld', 'nether', 'end'] });
+  });
+
+  it('throws MapRenderError carrying the docker output when the render fails', async () => {
+    mkRegion(join(worldsDir, 'w', 'region'));
+    vi.stubEnv('FAKE_RENDER_EXIT', '3');
+
+    const err = await renderer().renderWorld('w').catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(MapRenderError);
+    expect((err as Error).message).toMatch(/render exploded/);
   });
 });

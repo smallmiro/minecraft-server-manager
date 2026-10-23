@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
-import { resolveScriptPath } from '../src/lib/script-resolver.js';
+import { resolveScriptPath, resolveBlueMapDockerDir } from '../src/lib/script-resolver.js';
 
 const TMP = join(import.meta.dirname, '.tmp-script-resolver-test');
 const BUNDLED = join(TMP, 'bundled-scripts');
@@ -58,5 +58,28 @@ describe('resolveScriptPath', () => {
     expect(del!.scriptsDir).toBe(BUNDLED);
     expect(backup!.scriptsDir).toBe(join(PLATFORM, 'scripts'));
     expect(missing).toBeNull();
+  });
+});
+
+describe('resolveBlueMapDockerDir', () => {
+  const BUNDLED_DOCKER = join(TMP, 'bundled-docker');
+
+  beforeEach(() => {
+    rmSync(TMP, { recursive: true, force: true });
+  });
+
+  afterEach(() => {
+    rmSync(TMP, { recursive: true, force: true });
+  });
+
+  it('uses the BlueMap build context bundled with the package (#733)', () => {
+    mkdirSync(join(BUNDLED_DOCKER, 'bluemap'), { recursive: true });
+    writeFileSync(join(BUNDLED_DOCKER, 'bluemap', 'Dockerfile'), 'FROM scratch\n', 'utf-8');
+
+    expect(resolveBlueMapDockerDir(PLATFORM, BUNDLED_DOCKER)).toBe(join(BUNDLED_DOCKER, 'bluemap'));
+  });
+
+  it('falls back to <mcctlRoot>/docker/bluemap when the package has no Dockerfile', () => {
+    expect(resolveBlueMapDockerDir(PLATFORM, BUNDLED_DOCKER)).toBe(join(PLATFORM, 'docker', 'bluemap'));
   });
 });
