@@ -72,6 +72,15 @@ const until = (assertion: () => void) => vi.waitFor(assertion, { interval: 5, ti
 /** Wait until `n` scripts have started. */
 const started = (n: number) => until(() => expect(calls.scripts).toHaveLength(n));
 
+/** Requests that reached their handler, which queues them synchronously. */
+let arrivals = 0;
+
+/** Wait until `n` requests reached the queue, then give the last one time to (wrongly) start. */
+const queued = async (n: number) => {
+  await until(() => expect(arrivals).toBe(n));
+  await settle();
+};
+
 /** Script names in start order. */
 const scripts = () => calls.scripts.map((s) => s.args[0]!.split('/').pop());
 
@@ -86,6 +95,9 @@ describe('server create/delete single-flight (#656)', () => {
     app.addHook('onRequest', async (request, reply) => {
       if (request.url.includes('follow=true')) lastReply = reply;
     });
+    app.addHook('preHandler', async () => {
+      arrivals++;
+    });
   });
 
   afterAll(async () => {
@@ -94,6 +106,7 @@ describe('server create/delete single-flight (#656)', () => {
 
   beforeEach(() => {
     calls.scripts.length = 0;
+    arrivals = 0;
     vi.restoreAllMocks();
     vi.mocked(serverExists).mockImplementation((name: string) => name === 'old');
     Object.assign(lifecycleLimits, defaults);
@@ -103,7 +116,7 @@ describe('server create/delete single-flight (#656)', () => {
     const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'fresh', type: 'PAPER' } });
     await started(1);
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-    await settle();
+    await queued(2);
     expect(scripts()).toEqual(['create-server.sh']);
 
     calls.scripts[0]!.done();
@@ -119,7 +132,7 @@ describe('server create/delete single-flight (#656)', () => {
     const first = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'twin', type: 'PAPER' } });
     await started(1);
     const second = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'twin', type: 'PAPER' } });
-    await settle();
+    await queued(2);
     expect(scripts()).toHaveLength(1);
 
     vi.mocked(serverExists).mockImplementation((name: string) => name === 'twin');
@@ -133,7 +146,7 @@ describe('server create/delete single-flight (#656)', () => {
     const create = app.inject({ method: 'POST', url: '/api/servers?follow=true', payload: { name: 'stream', type: 'PAPER' } });
     await started(1);
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-    await settle();
+    await queued(2);
     expect(scripts()).toEqual(['create-server.sh']);
 
     calls.scripts[0]!.done();
@@ -161,7 +174,6 @@ describe('server create/delete single-flight (#656)', () => {
 
   describe('a hung script cannot hold the queue (#656 review)', () => {
     const kills = () => vi.mocked(process.kill).mock.calls.map(([pid, sig]) => `${pid}:${sig}`);
-    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
     beforeEach(() => {
       vi.spyOn(process, 'kill').mockImplementation(() => true);
@@ -185,12 +197,11 @@ describe('server create/delete single-flight (#656)', () => {
       const create = app.inject({ method: 'POST', url: '/api/servers?follow=true', payload: { name: 'stall', type: 'PAPER' } });
       await started(1);
       const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-      await settle();
+      await queued(2);
       expect(scripts()).toEqual(['create-server.sh']);
 
       // The script never exits, even after SIGKILL (a child still holds the pipes).
-      await wait(250);
-      expect(kills()).toEqual(['-4242:SIGTERM', '-4242:SIGKILL']);
+      await until(() => expect(kills()).toEqual(['-4242:SIGTERM', '-4242:SIGKILL']));
       expect((await create).body).toContain('timed out');
 
       await started(2);
@@ -204,7 +215,7 @@ describe('server create/delete single-flight (#656)', () => {
       const create = app.inject({ method: 'POST', url: '/api/servers?follow=true', payload: { name: 'gone', type: 'PAPER' } });
       await started(1);
       const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-      await settle();
+      await queued(2);
 
       lastReply!.raw.destroy();
       await create.catch(() => undefined);
@@ -223,6 +234,7 @@ describe('server create/delete single-flight (#656)', () => {
       const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'hang', type: 'PAPER' } });
       await started(1);
       const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
+      await until(() => expect(arrivals).toBe(2));
 
       await until(() => expect(kills()).toEqual(['-4242:SIGTERM'])); // past the timeout, inside the grace period
       expect(scripts()).toEqual(['create-server.sh']);
