@@ -55,6 +55,23 @@ const README = '# Minecraft Worlds Backup\n\nThis repository contains automated 
 /** D1 ports use container names; results use server names (D4 moves this rule). */
 const serverNameOf = (container: string) => container.replace(/^mc-/, '');
 
+interface SaveOnFailure {
+  server: string;
+  message: string;
+}
+
+/** The error to report, with the servers left with autosave off appended (P2). */
+function withSaveOnFailures(error: unknown, failures: SaveOnFailure[]): unknown {
+  if (failures.length === 0) return error;
+  const base: WorldBackupError =
+    error instanceof Fail ? error.error : { code: 'io_failed', message: (error as Error).message };
+  return new Fail({
+    ...base,
+    message: [base.message, ...failures.map((f) => f.message)].join('; '),
+    servers: [...new Set([...(base.servers ?? []), ...failures.map((f) => f.server)])],
+  });
+}
+
 /** A server's internal world: servers/<n>/data/<LEVEL>[ _nether | _the_end ]. */
 interface InternalWorld {
   server: string;
@@ -155,7 +172,7 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
       }
       if (source.size === 0) fail('empty_source', 'Nothing to back up: no worlds found');
 
-      const flushed = await this.withFlush(warnings, async () => {
+      const { flushed, saveOnFailures } = await this.withFlush(async () => {
         await rm(join(this.cache, 'worlds'), { recursive: true, force: true });
         await rm(join(this.cache, 'servers'), { recursive: true, force: true });
         const worlds = join(this.root, 'worlds');
@@ -167,33 +184,39 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
         }
       });
 
-      await this.mustGit(['add', '-A']);
-      const staged = await this.git.run(['diff', '--cached', '--quiet'], { cwd: this.cache });
-      const changed = staged.code !== 0;
-      if (changed) {
-        await this.mustGit(['commit', '-q', '-m', options.message || this.defaultMessage()], {
-          env: BACKUP_IDENTITY,
-        });
-      }
-      const ahead = await this.git.run(['rev-list', '--count', `refs/remotes/origin/${cfg.branch}..HEAD`], {
-        cwd: this.cache,
-      });
-      if (changed || ahead.code !== 0 || ahead.stdout.trim() !== '0') {
-        const r = await this.git.run(['push', '-q', 'origin', `HEAD:refs/heads/${cfg.branch}`], {
+      warnings.push(...saveOnFailures.map((f) => f.message));
+      // A later failure must still report the servers left with autosave off
+      try {
+        await this.mustGit(['add', '-A']);
+        const staged = await this.git.run(['diff', '--cached', '--quiet'], { cwd: this.cache });
+        const changed = staged.code !== 0;
+        if (changed) {
+          await this.mustGit(['commit', '-q', '-m', options.message || this.defaultMessage()], {
+            env: BACKUP_IDENTITY,
+          });
+        }
+        const ahead = await this.git.run(['rev-list', '--count', `refs/remotes/origin/${cfg.branch}..HEAD`], {
           cwd: this.cache,
-          token: cfg.token,
         });
-        if (r.code !== 0) fail(networkErrorCode(r), `git push failed: ${r.stderr.trim()}`);
-        await this.git.run(['fetch', '-q', 'origin', this.refspec(cfg.branch)], { cwd: this.cache, token: cfg.token });
+        if (changed || ahead.code !== 0 || ahead.stdout.trim() !== '0') {
+          const r = await this.git.run(['push', '-q', 'origin', `HEAD:refs/heads/${cfg.branch}`], {
+            cwd: this.cache,
+            token: cfg.token,
+          });
+          if (r.code !== 0) fail(networkErrorCode(r), `git push failed: ${r.stderr.trim()}`);
+          await this.git.run(['fetch', '-q', 'origin', this.refspec(cfg.branch)], { cwd: this.cache, token: cfg.token });
+        }
+        const head = await this.mustGit(['rev-parse', 'HEAD']);
+        return {
+          changed,
+          commit: head.stdout.trim(),
+          flushed,
+          skipped: internals.skipped,
+          warnings,
+        };
+      } catch (e) {
+        throw withSaveOnFailures(e, saveOnFailures);
       }
-      const head = await this.mustGit(['rev-parse', 'HEAD']);
-      return {
-        changed,
-        commit: head.stdout.trim(),
-        flushed,
-        skipped: internals.skipped,
-        warnings,
-      };
     });
   }
 
@@ -587,7 +610,9 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
   }
 
   /** save-off → save-all flush → copy → save-on (always). Returns flushed server names. */
-  private async withFlush(warnings: string[], copy: () => Promise<void>): Promise<string[]> {
+  private async withFlush(
+    copy: () => Promise<void>
+  ): Promise<{ flushed: string[]; saveOnFailures: SaveOnFailure[] }> {
     const running = this.runningServers();
     const cleanup: string[] = [];
     const rcon = async (container: string, args: string[]) => {
@@ -612,24 +637,13 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
       mainError = e;
     }
     // save-on for every server, independently, even after a failure
-    const saveOnFailures: Array<{ server: string; message: string }> = [];
+    const saveOnFailures: SaveOnFailure[] = [];
     for (const c of cleanup) {
       const err = await rcon(c, ['save-on']).catch((e: Error) => e.message);
       if (err) saveOnFailures.push({ server: serverNameOf(c), message: `save-on failed for ${serverNameOf(c)}: ${err}` });
     }
-    if (mainError === undefined) {
-      warnings.push(...saveOnFailures.map((f) => f.message));
-      return cleanup.map(serverNameOf);
-    }
-    if (saveOnFailures.length === 0) throw mainError;
-    // Keep the servers left with autosave off in the failure result (P2)
-    const base: WorldBackupError =
-      mainError instanceof Fail ? mainError.error : { code: 'io_failed', message: (mainError as Error).message };
-    throw new Fail({
-      ...base,
-      message: [base.message, ...saveOnFailures.map((f) => f.message)].join('; '),
-      servers: [...new Set([...(base.servers ?? []), ...saveOnFailures.map((f) => f.server)])],
-    });
+    if (mainError !== undefined) throw withSaveOnFailures(mainError, saveOnFailures);
+    return { flushed: cleanup.map(serverNameOf), saveOnFailures };
   }
 
   // ---------------------------------------------------------------- restore
