@@ -264,13 +264,31 @@ validate_world_name() {
 # parses the rest of the line as more settings (MOTD="" MODS=<url>).
 # Prints the reason and returns 1 when invalid.
 validate_env_value() {
-    local LC_ALL=C  # byte patterns: same result in every locale
-    local control=$'[\x01-\x1f\x7f]|\xc2[\x80-\x9f]|\xe2\x80[\xa8\xa9]'
-    local quoted=$'^([ \t\v\f]|\xc2\xa0)*["\'`]'
-    if [[ "$1" =~ $control || "$1" =~ $quoted ]]; then
-        echo "Value must be one line without control characters and must not start with a quote"
-        return 1
-    fi
+    # case globs, not [[ =~ ]]: macOS bash 3.2 hands the regex to BSD regcomp,
+    # which mishandles these bytes; bash matches globs itself, byte-wise in C
+    local LC_ALL=C
+    local message="Value must be one line without control characters and must not start with a quote"
+    local c1=$'\xc2['$'\x80''-'$'\x9f'']' rest="$1"
+    case "$1" in
+        *[[:cntrl:]]* | *$c1* | *$'\xe2\x80\xa8'* | *$'\xe2\x80\xa9'*)
+            echo "$message"
+            return 1
+            ;;
+    esac
+    # Skip the blanks Compose skips before a value: space, tab, VT, FF, NBSP, NEL
+    while :; do
+        case "$rest" in
+            ' '* | $'\t'* | $'\v'* | $'\f'*) rest="${rest#?}" ;;
+            $'\xc2\xa0'* | $'\xc2\x85'*) rest="${rest#??}" ;;
+            *) break ;;
+        esac
+    done
+    case "$rest" in
+        [\"\'\`]*)
+            echo "$message"
+            return 1
+            ;;
+    esac
     return 0
 }
 
