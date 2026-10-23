@@ -2,7 +2,7 @@
  * GitWorldBackupAdapter behaviour (#732, ADR-0001 "Backup Port").
  * Real git against a local bare remote (file://) and a temporary platform root.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, chmod, readdir, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -29,7 +29,7 @@ function git(cwd: string, args: string[], env: Record<string, string> = {}): str
     encoding: 'utf8',
     env: {
       ...process.env,
-      GIT_CONFIG_GLOBAL: '/dev/null',
+      GIT_CONFIG_GLOBAL: process.env.GIT_CONFIG_GLOBAL ?? '/dev/null',
       GIT_AUTHOR_NAME: 'Tester',
       GIT_AUTHOR_EMAIL: 't@example.com',
       GIT_COMMITTER_NAME: 'Tester',
@@ -169,11 +169,19 @@ async function rejectPushes(bare: string, flag: string) {
 }
 
 let ctx: Ctx;
+// A detached `git gc --auto` can still be writing into a repo while the test
+// removes it (ENOTEMPTY in CI). GIT_CONFIG_GLOBAL survives the adapter's env
+// scrubbing (it is not a repo-local variable), so every git run sees gc.auto=0.
+beforeAll(async () => {
+  const gitconfig = join(await mkdtemp(join(tmpdir(), 'wb-gitcfg-')), 'gitconfig');
+  await writeFile(gitconfig, '[gc]\n\tauto = 0\n\tautoDetach = false\n');
+  process.env.GIT_CONFIG_GLOBAL = gitconfig;
+});
 beforeEach(async () => {
   ctx = await setup();
 });
 afterEach(async () => {
-  await rm(ctx.base, { recursive: true, force: true });
+  await rm(ctx.base, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
 });
 
 describe('push', () => {
