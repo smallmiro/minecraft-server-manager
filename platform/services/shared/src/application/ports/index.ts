@@ -104,6 +104,8 @@ export type {
   ToolVersion,
   IServerSpecRepository,
   ServerSpec,
+  LoadedServerSpec,
+  WriteServerSpecOptions,
   IWorldAssignmentPort,
   WorldAssignment,
   IWorldBackupPort,

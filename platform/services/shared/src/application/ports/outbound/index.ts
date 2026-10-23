@@ -91,7 +91,12 @@ export type { IRouterStatusPort } from './IRouterStatusPort.js';
 export type { IPlayitAgentPort } from './IPlayitAgentPort.js';
 export type { IHostnameRegistrarPort, HostnameRegistrarStatus } from './IHostnameRegistrarPort.js';
 export type { IRuntimeEnvironmentPort, ToolVersion } from './IRuntimeEnvironmentPort.js';
-export type { IServerSpecRepository, ServerSpec } from './IServerSpecRepository.js';
+export type {
+  IServerSpecRepository,
+  ServerSpec,
+  LoadedServerSpec,
+  WriteServerSpecOptions,
+} from './IServerSpecRepository.js';
 export type { IWorldAssignmentPort, WorldAssignment, WorldAssignmentSnapshot } from './IWorldAssignmentPort.js';
 
 // Backup port (ADR-0001, #732)

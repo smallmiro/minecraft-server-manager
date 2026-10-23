@@ -1,5 +1,6 @@
 /**
- * Cross-process lock for backup push/restore/prune (ADR-0001 "Backup Port", B2).
+ * Cross-process file lock (ADR-0001 "Backup Port", B2), used for backup
+ * push/restore/prune and for servers/compose.yml (ADR-0003 §3).
  * Single host only. A holder is taken over only when it provably died on this
  * host (ESRCH, or the host rebooted); never by age.
  */
@@ -9,22 +10,29 @@ import { hostname, uptime } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import type { BackupLockHolder } from '../../application/ports/outbound/IWorldBackupPort.js';
 
+/** The lock file content: who holds it. `op` names the operation. */
+export type FileLockHolder = Omit<BackupLockHolder, 'op'> & { op: string };
+
+export type FileLock =
+  | { ok: true; release: () => Promise<void> }
+  | { ok: false; holder?: FileLockHolder };
+
 export type BackupLock =
   | { ok: true; release: () => Promise<void> }
   | { ok: false; holder?: BackupLockHolder };
 
 const bootTime = () => Math.round(Date.now() - uptime() * 1000);
 
-function parseHolder(text: string): BackupLockHolder | undefined {
+function parseHolder(text: string): FileLockHolder | undefined {
   try {
-    const h = JSON.parse(text) as BackupLockHolder;
+    const h = JSON.parse(text) as FileLockHolder;
     return typeof h.pid === 'number' && typeof h.nonce === 'string' ? h : undefined;
   } catch {
     return undefined;
   }
 }
 
-function provablyDead(h: BackupLockHolder): boolean {
+function provablyDead(h: FileLockHolder): boolean {
   if (h.hostname !== hostname()) return false;
   if (Math.abs(h.bootTime - bootTime()) > 60_000) return true;
   try {
@@ -50,7 +58,7 @@ async function readText(path: string): Promise<string | undefined> {
  * ponytail: with three contenders the put-back can lose to a third writer
  * (two holders). Accepted (ADR B2); upgrade path is an OS advisory lock.
  */
-async function takeOver(lockPath: string, stale: BackupLockHolder, nonce: string): Promise<void> {
+async function takeOver(lockPath: string, stale: FileLockHolder, nonce: string): Promise<void> {
   const aside = `${lockPath}.${nonce}.stale`;
   try {
     await rename(lockPath, aside);
@@ -94,10 +102,20 @@ export async function acquireBackupLock(
   options: { waitMs?: number; pollMs?: number } = {}
 ): Promise<BackupLock> {
   const dir = join(root, 'backups');
-  const lockPath = join(dir, '.backup.lock');
   await mkdir(dir, { recursive: true });
+  return (await acquireFileLock(join(dir, '.backup.lock'), op, options)) as BackupLock;
+}
 
-  const me: BackupLockHolder = {
+/**
+ * Take `lockPath` (its directory must exist), waiting up to `waitMs` for the
+ * holder; `{ ok: false, holder }` when it is still held.
+ */
+export async function acquireFileLock(
+  lockPath: string,
+  op: string,
+  options: { waitMs?: number; pollMs?: number } = {}
+): Promise<FileLock> {
+  const me: FileLockHolder = {
     pid: process.pid,
     hostname: hostname(),
     bootTime: bootTime(),

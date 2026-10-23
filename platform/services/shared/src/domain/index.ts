@@ -96,6 +96,22 @@ export {
   type WorldAssignmentErrorCode,
 } from './services/worldAssignment.js';
 
+// ServerSpec (#675, ADR-0003)
+export {
+  ServerSpecError,
+  SERVER_SPEC_VERSION,
+  SERVER_SPEC_MANAGED_ENV_KEYS,
+  validateServerSpecDocument,
+  assertServerSpecDocument,
+  validateHostname,
+  routerHosts,
+  type ServerSpecDocument,
+  type ServerSpecErrorCode,
+  type ServerSpecIssue,
+  type ServerSpecRules,
+  type WorldStorage,
+} from './server-spec/ServerSpecDocument.js';
+
 // Entities
 export {
   Server,
