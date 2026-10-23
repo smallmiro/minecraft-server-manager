@@ -222,11 +222,18 @@ cmd_status() {
 # =============================================================================
 
 cmd_logs() {
-    local server="$1"
-    local lines="${2:-50}"
+    local server="" lines=50 follow=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -f|--follow) follow=(-f) ;;
+            -n|--lines) lines="${2:-50}"; shift ;;
+            *) if [[ -z "$server" ]]; then server="$1"; else lines="$1"; fi ;;
+        esac
+        shift
+    done
 
     if [[ -z "$server" ]]; then
-        error "Usage: logs <server> [lines]"
+        error "Usage: logs <server> [lines] [-f]"
         return 1
     fi
 
@@ -239,12 +246,7 @@ cmd_logs() {
         return 1
     fi
 
-    # Use the logs.sh script if available
-    if [[ -x "$SCRIPT_DIR/logs.sh" ]]; then
-        "$SCRIPT_DIR/logs.sh" "$server" "$lines"
-    else
-        docker logs --tail "$lines" "$container"
-    fi
+    docker logs "${follow[@]}" --tail "$lines" -- "$container"
 }
 
 # =============================================================================

@@ -701,7 +701,7 @@ mcctl stop --all
 서버 로그를 조회합니다.
 
 ```bash
-mcctl logs <name> [options]
+mcctl logs <name|router> [options]
 ```
 
 **옵션:**
@@ -709,7 +709,8 @@ mcctl logs <name> [options]
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
 | `--follow` | `-f` | 로그 출력 추적 |
-| `--lines` | `-n` | 표시할 줄 수 |
+| `--lines` | `-n` | 표시할 줄 수(기본 50). `-f`와 함께 쓰면 마지막 N줄 다음 이어서 추적 |
+| `--json` | | 줄 배열을 JSON으로 출력(`-f`와 함께 사용 불가) |
 
 **예제:**
 
@@ -722,7 +723,12 @@ mcctl logs survival -f
 
 # 마지막 10줄 표시
 mcctl logs survival -n 10
+
+# mc-router 로그
+mcctl logs router
 ```
+
+> 추적(`-f`)은 Ctrl+C로 끝내며 종료 코드는 0이다. avahi-daemon 로그는 `mcctl logs`가 다루지 않는다. 필요하면 `journalctl -u avahi-daemon`을 직접 실행한다.
 
 **출력 예시:**
 ```

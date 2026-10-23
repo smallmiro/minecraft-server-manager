@@ -701,7 +701,7 @@ mcctl stop --all
 View server logs.
 
 ```bash
-mcctl logs <name> [options]
+mcctl logs <name|router> [options]
 ```
 
 **Options:**
@@ -709,7 +709,8 @@ mcctl logs <name> [options]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--follow` | `-f` | Follow log output |
-| `--lines` | `-n` | Number of lines to show |
+| `--lines` | `-n` | Number of lines to show (default 50). With `-f`, shows the last N lines, then keeps following |
+| `--json` | | Print the lines as a JSON array (not combinable with `-f`) |
 
 **Examples:**
 
@@ -722,7 +723,12 @@ mcctl logs survival -f
 
 # Show last 10 lines
 mcctl logs survival -n 10
+
+# mc-router logs
+mcctl logs router
 ```
+
+> Press Ctrl+C to end `-f`; the exit code is 0. `mcctl logs` does not cover avahi-daemon; run `journalctl -u avahi-daemon` yourself if needed.
 
 **Output Example:**
 ```
