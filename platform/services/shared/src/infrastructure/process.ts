@@ -125,10 +125,15 @@ export function execScriptInteractive(
 export function execCommandStreaming(
   file: string,
   args: string[],
-  onLine: (line: string) => void
+  onLine: (line: string) => void,
+  options?: { cwd?: string; env?: NodeJS.ProcessEnv }
 ): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(file, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(file, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: options?.cwd,
+      env: options?.env,
+    });
     const out = { stdout: '', stderr: '' };
 
     for (const key of ['stdout', 'stderr'] as const) {
