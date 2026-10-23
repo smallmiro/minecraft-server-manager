@@ -229,11 +229,20 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
 
   async prune(policy: BackupRetentionPolicy, options: LockOptions = {}): Promise<WorldBackupResult<WorldBackupPruneOutcome>> {
     return this.locked('prune', options, async (cfg) => {
-      const warnings = await this.prepareCache(cfg);
       const b = cfg.branch;
-      const local = (await this.mustGit(['rev-parse', `refs/heads/${b}`])).stdout.trim();
+      const warnings: string[] = [];
+      if (!(await this.hasCache())) {
+        await this.prepareCache(cfg); // nothing local to protect
+      } else {
+        // Only normalize and fetch: never move the local branch before comparing (P1)
+        await this.normalizeRemote(this.url(cfg.repository));
+        const fetch = await this.git.run(['fetch', '-q', 'origin', this.refspec(b)], { cwd: this.cache, token: cfg.token });
+        if (fetch.code !== 0) fail(networkErrorCode(fetch), `git fetch failed: ${fetch.stderr.trim()}`);
+      }
+      const localRef = await this.git.run(['rev-parse', '--verify', '-q', `refs/heads/${b}`], { cwd: this.cache });
       const originRef = await this.git.run(['rev-parse', '--verify', '-q', `refs/remotes/origin/${b}`], { cwd: this.cache });
-      if (originRef.code !== 0 || originRef.stdout.trim() !== local) {
+      const local = localRef.stdout.trim();
+      if (localRef.code !== 0 || originRef.code !== 0 || originRef.stdout.trim() !== local) {
         return { removed: 0, warnings: [...warnings, 'Local backup differs from the remote; prune skipped until the next push'] };
       }
       const oldTip = local;
