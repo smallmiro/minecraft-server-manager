@@ -10,8 +10,10 @@ export interface DimensionRegionDir {
    * World-save root that holds {@link dir}: the world itself, or a Paper
    * satellite (`<name>_nether` / `<name>_the_end`). BlueMap mounts this and
    * resolves `DIM-1`/`DIM1`/`dimensions/minecraft/<dim>` below it.
+   * {@link resolveRegionDirs} always sets it; it is optional only so v2
+   * `{ dimension, dir }` objects still type-check (#715 policy).
    */
-  root: string;
+  root?: string;
 }
 
 /** A layout candidate: a region directory and the world-save root holding it. */

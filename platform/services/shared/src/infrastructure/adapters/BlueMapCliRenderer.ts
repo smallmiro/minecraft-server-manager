@@ -140,12 +140,14 @@ export class BlueMapCliRenderer implements IMapRenderer {
       this.paths = pathsOrScript;
       return;
     }
+    // Same env the docker child gets: spawnOptions.env, else inherited process.env.
+    const env = spawnOptions.env ?? process.env;
     const pkgDir = dirname(dirname(pathsOrScript));
-    const root = spawnOptions.env?.['MCCTL_ROOT'] || pkgDir;
+    const root = env['MCCTL_ROOT'] || pkgDir;
     this.paths = {
       worldsDir: join(root, 'worlds'),
       mapsDir: join(root, 'maps'),
-      dockerDir: join(spawnOptions.env?.['MCCTL_DOCKER'] || join(pkgDir, 'docker'), 'bluemap'),
+      dockerDir: join(env['MCCTL_DOCKER'] || join(pkgDir, 'docker'), 'bluemap'),
     };
   }
 

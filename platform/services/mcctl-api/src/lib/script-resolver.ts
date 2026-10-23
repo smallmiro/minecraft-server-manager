@@ -85,14 +85,25 @@ export function getBundledDockerDir(): string {
 }
 
 /**
+ * `platform/docker` when running from the monorepo source tree (the package
+ * sits at `platform/services/mcctl-api`), the way `Paths` finds
+ * `platform/scripts`. Does not exist in an npm install.
+ */
+export function getRepoDockerDir(): string {
+  return join(getApiPackageRoot(), '..', '..', 'docker');
+}
+
+/**
  * BlueMap image build context: the version-matched copy bundled with the
- * package, else `<mcctlRoot>/docker/bluemap`. The renderer only needs it when
- * the image is missing, and reports a missing Dockerfile itself.
+ * package, else the monorepo source `platform/docker/bluemap`, else
+ * `<mcctlRoot>/docker/bluemap`. The renderer only needs it when the image is
+ * missing, and reports a missing Dockerfile itself.
  */
 export function resolveBlueMapDockerDir(
   mcctlRoot: string,
   bundledDockerDir: string = getBundledDockerDir(),
+  repoDockerDir: string = getRepoDockerDir(),
 ): string {
-  const bundled = join(bundledDockerDir, 'bluemap');
-  return existsSync(join(bundled, 'Dockerfile')) ? bundled : join(mcctlRoot, 'docker', 'bluemap');
+  const candidates = [bundledDockerDir, repoDockerDir].map((dir) => join(dir, 'bluemap'));
+  return candidates.find((dir) => existsSync(join(dir, 'Dockerfile'))) ?? join(mcctlRoot, 'docker', 'bluemap');
 }
