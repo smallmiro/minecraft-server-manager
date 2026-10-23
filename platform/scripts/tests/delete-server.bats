@@ -301,3 +301,54 @@ exec /bin/mv "$@"'
     [ ! -e "$PLATFORM/worlds/alpha_nether/alpha_nether" ]
     [[ "$output" == *"worlds/alpha"* ]]
 }
+
+# --- #652 re-review: worlds without level.dat, symlinks into the server ------
+
+@test "delete: a symlink target inside the server with only level.dat_old aborts (#652)" {
+    mkdir -p "$PLATFORM/servers/alpha/data/realworld"
+    echo old > "$PLATFORM/servers/alpha/data/realworld/level.dat_old"
+    ln -s realworld "$PLATFORM/servers/alpha/data/alpha"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/data/realworld/level.dat_old"
+}
+
+@test "delete: a world with only region files is not deleted unnoticed (#652)" {
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    mkdir -p "$PLATFORM/servers/alpha/data/oldworld/region"
+    : > "$PLATFORM/servers/alpha/data/oldworld/region/r.0.0.mca"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/data/oldworld/region/r.0.0.mca"
+    [[ "$output" == *"data/oldworld"* ]]
+}
+
+@test "delete: a symlink pointing inside the server aborts even without world files (#652)" {
+    mkdir -p "$PLATFORM/servers/alpha/saves/realworld/playerdata"
+    : > "$PLATFORM/servers/alpha/saves/realworld/playerdata/p.dat"
+    mkdir -p "$PLATFORM/servers/alpha/data"
+    ln -s ../saves/realworld "$PLATFORM/servers/alpha/data/alpha"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    expect_abort_keeping "$PLATFORM/servers/alpha/saves/realworld/playerdata/p.dat"
+    [[ "$output" == *"data/alpha"* ]]
+}
+
+@test "delete: worlds/ resolving inside the server aborts, even with --delete-world (#652)" {
+    mk_world "$PLATFORM/servers/alpha/data/alpha"
+    mk_world "$PLATFORM/servers/alpha/saved/other"
+    rmdir "$PLATFORM/worlds"
+    ln -s servers/alpha/saved "$PLATFORM/worlds"
+    for extra in "" --delete-world; do
+        run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi $extra
+        expect_abort_keeping "$PLATFORM/servers/alpha/saved/other/level.dat"
+        [ -f "$PLATFORM/servers/alpha/data/alpha/level.dat" ]
+    done
+}
+
+@test "delete: a world symlinked to a folder outside the server is only unlinked (#652)" {
+    mk_world "$BATS_TEST_TMPDIR/elsewhere/alpha"
+    mkdir -p "$PLATFORM/servers/alpha/data"
+    ln -s "$BATS_TEST_TMPDIR/elsewhere/alpha" "$PLATFORM/servers/alpha/data/alpha"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    [ "$status" -eq 0 ]
+    [ ! -d "$PLATFORM/servers/alpha" ]
+    [ -f "$BATS_TEST_TMPDIR/elsewhere/alpha/level.dat" ]
+}
