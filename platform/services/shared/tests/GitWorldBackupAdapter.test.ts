@@ -305,6 +305,33 @@ describe('push', () => {
     expect(ctx.console.calls).toEqual(['mc-a save-off', 'mc-a save-all flush', 'mc-a save-on']);
   });
 
+  it('sends save-on as soon as the signal aborts mid-copy, but resolves and unlocks only once the copy stops (#734 review)', async () => {
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    ctx.runtime.running = ['mc-a'];
+    const shutdown = new AbortController();
+    let copyStarted!: () => void;
+    const started = new Promise<void>((r) => (copyStarted = r));
+    let finishCopy!: () => void;
+    const copying = new Promise<void>((r) => (finishCopy = r));
+    // One large file still being copied when the API shuts down
+    vi.spyOn(ctx.adapter as unknown as { copy: () => Promise<void> }, 'copy').mockImplementation(async () => {
+      copyStarted();
+      await copying;
+    });
+    let settled = false;
+    const pushing = ctx.adapter.push({ signal: shutdown.signal }).finally(() => (settled = true));
+
+    await started;
+    shutdown.abort();
+    await vi.waitFor(() => expect(ctx.console.calls).toContain('mc-a save-on'));
+    expect(settled).toBe(false);
+    expect(errCode(await ctx.adapter.push({ lockWaitMs: 0 }))).toBe('locked'); // the lock is still held
+
+    finishCopy(); // the copy ends normally, but the push must not go on to commit
+    expect(errCode(await pushing)).toBe('aborted');
+    expect(remoteFiles(ctx.bare)).toEqual([]);
+  });
+
   it('sends save-on to every server at once, so one slow server does not hold back the rest (#734 review)', async () => {
     await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
     ctx.runtime.running = ['mc-a', 'mc-b'];
