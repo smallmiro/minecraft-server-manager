@@ -51,9 +51,11 @@ function run(cmd: string, args: string[], input?: string): Promise<number> {
  */
 export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
   private readonly hostsFile: string;
+  private readonly sudoPassword?: string;
 
-  constructor(private readonly options: AvahiHostnameRegistrarOptions = {}) {
+  constructor(options: AvahiHostnameRegistrarOptions = {}) {
     this.hostsFile = options.hostsFile ?? '/etc/avahi/hosts';
+    this.sudoPassword = options.sudoPassword;
   }
 
   /**
@@ -107,11 +109,7 @@ export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
     }
     if (registered(current, hostname)) return { status: 'unchanged' };
 
-    if (this.options.sudoPassword) {
-      if ((await run('sudo', ['-S', '-p', '', '-v'], `${this.options.sudoPassword}\n`)) !== 0) {
-        return skipped('sudo authentication failed; check the sudo password');
-      }
-    }
+    if (!(await this.authenticate())) return skipped('sudo authentication failed; check the sudo password');
     const manual = `echo '${ip} ${hostname}' | sudo tee -a ${this.hostsFile}`;
     if ((await run('sudo', ['-n', 'tee', '-a', this.hostsFile], `${ip} ${hostname}\n`)) !== 0) {
       return skipped(`failed to write ${this.hostsFile} with sudo; pass a sudo password, or add it manually: ${manual}`);
@@ -120,5 +118,11 @@ export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
       return skipped(`${hostname} was added to ${this.hostsFile} but avahi-daemon could not be restarted`);
     }
     return { status: 'changed' };
+  }
+
+  /** With a password, `sudo -S -p '' -v` reads it on stdin, so the commands that follow never see it (#682). */
+  private async authenticate(): Promise<boolean> {
+    if (!this.sudoPassword) return true; // absent or empty: sudo -n (#675)
+    return (await run('sudo', ['-S', '-p', '', '-v'], `${this.sudoPassword}\n`)) === 0;
   }
 }
