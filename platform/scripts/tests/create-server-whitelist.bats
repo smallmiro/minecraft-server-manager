@@ -25,7 +25,7 @@ setup() {
     fake_cmd sudo 'echo "$*" >> "$BATS_TEST_TMPDIR/sudo.log"; exit 1'
     make_platform
     : > "$PLATFORM/docker-compose.yml"
-    cp -r "$REPO_DIR/platform/servers/_template" "$PLATFORM/servers/_template"
+    cp -rL "$REPO_DIR/platform/servers/_template" "$PLATFORM/servers/_template"
 }
 
 teardown() {

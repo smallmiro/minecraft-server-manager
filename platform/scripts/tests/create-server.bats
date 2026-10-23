@@ -10,7 +10,7 @@ setup() {
     fake_cmd ip 'exit 0'
     fake_cmd hostname 'exit 0'
     make_platform
-    cp -r "$REPO_DIR/platform/servers/_template" "$PLATFORM/servers/_template"
+    cp -rL "$REPO_DIR/platform/servers/_template" "$PLATFORM/servers/_template"
 }
 
 @test "create: writes server dir, config and compose include; validates compose via docker" {
