@@ -430,6 +430,14 @@ if [ "$WORLD_OPTIONS_COUNT" -gt 1 ]; then
     exit 1
 fi
 
+# Seed and modpack version are written to config.env as KEY=value lines (#726)
+for env_value in "$WORLD_SEED" "$MODPACK_VERSION"; do
+    if ! problem="$(validate_env_value "$env_value")"; then
+        echo -e "${RED}Error: invalid --seed or --modpack-version: ${problem}${NC}"
+        exit 1
+    fi
+done
+
 # Validate modpack options for MODRINTH and AUTO_CURSEFORGE types
 if [[ "$SERVER_TYPE" =~ ^(MODRINTH|AUTO_CURSEFORGE)$ ]]; then
     if [ -z "$MODPACK_SLUG" ]; then

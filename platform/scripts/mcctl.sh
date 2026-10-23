@@ -488,10 +488,9 @@ cmd_config() {
         error "Invalid config key: $key"
         return 1
     fi
-    # config.env is an env_file, which has no escape syntax: a line break
-    # would add another setting (#726)
-    if [[ "$value" =~ [[:cntrl:]] ]]; then
-        error "Value for ${key} must be a single line without control characters"
+    local problem
+    if ! problem="$(validate_env_value "$value")"; then
+        error "${key}: ${problem}"
         return 1
     fi
 
