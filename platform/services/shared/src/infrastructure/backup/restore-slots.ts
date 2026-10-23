@@ -14,6 +14,9 @@ export interface RestoreTarget {
 
 const KEEP_SLOTS = 3;
 
+/** Filesystem calls of the swap; tests replace `rename` to inject failures. */
+export const fsOps = { rename };
+
 /** Moves live → slot and staged → live; rolls back in reverse on failure (K2, R4). */
 export async function swapIntoPlace(root: string, oid: string, targets: RestoreTarget[], stamp: string): Promise<string> {
   const slot = join(root, 'backups', 'restore-previous', stamp);
@@ -30,12 +33,12 @@ export async function swapIntoPlace(root: string, oid: string, targets: RestoreT
     for (const t of targets) {
       if (await lstatOrNull(t.live)) {
         await mkdir(dirname(saved(t.live)), { recursive: true });
-        await rename(t.live, saved(t.live));
+        await fsOps.rename(t.live, saved(t.live));
         done.push({ kind: 'aside', live: t.live });
       }
       if (t.staged) {
         await mkdir(dirname(t.live), { recursive: true });
-        await rename(t.staged, t.live);
+        await fsOps.rename(t.staged, t.live);
         done.push({ kind: 'in', live: t.live });
       }
     }
@@ -46,9 +49,9 @@ export async function swapIntoPlace(root: string, oid: string, targets: RestoreT
         if (step.kind === 'in') {
           const parked = join(slot, '.new', relative(root, step.live));
           await mkdir(dirname(parked), { recursive: true });
-          await rename(step.live, parked);
+          await fsOps.rename(step.live, parked);
         } else {
-          await rename(saved(step.live), step.live);
+          await fsOps.rename(saved(step.live), step.live);
         }
       } catch {
         complete = false;
