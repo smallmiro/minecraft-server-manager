@@ -1,5 +1,6 @@
 import { Paths, log, colors, checkProposed, type IWorldAssignmentPort } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
+import { migrateSpec } from './migrate-spec.js';
 import { isContainerRunning } from '../lib/rcon.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -50,9 +51,12 @@ export async function migrateCommand(options: MigrateCommandOptions): Promise<nu
     case 'status':
       return migrationStatus(paths, options);
 
+    case 'spec':
+      return migrateSpec(getContainer(options.root).serverSpecRepository, options);
+
     default:
       log.error(`Unknown migrate subcommand: ${subCommand}`);
-      console.log('Usage: mcctl migrate [worlds|status]');
+      console.log('Usage: mcctl migrate [worlds|status|spec]');
       return 1;
   }
 }

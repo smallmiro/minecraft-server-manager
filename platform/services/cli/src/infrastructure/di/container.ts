@@ -7,6 +7,7 @@ import {
   ServerRepository,
   WorldRepository,
   ConfigEnvWorldAssignmentAdapter,
+  FileServerSpecRepository,
   DockerComposeRuntimeAdapter,
   DocsAdapter,
   SqliteAuditLogRepository,
@@ -70,6 +71,7 @@ export class Container {
   private _serverRepo?: IServerRepository;
   private _worldRepo?: IWorldRepository;
   private _worldAssignmentPort?: IWorldAssignmentPort;
+  private _serverSpecRepo?: FileServerSpecRepository;
   private _containerRuntime?: IContainerRuntimePort;
   private _docProvider?: IDocProvider;
   private _auditLogPort?: IAuditLogPort;
@@ -138,6 +140,14 @@ export class Container {
       this._worldAssignmentPort = new ConfigEnvWorldAssignmentAdapter(this.paths);
     }
     return this._worldAssignmentPort;
+  }
+
+  /** Concrete type: `mcctl migrate spec --force` also uses importServer(). */
+  get serverSpecRepository(): FileServerSpecRepository {
+    if (!this._serverSpecRepo) {
+      this._serverSpecRepo = new FileServerSpecRepository(this.paths);
+    }
+    return this._serverSpecRepo;
   }
 
   get containerRuntime(): IContainerRuntimePort {

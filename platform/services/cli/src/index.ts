@@ -286,6 +286,8 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate status')}             Check migration status
   ${colors.bold('migrate worlds')} --all       Migrate all servers
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
+  ${colors.bold('migrate spec')} <server>      Import a server into servers/<server>/server.yaml
+  ${colors.bold('migrate spec')} --all         Import every server (--dry-run, --force re-imports)
 
 ${colors.cyan('Self Update:')}
   ${colors.bold('update')}                     Update CLI and all installed services (default)
@@ -953,11 +955,11 @@ async function main(): Promise<void> {
       }
 
       case 'migrate': {
-        // migrate command: migrate [worlds|status] [options]
+        // migrate command: migrate [worlds|status|spec] [options]
         exitCode = await migrateCommand({
           root: rootDir,
           subCommand: subCommand,
-          serverName: flags['server'] as string | undefined,
+          serverName: (flags['server'] as string | undefined) ?? (subCommand === 'spec' ? positional[0] : undefined),
           all: flags['all'] === true,
           dryRun: flags['dry-run'] === true,
           backup: flags['backup'] === true,
