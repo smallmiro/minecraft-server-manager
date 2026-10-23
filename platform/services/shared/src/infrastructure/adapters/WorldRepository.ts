@@ -3,7 +3,6 @@ import {
   readFile,
   stat,
   rm,
-  unlink,
   mkdir,
   writeFile,
   rename,
@@ -16,7 +15,7 @@ import { randomUUID } from 'node:crypto';
 import * as unzipper from 'unzipper';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { Paths } from '../../utils/index.js';
-import { World, WORLD_NAME_PATTERN } from '../../domain/index.js';
+import { World, WORLD_NAME_PATTERN, holdersOf, type WorldAssignmentSnapshot } from '../../domain/index.js';
 import { getContainerStatus } from '../../docker/index.js';
 import type {
   IWorldRepository,
@@ -25,6 +24,8 @@ import type {
   ServerStatus,
   WorldAvailabilityCategory,
 } from '../../application/ports/outbound/IWorldRepository.js';
+import type { IWorldAssignmentPort } from '../../application/ports/outbound/IWorldAssignmentPort.js';
+import { ConfigEnvWorldAssignmentAdapter } from './ConfigEnvWorldAssignmentAdapter.js';
 
 // ---------------------------------------------------------------------------
 // Exported pure helper — testable without real zips
@@ -134,17 +135,20 @@ async function collectLevelDats(dir: string, results: string[]): Promise<void> {
 
 /**
  * WorldRepository
- * Implements IWorldRepository for world data access
+ * Implements IWorldRepository for world data access.
+ *
+ * A world is "locked" when a server's LEVEL points at it (#670, ADR-0002):
+ * isLocked/lockedBy mean "assigned". worlds/.locks is never read or written.
  */
 export class WorldRepository implements IWorldRepository {
   private readonly paths: Paths;
   private readonly worldsDir: string;
-  private readonly locksDir: string;
+  private readonly assignments: IWorldAssignmentPort;
 
-  constructor(paths?: Paths) {
+  constructor(paths?: Paths, assignments?: IWorldAssignmentPort) {
     this.paths = paths ?? new Paths();
     this.worldsDir = join(this.paths.root, 'worlds');
-    this.locksDir = join(this.worldsDir, '.locks');
+    this.assignments = assignments ?? new ConfigEnvWorldAssignmentAdapter(this.paths);
   }
 
   /**
@@ -152,10 +156,11 @@ export class WorldRepository implements IWorldRepository {
    */
   async findAll(): Promise<World[]> {
     const names = await this.listNames();
+    const snapshot = await this.snapshot();
     const worlds: World[] = [];
 
     for (const name of names) {
-      const world = await this.findByName(name);
+      const world = await this.load(name, snapshot);
       if (world) {
         worlds.push(world);
       }
@@ -168,6 +173,22 @@ export class WorldRepository implements IWorldRepository {
    * Find world by name
    */
   async findByName(name: string): Promise<World | null> {
+    return this.load(name, await this.snapshot());
+  }
+
+  /**
+   * Listings are read-only, so an unreadable servers/ shows every world as
+   * unassigned; assignment changes go through the port and fail there (R7).
+   */
+  private async snapshot(): Promise<WorldAssignmentSnapshot> {
+    try {
+      return await this.assignments.listAssignments();
+    } catch {
+      return { assignments: [], undetermined: [] };
+    }
+  }
+
+  private async load(name: string, snapshot: WorldAssignmentSnapshot): Promise<World | null> {
     const worldPath = join(this.worldsDir, name);
 
     if (!existsSync(worldPath)) {
@@ -176,10 +197,9 @@ export class WorldRepository implements IWorldRepository {
 
     const world = new World(name, worldPath);
 
-    // Get lock status
-    const lockData = await this.getLockStatus(name);
-    if (lockData) {
-      world.lockTo(lockData.serverName, lockData.pid);
+    const holder = holdersOf(snapshot, name)[0];
+    if (holder) {
+      world.lockTo(holder);
     }
 
     // Get world metadata and seed
@@ -247,32 +267,15 @@ export class WorldRepository implements IWorldRepository {
   }
 
   /**
-   * Get lock status for a world
+   * The server a world is assigned to, derived from the assignments.
+   * `timestamp` is the time of the read; `pid` is always undefined.
+   *
+   * @deprecated Lock files are gone (#670). Use IWorldAssignmentPort.listAssignments
+   * with holdersOf. Removed in v3.0.0 (#736).
    */
   async getLockStatus(name: string): Promise<WorldLockData | null> {
-    const lockFile = join(this.locksDir, `${name}.lock`);
-
-    if (!existsSync(lockFile)) {
-      return null;
-    }
-
-    try {
-      const content = await readFile(lockFile, 'utf-8');
-      const [serverName, timestampStr, pidStr] = content.trim().split(':');
-
-      if (!serverName || !timestampStr) {
-        return null;
-      }
-
-      return {
-        worldName: name,
-        serverName,
-        timestamp: new Date(parseInt(timestampStr, 10) * 1000),
-        pid: pidStr ? parseInt(pidStr, 10) : undefined,
-      };
-    } catch {
-      return null;
-    }
+    const serverName = holdersOf(await this.snapshot(), name)[0];
+    return serverName ? { worldName: name, serverName, timestamp: new Date(), pid: undefined } : null;
   }
 
   /**
@@ -304,12 +307,9 @@ export class WorldRepository implements IWorldRepository {
         if (containerStatus === 'running') {
           serverStatus = 'running';
           category = 'running';
-        } else if (containerStatus === 'not_found') {
-          serverStatus = 'not_found';
-          // If container not found, treat as available (stale lock)
-          category = 'available';
         } else {
-          // exited, paused, created, etc. - server is stopped
+          // exited, paused, created, not_found (never started) - the world
+          // stays assigned in config.env, so it is not available
           serverStatus = 'stopped';
           category = 'stopped';
         }
@@ -338,36 +338,26 @@ export class WorldRepository implements IWorldRepository {
   }
 
   /**
-   * Delete a world directory and its lock file.
+   * Delete a world directory.
    * Also deletes split-dimension satellites (<name>_nether, <name>_the_end).
    * Returns true if the main world was deleted.
    */
   async delete(name: string): Promise<boolean> {
     assertValidWorldName(name);
     const worldPath = join(this.worldsDir, name);
-    const lockFile = join(this.locksDir, `${name}.lock`);
 
     if (!existsSync(worldPath)) {
       return false;
     }
 
     try {
-      // Delete lock file if exists
-      if (existsSync(lockFile)) {
-        await unlink(lockFile);
-      }
-
       // Delete world directory
       await rm(worldPath, { recursive: true, force: true });
 
       // Cascade-delete split-dimension satellites
       for (const suffix of ['_nether', '_the_end']) {
         const satellitePath = join(this.worldsDir, `${name}${suffix}`);
-        const satelliteLock = join(this.locksDir, `${name}${suffix}.lock`);
         if (existsSync(satellitePath)) {
-          if (existsSync(satelliteLock)) {
-            await unlink(satelliteLock).catch(() => {});
-          }
           await rm(satellitePath, { recursive: true, force: true });
         }
       }
