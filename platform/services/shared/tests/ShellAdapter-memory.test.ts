@@ -36,6 +36,15 @@ describe('ShellAdapter.createServer - memory args', () => {
     expect(args[i + 1]).toBe('6G');
   });
 
+  test.each([
+    ['1536M', '1536M'],
+    ['1.5G', '1536M'],
+    ['2560M', '2560M'],
+  ])('keeps non-integer GiB memory %s as %s', async (input, expected) => {
+    const args = await argsFor({ memory: Memory.create(input) });
+    expect(args[args.indexOf('-m') + 1]).toBe(expected);
+  });
+
   test('passes no memory flag when memory is unset', async () => {
     const args = await argsFor({});
     expect(args).not.toContain('-m');
