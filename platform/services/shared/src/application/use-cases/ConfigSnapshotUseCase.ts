@@ -9,8 +9,7 @@ import { FileDiff } from '../../domain/value-objects/FileDiff.js';
 import type { ConfigSnapshotFile } from '../../domain/value-objects/ConfigSnapshotFile.js';
 import type { IWorldAssignmentPort } from '../ports/outbound/IWorldAssignmentPort.js';
 import type { IContainerRuntimePort } from '../ports/outbound/IContainerRuntimePort.js';
-import { WorldAssignmentError, checkProposed } from '../../domain/services/worldAssignment.js';
-import { checkServerStopped } from './checkServerStopped.js';
+import { checkConfigEnvChange } from './checkServerStopped.js';
 
 /**
  * ConfigSnapshotUseCaseImpl
@@ -33,20 +32,7 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
    * port a config.env restore fails closed.
    */
   private async checkRestoredAssignment(server: string, configEnv: string): Promise<void> {
-    if (!this.assignments) {
-      throw new WorldAssignmentError(
-        'undetermined',
-        'World assignments cannot be read: no assignment port configured'
-      );
-    }
-    const [current, next] = await Promise.all([
-      this.assignments.snapshot(),
-      this.assignments.preview(server, configEnv),
-    ]);
-    const before = current.assignments.find((a) => a.server === server);
-    const after = next.assignments.find((a) => a.server === server);
-    if (before?.world === after?.world && before?.internal === after?.internal) return;
-    const refused = checkProposed(next, server) ?? checkServerStopped(this.runtime, server);
+    const refused = await checkConfigEnvChange(this.assignments, this.runtime, server, configEnv);
     if (refused) throw refused;
   }
 

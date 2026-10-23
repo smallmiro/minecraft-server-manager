@@ -122,6 +122,43 @@ describe('mcctl config <server> LEVEL|WORLD_NAME', () => {
   });
 });
 
+describe('mcctl config <server> EXTRA_ARGS (world location, Codex PR #750)', () => {
+  it('refuses moving a running server between worlds/ and its data directory', async () => {
+    const file = server('alpha', `LEVEL=alpha\n${UNIVERSE}`);
+    state.status = 'running';
+
+    expect(await configCommand({ root, serverName: 'alpha', key: 'EXTRA_ARGS', value: '--universe /data' })).toBe(1);
+    expect(readFileSync(file, 'utf-8')).toBe(`LEVEL=alpha\n${UNIVERSE}`);
+  });
+
+  it('refuses pointing a server at worlds/ when another server uses that world', async () => {
+    const file = server('alpha', 'LEVEL=held\nEXTRA_ARGS=--universe /data\n');
+    server('beta', `LEVEL=held_nether\n${UNIVERSE}`);
+
+    expect(await configCommand({ root, serverName: 'alpha', key: 'EXTRA_ARGS', value: '--universe /worlds/' })).toBe(1);
+    expect(output.join('\n')).toContain("'beta'");
+    expect(readFileSync(file, 'utf-8')).toBe('LEVEL=held\nEXTRA_ARGS=--universe /data\n');
+  });
+
+  it('writes EXTRA_ARGS that keep the world location, even on a running server', async () => {
+    const file = server('alpha', `LEVEL=alpha\n${UNIVERSE}`);
+    state.status = 'running';
+
+    expect(
+      await configCommand({ root, serverName: 'alpha', key: 'EXTRA_ARGS', value: '--universe /worlds/ --nogui' })
+    ).toBe(0);
+    expect(readFileSync(file, 'utf-8')).toContain('EXTRA_ARGS=');
+    expect(readFileSync(file, 'utf-8')).toContain('--nogui');
+  });
+
+  it('writes EXTRA_ARGS that move a stopped server whose world is free', async () => {
+    const file = server('alpha', `LEVEL=alpha\n${UNIVERSE}`);
+
+    expect(await configCommand({ root, serverName: 'alpha', key: 'EXTRA_ARGS', value: '--universe /data' })).toBe(0);
+    expect(readFileSync(file, 'utf-8')).toContain('/data');
+  });
+});
+
 describe('mcctl world list', () => {
   it('shows who a world is assigned to and warns about duplicates', async () => {
     world('shared');

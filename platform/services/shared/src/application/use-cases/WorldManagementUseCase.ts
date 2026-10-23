@@ -15,7 +15,7 @@ import type {
   IWorldAssignmentPort,
   IContainerRuntimePort,
 } from '../ports/index.js';
-import { checkServerStopped } from './checkServerStopped.js';
+import { checkConfigEnvChange, checkServerStopped } from './checkServerStopped.js';
 import { formatWorldBytes } from '../../utils/index.js';
 import {
   WORLD_NAME_PATTERN,
@@ -660,6 +660,14 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
     const refused = checkReset(snapshot, serverName);
     if (refused) return refused;
     return { world: snapshot.assignments.find((a) => a.server === serverName)!.world };
+  }
+
+  /**
+   * Why `serverName`'s config.env may not become `configEnv` (a config write
+   * that moves its world, e.g. EXTRA_ARGS --universe), or null (#670).
+   */
+  checkConfigChange(serverName: string, configEnv: string): Promise<WorldAssignmentError | null> {
+    return checkConfigEnvChange(this.assignments, this.runtime, serverName, configEnv);
   }
 
   /**

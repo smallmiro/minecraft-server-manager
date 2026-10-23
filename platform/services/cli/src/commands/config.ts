@@ -1,6 +1,12 @@
 import { Paths, log, colors } from '@minecraft-docker/shared';
 import { ShellExecutor } from '../lib/shell.js';
 import { getContainer } from '../infrastructure/index.js';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { applyEnvChanges } from '@minecraft-docker/shared/utils';
+
+/** Keys that decide where a server's world lives, besides LEVEL/WORLD_NAME (#670). */
+const WORLD_LOCATION_KEYS = new Set(['EXTRA_ARGS']);
 
 export interface ConfigCommandOptions {
   root?: string;
@@ -104,7 +110,7 @@ export async function configCommand(options: ConfigCommandOptions): Promise<numb
   // LEVEL (or WORLD_NAME when no LEVEL is set) is a world assignment (#670)
   let success: boolean;
   const world = await assignIfWorldChanges(options, config);
-  if (world === 'refused') {
+  if (world === 'refused' || !(await locationChangeAllowed(paths, options))) {
     return 1;
   } else if (world === 'assigned' && options.key === 'LEVEL') {
     success = true; // the assignment port wrote LEVEL
@@ -166,5 +172,29 @@ async function assignIfWorldChanges(
   } catch (error) {
     log.error(error instanceof Error ? error.message : String(error));
     return 'refused';
+  }
+}
+
+/**
+ * A write to a world-location key (EXTRA_ARGS --universe) that moves the
+ * server between worlds/ and its data directory is checked like any other
+ * assignment change: the proposed config.env must pass the assignment rules
+ * and the server must be stopped.
+ */
+async function locationChangeAllowed(paths: Paths, options: ConfigCommandOptions): Promise<boolean> {
+  const { key, value, serverName } = options;
+  if (!key || !WORLD_LOCATION_KEYS.has(key) || value === undefined || !serverName) return true;
+  try {
+    const content = readFileSync(join(paths.servers, serverName, 'config.env'), 'utf-8');
+    const proposed = applyEnvChanges(content, { set: { [key]: value } });
+    const refused = await getContainer(options.root).worldManagementUseCase.checkConfigChange(serverName, proposed);
+    if (refused) {
+      log.error(refused.message);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    log.error(error instanceof Error ? error.message : String(error));
+    return false;
   }
 }
