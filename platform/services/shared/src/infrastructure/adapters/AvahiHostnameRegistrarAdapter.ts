@@ -120,6 +120,39 @@ export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
     return { status: 'changed' };
   }
 
+  /**
+   * Remove the lines that list exactly `hostname` before any comment, then
+   * restart avahi-daemon, with the commands the README sudoers lines allow
+   * (#751): `sudo -n sed -i <expr> /etc/avahi/hosts`, `sudo -n systemctl
+   * restart avahi-daemon`. GNU sed -i renames a temp file, so a failure
+   * leaves the file intact; avahi is Linux-only.
+   */
+  async unregister(hostname: string): Promise<HostnameChangeResult> {
+    const skipped = (reason: string): HostnameChangeResult => ({ status: 'skipped', reason });
+    const hostError = validateHostname(hostname);
+    if (hostError) return skipped(`invalid hostname '${hostname}': ${hostError}`);
+
+    let current: string;
+    try {
+      current = await readFile(this.hostsFile, 'utf-8');
+    } catch {
+      return { status: 'unchanged' }; // no hosts file: avahi is not configured
+    }
+    if (!registered(current, hostname)) return { status: 'unchanged' };
+
+    if (!(await this.authenticate())) return skipped('sudo authentication failed; check the sudo password');
+    // A host field equal to `hostname`: whitespace before it, whitespace, `#` or the line end after it.
+    const host = hostname.replace(/[[\]\\.*^$/]/g, '\\$&');
+    const expr = `/^[^#]*[[:space:]]${host}\\([[:space:]]\\|#\\|$\\)/d`;
+    if ((await run('sudo', ['-n', 'sed', '-i', expr, this.hostsFile])) !== 0) {
+      return skipped(`failed to edit ${this.hostsFile} with sudo; pass a sudo password, or remove the ${hostname} line manually`);
+    }
+    if ((await run('sudo', ['-n', 'systemctl', 'restart', 'avahi-daemon'])) !== 0) {
+      return skipped(`${hostname} was removed from ${this.hostsFile} but avahi-daemon could not be restarted`);
+    }
+    return { status: 'changed' };
+  }
+
   /** With a password, `sudo -S -p '' -v` reads it on stdin, so the commands that follow never see it (#682). */
   private async authenticate(): Promise<boolean> {
     if (!this.sudoPassword) return true; // absent or empty: sudo -n (#675)

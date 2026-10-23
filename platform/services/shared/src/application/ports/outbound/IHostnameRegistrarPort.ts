@@ -18,4 +18,9 @@ export interface IHostnameRegistrarPort {
    * lists exactly that hostname (#660). Best effort: never rejects.
    */
   register(hostname: string, ip: string): Promise<HostnameChangeResult>;
+  /**
+   * #735: stop announcing `hostname`: remove the entries that list exactly
+   * that hostname (#660). 'unchanged' when none does. Best effort: never rejects.
+   */
+  unregister(hostname: string): Promise<HostnameChangeResult>;
 }

@@ -184,6 +184,6 @@ describe.skipIf(!gnuSed)('sudo password (#682)', () => {
     vi.spyOn(adapter, 'getStatus').mockReturnValue('running');
     expect((await adapter.unregister('wood.local')).status).toBe('changed');
     expect((await adapter.register('new.local', '192.168.1.10')).status).toBe('changed');
-    expect(sudoCalls().some((c) => c.includes('-v'))).toBe(false);
+    expect(sudoCalls().some((c) => c.startsWith('-S'))).toBe(false);
   });
 });
