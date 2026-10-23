@@ -211,7 +211,9 @@ export class Container {
       this._configSnapshotUseCase = new ConfigSnapshotUseCaseImpl(
         repository,
         storage,
-        collector
+        collector,
+        this.worldAssignmentPort,
+        this.containerRuntime
       );
     }
     return this._configSnapshotUseCase;

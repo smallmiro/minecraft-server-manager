@@ -15,7 +15,7 @@ import type {
   IWorldAssignmentPort,
   IContainerRuntimePort,
 } from '../ports/index.js';
-import type { ContainerStatus } from '../../types/index.js';
+import { checkServerStopped } from './checkServerStopped.js';
 import { formatWorldBytes } from '../../utils/index.js';
 import {
   WORLD_NAME_PATTERN,
@@ -26,12 +26,10 @@ import {
   findDuplicates,
   planRelease,
   resolveWorldName,
+  worldFamily,
   type WorldAssignmentErrorCode,
   type WorldAssignmentSnapshot,
 } from '../../domain/index.js';
-
-/** A server in one of these states may not change its LEVEL. */
-const ACTIVE_STATES: ReadonlySet<ContainerStatus> = new Set(['running', 'paused', 'restarting', 'created']);
 
 const NO_ASSIGNMENTS: WorldAssignmentSnapshot = { assignments: [], undetermined: [] };
 
@@ -71,29 +69,8 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
     }
   }
 
-  /**
-   * Refuse a LEVEL change on a server that is not stopped. Nothing is stopped
-   * automatically. D1: 'not_found' also means "runtime unreachable" and passes
-   * until A7 (#669) makes getStatus throw; a throw is mapped to undetermined.
-   */
   private checkStopped(server: string): WorldAssignmentError | null {
-    let status: ContainerStatus;
-    try {
-      if (!this.runtime) throw new Error('no runtime configured');
-      status = this.runtime.getStatus(`mc-${server}`);
-    } catch (error) {
-      return new WorldAssignmentError(
-        'undetermined',
-        `Cannot check whether server '${server}' is running: ${toFailure(error).error}`,
-        [server]
-      );
-    }
-    if (!ACTIVE_STATES.has(status)) return null;
-    return new WorldAssignmentError(
-      'server_running',
-      `Server '${server}' is ${status}; stop it before changing its world`,
-      [server]
-    );
+    return checkServerStopped(this.runtime, server);
   }
 
   /**
@@ -347,6 +324,8 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
   async listWorlds(): Promise<WorldListResult[]> {
     const allWorlds = await this.worldRepo.findAll();
     const serversByWorld = await this.getServersByWorld();
+    const serversOf = (name: string) =>
+      (this.assignments ? serversByWorld.get(worldFamily(name)) : serversByWorld.get(name)) ?? [];
 
     // Build a set of all world names for O(1) satellite detection
     const allNames = new Set(allWorlds.map((w) => w.name));
@@ -396,7 +375,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
           lockedBy: world.lockedBy,
           size,
           lastModified: world.lastModified,
-          servers: serversByWorld.get(world.name) ?? [],
+          servers: serversOf(world.name),
           dimensions: {
             nether: !!satellites.nether,
             end: !!satellites.theEnd,
@@ -422,6 +401,18 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
    * world-name precedence used for detailed server info (resolveWorldName).
    */
   private async getServersByWorld(): Promise<Map<string, string[]>> {
+    // Same parser and resolution as the assignment checks, keyed by world family (#670)
+    if (this.assignments) {
+      const snapshot = await this.snapshot();
+      const map = new Map<string, string[]>();
+      if (snapshot instanceof WorldAssignmentError) return map;
+      for (const a of snapshot.assignments) {
+        const family = worldFamily(a.world);
+        map.set(family, [...(map.get(family) ?? []), a.server]);
+      }
+      return map;
+    }
+
     const names = await this.serverRepo.listNames();
     const map = new Map<string, string[]>();
 
@@ -449,13 +440,13 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       const worlds = await this.worldRepo.findUnlocked();
 
       if (worlds.length === 0) {
-        this.prompt.warn('No unlocked worlds available');
+        this.prompt.warn('No unassigned worlds available');
         this.prompt.outro('All worlds are currently assigned');
         return {
           success: false,
           worldName: '',
           serverName: '',
-          error: 'No unlocked worlds available',
+          error: 'No unassigned worlds available',
         };
       }
 
@@ -555,19 +546,19 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
    * Interactive world release
    */
   async releaseWorld(): Promise<WorldReleaseResult> {
-    this.prompt.intro('Release World Lock');
+    this.prompt.intro('Release World');
 
     try {
       // Worlds a server is assigned to
       const worlds = await this.worldRepo.findLocked();
 
       if (worlds.length === 0) {
-        this.prompt.warn('No locked worlds found');
-        this.prompt.outro('All worlds are unlocked');
+        this.prompt.warn('No assigned worlds found');
+        this.prompt.outro('No server uses a world in worlds/');
         return {
           success: false,
           worldName: '',
-          error: 'No locked worlds found',
+          error: 'No assigned worlds found',
         };
       }
 
@@ -661,14 +652,18 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
   }
 
   /**
-   * Why `serverName`'s world (worlds/<LEVEL>) may not be reset, or null:
-   * the server keeps its world inside its data directory, another server
-   * uses the same world, or the assignments cannot be read (#670).
-   * The caller still checks that the server is stopped.
+   * The world `serverName` may reset (worlds/<world>, resolved like every
+   * other assignment read), or why not: the server keeps its world inside
+   * its data directory, another server uses the same world family, or the
+   * assignments cannot be read (#670). The caller still checks that the
+   * server is stopped.
    */
-  async checkWorldReset(serverName: string): Promise<WorldAssignmentError | null> {
+  async planWorldReset(serverName: string): Promise<{ world: string } | WorldAssignmentError> {
     const snapshot = await this.snapshot();
-    return snapshot instanceof WorldAssignmentError ? snapshot : checkReset(snapshot, serverName);
+    if (snapshot instanceof WorldAssignmentError) return snapshot;
+    const refused = checkReset(snapshot, serverName);
+    if (refused) return refused;
+    return { world: snapshot.assignments.find((a) => a.server === serverName)!.world };
   }
 
   /**

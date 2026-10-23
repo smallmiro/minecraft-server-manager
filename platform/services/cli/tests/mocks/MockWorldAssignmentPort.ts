@@ -24,6 +24,18 @@ export class MockWorldAssignmentPort implements IWorldAssignmentPort {
     };
   }
 
+  /** Parses only `LEVEL=` from the proposed config.env. */
+  async preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot> {
+    const levels = new Map(this.levels);
+    levels.set(server, /^LEVEL=(.*)$/m.exec(configEnv)?.[1]?.trim() || 'world');
+    return {
+      assignments: [...levels]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, world]) => ({ server: name, world, internal: false })),
+      undetermined: [...this.undetermined],
+    };
+  }
+
   async assign(world: string, server: string): Promise<void> {
     this.calls.push({ method: 'assign', args: [world, server] });
     this.throwPending();

@@ -2,7 +2,13 @@ import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } fro
 import fp from 'fastify-plugin';
 import { join } from 'path';
 import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
-import { serverExists, getContainerStatus, AuditActionEnum, WORLD_NAME_PATTERN } from '@minecraft-docker/shared';
+import {
+  serverExists,
+  getContainerStatus,
+  AuditActionEnum,
+  WORLD_NAME_PATTERN,
+  WorldAssignmentError,
+} from '@minecraft-docker/shared';
 import { EnvValueError } from '@minecraft-docker/shared/utils';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
@@ -255,15 +261,14 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      // Only the sole, non-internal user of worlds/<LEVEL> may wipe it (#670)
-      const refused = await createWorldUseCase().checkWorldReset(name);
-      if (refused) {
-        const failure = worldFailure({ error: refused.message, errorCode: refused.code }, 'World cannot be reset');
+      // Only the sole, non-internal user of worlds/<LEVEL> may wipe it, and the
+      // world name comes from the same parser as every assignment check (#670)
+      const plan = await createWorldUseCase().planWorldReset(name);
+      if (plan instanceof WorldAssignmentError) {
+        const failure = worldFailure({ error: plan.message, errorCode: plan.code }, 'World cannot be reset');
         return reply.code(failure.status).send(failure.body);
       }
-
-      // Get world name from configuration
-      const worldName = configService.getWorldName(name);
+      const worldName = plan.world;
 
       // Validate world path to prevent path traversal
       const worldPath = resolveInside(join(config.mcctlRoot, 'worlds'), worldName);

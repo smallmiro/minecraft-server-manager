@@ -390,14 +390,16 @@ describe('deleteWorldByName', () => {
   });
 });
 
-describe('checkWorldReset', () => {
-  test('allows the sole holder', async () => {
-    expect(await setup({ levels: { alpha: 'held' } }).useCase.checkWorldReset('alpha')).toBeNull();
+describe('planWorldReset', () => {
+  test('returns the world of the sole holder, as the assignment port resolved it', async () => {
+    expect(await setup({ levels: { alpha: 'My World' } }).useCase.planWorldReset('alpha')).toEqual({
+      world: 'My World',
+    });
   });
 
   test('ignores another internal holder of the same name', async () => {
     const { useCase } = setup({ levels: { alpha: 'held', old: 'held' }, internal: ['old'] });
-    expect(await useCase.checkWorldReset('alpha')).toBeNull();
+    expect(await useCase.planWorldReset('alpha')).toEqual({ world: 'held' });
   });
 
   test.each([
@@ -407,7 +409,7 @@ describe('checkWorldReset', () => {
     ['server_not_found', { levels: { alpha: 'held' } }, 'ghost'],
     ['undetermined', { noPort: true }, 'alpha'],
   ] as const)('refuses with %s', async (code, opts, server) => {
-    const error = await setup(opts as Setup).useCase.checkWorldReset(server);
+    const error = await setup(opts as Setup).useCase.planWorldReset(server);
     expect(error).toBeInstanceOf(WorldAssignmentError);
     expect(error?.code).toBe(code);
   });
@@ -420,5 +422,22 @@ describe('getAssignmentReport', () => {
       duplicates: [{ world: 'world', servers: ['a', 'b'] }],
       undetermined: ['broken'],
     });
+  });
+});
+
+describe('listWorlds servers[] (same resolution as the assignment port)', () => {
+  test('groups servers by world family from the port snapshot', async () => {
+    const { useCase, worldRepo } = setup({ levels: { a: 'held', b: 'held_nether', c: 'c' } });
+    (worldRepo as unknown as { findAll: () => Promise<unknown[]> }).findAll = async () => [
+      { name: 'held', path: '/w/held', isLocked: true, lockedBy: 'a', sizeBytes: 1 },
+      { name: 'free', path: '/w/free', isLocked: false, sizeBytes: 1 },
+    ];
+
+    const worlds = await useCase.listWorlds();
+
+    expect(worlds.map((w) => [w.name, w.servers])).toEqual([
+      ['held', ['a', 'b']],
+      ['free', []],
+    ]);
   });
 });

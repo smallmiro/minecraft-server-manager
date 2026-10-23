@@ -7,6 +7,10 @@ import { ServerName } from '../../domain/value-objects/ServerName.js';
 import { SnapshotDiff } from '../../domain/value-objects/SnapshotDiff.js';
 import { FileDiff } from '../../domain/value-objects/FileDiff.js';
 import type { ConfigSnapshotFile } from '../../domain/value-objects/ConfigSnapshotFile.js';
+import type { IWorldAssignmentPort } from '../ports/outbound/IWorldAssignmentPort.js';
+import type { IContainerRuntimePort } from '../ports/outbound/IContainerRuntimePort.js';
+import { WorldAssignmentError, checkProposed } from '../../domain/services/worldAssignment.js';
+import { checkServerStopped } from './checkServerStopped.js';
 
 /**
  * ConfigSnapshotUseCaseImpl
@@ -17,8 +21,34 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
   constructor(
     private readonly repository: IConfigSnapshotRepository,
     private readonly storage: IConfigSnapshotStorage,
-    private readonly collector: IConfigFileCollector
+    private readonly collector: IConfigFileCollector,
+    private readonly assignments?: IWorldAssignmentPort,
+    private readonly runtime?: IContainerRuntimePort
   ) {}
+
+  /**
+   * A restored config.env may not bypass the world assignment rules (#670):
+   * the result must pass checkProposed (R1, R7), and an assignment change
+   * needs a stopped server, whatever `force` says. Without an assignment
+   * port a config.env restore fails closed.
+   */
+  private async checkRestoredAssignment(server: string, configEnv: string): Promise<void> {
+    if (!this.assignments) {
+      throw new WorldAssignmentError(
+        'undetermined',
+        'World assignments cannot be read: no assignment port configured'
+      );
+    }
+    const [current, next] = await Promise.all([
+      this.assignments.listAssignments(),
+      this.assignments.preview(server, configEnv),
+    ]);
+    const before = current.assignments.find((a) => a.server === server);
+    const after = next.assignments.find((a) => a.server === server);
+    if (before?.world === after?.world && before?.internal === after?.internal) return;
+    const refused = checkProposed(next, server) ?? checkServerStopped(this.runtime, server);
+    if (refused) throw refused;
+  }
 
   /**
    * Create a new config snapshot for a server
@@ -183,7 +213,8 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
 
   /**
    * Restore server configuration from a snapshot
-   * Retrieves file contents from storage and writes them to the server directory
+   * Retrieves file contents from storage and writes them to the server directory.
+   * `force` (the caller's running check) does not bypass the world assignment check.
    */
   async restore(snapshotId: string, _force?: boolean): Promise<void> {
     const snapshot = await this.repository.findById(snapshotId);
@@ -198,6 +229,11 @@ export class ConfigSnapshotUseCaseImpl implements IConfigSnapshotUseCase {
 
     if (files.size === 0) {
       throw new Error(`No files found for snapshot: ${snapshotId}`);
+    }
+
+    const configEnv = files.get('config.env');
+    if (configEnv !== undefined) {
+      await this.checkRestoredAssignment(snapshot.serverName.value, configEnv);
     }
 
     // Write each file back to the server directory

@@ -235,7 +235,7 @@ describe('WorldManagementUseCase Integration', () => {
       const result = await useCase.assignWorld();
 
       assert.strictEqual(result.success, false);
-      assert.ok(result.error?.includes('No unlocked worlds'));
+      assert.ok(result.error?.includes('No unassigned worlds'));
     });
 
     it('should return error when no servers', async () => {
@@ -291,7 +291,7 @@ describe('WorldManagementUseCase Integration', () => {
 
     it('should show intro message', async () => {
       await useCase.releaseWorld();
-      assert.strictEqual(promptAdapter.introMessage, 'Release World Lock');
+      assert.strictEqual(promptAdapter.introMessage, 'Release World');
     });
 
     it('should return error when no locked worlds', async () => {
@@ -304,7 +304,7 @@ describe('WorldManagementUseCase Integration', () => {
       const result = await useCase.releaseWorld();
 
       assert.strictEqual(result.success, false);
-      assert.ok(result.error?.includes('No locked worlds'));
+      assert.ok(result.error?.includes('No assigned worlds'));
     });
 
     it('should return error when user declines', async () => {

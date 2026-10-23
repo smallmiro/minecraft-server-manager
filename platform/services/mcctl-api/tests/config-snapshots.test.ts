@@ -409,6 +409,24 @@ describe('Config Snapshot Routes', () => {
 
       expect(response.statusCode).toBe(404);
     });
+
+    it('returns 409 when the restored config.env breaks a world assignment rule (#670)', async () => {
+      const snapshot = createMockSnapshot('testserver', 'Old world');
+      const { restoreSnapshot } = await import('../src/services/config-snapshot-service.js');
+      const { WorldAssignmentError } = await import('@minecraft-docker/shared');
+      vi.mocked(restoreSnapshot).mockRejectedValueOnce(
+        new WorldAssignmentError('conflict', "World 'held' is assigned to 'beta'", ['beta'])
+      );
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/api/servers/testserver/config-snapshots/${snapshot.id}/restore`,
+        payload: { force: true, createSnapshotBeforeRestore: false },
+      });
+
+      expect(response.statusCode).toBe(409);
+      expect(JSON.parse(response.body).message).toContain("'beta'");
+    });
   });
 
   // ==========================================================

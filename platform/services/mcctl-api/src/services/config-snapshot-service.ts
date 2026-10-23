@@ -5,13 +5,16 @@ import {
   SqliteConfigSnapshotRepository,
   FileSystemConfigSnapshotStorage,
   FileSystemConfigFileCollector,
+  ConfigEnvWorldAssignmentAdapter,
+  DockerComposeRuntimeAdapter,
+  Paths,
   type IConfigSnapshotUseCase,
   type ConfigSnapshot,
   type SnapshotDiff,
   serverExists,
   getContainerStatus,
 } from '@minecraft-docker/shared';
-import { config } from '../config/index.js';
+import { config, childProcessEnv } from '../config/index.js';
 
 /**
  * Singleton instances for the config snapshot service
@@ -41,7 +44,10 @@ export function getConfigSnapshotUseCase(): IConfigSnapshotUseCase {
     const storage = new FileSystemConfigSnapshotStorage(storagePath);
     const serversDir = join(config.mcctlRoot, 'servers');
     const collector = new FileSystemConfigFileCollector(serversDir);
-    useCase = new ConfigSnapshotUseCaseImpl(repository, storage, collector);
+    // A restored config.env is checked against the world assignments (#670)
+    const assignments = new ConfigEnvWorldAssignmentAdapter(new Paths(config.mcctlRoot));
+    const runtime = new DockerComposeRuntimeAdapter({ root: config.mcctlRoot, env: () => childProcessEnv() });
+    useCase = new ConfigSnapshotUseCaseImpl(repository, storage, collector, assignments, runtime);
   }
   return useCase;
 }

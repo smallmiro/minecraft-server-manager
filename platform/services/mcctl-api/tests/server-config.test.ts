@@ -87,7 +87,7 @@ vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
 // World assignment use case (#670): PATCH level and world reset go through it
 const worldUseCase = vi.hoisted(() => ({
   assignWorldByName: vi.fn(),
-  checkWorldReset: vi.fn(),
+  planWorldReset: vi.fn(),
 }));
 vi.mock('../src/lib/world-use-case.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/world-use-case.js')>()),
@@ -110,6 +110,7 @@ vi.mock('fs', async (importOriginal) => {
 import {
   serverExists,
   getContainerStatus,
+  WorldAssignmentError,
 } from '@minecraft-docker/shared';
 import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
@@ -181,7 +182,7 @@ GID=1000
       worldName,
       serverName,
     }));
-    worldUseCase.checkWorldReset.mockResolvedValue(null);
+    worldUseCase.planWorldReset.mockResolvedValue({ world: 'world' });
   });
 
   describe('GET /api/servers/:name/config', () => {
@@ -563,6 +564,20 @@ GID=1000
         expect(String(mockWriteFileSync.mock.calls[0]?.[1])).not.toMatch(/^LEVEL=new_world-2$/m);
       });
 
+      it('cannot smuggle a LEVEL line through another field (#670, #726)', async () => {
+        mockedServerExists.mockReturnValue(true);
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload: { motd: 'x\nLEVEL=held' },
+        });
+
+        expect(response.statusCode).toBe(400);
+        expect(worldUseCase.assignWorldByName).not.toHaveBeenCalled();
+        expect(mockWriteFileSync).not.toHaveBeenCalled();
+      });
+
       it.each([
         ['conflict', 409],
         ['server_running', 409],
@@ -686,6 +701,19 @@ GID=1000
   });
 
   describe('POST /api/servers/:name/world/reset', () => {
+    it('wipes the world the assignment port resolved, not a re-parsed LEVEL (#670)', async () => {
+      mockedServerExists.mockReturnValue(true);
+      mockedGetContainerStatus.mockReturnValue('exited');
+      // ConfigService would keep the quotes of LEVEL='My World'
+      mockReadFileSync.mockReturnValue(sampleConfigContent.replace('LEVEL=world', "LEVEL='My World'"));
+      worldUseCase.planWorldReset.mockResolvedValueOnce({ world: 'My World' });
+
+      const response = await app.inject({ method: 'POST', url: '/api/servers/testserver/world/reset' });
+
+      expect(response.statusCode).toBe(200);
+      expect(String(mockReaddirSync.mock.calls[0]?.[0])).toMatch(/[/\\]worlds[/\\]My World$/);
+    });
+
     it.each([
       ['internal_world', 409],
       ['conflict', 409],
@@ -693,14 +721,14 @@ GID=1000
     ])('refuses when the assignment check says %s -> %i (#670)', async (code, status) => {
       mockedServerExists.mockReturnValue(true);
       mockedGetContainerStatus.mockReturnValue('exited');
-      worldUseCase.checkWorldReset.mockResolvedValueOnce({ code, message: 'not this world' });
+      worldUseCase.planWorldReset.mockResolvedValueOnce(new WorldAssignmentError(code, 'not this world'));
 
       const response = await app.inject({ method: 'POST', url: '/api/servers/testserver/world/reset' });
 
       expect(response.statusCode).toBe(status);
       expect(JSON.parse(response.body).message).toBe('not this world');
       expect(mockRmSync).not.toHaveBeenCalled();
-      expect(worldUseCase.checkWorldReset).toHaveBeenCalledWith('testserver');
+      expect(worldUseCase.planWorldReset).toHaveBeenCalledWith('testserver');
     });
 
     it('should return 404 if server does not exist', async () => {
@@ -777,9 +805,9 @@ GID=1000
       mockedGetContainerStatus.mockReturnValue('exited');
       mockExistsSync.mockReturnValue(true);
 
-      // Mock config with path traversal in LEVEL
-      const maliciousConfig = `LEVEL=../../etc`;
-      mockReadFileSync.mockReturnValue(maliciousConfig);
+      // Defense in depth: the real assignment port reports such a LEVEL as
+      // undetermined (409); the route still refuses a path that leaves worlds/
+      worldUseCase.planWorldReset.mockResolvedValueOnce({ world: '../../etc' });
 
       const response = await app.inject({
         method: 'POST',
