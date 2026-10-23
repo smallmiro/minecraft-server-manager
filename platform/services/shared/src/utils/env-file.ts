@@ -5,6 +5,7 @@
  * The platform `.env` is read by docker compose, dotenv and bash
  * (`mcctl.sh` runs `set -a; source .env`), so every value we write must be
  * literal in all three. Untouched lines are kept byte-identical.
+ *
  * Parsing (parseEnvDocument) follows Docker Compose's env_file reader, the
  * consumer that matters:
  * - Blank lines and lines whose first non-blank character is `#` are skipped.
