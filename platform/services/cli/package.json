@@ -32,7 +32,8 @@
     "start": "node dist/index.js",
     "sync-scripts": "rm -rf scripts docker && cp -r ../../scripts scripts && rm -rf scripts/tests scripts/.gitkeep && cp -r ../../docker docker",
     "prepack": "npm run sync-scripts",
-    "verify:package": "node tools/verify-package.mjs"
+    "verify:package": "node tools/verify-package.mjs",
+    "check:templates": "node tools/check-templates.mjs"
   },
   "keywords": [
     "minecraft",
