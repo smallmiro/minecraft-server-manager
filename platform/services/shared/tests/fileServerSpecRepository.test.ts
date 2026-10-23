@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { Paths } from '../src/utils/index.js';
 import { FileServerSpecRepository } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import { ServerSpecError, type ServerSpecDocument } from '../src/domain/server-spec/ServerSpecDocument.js';
+import type { IContainerRuntimePort } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 
 let root: string;
 let repo: FileServerSpecRepository;
@@ -69,7 +70,9 @@ async function rejection(promise: Promise<unknown>): Promise<ServerSpecError> {
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'mcctl-spec-repo-'));
   mkdirSync(join(root, 'servers'));
-  repo = new FileServerSpecRepository(new Paths(root));
+  // A stopped runtime: these specs set a level the bare config.env lacks (ADR-0003 R4 asks it).
+  const stopped = { getStatus: () => 'exited' } as unknown as IContainerRuntimePort;
+  repo = new FileServerSpecRepository(new Paths(root), undefined, stopped);
 });
 
 afterEach(() => {

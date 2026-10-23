@@ -2,6 +2,7 @@ import {
   colors,
   log,
   ServerSpecError,
+  WorldAssignmentError,
   type FileServerSpecRepository,
 } from '@minecraft-docker/shared';
 
@@ -61,6 +62,8 @@ async function migrateOne(
       const status = err.code === 'undetermined' ? 'refused' : 'error';
       return { server, status, warnings: [], reason: err.message };
     }
+    // ADR-0003 R4: a changed world.level checked against ADR-0002
+    if (err instanceof WorldAssignmentError) return { server, status: 'error', warnings: [], reason: err.message };
     throw err;
   }
 }

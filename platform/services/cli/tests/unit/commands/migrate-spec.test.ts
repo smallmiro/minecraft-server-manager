@@ -100,6 +100,18 @@ describe('mcctl migrate spec', () => {
     expect(readFileSync(`${config}.bak`, 'utf-8')).toContain('MEMORY=6G');
   });
 
+  it('refuses a hand-edited level that another server uses (ADR-0002 R1)', async () => {
+    server('alpha', 'TYPE=PAPER\nLEVEL=alpha\nEXTRA_ARGS=--universe /worlds/\n');
+    server('beta', 'TYPE=PAPER\nLEVEL=beta\nEXTRA_ARGS=--universe /worlds/\n');
+    await run({ all: true });
+    writeFileSync(specFile('beta'), readFileSync(specFile('beta'), 'utf-8').replace('level: beta', 'level: alpha'));
+
+    output = [];
+    expect(await run({ serverName: 'beta' })).toBe(1);
+    expect(output.join('\n')).toMatch(/beta.*World 'alpha' is assigned to 'alpha'/);
+    expect(readFileSync(join(root, 'servers', 'beta', 'config.env'), 'utf-8')).toMatch(/^LEVEL=beta$/m);
+  });
+
   it('reports a broken server.yaml', async () => {
     server('alpha', 'TYPE=PAPER\nEXTRA_ARGS=\n');
     writeFileSync(specFile('alpha'), 'specVersion: 1\nname: [\n');

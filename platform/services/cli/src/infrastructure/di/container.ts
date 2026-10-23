@@ -145,7 +145,7 @@ export class Container {
   /** Concrete type: `mcctl migrate spec --force` also uses importServer(). */
   get serverSpecRepository(): FileServerSpecRepository {
     if (!this._serverSpecRepo) {
-      this._serverSpecRepo = new FileServerSpecRepository(this.paths);
+      this._serverSpecRepo = new FileServerSpecRepository(this.paths, undefined, this.containerRuntime);
     }
     return this._serverSpecRepo;
   }

@@ -293,7 +293,8 @@ describe('guards', () => {
     const doc = await migrate('survival');
     const moved: ServerSpecDocument = { ...doc, world: { ...doc.world, storage: 'data' } };
     expect((await rejection(repo.write(moved))).code).toBe('storage_change');
-    await repo.write(moved, { allowStorageChange: true });
+    const stopped = { getStatus: () => 'exited' } as unknown as IContainerRuntimePort;
+    await new FileServerSpecRepository(new Paths(root), undefined, stopped).write(moved, { allowStorageChange: true });
     expect(parseEnvDocument(read('survival', 'config.env')).values.get('EXTRA_ARGS')).toBe('');
   });
 
