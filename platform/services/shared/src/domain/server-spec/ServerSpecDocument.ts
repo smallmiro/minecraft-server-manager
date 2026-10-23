@@ -22,9 +22,9 @@ export interface ServerSpecDocument extends ServerSpec {
   name: string;
   /** TYPE */
   type: string;
-  /** VERSION; absent = itzg/modpack decides. */
+  /** VERSION; absent = itzg/modpack decides; '' = `VERSION=` (empty, still overrides servers/global.env). */
   version?: string;
-  /** MEMORY */
+  /** MEMORY; '' as for version. */
   memory?: string;
   /** Compose image, e.g. itzg/minecraft-server:java25 */
   image: string;
@@ -37,7 +37,7 @@ export interface ServerSpecDocument extends ServerSpec {
   routing: {
     /** User-added mc-router hostnames. */
     customHostnames: string[];
-    /** PLAYIT_DOMAIN and a router hostname. */
+    /** PLAYIT_DOMAIN and a router hostname; '' = `PLAYIT_DOMAIN=` (no router hostname). */
     playitDomain?: string;
     autoScale: { up: boolean; down: boolean };
     /** mc-router.auto-scale-asleep-motd */
@@ -212,8 +212,10 @@ export function validateServerSpecDocument(value: unknown, rules: ServerSpecRule
 
   const type = str(value, 'type', 'type', true);
   if (type !== undefined) check('type', create ? rejects(ServerType.create, type) : envValueError(type));
+  // '' in version, memory and routing.playitDomain is an explicit empty value: config.env keeps
+  // `KEY=`, which still overrides servers/global.env (imported servers, ADR-0003 §4).
   const version = str(value, 'version', 'version', false);
-  if (version !== undefined) {
+  if (version !== undefined && version !== '') {
     check(
       'version',
       create
@@ -222,7 +224,7 @@ export function validateServerSpecDocument(value: unknown, rules: ServerSpecRule
     );
   }
   const memory = str(value, 'memory', 'memory', false);
-  if (memory !== undefined) check('memory', create ? rejects(Memory.create, memory) : envValueError(memory));
+  if (memory !== undefined && memory !== '') check('memory', create ? rejects(Memory.create, memory) : envValueError(memory));
 
   const image = str(value, 'image', 'image', true);
   if (image !== undefined && !/^\S+$/.test(image)) add('image', 'must be a non-empty image reference without spaces');
@@ -259,7 +261,7 @@ export function validateServerSpecDocument(value: unknown, rules: ServerSpecRule
       });
     }
     const playit = str(routing, 'playitDomain', 'routing.playitDomain', false);
-    if (playit !== undefined) check('routing.playitDomain', validateHostname(playit));
+    if (playit !== undefined && playit !== '') check('routing.playitDomain', validateHostname(playit));
 
     const autoScale = routing['autoScale'];
     if (autoScale === undefined) add('routing.autoScale', 'is required');

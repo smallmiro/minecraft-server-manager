@@ -171,15 +171,16 @@ async function readConfigEnv(
     }
   }
 
+  // An empty value is kept: `KEY=` still overrides servers/global.env, like an empty EXTRA_ARGS (ADR-0002).
   const take = (key: string): string | undefined => {
     const value = values.get(key);
     values.delete(key);
-    return value?.trim() ? value : undefined;
+    return value;
   };
   const level = resolveWorldName(Object.fromEntries(values));
   values.delete('LEVEL');
   let type = take('TYPE');
-  if (type === undefined) {
+  if (!type?.trim()) {
     warnings.push('TYPE is not set; the spec uses VANILLA (the itzg default)');
     type = 'VANILLA';
   }
