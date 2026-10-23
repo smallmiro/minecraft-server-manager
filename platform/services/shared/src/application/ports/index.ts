@@ -2,6 +2,7 @@
 export type {
   ICreateServerUseCase,
   CreateServerConfig,
+  CreateServerRunOptions,
   IDeleteServerUseCase,
   DeleteServerResult,
   DeleteServerOptions,

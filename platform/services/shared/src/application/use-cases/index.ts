@@ -1,4 +1,4 @@
-export { CreateServerUseCase } from './CreateServerUseCase.js';
+export { CreateServerUseCase, ServerStartError, type ServerProvisionDeps } from './CreateServerUseCase.js';
 export { DeleteServerUseCase } from './DeleteServerUseCase.js';
 export { ServerStatusUseCase } from './ServerStatusUseCase.js';
 export { WorldManagementUseCase } from './WorldManagementUseCase.js';

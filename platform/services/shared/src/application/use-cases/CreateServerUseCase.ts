@@ -9,6 +9,7 @@ import {
   ModpackOptions,
   WorldAssignmentError,
   checkAssign,
+  buildCreateSpec,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import { Config, type Paths } from '../../utils/index.js';
@@ -23,7 +24,41 @@ import type {
   IModSourcePort,
   IWorldAssignmentPort,
   IPlatformSettingsPort,
+  CreateServerRunOptions,
+  IServerSpecRepository,
+  IHostnameRegistrarPort,
+  IContainerRuntimePort,
 } from '../ports/index.js';
+import type { CreateServerOptions } from '../ports/outbound/IShellPort.js';
+
+/**
+ * What TypeScript provisioning needs (#675, ADR-0003 §5). Without it the
+ * use case falls back to the deprecated create-server.sh path.
+ */
+export interface ServerProvisionDeps {
+  specRepo: IServerSpecRepository;
+  /** avahi `<name>.local`; skipped when absent. */
+  hostnames?: IHostnameRegistrarPort;
+  /** Starts the new server unless autoStart is false. */
+  runtime?: IContainerRuntimePort;
+  /** Host addresses; the first one is announced for `<name>.local`. */
+  hostIps?: () => string[];
+}
+
+/**
+ * The server was created but did not start (ADR-0003 decision 1). It stays
+ * created: the CLI exits 1 with the cause, the API answers success with
+ * `server.status: 'created'` and a warning.
+ */
+export class ServerStartError extends Error {
+  constructor(
+    readonly server: Server,
+    readonly reason: string
+  ) {
+    super(`Server '${server.name.value}' was created but did not start: ${reason}. Start it with: mcctl start ${server.name.value}`);
+    this.name = 'ServerStartError';
+  }
+}
 
 /**
  * Create Server Use Case
@@ -44,7 +79,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     private readonly worldRepo?: IWorldRepository,
     private readonly auditLog?: IAuditLogPort,
     private readonly modSource?: IModSourcePort,
-    private readonly assignments?: IWorldAssignmentPort
+    private readonly assignments?: IWorldAssignmentPort,
+    private readonly provision?: ServerProvisionDeps
   ) {
     this.config = settings && 'load' in settings ? settings : new Config(settings);
   }
@@ -65,6 +101,63 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     }
     const refused = checkAssign(await this.assignments.snapshot(), world, name.value, { newServer: true });
     if (refused) throw refused;
+  }
+
+  /**
+   * Write the new server's files and bring it up: TypeScript provisioning
+   * (ADR-0003 §5) when provision deps are given, else create-server.sh.
+   * Rejects when the server was not created; a start failure is returned.
+   */
+  private async createFiles(
+    name: ServerName,
+    options: CreateServerOptions,
+    run: CreateServerRunOptions
+  ): Promise<{ startError?: string }> {
+    if (!this.provision) {
+      const result = await this.shell.createServer(name, options);
+      if (!result.success) throw new Error(result.stderr || 'Server creation failed');
+      return {};
+    }
+    const { specRepo, hostnames, runtime, hostIps } = this.provision;
+    const type = options.type;
+    const worldOptions = options.worldOptions;
+
+    run.onProgress?.('creating', 'Creating server directory...');
+    await specRepo.write(
+      buildCreateSpec({
+        name: name.value,
+        type: type.value,
+        // The modpack decides the Minecraft version unless one is given (no VERSION).
+        version: type.isModpack && options.version.value === 'LATEST' ? undefined : options.version.value,
+        memory: (options.memory ?? (type.isModpack ? Memory.create('6G') : Memory.default())).formatted,
+        seed: worldOptions.setupType === WorldSetupType.NEW ? worldOptions.seed : undefined,
+        worldUrl: worldOptions.setupType === WorldSetupType.DOWNLOAD ? worldOptions.downloadUrl : undefined,
+        worldName: worldOptions.setupType === WorldSetupType.EXISTING ? worldOptions.worldName : undefined,
+        modpackSlug: options.modpackSlug,
+        modpackVersion: options.modpackVersion,
+        modLoader: options.modLoader,
+        modpackExcludeFiles: options.modpackExcludeFiles,
+        enableWhitelist: options.enableWhitelist,
+        whitelistPlayers: options.whitelistPlayers,
+        playitDomain: options.playitDomain,
+      }),
+      { create: true }
+    );
+
+    run.onProgress?.('configuring', 'Registering mDNS hostname...');
+    if (hostnames) {
+      const ip = hostIps?.()[0];
+      const result = ip
+        ? await hostnames.register(`${name.value}.local`, ip)
+        : { status: 'skipped' as const, reason: 'could not determine the host address (set HOST_IP in .env)' };
+      if (result.status === 'skipped') run.onLog?.(`Warning: mDNS registration of ${name.value}.local skipped: ${result.reason}`);
+    }
+
+    if (options.autoStart === false) return {};
+    run.onProgress?.('starting', 'Starting container...');
+    if (!runtime) return { startError: 'no container runtime configured' };
+    const started = await runtime.start(`mc-${name.value}`);
+    return started.success ? {} : { startError: started.error || started.stderr?.trim() || 'the container did not start' };
   }
 
   /**
@@ -217,9 +310,10 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       // Execute creation - stop spinner before running script to avoid output conflicts
       const spinner = this.prompt.spinner();
       spinner.start('Creating server...');
-      spinner.stop('Running create script...');
+      spinner.stop(this.provision ? 'Writing server files...' : 'Running create script...');
 
-      const result = await this.shell.createServer(name, {
+      let startError: string | undefined;
+      const result = await this.createFiles(name, {
         type,
         version,
         worldOptions,
@@ -232,7 +326,16 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         enableWhitelist,
         whitelistPlayers,
         playitDomain,
-      });
+      }, {
+        onProgress: (_stage, message) => this.prompt.info(message),
+        onLog: (line) => this.prompt.warn(line),
+      }).then(
+        (r) => {
+          startError = r.startError;
+          return { success: true, stderr: '' };
+        },
+        (error: unknown) => ({ success: false, stderr: error instanceof Error ? error.message : String(error) })
+      );
 
       if (!result.success) {
         this.prompt.error(result.stderr || 'Unknown error occurred');
@@ -266,6 +369,12 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         errorMessage: null,
       });
 
+      if (startError) {
+        const error = new ServerStartError(server, startError);
+        this.prompt.error(error.message);
+        throw error;
+      }
+
       this.prompt.success(`Server '${name.value}' created!`);
 
       const whitelistInfo = !enableWhitelist
@@ -293,7 +402,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
   /**
    * Execute server creation with provided configuration
    */
-  async executeWithConfig(config: CreateServerConfig): Promise<Server> {
+  async executeWithConfig(config: CreateServerConfig, options: CreateServerRunOptions = {}): Promise<Server> {
     // Parse configuration
     const name = ServerName.create(config.name);
     const type = config.type
@@ -359,7 +468,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     await this.assertWorldAssignable(worldOptions, name);
 
     // Execute creation
-    const result = await this.shell.createServer(name, {
+    let startError: string | undefined;
+    const result = await this.createFiles(name, {
       type,
       version,
       worldOptions,
@@ -373,7 +483,13 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       whitelistPlayers: config.whitelistPlayers,
       playitDomain: config.playitDomain,
       noPlayitDomain: config.noPlayitDomain,
-    });
+    }, options).then(
+      (r) => {
+        startError = r.startError;
+        return { success: true, stderr: '' };
+      },
+      (error: unknown) => ({ success: false, stderr: error instanceof Error ? error.message : String(error), error })
+    );
 
     if (!result.success) {
       // Log audit failure
@@ -386,6 +502,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         errorMessage: result.stderr || 'Server creation failed',
         details: null,
       });
+      // Keep a typed provisioning error (ServerSpecError, WorldAssignmentError) for the caller.
+      if ('error' in result && result.error instanceof Error) throw result.error;
       throw new Error(result.stderr || 'Server creation failed');
     }
 
@@ -406,6 +524,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       errorMessage: null,
     });
 
+    if (startError) throw new ServerStartError(server, startError);
     return server;
   }
 }
