@@ -129,3 +129,13 @@ function renderInclude(name: string, current: string | undefined): string {
   if (list.some((e) => includePaths(e).includes(entry))) return current;
   return INCLUDE_HEADER + yaml.dump({ ...parsed, include: [...list, entry] }, DUMP_OPTIONS);
 }
+
+/** servers/compose.yml text without the entries naming exactly `<name>/docker-compose.yml`; unchanged when there is none. */
+export function removeIncludeEntry(current: string, name: string): string {
+  const entry = `${name}/docker-compose.yml`;
+  const parsed = yaml.load(current) as Record<string, unknown> | null;
+  const list = parsed?.['include'];
+  if (!Array.isArray(list) || !list.some((e) => includePaths(e).includes(entry))) return current;
+  const kept = list.filter((e) => !includePaths(e).includes(entry));
+  return INCLUDE_HEADER + yaml.dump({ ...parsed, include: kept }, DUMP_OPTIONS);
+}

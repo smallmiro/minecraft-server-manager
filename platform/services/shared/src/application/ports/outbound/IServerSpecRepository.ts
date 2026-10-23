@@ -14,6 +14,12 @@ export interface LoadedServerSpec {
 export interface WriteServerSpecOptions {
   /** Revision from load(); a mismatch rejects with ServerSpecError 'conflict'. Omit to write unconditionally. */
   expectedRevision?: string | null;
+  /**
+   * A new server: claim servers/<n> with mkdir ('already_exists'), strict
+   * create rules, the bundled template's other config.env keys, data/ and
+   * logs/, the include entry; rolled back on any failure (#657).
+   */
+  create?: boolean;
   /** Overwrite hand-edited generated files after writing a .bak (edit_conflict, compose_edited, refused import). */
   force?: boolean;
   /** Allow a world.storage change (only `mcctl migrate worlds`); otherwise 'storage_change'. */
