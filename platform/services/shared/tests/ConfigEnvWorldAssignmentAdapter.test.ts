@@ -157,7 +157,8 @@ describe('assign', () => {
     await adapter.assign('new', 'a', { seed: 'a text seed, with #hash' });
 
     expect(readFileSync(file, 'utf-8')).toBe(
-      `TYPE=PAPER\nLEVEL=new\nSEED=a text seed, with #hash\n${UNIVERSE}`
+      // raw style: single-quoted only because ' #' would start a comment
+      `TYPE=PAPER\nLEVEL=new\nSEED='a text seed, with #hash'\n${UNIVERSE}`
     );
   });
 

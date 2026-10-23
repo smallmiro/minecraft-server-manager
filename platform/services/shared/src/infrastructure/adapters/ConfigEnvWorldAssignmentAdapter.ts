@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
-import { applyEnvChanges } from '../../utils/env-file.js';
+import { applyEnvChanges, assertEnvFileValue } from '../../utils/env-file.js';
 import { atomicWriteFile } from '../../utils/atomic-write.js';
 import {
   WorldAssignmentError,
@@ -57,12 +57,15 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
   // ponytail: check-then-write race between CLI and API processes is accepted
   // (human-driven, findDuplicates reports the result); add an open(..., 'wx')
   // mutex file if a duplicate is ever seen.
-  async assign(world: string, server: string): Promise<void> {
+  async assign(world: string, server: string, options: { seed?: string } = {}): Promise<void> {
+    const { seed } = options;
+    if (seed !== undefined) assertEnvFileValue('SEED', seed);
     const snapshot = await this.read();
     const error = checkAssign(snapshot, world, server);
     if (error) throw error;
-    if (snapshot.assignments.find((a) => a.server === server)?.world === world) return;
-    await this.writeConfig(server, { LEVEL: world });
+    const unchanged = snapshot.assignments.find((a) => a.server === server)?.world === world;
+    if (unchanged && seed === undefined) return;
+    await this.writeConfig(server, unchanged ? { SEED: seed! } : { LEVEL: world, ...(seed === undefined ? {} : { SEED: seed }) });
   }
 
   async release(world: string): Promise<{ server: string; fallback: string }> {

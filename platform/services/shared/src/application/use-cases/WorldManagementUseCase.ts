@@ -17,6 +17,7 @@ import type {
 } from '../ports/index.js';
 import { checkConfigEnvChange, checkPlatformEnvChange, checkServerStopped } from './checkServerStopped.js';
 import { formatWorldBytes } from '../../utils/index.js';
+import { assertEnvFileValue } from '../../utils/env-file.js';
 import {
   ServerName,
   WORLD_NAME_PATTERN,
@@ -34,6 +35,16 @@ import {
 
 const NO_ASSIGNMENTS: WorldAssignmentSnapshot = { assignments: [], undetermined: [] };
 
+/** Why `seed` cannot be a config.env SEED value, or null. */
+function invalidSeed(seed: string | undefined): Error | null {
+  try {
+    if (seed) assertEnvFileValue('SEED', seed);
+    return null;
+  } catch (error) {
+    return error as Error;
+  }
+}
+
 function toFailure(error: unknown): { error: string; errorCode?: WorldAssignmentErrorCode } {
   if (error instanceof WorldAssignmentError) return { error: error.message, errorCode: error.code };
   return { error: error instanceof Error ? error.message : String(error) };
@@ -49,9 +60,13 @@ function toFailure(error: unknown): { error: string; errorCode?: WorldAssignment
  * world delete is refused (fail-closed).
  */
 export class WorldManagementUseCase implements IWorldManagementUseCase {
+  /**
+   * @param _shell Unused since #734 (mcctl.sh was removed); pass undefined.
+   *   @deprecated Kept for constructor compatibility; removed in v3.0.0 (#736).
+   */
   constructor(
     private readonly prompt: IPromptPort,
-    private readonly shell: IShellPort,
+    _shell: IShellPort | undefined,
     private readonly worldRepo: IWorldRepository,
     private readonly serverRepo: IServerRepository,
     private readonly assignments?: IWorldAssignmentPort,
@@ -191,10 +206,11 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
         });
       }
 
-      // Refuse before creating anything: a held name, an undetermined
-      // assignment, or a server that is not stopped (no auto-stop, #670)
+      // Refuse before creating anything: a seed config.env cannot hold (#726),
+      // a held name, an undetermined assignment, or a server that is not
+      // stopped (no auto-stop, #670)
       if (serverName) {
-        const refused = await this.checkNewWorldTarget(worldName, serverName);
+        const refused = invalidSeed(seed) ?? (await this.checkNewWorldTarget(worldName, serverName));
         if (refused) {
           if (isInteractive) {
             this.prompt.error(refused.message);
@@ -232,9 +248,10 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       if (serverName) {
         spinner?.message('Configuring server...');
 
-        // Set LEVEL through the assignment port (re-checks R1 on a fresh snapshot)
+        // LEVEL and SEED in one config.env write through the assignment port
+        // (re-checks R1 on a fresh snapshot; mcctl.sh config is gone, #734)
         try {
-          await this.assignments!.assign(worldName, serverName);
+          await this.assignments!.assign(worldName, serverName, seed ? { seed } : {});
         } catch (error) {
           spinner?.stop('Failed to configure server');
           const failure = toFailure(error);
@@ -243,26 +260,6 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
             this.prompt.outro('World created but server configuration failed');
           }
           return { success: false, worldName, seed, serverName, ...failure };
-        }
-
-        // Set SEED if provided
-        if (seed) {
-          const seedResult = await this.shell.setServerConfig(serverName, 'SEED', seed);
-          if (!seedResult.success) {
-            spinner?.stop('Failed to set seed');
-            const errorMsg = seedResult.stderr || 'Failed to set SEED';
-            if (isInteractive) {
-              this.prompt.error(errorMsg);
-              this.prompt.outro('World created but seed configuration failed');
-            }
-            return {
-              success: false,
-              worldName,
-              seed,
-              serverName,
-              error: errorMsg,
-            };
-          }
         }
       }
 

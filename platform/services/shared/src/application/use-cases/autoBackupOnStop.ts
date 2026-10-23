@@ -1,0 +1,35 @@
+import type {
+  IWorldBackupPort,
+  WorldBackupError,
+  WorldBackupPushOutcome,
+} from '../ports/outbound/IWorldBackupPort.js';
+
+/** How long an auto-backup waits for another backup operation (same as `backup push --auto`). */
+export const AUTO_BACKUP_LOCK_WAIT_MS = 600_000;
+
+export type AutoBackupOnStopResult =
+  | { status: 'skipped' }
+  | { status: 'done'; outcome: WorldBackupPushOutcome }
+  | { status: 'failed'; error: WorldBackupError };
+
+/**
+ * Back up the worlds after `server` stopped, when BACKUP_AUTO_ON_STOP=true and
+ * the backup is configured (#734; was `mcctl.sh stop`). Waits for the backup
+ * lock, never consents to dropping worlds, never rejects: the caller reports a
+ * failure without failing the stop (#732 B-Q9).
+ */
+export async function autoBackupOnStop(backup: IWorldBackupPort, server: string): Promise<AutoBackupOnStopResult> {
+  try {
+    const status = await backup.status();
+    if (!status.ok) return { status: 'failed', error: status.error };
+    if (!status.value.configured || !status.value.autoOnStop) return { status: 'skipped' };
+
+    const pushed = await backup.push({
+      message: `Auto-backup after stopping ${server}`,
+      lockWaitMs: AUTO_BACKUP_LOCK_WAIT_MS,
+    });
+    return pushed.ok ? { status: 'done', outcome: pushed.value } : { status: 'failed', error: pushed.error };
+  } catch (error) {
+    return { status: 'failed', error: { code: 'io_failed', message: error instanceof Error ? error.message : String(error) } };
+  }
+}
