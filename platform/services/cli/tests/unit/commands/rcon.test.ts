@@ -4,6 +4,7 @@
  * `docker exec -i rcon-cli`). The endpoint comes from IServerConsolePort.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import {
   ServerName,
@@ -27,8 +28,26 @@ vi.mock('@minecraft-docker/shared', async () => {
 const ALPHA = ServerName.fromExisting('alpha');
 const ENDPOINT: ConsoleEndpoint = { host: '172.18.0.5', port: 25575, password: 'secret' };
 
-function deps(status: ContainerStatus, endpoint: ConsoleEndpoint | null = ENDPOINT) {
-  const session = { send: vi.fn(async (cmd: string) => `ran ${cmd}`), end: vi.fn(async () => undefined) };
+/** rcon-client's Rcon is an EventEmitter ('end' when the server closes, 'error' on a reset). */
+function fakeSession(sendDelayMs = 0) {
+  const events: string[] = [];
+  const session = Object.assign(new EventEmitter(), {
+    events,
+    send: vi.fn(async (cmd: string) => {
+      events.push(`send ${cmd}`);
+      if (sendDelayMs) await new Promise((r) => setTimeout(r, sendDelayMs));
+      events.push(`reply ${cmd}`);
+      return `ran ${cmd}`;
+    }),
+    end: vi.fn(async () => {
+      events.push('end');
+    }),
+  });
+  return session;
+}
+
+function deps(status: ContainerStatus, endpoint: ConsoleEndpoint | null = ENDPOINT, sendDelayMs = 0) {
+  const session = fakeSession(sendDelayMs);
   const input = new PassThrough();
   const output = new PassThrough();
   let printed = '';
@@ -48,7 +67,10 @@ function deps(status: ContainerStatus, endpoint: ConsoleEndpoint | null = ENDPOI
   };
 }
 
-beforeEach(() => vi.mocked(log.error).mockClear());
+beforeEach(() => {
+  vi.mocked(log.error).mockClear();
+  vi.mocked(log.info).mockClear();
+});
 
 describe('rconCommand (mcctl rcon / mcctl console)', () => {
   it('opens a TCP RCON session at the endpoint the console port reports', async () => {
@@ -74,6 +96,51 @@ describe('rconCommand (mcctl rcon / mcctl console)', () => {
     d.input.end();
     expect(await done).toBe(0);
     expect(d.session.end).toHaveBeenCalled();
+  });
+
+  it('runs piped input in order and closes only after the last reply (EOF)', async () => {
+    const d = deps('running', ENDPOINT, 20);
+
+    const done = rconCommand(d.options);
+    await vi.waitFor(() => expect(d.options.connect).toHaveBeenCalled());
+    d.input.end('list\nsay hello\n'); // printf 'list\nsay hello\n' | mcctl console alpha
+
+    expect(await done).toBe(0);
+    expect(d.session.events).toEqual(['send list', 'reply list', 'send say hello', 'reply say hello', 'end']);
+    expect(d.printed()).toContain('ran list');
+    expect(d.printed()).toContain('ran say hello');
+  });
+
+  it('ignores lines queued after exit', async () => {
+    const d = deps('running', ENDPOINT, 10);
+    const done = rconCommand(d.options);
+    await vi.waitFor(() => expect(d.options.connect).toHaveBeenCalled());
+    d.input.end('list\nexit\nsay late\n');
+
+    expect(await done).toBe(0);
+    expect(d.session.send.mock.calls.map((c) => c[0])).toEqual(['list']);
+  });
+
+  it('ends when the server closes the connection (e.g. after stop)', async () => {
+    const d = deps('running');
+    const done = rconCommand(d.options);
+    await vi.waitFor(() => expect(d.options.connect).toHaveBeenCalled());
+
+    d.session.emit('end');
+
+    expect(await done).toBe(0);
+    expect(log.info).toHaveBeenCalledWith(expect.stringContaining('closed by the server'));
+  });
+
+  it('exits 1 on a connection error instead of crashing', async () => {
+    const d = deps('running');
+    const done = rconCommand(d.options);
+    await vi.waitFor(() => expect(d.options.connect).toHaveBeenCalled());
+
+    d.session.emit('error', new Error('read ECONNRESET'));
+
+    expect(await done).toBe(1);
+    expect(log.error).toHaveBeenCalledWith(expect.stringContaining('ECONNRESET'));
   });
 
   it.each<ContainerStatus>(['exited', 'not_found'])('refuses a %s server without connecting', async (status) => {

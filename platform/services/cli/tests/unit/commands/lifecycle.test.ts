@@ -24,9 +24,13 @@ vi.mock('@minecraft-docker/shared', async () => {
 const ALPHA = ServerName.fromExisting('alpha');
 let root: string;
 
-function fakeRuntime(status: ContainerStatus, action = { success: true }) {
+function fakeRuntime(status: ContainerStatus, action = { success: true }, unreachable = false) {
   return {
     getStatus: vi.fn(() => status),
+    list: vi.fn((options?: { strict?: boolean }) => {
+      if (unreachable && options?.strict) throw new Error('docker ps failed: Cannot connect to the Docker daemon');
+      return [];
+    }),
     start: vi.fn(async () => action),
     stop: vi.fn(async () => action),
   } as unknown as IContainerRuntimePort & Record<'getStatus' | 'start' | 'stop', ReturnType<typeof vi.fn>>;
@@ -95,6 +99,15 @@ describe('startCommand', () => {
     expect(log.error).toHaveBeenCalledWith(expect.stringContaining("'ghost' not found"));
   });
 
+  it('fails with exit 1 when the runtime cannot be queried (was check_docker)', async () => {
+    const runtime = fakeRuntime('not_found', { success: true }, true);
+
+    expect(await startCommand({ root, serverName: 'alpha', runtime })).toBe(1);
+
+    expect(runtime.start).not.toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledWith(expect.stringContaining('Cannot connect to the Docker daemon'));
+  });
+
   it('requires a server name and a valid one', async () => {
     const runtime = fakeRuntime('exited');
     expect(await startCommand({ root, runtime })).toBe(1);
@@ -147,6 +160,18 @@ describe('stopCommand', () => {
       expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('not running'));
     }
   );
+
+  it('fails with exit 1, not "not running" (2), when the runtime cannot be queried', async () => {
+    const runtime = fakeRuntime('not_found', { success: true }, true);
+    const backup = fakeBackup();
+
+    expect(await stopCommand({ root, serverName: 'alpha', runtime, backup })).toBe(1);
+
+    expect(runtime.stop).not.toHaveBeenCalled();
+    expect(backup.status).not.toHaveBeenCalled();
+    expect(log.warn).not.toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledWith(expect.stringContaining('Cannot connect to the Docker daemon'));
+  });
 
   it('fails without a backup when the runtime cannot stop it', async () => {
     const runtime = fakeRuntime('running', { success: false, error: 'permission denied' } as never);

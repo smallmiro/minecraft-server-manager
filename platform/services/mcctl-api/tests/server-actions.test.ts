@@ -177,6 +177,34 @@ describe('Server Action Routes', () => {
       await vi.waitFor(() => expect(backupPort.push).toHaveBeenCalled());
     });
 
+    it('close waits for a running auto-backup so its save-on recovery finishes (#734 review)', async () => {
+      const local = await buildApp({ logger: false });
+      mockCompose(null, 'Stopping mc-myserver...', '');
+      autoOnStop(true);
+      let finishPush!: () => void;
+      backupPort.push.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishPush = () =>
+              resolve({ ok: true, value: { changed: true, commit: 'abc1234', flushed: [], skipped: [], warnings: [] } });
+          })
+      );
+
+      expect((await local.inject({ method: 'POST', url: '/api/servers/myserver/stop' })).statusCode).toBe(200);
+      await vi.waitFor(() => expect(backupPort.push).toHaveBeenCalled());
+
+      let closed = false;
+      const closing = local.close().then(() => {
+        closed = true;
+      });
+      await new Promise((r) => setTimeout(r, 50));
+      expect(closed).toBe(false);
+
+      finishPush();
+      await closing;
+      expect(closed).toBe(true);
+    });
+
     it('does not back up when the stop failed', async () => {
       mockCompose(new Error('Permission denied'), '', 'Error: Permission denied');
       autoOnStop(true);
