@@ -8,13 +8,18 @@ import {
   existsSync,
   rmSync,
 } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 import {
   BlueMapCliRenderer,
   MapRenderError,
   parseProgressLine,
+  parseResultJson,
+  type RenderSpawn,
 } from '../src/infrastructure/adapters/BlueMapCliRenderer.js';
+import { execCommandStreaming } from '../src/infrastructure/process.js';
 
 describe('parseProgressLine', () => {
   it('parses a BlueMap progress line with ETA', () => {
@@ -32,6 +37,31 @@ describe('parseProgressLine', () => {
   it('returns null for non-progress lines', () => {
     expect(parseProgressLine('[INFO] Resources loaded.')).toBeNull();
     expect(parseProgressLine('')).toBeNull();
+  });
+});
+
+describe('parseResultJson (deprecated)', () => {
+  it('extracts the JSON summary even when log lines precede it', () => {
+    const stdout = [
+      "[INFO] Rendering map for 'survival'...",
+      '[INFO] Map rendered: /p/maps/survival/web/index.html',
+      '{',
+      '  "world": "survival",',
+      '  "maps": ["overworld","nether"],',
+      '  "webroot": "/p/maps/survival/web",',
+      '  "entry": "/p/maps/survival/web/index.html"',
+      '}',
+    ].join('\n');
+    expect(parseResultJson(stdout)).toEqual({
+      world: 'survival',
+      maps: ['overworld', 'nether'],
+      webroot: '/p/maps/survival/web',
+      entry: '/p/maps/survival/web/index.html',
+    });
+  });
+
+  it('throws when no JSON object is present', () => {
+    expect(() => parseResultJson('no json here')).toThrow(MapRenderError);
   });
 });
 
@@ -267,5 +297,110 @@ describe('BlueMapCliRenderer', () => {
 
     expect(err).toBeInstanceOf(MapRenderError);
     expect((err as Error).message).toMatch(/render exploded/);
+  });
+
+  // Deprecated v2 constructor, kept until v3.0.0 (#736). It derives the paths
+  // the way render-map.sh did: <scripts>/.. is the platform root unless
+  // MCCTL_ROOT is set, and the build context is ${MCCTL_DOCKER:-<scripts>/../docker}/bluemap.
+  describe('deprecated script-path constructor', () => {
+    const expectedRender = (): string[] => [
+      ...runPrefix,
+      '-v', `${join(mapsDir, 'w', 'config')}:/work/config`,
+      '-v', `${join(mapsDir, '.bluemap-data')}:/work/data`,
+      '-v', `${join(mapsDir, 'w', 'web')}:/work/web`,
+      '-v', `${join(worldsDir, 'w')}:/worlds/overworld:ro`,
+      '--', IMAGE, '-c', '/work/config', '-r', '-g', '-m', 'overworld',
+    ];
+
+    it('renders from the platform root next to the scripts dir', async () => {
+      mkRegion(join(worldsDir, 'w', 'region'));
+      vi.stubEnv('FAKE_IMAGE_PRESENT', '0');
+
+      const result = await new BlueMapCliRenderer(join(tmp, 'scripts', 'render-map.sh')).renderWorld('w');
+
+      expect(result.webroot).toBe(join(mapsDir, 'w', 'web'));
+      expect(calls()[1]).toEqual(['build', '-t', IMAGE, '--', dockerDir]);
+      expect(renderCall()).toEqual(expectedRender());
+    });
+
+    it('honors MCCTL_ROOT and MCCTL_DOCKER from the old mcctl-api call shape', async () => {
+      mkRegion(join(worldsDir, 'w', 'region'));
+      vi.stubEnv('FAKE_IMAGE_PRESENT', '0');
+      const pkgScripts = join(tmp, 'pkg', 'scripts');
+
+      await new BlueMapCliRenderer(join(pkgScripts, 'render-map.sh'), undefined, {
+        cwd: tmp,
+        env: {
+          ...process.env,
+          MCCTL_ROOT: tmp,
+          MCCTL_SCRIPTS: pkgScripts,
+          MCCTL_DOCKER: join(tmp, 'docker'),
+        },
+      }).renderWorld('w');
+
+      expect(calls()[1]).toEqual(['build', '-t', IMAGE, '--', dockerDir]);
+      expect(renderCall()).toEqual(expectedRender());
+    });
+
+    it('runs docker through a custom run with the given spawn options', async () => {
+      mkRegion(join(worldsDir, 'w', 'region'));
+      const options = { cwd: tmp, env: { ...process.env } };
+      const seen: { file: string; options: unknown }[] = [];
+      const run: RenderSpawn = (file, args, onLine, opts) => {
+        seen.push({ file, options: opts });
+        return execCommandStreaming(file, args, onLine, opts);
+      };
+
+      await new BlueMapCliRenderer(join(tmp, 'scripts', 'render-map.sh'), run, options).renderWorld('w');
+
+      expect(seen.length).toBe(calls().length);
+      expect(seen.every((c) => c.file === 'docker' && c.options === options)).toBe(true);
+      expect(renderCall()).toEqual(expectedRender());
+    });
+  });
+});
+
+// The v2 public API stays until v3.0.0 (#736): removed exports come back as
+// @deprecated and old call shapes must still compile. Tests are not part of
+// `tsc`, so type-check a consumer snippet here.
+describe('deprecated v2 BlueMap API (#733, removed in v3.0.0 #736)', () => {
+  it('is still exported from the package root', async () => {
+    const shared = await import('../src/index.js');
+    expect(typeof shared.parseResultJson).toBe('function');
+    expect(typeof shared.BlueMapCliRenderer).toBe('function');
+  });
+
+  it('old constructor and type exports still type-check', () => {
+    const testsDir = dirname(fileURLToPath(import.meta.url));
+    const file = join(testsDir, `.bluemap-compat-${process.pid}.ts`);
+    writeFileSync(
+      file,
+      [
+        "import { BlueMapCliRenderer, parseResultJson, type MapRenderResult, type RenderSpawn, type RenderSpawnOptions } from '../src/index.js';",
+        "const run: RenderSpawn = async (_file, _args, onStderr) => { onStderr(''); return { code: 0, stdout: '', stderr: '' }; };",
+        "const options: RenderSpawnOptions = { cwd: '/p', env: { MCCTL_ROOT: '/p' } };",
+        "export const renderers = [",
+        "  new BlueMapCliRenderer('/p/scripts/render-map.sh'),",
+        "  new BlueMapCliRenderer('/p/scripts/render-map.sh', undefined, options),",
+        "  new BlueMapCliRenderer('/p/scripts/render-map.sh', run, options),",
+        "  new BlueMapCliRenderer({ worldsDir: '/p/worlds', mapsDir: '/p/maps', dockerDir: '/p/docker/bluemap' }),",
+        "];",
+        "export const result: MapRenderResult = parseResultJson('{}');",
+      ].join('\n')
+    );
+    try {
+      const { options } = ts.parseJsonConfigFileContent(
+        { extends: '../tsconfig.json', compilerOptions: { noEmit: true, rootDir: '..' } },
+        ts.sys,
+        testsDir
+      );
+      const program = ts.createProgram([file], options);
+      const errors = ts
+        .getPreEmitDiagnostics(program)
+        .map((d) => ts.flattenDiagnosticMessageText(d.messageText, '\n'));
+      expect(errors).toEqual([]);
+    } finally {
+      rmSync(file, { force: true });
+    }
   });
 });
