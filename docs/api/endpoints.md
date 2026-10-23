@@ -248,9 +248,22 @@ Execute an RCON command on the server.
 
 ## World Endpoints
 
+### World assignment rules
+
+A world is assigned to a server by the server's `LEVEL` in `servers/<name>/config.env` (legacy `WORLD_NAME` is read when `LEVEL` is unset; unset means itzg's default `world`). There is no lock file: `worlds/.locks` is no longer read, written or created.
+
+- **One world, one server.** A world and its `<world>_nether` / `<world>_the_end` folders count as one world. A world used by another server cannot be assigned. This applies to `POST /api/worlds/:name/assign`, `POST /api/worlds` with `serverName`, `POST /api/servers` (including the new server's default world `<name>`) and `PATCH /api/servers/:name/config` with `level`. Deleting a server frees its world for reuse.
+- **Stopped server only.** Assign, release, `POST /api/worlds` with `serverName` and `PATCH /api/servers/:name/config` with `level` are refused while the container is running, paused, restarting or created. Nothing is stopped automatically.
+- **Fail-closed.** If any server's `config.env` cannot be read, or its `LEVEL` cannot be interpreted safely (path separators, `.`/`..`, quotes, control characters, Compose interpolation such as `${VAR}` outside single quotes, or an unsupported `--universe` location), every assignment change and world delete/reset is refused until it is fixed. Legacy names such as `My World` are still accepted as existing values; new names must be letters, digits, `-` or `_`.
+- **Status codes** for world assign/release/delete/create and config `level`: invalid world name `400`, unknown server or world `404`, everything else refused by these rules `409` (conflict, server running, undetermined config).
+- **Config snapshot restore** answers `409` when the restored `config.env` would assign a world another server uses, or change the world of a running server (even with force).
+- **World reset.** `POST /api/servers/:name/world/reset` is refused for servers that keep their world inside `servers/<name>/data` and when another server uses the same world.
+
+---
+
 ### GET /api/worlds
 
-List all worlds with lock status.
+List all worlds with the servers they are assigned to.
 
 **Response:**
 
@@ -262,13 +275,17 @@ List all worlds with lock status.
       "path": "/home/user/minecraft-servers/worlds/survival",
       "isLocked": true,
       "lockedBy": "mc-survival",
+      "servers": ["mc-survival"],
       "size": "1.2 GB",
       "lastModified": "2025-01-30T10:00:00.000Z"
     }
   ],
-  "total": 1
+  "total": 1,
+  "assignmentWarnings": []
 }
 ```
+
+`isLocked` and `lockedBy` remain as aliases for "assigned". Duplicate assignments from older installs are reported, not fixed: `servers` then lists every server using the world and `assignmentWarnings` (`string[]`) has one entry per duplicate world and per server whose `config.env` cannot be read.
 
 ---
 
@@ -291,6 +308,7 @@ Get world details.
     "path": "/home/user/minecraft-servers/worlds/survival",
     "isLocked": true,
     "lockedBy": "mc-survival",
+    "servers": ["mc-survival"],
     "size": "1.2 GB",
     "lastModified": "2025-01-30T10:00:00.000Z"
   }
@@ -318,7 +336,7 @@ Create a new world.
 |-------|------|----------|-------------|
 | `name` | string | Yes | World name |
 | `seed` | string | No | World seed |
-| `serverName` | string | No | Server to assign |
+| `serverName` | string | No | Server to assign (must be stopped; `409` if the world is used by another server) |
 | `autoStart` | boolean | No | Start server after assignment |
 
 **Response (201):**
@@ -337,7 +355,7 @@ Create a new world.
 
 ### POST /api/worlds/:name/assign
 
-Assign world to a server.
+Assign world to a server (sets the server's `LEVEL`). The server must be stopped.
 
 **Parameters:**
 
@@ -368,7 +386,7 @@ Assign world to a server.
 ```json
 {
   "error": "Conflict",
-  "message": "World 'survival' is already locked by mc-creative"
+  "message": "World 'survival' is assigned to 'mc-creative'; assign another world to 'mc-creative' or delete it first"
 }
 ```
 
@@ -376,7 +394,7 @@ Assign world to a server.
 
 ### POST /api/worlds/:name/release
 
-Release world lock.
+Switch the server using the world back to its own default world `<server>`: an existing free `worlds/<server>` is adopted, otherwise it is created on the next start. The world stays in `worlds/`. The server must be stopped. Releasing a server from its own default world, a world assigned to more than one server, or a server whose world is inside `servers/<name>/data` is refused with `409`.
 
 **Parameters:**
 
@@ -388,7 +406,7 @@ Release world lock.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `force` | boolean | false | Force release even if server is running |
+| `force` | boolean | false | Accepted and ignored |
 
 **Response:**
 
@@ -396,15 +414,19 @@ Release world lock.
 {
   "success": true,
   "worldName": "survival",
-  "previousServer": "mc-survival"
+  "previousServer": "mc-survival",
+  "fallbackWorld": "mc-survival",
+  "fallbackExists": false
 }
 ```
+
+`fallbackWorld` is the world the previous server now uses. `fallbackExists` is `false` when `worlds/<fallbackWorld>` does not exist yet and will be created on the next start.
 
 ---
 
 ### DELETE /api/worlds/:name
 
-Delete a world.
+Delete a world. Refused with `409` while any server uses it. Servers that keep their world inside `servers/<name>/data` (no `EXTRA_ARGS=--universe /worlds/`) do not block deleting `worlds/<name>`.
 
 **Parameters:**
 
@@ -416,7 +438,7 @@ Delete a world.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `force` | boolean | false | Force delete locked world |
+| `force` | boolean | false | Accepted for compatibility; does not delete a world a server uses |
 
 **Response:**
 
@@ -539,7 +561,7 @@ All error responses follow this format:
 | `ForbiddenError` | 403 | IP not in whitelist |
 | `NotFound` | 404 | Resource not found |
 | `ValidationError` | 400 | Invalid request parameters |
-| `Conflict` | 409 | Resource conflict (e.g., locked world) |
+| `Conflict` | 409 | Resource conflict (e.g., world used by another server, server running) |
 | `InternalServerError` | 500 | Server-side error |
 
 ---

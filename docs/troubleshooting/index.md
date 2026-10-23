@@ -112,7 +112,7 @@ mcctl stop <server-name> && mcctl start <server-name>
 **Diagnosis:**
 
 ```bash
-# Check world lock status
+# Check which servers use each world
 mcctl world list
 
 # Check server logs for errors
@@ -126,15 +126,47 @@ mcctl logs <server-name> | grep -i error
    mcctl backup restore
    ```
 
-2. **Check world locking:**
+2. **Check world assignments:**
    ```bash
    # Ensure world is not assigned to multiple servers
    mcctl world list
 
-   # Release and reassign if needed
+   # Move a world to another server (both servers stopped)
    mcctl world release <world-name>
    mcctl world assign <world-name> <server-name>
    ```
+
+### World Assignment Refused
+
+**Symptoms:** `mcctl world assign`, `mcctl world release`, `mcctl world new --server`, `mcctl create --world`, `mcctl config <server> LEVEL <world>`, `mcctl world delete`, or the matching Web Console and API actions are refused (API: `409 Conflict`).
+
+**Cause:** A world is assigned to a server by its `LEVEL` in `servers/<name>/config.env` (there is no lock file), and one world can be used by one server only. The request is refused when:
+
+- another server already uses the world (a world and its `<world>_nether` / `<world>_the_end` folders count as one world), or a server uses the world you try to delete (`--force` does not override this)
+- the server is running, paused, restarting or created (nothing is stopped for you)
+- any server's `config.env` cannot be read, or its `LEVEL` cannot be interpreted safely (path separators, `.`/`..`, quotes, control characters, `${VAR}` outside single quotes, or an unsupported `--universe` location). Every assignment change and world delete/reset is refused until it is fixed
+
+**Diagnosis:**
+
+```bash
+# Shows "assigned: <servers>" per world and warnings for duplicates and unreadable configs
+mcctl world list
+
+# See which world each server uses
+grep -E '^(LEVEL|WORLD_NAME)=' servers/*/config.env
+```
+
+**Solution:**
+
+1. Stop the server (`mcctl stop <server-name>`).
+2. To free a world another server uses, run `mcctl world release <world-name>` on that stopped server. It switches back to its own default world `<server>`.
+3. If a `config.env` is reported as unreadable, fix its `LEVEL` line to a plain `LEVEL=<name>` and run the command again.
+
+!!! note "Duplicate assignments from older installs"
+    Older versions allowed two servers on the same world. These are reported, not fixed: `mcctl world list` shows `assigned: a, b` with a warning, `GET /api/worlds` returns them in `assignmentWarnings`, and the Web Console shows a warning alert. Assign another world to all but one of the servers.
+
+!!! tip "Leftover `worlds/.locks`"
+    `mcctl` no longer reads, writes or creates `worlds/.locks`. An existing directory is harmless and `rm -rf worlds/.locks` is safe.
 
 ### Mods/Plugins Not Loading
 

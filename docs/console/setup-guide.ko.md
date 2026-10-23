@@ -84,7 +84,6 @@ mcctl이 필요한 소프트웨어의 설치 여부와 버전 요구 사항을 �
   Created: ~/.minecraft-servers/servers
   Created: ~/.minecraft-servers/servers/_template
   Created: ~/.minecraft-servers/worlds
-  Created: ~/.minecraft-servers/worlds/.locks
   Created: ~/.minecraft-servers/shared/plugins
   Created: ~/.minecraft-servers/shared/mods
   Created: ~/.minecraft-servers/backups

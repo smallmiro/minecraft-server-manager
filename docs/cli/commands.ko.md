@@ -495,6 +495,9 @@ mcctl create [name] [options]
 | `--no-whitelist` | | 화이트리스트 비활성화 (기본값, 위 두 옵션보다 우선) |
 | `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
 
+!!! info "월드 하나는 서버 하나"
+    다른 서버가 이미 사용 중인 월드는 `--world`(그리고 새 서버의 기본 월드 `<name>`)로 지정할 수 없습니다. [월드 할당 규칙](#world-assignment-rules)을 참고하세요.
+
 !!! note "화이트리스트는 기본 비활성입니다"
     화이트리스트 옵션 없이 만든 서버는 화이트리스트가 **꺼진 상태**라서 정품(online-mode) 계정이면 누구나 접속할 수 있습니다. 접속을 제한하려면 `--whitelist` 또는 `--enable-whitelist`를 사용하거나, 나중에 `mcctl whitelist <server> on`으로 켜세요. 대화형 모드에서는 "Enable whitelist?"(기본 No)를 묻고, Yes를 선택한 경우에만 플레이어를 입력받습니다. 웹 콘솔에서 만든 서버도 화이트리스트가 꺼진 상태로 생성됩니다.
 
@@ -917,6 +920,9 @@ mcctl config <server> [key] [value] [options]
 !!! note "재시작 필요"
     일부 설정 변경은 적용을 위해 서버 재시작이 필요합니다.
 
+!!! warning "`LEVEL` 변경"
+    `LEVEL`은 서버가 사용하는 월드입니다([월드 할당 규칙](#world-assignment-rules) 참고). 서버가 실행 중이거나 다른 서버가 `<world>`를 사용 중이면 `mcctl config <server> LEVEL <world>`는 거부됩니다.
+
 ---
 
 ## 서버 백업 및 복원
@@ -1220,6 +1226,18 @@ mcctl player online --all
 
 ## 월드 관리
 
+### 월드 할당 규칙 { #world-assignment-rules }
+
+월드는 `servers/<name>/config.env`의 `LEVEL`로 서버에 할당됩니다. `LEVEL`이 없으면 레거시 `WORLD_NAME`을 읽고, 둘 다 없으면 서버는 itzg 기본값인 `world`를 사용합니다.
+
+- **잠금 파일 없음.** `worlds/.locks`는 더 이상 읽거나 쓰거나 만들지 않습니다(`mcctl init`도 만들지 않습니다). 기존 `worlds/.locks` 디렉토리는 무해하며 `rm -rf worlds/.locks`로 지워도 안전합니다. `platform/scripts/lock.sh`는 제거되었고, `mcctl.sh world`는 제거 안내 메시지만 출력합니다.
+- **월드 하나는 서버 하나.** 월드와 그 `<world>_nether` / `<world>_the_end` 폴더는 하나의 월드로 취급합니다. 다른 서버가 사용 중인 월드는 할당할 수 없습니다. `mcctl world assign`, `mcctl create --world`, 새 서버의 기본 월드 `<name>`, `mcctl config <server> LEVEL <world>`가 거부됩니다. 서버를 삭제하면 그 월드는 다시 쓸 수 있습니다.
+- **중지된 서버만.** 서버 컨테이너가 running, paused, restarting, created 상태이면 `world assign`, `world release`, `world new --server`, `config LEVEL`은 거부됩니다. 서버를 자동으로 중지하지 않습니다(`world new --server`는 예전에 서버 중지를 시도했지만, 이제는 거부합니다).
+- **안전 우선(fail-closed).** 어떤 서버의 `config.env`를 읽을 수 없거나 `LEVEL`을 안전하게 해석할 수 없으면, 문제를 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다. 안전하지 않은 값은 경로 구분자, `.` 또는 `..`, 따옴표, 제어 문자, 작은따옴표 밖의 `${VAR}` 같은 Compose 보간, 지원하지 않는 `--universe` 위치입니다. `My World` 같은 레거시 이름은 기존 값으로는 계속 허용되며, 새 이름은 영문자, 숫자, `-`, `_`만 쓸 수 있습니다.
+- **이전 설치.** 중복 할당은 고치지 않고 알려 줍니다. [`mcctl world list`](#mcctl-world-list)를 참고하세요.
+
+---
+
 ### mcctl world new
 
 선택적 시드 설정으로 새 월드 디렉토리를 생성합니다.
@@ -1239,7 +1257,7 @@ mcctl world new [name] [options]
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
 | `--seed` | `-s` | 월드 생성 시드 |
-| `--server` | | 월드를 할당할 서버 (config에 SEED도 설정) |
+| `--server` | | 월드를 할당할 서버 (`LEVEL`을 설정하고, 시드가 있으면 `SEED`도 설정). 서버가 중지되어 있어야 함 |
 | `--no-start` | | 할당 후 서버 자동 시작 안 함 |
 
 **예제:**
@@ -1277,6 +1295,7 @@ mcctl world new [name] [options]
 1. `worlds/<name>/` 디렉토리에 월드 디렉토리 생성
 2. 시드가 제공되면 `.seed` 파일 생성 (참조용)
 3. 서버가 할당되면:
+   - 서버가 실행 중이거나 다른 서버가 그 월드를 사용 중이면 거부 (서버를 대신 중지하지 않음)
    - 서버의 `config.env`에 `LEVEL=<world-name>` 업데이트
    - 시드가 있으면 `SEED=<seed>` 설정
    - 선택적으로 서버 시작
@@ -1289,7 +1308,7 @@ mcctl world new [name] [options]
 
 ### mcctl world list
 
-모든 월드와 잠금 상태를 나열합니다.
+모든 월드와 할당된 서버를 나열합니다.
 
 ```bash
 mcctl world list [options]
@@ -1313,12 +1332,12 @@ mcctl world list [options]
     Worlds:
 
       survival-world
-        Status: locked (mc-survival)
+        Status: assigned: mc-survival
         Size: 514.0MB
         Path: /home/myuser/minecraft-servers/worlds/survival-world
 
       creative-world
-        Status: unlocked
+        Status: unassigned
         Size: 128.5MB
         Path: /home/myuser/minecraft-servers/worlds/creative-world
     ```
@@ -1336,6 +1355,7 @@ mcctl world list [options]
         "path": "/home/myuser/minecraft-servers/worlds/survival-world",
         "isLocked": true,
         "lockedBy": "mc-survival",
+        "servers": ["mc-survival"],
         "size": "514.0MB",
         "lastModified": "2026-01-21T13:19:48.853Z"
       },
@@ -1343,17 +1363,21 @@ mcctl world list [options]
         "name": "creative-world",
         "path": "/home/myuser/minecraft-servers/worlds/creative-world",
         "isLocked": false,
+        "servers": [],
         "size": "128.5MB",
         "lastModified": "2026-01-20T10:30:00.000Z"
       }
     ]
     ```
 
+!!! info "중복 할당"
+    이전 설치에서 두 서버가 같은 월드를 쓰고 있으면 `mcctl world list`가 `assigned: a, b`로 표시하고, 중복마다(그리고 `config.env`를 읽을 수 없는 서버마다) 경고를 출력합니다. 자동으로 고치지 않으므로, 한 서버만 남기고 나머지 서버에는 다른 월드를 할당하세요. JSON 출력의 `isLocked`와 `lockedBy`는 "할당됨"의 별칭으로 남아 있습니다.
+
 ---
 
 ### mcctl world assign
 
-월드를 서버에 잠급니다.
+월드를 서버에 할당합니다(서버의 `LEVEL`을 설정).
 
 ```bash
 mcctl world assign [world] [server]
@@ -1379,14 +1403,14 @@ mcctl world assign [world] [server]
     mcctl world assign survival mc-myserver
     ```
 
-!!! info "월드 잠금"
-    잠긴 월드는 할당된 서버만 사용할 수 있습니다. 이는 동시 접근으로 인한 데이터 손상을 방지합니다.
+!!! info "월드 하나는 서버 하나"
+    다른 서버가 사용 중인 월드는 할당할 수 없고, 대상 서버는 중지되어 있어야 합니다. 이는 동시 접근으로 인한 데이터 손상을 방지합니다. 월드를 `servers/<name>/data` 안에 두는 서버에도 할당할 수 없으므로 먼저 `mcctl migrate worlds`를 실행하세요. [월드 할당 규칙](#world-assignment-rules)을 참고하세요.
 
 ---
 
 ### mcctl world release
 
-월드 잠금을 해제합니다.
+월드를 사용하던 서버를 서버 자신의 기본 월드 `<server>`로 되돌립니다.
 
 ```bash
 mcctl world release [world] [options]
@@ -1402,17 +1426,21 @@ mcctl world release [world] [options]
 
 | 옵션 | 설명 |
 |--------|-------------|
-| `--force` | 서버가 실행 중이어도 강제 해제 |
+| `--force` | 받아들이지만 무시됨 (실행 중인 서버는 해제하지 않음) |
 
 **예제:**
 
 ```bash
-# 대화형 - 잠긴 월드 목록 표시
+# 대화형 - 할당된 월드 목록 표시
 mcctl world release
 
 # 특정 월드 해제
 mcctl world release survival
 ```
+
+월드를 사용하던 서버는 `LEVEL=<server>`가 됩니다. 비어 있는 `worlds/<server>`가 이미 있으면 그것을 사용하고, 없으면 다음 시작 때 새로 만듭니다. 월드 자체는 `worlds/`에 그대로 남습니다.
+
+서버가 실행 중이거나, 서버가 이미 자신의 기본 월드를 쓰고 있거나, 월드가 둘 이상의 서버에 할당되어 있거나, 서버가 월드를 `servers/<name>/data` 안에 두고 있거나, 월드를 쓰는 서버가 없으면 해제는 거부됩니다.
 
 ---
 
@@ -1434,7 +1462,7 @@ mcctl world delete [world] [options]
 
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
-| `--force` | `-f` | 확인 프롬프트 건너뛰기 |
+| `--force` | `-f` | 확인 프롬프트 건너뛰기 (서버가 사용 중인 월드는 삭제하지 않음) |
 | `--json` | | JSON 형식으로 출력 |
 
 !!! danger "영구 삭제"
@@ -1466,7 +1494,8 @@ mcctl world delete [world] [options]
 
 **안전 기능:**
 
-- **잠금 확인**: 잠긴 월드(실행 중인 서버에 할당된)는 삭제할 수 없음
+- **할당 확인**: 서버가 사용 중인 월드는 실행 여부와 관계없이 삭제할 수 없으며 `--force`로도 우회할 수 없음. 먼저 서버에 다른 월드를 할당하세요. 월드를 `servers/<name>/data` 안에 두는 서버(`EXTRA_ARGS=--universe /worlds/` 없음)는 `worlds/<world>` 삭제를 막지 않음
+- **안전 우선(fail-closed)**: 어떤 서버의 `config.env`를 읽거나 해석할 수 없으면 거부됨([월드 할당 규칙](#world-assignment-rules) 참고)
 - **확인 프롬프트**: "DELETE" 입력 필요 (`--force` 미사용 시)
 - **크기 표시**: 삭제 전 월드 크기 표시
 
@@ -1936,6 +1965,8 @@ mcctl migrate worlds [options]
    - `EXTRA_ARGS=--universe /worlds/` 추가
    - `LEVEL=<server-name>` 설정
 4. 대소문자 무시로 **기존 월드 탐지**
+
+결과 `LEVEL`을 다른 서버가 사용 중이거나 서버의 할당을 확인할 수 없으면, 데이터를 옮기기 전에 해당 서버의 마이그레이션을 거부합니다([월드 할당 규칙](#world-assignment-rules) 참고).
 
 !!! info "월드 저장 경로 변경"
     `mcctl create`로 생성된 새 서버는 이미 `/worlds/` 디렉토리 구조를 사용합니다.

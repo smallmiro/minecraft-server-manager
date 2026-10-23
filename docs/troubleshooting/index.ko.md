@@ -112,7 +112,7 @@ mcctl stop <server-name> && mcctl start <server-name>
 **진단:**
 
 ```bash
-# 월드 잠금 상태 확인
+# 각 월드를 사용하는 서버 확인
 mcctl world list
 
 # 서버 로그에서 오류 확인
@@ -126,15 +126,47 @@ mcctl logs <server-name> | grep -i error
    mcctl backup restore
    ```
 
-2. **월드 잠금 확인:**
+2. **월드 할당 확인:**
    ```bash
    # 월드가 여러 서버에 할당되지 않았는지 확인
    mcctl world list
 
-   # 필요시 해제 후 재할당
+   # 월드를 다른 서버로 옮기기 (두 서버 모두 중지)
    mcctl world release <world-name>
    mcctl world assign <world-name> <server-name>
    ```
+
+### 월드 할당이 거부됨
+
+**증상:** `mcctl world assign`, `mcctl world release`, `mcctl world new --server`, `mcctl create --world`, `mcctl config <server> LEVEL <world>`, `mcctl world delete`, 또는 같은 동작의 웹 콘솔·API 요청이 거부됩니다(API: `409 Conflict`).
+
+**원인:** 월드는 `servers/<name>/config.env`의 `LEVEL`로 서버에 할당되며(잠금 파일은 없습니다), 한 월드는 한 서버만 사용할 수 있습니다. 다음 경우에 요청이 거부됩니다:
+
+- 다른 서버가 이미 그 월드를 사용 중이거나(월드와 `<world>_nether` / `<world>_the_end` 폴더는 하나의 월드로 봅니다), 삭제하려는 월드를 서버가 사용 중인 경우(`--force`로도 우회할 수 없음)
+- 서버가 running, paused, restarting, created 상태인 경우(서버를 대신 중지하지 않습니다)
+- 어떤 서버의 `config.env`를 읽을 수 없거나 `LEVEL`을 안전하게 해석할 수 없는 경우(경로 구분자, `.`/`..`, 따옴표, 제어 문자, 작은따옴표 밖의 `${VAR}`, 지원하지 않는 `--universe` 위치). 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다
+
+**진단:**
+
+```bash
+# 월드별 "assigned: <servers>"와, 중복 및 읽을 수 없는 설정에 대한 경고 표시
+mcctl world list
+
+# 각 서버가 쓰는 월드 확인
+grep -E '^(LEVEL|WORLD_NAME)=' servers/*/config.env
+```
+
+**해결:**
+
+1. 서버를 중지합니다(`mcctl stop <server-name>`).
+2. 다른 서버가 쓰는 월드를 비우려면, 그 서버를 중지한 뒤 `mcctl world release <world-name>`을 실행합니다. 그 서버는 자신의 기본 월드 `<server>`로 돌아갑니다.
+3. `config.env`를 읽을 수 없다고 보고되면 `LEVEL` 줄을 `LEVEL=<name>` 형태로 고친 뒤 명령을 다시 실행합니다.
+
+!!! note "이전 설치의 중복 할당"
+    이전 버전에서는 두 서버가 같은 월드를 쓸 수 있었습니다. 이런 경우는 고치지 않고 알려 줍니다. `mcctl world list`가 경고와 함께 `assigned: a, b`로 표시하고, `GET /api/worlds`는 `assignmentWarnings`에 담아 반환하며, 웹 콘솔은 경고 알림을 보여 줍니다. 한 서버만 남기고 나머지 서버에는 다른 월드를 할당하세요.
+
+!!! tip "남아 있는 `worlds/.locks`"
+    `mcctl`은 더 이상 `worlds/.locks`를 읽거나 쓰거나 만들지 않습니다. 기존 디렉토리는 무해하며 `rm -rf worlds/.locks`로 지워도 안전합니다.
 
 ### 모드/플러그인이 로드되지 않음
 

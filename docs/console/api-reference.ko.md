@@ -395,6 +395,8 @@ curl -X POST http://localhost:5001/api/servers/survival/exec \
 }
 ```
 
+서버가 쓸 월드(`worldName`, 없으면 기본 월드 `<이름>`)가 다른 서버에 배정되어 있거나, 다른 서버의 `config.env`를 해석할 수 없을 때도 `409`를 반환합니다(#670). [월드 할당 규칙](../cli/commands.md#world-assignment-rules)을 참고하세요.
+
 ---
 
 #### DELETE /api/servers/:name

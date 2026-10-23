@@ -495,6 +495,9 @@ mcctl create [name] [options]
 | `--no-whitelist` | | Disable whitelist (default; overrides the two options above) |
 | `--sudo-password` | | Sudo password for mDNS registration (automation) |
 
+!!! info "One world, one server"
+    `--world` (and the default world `<name>` of a new server) is refused when another server already uses that world. See [World Assignment Rules](#world-assignment-rules).
+
 !!! note "Whitelist is off by default"
     Servers created without a whitelist option have the whitelist **disabled**, so anyone with a premium (online-mode) account can join. Use `--whitelist` or `--enable-whitelist` to restrict access, or turn it on later with `mcctl whitelist <server> on`. In interactive mode you are asked "Enable whitelist?" (default No) and only asked for players when you answer Yes. Servers created from the Web Console are also created with the whitelist off.
 
@@ -917,6 +920,9 @@ mcctl config <server> [key] [value] [options]
 !!! note "Restart Required"
     Some configuration changes require a server restart to take effect.
 
+!!! warning "Changing `LEVEL`"
+    `LEVEL` is the world the server uses (see [World Assignment Rules](#world-assignment-rules)). `mcctl config <server> LEVEL <world>` is refused while the server is running and when another server uses `<world>`.
+
 ---
 
 ## Server Backup & Restore
@@ -1220,6 +1226,18 @@ mcctl player online --all
 
 ## World Management
 
+### World Assignment Rules
+
+A world is assigned to a server by the server's `LEVEL` in `servers/<name>/config.env`. If `LEVEL` is unset, the legacy `WORLD_NAME` is read; if both are unset the server uses itzg's default `world`.
+
+- **No lock file.** `worlds/.locks` is no longer read, written or created (`mcctl init` does not create it). An existing `worlds/.locks` directory is harmless; `rm -rf worlds/.locks` is safe. `platform/scripts/lock.sh` was removed, and `mcctl.sh world` only prints a removal message.
+- **One world, one server.** A world and its `<world>_nether` / `<world>_the_end` folders count as one world. A world used by another server cannot be assigned: `mcctl world assign`, `mcctl create --world`, a new server's default world `<name>`, and `mcctl config <server> LEVEL <world>` are refused. Deleting a server frees its world for reuse.
+- **Stopped server only.** `world assign`, `world release`, `world new --server` and `config LEVEL` are refused while the server's container is running, paused, restarting or created. Nothing is stopped automatically (`world new --server` used to try to stop the server; it now refuses).
+- **Fail-closed.** If any server's `config.env` cannot be read, or its `LEVEL` cannot be interpreted safely, every assignment change and world delete/reset is refused until it is fixed. Unsafe values are path separators, `.` or `..`, quotes, control characters, Compose interpolation such as `${VAR}` outside single quotes, and an unsupported `--universe` location. Legacy names such as `My World` are still accepted as existing values; new names must be letters, digits, `-` or `_`.
+- **Older installs.** Duplicate assignments are reported, not fixed: see [`mcctl world list`](#mcctl-world-list).
+
+---
+
 ### mcctl world new
 
 Create a new world directory with optional seed configuration.
@@ -1239,7 +1257,7 @@ mcctl world new [name] [options]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--seed` | `-s` | World seed for generation |
-| `--server` | | Server to assign world to (also sets SEED in config) |
+| `--server` | | Server to assign world to (sets `LEVEL`, and `SEED` if given). The server must be stopped |
 | `--no-start` | | Don't auto-start server after assignment |
 
 **Examples:**
@@ -1277,6 +1295,7 @@ mcctl world new [name] [options]
 1. Creates world directory in `worlds/<name>/`
 2. Creates `.seed` file if seed is provided (for reference)
 3. If server assigned:
+   - Refuses if the server is running or the world is used by another server (the server is not stopped for you)
    - Updates server's `config.env` with `LEVEL=<world-name>`
    - Sets `SEED=<seed>` if provided
    - Optionally starts the server
@@ -1289,7 +1308,7 @@ mcctl world new [name] [options]
 
 ### mcctl world list
 
-List all worlds with their lock status.
+List all worlds with the servers they are assigned to.
 
 ```bash
 mcctl world list [options]
@@ -1313,12 +1332,12 @@ mcctl world list [options]
     Worlds:
 
       survival-world
-        Status: locked (mc-survival)
+        Status: assigned: mc-survival
         Size: 514.0MB
         Path: /home/myuser/minecraft-servers/worlds/survival-world
 
       creative-world
-        Status: unlocked
+        Status: unassigned
         Size: 128.5MB
         Path: /home/myuser/minecraft-servers/worlds/creative-world
     ```
@@ -1336,6 +1355,7 @@ mcctl world list [options]
         "path": "/home/myuser/minecraft-servers/worlds/survival-world",
         "isLocked": true,
         "lockedBy": "mc-survival",
+        "servers": ["mc-survival"],
         "size": "514.0MB",
         "lastModified": "2026-01-21T13:19:48.853Z"
       },
@@ -1343,17 +1363,21 @@ mcctl world list [options]
         "name": "creative-world",
         "path": "/home/myuser/minecraft-servers/worlds/creative-world",
         "isLocked": false,
+        "servers": [],
         "size": "128.5MB",
         "lastModified": "2026-01-20T10:30:00.000Z"
       }
     ]
     ```
 
+!!! info "Duplicate assignments"
+    If an older install has two servers on the same world, `mcctl world list` shows `assigned: a, b` and prints a warning for each duplicate (and for each server whose `config.env` cannot be read). Nothing is fixed automatically: assign another world to all but one of the servers. `isLocked` and `lockedBy` remain in the JSON output as aliases for "assigned".
+
 ---
 
 ### mcctl world assign
 
-Lock a world to a server.
+Assign a world to a server (sets the server's `LEVEL`).
 
 ```bash
 mcctl world assign [world] [server]
@@ -1379,14 +1403,14 @@ mcctl world assign [world] [server]
     mcctl world assign survival mc-myserver
     ```
 
-!!! info "World Locking"
-    A locked world can only be used by the assigned server. This prevents data corruption from simultaneous access.
+!!! info "One world, one server"
+    A world used by another server cannot be assigned, and the target server must be stopped. This prevents data corruption from simultaneous access. A server that keeps its world inside `servers/<name>/data` is refused too: run `mcctl migrate worlds` first. See [World Assignment Rules](#world-assignment-rules).
 
 ---
 
 ### mcctl world release
 
-Release a world lock.
+Switch the server that uses a world back to its own default world `<server>`.
 
 ```bash
 mcctl world release [world] [options]
@@ -1402,17 +1426,21 @@ mcctl world release [world] [options]
 
 | Option | Description |
 |--------|-------------|
-| `--force` | Force release even if server is running |
+| `--force` | Accepted and ignored (a running server is never released) |
 
 **Examples:**
 
 ```bash
-# Interactive - shows locked worlds
+# Interactive - shows assigned worlds
 mcctl world release
 
 # Release specific world
 mcctl world release survival
 ```
+
+The server using the world gets `LEVEL=<server>`: an existing free `worlds/<server>` is adopted, otherwise the world is created on the next start. The world itself is kept in `worlds/`.
+
+Release is refused when the server is running, when the server already uses its own default world, when the world is assigned to more than one server, when the server keeps its world inside `servers/<name>/data`, and when no server uses the world.
 
 ---
 
@@ -1434,7 +1462,7 @@ mcctl world delete [world] [options]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--force` | `-f` | Skip confirmation prompt |
+| `--force` | `-f` | Skip confirmation prompt (does not delete a world a server uses) |
 | `--json` | | Output in JSON format |
 
 !!! danger "Permanent Deletion"
@@ -1466,7 +1494,8 @@ mcctl world delete [world] [options]
 
 **Safety Features:**
 
-- **Lock Check**: Cannot delete a world that is locked (assigned to a running server)
+- **Assignment Check**: Cannot delete a world that any server uses, running or not; `--force` does not override this. Assign another world to the server first. Servers that keep their world inside `servers/<name>/data` (no `EXTRA_ARGS=--universe /worlds/`) do not block deleting `worlds/<world>`
+- **Fail-closed**: Refused while any server's `config.env` cannot be read or interpreted (see [World Assignment Rules](#world-assignment-rules))
 - **Confirmation Prompt**: Requires typing "DELETE" to confirm (unless `--force`)
 - **Size Display**: Shows world size before deletion
 
@@ -1936,6 +1965,8 @@ mcctl migrate worlds [options]
    - Adds `EXTRA_ARGS=--universe /worlds/`
    - Sets `LEVEL=<server-name>`
 4. **Detects existing worlds** with case-insensitive matching
+
+If the resulting `LEVEL` is used by another server, or a server's assignment cannot be determined, the migration of that server is refused before any data is moved (see [World Assignment Rules](#world-assignment-rules)).
 
 !!! info "World Storage Change"
     New servers created with `mcctl create` already use the `/worlds/` directory structure.

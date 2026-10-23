@@ -236,9 +236,22 @@ data: {"event": "closed"}
 
 ## 월드 엔드포인트
 
+### 월드 할당 규칙
+
+월드는 `servers/<name>/config.env`의 `LEVEL`로 서버에 할당됩니다(`LEVEL`이 없으면 레거시 `WORLD_NAME`을 읽고, 둘 다 없으면 itzg 기본값 `world`). 잠금 파일은 없습니다. `worlds/.locks`는 더 이상 읽거나 쓰거나 만들지 않습니다.
+
+- **월드 하나는 서버 하나.** 월드와 그 `<world>_nether` / `<world>_the_end` 폴더는 하나의 월드로 취급합니다. 다른 서버가 사용 중인 월드는 할당할 수 없습니다. `POST /api/worlds/:name/assign`, `serverName`을 넣은 `POST /api/worlds`, `POST /api/servers`(새 서버의 기본 월드 `<name>` 포함), `level`을 넣은 `PATCH /api/servers/:name/config`에 적용됩니다. 서버를 삭제하면 그 월드는 다시 쓸 수 있습니다.
+- **중지된 서버만.** 컨테이너가 running, paused, restarting, created 상태이면 assign, release, `serverName`을 넣은 `POST /api/worlds`, `level`을 넣은 `PATCH /api/servers/:name/config`는 거부됩니다. 서버를 자동으로 중지하지 않습니다.
+- **안전 우선(fail-closed).** 어떤 서버의 `config.env`를 읽을 수 없거나 `LEVEL`을 안전하게 해석할 수 없으면(경로 구분자, `.`/`..`, 따옴표, 제어 문자, 작은따옴표 밖의 `${VAR}` 같은 Compose 보간, 지원하지 않는 `--universe` 위치), 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다. `My World` 같은 레거시 이름은 기존 값으로는 계속 허용되며, 새 이름은 영문자, 숫자, `-`, `_`만 쓸 수 있습니다.
+- **상태 코드**(월드 assign/release/delete/create와 config `level`): 잘못된 월드 이름 `400`, 없는 서버나 월드 `404`, 이 규칙으로 거부되는 나머지 모든 경우 `409`(충돌, 서버 실행 중, 확인할 수 없는 설정).
+- **설정 스냅샷 복원**은 복원할 `config.env`가 다른 서버가 쓰는 월드를 할당하거나 실행 중인 서버의 월드를 바꾸게 되면(force를 써도) `409`로 응답합니다.
+- **월드 초기화.** `POST /api/servers/:name/world/reset`은 월드를 `servers/<name>/data` 안에 두는 서버와, 다른 서버가 같은 월드를 쓰는 경우 거부됩니다.
+
+---
+
 ### GET /api/worlds
 
-전체 월드 목록과 잠금 상태를 조회합니다.
+전체 월드 목록과 할당된 서버를 조회합니다.
 
 **응답:**
 
@@ -250,13 +263,17 @@ data: {"event": "closed"}
       "path": "/home/user/minecraft-servers/worlds/survival",
       "isLocked": true,
       "lockedBy": "mc-survival",
+      "servers": ["mc-survival"],
       "size": "1.2 GB",
       "lastModified": "2025-01-30T10:00:00.000Z"
     }
   ],
-  "total": 1
+  "total": 1,
+  "assignmentWarnings": []
 }
 ```
+
+`isLocked`와 `lockedBy`는 "할당됨"의 별칭으로 남아 있습니다. 이전 설치의 중복 할당은 고치지 않고 알려 줍니다. 이 경우 `servers`에 그 월드를 쓰는 모든 서버가 들어가고, `assignmentWarnings`(`string[]`)에는 중복 월드마다, 그리고 `config.env`를 읽을 수 없는 서버마다 한 항목이 들어갑니다.
 
 ---
 
@@ -273,6 +290,7 @@ data: {"event": "closed"}
     "path": "/home/user/minecraft-servers/worlds/survival",
     "isLocked": true,
     "lockedBy": "mc-survival",
+    "servers": ["mc-survival"],
     "size": "1.2 GB",
     "lastModified": "2025-01-30T10:00:00.000Z"
   }
@@ -300,7 +318,7 @@ data: {"event": "closed"}
 |------|------|------|------|
 | `name` | string | 예 | 월드 이름 |
 | `seed` | string | 아니오 | 월드 시드 |
-| `serverName` | string | 아니오 | 할당할 서버 |
+| `serverName` | string | 아니오 | 할당할 서버 (중지되어 있어야 하며, 다른 서버가 쓰는 월드이면 `409`) |
 | `autoStart` | boolean | 아니오 | 할당 후 서버 시작 |
 
 **응답 (201):**
@@ -319,7 +337,7 @@ data: {"event": "closed"}
 
 ### POST /api/worlds/:name/assign
 
-월드를 서버에 할당합니다.
+월드를 서버에 할당합니다(서버의 `LEVEL`을 설정). 서버가 중지되어 있어야 합니다.
 
 **요청 본문:**
 
@@ -344,7 +362,7 @@ data: {"event": "closed"}
 ```json
 {
   "error": "Conflict",
-  "message": "World 'survival' is already locked by mc-creative"
+  "message": "World 'survival' is assigned to 'mc-creative'; assign another world to 'mc-creative' or delete it first"
 }
 ```
 
@@ -352,13 +370,13 @@ data: {"event": "closed"}
 
 ### POST /api/worlds/:name/release
 
-월드 잠금을 해제합니다.
+월드를 사용하던 서버를 서버 자신의 기본 월드 `<server>`로 되돌립니다. 비어 있는 `worlds/<server>`가 이미 있으면 그것을 사용하고, 없으면 다음 시작 때 만듭니다. 월드는 `worlds/`에 그대로 남습니다. 서버가 중지되어 있어야 합니다. 서버가 자신의 기본 월드를 쓰고 있거나, 월드가 둘 이상의 서버에 할당되어 있거나, 서버가 월드를 `servers/<name>/data` 안에 두고 있으면 `409`로 거부됩니다.
 
 **쿼리 파라미터:**
 
 | 파라미터 | 타입 | 기본값 | 설명 |
 |----------|------|--------|------|
-| `force` | boolean | false | 서버가 실행 중이어도 강제 해제 |
+| `force` | boolean | false | 받아들이지만 무시됨 |
 
 **응답:**
 
@@ -366,21 +384,25 @@ data: {"event": "closed"}
 {
   "success": true,
   "worldName": "survival",
-  "previousServer": "mc-survival"
+  "previousServer": "mc-survival",
+  "fallbackWorld": "mc-survival",
+  "fallbackExists": false
 }
 ```
+
+`fallbackWorld`는 이전 서버가 이제 사용하는 월드입니다. `fallbackExists`가 `false`이면 `worlds/<fallbackWorld>`가 아직 없으며 다음 시작 때 만들어집니다.
 
 ---
 
 ### DELETE /api/worlds/:name
 
-월드를 삭제합니다.
+월드를 삭제합니다. 서버가 하나라도 사용 중이면 `409`로 거부됩니다. 월드를 `servers/<name>/data` 안에 두는 서버(`EXTRA_ARGS=--universe /worlds/` 없음)는 `worlds/<name>` 삭제를 막지 않습니다.
 
 **쿼리 파라미터:**
 
 | 파라미터 | 타입 | 기본값 | 설명 |
 |----------|------|--------|------|
-| `force` | boolean | false | 잠긴 월드도 강제 삭제 |
+| `force` | boolean | false | 호환을 위해 받아들이지만, 서버가 사용 중인 월드는 삭제하지 않음 |
 
 **응답:**
 
@@ -472,7 +494,7 @@ data: {"event": "closed"}
 | `ForbiddenError` | 403 | IP가 화이트리스트에 없음 |
 | `NotFound` | 404 | 리소스를 찾을 수 없음 |
 | `ValidationError` | 400 | 잘못된 요청 파라미터 |
-| `Conflict` | 409 | 리소스 충돌 (예: 잠긴 월드) |
+| `Conflict` | 409 | 리소스 충돌 (예: 다른 서버가 쓰는 월드, 서버 실행 중) |
 | `InternalServerError` | 500 | 서버 내부 오류 |
 
 ---

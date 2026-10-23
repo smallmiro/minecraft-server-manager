@@ -63,9 +63,9 @@ mcctl create --help
 
 | 명령어 | 설명 |
 |--------|------|
-| `mcctl world list` | 잠금 상태와 함께 모든 월드 목록 표시 |
-| `mcctl world assign` | 월드를 서버에 잠금 |
-| `mcctl world release` | 월드 잠금 해제 |
+| `mcctl world list` | 모든 월드를 할당된 서버와 함께 나열 |
+| `mcctl world assign` | 월드를 중지된 서버에 할당 (월드 하나는 서버 하나) |
+| `mcctl world release` | 월드를 쓰던 서버를 자신의 기본 월드로 되돌림 |
 
 ### 서버 백업/복원
 
