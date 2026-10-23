@@ -90,3 +90,18 @@ setup() {
         [ ! -e "$PLATFORM/servers/gamma" ]
     done
 }
+
+@test "validate_existing_server_name: accepts legacy names of existing servers (#652)" {
+    for name in a my--server server- MyServer my_server 1server router "$(printf '%064d' 0 | tr 0 a)"; do
+        run validate_existing_server_name "$name"
+        [ "$status" -eq 0 ]
+    done
+}
+
+@test "validate_existing_server_name: rejects unsafe names (#652)" {
+    for name in "" ../etc a/b "my server" "a;rm -rf" -x .hidden "$(printf '%065d' 0 | tr 0 a)"; do
+        run validate_existing_server_name "$name"
+        [ "$status" -eq 1 ]
+        [ -n "$output" ]
+    done
+}

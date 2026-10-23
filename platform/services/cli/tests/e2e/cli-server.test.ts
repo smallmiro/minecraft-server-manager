@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { runCli, runCliWithTimeout, isCliBuild } from './helpers.js';
 
 describe('CLI Server Commands', () => {
@@ -49,6 +52,24 @@ describe('CLI Server Commands', () => {
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('delete');
+      expect(result.stdout).toContain('--delete-world');
+    });
+  });
+
+  describe('mcctl delete confirmation (#652)', () => {
+    it('refuses to delete without --yes when stdin is not a terminal', async () => {
+      const root = mkdtempSync(join(tmpdir(), 'mcctl-delete-'));
+      writeFileSync(join(root, 'docker-compose.yml'), '');
+      // A name no real container on the test host should have.
+      const name = 'e2e-delete-652';
+      mkdirSync(join(root, 'servers', name), { recursive: true });
+      writeFileSync(join(root, 'servers', name, 'config.env'), `LEVEL=${name}\n`);
+
+      const result = await runCli(['delete', name, '--root', root]);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain('--yes');
+      expect(existsSync(join(root, 'servers', name))).toBe(true);
     });
   });
 
