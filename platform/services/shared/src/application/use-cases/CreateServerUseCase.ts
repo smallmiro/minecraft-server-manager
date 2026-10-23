@@ -159,7 +159,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     if (options.autoStart === false) return {};
     run.onProgress?.('starting', 'Starting container...');
     if (!runtime) return { startError: 'no container runtime configured' };
-    const started = await runtime.start(`mc-${name.value}`);
+    const started = await runtime.start(name);
     return started.success ? {} : { startError: started.error || started.stderr?.trim() || 'the container did not start' };
   }
 

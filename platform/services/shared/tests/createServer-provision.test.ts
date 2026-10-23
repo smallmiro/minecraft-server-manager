@@ -30,8 +30,8 @@ const file = (...p: string[]) => join(root, 'servers', ...p);
 function useCase(opts: { hostIps?: string[] } = {}) {
   const paths = new Paths(root);
   const runtime = {
-    start: vi.fn(async (name: string) => {
-      started.push(name);
+    start: vi.fn(async (name: { value: string } | string) => {
+      started.push(typeof name === 'string' ? name : `mc-${name.value}`);
       return startResult;
     }),
   } as unknown as IContainerRuntimePort;
