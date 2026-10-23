@@ -4,7 +4,8 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { McctlConfig, EnvConfig } from '../types/index.js';
-import { applyEnvChanges, writeFileAtomic } from './env-file.js';
+import { applyEnvChanges } from './env-file.js';
+import { writeFileAtomic } from './atomic-write.js';
 
 /**
  * Get the package root directory
@@ -357,6 +358,7 @@ export function isTelemetryEnabled(
 export { formatWorldBytes } from './format.js';
 
 export * from './env-file.js';
+export * from './atomic-write.js';
 
 /**
  * Console output utilities with colors
