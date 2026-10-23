@@ -1,6 +1,6 @@
 import { readFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
+import { applyEnvChanges, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 
 interface WhitelistPlayer {
   name: string;
@@ -93,17 +93,7 @@ export class PlayerFileService {
     const configPath = this.getConfigEnvPath(serverName);
     if (!existsSync(configPath)) return new Map();
 
-    const content = readFileSync(configPath, 'utf-8');
-    const result = new Map<string, string>();
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const eqIndex = trimmed.indexOf('=');
-      if (eqIndex > 0) {
-        result.set(trimmed.substring(0, eqIndex).trim(), trimmed.substring(eqIndex + 1).trim());
-      }
-    }
-    return result;
+    return parseEnvDocument(readFileSync(configPath, 'utf-8')).values;
   }
 
   private writeConfigEnv(serverName: string, key: string, value: string): void {
@@ -113,29 +103,8 @@ export class PlayerFileService {
       mkdirSync(serverDir, { recursive: true });
     }
 
-    if (!existsSync(configPath)) {
-      atomicWriteFileSync(configPath, `${key}=${value}\n`);
-      return;
-    }
-
-    const content = readFileSync(configPath, 'utf-8');
-    const lines = content.split('\n');
-    let found = false;
-
-    const updated = lines.map(line => {
-      const trimmed = line.trim();
-      if (trimmed.startsWith(`${key}=`)) {
-        found = true;
-        return `${key}=${value}`;
-      }
-      return line;
-    });
-
-    if (!found) {
-      updated.push(`${key}=${value}`);
-    }
-
-    atomicWriteFileSync(configPath, updated.join('\n'));
+    const content = existsSync(configPath) ? readFileSync(configPath, 'utf-8') : '';
+    atomicWriteFileSync(configPath, applyEnvChanges(content, { set: { [key]: value } }, { raw: true }));
   }
 
   private parseCommaSeparated(value: string | undefined): string[] {

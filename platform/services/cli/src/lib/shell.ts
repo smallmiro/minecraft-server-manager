@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { Paths, execScriptInteractive, log } from '@minecraft-docker/shared';
-import { ENV_KEY_RE, assertEnvFileValue, atomicWriteFileSync } from '@minecraft-docker/shared/utils';
+import { applyEnvChanges, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 
 export interface ShellExecutorOptions {
   paths?: Paths;
@@ -139,24 +139,7 @@ export class ShellExecutor {
       return null;
     }
 
-    const content = readFileSync(configPath, 'utf-8');
-    const config: Record<string, string> = {};
-
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-      // Skip empty lines and comments
-      if (!trimmed || trimmed.startsWith('#')) {
-        continue;
-      }
-      const match = trimmed.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
-      if (match) {
-        const [, key, value] = match;
-        // Remove surrounding quotes if present
-        config[key!] = value!.replace(/^["']|["']$/g, '');
-      }
-    }
-
-    return config;
+    return Object.fromEntries(parseEnvDocument(readFileSync(configPath, 'utf-8')).values);
   }
 
   /**
@@ -165,45 +148,19 @@ export class ShellExecutor {
    */
   writeConfigValue(server: string, key: string, value: string): boolean {
     // config.env is an env_file: the key and value must stay one setting (#726)
-    if (!ENV_KEY_RE.test(key)) {
-      log.error(`Invalid config key: ${JSON.stringify(key)}`);
-      return false;
-    }
-    try {
-      assertEnvFileValue(key, value);
-    } catch (error) {
-      log.error((error as Error).message);
-      return false;
-    }
     const configPath = this.getConfigPath(server);
     if (!existsSync(configPath)) {
       log.error(`Config file not found: ${configPath}`);
       return false;
     }
-
-    const content = readFileSync(configPath, 'utf-8');
-    const lines = content.split('\n');
-    let found = false;
-
-    const updatedLines = lines.map((line) => {
-      const trimmed = line.trim();
-      if (trimmed.startsWith('#') || !trimmed) {
-        return line;
-      }
-      const match = trimmed.match(/^([A-Z_][A-Z0-9_]*)=/);
-      if (match && match[1] === key) {
-        found = true;
-        return `${key}=${value}`;
-      }
-      return line;
-    });
-
-    // If key not found, add it at the end
-    if (!found) {
-      updatedLines.push(`${key}=${value}`);
+    let next: string;
+    try {
+      next = applyEnvChanges(readFileSync(configPath, 'utf-8'), { set: { [key]: value } }, { raw: true });
+    } catch (error) {
+      log.error((error as Error).message);
+      return false;
     }
-
-    atomicWriteFileSync(configPath, updatedLines.join('\n'));
+    atomicWriteFileSync(configPath, next);
     return true;
   }
 

@@ -14,7 +14,7 @@ import type {
 } from '../types/index.js';
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
 import { resolveMcctlRoot } from '../utils/index.js';
-import { assertEnvFileValue } from '../utils/env-file.js';
+import { assertEnvFileValue, parseEnvDocument } from '../utils/env-file.js';
 import { atomicWriteFileSync } from '../utils/atomic-write.js';
 // Adapters are imported by file path, never via a barrel: the barrel loads ServerRepository, which imports this module (ADR-0001)
 import {
@@ -470,30 +470,7 @@ export function readServerConfigEnv(serverName: string, serversDir?: string): Re
   }
 
   try {
-    const content = readFileSync(configPath, 'utf-8');
-    const config: Record<string, string> = {};
-
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-      // Skip comments and empty lines
-      if (!trimmed || trimmed.startsWith('#')) continue;
-
-      const eqIndex = trimmed.indexOf('=');
-      if (eqIndex === -1) continue;
-
-      const key = trimmed.substring(0, eqIndex).trim();
-      let value = trimmed.substring(eqIndex + 1).trim();
-
-      // Remove quotes if present
-      if ((value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-
-      config[key] = value;
-    }
-
-    return config;
+    return Object.fromEntries(parseEnvDocument(readFileSync(configPath, 'utf-8')).values);
   } catch {
     return {};
   }
@@ -602,8 +579,7 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
     try {
       const envContent = readFileSync(envPath, 'utf-8');
       // Check if PLAYIT_SECRET_KEY is set and not empty
-      const secretMatch = envContent.match(/^PLAYIT_SECRET_KEY=(.+)$/m);
-      secretKeyConfigured = !!(secretMatch && secretMatch[1] && secretMatch[1].trim());
+      secretKeyConfigured = !!parseEnvDocument(envContent).values.get('PLAYIT_SECRET_KEY');
     } catch {
       // Ignore read errors
     }

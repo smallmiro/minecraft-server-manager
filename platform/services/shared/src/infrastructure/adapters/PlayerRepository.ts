@@ -1,6 +1,6 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { Paths } from '../../utils/index.js';
+import { Paths, parseEnvDocument } from '../../utils/index.js';
 import { Player, PlayerStats, PlayerData, resolveWorldName } from '../../domain/index.js';
 import { PLAYER_DATA_DIRS, parsePlayerDat } from './playerDataNbt.js';
 import type {
@@ -176,20 +176,7 @@ export class PlayerRepository implements IPlayerRepository {
   private async resolveWorldLevel(serverName: string): Promise<string> {
     const configPath = join(this.paths.root, 'servers', serverName, 'config.env');
     const content = await readFile(configPath, 'utf-8').catch(() => '');
-    return resolveWorldName(Object.fromEntries(this.parseEnv(content)));
-  }
-
-  private parseEnv(content: string): Map<string, string> {
-    const result = new Map<string, string>();
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const eqIndex = trimmed.indexOf('=');
-      if (eqIndex > 0) {
-        result.set(trimmed.slice(0, eqIndex).trim(), trimmed.slice(eqIndex + 1).trim());
-      }
-    }
-    return result;
+    return resolveWorldName(Object.fromEntries(parseEnvDocument(content).values));
   }
 
   private async readJsonArray<T>(filePath: string): Promise<T[]> {

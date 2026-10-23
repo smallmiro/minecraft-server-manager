@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
+import { applyEnvChanges, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 
 const DEFAULT_GID = '999';
 
@@ -28,12 +28,8 @@ export function detectDockerGid(socket = socketPath()): number | null {
 export function setDockerGid(envPath: string, gid: number | null): boolean {
   if (gid === null || !existsSync(envPath)) return false;
   const content = readFileSync(envPath, 'utf-8');
-  const line = /^DOCKER_GID=(.*)$/m;
-  const current = content.match(line)?.[1]?.trim();
+  const current = parseEnvDocument(content).values.get('DOCKER_GID');
   if (current !== undefined && current !== DEFAULT_GID && current !== '') return false;
-  const next = current === undefined
-    ? `${content}${content.endsWith('\n') ? '' : '\n'}DOCKER_GID=${gid}\n`
-    : content.replace(line, `DOCKER_GID=${gid}`);
-  atomicWriteFileSync(envPath, next);
+  atomicWriteFileSync(envPath, applyEnvChanges(content, { set: { DOCKER_GID: String(gid) } }));
   return true;
 }

@@ -1,4 +1,5 @@
 import { Paths, log, colors } from '@minecraft-docker/shared';
+import { parseEnvDocument } from '@minecraft-docker/shared/utils';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, createWriteStream } from 'node:fs';
 import { join, basename } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -78,24 +79,11 @@ function readServerConfig(configPath: string): BackupManifest['serverConfig'] {
     return {};
   }
 
-  const content = readFileSync(configPath, 'utf-8');
+  const values = parseEnvDocument(readFileSync(configPath, 'utf-8')).values;
   const config: BackupManifest['serverConfig'] = {};
-
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-
-    const match = trimmed.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
-    if (match) {
-      const [, key, value] = match;
-      const cleanValue = value!.replace(/^["']|["']$/g, '');
-
-      if (key === 'TYPE') config.type = cleanValue;
-      if (key === 'VERSION') config.version = cleanValue;
-      if (key === 'MEMORY') config.memory = cleanValue;
-    }
-  }
-
+  if (values.has('TYPE')) config.type = values.get('TYPE');
+  if (values.has('VERSION')) config.version = values.get('VERSION');
+  if (values.has('MEMORY')) config.memory = values.get('MEMORY');
   return config;
 }
 

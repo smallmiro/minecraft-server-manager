@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { resolveWorldName } from '@minecraft-docker/shared';
-import { assertEnvFileValue, atomicWriteFileSync } from '@minecraft-docker/shared/utils';
+import { applyEnvChanges, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 import type { ServerConfig, UpdateServerConfigRequest } from '../schemas/config.js';
 
 /**
@@ -184,32 +184,6 @@ const NUMBER_FIELDS: (keyof ServerConfig)[] = [
 ];
 
 /**
- * Parse config.env file content into key-value pairs
- */
-function parseEnvFile(content: string): Map<string, string> {
-  const result = new Map<string, string>();
-  const lines = content.split('\n');
-
-  for (const line of lines) {
-    // Skip empty lines and comments
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) {
-      continue;
-    }
-
-    // Parse KEY=VALUE
-    const eqIndex = line.indexOf('=');
-    if (eqIndex > 0) {
-      const key = line.substring(0, eqIndex).trim();
-      const value = line.substring(eqIndex + 1).trim();
-      result.set(key, value);
-    }
-  }
-
-  return result;
-}
-
-/**
  * Convert env value to appropriate type for API response
  */
 function parseEnvValue(key: keyof ServerConfig, value: string | undefined): ServerConfig[keyof ServerConfig] {
@@ -302,55 +276,6 @@ function formatEnvValue(key: keyof ServerConfig, value: ServerConfig[keyof Serve
 }
 
 /**
- * Update config.env file while preserving comments and structure.
- * Throws EnvValueError for a value with a line break or control character.
- */
-function updateEnvFile(content: string, updates: Map<string, string>): string {
-  for (const [key, value] of updates) {
-    assertEnvFileValue(key, value);
-  }
-
-  const lines = content.split('\n');
-  const result: string[] = [];
-  const updatedKeys = new Set<string>();
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // Preserve empty lines and comments
-    if (!trimmed || trimmed.startsWith('#')) {
-      result.push(line);
-      continue;
-    }
-
-    // Check if this line has a key we want to update
-    const eqIndex = line.indexOf('=');
-    if (eqIndex > 0) {
-      const key = line.substring(0, eqIndex).trim();
-
-      if (updates.has(key)) {
-        const newValue = updates.get(key)!;
-        result.push(`${key}=${newValue}`);
-        updatedKeys.add(key);
-      } else {
-        result.push(line);
-      }
-    } else {
-      result.push(line);
-    }
-  }
-
-  // Add any new keys that weren't in the original file
-  for (const [key, value] of updates) {
-    if (!updatedKeys.has(key)) {
-      result.push(`${key}=${value}`);
-    }
-  }
-
-  return result.join('\n');
-}
-
-/**
  * ConfigService - Manages server configuration files
  */
 export class ConfigService {
@@ -385,7 +310,7 @@ export class ConfigService {
     }
 
     const content = readFileSync(configPath, 'utf-8');
-    const envMap = parseEnvFile(content);
+    const envMap = parseEnvDocument(content).values;
 
     const config: ServerConfig = {};
 
@@ -454,7 +379,8 @@ export class ConfigService {
 
     // Only write if there are changes
     if (changedFields.length > 0) {
-      const updatedContent = updateEnvFile(content, envUpdates);
+      // Throws EnvValueError for a value with a line break or control character
+      const updatedContent = applyEnvChanges(content, { set: Object.fromEntries(envUpdates) }, { raw: true });
       atomicWriteFileSync(configPath, updatedContent);
     }
 
@@ -480,7 +406,7 @@ export class ConfigService {
 
     const content = readFileSync(configPath, 'utf-8');
 
-    return resolveWorldName(Object.fromEntries(parseEnvFile(content)));
+    return resolveWorldName(Object.fromEntries(parseEnvDocument(content).values));
   }
 }
 
