@@ -161,7 +161,7 @@ docker/index.ts                                 legacy facade: 48 exports, leaf 
   - `DockerPlayitAgentAdapter({ root?: string })`. The playit commands keep inheriting `process.env`, as today.
 - **Legacy extras**: three exports have no port equivalent. They stay as `@deprecated` methods on the adapter, outside every port, and are deleted once they have no callers (D3/D4):
   - `startContainer` (`docker start`) has no production caller.
-  - `stopContainer` (synchronous `docker stop`) has two callers that move to `stop()`.
+  - `stopContainer` (synchronous `docker stop`) has one caller (the API delete route) that moves to `stop()`.
   - `checkDockerCompose` has no caller.
 - **Composition**: export the classes from `infrastructure/adapters/index.ts` (and therefore from the package root). Do not export instances. The facade creates its own private instances at module load. The constructors have no side effects, so import-time behaviour is unchanged.
 
