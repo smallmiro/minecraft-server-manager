@@ -62,8 +62,8 @@ describe('server create/delete single-flight (#656)', () => {
 
   beforeAll(async () => {
     app = await buildApp({ logger: false });
-    app.addHook('onRequest', async (_request, reply) => {
-      lastReply = reply;
+    app.addHook('onRequest', async (request, reply) => {
+      if (request.url.includes('follow=true')) lastReply = reply;
     });
   });
 
