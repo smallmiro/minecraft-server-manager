@@ -71,8 +71,8 @@ export interface IContainerRuntimePort {
 
   /** Timestamped lines since `since`, at most `tail` lines. Rejects on failure. */
   readLogs(name: string, options: { since: string; tail: number }): Promise<string[]>;
-  /** Streams new output only. Resolves when the stream ends or `signal` aborts. */
-  followLogs(name: string, onChunk: (chunk: string) => void, signal: AbortSignal): Promise<void>;
+  /** New output only by default; `options.tail` emits the last N lines first, then follows (#731). */
+  followLogs(name: string, onChunk: (chunk: string) => void, signal: AbortSignal, options?: { tail?: number }): Promise<void>;
 }
 ```
 
@@ -302,7 +302,7 @@ Config files: `platform/services/{shared,cli,mcctl-api}/.eslintrc.json` (ESLint 
 
 | Script | What it does | Covered by D1 ports | Deferred (reason) |
 |--------|--------------|---------------------|-------------------|
-| `logs.sh` | tail, follow, `--since`, `--timestamps` | `getLogs`, `followLogs`, `readLogs` | `--file`/`--json` formatting is CLI presentation, not a port |
+| `logs.sh` (removed in #731) | tail, follow, `--since`, `--timestamps` | `getLogs`, `followLogs({ tail })`, `readLogs` | `--file`/`--json` formatting is CLI presentation, not a port. The avahi `journalctl` view was dropped; run `journalctl -u avahi-daemon` directly. `followLogs` gained an optional `tail` (default 0, so existing callers are unchanged) so "last N lines, then follow" is one stream |
 | `mcctl.sh` | start/stop/status, `docker exec -i rcon-cli` console | `start`, `stop`, `getStatus`; console via `getEndpoint` + the existing TCP client (`rcon-client`) | an interactive `attach()` with TTY passthrough; use TCP instead |
 | `delete-server.sh` | stop, remove container, remove compose include, avahi unregister, keep world (D-2) | `stop` | `remove({ purgeData })`, `IHostnameRegistrarPort.unregister`, `IServerSpecRepository.delete`. No TS caller yet; D5/#715 |
 | `lock.sh` | world locks | — | `IWorldAssignmentPort` (A4) |

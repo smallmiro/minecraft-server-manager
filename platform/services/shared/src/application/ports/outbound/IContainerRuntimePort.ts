@@ -36,6 +36,14 @@ export interface IContainerRuntimePort {
 
   /** Timestamped lines since `since`, at most `tail` lines. Rejects on failure. */
   readLogs(name: string, options: { since: string; tail: number }): Promise<string[]>;
-  /** Streams new output only. Resolves when the stream ends or `signal` aborts. */
-  followLogs(name: string, onChunk: (chunk: string) => void, signal: AbortSignal): Promise<void>;
+  /**
+   * Streams output. New output only by default; `tail: N` emits the last N lines first, then follows (one stream).
+   * Resolves when the stream ends or `signal` aborts.
+   */
+  followLogs(
+    name: string,
+    onChunk: (chunk: string) => void,
+    signal: AbortSignal,
+    options?: { tail?: number }
+  ): Promise<void>;
 }

@@ -271,9 +271,14 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   /** Copied from mcctl-api GET /api/servers/:name/logs?follow; abort kills the child through spawn's signal */
-  followLogs(container: string, onChunk: (chunk: string) => void, signal: AbortSignal): Promise<void> {
+  followLogs(
+    container: string,
+    onChunk: (chunk: string) => void,
+    signal: AbortSignal,
+    options?: { tail?: number }
+  ): Promise<void> {
     return new Promise((resolve) => {
-      const dockerLogs = spawn('docker', ['logs', '-f', '--tail', '0', '--', container], {
+      const dockerLogs = spawn('docker', ['logs', '-f', '--tail', String(options?.tail ?? 0), '--', container], {
         stdio: ['ignore', 'pipe', 'pipe'],
         signal,
       });
