@@ -1,4 +1,5 @@
 import type { ContainerStatus, HealthStatus, ContainerStats } from '../../../types/index.js';
+import type { ServerName } from '../../../domain/value-objects/ServerName.js';
 
 /** Lifecycle result. Never rejects; failure is `success: false`. */
 export interface RuntimeActionResult {
@@ -12,16 +13,19 @@ export interface RuntimeActionResult {
  * Container Runtime Port - Outbound Port (ADR-0001)
  *
  * Per-workload runtime operations.
- * `name` is the runtime workload name. In D1 this is the Docker container name (`mc-<server>`).
+ * `name` is the server (#665): the adapter maps a ServerName to its workload
+ * (Docker: `mc-<server>`). A string is the runtime workload name itself
+ * (`mc-<server>`, `mc-router`, `playit-agent`); that form is @deprecated for
+ * servers and narrowed in v3.0.0 (#736).
  * D1 contract: "absent" and "runtime unreachable" are NOT distinguished (A7 changes this).
  * Synchronous methods stay synchronous until C2.
  */
 export interface IContainerRuntimePort {
   /** 'not_found' when absent or when the runtime cannot be queried. */
-  getStatus(name: string): ContainerStatus;
+  getStatus(name: ServerName | string): ContainerStatus;
   /** 'none' without a healthcheck, 'unknown' on failure. */
-  getHealth(name: string): HealthStatus;
-  exists(name: string): boolean;
+  getHealth(name: ServerName | string): HealthStatus;
+  exists(name: ServerName | string): boolean;
   /** Server workloads (mc-* except mc-router), sorted. [] on failure. */
   /**
    * With `strict: true` (#732) a failed query throws instead of returning [], so
@@ -29,24 +33,24 @@ export interface IContainerRuntimePort {
    */
   list(options?: { running?: boolean; strict?: boolean }): string[];
   /** Last `lines` lines (default 50). '' on failure. */
-  getLogs(name: string, lines?: number): string;
-  getStats(name: string): ContainerStats | null;
-  getUptime(name: string): { uptime: string; seconds: number } | null;
+  getLogs(name: ServerName | string, lines?: number): string;
+  getStats(name: ServerName | string): ContainerStats | null;
+  getUptime(name: ServerName | string): { uptime: string; seconds: number } | null;
 
   /** Create the workload if missing, then run it. */
-  start(name: string): Promise<RuntimeActionResult>;
-  stop(name: string): Promise<RuntimeActionResult>;
-  restart(name: string): Promise<RuntimeActionResult>;
+  start(name: ServerName | string): Promise<RuntimeActionResult>;
+  stop(name: ServerName | string): Promise<RuntimeActionResult>;
+  restart(name: ServerName | string): Promise<RuntimeActionResult>;
 
   /** Timestamped lines since `since`, at most `tail` lines. Rejects on failure. */
-  readLogs(name: string, options: { since: string; tail: number }): Promise<string[]>;
+  readLogs(name: ServerName | string, options: { since: string; tail: number }): Promise<string[]>;
   /**
    * Streams output. New output only by default; `tail: N` emits the last N lines first, then follows (one stream). `follow: false` prints the last `tail`
    * lines (stdout and stderr) and resolves when docker exits.
    * Resolves when the stream ends or `signal` aborts.
    */
   followLogs(
-    name: string,
+    name: ServerName | string,
     onChunk: (chunk: string) => void,
     signal: AbortSignal,
     options?: {
