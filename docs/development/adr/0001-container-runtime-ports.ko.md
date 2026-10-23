@@ -4,7 +4,7 @@
 |---|---|
 | **상태** | 제안됨 (2026-10-23) |
 | **이슈** | [#654](https://github.com/smallmiro/minecraft-server-manager/issues/654) (Hardening D1), 마일스톤 M2(#643), 에픽 #640 |
-| **이 ADR을 바꾸는 후속 이슈** | #665(D4), #669(A7), C2, #675(D5), #641(k8s 어댑터), #732(S3, [백업 포트](#백업-포트732-s3)) |
+| **이 ADR을 바꾸는 후속 이슈** | #665(D4), #669(A7), C2, #675(D5), #641(k8s 어댑터), #732(S3, [백업 포트](#백업-포트732-s3)), [ADR-0002](0002-world-server-assignment.ko.md)) |
 | **사용하는 이슈** | #667(D2, API), #668(D3, CLI), #666(E3, 계약 테스트), #715(스크립트 제거) |
 
 이 문서는 영어판의 요약입니다. 포트 시그니처 전체, 48개 함수 매핑, 호출 지점 표, 구현 단계는 [영어판](0001-container-runtime-ports.md)에 있습니다.
@@ -23,7 +23,7 @@
 |---|------|------|
 | 1 | D1에서 포트 6개를 만든다: `IContainerRuntimePort`, `IServerConsolePort`, `IRouterStatusPort`, `IPlayitAgentPort`, `IHostnameRegistrarPort`, `IRuntimeEnvironmentPort` | 이슈 Solution 1 |
 | 2 | 메서드는 **지금 옮겨 올 호출처가 있을 때만** 포트에 넣는다(`docker/index.ts` 함수, 또는 D2·D3이 옮길 CLI·API의 직접 호출) | YAGNI. D2와 D3이 shared를 고치지 않고 병렬로 진행할 수 있다(SYNC-3) |
-| 3 | `IServerSpecRepository`와 `IWorldAssignmentPort`는 **타입 전용 파일 두 개로 만들고 provisional로 표시한다** | 구현도 호출처도 없다. ServerSpec 스키마(§9.2)와 A4 배정 모델이 확정되면 D5/A4가 모양을 바꾼다. `ServerSpec`은 D5가 대체할 최소 placeholder다 |
+| 3 | `IServerSpecRepository`와 `IWorldAssignmentPort`는 **타입 전용 파일 두 개로 만들고 provisional로 표시한다** | 구현도 호출처도 없다. ServerSpec 스키마(§9.2)와 A4 배정 모델이 확정되면 D5/A4가 모양을 바꾼다. `ServerSpec`은 D5가 대체할 최소 placeholder다. `IWorldAssignmentPort`는 #670에서 확정했다(아래 참조) |
 | 4 | **두 번째 어댑터(#641)가 생기기 전까지 계약은 잠정적이다.** D4·A7·C2·D5가 시그니처를 바꿀 수 있다 | 호출처는 TS 컴파일러가 찾아 준다. 바꿀 때마다 이 ADR을 고친다 |
 | 5 | 지금 동기인 메서드는 **동기를 유지한다**. 비동기화는 C2에서 한다 | 동기 래퍼가 비동기 포트에 위임할 수 없으므로, 바꾸려면 호출처를 전부 바꿔야 한다 |
 | 6 | **오류 모델을 바꾸지 않는다**: 센티널 값(`'not_found'`, `'unknown'`, `''`, `null`, `false`, `'-'`)과 throw하지 않는 결과 객체를 그대로 쓴다 | "확인 불가"와 "없음"의 구분(`RuntimeUnavailableError`)은 A7의 동작 변경이다 |
@@ -57,6 +57,18 @@
 | `restart` | `docker compose restart <name>` | API restart |
 
 새 메서드는 이름 앞에 `--`를 넣는다(#720 규칙). 타임아웃은 지금 값을 유지하고, 통일은 C2에서 한다.
+
+### `IWorldAssignmentPort` 확정(#670, [ADR-0002](0002-world-server-assignment.ko.md))
+
+배정은 각 서버 `config.env`의 `LEVEL`에서 파생하며, 따로 기록하지 않는다. #715 결정대로 포트로 남기고, 규칙은 어댑터가 함께 쓰는 도메인 순수 함수(`shared/src/domain/services/worldAssignment.ts`)에 둔다.
+
+| 메서드 | 동작 |
+|--------|------|
+| `listAssignments(): Promise<WorldAssignmentSnapshot>` | `{ assignments: { world, server, internal }[], undetermined: string[] }`. `servers/`를 읽지 못할 때만 reject한다 |
+| `assign(world, server): Promise<void>` | `LEVEL=<world>`를 쓴다. 위반하거나 판단할 수 없으면 `WorldAssignmentError`로 reject한다(R7) |
+| `release(world): Promise<{ server, fallback }>` | 배정 해제(#715). 가진 서버의 `LEVEL`을 그 서버의 기본 월드 `<서버이름>`으로 바꾼다 |
+
+`getAssignment`는 뺐다(순수 함수 `holdersOf`로 대체). 어댑터는 `ConfigEnvWorldAssignmentAdapter`이고, CLI `Container`와 D2 전까지는 API 라우트가 만든다.
 
 ## 48개 함수 분류
 
@@ -96,7 +108,7 @@
 | `delete-server.sh` | `stop` | `remove`, `unregister`, `IServerSpecRepository.delete`(아직 TS 호출처가 없다) |
 | `create-server.sh` | `start` | `apply(spec)`, `register`, `save`(D5) |
 | `backup.sh` | `console.command`로 `save-off`, `save-all flush`, `save-on` | git 저장소는 `IWorldBackupPort`가 맡는다([백업 포트](#백업-포트732-s3)) |
-| `lock.sh` | — | `IWorldAssignmentPort`(A4) |
+| `lock.sh` | — | `LEVEL`에서 파생하는 `IWorldAssignmentPort.assign`/`release`로 대체. #670에서 `lock.sh` 삭제([ADR-0002](0002-world-server-assignment.ko.md)) |
 | `render-map.sh`(#733에서 제거) | — | Docker `IMapRenderer` 어댑터 `BlueMapCliRenderer`로 옮겼다(k8s에서는 Job) |
 | `player.sh` | — | #730에서 제거했다 (`mcctl player info`가 대체) (`init.sh`는 #729에서 제거했다) |
 
@@ -114,7 +126,7 @@
 
 ## 확인이 필요한 쟁점
 
-1. **예약 포트**(2026-10-23 해결): 이슈 본문대로 타입 전용 파일 두 개로 만들었다(결정 3).
+1. **예약 포트**(2026-10-23 해결): 이슈 본문대로 타입 전용 파일 두 개로 만들었다(결정 3). `IWorldAssignmentPort`는 #670에서 확정했다(ADR-0002).
 2. **API stop 의미**: `executeServerAction('stop')`(compose stop)을 `runtime.stop`(`docker stop`)으로 옮기면 동작이 조금 바뀐다(compose 프로젝트 밖의 컨테이너에서만 다르다). D2에서 별도 커밋으로 받아들이는 안을 권장한다.
 3. **합성 함수 담당**: 합성 함수 12개를 맡은 이슈가 없다. D2의 "가짜 컨테이너로 라우트 테스트"를 하려면 주입할 수 있어야 한다. D4에 넣고 D2보다 먼저 끝내는 안을 권장한다.
 4. **시그니처 변경 순서**: D4가 포트 인자를 `ServerName`으로 바꾼다. D4를 먼저 하고 D2·D3을 하는 안을 권장한다.
