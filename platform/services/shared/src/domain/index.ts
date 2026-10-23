@@ -111,6 +111,7 @@ export {
   type ServerSpecRules,
   type WorldStorage,
 } from './server-spec/ServerSpecDocument.js';
+export { buildCreateSpec, DEFAULT_SERVER_IMAGE, type CreateSpecInput } from './server-spec/buildCreateSpec.js';
 
 // Entities
 export {
