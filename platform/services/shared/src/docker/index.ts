@@ -14,6 +14,7 @@ import type {
 } from '../types/index.js';
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
 import { resolveMcctlRoot } from '../utils/index.js';
+import { assertEnvFileValue } from '../utils/env-file.js';
 // Adapters are imported by file path, never via a barrel: the barrel loads ServerRepository, which imports this module (ADR-0001)
 import {
   DockerComposeRuntimeAdapter,
@@ -724,6 +725,7 @@ export function resolvePlayitDomain(
  * mc-router.host label in docker-compose.yml in sync (skipped if file/label absent)
  * @param domain - Domain string to set, or null to remove
  * @throws Error if config.env does not exist
+ * @throws EnvValueError if domain has a line break or control character
  */
 export function setServerPlayitDomain(serverName: string, domain: string | null, serversDir?: string): void {
   const dir = serversDir ?? getServersDir();
@@ -732,6 +734,8 @@ export function setServerPlayitDomain(serverName: string, domain: string | null,
   if (!existsSync(configPath)) {
     throw new Error(`config.env not found for server '${serverName}': ${configPath}`);
   }
+
+  if (domain !== null) assertEnvFileValue('PLAYIT_DOMAIN', domain);
 
   const previousDomain = getServerPlayitDomain(serverName, dir);
   let content = readFileSync(configPath, 'utf-8');
@@ -742,7 +746,8 @@ export function setServerPlayitDomain(serverName: string, domain: string | null,
     content = content.replace(/^PLAYIT_DOMAIN=.*\n?/m, '');
   } else if (content.match(/^PLAYIT_DOMAIN=/m)) {
     // Update existing
-    content = content.replace(/^PLAYIT_DOMAIN=.*$/m, `PLAYIT_DOMAIN=${domain}`);
+    // Callback, so '$`', "$'" and '$&' in the domain stay literal (#726)
+    content = content.replace(/^PLAYIT_DOMAIN=.*$/m, () => `PLAYIT_DOMAIN=${domain}`);
   } else {
     // Append new
     const suffix = content.endsWith('\n') ? '' : '\n';

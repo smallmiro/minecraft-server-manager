@@ -256,6 +256,42 @@ validate_world_name() {
     return 0
 }
 
+# Validate a value written as KEY=<value> to config.env, which Compose reads
+# as an env_file (#726). Same intent as ENV_FILE_VALUE_RE in
+# services/shared/src/utils/env-file.ts: no control character (C0, DEL, C1,
+# U+2028, U+2029), and no quote or backtick after the leading blanks Compose
+# skips (space, tab, VT, FF, NBSP), since Compose closes a quoted value and
+# parses the rest of the line as more settings (MOTD="" MODS=<url>).
+# Prints the reason and returns 1 when invalid.
+validate_env_value() {
+    # case globs, not [[ =~ ]]: macOS bash 3.2 hands the regex to BSD regcomp,
+    # which mishandles these bytes; bash matches globs itself, byte-wise in C
+    local LC_ALL=C
+    local message="Value must be one line without control characters and must not start with a quote"
+    local c1=$'\xc2['$'\x80''-'$'\x9f'']' rest="$1"
+    case "$1" in
+        *[[:cntrl:]]* | *$c1* | *$'\xe2\x80\xa8'* | *$'\xe2\x80\xa9'*)
+            echo "$message"
+            return 1
+            ;;
+    esac
+    # Skip the blanks Compose skips before a value: space, tab, VT, FF, NBSP, NEL
+    while :; do
+        case "$rest" in
+            ' '* | $'\t'* | $'\v'* | $'\f'*) rest="${rest#?}" ;;
+            $'\xc2\xa0'* | $'\xc2\x85'*) rest="${rest#??}" ;;
+            *) break ;;
+        esac
+    done
+    case "$rest" in
+        [\"\'\`]*)
+            echo "$message"
+            return 1
+            ;;
+    esac
+    return 0
+}
+
 # =============================================================================
 # Path Functions
 # =============================================================================

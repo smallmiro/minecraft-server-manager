@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { ModSourceFactory } from '@minecraft-docker/shared';
+import { assertEnvFileValue } from '@minecraft-docker/shared/utils';
 
 // ============================================================
 // Installed Mod Types
@@ -45,6 +46,7 @@ function parseEnvFile(content: string): Map<string, string> {
  * Update a single key in env file content while preserving comments and structure
  */
 function updateEnvFile(content: string, key: string, value: string): string {
+  assertEnvFileValue(key, value);
   const lines = content.split('\n');
   let found = false;
   const result = lines.map((line) => {
@@ -135,6 +137,8 @@ export class ModConfigService {
 
     const added: string[] = [];
     for (const slug of slugs) {
+      // Each slug may become the first entry of the list later (#726)
+      assertEnvFileValue(envKey, slug);
       if (!existing.includes(slug)) {
         existing.push(slug);
         added.push(slug);

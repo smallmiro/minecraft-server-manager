@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { resolveWorldName } from '@minecraft-docker/shared';
+import { assertEnvFileValue } from '@minecraft-docker/shared/utils';
 import type { ServerConfig, UpdateServerConfigRequest } from '../schemas/config.js';
 
 /**
@@ -301,9 +302,14 @@ function formatEnvValue(key: keyof ServerConfig, value: ServerConfig[keyof Serve
 }
 
 /**
- * Update config.env file while preserving comments and structure
+ * Update config.env file while preserving comments and structure.
+ * Throws EnvValueError for a value with a line break or control character.
  */
 function updateEnvFile(content: string, updates: Map<string, string>): string {
+  for (const [key, value] of updates) {
+    assertEnvFileValue(key, value);
+  }
+
   const lines = content.split('\n');
   const result: string[] = [];
   const updatedKeys = new Set<string>();

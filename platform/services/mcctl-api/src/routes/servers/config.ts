@@ -3,6 +3,7 @@ import fp from 'fastify-plugin';
 import { join } from 'path';
 import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
 import { serverExists, getContainerStatus, AuditActionEnum, WORLD_NAME_PATTERN } from '@minecraft-docker/shared';
+import { EnvValueError } from '@minecraft-docker/shared/utils';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
   ServerConfigResponseSchema,
@@ -186,6 +187,9 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         status: 'failure',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
+      if (error instanceof EnvValueError) {
+        return reply.code(400).send({ error: 'BadRequest', message: error.message });
+      }
       fastify.log.error(error, 'Failed to update server configuration');
       return reply.code(500).send({
         error: 'InternalServerError',

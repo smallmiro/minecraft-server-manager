@@ -7,6 +7,7 @@ import {
   buildModpackCompatibilityMatrix,
 } from '@minecraft-docker/shared';
 import '@minecraft-docker/mod-source-modrinth';
+import { EnvValueError } from '@minecraft-docker/shared/utils';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import { createModConfigService } from '../../services/ModConfigService.js';
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
@@ -150,6 +151,9 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         status: 'failure',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
+      if (error instanceof EnvValueError) {
+        return reply.code(400).send({ error: 'BadRequest', message: error.message });
+      }
       fastify.log.error(error, 'Failed to add mods');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to add mods' });
     }
