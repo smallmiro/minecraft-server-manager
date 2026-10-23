@@ -32,7 +32,7 @@ This issue is a **structural change only (Tidy First)**. Runtime behaviour, argv
 
 ## Port Definitions
 
-Files: `platform/services/shared/src/application/ports/outbound/<Port>.ts`, exported from `outbound/index.ts` (one port per file, as in the rest of the directory). Types such as `ContainerStatus` come from `src/types/index.ts`.
+Files: `platform/services/shared/src/application/ports/outbound/<Port>.ts`, exported from `outbound/index.ts` and listed in `ports/index.ts`, so D2/D3 import them from the package root (one port per file, as in the rest of the directory). Types such as `ContainerStatus` come from `src/types/index.ts`.
 
 ```ts
 // IContainerRuntimePort.ts
@@ -197,10 +197,10 @@ docker/index.ts                                 legacy facade: 48 exports, leaf 
 | `getStats` / `getUptime` | sync | `null` | `getContainerStats` / `getContainerUptime` |
 | `start` / `stop` / `restart` | async | `{ success: false, error }`, never rejects | API `executeServerAction` |
 | `readLogs` | async | **rejects** | API `player-session-collector.ts` |
-| `followLogs` | async | resolves on close or spawn error | API `servers.ts:581` (adds the missing `error` handler) |
+| `followLogs` | async | resolves on close or spawn error | API `servers.ts:581` (adds the missing `error` handler; `signal` is passed to `spawn`, which kills the child on abort, and chunks after abort are dropped) |
 | `listPlayers` | async (blocking `execFileSync` inside, as today) | `null` | `getOnlinePlayers` |
 | `command` | async | `{ exitCode: 1, stderr }`, never rejects | API `lib/rcon.ts` `execRcon` |
-| `getEndpoint` | async | `null` | CLI `commands/rcon.ts` |
+| `getEndpoint` | async | `null` | CLI `commands/rcon.ts` (the copy uses `execFile` and returns `null` on a spawn error; the original has no `error` handler) |
 | router `getHealth` | sync | `'unknown'` / `'unhealthy'` | `getRouterHealthViaApi` |
 | router `getHostnames` | sync | `'-'` | `getContainerHostname` |
 | playit `start` / `stop` | async | `{ success: false, error }` / `false` | `startPlayitAgent` / `stopPlayitAgent` |
@@ -239,7 +239,7 @@ Callers are production imports (`src/`, tests excluded). "facade" means callers 
 
 **Composites → stay in the facade verbatim (12)**: `getServerInfo`, `getRouterInfo`, `getPlatformStatus` (cli `status`), `getDetailedServerInfo`, `getDetailedServerInfoWithPlayers` (cli `status`), `getRouterDetailInfo` (cli `status`, api `routes/router`), `getServerInfoFromConfig` (api `routes/playit`, `routes/servers`), `getAllServers` (api `routes/players`, `routes/playit`, `routes/servers`), `serverExists` (7 api files), `getDetailedServerInfoFromConfig`, `getServerDetailedInfo` (api `routes/servers`), `getPlayitAgentStatus` (cli `playit`, api `routes/playit`, `routes/router`). They combine runtime state with config files. Their target is an application query service that takes ports (see open questions).
 
-**Pure or config-file functions → no port (12)**: `parseRconPlayerList`, `formatBytes`, `parseRouterHosts`, `replaceRouterHosts`, `resolvePlayitDomain` (pure); `getWorldsDir`, `getServersDir`, `getWorldDirectorySize` (plan §9.1: moves to `WorldRepository`, async); `getConfiguredServers`, `readServerConfigEnv`, `getServerPlayitDomain`, `setServerPlayitDomain` (config files, later `IServerSpecRepository` in D5; env parsing is unified by A6).
+**Pure or config-file functions → no port (12)**: `parseRconPlayerList` (lives in `DockerComposeRuntimeAdapter.ts` next to `listPlayers`, because adapters cannot import the facade; the facade re-exports it), `formatBytes`, `parseRouterHosts`, `replaceRouterHosts`, `resolvePlayitDomain` (pure); `getWorldsDir`, `getServersDir`, `getWorldDirectorySize` (plan §9.1: moves to `WorldRepository`, async); `getConfiguredServers`, `readServerConfigEnv`, `getServerPlayitDomain`, `setServerPlayitDomain` (config files, later `IServerSpecRepository` in D5; env parsing is unified by A6).
 
 ## Direct Call Sites
 
@@ -320,8 +320,8 @@ Rules: no behaviour change; `refactor`/`test`/`chore` commits only; tests first 
 
 1. `refactor(shared): add runtime port interfaces (#654)`: the six port files and `outbound/index.ts` exports. Check: `pnpm --filter @minecraft-docker/shared typecheck`.
 2. `refactor(shared): move process helpers to infrastructure/process (#654)`: move `execCommand`, `execCommandAsync`, `execScript`, `execScriptInteractive` verbatim; the facade re-exports them. Check: shared tests, especially `world-name-resolution.test.ts` (its facade mock must still apply to `ServerRepository`).
-3. `test(shared): characterize Docker runtime adapters (#654)` (red), then `refactor(shared): move docker leaf functions into runtime adapters (#654)` (green). Create the five Docker classes by **moving** the 20 leaf bodies, and make the facade leaves one-line delegations. The facade must end with no `child_process` import. Export the classes from `infrastructure/adapters/index.ts`. Tests: `vi.mock('node:child_process')`, and for each method assert the exact `(file, argv, options)` and both the success mapping and the failure sentinel. Keep `docker-shell-injection.test.ts` unchanged: its fake `docker` on `PATH` proves wrapper → adapter argv end to end.
-4. `test(shared): ...` (red), then `refactor(shared): add lifecycle, log and console methods to Docker adapters (#654)` (green): `start`/`stop`/`restart`, `readLogs`, `followLogs`, `command`, `getEndpoint`, **copied** from the call sites in the direct call sites table. The originals stay until D2/D3. Test `followLogs` with a fake child (`EventEmitter` + `PassThrough`): abort kills the child, close resolves, a spawn error resolves.
+3. `test(shared): characterize Docker runtime adapters (#654)` (red), then `refactor(shared): move docker leaf functions into runtime adapters (#654)` (green). Create the five Docker classes by **moving** 19 leaf bodies (the 20th, `getAvahiStatus`, moves in step 5), and make the facade leaves one-line delegations. After step 5 the facade has no `child_process` import. Export the classes from `infrastructure/adapters/index.ts`. Tests: `vi.mock('node:child_process')`, and for each method assert the exact `(file, argv, options)` and both the success mapping and the failure sentinel. Keep `docker-shell-injection.test.ts` unchanged: its fake `docker` on `PATH` proves wrapper → adapter argv end to end.
+4. `test(shared): ...` (red), then `refactor(shared): add lifecycle, log and console methods to Docker adapters (#654)` (green): `start`/`stop`/`restart`, `readLogs`, `followLogs`, `command`, `getEndpoint`, **copied** from the call sites in the direct call sites table. The originals stay until D2/D3. Test `followLogs` with a fake child (`EventEmitter` + `PassThrough`): close resolves, a spawn error resolves, no chunk is forwarded after abort, and `signal` reaches `spawn`. One test runs a real child to prove that abort kills it.
 5. `test` (red), then `refactor(shared): add AvahiHostnameRegistrarAdapter (#654)` (green): move `getAvahiStatus` and mock the three `execSync` probes.
 6. `chore(lint): warn on child_process outside infrastructure (#654)`: the three `.eslintrc.json` files. Check: `pnpm lint` exits 0 with warnings shared 1, cli 12, mcctl-api 9.
 7. Final gate at the repo root: `pnpm build && pnpm lint && pnpm typecheck && pnpm test`. The cli/api tests use `vi.mock('@minecraft-docker/shared', ...)` and must pass unchanged, because every export name and signature is kept.
