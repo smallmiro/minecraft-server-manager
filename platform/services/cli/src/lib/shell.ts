@@ -78,13 +78,6 @@ export class ShellExecutor {
   }
 
   /**
-   * Player lookup
-   */
-  async player(args: string[]): Promise<number> {
-    return this.execInteractive('player.sh', args);
-  }
-
-  /**
    * Pull a Docker image
    */
   async dockerPull(image: string): Promise<number> {

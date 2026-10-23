@@ -18,7 +18,6 @@ import {
   DeleteServerUseCase,
   WorldManagementUseCase,
   BackupUseCase,
-  PlayerLookupUseCase,
   BackupScheduleUseCase,
   ConfigSnapshotUseCaseImpl,
   ConfigSnapshotScheduleUseCaseImpl,
@@ -34,7 +33,6 @@ import {
   type IDeleteServerUseCase,
   type IWorldManagementUseCase,
   type IBackupUseCase,
-  type IPlayerLookupUseCase,
   type IBackupScheduleUseCase,
   type IBackupScheduleRepository,
   type IConfigSnapshotUseCase,
@@ -231,10 +229,6 @@ export class Container {
 
   get backupUseCase(): IBackupUseCase {
     return new BackupUseCase(this.promptPort, this.shellPort);
-  }
-
-  get playerLookupUseCase(): IPlayerLookupUseCase {
-    return new PlayerLookupUseCase(this.promptPort, this.shellPort);
   }
 
   get backupScheduleUseCase(): IBackupScheduleUseCase {
