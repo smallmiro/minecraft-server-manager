@@ -374,8 +374,9 @@ describe('Audit Logging', () => {
       writeFileSync(join(worldDir, 'level.dat'), 'data', 'utf-8');
       writeFileSync(join(worldDir, '.meta'), '{}', 'utf-8');
 
+      // worlds/world is this server's world only with --universe (#670)
       setupServer('srv1', {
-        configEnv: 'TYPE=PAPER\nLEVEL=world\n',
+        configEnv: 'TYPE=PAPER\nLEVEL=world\nEXTRA_ARGS=--universe /worlds/\n',
       });
 
       const response = await app.inject({

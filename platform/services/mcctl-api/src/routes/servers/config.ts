@@ -16,6 +16,7 @@ import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } fr
 import { config } from '../../config/index.js';
 import { resolveInside } from '../../lib/safe-path.js';
 import { createConfigService } from '../../services/ConfigService.js';
+import { createWorldUseCase, worldFailure } from '../../lib/world-use-case.js';
 
 // ============================================================
 // Types
@@ -108,6 +109,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         200: UpdateServerConfigResponseSchema,
         400: ErrorResponseSchema,
         404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
@@ -145,7 +147,23 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      const result = configService.updateConfig(name, updates);
+      // A changed LEVEL is a world assignment (#670): checked and written by
+      // the assignment port (R1, R7, server must be stopped) before anything else
+      const levelChanged = level !== undefined && level !== previousConfig.level;
+      if (levelChanged) {
+        const assigned = await createWorldUseCase().assignWorldByName(level, name, { requireExisting: false });
+        if (!assigned.success) {
+          const failure = worldFailure(assigned, 'Failed to change level');
+          return reply.code(failure.status).send(failure.body);
+        }
+      }
+
+      const { level: _level, ...otherUpdates } = updates;
+      const result = configService.updateConfig(name, otherUpdates);
+      if (levelChanged) {
+        result.changedFields.unshift('level');
+        result.restartRequired = true;
+      }
 
       // Build before/after diff for changed fields
       const changes: Record<string, { before: unknown; after: unknown }> = {};
@@ -235,6 +253,13 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           error: 'Conflict',
           message: `Server must be stopped before resetting world (current status: ${status}). Please stop the server first.`,
         });
+      }
+
+      // Only the sole, non-internal user of worlds/<LEVEL> may wipe it (#670)
+      const refused = await createWorldUseCase().checkWorldReset(name);
+      if (refused) {
+        const failure = worldFailure({ error: refused.message, errorCode: refused.code }, 'World cannot be reset');
+        return reply.code(failure.status).send(failure.body);
       }
 
       // Get world name from configuration

@@ -12,15 +12,13 @@ import {
   stopContainer,
   getServerPlayitDomain,
   getOnlinePlayers,
-  WorldManagementUseCase,
   WorldInfoUseCase,
   PrismarineWorldDataReader,
   RconCliAdapter,
-  ApiPromptAdapter,
-  ShellAdapter,
   WorldRepository,
-  ServerRepository,
   Paths,
+  ConfigEnvWorldAssignmentAdapter,
+  checkAssign,
   ModSourceFactory,
   buildModpackCompatibilityMatrix,
   isModpackCompatible,
@@ -56,6 +54,7 @@ import { PlayerLocationsResponseSchema } from '../schemas/world-info.js';
 import { config, childProcessEnv } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
 import { getContainerName } from '../lib/rcon.js';
+import { worldFailure } from '../lib/world-use-case.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 import { delay, runScript, startScriptGroup } from '../lib/script-process.js';
@@ -798,37 +797,29 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
     }
 
-    // When attaching an existing world, verify it exists and is unmapped.
-    if (worldName) {
-      try {
-        const paths = new Paths();
-        const worldUseCase = new WorldManagementUseCase(
-          new ApiPromptAdapter({ confirmValue: true }),
-          new ShellAdapter({ paths }),
-          new WorldRepository(paths),
-          new ServerRepository(paths)
-        );
-        const worlds = await worldUseCase.listWorlds();
-        const target = worlds.find((w) => w.name === worldName);
-        if (!target) {
-          return reply.code(400).send({
-            error: 'BadRequest',
-            message: `World '${worldName}' not found`,
-          });
-        }
-        if (target.servers.length > 0 || target.isLocked) {
-          return reply.code(409).send({
-            error: 'Conflict',
-            message: `World '${worldName}' is already in use by another server`,
-          });
-        }
-      } catch (error) {
-        fastify.log.error(error, 'Failed to validate worldName');
-        return reply.code(500).send({
-          error: 'InternalServerError',
-          message: 'Failed to validate world selection',
+    // R1 for the world the new server will use (#670): worldName, else its
+    // default world <name>, which a deleted server may have left to another.
+    // Adopting a free worlds/<name> stays allowed.
+    try {
+      const paths = new Paths();
+      if (worldName && !(await new WorldRepository(paths).exists(worldName))) {
+        return reply.code(400).send({
+          error: 'BadRequest',
+          message: `World '${worldName}' not found`,
         });
       }
+      const snapshot = await new ConfigEnvWorldAssignmentAdapter(paths).listAssignments();
+      const refused = checkAssign(snapshot, worldName ?? name, name, { newServer: true });
+      if (refused) {
+        const failure = worldFailure({ error: refused.message, errorCode: refused.code }, 'World is not available');
+        return reply.code(failure.status).send(failure.body);
+      }
+    } catch (error) {
+      fastify.log.error(error, 'Failed to validate the world assignment');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'Failed to validate world selection',
+      });
     }
 
     // Build create-server.sh command arguments

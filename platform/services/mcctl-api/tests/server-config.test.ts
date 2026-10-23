@@ -84,6 +84,16 @@ vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
   atomicWriteFileSync: vi.fn(),
 }));
 
+// World assignment use case (#670): PATCH level and world reset go through it
+const worldUseCase = vi.hoisted(() => ({
+  assignWorldByName: vi.fn(),
+  checkWorldReset: vi.fn(),
+}));
+vi.mock('../src/lib/world-use-case.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/lib/world-use-case.js')>()),
+  createWorldUseCase: () => worldUseCase,
+}));
+
 // Mock fs module with path-aware logic
 vi.mock('fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs')>();
@@ -166,6 +176,12 @@ GID=1000
     mockWriteFileSync.mockImplementation(() => {});
     mockReaddirSync.mockReturnValue([]);
     mockRmSync.mockImplementation(() => {});
+    worldUseCase.assignWorldByName.mockImplementation(async (worldName: string, serverName: string) => ({
+      success: true,
+      worldName,
+      serverName,
+    }));
+    worldUseCase.checkWorldReset.mockResolvedValue(null);
   });
 
   describe('GET /api/servers/:name/config', () => {
@@ -527,17 +543,50 @@ GID=1000
         }
       );
 
-      it('accepts a valid new level', async () => {
+      it('assigns a valid new level through the world use case (#670)', async () => {
         mockedServerExists.mockReturnValue(true);
 
         const response = await app.inject({
           method: 'PATCH',
           url: '/api/servers/testserver/config',
-          payload: { level: 'new_world-2' },
+          payload: { level: 'new_world-2', motd: 'Updated MOTD' },
         });
 
         expect(response.statusCode).toBe(200);
-        expect(JSON.parse(response.body).changedFields).toContain('level');
+        const body = JSON.parse(response.body);
+        expect(body.changedFields).toEqual(expect.arrayContaining(['level', 'motd']));
+        expect(body.restartRequired).toBe(true);
+        expect(worldUseCase.assignWorldByName).toHaveBeenCalledWith('new_world-2', 'testserver', {
+          requireExisting: false,
+        });
+        // LEVEL is written by the assignment port, not by the config update
+        expect(String(mockWriteFileSync.mock.calls[0]?.[1])).not.toMatch(/^LEVEL=new_world-2$/m);
+      });
+
+      it.each([
+        ['conflict', 409],
+        ['server_running', 409],
+        ['undetermined', 409],
+        ['internal_world', 409],
+      ])('refuses a new level with %s -> %i and writes nothing (#670)', async (errorCode, status) => {
+        mockedServerExists.mockReturnValue(true);
+        worldUseCase.assignWorldByName.mockResolvedValueOnce({
+          success: false,
+          worldName: 'taken',
+          serverName: 'testserver',
+          error: 'refused',
+          errorCode,
+        });
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload: { level: 'taken', motd: 'Updated MOTD' },
+        });
+
+        expect(response.statusCode).toBe(status);
+        expect(JSON.parse(response.body).message).toBe('refused');
+        expect(mockWriteFileSync).not.toHaveBeenCalled();
       });
 
       it('keeps saving when an existing legacy level is sent back unchanged', async () => {
@@ -551,6 +600,7 @@ GID=1000
         });
 
         expect(response.statusCode).toBe(200);
+        expect(worldUseCase.assignWorldByName).not.toHaveBeenCalled();
       });
     });
 
@@ -636,6 +686,23 @@ GID=1000
   });
 
   describe('POST /api/servers/:name/world/reset', () => {
+    it.each([
+      ['internal_world', 409],
+      ['conflict', 409],
+      ['undetermined', 409],
+    ])('refuses when the assignment check says %s -> %i (#670)', async (code, status) => {
+      mockedServerExists.mockReturnValue(true);
+      mockedGetContainerStatus.mockReturnValue('exited');
+      worldUseCase.checkWorldReset.mockResolvedValueOnce({ code, message: 'not this world' });
+
+      const response = await app.inject({ method: 'POST', url: '/api/servers/testserver/world/reset' });
+
+      expect(response.statusCode).toBe(status);
+      expect(JSON.parse(response.body).message).toBe('not this world');
+      expect(mockRmSync).not.toHaveBeenCalled();
+      expect(worldUseCase.checkWorldReset).toHaveBeenCalledWith('testserver');
+    });
+
     it('should return 404 if server does not exist', async () => {
       mockedServerExists.mockReturnValue(false);
 
