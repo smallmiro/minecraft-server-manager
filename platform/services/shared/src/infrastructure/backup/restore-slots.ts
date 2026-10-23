@@ -58,7 +58,9 @@ export async function swapIntoPlace(root: string, oid: string, targets: RestoreT
       }
     }
     if (complete) {
-      await rm(marker, { force: true });
+      // Every original is back in place; the slot only holds the parked copy of the
+      // commit (still in git). Remove it so it never counts as a successful slot (P2).
+      await rm(slot, { recursive: true, force: true });
       fail('io_failed', `Restore failed and was rolled back: ${(e as Error).message}`);
     }
     fail('io_failed', `Restore failed and could not be fully rolled back; recover manually from ${slot}`, { paths: [slot] });
