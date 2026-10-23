@@ -151,6 +151,35 @@ describe('assign', () => {
     expect(statSync(file).mtimeMs).toBe(before);
   });
 
+  it('writes LEVEL and SEED in one write when a seed is given (#734)', async () => {
+    const file = server('a', `TYPE=PAPER\nLEVEL=old\nSEED=1\n${UNIVERSE}`);
+
+    await adapter.assign('new', 'a', { seed: 'a text seed, with #hash' });
+
+    expect(readFileSync(file, 'utf-8')).toBe(
+      `TYPE=PAPER\nLEVEL=new\nSEED=a text seed, with #hash\n${UNIVERSE}`
+    );
+  });
+
+  it('still writes SEED when the server already holds the world', async () => {
+    const file = server('a', `LEVEL=a\n${UNIVERSE}`);
+
+    await adapter.assign('a', 'a', { seed: '42' });
+
+    expect(readFileSync(file, 'utf-8')).toBe(`LEVEL=a\n${UNIVERSE}SEED=42\n`);
+  });
+
+  it.each(['x\nMODS=http://evil/x.jar', '"" MODS=x', 'x\u0000y'])(
+    'refuses seed %j and leaves config.env unchanged (#726)',
+    async (seed) => {
+      const file = server('a', `LEVEL=a\n${UNIVERSE}`);
+
+      await expect(adapter.assign('new', 'a', { seed })).rejects.toThrow(/SEED/);
+
+      expect(readFileSync(file, 'utf-8')).toBe(`LEVEL=a\n${UNIVERSE}`);
+    }
+  );
+
   it('refuses a world held by another server and leaves both files unchanged (R1)', async () => {
     const a = server('a', `LEVEL=shared\n${UNIVERSE}`);
     const b = server('b', `LEVEL=b\n${UNIVERSE}`);
