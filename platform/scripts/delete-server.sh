@@ -55,7 +55,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 SERVERS_DIR="$PLATFORM_DIR/servers"
 SERVERS_COMPOSE="$SERVERS_DIR/compose.yml"
 MAIN_COMPOSE="$PLATFORM_DIR/docker-compose.yml"
-AVAHI_HOSTS="/etc/avahi/hosts"
+AVAHI_HOSTS="${AVAHI_HOSTS:-/etc/avahi/hosts}"
 
 # Default values
 FORCE_DELETE="false"
@@ -379,21 +379,24 @@ echo -e "${BLUE}[2/4]${NC} Updating servers/compose.yml..."
 
 if [ -f "$SERVERS_COMPOSE" ]; then
     # Backup original
-    cp "$SERVERS_COMPOSE" "$SERVERS_COMPOSE.bak"
-
-    # Remove include entry
-    if grep -q "$SERVER_NAME/docker-compose.yml" "$SERVERS_COMPOSE"; then
-        sed -i "\|$SERVER_NAME/docker-compose.yml|d" "$SERVERS_COMPOSE"
-        echo "   Removed from include section"
-
-        # If no more includes, remove the include: line
-        if ! grep -q "^  - " "$SERVERS_COMPOSE"; then
-            sed -i '/^include:/d' "$SERVERS_COMPOSE"
-            echo "   Removed empty include section"
-        fi
-    else
-        echo "   Server not found in compose.yml"
+    if ! cp -p "$SERVERS_COMPOSE" "$SERVERS_COMPOSE.bak"; then
+        echo -e "${RED}   Error: cannot back up servers/compose.yml; nothing was deleted.${NC}" >&2
+        exit 1
     fi
+
+    # Remove include entry (0 removed, 1 absent, 2 failed: stop before deleting)
+    include_rc=0
+    remove_include_entry "$SERVERS_COMPOSE" "$SERVER_NAME" || include_rc=$?
+    case "$include_rc" in
+        0) echo "   Removed from include section" ;;
+        1) echo "   Server not found in compose.yml" ;;
+        *)
+            echo -e "${RED}   Error: cannot update servers/compose.yml (I/O failure or an include form that is not editable).${NC}" >&2
+            echo "   The server directory was not deleted. Backup kept at $SERVERS_COMPOSE.bak" >&2
+            echo "   Remove the '$SERVER_NAME/docker-compose.yml' include by hand and run again." >&2
+            exit 1
+            ;;
+    esac
 
     # Verify the changes
     if docker compose -f "$MAIN_COMPOSE" config --quiet 2>/dev/null; then
@@ -417,8 +420,8 @@ echo -e "${BLUE}[3/4]${NC} Removing mDNS hostname..."
 if [ "$KEEP_AVAHI" = "true" ]; then
     echo "   Skipped (--keep-avahi specified)"
 elif [ -f "$AVAHI_HOSTS" ]; then
-    if grep -q "$SERVER_NAME.local" "$AVAHI_HOSTS" 2>/dev/null; then
-        if run_with_sudo sed -i "/$SERVER_NAME\.local/d" "$AVAHI_HOSTS" 2>/dev/null; then
+    if avahi_host_registered "$AVAHI_HOSTS" "$SERVER_NAME.local"; then
+        if avahi_remove_host "$AVAHI_HOSTS" "$SERVER_NAME.local"; then
             run_with_sudo systemctl restart avahi-daemon 2>/dev/null || true
             echo -e "   ${GREEN}Removed $SERVER_NAME.local from avahi${NC}"
         else
@@ -426,7 +429,7 @@ elif [ -f "$AVAHI_HOSTS" ]; then
             if has_sudo_password; then
                 echo "   Check if MCCTL_SUDO_PASSWORD is correct"
             else
-                echo "   Set MCCTL_SUDO_PASSWORD env var or remove manually: sudo sed -i '/$SERVER_NAME.local/d' $AVAHI_HOSTS"
+                echo "   Set MCCTL_SUDO_PASSWORD env var or remove the $SERVER_NAME.local line from $AVAHI_HOSTS manually"
             fi
         fi
     else

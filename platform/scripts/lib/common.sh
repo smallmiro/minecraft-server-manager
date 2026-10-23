@@ -117,6 +117,84 @@ run_with_sudo_stdin() {
     run_with_sudo "$@"
 }
 
+# --- Exact-name matching (#660) ----------------------------------------------
+# Names go to awk through ENVIRON and are compared as plain strings, never
+# built into a regex. No GNU-only flags: works with BSD awk/mv/cp (macOS).
+
+# avahi_host_registered <hosts-file> <hostname>
+# True when an uncommented line lists exactly <hostname> as a host field.
+avahi_host_registered() {
+    MCCTL_MATCH="$2" awk '
+        /^[ \t]*#/ { next }
+        { for (i = 2; i <= NF; i++) { if ($i ~ /^#/) break; if ($i == ENVIRON["MCCTL_MATCH"]) found = 1 } }
+        END { exit !found }' "$1" 2> /dev/null
+}
+
+# avahi_hosts_without <hosts-file> <hostname>: file content minus the lines
+# that list exactly <hostname>.
+avahi_hosts_without() {
+    MCCTL_MATCH="$2" awk '
+        /^[ \t]*#/ { print; next }
+        { for (i = 2; i <= NF; i++) { if ($i ~ /^#/) break; if ($i == ENVIRON["MCCTL_MATCH"]) next } print }' "$1"
+}
+
+# remove_include_entry <compose-file> <server>: drops the items of the
+# top-level "include:" block whose value is <server>/docker-compose.yml
+# (plain, "double" or 'single' quoted, optional trailing "# comment"); other
+# list items elsewhere in the file are never touched. An include: left with no
+# items is dropped too. The file is rewritten through a temp file + mv, with
+# the original mode/owner (cp -p).
+# Returns 0 removed, 1 not present (file untouched), 2 failure or a form that
+# cannot be edited (inline "include: [...]" naming the server); the file is
+# untouched in every non-zero case.
+remove_include_entry() {
+    local file="$1" tmp rc=0
+    tmp=$(mktemp "$file.XXXXXX") || return 2
+    cp -p "$file" "$tmp" || { rm -f "$tmp"; return 2; }
+    MCCTL_MATCH="$2/docker-compose.yml" awk '
+        function item_value(l,   v, q) {
+            v = l; sub(/^[ \t]*-[ \t]+/, "", v)
+            q = substr(v, 1, 1)
+            if (q == "\"" || q == "\047") { v = substr(v, 2); i = index(v, q); return i ? substr(v, 1, i - 1) : v }
+            sub(/[ \t]+#.*$/, "", v); sub(/[ \t\r]+$/, "", v); return v
+        }
+        { lines[++n] = $0 }
+        /^include:/ { inc = 1; inc_idx = n; rest = $0; sub(/^include:[ \t]*/, "", rest); sub(/[ \t]*#.*$/, "", rest)
+                      if (rest != "" && index(rest, ENVIRON["MCCTL_MATCH"])) bad = 1; next }
+        inc && /^[^ \t#-]/ { inc = 0 }
+        inc && /^[ \t]*-[ \t]+/ {
+            if (item_value($0) == ENVIRON["MCCTL_MATCH"]) { removed = 1; n--; next }
+            items++
+        }
+        END {
+            if (bad) exit 3
+            for (i = 1; i <= n; i++) if (!(removed && inc_idx && !items && i == inc_idx && lines[i] ~ /^include:[ \t]*(#.*)?$/)) print lines[i]
+            exit !removed
+        }' "$file" > "$tmp" || rc=$?
+    if [ "$rc" -ne 0 ]; then
+        rm -f "$tmp"
+        [ "$rc" -eq 1 ] && return 1
+        return 2
+    fi
+    mv "$tmp" "$file" || { rm -f "$tmp"; return 2; }
+}
+
+# avahi_remove_host <hosts-file> <hostname>: removes the lines listing exactly
+# <hostname>. The new content is built completely in a temp file next to the
+# original (sudo cp -p keeps owner/mode) and swapped in with one sudo mv, so a
+# failure at any step leaves the original intact. Non-zero on failure.
+avahi_remove_host() {
+    local file="$1" new tmp="$1.mcctl-tmp.$$"
+    new=$(avahi_hosts_without "$file" "$2") || return 1
+    if run_with_sudo cp -p "$file" "$tmp" \
+        && printf '%s\n' "$new" | run_with_sudo_stdin tee "$tmp" > /dev/null \
+        && run_with_sudo mv "$tmp" "$file"; then
+        return 0
+    fi
+    run_with_sudo rm -f "$tmp" > /dev/null 2>&1 || true
+    return 1
+}
+
 # Check if sudo password is configured for automation
 has_sudo_password() {
     [[ -n "${MCCTL_SUDO_PASSWORD:-}" ]]

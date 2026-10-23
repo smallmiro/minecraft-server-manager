@@ -65,3 +65,22 @@ exec "$@"'
         [[ "$output" == *"not a valid IPv4"* ]] || return 1
     done
 }
+
+@test "register_avahi_hostname: ironwood.local present -> wood.local is still registered (#660)" {
+    printf '10.0.0.1 ironwood.local\n10.0.0.1 woodXlocal\n' > "$AVAHI_HOSTS"
+    register_avahi_hostname "wood.local" "192.168.1.10" > /dev/null 2>&1
+    grep -qx '192.168.1.10 wood.local' "$AVAHI_HOSTS"
+}
+
+@test "register_avahi_hostname: exact wood.local present -> not added twice (#660)" {
+    printf '10.0.0.1 wood.local\n' > "$AVAHI_HOSTS"
+    run register_avahi_hostname "wood.local" "192.168.1.10"
+    [ "$status" -eq 0 ]
+    [ "$(cat "$AVAHI_HOSTS")" = "10.0.0.1 wood.local" ]
+}
+
+@test "register_avahi_hostname: wood.local only in a comment -> registered (#660)" {
+    printf '# wood.local\n' > "$AVAHI_HOSTS"
+    register_avahi_hostname "wood.local" "192.168.1.10" > /dev/null 2>&1
+    grep -qx '192.168.1.10 wood.local' "$AVAHI_HOSTS"
+}
