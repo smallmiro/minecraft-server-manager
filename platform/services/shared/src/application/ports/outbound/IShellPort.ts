@@ -112,21 +112,25 @@ export interface IShellPort {
 
   /**
    * Push backup
+   * @deprecated Use IWorldBackupPort (#732). Removed in #736.
    */
   backupPush(message?: string): Promise<ShellResult>;
 
   /**
    * Get backup status
+   * @deprecated Use IWorldBackupPort (#732). Removed in #736.
    */
   backupStatus(): Promise<ShellResult>;
 
   /**
    * Get backup history
+   * @deprecated Use IWorldBackupPort (#732). Removed in #736.
    */
   backupHistory(json?: boolean): Promise<ShellResult>;
 
   /**
    * Restore from backup
+   * @deprecated Use IWorldBackupPort (#732). Removed in #736.
    */
   backupRestore(commitHash: string): Promise<ShellResult>;
 

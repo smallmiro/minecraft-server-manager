@@ -19,6 +19,7 @@ export type {
   IBackupUseCase,
   BackupInitResult,
   BackupPushResult,
+  BackupPushOptions,
   BackupStatusResult,
   BackupHistoryResult,
   BackupRestoreResult,
