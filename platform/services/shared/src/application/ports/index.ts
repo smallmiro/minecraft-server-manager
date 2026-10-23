@@ -100,6 +100,7 @@ export type {
   IPlayitAgentPort,
   IHostnameRegistrarPort,
   HostnameRegistrarStatus,
+  HostnameChangeResult,
   IRuntimeEnvironmentPort,
   ToolVersion,
   IServerSpecRepository,
