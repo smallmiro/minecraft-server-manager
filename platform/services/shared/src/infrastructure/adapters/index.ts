@@ -67,3 +67,4 @@ export {
   DockerPlayitAgentAdapter,
   DockerRuntimeEnvironmentAdapter,
 } from './DockerComposeRuntimeAdapter.js';
+export { AvahiHostnameRegistrarAdapter } from './AvahiHostnameRegistrarAdapter.js';

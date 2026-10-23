@@ -1,4 +1,3 @@
-import { execSync } from 'node:child_process';
 import { existsSync, readdirSync, statSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type {
@@ -23,6 +22,7 @@ import {
   DockerPlayitAgentAdapter,
   DockerRuntimeEnvironmentAdapter,
 } from '../infrastructure/adapters/DockerComposeRuntimeAdapter.js';
+import { AvahiHostnameRegistrarAdapter } from '../infrastructure/adapters/AvahiHostnameRegistrarAdapter.js';
 
 export { execCommand, execCommandAsync, execScript, execScriptInteractive } from '../infrastructure/process.js';
 export { parseRconPlayerList } from '../infrastructure/adapters/DockerComposeRuntimeAdapter.js';
@@ -33,6 +33,7 @@ const rconConsole = new DockerServerConsoleAdapter();
 const router = new DockerRouterStatusAdapter();
 const playit = new DockerPlayitAgentAdapter();
 const environment = new DockerRuntimeEnvironmentAdapter();
+const hostnameRegistrar = new AvahiHostnameRegistrarAdapter();
 
 /**
  * Check if Docker is available
@@ -144,29 +145,7 @@ export function getRouterInfo(): RouterInfo {
  * Get avahi-daemon status
  */
 export function getAvahiStatus(): string {
-  // Try systemctl first
-  try {
-    execSync('systemctl is-active --quiet avahi-daemon', { stdio: 'pipe' });
-    return 'running';
-  } catch {
-    // Not running via systemctl
-  }
-
-  // Try OpenRC
-  try {
-    execSync('rc-service avahi-daemon status', { stdio: 'pipe' });
-    return 'running';
-  } catch {
-    // Not running via OpenRC
-  }
-
-  // Check if installed
-  try {
-    execSync('which avahi-daemon', { stdio: 'pipe' });
-    return 'installed (not running)';
-  } catch {
-    return 'not installed';
-  }
+  return hostnameRegistrar.getStatus();
 }
 
 /**
