@@ -3,7 +3,7 @@
  * router hosts and the avahi entry, in create-server.sh's order, replacing
  * its get_host_ip / get_host_ips (bats create-server-avahi.bats).
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import type { NetworkInterfaceInfo } from 'node:os';
 import { tmpdir } from 'node:os';
@@ -99,5 +99,30 @@ describe('resolveHostIps: probes', () => {
 
   it('returns [] when nothing is found', () => {
     expect(resolveHostIps(paths, probes({}))).toEqual([]);
+  });
+});
+
+describe('resolveHostIps: probe cache (the API calls it on every spec load and write)', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('reuses a probe result for a minute instead of running ip/hostname again', () => {
+    vi.useFakeTimers();
+    const p = probes({ route: '1.0.0.0 via 192.168.1.1 dev eth0 src 192.168.1.10' });
+    expect(resolveHostIps(paths, p)).toEqual(['192.168.1.10']);
+    expect(resolveHostIps(paths, p)).toEqual(['192.168.1.10']);
+    expect(p.calls).toEqual(['ip route get 1']);
+
+    vi.advanceTimersByTime(61_000);
+    resolveHostIps(paths, p);
+    expect(p.calls).toEqual(['ip route get 1', 'ip route get 1']);
+  });
+
+  it('still reads .env first on every call', () => {
+    const p = probes({ route: '1.0.0.0 via 192.168.1.1 dev eth0 src 192.168.1.10' });
+    expect(resolveHostIps(paths, p)).toEqual(['192.168.1.10']);
+    env('HOST_IP=10.0.0.1\n');
+    expect(resolveHostIps(paths, p)).toEqual(['10.0.0.1']);
   });
 });

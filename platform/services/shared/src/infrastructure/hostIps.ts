@@ -22,6 +22,15 @@ const systemProbes: HostIpProbes = {
   interfaces: () => networkInterfaces(),
 };
 
+/**
+ * Probe results per probe set, reused for PROBE_TTL_MS. ponytail: the first
+ * lookup after the TTL still runs ip/hostname synchronously (up to 2 s each)
+ * and an address change shows up only after the TTL; make the probes async
+ * (execFile) if that ever matters. `.env` is read on every call.
+ */
+const PROBE_TTL_MS = 60_000;
+const probed = new WeakMap<HostIpProbes, { at: number; ips: string[] }>();
+
 /** Container bridges and veth pairs: never a host address. */
 const VIRTUAL_IFACE = /^(docker0|br-.+|veth.+)$/;
 const IPV4 = /^\d{1,3}(\.\d{1,3}){3}$/;
@@ -47,6 +56,14 @@ export function resolveHostIps(paths: Paths, probes: HostIpProbes = systemProbes
     if (ips.length > 0) return ips;
   }
 
+  const cached = probed.get(probes);
+  if (cached && Date.now() - cached.at < PROBE_TTL_MS) return [...cached.ips];
+  const ips = probe(probes);
+  probed.set(probes, { at: Date.now(), ips });
+  return [...ips];
+}
+
+function probe(probes: HostIpProbes): string[] {
   const ifaces = Object.entries(probes.interfaces());
   const virtual = new Set(
     ifaces.filter(([name]) => VIRTUAL_IFACE.test(name)).flatMap(([, infos]) => (infos ?? []).map((i) => i.address))
