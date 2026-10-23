@@ -5,6 +5,7 @@ import {
   ServerName,
   log,
   autoBackupOnStop,
+  type ContainerStatus,
   type IContainerRuntimePort,
   type IWorldBackupPort,
 } from '@minecraft-docker/shared';
@@ -42,13 +43,32 @@ function resolveServer(options: LifecycleCommandOptions, command: 'start' | 'sto
   return server;
 }
 
+/**
+ * The server's status, or null after reporting that the runtime cannot be
+ * queried: getStatus answers 'not_found' then too (D1), so confirm it with a
+ * strict list (mcctl.sh ran check_docker first).
+ */
+function statusOf(runtime: IContainerRuntimePort, server: ServerName): ContainerStatus | null {
+  const status = runtime.getStatus(server);
+  if (status !== 'not_found') return status;
+  try {
+    runtime.list({ strict: true });
+    return status;
+  } catch (e) {
+    log.error(`Cannot query the container runtime: ${e instanceof Error ? e.message : String(e)}`);
+    return null;
+  }
+}
+
 /** mcctl start <server>: create the container if needed and run it (#734; was mcctl.sh). */
 export async function startCommand(options: LifecycleCommandOptions): Promise<number> {
   const server = resolveServer(options, 'start');
   if (typeof server === 'number') return server;
   const runtime = options.runtime ?? getContainer(options.root).containerRuntime;
 
-  if (runtime.getStatus(server) === 'running') {
+  const status = statusOf(runtime, server);
+  if (status === null) return 1;
+  if (status === 'running') {
     log.warn(`Server '${server.value}' is already running`);
     return ALREADY;
   }
@@ -72,7 +92,8 @@ export async function stopCommand(options: LifecycleCommandOptions): Promise<num
   if (typeof server === 'number') return server;
   const runtime = options.runtime ?? getContainer(options.root).containerRuntime;
 
-  const status = runtime.getStatus(server);
+  const status = statusOf(runtime, server);
+  if (status === null) return 1;
   if (status !== 'running') {
     log.warn(
       status === 'not_found'
