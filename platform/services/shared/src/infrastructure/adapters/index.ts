@@ -60,3 +60,10 @@ export {
   type RenderSpawn,
   type RenderSpawnOptions,
 } from './BlueMapCliRenderer.js';
+export {
+  DockerComposeRuntimeAdapter,
+  DockerServerConsoleAdapter,
+  DockerRouterStatusAdapter,
+  DockerPlayitAgentAdapter,
+  DockerRuntimeEnvironmentAdapter,
+} from './DockerComposeRuntimeAdapter.js';
