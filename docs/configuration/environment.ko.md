@@ -113,7 +113,7 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 | `DOCKER_GID` | compose `router.group_add` | `router`: `mcctl router start` (`mcctl router restart`로는 적용되지 않습니다) |
 | `TZ`, `EXTRA_ARGS` | 모든 서버 컨테이너 (`servers/global.env`) | `servers`: 각 서버를 stop 후 start |
 | `RCON_PASSWORD` (시크릿), `RCON_PORT` | 모든 서버 컨테이너 (`servers/global.env`), CLI `rcon` | `servers` |
-| `BACKUP_GITHUB_TOKEN` (시크릿), `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH` | `backup.sh` (실행마다 `.env` 재읽기), mcctl-api 백업 라우트 (`process.env`) | `api`: `mcctl console service restart --api`. CLI는 즉시 반영됩니다 |
+| `BACKUP_GITHUB_TOKEN` (시크릿), `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH` | CLI와 mcctl-api 백업 (`GitWorldBackupAdapter`가 작업마다 `.env`를 다시 읽음) | `none`: 다음 백업 작업 |
 | `BACKUP_AUTO_ON_STOP` | `mcctl stop` 경로 | `none`: 다음 `mcctl stop` |
 | `PLAYIT_SECRET_KEY` (시크릿) | compose `playit` 서비스 (`SECRET_KEY`) | `playit`: playit를 stop 후 start |
 | `LOG_LEVEL` | **mcctl-api 전용** (dotenv, cwd = MCCTL_ROOT) | `api` |

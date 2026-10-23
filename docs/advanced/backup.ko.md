@@ -16,6 +16,7 @@
 - GitHub 계정
 - 백업용 비공개 저장소
 - `repo` 범위가 있는 Personal Access Token
+- 호스트에 git 2.31 이상(`git --version`). 이보다 낮으면 백업이 명확한 오류로 거부됩니다
 
 ## 설정
 
@@ -132,11 +133,23 @@ mcctl backup restore
 #### CLI 모드
 
 ```bash
-mcctl backup restore abc1234
+mcctl backup restore abc1234          # 확인을 묻습니다
+mcctl backup restore abc1234 --force  # 묻지 않습니다(스크립트용)
 ```
 
+복원 규칙:
+
+- **먼저 모든 서버를 중지하세요.** 실행 중인 서버가 하나라도 있거나 Docker 상태를 조회할 수 없으면 복원을 거부합니다.
+- 결과는 백업 커밋과 정확히 같습니다. 그 커밋 이후에 생긴 파일은 섞이지 않고 제거됩니다.
+- `worlds/.locks`는 건드리지 않습니다.
+- 서버 내부 월드(`servers/<이름>/data/<LEVEL>`)는 커밋에 있는 서버만 복원합니다. 서버의 현재 `LEVEL`이 커밋의 월드와 다르면 거부합니다(`restore_conflict`).
+- 교체된 데이터는 `~/minecraft-servers/backups/restore-previous/<시각>/`에 남습니다. 최근 3개만 두고, 복원이 성공하면 더 오래된 것은 지웁니다.
+
+!!! warning "복원 중 자동 기동"
+    mc-router는 플레이어가 접속하면 서버를 띄울 수 있습니다. 복원은 실행 중인 서버를 두 번 확인하지만, 마지막 확인 뒤 복원이 끝나기 전에 서버가 뜨는 것까지는 막지 못합니다. 복원하기 전에 `mc-router`를 멈추거나 아무도 접속하지 않게 하세요.
+
 !!! danger "데이터 덮어쓰기 경고"
-    복원은 모든 현재 월드 데이터를 덮어씁니다. 먼저 백업하는 것을 고려하세요:
+    복원은 현재 월드 데이터를 교체합니다. 먼저 백업하는 것을 고려하세요:
     ```bash
     mcctl backup push -m "복원 전 백업"
     mcctl backup restore abc1234
@@ -155,82 +168,69 @@ mcctl backup restore abc1234
 BACKUP_AUTO_ON_STOP=true
 ```
 
-### 예약 백업 (cron)
+정지 경로는 `mcctl backup push --auto`를 실행합니다. `--auto`는 입력을 묻지 않고, 다른 백업이 실행 중이면 최대 10분 기다립니다.
 
-예약 백업을 위한 cron 작업을 생성합니다:
+### 예약 백업
 
-```bash
-# crontab 편집
-crontab -e
-```
-
-추가:
+보존 정책이 있는 예약 백업은 `mcctl backup schedule add`(또는 웹 콘솔)를 쓰세요. 일반 cron 작업도 됩니다:
 
 ```cron
-# 매일 오전 4시 백업
-0 4 * * * /usr/local/bin/mcctl backup push -m "예약된 일일 백업"
-
-# 매주 일요일 오전 3시 백업
-0 3 * * 0 /usr/local/bin/mcctl backup push -m "예약된 주간 백업"
+# 매일 오전 4시 백업(--auto: 묻지 않고, 실행 중인 백업을 기다림)
+0 4 * * * /usr/local/bin/mcctl backup push --auto
 ```
 
 ---
 
 ## 백업되는 내용
 
-백업에는 전체 `worlds/` 디렉토리가 포함됩니다:
+- `worlds/` 디렉터리 전체(`worlds/.locks` 제외)
+- 서버 내부 월드: 월드가 `worlds/`에 없는 서버의 `servers/<이름>/data/<LEVEL>`(있으면 `<LEVEL>_nether`, `<LEVEL>_the_end` 포함)
 
-```text
-worlds/
-├── survival/
-│   ├── level.dat
-│   ├── region/
-│   ├── DIM-1/       # 네더
-│   ├── DIM1/        # 엔드
-│   └── ...
-├── creative/
-│   └── ...
-└── modded/
-    └── ...
-```
+실행 중인 서버는 복사 전에 디스크에 기록합니다. 순서는 `save-off` → `save-all flush` → 복사 → `save-on`이고, 백업이 실패해도 `save-on`은 보냅니다. 실행 중인 서버가 RCON에 응답하지 않으면, 쓰는 중인 월드를 복사하지 않고 백업을 실패로 끝냅니다.
+
+마지막 백업 이후 바뀐 것이 없으면 "No changes to backup"으로 성공합니다.
 
 ### 백업에서 제외
 
-- 서버 설정 파일 (servers/*)
-- Docker compose 파일
-- 플러그인/모드 (shared/*)
-- 컨테이너 데이터 (로그, 임시 파일)
+- 서버 설정 파일(`servers/*/config.env`, compose 파일)
+- 플러그인/모드(shared/*)
+- 컨테이너 데이터(로그, 임시 파일)
 
 !!! tip "서버 설정은 별도로 백업"
-    mcctl을 사용하여 서버 설정을 백업하세요:
+    mcctl로 서버 설정을 백업하세요:
     ```bash
-    # 특정 서버 설정 백업
     mcctl server-backup myserver
-
-    # 사용 가능한 백업 목록
     mcctl server-backup myserver --list
-
-    # 서버 설정 복원
     mcctl server-restore myserver
     ```
+
+### 삭제한 월드
+
+마지막 백업에 있던 월드가 없으면, 삭제를 기록하지 않고 백업을 멈춥니다. 마운트가 빠졌을 때 백업에서 모든 월드가 지워지는 것을 막기 위해서입니다. 일부러 지운 월드라면 한 번 동의하세요:
+
+```bash
+mcctl backup push --allow-missing
+```
+
+웹 콘솔에서는 백업 대화상자에서 **Remove worlds I deleted on purpose**를 체크합니다. 예약 백업은 이 옵션을 쓰지 않고, 실패 메시지에 이 명령을 남깁니다. `servers/<이름>/` 디렉터리 전체를 지운 경우는 의도한 삭제로 봅니다.
 
 ---
 
 ## 저장소 구조
 
-첫 번째 백업 후 저장소에는 다음이 포함됩니다:
-
 ```text
 minecraft-worlds-backup/
-├── README.md           # 자동 생성
-├── survival/
-│   ├── level.dat
-│   ├── region/
-│   └── ...
-├── creative/
-│   └── ...
-└── .backup-metadata    # 백업 메타데이터
+├── README.md                 # 자동 생성
+├── worlds/
+│   ├── survival/
+│   └── creative/
+└── servers/
+    └── myserver/
+        ├── world/            # 서버 내부 월드
+        └── world_nether/
 ```
+
+로컬 작업 사본은 `~/minecraft-servers/backups/worlds`입니다. 직접 고치지 마세요.
 
 ---
 
@@ -287,21 +287,48 @@ Error: Repository not found
 2. 저장소가 비공개인지 확인 (공개가 아님)
 3. 토큰이 저장소에 접근할 수 있는지 확인
 
-### 푸시 거부됨
+### 다른 백업이 실행 중
 
 ```
-Error: Push rejected (non-fast-forward)
+Error: Another backup operation is running (push, pid 1234 on host, since ...)
 ```
 
-원격에 로컬에 없는 변경사항이 있습니다. 옵션:
+push, 복원, 보존 정책 정리는 잠금 하나(`~/minecraft-servers/backups/.backup.lock`)를 함께 씁니다. 실행 중인 백업이 없는데 이 오류가 나면(예: 다른 호스트에서 비정상 종료), 표시된 프로세스가 없는지 확인한 뒤 파일을 지우세요.
+
+### 원본에서 월드가 없어짐
+
+[삭제한 월드](#삭제한-월드)를 보세요. `mcctl backup push --allow-missing`은 의도한 삭제일 때만 쓰세요.
+
+### 실행 중인 서버를 중지하세요
+
+서버가 실행 중이면 복원을 거부합니다. `mcctl stop <서버>`로 중지한 뒤 다시 시도하세요.
+
+### 복원이 끝나지 않음
+
+```
+Error: A restore did not finish; recover manually from .../backups/restore-previous/<시각>
+```
+
+복원이 실패했고 되돌리기도 끝까지 하지 못한 상태입니다. 복구하기 전까지 이후의 push와 복원은 모두 막힙니다:
+
+1. `backups/restore-previous/<시각>/INCOMPLETE`를 엽니다. 대상마다 실제 경로(`live`)와 이전 데이터를 둔 곳(`previous`)이 적혀 있습니다.
+2. 대상마다 `live`가 없거나 잘못되었으면 `previous`를 `live`로 되돌립니다. 복원이 이미 옮겨 넣은 데이터는 `.new/` 아래에 있습니다.
+3. `INCOMPLETE` 파일을 지웁니다.
+
+### 지원하지 않는 배치
+
+`unsupported_layout`은 다음 중 하나입니다:
+
+- 월드 안에 심볼릭 링크가 있습니다(심볼릭 링크는 백업·복원하지 않습니다).
+- `worlds/`, `servers/<이름>/`, `backups/`가 서로 다른 파일시스템에 있습니다(복원은 디렉터리를 옮기므로 같은 파일시스템이어야 합니다).
+
+### 예전 `worlds.bak.<시각>` 디렉터리
+
+이전 버전은 복원할 때마다 `worlds/` 옆에 `worlds.bak.<시각>` 사본을 남겼습니다. 이제는 만들지 않습니다. 필요 없으면 직접 지우세요:
 
 ```bash
-# 옵션 1: 강제 푸시 (원격을 덮어씀)
-git -C ~/minecraft-servers/worlds push --force origin main
-
-# 옵션 2: 먼저 풀하고 머지
-git -C ~/minecraft-servers/worlds pull origin main
-mcctl backup push -m "병합된 백업"
+ls -d ~/minecraft-servers/worlds.bak.*
+rm -rf ~/minecraft-servers/worlds.bak.<시각>
 ```
 
 ### 대용량 파일 오류
@@ -313,7 +340,7 @@ Error: File exceeds 100MB limit
 대용량 파일에 Git LFS를 사용합니다:
 
 ```bash
-cd ~/minecraft-servers/worlds
+cd ~/minecraft-servers/backups/worlds
 git lfs install
 git lfs track "*.dat"
 git lfs track "*.mca"

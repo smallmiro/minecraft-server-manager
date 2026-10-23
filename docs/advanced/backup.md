@@ -16,6 +16,7 @@ The backup system provides:
 - GitHub account
 - Private repository for backups
 - Personal Access Token with `repo` scope
+- git 2.31 or newer on the host (`git --version`); older git is refused with a clear error
 
 ## Setup
 
@@ -132,11 +133,23 @@ Shows a list of backups to choose from.
 #### CLI Mode
 
 ```bash
-mcctl backup restore abc1234
+mcctl backup restore abc1234          # asks for confirmation
+mcctl backup restore abc1234 --force  # no prompt (scripts)
 ```
 
+Restore rules:
+
+- **Stop every server first.** Restore is refused while any server is running, and when Docker cannot be queried.
+- The result is exactly the backup commit: files added after that commit are removed, not mixed in.
+- `worlds/.locks` is never touched.
+- Server-internal worlds (`servers/<name>/data/<LEVEL>`) are restored only for servers in the commit. A server whose current `LEVEL` differs from the world in the commit is refused (`restore_conflict`).
+- The data that was replaced is kept in `~/minecraft-servers/backups/restore-previous/<timestamp>/`. The three newest are kept; older ones are deleted after a successful restore.
+
+!!! warning "Auto-scale during restore"
+    mc-router can start a server when a player connects. Restore checks for running servers twice, but a server that starts between the last check and the end of the restore is not prevented. Stop `mc-router` (or make sure no one connects) before restoring.
+
 !!! danger "Data Overwrite Warning"
-    Restore will overwrite all current world data. Consider backing up first:
+    Restore replaces the current world data. Consider backing up first:
     ```bash
     mcctl backup push -m "Backup before restore"
     mcctl backup restore abc1234
@@ -155,82 +168,69 @@ Enable automatic backup when servers stop:
 BACKUP_AUTO_ON_STOP=true
 ```
 
-### Scheduled Backups (cron)
+The stop path runs `mcctl backup push --auto`. `--auto` never prompts and waits up to 10 minutes when another backup is running.
 
-Create a cron job for scheduled backups:
+### Scheduled Backups
 
-```bash
-# Edit crontab
-crontab -e
-```
-
-Add:
+Use `mcctl backup schedule add` (or the web console) for scheduled backups with a retention policy. A plain cron job also works:
 
 ```cron
-# Daily backup at 4 AM
-0 4 * * * /usr/local/bin/mcctl backup push -m "Scheduled daily backup"
-
-# Weekly backup on Sunday at 3 AM
-0 3 * * 0 /usr/local/bin/mcctl backup push -m "Scheduled weekly backup"
+# Daily backup at 4 AM (--auto: no prompt, waits for a running backup)
+0 4 * * * /usr/local/bin/mcctl backup push --auto
 ```
 
 ---
 
 ## What Gets Backed Up
 
-The backup includes the entire `worlds/` directory:
+- The whole `worlds/` directory, except `worlds/.locks`
+- Server-internal worlds: `servers/<name>/data/<LEVEL>` (with `<LEVEL>_nether` and `<LEVEL>_the_end` when present) for servers whose world is not in `worlds/`
 
-```text
-worlds/
-├── survival/
-│   ├── level.dat
-│   ├── region/
-│   ├── DIM-1/       # Nether
-│   ├── DIM1/        # End
-│   └── ...
-├── creative/
-│   └── ...
-└── modded/
-    └── ...
-```
+Running servers are flushed before the copy: `save-off`, `save-all flush`, copy, then `save-on`. `save-on` is sent even when the backup fails. If a running server does not answer RCON, the backup fails instead of copying a world that is being written.
+
+When nothing changed since the last backup, the backup succeeds with "No changes to backup".
 
 ### Excluded from Backup
 
-- Server configuration files (servers/*)
-- Docker compose files
+- Server configuration files (`servers/*/config.env`, compose files)
 - Plugins/mods (shared/*)
 - Container data (logs, temp files)
 
 !!! tip "Backup Server Config Separately"
     Use mcctl to backup server configurations:
     ```bash
-    # Backup specific server config
     mcctl server-backup myserver
-
-    # List available backups
     mcctl server-backup myserver --list
-
-    # Restore server config
     mcctl server-restore myserver
     ```
+
+### Deleted Worlds
+
+If a world that is in the last backup is missing, the backup stops instead of recording the deletion (a missing mount would otherwise delete every world from the backup). If you deleted the world on purpose, consent once:
+
+```bash
+mcctl backup push --allow-missing
+```
+
+In the web console, check **Remove worlds I deleted on purpose** in the push dialog. Scheduled backups never pass this flag; their failure message names the command. Deleting a whole `servers/<name>/` directory counts as intentional.
 
 ---
 
 ## Repository Structure
 
-After the first backup, your repository will contain:
-
 ```text
 minecraft-worlds-backup/
-├── README.md           # Auto-generated
-├── survival/
-│   ├── level.dat
-│   ├── region/
-│   └── ...
-├── creative/
-│   └── ...
-└── .backup-metadata    # Backup metadata
+├── README.md                 # Auto-generated
+├── worlds/
+│   ├── survival/
+│   └── creative/
+└── servers/
+    └── myserver/
+        ├── world/            # server-internal world
+        └── world_nether/
 ```
+
+The local working copy is `~/minecraft-servers/backups/worlds`. Do not edit it by hand.
 
 ---
 
@@ -287,21 +287,48 @@ Error: Repository not found
 2. Verify repository is private (not public)
 3. Ensure token has access to the repository
 
-### Push Rejected
+### Another Backup Is Running
 
 ```
-Error: Push rejected (non-fast-forward)
+Error: Another backup operation is running (push, pid 1234 on host, since ...)
 ```
 
-The remote has changes not in local. Options:
+Push, restore and retention pruning share one lock, `~/minecraft-servers/backups/.backup.lock`. If no backup is running (for example after a crash on another host), check that the listed process is gone and delete the file.
+
+### Worlds Missing From the Source
+
+See [Deleted Worlds](#deleted-worlds): use `mcctl backup push --allow-missing` only when the deletion was intended.
+
+### Stop the Running Servers
+
+Restore is refused while servers run. Stop them (`mcctl stop <server>`) and retry.
+
+### A Restore Did Not Finish
+
+```
+Error: A restore did not finish; recover manually from .../backups/restore-previous/<timestamp>
+```
+
+A restore failed and could not be fully rolled back. Every later push and restore is blocked until you recover:
+
+1. Open `backups/restore-previous/<timestamp>/INCOMPLETE`. It lists each target (`live`) and where its previous data was kept (`previous`).
+2. For each target, move the `previous` path back to `live` if `live` is missing or wrong. Data that the restore had already moved in is under `.new/`.
+3. Delete the `INCOMPLETE` file.
+
+### Unsupported Layout
+
+`unsupported_layout` means one of:
+
+- A world contains a symbolic link (symlinks are not backed up or restored).
+- `worlds/`, `servers/<name>/` and `backups/` are on different filesystems (restore moves directories and needs them on one filesystem).
+
+### Old `worlds.bak.<timestamp>` Directories
+
+Earlier versions left `worlds.bak.<timestamp>` copies next to `worlds/` on every restore. They are no longer created. Delete them by hand when you no longer need them:
 
 ```bash
-# Option 1: Force push (overwrites remote)
-git -C ~/minecraft-servers/worlds push --force origin main
-
-# Option 2: Pull and merge first
-git -C ~/minecraft-servers/worlds pull origin main
-mcctl backup push -m "Merged backup"
+ls -d ~/minecraft-servers/worlds.bak.*
+rm -rf ~/minecraft-servers/worlds.bak.<timestamp>
 ```
 
 ### Large File Error
@@ -313,7 +340,7 @@ Error: File exceeds 100MB limit
 Use Git LFS for large files:
 
 ```bash
-cd ~/minecraft-servers/worlds
+cd ~/minecraft-servers/backups/worlds
 git lfs install
 git lfs track "*.dat"
 git lfs track "*.mca"

@@ -1556,6 +1556,10 @@ mcctl backup push [options]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--message` | `-m` | Commit message |
+| `--auto` | | No prompt; timestamp message; waits up to 10 min for a running backup (used by auto-backup on stop) |
+| `--allow-missing` | | Drop worlds from the backup that were deleted on purpose (see [Backup Guide](../advanced/backup.md#deleted-worlds)) |
+
+Running servers are flushed (`save-off`, `save-all flush`, `save-on`) before the copy. "No changes" is a success.
 
 **Examples:**
 
@@ -1610,14 +1614,14 @@ mcctl backup history [options]
 
     **Output:**
     ```json
-    {
-      "history": [
-        {"commit": "fd8633b", "date": "2026-01-20 21:06:35 +0900", "message": "Backup: 2026-01-20 21:06:30"},
-        {"commit": "19a7a4d", "date": "2026-01-20 20:21:08 +0900", "message": "Backup: 2026-01-20 20:21:06"},
-        {"commit": "7c2ad14", "date": "2026-01-19 22:50:42 +0900", "message": "Manual backup"},
-        {"commit": "ddeda27", "date": "2026-01-17 23:43:24 +0900", "message": "Initial backup"}
-      ]
-    }
+    [
+      {
+        "commitHash": "fd8633b2c1e4a7d9b0f3e6a5c8d1b4e7f0a3c6d9",
+        "message": "Backup: 2026-01-20 21:06:30",
+        "date": "2026-01-20T12:06:35.000Z",
+        "author": "Minecraft Backup"
+      }
+    ]
     ```
 
 ---
@@ -1627,7 +1631,7 @@ mcctl backup history [options]
 Restore world data from a backup.
 
 ```bash
-mcctl backup restore [commit]
+mcctl backup restore [commit] [--force]
 ```
 
 **Arguments:**
@@ -1635,6 +1639,9 @@ mcctl backup restore [commit]
 | Argument | Description |
 |----------|-------------|
 | `commit` | Commit hash (optional, shows list if not provided) |
+| `--force` | Do not ask for confirmation |
+
+Every server must be stopped. The result is exactly the commit, `worlds/.locks` is kept, and the replaced data is kept in `backups/restore-previous/<timestamp>/`. See the [Backup Guide](../advanced/backup.md#restore-from-backup).
 
 **Examples:**
 
