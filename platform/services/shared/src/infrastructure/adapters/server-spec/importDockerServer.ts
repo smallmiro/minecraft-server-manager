@@ -10,7 +10,8 @@ import {
   validateServerSpecDocument,
   type ServerSpecDocument,
 } from '../../../domain/server-spec/ServerSpecDocument.js';
-import { isInterpolated, readInheritedExtraArgs, universeLocation } from '../effectiveExtraArgs.js';
+import { isInterpolated, readInheritedExtraArgs } from '../effectiveExtraArgs.js';
+import { universeLocation, withoutUniverse } from '../../../domain/server-spec/extraArgs.js';
 
 export interface ImportContext {
   paths: Paths;
@@ -51,17 +52,6 @@ export function composeMap(value: unknown): Map<string, string | null> {
     for (const [k, v] of Object.entries(value)) out.set(k, v === null || v === undefined ? null : String(v));
   }
   return out;
-}
-
-/** EXTRA_ARGS without its --universe option (ADR-0003: that is world.storage). */
-function withoutUniverse(extraArgs: string): string {
-  const args = extraArgs.trim().split(/\s+/).filter(Boolean);
-  const out: string[] = [];
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--universe') i++;
-    else if (!args[i]!.startsWith('--universe=')) out.push(args[i]!);
-  }
-  return out.join(' ');
 }
 
 async function readOptional(file: string): Promise<string | undefined> {
