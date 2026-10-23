@@ -23,11 +23,16 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
     private readonly serverConsole?: IServerConsolePort
   ) {}
 
-  /** Fill in who is online (the repository does not); unknown stays 0. */
-  private async loadPlayerCount(server: Server): Promise<void> {
-    if (!server.isRunning || !this.serverConsole) return;
-    const players = await this.serverConsole.listPlayers(server.containerName);
-    if (players) server.setPlayerCount(players.online);
+  /**
+   * Fill in who is online (the repository does not). Returns false when the
+   * server runs but RCON could not tell; without a console port it stays 0.
+   */
+  private async loadPlayerCount(server: Server): Promise<boolean> {
+    if (!server.isRunning || !this.serverConsole) return true;
+    const players = await this.serverConsole.listPlayers(server.containerName).catch(() => null);
+    if (!players) return false;
+    server.setPlayerCount(players.online);
+    return true;
   }
 
   private confirmMessage(deleteWorld: boolean): string {
@@ -55,7 +60,9 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
 
       // Prompt for server selection
       const server = await this.prompt.promptServerSelection(servers);
-      await this.loadPlayerCount(server);
+      if (!(await this.loadPlayerCount(server))) {
+        this.prompt.warn('Could not read the online player count over RCON.');
+      }
 
       // Show server info
       this.prompt.note(
@@ -98,9 +105,13 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
   /**
    * Execute server deletion with provided name
    */
-  async executeWithName(name: string, options: DeleteServerOptions | boolean = {}): Promise<boolean> {
-    // Deprecated boolean `force` form: it never asked before (#715)
-    const opts = typeof options === 'boolean' ? { force: options, yes: true } : options;
+  async executeWithName(name: string, options?: DeleteServerOptions | boolean): Promise<boolean> {
+    // Omitted, undefined or the deprecated boolean `force`: the v2.x behaviour
+    // without a question (#715). Only an options object asks.
+    const opts =
+      options === undefined || typeof options === 'boolean'
+        ? { force: options ?? false, yes: true }
+        : options;
     const { force = false, yes = false, deleteWorld = false } = opts;
     // Check if server exists
     const server = await this.serverRepo.findByName(name);
@@ -108,23 +119,23 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
     if (!server) {
       throw new Error(`Server '${name}' not found`);
     }
-    await this.loadPlayerCount(server);
+    const playersKnown = await this.loadPlayerCount(server);
 
-    // If not force mode and server has players, throw error
-    if (!force && server.isRunning && server.hasPlayers) {
-      // Log audit failure
+    // Refuse without force when players are online, or when that is unknown
+    if (!force && server.isRunning && (!playersKnown || server.hasPlayers)) {
+      const reason = playersKnown
+        ? `has ${server.playerCount} player(s) online`
+        : 'is running and its online players could not be read over RCON';
       await this.auditLog?.log({
         action: AuditActionEnum.SERVER_DELETE,
         actor: 'cli:local',
         targetType: 'server',
         targetName: name,
         status: 'failure',
-        errorMessage: `Server has ${server.playerCount} player(s) online`,
+        errorMessage: `Server ${reason}`,
         details: null,
       });
-      throw new Error(
-        `Server '${name}' has ${server.playerCount} player(s) online. Use --force to delete anyway.`
-      );
+      throw new Error(`Server '${name}' ${reason}. Use --force to delete anyway.`);
     }
 
     if (!yes) {
