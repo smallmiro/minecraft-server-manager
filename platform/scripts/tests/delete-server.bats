@@ -378,6 +378,7 @@ exec /bin/mv "$@"'
 }
 
 @test "delete: wood removes only wood.local from avahi hosts (#660)" {
+    require_gnu_sed  # avahi removal is GNU sed -i (#751); avahi is Linux-only
     add_server wood
     fake_cmd sudo 'while [[ "${1:-}" == -* ]]; do shift; done
 exec "$@"'
