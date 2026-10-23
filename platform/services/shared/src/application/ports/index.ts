@@ -82,6 +82,7 @@ export type {
   IConfigSnapshotStorage,
   IWorldDataReader,
   IRconPort,
+  IPlatformSettingsPort,
   IPlayerRepository,
   UserCacheEntry,
   IPlayerSessionRepository,

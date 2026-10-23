@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import {
   Paths,
+  Config,
   // Infrastructure adapters from shared
   ShellAdapter,
   DockerServerConsoleAdapter,
@@ -233,7 +234,7 @@ export class Container {
       this.promptPort,
       this.shellPort,
       this.serverRepository,
-      this.paths,
+      new Config(this.paths),
       this.worldRepository,
       this.auditLogPort,
       this.modSourcePort,
