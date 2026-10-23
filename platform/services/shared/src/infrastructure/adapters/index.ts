@@ -74,3 +74,5 @@ export {
   type GitWorldBackupAdapterOptions,
 } from './GitWorldBackupAdapter.js';
 export { ConfigEnvWorldAssignmentAdapter } from './ConfigEnvWorldAssignmentAdapter.js';
+export { FileServerSpecRepository } from './server-spec/FileServerSpecRepository.js';
+export type { ServerSpecImport } from './server-spec/importDockerServer.js';
