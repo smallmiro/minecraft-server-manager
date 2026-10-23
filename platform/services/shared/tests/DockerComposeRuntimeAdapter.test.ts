@@ -103,6 +103,19 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
     });
   }
 
+  it('getStatusAsync runs the pre-#665 async docker inspect (with --) and keeps its mapping', async () => {
+    vi.mocked(spawn).mockReturnValueOnce(fakeChild(0, 'Running\n'));
+    expect(await runtime.getStatusAsync('mc-a')).toBe('running');
+    expect(spawn).toHaveBeenCalledWith('docker', ['inspect', '-f', '{{.State.Status}}', '--', 'mc-a'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: undefined,
+    });
+    expect(spawnSync).not.toHaveBeenCalled();
+
+    vi.mocked(spawn).mockReturnValueOnce(fakeChild(1, '', 'No such object'));
+    expect(await runtime.getStatusAsync('mc-a')).toBe('not_found');
+  });
+
   it('exists maps the docker inspect exit code to a boolean', () => {
     expect(runtime.exists('mc-a')).toBe(true);
     expect(execFileSync).toHaveBeenCalledWith('docker', ['inspect', '--', 'mc-a'], { stdio: 'pipe' });

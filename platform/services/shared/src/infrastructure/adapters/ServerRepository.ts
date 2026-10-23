@@ -115,12 +115,13 @@ export class ServerRepository implements IServerRepository {
   }
 
   /**
-   * Get server status from the runtime port. A failed query ('not_found')
-   * counts as stopped, as before; a name no server can have is UNKNOWN.
+   * Get server status from the runtime port, awaited so request paths never
+   * block on docker (#665). A failed query ('not_found') counts as stopped, as
+   * before; a name no server can have is UNKNOWN.
    */
   async getStatus(name: string): Promise<ServerStatus> {
     try {
-      switch (this.runtime.getStatus(ServerName.fromExisting(name))) {
+      switch (await this.runtime.getStatusAsync(ServerName.fromExisting(name))) {
         case 'running':
           return ServerStatus.RUNNING;
         case 'exited':

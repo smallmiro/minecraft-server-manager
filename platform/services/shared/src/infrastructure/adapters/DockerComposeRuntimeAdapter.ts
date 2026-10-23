@@ -87,6 +87,16 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   /**
+   * Async `docker inspect` (the pre-#665 ServerRepository query, with `--`).
+   * Non-zero exit → 'not_found'; otherwise the lower-cased state.
+   */
+  async getStatusAsync(name: ServerName | string): Promise<ContainerStatus> {
+    const result = await execCommandAsync('docker', ['inspect', '-f', '{{.State.Status}}', '--', workloadNameOf(name)]);
+    if (result.code !== 0) return 'not_found';
+    return result.stdout.trim().toLowerCase() as ContainerStatus;
+  }
+
+  /**
    * Get container health status
    */
   getHealth(name: ServerName | string): HealthStatus {

@@ -23,6 +23,11 @@ export interface RuntimeActionResult {
 export interface IContainerRuntimePort {
   /** 'not_found' when absent or when the runtime cannot be queried. */
   getStatus(name: ServerName | string): ContainerStatus;
+  /**
+   * getStatus without blocking the event loop (#665): same sentinel, the query
+   * runs as an awaited child process. For callers on request paths.
+   */
+  getStatusAsync(name: ServerName | string): Promise<ContainerStatus>;
   /** 'none' without a healthcheck, 'unknown' on failure. */
   getHealth(name: ServerName | string): HealthStatus;
   exists(name: ServerName | string): boolean;

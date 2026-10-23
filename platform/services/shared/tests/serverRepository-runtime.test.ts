@@ -14,13 +14,18 @@ import type { ContainerStatus } from '../src/types/index.js';
 
 let root: string;
 let status: ContainerStatus;
-const runtime = { getStatus: vi.fn(() => status) } as unknown as IContainerRuntimePort;
+const runtime = {
+  getStatus: vi.fn(() => {
+    throw new Error('the synchronous query must not be used here');
+  }),
+  getStatusAsync: vi.fn(async () => status),
+} as unknown as IContainerRuntimePort;
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'mcctl-serverrepo-'));
   mkdirSync(join(root, 'servers', 'alpha'), { recursive: true });
   writeFileSync(join(root, 'servers', 'alpha', 'config.env'), 'TYPE=PAPER\n');
-  vi.mocked(runtime.getStatus).mockClear();
+  vi.mocked(runtime.getStatusAsync).mockClear();
 });
 
 afterEach(() => {
@@ -44,9 +49,10 @@ describe('ServerRepository runtime status (#665)', () => {
     expect((await repo.findByName('alpha'))?.status).toBe(expected);
   });
 
-  it('asks the port by ServerName, not by container name', async () => {
+  it('asks the async query by ServerName and never the blocking one', async () => {
     status = 'running';
     await new ServerRepository(new Paths(root), runtime).getStatus('alpha');
-    expect(runtime.getStatus).toHaveBeenCalledWith(ServerName.fromExisting('alpha'));
+    expect(runtime.getStatusAsync).toHaveBeenCalledWith(ServerName.fromExisting('alpha'));
+    expect(runtime.getStatus).not.toHaveBeenCalled();
   });
 });

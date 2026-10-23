@@ -17,7 +17,7 @@ import { ServerRepository } from '../src/infrastructure/adapters/ServerRepositor
 import { Paths } from '../src/utils/index.js';
 import type { IContainerRuntimePort } from '../src/application/ports/index.js';
 
-const runtime = { getStatus: () => 'not_found' } as unknown as IContainerRuntimePort;
+const runtime = { getStatusAsync: async () => 'not_found' } as unknown as IContainerRuntimePort;
 import { WorldOptions } from '../src/domain/value-objects/WorldOptions.js';
 
 describe('world name resolution (#649)', () => {
