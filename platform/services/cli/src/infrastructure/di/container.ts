@@ -16,9 +16,7 @@ import {
   FileSystemConfigSnapshotStorage,
   FileSystemConfigFileCollector,
   GitWorldBackupAdapter,
-  DockerComposeRuntimeAdapter,
   DockerRuntimeEnvironmentAdapter,
-  DockerServerConsoleAdapter,
   // Use cases from shared
   CreateServerUseCase,
   DeleteServerUseCase,
