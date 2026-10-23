@@ -69,6 +69,7 @@ import { config, childProcessEnv } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
 import { getContainerName } from '../lib/rcon.js';
 import { worldFailure } from '../lib/world-use-case.js';
+import { serverSpecFailure } from '../lib/server-spec.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 import { delay, runScript, startScriptGroup } from '../lib/script-process.js';
@@ -977,8 +978,8 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         return reply.code(failure.status).send(failure.body);
       }
       if (error instanceof ServerSpecError) {
-        const status = error.code === 'invalid_spec' ? 400 : 409;
-        return reply.code(status).send({ error: status === 400 ? 'BadRequest' : 'Conflict', message: errorMessage });
+        const failure = serverSpecFailure(error, errorMessage);
+        return reply.code(failure.status).send(failure.body);
       }
       return reply.code(500).send({ error: 'InternalServerError', message: errorMessage });
     }

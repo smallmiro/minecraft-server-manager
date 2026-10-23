@@ -5,6 +5,7 @@ import {
   setEnvKeys,
   updateServerSpec,
   type ServerSpecDocument,
+  type ServerSpecError,
   type SpecEnvChanges,
 } from '@minecraft-docker/shared';
 import { childProcessEnv } from '../config/index.js';
@@ -40,4 +41,18 @@ export function updateServer(
   mutate: (doc: ServerSpecDocument) => ServerSpecDocument
 ): Promise<ServerSpecDocument> {
   return updateServerSpec(serverSpecRepositories.create(mcctlRoot), server, mutate);
+}
+
+/**
+ * HTTP status and body for a refused ServerSpec write (#675): invalid_spec ->
+ * 400, every other code (conflict, locked, undetermined, compose_edited, ...)
+ * -> 409.
+ */
+export function serverSpecFailure(
+  error: ServerSpecError,
+  message: string = error.message
+): { status: 400 | 409; body: { error: string; message: string } } {
+  return error.code === 'invalid_spec'
+    ? { status: 400, body: { error: 'BadRequest', message } }
+    : { status: 409, body: { error: 'Conflict', message } };
 }
