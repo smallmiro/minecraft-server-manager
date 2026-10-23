@@ -80,7 +80,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node platform/services/cli/tools/check-templates.mjs
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @minecraft-docker/mcctl check:templates
+      - run: node --test platform/services/cli/tools/check-templates.test.mjs

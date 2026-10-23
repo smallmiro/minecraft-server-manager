@@ -23,7 +23,7 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
-    "test": "vitest run",
+    "test": "vitest run && node --test tools/check-templates.test.mjs",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
