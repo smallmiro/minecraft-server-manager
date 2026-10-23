@@ -228,6 +228,25 @@ describe('mcctl migrate worlds (Codex #2)', () => {
     expect(output.join('\n')).toContain("'alpha'");
   });
 
+  it('moves the world back when the spec write is refused, so LEVEL and the world stay together', async () => {
+    const file = server('beta', 'LEVEL=world\n');
+    const compose = join(root, 'servers', 'beta', 'docker-compose.yml');
+    // An image the import cannot determine: every spec write for beta is refused.
+    writeFileSync(compose, readFileSync(compose, 'utf-8').replace(/image: .*/, 'image: ${MC_IMAGE}'));
+    mkdirSync(join(root, 'servers', 'beta', 'data', 'world'), { recursive: true });
+    mkdirSync(join(root, 'servers', 'beta', 'data', 'world_nether'), { recursive: true });
+    writeFileSync(join(root, 'servers', 'beta', 'data', 'world', 'level.dat'), 'x');
+
+    expect(await migrateCommand({ root, subCommand: 'worlds', serverName: 'beta', force: true })).toBe(1);
+
+    expect(readFileSync(join(root, 'servers', 'beta', 'data', 'world', 'level.dat'), 'utf-8')).toBe('x');
+    expect(existsSync(join(root, 'servers', 'beta', 'data', 'world_nether'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', 'beta'))).toBe(false);
+    expect(existsSync(join(root, 'worlds', 'beta_nether'))).toBe(false);
+    expect(readFileSync(file, 'utf-8')).toBe('LEVEL=world\n');
+    expect(output.join('\n')).toMatch(/MC_IMAGE|image/);
+  });
+
   it('migrates a server whose target world is free', async () => {
     const file = server('beta', 'LEVEL=world\n');
     mkdirSync(join(root, 'servers', 'beta', 'data', 'world'), { recursive: true });

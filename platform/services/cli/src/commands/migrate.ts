@@ -452,12 +452,18 @@ async function migrateServer(
     await copyDirectory(sourceWorldDir, backupDir);
   }
 
+  // Every move is undone if the spec write below is refused (import refused, locked,
+  // invalid spec): a moved world with the old LEVEL would make the server start a new one.
+  const undo: Array<() => void> = [];
+
   // Step 2: Move world data if it exists in server directory
   if (fs.existsSync(sourceWorldDir) && fs.statSync(sourceWorldDir).isDirectory()) {
     // Check if it's a symlink
     if (fs.lstatSync(sourceWorldDir).isSymbolicLink()) {
       console.log(`  World is already a symlink, removing...`);
+      const link = fs.readlinkSync(sourceWorldDir);
       fs.unlinkSync(sourceWorldDir);
+      undo.push(() => fs.symlinkSync(link, sourceWorldDir));
     } else {
       // Check if target already exists
       if (fs.existsSync(targetWorldDir)) {
@@ -466,6 +472,7 @@ async function migrateServer(
 
       console.log(`  Moving world data to worlds/${server.name}`);
       fs.renameSync(sourceWorldDir, targetWorldDir);
+      undo.push(() => fs.renameSync(targetWorldDir, sourceWorldDir));
     }
   }
 
@@ -481,6 +488,7 @@ async function migrateServer(
       console.log(`  Moving ${dimWorld} to worlds/`);
       if (!fs.existsSync(targetDimDir)) {
         fs.renameSync(sourceDimDir, targetDimDir);
+        undo.push(() => fs.renameSync(targetDimDir, sourceDimDir));
       }
     }
   }
@@ -489,12 +497,29 @@ async function migrateServer(
   console.log(`  Updating config.env`);
   console.log(`  Setting LEVEL=${newLevelValue}`);
   const proposed = parseEnvDocument(newConfig).values;
-  await writeServerConfig(
-    paths,
-    server.name,
-    { set: { LEVEL: newLevelValue, EXTRA_ARGS: proposed.get('EXTRA_ARGS') ?? '--universe /worlds/' } },
-    { allowStorageChange: true }
-  );
+  try {
+    await writeServerConfig(
+      paths,
+      server.name,
+      { set: { LEVEL: newLevelValue, EXTRA_ARGS: proposed.get('EXTRA_ARGS') ?? '--universe /worlds/' } },
+      { allowStorageChange: true }
+    );
+  } catch (error) {
+    const failed: string[] = [];
+    for (const step of undo.reverse()) {
+      try {
+        step();
+      } catch (e) {
+        failed.push((e as Error).message);
+      }
+    }
+    if (undo.length > 0 && error instanceof Error) {
+      error.message += failed.length > 0
+        ? ` (moving the world back failed: ${failed.join('; ')}; move it back to servers/${server.name}/data by hand)`
+        : ' (the world was moved back)';
+    }
+    throw error;
+  }
 }
 
 /**
