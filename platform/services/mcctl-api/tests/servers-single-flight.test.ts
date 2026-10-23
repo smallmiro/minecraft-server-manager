@@ -67,8 +67,23 @@ import { buildApp } from '../src/app.js';
 import { lifecycleLimits } from '../src/routes/servers.js';
 import { fakeProvision } from './fake-provision.js';
 
-/** Let pending handlers run until they block on the lock or a script. */
+/** Give a queued request time to (wrongly) start; only for "has not started" checks. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+/** Poll until the assertion holds, so a slow CI runner does not race the handlers (#757). */
+const until = (assertion: () => void) => vi.waitFor(assertion, { interval: 5, timeout: 5_000 });
+
+/** Wait until `n` creates or delete scripts have started. */
+const started = (n: number) => until(() => expect(log).toHaveLength(n));
+
+/** Requests that reached their handler, which queues them synchronously. */
+let arrivals = 0;
+
+/** Wait until `n` requests reached the queue, then give the last one time to (wrongly) start. */
+const queued = async (n: number) => {
+  await until(() => expect(arrivals).toBe(n));
+  await settle();
+};
 
 /** A create waiting for the test: done() succeeds, fail() rejects. */
 interface PendingCreate {
@@ -91,6 +106,9 @@ describe('server create/delete single-flight (#656)', () => {
     app.addHook('onRequest', async (request, reply) => {
       if (request.url.includes('follow=true')) lastReply = reply;
     });
+    app.addHook('preHandler', async () => {
+      arrivals++;
+    });
   });
 
   afterAll(async () => {
@@ -101,6 +119,7 @@ describe('server create/delete single-flight (#656)', () => {
     calls.scripts.length = 0;
     log.length = 0;
     creates.length = 0;
+    arrivals = 0;
     fakeProvision(
       (config) =>
         new Promise<void>((resolve, reject) => {
@@ -115,14 +134,14 @@ describe('server create/delete single-flight (#656)', () => {
 
   it('queues a delete behind a running create and runs it after', async () => {
     const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'fresh', type: 'PAPER' } });
-    await settle();
+    await started(1);
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-    await settle();
+    await queued(2);
     expect(scripts()).toEqual(['create fresh']);
 
     creates[0]!.done();
     expect((await create).statusCode).toBe(201);
-    await settle();
+    await started(2);
 
     expect(scripts()).toEqual(['create fresh', 'delete-server.sh']);
     calls.scripts[0]!.done();
@@ -131,9 +150,9 @@ describe('server create/delete single-flight (#656)', () => {
 
   it('checks existence inside the lock, so a second create of the same name gets 409', async () => {
     const first = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'twin', type: 'PAPER' } });
-    await settle();
+    await started(1);
     const second = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'twin', type: 'PAPER' } });
-    await settle();
+    await queued(2);
     expect(creates).toHaveLength(1);
 
     vi.mocked(serverExists).mockImplementation((name: string) => name === 'twin');
@@ -145,14 +164,14 @@ describe('server create/delete single-flight (#656)', () => {
 
   it('holds the lock for a streaming create until provisioning ends', async () => {
     const create = app.inject({ method: 'POST', url: '/api/servers?follow=true', payload: { name: 'stream', type: 'PAPER' } });
-    await settle();
+    await started(1);
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-    await settle();
+    await queued(2);
     expect(scripts()).toEqual(['create stream']);
 
     creates[0]!.done();
     await create;
-    await settle();
+    await started(2);
     expect(scripts()).toEqual(['create stream', 'delete-server.sh']);
     calls.scripts[0]!.done();
     expect((await remove).statusCode).toBe(200);
@@ -160,14 +179,14 @@ describe('server create/delete single-flight (#656)', () => {
 
   it('releases the lock when a create fails, and reports the error', async () => {
     const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'broken', type: 'PAPER' } });
-    await settle();
+    await started(1);
     creates[0]!.fail('boom');
     const response = await create;
     expect(response.statusCode).toBe(500);
     expect(response.json().message).toContain('boom');
 
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-    await settle();
+    await started(2);
     expect(scripts()).toEqual(['create broken', 'delete-server.sh']);
     calls.scripts[0]!.done();
     expect((await remove).statusCode).toBe(200);
@@ -175,9 +194,9 @@ describe('server create/delete single-flight (#656)', () => {
 
   it('a client disconnect stops the events, not the provisioning; the queue waits for it (ADR-0003 §5)', async () => {
     const create = app.inject({ method: 'POST', url: '/api/servers?follow=true', payload: { name: 'gone', type: 'PAPER' } });
-    await settle();
+    await started(1);
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-    await settle();
+    await queued(2);
 
     lastReply!.raw.destroy();
     await create.catch(() => undefined);
@@ -185,7 +204,7 @@ describe('server create/delete single-flight (#656)', () => {
     expect(scripts()).toEqual(['create gone']);
 
     creates[0]!.done();
-    await settle();
+    await started(2);
     expect(scripts()).toEqual(['create gone', 'delete-server.sh']);
     calls.scripts[0]!.done();
     expect((await remove).statusCode).toBe(200);
@@ -194,9 +213,9 @@ describe('server create/delete single-flight (#656)', () => {
   it('a create that never ends holds the queue no longer than sseCreateTimeoutMs', async () => {
     lifecycleLimits.sseCreateTimeoutMs = 40;
     const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'hang', type: 'PAPER' } });
-    await settle();
+    await started(1);
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-    await new Promise((resolve) => setTimeout(resolve, 120));
+    await started(2); // after sseCreateTimeoutMs
     expect(scripts()).toEqual(['create hang', 'delete-server.sh']);
     calls.scripts[0]!.done();
     expect((await remove).statusCode).toBe(200);
@@ -211,7 +230,7 @@ describe('server create/delete single-flight (#656)', () => {
 
     it('runs the delete script in its own process group', async () => {
       const request = app.inject({ method: 'DELETE', url: '/api/servers/old' });
-      await settle();
+      await started(1);
       expect(calls.scripts[0]!.options.detached).toBe(true);
       calls.scripts[0]!.done();
       await request;
