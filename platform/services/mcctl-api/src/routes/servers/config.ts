@@ -165,7 +165,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
 
       const { level: _level, ...otherUpdates } = updates;
-      const result = configService.updateConfig(name, otherUpdates);
+      const result = await configService.updateConfig(name, otherUpdates);
       if (levelChanged) {
         result.changedFields.unshift('level');
         result.restartRequired = true;

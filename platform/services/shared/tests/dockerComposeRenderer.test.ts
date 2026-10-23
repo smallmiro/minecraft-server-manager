@@ -171,6 +171,11 @@ describe('docker-compose.yml', () => {
     });
   });
 
+  it('quotes the router label so the v2 label readers still match it', async () => {
+    const { parseRouterHosts } = await import('../src/docker/index.js');
+    expect(parseRouterHosts(render(spec()).compose.content)).toEqual(['survival.local', 'survival.192.168.1.10.nip.io']);
+  });
+
   it('is the same bytes on every render', () => {
     expect(render(spec()).compose.content).toBe(render(spec()).compose.content);
     expect(render(spec()).config.content).toBe(render(spec()).config.content);

@@ -89,7 +89,8 @@ function renderCompose(doc: ServerSpecDocument, hostIps: string[], templateText:
     ...(r.loadingMotd !== undefined && { 'mc-router.auto-scale-loading-motd': r.loadingMotd }),
   };
   const service = { ...svc, container_name: `mc-${doc.name}`, image: doc.image, labels };
-  return yaml.dump({ ...tpl, services: { [`mc-${doc.name}`]: service } }, DUMP_OPTIONS);
+  // Every string quoted: v2 readers match the mc-router.host label as `"..."` (parseRouterHosts, HostnameService).
+  return yaml.dump({ ...tpl, services: { [`mc-${doc.name}`]: service } }, { ...DUMP_OPTIONS, forceQuotes: true });
 }
 
 const includePaths = (e: unknown): unknown[] =>

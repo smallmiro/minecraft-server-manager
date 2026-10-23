@@ -537,7 +537,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         }
       }
 
-      playerFileService.setWhitelistEnabled(name, enabled);
+      await playerFileService.setWhitelistEnabled(name, enabled);
 
       await writeAuditLog({
         action: AuditActionEnum.PLAYER_WHITELIST_TOGGLE,

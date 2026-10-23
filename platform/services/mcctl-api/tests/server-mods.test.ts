@@ -100,6 +100,21 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
 // Mock @minecraft-docker/mod-source-modrinth (auto-register)
 vi.mock('@minecraft-docker/mod-source-modrinth', () => ({}));
 
+// ServerSpec writes (#675) land on the mocked file writer, as the direct writes did
+vi.mock('../src/lib/server-spec.js', async () => {
+  const utils = await import('@minecraft-docker/shared/utils');
+  const fs = await import('fs');
+  const { join } = await import('path');
+  return {
+    writeServerConfig: vi.fn(async (root: string, server: string, changes: { set?: Record<string, string>; remove?: string[] }) => {
+      const file = join(root, 'servers', server, 'config.env');
+      const content = fs.existsSync(file) ? String(fs.readFileSync(file, 'utf-8')) : '';
+      utils.atomicWriteFileSync(file, utils.applyEnvChanges(content, changes, { raw: true }));
+      return {};
+    }),
+  };
+});
+
 vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared/utils')>()),
   atomicWriteFileSync: vi.fn(),

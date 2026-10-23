@@ -5,7 +5,6 @@ import {
   serverExists,
   AuditActionEnum,
   getServerPlayitDomain,
-  setServerPlayitDomain,
   resolvePlayitDomain,
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../../services/audit-log-service.js';
@@ -133,15 +132,12 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
       const previousData = hostnameService.getHostnames(name);
       const previousCustom = previousData.customHostnames;
 
-      const data = hostnameService.updateCustomHostnames(name, customHostnames);
-
-      // Keep PLAYIT_DOMAIN in config.env in step with the label (label already updated above)
+      // PLAYIT_DOMAIN follows the edit of the listed hosts; both change in server.yaml (#675)
       const serversDir = join(config.mcctlRoot, 'servers');
       const currentPlayit = getServerPlayitDomain(name, serversDir);
-      const playitDomain = resolvePlayitDomain(currentPlayit, previousCustom, data.customHostnames);
-      if (playitDomain !== currentPlayit) {
-        setServerPlayitDomain(name, playitDomain, serversDir);
-      }
+      const nextCustom = customHostnames.map((h) => h.trim().toLowerCase());
+      const playitDomain = resolvePlayitDomain(currentPlayit, previousCustom, nextCustom);
+      const data = await hostnameService.updateCustomHostnames(name, customHostnames, playitDomain);
 
       await writeAuditLog({
         action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,

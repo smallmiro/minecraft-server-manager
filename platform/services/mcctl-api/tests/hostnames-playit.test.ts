@@ -7,7 +7,6 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
   serverExists: vi.fn(),
   getServerPlayitDomain: vi.fn(),
-  setServerPlayitDomain: vi.fn(),
   AuditActionEnum: {},
 }));
 
@@ -58,7 +57,7 @@ describe('PUT /api/servers/:name/hostnames - playit domain sync', () => {
     const { getServerPlayitDomain } = await import('@minecraft-docker/shared');
     vi.mocked(getServerPlayitDomain).mockReturnValue(current);
     hostnameService.getHostnames.mockReturnValue(hostData(previous));
-    hostnameService.updateCustomHostnames.mockReturnValue(hostData(next));
+    hostnameService.updateCustomHostnames.mockResolvedValue(hostData(next));
     return app.inject({
       method: 'PUT',
       url: '/api/servers/factory/hostnames',
@@ -67,42 +66,39 @@ describe('PUT /api/servers/:name/hostnames - playit domain sync', () => {
   }
 
   it('replaces PLAYIT_DOMAIN when the playit host is swapped for one new host', async () => {
-    const { setServerPlayitDomain } = await import('@minecraft-docker/shared');
-
     const res = await save(['old.gl.joinmc.link'], ['new.tun.ply.gg'], 'old.gl.joinmc.link');
 
     expect(res.statusCode).toBe(200);
-    expect(vi.mocked(setServerPlayitDomain)).toHaveBeenCalledWith('factory', 'new.tun.ply.gg', expect.any(String));
+    // custom hosts and PLAYIT_DOMAIN change together in server.yaml (#675)
+    expect(hostnameService.updateCustomHostnames).toHaveBeenCalledWith('factory', ['new.tun.ply.gg'], 'new.tun.ply.gg');
     expect(res.json().playitDomain).toBe('new.tun.ply.gg');
   });
 
   it('clears PLAYIT_DOMAIN when the playit host is only removed', async () => {
-    const { setServerPlayitDomain } = await import('@minecraft-docker/shared');
-
     const res = await save(['old.gl.joinmc.link', 'mc.example.com'], ['mc.example.com'], 'old.gl.joinmc.link');
 
     expect(res.statusCode).toBe(200);
-    expect(vi.mocked(setServerPlayitDomain)).toHaveBeenCalledWith('factory', null, expect.any(String));
+    expect(hostnameService.updateCustomHostnames).toHaveBeenCalledWith('factory', ['mc.example.com'], null);
     expect(res.json().playitDomain).toBeNull();
   });
 
   it('keeps a PLAYIT_DOMAIN that was never in the label when one host is added', async () => {
-    const { setServerPlayitDomain } = await import('@minecraft-docker/shared');
-
     const res = await save([], ['mc.example.com'], 'legacy.gl.joinmc.link');
 
     expect(res.statusCode).toBe(200);
-    expect(vi.mocked(setServerPlayitDomain)).not.toHaveBeenCalled();
+    expect(hostnameService.updateCustomHostnames).toHaveBeenCalledWith('factory', ['mc.example.com'], 'legacy.gl.joinmc.link');
     expect(res.json().playitDomain).toBe('legacy.gl.joinmc.link');
   });
 
   it('leaves PLAYIT_DOMAIN untouched when the playit host is kept', async () => {
-    const { setServerPlayitDomain } = await import('@minecraft-docker/shared');
-
     const res = await save(['old.gl.joinmc.link'], ['old.gl.joinmc.link', 'mc.example.com'], 'old.gl.joinmc.link');
 
     expect(res.statusCode).toBe(200);
-    expect(vi.mocked(setServerPlayitDomain)).not.toHaveBeenCalled();
+    expect(hostnameService.updateCustomHostnames).toHaveBeenCalledWith(
+      'factory',
+      ['old.gl.joinmc.link', 'mc.example.com'],
+      'old.gl.joinmc.link'
+    );
     expect(res.json().playitDomain).toBe('old.gl.joinmc.link');
   });
 });

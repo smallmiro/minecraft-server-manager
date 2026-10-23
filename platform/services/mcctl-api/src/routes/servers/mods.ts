@@ -127,7 +127,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
 
       const sourceName = source || ModSourceFactory.getDefaultSource();
-      const { added, mods } = modConfigService.addMods(name, slugs, sourceName);
+      const { added, mods } = await modConfigService.addMods(name, slugs, sourceName);
 
       await writeAuditLog({
         action: AuditActionEnum.MOD_ADD,
@@ -185,7 +185,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         return reply.code(404).send({ error: 'NotFound', message: `Configuration for server '${name}' not found` });
       }
 
-      const { removed, sourceName } = modConfigService.removeMod(name, slug);
+      const { removed, sourceName } = await modConfigService.removeMod(name, slug);
 
       if (!removed) {
         return reply.code(404).send({ error: 'NotFound', message: `Mod '${slug}' not found in server configuration` });
@@ -506,7 +506,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      const { excludeKey, excludeList } = modConfigService.toggleModExclude(name, filename, excluded);
+      const { excludeKey, excludeList } = await modConfigService.toggleModExclude(name, filename, excluded);
 
       await writeAuditLog({
         action: AuditActionEnum.MOD_ADD,
