@@ -23,7 +23,7 @@
 |---|------|------|
 | 1 | D1에서 포트 6개를 만든다: `IContainerRuntimePort`, `IServerConsolePort`, `IRouterStatusPort`, `IPlayitAgentPort`, `IHostnameRegistrarPort`, `IRuntimeEnvironmentPort` | 이슈 Solution 1 |
 | 2 | 메서드는 **지금 옮겨 올 호출처가 있을 때만** 포트에 넣는다(`docker/index.ts` 함수, 또는 D2·D3이 옮길 CLI·API의 직접 호출) | YAGNI. D2와 D3이 shared를 고치지 않고 병렬로 진행할 수 있다(SYNC-3) |
-| 3 | `IServerSpecRepository`와 `IWorldAssignmentPort`는 **타입 전용 파일 두 개로 만들고 provisional로 표시한다** | 구현도 호출처도 없다. ServerSpec 스키마(§9.2)와 A4 배정 모델이 확정되면 D5/A4가 모양을 바꾼다. `ServerSpec`은 D5가 대체할 최소 placeholder다. `IWorldAssignmentPort`는 #670에서 확정했다(아래 참조) |
+| 3 | `IServerSpecRepository`와 `IWorldAssignmentPort`는 **타입 전용 파일 두 개로 만들고 provisional로 표시한다** | 구현도 호출처도 없다. ServerSpec 스키마(§9.2)와 A4 배정 모델이 확정되면 D5/A4가 모양을 바꾼다. `ServerSpec`은 D5가 대체할 최소 placeholder다. 이후 `IWorldAssignmentPort`는 ADR-0002(#670), `IServerSpecRepository`는 [ADR-0003](0003-server-spec.ko.md)(#675)에서 확정했다 |
 | 4 | **두 번째 어댑터(#641)가 생기기 전까지 계약은 잠정적이다.** D4·A7·C2·D5가 시그니처를 바꿀 수 있다 | 호출처는 TS 컴파일러가 찾아 준다. 바꿀 때마다 이 ADR을 고친다 |
 | 5 | 지금 동기인 메서드는 **동기를 유지한다**. 비동기화는 C2에서 한다 | 동기 래퍼가 비동기 포트에 위임할 수 없으므로, 바꾸려면 호출처를 전부 바꿔야 한다 |
 | 6 | **오류 모델을 바꾸지 않는다**: 센티널 값(`'not_found'`, `'unknown'`, `''`, `null`, `false`, `'-'`)과 throw하지 않는 결과 객체를 그대로 쓴다 | "확인 불가"와 "없음"의 구분(`RuntimeUnavailableError`)은 A7의 동작 변경이다 |
@@ -46,6 +46,8 @@
 | `IRouterStatusPort` | `getHealth()` (`getRouterHealthViaApi`), `getHostnames(name)` (`getContainerHostname`) | 동기 |
 | `IPlayitAgentPort` | `start()`, `stop()` | 비동기 |
 | `IHostnameRegistrarPort` | `getStatus()` (`getAvahiStatus`) | 동기 |
+| | `register(hostname, ip)`(#675), `unregister(hostname)`(#735) → `HostnameChangeResult { status: 'changed' \| 'unchanged' \| 'skipped'; reason? }`. 정확히 일치하는 이름만 다룬다(#660) | 비동기, reject하지 않음 |
+| `IServerSpecRepository`(#675, ADR-0003) | `list()` → 서버 이름, `get(name)` → `{ spec, revision, warnings }`(`server.yaml`이 없으면 메모리에서 가져오기, 쓰지 않음), `save(spec, { expectedRevision?, create?, force? })`, `delete(name)`(#735). 오류는 `ServerSpecError`(`invalid_spec` → 400, `not_found` → 404, 나머지 409) | 비동기 |
 | `IRuntimeEnvironmentPort` | `isAvailable()`, `getEngineVersion()`, `getComposeVersion()` | 동기 |
 
 **수명주기 구현**:
@@ -109,8 +111,8 @@ v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유�
 |----------|----------------------|-------------------|
 | `logs.sh`(#731에서 제거) | `getLogs`, `followLogs({ tail, follow })`, `readLogs` | 출력 형식은 CLI 표현 문제다. avahi `journalctl` 보기는 삭제했다(`journalctl -u avahi-daemon`을 직접 실행). `followLogs`에 선택 인자 `tail`(기본 0)과 `follow`(기본 true)를 추가해(기존 호출처 불변) "마지막 N줄 다음 follow"를 한 스트림으로 내고, `follow: false`는 마지막 N줄을 stdout·stderr 모두 출력한 뒤 종료한다. `onExit(code, error?)`는 docker 종료 코드나 spawn 오류를 한 번 알리며 promise는 v2.x 계약대로 항상 resolve된다. 호출자는 이로 `docker logs` 실패를 0이 아닌 종료 코드로 바꾼다 |
 | `mcctl.sh` | `start`, `stop`, `getStatus`. 콘솔은 `getEndpoint`와 기존 TCP 클라이언트로 처리한다 | TTY를 넘기는 `attach()`는 만들지 않는다 |
-| `delete-server.sh` | `stop` | `remove`, `unregister`, `IServerSpecRepository.delete`(아직 TS 호출처가 없다) |
-| `create-server.sh` | `start` | `apply(spec)`, `register`, `save`(D5) |
+| `delete-server.sh` | `stop` | `remove`, `unregister`, `IServerSpecRepository.delete`(시그니처는 #675에서 기록, 구현은 #735) |
+| `create-server.sh` | `start` | `IServerSpecRepository.save({ create: true })`(compose·include 생성), `register`(#675, ADR-0003 §5). `apply(spec)`는 만들지 않는다: k8s에서는 `save`가 렌더링과 적용을 맡는다 |
 | `backup.sh` | `console.command`로 `save-off`, `save-all flush`, `save-on` | git 저장소는 `IWorldBackupPort`가 맡는다([백업 포트](#백업-포트732-s3)) |
 | `lock.sh` | — | `LEVEL`에서 파생하는 `IWorldAssignmentPort.assign`/`release`로 대체. #670에서 `lock.sh` 삭제([ADR-0002](0002-world-server-assignment.ko.md)) |
 | `render-map.sh`(#733에서 제거) | — | Docker `IMapRenderer` 어댑터 `BlueMapCliRenderer`로 옮겼다(k8s에서는 Job) |

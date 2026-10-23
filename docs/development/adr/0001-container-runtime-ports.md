@@ -20,7 +20,7 @@ This issue is a **structural change only (Tidy First)**. Runtime behaviour, argv
 
 1. **Six runtime ports in D1**: `IContainerRuntimePort`, `IServerConsolePort`, `IRouterStatusPort`, `IPlayitAgentPort`, `IHostnameRegistrarPort`, `IRuntimeEnvironmentPort`.
 2. **Method rule**: a method goes into a port only if a current call site will move to it: a function in `docker/index.ts`, or a direct `docker` call in the CLI or API that D2/D3 will migrate. Methods needed only by future k8s or #715 work are deferred. D1 fixes the port surface so that D2 and D3 can work in parallel without editing shared (SYNC-3).
-3. **`IServerSpecRepository` and `IWorldAssignmentPort` are reserved as type-only files.** The issue asks for them "interface only", so D1 creates them with the sketched signatures, marked provisional. They have no implementation and no caller in D1. Their shapes depend on designs that are still open (ServerSpec schema, §9.2; the A4 assignment model), so D5 and A4 may rewrite them. See [Reserved ports](#reserved-ports). A4 has done so (2026-10-23, [ADR-0002](0002-world-server-assignment.md)); `IServerSpecRepository` stays reserved.
+3. **`IServerSpecRepository` and `IWorldAssignmentPort` are reserved as type-only files.** The issue asks for them "interface only", so D1 creates them with the sketched signatures, marked provisional. They have no implementation and no caller in D1. Their shapes depend on designs that are still open (ServerSpec schema, §9.2; the A4 assignment model), so D5 and A4 may rewrite them. See [Reserved ports](#reserved-ports). Both are now settled: `IWorldAssignmentPort` by [ADR-0002](0002-world-server-assignment.md) (#670), `IServerSpecRepository` by [ADR-0003](0003-server-spec.md) (#675).
 4. **Contracts are provisional until a second adapter exists.** Until #641 adds the k8s adapter, D4, A7, C2, and D5 may change signatures. The TypeScript compiler finds every call site. Each change updates this ADR.
 5. **Synchronous where the code is synchronous today.** Methods backed by `execSync`/`spawnSync`/`execFileSync` stay synchronous. Methods that are async today stay async. C2 converts the port to `Promise` everywhere.
 6. **Error model is unchanged**: sentinels (`'not_found'`, `'unknown'`, `''`, `null`, `false`, `'-'`) and result objects that never throw, exactly as today. "Cannot tell" and "absent" stay conflated until A7 adds `RuntimeUnavailableError`.
@@ -114,8 +114,14 @@ export interface IPlayitAgentPort {
 
 // IHostnameRegistrarPort.ts
 export type HostnameRegistrarStatus = 'running' | 'installed (not running)' | 'not installed';
+/** Added by #675 (ADR-0003). 'skipped' = no/invalid IPv4, registrar missing, or sudo failed. */
+export interface HostnameChangeResult { status: 'changed' | 'unchanged' | 'skipped'; reason?: string; }
 export interface IHostnameRegistrarPort {
   getStatus(): HostnameRegistrarStatus;
+  /** #675: add `<ip> <hostname>` (exact-match check, #660). Never rejects. */
+  register(hostname: string, ip: string): Promise<HostnameChangeResult>;
+  /** #735: remove lines that list exactly `hostname`. Never rejects. */
+  unregister(hostname: string): Promise<HostnameChangeResult>;
 }
 
 // IRuntimeEnvironmentPort.ts
@@ -131,13 +137,43 @@ export interface IRuntimeEnvironmentPort {
 
 `IRconPort` (`getEntityPosition`) stays as it is. D4 decides whether to re-implement `RconCliAdapter` on top of `IServerConsolePort.command` or to merge the two ports.
 
+### IServerSpecRepository (#675)
+
+Final shape from [ADR-0003](0003-server-spec.md) (schema in its §1). No new port: `save` renders the generated files through an infrastructure-internal `ServerSpecRenderer` (Docker compose now, k8s manifests in #641), so `IContainerRuntimePort` needs no `apply(spec)`.
+
+```ts
+// IServerSpecRepository.ts (replaces the D1 placeholder; ServerSpec moves to domain/server-spec and is re-exported here under the same name)
+export interface LoadedServerSpec {
+  spec: ServerSpec;
+  revision: string | null;   // sha256 of server.yaml; null = imported in memory, no server.yaml yet
+  warnings: string[];        // absorbed config.env edits, protected compose, import notes
+}
+export interface SaveServerSpecOptions {
+  expectedRevision?: string | null; // from get(); mismatch → ServerSpecError 'conflict'
+  create?: boolean;                 // claim servers/<n> with mkdir, add the include entry, roll back on failure
+  force?: boolean;                  // overwrite hand-edited generated files after writing a .bak
+}
+export interface IServerSpecRepository {
+  /** Names of servers with server.yaml or config.env. */
+  list(): Promise<string[]>;
+  /** Imports in memory when server.yaml is missing; absorbs config.env hand edits. Never writes. */
+  get(name: string): Promise<LoadedServerSpec | null>;
+  save(spec: ServerSpec, options?: SaveServerSpecOptions): Promise<void>;
+  /** #735: removes the include entry (exact name) and the definition files; data/ and worlds/ are the use case's. */
+  delete(name: string): Promise<void>;
+}
+// Errors: ServerSpecError (domain) with code 'invalid_spec' | 'not_found' | 'already_exists' | 'conflict'
+//   | 'edit_conflict' | 'compose_edited' | 'undetermined' | 'unsupported_spec_version'.
+//   API: invalid_spec → 400, not_found → 404, everything else → 409.
+```
+
 ### Reserved ports
 
 Created in D1 as type-only files with the sketch from the hardening plan §9.1, each with a "provisional" JSDoc. They are async (new code, no synchronous caller to preserve) and import nothing from infrastructure.
 
 | Port | Owner | D1 signature | Why provisional |
 |------|-------|--------------|-----------------|
-| `IServerSpecRepository` | D5 (#675) | `list(): Promise<ServerSpec[]>`, `get(name): Promise<ServerSpec \| null>`, `save(spec): Promise<void>`, `delete(name): Promise<void>`; `ServerSpec` is a placeholder `{ name: string }` | The real `ServerSpec` schema is a D5 design item (§8, §9.2). D5 replaces the placeholder type. |
+| `IServerSpecRepository` | D5 (#675) | `list(): Promise<ServerSpec[]>`, `get(name): Promise<ServerSpec \| null>`, `save(spec): Promise<void>`, `delete(name): Promise<void>`; `ServerSpec` is a placeholder `{ name: string }` | **Settled by [ADR-0003](0003-server-spec.md)**, see [IServerSpecRepository (#675)](#iserverspecrepository-675) above. |
 | `IWorldAssignmentPort` | A4 (#670) | `getAssignment(world): Promise<string \| null>`, `listAssignments(): Promise<WorldAssignment[]>` (`{ world, server }`), `assign(world, server): Promise<void>` (rejects on an R1 violation) | **Superseded, final below.** |
 
 **`IWorldAssignmentPort`, final (#670, [ADR-0002](0002-world-server-assignment.md))**. Assignments are derived from each server's `LEVEL` in `config.env`; there is no separate record. It stays a port (#715: no new ports), and the rules live in pure domain functions (`shared/src/domain/services/worldAssignment.ts`) that adapters reuse.
@@ -208,7 +244,7 @@ docker/index.ts                                 legacy facade: 48 exports, leaf 
 | `stop(name)` | `docker stop -- <name>`, env, no timeout | `mcctl.sh stop` (`:464`), `stopContainer`, CLI `migrate.ts:557`, API delete route |
 | `restart(name)` | `docker compose restart <name>`, cwd = root, env + `COMPOSE_FILE`, timeout 60 s | API `executeServerAction('restart')` (only caller) |
 
-- `start` means "create if missing". `docker start` cannot start a server whose container was never created (`not_created` in the UI). For k8s, `start` is a scale to 1 (after `apply` in D5).
+- `start` means "create if missing". `docker start` cannot start a server whose container was never created (`not_created` in the UI). For k8s, `start` is a scale to 1 after `IServerSpecRepository.save` has rendered and applied the manifests (ADR-0003).
 - `stop` follows the majority (3 of 4 paths use `docker stop`). The API actions route uses `docker compose stop` today, so its move in D2 is a behaviour change and needs its own commit (see open questions).
 - **argv rule**: every Docker command that takes a workload name puts `--` before the name, as #720 does. Leaf functions already do this. New methods (`stop`, `readLogs`, `followLogs`, `command`, `getEndpoint`) add it. Names that reach these calls are already validated, so the only effect is defence in depth. Compose commands (`start`, `restart`) keep the API's current argv.
 - Timeouts stay as they are today (`listPlayers` 5 s, `readLogs` 10 s with a 10 MiB buffer, compose 60 s, router probe 3 s, the rest none). C2 sets them uniformly.
@@ -267,7 +303,7 @@ Callers are production imports (`src/`, tests excluded). "facade" means callers 
 
 **Composites → stay in the facade verbatim (12)**: `getServerInfo`, `getRouterInfo`, `getPlatformStatus` (cli `status`), `getDetailedServerInfo`, `getDetailedServerInfoWithPlayers` (cli `status`), `getRouterDetailInfo` (cli `status`, api `routes/router`), `getServerInfoFromConfig` (api `routes/playit`, `routes/servers`), `getAllServers` (api `routes/players`, `routes/playit`, `routes/servers`), `serverExists` (7 api files), `getDetailedServerInfoFromConfig`, `getServerDetailedInfo` (api `routes/servers`), `getPlayitAgentStatus` (cli `playit`, api `routes/playit`, `routes/router`). They combine runtime state with config files. Their target is an application query service that takes ports (see open questions).
 
-**Pure or config-file functions → no port (12)**: `parseRconPlayerList` (lives in `DockerComposeRuntimeAdapter.ts` next to `listPlayers`, because adapters cannot import the facade; the facade re-exports it), `formatBytes`, `parseRouterHosts`, `replaceRouterHosts`, `resolvePlayitDomain` (pure); `getWorldsDir`, `getServersDir`, `getWorldDirectorySize` (plan §9.1: moves to `WorldRepository`, async); `getConfiguredServers`, `readServerConfigEnv`, `getServerPlayitDomain`, `setServerPlayitDomain` (config files, later `IServerSpecRepository` in D5; env parsing is unified by A6).
+**Pure or config-file functions → no port (12)**: `parseRconPlayerList` (lives in `DockerComposeRuntimeAdapter.ts` next to `listPlayers`, because adapters cannot import the facade; the facade re-exports it), `formatBytes`, `parseRouterHosts`, `replaceRouterHosts`, `resolvePlayitDomain` (pure); `getWorldsDir`, `getServersDir`, `getWorldDirectorySize` (plan §9.1: moves to `WorldRepository`, async); `getConfiguredServers`, `readServerConfigEnv`, `getServerPlayitDomain`, `setServerPlayitDomain` (config files; their writes move behind `IServerSpecRepository` in #675, ADR-0003 §6; env parsing is unified by A6).
 
 ## Direct Call Sites
 
@@ -332,15 +368,15 @@ Config files: `platform/services/{shared,cli,mcctl-api}/.eslintrc.json` (ESLint 
 |--------|--------------|---------------------|-------------------|
 | `logs.sh` (removed in #731) | tail, follow, `--since`, `--timestamps` | `getLogs`, `followLogs({ tail, follow })`, `readLogs` | `--file`/`--json` formatting is CLI presentation, not a port. The avahi `journalctl` view was dropped; run `journalctl -u avahi-daemon` directly. `followLogs` gained optional `tail` (default 0) and `follow` (default true), so existing callers are unchanged. "Last N lines, then follow" is one stream, and `follow: false` prints the last N lines from stdout and stderr, and `onExit` lets a caller turn a failed `docker logs` into a non-zero exit code |
 | `mcctl.sh` | start/stop/status, `docker exec -i rcon-cli` console | `start`, `stop`, `getStatus`; console via `getEndpoint` + the existing TCP client (`rcon-client`) | an interactive `attach()` with TTY passthrough; use TCP instead |
-| `delete-server.sh` | stop, remove container, remove compose include, avahi unregister, keep world (D-2) | `stop` | `remove({ purgeData })`, `IHostnameRegistrarPort.unregister`, `IServerSpecRepository.delete`. No TS caller yet; D5/#715 |
+| `delete-server.sh` | stop, remove container, remove compose include, avahi unregister, keep world (D-2) | `stop` | `remove({ purgeData })`, `IHostnameRegistrarPort.unregister`, `IServerSpecRepository.delete` (signatures recorded by #675; implemented in #735) |
 | `lock.sh` | world locks | — | replaced by `IWorldAssignmentPort.assign`/`release` derived from `LEVEL`; `lock.sh` removed in #670 ([ADR-0002](0002-world-server-assignment.md)) |
 | `player.sh` | Mojang API lookup | — | removed in #730 (`mcctl player info` covers it) |
 | `backup.sh` | git backup of worlds | flush via `console.command`: `save-off`, `save-all flush`, `save-on` | git storage is `IWorldBackupPort`, not runtime ([Backup Port](#backup-port-732-s3)) |
 | `render-map.sh` (removed in #733) | `docker image build`, `docker run --rm` BlueMap | — | moved into the Docker `IMapRenderer` adapter, `BlueMapCliRenderer` (k8s: Job) |
-| `create-server.sh` | compose generation, include, avahi register, `compose up` | `start` | `apply(spec)`, `IHostnameRegistrarPort.register`, `IServerSpecRepository.save` (D5) |
+| `create-server.sh` | compose generation, include, avahi register, `compose up` | `start` | `IServerSpecRepository.save({ create: true })` (renders compose, include), `IHostnameRegistrarPort.register` (#675, ADR-0003 §5); no `apply(spec)` |
 | `init.sh` | network, platform setup | — | removed in #729; `mcctl init` is TS and platform install is not a runtime port |
 
-Nothing in this table needs a method added to the D1 ports now. Every deferred method has no TypeScript caller today.
+Nothing in this table needed a method in D1. #715 (2026-10-23) adds the deferred methods to existing ports instead of new ports: `IHostnameRegistrarPort.register`/`unregister` and `IServerSpecRepository.save`/`delete` (recorded above by #675), `IContainerRuntimePort.remove` (#735), `IWorldAssignmentPort.release` (ADR-0002).
 
 ## Implementation Plan for #654 (core-agent)
 
