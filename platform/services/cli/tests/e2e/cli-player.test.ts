@@ -68,4 +68,20 @@ describe('CLI Player Commands', () => {
       expect(result.stdout).toContain('msg');
     });
   });
+
+  describe('removed player subcommands (#730)', () => {
+    it.each(['lookup', 'uuid'])('mcctl player %s fails with a hint to player info', async (sub) => {
+      const result = await runCli(['player', sub, 'Notch']);
+
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout + result.stderr).toContain('mcctl player info <name>');
+    });
+
+    it('mcctl player info <name> --offline prints the offline UUID', async () => {
+      const result = await runCli(['player', 'info', 'Notch', '--offline', '--json']);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/);
+    });
+  });
 });
