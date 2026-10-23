@@ -114,7 +114,7 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 | `TZ`, `EXTRA_ARGS` | 모든 서버 컨테이너 (`servers/global.env`) | `servers`: 각 서버를 stop 후 start |
 | `RCON_PASSWORD` (시크릿), `RCON_PORT` | 모든 서버 컨테이너 (`servers/global.env`), CLI `rcon` | `servers` |
 | `BACKUP_GITHUB_TOKEN` (시크릿), `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH` | CLI와 mcctl-api 백업 (`GitWorldBackupAdapter`가 작업마다 `.env`를 다시 읽음) | `none`: 다음 백업 작업 |
-| `BACKUP_AUTO_ON_STOP` | `mcctl stop` 경로 | `none`: 다음 `mcctl stop` |
+| `BACKUP_AUTO_ON_STOP` | `mcctl stop <server>`, API·콘솔 정지 | `none`: 다음 정지 |
 | `PLAYIT_SECRET_KEY` (시크릿) | compose `playit` 서비스 (`SECRET_KEY`) | `playit`: playit를 stop 후 start |
 | `LOG_LEVEL` | **mcctl-api 전용** (dotenv, cwd = MCCTL_ROOT) | `api` |
 | `BETTER_AUTH_SECRET` (시크릿, 삭제 불가), `BETTER_AUTH_BASE_URL` | mcctl-console은 시작 시 `.env`에서 이 두 키만 읽으며, 비어 있지 않은 값은 `ecosystem.config.cjs`에 해당 키가 더 이상 없을 때만 사용됩니다(ecosystem에 있는 동안은 ecosystem 값이 우선하고, `.env`와 다르면 경고를 로그에 남깁니다). `mcctl upgrade`가 이 키들을 `.env`로 옮깁니다. 시크릿을 바꾸면 모든 사용자가 로그아웃됩니다. base URL 미설정 시 `http://localhost:<console port>` | `console`: `mcctl console service restart --console` |

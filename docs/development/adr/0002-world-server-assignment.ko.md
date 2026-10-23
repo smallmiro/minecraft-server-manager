@@ -28,7 +28,7 @@
 | 6 | `world release`는 그 월드를 가진 서버를 자기 기본 월드 `<서버이름>`으로 되돌린다. `--force`는 받기만 하고 무시한다. |
 | 7 | `worlds/.locks`는 읽지도, 쓰지도, 만들지도, 지우지도 않는다. `mcctl init`도 만들지 않는다. 사용자가 지워도 된다. |
 | 8 | 중복 배정은 보고만 하고 고치지 않는다(`world list`, `GET /api/worlds`의 `assignmentWarnings`, 콘솔). 시작 경로는 바꾸지 않는다. |
-| 9 | `lock.sh`와 `lock.bats`를 지운다. `mcctl.sh world`는 #734에서 없어질 때까지 제거 안내만 출력한다. |
+| 9 | `lock.sh`와 `lock.bats`를 지운다. `mcctl.sh world`는 #734에서 `mcctl.sh`가 지워질 때까지 제거 안내만 출력했다. |
 | 10 | `world delete --force`는 서버가 쓰는 월드를 더 이상 지우지 않는다. `--force`는 확인 질문만 생략한다. |
 | 11 | CLI와 API의 동시 변경 경쟁은 받아들인다. 중복 보고로 드러나며 뮤텍스 파일은 두지 않는다. |
 
@@ -74,7 +74,7 @@ interface IWorldAssignmentPort {
 | `mcctl config <서버> LEVEL\|WORLD_NAME <v>` | 유효 월드(`LEVEL`, 없으면 `WORLD_NAME`)가 바뀔 때만 `assignWorldByName`. `LEVEL`이 있으면 `WORLD_NAME`은 그대로 쓴다 |
 | `mcctl config <서버> EXTRA_ARGS <v>` | `checkConfigChange`: 새 `config.env`가 월드나 위치(`--universe`)를 바꾸면 `checkProposed`와 정지 상태가 필요하다. API PATCH에는 `EXTRA_ARGS` 필드가 없다 |
 | API PATCH `level` | 다른 필드를 쓰기 전에 `assignWorldByName(level, 이름, { requireExisting: false })`. 다른 필드로 `LEVEL` 줄을 넣을 수 없다(#726) |
-| `world new --server`, API `POST /api/worlds`(serverName) | 디렉터리를 만들기 전에 상태와 `checkAssign` 확인 |
+| `world new --server`, API `POST /api/worlds`(serverName) | 디렉터리를 만들기 전에 상태와 `checkAssign` 확인. `SEED`는 `assignments.assign(world, server, { seed })`로 `LEVEL`과 같은 `config.env` 쓰기에 들어간다(#734) |
 | `world release`, API release | `planRelease` → 가진 서버의 상태 확인 → `assignments.release` |
 | `world delete`, API delete | `checkRemoval`. `--force`로도 우회하지 못한다 |
 | API `POST /api/servers/:name/world/reset` | `planWorldReset`(`checkReset`)이 돌려준 월드만 지운다 |

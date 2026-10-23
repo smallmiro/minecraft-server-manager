@@ -256,3 +256,19 @@ v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유�
 - 옵션 이름은 CLI `--allow-missing`, API `allowMissing`이다.
 - `INCOMPLETE` 슬롯은 S3에서 수동 복구로 안내한다.
 - 알려진 한계 두 가지(복원 중 자동 기동 경쟁, 잠금 경쟁자 셋)는 받아들인다.
+
+## 스크립트 제거 S5: `mcctl.sh`(#734)
+
+`mcctl.sh`를 지웠다. 새 포트는 없고, 기존 포트에 선택 인자 하나를 더했다.
+
+| 경로 | 이전 | 이후 |
+|------|------|------|
+| CLI `start`/`stop <server>` | `ShellExecutor.mcctl` → `mcctl.sh` | `ServerName`으로 `IContainerRuntimePort.start`/`stop`(`commands/lifecycle.ts`). 종료 코드는 그대로: 2 = 이미 실행 중(start)/실행 중 아님(stop), 1 = `servers/<name>/docker-compose.yml` 없음 |
+| CLI `console <server>` | `docker exec -i mc-<name> rcon-cli` | `mcctl rcon` 세션: `getStatus` + `IServerConsolePort.getEndpoint` + TCP `rcon-client` |
+| 정지 시 자동 백업 | `mcctl.sh stop` → `mcctl backup push --auto` | shared `autoBackupOnStop(backup, server)`: `status()` → `configured && autoOnStop` → `push({ lockWaitMs: 600000 })`. `allowMissing`은 넘기지 않고 reject하지 않는다. CLI `stop <server>`는 기다리고(실패 시 경고, 종료 코드 0), API 정지 라우트는 백그라운드로 실행하고 결과를 로그에 남긴다(B-Q9 종료). start, restart, `stop --all`, 삭제 전 정지는 백업하지 않는다 |
+| `createWorld`의 SEED | `IShellPort.setServerConfig` → `mcctl.sh config` | `IWorldAssignmentPort.assign(world, server, { seed })`: `LEVEL`과 함께 raw 형식으로 한 번에 원자적으로 쓴다. `LEVEL`이 그대로여도 `SEED`는 쓴다. `WorldManagementUseCase`의 `shell` 인자는 쓰지 않는다(`@deprecated`) |
+| 정지 확인 | `checkServerStopped`가 `not_found`를 통과시킴 | `list({ strict: true })`가 성공할 때만 `not_found`를 통과시킨다. 런타임에 닿지 않으면 `undetermined`(fail-closed) |
+| 삭제 전 정지 | `IShellPort.stopServer` | `DeleteServerUseCase(..., runtime?)`: 주어지면 `runtime.stop`(CLI). `delete-server.sh`도 컨테이너를 직접 멈춘다 |
+| API | `lib/world-use-case.ts`의 `new ShellAdapter({ paths })` | 없음. 월드 작업에서 `<root>/scripts`를 찾지 않는다 |
+
+`IShellPort`/`ShellAdapter`의 `startServer`, `stopServer`, `serverStatus`, `setServerConfig`, `logs`, `console`, `status`는 v2 시그니처를 유지하고, 스크립트를 실행하지 않고 `mcctl.sh was removed (#734); use …`를 돌려준다(#736에서 삭제). API 정지 라우트는 `executeServerAction`(`docker compose stop`)을 그대로 쓴다. 쟁점 2는 바뀌지 않았다.

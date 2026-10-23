@@ -667,6 +667,8 @@ mcctl start myserver
 mcctl start --all
 ```
 
+`mcctl start <name>` creates the container if needed and starts it (`docker compose up -d mc-<name>`). It exits with code 2 and a warning when the server is already running, and with code 1 when `servers/<name>/docker-compose.yml` does not exist.
+
 !!! tip "Auto-Start"
     With mc-router, servers automatically start when a player connects.
 
@@ -696,6 +698,10 @@ mcctl stop myserver
 # Stop all servers
 mcctl stop --all
 ```
+
+`mcctl stop <name>` exits with code 2 and a warning when the server is not running.
+
+With `BACKUP_AUTO_ON_STOP=true` and a configured backup, `mcctl stop <name>` backs up the worlds after the server has stopped, the same way as [`mcctl backup push --auto`](#mcctl-backup-push): it never prompts and waits up to 10 minutes for a running backup. A failed backup prints a warning; the stop still succeeds (exit code 0). Stopping from the web console or the API (`POST /api/servers/<name>/stop`) runs the same backup in the background. `mcctl stop --all` does not back up.
 
 ---
 
@@ -751,11 +757,14 @@ mcctl logs router
 
 ### mcctl console
 
-Connect to server RCON console.
+Connect to server RCON console. This is the same interactive session as [`mcctl rcon`](#mcctl-rcon).
 
 ```bash
 mcctl console <name>
 ```
+
+!!! note "Changed in this release: TCP RCON instead of `docker exec`"
+    `mcctl console` connects to the server's RCON port over TCP (the container address, `RCON_PORT` and `RCON_PASSWORD`), like `mcctl rcon`. It used to run `docker exec -i mc-<name> rcon-cli`. The server must be running and its RCON port reachable from the host running `mcctl`. Type `exit` or `quit`, or press `Ctrl+C`/`Ctrl+D`, to leave.
 
 **Example:**
 
@@ -1230,7 +1239,7 @@ mcctl player online --all
 
 A world is assigned to a server by the server's `LEVEL` in `servers/<name>/config.env`. If `LEVEL` is unset, the legacy `WORLD_NAME` is read; if both are unset the server uses itzg's default `world`.
 
-- **No lock file.** `worlds/.locks` is no longer read, written or created (`mcctl init` does not create it). An existing `worlds/.locks` directory is harmless; `rm -rf worlds/.locks` is safe. `platform/scripts/lock.sh` was removed, and `mcctl.sh world` only prints a removal message.
+- **No lock file.** `worlds/.locks` is no longer read, written or created (`mcctl init` does not create it). An existing `worlds/.locks` directory is harmless; `rm -rf worlds/.locks` is safe. `platform/scripts/lock.sh` was removed, and so was `mcctl.sh`.
 - **One world, one server.** A world and its `<world>_nether` / `<world>_the_end` folders count as one world. A world used by another server cannot be assigned: `mcctl world assign`, `mcctl create --world`, a new server's default world `<name>`, and `mcctl config <server> LEVEL <world>` are refused. Deleting a server frees its world for reuse.
 - **Stopped server only.** `world assign`, `world release`, `world new --server` and `config LEVEL` are refused while the server's container is running, paused, restarting or created. Nothing is stopped automatically (`world new --server` used to try to stop the server; it now refuses).
 - **Fail-closed.** If any server's `config.env` cannot be read, or its `LEVEL` cannot be interpreted safely, every assignment change and world delete/reset is refused until it is fixed. Unsafe values are path separators, `.` or `..`, quotes, control characters, Compose interpolation such as `${VAR}` outside single quotes, and an unsupported `--universe` location. Legacy names such as `My World` are still accepted as existing values; new names must be letters, digits, `-` or `_`.
@@ -1585,7 +1594,7 @@ mcctl backup push [options]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--message` | `-m` | Commit message |
-| `--auto` | | No prompt; timestamp message; waits up to 10 min for a running backup (used by auto-backup on stop) |
+| `--auto` | | No prompt; timestamp message; waits up to 10 min for a running backup (the same rules as the auto-backup on stop) |
 | `--allow-missing` | | Drop worlds from the backup that were deleted on purpose (see [Backup Guide](../advanced/backup.md#deleted-worlds)) |
 
 Running servers are flushed (`save-off`, `save-all flush`, `save-on`) before the copy. "No changes" is a success.

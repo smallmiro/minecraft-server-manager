@@ -63,7 +63,7 @@ flowchart TB
 코드를 읽거나 추가할 때 두 가지 방식이 공존한다는 점을 알아두어야 합니다.
 
 - **유스케이스 커맨드**는 비즈니스 로직을 가집니다. 핸들러가 컨테이너를 얻고, `shared`의 유스케이스를 호출한 뒤 결과를 출력합니다. 예: `create`, `delete`, `config-snapshot`, `backup-schedule`, `world`, `mod`.
-- **Thin 커맨드**는 단순 전달용입니다. `ShellExecutor`로 bash 스크립트(`mcctl.sh` 등)를 호출하거나, `docker exec <container> rcon-cli`로 RCON을 실행합니다(`lib/rcon.ts`). 예: `start`, `stop`, `logs`, `console <server>`(RCON 콘솔), `router`, `exec`. `console init/service/user/api/remove` 하위 명령은 별개이며 아래에서 설명합니다.
+- **Thin 커맨드**는 단순 전달용입니다. 런타임 포트를 부르거나(`start`, `stop`, `logs`), `IServerConsolePort.getEndpoint`로 TCP RCON 세션을 열거나(`rcon`, `console <server>`), `ShellExecutor`로 docker compose를 실행하거나(`up`, `down`, `--all`, `router`), `docker exec <container> rcon-cli`로 RCON을 실행합니다(`lib/rcon.ts`, `exec`). `console init/service/user/api/remove` 하위 명령은 별개이며 아래에서 설명합니다.
 
 새로운 비즈니스 로직은 `commands/` 아래 파일이 아니라 shared 유스케이스에 두어야 합니다. 커맨드 파일은 옵션 파싱, 유스케이스 호출, 출력만 담당합니다.
 

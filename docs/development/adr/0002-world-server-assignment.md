@@ -24,7 +24,7 @@
 6. **`world release` = fall back to the default world.** The holding server switches to its own default world `<server>` (the `LEVEL` that `create-server.sh` writes). `--force` is accepted and ignored.
 7. **`worlds/.locks` is ignored**: never read, written, created or deleted by mcctl. `mcctl init` stops creating it. Users may delete it.
 8. **Duplicates are reported, not fixed**: `mcctl world list`, `GET /api/worlds` (`assignmentWarnings`), and the console worlds page. Start paths are unchanged.
-9. **`lock.sh` and `lock.bats` are deleted.** `mcctl.sh world` only prints a removal message until #734 removes the subcommand.
+9. **`lock.sh` and `lock.bats` are deleted.** `mcctl.sh world` printed a removal message until #734 deleted `mcctl.sh`.
 10. **`world delete --force` no longer deletes a world a server uses**; `--force` only skips the prompt.
 11. **Concurrent CLI/API changes**: the check-then-write race is accepted (human-driven, millisecond window); `findDuplicates` reports the result. No mutex file.
 
@@ -101,7 +101,7 @@ interface IWorldAssignmentPort {
 | `mcctl config <srv> LEVEL\|WORLD_NAME <v>` | Only when the effective world (`LEVEL`, else `WORLD_NAME`) changes: `assignWorldByName(newWorld, srv, { requireExisting: false })`. A `WORLD_NAME` under a set `LEVEL` changes nothing and is written as before. |
 | `mcctl config <srv> EXTRA_ARGS <v>` | `checkConfigChange` (`checkConfigEnvChange`): when the proposed `config.env` changes the server's world or location (`--universe`), `checkProposed` and a stopped server are required. The API PATCH config has no `EXTRA_ARGS` field. |
 | API PATCH `/api/servers/:name/config` with a changed `level` | `assignWorldByName(level, name, { requireExisting: false })` before any other field is written; `level` is then dropped from the config update. Other fields cannot inject a `LEVEL` line (#726). |
-| `mcctl world new --server`, API `POST /api/worlds` with `serverName` | Runtime check and `checkAssign` **before** creating the directory, then `assignments.assign`; `start` uses `runtime.start`. `SEED` stays on `shell.setServerConfig` until #734/#726. |
+| `mcctl world new --server`, API `POST /api/worlds` with `serverName` | Runtime check and `checkAssign` **before** creating the directory, then `assignments.assign`; `start` uses `runtime.start`. `SEED` is written with `LEVEL` in the same `config.env` write: `assignments.assign(world, server, { seed })` (#734); a seed config.env cannot hold is refused before the directory is created. |
 | `mcctl world release`, API `POST /api/worlds/:name/release` | `planRelease` → runtime check on the holder → `assignments.release`. |
 | `mcctl world delete`, API `DELETE /api/worlds/:name` | `checkRemoval`: refused while a non-internal server uses one of its folders or anything is undetermined; `--force`/`?force` no longer bypasses this. |
 | API `POST /api/servers/:name/world/reset` | `planWorldReset` (`checkReset`), and the route wipes the world it returns. |

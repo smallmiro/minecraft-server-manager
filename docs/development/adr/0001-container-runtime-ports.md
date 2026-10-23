@@ -736,3 +736,19 @@ Bundle **R** also covers the review cases: the N-th rename fails → original by
 Not adopted: `Promise.race` for RCON (an `AbortSignal` actually kills the child, R9); `core.checkStat=minimal` (can miss changes) and `verbatimSymlinks` (symlinks are refused); `reflog expire` after prune (local disk is not an acceptance criterion; auto gc handles it); stopping mc-router or locking start paths (outside S3, R1).
 
 Settled at re-review: option names CLI `--allow-missing` / API `allowMissing`; `INCOMPLETE` recovery is manual in S3; the two known limits (auto-start during restore, three lock contenders) are accepted.
+
+## Script Removal S5: `mcctl.sh` (#734)
+
+`mcctl.sh` is deleted. No new port; the existing ones gained one optional parameter.
+
+| Path | Before | After |
+|------|--------|-------|
+| CLI `start`/`stop <server>` | `ShellExecutor.mcctl` → `mcctl.sh` | `IContainerRuntimePort.start`/`stop` with a `ServerName` (`commands/lifecycle.ts`). Exit codes kept: 2 = already running (start) / not running (stop), 1 = no `servers/<name>/docker-compose.yml` |
+| CLI `console <server>` | `docker exec -i mc-<name> rcon-cli` | the `mcctl rcon` session: `getStatus` + `IServerConsolePort.getEndpoint` + `rcon-client` over TCP (row `mcctl.sh` in [Alignment with #715](#alignment-with-715-script-removal)) |
+| Auto-backup on stop | `mcctl.sh stop` → `mcctl backup push --auto` | `autoBackupOnStop(backup, server)` (shared): `status()` → `configured && autoOnStop` → `push({ lockWaitMs: 600000 })`, never `allowMissing`, never rejects. CLI `stop <server>` awaits it (warning on failure, exit 0); the API stop route runs it in the background and logs the result (B-Q9 closed). Start, restart, `stop --all` and the pre-delete stop do not back up |
+| `createWorld` SEED | `IShellPort.setServerConfig` → `mcctl.sh config` | `IWorldAssignmentPort.assign(world, server, { seed })`: one raw-style atomic write with `LEVEL`; `SEED` is written even when `LEVEL` is unchanged. `WorldManagementUseCase`'s `shell` parameter is unused (`@deprecated`) |
+| Stopped check | `checkServerStopped` passed `not_found` | `not_found` passes only when `list({ strict: true })` succeeds, so an unreachable runtime is `undetermined` (fail-closed) |
+| Pre-delete stop | `IShellPort.stopServer` | `DeleteServerUseCase(..., runtime?)`: `runtime.stop` when given (CLI); `delete-server.sh` still stops the container itself |
+| API | `new ShellAdapter({ paths })` in `lib/world-use-case.ts` | none: the API no longer resolves `<root>/scripts` for world operations |
+
+`IShellPort`/`ShellAdapter` `startServer`, `stopServer`, `serverStatus`, `setServerConfig`, `logs`, `console`, `status` keep their v2 signatures and return `mcctl.sh was removed (#734); use …` without running a script (removed in #736). The API stop route keeps `executeServerAction` (`docker compose stop`); open question 2 is unchanged.
