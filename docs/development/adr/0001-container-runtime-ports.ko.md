@@ -4,7 +4,7 @@
 |---|---|
 | **상태** | 제안됨 (2026-10-23) |
 | **이슈** | [#654](https://github.com/smallmiro/minecraft-server-manager/issues/654) (Hardening D1), 마일스톤 M2(#643), 에픽 #640 |
-| **이 ADR을 바꾸는 후속 이슈** | #665(D4), #669(A7), C2, #675(D5), #641(k8s 어댑터) |
+| **이 ADR을 바꾸는 후속 이슈** | #665(D4), #669(A7), C2, #675(D5), #641(k8s 어댑터), #732(S3, [백업 포트](#백업-포트732-s3)) |
 | **사용하는 이슈** | #667(D2, API), #668(D3, CLI), #666(E3, 계약 테스트), #715(스크립트 제거) |
 
 이 문서는 영어판의 요약입니다. 포트 시그니처 전체, 48개 함수 매핑, 호출 지점 표, 구현 단계는 [영어판](0001-container-runtime-ports.md)에 있습니다.
@@ -95,7 +95,7 @@
 | `mcctl.sh` | `start`, `stop`, `getStatus`. 콘솔은 `getEndpoint`와 기존 TCP 클라이언트로 처리한다 | TTY를 넘기는 `attach()`는 만들지 않는다 |
 | `delete-server.sh` | `stop` | `remove`, `unregister`, `IServerSpecRepository.delete`(아직 TS 호출처가 없다) |
 | `create-server.sh` | `start` | `apply(spec)`, `register`, `save`(D5) |
-| `backup.sh` | `command(['save-all'])`로 flush, 또는 `stop` | git 저장소는 백업 어댑터가 맡는다 |
+| `backup.sh` | `console.command`로 `save-off`, `save-all flush`, `save-on` | git 저장소는 `IWorldBackupPort`가 맡는다([백업 포트](#백업-포트732-s3)) |
 | `lock.sh` | — | `IWorldAssignmentPort`(A4) |
 | `render-map.sh`(#733에서 제거) | — | Docker `IMapRenderer` 어댑터 `BlueMapCliRenderer`로 옮겼다(k8s에서는 Job) |
 | `player.sh` | — | #730에서 제거했다 (`mcctl player info`가 대체) (`init.sh`는 #729에서 제거했다) |
@@ -119,3 +119,22 @@
 3. **합성 함수 담당**: 합성 함수 12개를 맡은 이슈가 없다. D2의 "가짜 컨테이너로 라우트 테스트"를 하려면 주입할 수 있어야 한다. D4에 넣고 D2보다 먼저 끝내는 안을 권장한다.
 4. **시그니처 변경 순서**: D4가 포트 인자를 `ServerName`으로 바꾼다. D4를 먼저 하고 D2·D3을 하는 안을 권장한다.
 5. **error 전환 범위**: 스크립트·git·npm·pm2 실행 위치를 옮기는 일이 D2·D3·D4 범위인지 확인이 필요하다.
+
+## 백업 포트(#732, S3)
+
+상태: 제안됨(2026-10-23), system-architect 리뷰 전. #653, #664, #727을 흡수한다. 시그니처, 절차, 버그별 테스트 표 전체는 [영어판](0001-container-runtime-ports.md#backup-port-732-s3)에 있습니다.
+
+| # | 결정 |
+|---|------|
+| 1 | 포트 `IWorldBackupPort`(`status`, `history`, `push`, `restore`, `prune`, `testConnection`)를 둔다. 비동기이고 reject하지 않는다. 결과는 `{ ok: true, value } \| { ok: false, error: { code, message } }`이고, 코드는 `not_configured`, `locked`, `servers_running`, `flush_failed`, `commit_not_found`, `empty_source`, `auth_failed`, `repo_not_found`, `git_too_old`, `timeout`, `git_failed`, `io_failed`다 |
+| 2 | 어댑터는 `GitWorldBackupAdapter({ root, runtime, console, remoteBase? })`다. 설정은 호출할 때마다 `<root>/.env`를 env 코덱으로 읽는다(없는 키만 `process.env`). 잠금, flush, 실행 중 확인도 어댑터가 한다. 호출처 네 곳이 모두 이 어댑터를 거치고, API에는 아직 use case 계층이 없기 때문이다(B-Q1) |
+| 3 | composition root: CLI `Container.worldBackupPort`, API `routes/backup.ts`와 `routes/backup-schedule.ts`(D2의 `container` 플러그인이 생기면 그리로 옮긴다). `BackupUseCase`의 두 번째 인자를 `IWorldBackupPort`로 바꾼다(B-Q2). `IShellPort`와 `ShellAdapter`의 `backup*` 4개에는 `@deprecated`만 붙이고, #736에서 지운다 |
+| 4 | 잠금 파일은 `<root>/backups/.backup.lock`이다. `open(..., 'wx')`(O_EXCL)로 만들고 `{pid, hostname, op, startedAt}`를 쓴다. 같은 호스트에서 pid가 죽었거나 6시간이 지났으면 오래된 잠금으로 보고 가져온다. 대화형 CLI, API 수동 백업, 복원은 기다리지 않는다(API는 409). `--auto`(정지 시 자동 백업)와 스케줄러는 최대 10분 기다린다 |
+| 5 | 토큰은 환경 변수로만 넘긴다: `GIT_CONFIG_COUNT/KEY_0/VALUE_0`로 github.com에만 `http.extraHeader: Authorization: Basic …`을 건다. 원격 URL에는 토큰을 넣지 않고, 기존 캐시의 토큰 URL은 `remote set-url`로 지운다. `GIT_TERMINAL_PROMPT=0`을 쓴다. git 2.31 이상이 필요하다(B-Q3) |
+| 6 | push: 저장소 구조는 `worlds/…`와 `servers/<n>/<LEVEL>{,_nether,_the_end}`다. 실행 중인 서버마다 `save-off` → `save-all flush` → 복사(`fs.rm` + `fs.cp`, `.locks` 제외) → `finally`에서 `save-on`을 실행한다. 원본이 비어 있으면 커밋하지 않는다. 변경이 없으면 `{ changed: false }`(성공)다. `--force`는 쓰지 않는다 |
+| 7 | 복원: **실행 중인 서버가 하나라도 있으면 거부한다**(#670 전까지 월드와 서버의 대응을 믿을 수 없다). `git worktree add --detach`로 그 커밋의 트리를 정확히 꺼낸다. `worlds/`가 비어 있으면 중단한다. `.locks`는 옮기지 않는다. 이전 상태는 `backups/restore-previous/` 한 칸에만 두므로 `.bak`이 쌓이지 않는다. 커밋에 있는 서버의 내부 월드만 바꾼다. 포트는 입력을 기다리지 않고, CLI `restore <commit>`은 `--force`가 없으면 확인한다 |
+| 8 | history는 NUL로 구분한 `git log`로 읽고(#12), status는 env 키와 캐시의 마지막 커밋으로 판단한다(#13). `diff`는 TS 호출처가 없어 옮기지 않는다(B-Q4). 연결 테스트는 실제 `git ls-remote`를 실행한다(#10) |
+| 9 | 보존 정책: 잠금 안에서 작성 시각 기준으로 남길 커밋을 고른다(`--reverse -1` 버그 수정). `commit-tree`로 원래 날짜를 유지한 채 새 이력을 만들고(ref, 작업 트리, index는 그대로), `push --force-with-lease=<b>:<oldTip>`가 성공한 뒤에만 `update-ref`한다. 중간에 실패하거나 타임아웃이 나도 로컬과 원격이 깨지지 않는다 |
+| 10 | 테스트: 동작은 로컬 bare 저장소와 실제 git으로, argv와 env 확인(#10, #11)만 `PATH`의 가짜 git으로 검증한다. PR1은 포트, 어댑터, 잠금, 테스트다. PR2는 호출처(use case, CLI, API, 스케줄러, `mcctl.sh`의 `mcctl backup push --auto`)를 바꾼다. PR3는 `backup.sh`를 지우고 문서를 고친다 |
+
+**확인이 필요한 쟁점**(영어판 B10): B-Q1 정책 위치, B-Q2 `BackupUseCase` 생성자 변경, B-Q3 git 2.31 요구, B-Q4 `diff` 제거, B-Q5 기존 `worlds.bak.*` 처리, B-Q6 flush 실패 시 전체 실패 여부, B-Q7 복원 중 auto-scale 기동, B-Q8 프로세스가 죽어 `save-off`가 남는 경우, B-Q9 API 정지 경로의 자동 백업.
