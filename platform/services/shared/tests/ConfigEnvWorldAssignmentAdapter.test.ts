@@ -356,3 +356,21 @@ describe('preview (snapshot restore, migrate)', () => {
     expect(next.assignments).toEqual([{ server: 'new', world: 'n', internal: false }]);
   });
 });
+
+describe('previewPlatformEnv (platform settings EXTRA_ARGS)', () => {
+  it('returns the snapshot as if the platform .env were replaced, writing nothing', async () => {
+    mkdirSync(join(root, 'servers'), { recursive: true });
+    writeFileSync(join(root, 'servers', 'global.env'), 'EXTRA_ARGS\n');
+    writeFileSync(join(root, '.env'), 'EXTRA_ARGS=--universe /worlds/\n');
+    server('inherits', 'LEVEL=a\n');
+    server('local', `LEVEL=b\n${UNIVERSE}`);
+
+    const next = await adapter.previewPlatformEnv('EXTRA_ARGS=--universe /data\n');
+
+    expect(next.assignments).toEqual([
+      { server: 'inherits', world: 'a', internal: true },
+      { server: 'local', world: 'b', internal: false },
+    ]);
+    expect(readFileSync(join(root, '.env'), 'utf-8')).toBe('EXTRA_ARGS=--universe /worlds/\n');
+  });
+});

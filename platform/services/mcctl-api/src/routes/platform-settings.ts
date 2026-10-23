@@ -9,7 +9,9 @@ import {
   PlatformNotInitializedError,
   PlatformSettingsStaleError,
   PlatformSettingsValidationError,
+  PlatformSettingsWorldLocationError,
 } from '../services/PlatformSettingsService.js';
+import { createWorldUseCase } from '../lib/world-use-case.js';
 import {
   PlatformSettingsResponseSchema,
   PlatformSettingsUpdateRequestSchema,
@@ -36,7 +38,15 @@ function requireAdmin(request: FastifyRequest, reply: FastifyReply): boolean {
 const platformSettingsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // Created per request so the root paths always reflect current config.
   const service = () =>
-    new PlatformSettingsService(config.mcctlRoot, join(config.mcctlRoot, 'ecosystem.config.cjs'));
+    new PlatformSettingsService(
+      config.mcctlRoot,
+      join(config.mcctlRoot, 'ecosystem.config.cjs'),
+      process.env,
+      async (nextEnv) => {
+        const refused = await createWorldUseCase().checkPlatformEnvChange(nextEnv);
+        return refused ? { message: refused.message, servers: refused.servers } : null;
+      },
+    );
 
   /** GET /api/platform-settings */
   fastify.get('/api/platform-settings', {
@@ -113,6 +123,15 @@ const platformSettingsPlugin: FastifyPluginAsync = async (fastify: FastifyInstan
       if (error instanceof PlatformSettingsValidationError) {
         await audit('failure', { ...requested, restartScopes: [], invalidKeys: error.errors.map((e) => e.key).filter((k) => KEY_NAME_RE.test(k)) }, 'Validation failed');
         return reply.code(400).send({ error: 'BadRequest', message: error.message, errors: error.errors });
+      }
+      if (error instanceof PlatformSettingsWorldLocationError) {
+        await audit('failure', { ...requested, restartScopes: [] }, 'World location change refused');
+        return reply.code(409).send({
+          error: 'Conflict',
+          message: error.message,
+          currentRevision: error.currentRevision,
+          servers: error.servers,
+        });
       }
       if (error instanceof PlatformSettingsStaleError) {
         await audit('failure', { ...requested, restartScopes: [] }, 'Stale revision');

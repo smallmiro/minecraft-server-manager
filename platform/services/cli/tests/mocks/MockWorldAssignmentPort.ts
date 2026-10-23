@@ -44,6 +44,11 @@ export class MockWorldAssignmentPort implements IWorldAssignmentPort {
     };
   }
 
+  /** The platform .env does not affect this in-memory port. */
+  async previewPlatformEnv(_dotenv: string): Promise<WorldAssignmentSnapshot> {
+    return this.snapshot();
+  }
+
   async assign(world: string, server: string): Promise<void> {
     this.calls.push({ method: 'assign', args: [world, server] });
     this.throwPending();

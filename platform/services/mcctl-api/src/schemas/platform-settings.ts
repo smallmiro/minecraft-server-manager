@@ -99,6 +99,8 @@ export const PlatformSettingsConflictSchema = Type.Object({
   error: Type.String(),
   message: Type.String(),
   currentRevision: Type.String(),
+  /** Servers whose world location the change would move against the assignment rules (#670). */
+  servers: Type.Optional(Type.Array(Type.String())),
 });
 
 export const PlatformSettingsErrorSchema = Type.Object({

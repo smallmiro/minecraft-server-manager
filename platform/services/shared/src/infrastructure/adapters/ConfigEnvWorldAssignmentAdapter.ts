@@ -82,6 +82,10 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     return this.read({ server, content: configEnv });
   }
 
+  previewPlatformEnv(dotenv: string): Promise<WorldAssignmentSnapshot> {
+    return this.read(undefined, dotenv);
+  }
+
   // ponytail: check-then-write race between CLI and API processes is accepted
   // (human-driven, findDuplicates reports the result); add an open(..., 'wx')
   // mutex file if a duplicate is ever seen.
@@ -100,7 +104,10 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     return plan;
   }
 
-  private async read(override?: { server: string; content: string }): Promise<WorldAssignmentSnapshot> {
+  private async read(
+    override?: { server: string; content: string },
+    dotenvOverride?: string
+  ): Promise<WorldAssignmentSnapshot> {
     let entries: Dirent[] = [];
     try {
       entries = await readdir(this.paths.servers, { withFileTypes: true });
@@ -110,7 +117,7 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     const names = new Set(entries.filter((e) => e.isDirectory() && !e.name.startsWith('_')).map((e) => e.name));
     if (override) names.add(override.server);
 
-    const inherited = await this.inheritedExtraArgs();
+    const inherited = await this.inheritedExtraArgs(dotenvOverride);
     const assignments: WorldAssignment[] = [];
     const undetermined: string[] = [];
     for (const server of [...names].sort()) {
@@ -155,7 +162,7 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
   }
 
   /** EXTRA_ARGS a server gets from servers/global.env (and the platform .env). */
-  private async inheritedExtraArgs(): Promise<Inherited> {
+  private async inheritedExtraArgs(dotenvOverride?: string): Promise<Inherited> {
     const read = async (file: string): Promise<string | undefined> => {
       try {
         return await readFile(file, 'utf-8');
@@ -172,7 +179,7 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
         return isInterpolated(doc, 'EXTRA_ARGS') ? new Error('interpolated') : doc.values.get('EXTRA_ARGS');
       }
       if (!/^\s*EXTRA_ARGS\s*$/m.test(global)) return undefined;
-      const dotenv = await read(this.paths.envFile);
+      const dotenv = dotenvOverride ?? (await read(this.paths.envFile));
       // A bare key with no platform value leaves the variable unset.
       if (dotenv === undefined) return undefined;
       const dotenvDoc = parseEnvDocument(dotenv);

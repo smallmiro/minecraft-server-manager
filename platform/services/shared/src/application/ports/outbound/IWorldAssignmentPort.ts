@@ -29,6 +29,12 @@ export interface IWorldAssignmentPort {
    * `configEnv` (snapshot restore, migrate, config writes). Writes nothing.
    */
   preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot>;
+  /**
+   * The snapshot as it would be with the platform .env replaced by `dotenv`
+   * (its EXTRA_ARGS reaches servers through a bare key in servers/global.env).
+   * Writes nothing.
+   */
+  previewPlatformEnv(dotenv: string): Promise<WorldAssignmentSnapshot>;
   /** Writes LEVEL=<world> after checkAssign on a fresh snapshot; no-op if already assigned. */
   assign(world: string, server: string): Promise<void>;
   /** Unassign (#715): the holder's LEVEL becomes `<holder>`. */

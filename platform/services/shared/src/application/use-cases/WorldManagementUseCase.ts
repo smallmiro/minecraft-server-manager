@@ -15,7 +15,7 @@ import type {
   IWorldAssignmentPort,
   IContainerRuntimePort,
 } from '../ports/index.js';
-import { checkConfigEnvChange, checkServerStopped } from './checkServerStopped.js';
+import { checkConfigEnvChange, checkPlatformEnvChange, checkServerStopped } from './checkServerStopped.js';
 import { formatWorldBytes } from '../../utils/index.js';
 import {
   WORLD_NAME_PATTERN,
@@ -668,6 +668,15 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
    */
   checkConfigChange(serverName: string, configEnv: string): Promise<WorldAssignmentError | null> {
     return checkConfigEnvChange(this.assignments, this.runtime, serverName, configEnv);
+  }
+
+  /**
+   * Why the platform .env may not become `dotenv`, or null (#670): a new
+   * EXTRA_ARGS reaches every server that inherits it (bare key in
+   * servers/global.env) and may move their worlds.
+   */
+  checkPlatformEnvChange(dotenv: string): Promise<WorldAssignmentError | null> {
+    return checkPlatformEnvChange(this.assignments, this.runtime, dotenv);
   }
 
   /**
