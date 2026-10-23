@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CreateServerUseCase, ServerStartError } from '../src/application/use-cases/CreateServerUseCase.js';
 import { Paths, parseEnvDocument } from '../src/utils/index.js';
+import { McVersion, Memory, ServerName, ServerType, WorldOptions } from '../src/domain/index.js';
 import { FileServerSpecRepository } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import { ConfigEnvWorldAssignmentAdapter } from '../src/infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.js';
 import type {
@@ -27,7 +28,7 @@ let shell: { createServer: ReturnType<typeof vi.fn> };
 
 const file = (...p: string[]) => join(root, 'servers', ...p);
 
-function useCase(opts: { hostIps?: string[] } = {}) {
+function useCase(opts: { hostIps?: string[]; prompt?: IPromptPort } = {}) {
   const paths = new Paths(root);
   const runtime = {
     start: vi.fn(async (name: { value: string } | string) => {
@@ -44,7 +45,7 @@ function useCase(opts: { hostIps?: string[] } = {}) {
   } as unknown as IHostnameRegistrarPort;
   shell = { createServer: vi.fn() };
   return new CreateServerUseCase(
-    {} as IPromptPort,
+    opts.prompt ?? ({} as IPromptPort),
     shell as unknown as IShellPort,
     { exists: vi.fn(async () => false) } as unknown as IServerRepository,
     paths,
@@ -143,5 +144,44 @@ describe('CreateServerUseCase.executeWithConfig with provisioning', () => {
   it('creates a server whose name contains "error" (#658)', async () => {
     await useCase().executeWithConfig({ name: 'error-test', version: '1.21.1' }, run);
     expect(existsSync(file('error-test', 'server.yaml'))).toBe(true);
+  });
+});
+
+/** Answers for the interactive flow: server beta, PAPER 1.21.1, new world, 2G, no whitelist. */
+function interactivePrompt() {
+  return {
+    intro: vi.fn(),
+    outro: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+    note: vi.fn(),
+    isCancel: () => false,
+    spinner: () => ({ start: vi.fn(), stop: vi.fn() }),
+    promptServerName: async () => ServerName.create('beta'),
+    promptServerType: async () => ServerType.create('PAPER'),
+    promptMcVersion: async () => McVersion.create('1.21.1'),
+    promptWorldOptions: async () => WorldOptions.newWorld(),
+    promptMemory: async () => Memory.create('2G'),
+    confirm: async () => false,
+  };
+}
+
+describe('CreateServerUseCase.execute (interactive) with provisioning', () => {
+  it('rejects ServerStartError without printing it, so the CLI reports it once', async () => {
+    startResult = { success: false, error: 'port is already allocated' };
+    const prompt = interactivePrompt();
+    const error = await useCase({ prompt: prompt as unknown as IPromptPort }).execute().catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ServerStartError);
+    expect(existsSync(file('beta', 'server.yaml'))).toBe(true);
+    expect(prompt.error).not.toHaveBeenCalled();
+  });
+
+  it('rejects a failed create without printing it', async () => {
+    writeFileSync(file('compose.yml'), 'include: [broken\n');
+    const prompt = interactivePrompt();
+    await expect(useCase({ prompt: prompt as unknown as IPromptPort }).execute()).rejects.toThrow(/servers\/compose\.yml/);
+    expect(prompt.error).not.toHaveBeenCalled();
   });
 });

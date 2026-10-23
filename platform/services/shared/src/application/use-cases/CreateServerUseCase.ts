@@ -302,12 +302,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         modpackOptions,
       });
 
-      try {
-        await this.assertWorldAssignable(worldOptions, name);
-      } catch (error) {
-        this.prompt.error(error instanceof Error ? error.message : String(error));
-        throw error;
-      }
+      // Failures below reject without printing: the caller reports them once (mcctl create).
+      await this.assertWorldAssignable(worldOptions, name);
 
       // Execute creation - stop spinner before running script to avoid output conflicts
       const spinner = this.prompt.spinner();
@@ -340,7 +336,6 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       );
 
       if (!result.success) {
-        this.prompt.error(result.stderr || 'Unknown error occurred');
         // Log audit failure
         await this.auditLog?.log({
           action: AuditActionEnum.SERVER_CREATE,
@@ -371,11 +366,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         errorMessage: null,
       });
 
-      if (startError) {
-        const error = new ServerStartError(server, startError);
-        this.prompt.error(error.message);
-        throw error;
-      }
+      if (startError) throw new ServerStartError(server, startError);
 
       this.prompt.success(`Server '${name.value}' created!`);
 
