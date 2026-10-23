@@ -60,6 +60,11 @@ interface SaveOnFailure {
   message: string;
 }
 
+/** push's signal (#734): stop before the next save-off or copied file. */
+const throwIfAborted = (signal: AbortSignal | undefined) => {
+  if (signal?.aborted) fail('aborted', 'Backup aborted (shutting down)');
+};
+
 /** The error to report, with the servers left with autosave off appended (P2). */
 function withSaveOnFailures(error: unknown, failures: SaveOnFailure[]): unknown {
   if (failures.length === 0) return error;
@@ -172,17 +177,18 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
       }
       if (source.size === 0) fail('empty_source', 'Nothing to back up: no worlds found');
 
+      const { signal } = options;
       const { flushed, saveOnFailures } = await this.withFlush(async () => {
         await rm(join(this.cache, 'worlds'), { recursive: true, force: true });
         await rm(join(this.cache, 'servers'), { recursive: true, force: true });
         const worlds = join(this.root, 'worlds');
-        for (const name of worldNames) await this.copy(join(worlds, name), join(this.cache, 'worlds', name));
+        for (const name of worldNames) await this.copy(join(worlds, name), join(this.cache, 'worlds', name), signal);
         for (const w of internals.worlds) {
           for (const d of w.dirs) {
-            await this.copy(join(this.root, 'servers', w.server, 'data', d), join(this.cache, 'servers', w.server, d));
+            await this.copy(join(this.root, 'servers', w.server, 'data', d), join(this.cache, 'servers', w.server, d), signal);
           }
         }
-      });
+      }, signal);
 
       warnings.push(...saveOnFailures.map((f) => f.message));
       // A later failure must still report the servers left with autosave off
@@ -575,11 +581,12 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
     }
   }
 
-  private async copy(src: string, dst: string): Promise<void> {
+  private async copy(src: string, dst: string, signal?: AbortSignal): Promise<void> {
     await mkdir(dirname(dst), { recursive: true });
     await cp(src, dst, {
       recursive: true,
       filter: async (path) => {
+        throwIfAborted(signal);
         if ((await lstat(path)).isSymbolicLink()) {
           fail('unsupported_layout', `Symbolic links are not supported: ${path}`, { paths: [path] });
         }
@@ -611,7 +618,8 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
 
   /** save-off → save-all flush → copy → save-on (always). Returns flushed server names. */
   private async withFlush(
-    copy: () => Promise<void>
+    copy: () => Promise<void>,
+    signal?: AbortSignal
   ): Promise<{ flushed: string[]; saveOnFailures: SaveOnFailure[] }> {
     const running = this.runningServers();
     const cleanup: string[] = [];
@@ -624,11 +632,13 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
     let mainError: unknown;
     try {
       for (const c of running) {
+        throwIfAborted(signal);
         cleanup.push(c); // before sending, so save-on follows even if save-off hangs
         const err = await rcon(c, ['save-off']);
         if (err) fail('flush_failed', `save-off failed for ${serverNameOf(c)}: ${err}`, { servers: [serverNameOf(c)] });
       }
       for (const c of running) {
+        throwIfAborted(signal);
         const err = await rcon(c, ['save-all', 'flush']);
         if (err) fail('flush_failed', `save-all flush failed for ${serverNameOf(c)}: ${err}`, { servers: [serverNameOf(c)] });
       }

@@ -24,7 +24,8 @@ export type WorldBackupErrorCode =
   | 'timeout'
   | 'lease_conflict'
   | 'git_failed'
-  | 'io_failed';
+  | 'io_failed'
+  | 'aborted';
 
 export interface BackupLockHolder {
   pid: number;
@@ -73,6 +74,12 @@ export interface WorldBackupPushOptions extends LockOptions {
   message?: string;
   /** Consent to drop worlds that are in the last backup but missing from the source. */
   allowMissing?: boolean;
+  /**
+   * Stop as soon as it is safe (before the next save-off, or at the next
+   * copied file) and fail with `aborted`. Servers already flushed get save-on
+   * before push resolves, so a process can abort and then exit (#734).
+   */
+  signal?: AbortSignal;
 }
 
 export interface WorldBackupPushOutcome {

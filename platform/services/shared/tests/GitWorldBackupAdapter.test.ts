@@ -272,6 +272,34 @@ describe('push', () => {
     expect(ctx.console.calls).toContain('mc-a save-on');
   });
 
+  it('stops the copy when the signal aborts, turns auto-save back on, and commits nothing (#734)', async () => {
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    ctx.runtime.running = ['mc-a', 'mc-b'];
+    const shutdown = new AbortController();
+    ctx.console.handler = (name, args) => {
+      if (name === 'mc-b' && args[0] === 'save-all') shutdown.abort(); // mcctl-api shutting down mid-flush
+      return { exitCode: 0, stdout: '', stderr: '' };
+    };
+    const r = await ctx.adapter.push({ signal: shutdown.signal });
+    expect(errCode(r)).toBe('aborted');
+    expect(ctx.console.calls.filter((c) => c.endsWith('save-on'))).toEqual(['mc-a save-on', 'mc-b save-on']);
+    expect(existsSync(join(ctx.cache, 'worlds', 'alpha', 'level.dat'))).toBe(false);
+    expect(remoteFiles(ctx.bare)).toEqual([]);
+  });
+
+  it('sends no save-off once the signal has aborted (#734)', async () => {
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    ctx.runtime.running = ['mc-a', 'mc-b'];
+    const shutdown = new AbortController();
+    ctx.console.handler = (name, args) => {
+      if (name === 'mc-a' && args[0] === 'save-off') shutdown.abort();
+      return { exitCode: 0, stdout: '', stderr: '' };
+    };
+    const r = await ctx.adapter.push({ signal: shutdown.signal });
+    expect(errCode(r)).toBe('aborted');
+    expect(ctx.console.calls).toEqual(['mc-a save-off', 'mc-a save-on']);
+  });
+
   it('reports a save-on failure as a warning and keeps the backup', async () => {
     await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
     ctx.runtime.running = ['mc-a'];

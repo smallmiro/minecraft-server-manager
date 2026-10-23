@@ -39,6 +39,15 @@ describe('autoBackupOnStop', () => {
     expect(AUTO_BACKUP_LOCK_WAIT_MS).toBe(600_000);
   });
 
+  test('passes the caller\'s signal to push, so a shutting-down API can abort it (#734 review)', async () => {
+    const backup = fakeBackup({});
+    const shutdown = new AbortController();
+
+    await autoBackupOnStop(backup, 'alpha', { signal: shutdown.signal });
+
+    expect(backup.push.mock.calls[0]![0].signal).toBe(shutdown.signal);
+  });
+
   test.each([
     ['BACKUP_AUTO_ON_STOP is not true', { autoOnStop: false }],
     ['the token or repository is missing', { configured: false }],

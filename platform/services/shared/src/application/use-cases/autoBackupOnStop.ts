@@ -10,7 +10,8 @@ export const AUTO_BACKUP_LOCK_WAIT_MS = 600_000;
 /**
  * How long mcctl-api's close waits for running auto-backups. The backup's
  * finally re-enables auto-save (save-on) on servers it flushed; shutdown
- * must not cut that off.
+ * must not cut that off, so close aborts a backup still running near the end
+ * of this wait and waits for its save-on.
  */
 export const AUTO_BACKUP_CLOSE_WAIT_MS = 120_000;
 
@@ -28,7 +29,11 @@ export type AutoBackupOnStopResult =
  * lock, never consents to dropping worlds, never rejects: the caller reports a
  * failure without failing the stop (#732 B-Q9).
  */
-export async function autoBackupOnStop(backup: IWorldBackupPort, server: string): Promise<AutoBackupOnStopResult> {
+export async function autoBackupOnStop(
+  backup: IWorldBackupPort,
+  server: string,
+  options: { signal?: AbortSignal } = {}
+): Promise<AutoBackupOnStopResult> {
   try {
     const status = await backup.status();
     if (!status.ok) return { status: 'failed', error: status.error };
@@ -37,6 +42,7 @@ export async function autoBackupOnStop(backup: IWorldBackupPort, server: string)
     const pushed = await backup.push({
       message: `Auto-backup after stopping ${server}`,
       lockWaitMs: AUTO_BACKUP_LOCK_WAIT_MS,
+      signal: options.signal,
     });
     return pushed.ok ? { status: 'done', outcome: pushed.value } : { status: 'failed', error: pushed.error };
   } catch (error) {
