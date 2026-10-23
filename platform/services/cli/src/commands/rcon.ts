@@ -1,69 +1,33 @@
-import { spawn } from 'node:child_process';
 import * as readline from 'node:readline';
 import { Rcon } from 'rcon-client';
-import { Paths, log } from '@minecraft-docker/shared';
-import { getContainerName, isContainerRunning } from '../lib/rcon.js';
+import {
+  Paths,
+  ServerName,
+  log,
+  type ConsoleEndpoint,
+  type IContainerRuntimePort,
+  type IServerConsolePort,
+} from '@minecraft-docker/shared';
+import { getContainer } from '../infrastructure/index.js';
+
+/** The part of an RCON connection the session uses. */
+export interface RconSession {
+  send(command: string): Promise<string>;
+  end(): Promise<unknown>;
+  /** rcon-client emits 'end' when the server closes the connection and 'error' on a reset. */
+  on(event: 'end' | 'error', listener: (error?: Error) => void): unknown;
+}
 
 export interface RconCommandOptions {
   serverName?: string;
   root?: string;
-}
-
-interface ContainerRconConfig {
-  host: string;
-  port: number;
-  password: string;
-}
-
-/**
- * Get RCON configuration from Docker container
- */
-async function getContainerRconConfig(containerName: string): Promise<ContainerRconConfig | null> {
-  return new Promise((resolve) => {
-    // Get container IP
-    const ipProcess = spawn('docker', [
-      'inspect', containerName,
-      '--format', '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
-    ], { stdio: ['pipe', 'pipe', 'pipe'] });
-
-    let ip = '';
-    ipProcess.stdout.on('data', (data) => { ip += data.toString(); });
-
-    ipProcess.on('close', (code) => {
-      if (code !== 0 || !ip.trim()) {
-        resolve(null);
-        return;
-      }
-
-      // Get RCON env vars
-      const envProcess = spawn('docker', [
-        'inspect', containerName,
-        '--format', '{{range .Config.Env}}{{println .}}{{end}}'
-      ], { stdio: ['pipe', 'pipe', 'pipe'] });
-
-      let envOutput = '';
-      envProcess.stdout.on('data', (data) => { envOutput += data.toString(); });
-
-      envProcess.on('close', (envCode) => {
-        if (envCode !== 0) {
-          resolve(null);
-          return;
-        }
-
-        const env: Record<string, string> = {};
-        envOutput.split('\n').forEach(line => {
-          const [key, ...valueParts] = line.split('=');
-          if (key) env[key] = valueParts.join('=');
-        });
-
-        resolve({
-          host: ip.trim(),
-          port: parseInt(env['RCON_PORT'] || '25575', 10),
-          password: env['RCON_PASSWORD'] || '',
-        });
-      });
-    });
-  });
+  /** The command name for messages: `mcctl rcon` (default) or `mcctl console` (#734). */
+  command?: 'rcon' | 'console';
+  runtime?: Pick<IContainerRuntimePort, 'getStatus'>;
+  console?: Pick<IServerConsolePort, 'getEndpoint'>;
+  connect?: (endpoint: ConsoleEndpoint) => Promise<RconSession>;
+  input?: NodeJS.ReadableStream;
+  output?: NodeJS.WritableStream;
 }
 
 // ANSI color codes
@@ -130,16 +94,16 @@ function formatRconResponse(response: string): string {
  * For single command execution, use `mcctl exec <server> <cmd>` instead.
  */
 export async function rconCommand(options: RconCommandOptions): Promise<number> {
-  const paths = new Paths(options.root);
+  const command = options.command ?? 'rcon';
 
-  if (!paths.isInitialized()) {
+  if (!options.runtime && !new Paths(options.root).isInitialized()) {
     log.error('Platform not initialized. Run: mcctl init');
     return 1;
   }
 
   if (!options.serverName) {
     log.error('Server name is required');
-    log.info('Usage: mcctl rcon <server>');
+    log.info(`Usage: mcctl ${command} <server>`);
     log.info('');
     log.info('Opens an interactive RCON console for the specified server.');
     log.info('Type "help" to see available commands, "exit" or Ctrl+C to quit.');
@@ -148,16 +112,26 @@ export async function rconCommand(options: RconCommandOptions): Promise<number> 
     return 1;
   }
 
-  const containerName = getContainerName(options.serverName);
+  let server: ServerName;
+  try {
+    server = ServerName.fromExisting(options.serverName);
+  } catch (e) {
+    log.error(e instanceof Error ? e.message : String(e));
+    return 1;
+  }
 
-  if (!(await isContainerRunning(containerName))) {
+  const container = options.runtime && options.console ? undefined : getContainer(options.root);
+  const runtime = options.runtime ?? container!.containerRuntime;
+  const consolePort = options.console ?? container!.serverConsolePort;
+
+  if (runtime.getStatus(server) !== 'running') {
     log.error(`Server '${options.serverName}' is not running`);
     log.info(`Start the server first: mcctl start ${options.serverName}`);
     return 1;
   }
 
-  // Get RCON config from container
-  const rconConfig = await getContainerRconConfig(containerName);
+  // Address and RCON password from the container (TCP, not docker exec)
+  const rconConfig = await consolePort.getEndpoint(server);
   if (!rconConfig) {
     log.error('Failed to get RCON configuration from container');
     return 1;
@@ -170,70 +144,86 @@ export async function rconCommand(options: RconCommandOptions): Promise<number> 
 
   log.info(`Connecting to RCON console for '${options.serverName}'...`);
 
-  let rcon: Rcon;
+  const connect = options.connect ?? ((e: ConsoleEndpoint) => Rcon.connect(e));
+  let rcon: RconSession;
   try {
-    rcon = await Rcon.connect({
-      host: rconConfig.host,
-      port: rconConfig.port,
-      password: rconConfig.password,
-    });
+    rcon = await connect(rconConfig);
   } catch (err) {
     log.error(`Failed to connect to RCON: ${(err as Error).message}`);
     log.info('Make sure the server is fully started and RCON is enabled.');
     return 1;
   }
 
+  const output = options.output ?? process.stdout;
   log.info('Connected! Type "help" for commands, "exit" or Ctrl+C to quit.');
-  console.log('');
+  output.write('\n');
 
   const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
+    input: options.input ?? process.stdin,
+    output,
     prompt: '> ',
   });
 
-  rl.prompt();
-
   return new Promise((resolve) => {
-    rl.on('line', async (line) => {
-      const cmd = line.trim();
+    let done = false;
+    // After EOF the queue still drains, but the closed readline cannot prompt
+    let inputClosed = false;
+    // Lines run one at a time, in order; EOF waits for the queue (piped input)
+    let queue: Promise<void> = Promise.resolve();
 
-      if (cmd === 'exit' || cmd === 'quit') {
-        rl.close();
-        return;
-      }
-
-      if (!cmd) {
-        rl.prompt();
-        return;
-      }
-
-      try {
-        const response = await rcon.send(cmd);
-        if (response) {
-          console.log(formatRconResponse(response));
-        }
-      } catch (err) {
-        log.error(`Command failed: ${(err as Error).message}`);
-      }
-
-      rl.prompt();
-    });
-
-    rl.on('close', async () => {
-      console.log('');
-      log.info('Disconnecting from RCON...');
-      try {
-        await rcon.end();
-      } catch {
-        // Ignore disconnect errors
-      }
-      resolve(0);
-    });
-
-    // Handle Ctrl+C
-    rl.on('SIGINT', () => {
+    const finish = async (code: number, connectionOpen = true) => {
+      if (done) return;
+      done = true;
       rl.close();
+      output.write('\n');
+      if (connectionOpen) {
+        log.info('Disconnecting from RCON...');
+        try {
+          await rcon.end();
+        } catch {
+          // Ignore disconnect errors
+        }
+      }
+      resolve(code);
+    };
+
+    const run = async (line: string) => {
+      if (done) return;
+      const cmd = line.trim();
+      if (cmd === 'exit' || cmd === 'quit') return finish(0);
+      if (cmd) {
+        try {
+          const response = await rcon.send(cmd);
+          if (response) output.write(formatRconResponse(response) + '\n');
+        } catch (err) {
+          log.error(`Command failed: ${(err as Error).message}`);
+        }
+      }
+      if (!done && !inputClosed) rl.prompt();
+    };
+
+    rl.on('line', (line) => {
+      queue = queue.then(() => run(line));
     });
+    // EOF (Ctrl+D, end of a pipe): finish the queued commands first
+    rl.on('close', () => {
+      inputClosed = true;
+      void queue.then(() => finish(0));
+    });
+    // Ctrl+C: leave now
+    rl.on('SIGINT', () => void finish(0));
+
+    rcon.on('end', () => {
+      if (done) return;
+      log.info('RCON connection closed by the server.');
+      void finish(0, false);
+    });
+    rcon.on('error', (error) => {
+      if (done) return;
+      log.error(`RCON connection error: ${error?.message ?? 'unknown error'}`);
+      void finish(1, false);
+    });
+
+    rl.prompt();
   });
 }

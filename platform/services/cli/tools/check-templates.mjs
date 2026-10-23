@@ -48,13 +48,18 @@ export function checkTemplates(src, repoRoot) {
   // ecosystem.config.js: per-app env (evaluated, so comments are ignored)
   const mod = { exports: {} };
   vm.runInNewContext(read('ecosystem.config.js'), { module: mod, process: { env: {} } });
-  const appEnv = (name) => mod.exports.apps?.find((a) => a.name === name)?.env ?? {};
+  const app = (name) => mod.exports.apps?.find((a) => a.name === name) ?? {};
+  const appEnv = (name) => app(name).env ?? {};
   const api = appEnv('mcctl-api');
   const con = appEnv('mcctl-console');
   if (String(api.PORT) !== '5001') errors.push(`ecosystem.config.js: mcctl-api PORT must be 5001, got ${api.PORT}`);
   if (String(con.PORT) !== '5000') errors.push(`ecosystem.config.js: mcctl-console PORT must be 5000, got ${con.PORT}`);
   if (con.MCCTL_API_URL !== 'http://localhost:5001') {
     errors.push(`ecosystem.config.js: mcctl-console MCCTL_API_URL must be http://localhost:5001, got ${con.MCCTL_API_URL}`);
+  }
+  // mcctl-api shutdown waits for an auto-backup (#734): API_PM2_KILL_TIMEOUT_MS in shared
+  if (app('mcctl-api').kill_timeout !== 130000) {
+    errors.push(`ecosystem.config.js: mcctl-api kill_timeout must be 130000, got ${app('mcctl-api').kill_timeout}`);
   }
   return errors;
 }

@@ -22,6 +22,11 @@ export interface ShellAdapterOptions {
   sudoPassword?: string;
 }
 
+/** Result of the deprecated methods that ran mcctl.sh: a failure, no script is run. */
+function mcctlRemoved(replacement: string): ShellResult {
+  return { code: 1, stdout: '', stderr: `mcctl.sh was removed (#734); use ${replacement}`, success: false };
+}
+
 /** Result of the deprecated lock.sh world methods: a failure, no script is run. */
 function worldLockRemoved(replacement: string): ShellResult {
   return { code: 1, stdout: '', stderr: `lock.sh was removed (#670); use ${replacement}`, success: false };
@@ -168,51 +173,64 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('delete-server.sh', args);
   }
 
-  async startServer(name: ServerName | string): Promise<ShellResult> {
-    const serverName = typeof name === 'string' ? name : name.value;
-    return this.executeScript('mcctl.sh', ['start', serverName]);
+  /**
+   * @deprecated mcctl.sh was removed (#734); always fails. Use IContainerRuntimePort.start.
+   * Removed in v3.0.0 (#736).
+   */
+  async startServer(_name: ServerName | string): Promise<ShellResult> {
+    return mcctlRemoved('IContainerRuntimePort.start / mcctl start <server>');
   }
 
-  async stopServer(name: ServerName | string): Promise<ShellResult> {
-    const serverName = typeof name === 'string' ? name : name.value;
-    return this.executeScript('mcctl.sh', ['stop', serverName]);
+  /**
+   * @deprecated mcctl.sh was removed (#734); always fails. Use IContainerRuntimePort.stop
+   * (and autoBackupOnStop for BACKUP_AUTO_ON_STOP). Removed in v3.0.0 (#736).
+   */
+  async stopServer(_name: ServerName | string): Promise<ShellResult> {
+    return mcctlRemoved('IContainerRuntimePort.stop / mcctl stop <server>');
   }
 
-  /** @deprecated Use IContainerRuntimePort.getStatus. Removed in v3.0.0 (#736). */
-  async serverStatus(name: string): Promise<ShellResult> {
-    return this.executeScript('mcctl.sh', ['status', name, '--json']);
+  /**
+   * @deprecated mcctl.sh was removed (#734); always fails. Use IContainerRuntimePort.getStatus.
+   * Removed in v3.0.0 (#736).
+   */
+  async serverStatus(_name: string): Promise<ShellResult> {
+    return mcctlRemoved('IContainerRuntimePort.getStatus / mcctl status');
   }
 
-  async setServerConfig(serverName: string, key: string, value: string): Promise<ShellResult> {
-    return this.executeScript('mcctl.sh', ['config', serverName, key, value]);
+  /**
+   * @deprecated mcctl.sh was removed (#734); always fails. Write config.env with the env codec
+   * (utils/env-file.ts applyEnvChanges with { raw: true }, atomicWriteFile). Removed in v3.0.0 (#736).
+   */
+  async setServerConfig(_serverName: string, _key: string, _value: string): Promise<ShellResult> {
+    return mcctlRemoved('the env codec (utils/env-file.ts) / mcctl config <server> <key> <value>');
   }
 
-  /** @deprecated Use IContainerRuntimePort.getLogs/followLogs. */
-  async logs(name: ServerName, options?: LogsOptions): Promise<ShellResult> {
-    const args: string[] = ['logs', name.value];
-    if (options?.follow) {
-      args.push('-f');
-    }
-    if (options?.lines) {
-      args.push('-n', options.lines.toString());
-    }
-    return this.executeScript('mcctl.sh', args);
+  /**
+   * @deprecated mcctl.sh was removed (#734); always fails. Use IContainerRuntimePort.getLogs/followLogs.
+   * Removed in v3.0.0 (#736).
+   */
+  async logs(_name: ServerName, _options?: LogsOptions): Promise<ShellResult> {
+    return mcctlRemoved('IContainerRuntimePort.followLogs / mcctl logs <server>');
   }
 
-  async console(name: ServerName): Promise<ShellResult> {
-    return this.executeScript('mcctl.sh', ['console', name.value]);
+  /**
+   * @deprecated mcctl.sh was removed (#734); always fails. Use IServerConsolePort.getEndpoint
+   * with an RCON client. Removed in v3.0.0 (#736).
+   */
+  async console(_name: ServerName): Promise<ShellResult> {
+    return mcctlRemoved('IServerConsolePort.getEndpoint / mcctl console <server>');
   }
 
   // ========================================
   // Status Operations
   // ========================================
 
-  async status(json = false): Promise<ShellResult> {
-    const args: string[] = ['status'];
-    if (json) {
-      args.push('--json');
-    }
-    return this.executeScript('mcctl.sh', args);
+  /**
+   * @deprecated mcctl.sh was removed (#734); always fails. Use `mcctl status`.
+   * Removed in v3.0.0 (#736).
+   */
+  async status(_json = false): Promise<ShellResult> {
+    return mcctlRemoved('mcctl status');
   }
 
   // ========================================

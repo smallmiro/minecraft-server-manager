@@ -27,6 +27,10 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
     getStatus(name: Parameters<typeof actual.workloadNameOf>[0]) {
       return runtime.status.get(actual.workloadNameOf(name)) ?? 'not_found';
     }
+    // 'not_found' counts as stopped only when a strict list succeeds (#734)
+    list() {
+      return [];
+    }
   }
   return { ...actual, DockerComposeRuntimeAdapter: FakeRuntimeAdapter };
 });

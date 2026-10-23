@@ -667,6 +667,8 @@ mcctl start myserver
 mcctl start --all
 ```
 
+`mcctl start <name>`은 필요하면 컨테이너를 만든 뒤 시작합니다(`docker compose up -d mc-<name>`). 서버가 이미 실행 중이면 경고와 함께 종료 코드 2로, `servers/<name>/docker-compose.yml`이 없으면 종료 코드 1로 끝납니다.
+
 !!! tip "자동 시작"
     mc-router를 사용하면 플레이어가 접속할 때 서버가 자동으로 시작됩니다.
 
@@ -696,6 +698,10 @@ mcctl stop myserver
 # 모든 서버 중지
 mcctl stop --all
 ```
+
+`mcctl stop <name>`은 서버가 실행 중이 아니면 경고와 함께 종료 코드 2로 끝납니다. Docker를 조회할 수 없으면 `start`와 `stop`은 종료 코드 1로 끝납니다.
+
+`BACKUP_AUTO_ON_STOP=true`이고 백업이 설정되어 있으면 `mcctl stop <name>`은 서버가 멈춘 뒤 월드를 백업합니다. 방식은 [`mcctl backup push --auto`](#mcctl-backup-push)와 같습니다. 입력을 묻지 않고, 다른 백업이 실행 중이면 최대 10분 기다립니다. 백업이 실패하면 경고만 출력하고 정지는 성공합니다(종료 코드 0). 웹 콘솔이나 API(`POST /api/servers/<name>/stop`)로 정지해도 같은 백업을 백그라운드에서 실행합니다. `mcctl stop --all`은 백업하지 않습니다.
 
 ---
 
@@ -751,11 +757,14 @@ mcctl logs router
 
 ### mcctl console
 
-서버 RCON 콘솔에 연결합니다.
+서버 RCON 콘솔에 연결합니다. [`mcctl rcon`](#mcctl-rcon)과 같은 대화형 세션입니다.
 
 ```bash
 mcctl console <name>
 ```
+
+!!! note "이번 릴리스 변경: `docker exec` 대신 TCP RCON"
+    `mcctl console`은 `mcctl rcon`처럼 서버의 RCON 포트에 TCP로 연결합니다(컨테이너 주소, `RCON_PORT`, `RCON_PASSWORD`). 예전에는 `docker exec -i mc-<name> rcon-cli`를 실행했습니다. 서버가 실행 중이어야 하고, `mcctl`을 실행하는 호스트에서 RCON 포트에 닿아야 합니다. `exit`나 `quit`을 입력하거나 `Ctrl+C`/`Ctrl+D`를 누르면 끝납니다. 파이프 입력은 한 줄씩 실행합니다(`printf 'list\n' | mcctl console myserver`). 서버가 연결을 끊으면(예: `stop` 뒤) 세션이 끝나고, 연결 오류는 종료 코드 1로 끝납니다.
 
 **예제:**
 
@@ -1230,7 +1239,7 @@ mcctl player online --all
 
 월드는 `servers/<name>/config.env`의 `LEVEL`로 서버에 할당됩니다. `LEVEL`이 없으면 레거시 `WORLD_NAME`을 읽고, 둘 다 없으면 서버는 itzg 기본값인 `world`를 사용합니다.
 
-- **잠금 파일 없음.** `worlds/.locks`는 더 이상 읽거나 쓰거나 만들지 않습니다(`mcctl init`도 만들지 않습니다). 기존 `worlds/.locks` 디렉토리는 무해하며 `rm -rf worlds/.locks`로 지워도 안전합니다. `platform/scripts/lock.sh`는 제거되었고, `mcctl.sh world`는 제거 안내 메시지만 출력합니다.
+- **잠금 파일 없음.** `worlds/.locks`는 더 이상 읽거나 쓰거나 만들지 않습니다(`mcctl init`도 만들지 않습니다). 기존 `worlds/.locks` 디렉토리는 무해하며 `rm -rf worlds/.locks`로 지워도 안전합니다. `platform/scripts/lock.sh`와 `mcctl.sh`는 제거되었습니다.
 - **월드 하나는 서버 하나.** 월드와 그 `<world>_nether` / `<world>_the_end` 폴더는 하나의 월드로 취급합니다. 다른 서버가 사용 중인 월드는 할당할 수 없습니다. `mcctl world assign`, `mcctl create --world`, 새 서버의 기본 월드 `<name>`, `mcctl config <server> LEVEL <world>`가 거부됩니다. 서버를 삭제하면 그 월드는 다시 쓸 수 있습니다.
 - **중지된 서버만.** 서버 컨테이너가 running, paused, restarting, created 상태이면 `world assign`, `world release`, `world new --server`, `config LEVEL`은 거부됩니다. 서버를 자동으로 중지하지 않습니다(`world new --server`는 예전에 서버 중지를 시도했지만, 이제는 거부합니다).
 - **안전 우선(fail-closed).** 어떤 서버의 `config.env`를 읽을 수 없거나 `LEVEL`을 안전하게 해석할 수 없으면, 문제를 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다. 안전하지 않은 값은 경로 구분자, `.` 또는 `..`, 따옴표, 제어 문자, 작은따옴표 밖의 `${VAR}` 같은 Compose 보간, 지원하지 않는 `--universe` 위치입니다. `My World` 같은 레거시 이름은 기존 값으로는 계속 허용되며, 새 이름은 영문자, 숫자, `-`, `_`만 쓸 수 있습니다.
@@ -1585,7 +1594,7 @@ mcctl backup push [options]
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
 | `--message` | `-m` | 커밋 메시지 |
-| `--auto` | | 묻지 않고 시각 메시지로 백업합니다. 다른 백업이 실행 중이면 최대 10분 기다립니다(정지 시 자동 백업이 사용) |
+| `--auto` | | 묻지 않고 시각 메시지로 백업합니다. 다른 백업이 실행 중이면 최대 10분 기다립니다(정지 시 자동 백업과 같은 규칙) |
 | `--allow-missing` | | 일부러 지운 월드를 백업에서도 지웁니다([백업 가이드](../advanced/backup.md#삭제한-월드) 참조) |
 
 실행 중인 서버는 복사 전에 디스크에 기록합니다(`save-off`, `save-all flush`, `save-on`). 변경이 없으면 성공입니다.

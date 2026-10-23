@@ -1,7 +1,7 @@
 import { describe, it, beforeEach } from 'vitest';
 import assert from 'node:assert';
-import { DeleteServerUseCase, ServerStatus } from '@minecraft-docker/shared';
-import type { IServerConsolePort } from '@minecraft-docker/shared';
+import { DeleteServerUseCase, ServerName, ServerStatus } from '@minecraft-docker/shared';
+import type { IContainerRuntimePort, IServerConsolePort } from '@minecraft-docker/shared';
 import {
   MockPromptAdapter,
   MockShellAdapter,
@@ -45,6 +45,23 @@ describe('DeleteServerUseCase Integration', () => {
       await useCase.execute();
 
       assert.ok(shellAdapter.wasCommandCalled('stopServer'));
+      assert.ok(shellAdapter.wasCommandCalled('deleteServer'));
+    });
+
+    it('stops through the runtime port when one is given (mcctl.sh is gone, #734)', async () => {
+      const stopped: unknown[] = [];
+      const runtime = {
+        stop: async (name: unknown) => {
+          stopped.push(name);
+          return { success: true };
+        },
+      } as unknown as IContainerRuntimePort;
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, undefined, runtime);
+
+      await useCase.execute();
+
+      assert.deepStrictEqual(stopped, [ServerName.fromExisting('server1')]);
+      assert.ok(!shellAdapter.wasCommandCalled('stopServer'));
       assert.ok(shellAdapter.wasCommandCalled('deleteServer'));
     });
 

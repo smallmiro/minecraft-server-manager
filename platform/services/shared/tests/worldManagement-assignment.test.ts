@@ -25,6 +25,8 @@ interface Setup {
   status?: ContainerStatus;
   noPort?: boolean;
   noRuntime?: boolean;
+  /** `list({ strict: true })` throws: the runtime cannot be queried. */
+  unreachable?: boolean;
 }
 
 function setup(opts: Setup = {}) {
@@ -56,6 +58,10 @@ function setup(opts: Setup = {}) {
 
   const runtime = {
     getStatus: vi.fn((): ContainerStatus => opts.status ?? 'exited'),
+    list: vi.fn((options?: { strict?: boolean }): string[] => {
+      if (opts.unreachable && options?.strict) throw new Error('docker ps failed: cannot connect');
+      return [];
+    }),
     start: vi.fn().mockResolvedValue({ success: true }),
   };
 
@@ -176,6 +182,24 @@ describe('assignWorldByName', () => {
   test.each(INACTIVE)('allows a %s server', async (status) => {
     const { useCase } = setup({ status });
     expect((await useCase.assignWorldByName('free', 'srv')).success).toBe(true);
+  });
+
+  test('refuses when the runtime cannot be queried: not_found is not "stopped" then (#734)', async () => {
+    const { useCase, port, runtime, levels } = setup({ status: 'not_found', unreachable: true });
+
+    const result = await useCase.assignWorldByName('free', 'srv');
+
+    expect(result).toMatchObject({ success: false, errorCode: 'undetermined' });
+    expect(result.error).toContain('cannot connect');
+    expect(runtime.list).toHaveBeenCalledWith({ strict: true });
+    expect(port.assign).not.toHaveBeenCalled();
+    expect(levels.get('srv')).toBe('srv');
+  });
+
+  test('a stopped container needs no strict lookup', async () => {
+    const { useCase, runtime } = setup({ status: 'exited', unreachable: true });
+    expect((await useCase.assignWorldByName('free', 'srv')).success).toBe(true);
+    expect(runtime.list).not.toHaveBeenCalled();
   });
 
   test('re-assigning the current world succeeds without a runtime check', async () => {
@@ -304,16 +328,17 @@ describe('releaseWorldByName', () => {
 });
 
 describe('createWorld with a server', () => {
-  test('creates the directory, assigns through the port, sets SEED, starts through the runtime', async () => {
+  test('creates the directory, assigns LEVEL and SEED through the port, starts through the runtime', async () => {
     const { useCase, port, runtime, shell, worldRepo, levels } = setup();
 
     const result = await useCase.createWorld({ name: 'fresh', seed: '42', serverName: 'srv', autoStart: true });
 
     expect(result).toMatchObject({ success: true, worldName: 'fresh', serverName: 'srv', started: true });
     expect(worldRepo.create).toHaveBeenCalledWith('fresh', '42');
-    expect(port.assign).toHaveBeenCalledWith('fresh', 'srv');
+    // One config.env write for LEVEL and SEED; mcctl.sh config is gone (#734)
+    expect(port.assign).toHaveBeenCalledWith('fresh', 'srv', { seed: '42' });
     expect(levels.get('srv')).toBe('fresh');
-    expect(shell.setServerConfig).toHaveBeenCalledWith('srv', 'SEED', '42');
+    expect(shell.setServerConfig).not.toHaveBeenCalled();
     expect(runtime.start).toHaveBeenCalledWith(ServerName.fromExisting('srv'));
     expect(shell.startServer).not.toHaveBeenCalled();
     expect(shell.stopServer).not.toHaveBeenCalled();
@@ -348,6 +373,27 @@ describe('createWorld with a server', () => {
     });
     expect(worldRepo.create).not.toHaveBeenCalled();
   });
+
+  test('assigns without a seed option when no seed is given', async () => {
+    const { useCase, port, shell } = setup();
+    expect((await useCase.createWorld({ name: 'fresh', serverName: 'srv' })).success).toBe(true);
+    expect(port.assign).toHaveBeenCalledWith('fresh', 'srv', {});
+    expect(shell.setServerConfig).not.toHaveBeenCalled();
+  });
+
+  test.each(['x\nMODS=http://evil/x.jar', '"" MODS=x', 'a\u2028b'])(
+    'refuses seed %j before creating the directory (#726)',
+    async (seed) => {
+      const { useCase, port, worldRepo } = setup();
+
+      const result = await useCase.createWorld({ name: 'fresh', seed, serverName: 'srv' });
+
+      expect(result).toMatchObject({ success: false, worldName: 'fresh' });
+      expect(result.error).toMatch(/SEED/);
+      expect(worldRepo.create).not.toHaveBeenCalled();
+      expect(port.assign).not.toHaveBeenCalled();
+    }
+  );
 
   test('without a server needs no assignment port', async () => {
     const { useCase, worldRepo } = setup({ noPort: true, noRuntime: true });

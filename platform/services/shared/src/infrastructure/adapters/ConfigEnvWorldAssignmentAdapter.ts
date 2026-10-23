@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
-import { applyEnvChanges } from '../../utils/env-file.js';
+import { applyEnvChanges, assertEnvFileValue } from '../../utils/env-file.js';
 import { atomicWriteFile } from '../../utils/atomic-write.js';
 import {
   WorldAssignmentError,
@@ -57,18 +57,21 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
   // ponytail: check-then-write race between CLI and API processes is accepted
   // (human-driven, findDuplicates reports the result); add an open(..., 'wx')
   // mutex file if a duplicate is ever seen.
-  async assign(world: string, server: string): Promise<void> {
+  async assign(world: string, server: string, options: { seed?: string } = {}): Promise<void> {
+    const { seed } = options;
+    if (seed !== undefined) assertEnvFileValue('SEED', seed);
     const snapshot = await this.read();
     const error = checkAssign(snapshot, world, server);
     if (error) throw error;
-    if (snapshot.assignments.find((a) => a.server === server)?.world === world) return;
-    await this.writeLevel(server, world);
+    const unchanged = snapshot.assignments.find((a) => a.server === server)?.world === world;
+    if (unchanged && seed === undefined) return;
+    await this.writeConfig(server, unchanged ? { SEED: seed! } : { LEVEL: world, ...(seed === undefined ? {} : { SEED: seed }) });
   }
 
   async release(world: string): Promise<{ server: string; fallback: string }> {
     const plan = planRelease(await this.read(), world);
     if (plan instanceof WorldAssignmentError) throw plan;
-    await this.writeLevel(plan.server, plan.fallback);
+    await this.writeConfig(plan.server, { LEVEL: plan.fallback });
     return plan;
   }
 
@@ -83,10 +86,10 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     return join(this.paths.servers, server, 'config.env');
   }
 
-  private async writeLevel(server: string, world: string): Promise<void> {
+  private async writeConfig(server: string, set: Record<string, string>): Promise<void> {
     const file = this.configPath(server);
     const content = await readFile(file, 'utf-8');
     // config.env is a Compose env_file: raw style (#656); atomicWriteFile keeps the mode
-    await atomicWriteFile(file, applyEnvChanges(content, { set: { LEVEL: world } }, { raw: true }));
+    await atomicWriteFile(file, applyEnvChanges(content, { set }, { raw: true }));
   }
 }

@@ -2,8 +2,8 @@
  * The env codec: the one parse / serialize / validate rule for every env file
  * TS reads or writes (platform `.env`, `servers/<name>/config.env`) (#656).
  *
- * The platform `.env` is read by docker compose, dotenv and bash
- * (`mcctl.sh` runs `set -a; source .env`), so every value we write must be
+ * The platform `.env` is read by docker compose, dotenv and bash (it is
+ * `source`d; `mcctl.sh` did until #734), so every value we write must be
  * literal in all three. Untouched lines are kept byte-identical.
  *
  * Parsing (parseEnvDocument) follows Docker Compose's env_file reader, the

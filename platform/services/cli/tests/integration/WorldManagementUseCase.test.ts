@@ -68,7 +68,9 @@ describe('WorldManagementUseCase Integration', () => {
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.worldName, 'seededworld');
       assert.strictEqual(result.seed, '12345');
-      assert.ok(shellAdapter.wasCommandCalled('setServerConfig'));
+      // SEED goes with LEVEL through the assignment port; mcctl.sh config is gone (#734)
+      assert.strictEqual(assignments.seeds.get('server1'), '12345');
+      assert.ok(!shellAdapter.wasCommandCalled('setServerConfig'));
     });
 
     it('should return error when world already exists', async () => {

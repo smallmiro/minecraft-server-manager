@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
-import { Paths, execScriptInteractive, log } from '@minecraft-docker/shared';
+import { Paths, log } from '@minecraft-docker/shared';
 import { applyEnvChanges, assertEnvFileValue, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 
 export interface ShellExecutorOptions {
@@ -47,35 +47,6 @@ export class ShellExecutor {
     }
 
     return env;
-  }
-
-  /**
-   * Get script path and validate existence
-   */
-  private getScriptPath(script: string): string | null {
-    const scriptPath = join(this.paths.scripts, script);
-    if (!existsSync(scriptPath)) {
-      log.error(`Script not found: ${scriptPath}`);
-      return null;
-    }
-    return scriptPath;
-  }
-
-  /**
-   * Execute a script interactively (with inherited stdio)
-   */
-  async execInteractive(script: string, args: string[] = []): Promise<number> {
-    const scriptPath = this.getScriptPath(script);
-    if (!scriptPath) return 1;
-
-    return execScriptInteractive(scriptPath, args, this.env);
-  }
-
-  /**
-   * Execute mcctl.sh with arguments
-   */
-  async mcctl(args: string[]): Promise<number> {
-    return this.execInteractive('mcctl.sh', args);
   }
 
   /**

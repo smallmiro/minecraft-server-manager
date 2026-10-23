@@ -34,6 +34,11 @@ test('swapped API/console ports are rejected', () => {
   assert.ok(e.some((m) => m.includes('mcctl-console PORT')));
 });
 
+test('mcctl-api without the auto-backup kill_timeout is rejected (#734)', () => {
+  const e = fixture(edit('ecosystem.config.js', (s) => s.replace(/^\s*kill_timeout: .*\n/m, '')));
+  assert.ok(e.some((m) => m.includes('mcctl-api kill_timeout')));
+});
+
 test('expected value only in a comment + wrong active value is rejected', () => {
   const e = fixture((src) => {
     edit('docker-compose.yml', (s) => s.replace('DOCKER_TIMEOUT: "120s"', '# DOCKER_TIMEOUT: "120s"\n      DOCKER_TIMEOUT: "120"'))(src);

@@ -8,6 +8,7 @@ import type {
   IServerRepository,
   IAuditLogPort,
   IServerConsolePort,
+  IContainerRuntimePort,
 } from '../ports/index.js';
 
 /**
@@ -20,7 +21,9 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
     private readonly shell: IShellPort,
     private readonly serverRepo: IServerRepository,
     private readonly auditLog?: IAuditLogPort,
-    private readonly serverConsole?: IServerConsolePort
+    private readonly serverConsole?: IServerConsolePort,
+    /** Stops a running server before deletion (#734). Without it the deprecated shell path is used. */
+    private readonly runtime?: IContainerRuntimePort
   ) {}
 
   /**
@@ -162,7 +165,9 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
       // Stop server if running
       if (server.isRunning) {
         spinner.start('Stopping server...');
-        await this.shell.stopServer(server.name);
+        // delete-server.sh stops the container too, so a failed stop is not fatal here
+        if (this.runtime) await this.runtime.stop(server.name);
+        else await this.shell.stopServer(server.name);
         spinner.stop('Server stopped');
       }
 

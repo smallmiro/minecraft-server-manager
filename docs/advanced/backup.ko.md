@@ -168,7 +168,7 @@ mcctl backup restore abc1234 --force  # 묻지 않습니다(스크립트용)
 BACKUP_AUTO_ON_STOP=true
 ```
 
-정지 경로는 `mcctl backup push --auto`를 실행합니다. `--auto`는 입력을 묻지 않고, 다른 백업이 실행 중이면 최대 10분 기다립니다.
+`mcctl stop <server>`와 웹 콘솔·API의 정지는 서버가 멈춘 뒤 `mcctl backup push --auto`처럼 백업합니다. 입력을 묻지 않고, 다른 백업이 실행 중이면 최대 10분 기다립니다. 백업이 실패하면 CLI는 경고를 출력하고 API는 로그에 남기며, 정지는 실패하지 않습니다. API는 백업을 백그라운드에서 실행하므로 정지 요청이 먼저 응답하고, mcctl-api는 종료할 때 실행 중인 백업을 기다리고, 90초가 지나도 끝나지 않으면 백업을 중단해 자동 저장(`save-on`)을 되돌린 뒤 종료합니다(전체 최대 2분). 이 릴리스 전에 `mcctl console init`으로 설치했다면 이 대기를 위해 `ecosystem.config.cjs`에 `kill_timeout`이 필요합니다([업그레이드 런북 4-2단계](upgrade-runbook.md#pm2-kill-timeout)). `mcctl stop --all`은 백업하지 않습니다.
 
 ### 예약 백업
 

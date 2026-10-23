@@ -35,6 +35,8 @@ module.exports = {
       watch: false,
       autorestart: true,
       max_memory_restart: '500M',
+      // Shutdown waits up to 2 min for a running auto-backup (#734); PM2's default is 1.6 s
+      kill_timeout: 130000,
     },
     {
       name: 'mcctl-console',

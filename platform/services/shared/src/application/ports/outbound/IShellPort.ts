@@ -24,38 +24,52 @@ export interface IShellPort {
 
   /**
    * Start a server
+   *
+   * @deprecated mcctl.sh was removed (#734); ShellAdapter always fails. Use
+   * IContainerRuntimePort.start. Removed in v3.0.0 (#736).
    */
   startServer(name: ServerName | string): Promise<ShellResult>;
 
   /**
    * Stop a server
+   *
+   * @deprecated mcctl.sh was removed (#734); ShellAdapter always fails. Use
+   * IContainerRuntimePort.stop (and autoBackupOnStop). Removed in v3.0.0 (#736).
    */
   stopServer(name: ServerName | string): Promise<ShellResult>;
 
   /**
    * Get server status
    *
-   * @deprecated `mcctl.sh status` ignores the name, so this never reported one
-   * server. Use IContainerRuntimePort.getStatus. Removed in v3.0.0 (#736).
+   * @deprecated mcctl.sh was removed (#734; its `status` ignored the name, so
+   * this never reported one server). Use IContainerRuntimePort.getStatus.
+   * Removed in v3.0.0 (#736).
    */
   serverStatus(name: string): Promise<ShellResult>;
 
   /**
    * Set server config value
+   *
+   * @deprecated mcctl.sh was removed (#734); ShellAdapter always fails. Write
+   * config.env with the env codec (utils/env-file.ts, raw style) and an atomic
+   * write. Removed in v3.0.0 (#736).
    */
   setServerConfig(serverName: string, key: string, value: string): Promise<ShellResult>;
 
   /**
    * Get server logs
    *
-   * @deprecated Unused by the CLI. Use `mcctl logs` (docker compose logs) directly. Removed in v3.0.0 (#736).
+   * @deprecated mcctl.sh was removed (#734); ShellAdapter always fails. Use
+   * IContainerRuntimePort.followLogs (`mcctl logs`). Removed in v3.0.0 (#736).
    */
   logs(name: ServerName, options?: LogsOptions): Promise<ShellResult>;
 
   /**
    * Connect to RCON console
    *
-   * @deprecated Unused by the CLI. Use `mcctl console`/RCON via the runtime port. Removed in v3.0.0 (#736).
+   * @deprecated mcctl.sh was removed (#734); ShellAdapter always fails. Use
+   * IServerConsolePort.getEndpoint with an RCON client (`mcctl console`).
+   * Removed in v3.0.0 (#736).
    */
   console(name: ServerName): Promise<ShellResult>;
 
@@ -66,7 +80,8 @@ export interface IShellPort {
   /**
    * Get status of all servers
    *
-   * @deprecated Unused by the CLI. Use `mcctl status`. Removed in v3.0.0 (#736).
+   * @deprecated mcctl.sh was removed (#734); ShellAdapter always fails. Use
+   * `mcctl status`. Removed in v3.0.0 (#736).
    */
   status(json?: boolean): Promise<ShellResult>;
 

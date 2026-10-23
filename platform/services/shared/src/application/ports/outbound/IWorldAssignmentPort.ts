@@ -35,8 +35,13 @@ export interface IWorldAssignmentPort {
    * Writes nothing.
    */
   previewPlatformEnv(dotenv: string): Promise<WorldAssignmentSnapshot>;
-  /** Writes LEVEL=<world> after checkAssign on a fresh snapshot; no-op if already assigned. */
-  assign(world: string, server: string): Promise<void>;
+  /**
+   * Writes LEVEL=<world> after checkAssign on a fresh snapshot; no-op if already
+   * assigned. `seed` (a new world's SEED, #734) is written in the same
+   * config.env write, even when LEVEL is unchanged; an invalid value rejects
+   * before anything is written.
+   */
+  assign(world: string, server: string, options?: { seed?: string }): Promise<void>;
   /** Unassign (#715): the holder's LEVEL becomes `<holder>`. */
   release(world: string): Promise<{ server: string; fallback: string }>;
 }

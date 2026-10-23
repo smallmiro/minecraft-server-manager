@@ -32,6 +32,7 @@ import {
   type IPromptPort,
   type IShellPort,
   type IContainerRuntimePort,
+  type IServerConsolePort,
   type IWorldBackupPort,
   type IServerRepository,
   type IWorldRepository,
@@ -74,6 +75,7 @@ export class Container {
   private _worldAssignmentPort?: IWorldAssignmentPort;
   private _serverSpecRepo?: FileServerSpecRepository;
   private _containerRuntime?: IContainerRuntimePort;
+  private _serverConsole?: IServerConsolePort;
   private _docProvider?: IDocProvider;
   private _auditLogPort?: IAuditLogPort;
   private _modSourcePort?: IModSourcePort;
@@ -156,6 +158,14 @@ export class Container {
       this._containerRuntime = new DockerComposeRuntimeAdapter({ root: this.paths.root });
     }
     return this._containerRuntime;
+  }
+
+  /** RCON access to a server (`mcctl rcon`, `mcctl console <server>`). */
+  get serverConsolePort(): IServerConsolePort {
+    if (!this._serverConsole) {
+      this._serverConsole = new DockerServerConsoleAdapter();
+    }
+    return this._serverConsole;
   }
 
   get docProvider(): IDocProvider {
@@ -258,14 +268,15 @@ export class Container {
       this.shellPort,
       this.serverRepository,
       this.auditLogPort,
-      new DockerServerConsoleAdapter()
+      this.serverConsolePort,
+      this.containerRuntime
     );
   }
 
   get worldManagementUseCase(): WorldManagementUseCase {
     return new WorldManagementUseCase(
       this.promptPort,
-      this.shellPort,
+      undefined, // no shell since mcctl.sh was removed (#734)
       this.worldRepository,
       this.serverRepository,
       this.worldAssignmentPort,
@@ -281,7 +292,7 @@ export class Container {
         root,
         runtime: new DockerComposeRuntimeAdapter({ root }),
         environment: new DockerRuntimeEnvironmentAdapter(),
-        console: new DockerServerConsoleAdapter(),
+        console: this.serverConsolePort,
       });
     }
     return this._worldBackupPort;

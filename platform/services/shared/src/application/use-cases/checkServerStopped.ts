@@ -13,9 +13,10 @@ const ACTIVE_STATES: ReadonlySet<ContainerStatus> = new Set(['running', 'paused'
 
 /**
  * Refuse a world assignment change on a server that is not stopped (#670).
- * Nothing is stopped automatically. Known limit: in D1 'not_found' also means
- * "runtime unreachable" and passes; a throw (or no runtime) is undetermined,
- * and so is a name no server can have (ServerName.fromExisting rejects it).
+ * Nothing is stopped automatically. 'not_found' also means "runtime
+ * unreachable" (D1), so it passes only when a strict list succeeds (#734). A
+ * throw (or no runtime) is undetermined, and so is a name no server can have
+ * (ServerName.fromExisting rejects it).
  */
 export function checkServerStopped(
   runtime: IContainerRuntimePort | undefined,
@@ -25,6 +26,7 @@ export function checkServerStopped(
   try {
     if (!runtime) throw new Error('no runtime configured');
     status = runtime.getStatus(ServerName.fromExisting(server));
+    if (status === 'not_found') runtime.list({ strict: true });
   } catch (error) {
     return new WorldAssignmentError(
       'undetermined',

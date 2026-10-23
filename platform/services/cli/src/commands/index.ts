@@ -7,6 +7,7 @@ export { backupCommand, type BackupCommandOptions } from './backup.js';
 export { execCommand, type ExecCommandOptions } from './exec.js';
 export { logsCommand, type LogsCommandOptions } from './logs.js';
 export { rconCommand, type RconCommandOptions } from './rcon.js';
+export { startCommand, stopCommand, type LifecycleCommandOptions } from './lifecycle.js';
 export { configCommand, type ConfigCommandOptions } from './config.js';
 export { opCommand, type OpCommandOptions } from './op.js';
 export { serverBackupCommand, type ServerBackupOptions } from './server-backup.js';

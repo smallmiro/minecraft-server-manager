@@ -114,7 +114,7 @@ Every key in `.env` has exactly one status, decided by which code actually reads
 | `TZ`, `EXTRA_ARGS` | Every server container (`servers/global.env`) | `servers`: stop, then start each server |
 | `RCON_PASSWORD` (secret), `RCON_PORT` | Every server container (`servers/global.env`); CLI `rcon` | `servers` |
 | `BACKUP_GITHUB_TOKEN` (secret), `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH` | CLI and mcctl-api backups (`GitWorldBackupAdapter` re-reads `.env` on every operation) | `none`: the next backup operation |
-| `BACKUP_AUTO_ON_STOP` | `mcctl stop` path | `none`: next `mcctl stop` |
+| `BACKUP_AUTO_ON_STOP` | `mcctl stop <server>`, API/console stop | `none`: next stop |
 | `PLAYIT_SECRET_KEY` (secret) | compose `playit` service (`SECRET_KEY`) | `playit`: stop, then start playit |
 | `LOG_LEVEL` | **mcctl-api only** (dotenv, cwd = MCCTL_ROOT) | `api` |
 | `BETTER_AUTH_SECRET` (secret, cannot be removed), `BETTER_AUTH_BASE_URL` | mcctl-console reads only these two from `.env` at startup, and a non-empty value is used only when `ecosystem.config.cjs` no longer defines that key (while it does, the ecosystem value wins and a warning is logged if `.env` differs). `mcctl upgrade` moves them into `.env`. Changing the secret signs everyone out. Unset base URL = `http://localhost:<console port>` | `console`: `mcctl console service restart --console` |

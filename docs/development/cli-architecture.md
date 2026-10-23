@@ -63,7 +63,7 @@ flowchart TB
 Be aware of both styles when reading or adding code:
 
 - **Use case commands** contain business logic. The handler gets the container, calls a use case from `shared`, and formats the result. Examples: `create`, `delete`, `config-snapshot`, `backup-schedule`, `world`, `mod`.
-- **Thin commands** are pass-throughs. They call bash scripts (`mcctl.sh` and friends) through `ShellExecutor`, or run RCON through `docker exec <container> rcon-cli` (`lib/rcon.ts`). Examples: `start`, `stop`, `logs`, `console <server>` (RCON console), `router`, `exec`. The `console init/service/user/api/remove` subcommands are separate; see below.
+- **Thin commands** are pass-throughs. They call a runtime port (`start`, `stop`, `logs`), open a TCP RCON session from `IServerConsolePort.getEndpoint` (`rcon`, `console <server>`), run docker compose through `ShellExecutor` (`up`, `down`, `--all`, `router`), or run RCON through `docker exec <container> rcon-cli` (`lib/rcon.ts`, `exec`). The `console init/service/user/api/remove` subcommands are separate; see below.
 
 New business logic belongs in a shared use case, not in a file under `commands/`. A command file should parse options, call the use case and print output.
 

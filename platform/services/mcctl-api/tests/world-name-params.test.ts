@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { request as httpRequest } from 'http';
 import { AddressInfo } from 'net';
 import { tmpdir } from 'os';
@@ -136,7 +136,13 @@ describe('World name path params (#720)', () => {
     });
 
     it('is released from the server whose LEVEL points at it', async () => {
-      // A name no real host runs: the release checks mc-<server> through docker
+      // The release asks the runtime whether mc-<server> runs: a fake docker
+      // with no containers, so the test neither needs nor touches the host's
+      const bin = mkdtempSync(join(tmpdir(), 'fake-docker-'));
+      writeFileSync(join(bin, 'docker'), '#!/bin/sh\nexit 0\n');
+      chmodSync(join(bin, 'docker'), 0o755);
+      const savedPath = process.env['PATH'];
+      process.env['PATH'] = `${bin}:${savedPath}`;
       const holder = 'mcctl-test-holder-670';
       const configEnv = join(TEST_PLATFORM_PATH, 'servers', holder, 'config.env');
       mkdirSync(join(TEST_PLATFORM_PATH, 'servers', holder), { recursive: true });
@@ -149,6 +155,8 @@ describe('World name path params (#720)', () => {
         expect(response.body).toMatchObject({ success: true, worldName: '-lobby', previousServer: holder });
         expect(readFileSync(configEnv, 'utf-8')).toBe(`LEVEL=${holder}\nEXTRA_ARGS=--universe /worlds/\n`);
       } finally {
+        process.env['PATH'] = savedPath;
+        rmSync(bin, { recursive: true, force: true });
         rmSync(join(TEST_PLATFORM_PATH, 'servers', holder), { recursive: true });
       }
     });

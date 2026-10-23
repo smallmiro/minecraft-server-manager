@@ -11,3 +11,10 @@ export { WorldInfoUseCase } from './WorldInfoUseCase.js';
 export { WorldStatsUseCase } from './WorldStatsUseCase.js';
 export { PlayerManagementUseCase } from './PlayerManagementUseCase.js';
 export { PlayerSessionUseCase } from './PlayerSessionUseCase.js';
+export {
+  autoBackupOnStop,
+  AUTO_BACKUP_LOCK_WAIT_MS,
+  AUTO_BACKUP_CLOSE_WAIT_MS,
+  API_PM2_KILL_TIMEOUT_MS,
+  type AutoBackupOnStopResult,
+} from './autoBackupOnStop.js';

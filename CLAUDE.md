@@ -9,7 +9,7 @@ This project is a DevOps project for building and operating multiple Minecraft J
 | Directory | Description |
 |-----------|-------------|
 | `platform/` | Docker platform runtime (docker-compose, .env, servers/, worlds/, shared/) |
-| `platform/scripts/` | Bash management scripts (create-server.sh, delete-server.sh, mcctl.sh 등) |
+| `platform/scripts/` | Bash management scripts (create-server.sh, delete-server.sh 등) |
 | `platform/services/shared/` | `@minecraft-docker/shared` - Domain entities, value objects, use cases, ports/adapters |
 | `platform/services/cli/` | `@minecraft-docker/mcctl` - npm CLI (Hexagonal Architecture) |
 | `platform/services/mcctl-api/` | `@minecraft-docker/mcctl-api` - Fastify REST API (:5001) |
