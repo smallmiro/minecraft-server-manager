@@ -9,6 +9,8 @@ import {
   WorldRepository,
   ConfigEnvWorldAssignmentAdapter,
   FileServerSpecRepository,
+  AvahiHostnameRegistrarAdapter,
+  resolveHostIps,
   DockerComposeRuntimeAdapter,
   DocsAdapter,
   SqliteAuditLogRepository,
@@ -258,7 +260,13 @@ export class Container {
       this.worldRepository,
       this.auditLogPort,
       this.modSourcePort,
-      this.worldAssignmentPort
+      this.worldAssignmentPort,
+      {
+        specRepo: this.serverSpecRepository,
+        hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: this.sudoPassword }),
+        runtime: this.containerRuntime,
+        hostIps: () => resolveHostIps(this.paths),
+      }
     );
   }
 
