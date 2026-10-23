@@ -9,7 +9,7 @@ import { multiselect, text, select, confirm, password, isCancel } from '@clack/p
 import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import { randomizeRconPassword } from '../lib/rcon-password.js';
 import { displayPrerequisiteReport } from '../lib/prerequisite-display.js';
-import { printBanner, getGitHash, type UpdateCheckResult } from '../lib/banner.js';
+import { printBanner, type UpdateCheckResult } from '../lib/banner.js';
 import {
   getInstalledVersion,
   fetchLatestVersionForced,
@@ -40,7 +40,6 @@ export async function initCommand(options: {
 
   // Get version info for banner
   const version = getInstalledVersion();
-  const gitHash = getGitHash();
 
   // Check for updates (non-blocking, with timeout)
   let updateInfo: UpdateCheckResult | null = null;
@@ -58,7 +57,7 @@ export async function initCommand(options: {
   }
 
   // Print creeper banner
-  printBanner({ version, gitHash, updateInfo });
+  printBanner({ version, updateInfo });
 
   console.log(`  Data directory: ${colors.cyan(paths.root)}`);
   console.log('');

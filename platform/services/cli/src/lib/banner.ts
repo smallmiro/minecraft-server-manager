@@ -93,19 +93,3 @@ export function printBanner(options: BannerOptions): void {
   console.log('');
   console.log(generateBanner(options));
 }
-
-/**
- * Get git commit hash (short)
- */
-export function getGitHash(): string | undefined {
-  try {
-    const { execSync } = require('node:child_process');
-    const hash = execSync('git rev-parse --short HEAD', {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim();
-    return hash || undefined;
-  } catch {
-    return undefined;
-  }
-}
