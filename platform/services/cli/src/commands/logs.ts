@@ -4,11 +4,12 @@ import { getContainer } from '../infrastructure/index.js';
 export interface LogsCommandOptions {
   root?: string;
   serverName?: string;
-  lines?: string;
+  /** Raw flag value: `-n` without a value arrives as `true`. */
+  lines?: string | boolean;
   follow?: boolean;
   json?: boolean;
   runtime?: IContainerRuntimePort;
-  write?: (text: string) => void;
+  write?: (text: string) => void | Promise<void>;
   /** Abort to end follow (SIGINT also aborts it). */
   signal?: AbortSignal;
 }
@@ -20,7 +21,10 @@ const ROUTER = 'mc-router';
  * View server (or router) logs through the container runtime port.
  */
 export async function logsCommand(options: LogsCommandOptions): Promise<number> {
-  const write = options.write ?? ((s: string) => void process.stdout.write(s));
+  // Resolve on the write callback so process.exit() cannot truncate piped output.
+  const write =
+    options.write ??
+    ((s: string) => new Promise<void>((resolve) => void process.stdout.write(s, () => resolve())));
 
   if (!options.runtime && !new Paths(options.root).isInitialized()) {
     log.error('Platform not initialized. Run: mcctl init');
@@ -32,8 +36,11 @@ export async function logsCommand(options: LogsCommandOptions): Promise<number> 
     return 1;
   }
 
-  const lines = options.lines === undefined ? DEFAULT_LINES : Number(options.lines);
-  if (!Number.isInteger(lines) || lines < 0) {
+  let lines = DEFAULT_LINES;
+  if (options.lines !== undefined) {
+    lines = typeof options.lines === 'string' && /^[1-9]\d*$/.test(options.lines) ? Number(options.lines) : NaN;
+  }
+  if (!Number.isInteger(lines)) {
     log.error(`Invalid --lines value: ${options.lines}`);
     return 1;
   }
@@ -66,19 +73,34 @@ export async function logsCommand(options: LogsCommandOptions): Promise<number> 
   options.signal?.addEventListener('abort', abort);
   process.once('SIGINT', abort);
   const chunks: string[] = [];
+  const pending: Array<void | Promise<void>> = [];
+  let failed = false;
   try {
-    await runtime.followLogs(workload, options.follow ? write : (c) => void chunks.push(c), controller.signal, {
-      follow: options.follow === true,
-      tail: lines,
-    });
+    await runtime.followLogs(
+      workload,
+      options.follow ? (c) => void pending.push(write(c)) : (c) => void chunks.push(c),
+      controller.signal,
+      {
+        follow: options.follow === true,
+        tail: lines,
+        onExit: (code, error) => {
+          if (!controller.signal.aborted && (error || code !== 0)) {
+            failed = true;
+            log.error(`docker logs failed${error ? `: ${error.message}` : ` (exit ${code})`}`);
+          }
+        },
+      }
+    );
   } finally {
     options.signal?.removeEventListener('abort', abort);
     process.off('SIGINT', abort);
   }
+  await Promise.all(pending);
+  if (failed) return 1;
   if (options.follow) return 0;
 
   const text = chunks.join('').replace(/\r?\n$/, '');
   const all = text === '' ? [] : text.split(/\r?\n/);
-  write(options.json ? JSON.stringify(all, null, 2) + '\n' : text === '' ? '' : text + '\n');
+  await write(options.json ? JSON.stringify(all, null, 2) + '\n' : text === '' ? '' : text + '\n');
   return 0;
 }

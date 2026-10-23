@@ -695,7 +695,7 @@ async function main(): Promise<void> {
         exitCode = await logsCommand({
           root: rootDir,
           serverName: positional[0],
-          lines: flags['lines'] as string | undefined,
+          lines: flags['lines'] as string | boolean | undefined,
           follow: flags['follow'] === true,
           json: flags['json'] === true,
         });

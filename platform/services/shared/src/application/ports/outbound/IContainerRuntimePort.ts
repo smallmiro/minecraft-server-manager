@@ -45,6 +45,11 @@ export interface IContainerRuntimePort {
     name: string,
     onChunk: (chunk: string) => void,
     signal: AbortSignal,
-    options?: { tail?: number; follow?: boolean }
+    options?: {
+      tail?: number;
+      follow?: boolean;
+      /** Called once when the stream ends. `code` is docker's exit code (null if killed or not spawned). The promise still resolves. */
+      onExit?: (code: number | null, error?: Error) => void;
+    }
   ): Promise<void>;
 }

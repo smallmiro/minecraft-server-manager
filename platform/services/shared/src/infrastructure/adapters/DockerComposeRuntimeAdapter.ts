@@ -275,7 +275,11 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
     container: string,
     onChunk: (chunk: string) => void,
     signal: AbortSignal,
-    options?: { tail?: number; follow?: boolean }
+    options?: {
+      tail?: number;
+      follow?: boolean;
+      onExit?: (code: number | null, error?: Error) => void;
+    }
   ): Promise<void> {
     return new Promise((resolve) => {
       const dockerLogs = spawn('docker', [
@@ -296,8 +300,16 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
 
       dockerLogs.stdout?.on('data', send);
       dockerLogs.stderr?.on('data', send);
-      dockerLogs.on('close', () => resolve());
-      dockerLogs.on('error', () => resolve());
+      let exited = false;
+      const finish = (code: number | null, error?: Error) => {
+        if (!exited) {
+          exited = true;
+          options?.onExit?.(code, error);
+        }
+        resolve();
+      };
+      dockerLogs.on('close', (code: number | null) => finish(code));
+      dockerLogs.on('error', (error: Error) => finish(null, error));
     });
   }
 

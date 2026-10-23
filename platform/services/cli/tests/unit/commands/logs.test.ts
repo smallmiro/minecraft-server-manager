@@ -34,7 +34,7 @@ describe('logsCommand', () => {
     expect(await logsCommand({ serverName: 'myserver', runtime, write })).toBe(0);
     expect(runtime.followLogs).toHaveBeenCalledWith('mc-myserver', expect.any(Function), expect.any(AbortSignal), {
       follow: false,
-      tail: 50,
+      tail: 50, onExit: expect.any(Function)
     });
     expect(out.join('')).toBe('a\njava.lang.Exception\nb\n');
   });
@@ -44,7 +44,7 @@ describe('logsCommand', () => {
     await logsCommand({ serverName: 'myserver', lines: '10', runtime, write });
     expect(runtime.followLogs).toHaveBeenCalledWith('mc-myserver', expect.any(Function), expect.any(AbortSignal), {
       follow: false,
-      tail: 10,
+      tail: 10, onExit: expect.any(Function)
     });
   });
 
@@ -66,7 +66,7 @@ describe('logsCommand', () => {
     expect(runtime.exists).toHaveBeenCalledWith('mc-router');
     expect(runtime.followLogs).toHaveBeenCalledWith('mc-router', expect.any(Function), expect.any(AbortSignal), {
       follow: false,
-      tail: 50,
+      tail: 50, onExit: expect.any(Function)
     });
   });
 
@@ -92,7 +92,7 @@ describe('logsCommand', () => {
     });
     const runtime = fakeRuntime({ followLogs });
     expect(await logsCommand({ serverName: 'myserver', follow: true, lines: '5', runtime, write })).toBe(0);
-    expect(followLogs).toHaveBeenCalledWith('mc-myserver', expect.any(Function), expect.any(AbortSignal), { follow: true, tail: 5 });
+    expect(followLogs).toHaveBeenCalledWith('mc-myserver', expect.any(Function), expect.any(AbortSignal), { follow: true, tail: 5, onExit: expect.any(Function) });
     expect(out.join('')).toBe('x\n');
   });
 
