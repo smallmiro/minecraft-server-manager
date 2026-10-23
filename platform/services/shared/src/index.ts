@@ -91,6 +91,7 @@ export {
   EXISTING_SERVER_NAME_PATTERN,
   WorldName,
   WORLD_NAME_PATTERN,
+  EXISTING_WORLD_NAME_PATTERN,
   configuredWorldName,
   resolveWorldName,
   ServerType,
@@ -111,6 +112,15 @@ export {
   ProcessInfo,
   type ProcessInfoData,
   type ProcessMetrics,
+  // World assignment rules (#670)
+  WorldAssignmentError,
+  holdersOf,
+  checkAssign,
+  planRelease,
+  findDuplicates,
+  type WorldAssignment,
+  type WorldAssignmentSnapshot,
+  type WorldAssignmentErrorCode,
   // Entities
   Server,
   ServerStatus,

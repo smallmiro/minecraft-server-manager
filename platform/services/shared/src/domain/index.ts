@@ -8,6 +8,7 @@ export {
   EXISTING_SERVER_NAME_PATTERN,
   WorldName,
   WORLD_NAME_PATTERN,
+  EXISTING_WORLD_NAME_PATTERN,
   configuredWorldName,
   resolveWorldName,
   ServerType,
@@ -78,6 +79,18 @@ export {
   parseDockerLogTimestamp,
   type PlayerSessionEvent,
 } from './value-objects/index.js';
+
+// Domain services
+export {
+  WorldAssignmentError,
+  holdersOf,
+  checkAssign,
+  planRelease,
+  findDuplicates,
+  type WorldAssignment,
+  type WorldAssignmentSnapshot,
+  type WorldAssignmentErrorCode,
+} from './services/worldAssignment.js';
 
 // Entities
 export {
