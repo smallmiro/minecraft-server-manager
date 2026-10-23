@@ -21,7 +21,7 @@
 2. **Small typed core + `env` pass-through.** Typed fields only for what mcctl reasons about or a renderer must translate (type, version, memory, image, world, routing). Every other `config.env` key lives in `env` unchanged, so import is lossless.
 3. **Readers do not change in v2.x.** Generated files are rewritten on every save, so existing readers (`ServerRepository`, status, API config) keep reading `config.env`/compose. Only writers move.
 4. **Hand edits are absorbed, not lost.** A header hash detects them. `config.env` edits and edits of spec-owned compose fields (`image`, `mc-router.*` labels) are absorbed into the spec before the next write. Any other compose difference is protected: never overwritten silently.
-5. **No new port, no broken export** (#715, v2.x rule). `IServerSpecRepository` and `ServerSpec` keep their v2 shape; the full type is the new `ServerSpecDocument`, and the new behaviour comes from added methods (`load`, `write`), as #670 did for `IWorldAssignmentPort`. Rendering is an infrastructure detail of the repository adapter. `IHostnameRegistrarPort` gains `register`; `unregister` is added with delete in #735.
+5. **No new port, no broken export** (#715, v2.x rule). `IServerSpecRepository` and `ServerSpec` keep their v2 shape; the full type is the new `ServerSpecDocument`, and the new behaviour comes from added methods (`load`, `write`), as #670 did for `IWorldAssignmentPort`. Rendering is an infrastructure detail of the repository adapter. `IHostnameRegistrarPort` gains `register`; `unregister` was added with delete in #735.
 6. **No lock file.** Create claims the directory with `mkdir`; updates use an optimistic revision (sha256 of `server.yaml`). The in-process API queue from #749 stays.
 7. **Import is lazy or explicit, never bulk.** A server without `server.yaml` is imported in memory on its first write; `mcctl migrate spec` imports on request. `mcctl upgrade` only reports which servers are not imported yet. A server that is never imported keeps working as today.
 8. **Provision replaces `create-server.sh`** inside `CreateServerUseCase`, with progress events named as the API SSE already expects and all-or-nothing cleanup so a retry works.
@@ -114,7 +114,7 @@ list(): Promise<ServerSpec[]>;                       // { name } per server dir 
 /** @deprecated Use load(). Removed in v3.0.0 (#736). */
 get(name: string): Promise<ServerSpec | null>;       // the document, typed as the v2 ServerSpec
 save(spec: ServerSpec): Promise<void>;               // = write(spec) after validating it is a document
-delete(name: string): Promise<void>;                 // #735
+delete(name: string, options?: DeleteServerSpecOptions): Promise<ServerSpecDeleteResult>; // #735
 load(name: string): Promise<LoadedServerSpec | null>;               // { document, revision, warnings }
 write(doc: ServerSpecDocument, options?: WriteServerSpecOptions): Promise<void>; // { expectedRevision?, create?, force?, allowStorageChange? }
 ```
@@ -141,7 +141,7 @@ export interface ServerSpecRenderer {
 }
 ```
 
-`FileServerSpecRepository` (the `IServerSpecRepository` adapter) takes a renderer in its constructor. Application code never calls a renderer, so it is not a port. `DockerComposeRenderer` is implemented now. `KubernetesManifestRenderer` (StatefulSet, Service, PVC from `world.storage`) is only this interface until #641, which adds the renderer plus whatever storing the spec and applying manifests need in a k8s repository adapter; ADR-0001's `apply(spec)` is not needed. What removal renders (include entry) is decided in #735.
+`FileServerSpecRepository` (the `IServerSpecRepository` adapter) takes a renderer in its constructor. Application code never calls a renderer, so it is not a port. `DockerComposeRenderer` is implemented now. `KubernetesManifestRenderer` (StatefulSet, Service, PVC from `world.storage`) is only this interface until #641, which adds the renderer plus whatever storing the spec and applying manifests need in a k8s repository adapter; ADR-0001's `apply(spec)` is not needed. Removal (#735) drops the server's include entry with `removeIncludeEntry` (and `include:` itself when no entry is left) and deletes `servers/<n>` after moving its world; see [ADR-0001 S7](0001-container-runtime-ports.md#script-removal-s7-delete-serversh-735).
 
 **Docker outputs**
 
@@ -230,7 +230,7 @@ export interface ServerSpecRenderer {
 | `MCCTL_SUDO_PASSWORD` | `--sudo-password` / `sudoPassword` | avahi adapter option |
 | defaults `MOTD=Welcome to <n>!…`, `LEVEL=<n>` | — | `env.MOTD`, `world.level` |
 
-**bats → vitest**: `get_host_ip` ×4 → `resolveHostIps`; `register_avahi_hostname` ×5 → avahi adapter with fake `sudo`/`avahi-daemon` on `PATH` (as `docker-shell-injection.test.ts`); create writes dir/config/include, seed/modpack-version rejection, text seed → provision tests on a temp root (plus "retry after failure succeeds"); "aborts when compose config fails" → "aborts and writes nothing when `servers/compose.yml` fails to load"; symlinked `_template` → "the renderer never writes `templatesDir`"; whitelist ×3 → render tests with the bundled template and a legacy one with `ENABLE_WHITELIST=TRUE`. `sudo-password.bats` stays until #735 (delete still uses `common.sh`).
+**bats → vitest**: `get_host_ip` ×4 → `resolveHostIps`; `register_avahi_hostname` ×5 → avahi adapter with fake `sudo`/`avahi-daemon` on `PATH` (as `docker-shell-injection.test.ts`); create writes dir/config/include, seed/modpack-version rejection, text seed → provision tests on a temp root (plus "retry after failure succeeds"); "aborts when compose config fails" → "aborts and writes nothing when `servers/compose.yml` fails to load"; symlinked `_template` → "the renderer never writes `templatesDir`"; whitelist ×3 → render tests with the bundled template and a legacy one with `ENABLE_WHITELIST=TRUE`. `sudo-password.bats` stayed until #735, which moved its cases to the avahi adapter tests and removed it with `delete-server.sh`.
 
 ## 6. Write Paths
 
