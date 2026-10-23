@@ -404,9 +404,9 @@ describe('v2 methods', () => {
     expect((await repo.load('survival'))!.document).toEqual(spec());
   });
 
-  it('delete says it arrives with #735', async () => {
+  it('delete(name), the v2 call, removes the server (#735)', async () => {
     serverDir('survival', VALID, COMPOSE('survival'));
-    await expect(repo.delete('survival')).rejects.toThrow(/#735/);
-    expect(existsSync(join(root, 'servers', 'survival'))).toBe(true);
+    await repo.delete('survival');
+    expect(existsSync(join(root, 'servers', 'survival'))).toBe(false);
   });
 });

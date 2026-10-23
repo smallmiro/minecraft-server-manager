@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { mkdir, readdir, readFile, rm, stat } from 'node:fs/promises';
+import { cp, lstat, mkdir, readdir, readFile, rename, rm, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import yaml from 'js-yaml';
 import { Paths } from '../../../utils/index.js';
@@ -15,8 +15,10 @@ import {
   type ServerSpecDocument,
 } from '../../../domain/server-spec/ServerSpecDocument.js';
 import type {
+  DeleteServerSpecOptions,
   IServerSpecRepository,
   LoadedServerSpec,
+  ServerSpecDeleteResult,
   WriteServerSpecOptions,
 } from '../../../application/ports/outbound/IServerSpecRepository.js';
 import { absorbCompose, absorbConfigEnv, importDockerServer, type ServerSpecImport } from './importDockerServer.js';
@@ -29,6 +31,7 @@ import {
   type ServerSpecRenderer,
 } from './DockerComposeRenderer.js';
 import { composeOutsideEdits } from './composeEdits.js';
+import { planServerWorlds } from './serverWorldPlan.js';
 import { readWorldAssignmentSnapshot } from '../effectiveExtraArgs.js';
 import { acquireFileLock } from '../../backup/lock.js';
 import { checkProposed, type WorldAssignmentSnapshot } from '../../../domain/services/worldAssignment.js';
@@ -113,7 +116,25 @@ export const serverSpecTestHooks = {
   beforeIncludeWrite: async (): Promise<void> => {},
   /** How long to wait for another process holding servers/compose.yml. */
   includeLockWaitMs: 10_000,
+  /** Before delete moves servers/<n>/data/<world> to worlds/ (#735). */
+  beforeWorldMove: async (_world: string): Promise<void> => {},
 };
+
+/** Rename, or copy then remove when worlds/ is on another filesystem (what mv did). */
+async function moveFolder(from: string, to: string): Promise<void> {
+  try {
+    await rename(from, to);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EXDEV') throw err;
+    try {
+      await cp(from, to, { recursive: true, errorOnExist: true, force: false, preserveTimestamps: true, verbatimSymlinks: true });
+    } catch (copyErr) {
+      await rm(to, { recursive: true, force: true }); // our partial copy; the original is untouched
+      throw copyErr;
+    }
+    await rm(from, { recursive: true, force: true });
+  }
+}
 
 const editConflict = (name: string) =>
   new ServerSpecError(
@@ -170,12 +191,86 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     await this.write(spec as ServerSpecDocument);
   }
 
-  async delete(name: string): Promise<void> {
-    throw new ServerSpecError(
-      'conflict',
-      `Removing server '${name}' through the ServerSpec repository arrives with #735; use mcctl delete ${name}`,
-      name
-    );
+  /**
+   * Remove a server (#735, delete-server.sh steps 2-4): plan its worlds
+   * (#652), move the world inside the server to worlds/ unless deleteWorld,
+   * then drop its servers/compose.yml entry and servers/<n> under the
+   * servers/compose.yml lock. Every refusal comes before the first change.
+   */
+  async delete(name: string, options: DeleteServerSpecOptions = {}): Promise<ServerSpecDeleteResult> {
+    if (!EXISTING_SERVER_NAME_PATTERN.test(name)) {
+      throw new ServerSpecError('not_found', `Invalid server name '${name}'`, name);
+    }
+    const dir = this.paths.serverDir(name);
+    if (!(await isDirectory(dir))) {
+      throw new ServerSpecError('not_found', `Server '${name}' not found (no servers/${name} directory)`, name);
+    }
+    const deleteWorld = options.deleteWorld === true;
+    const plan = await planServerWorlds(this.paths, name, deleteWorld);
+    const includePath = join(this.paths.servers, 'compose.yml');
+    this.includeWithout(name, readOptionalSync(includePath)); // an unreadable file refuses before any change
+    const result: ServerSpecDeleteResult = {
+      level: plan.level,
+      movedWorlds: deleteWorld ? [] : plan.internal,
+      deletedWorlds: deleteWorld ? plan.internal : [],
+      keptWorld: plan.keptWorld,
+    };
+    if (options.dryRun) return result;
+
+    await this.moveWorlds(name, result.movedWorlds);
+    await this.withIncludeLock(name, async () => {
+      const current = readOptionalSync(includePath);
+      const next = this.includeWithout(name, current);
+      if (next !== current) await atomicWriteFile(includePath, next!);
+      await rm(dir, { recursive: true, force: true });
+    });
+    return result;
+  }
+
+  /** servers/compose.yml text without the server's entry; 'conflict' when it does not parse. */
+  private includeWithout(name: string, current: string | undefined): string | undefined {
+    if (current === undefined) return undefined;
+    try {
+      return removeIncludeEntry(current, name);
+    } catch (e) {
+      throw new ServerSpecError(
+        'conflict',
+        `servers/compose.yml does not parse: ${(e as Error).message.split('\n')[0]}; fix it first (nothing was deleted)`,
+        name
+      );
+    }
+  }
+
+  /** Move servers/<n>/data/<world> to worlds/<world>; on failure report what already moved. */
+  private async moveWorlds(name: string, worlds: string[]): Promise<void> {
+    if (worlds.length === 0) return;
+    const moved: string[] = [];
+    const failed = (reason: string) =>
+      new ServerSpecError(
+        'conflict',
+        `${reason}. servers/${name}/ was kept.` +
+          moved.map((w) => ` Already moved: servers/${name}/data/${w} -> worlds/${w}`).join(''),
+        name
+      );
+    await mkdir(this.paths.worlds, { recursive: true });
+    for (const world of worlds) {
+      await serverSpecTestHooks.beforeWorldMove(world);
+      // ponytail: check-then-rename is not atomic; rename onto a folder created in between
+      // fails (not empty) or replaces an empty one, so no data is lost.
+      try {
+        await lstat(join(this.paths.worlds, world));
+        throw failed(`worlds/${world} appeared before data/${world} could be moved`);
+      } catch (err) {
+        if (err instanceof ServerSpecError) throw err;
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw failed(`cannot check worlds/${world}`);
+      }
+      try {
+        await moveFolder(join(this.paths.serverDir(name), 'data', world), join(this.paths.worlds, world));
+      } catch (err) {
+        throw failed(`failed to move data/${world} to worlds/: ${(err as Error).message}`);
+      }
+      moved.push(world);
+    }
   }
 
   /**

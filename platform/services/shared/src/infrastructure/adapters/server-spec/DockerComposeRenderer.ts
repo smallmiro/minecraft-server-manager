@@ -140,6 +140,8 @@ export function removeIncludeEntry(current: string, name: string): string {
   const parsed = yaml.load(current) as Record<string, unknown> | null;
   const list = parsed?.['include'];
   if (!Array.isArray(list) || !list.some((e) => includePaths(e).includes(entry))) return current;
-  const kept = list.filter((e) => !includePaths(e).includes(entry));
-  return INCLUDE_HEADER + yaml.dump({ ...parsed, include: kept }, DUMP_OPTIONS);
+  const doc: Record<string, unknown> = { ...parsed, include: list.filter((e) => !includePaths(e).includes(entry)) };
+  // No entry left: no include: key, like a fresh servers/compose.yml (#660)
+  if ((doc['include'] as unknown[]).length === 0) delete doc['include'];
+  return INCLUDE_HEADER + (Object.keys(doc).length > 0 ? yaml.dump(doc, DUMP_OPTIONS) : '');
 }
