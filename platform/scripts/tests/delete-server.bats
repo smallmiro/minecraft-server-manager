@@ -156,7 +156,7 @@ mk_world() {
     [ "$status" -eq 1 ]
     [ -f "$PLATFORM/servers/alpha/data/alpha/level.dat" ]
     [ ! -e "$PLATFORM/worlds/alpha" ]
-    run ! grep -q 'rm' "$FAKE_DOCKER_LOG"
+    run ! grep -qE '(^| )rm( |$)' "$FAKE_DOCKER_LOG"
 }
 
 @test "delete: does not claim a world was preserved when there was none (#652)" {
@@ -173,7 +173,7 @@ expect_abort_keeping() {
     [ "$status" -eq 1 ]
     [ -e "$1" ]
     [ -d "$PLATFORM/servers/alpha" ]
-    run ! grep -qE '(^| )(stop|rm)( |$)' "$FAKE_DOCKER_LOG"
+    if grep -qE '(^| )(stop|rm)( |$)' "$FAKE_DOCKER_LOG"; then return 1; fi
 }
 
 @test "delete: LEVEL with an inline comment is not guessed (#652)" {
