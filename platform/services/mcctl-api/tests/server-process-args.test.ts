@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
@@ -14,7 +14,6 @@ import { join } from 'path';
  */
 
 const ROOT = mkdtempSync(join(tmpdir(), 'mcctl-api-process-args-'));
-const SCRIPTS = join(ROOT, 'scripts');
 
 process.env.MCCTL_ROOT = ROOT;
 process.env.AUTH_MODE = 'disabled';
@@ -31,14 +30,6 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   serverExists: vi.fn(),
   getContainerStatus: vi.fn(() => 'not_found'),
   stopContainer: vi.fn(),
-}));
-
-// Never fall through to a real (bundled or deployed) create/delete script.
-vi.mock('../src/lib/script-resolver.js', () => ({
-  resolveScriptPath: (scriptName: string) => ({
-    scriptPath: join(SCRIPTS, scriptName),
-    scriptsDir: SCRIPTS,
-  }),
 }));
 
 vi.mock('../src/services/audit-log-service.js', () => ({
@@ -83,8 +74,6 @@ function configEnv(): Map<string, string> {
   return parseEnvDocument(readFileSync(join(ROOT, 'servers', 'argv-test', 'config.env'), 'utf-8')).values;
 }
 
-const ARGV_FILE = join(ROOT, 'argv');
-
 const pwned = (tag: string) => existsSync(join(ROOT, `pwned-${tag}`));
 
 describe('Server scripts receive user input as argv, not shell text (#720)', () => {
@@ -92,12 +81,6 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
 
   beforeAll(async () => {
     mkdirSync(join(ROOT, 'backups', 'meta'), { recursive: true });
-    mkdirSync(SCRIPTS, { recursive: true });
-    for (const name of ['create-server.sh']) {
-      const script = join(SCRIPTS, name);
-      writeFileSync(script, `#!/bin/bash\nprintf '%s\\0' "$@" > "${ARGV_FILE}"\n`);
-      chmodSync(script, 0o755);
-    }
 
     const { config } = await import('../src/config/index.js');
     (config as any).mcctlRoot = ROOT;
@@ -114,7 +97,6 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
 
   beforeEach(() => {
     vi.clearAllMocks();
-    rmSync(ARGV_FILE, { force: true });
     rmSync(join(ROOT, 'servers'), { recursive: true, force: true });
     mkdirSync(join(ROOT, 'servers'), { recursive: true });
     fileProvision();

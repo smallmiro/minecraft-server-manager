@@ -75,7 +75,6 @@ import { worldFailure } from '../lib/world-use-case.js';
 import { serverSpecFailure } from '../lib/server-spec.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
-import { delay } from '../lib/script-process.js';
 
 /**
  * How POST /api/servers builds its CreateServerUseCase (#675, ADR-0003 §5):
@@ -233,8 +232,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // get the normal 201/200/404/409 answers instead of racing on servers/.
   // ponytail: in-process queue; a second API process would need a file lock.
   // The queue moves on when the task settles or after maxHoldMs, whichever is
-  // first, so a script that never returns cannot block it for good.
+  // first, so a task that never returns cannot block it for good.
   let lifecycleTail: Promise<unknown> = Promise.resolve();
+  const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms).unref());
   const runSerial = <T>(task: () => Promise<T>, maxHoldMs: () => number): Promise<T> => {
     const started = lifecycleTail.then(() => {
       const run = task();

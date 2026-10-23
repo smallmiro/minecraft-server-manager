@@ -31,54 +31,6 @@ function getApiPackageRoot(): string {
   return start;
 }
 
-/**
- * Directory of the scripts bundled with the mcctl-api package.
- *
- * These are synced from `platform/scripts` at publish time (see the
- * `sync-scripts` npm script) and are therefore version-matched with the API.
- * In a development build (running from `src/` via tsx) this directory does not
- * exist, in which case the resolver falls back to the deployed platform copy.
- */
-export function getBundledScriptsDir(): string {
-  return join(getApiPackageRoot(), 'scripts');
-}
-
-export interface ResolvedScript {
-  /** Absolute path to the resolved `.sh` script. */
-  scriptPath: string;
-  /** Directory containing the script (exported as MCCTL_SCRIPTS to the script). */
-  scriptsDir: string;
-}
-
-/**
- * Resolve the script to execute for a given script name.
- *
- * Resolution order:
- *   1. Bundled scripts shipped with mcctl-api (version-matched).
- *   2. Scripts deployed under `<mcctlRoot>/scripts` (legacy / may be stale).
- *
- * Returns `null` when the script is found in neither location, signalling the
- * caller to fall back to the globally installed `mcctl` CLI.
- */
-export function resolveScriptPath(
-  scriptName: string,
-  mcctlRoot: string,
-  bundledScriptsDir: string = getBundledScriptsDir(),
-): ResolvedScript | null {
-  const bundled = join(bundledScriptsDir, scriptName);
-  if (existsSync(bundled)) {
-    return { scriptPath: bundled, scriptsDir: bundledScriptsDir };
-  }
-
-  const deployedDir = join(mcctlRoot, 'scripts');
-  const deployed = join(deployedDir, scriptName);
-  if (existsSync(deployed)) {
-    return { scriptPath: deployed, scriptsDir: deployedDir };
-  }
-
-  return null;
-}
-
 /** Directory of the Docker build contexts bundled with the package (synced from `platform/docker`). */
 export function getBundledDockerDir(): string {
   return join(getApiPackageRoot(), 'docker');
