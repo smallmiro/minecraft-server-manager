@@ -15,6 +15,8 @@ import {
   ShellAdapter,
   WorldRepository,
   ServerRepository,
+  ConfigEnvWorldAssignmentAdapter,
+  DockerComposeRuntimeAdapter,
   Paths,
   AuditActionEnum,
   BlueMapCliRenderer,
@@ -67,7 +69,7 @@ import {
   type StatsAnalyzeQuery,
 } from '../schemas/world-stats.js';
 import { mkdir, readFile as readFileAsync, writeFile, rename } from 'fs/promises';
-import { config } from '../config/index.js';
+import { config, childProcessEnv } from '../config/index.js';
 import { resolveBlueMapDockerDir } from '../lib/script-resolver.js';
 import { resolveInside } from '../lib/safe-path.js';
 import { resolve as resolvePath, sep, extname } from 'node:path';
@@ -130,10 +132,13 @@ function createWorldUseCase(options?: {
     confirmValue: options?.confirmValue ?? true,
   });
   const shell = new ShellAdapter({ paths });
-  const worldRepo = new WorldRepository(paths);
+  // #670: assignments come from each server's LEVEL; D2 moves these into its container plugin
+  const assignments = new ConfigEnvWorldAssignmentAdapter(paths);
+  const runtime = new DockerComposeRuntimeAdapter({ root: paths.root, env: () => childProcessEnv() });
+  const worldRepo = new WorldRepository(paths, assignments);
   const serverRepo = new ServerRepository(paths);
 
-  return new WorldManagementUseCase(prompt, shell, worldRepo, serverRepo);
+  return new WorldManagementUseCase(prompt, shell, worldRepo, serverRepo, assignments, runtime);
 }
 
 /**

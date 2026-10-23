@@ -1,3 +1,5 @@
+import type { WorldAssignmentErrorCode } from '../../../domain/services/worldAssignment.js';
+
 /**
  * World creation options
  */
@@ -18,6 +20,8 @@ export interface WorldCreateResult {
   serverName?: string;
   started?: boolean;
   error?: string;
+  /** Set when an assignment rule refused the request (#670). */
+  errorCode?: WorldAssignmentErrorCode;
 }
 
 /**
@@ -64,9 +68,14 @@ export interface IWorldManagementUseCase {
   assignWorld(): Promise<WorldAssignResult>;
 
   /**
-   * Assign world to server by name
+   * Assign world to server by name (writes the server's LEVEL).
+   * `requireExisting` (default true): the world must already exist in worlds/.
    */
-  assignWorldByName(worldName: string, serverName: string): Promise<WorldAssignResult>;
+  assignWorldByName(
+    worldName: string,
+    serverName: string,
+    options?: { requireExisting?: boolean }
+  ): Promise<WorldAssignResult>;
 
   /**
    * Interactive world release
@@ -74,7 +83,8 @@ export interface IWorldManagementUseCase {
   releaseWorld(): Promise<WorldReleaseResult>;
 
   /**
-   * Release world by name
+   * Release world by name: the holder falls back to its own world `<server>`.
+   * `force` is accepted and ignored (#670).
    */
   releaseWorldByName(worldName: string, force?: boolean): Promise<WorldReleaseResult>;
 
@@ -84,7 +94,8 @@ export interface IWorldManagementUseCase {
   deleteWorld(): Promise<WorldDeleteResult>;
 
   /**
-   * Delete world by name
+   * Delete world by name. Refused while a server's LEVEL points at it;
+   * `force` only skips the prompt, it no longer bypasses that check (#670).
    */
   deleteWorldByName(worldName: string, force?: boolean): Promise<WorldDeleteResult>;
 
@@ -118,6 +129,7 @@ export interface WorldAssignResult {
   worldName: string;
   serverName: string;
   error?: string;
+  errorCode?: WorldAssignmentErrorCode;
 }
 
 /**
@@ -127,7 +139,12 @@ export interface WorldReleaseResult {
   success: boolean;
   worldName: string;
   previousServer?: string;
+  /** The world the previous holder now uses: its own name (#670). */
+  fallbackWorld?: string;
+  /** Whether worlds/<fallbackWorld> already exists (adopted) or is created on next start. */
+  fallbackExists?: boolean;
   error?: string;
+  errorCode?: WorldAssignmentErrorCode;
 }
 
 /**
@@ -138,5 +155,6 @@ export interface WorldDeleteResult {
   worldName: string;
   size?: string;
   error?: string;
+  errorCode?: WorldAssignmentErrorCode;
 }
 

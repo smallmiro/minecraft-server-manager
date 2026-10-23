@@ -12,21 +12,99 @@ import type {
   IShellPort,
   IWorldRepository,
   IServerRepository,
+  IWorldAssignmentPort,
+  IContainerRuntimePort,
 } from '../ports/index.js';
+import type { ContainerStatus } from '../../types/index.js';
 import { formatWorldBytes } from '../../utils/index.js';
-import { WORLD_NAME_PATTERN, configuredWorldName, resolveWorldName } from '../../domain/index.js';
+import {
+  WORLD_NAME_PATTERN,
+  WorldAssignmentError,
+  checkAssign,
+  checkRemoval,
+  checkReset,
+  findDuplicates,
+  planRelease,
+  resolveWorldName,
+  type WorldAssignmentErrorCode,
+  type WorldAssignmentSnapshot,
+} from '../../domain/index.js';
+
+/** A server in one of these states may not change its LEVEL. */
+const ACTIVE_STATES: ReadonlySet<ContainerStatus> = new Set(['running', 'paused', 'restarting', 'created']);
+
+const NO_ASSIGNMENTS: WorldAssignmentSnapshot = { assignments: [], undetermined: [] };
+
+function toFailure(error: unknown): { error: string; errorCode?: WorldAssignmentErrorCode } {
+  if (error instanceof WorldAssignmentError) return { error: error.message, errorCode: error.code };
+  return { error: error instanceof Error ? error.message : String(error) };
+}
 
 /**
  * World Management Use Case
- * Manages world assignments and locks
+ *
+ * A server's world is its LEVEL (#670, ADR-0002). Assignment changes go
+ * through IWorldAssignmentPort, which enforces R1/R6/R7, and only on a
+ * stopped server (IContainerRuntimePort). Both ports are optional for
+ * constructor compatibility; without them every assignment change and
+ * world delete is refused (fail-closed).
  */
 export class WorldManagementUseCase implements IWorldManagementUseCase {
   constructor(
     private readonly prompt: IPromptPort,
     private readonly shell: IShellPort,
     private readonly worldRepo: IWorldRepository,
-    private readonly serverRepo: IServerRepository
+    private readonly serverRepo: IServerRepository,
+    private readonly assignments?: IWorldAssignmentPort,
+    private readonly runtime?: IContainerRuntimePort
   ) {}
+
+  /** The current assignments, or why they cannot be read (R7). */
+  private async snapshot(): Promise<WorldAssignmentSnapshot | WorldAssignmentError> {
+    if (!this.assignments) {
+      return new WorldAssignmentError('undetermined', 'World assignments cannot be read: no assignment port configured');
+    }
+    try {
+      return await this.assignments.listAssignments();
+    } catch (error) {
+      return new WorldAssignmentError('undetermined', `Cannot read world assignments: ${toFailure(error).error}`);
+    }
+  }
+
+  /**
+   * Refuse a LEVEL change on a server that is not stopped. Nothing is stopped
+   * automatically. D1: 'not_found' also means "runtime unreachable" and passes
+   * until A7 (#669) makes getStatus throw; a throw is mapped to undetermined.
+   */
+  private checkStopped(server: string): WorldAssignmentError | null {
+    let status: ContainerStatus;
+    try {
+      if (!this.runtime) throw new Error('no runtime configured');
+      status = this.runtime.getStatus(`mc-${server}`);
+    } catch (error) {
+      return new WorldAssignmentError(
+        'undetermined',
+        `Cannot check whether server '${server}' is running: ${toFailure(error).error}`,
+        [server]
+      );
+    }
+    if (!ACTIVE_STATES.has(status)) return null;
+    return new WorldAssignmentError(
+      'server_running',
+      `Server '${server}' is ${status}; stop it before changing its world`,
+      [server]
+    );
+  }
+
+  /**
+   * Reasons a new world cannot be assigned to `serverName` (create --server):
+   * checked before the directory is created.
+   */
+  private async checkNewWorldTarget(worldName: string, serverName: string): Promise<WorldAssignmentError | null> {
+    const snapshot = await this.snapshot();
+    if (snapshot instanceof WorldAssignmentError) return snapshot;
+    return checkAssign(snapshot, worldName, serverName) ?? this.checkStopped(serverName);
+  }
 
   /**
    * Create a new world with optional seed
@@ -135,6 +213,19 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
         });
       }
 
+      // Refuse before creating anything: a held name, an undetermined
+      // assignment, or a server that is not stopped (no auto-stop, #670)
+      if (serverName) {
+        const refused = await this.checkNewWorldTarget(worldName, serverName);
+        if (refused) {
+          if (isInteractive) {
+            this.prompt.error(refused.message);
+            this.prompt.outro('World creation cancelled');
+          }
+          return { success: false, worldName, seed, serverName, ...toFailure(refused) };
+        }
+      }
+
       // Execute world creation
       const spinner = isInteractive ? this.prompt.spinner() : null;
       spinner?.start('Creating world...');
@@ -161,31 +252,19 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
 
       // If server specified, configure it to use the new world
       if (serverName) {
-        // Check if server is running and stop it
-        const statusResult = await this.shell.serverStatus(serverName);
-        if (statusResult.success && statusResult.stdout?.includes('running')) {
-          spinner?.message('Stopping server...');
-          await this.shell.stopServer(serverName);
-        }
-
         spinner?.message('Configuring server...');
 
-        // Set LEVEL to new world name
-        const levelResult = await this.shell.setServerConfig(serverName, 'LEVEL', worldName);
-        if (!levelResult.success) {
+        // Set LEVEL through the assignment port (re-checks R1 on a fresh snapshot)
+        try {
+          await this.assignments!.assign(worldName, serverName);
+        } catch (error) {
           spinner?.stop('Failed to configure server');
-          const errorMsg = levelResult.stderr || 'Failed to set LEVEL';
+          const failure = toFailure(error);
           if (isInteractive) {
-            this.prompt.error(errorMsg);
+            this.prompt.error(failure.error);
             this.prompt.outro('World created but server configuration failed');
           }
-          return {
-            success: false,
-            worldName,
-            seed,
-            serverName,
-            error: errorMsg,
-          };
+          return { success: false, worldName, seed, serverName, ...failure };
         }
 
         // Set SEED if provided
@@ -217,7 +296,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
         const startSpinner = isInteractive ? this.prompt.spinner() : null;
         startSpinner?.start('Starting server...');
 
-        const startResult = await this.shell.startServer(serverName);
+        const startResult = await this.runtime!.start(`mc-${serverName}`);
         if (startResult.success) {
           started = true;
           startSpinner?.stop('Server started');
@@ -366,7 +445,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
     this.prompt.intro('Assign World to Server');
 
     try {
-      // Get unlocked worlds
+      // Worlds no server is assigned to
       const worlds = await this.worldRepo.findUnlocked();
 
       if (worlds.length === 0) {
@@ -400,62 +479,20 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       // Prompt for server selection
       const server = await this.prompt.promptServerSelection(servers);
 
-      // Remember the server's current world to release its superseded lock later.
-      const previousLevel = await this.getServerLevel(server.name.value);
-
-      // Execute assignment
       const spinner = this.prompt.spinner();
       spinner.start('Assigning world...');
 
-      const result = await this.shell.worldAssign(
-        world.name,
-        server.name.value
-      );
-
+      const result = await this.assignWorldByName(world.name, server.name.value);
       if (!result.success) {
         spinner.stop('Failed to assign world');
-        this.prompt.error(result.stderr || 'Unknown error');
-        return {
-          success: false,
-          worldName: world.name,
-          serverName: server.name.value,
-          error: result.stderr,
-        };
+        this.prompt.error(result.error || 'Unknown error');
+        return result;
       }
-
-      // Sync the server's LEVEL with the lock so it loads the assigned world (#489).
-      const levelResult = await this.shell.setServerConfig(
-        server.name.value,
-        'LEVEL',
-        world.name
-      );
-      if (!levelResult.success) {
-        spinner.stop('Failed to update server LEVEL');
-        this.prompt.error(levelResult.stderr || 'Failed to update server LEVEL');
-        return {
-          success: false,
-          worldName: world.name,
-          serverName: server.name.value,
-          error: levelResult.stderr || 'Failed to update server LEVEL',
-        };
-      }
-
-      // Release the previous world's lock if this server held it (best-effort).
-      await this.releaseSupersededWorldLock(
-        previousLevel,
-        world.name,
-        server.name.value
-      );
 
       spinner.stop('World assigned');
       this.prompt.success(`World '${world.name}' assigned to '${server.name.value}'`);
       this.prompt.outro('Assignment complete');
-
-      return {
-        success: true,
-        worldName: world.name,
-        serverName: server.name.value,
-      };
+      return result;
     } catch (error) {
       if (this.prompt.isCancel(error)) {
         this.prompt.outro('Assignment cancelled');
@@ -471,121 +508,47 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
   }
 
   /**
-   * Assign world to server by name
+   * Assign world to server by name: the server's LEVEL becomes the world.
    */
   async assignWorldByName(
     worldName: string,
-    serverName: string
+    serverName: string,
+    options: { requireExisting?: boolean } = {}
   ): Promise<WorldAssignResult> {
-    // The world name becomes the server's LEVEL (#649)
-    if (!WORLD_NAME_PATTERN.test(worldName)) {
-      return {
-        success: false,
-        worldName,
-        serverName,
-        error: `Invalid world name '${worldName}': only letters, numbers, hyphens, and underscores are allowed`,
-      };
-    }
-
-    // Check world exists
-    const world = await this.worldRepo.findByName(worldName);
-    if (!world) {
-      return {
-        success: false,
-        worldName,
-        serverName,
-        error: `World '${worldName}' not found`,
-      };
-    }
-
-    // Check world is not locked
-    if (world.isLocked) {
-      return {
-        success: false,
-        worldName,
-        serverName,
-        error: `World '${worldName}' is already locked by '${world.lockedBy}'`,
-      };
-    }
-
-    // Check server exists
-    if (!(await this.serverRepo.exists(serverName))) {
-      return {
-        success: false,
-        worldName,
-        serverName,
-        error: `Server '${serverName}' not found`,
-      };
-    }
-
-    // Remember the world this server currently points at, so we can release its
-    // (now-superseded) lock after switching (#489 follow-up).
-    const previousLevel = await this.getServerLevel(serverName);
-
-    // Execute assignment (creates the lock)
-    const result = await this.shell.worldAssign(worldName, serverName);
-    if (!result.success) {
-      return {
-        success: false,
-        worldName,
-        serverName,
-        error: result.stderr,
-      };
-    }
-
-    // Keep the server's LEVEL in sync with the lock so the container actually
-    // loads the assigned world (otherwise lockedBy and servers[]/LEVEL diverge — #489).
-    const levelResult = await this.shell.setServerConfig(serverName, 'LEVEL', worldName);
-    if (!levelResult.success) {
-      return {
-        success: false,
-        worldName,
-        serverName,
-        error: levelResult.stderr || 'Failed to update server LEVEL',
-      };
-    }
-
-    // Release the previous world's lock if this server held it (best-effort —
-    // the assignment itself already succeeded).
-    await this.releaseSupersededWorldLock(previousLevel, worldName, serverName);
-
-    return {
-      success: true,
+    const fail = (error: unknown): WorldAssignResult => ({
+      success: false,
       worldName,
       serverName,
-    };
-  }
+      ...toFailure(error),
+    });
 
-  /**
-   * The world a server currently uses, from its LEVEL (or WORLD_NAME) config.
-   * Returns undefined when neither is set (default world named after the server).
-   */
-  private async getServerLevel(serverName: string): Promise<string | undefined> {
-    const config = await this.serverRepo.getConfig(serverName);
-    return configuredWorldName(config?.customEnv ?? {});
-  }
+    // The world name becomes the server's LEVEL (#649): validate before any lookup
+    const invalid = checkAssign(NO_ASSIGNMENTS, worldName, serverName, { newServer: true });
+    if (invalid) return fail(invalid);
 
-  /**
-   * Release the lock on the world a server was previously using, but only if
-   * that world is actually locked by this server (avoids touching another
-   * server's lock). Best-effort: never throws.
-   */
-  private async releaseSupersededWorldLock(
-    previousLevel: string | undefined,
-    newWorldName: string,
-    serverName: string
-  ): Promise<void> {
-    if (!previousLevel || previousLevel === newWorldName) {
-      return;
+    if (options.requireExisting !== false && !(await this.worldRepo.exists(worldName))) {
+      return fail(new Error(`World '${worldName}' not found`));
     }
+
+    const snapshot = await this.snapshot();
+    if (snapshot instanceof WorldAssignmentError) return fail(snapshot);
+    const refused = checkAssign(snapshot, worldName, serverName);
+    if (refused) return fail(refused);
+
+    // Already assigned: nothing to write, so the runtime state does not matter
+    if (snapshot.assignments.find((a) => a.server === serverName)?.world === worldName) {
+      return { success: true, worldName, serverName };
+    }
+
+    const running = this.checkStopped(serverName);
+    if (running) return fail(running);
+
     try {
-      const lock = await this.worldRepo.getLockStatus(previousLevel);
-      if (lock?.serverName === serverName) {
-        await this.shell.worldRelease(previousLevel);
-      }
-    } catch {
-      // Best-effort cleanup; the assignment already succeeded.
+      await this.assignments!.assign(worldName, serverName);
+    } catch (error) {
+      return fail(error);
     }
+    return { success: true, worldName, serverName };
   }
 
   /**
@@ -595,7 +558,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
     this.prompt.intro('Release World Lock');
 
     try {
-      // Get locked worlds
+      // Worlds a server is assigned to
       const worlds = await this.worldRepo.findLocked();
 
       if (worlds.length === 0) {
@@ -613,7 +576,9 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
 
       // Confirm release
       const confirmed = await this.prompt.confirm({
-        message: `Release lock on '${world.name}' (locked by ${world.lockedBy})?`,
+        message:
+          `Release '${world.name}' from '${world.lockedBy}'? ` +
+          `'${world.lockedBy}' switches to its own world '${world.lockedBy}'.`,
         initialValue: true,
       });
 
@@ -626,32 +591,24 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
         };
       }
 
-      // Execute release
       const spinner = this.prompt.spinner();
-      spinner.start('Releasing lock...');
+      spinner.start('Releasing world...');
 
-      const result = await this.shell.worldRelease(world.name);
-
+      const result = await this.releaseWorldByName(world.name);
       if (!result.success) {
-        spinner.stop('Failed to release lock');
-        this.prompt.error(result.stderr || 'Unknown error');
-        return {
-          success: false,
-          worldName: world.name,
-          previousServer: world.lockedBy,
-          error: result.stderr,
-        };
+        spinner.stop('Failed to release world');
+        this.prompt.error(result.error || 'Unknown error');
+        return result;
       }
 
-      spinner.stop('Lock released');
-      this.prompt.success(`World '${world.name}' is now unlocked`);
+      spinner.stop('World released');
+      this.prompt.success(
+        `World '${world.name}' released from '${result.previousServer}'; ` +
+          `'${result.previousServer}' now uses world '${result.fallbackWorld}'` +
+          (result.fallbackExists ? '' : ' (created on next start)')
+      );
       this.prompt.outro('Release complete');
-
-      return {
-        success: true,
-        worldName: world.name,
-        previousServer: world.lockedBy,
-      };
+      return result;
     } catch (error) {
       if (this.prompt.isCancel(error)) {
         this.prompt.outro('Release cancelled');
@@ -666,40 +623,72 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
   }
 
   /**
-   * Release world by name
+   * Release world by name: the holder's LEVEL falls back to its own name.
+   * `force` is accepted for compatibility and ignored (#670).
    */
   async releaseWorldByName(
     worldName: string,
-    force = false
+    _force = false
   ): Promise<WorldReleaseResult> {
-    // Check world exists
-    const world = await this.worldRepo.findByName(worldName);
-    if (!world) {
-      return {
-        success: false,
-        worldName,
-        error: `World '${worldName}' not found`,
-      };
-    }
-
-    // Check world is locked
-    if (!world.isLocked) {
-      return {
-        success: false,
-        worldName,
-        error: `World '${worldName}' is not locked`,
-      };
-    }
-
-    // Execute release
-    const result = await this.shell.worldRelease(worldName);
-
-    return {
-      success: result.success,
+    const fail = (error: unknown, previousServer?: string): WorldReleaseResult => ({
+      success: false,
       worldName,
-      previousServer: world.lockedBy,
-      error: result.success ? undefined : result.stderr,
+      previousServer,
+      ...toFailure(error),
+    });
+
+    const snapshot = await this.snapshot();
+    if (snapshot instanceof WorldAssignmentError) return fail(snapshot);
+    const plan = planRelease(snapshot, worldName);
+    if (plan instanceof WorldAssignmentError) return fail(plan);
+
+    const running = this.checkStopped(plan.server);
+    if (running) return fail(running, plan.server);
+
+    let released: { server: string; fallback: string };
+    try {
+      released = await this.assignments!.release(worldName);
+    } catch (error) {
+      return fail(error, plan.server);
+    }
+    return {
+      success: true,
+      worldName,
+      previousServer: released.server,
+      fallbackWorld: released.fallback,
+      fallbackExists: await this.worldRepo.exists(released.fallback),
     };
+  }
+
+  /**
+   * Why `serverName`'s world (worlds/<LEVEL>) may not be reset, or null:
+   * the server keeps its world inside its data directory, another server
+   * uses the same world, or the assignments cannot be read (#670).
+   * The caller still checks that the server is stopped.
+   */
+  async checkWorldReset(serverName: string): Promise<WorldAssignmentError | null> {
+    const snapshot = await this.snapshot();
+    return snapshot instanceof WorldAssignmentError ? snapshot : checkReset(snapshot, serverName);
+  }
+
+  /**
+   * Existing duplicate assignments and servers whose assignment cannot be
+   * read (plan item 6). Reported, never fixed. Rejects when the assignments
+   * cannot be read at all.
+   */
+  async getAssignmentReport(): Promise<{
+    duplicates: { world: string; servers: string[] }[];
+    undetermined: string[];
+  }> {
+    const snapshot = await this.snapshot();
+    if (snapshot instanceof WorldAssignmentError) throw snapshot;
+    return { duplicates: findDuplicates(snapshot), undetermined: snapshot.undetermined };
+  }
+
+  /** Why worlds/<worldName> may not be deleted, or null (#670). */
+  private async checkWorldDeletion(worldName: string): Promise<WorldAssignmentError | null> {
+    const snapshot = await this.snapshot();
+    return snapshot instanceof WorldAssignmentError ? snapshot : checkRemoval(snapshot, worldName);
   }
 
   /**
@@ -729,15 +718,16 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       this.prompt.note(
         `Name: ${world.name}\n` +
           `Size: ${world.sizeFormatted}\n` +
-          `Status: ${world.isLocked ? `locked by ${world.lockedBy}` : 'unlocked'}`,
+          `Status: ${world.isLocked ? `assigned to ${world.lockedBy}` : 'unassigned'}`,
         'World Info'
       );
 
-      // Warn if locked
-      if (world.isLocked) {
-        this.prompt.warn(
-          `Warning: This world is currently locked by '${world.lockedBy}'!`
-        );
+      // A world a server uses cannot be deleted (#670)
+      const refused = await this.checkWorldDeletion(world.name);
+      if (refused) {
+        this.prompt.error(refused.message);
+        this.prompt.outro('Deletion cancelled');
+        return { success: false, worldName: world.name, ...toFailure(refused) };
       }
 
       // Confirm deletion
@@ -787,13 +777,10 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       };
     }
 
-    // If not force mode and world is locked, throw error
-    if (!force && world.isLocked) {
-      return {
-        success: false,
-        worldName,
-        error: `World '${worldName}' is locked by '${world.lockedBy}'. Use --force to delete anyway.`,
-      };
+    // A world a server uses cannot be deleted; force no longer bypasses this (#670)
+    const refused = await this.checkWorldDeletion(worldName);
+    if (refused) {
+      return { success: false, worldName, ...toFailure(refused) };
     }
 
     return await this.performWorldDeletion(worldName, world.sizeFormatted, force);

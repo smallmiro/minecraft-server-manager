@@ -5,6 +5,8 @@ import { describe, it, expect } from 'vitest';
 import {
   WorldAssignmentError,
   checkAssign,
+  checkRemoval,
+  checkReset,
   findDuplicates,
   holdersOf,
   planRelease,
@@ -179,5 +181,45 @@ describe('findDuplicates (plan item 6)', () => {
 
   it('is empty when every world has one server', () => {
     expect(findDuplicates(snap([['a', 'a'], ['b', 'b']]))).toEqual([]);
+  });
+});
+
+describe('checkRemoval (world delete: undetermined, conflict on non-internal holders)', () => {
+  it('allows an unassigned world', () => {
+    expect(checkRemoval(snap([['a', 'a']]), 'w')).toBeNull();
+  });
+
+  it('refuses while anything is undetermined', () => {
+    expectError(checkRemoval(snap([], ['broken']), 'w'), 'undetermined', ['broken']);
+  });
+
+  it('refuses a world or dimension folder used by a server', () => {
+    expectError(checkRemoval(snap([['a', 'w'], ['b', 'w_the_end']]), 'w'), 'conflict', ['a', 'b']);
+  });
+
+  it('ignores internal holders: their files are in servers/<n>/data', () => {
+    expect(checkRemoval(snap([['a', 'w', true]]), 'w')).toBeNull();
+  });
+});
+
+describe('checkReset (order: undetermined, server_not_found, internal_world, conflict)', () => {
+  it('allows the sole holder', () => {
+    expect(checkReset(snap([['a', 'w'], ['old', 'w', true]]), 'a')).toBeNull();
+  });
+
+  it('refuses while anything is undetermined, even for the undetermined server itself', () => {
+    expectError(checkReset(snap([['a', 'w']], ['b']), 'b'), 'undetermined', ['b']);
+  });
+
+  it('rejects an unknown server', () => {
+    expectError(checkReset(snap([['a', 'w']]), 'ghost'), 'server_not_found', ['ghost']);
+  });
+
+  it('rejects an internal server: worlds/<LEVEL> is not its world', () => {
+    expectError(checkReset(snap([['a', 'w', true]]), 'a'), 'internal_world', ['a']);
+  });
+
+  it('rejects a world another server also uses (duplicate)', () => {
+    expectError(checkReset(snap([['a', 'w'], ['b', 'w']]), 'a'), 'conflict', ['b']);
   });
 });

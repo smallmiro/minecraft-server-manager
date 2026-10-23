@@ -5,13 +5,27 @@ import {
   MockPromptAdapter,
   MockShellAdapter,
   MockServerRepository,
+  MockWorldAssignmentPort,
 } from '../mocks/index.js';
 
 describe('CreateServerUseCase Integration', () => {
   let promptAdapter: MockPromptAdapter;
   let shellAdapter: MockShellAdapter;
   let serverRepo: MockServerRepository;
+  let assignments: MockWorldAssignmentPort;
   let useCase: CreateServerUseCase;
+
+  const makeUseCase = () =>
+    new CreateServerUseCase(
+      promptAdapter,
+      shellAdapter,
+      serverRepo,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      assignments
+    );
 
   beforeEach(() => {
     promptAdapter = new MockPromptAdapter({
@@ -23,7 +37,8 @@ describe('CreateServerUseCase Integration', () => {
     });
     shellAdapter = new MockShellAdapter();
     serverRepo = new MockServerRepository();
-    useCase = new CreateServerUseCase(promptAdapter, shellAdapter, serverRepo);
+    assignments = new MockWorldAssignmentPort();
+    useCase = makeUseCase();
   });
 
   describe('execute (interactive)', () => {
@@ -73,6 +88,14 @@ describe('CreateServerUseCase Integration', () => {
       }
     });
 
+    it('should refuse a default world another server uses (#670)', async () => {
+      assignments = new MockWorldAssignmentPort({ other: 'testserver' });
+      useCase = makeUseCase();
+
+      await assert.rejects(useCase.execute(), { code: 'conflict' });
+      assert.ok(!shellAdapter.wasCommandCalled('createServer'));
+    });
+
     it('should handle shell failure', async () => {
       shellAdapter = new MockShellAdapter({
         createServerResult: {
@@ -80,7 +103,7 @@ describe('CreateServerUseCase Integration', () => {
           stderr: 'Failed to create server',
         },
       });
-      useCase = new CreateServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = makeUseCase();
 
       await assert.rejects(async () => {
         await useCase.execute();
@@ -249,7 +272,7 @@ describe('CreateServerUseCase Integration', () => {
         worldSetup: 'new',
         whitelistPlayers: ['player1', 'player2'],
       });
-      useCase = new CreateServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = makeUseCase();
 
       await useCase.execute();
 
@@ -304,7 +327,7 @@ describe('CreateServerUseCase Integration', () => {
     it('should not prompt players and disable whitelist when user declines (#679)', async () => {
       promptAdapter = new MockPromptAdapter({ confirm: false, whitelistPlayers: ['ignored'] });
       const playersSpy = vi.spyOn(promptAdapter, 'promptWhitelistPlayers');
-      useCase = new CreateServerUseCase(promptAdapter, shellAdapter, serverRepo);
+      useCase = makeUseCase();
 
       await useCase.execute();
 

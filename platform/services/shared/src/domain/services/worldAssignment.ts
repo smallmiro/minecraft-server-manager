@@ -48,6 +48,14 @@ const DIMENSION_SUFFIX = /_(nether|the_end)$/;
 
 const list = (servers: string[]) => servers.map((s) => `'${s}'`).join(', ');
 
+const conflictError = (world: string, holders: string[]) =>
+  new WorldAssignmentError(
+    'conflict',
+    `World '${world}' is assigned to ${list(holders)}; ` +
+      `assign another world to ${list(holders)} or delete it first`,
+    holders
+  );
+
 /** Servers holding `world` or one of its dimension folders, in snapshot order. */
 export function holdersOf(
   s: WorldAssignmentSnapshot,
@@ -107,15 +115,38 @@ export function checkAssign(
   }
 
   const others = holdersOf(s, world).filter((h) => h !== server);
-  if (others.length > 0) {
+  return others.length > 0 ? conflictError(world, others) : null;
+}
+
+/**
+ * Why worlds/<world> may not be deleted, or null. Internal holders do not
+ * block: their files are in servers/<n>/data, not in worlds/.
+ */
+export function checkRemoval(s: WorldAssignmentSnapshot, world: string): WorldAssignmentError | null {
+  const undetermined = undeterminedError(s);
+  if (undetermined) return undetermined;
+  const holders = holdersOf(s, world, { includeInternal: false });
+  return holders.length > 0 ? conflictError(world, holders) : null;
+}
+
+/** Why `server`'s world (worlds/<LEVEL>) may not be wiped, or null. */
+export function checkReset(s: WorldAssignmentSnapshot, server: string): WorldAssignmentError | null {
+  const undetermined = undeterminedError(s);
+  if (undetermined) return undetermined;
+  const target = s.assignments.find((a) => a.server === server);
+  if (!target) {
+    return new WorldAssignmentError('server_not_found', `Server '${server}' not found`, [server]);
+  }
+  if (target.internal) {
     return new WorldAssignmentError(
-      'conflict',
-      `World '${world}' is assigned to ${list(others)}; ` +
-        `assign another world to ${list(others)} or delete it first`,
-      others
+      'internal_world',
+      `Server '${server}' keeps its world inside servers/${server}/data, not in worlds/${target.world}; ` +
+        'migrate it to worlds/ before resetting',
+      [server]
     );
   }
-  return null;
+  const others = holdersOf(s, target.world, { includeInternal: false }).filter((h) => h !== server);
+  return others.length > 0 ? conflictError(target.world, others) : null;
 }
 
 /** The holder of `world` and the world it falls back to (its own name), or why not. */

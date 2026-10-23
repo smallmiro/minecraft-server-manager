@@ -7,6 +7,8 @@ import {
   WorldOptions,
   WorldSetupType,
   ModpackOptions,
+  WorldAssignmentError,
+  checkAssign,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import { Config, Paths } from '../../utils/index.js';
@@ -19,6 +21,7 @@ import type {
   IWorldRepository,
   IAuditLogPort,
   IModSourcePort,
+  IWorldAssignmentPort,
 } from '../ports/index.js';
 
 /**
@@ -36,10 +39,29 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     paths?: Paths,
     private readonly worldRepo?: IWorldRepository,
     private readonly auditLog?: IAuditLogPort,
-    private readonly modSource?: IModSourcePort
+    private readonly modSource?: IModSourcePort,
+    private readonly assignments?: IWorldAssignmentPort
   ) {
     this.paths = paths ?? new Paths();
     this.config = new Config(this.paths);
+  }
+
+  /**
+   * R1 for the world the new server will use (#670): `--world`, else its
+   * default world `<name>`, which a deleted server of the same name may have
+   * left assigned to someone else. Adopting a free worlds/<name> stays allowed.
+   * Without an assignment port, creation fails closed (R7).
+   */
+  private async assertWorldAssignable(worldOptions: WorldOptions, name: ServerName): Promise<void> {
+    const world =
+      worldOptions.setupType === WorldSetupType.EXISTING && worldOptions.worldName
+        ? worldOptions.worldName
+        : name.value;
+    if (!this.assignments) {
+      throw new WorldAssignmentError('undetermined', 'World assignments cannot be read: no assignment port configured');
+    }
+    const refused = checkAssign(await this.assignments.listAssignments(), world, name.value, { newServer: true });
+    if (refused) throw refused;
   }
 
   /**
@@ -182,6 +204,13 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         modpackOptions,
       });
 
+      try {
+        await this.assertWorldAssignable(worldOptions, name);
+      } catch (error) {
+        this.prompt.error(error instanceof Error ? error.message : String(error));
+        throw error;
+      }
+
       // Execute creation - stop spinner before running script to avoid output conflicts
       const spinner = this.prompt.spinner();
       spinner.start('Creating server...');
@@ -323,6 +352,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       worldOptions,
       modpackOptions,
     });
+
+    await this.assertWorldAssignable(worldOptions, name);
 
     // Execute creation
     const result = await this.shell.createServer(name, {

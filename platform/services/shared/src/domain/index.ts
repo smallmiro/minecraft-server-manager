@@ -85,6 +85,8 @@ export {
   WorldAssignmentError,
   holdersOf,
   checkAssign,
+  checkRemoval,
+  checkReset,
   planRelease,
   findDuplicates,
   type WorldAssignment,
