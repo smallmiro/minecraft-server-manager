@@ -56,7 +56,7 @@ function describeWorldOutcome(result: ServerSpecDeleteResult, deleteWorld: boole
 export class DeleteServerUseCase implements IDeleteServerUseCase {
   /**
    * @param runtime removes the server's container (#735). #734 added it for the stop before deletion, which `remove` now does.
-   * @param deprovision the ServerSpec repository and hostname registrar (#735).
+   * @param deprovisionDeps the ServerSpec repository and hostname registrar (#735).
    */
   constructor(
     private readonly prompt: IPromptPort,
