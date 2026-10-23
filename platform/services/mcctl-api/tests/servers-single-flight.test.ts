@@ -159,7 +159,8 @@ describe('server create/delete single-flight (#656)', () => {
 
     beforeEach(() => {
       vi.spyOn(process, 'kill').mockImplementation(() => true);
-      Object.assign(lifecycleLimits, { sseCreateTimeoutMs: 40, createTimeoutMs: 40, deleteTimeoutMs: 40, killGraceMs: 40 });
+      // Only the create scripts time out here; the queued delete is finished by the test.
+      Object.assign(lifecycleLimits, { sseCreateTimeoutMs: 40, createTimeoutMs: 40, deleteTimeoutMs: 60_000, killGraceMs: 40 });
     });
 
     it.each([
