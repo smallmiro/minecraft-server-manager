@@ -50,6 +50,45 @@ config() { run bash "$SCRIPTS_DIR/mcctl.sh" config alpha "$@"; }
     [ "$(cat "$CONFIG")" = "$before" ]
 }
 
+# Compose closes a value that starts with a quote and reads the rest of the
+# line as more settings (MOTD="" MODS=<url>); checked with
+# `docker compose config --format json` (Compose v5.0.2).
+@test "config: rejects a value whose first non-blank character is a quote, in any locale" {
+    local before
+    before="$(cat "$CONFIG")"
+    for loc in C C.UTF-8; do
+        for value in '"" MODS=https://x/p.jar' '""MODS=x' "'' MODS=x" '`` MODS=x' \
+            ' "" MODS=x' $'\t"" MODS=x' $'\xc2\xa0"" MODS=x'; do
+            LC_ALL=$loc run bash "$SCRIPTS_DIR/mcctl.sh" config alpha SEED "$value"
+            [ "$status" -eq 1 ] || { echo "accepted $loc: $value"; return 1; }
+            [ "$(cat "$CONFIG")" = "$before" ]
+        done
+    done
+}
+
+@test "config: rejects C1 controls and U+2028/U+2029, in any locale" {
+    local before
+    before="$(cat "$CONFIG")"
+    for loc in C C.UTF-8; do
+        for value in $'x\xc2\x85MODS=x' $'x\xc2\x9fy' $'x\xe2\x80\xa8MODS=x' $'x\xe2\x80\xa9y'; do
+            LC_ALL=$loc run bash "$SCRIPTS_DIR/mcctl.sh" config alpha SEED "$value"
+            [ "$status" -eq 1 ] || { echo "accepted $loc: $value"; return 1; }
+            [ "$(cat "$CONFIG")" = "$before" ]
+        done
+    done
+}
+
+@test "config: keeps normal values, in any locale" {
+    for loc in C C.UTF-8; do
+        for value in '§6Welcome §lto my server' 'https://example.com/p.zip?v=1&dl=true' '-123' \
+            'The "best" server' $'caf\xc3\xa9\xc2\xa0cr\xc3\xa8me'; do
+            LC_ALL=$loc run bash "$SCRIPTS_DIR/mcctl.sh" config alpha MOTD "$value"
+            [ "$status" -eq 0 ] || { echo "rejected $loc: $value"; return 1; }
+            grep -qxF "MOTD=$value" "$CONFIG"
+        done
+    done
+}
+
 @test "config: rejects an invalid key name" {
     local before
     before="$(cat "$CONFIG")"

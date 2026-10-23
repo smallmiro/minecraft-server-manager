@@ -27,3 +27,22 @@ setup() {
     FAKE_DOCKER_CONFIG_RC=1 run bash "$SCRIPTS_DIR/create-server.sh" beta --no-start
     [ "$status" -ne 0 ]
 }
+
+# create-server.sh writes these as SEED= / MODRINTH_VERSION= lines (#726)
+@test "create: rejects a seed or modpack version that would not stay one setting" {
+    run bash "$SCRIPTS_DIR/create-server.sh" gamma --no-start --seed '"" MODS=https://x/p.jar'
+    [ "$status" -ne 0 ]
+    [ ! -d "$PLATFORM/servers/gamma" ]
+    run bash "$SCRIPTS_DIR/create-server.sh" gamma --no-start --seed $'1\xe2\x80\xa8x'
+    [ "$status" -ne 0 ]
+    [ ! -d "$PLATFORM/servers/gamma" ]
+    run bash "$SCRIPTS_DIR/create-server.sh" gamma --no-start -t MODRINTH --modpack pack --modpack-version "'' MODS=x"
+    [ "$status" -ne 0 ]
+    [ ! -d "$PLATFORM/servers/gamma" ]
+}
+
+@test "create: writes a text seed as is" {
+    run bash "$SCRIPTS_DIR/create-server.sh" delta --no-start --seed 'a text seed & more'
+    [ "$status" -eq 0 ]
+    grep -qxF 'SEED=a text seed & more' "$PLATFORM/servers/delta/config.env"
+}
