@@ -69,17 +69,15 @@ async function takeOver(lockPath: string, stale: BackupLockHolder, nonce: string
 export const lockFsOps = { unlink };
 
 /**
- * Remove our lock. A late contender may have moved it aside (takeOver) and will put
- * it back when it sees our nonce; that would resurrect a released lock. So we also
- * delete any aside copy holding our nonce (its put-back then fails), and re-read the
- * lock afterwards in case the put-back happened first. No timing assumptions.
+ * Remove our lock. A late contender may move it aside (takeOver) at any point, even
+ * between our check and our unlink, and put it back when it sees our nonce; that
+ * would resurrect a released lock. So after the unlink attempt we always delete any
+ * aside copy holding our nonce (its put-back then fails), and re-read the lock in
+ * case the put-back happened first. No timing assumptions.
  */
 async function release(lockPath: string, nonce: string): Promise<void> {
   const ours = async () => parseHolder((await readText(lockPath)) ?? '')?.nonce === nonce;
-  if (await ours()) {
-    await lockFsOps.unlink(lockPath).catch(() => undefined);
-    return;
-  }
+  if ((await ours()) && (await lockFsOps.unlink(lockPath).then(() => true, () => false))) return;
   const dir = dirname(lockPath);
   const prefix = `${basename(lockPath)}.`;
   for (const name of await readdir(dir).catch(() => [] as string[])) {
