@@ -71,6 +71,8 @@ export interface CreateServerResponse {
     container: string;
     status: string;
   };
+  /** The server was created but did not start (#675): server.status is 'created'. */
+  warning?: string;
 }
 
 export interface DeleteServerResponse {

@@ -27,9 +27,10 @@ export type CreateServerStatus =
  */
 export interface UseCreateServerSSEOptions {
   /**
-   * Callback when server creation succeeds
+   * Callback when server creation succeeds. `warning`: the server was created
+   * but did not start (#675); it stays created, start it from the list.
    */
-  onSuccess?: (serverName: string) => void;
+  onSuccess?: (serverName: string, warning?: string) => void;
 
   /**
    * Callback when an error occurs
@@ -65,6 +66,11 @@ export interface UseCreateServerSSEReturn {
    * Error message if status is 'error'
    */
   error: string | null;
+
+  /**
+   * Set when the server was created but did not start (#675)
+   */
+  warning: string | null;
 
   /**
    * Whether server creation is in progress
@@ -108,6 +114,7 @@ export function useCreateServerSSE(
   const queryClient = useQueryClient();
 
   const [status, setStatus] = useState<CreateServerStatus>('idle');
+  const [warning, setWarning] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [message, setMessage] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -124,6 +131,7 @@ export function useCreateServerSSE(
     setProgress(0);
     setMessage('');
     setError(null);
+    setWarning(null);
 
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
@@ -156,6 +164,7 @@ export function useCreateServerSSE(
 
       // Reset previous state
       setError(null);
+      setWarning(null);
       updateProgress('initializing', 'Initializing server creation...', 0);
       serverNameRef.current = data.name;
 
@@ -194,11 +203,19 @@ export function useCreateServerSSE(
 
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        updateProgress('completed', 'Server created successfully!', 100);
+        // Created but not started (#675, decision 1): success with the cause, no retry
+        const startWarning: string | undefined = result?.warning;
+        setWarning(startWarning ?? null);
+        updateProgress(
+          'completed',
+          startWarning ? `Server created, but it did not start: ${startWarning}` : 'Server created successfully!',
+          100
+        );
         // Refresh the server list so the newly created server shows up without
         // a manual reload. Other mutations (delete/start/stop) already do this.
         queryClient.invalidateQueries({ queryKey: ['servers'] });
-        onSuccess?.(data.name);
+        if (startWarning) onSuccess?.(data.name, startWarning);
+        else onSuccess?.(data.name);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
         setStatus('error');
@@ -225,6 +242,7 @@ export function useCreateServerSSE(
     progress,
     message,
     error,
+    warning,
     isCreating: status !== 'idle' && status !== 'completed' && status !== 'error',
     createServer,
     reset,
