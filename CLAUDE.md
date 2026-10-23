@@ -16,7 +16,7 @@ This project is a DevOps project for building and operating multiple Minecraft J
 | `platform/services/mcctl-console/` | `@minecraft-docker/mcctl-console` - Next.js Web UI (:5000) |
 | `platform/services/mod-source-modrinth/` | `@minecraft-docker/mod-source-modrinth` - Modrinth adapter |
 | `platform/backups/` | Backup storage (worlds/, meta/) |
-| `templates/` | npm package templates for `mcctl init` |
+| `platform/services/cli/templates/` | Single source of the npm package templates for `mcctl init` (`platform/docker-compose.yml`, `platform/servers/_template` etc. are symlinks to it) |
 | `docs/` | MkDocs documentation (EN/KO), LLM Knowledge Base |
 | `e2e/` | Playwright E2E tests |
 | `.claude/agents/` | Multi-agent definitions (orchestrator, core, cli, backend, frontend, devops, etc.) |
