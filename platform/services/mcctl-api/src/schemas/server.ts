@@ -170,8 +170,8 @@ export const CreateServerRequestSchema = Type.Object({
     Type.Literal('AUTO_CURSEFORGE'),
   ])),
   version: Type.Optional(Type.String({
-    // Minecraft version (1.21.1, LATEST, 24w14a, 1.20.5-rc1); also a sed
-    // replacement in create-server.sh, so no '/', '&' or '\\'.
+    // Minecraft version (1.21.1, LATEST, 24w14a, 1.20.5-rc1); the same rule
+    // as MC_VERSION_INPUT_PATTERN (ServerSpec create, #675).
     pattern: '^[A-Za-z0-9][A-Za-z0-9._-]*$',
     maxLength: 64,
   })),

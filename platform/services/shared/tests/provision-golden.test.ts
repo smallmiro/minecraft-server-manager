@@ -1,7 +1,8 @@
 /**
  * Parity of the TypeScript provision with create-server.sh (#675, ADR-0003
  * §5): each fixture in fixtures/create-server-golden was written by the
- * script (captured before it was removed). The provision must produce the
+ * script, captured by create-server-golden.bats (commit 19ffef52) before
+ * the script was removed. The provision must produce the
  * same config.env settings, the same server compose and the same include
  * list. Comments, key order in YAML and the mcctl header are not compared.
  */

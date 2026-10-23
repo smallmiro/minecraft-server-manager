@@ -4,7 +4,7 @@
 # =============================================================================
 # Usage: ./scripts/delete-server.sh <server-name> [options]
 #
-# This script removes a server created by create-server.sh:
+# This script removes a server created by mcctl create:
 #   - Stops and removes the Docker container
 #   - Removes server from servers/compose.yml
 #   - Removes hostname from avahi-daemon

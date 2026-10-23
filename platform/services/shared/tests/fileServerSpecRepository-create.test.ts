@@ -75,6 +75,19 @@ describe('write({ create: true })', () => {
     expect(existsSync(file('Bad_Name'))).toBe(false);
   });
 
+  it.each(['router', 'a--b', '1abc'])('refuses the server name %j before creating anything (naming-rules.bats)', async (name) => {
+    const error = await repo.write({ ...spec(), name, world: { level: 'w', storage: 'universe' } }, { create: true }).catch((e) => e);
+    expect((error as ServerSpecError).code).toBe('invalid_spec');
+    expect(error.message).toMatch(/name/);
+    expect(existsSync(file(name))).toBe(false);
+  });
+
+  it.each(['../escape', 'my/world', 'w_nether'])('refuses the world %j before creating anything', async (level) => {
+    const error = await repo.write({ ...spec(), world: { level, storage: 'universe' } }, { create: true }).catch((e) => e);
+    expect((error as ServerSpecError).code).toBe('invalid_spec');
+    expect(existsSync(file('alpha'))).toBe(false);
+  });
+
   it('refuses a seed that would not stay one config.env setting (#726)', async () => {
     await expect(repo.write(spec({ seed: '"" MODS=https://x/p.jar' }), { create: true })).rejects.toMatchObject({
       code: 'invalid_spec',

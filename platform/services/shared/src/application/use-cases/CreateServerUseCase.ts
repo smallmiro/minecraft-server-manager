@@ -33,8 +33,8 @@ import type {
 import type { CreateServerOptions } from '../ports/outbound/IShellPort.js';
 
 /**
- * What TypeScript provisioning needs (#675, ADR-0003 §5). Without it the
- * use case falls back to the deprecated create-server.sh path.
+ * What TypeScript provisioning needs (#675, ADR-0003 §5). Without it create
+ * fails: create-server.sh was removed.
  */
 export interface ServerProvisionDeps {
   specRepo: IServerSpecRepository;
@@ -116,9 +116,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     versionText?: string
   ): Promise<{ startError?: string }> {
     if (!this.provision) {
-      const result = await this.shell.createServer(name, options);
-      if (!result.success) throw new Error(result.stderr || 'Server creation failed');
-      return {};
+      // create-server.sh was removed in #675; the shell port is kept for v2 callers (#736).
+      throw new Error('create-server.sh was removed in #675; pass specRepo / use ServerSpec provision');
     }
     const { specRepo, hostnames, runtime, hostIps } = this.provision;
     const type = options.type;
@@ -313,7 +312,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       // Execute creation - stop spinner before running script to avoid output conflicts
       const spinner = this.prompt.spinner();
       spinner.start('Creating server...');
-      spinner.stop(this.provision ? 'Writing server files...' : 'Running create script...');
+      spinner.stop('Writing server files...');
 
       let startError: string | undefined;
       const result = await this.createFiles(name, {
