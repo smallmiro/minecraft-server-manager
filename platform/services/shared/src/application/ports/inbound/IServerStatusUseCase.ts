@@ -3,6 +3,8 @@ import { Server, ServerStatus } from '../../../domain/index.js';
 /**
  * Server Status Use Case - Inbound Port
  * Displays server status information
+ *
+ * @deprecated Unused by the CLI. Use `mcctl status` / IServerRepository directly. Removed in v3.0.0 (#736).
  */
 export interface IServerStatusUseCase {
   /**

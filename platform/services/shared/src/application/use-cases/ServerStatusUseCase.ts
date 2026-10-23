@@ -10,6 +10,8 @@ import type {
 /**
  * Server Status Use Case
  * Displays server status information
+ *
+ * @deprecated Unused by the CLI. Use `mcctl status` / IServerRepository directly. Removed in v3.0.0 (#736).
  */
 export class ServerStatusUseCase implements IServerStatusUseCase {
   constructor(
