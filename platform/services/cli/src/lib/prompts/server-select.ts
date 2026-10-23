@@ -4,8 +4,9 @@
  */
 
 import { select, isCancel } from '@clack/prompts';
-import { colors, log } from '@minecraft-docker/shared';
-import { getOnlinePlayerCount } from '../rcon.js';
+import { colors, log, type ContainerStatus } from '@minecraft-docker/shared';
+import { getContainer } from '../../infrastructure/index.js';
+import { getOnlinePlayerCount, serverOfContainer } from '../rcon.js';
 
 export interface ServerInfo {
   name: string;
@@ -95,40 +96,20 @@ export async function selectServer(options: ServerSelectOptions): Promise<string
   return selected as string;
 }
 
+/** Container states that `docker ps` shows as "Up". */
+const UP_STATES: ContainerStatus[] = ['running', 'paused'];
+
 /**
- * Get list of servers from Docker
+ * Get list of servers from the container runtime
  */
 export async function getServerList(): Promise<ServerInfo[]> {
-  // This function should be implemented to get servers from Docker
-  // For now, we'll import from the shell executor pattern
-  const { execSync } = await import('node:child_process');
-
   try {
-    // Get all mc-* containers
-    const output = execSync(
-      'docker ps -a --filter "name=mc-" --format "{{.Names}}|{{.Status}}"',
-      { encoding: 'utf-8' }
-    );
-
-    const servers: ServerInfo[] = [];
-
-    for (const line of output.trim().split('\n')) {
-      if (!line || line.includes('mc-router')) continue;
-
-      const [containerName, status] = line.split('|');
-      if (!containerName) continue;
-
-      const name = containerName.replace('mc-', '');
-      const isRunning = status?.toLowerCase().includes('up');
-
-      servers.push({
-        name,
-        containerName,
-        status: isRunning ? 'running' : 'stopped',
-      });
-    }
-
-    return servers;
+    const runtime = getContainer().containerRuntime;
+    return runtime.list().map((containerName) => ({
+      name: containerName.replace('mc-', ''),
+      containerName,
+      status: UP_STATES.includes(runtime.getStatus(serverOfContainer(containerName))) ? 'running' : 'stopped',
+    }));
   } catch {
     return [];
   }
