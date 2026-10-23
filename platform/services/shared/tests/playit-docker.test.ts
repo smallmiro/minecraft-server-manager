@@ -173,6 +173,18 @@ describe('Docker helper functions for playit.gg', () => {
       expect(content.includes('MEMORY=4G')).toBeTruthy();
     });
 
+    // config.env is the container's env_file: a line break adds a setting (#726)
+    test.each(['x.example.com\nMODS=http://evil/x.jar', 'x.example.com\r', 'x\u0000y'])(
+      'should reject %j without writing config.env',
+      (domain) => {
+        const configPath = join(testServersDir, 'survival', 'config.env');
+        writeFileSync(configPath, 'TYPE=PAPER\n', 'utf-8');
+
+        expect(() => dockerHelpers.setServerPlayitDomain('survival', domain, testServersDir)).toThrow();
+        expect(readFileSync(configPath, 'utf-8')).toBe('TYPE=PAPER\n');
+      }
+    );
+
     test('should throw when server config.env does not exist', () => {
       expect(() => {
         dockerHelpers.setServerPlayitDomain('nonexistent', 'test.domain.com', testServersDir);
