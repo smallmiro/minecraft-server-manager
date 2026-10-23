@@ -106,9 +106,9 @@ describe('parseEnvDocument Compose compatibility', () => {
 });
 
 describe('codec round-trip', () => {
-  const values = ['plain', 'a b c', '$(id)', 'x=y', 'semi;colon', '§aMOTD', '', 'p@ss:w/rd', 'with "double" inside'];
+  const values = ['plain', 'a b c', 'x=y', 'semi;colon', '§aMOTD', '', 'p@ss:w/rd', 'with "double" inside'];
 
-  test.each(values)('quoted style: %j reads back unchanged', (value) => {
+  test.each([...values, '$(id)'])('quoted style: %j reads back unchanged', (value) => {
     const out = applyEnvChanges('', { set: { K: value } });
     expect(parseEnvDocument(out).values.get('K')).toBe(value);
   });
@@ -124,13 +124,18 @@ describe('codec round-trip', () => {
     [' padded ', "' padded '"],
     ['"" B=1', `'"" B=1'`],
     ['"quoted"', `'"quoted"'`],
+    // Compose interpolates $ in an unquoted env_file value (Price$5 -> Price, ${X} -> mcctl's env)
+    ['Price$5', "'Price$5'"],
+    ['${MCCTL_X}', "'${MCCTL_X}'"],
+    ['$(id)', "'$(id)'"],
+    ['$$', "'$$'"],
   ])('raw style single-quotes %j, which raw cannot represent', (value, written) => {
     const out = applyEnvChanges('', { set: { K: value } }, { raw: true });
     expect(out).toBe(`K=${written}\n`);
     expect(parseEnvDocument(out).values.get('K')).toBe(value);
   });
 
-  test.each(['a\nB=1', 'x\u0000y', "it's #1", "'open"])('raw style rejects %j, which it cannot represent', (value) => {
+  test.each(['a\nB=1', 'x\u0000y', "it's #1", "'open", "it's $5"])('raw style rejects %j, which it cannot represent', (value) => {
     expect(() => applyEnvChanges('', { set: { K: value } }, { raw: true })).toThrow(EnvValueError);
   });
 

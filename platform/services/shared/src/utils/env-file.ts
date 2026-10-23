@@ -29,7 +29,7 @@
  *   bare-safe, otherwise single-quoted (serializeEnvValue).
  * - raw (`config.env`): `KEY=value` unquoted when that reads back as the same
  *   value. A value raw cannot carry (` #`, leading/trailing blanks, a leading
- *   quote) is single-quoted; one that cannot be quoted either (contains `'`)
+ *   quote, a `$` that Compose would interpolate) is single-quoted; one that cannot be quoted either (contains `'`)
  *   or has a control character throws EnvValueError. Every written value
  *   reads back unchanged. Rejecting user input that starts with a quote
  *   (#726) is the caller's job (assertEnvFileValue), not the serializer's.
@@ -125,7 +125,8 @@ const CONTROL_CHAR_RE = /[\x00-\x1f\x7f-\x9f\u2028\u2029]/;
 /** Raw-style value for `KEY=<here>` in config.env (see the module header). */
 function serializeRawEnvValue(key: string, value: string): string {
   if (CONTROL_CHAR_RE.test(value)) throw new EnvValueError(key);
-  if (!/^["'`]/.test(value) && decodeValue(value) === value) return value;
+  // `$` is interpolated by Compose in an unquoted env_file value; single quotes keep it literal.
+  if (!/^["'`]/.test(value) && !value.includes('$') && decodeValue(value) === value) return value;
   if (!value.includes("'")) return `'${value}'`;
   throw new EnvValueError(key);
 }
