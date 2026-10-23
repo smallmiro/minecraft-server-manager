@@ -180,19 +180,14 @@ remove_include_entry() {
 }
 
 # avahi_remove_host <hosts-file> <hostname>: removes the lines listing exactly
-# <hostname>. The new content is built completely in a temp file next to the
-# original (sudo cp -p keeps owner/mode) and swapped in with one sudo mv, so a
-# failure at any step leaves the original intact. Non-zero on failure.
+# <hostname> before any comment. One `sudo sed -i <expr> <file>`: the command
+# shape README's sudoers NOPASSWD rule allows (#751). GNU sed -i writes a temp
+# file and renames it, so a failure leaves the original intact; avahi is
+# Linux-only, so BSD sed does not apply. Non-zero on failure.
 avahi_remove_host() {
-    local file="$1" new tmp="$1.mcctl-tmp.$$"
-    new=$(avahi_hosts_without "$file" "$2") || return 1
-    if run_with_sudo cp -p "$file" "$tmp" \
-        && printf '%s\n' "$new" | run_with_sudo_stdin tee "$tmp" > /dev/null \
-        && run_with_sudo mv "$tmp" "$file"; then
-        return 0
-    fi
-    run_with_sudo rm -f "$tmp" > /dev/null 2>&1 || true
-    return 1
+    local host
+    host=$(printf '%s' "$2" | sed 's/[][\.*^$/]/\\&/g')
+    run_with_sudo sed -i "/^[^#]*[[:space:]]${host}\\([[:space:]]\\|#\\|\$\\)/d" "$1"
 }
 
 # Check if sudo password is configured for automation
