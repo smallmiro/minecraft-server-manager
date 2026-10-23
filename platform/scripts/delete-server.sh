@@ -145,6 +145,38 @@ fi
 # create folders while it stops); only the second plan is acted on.
 WORLDS_DIR="$PLATFORM_DIR/worlds"
 
+# real_dir <dir>: physical path with symlinks resolved (no readlink -f: BSD).
+real_dir() { (cd -P -- "$1" 2> /dev/null && pwd -P); }
+
+# is_within <path> <dir>: <path> is <dir> or below it.
+is_within() {
+    case "$1/" in "$2/"*) return 0 ;; esac
+    return 1
+}
+
+# worlds_outside_server: worlds/ must not resolve into the server directory,
+# or rm -rf would delete the moved world and every other world with it.
+worlds_outside_server() {
+    local server_real worlds_real
+    server_real=$(real_dir "$SERVER_DIR") || {
+        PLAN_ERROR="cannot resolve servers/$SERVER_NAME"
+        return 1
+    }
+    if [ -L "$WORLDS_DIR" ] && [ ! -e "$WORLDS_DIR" ]; then
+        PLAN_ERROR="worlds/ is a broken symlink"
+        return 1
+    fi
+    [ -e "$WORLDS_DIR" ] || return 0  # created later, next to servers/
+    worlds_real=$(real_dir "$WORLDS_DIR") || {
+        PLAN_ERROR="cannot resolve worlds/"
+        return 1
+    }
+    if is_within "$worlds_real" "$server_real"; then
+        PLAN_ERROR="worlds/ resolves to $worlds_real, inside servers/$SERVER_NAME, which would be deleted"
+        return 1
+    fi
+}
+
 # plan_worlds: sets LEVEL and INTERNAL_WORLDS (folders under data/ to move to
 # worlds/). Returns 1 with the reason in PLAN_ERROR when that is not safe.
 plan_worlds() {
@@ -152,6 +184,7 @@ plan_worlds() {
     LEVEL=""
     PLAN_ERROR=""
     local config="$SERVER_DIR/config.env" defs="" rc=0 suffix dir files file found world covered hidden=""
+    local links link target target_real server_real inside=""
 
     # Only a single plain `LEVEL=<world name>` line is understood. Anything
     # else Compose may read differently (comments, quotes, spaces, export).
@@ -193,22 +226,58 @@ plan_worlds() {
         return 1
     fi
 
-    # Any other world (a folder with level.dat) in the server would be deleted.
-    files=$(find "$SERVER_DIR" -name level.dat -type f) || {
+    # Any other world in the server would be deleted. A world is a folder with
+    # level.dat, level.dat_old, a region/ folder or *.mca files.
+    files=$(find "$SERVER_DIR" \( -type f \( -name level.dat -o -name level.dat_old -o -name '*.mca' \) \) -o \( -type d -name region \)) || {
         PLAN_ERROR="cannot scan servers/$SERVER_NAME for worlds"
         return 1
     }
     while IFS= read -r file; do
         [ -n "$file" ] || continue
         found=$(dirname "$file")
+        [ "$(basename "$found")" != region ] || found=$(dirname "$found")
         covered="false"
         for world in "${INTERNAL_WORLDS[@]}"; do
             case "$found/" in "$SERVER_DIR/data/$world/"*) covered="true" ;; esac
         done
-        [ "$covered" = "true" ] || hidden="$hidden ${found#"$SERVER_DIR"/}"
+        found="${found#"$SERVER_DIR"/}"
+        case "$hidden " in *" $found "*) covered="true" ;; esac  # listed already
+        [ "$covered" = "true" ] || hidden="$hidden $found"
     done <<< "$files"
     if [ -n "$hidden" ]; then
         PLAN_ERROR="worlds that are not LEVEL '$LEVEL' would be deleted:$hidden"
+        return 1
+    fi
+
+    # A symlink whose target is inside the server: rm -rf deletes the target
+    # with the server, and the link itself is not moved.
+    server_real=$(real_dir "$SERVER_DIR") || {
+        PLAN_ERROR="cannot resolve servers/$SERVER_NAME"
+        return 1
+    }
+    links=$(find "$SERVER_DIR" -type l) || {
+        PLAN_ERROR="cannot scan servers/$SERVER_NAME for symlinks"
+        return 1
+    }
+    while IFS= read -r link; do
+        [ -n "$link" ] || continue
+        [ -e "$link" ] || continue  # a broken link holds nothing
+        if [ -d "$link" ]; then
+            target_real=$(real_dir "$link")
+        else
+            target=$(readlink "$link")
+            case "$target" in /*) ;; *) target="$(dirname "$link")/$target" ;; esac
+            target_real=$(real_dir "$(dirname "$target")")
+        fi || {
+            PLAN_ERROR="cannot resolve symlink ${link#"$SERVER_DIR"/}"
+            return 1
+        }
+        if is_within "$target_real" "$server_real"; then
+            inside="$inside ${link#"$SERVER_DIR"/}"
+        fi
+    done <<< "$links"
+    if [ -n "$inside" ]; then
+        PLAN_ERROR="symlinks point inside servers/$SERVER_NAME, so their targets would be deleted:$inside"
         return 1
     fi
 
@@ -221,7 +290,14 @@ plan_worlds() {
 }
 
 # require_world_plan <what was done so far>: abort unless --delete-world.
+# worlds/ inside the server aborts even with --delete-world: that would
+# delete worlds that are not the server's.
 require_world_plan() {
+    if ! worlds_outside_server; then
+        echo -e "${RED}Error: $PLAN_ERROR.${NC}" >&2
+        echo "$1 Point worlds/ outside servers/$SERVER_NAME first." >&2
+        exit 1
+    fi
     plan_worlds && return 0
     [ "$DELETE_WORLD" = "true" ] && return 0
     echo -e "${RED}Error: $PLAN_ERROR.${NC}" >&2
@@ -378,8 +454,9 @@ if [ "$DELETE_WORLD" != "true" ] && [ ${#INTERNAL_WORLDS[@]} -gt 0 ]; then
     mkdir -p "$WORLDS_DIR"
     for world in "${INTERNAL_WORLDS[@]}"; do
         # ponytail: check-then-mv is not atomic; a folder created in between
-        # makes mv nest the world (worlds/<w>/<w>). Concurrent create/delete
-        # of the same world name is rare; a world lock (#670) would close it.
+        # makes mv nest the world (worlds/<w>/<w>): misplaced, but the data is
+        # kept. Concurrent create/delete of the same world name is rare; a
+        # world lock (#670) would close it.
         if [ -e "$WORLDS_DIR/$world" ] || [ -L "$WORLDS_DIR/$world" ]; then
             move_failed "worlds/$world appeared before data/$world could be moved"
         fi
