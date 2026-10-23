@@ -113,11 +113,11 @@
 
 ## 5. provision(`create-server.sh` 대체)
 
-`CreateServerUseCase`에 선택 인자 `specRepo?`, `hostnames?`, `runtime?`(#670의 `assignments?` 뒤)를 추가하고 `executeWithConfig(config, options?: { onProgress?, onLog? })`로 바꾼다. `specRepo`가 없으면 deprecated 셸 경로를 쓴다.
+`CreateServerUseCase`에 선택 인자 `specRepo?`, `hostnames?`, `runtime?`(#670의 `assignments?` 뒤)를 추가하고 `executeWithConfig(config, options?: { onProgress?, onLog? })`로 바꾼다. `specRepo`가 없으면 deprecated 셸 경로를 쓴다. PR 3에서 스크립트를 지운 뒤에는 이 경로와 `ShellAdapter.createServer`가 ENOENT 대신 명확한 오류를 낸다: `create-server.sh was removed in #675; pass specRepo / use ServerSpec provision`.
 
 | # | `create-server.sh` | TS provision | 진행 |
 |---|--------------------|--------------|------|
-| 0 | 인자 해석, 이름·월드 옵션 배타·env 값·모드팩 slug 검증 | `buildCreateSpec`(순수) + 검증, #670 `checkAssign(..., { newServer: true })`. 통과 전에는 I/O 없음 | `initializing`(API) |
+| 0 | 인자 해석, 이름·월드 옵션 배타·env 값·모드팩 slug 검증 | `buildCreateSpec`(순수) + 검증, #670 `checkAssign(..., { newServer: true })`(배정 스냅샷을 읽음). 통과 전에는 쓰기 없음 | `initializing`(API) |
 | 1–4 | 템플릿 복사, `sed`, include 추가, `docker compose config --quiet`, 실패 시 `.bak` 복원 | 한 번의 `specRepo.write(doc, { create: true })`: `mkdir` 선점, `server.yaml`, 렌더링, include 항목(다시 읽어 확인). `docker compose config`는 뺀다: 파일은 `js-yaml`로 생성하고, 깨진 프로젝트는 `start`가 보고한다 | `creating` |
 | 5 | avahi `<n>.local` → 첫 IP, 최선 노력 | `hostnames.register('<n>.local', hostIps[0])`, 건너뛰면 경고 | `configuring` |
 | 6 | `--no-start`가 아니면 `docker compose up -d`, `sleep 2`, `ps` | `autoStart === false`가 아니면 `runtime.start('mc-<n>')`, sleep 없음 | `starting` |
@@ -158,7 +158,7 @@
 |----|------|-----------|
 | 1 스키마+가져오기 | `ServerSpecDocument`, 검증, `buildCreateSpec`, `load`(+ v2 `list`/`get` 구현)와 가져오기(읽기 전용), `mcctl migrate spec --dry-run`, 지금 `create-server.sh` 출력의 골든 파일(3단계 동등성 기준) | 없음 |
 | 2 렌더러+쓰기 | `ServerSpecRenderer`, `DockerComposeRenderer`, 헤더·수정 감지, `write`/`save`(리비전, 선점, 되돌리기, 월드 보호), `mcctl migrate spec` 쓰기, `upgrade` 보고 | `migrate spec`만 씀 |
-| 3 쓰기 경로(#715 S8) | `register`와 avahi 어댑터, provision, CLI·API 생성(SSE, 시작 실패 경고, 콘솔 확인), §6 전체, `create-server.sh`와 bats 3개 삭제, `IShellPort.createServer`·`ShellAdapter.createServer`·`Server.toCliArgs`·`WorldOptions.toCliArgs`·`setServerPlayitDomain`·`replaceRouterHosts`·`IServerSpecRepository.get`에 `@deprecated`, 저장소 어댑터 밖에서 `config.env`나 서버 compose를 쓰면 실패하는 시험(허용 목록: `server-env-migration`), 문서 EN/KO, `test:scripts`·`verify:package` 통과. 3a·3b로 나눌 수 있다 | 있음 |
+| 3 쓰기 경로(#715 S8) | `register`와 avahi 어댑터, provision, CLI·API 생성(SSE, 시작 실패 경고, 콘솔 확인), §6 전체, `create-server.sh`와 bats 3개 삭제, `IShellPort.createServer`·`ShellAdapter.createServer`·`Server.toCliArgs`·`WorldOptions.toCliArgs`·`setServerPlayitDomain`·`replaceRouterHosts`·`IServerSpecRepository.get`에 `@deprecated`, 셸 생성 경로는 "removed in #675" 오류, 저장소 어댑터 밖에서 `config.env`나 서버 compose를 쓰면 실패하는 시험(허용 목록: `server-env-migration`), 문서 EN/KO, `test:scripts`·`verify:package` 통과. 3a·3b로 나눌 수 있다 | 있음 |
 
 #675의 완료 조건 8개는 PR 3에서 모두 충족되므로 **#675는 PR 3 뒤에 닫는다**. 이전의 4단계("이전 형식 지원 종료")는 쓰기 보호 시험과 문서로 줄여 PR 3에 합쳤다. PR 3부터 `server-env-migration` 말고는 이전 방식으로 쓰는 코드가 없다. `server.yaml`이 없는 서버는 지연 가져오기로 계속 지원한다. **#736(v3.0.0)으로 미루는 것**: 위 `@deprecated` export, `IShellPort`/`ShellAdapter`, `server-env-migration` 삭제. v3.0.0에서 ServerSpec 동작은 바뀌지 않는다.
 
@@ -169,7 +169,7 @@
 각 PR에서 실패하는 시험을 먼저 추가한다. 세부 목록은 영어판 §8.
 
 - **v2 호환**: v2 계약으로 쓴 코드가 컴파일된다(`const s: ServerSpec = { name: 'a' }`, v2 타입으로 `list`/`get`/`save`/`delete` 호출). 패키지 루트가 `ServerSpec`과 `IServerSpecRepository`를 계속 export한다. `save({ name })`는 빠진 필드를 나열한 `invalid_spec`.
-- 도메인(검증표, `buildCreateSpec` 옵션별, 호스트명 생성기), 가져오기(옛 템플릿, 따옴표·주석·중복 키, 상속과 `--universe` 형식은 ADR-0002와 같은 fixture, 보간 거부, compose `environment` 충돌 보고, compose `${...}`, image·라벨 흡수, 그 밖의 수정 보호), 렌더링(멱등, 스펙이 그대로면 쓰기 없음, 주석 보존, 헤더, 두 감지표, include 정확 일치·다시 읽기 재시도, 읽지 못한 `servers/compose.yml` 보존), 저장소(리비전 충돌·재시도, 선점, 실패 뒤 되돌리기와 재시도 성공, 월드 보호), 호스트 IP(우선순위, 가짜 바이너리로 탐지 순서, `docker0`/`br-*` 제외), provision·API(골든 동등성, 이벤트 순서, 시작 실패 → `completed` + `created` + `warning`, 이름에 `error`가 든 서버, sudoers와 같은 avahi argv, 비밀번호는 `-S -v`에만 쓰고 자식 환경에 넣지 않음), 쓰기 경로(§6 행마다 하나).
+- 도메인(검증표, `buildCreateSpec` 옵션별, 호스트명 생성기), 가져오기(옛 템플릿, 따옴표·주석·중복 키, 상속과 `--universe` 형식은 ADR-0002와 같은 fixture, 보간 거부, compose `environment` 충돌 보고, compose `${...}`, image·라벨 흡수, 그 밖의 수정 보호), 렌더링(멱등, 스펙이 그대로면 쓰기 없음, 주석 보존, 헤더, 두 감지표, include 정확 일치·다시 읽기 재시도, 읽지 못한 `servers/compose.yml` 보존), 저장소(리비전 충돌·재시도, 선점, 실패 뒤 되돌리기와 재시도 성공, 월드 보호), 호스트 IP(우선순위, 가짜 바이너리로 탐지 순서, `docker0`/`br-*` 제외), provision·API(골든 동등성, 이벤트 순서, 시작 실패 → `completed` + `created` + `warning`, 이름에 `error`가 든 서버, sudoers와 같은 avahi argv, 비밀번호는 `-S -v`에만 쓰고 자식 환경에 넣지 않음), 스크립트 삭제(`specRepo` 없는 `CreateServerUseCase`와 `ShellAdapter.createServer`가 ENOENT가 아니라 "create-server.sh was removed in #675" 메시지로 실패), 쓰기 경로(§6 행마다 하나).
 
 ## 결과
 
