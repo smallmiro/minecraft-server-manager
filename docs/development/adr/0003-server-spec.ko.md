@@ -67,7 +67,7 @@
 - `servers/<n>/server.yaml`, 고정 키 순서, `atomicWriteFile`(#749).
 - **생성**: `mkdir servers/<n>`(재귀 아님)이 선점이다. `EEXIST`는 `already_exists`.
 - **수정**: `load`가 읽은 바이트의 sha256을 `revision`으로 돌려주고, `write`는 rename 직전에 다시 읽어 비교한다. 다르면 `conflict`이고 `updateServerSpec`이 한 번 재시도한다. `ponytail:` 비교와 rename 사이 마이크로초 창은 남는다.
-- **월드 보호(R1, R7)**: 렌더링한 `LEVEL`이나 저장 위치가 현재 `config.env`와 다르면 `write`가 ADR-0002의 순수 함수 `checkProposed`를 렌더링한 `config.env`를 넣은 스냅샷으로 실행한다. `IWorldAssignmentPort.preview`와 같은 스냅샷 리더를 직접 쓴다(배정 어댑터가 이 저장소로 쓰므로 포트를 거치면 순환). 저장 위치 변경은 `allowStorageChange` 없이는 거부한다(`storage_change`). 이 옵션은 `mcctl migrate worlds`만 쓴다. "서버가 정지돼 있어야 한다"는 검사는 유스케이스에 남는다(ADR-0002 결정 5).
+- **월드 보호(R1, R7)**: 렌더링한 `LEVEL`이나 저장 위치가 현재 `config.env`와 다르면 `write`가 ADR-0002의 순수 함수 `checkProposed`를 렌더링한 `config.env`를 넣은 스냅샷으로 실행한다. `IWorldAssignmentPort.preview`와 같은 스냅샷 리더를 직접 쓴다(배정 어댑터가 이 저장소로 쓰므로 포트를 거치면 순환). 저장 위치 변경은 `allowStorageChange` 없이는 거부한다(`storage_change`). 이 옵션은 `mcctl migrate worlds`만 쓴다. 같은 쓰기에서 정지되지 않은 서버도 거부한다(어댑터에 넘긴 런타임으로 `checkServerStopped`, 런타임이 없거나 상태를 읽지 못하면 판단 불가). 그래서 `mcctl migrate spec`이 손으로 고친 `world.level`을 렌더링해도 ADR-0002 결정 5를 우회하지 못한다. 유스케이스의 정지 검사는 그대로 둔다.
 - **저장 순서**: `server.yaml` 먼저, 그다음 생성물. 중간에 죽으면 생성물의 해시는 맞고 `spec=`만 이전 값이므로(§3), 다음 쓰기나 `mcctl migrate spec`이 다시 렌더링해 마무리한다.
 
 ## 3. 렌더링
@@ -158,8 +158,8 @@
 | PR | 내용 | 동작 변화 |
 |----|------|-----------|
 | 1 스키마+가져오기 | `ServerSpecDocument`, 검증, `server.yaml`만 다루는 `load`/`write`(리비전 확인, 렌더링은 아직 없음)와 v2 `list`/`get`/`save`, 가져오기(월드 저장 위치는 #670 배정 어댑터와 같은 `effectiveExtraArgs.ts` 규칙으로 읽음), `mcctl migrate spec`(dry run 또는 `server.yaml`만 씀) | 없음: `migrate spec`만 쓰고 아직 `server.yaml`을 읽는 곳이 없다 |
-| 2 렌더러+쓰기 | `ServerSpecRenderer`, `DockerComposeRenderer`, 헤더·수정 감지, `write` 렌더링(`.bak`을 남기는 `force`, 저장 위치 보호, include 다시 읽기), `mcctl migrate spec` 렌더링 | `migrate spec`만 씀 |
-| 3 쓰기 경로(#715 S8) | 지금 `create-server.sh` 출력의 옵션 조합별 골든 파일(스크립트 삭제 전에 bats 하네스로 캡처, 동등성 기준), `buildCreateSpec`, `write({ create: true })`(선점, 되돌리기, `data/`·`logs/`·`global.env`), `write`의 R1 월드 보호(`checkProposed`), `mcctl upgrade` 보고, `register`와 avahi 어댑터, provision, CLI·API 생성(SSE, 시작 실패 경고, 콘솔 확인), §6 전체, `create-server.sh`와 bats 3개 삭제, `IShellPort.createServer`·`ShellAdapter.createServer`·`Server.toCliArgs`·`WorldOptions.toCliArgs`·`setServerPlayitDomain`·`replaceRouterHosts`·`IServerSpecRepository.get`에 `@deprecated`, 셸 생성 경로는 "removed in #675" 오류, 저장소 어댑터 밖에서 `config.env`나 서버 compose를 쓰면 실패하는 시험(허용 목록: `server-env-migration`), 문서 EN/KO, `test:scripts`·`verify:package` 통과. 3a·3b로 나눌 수 있다 | 있음 |
+| 2 렌더러+쓰기 | `ServerSpecRenderer`, `DockerComposeRenderer`, 헤더·수정 감지, `write` 렌더링(`.bak`을 남기는 `force`, 저장 위치 보호, 정지 검사를 포함한 R1/R7 월드 보호, include 다시 읽기), `mcctl migrate spec` 렌더링 | `migrate spec`만 씀 |
+| 3 쓰기 경로(#715 S8) | 지금 `create-server.sh` 출력의 옵션 조합별 골든 파일(스크립트 삭제 전에 bats 하네스로 캡처, 동등성 기준), `buildCreateSpec`, `write({ create: true })`(선점, 되돌리기, `data/`·`logs/`·`global.env`), `mcctl upgrade` 보고, `register`와 avahi 어댑터, provision, CLI·API 생성(SSE, 시작 실패 경고, 콘솔 확인), §6 전체, `create-server.sh`와 bats 3개 삭제, `IShellPort.createServer`·`ShellAdapter.createServer`·`Server.toCliArgs`·`WorldOptions.toCliArgs`·`setServerPlayitDomain`·`replaceRouterHosts`·`IServerSpecRepository.get`에 `@deprecated`, 셸 생성 경로는 "removed in #675" 오류, 저장소 어댑터 밖에서 `config.env`나 서버 compose를 쓰면 실패하는 시험(허용 목록: `server-env-migration`), 문서 EN/KO, `test:scripts`·`verify:package` 통과. 3a·3b로 나눌 수 있다 | 있음 |
 
 #675의 완료 조건 8개는 PR 3에서 모두 충족되므로 **#675는 PR 3 뒤에 닫는다**. 이전의 4단계("이전 형식 지원 종료")는 쓰기 보호 시험과 문서로 줄여 PR 3에 합쳤다. PR 3부터 `server-env-migration` 말고는 이전 방식으로 쓰는 코드가 없다. `server.yaml`이 없는 서버는 지연 가져오기로 계속 지원한다. **#736(v3.0.0)으로 미루는 것**: 위 `@deprecated` export, `IShellPort`/`ShellAdapter`, `server-env-migration` 삭제. v3.0.0에서 ServerSpec 동작은 바뀌지 않는다.
 
