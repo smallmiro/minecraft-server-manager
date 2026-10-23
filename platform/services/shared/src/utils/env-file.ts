@@ -16,7 +16,7 @@ export const ENV_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
  * No line break or other control character: a `KEY=value` line in an env
  * file stays one line (#720).
  */
-export const SINGLE_LINE_RE = /^[^\x00-\x1f\x7f]*$/;
+export const ENV_FILE_VALUE_RE = /^[^\x00-\x1f\x7f]*$/;
 
 /** A value that cannot be written as one `KEY=value` line. */
 export class EnvValueError extends Error {
@@ -31,8 +31,8 @@ export class EnvValueError extends Error {
  * config.env is an env_file, which has no escape syntax, so a line break
  * would add another setting: reject rather than escape (#726).
  */
-export function assertSingleLineEnvValue(key: string, value: string): void {
-  if (!SINGLE_LINE_RE.test(value)) throw new EnvValueError(key);
+export function assertEnvFileValue(key: string, value: string): void {
+  if (!ENV_FILE_VALUE_RE.test(value)) throw new EnvValueError(key);
 }
 
 /** Values matching this are literal in bash, compose and dotenv without quotes. */

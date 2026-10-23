@@ -1,5 +1,5 @@
 import { Type, Static, type StringOptions } from '@sinclair/typebox';
-import { SINGLE_LINE_RE } from '@minecraft-docker/shared/utils';
+import { ENV_FILE_VALUE_RE } from '@minecraft-docker/shared/utils';
 
 // ============================================================
 // Server Configuration Schemas
@@ -40,8 +40,8 @@ export const LevelTypeSchema = Type.Union([
  * Free text written to config.env as one KEY=value line: a line break would
  * add another setting to the container's env_file (#726).
  */
-const SingleLineString = (options: StringOptions) =>
-  Type.String({ pattern: SINGLE_LINE_RE.source, ...options });
+const EnvFileString = (options: StringOptions) =>
+  Type.String({ pattern: ENV_FILE_VALUE_RE.source, ...options });
 
 /**
  * Server configuration values (from config.env)
@@ -65,15 +65,15 @@ export const ServerConfigSchema = Type.Object({
   spawnNpcs: Type.Optional(Type.Boolean({ description: 'Spawn villagers and NPCs' })),
 
   // ── World (Essential) ──
-  motd: Type.Optional(SingleLineString({ maxLength: 500, description: 'Message of the day' })),
-  level: Type.Optional(SingleLineString({ description: 'World save folder name' })),
+  motd: Type.Optional(EnvFileString({ maxLength: 500, description: 'Message of the day' })),
+  level: Type.Optional(EnvFileString({ description: 'World save folder name' })),
   levelType: Type.Optional(LevelTypeSchema),
-  seed: Type.Optional(SingleLineString({ description: 'World generation seed' })),
+  seed: Type.Optional(EnvFileString({ description: 'World generation seed' })),
 
   // ── World (Advanced) ──
   generateStructures: Type.Optional(Type.Boolean({ description: 'Generate structures like villages' })),
   maxWorldSize: Type.Optional(Type.Number({ minimum: 1, maximum: 29999984, description: 'Maximum world radius in blocks' })),
-  icon: Type.Optional(SingleLineString({ description: 'Server icon URL (64x64 PNG)' })),
+  icon: Type.Optional(EnvFileString({ description: 'Server icon URL (64x64 PNG)' })),
 
   // ── Security (Essential) ──
   onlineMode: Type.Optional(Type.Boolean({ description: 'Require Mojang authentication' })),
@@ -91,9 +91,9 @@ export const ServerConfigSchema = Type.Object({
   // ── Performance & JVM (Advanced) ──
   simulationDistance: Type.Optional(Type.Number({ minimum: 3, maximum: 32, description: 'Simulation distance in chunks' })),
   maxTickTime: Type.Optional(Type.Number({ minimum: -1, description: 'Max tick time ms (-1 to disable watchdog)' })),
-  initMemory: Type.Optional(SingleLineString({ description: 'Initial JVM heap size (e.g., 2G)' })),
-  maxMemory: Type.Optional(SingleLineString({ description: 'Maximum JVM heap size (e.g., 8G)' })),
-  jvmXxOpts: Type.Optional(SingleLineString({ description: 'Additional -XX JVM options' })),
+  initMemory: Type.Optional(EnvFileString({ description: 'Initial JVM heap size (e.g., 2G)' })),
+  maxMemory: Type.Optional(EnvFileString({ description: 'Maximum JVM heap size (e.g., 8G)' })),
+  jvmXxOpts: Type.Optional(EnvFileString({ description: 'Additional -XX JVM options' })),
 
   // ── Auto-pause / Auto-stop (Essential) ──
   enableAutopause: Type.Optional(Type.Boolean({ description: 'Pause server when no players connected' })),
@@ -109,15 +109,15 @@ export const ServerConfigSchema = Type.Object({
   pauseWhenEmptySeconds: Type.Optional(Type.Number({ minimum: 0, description: 'Native pause: seconds to wait before pausing when empty (MC 1.21.2+)' })),
 
   // ── System (Essential) ──
-  tz: Type.Optional(SingleLineString({ description: 'Timezone (e.g., Asia/Seoul)' })),
-  resourcePack: Type.Optional(SingleLineString({ description: 'Resource pack download URL' })),
+  tz: Type.Optional(EnvFileString({ description: 'Timezone (e.g., Asia/Seoul)' })),
+  resourcePack: Type.Optional(EnvFileString({ description: 'Resource pack download URL' })),
   enableRcon: Type.Optional(Type.Boolean({ description: 'Enable RCON remote console' })),
 
   // ── System (Advanced) ──
-  resourcePackSha1: Type.Optional(SingleLineString({ description: 'Resource pack SHA1 checksum' })),
+  resourcePackSha1: Type.Optional(EnvFileString({ description: 'Resource pack SHA1 checksum' })),
   resourcePackEnforce: Type.Optional(Type.Boolean({ description: 'Kick players who decline resource pack' })),
-  resourcePackPrompt: Type.Optional(SingleLineString({ description: 'Custom prompt message for resource pack' })),
-  rconPassword: Type.Optional(SingleLineString({ description: 'RCON password' })),
+  resourcePackPrompt: Type.Optional(EnvFileString({ description: 'Custom prompt message for resource pack' })),
+  rconPassword: Type.Optional(EnvFileString({ description: 'RCON password' })),
   rconPort: Type.Optional(Type.Number({ minimum: 1024, maximum: 65535, description: 'RCON port' })),
   stopDuration: Type.Optional(Type.Number({ minimum: 0, description: 'Graceful stop timeout in seconds' })),
   uid: Type.Optional(Type.Number({ minimum: 0, description: 'Container user ID' })),
@@ -125,17 +125,17 @@ export const ServerConfigSchema = Type.Object({
 
   // ── Remote Access ──
   websocketConsole: Type.Optional(Type.Boolean({ description: 'Enable WebSocket console' })),
-  websocketAddress: Type.Optional(SingleLineString({ description: 'WebSocket bind address (e.g., 0.0.0.0:80)' })),
-  websocketPassword: Type.Optional(SingleLineString({ description: 'WebSocket password (uses RCON password if unset)' })),
+  websocketAddress: Type.Optional(EnvFileString({ description: 'WebSocket bind address (e.g., 0.0.0.0:80)' })),
+  websocketPassword: Type.Optional(EnvFileString({ description: 'WebSocket password (uses RCON password if unset)' })),
   websocketDisableAuthentication: Type.Optional(Type.Boolean({ description: 'Disable WebSocket authentication' })),
-  websocketAllowedOrigins: Type.Optional(SingleLineString({ description: 'Allowed origins for WebSocket (comma-separated)' })),
+  websocketAllowedOrigins: Type.Optional(EnvFileString({ description: 'Allowed origins for WebSocket (comma-separated)' })),
   websocketLogBufferSize: Type.Optional(Type.Number({ minimum: 1, description: 'WebSocket log history buffer size' })),
   enableSsh: Type.Optional(Type.Boolean({ description: 'Enable SSH console (port 2222)' })),
   // ── Configuration Repositories ──
-  paperConfigRepo: Type.Optional(SingleLineString({ description: 'Paper optimized config repository URL' })),
-  pufferfishConfigRepo: Type.Optional(SingleLineString({ description: 'Pufferfish config repository URL' })),
-  purpurConfigRepo: Type.Optional(SingleLineString({ description: 'Purpur config repository URL' })),
-  serverPropertiesRepoUrl: Type.Optional(SingleLineString({ description: 'Base server.properties repository URL' })),
+  paperConfigRepo: Type.Optional(EnvFileString({ description: 'Paper optimized config repository URL' })),
+  pufferfishConfigRepo: Type.Optional(EnvFileString({ description: 'Pufferfish config repository URL' })),
+  purpurConfigRepo: Type.Optional(EnvFileString({ description: 'Purpur config repository URL' })),
+  serverPropertiesRepoUrl: Type.Optional(EnvFileString({ description: 'Base server.properties repository URL' })),
 });
 
 /**

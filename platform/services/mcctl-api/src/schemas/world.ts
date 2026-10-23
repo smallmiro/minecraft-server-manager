@@ -1,6 +1,6 @@
 import { Type, Static } from '@sinclair/typebox';
 import { WORLD_NAME_PATTERN } from '@minecraft-docker/shared';
-import { SINGLE_LINE_RE } from '@minecraft-docker/shared/utils';
+import { ENV_FILE_VALUE_RE } from '@minecraft-docker/shared/utils';
 import { ExistingServerNameSchema } from './server.js';
 
 // ========================================
@@ -67,7 +67,7 @@ export const WorldNameParamsSchema = Type.Object({
 export const CreateWorldRequestSchema = Type.Object({
   name: Type.String({ minLength: 1, pattern: WORLD_NAME_PATTERN.source }),
   // Written to the server's config.env as SEED=<seed> (#726)
-  seed: Type.Optional(Type.String({ pattern: SINGLE_LINE_RE.source, maxLength: 256 })),
+  seed: Type.Optional(Type.String({ pattern: ENV_FILE_VALUE_RE.source, maxLength: 256 })),
   serverName: Type.Optional(ExistingServerNameSchema),
   autoStart: Type.Optional(Type.Boolean({ default: false })),
 });

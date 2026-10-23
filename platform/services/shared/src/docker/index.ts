@@ -14,7 +14,7 @@ import type {
 } from '../types/index.js';
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
 import { resolveMcctlRoot } from '../utils/index.js';
-import { assertSingleLineEnvValue } from '../utils/env-file.js';
+import { assertEnvFileValue } from '../utils/env-file.js';
 // Adapters are imported by file path, never via a barrel: the barrel loads ServerRepository, which imports this module (ADR-0001)
 import {
   DockerComposeRuntimeAdapter,
@@ -735,7 +735,7 @@ export function setServerPlayitDomain(serverName: string, domain: string | null,
     throw new Error(`config.env not found for server '${serverName}': ${configPath}`);
   }
 
-  if (domain !== null) assertSingleLineEnvValue('PLAYIT_DOMAIN', domain);
+  if (domain !== null) assertEnvFileValue('PLAYIT_DOMAIN', domain);
 
   const previousDomain = getServerPlayitDomain(serverName, dir);
   let content = readFileSync(configPath, 'utf-8');

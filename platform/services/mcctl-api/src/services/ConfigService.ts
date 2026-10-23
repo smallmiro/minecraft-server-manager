@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { resolveWorldName } from '@minecraft-docker/shared';
-import { assertSingleLineEnvValue } from '@minecraft-docker/shared/utils';
+import { assertEnvFileValue } from '@minecraft-docker/shared/utils';
 import type { ServerConfig, UpdateServerConfigRequest } from '../schemas/config.js';
 
 /**
@@ -307,7 +307,7 @@ function formatEnvValue(key: keyof ServerConfig, value: ServerConfig[keyof Serve
  */
 function updateEnvFile(content: string, updates: Map<string, string>): string {
   for (const [key, value] of updates) {
-    assertSingleLineEnvValue(key, value);
+    assertEnvFileValue(key, value);
   }
 
   const lines = content.split('\n');
