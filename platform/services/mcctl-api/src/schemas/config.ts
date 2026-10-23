@@ -37,8 +37,8 @@ export const LevelTypeSchema = Type.Union([
 ]);
 
 /**
- * Free text written to config.env as one KEY=value line: a line break would
- * add another setting to the container's env_file (#726).
+ * Free text written to config.env as KEY=value: a line break or a leading
+ * quote would add another setting to the container's env_file (#726).
  */
 const EnvFileString = (options: StringOptions) =>
   Type.String({ pattern: ENV_FILE_VALUE_RE.source, ...options });

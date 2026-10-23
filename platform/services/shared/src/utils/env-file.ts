@@ -13,23 +13,27 @@ import { basename, dirname, join } from 'node:path';
 export const ENV_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 /**
- * No line break or other control character: a `KEY=value` line in an env
- * file stays one line (#720).
+ * A value Compose reads back from `KEY=<value>` in an env_file as exactly
+ * that one setting (#720, #726):
+ * - no control character (C0, DEL, C1) or U+2028/U+2029 line separator;
+ * - first non-blank character is not a quote or backtick. Compose closes a
+ *   quoted value and parses the rest of the line as more settings
+ *   (MOTD="" MODS=<url>), while an unquoted value runs to the end of line.
  */
-export const ENV_FILE_VALUE_RE = /^[^\x00-\x1f\x7f]*$/;
+export const ENV_FILE_VALUE_RE = /^(?!\s*["'`])[^\x00-\x1f\x7f-\x9f\u2028\u2029]*$/;
 
-/** A value that cannot be written as one `KEY=value` line. */
+/** A value that cannot be written as one `KEY=value` setting. */
 export class EnvValueError extends Error {
   constructor(key: string) {
-    super(`${key} must be a single line without control characters`);
+    super(`${key} must be one line without control characters and must not start with a quote`);
     this.name = 'EnvValueError';
   }
 }
 
 /**
- * Throw EnvValueError unless `value` fits on one `KEY=value` line. A server's
- * config.env is an env_file, which has no escape syntax, so a line break
- * would add another setting: reject rather than escape (#726).
+ * Throw EnvValueError unless `value` matches ENV_FILE_VALUE_RE. A server's
+ * config.env is an env_file with no escape syntax that the readers share,
+ * so reject rather than escape (#726).
  */
 export function assertEnvFileValue(key: string, value: string): void {
   if (!ENV_FILE_VALUE_RE.test(value)) throw new EnvValueError(key);

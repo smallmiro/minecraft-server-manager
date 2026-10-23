@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { Paths, execScriptInteractive, log } from '@minecraft-docker/shared';
-import { ENV_FILE_VALUE_RE } from '@minecraft-docker/shared/utils';
+import { ENV_KEY_RE, assertEnvFileValue } from '@minecraft-docker/shared/utils';
 
 export interface ShellExecutorOptions {
   paths?: Paths;
@@ -164,9 +164,15 @@ export class ShellExecutor {
    * Preserves comments and formatting
    */
   writeConfigValue(server: string, key: string, value: string): boolean {
-    // config.env is an env_file: a line break would add another setting (#726)
-    if (!ENV_FILE_VALUE_RE.test(value)) {
-      log.error(`${key} must be a single line without control characters`);
+    // config.env is an env_file: the key and value must stay one setting (#726)
+    if (!ENV_KEY_RE.test(key)) {
+      log.error(`Invalid config key: ${JSON.stringify(key)}`);
+      return false;
+    }
+    try {
+      assertEnvFileValue(key, value);
+    } catch (error) {
+      log.error((error as Error).message);
       return false;
     }
     const configPath = this.getConfigPath(server);

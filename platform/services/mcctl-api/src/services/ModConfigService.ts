@@ -137,6 +137,8 @@ export class ModConfigService {
 
     const added: string[] = [];
     for (const slug of slugs) {
+      // Each slug may become the first entry of the list later (#726)
+      assertEnvFileValue(envKey, slug);
       if (!existing.includes(slug)) {
         existing.push(slug);
         added.push(slug);
