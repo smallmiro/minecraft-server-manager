@@ -1,7 +1,6 @@
 import {
   WorldManagementUseCase,
   ApiPromptAdapter,
-  ShellAdapter,
   WorldRepository,
   ServerRepository,
   ConfigEnvWorldAssignmentAdapter,
@@ -27,14 +26,14 @@ export function createWorldUseCase(options?: {
     worldSeed: options?.worldSeed,
     confirmValue: options?.confirmValue ?? true,
   });
-  const shell = new ShellAdapter({ paths });
   // #670: assignments come from each server's LEVEL; D2 moves these into its container plugin
   const assignments = new ConfigEnvWorldAssignmentAdapter(paths);
   const runtime = new DockerComposeRuntimeAdapter({ root: paths.root, env: () => childProcessEnv() });
   const worldRepo = new WorldRepository(paths, assignments);
   const serverRepo = new ServerRepository(paths);
 
-  return new WorldManagementUseCase(prompt, shell, worldRepo, serverRepo, assignments, runtime);
+  // No shell: SEED is written with LEVEL by the assignment port (#734)
+  return new WorldManagementUseCase(prompt, undefined, worldRepo, serverRepo, assignments, runtime);
 }
 
 /**

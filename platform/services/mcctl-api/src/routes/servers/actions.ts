@@ -6,7 +6,9 @@ import {
   ServerAction,
 } from '../../utils/docker-compose.js';
 import { writeAuditLog } from '../../services/audit-log-service.js';
-import { AuditActionEnum, EXISTING_SERVER_NAME_PATTERN, ServerName } from '@minecraft-docker/shared';
+import { createWorldBackupPort } from '../../lib/world-backup.js';
+import { config } from '../../config/index.js';
+import { AuditActionEnum, EXISTING_SERVER_NAME_PATTERN, ServerName, autoBackupOnStop } from '@minecraft-docker/shared';
 
 // ============================================================
 // Types
@@ -98,6 +100,17 @@ async function handleServerAction(
     details: null,
     errorMessage: null,
   });
+
+  // BACKUP_AUTO_ON_STOP (#734, #732 B-Q9): in the background, so a backup that
+  // waits for the lock or pushes a large world never holds the response; a
+  // failure is logged and never fails the stop
+  if (action === 'stop') {
+    const log = request.log;
+    void autoBackupOnStop(createWorldBackupPort(config.mcctlRoot), serverName).then((auto) => {
+      if (auto.status === 'done') log.info({ server: serverName, commit: auto.outcome.commit }, 'Auto-backup on stop complete');
+      else if (auto.status === 'failed') log.warn({ server: serverName, error: auto.error }, 'Auto-backup on stop failed');
+    });
+  }
 
   return {
     success: true,
