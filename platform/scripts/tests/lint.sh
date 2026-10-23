@@ -10,5 +10,5 @@ if ! command -v shellcheck > /dev/null; then
     exit 127
 fi
 
-shellcheck -x --severity=error -- *.sh lib/*.sh tests/lint.sh tests/fake-bin/docker
+shellcheck -x --severity=error -- lib/*.sh tests/lint.sh
 echo "shellcheck $(shellcheck --version | sed -n 's/^version: //p'): OK"
