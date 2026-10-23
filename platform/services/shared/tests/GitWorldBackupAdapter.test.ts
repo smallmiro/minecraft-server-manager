@@ -287,6 +287,47 @@ describe('push', () => {
     expect(remoteFiles(ctx.bare)).toEqual([]);
   });
 
+  it('interrupts a flush command in flight when the signal aborts, then sends save-on (#734 review)', async () => {
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    ctx.runtime.running = ['mc-a'];
+    const shutdown = new AbortController();
+    ctx.console.handler = (_n, args, signal) => {
+      if (args[0] !== 'save-all') return { exitCode: 0, stdout: '', stderr: '' };
+      setTimeout(() => shutdown.abort(), 10); // shutdown while the server is slow to flush
+      return new Promise((resolve) => {
+        signal?.addEventListener('abort', () => resolve({ exitCode: 1, stdout: '', stderr: 'interrupted' }));
+      });
+    };
+    const started = Date.now();
+    const r = await ctx.adapter.push({ signal: shutdown.signal });
+    expect(errCode(r)).toBe('aborted');
+    expect(Date.now() - started).toBeLessThan(250); // not the 300 ms command timeout
+    expect(ctx.console.calls).toEqual(['mc-a save-off', 'mc-a save-all flush', 'mc-a save-on']);
+  });
+
+  it('sends save-on to every server at once, so one slow server does not hold back the rest (#734 review)', async () => {
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    ctx.runtime.running = ['mc-a', 'mc-b'];
+    let aAnswered = false;
+    const seen: string[] = [];
+    ctx.console.handler = (name, args, signal) => {
+      if (args[0] !== 'save-on') return { exitCode: 0, stdout: '', stderr: '' };
+      if (name === 'mc-a') {
+        return new Promise((resolve) => {
+          signal?.addEventListener('abort', () => {
+            aAnswered = true;
+            resolve({ exitCode: 1, stdout: '', stderr: 'timed out' });
+          });
+        });
+      }
+      seen.push(`b save-on, a answered=${aAnswered}`);
+      return { exitCode: 0, stdout: '', stderr: '' };
+    };
+    const out = ok(await ctx.adapter.push({ message: 'm' }));
+    expect(seen).toEqual(['b save-on, a answered=false']);
+    expect(out.warnings.join('\n')).toContain('save-on failed for a');
+  });
+
   it('sends no save-off once the signal has aborted (#734)', async () => {
     await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
     ctx.runtime.running = ['mc-a', 'mc-b'];

@@ -75,9 +75,10 @@ export interface WorldBackupPushOptions extends LockOptions {
   /** Consent to drop worlds that are in the last backup but missing from the source. */
   allowMissing?: boolean;
   /**
-   * Stop as soon as it is safe (before the next save-off, or at the next
-   * copied file) and fail with `aborted`. Servers already flushed get save-on
-   * before push resolves, so a process can abort and then exit (#734).
+   * Stop now and fail with `aborted`: a save-off or save-all in flight is
+   * interrupted, and the copy is no longer waited for (the file being copied
+   * may still finish). Servers already flushed get save-on before push
+   * resolves, so a shutting-down process can abort and then exit (#734).
    */
   signal?: AbortSignal;
 }

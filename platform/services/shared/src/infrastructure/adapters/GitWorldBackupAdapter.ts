@@ -60,10 +60,33 @@ interface SaveOnFailure {
   message: string;
 }
 
+const ABORTED = 'Backup aborted (shutting down)';
+
 /** push's signal (#734): stop before the next save-off or copied file. */
 const throwIfAborted = (signal: AbortSignal | undefined) => {
-  if (signal?.aborted) fail('aborted', 'Backup aborted (shutting down)');
+  if (signal?.aborted) fail('aborted', ABORTED);
 };
+
+/**
+ * `work`, or an `aborted` failure as soon as `signal` aborts (#734 review), so
+ * save-on need not wait for the file being copied. `work` then stops at its
+ * next file on its own.
+ */
+async function untilAborted<T>(work: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
+  if (!signal) return work;
+  work.catch(() => undefined); // it may still reject after we stop waiting
+  let onAbort = () => {};
+  const aborted = new Promise<never>((_, reject) => {
+    onAbort = () => reject(new Fail({ code: 'aborted', message: ABORTED }));
+    if (signal.aborted) onAbort();
+    else signal.addEventListener('abort', onAbort, { once: true });
+  });
+  try {
+    return await Promise.race([work, aborted]);
+  } finally {
+    signal.removeEventListener('abort', onAbort);
+  }
+}
 
 /** The error to report, with the servers left with autosave off appended (P2). */
 function withSaveOnFailures(error: unknown, failures: SaveOnFailure[]): unknown {
@@ -623,35 +646,45 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
   ): Promise<{ flushed: string[]; saveOnFailures: SaveOnFailure[] }> {
     const running = this.runningServers();
     const cleanup: string[] = [];
-    const rcon = async (container: string, args: string[]) => {
-      const r = await this.options.console.command(container, args, {
-        signal: AbortSignal.timeout(this.options.flushTimeoutMs ?? 60_000),
-      });
-      return r.exitCode === 0 ? undefined : r.stderr.trim() || r.stdout.trim() || `exit ${r.exitCode}`;
+    // Each command ends at its timeout, or (save-off, save-all) when push's signal aborts
+    const rcon = async (container: string, args: string[], interrupt?: AbortSignal) => {
+      const command = new AbortController();
+      const stop = () => command.abort();
+      const timer = setTimeout(stop, this.options.flushTimeoutMs ?? 60_000);
+      interrupt?.addEventListener('abort', stop, { once: true });
+      if (interrupt?.aborted) stop();
+      try {
+        const r = await this.options.console.command(container, args, { signal: command.signal });
+        return r.exitCode === 0 ? undefined : r.stderr.trim() || r.stdout.trim() || `exit ${r.exitCode}`;
+      } finally {
+        clearTimeout(timer);
+        interrupt?.removeEventListener('abort', stop);
+      }
     };
     let mainError: unknown;
     try {
       for (const c of running) {
         throwIfAborted(signal);
         cleanup.push(c); // before sending, so save-on follows even if save-off hangs
-        const err = await rcon(c, ['save-off']);
+        const err = await rcon(c, ['save-off'], signal);
+        throwIfAborted(signal);
         if (err) fail('flush_failed', `save-off failed for ${serverNameOf(c)}: ${err}`, { servers: [serverNameOf(c)] });
       }
       for (const c of running) {
         throwIfAborted(signal);
-        const err = await rcon(c, ['save-all', 'flush']);
+        const err = await rcon(c, ['save-all', 'flush'], signal);
+        throwIfAborted(signal);
         if (err) fail('flush_failed', `save-all flush failed for ${serverNameOf(c)}: ${err}`, { servers: [serverNameOf(c)] });
       }
-      await copy();
+      await untilAborted(copy(), signal);
     } catch (e) {
       mainError = e;
     }
-    // save-on for every server, independently, even after a failure
-    const saveOnFailures: SaveOnFailure[] = [];
-    for (const c of cleanup) {
-      const err = await rcon(c, ['save-on']).catch((e: Error) => e.message);
-      if (err) saveOnFailures.push({ server: serverNameOf(c), message: `save-on failed for ${serverNameOf(c)}: ${err}` });
-    }
+    // save-on for every server at once, independently, even after a failure
+    const errors = await Promise.all(cleanup.map((c) => rcon(c, ['save-on']).catch((e: Error) => e.message)));
+    const saveOnFailures: SaveOnFailure[] = cleanup.flatMap((c, i) =>
+      errors[i] ? [{ server: serverNameOf(c), message: `save-on failed for ${serverNameOf(c)}: ${errors[i]}` }] : []
+    );
     if (mainError !== undefined) throw withSaveOnFailures(mainError, saveOnFailures);
     return { flushed: cleanup.map(serverNameOf), saveOnFailures };
   }
