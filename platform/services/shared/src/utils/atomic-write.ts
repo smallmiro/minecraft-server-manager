@@ -9,9 +9,12 @@
  * is removed on failure. An existing file that is not writable is refused
  * (EACCES) like an in-place write would be.
  *
- * Renaming hands the file to the writing user, so when the existing owner or
- * group cannot be kept (chown fails, i.e. not root and not our file) the file
- * is written in place instead: not atomic, but its owner stays.
+ * Falls back to writing the existing file in place (not atomic, but what a
+ * plain writeFile did) when:
+ * - the existing owner or group cannot be kept (chown fails, i.e. not root
+ *   and not our file), since renaming would hand the file to the writer;
+ * - the temp file cannot be created (EACCES/EPERM: the directory is not
+ *   writable but the file is).
  */
 import { randomUUID } from 'node:crypto';
 import {
@@ -68,6 +71,21 @@ async function linkTarget(path: string): Promise<string> {
   throw tooManySymlinks(path);
 }
 
+/** The temp file cannot be created, but writing the existing file in place may work. */
+function cannotCreateTemp(err: unknown, existing: Stats | undefined): boolean {
+  const code = (err as NodeJS.ErrnoException).code;
+  return existing !== undefined && (code === 'EACCES' || code === 'EPERM');
+}
+
+/** Non-atomic fallback: overwrite the existing file, keeping its inode and owner. */
+async function writeInPlace(target: string, content: string | Uint8Array): Promise<void> {
+  await writeFile(target, content);
+}
+
+function writeInPlaceSync(target: string, content: string | Uint8Array): void {
+  writeFileSync(target, content);
+}
+
 function tempPathFor(target: string): string {
   return join(dirname(target), `.${basename(target)}.${randomUUID()}.tmp`);
 }
@@ -89,7 +107,13 @@ export async function atomicWriteFile(
   if (existing) await access(target, constants.W_OK);
   const mode = modeFor(options, existing);
   const tmp = tempPathFor(target);
-  const file = await open(tmp, 'wx', mode ?? 0o666);
+  let file;
+  try {
+    file = await open(tmp, 'wx', mode ?? 0o666);
+  } catch (err) {
+    if (cannotCreateTemp(err, existing)) return writeInPlace(target, content);
+    throw err;
+  }
   let ownerKept = true;
   try {
     try {
@@ -107,7 +131,7 @@ export async function atomicWriteFile(
   }
   if (!ownerKept) {
     await rm(tmp, { force: true });
-    await writeFile(target, content);
+    await writeInPlace(target, content);
   }
 }
 
@@ -122,7 +146,13 @@ export function atomicWriteFileSync(
   if (existing) accessSync(target, constants.W_OK);
   const mode = modeFor(options, existing);
   const tmp = tempPathFor(target);
-  const fd = openSync(tmp, 'wx', mode ?? 0o666);
+  let fd: number;
+  try {
+    fd = openSync(tmp, 'wx', mode ?? 0o666);
+  } catch (err) {
+    if (cannotCreateTemp(err, existing)) return writeInPlaceSync(target, content);
+    throw err;
+  }
   let ownerKept = true;
   try {
     try {
@@ -146,7 +176,7 @@ export function atomicWriteFileSync(
   }
   if (!ownerKept) {
     rmSync(tmp, { force: true });
-    writeFileSync(target, content);
+    writeInPlaceSync(target, content);
   }
 }
 
