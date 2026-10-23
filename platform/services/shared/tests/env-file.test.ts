@@ -119,9 +119,27 @@ describe('codec round-trip', () => {
     expect(parseEnvDocument(out).values.get('K')).toBe(value);
   });
 
-  test('raw style rejects values that are not one env_file setting', () => {
-    expect(() => applyEnvChanges('', { set: { K: 'a\nB=1' } }, { raw: true })).toThrow(EnvValueError);
-    expect(() => applyEnvChanges('', { set: { K: '"" B=1' } }, { raw: true })).toThrow(EnvValueError);
+  test.each([
+    ['mod #1.jar', "'mod #1.jar'"],
+    [' padded ', "' padded '"],
+    ['"" B=1', `'"" B=1'`],
+    ['"quoted"', `'"quoted"'`],
+  ])('raw style single-quotes %j, which raw cannot represent', (value, written) => {
+    const out = applyEnvChanges('', { set: { K: value } }, { raw: true });
+    expect(out).toBe(`K=${written}\n`);
+    expect(parseEnvDocument(out).values.get('K')).toBe(value);
+  });
+
+  test.each(['a\nB=1', 'x\u0000y', "it's #1", "'open"])('raw style rejects %j, which it cannot represent', (value) => {
+    expect(() => applyEnvChanges('', { set: { K: value } }, { raw: true })).toThrow(EnvValueError);
+  });
+
+  test('raw style keeps a quoted value through read, change of another item, write, read', () => {
+    const src = "TYPE=MODRINTH\nMODRINTH_EXCLUDE_FILES='mod #1.jar,other.jar'\n";
+    const excluded = parseEnvDocument(src).values.get('MODRINTH_EXCLUDE_FILES')!.split(',');
+    const out = applyEnvChanges(src, { set: { MODRINTH_EXCLUDE_FILES: excluded.filter((f) => f !== 'other.jar').join(',') } }, { raw: true });
+    expect(out).toBe("TYPE=MODRINTH\nMODRINTH_EXCLUDE_FILES='mod #1.jar'\n");
+    expect(parseEnvDocument(out).values.get('MODRINTH_EXCLUDE_FILES')).toBe('mod #1.jar');
   });
 
   test('raw style keeps untouched lines and rewrites an export line in place', () => {
