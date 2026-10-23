@@ -48,6 +48,7 @@ interface IWorldAssignmentPort {
   listAssignments(): Promise<WorldAssignment[]>;              // v2 shape: readable servers only
   snapshot(): Promise<WorldAssignmentSnapshot>;               // + undetermined; rejects only when servers/ cannot be listed
   preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot>; // writes nothing
+  previewPlatformEnv(dotenv: string): Promise<WorldAssignmentSnapshot>;          // platform .env replaced; writes nothing
   assign(world: string, server: string): Promise<void>;       // checkAssign on a fresh snapshot; no-op if held
   release(world: string): Promise<{ server: string; fallback: string }>;
 }
@@ -77,7 +78,8 @@ interface IWorldAssignmentPort {
 | `world release`, API release | `planRelease` → 가진 서버의 상태 확인 → `assignments.release` |
 | `world delete`, API delete | `checkRemoval`. `--force`로도 우회하지 못한다 |
 | API `POST /api/servers/:name/world/reset` | `planWorldReset`(`checkReset`)이 돌려준 월드만 지운다 |
-| 설정 스냅숏 복원(CLI, API) | `config.env`: `preview` + `checkProposed`, 배정이 바뀌면 `force`와 상관없이 상태 확인. `docker-compose.yml`(js-yaml로 파싱): `environment`에 `LEVEL`/`WORLD_NAME`/`EXTRA_ARGS`가 있거나 `/worlds`·`/data` 매핑이 현재와 다르거나 파싱할 수 없으면 거부. API는 409 |
+| 설정 스냅숏 복원(CLI, API) | `config.env`: `preview` + `checkProposed`, 배정이 바뀌면 `force`와 상관없이 상태 확인. `docker-compose.yml`(js-yaml로 파싱): `environment`에 `LEVEL`/`WORLD_NAME`/`EXTRA_ARGS`가 있거나 `/worlds`·`/data` 매핑이나 `env_file` 목록(순서 포함)이 현재와 다르거나 파싱할 수 없으면 거부. API는 409 |
+| API `PUT /api/platform-settings`의 `EXTRA_ARGS` 변경·삭제 | 플랫폼 값은 상속하는 서버(`servers/global.env`의 값 없는 키, 자체 값 없음)에 전달된다. `previewPlatformEnv` + `checkSnapshotChange`: 배정이 바뀌는 서버는 모두 `checkProposed`를 통과하고 정지돼 있어야 하며, 아니면 `servers`와 함께 409. 보간 값은 상속 서버를 판단 불가로 만들어 거부된다 |
 | `mcctl migrate worlds` | 새 `config.env`를 먼저 만들어 `preview` + `checkProposed`로 확인한 뒤 데이터를 옮긴다 |
 
 - 상태 확인은 `checkServerStopped`가 `runtime.getStatus('mc-<서버>')`로 한다. **알려진 한계**: D1에서는 `not_found`가 "런타임에 연결할 수 없음"도 뜻하므로 통과한다. 예외는 판단 불가로 처리한다. 후속: #732의 엄격한 조회로 교체(A7, #669).

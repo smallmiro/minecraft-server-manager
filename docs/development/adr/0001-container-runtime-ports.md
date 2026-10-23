@@ -155,6 +155,8 @@ export interface IWorldAssignmentPort {
   snapshot(): Promise<WorldAssignmentSnapshot>;
   /** The snapshot with one server's config.env replaced (snapshot restore, migrate). Writes nothing. */
   preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot>;
+  /** The snapshot with the platform .env replaced (platform settings EXTRA_ARGS). Writes nothing. */
+  previewPlatformEnv(dotenv: string): Promise<WorldAssignmentSnapshot>;
   /** Writes LEVEL=<world>. Rejects WorldAssignmentError (conflict, undetermined, internal_world, ...); fail-closed (R7). */
   assign(world: string, server: string): Promise<void>;
   /** Unassign (#715): the holder's LEVEL falls back to its own default world `<server>`. Rejects WorldAssignmentError. */

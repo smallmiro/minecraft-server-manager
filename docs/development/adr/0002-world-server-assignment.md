@@ -65,6 +65,7 @@ interface IWorldAssignmentPort {
   listAssignments(): Promise<WorldAssignment[]>;              // v2 shape: readable servers only
   snapshot(): Promise<WorldAssignmentSnapshot>;               // + undetermined; rejects only when servers/ cannot be listed
   preview(server: string, configEnv: string): Promise<WorldAssignmentSnapshot>; // writes nothing
+  previewPlatformEnv(dotenv: string): Promise<WorldAssignmentSnapshot>;          // platform .env replaced; writes nothing
   assign(world: string, server: string): Promise<void>;       // checkAssign on a fresh snapshot; no-op if held
   release(world: string): Promise<{ server: string; fallback: string }>;
 }
@@ -104,7 +105,8 @@ interface IWorldAssignmentPort {
 | `mcctl world release`, API `POST /api/worlds/:name/release` | `planRelease` → runtime check on the holder → `assignments.release`. |
 | `mcctl world delete`, API `DELETE /api/worlds/:name` | `checkRemoval`: refused while a non-internal server uses one of its folders or anything is undetermined; `--force`/`?force` no longer bypasses this. |
 | API `POST /api/servers/:name/world/reset` | `planWorldReset` (`checkReset`), and the route wipes the world it returns. |
-| Config snapshot restore (CLI, API `POST …/config-snapshots/:id/restore`) | `config.env`: `checkConfigEnvChange` (`preview` + `checkProposed`, and a runtime check when the assignment changes, whatever `force` says). `docker-compose.yml` (parsed with js-yaml): refused when its `environment` sets `LEVEL`, `WORLD_NAME` or `EXTRA_ARGS`, when its `/worlds` or `/data` mapping differs from the current file, or when it cannot be parsed. API answers 409. |
+| Config snapshot restore (CLI, API `POST …/config-snapshots/:id/restore`) | `config.env`: `checkConfigEnvChange` (`preview` + `checkProposed`, and a runtime check when the assignment changes, whatever `force` says). `docker-compose.yml` (parsed with js-yaml): refused when its `environment` sets `LEVEL`, `WORLD_NAME` or `EXTRA_ARGS`, when its `/worlds` or `/data` mapping or its `env_file` list (or order) differs from the current file, or when it cannot be parsed. API answers 409. |
+| API `PUT /api/platform-settings` changing or removing `EXTRA_ARGS` | The platform value reaches servers that inherit it (bare key in `servers/global.env`, no own value). `previewPlatformEnv` + `checkSnapshotChange`: every server whose assignment changes must pass `checkProposed` and be stopped; otherwise 409 with `servers`. An interpolated value leaves inheritors undetermined and is refused. |
 | `mcctl migrate worlds` | The new `config.env` is built first and checked with `preview` + `checkProposed` before any world data moves. |
 
 - **Runtime check**: `checkServerStopped(runtime, server)` calls `runtime.getStatus('mc-<server>')` (D1 naming; D4 switches to `ServerName`). **Known limit**: in D1, `not_found` also means "runtime unreachable", so that case passes and a running server can be changed when Docker cannot be queried. A throw is mapped to `undetermined`. Follow-up: replace the call with #732's strict runtime lookup once it is merged (A7, #669).
