@@ -100,6 +100,10 @@ export class ShellAdapter implements IShellPort {
     args.push('-t', options.type.value);
     args.push('-v', options.version.value);
 
+    if (options.memory) {
+      args.push('-m', options.memory.formatted);
+    }
+
     // Add world options
     args.push(...options.worldOptions.toCliArgs());
 
