@@ -76,6 +76,14 @@ describe('AvahiHostnameRegistrarAdapter.register', () => {
     ]);
   });
 
+  it("treats an empty password (the console's default) like none: sudo -n, no -S -v", async () => {
+    expect(await registrar('').register('alpha.local', '192.168.1.10')).toEqual({ status: 'changed' });
+    expect(sudoCalls()).toEqual([
+      `-n tee -a ${hosts} env=none`,
+      '-n systemctl restart avahi-daemon env=none',
+    ]);
+  });
+
   it('skips a wrong password without writing', async () => {
     vi.stubEnv('FAKE_SUDO_AUTH_RC', '1');
     const result = await registrar('wrong').register('alpha.local', '192.168.1.10');

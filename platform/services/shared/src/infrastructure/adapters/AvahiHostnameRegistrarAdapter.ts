@@ -11,7 +11,8 @@ export interface AvahiHostnameRegistrarOptions {
   /**
    * sudo password (the CLI's --sudo-password / MCCTL_SUDO_PASSWORD / prompt,
    * the API request's sudoPassword). Given: `sudo -S -p '' -v` reads it on
-   * stdin first. Absent: `sudo -n` relies on NOPASSWD or cached credentials.
+   * stdin first. Absent or empty (the console sends ''): `sudo -n` relies on
+   * NOPASSWD or cached credentials.
    */
   sudoPassword?: string;
   /** Default /etc/avahi/hosts (the path the README sudoers lines name). */
@@ -106,7 +107,7 @@ export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
     }
     if (registered(current, hostname)) return { status: 'unchanged' };
 
-    if (this.options.sudoPassword !== undefined) {
+    if (this.options.sudoPassword) {
       if ((await run('sudo', ['-S', '-p', '', '-v'], `${this.options.sudoPassword}\n`)) !== 0) {
         return skipped('sudo authentication failed; check the sudo password');
       }
