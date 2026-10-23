@@ -91,21 +91,22 @@ export async function importDockerServer(name: string, ctx: ImportContext): Prom
   }
 }
 
-async function build(name: string, { paths, hostIps }: ImportContext, warnings: string[]): Promise<ServerSpecDocument> {
-  const dir = join(paths.servers, name);
-  const refuse = (reason: string): never => {
-    throw new Refused(reason);
-  };
+const refuse = (reason: string): never => {
+  throw new Refused(reason);
+};
 
-  const configText = await readOptional(join(dir, 'config.env'));
-  if (configText === undefined) refuse(`servers/${name}/config.env is missing`);
-  const composeText = await readOptional(join(dir, 'docker-compose.yml'));
-  if (composeText === undefined) refuse(`servers/${name}/docker-compose.yml is missing`);
+/** The parsed compose service mc-<name>: image and mc-router labels checked, environment as is. */
+interface ComposePart {
+  image: string;
+  labels: Map<string, string | null>;
+  environment: Map<string, string | null>;
+}
 
-  // --- compose: one service mc-<name> ---
+/** Check and read servers/<n>/docker-compose.yml (ADR-0003 §4 step 4). */
+function readCompose(name: string, composeText: string): ComposePart {
   let compose: unknown;
   try {
-    compose = yaml.load(composeText!);
+    compose = yaml.load(composeText);
   } catch (e) {
     refuse(`servers/${name}/docker-compose.yml does not parse: ${(e as Error).message.split('\n')[0]}`);
   }
@@ -115,34 +116,51 @@ async function build(name: string, { paths, hostIps }: ImportContext, warnings: 
     refuse(`servers/${name}/docker-compose.yml must define exactly one service '${service}'`);
   }
   const svc = (services as Record<string, Record<string, unknown>>)[service] ?? {};
-  const undetermined = (what: string): never =>
-    refuse(`${what} in servers/${name}/docker-compose.yml uses \${...} or a shell pass-through; replace it with a literal value`);
 
   const image = svc['image'];
   if (typeof image !== 'string' || image.trim() === '') refuse(`servers/${name}/docker-compose.yml has no image`);
-  if ((image as string).includes('$')) undetermined('image');
+  if ((image as string).includes('$')) composeUndetermined(name, 'image');
 
   const labels = composeMap(svc['labels']);
   for (const [key, value] of labels) {
-    if (key.startsWith('mc-router.') && (value === null || value.includes('$'))) undetermined(`label ${key}`);
+    if (key.startsWith('mc-router.') && (value === null || value.includes('$'))) composeUndetermined(name, `label ${key}`);
   }
+  return { image: image as string, labels, environment: composeMap(svc['environment']) };
+}
 
-  // --- env: config.env, then compose environment (Compose gives it precedence) ---
-  const doc = parseEnvDocument(configText!);
+function composeUndetermined(name: string, what: string): never {
+  return refuse(
+    `${what} in servers/${name}/docker-compose.yml uses \${...} or a shell pass-through; replace it with a literal value`
+  );
+}
+
+/** The fields config.env (plus moved compose environment) defines. */
+interface ConfigPart {
+  type: string;
+  version?: string;
+  memory?: string;
+  playitDomain?: string;
+  world: ServerSpecDocument['world'];
+  env: Record<string, string>;
+}
+
+/**
+ * config.env to the typed fields and env (ADR-0003 §4 steps 1-3).
+ * `environment`: compose entries that override config.env (already checked).
+ */
+async function readConfigEnv(
+  name: string,
+  configText: string,
+  paths: Paths,
+  warnings: string[],
+  environment: Map<string, string> = new Map()
+): Promise<ConfigPart> {
+  const dir = join(paths.servers, name);
+  const doc = parseEnvDocument(configText);
   const values = new Map(doc.values);
   const fromCompose = new Set<string>();
-  for (const [key, value] of composeMap(svc['environment'])) {
-    if (key === 'EULA') continue;
-    if (value === null || value.includes('$')) undetermined(`environment ${key}`);
-    const old = values.get(key);
-    warnings.push(
-      old === undefined
-        ? `docker-compose.yml environment ${key} moved into the spec`
-        : old === value
-          ? `docker-compose.yml environment ${key} moved into the spec (same as config.env)`
-          : `docker-compose.yml environment ${key}=${value} overrides config.env ${key}=${old}; the spec keeps ${value}`
-    );
-    values.set(key, value!);
+  for (const [key, value] of environment) {
+    values.set(key, value);
     fromCompose.add(key);
   }
 
@@ -196,7 +214,24 @@ async function build(name: string, { paths, hostIps }: ImportContext, warnings: 
     warnings.push(`worlds/${level} does not exist but servers/${name}/data/${level} does; check the world before starting`);
   }
 
-  // --- routing ---
+  return {
+    type,
+    ...(version !== undefined && { version }),
+    ...(memory !== undefined && { memory }),
+    ...(playitDomain !== undefined && { playitDomain }),
+    world: { level, storage },
+    env: Object.fromEntries(values),
+  };
+}
+
+/** Router labels to the routing fields (system hosts dropped, custom hosts kept). */
+function readRouting(
+  name: string,
+  labels: Map<string, string | null>,
+  playitDomain: string | undefined,
+  hostIps: string[],
+  warnings: string[]
+): ServerSpecDocument['routing'] {
   const nipIo = new RegExp(`^${escapeRe(name)}\\.(\\d{1,3}(?:\\.\\d{1,3}){3})\\.nip\\.io$`, 'i');
   const customHostnames: string[] = [];
   for (const raw of (labels.get(ROUTER.host) ?? '').split(',')) {
@@ -213,25 +248,17 @@ async function build(name: string, { paths, hostIps }: ImportContext, warnings: 
     if (!customHostnames.includes(host)) customHostnames.push(host);
   }
   const flag = (key: string) => labels.get(key)?.trim().toLowerCase() === 'true';
-
-  const document: ServerSpecDocument = {
-    specVersion: 1,
-    name,
-    type,
-    ...(version !== undefined && { version }),
-    ...(memory !== undefined && { memory }),
-    image: image as string,
-    world: { level, storage },
-    routing: {
-      customHostnames,
-      ...(playitDomain !== undefined && { playitDomain }),
-      autoScale: { up: flag(ROUTER.up), down: flag(ROUTER.down) },
-      ...(labels.get(ROUTER.asleep) != null && { asleepMotd: labels.get(ROUTER.asleep)! }),
-      ...(labels.get(ROUTER.loading) != null && { loadingMotd: labels.get(ROUTER.loading)! }),
-    },
-    env: Object.fromEntries(values),
+  return {
+    customHostnames,
+    ...(playitDomain !== undefined && { playitDomain }),
+    autoScale: { up: flag(ROUTER.up), down: flag(ROUTER.down) },
+    ...(labels.get(ROUTER.asleep) != null && { asleepMotd: labels.get(ROUTER.asleep)! }),
+    ...(labels.get(ROUTER.loading) != null && { loadingMotd: labels.get(ROUTER.loading)! }),
   };
+}
 
+/** Refuse a document the existing-server rules reject; report what only the create rules reject. */
+function checked(document: ServerSpecDocument, warnings: string[]): ServerSpecDocument {
   const issues = validateServerSpecDocument(document, 'existing');
   if (issues.length > 0) {
     refuse(`cannot import: ${issues.map((i) => `${i.path}: ${i.message}`).join('; ')}`);
@@ -240,4 +267,47 @@ async function build(name: string, { paths, hostIps }: ImportContext, warnings: 
     warnings.push(`${issue.path} would be rejected for a new server: ${issue.message}`);
   }
   return document;
+}
+
+async function build(name: string, { paths, hostIps }: ImportContext, warnings: string[]): Promise<ServerSpecDocument> {
+  const dir = join(paths.servers, name);
+  const configText = await readOptional(join(dir, 'config.env'));
+  if (configText === undefined) refuse(`servers/${name}/config.env is missing`);
+  const composeText = await readOptional(join(dir, 'docker-compose.yml'));
+  if (composeText === undefined) refuse(`servers/${name}/docker-compose.yml is missing`);
+
+  const compose = readCompose(name, composeText!);
+
+  // Compose gives environment precedence over env_file: move it into env, report clashes.
+  const configValues = parseEnvDocument(configText!).values;
+  const environment = new Map<string, string>();
+  for (const [key, value] of compose.environment) {
+    if (key === 'EULA') continue;
+    if (value === null || value.includes('$')) composeUndetermined(name, `environment ${key}`);
+    const old = configValues.get(key);
+    warnings.push(
+      old === undefined
+        ? `docker-compose.yml environment ${key} moved into the spec`
+        : old === value
+          ? `docker-compose.yml environment ${key} moved into the spec (same as config.env)`
+          : `docker-compose.yml environment ${key}=${value} overrides config.env ${key}=${old}; the spec keeps ${value}`
+    );
+    environment.set(key, value!);
+  }
+
+  const { playitDomain, ...config } = await readConfigEnv(name, configText!, paths, warnings, environment);
+  return checked(
+    {
+      specVersion: 1,
+      name,
+      type: config.type,
+      ...(config.version !== undefined && { version: config.version }),
+      ...(config.memory !== undefined && { memory: config.memory }),
+      image: compose.image,
+      world: config.world,
+      routing: readRouting(name, compose.labels, playitDomain, hostIps, warnings),
+      env: config.env,
+    },
+    warnings
+  );
 }
