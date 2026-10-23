@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
+import { autoBackupCloseLimits } from '../src/routes/servers/actions.js';
 
 // Mock audit-log-service
 vi.mock('../src/services/audit-log-service.js', () => ({
@@ -203,6 +204,36 @@ describe('Server Action Routes', () => {
       finishPush();
       await closing;
       expect(closed).toBe(true);
+    });
+
+    it('aborts a backup still running late in the close wait, so it turns auto-save back on first (#734 review)', async () => {
+      const defaults = { ...autoBackupCloseLimits };
+      Object.assign(autoBackupCloseLimits, { abortAfterMs: 30, waitMs: 5_000 });
+      try {
+        const local = await buildApp({ logger: false });
+        mockCompose(null, 'Stopping mc-myserver...', '');
+        autoOnStop(true);
+        let signal: AbortSignal | undefined;
+        // A backup that only ends when aborted (a long copy), like GitWorldBackupAdapter
+        backupPort.push.mockImplementation(
+          (options?: { signal?: AbortSignal }) =>
+            new Promise((resolve) => {
+              signal = options?.signal;
+              signal?.addEventListener('abort', () =>
+                resolve({ ok: false, error: { code: 'aborted', message: 'Backup aborted (shutting down)' } })
+              );
+            })
+        );
+
+        expect((await local.inject({ method: 'POST', url: '/api/servers/myserver/stop' })).statusCode).toBe(200);
+        await vi.waitFor(() => expect(backupPort.push).toHaveBeenCalled());
+        expect(signal?.aborted).toBe(false);
+
+        await local.close();
+        expect(signal?.aborted).toBe(true);
+      } finally {
+        Object.assign(autoBackupCloseLimits, defaults);
+      }
     });
 
     it('does not back up when the stop failed', async () => {

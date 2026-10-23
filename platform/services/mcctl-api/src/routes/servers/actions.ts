@@ -16,6 +16,35 @@ import {
   autoBackupOnStop,
 } from '@minecraft-docker/shared';
 
+/**
+ * close lets auto-backups on stop finish for abortAfterMs, then aborts them so
+ * each sends save-on to the servers it flushed, waiting up to waitMs in all
+ * (#734 review). Tests shorten these.
+ */
+export const autoBackupCloseLimits = {
+  abortAfterMs: AUTO_BACKUP_CLOSE_WAIT_MS - 30_000,
+  waitMs: AUTO_BACKUP_CLOSE_WAIT_MS,
+};
+
+/** Auto-backups started by a stop, and the signal that aborts them at shutdown. */
+interface AutoBackups {
+  running: Set<Promise<unknown>>;
+  shutdown: AbortController;
+}
+
+/** True when `p` settles within `ms`. */
+async function settlesWithin(p: Promise<unknown>, ms: number): Promise<boolean> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<false>((resolve) => {
+    timer = setTimeout(() => resolve(false), ms);
+  });
+  try {
+    return await Promise.race([p.then(() => true), timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ============================================================
 // Types
 // ============================================================
@@ -52,7 +81,7 @@ async function handleServerAction(
   request: FastifyRequest<{ Params: ServerNameParams }>,
   reply: FastifyReply,
   action: ServerAction,
-  backups: Set<Promise<unknown>>
+  backups: AutoBackups
 ): Promise<ActionResponse> {
   const serverName = sanitizeServerName(request.params.name);
 
@@ -113,12 +142,14 @@ async function handleServerAction(
   // failure is logged and never fails the stop
   if (action === 'stop') {
     const log = request.log;
-    const running = autoBackupOnStop(createWorldBackupPort(config.mcctlRoot), serverName).then((auto) => {
+    const running = autoBackupOnStop(createWorldBackupPort(config.mcctlRoot), serverName, {
+      signal: backups.shutdown.signal,
+    }).then((auto) => {
       if (auto.status === 'done') log.info({ server: serverName, commit: auto.outcome.commit }, 'Auto-backup on stop complete');
       else if (auto.status === 'failed') log.warn({ server: serverName, error: auto.error }, 'Auto-backup on stop failed');
     });
-    backups.add(running);
-    void running.finally(() => backups.delete(running));
+    backups.running.add(running);
+    void running.finally(() => backups.running.delete(running));
   }
 
   return {
@@ -135,18 +166,18 @@ async function handleServerAction(
 // ============================================================
 
 const serverActionsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  // Auto-backups started by a stop; close waits for them (bounded)
-  const backups = new Set<Promise<unknown>>();
+  const backups: AutoBackups = { running: new Set(), shutdown: new AbortController() };
   fastify.addHook('onClose', async () => {
-    if (backups.size === 0) return;
-    fastify.log.info({ count: backups.size }, 'Waiting for auto-backups on stop to finish');
-    let timer: NodeJS.Timeout | undefined;
-    const timeout = new Promise<'timeout'>((resolve) => {
-      timer = setTimeout(() => resolve('timeout'), AUTO_BACKUP_CLOSE_WAIT_MS);
-    });
-    const result = await Promise.race([Promise.allSettled([...backups]), timeout]);
-    clearTimeout(timer);
-    if (result === 'timeout') fastify.log.warn('Auto-backup on stop still running at shutdown; giving up waiting');
+    if (backups.running.size === 0) return;
+    fastify.log.info({ count: backups.running.size }, 'Waiting for auto-backups on stop to finish');
+    const settled = Promise.allSettled([...backups.running]);
+    if (await settlesWithin(settled, autoBackupCloseLimits.abortAfterMs)) return;
+    // Exiting mid-backup would leave auto-save off on the servers it flushed
+    fastify.log.warn('Auto-backup on stop still running at shutdown; aborting it');
+    backups.shutdown.abort();
+    if (!(await settlesWithin(settled, autoBackupCloseLimits.waitMs - autoBackupCloseLimits.abortAfterMs))) {
+      fastify.log.warn('Aborted auto-backup on stop did not finish; giving up waiting');
+    }
   });
 
   // POST /api/servers/:name/start
