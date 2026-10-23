@@ -268,14 +268,15 @@ export class Container {
       this.shellPort,
       this.serverRepository,
       this.auditLogPort,
-      this.serverConsolePort
+      this.serverConsolePort,
+      this.containerRuntime
     );
   }
 
   get worldManagementUseCase(): WorldManagementUseCase {
     return new WorldManagementUseCase(
       this.promptPort,
-      this.shellPort,
+      undefined, // no shell since mcctl.sh was removed (#734)
       this.worldRepository,
       this.serverRepository,
       this.worldAssignmentPort,

@@ -12,6 +12,8 @@ import {
   execCommand,
   logsCommand,
   rconCommand,
+  startCommand,
+  stopCommand,
   configCommand,
   opCommand,
   serverBackupCommand,
@@ -517,9 +519,6 @@ async function main(): Promise<void> {
   const rootDir = flags['root'] as string | undefined;
   const sudoPassword = flags['sudo-password'] as string | undefined;
 
-  // mcctl.sh calls back into this CLI for backups (#732): same node, same entry point
-  process.env.MCCTL_NODE = process.execPath;
-  if (process.argv[1]) process.env.MCCTL_CLI = process.argv[1];
   const paths = new Paths(rootDir);
   const shell = new ShellExecutor({ paths, sudoPassword });
 
@@ -623,9 +622,7 @@ async function main(): Promise<void> {
         if (flags['all']) {
           exitCode = await shell.startAll();
         } else {
-          const mcctlArgs = [command, ...positional];
-          if (flags['json']) mcctlArgs.push('--json');
-          exitCode = await shell.mcctl(mcctlArgs);
+          exitCode = await startCommand({ root: rootDir, serverName: positional[0] });
         }
 
         // Log audit
@@ -652,9 +649,7 @@ async function main(): Promise<void> {
         if (flags['all']) {
           exitCode = await shell.stopAll();
         } else {
-          const mcctlArgs = [command, ...positional];
-          if (flags['json']) mcctlArgs.push('--json');
-          exitCode = await shell.mcctl(mcctlArgs);
+          exitCode = await stopCommand({ root: rootDir, serverName: positional[0] });
         }
 
         // Log audit
@@ -687,13 +682,13 @@ async function main(): Promise<void> {
           break;
         }
 
-        // Pass through to mcctl.sh for RCON console
-        const mcctlArgs = [command, ...positional];
-        if (flags['json']) mcctlArgs.push('--json');
-        if (flags['follow']) mcctlArgs.push('-f');
-        if (flags['lines']) mcctlArgs.push('-n', flags['lines'] as string);
-
-        exitCode = await shell.mcctl(mcctlArgs);
+        // Interactive RCON over TCP, the same session as `mcctl rcon` (#734).
+        // parseArgs puts the server in subCommand for `console`.
+        exitCode = await rconCommand({
+          root: rootDir,
+          serverName: subCommand ?? positional[0],
+          command: 'console',
+        });
         break;
       }
 

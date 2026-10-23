@@ -6,6 +6,8 @@ import { WorldAssignmentError, checkAssign, holdersOf, planRelease } from '@mine
  */
 export class MockWorldAssignmentPort implements IWorldAssignmentPort {
   readonly levels: Map<string, string>;
+  /** server -> SEED written with assign (#734) */
+  readonly seeds = new Map<string, string>();
   readonly calls: Array<{ method: 'assign' | 'release'; args: string[] }> = [];
   undetermined: string[] = [];
   /** Next assign/release rejects with this error. */
@@ -49,12 +51,13 @@ export class MockWorldAssignmentPort implements IWorldAssignmentPort {
     return this.snapshot();
   }
 
-  async assign(world: string, server: string): Promise<void> {
+  async assign(world: string, server: string, options: { seed?: string } = {}): Promise<void> {
     this.calls.push({ method: 'assign', args: [world, server] });
     this.throwPending();
     const error = checkAssign(await this.snapshot(), world, server);
     if (error) throw error;
     this.levels.set(server, world);
+    if (options.seed !== undefined) this.seeds.set(server, options.seed);
   }
 
   async release(world: string): Promise<{ server: string; fallback: string }> {
