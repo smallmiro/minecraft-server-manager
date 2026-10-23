@@ -1,9 +1,34 @@
 /**
- * Format-preserving `.env` helpers.
+ * The env codec: the one parse / serialize / validate rule for every env file
+ * TS reads or writes (platform `.env`, `servers/<name>/config.env`) (#656).
  *
  * The platform `.env` is read by docker compose, dotenv and bash
  * (`mcctl.sh` runs `set -a; source .env`), so every value we write must be
  * literal in all three. Untouched lines are kept byte-identical.
+ * Parsing (parseEnvDocument) follows Docker Compose's env_file reader, the
+ * consumer that matters:
+ * - Blank lines and lines whose first non-blank character is `#` are skipped.
+ *   Lines that are not `KEY=value` are skipped too.
+ * - `export ` before the key is allowed; whitespace around the key and `=` is
+ *   ignored. The key is a POSIX name (ENV_KEY_RE).
+ * - Unquoted value: runs to end of line, trimmed; ` #` (whitespace + hash)
+ *   starts an inline comment. `a#b` is kept.
+ * - Single-quoted value: literal up to the next `'`.
+ * - Double-quoted value: up to the next unescaped `"`; `\n`, `\r`, `\t`, `\"`,
+ *   `\\` and `\$` are unescaped, any other backslash is kept.
+ * - Text after a closing quote is ignored. An unterminated quote is read
+ *   literally (Compose rejects the file).
+ * - The last occurrence of a duplicate key wins.
+ * - Not supported: `${VAR}` interpolation and quoted values that span lines
+ *   (Compose supports both; no file we write uses them).
+ *
+ * Serializing (applyEnvChanges) has two styles. Untouched lines stay
+ * byte-identical in both:
+ * - quoted (default, platform `.env`, also `source`d by bash): bare when
+ *   bare-safe, otherwise single-quoted (serializeEnvValue).
+ * - raw (`config.env`): `KEY=value` unquoted, after assertEnvFileValue (#726).
+ *   Note Compose cuts a raw value at ` #` and trims it, so such values do not
+ *   round-trip.
  */
 import { createHash } from 'node:crypto';
 
@@ -60,12 +85,21 @@ export interface EnvChanges {
   remove?: string[];
 }
 
+export interface ApplyEnvOptions {
+  /** Write `KEY=value` unquoted after assertEnvFileValue (server config.env, #726). */
+  raw?: boolean;
+}
+
+const DOUBLE_QUOTE_ESCAPES: Record<string, string> = { n: '\n', r: '\r', t: '\t', '"': '"', '\\': '\\', $: '$' };
+
 function decodeValue(rest: string): string {
   const v = rest.trim();
-  const quote = v[0];
-  if (quote === '"' || quote === "'") {
-    const end = v.indexOf(quote, 1);
+  if (v[0] === "'") {
+    const end = v.indexOf("'", 1);
     if (end > 0) return v.slice(1, end);
+  } else if (v[0] === '"') {
+    const match = /^"((?:[^"\\]|\\.)*)"/.exec(v);
+    if (match) return match[1]!.replace(/\\(.)/g, (seq, ch: string) => DOUBLE_QUOTE_ESCAPES[ch] ?? seq);
   }
   return v.replace(/\s+#.*$/, '');
 }
@@ -95,18 +129,24 @@ export function serializeEnvValue(value: string): string {
 }
 
 /**
- * Apply set/remove changes to `.env` content. `set` rewrites every occurrence
- * of a key and appends missing keys at the end; `remove` drops every
- * occurrence. All other lines stay byte-identical.
+ * Apply set/remove changes to env file content. `set` rewrites every
+ * occurrence of a key and appends missing keys at the end; `remove` drops
+ * every occurrence. All other lines stay byte-identical. Values use the quoted
+ * style unless `options.raw` (see the module header).
  */
-export function applyEnvChanges(content: string, changes: EnvChanges): string {
+export function applyEnvChanges(content: string, changes: EnvChanges, options: ApplyEnvOptions = {}): string {
   const set = new Map(Object.entries(changes.set ?? {}));
   const remove = new Set(changes.remove ?? []);
   for (const key of [...set.keys(), ...remove]) {
     if (!ENV_KEY_RE.test(key)) throw new Error(`Invalid key name: ${JSON.stringify(key)}`);
     if (set.has(key) && remove.has(key)) throw new Error(`Key ${key} is both set and removed`);
   }
-  const replacements = new Map([...set].map(([key, value]) => [key, `${key}=${serializeEnvValue(value)}`]));
+  const serialize = (key: string, value: string): string => {
+    if (!options.raw) return serializeEnvValue(value);
+    assertEnvFileValue(key, value);
+    return value;
+  };
+  const replacements = new Map([...set].map(([key, value]) => [key, `${key}=${serialize(key, value)}`]));
 
   const trailingNewline = content.endsWith('\n');
   const lines = content === '' ? [] : parseEnvDocument(trailingNewline ? content.slice(0, -1) : content).lines;
