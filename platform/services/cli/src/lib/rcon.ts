@@ -1,4 +1,5 @@
-import { spawn } from 'node:child_process';
+import { ServerName, type ContainerStatus } from '@minecraft-docker/shared';
+import { getContainer } from '../infrastructure/index.js';
 
 /**
  * Result of an RCON command execution
@@ -9,27 +10,27 @@ export interface RconResult {
 }
 
 /**
+ * The port argument for a container name: the ServerName of `mc-<server>`,
+ * or the name itself (v2 workload form) when it is not a valid server container.
+ */
+export function serverOfContainer(containerName: string): ServerName | string {
+  if (!containerName.startsWith('mc-')) return containerName;
+  try {
+    return ServerName.fromExisting(containerName.slice(3));
+  } catch {
+    return containerName;
+  }
+}
+
+/** States where `docker inspect -f {{.State.Running}}` prints true. */
+const RUNNING_STATES: ContainerStatus[] = ['running', 'paused', 'restarting'];
+
+/**
  * Check if a Docker container is running
  */
 export async function isContainerRunning(containerName: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const child = spawn('docker', ['inspect', '-f', '{{.State.Running}}', containerName], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-
-    let output = '';
-    child.stdout.on('data', (data) => {
-      output += data.toString();
-    });
-
-    child.on('close', (code) => {
-      resolve(code === 0 && output.trim() === 'true');
-    });
-
-    child.on('error', () => {
-      resolve(false);
-    });
-  });
+  const status = await getContainer().containerRuntime.getStatusAsync(serverOfContainer(containerName));
+  return RUNNING_STATES.includes(status);
 }
 
 /**
@@ -39,30 +40,8 @@ export async function execRconWithOutput(
   containerName: string,
   command: string[]
 ): Promise<RconResult> {
-  return new Promise((resolve) => {
-    const child = spawn('docker', ['exec', containerName, 'rcon-cli', ...command], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-
-    let output = '';
-    let errorOutput = '';
-
-    child.stdout.on('data', (data) => {
-      output += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      errorOutput += data.toString();
-    });
-
-    child.on('close', (code) => {
-      resolve({ code: code ?? 1, output: output || errorOutput });
-    });
-
-    child.on('error', (err) => {
-      resolve({ code: 1, output: err.message });
-    });
-  });
+  const result = await getContainer().serverConsolePort.command(serverOfContainer(containerName), command);
+  return { code: result.exitCode, output: result.stdout || result.stderr };
 }
 
 /**
