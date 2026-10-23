@@ -4,13 +4,22 @@
  * Bodies moved verbatim from the legacy docker facade (src/docker), which now delegates here.
  * Never import the facade from this module: the facade imports this file (cycle).
  */
-import { execSync, execFileSync, spawnSync } from 'node:child_process';
+import { execSync, execFileSync, spawnSync, spawn, execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import type { ContainerStatus, HealthStatus, ContainerStats, PlayerListResult } from '../../types/index.js';
 import { resolveMcctlRoot } from '../../utils/index.js';
 import { execCommand, execCommandAsync } from '../process.js';
+import type { IContainerRuntimePort, RuntimeActionResult } from '../../application/ports/outbound/IContainerRuntimePort.js';
+import type {
+  IServerConsolePort,
+  ConsoleCommandResult,
+  ConsoleEndpoint,
+} from '../../application/ports/outbound/IServerConsolePort.js';
 import type { IRouterStatusPort } from '../../application/ports/outbound/IRouterStatusPort.js';
 import type { IPlayitAgentPort } from '../../application/ports/outbound/IPlayitAgentPort.js';
 import type { IRuntimeEnvironmentPort, ToolVersion } from '../../application/ports/outbound/IRuntimeEnvironmentPort.js';
+
+const execFilePromise = promisify(execFile);
 
 /**
  * Get container status
@@ -64,8 +73,11 @@ export function parseRconPlayerList(raw: string): PlayerListResult | null {
 
 /**
  * IContainerRuntimePort over the Docker CLI. Names are Docker container names (`mc-<server>`).
+ * `root` defaults to resolveMcctlRoot() at call time; `env` (default process.env) applies to start/stop/restart only.
  */
-export class DockerComposeRuntimeAdapter {
+export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
+  constructor(private readonly options: { root?: string; env?: () => NodeJS.ProcessEnv } = {}) {}
+
   getStatus(container: string): ContainerStatus {
     return getContainerStatus(container);
   }
@@ -235,6 +247,84 @@ export class DockerComposeRuntimeAdapter {
     }
   }
 
+  /** Create the container if missing, then run it (`docker compose up -d`) */
+  start(container: string): Promise<RuntimeActionResult> {
+    return this.compose(['compose', 'up', '-d', container]);
+  }
+
+  stop(container: string): Promise<RuntimeActionResult> {
+    return this.run(['stop', '--', container], { env: this.env() });
+  }
+
+  restart(container: string): Promise<RuntimeActionResult> {
+    return this.compose(['compose', 'restart', container]);
+  }
+
+  /** Copied from mcctl-api player-session-collector (defaultLogFetcher) */
+  async readLogs(container: string, options: { since: string; tail: number }): Promise<string[]> {
+    const { stdout } = await execFilePromise(
+      'docker',
+      ['logs', '--timestamps', '--since', options.since, '--tail', String(options.tail), '--', container],
+      { timeout: 10_000, maxBuffer: 10 * 1024 * 1024 }
+    );
+    return stdout.split('\n').filter(Boolean);
+  }
+
+  /** Copied from mcctl-api GET /api/servers/:name/logs?follow; abort kills the child through spawn's signal */
+  followLogs(container: string, onChunk: (chunk: string) => void, signal: AbortSignal): Promise<void> {
+    return new Promise((resolve) => {
+      const dockerLogs = spawn('docker', ['logs', '-f', '--tail', '0', '--', container], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        signal,
+      });
+
+      const send = (data: Buffer) => {
+        if (!signal.aborted) onChunk(data.toString());
+      };
+
+      dockerLogs.stdout?.on('data', send);
+      dockerLogs.stderr?.on('data', send);
+      dockerLogs.on('close', () => resolve());
+      dockerLogs.on('error', () => resolve());
+    });
+  }
+
+  private env(): NodeJS.ProcessEnv {
+    return this.options.env?.() ?? process.env;
+  }
+
+  /** Copied from mcctl-api executeServerAction */
+  private compose(args: string[]): Promise<RuntimeActionResult> {
+    return this.run(args, {
+      cwd: this.options.root ?? resolveMcctlRoot(),
+      timeout: 60000, // 60 second timeout
+      // Ensure Docker Compose uses the correct compose file
+      env: { ...this.env(), COMPOSE_FILE: 'docker-compose.yml' },
+    });
+  }
+
+  private async run(
+    args: string[],
+    options: { cwd?: string; timeout?: number; env: NodeJS.ProcessEnv }
+  ): Promise<RuntimeActionResult> {
+    try {
+      const { stdout, stderr } = await execFilePromise('docker', args, options);
+      return {
+        success: true,
+        stdout: stdout.trim(),
+        stderr: stderr.trim(),
+      };
+    } catch (error) {
+      const execError = error as { stdout?: string | Buffer; stderr?: string | Buffer; message?: string };
+      return {
+        success: false,
+        stdout: typeof execError.stdout === 'string' ? execError.stdout.trim() : execError.stdout?.toString().trim(),
+        stderr: typeof execError.stderr === 'string' ? execError.stderr.trim() : execError.stderr?.toString().trim(),
+        error: execError.message ?? 'Unknown error',
+      };
+    }
+  }
+
   /**
    * Start a container
    * @deprecated No production caller; use start() (ADR-0001). Removed in D3/D4.
@@ -265,7 +355,7 @@ export class DockerComposeRuntimeAdapter {
 /**
  * IServerConsolePort over `docker exec <container> rcon-cli`.
  */
-export class DockerServerConsoleAdapter {
+export class DockerServerConsoleAdapter implements IServerConsolePort {
   /**
    * Get online players via RCON
    */
@@ -277,6 +367,64 @@ export class DockerServerConsoleAdapter {
         stdio: ['pipe', 'pipe', 'pipe'],
       });
       return parseRconPlayerList(rawResult);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Copied from mcctl-api execRcon / cli execRconWithOutput */
+  command(container: string, args: string[]): Promise<ConsoleCommandResult> {
+    return new Promise((resolve) => {
+      const child = spawn('docker', ['exec', '--', container, 'rcon-cli', ...args], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      child.stdout.on('data', (data: Buffer) => {
+        stdout += data.toString();
+      });
+
+      child.stderr.on('data', (data: Buffer) => {
+        stderr += data.toString();
+      });
+
+      child.on('close', (code: number | null) => {
+        resolve({ exitCode: code ?? 1, stdout, stderr });
+      });
+
+      child.on('error', (err: Error) => {
+        resolve({ exitCode: 1, stdout: '', stderr: err.message });
+      });
+    });
+  }
+
+  /** Copied from cli `mcctl rcon` (getContainerRconConfig) */
+  async getEndpoint(container: string): Promise<ConsoleEndpoint | null> {
+    try {
+      // Get container IP
+      const { stdout: ip } = await execFilePromise('docker', [
+        'inspect', '--format', '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}', '--', container,
+      ]);
+      if (!ip.trim()) return null;
+
+      // Get RCON env vars
+      const { stdout: envOutput } = await execFilePromise('docker', [
+        'inspect', '--format', '{{range .Config.Env}}{{println .}}{{end}}', '--', container,
+      ]);
+
+      const env: Record<string, string> = {};
+      envOutput.split('\n').forEach(line => {
+        const [key, ...valueParts] = line.split('=');
+        if (key) env[key] = valueParts.join('=');
+      });
+
+      return {
+        host: ip.trim(),
+        port: parseInt(env['RCON_PORT'] || '25575', 10),
+        password: env['RCON_PASSWORD'] || '',
+      };
     } catch {
       return null;
     }
