@@ -58,8 +58,6 @@ mcctl create --help
 | `mcctl ban` | 플레이어 및 IP 밴 관리 |
 | `mcctl kick` | 서버에서 플레이어 강퇴 |
 | `mcctl player online` | 온라인 플레이어 표시 |
-| `mcctl player lookup` | 플레이어 정보 조회 |
-| `mcctl player uuid` | 플레이어 UUID 조회 |
 
 ### 월드 관리
 

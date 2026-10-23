@@ -58,8 +58,6 @@ mcctl create --help
 | `mcctl ban` | Manage player and IP bans |
 | `mcctl kick` | Kick a player from the server |
 | `mcctl player online` | Show online players |
-| `mcctl player lookup` | Look up player information |
-| `mcctl player uuid` | Get player UUID |
 
 ### World Management
 

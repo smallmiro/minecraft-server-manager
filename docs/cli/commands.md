@@ -1802,58 +1802,8 @@ Online Players for myserver:
 
 ---
 
-### mcctl player lookup (Legacy)
-
-!!! note "Deprecated"
-    Use `mcctl player info` instead. This command is kept for backward compatibility.
-
-Look up player information from Mojang API.
-
-```bash
-mcctl player lookup <name> [options]
-```
-
-**Options:**
-
-| Option | Description |
-|--------|-------------|
-| `--json` | Output in JSON format |
-
-**Example:**
-
-```bash
-mcctl player lookup Notch
-```
-
----
-
-### mcctl player uuid (Legacy)
-
-!!! note "Deprecated"
-    Use `mcctl player info` or `mcctl player info --offline` instead.
-
-Get player UUID.
-
-```bash
-mcctl player uuid <name> [options]
-```
-
-**Options:**
-
-| Option | Description |
-|--------|-------------|
-| `--offline` | Generate offline UUID |
-| `--json` | Output in JSON format |
-
-**Examples:**
-
-```bash
-# Online UUID (from Mojang)
-mcctl player uuid Notch
-
-# Offline UUID (for offline-mode servers)
-mcctl player uuid Steve --offline
-```
+!!! note "Removed"
+    `mcctl player lookup` and `mcctl player uuid` were removed. Use `mcctl player info <name>` (add `--offline` for the offline UUID).
 
 ---
 
