@@ -36,6 +36,20 @@ export interface IContainerRuntimePort {
 
   /** Timestamped lines since `since`, at most `tail` lines. Rejects on failure. */
   readLogs(name: string, options: { since: string; tail: number }): Promise<string[]>;
-  /** Streams new output only. Resolves when the stream ends or `signal` aborts. */
-  followLogs(name: string, onChunk: (chunk: string) => void, signal: AbortSignal): Promise<void>;
+  /**
+   * Streams output. New output only by default; `tail: N` emits the last N lines first, then follows (one stream). `follow: false` prints the last `tail`
+   * lines (stdout and stderr) and resolves when docker exits.
+   * Resolves when the stream ends or `signal` aborts.
+   */
+  followLogs(
+    name: string,
+    onChunk: (chunk: string) => void,
+    signal: AbortSignal,
+    options?: {
+      tail?: number;
+      follow?: boolean;
+      /** Called once when the stream ends. `code` is docker's exit code (null if killed or not spawned). The promise still resolves. */
+      onExit?: (code: number | null, error?: Error) => void;
+    }
+  ): Promise<void>;
 }

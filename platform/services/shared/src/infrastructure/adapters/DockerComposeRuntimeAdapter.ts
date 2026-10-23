@@ -271,9 +271,25 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   /** Copied from mcctl-api GET /api/servers/:name/logs?follow; abort kills the child through spawn's signal */
-  followLogs(container: string, onChunk: (chunk: string) => void, signal: AbortSignal): Promise<void> {
+  followLogs(
+    container: string,
+    onChunk: (chunk: string) => void,
+    signal: AbortSignal,
+    options?: {
+      tail?: number;
+      follow?: boolean;
+      onExit?: (code: number | null, error?: Error) => void;
+    }
+  ): Promise<void> {
     return new Promise((resolve) => {
-      const dockerLogs = spawn('docker', ['logs', '-f', '--tail', '0', '--', container], {
+      const dockerLogs = spawn('docker', [
+          'logs',
+          ...(options?.follow === false ? [] : ['-f']),
+          '--tail',
+          String(options?.tail ?? 0),
+          '--',
+          container,
+        ], {
         stdio: ['ignore', 'pipe', 'pipe'],
         signal,
       });
@@ -284,8 +300,16 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
 
       dockerLogs.stdout?.on('data', send);
       dockerLogs.stderr?.on('data', send);
-      dockerLogs.on('close', () => resolve());
-      dockerLogs.on('error', () => resolve());
+      let exited = false;
+      const finish = (code: number | null, error?: Error) => {
+        if (!exited) {
+          exited = true;
+          options?.onExit?.(code, error);
+        }
+        resolve();
+      };
+      dockerLogs.on('close', (code: number | null) => finish(code));
+      dockerLogs.on('error', (error: Error) => finish(null, error));
     });
   }
 

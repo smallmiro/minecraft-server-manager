@@ -296,6 +296,60 @@ describe('DockerComposeRuntimeAdapter.followLogs', () => {
     });
   });
 
+  it('emits the last N lines first when tail is given (one stream, -- before the name)', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const controller = new AbortController();
+    const done = runtime.followLogs('mc-a', () => {}, controller.signal, { tail: 25 });
+    child.emit('close', 0);
+    await done;
+    expect(spawn).toHaveBeenCalledWith('docker', ['logs', '-f', '--tail', '25', '--', 'mc-a'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      signal: controller.signal,
+    });
+  });
+
+  it('follow: false runs docker logs without -f, streams stdout and stderr, resolves on close', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const chunks: string[] = [];
+    const controller = new AbortController();
+    const done = runtime.followLogs('mc-a', (c) => chunks.push(c), controller.signal, { follow: false, tail: 7 });
+    child.stdout.emit('data', Buffer.from('out\n'));
+    child.stderr.emit('data', Buffer.from('java.lang.Exception\n'));
+    child.emit('close', 0);
+    await done;
+    expect(chunks).toEqual(['out\n', 'java.lang.Exception\n']);
+    expect(spawn).toHaveBeenCalledWith('docker', ['logs', '--tail', '7', '--', 'mc-a'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      signal: controller.signal,
+    });
+  });
+
+  it('reports the exit code through onExit while still resolving', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const onExit = vi.fn();
+    const done = runtime.followLogs('mc-a', () => {}, new AbortController().signal, { onExit });
+    child.emit('close', 1);
+    await expect(done).resolves.toBeUndefined();
+    expect(onExit).toHaveBeenCalledTimes(1);
+    expect(onExit).toHaveBeenCalledWith(1, undefined);
+  });
+
+  it('reports a spawn error through onExit once (error then close)', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const onExit = vi.fn();
+    const done = runtime.followLogs('mc-a', () => {}, new AbortController().signal, { onExit });
+    const err = new Error('spawn docker ENOENT');
+    child.emit('error', err);
+    child.emit('close', null);
+    await done;
+    expect(onExit).toHaveBeenCalledTimes(1);
+    expect(onExit).toHaveBeenCalledWith(null, err);
+  });
+
   it('resolves on a spawn error', async () => {
     const child = bareChild();
     vi.mocked(spawn).mockReturnValue(child as never);

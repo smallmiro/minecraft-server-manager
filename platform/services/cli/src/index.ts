@@ -10,6 +10,7 @@ import {
   worldCommand,
   backupCommand,
   execCommand,
+  logsCommand,
   rconCommand,
   configCommand,
   opCommand,
@@ -140,7 +141,7 @@ ${colors.cyan('Commands:')}
   ${colors.bold('status')} router               Show mc-router status with routes
   ${colors.bold('start')} <server> [--all]     Start a server (--all for all servers)
   ${colors.bold('stop')} <server> [--all]      Stop a server (--all for all servers)
-  ${colors.bold('logs')} <server> [lines]      View server logs
+  ${colors.bold('logs')} <server|router>     View logs (-n <lines>, -f follow, --json)
   ${colors.bold('rcon')} <server>              Interactive RCON console
   ${colors.bold('exec')} <server> <cmd...>     Execute single RCON command
   ${colors.bold('config')} <server> [key] [val]  View/set server config
@@ -371,7 +372,8 @@ ${colors.cyan('Examples:')}
   mcctl status --watch --interval 2  # Watch with 2s refresh
   mcctl status myserver              # Single server status
   mcctl status router                # mc-router status
-  mcctl logs myserver -f
+  mcctl logs myserver -n 100 -f
+  mcctl logs router
   mcctl rcon myserver                # Interactive RCON console
   mcctl exec myserver say "Hello!"   # Single RCON command
   mcctl exec myserver list           # List online players
@@ -690,19 +692,13 @@ async function main(): Promise<void> {
       }
 
       case 'logs': {
-        if (!paths.isInitialized()) {
-          log.error('Platform not initialized. Run: mcctl init');
-          exitCode = 1;
-          break;
-        }
-
-        // Pass through to mcctl.sh
-        const mcctlArgs = [command, ...positional];
-        if (flags['json']) mcctlArgs.push('--json');
-        if (flags['follow']) mcctlArgs.push('-f');
-        if (flags['lines']) mcctlArgs.push('-n', flags['lines'] as string);
-
-        exitCode = await shell.mcctl(mcctlArgs);
+        exitCode = await logsCommand({
+          root: rootDir,
+          serverName: positional[0],
+          lines: flags['lines'] as string | boolean | undefined,
+          follow: flags['follow'] === true,
+          json: flags['json'] === true,
+        });
         break;
       }
 

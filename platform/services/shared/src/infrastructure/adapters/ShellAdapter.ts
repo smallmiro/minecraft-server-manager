@@ -174,15 +174,16 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('mcctl.sh', ['config', serverName, key, value]);
   }
 
+  /** @deprecated Use IContainerRuntimePort.getLogs/followLogs. */
   async logs(name: ServerName, options?: LogsOptions): Promise<ShellResult> {
-    const args: string[] = [name.value];
+    const args: string[] = ['logs', name.value];
     if (options?.follow) {
       args.push('-f');
     }
     if (options?.lines) {
       args.push('-n', options.lines.toString());
     }
-    return this.executeScript('logs.sh', args);
+    return this.executeScript('mcctl.sh', args);
   }
 
   async console(name: ServerName): Promise<ShellResult> {
