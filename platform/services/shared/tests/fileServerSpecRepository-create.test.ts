@@ -133,3 +133,28 @@ describe('write({ create: true })', () => {
     expect(includes()).toEqual(['other/docker-compose.yml', 'alpha/docker-compose.yml']);
   });
 });
+
+describe('$ in values (Compose interpolation)', () => {
+  it('renders values with $ as literals and imports them back unchanged', async () => {
+    const created = {
+      ...spec({ seed: 'Price$5' }),
+      routing: {
+        customHostnames: [],
+        autoScale: { up: true, down: true },
+        asleepMotd: 'Price $5',
+        loadingMotd: '${MCCTL_X}',
+      },
+    };
+    await repo.write(created, { create: true });
+    expect(read('alpha', 'config.env')).toContain("SEED='Price$5'");
+
+    // Without server.yaml the server is imported from the generated files (ADR-0003 §4).
+    const before = (await repo.load('alpha'))!.document;
+    rmSync(file('alpha', 'server.yaml'));
+    const imported = (await repo.load('alpha'))!;
+    expect(imported.document.env['SEED']).toBe('Price$5');
+    expect(imported.document.routing.asleepMotd).toBe('Price $5');
+    expect(imported.document.routing.loadingMotd).toBe('${MCCTL_X}');
+    expect(imported.document).toEqual(before);
+  });
+});

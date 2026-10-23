@@ -185,6 +185,27 @@ describe('docker-compose.yml', () => {
     const first = render(spec()).config.content;
     expect(render(spec(), ctx({ [CONFIG]: first })).config.content).toBe(first);
   });
+
+  it('writes every $ it puts in the compose as $$, the Compose literal, so no value is interpolated', () => {
+    const doc = spec({
+      image: 'registry.example.com/mc$1:java25',
+      routing: {
+        customHostnames: [],
+        autoScale: { up: true, down: true },
+        asleepMotd: 'Price $5',
+        loadingMotd: '${HOME}',
+      },
+    });
+    const { compose } = render(doc, ctx({}, ['${HOST_IP}']));
+    const svc = (yaml.load(compose.content) as { services: Record<string, Record<string, Record<string, string>>> })
+      .services['mc-survival']!;
+    expect(svc['image']).toBe('registry.example.com/mc$$1:java25');
+    expect(svc['labels']!['mc-router.auto-scale-asleep-motd']).toBe('Price $$5');
+    expect(svc['labels']!['mc-router.auto-scale-loading-motd']).toBe('$${HOME}');
+    expect(svc['labels']!['mc-router.host']).toBe('survival.local,survival.$${HOST_IP}.nip.io');
+    // A lone $ breaks `docker compose` for every server included from servers/compose.yml.
+    expect(compose.content).not.toMatch(/(?<!\$)\$(?!\$)/);
+  });
 });
 
 describe('servers/compose.yml', () => {

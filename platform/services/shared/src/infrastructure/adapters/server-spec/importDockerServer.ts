@@ -110,13 +110,22 @@ function readCompose(name: string, composeText: string): ComposePart {
 
   const image = svc['image'];
   if (typeof image !== 'string' || image.trim() === '') refuse(`servers/${name}/docker-compose.yml has no image`);
-  if ((image as string).includes('$')) composeUndetermined(name, 'image');
 
   const labels = composeMap(svc['labels']);
   for (const [key, value] of labels) {
-    if (key.startsWith('mc-router.') && (value === null || value.includes('$'))) composeUndetermined(name, `label ${key}`);
+    if (key.startsWith('mc-router.')) labels.set(key, composeLiteralValue(name, `label ${key}`, value));
   }
-  return { image: image as string, labels, environment: composeMap(svc['environment']) };
+  return {
+    image: composeLiteralValue(name, 'image', image as string),
+    labels,
+    environment: composeMap(svc['environment']),
+  };
+}
+
+/** A Compose value without interpolation: `$$` read as `$`; a lone `$` or a pass-through (null) is refused. */
+function composeLiteralValue(name: string, what: string, value: string | null): string {
+  if (value === null || value.replace(/\$\$/g, '').includes('$')) composeUndetermined(name, what);
+  return value!.replace(/\$\$/g, '$');
 }
 
 function composeUndetermined(name: string, what: string): never {
@@ -272,9 +281,9 @@ async function build(name: string, { paths, hostIps }: ImportContext, warnings: 
   // Compose gives environment precedence over env_file: move it into env, report clashes.
   const configValues = parseEnvDocument(configText!).values;
   const environment = new Map<string, string>();
-  for (const [key, value] of compose.environment) {
+  for (const [key, raw] of compose.environment) {
     if (key === 'EULA') continue;
-    if (value === null || value.includes('$')) composeUndetermined(name, `environment ${key}`);
+    const value = composeLiteralValue(name, `environment ${key}`, raw);
     const old = configValues.get(key);
     warnings.push(
       old === undefined
@@ -283,7 +292,7 @@ async function build(name: string, { paths, hostIps }: ImportContext, warnings: 
           ? `docker-compose.yml environment ${key} moved into the spec (same as config.env)`
           : `docker-compose.yml environment ${key}=${value} overrides config.env ${key}=${old}; the spec keeps ${value}`
     );
-    environment.set(key, value!);
+    environment.set(key, value);
   }
 
   const { playitDomain, ...config } = await readConfigEnv(name, configText!, paths, warnings, environment);
