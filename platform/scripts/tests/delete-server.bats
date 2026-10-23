@@ -143,6 +143,7 @@ mk_world() {
 
 @test "delete: an unsafe LEVEL with a folder behind it aborts instead of guessing (#652)" {
     echo "LEVEL=.." > "$PLATFORM/servers/alpha/config.env"
+    mkdir -p "$PLATFORM/servers/alpha/data"
     run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
     [ "$status" -eq 1 ]
     [ -d "$PLATFORM/servers/alpha" ]
