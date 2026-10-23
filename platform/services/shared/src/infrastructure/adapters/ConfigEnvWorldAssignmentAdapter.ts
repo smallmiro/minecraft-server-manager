@@ -62,13 +62,13 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     const error = checkAssign(snapshot, world, server);
     if (error) throw error;
     if (snapshot.assignments.find((a) => a.server === server)?.world === world) return;
-    await this.writeLevel(server, world);
+    await this.writeConfig(server, { LEVEL: world });
   }
 
   async release(world: string): Promise<{ server: string; fallback: string }> {
     const plan = planRelease(await this.read(), world);
     if (plan instanceof WorldAssignmentError) throw plan;
-    await this.writeLevel(plan.server, plan.fallback);
+    await this.writeConfig(plan.server, { LEVEL: plan.fallback });
     return plan;
   }
 
@@ -83,10 +83,10 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     return join(this.paths.servers, server, 'config.env');
   }
 
-  private async writeLevel(server: string, world: string): Promise<void> {
+  private async writeConfig(server: string, set: Record<string, string>): Promise<void> {
     const file = this.configPath(server);
     const content = await readFile(file, 'utf-8');
     // config.env is a Compose env_file: raw style (#656); atomicWriteFile keeps the mode
-    await atomicWriteFile(file, applyEnvChanges(content, { set: { LEVEL: world } }, { raw: true }));
+    await atomicWriteFile(file, applyEnvChanges(content, { set }, { raw: true }));
   }
 }
