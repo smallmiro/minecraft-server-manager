@@ -4,12 +4,15 @@
  * all-or-nothing rollback so a retry works at once (#657).
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import yaml from 'js-yaml';
 import { Paths, parseEnvDocument } from '../src/utils/index.js';
-import { FileServerSpecRepository } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
+import {
+  FileServerSpecRepository,
+  serverSpecTestHooks,
+} from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import {
   DockerComposeRenderer,
   type RenderContext,
@@ -131,6 +134,29 @@ describe('write({ create: true })', () => {
     writeFileSync(file('compose.yml'), 'include:\n  - other/docker-compose.yml\n');
     await repo.write(spec(), { create: true });
     expect(includes()).toEqual(['other/docker-compose.yml', 'alpha/docker-compose.yml']);
+  });
+});
+
+describe('rollback that cannot clean up', () => {
+  const hook = serverSpecTestHooks.beforeIncludeWrite;
+  const stuck = () => file('alpha', 'data', 'stuck');
+  afterEach(() => {
+    serverSpecTestHooks.beforeIncludeWrite = hook;
+    if (existsSync(stuck())) chmodSync(stuck(), 0o755);
+  });
+
+  it('throws the original error and adds the cleanup failure to its message', async () => {
+    serverSpecTestHooks.beforeIncludeWrite = async () => {
+      // A directory rm cannot empty, then the failure that starts the rollback.
+      mkdirSync(stuck());
+      writeFileSync(join(stuck(), 'file'), 'x');
+      chmodSync(stuck(), 0o555);
+      throw new ServerSpecError('locked', 'servers/compose.yml is locked', 'alpha');
+    };
+    const error = await repo.write(spec(), { create: true }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ServerSpecError);
+    expect((error as ServerSpecError).code).toBe('locked');
+    expect((error as Error).message).toMatch(/^servers\/compose\.yml is locked \(cleanup failed: .*servers\/alpha.*EACCES/);
   });
 });
 

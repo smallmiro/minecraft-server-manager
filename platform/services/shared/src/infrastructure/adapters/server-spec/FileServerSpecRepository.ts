@@ -461,8 +461,14 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       );
       await this.writeInclude(name, doc, ctx);
     } catch (err) {
-      if (entryAdded) await this.removeInclude(name).catch(() => undefined);
-      await rm(dir, { recursive: true, force: true });
+      // A cleanup failure never hides the create error: it is added to the message (as withCleanup, ADR B5.9).
+      const failed: string[] = [];
+      const note = (what: string) => (e: unknown) => void failed.push(`${what}: ${(e as Error).message}`);
+      if (entryAdded) await this.removeInclude(name).catch(note(`the servers/compose.yml entry for ${name}`));
+      await rm(dir, { recursive: true, force: true }).catch(note(`servers/${name}`));
+      if (failed.length > 0 && err instanceof Error) {
+        err.message += ` (cleanup failed: ${failed.join('; ')}; remove it by hand before retrying)`;
+      }
       throw err;
     }
   }
