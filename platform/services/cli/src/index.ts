@@ -286,8 +286,8 @@ ${colors.cyan('Migration:')}
   ${colors.bold('migrate status')}             Check migration status
   ${colors.bold('migrate worlds')} --all       Migrate all servers
   ${colors.bold('migrate worlds')} --dry-run   Preview changes without applying
-  ${colors.bold('migrate spec')} <server>      Import a server into servers/<server>/server.yaml
-  ${colors.bold('migrate spec')} --all         Import every server (--dry-run, --force re-imports)
+  ${colors.bold('migrate spec')} <server>      Import a server into server.yaml and render its files
+  ${colors.bold('migrate spec')} --all         Every server (--dry-run; --force re-renders from server.yaml)
 
 ${colors.cyan('Self Update:')}
   ${colors.bold('update')}                     Update CLI and all installed services (default)

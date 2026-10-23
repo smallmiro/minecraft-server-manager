@@ -3,7 +3,6 @@ import {
   log,
   ServerSpecError,
   type FileServerSpecRepository,
-  type ServerSpecDocument,
 } from '@minecraft-docker/shared';
 
 export interface MigrateSpecOptions {
@@ -16,16 +15,17 @@ export interface MigrateSpecOptions {
 
 interface MigrateSpecResult {
   server: string;
-  status: 'imported' | 'would import' | 'already imported' | 'refused' | 'error';
+  status: 'imported' | 'would import' | 'synced' | 'would sync' | 'refused' | 'error';
   warnings: string[];
   reason?: string;
 }
 
 /**
  * `mcctl migrate spec [<name>|--all] [--dry-run] [--force]` (#675, ADR-0003 §4):
- * import existing servers into servers/<n>/server.yaml. A server that
- * already has one is left alone unless --force re-imports it from
- * config.env and docker-compose.yml. Exit 1 when any server is refused.
+ * import a server into servers/<n>/server.yaml (or absorb hand edits of its
+ * generated files) and render config.env, docker-compose.yml and the
+ * servers/compose.yml entry. Idempotent. --force re-renders from server.yaml
+ * over hand edits, keeping .bak files. Exit 1 when any server fails.
  */
 export async function migrateSpec(repo: FileServerSpecRepository, options: MigrateSpecOptions): Promise<number> {
   if (!options.serverName && !options.all) {
@@ -50,24 +50,12 @@ async function migrateOne(
   options: MigrateSpecOptions
 ): Promise<MigrateSpecResult> {
   try {
-    let document: ServerSpecDocument;
-    let warnings: string[];
-    let expectedRevision: null | undefined;
-    if (options.force) {
-      const result = await repo.importServer(server);
-      if (result.status === 'refused') return { server, status: 'refused', warnings: result.warnings, reason: result.reason };
-      ({ document, warnings } = result);
-      expectedRevision = undefined;
-    } else {
-      const loaded = await repo.load(server);
-      if (!loaded) return { server, status: 'error', warnings: [], reason: `Server '${server}' not found` };
-      if (loaded.revision !== null) return { server, status: 'already imported', warnings: [] };
-      ({ document, warnings } = loaded);
-      expectedRevision = null;
-    }
-    if (options.dryRun) return { server, status: 'would import', warnings };
-    await repo.write(document, { expectedRevision });
-    return { server, status: 'imported', warnings };
+    const loaded = (options.force && (await repo.loadFile(server))) || (await repo.load(server));
+    if (!loaded) return { server, status: 'error', warnings: [], reason: `Server '${server}' not found` };
+    const imported = loaded.revision === null;
+    if (options.dryRun) return { server, status: imported ? 'would import' : 'would sync', warnings: loaded.warnings };
+    await repo.write(loaded.document, { expectedRevision: loaded.revision, force: options.force });
+    return { server, status: imported ? 'imported' : 'synced', warnings: loaded.warnings };
   } catch (err) {
     if (err instanceof ServerSpecError) {
       const status = err.code === 'undetermined' ? 'refused' : 'error';
@@ -82,14 +70,17 @@ function print(results: MigrateSpecResult[], options: MigrateSpecOptions): void 
   console.log(colors.bold(`ServerSpec import${options.dryRun ? ' (dry run)' : ''}:`));
   if (results.length === 0) console.log('  No servers found.');
   for (const r of results) {
+    const target = `servers/${r.server}/server.yaml`;
     const status =
       r.status === 'imported'
-        ? colors.green(`imported → servers/${r.server}/server.yaml`)
-        : r.status === 'would import'
-          ? colors.cyan(`would import → servers/${r.server}/server.yaml`)
-          : r.status === 'already imported'
-            ? colors.dim('already imported (--force re-imports from config.env and docker-compose.yml)')
-            : colors.red(`${r.status}: ${r.reason}`);
+        ? colors.green(`imported → ${target}, generated files rendered`)
+        : r.status === 'synced'
+          ? colors.green('synced (generated files match server.yaml)')
+          : r.status === 'would import'
+            ? colors.cyan(`would import → ${target} and render the generated files`)
+            : r.status === 'would sync'
+              ? colors.cyan('would render the generated files from server.yaml')
+              : colors.red(`${r.status}: ${r.reason}`);
     console.log(`  ${colors.cyan(r.server)}: ${status}`);
     for (const w of r.warnings) console.log(`    ${colors.yellow('!')} ${w}`);
   }
