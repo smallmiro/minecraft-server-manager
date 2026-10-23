@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { RconCliAdapter, type CommandRunner } from '../src/infrastructure/adapters/RconCliAdapter.js';
-import { Dimension } from '../src/domain/index.js';
+import { Dimension, ServerName } from '../src/domain/index.js';
 
 describe('RconCliAdapter', () => {
   it('parses Pos and Dimension into an EntityPosition', async () => {
@@ -76,5 +76,17 @@ describe('RconCliAdapter', () => {
     const adapter = new RconCliAdapter(runner);
     const pos = await adapter.getEntityPosition('mc-x', 'Steve');
     expect(pos).toEqual({ x: 10, y: 64, z: 20, dimension: undefined });
+  });
+});
+
+describe('RconCliAdapter with a ServerName (#665)', () => {
+  it('runs against the server container', async () => {
+    const calls: string[][] = [];
+    const adapter = new RconCliAdapter(async (file, args) => {
+      calls.push([file, ...args]);
+      return 'x has the following entity data: [1.0d, 2.0d, 3.0d]';
+    });
+    await adapter.getEntityPosition(ServerName.fromExisting('survival'), 'Steve');
+    expect(calls[0]).toEqual(['docker', 'exec', 'mc-survival', 'rcon-cli', 'data', 'get', 'entity', 'Steve', 'Pos']);
   });
 });

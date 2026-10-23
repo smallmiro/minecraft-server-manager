@@ -22,11 +22,12 @@ const runtime = vi.hoisted(() => ({ status: new Map<string, string>(), started: 
 vi.mock('@minecraft-docker/shared', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@minecraft-docker/shared')>();
   class FakeRuntimeAdapter {
-    getStatus(name: string) {
-      return runtime.status.get(name) ?? 'not_found';
+    // Ports pass a ServerName since #665; key the fake by container name
+    getStatus(name: Parameters<typeof actual.workloadNameOf>[0]) {
+      return runtime.status.get(actual.workloadNameOf(name)) ?? 'not_found';
     }
-    async start(name: string) {
-      runtime.started.push(name);
+    async start(name: Parameters<typeof actual.workloadNameOf>[0]) {
+      runtime.started.push(actual.workloadNameOf(name));
       return { success: true };
     }
   }

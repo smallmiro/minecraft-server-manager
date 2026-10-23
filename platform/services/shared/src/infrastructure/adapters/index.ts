@@ -69,6 +69,7 @@ export {
   DockerRuntimeEnvironmentAdapter,
 } from './DockerComposeRuntimeAdapter.js';
 export { AvahiHostnameRegistrarAdapter } from './AvahiHostnameRegistrarAdapter.js';
+export { containerNameOf, serverHostnameOf, workloadNameOf } from './workloadNames.js';
 export {
   GitWorldBackupAdapter,
   type GitWorldBackupAdapterOptions,

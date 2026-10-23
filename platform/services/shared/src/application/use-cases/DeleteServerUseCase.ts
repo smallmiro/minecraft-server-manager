@@ -29,7 +29,7 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
    */
   private async loadPlayerCount(server: Server): Promise<boolean> {
     if (!server.isRunning || !this.serverConsole) return true;
-    const players = await this.serverConsole.listPlayers(server.containerName).catch(() => null);
+    const players = await this.serverConsole.listPlayers(server.name).catch(() => null);
     if (!players) return false;
     server.setPlayerCount(players.online);
     return true;

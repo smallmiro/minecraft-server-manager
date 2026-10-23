@@ -16,7 +16,6 @@ import * as unzipper from 'unzipper';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { Paths } from '../../utils/index.js';
 import { World, WORLD_NAME_PATTERN, holdersOf, type WorldAssignmentSnapshot } from '../../domain/index.js';
-import { getContainerStatus } from '../../docker/index.js';
 import type {
   IWorldRepository,
   WorldLockData,
@@ -25,7 +24,11 @@ import type {
   WorldAvailabilityCategory,
 } from '../../application/ports/outbound/IWorldRepository.js';
 import type { IWorldAssignmentPort } from '../../application/ports/outbound/IWorldAssignmentPort.js';
+import type { IContainerRuntimePort } from '../../application/ports/outbound/IContainerRuntimePort.js';
 import { ConfigEnvWorldAssignmentAdapter } from './ConfigEnvWorldAssignmentAdapter.js';
+// By file path, not the facade or the barrel (ADR-0001 dependency rules)
+import { DockerComposeRuntimeAdapter } from './DockerComposeRuntimeAdapter.js';
+import { containerNameOf } from './workloadNames.js';
 
 // ---------------------------------------------------------------------------
 // Exported pure helper — testable without real zips
@@ -144,11 +147,17 @@ export class WorldRepository implements IWorldRepository {
   private readonly paths: Paths;
   private readonly worldsDir: string;
   private readonly assignments: IWorldAssignmentPort;
+  private readonly runtime: IContainerRuntimePort;
 
-  constructor(paths?: Paths, assignments?: IWorldAssignmentPort) {
+  /**
+   * @param runtime Runtime status of the assigned servers (#665). Defaults to
+   *   the Docker adapter the legacy facade used.
+   */
+  constructor(paths?: Paths, assignments?: IWorldAssignmentPort, runtime?: IContainerRuntimePort) {
     this.paths = paths ?? new Paths();
     this.worldsDir = join(this.paths.root, 'worlds');
     this.assignments = assignments ?? new ConfigEnvWorldAssignmentAdapter(this.paths);
+    this.runtime = runtime ?? new DockerComposeRuntimeAdapter();
   }
 
   /**
@@ -296,10 +305,12 @@ export class WorldRepository implements IWorldRepository {
       } else {
         // World is locked - check server status
         const serverName = world.lockedBy!;
+        // The container-name form keeps the pre-#670 `mc-` lock-holder case
+        // exactly as it was (#665 is structural only); #736 narrows the port.
         const containerName = serverName.startsWith('mc-')
           ? serverName
-          : `mc-${serverName}`;
-        const containerStatus = getContainerStatus(containerName);
+          : containerNameOf(serverName);
+        const containerStatus = this.runtime.getStatus(containerName);
 
         let serverStatus: ServerStatus;
         let category: WorldAvailabilityCategory;

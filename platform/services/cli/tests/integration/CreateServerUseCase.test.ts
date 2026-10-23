@@ -59,6 +59,22 @@ describe('CreateServerUseCase Integration', () => {
       assert.strictEqual(log?.args[0], 'testserver');
     });
 
+    it('reads platform settings through the injected port (#665)', async () => {
+      const settings = { load: vi.fn(() => null) };
+      await new CreateServerUseCase(
+        promptAdapter,
+        shellAdapter,
+        serverRepo,
+        settings,
+        undefined,
+        undefined,
+        undefined,
+        assignments
+      ).execute();
+
+      assert.strictEqual(settings.load.mock.calls.length, 1);
+    });
+
     it('should show intro and outro messages', async () => {
       await useCase.execute();
 

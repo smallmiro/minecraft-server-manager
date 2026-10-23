@@ -4,7 +4,7 @@
 |---|---|
 | **상태** | 제안됨 (2026-10-23) |
 | **이슈** | [#654](https://github.com/smallmiro/minecraft-server-manager/issues/654) (Hardening D1), 마일스톤 M2(#643), 에픽 #640 |
-| **이 ADR을 바꾸는 후속 이슈** | #665(D4), #669(A7), C2, #675(D5), #641(k8s 어댑터), #732(S3, [백업 포트](#백업-포트732-s3)), #670(A4: `IWorldAssignmentPort` 확정, [ADR-0002](0002-world-server-assignment.ko.md)) |
+| **이 ADR을 바꾸는 후속 이슈** | #665(D4, [포트 경계 정리](#포트-경계-정리665-d4)), #669(A7), C2, #675(D5), #641(k8s 어댑터), #732(S3, [백업 포트](#백업-포트732-s3)), #670(A4: `IWorldAssignmentPort` 확정, [ADR-0002](0002-world-server-assignment.ko.md)) |
 | **사용하는 이슈** | #667(D2, API), #668(D3, CLI), #666(E3, 계약 테스트), #715(스크립트 제거) |
 
 이 문서는 영어판의 요약입니다. 포트 시그니처 전체, 48개 함수 매핑, 호출 지점 표, 구현 단계는 [영어판](0001-container-runtime-ports.md)에 있습니다.
@@ -27,7 +27,7 @@
 | 4 | **두 번째 어댑터(#641)가 생기기 전까지 계약은 잠정적이다.** D4·A7·C2·D5가 시그니처를 바꿀 수 있다 | 호출처는 TS 컴파일러가 찾아 준다. 바꿀 때마다 이 ADR을 고친다 |
 | 5 | 지금 동기인 메서드는 **동기를 유지한다**. 비동기화는 C2에서 한다 | 동기 래퍼가 비동기 포트에 위임할 수 없으므로, 바꾸려면 호출처를 전부 바꿔야 한다 |
 | 6 | **오류 모델을 바꾸지 않는다**: 센티널 값(`'not_found'`, `'unknown'`, `''`, `null`, `false`, `'-'`)과 throw하지 않는 결과 객체를 그대로 쓴다 | "확인 불가"와 "없음"의 구분(`RuntimeUnavailableError`)은 A7의 동작 변경이다 |
-| 7 | D1에서 워크로드 이름은 **Docker 컨테이너 이름**이다(`mc-<server>`, `mc-router`, `playit-agent`) | 이렇게 해야 래퍼가 그대로 위임하고 #720 argv 테스트가 바뀌지 않는다. `ServerName`으로 바꾸는 일은 D4가 한다 |
+| 7 | D1에서 워크로드 이름은 **Docker 컨테이너 이름**이다(`mc-<server>`, `mc-router`, `playit-agent`) | 이렇게 해야 래퍼가 그대로 위임하고 #720 argv 테스트가 바뀌지 않는다. `ServerName`으로 바꾸는 일은 D4가 한다. #665에서 `ServerName \| string`으로 넓혔다([포트 경계 정리](#포트-경계-정리665-d4)) |
 | 8 | **포트 하나에 어댑터 클래스 하나.** Docker 클래스 5개는 모듈 하나(`DockerComposeRuntimeAdapter.ts`)에 두고, Avahi는 파일을 따로 둔다 | 한 클래스로는 구현할 수 없다: playit의 `start()`/`stop()`과 런타임의 `start(name)`/`stop(name)`, 라우터의 `getHealth()`와 `getHealth(name)`이 충돌한다. avahi는 Docker가 아니라 호스트 OS 기능이다 |
 | 9 | `docker/index.ts`는 **레거시 퍼사드**가 된다. 48개 export와 시그니처를 유지한다. 리프 함수는 한 줄 위임으로 바꾸고, 합성 함수는 그대로 둔다. 프로세스 헬퍼는 `infrastructure/process.ts`로 옮긴다 | 퍼사드에서 `child_process` import가 사라진다 |
 | 10 | **싱글턴을 export하지 않는다.** composition root(D3의 CLI `Container`, D2의 API `container` 플러그인)가 `new`로 만든다 | 서비스 로케이터를 막는다. 퍼사드만 내부 기본 인스턴스를 가진다 |
@@ -40,6 +40,7 @@
 | 포트 | 메서드 | 동기 여부 |
 |------|--------|-----------|
 | `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `list({running?})`, `getLogs`, `getStats`, `getUptime` (docker/index.ts 리프) | 동기 |
+| | `getStatusAsync(name)` (#665, 요청 경로용 `getStatus`) | 비동기 |
 | | `start`, `stop`, `restart` → `RuntimeActionResult` (API `executeServerAction`, `mcctl.sh`) | 비동기, reject하지 않음 |
 | | `readLogs(name, {since, tail})` (API 세션 수집기), `followLogs(name, onChunk, signal, {tail?, follow?, onExit?})` (API SSE 로그) | 비동기 |
 | `IServerConsolePort` | `listPlayers` (`getOnlinePlayers`), `command(name, args)` (rcon-cli 호출 4곳), `getEndpoint` (CLI `mcctl rcon`) | 비동기 |
@@ -57,6 +58,8 @@
 | `restart` | `docker compose restart <name>` | API restart |
 
 새 메서드는 이름 앞에 `--`를 넣는다(#720 규칙). 타임아웃은 지금 값을 유지하고, 통일은 C2에서 한다.
+
+#665(D4)부터 서버를 받는 인자(`name`)는 `ServerName | string`이다. 자세한 내용은 [포트 경계 정리](#포트-경계-정리665-d4)에 있다.
 
 ### `IWorldAssignmentPort` 확정(#670, [ADR-0002](0002-world-server-assignment.ko.md))
 
@@ -87,7 +90,7 @@ v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유�
 
 1. 어댑터와 `process.ts`는 `docker/index.ts`를 import하지 않는다.
 2. `docker/index.ts`는 어댑터를 **파일 경로로** import한다. barrel(`infrastructure/index.js`)은 `ServerRepository`를 거쳐 퍼사드로 돌아오므로 순환이 생긴다.
-3. D1에서 `ServerRepository`와 `WorldRepository`는 계속 퍼사드를 쓴다. `world-name-resolution.test.ts`가 퍼사드를 mock하기 때문이다. 포트 주입으로 바꾸는 일은 D4에서 한다.
+3. D1에서 `ServerRepository`와 `WorldRepository`는 계속 퍼사드를 쓴다. `world-name-resolution.test.ts`가 퍼사드를 mock하기 때문이다. 포트 주입으로 바꾸는 일은 D4에서 한다. #665에서 끝냈다. 두 저장소는 선택 인자로 `IContainerRuntimePort`를 받고(기본값은 파일 경로로 import한 `new DockerComposeRuntimeAdapter()`), 퍼사드를 import하지 않는다.
 
 ## lint 규칙과 현재 위반 수
 
@@ -132,9 +135,75 @@ v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유�
 
 1. **예약 포트**(2026-10-23 해결): 이슈 본문대로 타입 전용 파일 두 개로 만들었다(결정 3). `IWorldAssignmentPort`는 #670에서 확정했다(ADR-0002).
 2. **API stop 의미**: `executeServerAction('stop')`(compose stop)을 `runtime.stop`(`docker stop`)으로 옮기면 동작이 조금 바뀐다(compose 프로젝트 밖의 컨테이너에서만 다르다). D2에서 별도 커밋으로 받아들이는 안을 권장한다.
-3. **합성 함수 담당**: 합성 함수 12개를 맡은 이슈가 없다. D2의 "가짜 컨테이너로 라우트 테스트"를 하려면 주입할 수 있어야 한다. D4에 넣고 D2보다 먼저 끝내는 안을 권장한다.
-4. **시그니처 변경 순서**: D4가 포트 인자를 `ServerName`으로 바꾼다. D4를 먼저 하고 D2·D3을 하는 안을 권장한다.
+3. **합성 함수 담당**: 합성 함수 12개를 맡은 이슈가 없다. D2의 "가짜 컨테이너로 라우트 테스트"를 하려면 주입할 수 있어야 한다. D4에 넣고 D2보다 먼저 끝내는 안을 권장한다. **#665에서는 하지 않았다.** 완료 조건에 필요하지 않기 때문이다. D2(#667)의 쟁점으로 남는다.
+4. **시그니처 변경 순서**: D4가 포트 인자를 `ServerName`으로 바꾼다. D4를 먼저 하고 D2·D3을 하는 안을 권장한다. **#665로 해결됐다.** 인자를 바꾸지 않고 넓혔으므로 D2·D3은 어느 쪽이든 컴파일되고, 호출처를 `ServerName`으로 옮기는 시점을 스스로 정할 수 있다.
 5. **error 전환 범위**: 스크립트·git·npm·pm2 실행 위치를 옮기는 일이 D2·D3·D4 범위인지 확인이 필요하다.
+
+## 포트 경계 정리(#665, D4)
+
+구조만 바꿨다(Tidy First). 아래에 적은 곳을 빼면 Docker argv, 반환값, 오류 sentinel은 그대로다. shared export와 시그니처는 하나도 지우지 않았다(#715: v2.x에서는 `@deprecated`만 붙이고, 삭제는 #736에서 v3.0.0으로 한다).
+
+### 이름 규칙을 인프라로 옮김
+
+런타임 이름 규칙은 `infrastructure/adapters/workloadNames.ts`에 있고, 패키지 루트에서 export한다.
+
+| 함수 | 결과 |
+|------|------|
+| `containerNameOf(server: ServerName \| string)` | `mc-<server>` |
+| `serverHostnameOf(server: ServerName \| string)` | `<server>.local` |
+| `workloadNameOf(name: ServerName \| string)` | ServerName이면 그 컨테이너, 문자열이면 그대로(컨테이너 이름) |
+
+이 모듈은 런타임 import가 없어서 `@minecraft-docker/shared/naming`이 브라우저에서도 안전하다. `ServerName.containerName`/`hostname`과 `Server.containerName`/`hostname`은 `@deprecated` getter로 남기고 이 함수에 위임한다. 도메인이 인프라를 import하는 곳은 이것 하나이고, #736에서 getter와 함께 사라진다. 예약 이름 오류 메시지(`conflicts with the mc-router container`)도 같은 함수로 만들어 문구가 그대로다.
+
+### 포트 시그니처 변경
+
+| 포트 | 이전(D1) | 이후(#665) |
+|------|----------|-----------|
+| `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `getLogs`, `getStats`, `getUptime`, `start`, `stop`, `restart`, `readLogs`, `followLogs`가 `name: string`을 받음 | `name: ServerName \| string`. `list()`는 그대로이고 여전히 컨테이너 이름을 돌려준다. `getStatusAsync(name): Promise<ContainerStatus>`를 추가했다(아래 저장소 항목) |
+| `IServerConsolePort` | `listPlayers`, `command`, `getEndpoint`가 `name: string`을 받음 | `name: ServerName \| string` |
+| `IRouterStatusPort` | `getHostnames(name: string)` | `getHostnames(name: ServerName \| string)` |
+| `IRconPort` | `getEntityPosition(container: string, player)` | `getEntityPosition(server: ServerName \| string, player)` |
+| `IShellPort` | `exec(script, args)`, `execInteractive(script, args)` | 그대로 두고 `@deprecated`(포트 메서드가 스크립트 이름을 받으면 안 된다) |
+| `IPlatformSettingsPort`(신규) | — | `load(): McctlConfig \| null` |
+
+- **의미**: ServerName은 서버이고, 워크로드는 어댑터가 고른다(`workloadNameOf`). 문자열은 D1처럼 워크로드 이름 자체다. 서버에 문자열을 넘기는 형태는 deprecated다. 라우터와 playit 에이전트는 k8s 어댑터(#641)가 전용 메서드를 줄 때까지 컨테이너 이름을 쓴다.
+- **overload가 아니라 union인 이유**: 메서드 인자는 bivariant라서 `(name: string)`으로 선언한 v2 구현도 `(name: ServerName | string)`을 만족한다. `(name: ServerName)`과 `(name: string)` overload 쌍은 이 구현을 거부한다. `tests/runtimePorts-v2-compat.test.ts`가 v2 `IRconPort` 구현과 v2 호출 코드를 컴파일해서 이를 지킨다.
+- **배포된 포트와 미배포 포트**(#753 리뷰): 넓힌 포트 가운데 v2.33.0(npm)에 들어간 것은 `IRconPort`뿐이다. `IContainerRuntimePort`, `IServerConsolePort`, `IRouterStatusPort`, `IHostnameRegistrarPort`는 v2.33.0 이후 #654에서 추가돼 배포된 구현체가 없다. 그래서 여기에 ServerName을 넘겨도 breaking change가 아니다. shared는 그렇게 한다(`checkServerStopped`, 생성 후 시작하는 `WorldManagementUseCase`, 접속자를 세는 `DeleteServerUseCase`, `ServerRepository.getStatus`). cli와 mcctl-api의 테스트 fake는 `workloadNameOf(name)`으로 바꾼다.
+- **`IRconPort`는 v2 런타임 계약을 지킨다**: 호출처(`WorldInfoUseCase.getLivePlayerLocations`, `PlayerManagementUseCase`의 `options.container`, 둘 다 API가 값을 넣음)는 계속 컨테이너 이름 문자열 `mc-<server>`를 넘긴다. v2 구현은 이전과 똑같은 값을 받는다. 두 형태를 모두 받는 것은 `RconCliAdapter`뿐이다. `tests/rconPort-v2-contract.test.ts`가 기록용 v2 구현으로 이를 고정한다. 인프라나 API에서 이름을 새로 계산하는 코드는 `containerNameOf`를 쓴다.
+
+### 저장소는 런타임 포트를 받음
+
+`new ServerRepository(paths?, runtime?)`, `new WorldRepository(paths?, assignments?, runtime?)`. 기본값은 퍼사드가 위임하던 것과 같은 `new DockerComposeRuntimeAdapter()`이고, CLI `Container`는 자기 런타임을 넘긴다. 두 저장소 모두 퍼사드를 import하지 않는다.
+
+- `ServerRepository.getStatus`는 `runtime.getStatusAsync(ServerName.fromExisting(name))`을 기다리고, 이전 매핑을 그대로 쓴다(조회 실패 sentinel인 `not_found`는 `STOPPED`). 동기 `getStatus`(`spawnSync`, 타임아웃 없음)를 쓰면 API의 `findAll()`이 서버마다 이벤트 루프를 막아서(#753 리뷰) `IContainerRuntimePort`에 `getStatusAsync`를 추가했다. Docker 어댑터는 #665 이전 조회를 `execCommandAsync`로 그대로 실행한다(`docker inspect -f {{.State.Status}} -- <container>`, 0이 아닌 종료 코드는 `not_found`, 상태는 소문자로). argv에서 바뀐 것은 #720 규칙의 `--`뿐이다. `getStatus` 자체를 비동기로 바꾸는 일은 모든 호출처를 함께 고치는 C2의 몫이라, 메서드를 추가하는 쪽이 더 단순했다. `fromExisting`이 거부하는 이름이면 `STOPPED` 대신 `UNKNOWN`이다. `findByName`은 그런 이름을 먼저 거르므로 이 경로에 오지 않는다.
+- `WorldRepository.findAllWithServerStatus`는 이전과 같은 컨테이너 이름 문자열을 넘긴다. `mc-`로 시작하는 배정 서버를 컨테이너 이름으로 보는 #670 이전 분기도 그대로다. 바꾸면 동작이 바뀐다. 포트를 좁히는 #736에서 지운다.
+
+### 플랫폼 설정 포트(`CreateServerUseCase`)
+
+`CreateServerUseCase`는 `Paths`를 `Config`를 만들어 `.mcctl.json`의 `playitEnabled`를 읽는 데만 썼다. 네 번째 생성자 인자를 `IPlatformSettingsPort | Paths`로 넓혔다. CLI는 `new Config(paths)`를 주입한다. `Config`가 구조적으로 이 포트를 만족하므로 어댑터 클래스는 없다. `Paths`를 넘기거나 아무것도 넘기지 않으면 이전처럼 그 경로의 `.mcctl.json`을 읽는다(deprecated v2 형태). #675가 그대로 rebase할 수 있도록 생성자만 고쳤다.
+
+**새 포트를 만든 이유**: #715는 이슈가 요청할 때만 포트를 추가하고, #665가 이 포트를 지목했다. 플랫폼 설정을 읽는 기존 포트가 없다. `IServerRepository`는 서버별 `config.env`를, `IPlayitAgentPort`는 에이전트 컨테이너를 다루고, `IServerSpecRepository`는 D5의 서버 모델이다. 메서드는 지금 호출자에게 필요한 하나뿐이다.
+
+### 아직 문자열 형태를 쓰는 호출자
+
+| 호출자 | 이유 | 담당 |
+|--------|------|------|
+| `docker/index.ts` 퍼사드 래퍼 | D1과 같은 argv(결정 9) | #736 |
+| `WorldRepository.findAllWithServerStatus` | #670 이전과 같은 컨테이너 이름 | #736 |
+| `GitWorldBackupAdapter` | `list()`가 컨테이너 이름을 돌려주고 그 값을 `console.command`에 다시 넘긴다 | #736 또는 서버 이름을 돌려주는 `list()` |
+| `PlayerManagementUseCase`(`options.container`), `WorldInfoUseCase.getLivePlayerLocations(container)` | API가 `mc-<name>`을 만든다. 공개 시그니처는 그대로 | D2(#667) |
+| 라우터에 대한 `mcctl logs` | `mc-router`는 서버가 아니다 | #641 |
+| CLI `lib/rcon.ts`, `commands/*`의 직접 `docker` 호출 | 포트 호출이 아니다 | D3(#668) |
+
+### #665에서 하지 않은 일
+
+- 합성 함수 query service(쟁점 3): 완료 조건에 필요하지 않다.
+- `PrerequisiteChecker`(직접 호출 지점 19행)와 shared lint의 error 전환.
+- `ServerStatusUseCase`(클래스 전체가 deprecated)와 `CreateServerUseCase`의 "Connect via" 메시지는 아직 deprecated getter를 읽는다. 생성 경로는 #675가 다시 쓰고, getter는 #736이 지운다.
+
+### #665에서 deprecated한 것(v3.0.0, #736에서 삭제)
+
+`ServerName.containerName`, `ServerName.hostname`, `Server.containerName`, `Server.hostname`, `IShellPort.exec`, `IShellPort.execInteractive`, `ShellAdapter.exec`, `ShellAdapter.execInteractive`, 위 포트들의 서버 인자에 문자열(컨테이너 이름)을 넘기는 형태, `CreateServerUseCase` 네 번째 인자에 `Paths`를 넘기거나 비우는 형태.
 
 ## 백업 포트(#732, S3)
 

@@ -152,11 +152,19 @@ export interface IShellPort {
 
   /**
    * Execute arbitrary script
+   *
+   * @deprecated A port method must not take a script name: it ties the contract
+   * to the bash implementation (#665). Use the operation's own port method or
+   * runtime port. Its only caller is the deprecated IShellPort path of
+   * BackupUseCase (the CLI passes IWorldBackupPort). Removed in v3.0.0 (#736).
    */
   exec(script: string, args?: string[]): Promise<ShellResult>;
 
   /**
    * Execute script interactively
+   *
+   * @deprecated A port method must not take a script name (#665). No production
+   * caller; removed in v3.0.0 (#736).
    */
   execInteractive(script: string, args?: string[]): Promise<number>;
 }

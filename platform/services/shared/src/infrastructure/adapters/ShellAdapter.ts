@@ -289,10 +289,12 @@ export class ShellAdapter implements IShellPort {
   // General Execution
   // ========================================
 
+  /** @deprecated See IShellPort.exec (#665). Removed in v3.0.0 (#736). */
   async exec(script: string, args: string[] = []): Promise<ShellResult> {
     return this.executeScript(script, args);
   }
 
+  /** @deprecated See IShellPort.execInteractive (#665). Removed in v3.0.0 (#736). */
   async execInteractive(script: string, args: string[] = []): Promise<number> {
     const scriptPath = this.getScriptPath(script);
     if (!scriptPath) {

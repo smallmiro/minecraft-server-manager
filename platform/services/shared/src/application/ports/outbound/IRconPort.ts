@@ -1,4 +1,5 @@
 import type { EntityPosition } from '../../../domain/index.js';
+import type { ServerName } from '../../../domain/value-objects/ServerName.js';
 
 /**
  * RCON Port - Outbound Port
@@ -13,11 +14,12 @@ export interface IRconPort {
    * (and Dimension). Returns null when the server is offline, the player
    * is not online, or the command fails.
    *
-   * @param container Server container name (e.g. `mc-<server>`).
+   * @param server The server (#665). A string is the container name
+   *   (`mc-<server>`): @deprecated, narrowed in v3.0.0 (#736).
    * @param player Player username.
    */
   getEntityPosition(
-    container: string,
+    server: ServerName | string,
     player: string
   ): Promise<EntityPosition | null>;
 }

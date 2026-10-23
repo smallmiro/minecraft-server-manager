@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { IContainerRuntimePort } from '@minecraft-docker/shared';
+import { ServerName, log, type IContainerRuntimePort } from '@minecraft-docker/shared';
 import { logsCommand } from '../../../src/commands/logs.js';
 
 vi.mock('@minecraft-docker/shared', async () => {
@@ -11,10 +11,13 @@ vi.mock('@minecraft-docker/shared', async () => {
   };
 });
 
+/** The runtime port takes the server by name since #665; the adapter maps it to mc-myserver. */
+const MYSERVER = ServerName.fromExisting('myserver');
+
 function fakeRuntime(over: Partial<IContainerRuntimePort> = {}): IContainerRuntimePort {
   return {
     exists: vi.fn().mockReturnValue(true),
-    followLogs: vi.fn(async (_n: string, onChunk: (c: string) => void) => {
+    followLogs: vi.fn(async (_n: unknown, onChunk: (c: string) => void) => {
       onChunk('a\n');
       onChunk('java.lang.Exception\nb\n'); // stderr chunk shares the stream
     }),
@@ -32,7 +35,7 @@ describe('logsCommand', () => {
   it('works with no options: last 50 lines of mc-<server>', async () => {
     const runtime = fakeRuntime();
     expect(await logsCommand({ serverName: 'myserver', runtime, write })).toBe(0);
-    expect(runtime.followLogs).toHaveBeenCalledWith('mc-myserver', expect.any(Function), expect.any(AbortSignal), {
+    expect(runtime.followLogs).toHaveBeenCalledWith(MYSERVER, expect.any(Function), expect.any(AbortSignal), {
       follow: false,
       tail: 50, onExit: expect.any(Function)
     });
@@ -42,7 +45,7 @@ describe('logsCommand', () => {
   it('honours -n/--lines', async () => {
     const runtime = fakeRuntime();
     await logsCommand({ serverName: 'myserver', lines: '10', runtime, write });
-    expect(runtime.followLogs).toHaveBeenCalledWith('mc-myserver', expect.any(Function), expect.any(AbortSignal), {
+    expect(runtime.followLogs).toHaveBeenCalledWith(MYSERVER, expect.any(Function), expect.any(AbortSignal), {
       follow: false,
       tail: 10, onExit: expect.any(Function)
     });
@@ -74,6 +77,8 @@ describe('logsCommand', () => {
     const runtime = fakeRuntime({ exists: vi.fn().mockReturnValue(false) });
     expect(await logsCommand({ serverName: 'ghost', runtime, write })).toBe(1);
     expect(runtime.followLogs).not.toHaveBeenCalled();
+    expect(runtime.exists).toHaveBeenCalledWith(ServerName.fromExisting('ghost'));
+    expect(log.error).toHaveBeenCalledWith("'ghost' (container: mc-ghost) not found");
   });
 
   it('requires a server name', async () => {
@@ -92,7 +97,7 @@ describe('logsCommand', () => {
     });
     const runtime = fakeRuntime({ followLogs });
     expect(await logsCommand({ serverName: 'myserver', follow: true, lines: '5', runtime, write })).toBe(0);
-    expect(followLogs).toHaveBeenCalledWith('mc-myserver', expect.any(Function), expect.any(AbortSignal), { follow: true, tail: 5, onExit: expect.any(Function) });
+    expect(followLogs).toHaveBeenCalledWith(MYSERVER, expect.any(Function), expect.any(AbortSignal), { follow: true, tail: 5, onExit: expect.any(Function) });
     expect(out.join('')).toBe('x\n');
   });
 
@@ -161,7 +166,7 @@ describe('logsCommand', () => {
   it('waits for the output write to finish before returning (pipe truncation)', async () => {
     const big = 'x'.repeat(1000) + '\n';
     const runtime = fakeRuntime({
-      followLogs: vi.fn(async (_n: string, onChunk: (c: string) => void) => onChunk(big)) as never,
+      followLogs: vi.fn(async (_n: unknown, onChunk: (c: string) => void) => onChunk(big)) as never,
     });
     let finish!: () => void;
     const write = vi.fn(() => new Promise<void>((r) => (finish = r)));

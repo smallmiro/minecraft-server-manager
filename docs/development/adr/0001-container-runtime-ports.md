@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Proposed (2026-10-23) |
 | **Issue** | [#654](https://github.com/smallmiro/minecraft-server-manager/issues/654) (Hardening D1), milestone M2 (#643), epic #640 |
-| **Follow-ups that change this ADR** | #665 (D4), #669 (A7), C2, #675 (D5), #641 (k8s adapter), #732 (S3, [backup port](#backup-port-732-s3)), #670 (A4: `IWorldAssignmentPort` final, [ADR-0002](0002-world-server-assignment.md)) |
+| **Follow-ups that change this ADR** | #665 (D4, [port boundary cleanup](#port-boundary-cleanup-665-d4)), #669 (A7), C2, #675 (D5), #641 (k8s adapter), #732 (S3, [backup port](#backup-port-732-s3)), #670 (A4: `IWorldAssignmentPort` final, [ADR-0002](0002-world-server-assignment.md)) |
 | **Consumers** | #667 (D2, API), #668 (D3, CLI), #666 (E3, contract tests), #715 (script removal) |
 
 ## Context
@@ -24,7 +24,7 @@ This issue is a **structural change only (Tidy First)**. Runtime behaviour, argv
 4. **Contracts are provisional until a second adapter exists.** Until #641 adds the k8s adapter, D4, A7, C2, and D5 may change signatures. The TypeScript compiler finds every call site. Each change updates this ADR.
 5. **Synchronous where the code is synchronous today.** Methods backed by `execSync`/`spawnSync`/`execFileSync` stay synchronous. Methods that are async today stay async. C2 converts the port to `Promise` everywhere.
 6. **Error model is unchanged**: sentinels (`'not_found'`, `'unknown'`, `''`, `null`, `false`, `'-'`) and result objects that never throw, exactly as today. "Cannot tell" and "absent" stay conflated until A7 adds `RuntimeUnavailableError`.
-7. **Workload names are Docker container names in D1** (`mc-<server>`, `mc-router`, `playit-agent`). Only then can the facade wrappers delegate without translation, and only then do the #720 argv tests (`docker-shell-injection.test.ts`) keep passing unchanged. D4 moves the `mc-` rule into the adapter and changes the parameter to `ServerName`.
+7. **Workload names are Docker container names in D1** (`mc-<server>`, `mc-router`, `playit-agent`). Only then can the facade wrappers delegate without translation, and only then do the #720 argv tests (`docker-shell-injection.test.ts`) keep passing unchanged. D4 moves the `mc-` rule into the adapter and changes the parameter to `ServerName`. Done in #665: the parameter is widened to `ServerName | string` (see [Port Boundary Cleanup](#port-boundary-cleanup-665-d4)).
 8. **One adapter class per port.** The Docker classes live in one module, `infrastructure/adapters/DockerComposeRuntimeAdapter.ts`, and share private `docker inspect` helpers. Avahi gets its own file. A single class cannot implement all ports: `start()`/`stop()` (playit) collide with `start(name)`/`stop(name)` (runtime), and `getHealth()` (router) collides with `getHealth(name)`.
 9. **`docker/index.ts` becomes a legacy facade.** It keeps all 48 exports with the same signatures. The leaf functions that run processes delegate in one line to private adapter instances. Composite functions stay verbatim, and process helpers move to `infrastructure/process.ts`. The facade no longer imports `child_process`.
 10. **No exported singleton.** Composition roots (CLI `Container` in D3, API `container` plugin in D2) construct adapters with `new`. Only the facade holds a private default instance.
@@ -37,6 +37,7 @@ Files: `platform/services/shared/src/application/ports/outbound/<Port>.ts`, expo
 ```ts
 // IContainerRuntimePort.ts
 import type { ContainerStatus, HealthStatus, ContainerStats } from '../../../types/index.js';
+import type { ServerName } from '../../../domain/value-objects/ServerName.js';
 
 /** Lifecycle result. Never rejects; failure is `success: false`. */
 export interface RuntimeActionResult {
@@ -48,32 +49,35 @@ export interface RuntimeActionResult {
 
 /**
  * Per-workload runtime operations.
- * `name` is the runtime workload name. In D1 this is the Docker container name (`mc-<server>`).
+ * `name` is the server (#665): the adapter maps a ServerName to its workload (Docker: `mc-<server>`).
+ * A string is the workload name itself (D1 form; @deprecated for servers, narrowed in #736).
  * D1 contract: "absent" and "runtime unreachable" are NOT distinguished (A7 changes this).
  */
 export interface IContainerRuntimePort {
   /** 'not_found' when absent or when the runtime cannot be queried. */
-  getStatus(name: string): ContainerStatus;
+  getStatus(name: ServerName | string): ContainerStatus;
+  /** Added by #665: getStatus as an awaited child process, for request paths. */
+  getStatusAsync(name: ServerName | string): Promise<ContainerStatus>;
   /** 'none' without a healthcheck, 'unknown' on failure. */
-  getHealth(name: string): HealthStatus;
-  exists(name: string): boolean;
+  getHealth(name: ServerName | string): HealthStatus;
+  exists(name: ServerName | string): boolean;
   /** Server workloads (mc-* except mc-router), sorted. [] on failure. */
   /** `strict: true` (added by #732): a failed query throws instead of returning []. */
   list(options?: { running?: boolean; strict?: boolean }): string[];
   /** Last `lines` lines (default 50). '' on failure. */
-  getLogs(name: string, lines?: number): string;
-  getStats(name: string): ContainerStats | null;
-  getUptime(name: string): { uptime: string; seconds: number } | null;
+  getLogs(name: ServerName | string, lines?: number): string;
+  getStats(name: ServerName | string): ContainerStats | null;
+  getUptime(name: ServerName | string): { uptime: string; seconds: number } | null;
 
   /** Create the workload if missing, then run it. */
-  start(name: string): Promise<RuntimeActionResult>;
-  stop(name: string): Promise<RuntimeActionResult>;
-  restart(name: string): Promise<RuntimeActionResult>;
+  start(name: ServerName | string): Promise<RuntimeActionResult>;
+  stop(name: ServerName | string): Promise<RuntimeActionResult>;
+  restart(name: ServerName | string): Promise<RuntimeActionResult>;
 
   /** Timestamped lines since `since`, at most `tail` lines. Rejects on failure. */
-  readLogs(name: string, options: { since: string; tail: number }): Promise<string[]>;
+  readLogs(name: ServerName | string, options: { since: string; tail: number }): Promise<string[]>;
   /** New output only by default; `options.tail` emits the last N lines first, then follows; `options.follow: false` prints the last `tail` lines (stdout and stderr) and resolves at exit; `options.onExit(code, error?)` reports docker's exit code or a spawn error once, while the promise still always resolves so the v2.x contract holds (#731). */
-  followLogs(name: string, onChunk: (chunk: string) => void, signal: AbortSignal, options?: { tail?: number; follow?: boolean; onExit?: (code: number | null, error?: Error) => void }): Promise<void>;
+  followLogs(name: ServerName | string, onChunk: (chunk: string) => void, signal: AbortSignal, options?: { tail?: number; follow?: boolean; onExit?: (code: number | null, error?: Error) => void }): Promise<void>;
 }
 ```
 
@@ -86,12 +90,12 @@ export interface ConsoleEndpoint { host: string; port: number; password: string;
 
 export interface IServerConsolePort {
   /** `list` via RCON. null when offline or unparseable. */
-  listPlayers(name: string): Promise<PlayerListResult | null>;
+  listPlayers(name: ServerName | string): Promise<PlayerListResult | null>;
   /** Runs one RCON command. Never rejects (spawn error → exitCode 1, stderr = message).
    *  `signal` (added by #732) is passed to spawn; abort kills the child. */
-  command(name: string, args: string[], options?: { signal?: AbortSignal }): Promise<ConsoleCommandResult>;
+  command(name: ServerName | string, args: string[], options?: { signal?: AbortSignal }): Promise<ConsoleCommandResult>;
   /** Address and credentials for a direct RCON TCP session (`mcctl rcon`). null when unknown. */
-  getEndpoint(name: string): Promise<ConsoleEndpoint | null>;
+  getEndpoint(name: ServerName | string): Promise<ConsoleEndpoint | null>;
 }
 ```
 
@@ -103,7 +107,7 @@ export interface IRouterStatusPort {
   /** 'unknown' if the router is not running; else management API probe result. */
   getHealth(): HealthStatus;
   /** Comma-separated router hostnames of a server workload, '-' when none. */
-  getHostnames(name: string): string;
+  getHostnames(name: ServerName | string): string;
 }
 
 // IPlayitAgentPort.ts
@@ -129,7 +133,7 @@ export interface IRuntimeEnvironmentPort {
 }
 ```
 
-`IRconPort` (`getEntityPosition`) stays as it is. D4 decides whether to re-implement `RconCliAdapter` on top of `IServerConsolePort.command` or to merge the two ports.
+`IRconPort` (`getEntityPosition`) stays a separate port. D4 (#665) only widened its first parameter to `ServerName | string`; re-implementing `RconCliAdapter` on top of `IServerConsolePort.command`, or merging the two ports, is left to #736 (it would change the argv: `docker exec` without `--`).
 
 ### Reserved ports
 
@@ -197,7 +201,7 @@ docker/index.ts                                 legacy facade: 48 exports, leaf 
 
 1. Adapter modules and `infrastructure/process.ts` import only `node:*`, `../../types`, `../../utils` (`resolveMcctlRoot`), `../process.js`, and port types. **They never import `docker/index.ts`.**
 2. `docker/index.ts` imports adapters **by file path**, never through `infrastructure/index.js` or `infrastructure/adapters/index.js`. The barrel loads `ServerRepository`, which imports the facade; that is a cycle, and a TDZ error on `new` at load time.
-3. `ServerRepository` and `WorldRepository` keep importing `execCommandAsync`/`getContainerStatus` from the facade in D1. `world-name-resolution.test.ts` mocks the facade's `execCommandAsync`. D4 switches them to an injected `IContainerRuntimePort`.
+3. `ServerRepository` and `WorldRepository` keep importing `execCommandAsync`/`getContainerStatus` from the facade in D1. `world-name-resolution.test.ts` mocks the facade's `execCommandAsync`. D4 switches them to an injected `IContainerRuntimePort`. Done in #665: both take an optional `IContainerRuntimePort` (default `new DockerComposeRuntimeAdapter()`, imported by file path) and no longer import the facade.
 4. Composite functions stay in the facade and call the wrappers. They contain no process code. Docker literals in them (`'mc-router'`, `'playit-agent'`, `--in-docker (auto-discovery)`, `:25565`) stay until the composites become a query service (see [Open questions](#open-questions)).
 
 ## Lifecycle Semantics and argv Rules
@@ -291,8 +295,8 @@ Production code that imports `child_process` outside `src/infrastructure/**` (23
 | 14 | cli `commands/migrate.ts:557` | `docker stop <c>` | `runtime.stop` (throw on `!success`) | D3 | |
 | 15 | cli `lib/shell.ts:145,167,298,321,348`, `commands/init.ts:344,349,679`, `commands/upgrade.ts:365` | `docker pull`, generic `docker compose`, `down`, `startAll`/`stopAll` pipelines, network create, router restart/recreate | not a runtime port: compose-project / platform-install operations; move under `cli/src/infrastructure/` | D3 | k8s platform lifecycle belongs to Helm (#641). C1 fixes the router service name |
 | 16 | cli `commands/console/init.ts`, `console/service.ts`, `update.ts`, `lib/pm2-utils.ts`, `lib/banner.ts` | `npm`, `pm2`, `git` | not a runtime port; move under `cli/src/infrastructure/` | D3 | needed before the rule becomes an error |
-| 17 | shared `ServerRepository.ts:115` | facade `execCommandAsync('docker', ['inspect', ...])` | `runtime.getStatus` | D4 | |
-| 18 | shared `WorldRepository.ts:299` | facade `getContainerStatus` | `runtime.getStatus` | D4 | |
+| 17 | shared `ServerRepository.ts:115` | facade `execCommandAsync('docker', ['inspect', ...])` | `runtime.getStatus` | D4 | done (#665) |
+| 18 | shared `WorldRepository.ts:299` | facade `getContainerStatus` | `runtime.getStatus` | D4 | done (#665) |
 | 19 | shared `prerequisite/PrerequisiteChecker.ts:1` | `which pm2`, `pm2 --version` | not a runtime port; move the probe under `infrastructure/` | D4 | the only shared finding left after D1 |
 | — | shared `RconCliAdapter`, `BlueMapCliRenderer`, `ShellAdapter` | `docker exec`, scripts | already infrastructure adapters | D4 / #715 | allowed by the lint rule |
 
@@ -368,9 +372,75 @@ Review checklist: `git grep -n "docker/index" src/infrastructure/adapters/Docker
 
 1. **Reserved ports** (resolved 2026-10-23): created as two type-only files with the sketched signatures and a placeholder `ServerSpec` that D5 will replace (decision 3). `IWorldAssignmentPort` was finalized by #670 (ADR-0002).
 2. **API stop semantics**: moving `executeServerAction('stop')` (`docker compose stop`) to `runtime.stop` (`docker stop`) is a small behaviour change. The two differ only for containers that are not in the compose project. Option A (recommended): accept it in D2 as a separate, labelled commit. Option B: make `stop` compose-based and change `mcctl.sh`-parity callers instead.
-3. **Owner of the composites**: none of D2, D4, or #667 names the 12 facade composites. D2's acceptance criterion "route tests with a fake container" needs them injectable. Recommendation: add "turn the composites into an application query service built from ports" to D4 (shared, core-agent), and land it before D2's route migration.
-4. **Order of signature changes**: D2, D3, and D4 run in parallel (P3), but D4 changes port parameters to `ServerName`. Option A (recommended): land D4's signature change first, then D2/D3. Option B: run them in parallel and let the compiler-driven fix-ups happen at merge.
+3. **Owner of the composites**: none of D2, D4, or #667 names the 12 facade composites. D2's acceptance criterion "route tests with a fake container" needs them injectable. Recommendation: add "turn the composites into an application query service built from ports" to D4 (shared, core-agent), and land it before D2's route migration. **#665 did not do this**: none of its acceptance criteria needs it. It stays open for D2 (#667).
+4. **Order of signature changes**: D2, D3, and D4 run in parallel (P3), but D4 changes port parameters to `ServerName`. Option A (recommended): land D4's signature change first, then D2/D3. Option B: run them in parallel and let the compiler-driven fix-ups happen at merge. **Resolved by #665**: the parameters were widened, not replaced, so D2/D3 compile either way and can move call sites to `ServerName` at their own pace.
 5. **Scope of the error flip**: rows 8, 15, 16, and 19 (script, git, npm, and pm2 runners) are not runtime work. Confirm they belong to D2/D3/D4, or else the rule stays a warning for that package.
+
+## Port Boundary Cleanup (#665, D4)
+
+Structural change only (Tidy First). Docker argv, return values and error sentinels are unchanged except where noted below, and no shared export or signature is removed (#715: v2.x only deprecates; #736 deletes in v3.0.0).
+
+### Naming rules move to infrastructure
+
+`infrastructure/adapters/workloadNames.ts` holds the runtime naming rules and is exported from the package root:
+
+| Function | Result |
+|----------|--------|
+| `containerNameOf(server: ServerName \| string)` | `mc-<server>` |
+| `serverHostnameOf(server: ServerName \| string)` | `<server>.local` |
+| `workloadNameOf(name: ServerName \| string)` | a ServerName → its container; a string → unchanged (the container name) |
+
+The module has no runtime imports, so `@minecraft-docker/shared/naming` stays browser-safe. `ServerName.containerName`/`hostname` and `Server.containerName`/`hostname` remain as `@deprecated` getters that delegate here; that is the only domain → infrastructure import, and it goes away with the getters in #736. The reserved-name message (`conflicts with the mc-router container`) is built the same way, so its text is unchanged.
+
+### Port signature changes
+
+| Port | Before (D1) | After (#665) |
+|------|-------------|--------------|
+| `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `getLogs`, `getStats`, `getUptime`, `start`, `stop`, `restart`, `readLogs`, `followLogs` take `name: string` | `name: ServerName \| string`. `list()` is unchanged and still returns container names. Added `getStatusAsync(name): Promise<ContainerStatus>` (see repositories below) |
+| `IServerConsolePort` | `listPlayers`, `command`, `getEndpoint` take `name: string` | `name: ServerName \| string` |
+| `IRouterStatusPort` | `getHostnames(name: string)` | `getHostnames(name: ServerName \| string)` |
+| `IRconPort` | `getEntityPosition(container: string, player)` | `getEntityPosition(server: ServerName \| string, player)` |
+| `IShellPort` | `exec(script, args)`, `execInteractive(script, args)` | unchanged, `@deprecated` (a port method must not take a script name) |
+| `IPlatformSettingsPort` (new) | — | `load(): McctlConfig \| null` |
+
+- **Meaning**: a ServerName is the server and the adapter picks the workload (`workloadNameOf`). A string is the workload name itself, as in D1. The string form is deprecated for servers; the router and playit agent keep their container names until the k8s adapter (#641) gives them their own methods.
+- **Why a union, not overloads**: method parameters are bivariant, so a v2 implementation declared with `(name: string)` still satisfies `(name: ServerName | string)`. An overload pair `(name: ServerName)` + `(name: string)` would reject it. `tests/runtimePorts-v2-compat.test.ts` compiles a v2 `IRconPort` implementation and v2 callers to hold this.
+- **Released and unreleased ports** (#753 review): of the widened ports only `IRconPort` shipped in v2.33.0 (npm). `IContainerRuntimePort`, `IServerConsolePort`, `IRouterStatusPort` and `IHostnameRegistrarPort` were added by #654 after v2.33.0, so no released implementation exists and passing a ServerName to them is not a breaking change. Shared does so (`checkServerStopped`, `WorldManagementUseCase` start after create, `DeleteServerUseCase` online players, `ServerRepository.getStatus`); the cli and mcctl-api test fakes map it with `workloadNameOf(name)`.
+- **`IRconPort` keeps the v2 runtime contract**: its callers (`WorldInfoUseCase.getLivePlayerLocations`, `PlayerManagementUseCase` `options.container`, fed by the API) keep passing the container name string `mc-<server>`, so a v2 implementation receives exactly what it did before. Only `RconCliAdapter` accepts both forms. `tests/rconPort-v2-contract.test.ts` pins this with a recording v2 implementation. New code that computes the name in infrastructure or the API uses `containerNameOf`.
+
+### Repositories take a runtime port
+
+`new ServerRepository(paths?, runtime?)` and `new WorldRepository(paths?, assignments?, runtime?)`. The default is `new DockerComposeRuntimeAdapter()`, the instance the facade delegated to; the CLI `Container` passes its runtime. Neither repository imports the facade any more.
+
+- `ServerRepository.getStatus` awaits `runtime.getStatusAsync(ServerName.fromExisting(name))` and keeps the old mapping (`not_found`, the failed-query sentinel, is `STOPPED`). `getStatusAsync` was added to `IContainerRuntimePort` because the synchronous `getStatus` (`spawnSync`, no timeout) blocked the API event loop once per server in `findAll()` (#753 review). The Docker adapter runs the pre-#665 query through `execCommandAsync` (`docker inspect -f {{.State.Status}} -- <container>`; a non-zero exit is `not_found`, the state is lower-cased); the only argv change is the `--` of the #720 rule. A new method was simpler than making `getStatus` async, which is C2's change across every caller. A name that `fromExisting` rejects returns `UNKNOWN` instead of `STOPPED`; `findByName` never reaches that, because it rejects such names first.
+- `WorldRepository.findAllWithServerStatus` passes the container-name string it used before, including the pre-#670 branch that takes a holder starting with `mc-` as a container name. Changing that would be a behaviour change; #736 removes it when the port is narrowed.
+
+### Platform settings port (`CreateServerUseCase`)
+
+`CreateServerUseCase` used `Paths` only to build a `Config` and read `playitEnabled` from `.mcctl.json`. Its fourth constructor parameter is widened to `IPlatformSettingsPort | Paths`. The CLI injects `new Config(paths)`; `Config` satisfies the port structurally, so there is no adapter class. Passing `Paths`, or nothing, still reads `.mcctl.json` under those paths (deprecated v2 form). The change is limited to the constructor so that #675 can rebase onto it.
+
+**Why a new port**: #715 adds no ports unless an issue asks, and #665 names this one. No existing port reads platform settings: `IServerRepository` reads per-server `config.env`, `IPlayitAgentPort` drives the agent container, `IServerSpecRepository` is the D5 server model. The port has one method, the one current caller needs.
+
+### Callers still on the string form
+
+| Caller | Why | Owner |
+|--------|-----|-------|
+| `docker/index.ts` facade wrappers | Same argv as D1 (decision 9) | #736 |
+| `WorldRepository.findAllWithServerStatus` | Exact pre-#670 container name | #736 |
+| `GitWorldBackupAdapter` | `list()` returns container names and they go back to `console.command` | #736 or `list()` returning server names |
+| `PlayerManagementUseCase` (`options.container`), `WorldInfoUseCase.getLivePlayerLocations(container)` | The API builds `mc-<name>`; public signatures unchanged | D2 (#667) |
+| `mcctl logs` for the router | `mc-router` is not a server | #641 |
+| CLI `lib/rcon.ts`, `commands/*` direct `docker` calls | Not port calls | D3 (#668) |
+
+### Not done in #665
+
+- The composites query service (open question 3): not needed for the acceptance criteria.
+- `PrerequisiteChecker` (direct call site row 19) and the shared lint error flip.
+- `ServerStatusUseCase` (deprecated as a whole) and the "Connect via" message in `CreateServerUseCase` still read the deprecated getters. #675 rewrites the creation path; #736 deletes both getters.
+
+### Deprecated in #665 (removed in v3.0.0, #736)
+
+`ServerName.containerName`, `ServerName.hostname`, `Server.containerName`, `Server.hostname`, `IShellPort.exec`, `IShellPort.execInteractive`, `ShellAdapter.exec`, `ShellAdapter.execInteractive`, the string (container-name) form of the server parameter of the ports above, and passing `Paths` (or nothing) to `CreateServerUseCase`'s fourth parameter.
 
 ## Backup Port (#732, S3)
 

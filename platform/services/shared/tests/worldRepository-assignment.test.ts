@@ -7,13 +7,15 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, existsSync } from 'node:
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const containerStatus = vi.hoisted(() => ({ value: 'not_found' as string }));
-vi.mock('../src/docker/index.js', () => ({ getContainerStatus: () => containerStatus.value }));
-
 import { Paths } from '../src/utils/index.js';
 import { WorldRepository } from '../src/infrastructure/adapters/WorldRepository.js';
 import { ConfigEnvWorldAssignmentAdapter } from '../src/infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.js';
-import type { IWorldAssignmentPort } from '../src/application/ports/index.js';
+import type { IContainerRuntimePort, IWorldAssignmentPort } from '../src/application/ports/index.js';
+import type { ContainerStatus } from '../src/types/index.js';
+
+// Injected runtime (#665); was a mock of the facade's getContainerStatus
+const containerStatus = { value: 'not_found' as ContainerStatus };
+const runtime = { getStatus: vi.fn(() => containerStatus.value) } as unknown as IContainerRuntimePort;
 
 let root: string;
 let repo: WorldRepository;
@@ -39,7 +41,7 @@ function lockFile(world: string, holder: string): string {
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'mcctl-worldrepo-'));
-  repo = new WorldRepository(new Paths(root));
+  repo = new WorldRepository(new Paths(root), undefined, runtime);
   containerStatus.value = 'not_found';
 });
 
@@ -84,7 +86,7 @@ describe('WorldRepository assignment hydration', () => {
       assign: vi.fn(),
       release: vi.fn(),
     };
-    repo = new WorldRepository(new Paths(root), port);
+    repo = new WorldRepository(new Paths(root), port, runtime);
 
     const worlds = await repo.findAll();
 
@@ -104,7 +106,7 @@ describe('WorldRepository assignment hydration', () => {
       assign: vi.fn(),
       release: vi.fn(),
     };
-    repo = new WorldRepository(new Paths(root), port);
+    repo = new WorldRepository(new Paths(root), port, runtime);
 
     expect((await repo.findAll()).map((w) => w.isLocked)).toEqual([false]);
   });
@@ -150,6 +152,7 @@ describe('WorldRepository assignment hydration', () => {
 
     const [result] = await repo.findAllWithServerStatus();
     expect(result).toMatchObject({ category: 'running', assignedServer: 'alpha', serverStatus: 'running' });
+    expect(runtime.getStatus).toHaveBeenCalledWith('mc-alpha');
   });
 
   it('delete leaves worlds/.locks alone', async () => {

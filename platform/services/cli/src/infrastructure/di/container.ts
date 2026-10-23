@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import {
   Paths,
+  Config,
   // Infrastructure adapters from shared
   ShellAdapter,
   DockerServerConsoleAdapter,
@@ -121,14 +122,14 @@ export class Container {
 
   get serverRepository(): IServerRepository {
     if (!this._serverRepo) {
-      this._serverRepo = new ServerRepository(this.paths);
+      this._serverRepo = new ServerRepository(this.paths, this.containerRuntime);
     }
     return this._serverRepo;
   }
 
   get worldRepository(): IWorldRepository {
     if (!this._worldRepo) {
-      this._worldRepo = new WorldRepository(this.paths, this.worldAssignmentPort);
+      this._worldRepo = new WorldRepository(this.paths, this.worldAssignmentPort, this.containerRuntime);
     }
     return this._worldRepo;
   }
@@ -233,7 +234,7 @@ export class Container {
       this.promptPort,
       this.shellPort,
       this.serverRepository,
-      this.paths,
+      new Config(this.paths),
       this.worldRepository,
       this.auditLogPort,
       this.modSourcePort,

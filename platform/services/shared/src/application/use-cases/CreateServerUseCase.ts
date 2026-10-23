@@ -11,7 +11,7 @@ import {
   checkAssign,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
-import { Config, Paths } from '../../utils/index.js';
+import { Config, type Paths } from '../../utils/index.js';
 import type {
   ICreateServerUseCase,
   CreateServerConfig,
@@ -22,6 +22,7 @@ import type {
   IAuditLogPort,
   IModSourcePort,
   IWorldAssignmentPort,
+  IPlatformSettingsPort,
 } from '../ports/index.js';
 
 /**
@@ -29,21 +30,23 @@ import type {
  * Orchestrates interactive server creation flow
  */
 export class CreateServerUseCase implements ICreateServerUseCase {
-  private readonly paths: Paths;
-  private readonly config: Config;
+  private readonly config: IPlatformSettingsPort;
 
+  /**
+   * @param settings Platform settings (#665). Passing `Paths`, or nothing, is the
+   *   deprecated v2 form: `.mcctl.json` is then read under those paths.
+   */
   constructor(
     private readonly prompt: IPromptPort,
     private readonly shell: IShellPort,
     private readonly serverRepo: IServerRepository,
-    paths?: Paths,
+    settings?: IPlatformSettingsPort | Paths,
     private readonly worldRepo?: IWorldRepository,
     private readonly auditLog?: IAuditLogPort,
     private readonly modSource?: IModSourcePort,
     private readonly assignments?: IWorldAssignmentPort
   ) {
-    this.paths = paths ?? new Paths();
-    this.config = new Config(this.paths);
+    this.config = settings && 'load' in settings ? settings : new Config(settings);
   }
 
   /**

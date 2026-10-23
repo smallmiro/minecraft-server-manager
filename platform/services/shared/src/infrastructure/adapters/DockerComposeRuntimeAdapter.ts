@@ -9,6 +9,8 @@ import { promisify } from 'node:util';
 import type { ContainerStatus, HealthStatus, ContainerStats, PlayerListResult } from '../../types/index.js';
 import { resolveMcctlRoot } from '../../utils/index.js';
 import { execCommand, execCommandAsync } from '../process.js';
+import type { ServerName } from '../../domain/value-objects/ServerName.js';
+import { workloadNameOf } from './workloadNames.js';
 import type { IContainerRuntimePort, RuntimeActionResult } from '../../application/ports/outbound/IContainerRuntimePort.js';
 import type {
   IServerConsolePort,
@@ -72,20 +74,33 @@ export function parseRconPlayerList(raw: string): PlayerListResult | null {
 }
 
 /**
- * IContainerRuntimePort over the Docker CLI. Names are Docker container names (`mc-<server>`).
+ * IContainerRuntimePort over the Docker CLI. A ServerName maps to its container (`mc-<server>`, workloadNames.ts);
+ * a string is the container name itself (deprecated v2 form, still used by the legacy facade).
  * `root` defaults to resolveMcctlRoot() at call time; `env` (default process.env) applies to start/stop/restart only.
  */
 export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   constructor(private readonly options: { root?: string; env?: () => NodeJS.ProcessEnv } = {}) {}
 
-  getStatus(container: string): ContainerStatus {
+  getStatus(name: ServerName | string): ContainerStatus {
+    const container = workloadNameOf(name);
     return getContainerStatus(container);
+  }
+
+  /**
+   * Async `docker inspect` (the pre-#665 ServerRepository query, with `--`).
+   * Non-zero exit → 'not_found'; otherwise the lower-cased state.
+   */
+  async getStatusAsync(name: ServerName | string): Promise<ContainerStatus> {
+    const result = await execCommandAsync('docker', ['inspect', '-f', '{{.State.Status}}', '--', workloadNameOf(name)]);
+    if (result.code !== 0) return 'not_found';
+    return result.stdout.trim().toLowerCase() as ContainerStatus;
   }
 
   /**
    * Get container health status
    */
-  getHealth(container: string): HealthStatus {
+  getHealth(name: ServerName | string): HealthStatus {
+    const container = workloadNameOf(name);
     const result = execCommand('docker', [
       'inspect',
       '--format',
@@ -101,7 +116,8 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   /**
    * Check if container exists
    */
-  exists(container: string): boolean {
+  exists(name: ServerName | string): boolean {
+    const container = workloadNameOf(name);
     try {
       execFileSync('docker', ['inspect', '--', container], { stdio: 'pipe' });
       return true;
@@ -139,14 +155,16 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   /**
    * Get container logs
    */
-  getLogs(container: string, lines: number = 50): string {
+  getLogs(name: ServerName | string, lines: number = 50): string {
+    const container = workloadNameOf(name);
     return execCommand('docker', ['logs', '--tail', String(lines), '--', container]);
   }
 
   /**
    * Get container resource stats (memory, CPU)
    */
-  getStats(container: string): ContainerStats | null {
+  getStats(name: ServerName | string): ContainerStats | null {
+    const container = workloadNameOf(name);
     // docker stats --no-stream --format "{{.MemUsage}},{{.CPUPerc}}"
     // Example output: "2.1GiB / 4GiB,15.23%"
     const result = execCommand('docker', [
@@ -208,7 +226,8 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   /**
    * Get container uptime (time since start)
    */
-  getUptime(container: string): { uptime: string; seconds: number } | null {
+  getUptime(name: ServerName | string): { uptime: string; seconds: number } | null {
+    const container = workloadNameOf(name);
     // docker inspect --format '{{.State.StartedAt}}'
     const result = execCommand('docker', [
       'inspect',
@@ -243,20 +262,24 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   /** Create the container if missing, then run it (`docker compose up -d`) */
-  start(container: string): Promise<RuntimeActionResult> {
+  start(name: ServerName | string): Promise<RuntimeActionResult> {
+    const container = workloadNameOf(name);
     return this.compose(['compose', 'up', '-d', container]);
   }
 
-  stop(container: string): Promise<RuntimeActionResult> {
+  stop(name: ServerName | string): Promise<RuntimeActionResult> {
+    const container = workloadNameOf(name);
     return this.run(['stop', '--', container], { env: this.env() });
   }
 
-  restart(container: string): Promise<RuntimeActionResult> {
+  restart(name: ServerName | string): Promise<RuntimeActionResult> {
+    const container = workloadNameOf(name);
     return this.compose(['compose', 'restart', container]);
   }
 
   /** Copied from mcctl-api player-session-collector (defaultLogFetcher) */
-  async readLogs(container: string, options: { since: string; tail: number }): Promise<string[]> {
+  async readLogs(name: ServerName | string, options: { since: string; tail: number }): Promise<string[]> {
+    const container = workloadNameOf(name);
     const { stdout } = await execFilePromise(
       'docker',
       ['logs', '--timestamps', '--since', options.since, '--tail', String(options.tail), '--', container],
@@ -267,7 +290,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
 
   /** Copied from mcctl-api GET /api/servers/:name/logs?follow; abort kills the child through spawn's signal */
   followLogs(
-    container: string,
+    name: ServerName | string,
     onChunk: (chunk: string) => void,
     signal: AbortSignal,
     options?: {
@@ -276,6 +299,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
       onExit?: (code: number | null, error?: Error) => void;
     }
   ): Promise<void> {
+    const container = workloadNameOf(name);
     return new Promise((resolve) => {
       const dockerLogs = spawn('docker', [
           'logs',
@@ -378,7 +402,8 @@ export class DockerServerConsoleAdapter implements IServerConsolePort {
   /**
    * Get online players via RCON
    */
-  async listPlayers(container: string): Promise<PlayerListResult | null> {
+  async listPlayers(name: ServerName | string): Promise<PlayerListResult | null> {
+    const container = workloadNameOf(name);
     try {
       const rawResult = execFileSync('docker', ['exec', '--', container, 'rcon-cli', 'list'], {
         encoding: 'utf-8',
@@ -392,7 +417,8 @@ export class DockerServerConsoleAdapter implements IServerConsolePort {
   }
 
   /** Copied from mcctl-api execRcon / cli execRconWithOutput */
-  command(container: string, args: string[], options?: { signal?: AbortSignal }): Promise<ConsoleCommandResult> {
+  command(name: ServerName | string, args: string[], options?: { signal?: AbortSignal }): Promise<ConsoleCommandResult> {
+    const container = workloadNameOf(name);
     return new Promise((resolve) => {
       const child = spawn('docker', ['exec', '--', container, 'rcon-cli', ...args], {
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -421,7 +447,8 @@ export class DockerServerConsoleAdapter implements IServerConsolePort {
   }
 
   /** Copied from cli `mcctl rcon` (getContainerRconConfig) */
-  async getEndpoint(container: string): Promise<ConsoleEndpoint | null> {
+  async getEndpoint(name: ServerName | string): Promise<ConsoleEndpoint | null> {
+    const container = workloadNameOf(name);
     try {
       // Get container IP
       const { stdout: ip } = await execFilePromise('docker', [
@@ -498,7 +525,8 @@ export class DockerRouterStatusAdapter implements IRouterStatusPort {
   /**
    * Get container's hostname label (mc-router.host)
    */
-  getHostnames(container: string): string {
+  getHostnames(name: ServerName | string): string {
+    const container = workloadNameOf(name);
     const result = execCommand('docker', [
       'inspect',
       '--format',

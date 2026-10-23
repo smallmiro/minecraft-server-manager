@@ -18,6 +18,7 @@ import {
   DockerPlayitAgentAdapter,
   DockerRuntimeEnvironmentAdapter,
 } from '../src/infrastructure/adapters/DockerComposeRuntimeAdapter.js';
+import { ServerName } from '../src/domain/value-objects/ServerName.js';
 
 const PIPE = { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] };
 
@@ -101,6 +102,19 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
       expect(c.run('mc-a')).toBe(c.failed);
     });
   }
+
+  it('getStatusAsync runs the pre-#665 async docker inspect (with --) and keeps its mapping', async () => {
+    vi.mocked(spawn).mockReturnValueOnce(fakeChild(0, 'Running\n'));
+    expect(await runtime.getStatusAsync('mc-a')).toBe('running');
+    expect(spawn).toHaveBeenCalledWith('docker', ['inspect', '-f', '{{.State.Status}}', '--', 'mc-a'], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: undefined,
+    });
+    expect(spawnSync).not.toHaveBeenCalled();
+
+    vi.mocked(spawn).mockReturnValueOnce(fakeChild(1, '', 'No such object'));
+    expect(await runtime.getStatusAsync('mc-a')).toBe('not_found');
+  });
 
   it('exists maps the docker inspect exit code to a boolean', () => {
     expect(runtime.exists('mc-a')).toBe(true);
@@ -613,5 +627,37 @@ describe('package exports', () => {
     ]) {
       expect(typeof (shared as Record<string, unknown>)[name]).toBe('function');
     }
+  });
+});
+
+describe('ServerName arguments (#665)', () => {
+  const server = ServerName.fromExisting('a');
+
+  it('maps a ServerName to the same container argv as the mc-<server> string', async () => {
+    const runtime = new DockerComposeRuntimeAdapter({ root: '/srv/mc' });
+    vi.mocked(spawnSync).mockReturnValue(exited(0, 'running\n'));
+    expect(runtime.getStatus(server)).toBe('running');
+    expect(spawnSync).toHaveBeenCalledWith('docker', ['inspect', '--format', '{{.State.Status}}', '--', 'mc-a'], PIPE);
+
+    expect(runtime.exists(server)).toBe(true);
+    expect(execFileSync).toHaveBeenCalledWith('docker', ['inspect', '--', 'mc-a'], { stdio: 'pipe' });
+
+    execFileCalls({ stdout: '' });
+    await runtime.start(server);
+    expect(vi.mocked(execFile).mock.calls[0]?.slice(0, 2)).toEqual(['docker', ['compose', 'up', '-d', 'mc-a']]);
+  });
+
+  it('console and router adapters resolve a ServerName the same way', async () => {
+    vi.mocked(spawn).mockReturnValue(fakeChild(0, 'ok'));
+    await new DockerServerConsoleAdapter().command(server, ['list']);
+    expect(spawn).toHaveBeenCalledWith('docker', ['exec', '--', 'mc-a', 'rcon-cli', 'list'], expect.anything());
+
+    vi.mocked(spawnSync).mockReturnValue(exited(0, 'a.local\n'));
+    expect(new DockerRouterStatusAdapter().getHostnames(server)).toBe('a.local');
+    expect(spawnSync).toHaveBeenCalledWith(
+      'docker',
+      ['inspect', '--format', '{{index .Config.Labels "mc-router.host"}}', '--', 'mc-a'],
+      PIPE
+    );
   });
 });

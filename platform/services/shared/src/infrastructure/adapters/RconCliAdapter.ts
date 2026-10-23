@@ -2,6 +2,8 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { IRconPort } from '../../application/ports/outbound/IRconPort.js';
 import { Dimension, type EntityPosition } from '../../domain/index.js';
+import type { ServerName } from '../../domain/value-objects/ServerName.js';
+import { workloadNameOf } from './workloadNames.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -76,9 +78,10 @@ export class RconCliAdapter implements IRconPort {
   }
 
   async getEntityPosition(
-    container: string,
+    server: ServerName | string,
     player: string
   ): Promise<EntityPosition | null> {
+    const container = workloadNameOf(server);
     let posOutput: string;
     try {
       posOutput = await this.run('docker', this.rconArgs(container, player, 'Pos'));

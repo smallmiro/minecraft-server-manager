@@ -66,6 +66,7 @@ export type {
   PlayerSessionSummary,
 } from './IPlayerSessionRepository.js';
 export type { IRconPort } from './IRconPort.js';
+export type { IPlatformSettingsPort } from './IPlatformSettingsPort.js';
 export type {
   IMapRenderer,
   MapRenderProgress,
