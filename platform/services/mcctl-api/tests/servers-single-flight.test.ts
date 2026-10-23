@@ -223,6 +223,79 @@ describe('server create/delete single-flight (#656)', () => {
     expect((await create).statusCode).toBe(201);
   });
 
+  describe('a JSON create whose container start outlasts createTimeoutMs (#675 review)', () => {
+    /** Writes the files, reports 'starting', then starts until the test calls done(). */
+    const slowStart = () =>
+      fakeProvision(
+        (config, run) =>
+          new Promise<void>((resolve, reject) => {
+            log.push(`create ${config.name}`);
+            run.onProgress?.('creating', 'Creating server directory...');
+            run.onProgress?.('starting', 'Starting container...');
+            creates.push({ name: config.name, done: resolve, fail: (m) => reject(new Error(m)) });
+          })
+      );
+
+    it('answers 201 created with a warning that the start goes on in the background', async () => {
+      lifecycleLimits.createTimeoutMs = 30;
+      slowStart();
+      const response = await app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'slow', type: 'PAPER' } });
+
+      expect(response.statusCode).toBe(201);
+      const body = response.json();
+      expect(body.server.status).toBe('created');
+      expect(body.warning).toMatch(/still starting in the background/);
+      expect(body.warning).toMatch(/mcctl start slow/);
+      creates[0]!.done();
+    });
+
+    it('lets the queue move on once it answered; the start keeps running', async () => {
+      lifecycleLimits.createTimeoutMs = 30;
+      slowStart();
+      expect((await app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'slow', type: 'PAPER' } })).statusCode).toBe(201);
+
+      const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
+      await started(2);
+      expect(scripts()).toEqual(['create slow', 'delete-server.sh']);
+      calls.scripts[0]!.done();
+      expect((await remove).statusCode).toBe(200);
+      creates[0]!.done();
+    });
+
+    it('waits for the files before answering: the limit starts at the container start', async () => {
+      lifecycleLimits.createTimeoutMs = 30;
+      fakeProvision(
+        (config) =>
+          new Promise<void>((resolve, reject) => {
+            log.push(`create ${config.name}`);
+            creates.push({ name: config.name, done: resolve, fail: (m) => reject(new Error(m)) });
+          })
+      );
+      const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'files', type: 'PAPER' } });
+      await started(1);
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      creates[0]!.fail('servers/compose.yml is locked');
+      expect((await create).statusCode).toBe(500);
+    });
+
+    it('keeps the streaming create waiting for the start (30-minute limit)', async () => {
+      lifecycleLimits.createTimeoutMs = 30;
+      slowStart();
+      const create = app.inject({ method: 'POST', url: '/api/servers?follow=true', payload: { name: 'stream', type: 'PAPER' } });
+      await started(1);
+      const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
+      await queued(2);
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      expect(scripts()).toEqual(['create stream']);
+
+      creates[0]!.done();
+      expect((await create).body).toContain('Server created successfully');
+      await started(2);
+      calls.scripts[0]!.done();
+      expect((await remove).statusCode).toBe(200);
+    });
+  });
+
   describe('a hung delete script cannot hold the queue (#656 review)', () => {
     beforeEach(() => {
       vi.spyOn(process, 'kill').mockImplementation(() => true);

@@ -117,7 +117,7 @@ export const serverProvision = {
 };
 
 export const lifecycleLimits = {
-  /** @deprecated create no longer runs a script (#675); kept for callers that set it. */
+  /** JSON create (no follow): how long the reply waits for the container start before answering with a warning. */
   createTimeoutMs: 120_000,
   /** Create (TypeScript provisioning): how long the queue waits for it, and the container start timeout. */
   sseCreateTimeoutMs: 30 * 60_000,
@@ -963,9 +963,33 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return;
     }
 
-    // Standard JSON response (non-streaming)
+    // Standard JSON response (non-streaming). Its clients (the console BFF) give up
+    // after a few minutes, so once the files are written the reply waits for the
+    // container start at most createTimeoutMs. Past that it answers like a start
+    // failure while compose up goes on; the queue then moves on, since the start
+    // touches no servers/ file. ponytail: a delete of this server can then race its
+    // start; hold the queue for the background start if that is ever seen.
     try {
-      const { warning } = await provision({});
+      let starting = (): void => undefined;
+      const startStage = new Promise<void>((resolve) => (starting = resolve));
+      const result = provision({ onProgress: (stage) => stage === 'starting' && starting() });
+      const outcome = await Promise.race([
+        result,
+        startStage.then(() => delay(lifecycleLimits.createTimeoutMs)).then(() => 'still-starting' as const),
+      ]);
+      let warning: string | undefined;
+      if (outcome === 'still-starting') {
+        warning =
+          `Server '${name}' was created and its container is still starting in the background ` +
+          '(the first start can take several minutes to pull the image or download mods). ' +
+          `Check it with: mcctl status ${name}. If it does not come up, start it with: mcctl start ${name}`;
+        result.then(
+          (late) => fastify.log.info({ server: name, warning: late.warning }, 'Background server start finished'),
+          (error: unknown) => fastify.log.error(error, 'Background server start failed')
+        );
+      } else {
+        warning = outcome.warning;
+      }
       await audit('success', null);
       return reply.code(201).send({ success: true, server: created(warning), ...(warning && { warning }) });
     } catch (error) {
