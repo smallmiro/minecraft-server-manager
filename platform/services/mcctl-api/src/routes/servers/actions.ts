@@ -42,10 +42,18 @@ function toAuditAction(action: ServerAction): AuditActionEnum {
   }
 }
 
+/**
+ * How long close waits for running auto-backups. The backup's finally
+ * re-enables auto-save (save-on) on servers it flushed; process.exit after
+ * app.close() must not cut that off.
+ */
+export const AUTO_BACKUP_CLOSE_WAIT_MS = 120_000;
+
 async function handleServerAction(
   request: FastifyRequest<{ Params: ServerNameParams }>,
   reply: FastifyReply,
-  action: ServerAction
+  action: ServerAction,
+  backups: Set<Promise<unknown>>
 ): Promise<ActionResponse> {
   const serverName = sanitizeServerName(request.params.name);
 
@@ -106,10 +114,12 @@ async function handleServerAction(
   // failure is logged and never fails the stop
   if (action === 'stop') {
     const log = request.log;
-    void autoBackupOnStop(createWorldBackupPort(config.mcctlRoot), serverName).then((auto) => {
+    const running = autoBackupOnStop(createWorldBackupPort(config.mcctlRoot), serverName).then((auto) => {
       if (auto.status === 'done') log.info({ server: serverName, commit: auto.outcome.commit }, 'Auto-backup on stop complete');
       else if (auto.status === 'failed') log.warn({ server: serverName, error: auto.error }, 'Auto-backup on stop failed');
     });
+    backups.add(running);
+    void running.finally(() => backups.delete(running));
   }
 
   return {
@@ -126,11 +136,25 @@ async function handleServerAction(
 // ============================================================
 
 const serverActionsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  // Auto-backups started by a stop; close waits for them (bounded)
+  const backups = new Set<Promise<unknown>>();
+  fastify.addHook('onClose', async () => {
+    if (backups.size === 0) return;
+    fastify.log.info({ count: backups.size }, 'Waiting for auto-backups on stop to finish');
+    let timer: NodeJS.Timeout | undefined;
+    const timeout = new Promise<'timeout'>((resolve) => {
+      timer = setTimeout(() => resolve('timeout'), AUTO_BACKUP_CLOSE_WAIT_MS);
+    });
+    const result = await Promise.race([Promise.allSettled([...backups]), timeout]);
+    clearTimeout(timer);
+    if (result === 'timeout') fastify.log.warn('Auto-backup on stop still running at shutdown; giving up waiting');
+  });
+
   // POST /api/servers/:name/start
   fastify.post<{ Params: ServerNameParams }>(
     '/api/servers/:name/start',
     async (request, reply) => {
-      return handleServerAction(request, reply, 'start');
+      return handleServerAction(request, reply, 'start', backups);
     }
   );
 
@@ -138,7 +162,7 @@ const serverActionsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance)
   fastify.post<{ Params: ServerNameParams }>(
     '/api/servers/:name/stop',
     async (request, reply) => {
-      return handleServerAction(request, reply, 'stop');
+      return handleServerAction(request, reply, 'stop', backups);
     }
   );
 
@@ -146,7 +170,7 @@ const serverActionsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance)
   fastify.post<{ Params: ServerNameParams }>(
     '/api/servers/:name/restart',
     async (request, reply) => {
-      return handleServerAction(request, reply, 'restart');
+      return handleServerAction(request, reply, 'restart', backups);
     }
   );
 };
