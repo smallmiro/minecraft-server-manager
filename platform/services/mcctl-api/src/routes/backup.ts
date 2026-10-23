@@ -1,10 +1,8 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { existsSync } from 'fs';
-import { join } from 'path';
+import type { WorldBackupError } from '@minecraft-docker/shared';
 import { config } from '../config/index.js';
+import { createWorldBackupPort, backupErrorStatus, shortHash } from '../lib/world-backup.js';
 import {
   BackupStatusResponseSchema,
   BackupPushRequestSchema,
@@ -15,19 +13,8 @@ import {
   ErrorResponseSchema,
   type BackupPushRequest,
   type BackupRestoreRequest,
-  type BackupCommit,
 } from '../schemas/backup.js';
 
-const execFilePromise = promisify(execFile);
-
-/**
- * The git backup cache directory used by backup.sh.
- * Located under <MCCTL_ROOT>/backups/worlds/ as the git repository,
- * NOT platform/worlds/ which is only the source data directory.
- */
-const BACKUP_CACHE_DIR = join(config.mcctlRoot, 'backups', 'worlds');
-
-// Route interfaces
 interface BackupPushRoute {
   Body: BackupPushRequest;
 }
@@ -36,305 +23,95 @@ interface BackupRestoreRoute {
   Body: BackupRestoreRequest;
 }
 
+const errorResponses = {
+  400: ErrorResponseSchema,
+  404: ErrorResponseSchema,
+  409: ErrorResponseSchema,
+  500: ErrorResponseSchema,
+  503: ErrorResponseSchema,
+};
+
 /**
- * Backup management routes plugin
+ * Backup management routes plugin (ADR-0001 "Backup Port", #732).
+ * All work goes through IWorldBackupPort; there is no script lookup.
  */
 const backupPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  const mcctlRoot = config.mcctlRoot;
-  const worldsPath = join(mcctlRoot, 'worlds');
+  const backup = createWorldBackupPort(config.mcctlRoot);
 
-  // Helper to check if backup is configured
-  const isBackupConfigured = (): { configured: boolean; repository?: string; branch?: string } => {
-    const repo = process.env['BACKUP_GITHUB_REPO'];
-    const token = process.env['BACKUP_GITHUB_TOKEN'];
-
-    if (!repo || !token) {
-      return { configured: false };
-    }
-
-    return {
-      configured: true,
-      repository: repo,
-      branch: process.env['BACKUP_GITHUB_BRANCH'] || 'main',
-    };
+  const sendError = (reply: FastifyReply, error: WorldBackupError) => {
+    const { status, error: name } = backupErrorStatus(error.code);
+    if (status >= 500) fastify.log.error({ code: error.code }, error.message);
+    return reply.code(status).send({ error: name, message: error.message });
   };
 
-  /**
-   * GET /api/backup/status
-   * Get backup configuration status
-   */
   fastify.get('/api/backup/status', {
     schema: {
       description: 'Get backup configuration status',
       tags: ['backup'],
-      response: {
-        200: BackupStatusResponseSchema,
-        500: ErrorResponseSchema,
-      },
+      response: { 200: BackupStatusResponseSchema, 500: ErrorResponseSchema },
     },
   }, async (_request, reply) => {
-    try {
-      const status = isBackupConfigured();
-
-      // Get last backup date from the backup cache directory (not from worlds/)
-      // backup.sh uses $HOME/.minecraft-backup as the git repository
-      let lastBackup: string | undefined;
-      if (status.configured && existsSync(join(BACKUP_CACHE_DIR, '.git'))) {
-        try {
-          const { stdout } = await execFilePromise(
-            'git',
-            ['log', '-1', '--format=%cI'],
-            { cwd: BACKUP_CACHE_DIR, timeout: 5000 }
-          );
-          lastBackup = stdout.trim() || undefined;
-        } catch {
-          // Git not initialized or no commits
-        }
-      }
-
-      return reply.send({
-        configured: status.configured,
-        repository: status.repository,
-        branch: status.branch,
-        lastBackup,
-      });
-    } catch (error) {
-      fastify.log.error(error, 'Failed to get backup status');
-      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get backup status' });
-    }
+    const r = await backup.status();
+    if (!r.ok) return sendError(reply, r.error);
+    const { configured, repository, branch, lastBackup } = r.value;
+    return reply.send({ configured, repository, branch, lastBackup: lastBackup?.date.toISOString() });
   });
 
-  /**
-   * POST /api/backup/push
-   * Push backup to GitHub
-   */
   fastify.post<BackupPushRoute>('/api/backup/push', {
     schema: {
       description: 'Push worlds backup to GitHub',
       tags: ['backup'],
       body: BackupPushRequestSchema,
-      response: {
-        200: BackupPushResponseSchema,
-        400: ErrorResponseSchema,
-        500: ErrorResponseSchema,
-      },
+      response: { 200: BackupPushResponseSchema, ...errorResponses },
     },
   }, async (request: FastifyRequest<BackupPushRoute>, reply: FastifyReply) => {
-    const { message } = request.body;
-
-    try {
-      const status = isBackupConfigured();
-      if (!status.configured) {
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: 'Backup not configured. Set BACKUP_GITHUB_REPO and BACKUP_GITHUB_TOKEN environment variables.',
-        });
-      }
-
-      if (!existsSync(worldsPath)) {
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: 'Worlds directory not found',
-        });
-      }
-
-      const execOptions = {
-        cwd: mcctlRoot,
-        timeout: 120000, // 2 minute timeout
-        env: {
-          ...process.env,
-          MCCTL_ROOT: mcctlRoot,
-        },
-      };
-
-      // Run backup script (safe from injection: args passed as array)
-      const scriptPath = join(mcctlRoot, 'scripts', 'backup.sh');
-
-      if (existsSync(scriptPath)) {
-        // Use execFile with array args to prevent shell injection
-        const args = message
-          ? [scriptPath, 'push', '--message', message]
-          : [scriptPath, 'push', '--auto'];
-        await execFilePromise('bash', args, execOptions);
-      } else {
-        // Fallback: run git commands directly against the backup cache directory
-        // (not worlds/ which is not a git repository)
-        const commitMessage = message || `Backup ${new Date().toISOString()}`;
-        const gitOptions = { ...execOptions, cwd: BACKUP_CACHE_DIR };
-        await execFilePromise('git', ['add', '-A'], gitOptions);
-        await execFilePromise('git', ['commit', '-m', commitMessage], gitOptions);
-        await execFilePromise('git', ['push'], gitOptions);
-      }
-
-      // Get commit hash from the backup cache directory
-      let commitHash: string | undefined;
-      try {
-        const { stdout: hashOut } = await execFilePromise(
-          'git',
-          ['rev-parse', '--short', 'HEAD'],
-          { cwd: BACKUP_CACHE_DIR }
-        );
-        commitHash = hashOut.trim();
-      } catch {
-        // Ignore
-      }
-
-      return reply.send({
-        success: true,
-        commitHash,
-        message: 'Backup pushed successfully',
-      });
-    } catch (error) {
-      const execError = error as { stderr?: string; message?: string };
-      fastify.log.error(error, 'Failed to push backup');
-
-      // Check for "nothing to commit" which is not an error
-      if (execError.stderr?.includes('nothing to commit') || execError.message?.includes('nothing to commit')) {
-        return reply.send({
-          success: true,
-          message: 'No changes to backup',
-        });
-      }
-
-      return reply.code(500).send({
-        error: 'InternalServerError',
-        message: execError.stderr || execError.message || 'Failed to push backup',
-      });
-    }
+    const { message, allowMissing } = request.body ?? {};
+    const r = await backup.push({ message, allowMissing: allowMissing === true });
+    if (!r.ok) return sendError(reply, r.error);
+    for (const w of [...r.value.warnings, ...r.value.skipped]) fastify.log.warn(`backup: ${w}`);
+    return reply.send({
+      success: true,
+      commitHash: shortHash(r.value.commit),
+      message: r.value.changed ? 'Backup pushed successfully' : 'No changes to backup',
+    });
   });
 
-  /**
-   * GET /api/backup/history
-   * Get backup history (git commits) from $HOME/.minecraft-backup
-   */
   fastify.get('/api/backup/history', {
     schema: {
       description: 'Get backup history (git commits)',
       tags: ['backup'],
-      response: {
-        200: BackupHistoryResponseSchema,
-        400: ErrorResponseSchema,
-        500: ErrorResponseSchema,
-      },
+      response: { 200: BackupHistoryResponseSchema, 400: ErrorResponseSchema, 500: ErrorResponseSchema },
     },
   }, async (_request, reply) => {
-    try {
-      const status = isBackupConfigured();
-      if (!status.configured) {
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: 'Backup not configured',
-        });
-      }
-
-      // Check the backup cache directory, not worlds/
-      if (!existsSync(BACKUP_CACHE_DIR)) {
-        return reply.send({ commits: [], total: 0 });
-      }
-
-      // Get git log from the backup cache directory
-      const { stdout } = await execFilePromise(
-        'git',
-        ['log', '--format=%H|%s|%cI|%an', '-n', '20'],
-        { cwd: BACKUP_CACHE_DIR, timeout: 10000 }
-      );
-
-      const commits: BackupCommit[] = stdout.trim().split('\n')
-        .filter(Boolean)
-        .map(line => {
-          const [hash, message, date, author] = line.split('|');
-          return {
-            hash: hash?.substring(0, 7) || '',
-            message: message || '',
-            date: date || '',
-            author,
-          };
-        });
-
-      return reply.send({ commits, total: commits.length });
-    } catch (error) {
-      const execError = error as { stderr?: string; message?: string };
-
-      // Check for "not a git repository"
-      if (execError.stderr?.includes('not a git repository')) {
-        return reply.send({ commits: [], total: 0 });
-      }
-
-      fastify.log.error(error, 'Failed to get backup history');
-      return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to get backup history' });
+    const status = await backup.status();
+    if (!status.ok) return sendError(reply, status.error);
+    if (!status.value.configured) {
+      return reply.code(400).send({ error: 'BadRequest', message: 'Backup not configured' });
     }
+    const r = await backup.history(20);
+    if (!r.ok) return sendError(reply, r.error);
+    const commits = r.value.map((c) => ({
+      hash: shortHash(c.hash)!,
+      message: c.message,
+      date: c.date.toISOString(),
+      author: c.author,
+    }));
+    return reply.send({ commits, total: commits.length });
   });
 
-  /**
-   * POST /api/backup/restore
-   * Restore from backup
-   */
   fastify.post<BackupRestoreRoute>('/api/backup/restore', {
     schema: {
-      description: 'Restore worlds from a backup commit',
+      description: 'Restore worlds from a backup commit (all servers must be stopped)',
       tags: ['backup'],
       body: BackupRestoreRequestSchema,
-      response: {
-        200: BackupRestoreResponseSchema,
-        400: ErrorResponseSchema,
-        500: ErrorResponseSchema,
-      },
+      response: { 200: BackupRestoreResponseSchema, ...errorResponses },
     },
   }, async (request: FastifyRequest<BackupRestoreRoute>, reply: FastifyReply) => {
     const { commitHash } = request.body;
-
-    try {
-      const status = isBackupConfigured();
-      if (!status.configured) {
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: 'Backup not configured',
-        });
-      }
-
-      if (!existsSync(worldsPath)) {
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: 'Worlds directory not found',
-        });
-      }
-
-      const execOptions = {
-        cwd: mcctlRoot,
-        timeout: 120000,
-        env: {
-          ...process.env,
-          MCCTL_ROOT: mcctlRoot,
-        },
-      };
-
-      // Run backup restore script (safe from injection: args passed as array)
-      const scriptPath = join(mcctlRoot, 'scripts', 'backup.sh');
-
-      if (existsSync(scriptPath)) {
-        // Use execFile with array args to prevent shell injection
-        await execFilePromise('bash', [scriptPath, 'restore', commitHash], execOptions);
-      } else {
-        // Fallback: git checkout from backup cache directory
-        await execFilePromise(
-          'git',
-          ['checkout', commitHash, '--', 'worlds/'],
-          { ...execOptions, cwd: BACKUP_CACHE_DIR }
-        );
-      }
-
-      return reply.send({
-        success: true,
-        message: `Restored to commit ${commitHash}`,
-      });
-    } catch (error) {
-      const execError = error as { stderr?: string; message?: string };
-      fastify.log.error(error, 'Failed to restore backup');
-      return reply.code(500).send({
-        error: 'InternalServerError',
-        message: execError.stderr || execError.message || 'Failed to restore backup',
-      });
-    }
+    const r = await backup.restore(commitHash);
+    if (!r.ok) return sendError(reply, r.error);
+    for (const s of r.value.skipped) fastify.log.warn(`restore skipped ${s}`);
+    return reply.send({ success: true, message: `Restored to commit ${commitHash}` });
   });
 };
 
